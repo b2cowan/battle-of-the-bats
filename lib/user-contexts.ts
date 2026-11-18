@@ -12,6 +12,7 @@ import { getBillingHref } from './billing-urls';
 import { orgPlanCarriesCoachesPortal } from './coach-portal-plan';
 import { readHiddenOrgIds, dropStaleHiddenWorkspaces } from './user-hidden-workspaces';
 import { hasBillingAccess } from './roles';
+import { invitationLapseCutoff } from './invitation-lapse';
 import { getStandaloneAdminHref, getCoachPortalAssignments } from './coach-portal-request';
 import { programHomePath } from './member-home';
 import { officialHome, volunteerHome, volunteerJobOf } from './volunteer-jobs';
@@ -552,6 +553,8 @@ export async function findInvitedMembershipSlug(userId: string): Promise<string 
     .select('organizations(slug)')
     .eq('user_id', userId)
     .eq('status', 'invited')
+    // Only a LIVE invitation can be finished (P2c): a run-out one is refused at accept-invite.
+    .gte('invited_at', invitationLapseCutoff())
     .limit(1)
     .maybeSingle();
 

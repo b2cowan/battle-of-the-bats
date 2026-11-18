@@ -7,9 +7,10 @@ import LoadingState from '@/components/shared/LoadingState';
 import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 
-type PageState = 'waiting' | 'ready' | 'submitting' | 'joinFailed' | 'retrying' | 'joinRefused' | 'expired';
-/** `terms`: the join refused the Terms box (step 6.3) — back to the form, with the line, to tick it again. */
-type JoinOutcome = 'joined' | 'failed' | 'refused' | 'terms';
+type PageState = 'waiting' | 'ready' | 'submitting' | 'joinFailed' | 'retrying' | 'joinRefused' | 'joinLapsed' | 'expired';
+/** `terms`: the join refused the Terms box (step 6.3) — back to the form, with the line, to tick it again.
+ *  `lapsed`: the invitation ran out (30 days from its last send, P2c) — no retry helps; the club has to send it again. */
+type JoinOutcome = 'joined' | 'failed' | 'refused' | 'terms' | 'lapsed';
 
 type InviteContext = {
   orgSlug: string | null;
@@ -30,7 +31,8 @@ type InviteContext = {
  *    the password is saved but the join fails, it says exactly that and retries ONLY the join —
  *    it never asks for a new password (J10-007) and never moves on as if it had worked.
  *  · Success lands where the role starts, through the server's destination resolver (J10-011).
- *  · An expired LINK is not an expired INVITATION (J10-008): the membership still waits, so
+ *  · An expired LINK is not an expired INVITATION (J10-008): the membership still waits (for 30 days from its last send,
+ *    P2c; after that the page says it has run out), so
  *    "Set a password" goes through the existing reset flow and the home-page card takes over.
  */
 export default function AcceptInviteForm({
@@ -110,8 +112,9 @@ export default function AcceptInviteForm({
       }
       if (!res.ok) {
         setErrorMsg(typeof data?.error === 'string' ? data.error : '');
-        // A policy refusal (a scorekeeper keeps one home organization) will not change on a retry;
-        // anything else is worth one.
+        // A policy refusal (a scorekeeper keeps one home organization) or a run-out invitation will not change on a
+        // retry; anything else is worth one.
+        if (data?.code === 'invitation_lapsed') return 'lapsed';
         return data?.code === 'one_home_org' ? 'refused' : 'failed';
       }
       const destination: string = data.destination
@@ -128,6 +131,7 @@ export default function AcceptInviteForm({
   function settle(outcome: JoinOutcome) {
     if (outcome === 'failed') setPageState('joinFailed');
     if (outcome === 'refused') setPageState('joinRefused');
+    if (outcome === 'lapsed') setPageState('joinLapsed');
     if (outcome === 'terms') setPageState('ready');
   }
 
@@ -177,9 +181,8 @@ export default function AcceptInviteForm({
         <StartHead title="This invitation link has expired" sub={orgName ?? undefined} />
         <div className={accountForm.form}>
           <p className={accountForm.body}>
-            {orgName
-              ? `Your invitation from ${orgName} is still waiting. Set a password and it will be on your home page.`
-              : 'Your invitation is still waiting. Set a password and it will be on your home page.'}
+            {/* An invitation stays open 30 days from its last send (P2c), so "still waiting" is no longer always true. */}
+            {`An invitation stays open for 30 days. If yours from ${orgName ?? 'the club'} is still open, set a password and it will be on your home page. If it has run out, ask them to send it again.`}
           </p>
           <Link href="/auth/forgot-password" className={accountForm.primary}>Set a password</Link>
         </div>
@@ -226,11 +229,30 @@ export default function AcceptInviteForm({
             {errorMsg && <><br />{errorMsg}</>}
           </div>
         )}
-        {pageState === 'joinRefused' && (
+        {pageState === 'joinLapsed' && (
+          <div className={accountForm.error} role="alert">
+            <strong>Your password is saved, but this invitation has run out.</strong>
+            <br />
+            Ask {clubWord} to send it again.
+          </div>
+        )}
+        {(pageState === 'joinRefused' || pageState === 'joinLapsed') && (
           <Link href="/discover" className={accountForm.secondary}>Go to your home page</Link>
         )}
 
-        {(pageState === 'ready' || pageState === 'submitting') && (
+        {/* An invitation that ran out before the person got here (P2c): nothing to set up a password for. */}
+        {pageState === 'ready' && invite?.status === 'lapsed' && (
+          <div className={accountForm.error} role="alert">
+            <strong>This invitation has run out.</strong>
+            <br />
+            Ask {clubWord} to send it again.
+          </div>
+        )}
+        {pageState === 'ready' && invite?.status === 'lapsed' && (
+          <Link href="/discover" className={accountForm.secondary}>Go to your home page</Link>
+        )}
+
+        {(pageState === 'ready' || pageState === 'submitting') && invite?.status !== 'lapsed' && (
           <form onSubmit={handleSubmit} className={accountForm.form}>
             <AccountFields
               idPrefix="accept"

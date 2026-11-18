@@ -63,6 +63,8 @@ const EXPORT_COLS: ExportColumnDef[] = [
 /** Board Ready two-step, Part 4: the export gains the column only where the screen shows it (owners and admins). */
 const EXPORT_TWO_STEP_COL: ExportColumnDef = { label: 'Two-Step', key: 'twoStep', format: 'text' };
 const STATUS_WORD = { invited: 'Invited', active: 'Active', suspended: 'Suspended' } as const;
+/** An invitation 30 days past its last send (P2c): it can't be accepted until Resend sends it again. */
+const LAPSED_WORD = 'Invitation ran out';
 
 /** "Today" or "Sep 24" — the org's calendar day, never the reader's. */
 function dayLabel(iso: string | null): string {
@@ -174,7 +176,8 @@ export default function MembersKit() {
 
   // Seats: shown only where the limit is real (Tournament); unlimited plans drop the banner (specimen 5).
   const seatLimited = planCfg.seatLimit < 9999;
-  const seatCount = members.filter(m => countsAsSeat(m.role, planCfg)).length;
+  // A run-out invitation holds no seat (P2c), as the server's count says.
+  const seatCount = members.filter(m => !m.lapsed && countsAsSeat(m.role, planCfg)).length;
   const atSeatLimit = seatLimited && seatCount >= planCfg.seatLimit;
 
   const manageTarget = manageId ? members.find(m => m.id === manageId) ?? null : null;
@@ -197,7 +200,7 @@ export default function MembersKit() {
       displayName: m.displayName ?? '',
       email: m.email,
       roleLabel: roleLabel(m.role),
-      statusLabel: STATUS_WORD[m.status],
+      statusLabel: m.lapsed ? LAPSED_WORD : STATUS_WORD[m.status],
       twoStep: m.twoStep ? twoStepWords(m.twoStep) : '—',
       lastSignIn: m.lastSignIn ? formatStoredDate(m.lastSignIn) : '—',
       invitedAt: formatStoredDate(m.invitedAt),
@@ -251,12 +254,12 @@ export default function MembersKit() {
     </span>
   );
 
-  const statusCell = (m: KitMember) =>
-    m.status === 'invited'
-      ? `Invited ${dayLabel(m.invitedAt)}`
-      : m.status === 'suspended'
-        ? <span className={`${ck.chip} ${ck.chipWarn}`}>Suspended</span>
-        : 'Active';
+  const statusCell = (m: KitMember) => {
+    if (m.lapsed) return <span className={`${ck.chip} ${ck.chipWarn}`}>{LAPSED_WORD}</span>;
+    if (m.status === 'invited') return `Invited ${dayLabel(m.invitedAt)}`;
+    if (m.status === 'suspended') return <span className={`${ck.chip} ${ck.chipWarn}`}>Suspended</span>;
+    return 'Active';
+  };
 
   /** The desktop table and the phone row list — one set of rows, two layouts (CSS picks). */
   const renderRows = (rows: KitMember[], caption: string) => (
@@ -308,7 +311,7 @@ export default function MembersKit() {
         {rows.map(m => {
           const isSelf = m.userId === user?.id;
           const line = m.status === 'invited'
-            ? `${roleLabel(m.role)} · invited ${dayLabel(m.invitedAt)}${m.coachInvite ? ' · coaches here' : ''}`
+            ? `${roleLabel(m.role)} · ${m.lapsed ? LAPSED_WORD.toLowerCase() : `invited ${dayLabel(m.invitedAt)}`}${m.coachInvite ? ' · coaches here' : ''}`
             : `${roleLabel(m.role)} · ${accessShort(m.role, m.access, m.capabilities)}${overrideChips(m.access).map(c => ` ${c.text}`).join('')}`;
           const twoStep = m.status === 'invited' ? null : twoStepPhrase(m);
           const body = (

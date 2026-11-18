@@ -76,7 +76,8 @@ export async function sendExistingAccountInvite(p: {
  * confirmed (generateLink({type:'invite'}) fails "already registered" once confirmed) and an
  * INVITE link otherwise; both redirect through `/auth/callback` → `/auth/accept-invite?org={slug}`.
  * Also refreshes `invited_at` and backfills `invited_email` (lowercased) so the row stays
- * reconcilable by email (mig 128).
+ * reconcilable by email (mig 128). The refresh restarts the invitation's 30 days (P2c), so it is written BEFORE the email
+ * and a failed one refuses the resend.
  *
  * Reads the send-to email + confirmation state from the auth user, so callers only pass the
  * pending member's identifiers.
@@ -127,18 +128,22 @@ export async function sendPendingInviteLink(params: {
   if (waitingRole && waiting !== waitingRole) {
     return { ok: false, error: 'That invitation was already answered. Reload the page.', changed: true };
   }
+  // ⚖ A resend restarts the invitation's 30 days (P2c, lib/invitation-lapse.ts), so the date is stamped FIRST and must land:
+  // an email saying "join" for an invitation that still reads as run out would be a promise the accept doors refuse.
   if (memberRow && waiting) {
-    await sendExistingAccountInvite({
-      email, orgId: memberRow.organization_id, orgName, role: waiting, capabilities: memberRow.pending_capabilities,
-      inviterName: sender?.name ?? null, askedBy, keepsCoaching: true,
-    });
-    const { error: refreshError } = await supabaseAdmin
+    const { data: stamped, error: refreshError } = await supabaseAdmin
       .from('organization_members')
       .update({ pending_invited_at: new Date().toISOString() })
       .eq('id', memberId)
       .eq('role', 'coach')
-      .not('pending_role', 'is', null);
-    if (refreshError) console.error('[sendPendingInviteLink] waiting board role date refresh failed:', refreshError);
+      .eq('pending_role', waiting)
+      .select('id');
+    if (refreshError) return { ok: false, error: 'We couldn’t send the invitation again. Try again.' };
+    if (!stamped?.length) return { ok: false, error: 'That invitation was already answered. Reload the page.', changed: true };
+    await sendExistingAccountInvite({
+      email, orgId: memberRow.organization_id, orgName, role: waiting, capabilities: memberRow.pending_capabilities,
+      inviterName: sender?.name ?? null, askedBy, keepsCoaching: true,
+    });
     return { ok: true, existingAccount: true };
   }
 
@@ -148,14 +153,11 @@ export async function sendPendingInviteLink(params: {
   // ⚠ Only a CONFIRMED account (/review): an unconfirmed one has nothing to sign in with, so it keeps the set-up link below
   // (which also backfills a legacy row's address).
   if (memberRow && authUser.email_confirmed_at && isInvitationToOwnAccount(memberRow, authUser.invited_at)) {
+    const stampError = await restampPendingRow(memberId, {});
+    if (stampError) return stampError;
     await sendExistingAccountInvite({
       email, orgId: memberRow.organization_id, orgName, role, capabilities: memberRow.capabilities, inviterName: sender?.name ?? null, askedBy,
     });
-    const { error: refreshError } = await supabaseAdmin
-      .from('organization_members')
-      .update({ invited_at: new Date().toISOString() })
-      .eq('id', memberId);
-    if (refreshError) console.error('[sendPendingInviteLink] invite date refresh failed:', refreshError);
     return { ok: true, existingAccount: true };
   }
   const job = role === 'official' ? volunteerJobOf(memberRow?.capabilities) : null;
@@ -174,6 +176,12 @@ export async function sendPendingInviteLink(params: {
     return { ok: false, error: linkError?.message ?? 'Failed to generate invite link' };
   }
 
+  // Refresh invited_at (the 30 days restart, P2c; the admin sees the re-invite time) + backfill invited_email so the row
+  // stays reconcilable by email (mig 128). Before the email, and it must land (see above); a row accepted mid-flight
+  // stamps nothing and nothing is sent.
+  const stampError = await restampPendingRow(memberId, { invited_email: invitedEmail });
+  if (stampError) return stampError;
+
   const inviteUrl = getActionLink(linkData);
   await sendEmail(
     email,
@@ -182,17 +190,24 @@ export async function sendPendingInviteLink(params: {
     { kind: 'org_invite', orgId: memberRow?.organization_id ?? null, ...(askedBy ? { askedBy } : {}) },
   );
 
-  // Refresh invited_at (admin sees the re-invite time) + backfill invited_email so the row
-  // stays reconcilable by email (mig 128). The email already sent, so a failed metadata
-  // refresh doesn't fail the operation — but log it rather than swallow, else the admin sees
-  // a stale "re-invited X ago" with no signal (e.g. the row was accepted mid-flight).
-  const { error: refreshError } = await supabaseAdmin
-    .from('organization_members')
-    .update({ invited_at: new Date().toISOString(), invited_email: invitedEmail })
-    .eq('id', memberId);
-  if (refreshError) {
-    console.error('[sendPendingInviteLink] invite metadata refresh failed:', refreshError);
-  }
-
   return { ok: true, existingAccount: false };
+}
+
+/** Restamps a pending row's send date (and any extra columns); a refusal to return, or null. Only a still-pending row. */
+async function restampPendingRow(
+  memberId: string,
+  extra: Record<string, unknown>,
+): Promise<{ ok: false; error: string; changed?: true } | null> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .update({ invited_at: new Date().toISOString(), ...extra })
+    .eq('id', memberId)
+    .eq('status', 'invited')
+    .select('id');
+  if (error) {
+    console.error('[sendPendingInviteLink] invite date refresh failed:', error);
+    return { ok: false, error: 'We couldn’t send the invitation again. Try again.' };
+  }
+  if (!data?.length) return { ok: false, error: 'That invitation was already answered. Reload the page.', changed: true };
+  return null;
 }

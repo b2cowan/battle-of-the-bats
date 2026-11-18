@@ -14,6 +14,7 @@ import { captureError, captureAndJson, withObservability } from '@/lib/observabi
 import { slugifyOrgName } from '@/lib/utils';
 import { requireAcceptance } from '@/lib/legal-acceptance';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { hasLiveInvitation } from '@/lib/invite-reconciliation';
 
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
@@ -78,12 +79,8 @@ export const POST = withObservability(async (req: Request) => {
     // A PENDING invite (not yet accepted) means the user already has somewhere to go — don't let
     // them spin up a stray org first (which would then block the accept via the single-org guard).
     // Server-side mirror of the /start/tournament page redirect to /home.
-    const { count: pendingInvites } = await supabaseAdmin
-      .from('organization_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'invited');
-    if ((pendingInvites ?? 0) > 0) {
+    // A run-out invitation (P2c) is not somewhere to go: it is off Home and can't be accepted, so it never blocks.
+    if (await hasLiveInvitation(user.id)) {
       return NextResponse.json(
         { error: 'You have a pending invitation. Accept it from your home screen before creating a new organization.' },
         { status: 409 }

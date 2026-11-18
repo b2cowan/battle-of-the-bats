@@ -1,7 +1,8 @@
 import { supabaseAdmin } from './supabase-admin';
 import { roleLabel, memberOpensSentence } from './member-access';
 import { invitationSender } from './member-names';
-import { PENDING_INVITATION_FILTER, waitingBoardRole } from './waiting-board-role';
+import { waitingBoardRole } from './waiting-board-role';
+import { invitationLapseCutoff, livePendingInvitationFilter } from './invitation-lapse';
 
 /**
  * Invite reconciliation (mig 128).
@@ -40,7 +41,8 @@ export type ReconciledInvite = {
 type OrgRel = { slug?: string | null; name?: string | null };
 type OrgRelation = OrgRel | OrgRel[] | null;
 
-function orgFromRelation(rel: OrgRelation): OrgRel | null {
+/** A joined `organizations(slug, name)` relation, which PostgREST may hand back as an object or a one-row array. */
+export function orgFromRelation(rel: OrgRelation): OrgRel | null {
   if (Array.isArray(rel)) return rel[0] ?? null;
   return rel ?? null;
 }
@@ -79,7 +81,9 @@ export async function reconcilePendingInvitesForUser(user: {
     .from('organization_members')
     .select('id, organization_id, user_id, role, organizations(slug, name)')
     .eq('status', 'invited')
-    .eq('invited_email', email);
+    .eq('invited_email', email)
+    // Only a live invitation is claimed (P2c): a run-out one waits for a Resend, and is claimed at the sign-in after it.
+    .gte('invited_at', invitationLapseCutoff());
 
   // On a transient query error, return empty so login isn't blocked — but the caller's
   // user_id-keyed fallback (findInvitedMembershipSlug) still runs, so an already-correctly
@@ -139,6 +143,22 @@ export async function reconcilePendingInvitesForUser(user: {
   return reconciled;
 }
 
+/**
+ * Does this person hold a LIVE pending invitation (P2c: 30 days from its last send)? The creation doors' one question:
+ * a live one means they already have somewhere to go, so they are sent to Home rather than starting a stray club or
+ * league; a run-out one is not on Home and never blocks. A failed read answers no, as these four doors always did (the
+ * one-club rule still guards the create).
+ */
+export async function hasLiveInvitation(userId: string): Promise<boolean> {
+  const { count } = await supabaseAdmin
+    .from('organization_members')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('status', 'invited')
+    .gte('invited_at', invitationLapseCutoff());
+  return (count ?? 0) > 0;
+}
+
 export type PendingInviteForEmail = {
   memberId: string;
   userId: string;
@@ -169,6 +189,8 @@ export async function findPendingInviteByEmail(email: string | null | undefined)
     .select('id, user_id, role, organizations(slug, name)')
     .eq('status', 'invited')
     .eq('invited_email', normalized)
+    // A run-out invitation (P2c) is never offered as live: not by the sign-up message, not by the self-serve resend.
+    .gte('invited_at', invitationLapseCutoff())
     .order('invited_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -191,12 +213,13 @@ export async function findPendingInviteByEmail(email: string | null | undefined)
  */
 export async function listPendingInvitesForUser(userId: string): Promise<ReconciledInvite[]> {
   // A pending row, or a club's coach row with a board role waiting on it (trust close-out 13 P2b, mig 503): both are an
-  // invitation the person has not answered, so both reach Home's card, the badge and the sign-in landing.
+  // invitation the person has not answered, so both reach Home's card, the badge and the sign-in landing — while LIVE: a
+  // run-out one (30 days from its last send, P2c) is off Home and stops steering the sign-in.
   const { data } = await supabaseAdmin
     .from('organization_members')
     .select('id, organization_id, role, status, pending_role, organizations(slug, name)')
     .eq('user_id', userId)
-    .or(PENDING_INVITATION_FILTER);
+    .or(livePendingInvitationFilter());
 
   return (data ?? []).map((row) => {
     const waiting = waitingBoardRole(row);

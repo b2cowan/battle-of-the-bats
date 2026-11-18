@@ -30,6 +30,11 @@ export interface KitMember {
    * unchanged and managed on the team's staff page.
    */
   coachInvite?: boolean;
+  /**
+   * An invitation that has run out (P2c, lib/invitation-lapse.ts): 30 days since it was last sent. It holds no seat, the
+   * invitee can no longer accept it, and Manage offers Resend (which revives it) and Cancel. Absent = live.
+   */
+  lapsed?: boolean;
 }
 
 /** "On", "Off", "Not set up · 9 days left", "Not set up" (ask E: past the deadline stays amber, no count). */

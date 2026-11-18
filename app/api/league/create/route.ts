@@ -16,6 +16,7 @@ import { clearStartDoor } from '@/lib/start-door-server';
 import { slugifyOrgName } from '@/lib/utils';
 import { requireAcceptance } from '@/lib/legal-acceptance';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { hasLiveInvitation } from '@/lib/invite-reconciliation';
 
 // Abuse controls (Phase 6.6): blunt scripted mass-creation of free workspaces before the beta flag
 // is turned on for real users. Best-effort, per-Lambda-instance (no external store wired). Legit use
@@ -95,12 +96,8 @@ export const POST = withObservability(async (req: Request) => {
     // spin up a league first, because the single-org guard above would then block the accept and strand
     // them outside the org that invited them. Parity with /api/org/create; server-side mirror of the
     // /start/league page redirect. (The invite is the destination; the league is the stray.)
-    const { count: pendingInvites } = await supabaseAdmin
-      .from('organization_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'invited');
-    if ((pendingInvites ?? 0) > 0) {
+    // A run-out invitation (P2c) is not somewhere to go, so it never blocks (parity with /api/org/create).
+    if (await hasLiveInvitation(user.id)) {
       return NextResponse.json(
         { error: 'You have a pending invitation. Accept it from your home screen before creating a league.' },
         { status: 409 },

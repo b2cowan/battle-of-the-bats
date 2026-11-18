@@ -11,6 +11,7 @@ import { accountDoorRefusal, checkAcceptance, recordDoorAcceptance } from '@/lib
 import { getSignedInUser } from '@/lib/two-step-session';
 import { startTwoStepGrace } from '@/lib/two-step-grace';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
+import { invitationHasLapsed, invitationLapseCutoff, lapsedInvitationMessage } from '@/lib/invitation-lapse';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -52,12 +53,14 @@ export const GET = withObservability(async (req: Request) => {
   const linkOrg = new URL(req.url).searchParams.get('org');
   let query = supabaseAdmin
     .from('organization_members')
-    .select('role, status, organization_id, capabilities, organizations!inner(slug, name)')
+    .select('role, status, organization_id, capabilities, invited_at, organizations!inner(slug, name)')
     .eq('user_id', user.id)
     .in('status', ['invited', 'active']);
   if (linkOrg) query = query.eq('organizations.slug', linkOrg);
   const { data: member } = await query
     .order('status', { ascending: false })
+    // The newest invitation first (/review, P2c): a live one is never hidden behind an older run-out one.
+    .order('invited_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -68,11 +71,13 @@ export const GET = withObservability(async (req: Request) => {
   const sender = member?.status === 'invited' && member.organization_id
     ? await invitationSender(member.organization_id as string, user.id)
     : null;
+  // A run-out invitation (P2c) reads as 'lapsed', so the page says so before a password is set for nothing.
+  const status = member?.status === 'invited' && invitationHasLapsed(member.invited_at as string | null) ? 'lapsed' : member?.status ?? null;
   return NextResponse.json({
     ok: true,
     orgSlug: org?.slug ?? null,
     role: member?.role ?? null,
-    status: member?.status ?? null,
+    status,
     orgName: org?.name ?? null,
     roleLabel: member?.role ? roleLabel(member.role) : null,
     roleOpens: member?.role ? memberOpensSentence(member.role, member.capabilities as Record<string, boolean> | null) : null,
@@ -127,11 +132,14 @@ export const POST = withObservability(async (req: Request) => {
   // The page sends the club from its link (J10-010) so a person invited to two clubs joins the one
   // whose link they followed; without it, the oldest pending invitation (the previous behaviour).
   const linkOrg = typeof body.orgSlug === 'string' && body.orgSlug ? body.orgSlug : null;
+  // ⚖ Only a LIVE invitation is accepted (P2c): 30 days from its last send (lib/invitation-lapse.ts).
+  const cutoff = invitationLapseCutoff();
   let pending = supabaseAdmin
     .from('organization_members')
     .select('id, role, organization_id, organizations!inner(slug)')
     .eq('user_id', user.id)
-    .eq('status', 'invited');
+    .eq('status', 'invited')
+    .gte('invited_at', cutoff);
   if (linkOrg) pending = pending.eq('organizations.slug', linkOrg);
   const { data: member } = await pending
     .order('invited_at', { ascending: true })
@@ -139,6 +147,26 @@ export const POST = withObservability(async (req: Request) => {
     .maybeSingle();
 
   if (!member) {
+    // A run-out invitation is said as one, never as "already accepted" (which would send them on as if they had joined).
+    let lapsedQuery = supabaseAdmin
+      .from('organization_members')
+      .select('id, organizations!inner(slug, name)')
+      .eq('user_id', user.id)
+      .eq('status', 'invited')
+      .lt('invited_at', cutoff);
+    if (linkOrg) lapsedQuery = lapsedQuery.eq('organizations.slug', linkOrg);
+    const { data: lapsed } = await lapsedQuery.limit(1).maybeSingle();
+    // Without the link's club, someone who already belongs somewhere keeps the old answer (they land where they work);
+    // the refusal is for a person whose only way in was the run-out invitation (/review).
+    const { count: activeElsewhere } = lapsed && !linkOrg
+      ? await supabaseAdmin.from('organization_members').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'active')
+      : { count: 0 };
+    if (lapsed && !(activeElsewhere ?? 0)) {
+      return NextResponse.json(
+        { error: lapsedInvitationMessage(orgFromRelation(lapsed.organizations ?? null)?.name), code: 'invitation_lapsed' },
+        { status: 410 },
+      );
+    }
     // Already accepted or not an invited member — not an error, just a no-op.
     // Try to return their existing accepted membership for redirect purposes.
     const { data: existing } = await supabaseAdmin
@@ -171,7 +199,8 @@ export const POST = withObservability(async (req: Request) => {
   const { error } = await supabaseAdmin
     .from('organization_members')
     .update(memberUpdate)
-    .eq('id', member.id);
+    .eq('id', member.id)
+    .eq('status', 'invited');
 
   if (error) {
     // A13 / J10-007: a named failure the page can act on — it retries ONLY this join (the password

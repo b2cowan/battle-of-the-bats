@@ -151,9 +151,9 @@ describe('6. a club\'s own coach given a board role accepts it too (P2b, owner 2
     const w = readCode('lib/waiting-board-role.ts');
     assert.match(w, /row\.role === 'coach' && row\.status === 'active' && row\.pending_role \? row\.pending_role : null/);
     assert.match(w, /PENDING_INVITATION_FILTER = 'status\.eq\.invited,and\(status\.eq\.active,role\.eq\.coach,pending_role\.not\.is\.null\)'/);
-    for (const file of ['app/api/auth/invitations/[memberId]/route.ts', 'lib/invite-reconciliation.ts']) {
-      assert.match(readCode(file), /\.or\(PENDING_INVITATION_FILTER\)/, file);
-    }
+    // The accept door reads any pending row (then refuses a run-out one, P2c); Home's list reads only live ones.
+    assert.match(readCode('app/api/auth/invitations/[memberId]/route.ts'), /\.or\(PENDING_INVITATION_FILTER\)/);
+    assert.match(readCode('lib/invite-reconciliation.ts'), /\.or\(livePendingInvitationFilter\(\)\)/);
   });
   it('accept moves the waiting role onto the row and starts two-step on it; decline clears it and never deletes the row', () => {
     const accept = readCode('app/api/auth/invitations/[memberId]/route.ts');
@@ -177,7 +177,8 @@ describe('6. a club\'s own coach given a board role accepts it too (P2b, owner 2
     assert.match(send, /\.update\(\{ pending_invited_at: new Date\(\)\.toISOString\(\) \}\)/);
   });
   it('a waiting board role holds its seat in every seat count', () => {
-    assert.match(readCode('lib/roles.ts'), /return `role\.not\.in\.\$\{exempt\},and\(status\.eq\.active,pending_role\.not\.in\.\$\{exempt\}\)`;/);
+    // A live one does; a run-out one (P2c) holds none, on either kind of row.
+    assert.match(readCode('lib/roles.ts'), /return `and\(role\.not\.in\.\$\{exempt\},or\(status\.neq\.invited,invited_at\.gte\.\$\{c\}\)\),and\(status\.eq\.active,pending_role\.not\.in\.\$\{exempt\},pending_invited_at\.gte\.\$\{c\}\)`;/);
     for (const file of ['app/api/admin/members/invite/route.ts', 'app/api/admin/members/[memberId]/route.ts', 'app/api/admin/members/count/route.ts', 'lib/billing-usage.ts']) {
       const code = readCode(file);
       assert.match(code, /\.or\(seatRowsFilter\((planCfg|plan)\)\)/, file);

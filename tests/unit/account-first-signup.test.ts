@@ -405,8 +405,9 @@ describe('Home’s waiting workspace (A4 revised 2026-10-19)', () => {
     const tournament = readCode('app/(consumer)/start/tournament/page.tsx');
     assert.match(tournament, /userBelongsToOtherRealOrg\(user\.id\),/);
     assert.match(tournament, /if \(inRealOrg\) \{/);
-    assert.match(tournament, /\.eq\('status', 'invited'\),/);
-    assert.match(tournament, /if \(\(pendingInvites \?\? 0\) > 0\) \{\s*redirect\('\/discover'\);/);
+    // A LIVE invitation (P2c: a run-out one is off Home and never blocks) — the one question all four creation doors ask.
+    assert.match(tournament, /hasLiveInvitation\(user\.id\),/);
+    assert.match(tournament, /if \(liveInvitation\) \{\s*redirect\('\/discover'\);/);
   });
   it('sits in Workspaces after the workspaces in use, and Home is not empty while it shows', () => {
     assert.match(home, /\{workspaces\.map\(ws => <WorkspaceCard key=\{ws\.id\} ctx=\{ws\} \/>\)\}\s*\{waiting && <WaitingWorkspaceCard door=\{waiting\.door\} \/>\}/);

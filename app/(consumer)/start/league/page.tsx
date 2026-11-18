@@ -4,11 +4,11 @@ import { redirect } from 'next/navigation';
 import { CalendarDays } from 'lucide-react';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { getAuthUserCached } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { startStepViewer } from '@/lib/start-door-server';
+import { hasLiveInvitation } from '@/lib/invite-reconciliation';
 import StartLeagueForm from './StartLeagueForm';
 import styles from '../start.module.css';
 
@@ -46,15 +46,9 @@ export default async function StartLeaguePage({ searchParams }: { searchParams: 
     // A pending invite means they already have somewhere to go — send them to Home's pending-invite
     // card instead of creating a stray league that would then block the accept. Mirrors
     // /start/tournament; the API enforces the same rule for anyone who bypasses this page.
-    if (user?.id) {
-      const { count: pendingInvites } = await supabaseAdmin
-        .from('organization_members')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('status', 'invited');
-      if ((pendingInvites ?? 0) > 0) {
-        redirect('/discover');
-      }
+    // Only a live invitation sends them Home (P2c): a run-out one is not on Home's card.
+    if (user?.id && (await hasLiveInvitation(user.id))) {
+      redirect('/discover');
     }
 
     return <StartLeagueForm viewer={await startStepViewer(user)} initialName={initialName} confirmed={confirmed} />;

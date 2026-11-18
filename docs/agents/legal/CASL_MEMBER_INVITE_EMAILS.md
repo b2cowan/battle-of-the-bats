@@ -1,5 +1,5 @@
 # The club's member invitations — CASL and what they promise
-**Last verified:** 2026-11-07 (applies the CASL text read 2026-11-06 for `CASL_SECOND_PARENT_EMAIL.md` — s.1(2), s.6(1),
+**Last verified:** 2026-11-07; run-out build reviewed 2026-11-18 (code-time) (applies the CASL text read 2026-11-06 for `CASL_SECOND_PARENT_EMAIL.md` — s.1(2), s.6(1),
 s.6(2), s.6(6) — to these two emails; no new source opened)
 **Re-verify by:** 2026-11-07 + 12 months, or a trigger: either email gains a plan name, a price, an offer or a link to pricing
 or sign-up; the invite starts going to people with no role (e.g. "tell a friend"); Bill C-36 / CASL amendments.
@@ -18,7 +18,7 @@ or sign-up; the invite starts going to people with no role (e.g. "tell a friend"
 > no privacy finding (the inviter's name and role-in-club and the role's access sentence were already shown to every
 > existing-account invitee; a coach is already in the club). Declining tells the club (separate change). Cancelling a pending invitation
 > sends no email. Accepting from Home records no new Terms tick (the account agreed at its own sign-up). Unaccepted
-> invitations are still never removed, and now sit on existing accounts too: recommendation 3 is wider, not new.
+> invitations sit on existing accounts too (recommendation 3 was wider, not new); **they now run out and are removed, built later the same day (see "An ignored invitation stays")**.
 
 ## Question(s) this answers
 Are the club's member-invitation emails (new account: "You're invited"; existing account: "You're invited" in its
@@ -59,9 +59,36 @@ and no platform line; `app/api/admin/members/invite/route.ts`; `lib/invite-links
   address (`invite/route.ts`, `generateLink` then the `invited` insert). "You can safely ignore this email" is true for the
   reader (nothing is charged or sent). **Checked 2026-11-18:** nothing ever removes an unaccepted invitation, and since
   trust close-out 13 an existing account's invitation is a pending row too (it holds a seat and sends its reader to Home at
-  each sign-in until they act). **Ruled 2026-11-18 (owner, recommendation 3 taken):** an unaccepted invitation runs out
-  after 30 days (a resend restarts it) and lapsed ones are removed — to be built (Board Ready trust queue P2c). Until it is,
-  the privacy policy must still not say unaccepted invitations are deleted.
+  each sign-in until they act). **Ruled 2026-11-18 (owner, recommendation 3 taken); BUILT 2026-11-18 (Board Ready trust
+  queue P2c; `lib/invitation-lapse.ts`, `lib/invitation-sweep.ts`; built and proved on dev, uncommitted when reviewed):** an
+  unaccepted invitation runs out 30 days after it was last sent (a Resend restarts it): no seat, off Home, refused at both
+  accept doors ("This invitation has run out. Ask {club} to send it again."), shown on Members as "Invitation ran out" with
+  Resend and Cancel. A nightly sweep removes it 30 days after that (the pending row; a coach's waiting board role is cleared,
+  the coaching kept) and deletes the sign-in account only if never confirmed, never signed in to, used for nothing else and
+  made by this club's first invitation, re-read just before the delete; any doubt keeps it. Each removal writes the club audit
+  line "Invitation removed after it ran out" with the address (as Cancel does). **The sweep's schedule is NOT switched on in
+  production (owner's go owed): the live privacy policy says nothing about invitations and stays silent; the §9 bullet in
+  `drafts/PRIVACY_POLICY.md` (0.3) publishes only once the schedule has run on production.**
+
+## Review of the run-out build (2026-11-18, code-time, no re-research)
+1. **No CASL issue.** The run-out wording adds no commercial content; no email is sent on run-out or removal; the Resend
+   notice ("It stays open for 30 days.") and the expired-link screen are service text to a person the club named. "Ask {club}
+   to send it again" points to the sender, not to FieldLogicHQ pricing or sign-up: fine (a pointer back to the club is what
+   keeps it non-commercial).
+2. **No disclosure to a non-invitee.** The club name on the expired-link screen comes from the link's own `org` parameter
+   (club names are public pages); the run-out refusals at the two accept doors need the invitee's own session or link; the
+   Resend notice and "Invitation ran out" show only to the club's admins. Nothing says who else was invited. Low, no action.
+3. **The audit line keeps the address of a person whose never-used account is deleted. Keep it** (Low): it is the club's own
+   record of an address the club typed and the same line Cancel writes today; dropping it would make "who did we invite?"
+   unanswerable and would be inconsistent with every other `member_removed` line. The cost is real but small (an email
+   address, no account, club-owner-readable only, no new use). The honesty fix is in the privacy draft's §9 bullet (the line
+   is named, and kept while the organization exists); the append-only log means an invitee's erasure request cannot reach it
+   (same class as backlog L16; route to `/plan` only if the owner wants a purge clock on `org_audit_log` payload emails).
+4. **Privacy policy:** live 2026-11-17 text needs NO change now (silent on unaccepted invitations; "your account is kept while
+   it is open" stays true). Draft 0.3 adds a §9 bullet, conditional on the sweep being scheduled and run on production.
+5. **Soft spot (UX, not law):** the expired-link screen's "Set a password" goes to forgot-password; after the sweep deletes the
+   never-used account, that path has no account to reset. The wording ("If it has run out, ask them to send it again") covers
+   it; confirm forgot-password's reply does not name whether an account exists.
 
 ## Recommendation
 1. CASL: no change needed. Keep both emails free of commercial content. A guard that fails the build when either template
@@ -69,8 +96,9 @@ and no platform line; `app/api/admin/members/invite/route.ts`; `lib/invite-links
 2. The product line: make it true for every sender. Either "FieldLogicHQ is the online system {club} uses for things like
    registration, schedules and results." (keeps /marketing's nouns), or reuse the family emails' "the software {club} uses".
    Exposure is low either way (not a contract term, no commercial representation). Prefer the first for the anti-scam purpose.
-3. Pre-existing, for the owner: the Reply-To that reaches nobody, and the retention of unaccepted invitations (backlog L9).
-   The privacy policy draft must not say unaccepted invitations are deleted unless a build makes that true.
+3. Pre-existing, for the owner: the Reply-To that reaches nobody. Retention of unaccepted invitations: **built 2026-11-18**
+   (see above and the review); the privacy policy may say they are removed only once the nightly sweep is scheduled and has
+   run on production.
 
 ## Sources
 - [Canada's Anti-Spam Legislation (S.C. 2010, c. 23) — s.1(2), s.6(1), s.6(2), s.6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-06 (via `CASL_SECOND_PARENT_EMAIL.md`)

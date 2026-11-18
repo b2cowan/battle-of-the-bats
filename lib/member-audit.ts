@@ -99,8 +99,10 @@ export function auditChangeSentence(action: string, payload: Record<string, unkn
         ? `Invited as ${roleLabel(p.role)} — ${HELPING_WITH.label}: ${HELPING_WITH.option[p.purpose]}`
         : `Invited as ${roleLabel(p.role)}`;
     case 'member_removed':
-      // A withdrawn invitation (trust close-out 13 and P2b) is not a removal: the person never held the role.
-      return p.pendingInvite === true ? 'Invitation cancelled' : 'Removed';
+      // A withdrawn invitation (trust close-out 13 and P2b) is not a removal: the person never held the role. One the
+      // nightly sweep removed after it ran out (P2c) was withdrawn by nobody, and says so.
+      if (p.pendingInvite === true) return p.lapsed === true ? 'Invitation removed after it ran out' : 'Invitation cancelled';
+      return 'Removed';
     case 'role_changed':
       return typeof p.before === 'string' && typeof p.after === 'string'
         ? `Role changed: ${roleLabel(p.before)} → ${roleLabel(p.after)}`

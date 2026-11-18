@@ -13,6 +13,8 @@ import { invitationSender } from '@/lib/member-names';
 import { roleLabel } from '@/lib/member-access';
 import { accountNameOf } from '@/lib/family-invitation';
 import { notify } from '@/lib/notify';
+import { invitationHasLapsed, invitationLapseCutoff, lapsedInvitationMessage } from '@/lib/invitation-lapse';
+import { orgFromRelation } from '@/lib/invite-reconciliation';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -75,7 +77,6 @@ function orgSlugFromRelation(rel: unknown): string | null {
   if (Array.isArray(rel)) return (rel[0] as { slug?: string } | undefined)?.slug ?? null;
   return (rel as { slug?: string } | null)?.slug ?? null;
 }
-
 // POST /api/auth/invitations/[memberId] — accept ({action:'accept'}) or decline
 // ({action:'decline'}) a pending invitation the SESSION user owns.
 //
@@ -106,7 +107,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   // with a board role WAITING on it (trust close-out 13 P2b, mig 503).
   const { data: member } = await supabaseAdmin
     .from('organization_members')
-    .select('id, role, status, organization_id, display_name, pending_role, pending_capabilities, pending_invited_at, organizations(slug)')
+    .select('id, role, status, organization_id, display_name, invited_at, pending_role, pending_capabilities, pending_invited_at, organizations(slug, name)')
     .eq('id', memberId)
     .eq('user_id', user.id)
     .or(PENDING_INVITATION_FILTER)
@@ -154,6 +155,12 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     return NextResponse.json({ ok: true, declined: true });
   }
 
+  // ⚖ A run-out invitation can't be accepted (P2c, lib/invitation-lapse.ts): 30 days from its last send. (A decline above
+  // is still taken: it only ends what the club would otherwise sweep.)
+  if (invitationHasLapsed(waiting ? member.pending_invited_at : member.invited_at)) {
+    return NextResponse.json({ error: lapsedInvitationMessage(orgFromRelation(member.organizations as Parameters<typeof orgFromRelation>[0])?.name), code: 'invitation_lapsed' }, { status: 410 });
+  }
+
   // A yes is to the role the person was SHOWN (trust close-out 13, /review): the club can still change a pending row's role,
   // so if it moved after their card loaded, nothing is accepted and they are asked to reload and see the new one. (A request
   // without a role — an older page — is taken as before.)
@@ -195,7 +202,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     // The offer read, to its date (/review): a Cancel and a new offer of the same role with other access in between leaves
     // nothing accepted, rather than the withdrawn access.
     ? write.eq('role', 'coach').eq('pending_role', waiting).eq('pending_invited_at', member.pending_invited_at)
-    : write.eq('status', 'invited')
+    : write.eq('status', 'invited').gte('invited_at', invitationLapseCutoff())
   ).select('id');
 
   if (error) {

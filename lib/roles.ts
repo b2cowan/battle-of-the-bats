@@ -1,4 +1,5 @@
 import type { OrgRole } from './types';
+import { invitationLapseCutoff } from './invitation-lapse';
 
 export type Capability =
   // --- existing action capabilities ---
@@ -135,12 +136,17 @@ export function seatExemptRoles(plan: { officialsFreeSeats: boolean }): string[]
  */
 export function seatRowsFilter(plan: { officialsFreeSeats: boolean }): string {
   const exempt = `(${seatExemptRoles(plan).join(',')})`;
+  // ⚖ A run-out invitation holds no seat (P2c, lib/invitation-lapse.ts): a pending row counts only inside its 30 days.
+  const c = invitationLapseCutoff();
   // A waiting role counts only on an ACTIVE coach row, the rows `waitingBoardRole` offers (/review: one answer everywhere).
-  return `role.not.in.${exempt},and(status.eq.active,pending_role.not.in.${exempt})`;
+  return `and(role.not.in.${exempt},or(status.neq.invited,invited_at.gte.${c})),and(status.eq.active,pending_role.not.in.${exempt},pending_invited_at.gte.${c})`;
 }
 
-/** The volunteer figure's filter (plans where volunteers are free): a volunteer, or a coach's waiting volunteer role. */
-export const VOLUNTEER_ROWS_FILTER = 'role.eq.official,and(status.eq.active,pending_role.eq.official)';
+/** The volunteer figure's filter (plans where volunteers are free): a volunteer, or a coach's waiting volunteer role (live ones). */
+export function volunteerRowsFilter(): string {
+  const c = invitationLapseCutoff();
+  return `and(role.eq.official,or(status.neq.invited,invited_at.gte.${c})),and(status.eq.active,pending_role.eq.official,pending_invited_at.gte.${c})`;
+}
 
 export function hasCapability(
   role: OrgRole,

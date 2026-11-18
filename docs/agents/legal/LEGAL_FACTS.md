@@ -48,6 +48,14 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   deleted 30 days after the event; who-set-it and the previous answer removed 60 days after the team's last event of the season; the answer itself
   stays as the club's attendance record, never deleted by the clean-up (migs 476/477/479/480/482/483/484/485; not on production). Topic: `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`; possibly stale because of it:
   `drafts/PRIVACY_POLICY.md` §5/§9, `drafts/GUARDIAN_CONSENT_STAGE4.md`.
+- **About a person who has not accepted a club's invitation (built on dev 2026-11-18, Board Ready trust close-out 13 call (b)):**
+  name and email (the club typed them), a pending membership, and for a new person an unconfirmed sign-in account the invitation
+  created. The invitation runs out 30 days after it was last sent (a Resend restarts it); a nightly sweep removes it 30 days after
+  that (the pending row; a coach's waiting board role is cleared), and deletes the account only if never confirmed, never signed in
+  to, used for nothing else, and made by this club's first invitation. The club's audit line "Invitation removed after it ran out"
+  keeps the email (append-only, kept while the organization exists, like Cancel's). **The sweep's schedule is NOT switched on in
+  production (owner's go owed): until it runs there, nothing is deleted and the privacy policy must not say so.** Topic:
+  `CASL_MEMBER_INVITE_EMAILS.md`; draft `drafts/PRIVACY_POLICY.md` §9 (0.3, conditional).
 - No public sharing of a child's data (`BUSINESS_DECISIONS.md` ~L2871); no one-to-one adult–minor
   messaging (`docs/projects/active/COACH_PORTAL_CHUNK_D_COUNSEL_PACKET.md` ~L188).
 - **Known gaps on file:** no player-information retention or purge rule (TODO, raised 2026-07-17); the

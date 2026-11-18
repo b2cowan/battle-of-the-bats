@@ -83,8 +83,11 @@ describe('billing counts follow enforcement and effective limits', () => {
   });
   it('coaches and free officials are exempt exactly as in invite enforcement', async () => {
     const { queries } = await read('tournament');
-    // A coach's waiting board role holds its seat (trust close-out 13, P2b): the one filter every seat count uses.
-    assert.ok(queries[1].filters.some(f => JSON.stringify(f) === '["or","role.not.in.(coach,official),and(status.eq.active,pending_role.not.in.(coach,official))"]'));
+    // A coach's waiting board role holds its seat (trust close-out 13, P2b): the one filter every seat count uses. A run-out
+    // invitation holds none (P2c): both branches carry the 30-day cutoff.
+    const T = '\\d{4}-\\d{2}-\\d{2}T[\\d:.]+Z';
+    const seat = new RegExp(`^and\\(role\\.not\\.in\\.\\(coach,official\\),or\\(status\\.neq\\.invited,invited_at\\.gte\\.${T}\\)\\),and\\(status\\.eq\\.active,pending_role\\.not\\.in\\.\\(coach,official\\),pending_invited_at\\.gte\\.${T}\\)$`);
+    assert.ok(queries[1].filters.some(f => f[0] === 'or' && seat.test(String(f[1]))));
     assert.match(readCode('app/api/admin/members/invite/route.ts'), /seatRowsFilter\(planCfg\)/);
   });
   for (const failure of ['error', 'null'] as const) it(`${failure} counts reject instead of returning an empty meter`, async () => {

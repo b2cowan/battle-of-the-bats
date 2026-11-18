@@ -47,7 +47,16 @@
 > added to a club without accepting). Proof `.probe/coach-board-invite-prove.mjs` (dev, 30/30); guard
 > `tests/unit/existing-account-invite-guard.test.ts` §6. Production: migration 503 FIRST, then the code; (b) a pending invitation never expires, holds a seat, and lands its
 > invitee on Home at every sign-in until they act — **RULED 2026-11-18 (owner, as recommended with /legal): an
-> unaccepted invitation runs out (30 days, a resend restarts it) and lapsed ones are removed**, queue prompt P2c; (c) the database's membership test (`is_org_member`,
+> unaccepted invitation runs out (30 days, a resend restarts it) and lapsed ones are removed**, queue prompt P2c.
+> **Status, 13 (b) (built 2026-11-18, dev; commit hash on the queue's PROGRESS row):** read at use, no new status
+> (`lib/invitation-lapse.ts`): 30 days after its last send an invitation holds no seat, is off Home, the badge and the
+> sign-in landing, can't be accepted at either door, never blocks starting a club or league, and Members shows "Invitation
+> ran out"; Resend restamps first and revives it (a seat check when reviving, /review); the same for a coach's waiting
+> board role. Removal: a nightly sweep (`lib/invitation-sweep.ts`) 60 days after the last send — the row goes, a waiting
+> role is cleared, and the account a new person's invitation made goes only when never confirmed, never signed in, of no
+> other use and made with that club's first invitation. Its schedule, migration 504, is written but NOT applied anywhere
+> (scheduler automation: the owner's go in conversation, its own commit). Proof `.probe/invitation-lapse-prove.mjs` (dev,
+> 32/32); guard `tests/unit/invitation-lapse.test.ts` (with a census of every door that reads pending rows); (c) the database's membership test (`is_org_member`,
 > `can_access_tournament`) ignores status, so a pending invitee's browser session can read the club's venue library and
 > its tournaments' team names (suspended members too: not new, now aimable at any existing account): one migration —
 > **RULED 2026-11-18 (owner, as recommended): both count only active members**, queue prompt P2d.

@@ -18,6 +18,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { requireFreshCode } from '@/lib/two-step-fresh';
 import { findAuthUserByEmail } from '@/lib/auth-account-lookup';
+import { invitationHasLapsed } from '@/lib/invitation-lapse';
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -116,17 +117,20 @@ export const POST = withObservability(async (req: Request) => {
     // Check they're not already in THIS org
     const { data: sameMember } = await supabaseAdmin
       .from('organization_members')
-      .select('id, role, status, pending_role')
+      .select('id, role, status, pending_role, invited_at, pending_invited_at')
       .eq('organization_id', org.id)
       .eq('user_id', existingUser.id)
       .maybeSingle();
 
     // A pending row of either kind waits for the PERSON's yes (trust close-out 13): a second invitation never stands in for
     // it — a pending coaching row would otherwise fall to the coach-row branch below. A coach's waiting board role (P2b)
-    // is a pending invitation too.
+    // is a pending invitation too. A run-out one (P2c) is revived by Resend, never replaced: same answer, its own words.
+    const resendWords = (sentAt: string | null) => invitationHasLapsed(sentAt)
+      ? 'Their invitation has run out. Resend it from their row on Members.'
+      : 'They already have an invitation waiting. Resend it from their row on Members.';
     if (sameMember?.pending_role) {
       return NextResponse.json({
-        error: 'They already have an invitation waiting. Resend it from their row on Members.',
+        error: resendWords(sameMember.pending_invited_at),
         code: 'already_invited',
       }, { status: 409 });
     }
@@ -134,7 +138,7 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({
         error: sameMember.role === 'coach'
           ? 'They haven’t accepted their coaching invitation yet. Invite them to the board once they have.'
-          : 'They already have an invitation waiting. Resend it from their row on Members.',
+          : resendWords(sameMember.invited_at),
         code: 'already_invited',
       }, { status: 409 });
     }

@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getAuthUserCached } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { parseStartPricing, readStartDoor } from '@/lib/start-door';
 import { startStepViewer } from '@/lib/start-door-server';
+import { hasLiveInvitation } from '@/lib/invite-reconciliation';
 import StartTournamentForm from './StartTournamentForm';
 
 export const metadata: Metadata = {
@@ -38,14 +38,11 @@ export default async function StartTournamentPage({ searchParams }: {
     return <StartTournamentForm viewer={null} pricing={parseStartPricing(first(sp.plan), first(sp.billing))} />;
   }
   // The three gates are independent reads: one round trip, then the redirects in their order.
-  const [isStaff, inRealOrg, { count: pendingInvites }] = await Promise.all([
+  const [isStaff, inRealOrg, liveInvitation] = await Promise.all([
     isPlatformAdminEmail(user.email),
     userBelongsToOtherRealOrg(user.id),
-    supabaseAdmin
-      .from('organization_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'invited'),
+    // Only a live invitation sends them Home (P2c): a run-out one is not on Home's card.
+    hasLiveInvitation(user.id),
   ]);
   if (isStaff) {
     redirect('/platform-admin');
@@ -62,7 +59,7 @@ export default async function StartTournamentPage({ searchParams }: {
 
   // A pending invite means they already have somewhere to go — send them to Home's
   // pending-invite card instead of creating a stray org (Sign-up Invite Guard, Phase 3).
-  if ((pendingInvites ?? 0) > 0) {
+  if (liveInvitation) {
     redirect('/discover');
   }
 

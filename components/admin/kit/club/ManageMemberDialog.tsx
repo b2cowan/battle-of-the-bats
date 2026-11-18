@@ -347,9 +347,10 @@ export default function ManageMemberDialog({
       const d = await res.json().catch(() => ({})) as { error?: string; existingAccount?: boolean };
       if (!res.ok) { refuse({ text: d.error ?? 'The invite didn’t go out. Try again.' }); return; }
       // The resend refreshes the invitation's date, which the list shows — read it again, and close with the page's notice.
-      // Someone who already has an account accepts from Home when they sign in; their link never runs out (trust close-out 13).
+      // Someone who already has an account accepts from Home when they sign in (trust close-out 13). Either way the
+      // invitation stays open 30 days from this resend (P2c), which revives one that had run out.
       await onChanged(d.existingAccount
-        ? `Invite resent to ${member.email}. They already have an account, so they’ll find it on their Home page when they sign in.`
+        ? `Invite resent to ${member.email}. They already have an account, so they’ll find it on their Home page when they sign in. It stays open for 30 days.`
         : `Invite resent to ${member.email}. The setup link expires in 24 hours, so ask them to accept it today.`, true);
     } catch {
       refuse({ text: 'Could not reach the server. Nothing changed. Try again.' });
@@ -360,10 +361,14 @@ export default function ManageMemberDialog({
 
   // ── The identity line: not a page header, so it keeps its second line (hub v8) ─────────────────
   const since = member.acceptedAt ? formatInOrgZone(member.acceptedAt, { month: 'long', year: 'numeric' }) : null;
+  // An invitation's state. P2c: 30 days after it was last sent it has run out; Resend opens it for another 30.
+  const invitedWords = member.lapsed
+    ? `invitation ran out, Resend to send it again${coachInvite ? ' · still coaching here' : ''}`
+    : coachInvite ? 'invited, still coaching here' : 'invited, not yet joined';
   const identity = [
     member.displayName ? member.email : null,
     member.status === 'invited'
-      ? coachInvite ? `${roleLabel(member.role)} · invited, still coaching here` : `${roleLabel(member.role)} · invited, not yet joined`
+      ? `${roleLabel(member.role)} · ${invitedWords}`
       : since ? `${roleLabel(member.role)} since ${since}` : roleLabel(member.role),
     member.status === 'suspended' ? 'suspended' : null,
   ].filter(Boolean).join(' · ');

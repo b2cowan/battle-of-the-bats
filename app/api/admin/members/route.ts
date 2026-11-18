@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { memberSection, whatTheyCanOpen } from '@/lib/member-access';
 import { waitingBoardRole } from '@/lib/waiting-board-role';
+import { invitationHasLapsed } from '@/lib/invitation-lapse';
 import type { OrgRole } from '@/lib/types';
 import {
   graceStartsFor, memberTwoStep, orgTwoStepFacts, peopleSignInFacts, type MemberTwoStep, type OrgTwoStepRow,
@@ -83,6 +84,7 @@ export const GET = withObservability(async (req: Request) => {
     repGroupScopeMap.set(s.member_id, arr);
   }
 
+  const asOf = new Date(now);
   const result = members.map(m => {
     const authUser = m.user_id ? people.get(m.user_id) : undefined;
     // ⚖ A club's coach with a board role WAITING (trust close-out 13 P2b): Members shows the invitation, on the board, as
@@ -100,6 +102,9 @@ export const GET = withObservability(async (req: Request) => {
         : memberTwoStep(switches, m.role as string, graces.get(m.user_id) ?? null, authUser.twoStepOn, now);
     const role = (waiting ?? m.role) as OrgRole;
     const capabilities = ((waiting ? m.pending_capabilities : m.capabilities) as Record<string, boolean> | null) ?? null;
+    const invitedAt = waiting ? m.pending_invited_at : m.invited_at;
+    // ⚖ A run-out invitation (P2c, lib/invitation-lapse.ts): shown as run out, holds no seat; Resend revives it.
+    const lapsed = status === 'invited' && invitationHasLapsed(invitedAt, asOf);
     return {
       // ── Added 2026-09-25 (Club Tier Stage 1), additively — every field below them is unchanged:
       //   section — which part of Members the row belongs to (the board, scorekeepers, or coaching
@@ -116,12 +121,13 @@ export const GET = withObservability(async (req: Request) => {
       role,
       status,
       capabilities,
-      invitedAt:             waiting ? m.pending_invited_at : m.invited_at,
+      invitedAt,
       acceptedAt:            waiting ? null : m.accepted_at ?? null,
       lastSignIn:            authUser?.lastSignInAt ?? null,
       assignedTournamentIds: assignmentMap.get(m.id) ?? [],
       repGroupIds:           repGroupScopeMap.get(m.id) ?? [],
       ...(waiting ? { coachInvite: true } : {}),
+      ...(lapsed ? { lapsed: true } : {}),
       // Part 4: present (possibly null) only for an owner or admin viewer; absent for everyone else.
       ...(seesTwoStep ? { twoStep } : {}),
     };

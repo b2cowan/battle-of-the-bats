@@ -9,6 +9,10 @@
 | **Starts from** | `lib/legal-documents/privacy/2026-11-17.md`, word for word, with the changes in the log |
 
 **Change log**
+- **Draft 0.3 (2026-11-18, Board Ready trust close-out 13 call (b); `CASL_MEMBER_INVITE_EMAILS.md`)** — one added §9 bullet,
+  "Invitations nobody accepts" (30 days open, 30 more run out, then removed; a never-used account the invitation made is
+  deleted; the club's audit line keeps the address). Conditional on the nightly sweep being scheduled on production
+  (Before list item 7). No new use or kind of data: no advance email.
 - **Draft 0.1 (2026-11-18, Stripe-owned pricing Stage 5)** — five edits:
   1. §3, billing-address row (~L34): the purpose no longer names billing "the Stripe fees a club's online payments
      cause" (Stage 4 retired the monthly Stripe-fee invoice, `6dc9c6119`). The data is unchanged: the address is still
@@ -278,6 +282,14 @@ and email addresses.
   agreed to (above), and our record that the deletion happened (the
   organization's name and web address, who deleted it, when and why). Copies in our routine database backups are gone within
   7 days.
+- **Invitations nobody accepts.** A club's invitation to join its organization stays open for 30 days from the day it
+  was last sent (the club can send it again, which starts the 30 days again). After that it has run out: it can no longer be
+  accepted, and the club sees it marked as run out. Thirty days after that, we remove it. If the invitation created a
+  FieldLogicHQ account for the person, and nobody has ever confirmed that account or signed in to it, and it is used for
+  nothing else (another club, a team, a family link), we delete that account too; any other account is kept. We do not
+  email the person when this happens. The club's record of changes (§3) keeps one line saying the invitation was removed,
+  with the email address it was sent to, for as long as the organization exists; the line a club's own Cancel writes is
+  the same.
 - **Two-step sign-in records** (§3) are kept while your account exists, or, for your set-up time in an organization, while
   that organization exists; they are deleted with the account or the organization. Your backup codes are removed when you
   turn two-step off or replace your phone; the record of codes recently accepted is cleared the next time you enter a code.
@@ -388,6 +400,15 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
    must not wait for the list (it is the must-fix before the first production payout); the ImprovMX row stays either way.
 6. **(0.2)** The §5 Data Terms sentence stays only if the Data Terms publish the same day (they ride in the next Terms
    version, owner Q6); otherwise cut it.
+
+7. **(0.3, 2026-11-18, Board Ready trust close-out 13 call (b), owner "as recommended")** The §9 bullet "Invitations nobody
+   accepts" stays ONLY IF, on the day this version publishes, (i) the run-out rule (30 days, a Resend restarts it) and the
+   removal sweep (`lib/invitation-lapse.ts`, `lib/invitation-sweep.ts`) are on production, AND (ii) the nightly schedule
+   for `POST /api/platform-admin/invitation-sweep-nightly` is switched ON in production (built and proved on dev, not
+   scheduled as of 2026-11-18, owner's go owed), AND (iii) one nightly run has succeeded. If not, cut the whole bullet (the
+   published text says nothing about invitations, so it is silent, not false). Soften "Thirty days after that" to "About
+   thirty days after that" if the owner will not hold the sweep to the day (the sweep takes 200 rows a run, so a backlog
+   can slip a night). Re-read the bullet against the sweep's keep rule if `lib/member-account-keep.ts` changes.
 
 **Publishing steps**
 1. Freeze the text as `lib/legal-documents/privacy/<date>.md` (the filter's output), add `{ version, sha256 }` to

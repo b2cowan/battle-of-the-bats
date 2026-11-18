@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { seatRowsFilter, VOLUNTEER_ROWS_FILTER } from '@/lib/roles';
+import { seatRowsFilter, volunteerRowsFilter } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async (request: Request) => {
@@ -15,7 +15,7 @@ export const GET = withObservability(async (request: Request) => {
   const planCfg = PLAN_CONFIG[org.planId];
 
   // Coaching staff never count (owner ruling 2026-09-13); officials only where the plan frees them. A coach's waiting
-  // board role holds its seat (P2b).
+  // board role holds its seat (P2b). A run-out invitation holds none (P2c).
   const { count: billedCount } = await supabaseAdmin
     .from('organization_members')
     .select('id', { count: 'exact', head: true })
@@ -28,7 +28,7 @@ export const GET = withObservability(async (request: Request) => {
       .from('organization_members')
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', org.id)
-      .or(VOLUNTEER_ROWS_FILTER);
+      .or(volunteerRowsFilter());
     officialCount = count ?? 0;
   }
 
