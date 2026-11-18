@@ -1,0 +1,356 @@
+<title>Invited, Not Added</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.calls { display: grid; gap: 14px; }
+.call { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.call:first-of-type { border-top: 0; padding-top: 0; }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready · trust close-out fix 13 · Owner QA Ledger §540</span>
+    <h1>Someone who already has an account is invited, not added</h1>
+    <p class="lead">Fix 13, ruled “as recommended” on Nov 18. Inviting an email that already has a FieldLogicHQ account used to make that person a member of the club on the spot, with no yes from them. Now they get an invitation like anyone else: they show as invited on Members, and they accept or decline on their Home page. You walk it from both chairs: the club owner who invites, and the person invited.</p>
+    <p class="lead">Written Nov 18, 2026 against the dev site. Every club and person here is test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Password</dt><dd><code>UATPassword2026!</code> for both accounts</dd>
+      <dt>The club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code>, owner of <b>UAT Rep Club</b>. Members: <code>localhost:3000/uat-rep-club/admin/org/members</code></dd>
+      <dt>The person invited</dt><dd><code>uat-admin@uat-test-org.local</code>. They already have an account (they help run two other test clubs) and are not in UAT Rep Club.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Use one ordinary window for the owner and one private window for the person invited, so you never sign out.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li>Checked on Nov 18 before publishing: both accounts sign in with the password above, and <code>uat-admin@uat-test-org.local</code> is not on UAT Rep Club’s Members list.</li>
+      <li>Walk them in order. Each walk ends with the person not in UAT Rep Club, which is where the next one starts.</li>
+      <li>The emails themselves can’t be opened: dev doesn’t deliver mail to these test addresses. Their wording is held by a build check (see below).</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li><b>34 checks against dev, all passing.</b> A pending invitation gives no role and no club page. Only the person can turn it into a membership: an owner’s edit can’t, and nor can a different signed-in account. A demo account is refused at both accept doors. Declining or cancelling leaves nothing behind and keeps the person’s own account. A resend goes as sign-in-and-accept. An account that was never confirmed gets the ordinary set-up invitation, because it has nothing to sign in with yet.</li>
+      <li><b>The email</b> for someone with an account says there’s nothing to set up: “Sign in, then accept or decline the invitation on your Home page. Nothing changes until you accept.” Its button is <b>Sign in to accept</b>. /legal read it on Nov 18: still not a commercial message.</li>
+      <li><b>Two-step sign-in</b>: the person’s 14 days start when they accept, not when they’re invited.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+<script>
+(function () {
+  "use strict";
+  var KEY = "board-ready-trust-fix13-walk-v1";
+  var PAGE = "Board Ready · trust close-out fix 13 · Owner QA Ledger §540";
+  var WALKS = [
+  {
+   "id": "W1",
+   "title": "Invited, then accepted",
+   "job": "UAT Rep Club · owner and the person invited · computer",
+   "forText": "The main change. The owner invites someone who already has an account. They are not added: they show as invited until they say yes on their Home page. If the club changes the role after they’ve read the invitation, their yes doesn’t land on a role they never saw.",
+   "passes": "The confirmation says they’ll accept on Home; Members reads Invited; the person sees the invitation on Home and can’t open the club before accepting; a yes to a role that changed is refused; accepting the current role lets them in. They are removed at the end and keep their account.",
+   "notIn": "The emails (dev doesn’t deliver to these addresses; held by a build check). A brand-new person (walk 3).",
+   "who": "Owner (ordinary window), then the person invited (private window).",
+   "where": "Owner: localhost:3000/uat-rep-club/admin/org/members · Person: localhost:3000/auth/login",
+   "steps": [
+    { "stop": true, "who": "Owner", "d": "Sign in as the owner and open <code>localhost:3000/uat-rep-club/admin/org/members</code>.", "s": "No row for <code>uat-admin@uat-test-org.local</code>. If there is one, stop and tell me." },
+    { "who": "Owner", "d": "Press <b>Invite</b>, type <code>uat-admin@uat-test-org.local</code>, choose <b>Staff</b>, and press <b>Send invite</b>.", "s": "“Invite sent to uat-admin@uat-test-org.local. They already have an account, so they’ll accept it on their Home page when they sign in. They show as invited until then.”" },
+    { "who": "Owner", "d": "Find their row on Members.", "s": "It reads <b>Invited today</b> (not a member)." },
+    { "who": "Person invited", "d": "In a private window, sign in at <code>localhost:3000/auth/login</code> as <code>uat-admin@uat-test-org.local</code>.", "s": "Home, with “You have an invitation”: <b>UAT Rep Club invited you to join as Staff</b>, with Accept and Decline." },
+    { "who": "Person invited", "d": "Type <code>localhost:3000/uat-rep-club/admin</code> in the address bar.", "s": "You don’t get into UAT Rep Club’s admin: you land back on Home. They aren’t a member yet." },
+    { "who": "Person invited", "d": "Go back to Home and leave it open without reloading.", "s": "The invitation still says <b>Staff</b>." },
+    { "who": "Owner", "d": "On Members, click their row, change <b>Role</b> to <b>Treasurer</b>, and press <b>Save</b>.", "s": "Their row now reads Treasurer, still invited." },
+    { "who": "Person invited", "d": "Without reloading, press <b>Accept</b>.", "s": "“This invitation changed since you opened it. Reload the page to see it as it is now.” Nothing is accepted." },
+    { "who": "Person invited", "d": "Reload Home.", "s": "The invitation now reads <b>UAT Rep Club invited you to join as Treasurer</b>." },
+    { "who": "Person invited", "d": "Press <b>Accept</b>.", "s": "You land inside UAT Rep Club." },
+    { "who": "Owner", "d": "Reload Members.", "s": "Their row is a Treasurer member now, no longer “Invited”." },
+    { "who": "Owner · put back", "d": "Click their row, press <b>Remove…</b>, and read the window before pressing <b>Remove</b>.", "s": "The window says their account is kept, along with their other organizations. After Remove, their row is gone." }
+   ]
+  },
+  {
+   "id": "W2",
+   "title": "Resent, declined, and cancelled",
+   "job": "UAT Rep Club · owner and the person invited · computer",
+   "forText": "The other ways an invitation ends. A resend for someone with an account doesn’t promise a 24-hour link. Declining removes the invitation. Cancelling is its own door, called what it is, and it never touches the person’s own account or emails them.",
+   "passes": "Resend says they’ll find it on Home; Decline removes the row; a pending row offers Cancel invitation… (not Remove…) with its own words; after cancelling, the person is still signed in with no invitation.",
+   "notIn": "Accepting (walk 1).",
+   "who": "Owner (ordinary window) and the person invited (the private window, still signed in from walk 1).",
+   "where": "Owner: localhost:3000/uat-rep-club/admin/org/members · Person: Home",
+   "steps": [
+    { "stop": true, "who": "Owner", "d": "Invite <code>uat-admin@uat-test-org.local</code> again as <b>Staff</b>.", "s": "The same “They already have an account…” confirmation, and an Invited row." },
+    { "who": "Owner", "d": "Click their row.", "s": "The window reads “Staff · invited, not yet joined”, with <b>Resend invite</b> and <b>Cancel invitation…</b>, and no Remove…." },
+    { "who": "Owner", "d": "Press <b>Resend invite</b>.", "s": "“Invite resent to uat-admin@uat-test-org.local. They already have an account, so they’ll find it on their Home page when they sign in.” No 24-hour line." },
+    { "who": "Person invited", "d": "Reload Home and press <b>Decline</b>.", "s": "The invitation leaves the page." },
+    { "who": "Owner", "d": "Reload Members.", "s": "No row for them." },
+    { "who": "Owner", "d": "Invite them again as <b>Staff</b>, click their row, and press <b>Cancel invitation…</b>.", "s": "A window titled “Cancel uat-admin@uat-test-org.local’s invitation?” (or their name), saying they won’t be able to join UAT Rep Club with it and won’t be emailed, and that their FieldLogicHQ account isn’t affected. Buttons <b>Keep it</b> and <b>Cancel invitation</b>." },
+    { "who": "Owner", "d": "Press <b>Cancel invitation</b>.", "s": "“… invitation was cancelled.” Their row is gone." },
+    { "who": "Person invited", "d": "Reload Home.", "s": "Still signed in, and no invitation on the page." }
+   ]
+  },
+  {
+   "id": "W3",
+   "title": "Who can’t be invited, and a new person",
+   "job": "UAT Rep Club · owner · computer",
+   "forText": "The edges. A club can’t invite the “See it live” demo accounts or FieldLogicHQ support, and is told so in one neutral sentence. Someone with no account gets the set-up invitation exactly as before, and cancelling it removes the unused account it made.",
+   "passes": "The demo address is refused with the neutral sentence; a new address gets the 24-hour set-up confirmation; cancelling that one says the account it set up goes too.",
+   "notIn": "A support address (dev has one, but it is a real person’s sign-in; the same sentence is proved behind the screens).",
+   "who": "Owner.",
+   "where": "localhost:3000/uat-rep-club/admin/org/members",
+   "steps": [
+    { "who": "Owner", "d": "Press <b>Invite</b>, type <code>demo-coach@example.com</code>, choose <b>Staff</b>, and press <b>Send invite</b>.", "s": "In the window: “That address can’t be invited to a club.” Nothing is added." },
+    { "who": "Owner", "d": "Close it. Invite <code>walk-new-person-1118@example.com</code> as <b>Staff</b>.", "s": "“Invite sent to walk-new-person-1118@example.com. The setup link expires in 24 hours, so ask them to accept it today…”" },
+    { "who": "Owner · put back", "d": "Click that row and press <b>Cancel invitation…</b>.", "s": "The window says the account this invitation set up for them is deleted too." },
+    { "who": "Owner · put back", "d": "Press <b>Cancel invitation</b>.", "s": "The row is gone. Members is as it was when you started." }
+   ]
+  }
+ ];
+  var CALLS = [];
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "W1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.calls = got.calls || {}; state.open = got.open || "W1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  var callsHost = document.getElementById("calls") || document.createElement("div");
+  CALLS.forEach(function (c) {
+    var box = el("div", "call");
+    box.appendChild(el("p", null, "<b>" + c.id + ".</b> " + c.q));
+    var opts = el("div", "opts");
+    c.o.forEach(function (o, oi) {
+      var lab = el("label"); var cb = el("input"); cb.type = "checkbox"; cb.id = "call-" + c.id + "-" + oi;
+      cb.checked = state.calls[c.id] === oi;
+      cb.addEventListener("change", function () {
+        state.calls[c.id] = cb.checked ? oi : null; save();
+        c.o.forEach(function (_, k) { var other = document.getElementById("call-" + c.id + "-" + k); if (other && k !== oi) other.checked = false; });
+        refresh();
+      });
+      lab.appendChild(cb); lab.appendChild(el("span", null, o)); opts.appendChild(lab);
+    });
+    box.appendChild(opts);
+    callsHost.appendChild(box);
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", [s.stop ? "Stop check" : "", s.who || ""].filter(Boolean).join(" · ")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function callsSummary() {
+    return ["Calls:"].concat(CALLS.map(function (c) {
+      var pick = state.calls[c.id];
+      return "  " + c.id + " " + (pick == null ? "NOT ANSWERED" : c.o[pick]);
+    })).join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).concat(CALLS.length ? ["", callsSummary()] : []).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "W1" }; save(); render();
+    CALLS.forEach(function (c) { c.o.forEach(function (_, k) { var x = document.getElementById("call-" + c.id + "-" + k); if (x) x.checked = false; }); });
+  });
+  render();
+})();
+</script>
