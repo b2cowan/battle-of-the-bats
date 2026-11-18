@@ -8,6 +8,62 @@
 
 ---
 
+### 2026-11-17 — Stripe-owned pricing: each club's Stripe account pays Stripe's own fees and we keep only our margin; the family-facing rates stay; the GST/HST on our fee is INSIDE it (Decided; not built)
+**Status:** **Decided** (owner, 2026-11-17). R1–R3 in the GST/HST Stage 5 kickoff conversation; the test-mode trial's
+**GO** and the rate design **A** ("agree with your recommendation") in the Stripe-owned pricing Stage 1 session the same
+day. Plan of record `docs/projects/active/STRIPE_OWNED_PRICING_PLAN.md` (Stage 1 results there; full probe record
+`.probe/sop/RESULTS.md`). Not built: Stage 2 builds it.
+**Decision:**
+1. **R1 — The GST/HST on our online-payment fee is included in the fee and paid out of our share.** No tax line at checkout,
+   no monthly tax bill to clubs. By the club's billing address (T3 stands: the fee is our charge to the club); a US club 0%.
+   Revisit tax-on-top later only if Stripe can add it at payment time, with the terms changed then.
+2. **R2 — Whether our fee is a taxable supply or an exempt financial service (D1) goes to the owner's accountant before
+   online payments switch on.** Not a gate on building (no professional is a gate, 2026-10-31 / 2026-11-04).
+3. **R3 — Move to Stripe-owned pricing before launch.** Every club account is created with Stripe collecting its own fees
+   from the club (`fees_collector: stripe`) and Stripe covering losses the club cannot (`losses_collector: stripe`).
+   Test-mode trial GO on the evidence: every Stripe cost (processing, $15 card dispute, $5 debit dispute, foreign card)
+   landed on the club's balance at the time; the platform received only its application fee; a payout cost nobody anything;
+   a negative balance sat on the club's account, never ours.
+4. **Rate design A — the family-facing rates do not move** (card **3.5% + $1.50**, bank debit **2.5% + $1.00**, on the base,
+   as 2026-07-28). **Our application fee = that fee less Stripe's standard Canadian cost for the payment** (card 2.9% +
+   $0.30 on the whole charge; pre-authorized debit 1% + $0.40, capped at $5 — Stripe's published prices, a new figure held
+   beside the rates). On a domestic card or debit the club nets the full base, as today; a foreign card or currency
+   conversion leaves it Stripe's extra less. The club-pays setting (2026-10-25) is unchanged: the fee comes out of the
+   payment, Stripe's cost is on the base.
+   What we keep after the tax inside our fee (families pay; Ontario / 15% province): card $100 → $1.46 / $1.43, $400 →
+   $2.79 / $2.74, $800 → $4.55 / $4.47, $1,000 → $5.43 / $5.34; bank $100 → $1.82 / $1.79, $1,000 → $18.58 / $18.26.
+   (Today's model at $1,000 by card, Ontario: about −$0.81.)
+**Rationale:** under today's model, card payments lose money above about $640 in Ontario once the tax is inside the fee
+(R1), and the monthly Stripe-fee invoice is the "you owe us more" bill R1 objects to. Under Stripe-owned pricing every card
+payment earns, the tax base is our margin only, and Stripe's costs never pass through our books. Now is the cheapest
+moment: the setting is immutable per account and production has no payout accounts. Option B (show families "Stripe's
+processing + our fee") was rejected: a labelled processing line sharpens the card-surcharge question and shows a guess as a
+fact (a foreign card costs more). Option C (families pay only our margin, the club absorbs Stripe's cost) was rejected for
+Canada: every club nets ~3.35% less, breaking the 2026-07-28 promise; it remains the natural shape for the US schedule.
+**Noted, not ruled:** the card margin (~0.5% + $1.15) is thin next to bank debit's (Stripe caps PAD at $5); the 2026-07-28
+rates are an anchor that recalibrates on real rail-mix data, so no re-price now. Stripe offers platforms in this model a
+revenue share on activation targets — ask Stripe before launch.
+**Affects:** `PLAN_PRICING_FACTS.md` facilitated-payments line (application fee = margin; the tax rider; the foreign-card,
+returned-debit and dispute riders; "the club nets the full fee" gains "less Stripe's extra on a foreign card or
+conversion"); `lib/plan-config.ts` (Stripe's standard cost beside `ONLINE_PAYMENT_RATES`; `FOREIGN_CARD_EXTRA_BPS` retires in
+Stage 4); `lib/online-payment-fee.ts`; `lib/stripe-connect.ts` account creation; payments terms §4/§5; GST/HST Stage 5
+(reshaped). No price page, plan card, gate, band or SKU moves.
+**Handoff:**
+```
+HANDOFF → /plan     Stage 2 build prompt (accounts + the fee), written in the Stage 1 session; Stages 3–5 per the plan
+HANDOFF → /accounting  tax base = our application fee only, tax inside by club province, US 0%; tax point = fee taken;
+                    accountant question list (D1 first); RECOVERED_STRIPE_FEES_TAX.md retires in Stage 4
+HANDOFF → /legal    PAYMENTS_TERMS §4 (our fee becomes margin), §5 ("Stripe charges your organization directly"); money-services position
+HANDOFF → /marketing   Stage 5 only: Payouts card and Before-window words, help articles; no pricing-page change (rates unchanged)
+HANDOFF → /billing  none (no gate or plan moves)
+```
+**Supersedes:** **T2** of 2026-10-31 "FieldLogicHQ charges its own sales tax…" **for the online-payment fee** (tax on top →
+tax inside). Amends 2026-07-28 facilitated payments ("the application fee is the whole all-in fee" → margin only; the
+family-facing rates stand) and makes the 2026-10-26 / 2026-10-27 riders (returned debit, card dispute and foreign-card fees
+billed by our invoice) redundant once Stage 4 retires them; until then they stand for today's accounts. Sits beside the
+2026-10-31 US rulings U1/U2 (US clubs pay Stripe directly; the US margin amounts are still owed).
+
+
 ### 2026-11-17 — Launch in Canada first, the US after; the Canadian launch = a club can onboard, with marketing and the demo after it (Decided)
 **Status:** **Decided** (owner, 2026-11-17, One Board Session 1; logged on his yes in One Board Session 2 the same day).
 **Decision:**
@@ -490,7 +546,9 @@ FieldLogicHQ is **registered for GST/HST** (number received the week of 2026-10-
 1. **Prices are tax-exclusive — "plus applicable taxes" (T4).** Every list price in the Facts doc stays as it is; sales
    tax is added at checkout by the buyer's location (13/14/15% HST or 5% GST by province, provincial tax where
    FieldLogicHQ is registered, 0% for a verified US buyer).
-2. **GST/HST is charged on top of the online-payment fee, to the club (T2).** Published rates unchanged; tax added on top;
+2. ⚠ **Superseded 2026-11-17 for the online-payment fee by R1** (entry "Stripe-owned pricing…" above): the GST/HST is
+   now INSIDE our fee, paid out of our share, no tax bill to clubs; T3 stands.
+   ~~**GST/HST is charged on top of the online-payment fee, to the club (T2).** Published rates unchanged; tax added on top;
    US clubs 0%. If counsel later rules the fee an exempt financial service, stop charging it.
 3. **The fee is always legally FieldLogicHQ's charge to the club (T3).** "Family pays" means the club passes its own cost
    on to its families as the club's charge. The lawyer writes it into the payments terms.

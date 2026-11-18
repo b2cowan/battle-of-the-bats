@@ -1,4 +1,12 @@
 # GST/HST on Stripe fees FieldLogicHQ recovers from a club
+
+> **⚠ RETIRES IN STAGE 4 of Stripe-owned pricing (owner R3, 2026-11-17).** Under Stripe-owned pricing Stripe charges the
+> **club's own account** for disputes, returned debits and foreign-card fees. We pay nothing to Stripe for these, so we
+> re-bill nothing, and there is nothing to tax. Once Stage 4 ships, **no recovery invoice exists** and this file's rules have
+> no live use. Until then it **stands for today's accounts** (created with `fees_collector: application`) and for any recovered
+> fee already billed (credit notes still reverse tax as described). Do not apply it to a Stripe-owned account. The tax on our
+> own fee is now in `PLATFORM_FEE_TAX_COLLECTION_METHOD.md` ("The R1 method"). Archive this file when Stage 4 is done.
+
 **Last verified:** 2026-11-05
 **Re-verify by:** 2027-11-05, or when counsel or a professional answers D1 (is the payment service a taxable supply or an
 exempt financial service), when the Stripe fee payer changes (Stripe billing the club's own account instead of the platform),

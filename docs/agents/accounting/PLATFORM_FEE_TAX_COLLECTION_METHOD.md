@@ -1,10 +1,51 @@
 # How the GST/HST on the online-payment fee is collected — at payment time vs a monthly statement
 
-> **⚠ Owner ruling 2026-11-17 (R1) overtakes the recommendation below.** The tax is **included in our fee** and paid out of
-> our share: neither (a) nor (b). The finding still applies: the tax base is the whole fee we charge, there is no ITC on
-> Stripe's exempt processing fee, and the tax must reach lines 101/103 with a valid invoice available on request. Under R1
-> the December tax-point question goes away, because the tax is counted when the fee is taken. Re-verify when the fee
-> becomes margin only ([STRIPE_OWNED_PRICING_PLAN.md](../../projects/active/STRIPE_OWNED_PRICING_PLAN.md)).
+> **⚠ SUPERSEDED 2026-11-17 by owner ruling R1 — read "The R1 method" section just below first.** The recommendation
+> further down ((b), a monthly tax statement billed on top of the fee) is **not the method any more**. It is kept as
+> history and for the reasoning that still holds: the tax base is the fee we charge, there is no ITC on Stripe's exempt
+> processing fee, the tax must reach lines 101/103, and a valid invoice must exist on request. The "tax point is the
+> catch" bullet and its December boundary question are mostly gone under R1 (see below). Plan of record:
+> [STRIPE_OWNED_PRICING_PLAN.md](../../projects/active/STRIPE_OWNED_PRICING_PLAN.md).
+
+## The R1 method (added 2026-11-17, Stripe-owned pricing Stage 1 step 5)
+
+**Rulings this rests on (owner, 2026-11-17):** R1 the GST/HST is **included in our fee**, paid out of our share, no tax line
+at checkout, no tax bill to clubs. T3 stands: the fee is FieldLogicHQ's charge **to the club**. R2: whether the fee is taxable
+at all (D1) goes to the accountant before online payments switch on. Rate design A: our application fee is the family-facing
+fee less Stripe's standard Canadian cost. Under Stripe-owned pricing Stripe charges the club's own account for processing,
+disputes, returned debits and foreign cards; nothing of Stripe's passes through our books.
+
+- **Tax base: our application fee only** (the money Stripe moves to our balance on each payment). Stripe's processing fee is
+  a supply from Stripe to the club, not part of what the club pays us. This is cleaner than today: nothing is re-billed, so
+  the agency question in `RECOVERED_STRIPE_FEES_TAX.md` does not arise.
+- **Tax is inside the fee.** Tax in the fee = fee x rate / (100 + rate), by the club's billing-address province: 13/113
+  (Ontario), 14/114 (Nova Scotia), 15/115 (NB, NL, PEI), 5/105 (AB, BC, SK, MB, territories, and the GST part in Québec).
+  A US club: 0%, the whole fee is zero-rated (evidence in `ZERO_RATED_SALES_TO_US_CUSTOMERS.md`). Store the rounded tax per
+  fee, in cents, with the rate and the province used. Family and club never see a tax line.
+- **Tax point: when the fee is taken** (the charge). The fee is paid the moment Stripe withholds it, and tax is payable on
+  the earlier of payment and due date (ETA s.152, s.168; RC4022). There is no invoice and no wait, so the old "withheld in
+  December, invoiced in January" question disappears. One small edge stays: a bank debit's fee shows on our balance when the
+  debit is started, days before the money settles, and a returned debit reverses it. Count it at the charge date and let
+  the reversal be an adjustment in its own period.
+- **What each fee feeds** (regular method, annual filer): the fee **less** its tax goes to line 101, the tax inside it to line
+  103, by the date of the charge. A US club's fee goes to 101 in full, tax 0. Stripe Tax does not see application fees
+  (`https://docs.stripe.com/tax/monitoring`), so **our own per-fee record is the only source**: the return worksheet must be
+  fed from it. Bookkeeping records the fee as revenue net of the tax inside it.
+- **Refunds of our fee (the one real rule).** A returned bank debit auto-refunds our application fee to the club (probe
+  evidence). That is a reduction of consideration (s.232). We may take the tax back out of net tax **only if a credit note
+  or equivalent record exists** showing the fee refunded and the tax reduced (Memo 12.2; see `CREDIT_NOTES_ON_REFUNDS.md`).
+  Without one, claim no adjustment (we simply pay a few cents more). A refund the club ticks on its own sale does **not**
+  refund our fee, so the fee and its tax stay as they were. A dispute lost does not debit our fee either.
+- **Records and returns.** Keep, per fee: charge date, club, province and rate used, fee, tax inside, and any refund of the
+  fee with its date. Keep six years (`RECORDS_RETENTION_AND_LOCATION.md`). A monthly **information statement** to the club
+  (the plan's Stage 5) is a courtesy and a copy of the record, not a tax bill.
+- **Still open, for the accountant** (`STRIPE_OWNED_PRICING_ACCOUNTANT_QUESTIONS.md`): D1 itself; what document lets a
+  GST-registered club claim the tax inside a fee Stripe withheld with no invoice; US evidence.
+- **Needs the club's province before the first payment.** With the tax inside every fee at the moment it is taken, we cannot
+  wait to learn the province. The billing-address-before-payouts step must stay (owner ask 3 in the plan; recommended yes).
+
+**Everything below is the earlier (2026-11-05 to 2026-11-17) analysis, kept for history.**
+
 **Last verified:** 2026-11-17
 **Re-verify by:** 2027-11-17, or when D1 is answered (taxable vs exempt), when Stripe Tax starts to tax application fees, when
 the first US club connects a payout account, or when online payments are switched on in production
