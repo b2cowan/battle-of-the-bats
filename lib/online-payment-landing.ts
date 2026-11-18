@@ -153,6 +153,50 @@ export async function syncPayoutsAccount(stripeAccountId: string): Promise<Payou
   return row;
 }
 
+/**
+ * Who paid, on the ledger line (owner 2026-11-18). A landed card or bank payment's line is named for the child or the
+ * team; this puts the PAYER beside it in the line's own payer slot — a family's guardian, a team's coach (the same two
+ * names the dispute file already calls "the payer"). Never overwrites a name a person typed, never blocks a landing
+ * (a line in a closed fiscal year refuses the write; the ledger just reads without a name), and safe to repeat — every
+ * replay of a landing runs it, which also names the payments that landed before this existed.
+ */
+async function stampPayerOnLines(opId: string): Promise<void> {
+  try {
+    const { data: op } = await supabaseAdmin.from('online_payments').select('flow, team_id').eq('id', opId).maybeSingle();
+    if (!op) return;
+    const named: Array<{ entryId: string; payer: string }> = [];
+    if (op.flow === 'tournament_team') {
+      if (!op.team_id) return;
+      const [{ data: team }, { data: pays }] = await Promise.all([
+        supabaseAdmin.from('teams').select('coach').eq('id', op.team_id).maybeSingle(),
+        supabaseAdmin.from('tournament_team_payments').select('entry_id').eq('online_payment_id', opId).not('entry_id', 'is', null),
+      ]);
+      const payer = typeof team?.coach === 'string' ? team.coach.trim() : '';
+      if (payer) for (const p of pays ?? []) named.push({ entryId: p.entry_id as string, payer });
+    } else {
+      const { data: items } = await supabaseAdmin.from('online_payment_items').select('registration_id, entry_id')
+        .eq('online_payment_id', opId).not('entry_id', 'is', null).not('registration_id', 'is', null);
+      const regIds = [...new Set((items ?? []).map(i => i.registration_id as string))];
+      if (!regIds.length) return;
+      const { data: regs } = await supabaseAdmin.from('league_registrations')
+        .select('id, guardian_first_name, guardian_last_name').in('id', regIds);
+      const guardian = new Map((regs ?? []).map(r => [r.id as string,
+        [r.guardian_first_name, r.guardian_last_name].filter(Boolean).join(' ').trim()]));
+      for (const i of items ?? []) {
+        const payer = guardian.get(i.registration_id as string);
+        if (payer) named.push({ entryId: i.entry_id as string, payer });
+      }
+    }
+    for (const n of named) {
+      const { error } = await supabaseAdmin.from('accounting_entries').update({ payee_payer: n.payer.slice(0, 200) })
+        .eq('id', n.entryId).is('payee_id', null).is('payee_payer', null);
+      if (error) console.error('[online-payment-landing] couldn’t name the payer on a ledger line:', n.entryId, error.message);
+    }
+  } catch (e) {
+    console.error('[online-payment-landing] couldn’t name the payer on a ledger line:', opId, e instanceof Error ? e.message : e);
+  }
+}
+
 /** Where the Payouts card lives (A8) — `payoutsPath`, the one home of the path. */
 export function payoutsHref(org: Pick<Organization, 'slug' | 'planId'>): string {
   return payoutsPath(org);
@@ -860,6 +904,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     // and those steps left a "send it back" answer waiting forever). Each is once-only, so a plain replay changes nothing.
     if (op.flow === 'league_signup') await raiseLeagueUnrecorded(op);
     else await raiseOverpaid(op.id); // 12d-1: the row is the truth, so a replay still owes the item a crash missed
+    await stampPayerOnLines(op.id);
     await carryOutDecisions(op.id);
     await sendOnlineReceiptOnce(op.id);
     await bookDisputesLostBeforeLanding(stripeAccountId, op.id).catch(lostBookingFailed); // 12d-1 Part 4b: a crash before it is caught here
@@ -925,6 +970,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     await sendOnlineReceiptOnce(op.id);
     return 'not_recorded';
   }
+  await stampPayerOnLines(op.id);
   if (!(landed as { already?: boolean } | null)?.already) await tellPaymentReceived(op);
   await sendOnlineReceiptOnce(op.id);
   await carryOutDecisions(op.id); // 12c Part 6: a team declined while its debit cleared
@@ -1211,6 +1257,7 @@ async function landLeague(
   const result = landed as { already?: boolean; unrecorded?: unknown[] } | null;
   // Notices are read from the database (a replay included), so a crash between the commit and here loses none.
   await raiseLeagueUnrecorded(op);
+  await stampPayerOnLines(op.id);
   await carryOutDecisions(op.id); // 12c Part 6
   if (result?.already) return 'already';
   await clearSettled({ orgIds: [op.org_id], kinds: ['online_payment_not_recorded'] });

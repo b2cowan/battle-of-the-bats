@@ -43,6 +43,7 @@ import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import { resolveDateRangePreset, type DateRangeSelection } from '@/lib/coach-date-range';
 import { LINE_TYPE_WORD, ledgerOpensAllTime, ledgerOptionCounts, type LineType } from '@/lib/club-ledger';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
+import { formulaSafe } from '@/lib/export/formula-safe';
 import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -530,10 +531,12 @@ type ExportRead = {
   totals: { moneyIn: number; moneyOut: number; net: number };
 };
 
-/** The rows, then the three totals the export carries (VOID and PENDING left out of them). */
+/** The rows, then the three totals the export carries (VOID and PENDING left out of them). A line now carries a payer's
+ *  name a stranger typed on a public form (a guardian's, a team's coach), so every text cell is made formula-safe before
+ *  Excel opens it; amounts are numbers and pass through. */
 function sheet(d: ExportRead): { headers: string[]; body: (string | number | null)[][] } {
   const headers = d.columns.map(c => c.label);
-  const body = d.rows.map(row => d.columns.map(c => row[c.key] ?? ''));
+  const body = d.rows.map(row => d.columns.map(c => formulaSafe(row[c.key] ?? '')));
   const total = (label: string, n: number) => d.columns.map(c => (c.key === 'what' ? label : c.key === 'amount' ? n : ''));
   return { headers, body: [...body, [], total('Total money in', d.totals.moneyIn), total('Total money out', -d.totals.moneyOut), total('Net', d.totals.net)] };
 }

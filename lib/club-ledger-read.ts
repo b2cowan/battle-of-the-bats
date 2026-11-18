@@ -7,6 +7,7 @@ import { fetchAll, fetchAllIn } from './supabase-paging';
 import { bookInScope } from './club-team-route';
 import { bookWindow, isMoneyIn, type BookLineFacts } from './club-money-figures';
 import { howItCame, installmentLineWords, requestLineWords } from './club-money-words';
+import { paymentMethodWord } from './house-league-money-words';
 import {
   NOT_FILED_ID, SOURCE_MODULE, findLoopRecord, isSourcedLine, isTransfer, ledgerCategory, ledgerFiling,
   lineType, type ExportableLine, type Filing, type FilingFacts, type LedgerFiling, type LedgerKind, type LineStatus, type LineType,
@@ -262,6 +263,12 @@ async function lookupsFor(orgId: string, page: readonly BookLine[]) {
 
 type Lookups = Awaited<ReturnType<typeof lookupsFor>>;
 
+/** How a line was paid, as the ledger reads it: a stored key ("online_card", "etransfer") in the product's own words
+ *  ("Online, card", "E-Transfer"); a typed phrase ("Cheque 214") is already words and passes through. */
+function storedHow(method: string | null): string | null {
+  return method ? paymentMethodWord(method) : null;
+}
+
 /** One line, worded, with what may be done with it. */
 function shapeLine(
   l: BookLine,
@@ -294,7 +301,7 @@ function shapeLine(
     } else if (team && book.kind !== 'team') {
       what = `Allocation received · ${team}`;
     }
-    detail = howItCame(inst?.paid_method ?? null, inst?.paid_reference ?? null) ?? l.paymentMethod;
+    detail = howItCame(inst?.paid_method ?? null, inst?.paid_reference ?? null) ?? storedHow(l.paymentMethod);
     source = { kind: 'allocation', allocationId: split?.allocation_id ?? null, splitId: inst?.split_id ?? null, installmentId: inst?.id ?? null, teamId: split?.team_id ?? null };
   } else if (type === 'team_support') {
     const team = (req?.team_id ? x.teamName.get(req.team_id) : null) ?? partnerTeam;
@@ -304,9 +311,11 @@ function shapeLine(
         requestType: moneyIn ? 'payment_to_org' : 'charge_to_org',
       }).club;
     }
-    detail = [l.paymentMethod, 'request'].filter(Boolean).join(' · ');
+    detail = [storedHow(l.paymentMethod), 'request'].filter(Boolean).join(' · ');
     source = { kind: 'request', requestId: req?.id ?? null, teamId: req?.team_id ?? null };
   } else if (type === 'house_league_fees') {
+    // Who paid and how it came — a card or bank payment stamps the guardian's name when it lands (online-payment-landing).
+    detail = [payeeName, storedHow(l.paymentMethod)].filter(Boolean).join(' · ') || null;
     source = { kind: 'league_fee', registrationId: l.sourceEntityId };
   } else if (type === 'transfer') {
     const other = partner?.name ?? 'another book';
@@ -314,7 +323,7 @@ function shapeLine(
     detail = [l.description, 'transfer'].filter(Boolean).join(' · ');
     source = { kind: 'transfer', partnerLedgerId: partner?.id ?? null, partnerLedgerName: partner?.name ?? null };
   } else {
-    detail = [payeeName, l.paymentMethod].filter(Boolean).join(' · ') || null;
+    detail = [payeeName, storedHow(l.paymentMethod)].filter(Boolean).join(' · ') || null;
   }
 
   /* ⚖ WHAT THE LINE IS FILED UNDER (Ask 4a) — the one rule, read once by `readBook` (`ledgerFiling`): its own word,
