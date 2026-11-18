@@ -58,7 +58,7 @@ describe('a payout’s lines, named (both flows)', () => {
   });
   it('a returned debit, and our fee given back beside it', () => {
     assert.deepEqual([by('t6').kind, by('t6').what, by('t6').receiptNo], ['returned', 'Returned by the bank', 1078]);
-    assert.deepEqual([by('t7').kind, by('t7').what, by('t7').amount], ['fee_back', 'Processing fee returned', 2.25]);
+    assert.deepEqual([by('t7').kind, by('t7').what, by('t7').amount], ['fee_back', 'FieldLogicHQ’s fee returned', 2.25]);
   });
   it('a card dispute taken and won, and a bank debit’s dispute', () => {
     assert.deepEqual([by('t8').kind, by('t8').who, by('t8').what, by('t8').amount], ['dispute', 'Henry and Lily Grant', 'Dispute', -65]);

@@ -217,11 +217,94 @@ dev account (a refund or dispute on an old dev payment) no longer map to the clu
   treatment" as the taxed-on-top recovered fee) → `/billing`; the help and terms items as above.
 
 ### Stage 3 — The club's books record Stripe's real fee
+**Build prompt (2026-11-18, after Stage 5's first part `9b0a05c1b`):**
+[STRIPE_OWNED_PRICING_STAGE3_BUILD_PROMPT.md](STRIPE_OWNED_PRICING_STAGE3_BUILD_PROMPT.md). ⚠ **Its census corrects the
+paragraph below:** the books already record the WHOLE processing fee (Stripe's standard cost + ours) when the club pays,
+so a domestic payment already nets exactly in both modes. What is off: Stripe's extras (foreign card, conversion), unbooked
+dispute fees, a returned debit that never reverses the cost line (books one fee low, a defect today), and the Payouts
+tab's old-model labels. The owner rules the shape first (A: fix only what is off, recommended; B: split every fee).
 Today the club's books record only our fee (and only when the club pays it). Under Stripe-owned pricing Stripe's fee comes
 off the club's balance on every payment, whoever pays our fee, and Stripe keeps it on a refund. Each payment's landing
 reads Stripe's fee from the charge and books it as its own "Payment processing" cost; refunds leave it in place. The
 delicate stage: the land and refund functions for tournaments and leagues, a stored Stripe-fee figure per payment, and the
 Payouts tab's existing Stripe-fee lines checked against it.
+
+**Owner rulings (2026-11-18, the Stage 3 session):**
+- **(a) Shape A: fix only what is off.** The one "Payment processing" line stays exactly as it is. Stripe's real fee is
+  stored per payment; when it differs from Stripe's standard cost the difference is its own cost line, in either payer
+  mode. ~~The returned debit takes the cost line back.~~ Withdrawn the same session (ruling (e) below): the census's
+  defect (b) does not exist.
+- **(b) Dispute fees are booked** as a cost when Stripe takes them (and given back in the books when Stripe gives one back).
+- **(c) Wording:** "Stripe's extra · <payment>", "Dispute fee · receipt <n>", in the existing "Payment processing"
+  category; `/marketing` checks it.
+- **(d) Stand-alone Stripe fees: match and book** (the probe below found them). Once a day, each club's stand-alone
+  `stripe_fee` lines are matched to their payment by Stripe's wording and day and booked once on that payment's book. A line
+  that can't be matched stays on the Payouts tab and the bank check names it as a Stripe fee to record by hand. (Rejected:
+  booking Stripe's listed price at the event, which puts a price list back in our code.)
+- **(e) The census's "returned debit leaves the books one fee low" is wrong; the terms narrow instead.** Read in the code
+  (`lib/online-payment-landing.ts` `returnDebit`, `reverseDebit`; the webhook): a debit that bounces BEFORE it clears
+  (`checkout.session.async_payment_failed`) never landed, so nothing is in the books; Stripe returns its fee and our fee
+  is auto-refunded (probe (f)), and only the later $5 "Payment Failure" is unbooked (ruling (d) matches it). A debit
+  returned AFTER it clears arrives as `charge.dispute.created` (`online_payment_reverse`): Stripe keeps its fee, takes a
+  $5 dispute fee inline, and our fee is NOT refunded (probe (f) "debit disputed", app fee refunded 0). In club-pays mode the
+  books are then exact except the $5. **Owner (2026-11-18): narrow the terms, not the product** — `/legal` rewrites
+  terms v0.2 §4's exception and §7's returned-debit bullet: our fee comes back when a debit fails before it clears; one
+  returned after it clears is handled as a dispute (neither part back, Stripe's $5 off the balance).
+- **(f) Found here, in scope under (a): family-pays mode under-books a reversal by the fee.** On a lost card dispute or a
+  debit returned after it clears, Stripe pulls back everything the family paid (base + fee) and keeps both fees, but the
+  books post only the base ("Dispute lost" / "Returned by the bank"). Probe (e) lost, $105 US card: the club netted
+  −$20.84; the books would read −$15.84 with the extra and dispute fee booked. Exists today in both account models. Fix:
+  the reversal posts the fee the family paid as the ordinary "Payment processing · …" cost (the line club-pays mode
+  already has), stored as the payment's processing cost line.
+
+#### Stage 3 probe results (test mode, 2026-11-18)
+Scripts and raw output `.probe/s3/`. The Stage 1 probe account (`acct_1Ud0FDFuSu8KhK2Q`) still held every case; its
+balance lines were read, and new rounding charges made on it.
+- **Stripe bills some fees LATER, as stand-alone lines with no source.** About 2½ hours after the Stage 1 cases, two
+  `stripe_fee` balance transactions appeared, `source: null`, `reporting_category: fee`:
+  "Pre-Authorized Debit in Canada (2026-11-18): Payment Failure" −$5.00, and "Card Dispute Countered Fee (2026-11-18)"
+  −$15.00. **This corrects Stage 1** ("no failure fee appeared in test mode", "a returned debit nets $0", "dispute won: out
+  $15"): a returned debit costs the club $5; an answered dispute costs $15 more. Stripe's Canadian price page (read
+  2026-11-18): dispute received $15 (kept); dispute countered $15, **returned for a won dispute**; PAD failures and
+  disputes +$5; international card +0.8%; conversion +2%. The countered fee's return on the Stage 1 win had not appeared
+  by 16:30 UTC; re-read before building its match.
+- **The dispute received fee is attached:** the `adjustment` / `dispute` line carries it in `fee_details`
+  (`stripe_fee` "Dispute fee", $15 card / $5 debit), `source` = the dispute. A won dispute's `dispute_reversal` returns the
+  amount with fee 0.
+- **A returned debit on the club's balance:** `payment_failure_refund` / `charge_failure` −$103.50 with fee −$1.44
+  (Stripe's fee returned), then `adjustment` / `fee` +$2.06 "Application fee refund for py_…", `source` = the payment. So
+  our fee comes back as an `adjustment` with category `fee` (the Payouts map's `fee_back`), never as its own
+  `application_fee_refund` line on the club. Plus the $5 failure fee above, later.
+- **Rounding matches to the cent.** Card charges of $5.00, $15.00, $25.00, $35.00, $123.45 and $999.99 (the first four land
+  on a half cent): `stripe_fee` = `stripeStandardCostCents` every time (half-up). US/UK card $105: $4.19 = $3.35 + 0.8%
+  ($0.84). So a domestic card books no extra line. Bank debits of $10.50, $20.50 (half cents) and $600.00 (the $5 cap):
+  `stripe_fee` $0.51, $0.61, $5.00, equal to ours; each debit's balance transaction was made when it cleared.
+- **The fee is NOT readable at the moment of success.** Right after `confirm`, `latest_charge.balance_transaction` was
+  null on all six cards; it appeared about a second later. The landing must leave the figure NULL and catch it up.
+
+**Built on dev 2026-11-18 (the code half; uncommitted until the owner's word).** Mig 501 (dev applied; prod `pending` in
+MANUAL_PROD_STEPS, applied WITH the promote): `online_payments.stripe_fee_amount` + three entry ids
+(`stripe_extra_entry_id`, `dispute_fee_entry_id`, `reversal_fee_entry_id`), table `online_payment_stripe_fee_lines`, the
+guard freezing them, and the writers `online_payment_stripe_fee_set` (the extra = Stripe's fee less
+`fee_amount − application_fee_amount`, so no price list in SQL), `online_payment_dispute_fee_book`,
+`online_payment_stripe_fee_line_take` (exactly one candidate or unmatched with a reason), and `online_payment_reverse`
+with ruling (f). Every writer acts only on a Stripe-owned account (`online_payment_stripe_owned`), so the old dev
+accounts, UAT Rep Club's payout test among them, read exactly as before. Code: the landing reads the fee from the
+re-read session (`retrieveCheckout` expands `latest_charge.balance_transaction`), `bookDisputeFee` on every dispute event,
+the daily job's `stripe_fee_catch_up` (35 days) and `standalone_stripe_fees` (10 days); the Payouts map links each new line
+for the bank check (`fees`, `standalone` in `PayoutEntryIndex`) and relabels `fee_back` "FieldLogicHQ’s fee returned"; the
+house-league Money page names the new lines (`STAGE3_LINE_PREFIX`, "Payment processing · Stripe’s extra · …" beside the
+existing "fee given back"). Book text: "Stripe’s extra · <payment>", "Dispute fee · receipt N", "Returned debit fee ·
+<payment>", and ruling (f)'s ordinary "Payment processing · <payment>". Checks: `scripts/stripe-owned-pricing-501-check.sql`
+PASSED (T1–T9, incl. probe (e) lost netting −$20.84 in the books); the 12c, 12d1, 498 and house-league money checks PASSED;
+unit tests `online-payment-stripe-fees`, `bank-club-read`, `online-payouts-list`, `online-payments-guard` pass.
+Census corrections: defect (b) does not exist (ruling (e)); `application_fee_refund` never lands on the club as its own line
+(it is an `adjustment` / `fee`); the daily job had no online-payments catch-up before this.
+**Left for the follow-up session** ([STRIPE_OWNED_PRICING_STAGE3_FOLLOWUP_PROMPT.md](STRIPE_OWNED_PRICING_STAGE3_FOLLOWUP_PROMPT.md)):
+the words and help below with `/docs` + `/marketing`; `/legal` narrows terms v0.2 §4/§7 (ruling (e)); the bank check names an
+unmatched stand-alone fee "to record by hand" (the line is recorded with its reason; nothing on screen yet); the seed
+teardown's entry deletes against the three new FKs; the countered fee's RETURN on a win (unseen in the probe: re-read the
+probe account's lines, then match it as a credit); `/accounting` and `/review`; the owner walk (Stage 5's step 6).
 
 **Stage 3's help and words (left by Stage 5, 2026-11-18, for this stage to write WITH its code; `/docs`, same rules: no
 dead anchors, `keywords` / `searchText` / `answerText` in the same pass).** Stage 5 ran before Stage 3 and left every

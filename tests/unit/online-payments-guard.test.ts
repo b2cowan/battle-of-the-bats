@@ -38,7 +38,11 @@ const LAND_RPCS = ['online_payment_land', 'online_payment_league_land', 'online_
   // 12c Part 1 (mig 382): a team's part refund, and a bank debit clearing or coming back.
   'online_payment_team_refund_book', 'online_payment_clearing', 'online_payment_returned',
   // 12d-1 (migs 390–391): a dispute's state, the extra still standing on a team payment, and a payment reversed.
-  'online_payment_dispute_apply', 'online_payment_over_left', 'online_payment_reverse'];
+  'online_payment_dispute_apply', 'online_payment_over_left', 'online_payment_reverse',
+  // Stripe-owned pricing Stage 3 (mig 501): Stripe's fee and its extra, a dispute's fee, a stand-alone fee line, and the
+  // shared cost line they post through.
+  'online_payment_stripe_fee_set', 'online_payment_dispute_fee_book', 'online_payment_stripe_fee_line_take',
+  'online_payment_cost_out', 'online_payment_lock_for_cost'];
 const MIG_12B_REFUNDS = 'supabase/migrations/375_a_house_league_refund_goes_back_to_the_card.sql';
 const fnBody = (sql: string, fn: string) => new RegExp(`FUNCTION public\\.${fn}\\([\\s\\S]*?\\nEND \\$\\$;`).exec(sql)?.[0] ?? '';
 

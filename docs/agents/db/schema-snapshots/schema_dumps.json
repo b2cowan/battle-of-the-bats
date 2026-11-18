@@ -12215,6 +12215,132 @@
         "column_default": null
       },
       {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 3,
+        "column_name": "stripe_account_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 4,
+        "column_name": "stripe_txn_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 5,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 6,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 7,
+        "column_name": "description",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 8,
+        "column_name": "stripe_created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 9,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 10,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 11,
+        "column_name": "entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 12,
+        "column_name": "booked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 13,
+        "column_name": "unmatched_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 14,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "online_payments",
         "pos": 1,
         "column_name": "id",
@@ -12653,6 +12779,42 @@
         "data_type": "numeric",
         "udt_name": "numeric",
         "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 50,
+        "column_name": "stripe_fee_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 51,
+        "column_name": "stripe_extra_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 52,
+        "column_name": "dispute_fee_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 53,
+        "column_name": "reversal_fee_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -33797,11 +33959,46 @@
         "constraint_name": "online_payment_refunds_resolved_by_fk"
       },
       {
+        "table_name": "online_payment_stripe_fee_lines",
+        "column_name": "entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_stripe_fee_lines_entry_id_fkey"
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_stripe_fee_lines_online_payment_id_fkey"
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_stripe_fee_lines_org_id_fkey"
+      },
+      {
         "table_name": "online_payments",
         "column_name": "processing_cost_entry_id",
         "foreign_table": "accounting_entries",
         "foreign_column": "id",
         "constraint_name": "online_payments_cost_entry_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "dispute_fee_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_dispute_fee_entry_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "stripe_extra_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_extra_entry_fk"
       },
       {
         "table_name": "online_payments",
@@ -33816,6 +34013,13 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "online_payments_over_kept_by_fkey"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "reversal_fee_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_reversal_fee_entry_fk"
       },
       {
         "table_name": "online_payments",
@@ -40109,6 +40313,31 @@
         "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_child_key ON public.online_payment_refunds USING btree (stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT WHERE (stripe_refund_id IS NOT NULL)"
       },
       {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_entry_idx",
+        "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_entry_idx ON public.online_payment_stripe_fee_lines USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_org_idx",
+        "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_org_idx ON public.online_payment_stripe_fee_lines USING btree (org_id, stripe_created_at DESC)"
+      },
+      {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_payment_idx",
+        "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_payment_idx ON public.online_payment_stripe_fee_lines USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_pkey",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_stripe_fee_lines_pkey ON public.online_payment_stripe_fee_lines USING btree (id)"
+      },
+      {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_txn_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_stripe_fee_lines_txn_key ON public.online_payment_stripe_fee_lines USING btree (stripe_txn_id)"
+      },
+      {
         "tablename": "online_payments",
         "indexname": "online_payments_clearing_idx",
         "indexdef": "CREATE INDEX online_payments_clearing_idx ON public.online_payments USING btree (org_id) WHERE (status = 'clearing'::text)"
@@ -40120,8 +40349,18 @@
       },
       {
         "tablename": "online_payments",
+        "indexname": "online_payments_dispute_fee_entry_idx",
+        "indexdef": "CREATE INDEX online_payments_dispute_fee_entry_idx ON public.online_payments USING btree (dispute_fee_entry_id) WHERE (dispute_fee_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
         "indexname": "online_payments_dispute_key",
         "indexdef": "CREATE UNIQUE INDEX online_payments_dispute_key ON public.online_payments USING btree (stripe_dispute_id) WHERE (stripe_dispute_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_extra_entry_idx",
+        "indexdef": "CREATE INDEX online_payments_extra_entry_idx ON public.online_payments USING btree (stripe_extra_entry_id) WHERE (stripe_extra_entry_id IS NOT NULL)"
       },
       {
         "tablename": "online_payments",
@@ -40167,6 +40406,11 @@
         "tablename": "online_payments",
         "indexname": "online_payments_receipt_key",
         "indexdef": "CREATE UNIQUE INDEX online_payments_receipt_key ON public.online_payments USING btree (receipt_no) WHERE (receipt_no IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_reversal_fee_entry_idx",
+        "indexdef": "CREATE INDEX online_payments_reversal_fee_entry_idx ON public.online_payments USING btree (reversal_fee_entry_id) WHERE (reversal_fee_entry_id IS NOT NULL)"
       },
       {
         "tablename": "online_payments",
@@ -46387,6 +46631,24 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "online_payment_stripe_fee_lines",
+        "detail": "online_payment_stripe_fee_lines_kind_chk",
+        "check_clause": "(kind = ANY (ARRAY['debit_failure'::text, 'dispute_countered'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_stripe_fee_lines",
+        "detail": "online_payment_stripe_fee_lines_unmatched_chk",
+        "check_clause": "((unmatched_reason IS NULL) OR (unmatched_reason = ANY (ARRAY['no_payment'::text, 'several_payments'::text, 'not_a_charge'::text, 'unknown_kind'::text, 'refused'::text])))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "online_payment_stripe_fee_lines",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_application_fee_chk",
         "check_clause": "((application_fee_amount >= (0)::numeric) AND (application_fee_amount <= fee_amount))"
@@ -46492,6 +46754,12 @@
         "table_name": "online_payments",
         "detail": "online_payments_status_chk",
         "check_clause": "(status = ANY (ARRAY['open'::text, 'clearing'::text, 'paid'::text, 'expired'::text, 'returned'::text, 'partly_refunded'::text, 'refunded'::text, 'reversed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_stripe_fee_chk",
+        "check_clause": "(stripe_fee_amount >= (0)::numeric)"
       },
       {
         "kind": "CHECK",

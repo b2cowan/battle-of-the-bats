@@ -7,7 +7,8 @@ import { clearSettled } from './needs-attention';
 import { getOrganizationBySlugForServer } from './server-organizations';
 import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTreasurer } from './online-payment-access';
 import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, pausedForRefundPolicy, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
-import { listRefunds, requestBankDebit, retrieveAccount, retrieveCheckout, retrieveDispute, refundToCard } from './stripe-connect';
+import { listRefunds, listStripeFeeLines, requestBankDebit, retrieveAccount, retrieveChargeWithFee, retrieveCheckout, retrieveDispute, refundToCard } from './stripe-connect';
+import { chargeBalanceTransaction, disputeFeeCents, standaloneFeeOf, stripeFeeCents } from './online-payment-stripe-fees';
 import { disputeFromStripe, isDisputeOpen, isInquiry, refundBlockedByDispute } from './online-payment-dispute';
 import { disputeOpenedEmailHtml, disputeReminderEmailHtml } from './online-dispute-email';
 import { sendEmail } from './email';
@@ -892,6 +893,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   if (op.flow === 'league_signup') {
     const result = await landLeague(op, paidAt, card, mismatch);
     await bookDisputesLostBeforeLanding(stripeAccountId, op.id).catch(lostBookingFailed);
+    if (result === 'landed' || result === 'already') await recordStripeFee(op.id, session);
     return result;
   }
 
@@ -930,7 +932,105 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   await raiseOverpaid(op.id);
   if (!(landed as { already?: boolean } | null)?.already) await reconcileDashboardRefunds(stripeAccountId, op.id);
   await bookDisputesLostBeforeLanding(stripeAccountId, op.id).catch(lostBookingFailed);
+  await recordStripeFee(op.id, session);
   return (landed as { already?: boolean } | null)?.already ? 'already' : 'landed';
+}
+
+/**
+ * Stripe-owned pricing Stage 3 (mig 501): Stripe's own fee on a landed payment, stored once, and the part above Stripe's
+ * standard cost (a foreign card, a conversion) booked as "Stripe's extra". Never blocks the landing: the figure is often
+ * not there yet (the probe saw it about a second after the payment), and the daily job catches it up
+ * (`catchUpStripeFees`). An old 'application' account is skipped by the database (its row stays NULL).
+ */
+async function recordStripeFee(onlinePaymentId: string, session: Stripe.Checkout.Session): Promise<void> {
+  const intent = typeof session.payment_intent === 'object' ? session.payment_intent : null;
+  const cents = stripeFeeCents(chargeBalanceTransaction(intent?.latest_charge));
+  if (cents === null) return;
+  await setStripeFee(onlinePaymentId, cents);
+}
+
+async function setStripeFee(onlinePaymentId: string, cents: number): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('online_payment_stripe_fee_set', { p_online_payment: onlinePaymentId, p_stripe_fee: cents / 100 });
+  if (error) console.error('[online-payment-landing] Stripe’s fee not recorded yet (the daily job retries):', onlinePaymentId, error.message);
+}
+
+/** How far back the daily job looks for a landed payment still without Stripe's fee. */
+const STRIPE_FEE_CATCH_UP_DAYS = 35;
+
+/**
+ * The daily job (Stage 3): every landed payment on a Stripe-owned account in the last 35 days whose Stripe fee is still
+ * unread is read from its charge and recorded. Returns how many were recorded.
+ */
+export async function catchUpStripeFees(): Promise<{ read: number; recorded: number }> {
+  const since = new Date(Date.now() - STRIPE_FEE_CATCH_UP_DAYS * 86_400_000).toISOString();
+  const { data: accounts, error: aErr } = await supabaseAdmin.from('org_payment_accounts').select('stripe_account_id').eq('fees_collector', 'stripe');
+  if (aErr) throw new Error(aErr.message);
+  const ids = (accounts ?? []).map(a => a.stripe_account_id as string).filter(Boolean);
+  if (!ids.length) return { read: 0, recorded: 0 };
+  const { data: rows, error } = await supabaseAdmin.from('online_payments').select('id, stripe_account_id, stripe_charge_id')
+    .in('stripe_account_id', ids).not('landed_at', 'is', null).gte('landed_at', since)
+    .is('stripe_fee_amount', null).not('stripe_charge_id', 'is', null).limit(500);
+  if (error) throw new Error(error.message);
+  let recorded = 0;
+  for (const r of rows ?? []) {
+    const charge = await retrieveChargeWithFee(r.stripe_account_id as string, r.stripe_charge_id as string);
+    const cents = stripeFeeCents(chargeBalanceTransaction(charge));
+    if (cents === null) continue;
+    await setStripeFee(r.id as string, cents);
+    recorded++;
+  }
+  return { read: rows?.length ?? 0, recorded };
+}
+
+/**
+ * Stage 3, owner ruling (b): the fee Stripe attached to a dispute (its withdrawal's "Dispute fee": $15 card, $5 bank
+ * debit) is booked once on the payment's own book as "Dispute fee · receipt N". Any dispute event, either rail; a no-op
+ * until the payment has landed, and on an old account.
+ */
+export async function bookDisputeFee(stripeAccountId: string, dispute: Stripe.Dispute): Promise<void> {
+  const cents = disputeFeeCents(dispute);
+  if (cents <= 0) return;
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
+  const intentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
+  const COLS = 'id, stripe_account_id, landed_at, dispute_fee_entry_id';
+  let op = chargeId ? (await supabaseAdmin.from('online_payments').select(COLS).eq('stripe_charge_id', chargeId).maybeSingle()).data : null;
+  if (!op && intentId) op = (await supabaseAdmin.from('online_payments').select(COLS).eq('stripe_payment_intent_id', intentId).maybeSingle()).data;
+  if (!op || op.stripe_account_id !== stripeAccountId || !op.landed_at || op.dispute_fee_entry_id) return;
+  const { error } = await supabaseAdmin.rpc('online_payment_dispute_fee_book', { p_online_payment: op.id, p_fee: cents / 100 });
+  if (error) throw new Error(error.message);
+}
+
+/** How far back the daily job reads each club's stand-alone Stripe fee lines (they arrive hours after the event). */
+const STANDALONE_FEE_LOOKBACK_DAYS = 10;
+
+/**
+ * Stage 3, owner ruling (d): each club's stand-alone Stripe fee lines (no source; billed later) are recorded once and, when
+ * exactly one payment of its kind sits near its day, booked on that payment's book. The rest stay recorded unmatched for
+ * the bank check to name. Returns counts for the job's audit.
+ */
+export async function takeStandaloneStripeFees(): Promise<{ lines: number; booked: number; unmatched: number }> {
+  const { data: accounts, error } = await supabaseAdmin.from('org_payment_accounts').select('org_id, stripe_account_id, livemode')
+    .eq('fees_collector', 'stripe').is('disconnected_at', null);
+  if (error) throw new Error(error.message);
+  const gte = Math.floor(Date.now() / 1000) - STANDALONE_FEE_LOOKBACK_DAYS * 86_400;
+  let lines = 0; let booked = 0; let unmatched = 0;
+  for (const a of accounts ?? []) {
+    const fees = await listStripeFeeLines(a.stripe_account_id as string, gte);
+    for (const bt of fees) {
+      if (bt.source) continue; // a fee with a source belongs to its charge or dispute, booked there
+      const { kind, day } = standaloneFeeOf(bt.description, bt.created);
+      const { data: res, error: tErr } = await supabaseAdmin.rpc('online_payment_stripe_fee_line_take', {
+        p_org: a.org_id, p_stripe_account: a.stripe_account_id, p_txn: bt.id, p_livemode: !!a.livemode, p_amount: bt.amount / 100,
+        p_description: bt.description ?? '', p_created: new Date(bt.created * 1000).toISOString(), p_kind: kind, p_day: day,
+      });
+      if (tErr) throw new Error(tErr.message);
+      const r = res as { already?: boolean; matched?: boolean } | null;
+      if (r?.already) continue;
+      lines++;
+      if (r?.matched) booked++; else unmatched++;
+    }
+  }
+  return { lines, booked, unmatched };
 }
 
 /**

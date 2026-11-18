@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-18",
-  "total": 236,
+  "total": 274,
   "counts": {
-    "tables": 8,
-    "columns": 112,
-    "indexes": 38,
-    "constraints": 28,
-    "rls": 50
+    "tables": 9,
+    "columns": 130,
+    "indexes": 46,
+    "constraints": 36,
+    "rls": 53
   },
   "items": [
     {
@@ -126,7 +126,19 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_kind_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_unmatched_chk",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:online_payments.online_payments_application_fee_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payments.online_payments_stripe_fee_chk",
       "sig": ""
     },
     {
@@ -454,7 +466,79 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.booked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.description",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.online_payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.stripe_account_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.stripe_created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.stripe_txn_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_stripe_fee_lines.unmatched_reason",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payments.application_fee_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.dispute_fee_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.reversal_fee_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.stripe_extra_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.stripe_fee_amount",
       "sig": ""
     },
     {
@@ -722,6 +806,38 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_online_payment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_txn_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payments.online_payments_dispute_fee_entry_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payments.online_payments_extra_entry_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payments.online_payments_reversal_fee_entry_fk",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:org_time_date_off_venues.org_time_date_off_venues_date_off_id_fkey",
       "sig": ""
     },
@@ -854,6 +970,38 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:online_payment_stripe_fee_lines_entry_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_stripe_fee_lines_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_stripe_fee_lines_payment_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_stripe_fee_lines_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_stripe_fee_lines_txn_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payments_dispute_fee_entry_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payments_extra_entry_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payments_reversal_fee_entry_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_time_date_off_venues_org_idx",
       "sig": ""
     },
@@ -935,6 +1083,10 @@
     },
     {
       "key": "table:only-dev:club_schedule_bill_rates",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:online_payment_stripe_fee_lines",
       "sig": ""
     },
     {

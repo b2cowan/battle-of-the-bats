@@ -2,22 +2,23 @@
 
 **Generated:** 2026-11-18 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 236 divergence(s)** across dev/prod.
+**⚠️ 274 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 6 | 2 | — |
-| Columns | 73 | 37 | 2 |
-| Indexes | 26 | 12 | 0 |
-| Constraints | 21 | 7 | — |
-| RLS / CHECK | 34 | 16 | 0 (RLS state) |
+| Tables | 7 | 2 | — |
+| Columns | 91 | 37 | 2 |
+| Indexes | 34 | 12 | 0 |
+| Constraints | 29 | 7 | — |
+| RLS / CHECK | 37 | 16 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (6)
+### Only in DEV (7)
 - `club_group_email_bodies`
 - `club_group_email_recipients`
 - `club_group_email_sends`
 - `club_schedule_bill_rates`
+- `online_payment_stripe_fee_lines`
 - `org_time_date_off_venues`
 - `payments_terms_agreements`
 
@@ -26,7 +27,7 @@
 - `platform_stripe_fees`
 
 ## Columns
-### Only in DEV (73)
+### Only in DEV (91)
 - `club_group_email_bodies.body`
 - `club_group_email_bodies.created_at`
 - `club_group_email_bodies.org_id`
@@ -86,7 +87,25 @@
 - `family_email_sends.names_cleared_at`
 - `family_email_sends.reply_to`
 - `family_email_sends.words_cleared_at`
+- `online_payment_stripe_fee_lines.amount`
+- `online_payment_stripe_fee_lines.booked_at`
+- `online_payment_stripe_fee_lines.created_at`
+- `online_payment_stripe_fee_lines.description`
+- `online_payment_stripe_fee_lines.entry_id`
+- `online_payment_stripe_fee_lines.id`
+- `online_payment_stripe_fee_lines.kind`
+- `online_payment_stripe_fee_lines.livemode`
+- `online_payment_stripe_fee_lines.online_payment_id`
+- `online_payment_stripe_fee_lines.org_id`
+- `online_payment_stripe_fee_lines.stripe_account_id`
+- `online_payment_stripe_fee_lines.stripe_created_at`
+- `online_payment_stripe_fee_lines.stripe_txn_id`
+- `online_payment_stripe_fee_lines.unmatched_reason`
 - `online_payments.application_fee_amount`
+- `online_payments.dispute_fee_entry_id`
+- `online_payments.reversal_fee_entry_id`
+- `online_payments.stripe_extra_entry_id`
+- `online_payments.stripe_fee_amount`
 - `org_payment_accounts.fees_collector`
 - `org_time_date_off_venues.date_off_id`
 - `org_time_date_off_venues.org_id`
@@ -145,7 +164,7 @@
 - `family_email_sends.subject` — dev: `text|text|YES|` | prod: `text|text|NO|`
 
 ## Indexes
-### Only in DEV (26)
+### Only in DEV (34)
 - `club_group_email_bodies_org_idx`
 - `club_group_email_bodies_pkey`
 - `club_group_email_recipients_org_idx`
@@ -167,6 +186,14 @@
 - `club_schedules_part_of_idx`
 - `family_email_sends_names_due_idx`
 - `family_email_sends_words_due_idx`
+- `online_payment_stripe_fee_lines_entry_idx`
+- `online_payment_stripe_fee_lines_org_idx`
+- `online_payment_stripe_fee_lines_payment_idx`
+- `online_payment_stripe_fee_lines_pkey`
+- `online_payment_stripe_fee_lines_txn_key`
+- `online_payments_dispute_fee_entry_idx`
+- `online_payments_extra_entry_idx`
+- `online_payments_reversal_fee_entry_idx`
 - `org_time_date_off_venues_org_idx`
 - `org_time_date_off_venues_pkey`
 - `org_time_date_off_venues_venue_idx`
@@ -191,7 +218,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (21)
+### Only in DEV (29)
 - `club_group_email_bodies.club_group_email_bodies_org_id_fkey`
 - `club_group_email_bodies.club_group_email_bodies_pkey`
 - `club_group_email_bodies.club_group_email_bodies_send_id_fkey`
@@ -208,6 +235,14 @@ _none_
 - `club_schedule_bill_rates.club_schedule_bill_rates_schedule_permit_key`
 - `club_schedules.club_schedules_bill_dismissed_by_fkey`
 - `club_schedules.club_schedules_part_of_schedule_id_fkey`
+- `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_entry_id_fkey`
+- `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_online_payment_id_fkey`
+- `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_org_id_fkey`
+- `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_pkey`
+- `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_txn_key`
+- `online_payments.online_payments_dispute_fee_entry_fk`
+- `online_payments.online_payments_extra_entry_fk`
+- `online_payments.online_payments_reversal_fee_entry_fk`
 - `org_time_date_off_venues.org_time_date_off_venues_date_off_id_fkey`
 - `org_time_date_off_venues.org_time_date_off_venues_org_id_fkey`
 - `org_time_date_off_venues.org_time_date_off_venues_org_venue_id_fkey`
@@ -227,7 +262,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (34)
+### CHECK only in DEV (37)
 - `club_group_email_bodies.club_group_email_bodies_body_check`
 - `club_group_email_bodies.club_group_email_bodies_subject_check`
 - `club_group_email_recipients.club_group_email_recipients_basis_check`
@@ -257,7 +292,10 @@ _none_
 - `club_schedules.club_schedules_part_never_in_review`
 - `family_email_sends.family_email_sends_club_copy_check`
 - `family_email_sends.family_email_sends_reply_to_check`
+- `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_kind_chk`
+- `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_unmatched_chk`
 - `online_payments.online_payments_application_fee_chk`
+- `online_payments.online_payments_stripe_fee_chk`
 - `org_payment_accounts.org_payment_accounts_fees_collector_chk`
 - `payments_terms_agreements.payments_terms_agreements_action_check`
 - `payments_terms_agreements.payments_terms_agreements_text_shape`

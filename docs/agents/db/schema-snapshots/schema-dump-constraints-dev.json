@@ -4760,10 +4760,80 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "online_payment_stripe_fee_lines",
+    "constraint_name": "online_payment_stripe_fee_lines_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "constraint_name": "online_payment_stripe_fee_lines_online_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "constraint_name": "online_payment_stripe_fee_lines_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "constraint_name": "online_payment_stripe_fee_lines_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "constraint_name": "online_payment_stripe_fee_lines_txn_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "stripe_txn_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "online_payments",
     "constraint_name": "online_payments_cost_entry_fk",
     "constraint_type": "FOREIGN KEY",
     "column_name": "processing_cost_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_dispute_fee_entry_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "dispute_fee_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_extra_entry_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "stripe_extra_entry_id",
     "foreign_table": "accounting_entries",
     "foreign_column": "id",
     "delete_rule": "NO ACTION",
@@ -4798,6 +4868,16 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_reversal_fee_entry_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "reversal_fee_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "online_payments",

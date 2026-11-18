@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureError } from '@/lib/observability';
 import { stripeKeyIsLive } from '@/lib/stripe-mode';
 import { connectWebhookSecret, constructConnectEvent } from '@/lib/stripe-connect';
-import { applyCardDispute, applyRefundEvent, expireCheckoutSession, landCheckoutSession, returnDebit, reverseDebit } from '@/lib/online-payment-landing';
+import { applyCardDispute, applyRefundEvent, bookDisputeFee, expireCheckoutSession, landCheckoutSession, returnDebit, reverseDebit } from '@/lib/online-payment-landing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -71,6 +71,8 @@ export const POST = withObservability(async (req: Request) => {
         // 12d-1 Part 3: a card dispute, re-read from Stripe on every event (they state no order), written once per read
         // (it returns early for a bank debit).
         await applyCardDispute(account, dispute);
+        // Stripe-owned pricing Stage 3 (ruling (b)): the fee Stripe attached to the dispute, either rail, booked once.
+        await bookDisputeFee(account, dispute);
         break;
       }
       case 'checkout.session.expired': {

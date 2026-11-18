@@ -215,6 +215,29 @@ describe('the Payouts mapping carries the book lines (bank check only)', () => {
   it('an open dispute has no book line yet; a Stripe fee and a stranger’s charge never have one', () => {
     assert.deepEqual([by('t7').entryIds, by('t8').entryIds, by('t9').entryIds, by('t9').kind], [[], [], [], 'not_ours']);
   });
+  it('Stripe-owned pricing Stage 3: a payment carries its extra, a dispute its fee and a family fee taken back, and a stand-alone fee the line booked for it', () => {
+    const ours: OurIndex = {
+      ...OURS,
+      entries: {
+        ...OURS.entries!,
+        payments: { ...OURS.entries!.payments, 'p-open': ['e-open', 'e-extra'] },
+        fees: { 'p-lost': ['e-dispute-fee', 'e-family-fee'], 'p-debit': ['e-debit-dispute-fee'] },
+        standalone: { txn_fail: ['e-failure-fee'] },
+      },
+    };
+    const lines = mapPayoutLines([
+      bt({ id: 'a1', type: 'charge', net: 9_916, sourceId: 'ch_open' }),
+      bt({ id: 'a2', type: 'adjustment', reportingCategory: 'dispute', net: -12_000, sourceId: 'du_lost' }),
+      bt({ id: 'a3', type: 'adjustment', reportingCategory: 'dispute', net: -10_850, sourceId: 'du_bank' }),
+      bt({ id: 'txn_fail', type: 'stripe_fee', net: -500 }),
+      bt({ id: 'txn_unmatched', type: 'stripe_fee', net: -1_500 }),
+    ], ours);
+    const of = (id: string) => lines.find(l => l.id === id)!.entryIds;
+    assert.deepEqual(of('a1'), ['e-open', 'e-extra']);
+    assert.deepEqual(of('a2'), ['e-lost', 'e-dispute-fee', 'e-family-fee']);
+    assert.deepEqual(of('a3'), ['e-returned', 'e-debit-dispute-fee']);
+    assert.deepEqual([of('txn_fail'), of('txn_unmatched')], [['e-failure-fee'], []]);
+  });
   it('the Payouts tab’s read (no entry index) is unchanged: no entryIds, no dispute', () => {
     const plain = mapPayoutLines([bt({ id: 'x', type: 'charge', net: 100, sourceId: 'ch_team' })], { ...OURS, entries: undefined });
     assert.equal('entryIds' in plain[0], false);

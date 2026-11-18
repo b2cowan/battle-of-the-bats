@@ -124,6 +124,11 @@ export const MONEY_PAGE_WORDS = {
     // 12b copy §8 `money.line.processing`: a club-paid processing fee, or a fee the club gave back on a refund — a cost.
     processing: (what: string) => `Payment processing · ${what}`,
     processingBack: (what: string) => `Payment processing · fee given back · ${what}`,
+    // Stripe-owned pricing Stage 3 (mig 501), owed to /marketing: Stripe's extra on a payment (a foreign card), a
+    // dispute's fee, and a debit that failed before it cleared — all costs under Payment processing.
+    processingExtra: (what: string) => `Payment processing · Stripe’s extra · ${what}`,
+    processingDisputeFee: (what: string) => `Payment processing · dispute fee · ${what}`,
+    processingFailureFee: (what: string) => `Payment processing · returned debit fee · ${what}`,
   },
   since: (day: string, days: number | null) => (days == null ? `Accepted ${day}` : `Accepted ${day} · ${pluralize(days, 'day')}`),
   sinceUnknown: 'Not known',
@@ -187,7 +192,7 @@ export const REGS_WORDS = {
   add: 'Add registration',
   loading: 'Loading registrations…',
   failed: 'We couldn’t load the registrations.',
-  tabsLabel: 'Registrations',
+  viewLabel: 'View',
   tab: { review: 'To review', active: 'Active', waitlist: 'Waitlist', ended: 'Ended' },
   reviewAria: (n: number) => `${pluralize(n, 'registration')} to review`,
   scopeAll: 'All divisions',

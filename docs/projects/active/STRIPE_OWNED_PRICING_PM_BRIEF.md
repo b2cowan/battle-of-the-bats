@@ -34,7 +34,15 @@ straight from the club's Stripe balance, and we take only our margin.
    currency conversion, a dispute, a returned debit) come out of its Stripe balance, with no invoice from us. The three
    dev test clubs' old accounts take no new payments and are re-created through "Set up payouts again"; UAT Rep Club only
    after the payout test's payout steps (owner, 2026-11-18).
-3. The club's books record Stripe's fee.
+3. The club's books record Stripe's fee. **Code built on dev 2026-11-18** (owner rulings that day: fix only what is off;
+   dispute fees booked; Stripe's later fees matched to their payment once a day). Canadian card and bank payments read
+   exactly as before: Stripe's fee matched our figure to the cent in every test. What now reaches the books, as costs
+   under Payment processing: a foreign card's extra ("Stripe’s extra", about 0.8%), a dispute's fee ($15 card, $5 debit),
+   Stripe's later $5 for a debit that bounces before it clears and $15 for answering a dispute, and, when families pay the
+   fee, the fee Stripe takes back on a lost dispute. The bank check's "on its way" now meets the payout on these. Old dev
+   accounts are untouched. Found on the way: a debit returned after it clears is a dispute at Stripe and our fee stays
+   with us, so the payments terms narrow (owner, 2026-11-18). Still to do: the help and words, the terms sentence, the
+   reviews, then the owner walk.
 4. Retire the monthly Stripe-fee invoicing. **Built on dev 2026-11-18** (before Stage 3, owner). A club no longer gets a
    Stripe-fee invoice or its reminder, and Plan & billing loses its Stripe fees list, the "you owe" line and the red banner
    (its menu pill keeps "Plan payment didn't go through"). Platform admin loses the fee card, its Retry and the two Health

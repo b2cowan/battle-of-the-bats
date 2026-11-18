@@ -2390,6 +2390,31 @@
     "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_child_key ON public.online_payment_refunds USING btree (stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT WHERE (stripe_refund_id IS NOT NULL)"
   },
   {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_entry_idx",
+    "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_entry_idx ON public.online_payment_stripe_fee_lines USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_org_idx",
+    "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_org_idx ON public.online_payment_stripe_fee_lines USING btree (org_id, stripe_created_at DESC)"
+  },
+  {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_payment_idx",
+    "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_payment_idx ON public.online_payment_stripe_fee_lines USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_stripe_fee_lines_pkey ON public.online_payment_stripe_fee_lines USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_txn_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_stripe_fee_lines_txn_key ON public.online_payment_stripe_fee_lines USING btree (stripe_txn_id)"
+  },
+  {
     "tablename": "online_payments",
     "indexname": "online_payments_clearing_idx",
     "indexdef": "CREATE INDEX online_payments_clearing_idx ON public.online_payments USING btree (org_id) WHERE (status = 'clearing'::text)"
@@ -2401,8 +2426,18 @@
   },
   {
     "tablename": "online_payments",
+    "indexname": "online_payments_dispute_fee_entry_idx",
+    "indexdef": "CREATE INDEX online_payments_dispute_fee_entry_idx ON public.online_payments USING btree (dispute_fee_entry_id) WHERE (dispute_fee_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
     "indexname": "online_payments_dispute_key",
     "indexdef": "CREATE UNIQUE INDEX online_payments_dispute_key ON public.online_payments USING btree (stripe_dispute_id) WHERE (stripe_dispute_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_extra_entry_idx",
+    "indexdef": "CREATE INDEX online_payments_extra_entry_idx ON public.online_payments USING btree (stripe_extra_entry_id) WHERE (stripe_extra_entry_id IS NOT NULL)"
   },
   {
     "tablename": "online_payments",
@@ -2448,6 +2483,11 @@
     "tablename": "online_payments",
     "indexname": "online_payments_receipt_key",
     "indexdef": "CREATE UNIQUE INDEX online_payments_receipt_key ON public.online_payments USING btree (receipt_no) WHERE (receipt_no IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_reversal_fee_entry_idx",
+    "indexdef": "CREATE INDEX online_payments_reversal_fee_entry_idx ON public.online_payments USING btree (reversal_fee_entry_id) WHERE (reversal_fee_entry_id IS NOT NULL)"
   },
   {
     "tablename": "online_payments",

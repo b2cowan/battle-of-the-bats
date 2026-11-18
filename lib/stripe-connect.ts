@@ -188,9 +188,26 @@ export async function createCheckout(args: {
 export async function retrieveCheckout(accountId: string, sessionId: string): Promise<Stripe.Checkout.Session> {
   return getStripe().checkout.sessions.retrieve(
     sessionId,
-    { expand: ['payment_intent.latest_charge', 'payment_intent.payment_method'] },
+    // Stripe-owned pricing Stage 3: the charge's balance transaction carries Stripe's own fee (its `stripe_fee` detail).
+    // Three levels, within Stripe's four; it may be null for about a second after the payment succeeds.
+    { expand: ['payment_intent.latest_charge.balance_transaction', 'payment_intent.payment_method'] },
     on(accountId),
   );
+}
+
+/** A charge on the club's account with its balance transaction (Stage 3's catch-up of Stripe's fee). Read only. */
+export async function retrieveChargeWithFee(accountId: string, chargeId: string): Promise<Stripe.Charge> {
+  return getStripe().charges.retrieve(chargeId, { expand: ['balance_transaction'] }, on(accountId));
+}
+
+/** The club's stand-alone Stripe fee lines made since `gte` (Stage 3, ruling (d)): `stripe_fee` balance transactions,
+ *  which Stripe bills later with no source. Read only. */
+export async function listStripeFeeLines(accountId: string, gte: number): Promise<Stripe.BalanceTransaction[]> {
+  const out: Stripe.BalanceTransaction[] = [];
+  for await (const bt of getStripe().balanceTransactions.list({ type: 'stripe_fee', created: { gte }, limit: 100 }, on(accountId))) {
+    out.push(bt);
+  }
+  return out;
 }
 
 export async function expireCheckout(accountId: string, sessionId: string): Promise<void> {

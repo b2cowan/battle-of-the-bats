@@ -102,21 +102,25 @@ function sourceOf(bt: Stripe.BalanceTransaction): { sourceId: string | null; sou
   return { sourceId: o.id, sourceCharge: charge };
 }
 
-type PaymentRowForEntries = { id: string; flow: 'tournament_team' | 'league_signup'; rail: 'card' | 'bank_debit'; status: string; processing_cost_entry_id: string | null };
+type PaymentRowForEntries = {
+  id: string; flow: 'tournament_team' | 'league_signup'; rail: 'card' | 'bank_debit'; status: string; processing_cost_entry_id: string | null;
+  // Stripe-owned pricing Stage 3 (mig 501).
+  stripe_extra_entry_id: string | null; dispute_fee_entry_id: string | null; reversal_fee_entry_id: string | null;
+};
 
 /**
  * The bank check's extra read (Bank reconciliation R2a): the club-book lines behind our payments, refunds and disputes
  * (`PayoutEntryIndex` in lib/online-payouts-map.ts says where each lives). Only `readPayouts({ withEntries: true })`
  * asks, so the Payouts tab reads exactly what it read before.
  */
-async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries[], refundIds: readonly string[], disputeIds: readonly string[]): Promise<PayoutEntryIndex> {
+async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries[], refundIds: readonly string[], disputeIds: readonly string[], standaloneTxnIds: readonly string[]): Promise<PayoutEntryIndex> {
   const teamIds = payments.filter(p => p.flow === 'tournament_team').map(p => p.id);
   const leagueIds = payments.filter(p => p.flow === 'league_signup').map(p => p.id);
   const reversed = payments.filter(p => p.status === 'reversed' && p.rail === 'bank_debit');
   const reversedTeams = reversed.filter(p => p.flow === 'tournament_team').map(p => p.id);
   const reversedLeagueIds = new Set(reversed.filter(p => p.flow === 'league_signup').map(p => p.id));
   // Paged (`fetchAllIn`): one league payment carries many children, and a plain `.in()` read stops silently at 1,000 rows.
-  const [teamRows, itemRows, refundRows, disputeRows, teamReturned] = await Promise.all([
+  const [teamRows, itemRows, refundRows, disputeRows, teamReturned, standaloneRows] = await Promise.all([
     fetchAllIn<{ online_payment_id: string; entry_id: string | null }>(teamIds, (c, a, b) =>
       supabaseAdmin.from('tournament_team_payments').select('online_payment_id, entry_id').in('online_payment_id', c).order('id').range(a, b)),
     fetchAllIn<{ online_payment_id: string; entry_id: string | null; registration_id: string | null }>(leagueIds, (c, a, b) =>
@@ -132,6 +136,10 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
     fetchAllIn<{ id: string; source_entity_id: string }>(reversedTeams, (c, a, b) =>
       supabaseAdmin.from('accounting_entries').select('id, source_entity_id').eq('source_module', 'online_payment')
         .like('description', 'Returned by the bank · %').in('source_entity_id', c).order('id').range(a, b)),
+    // Stage 3 (ruling (d)): a stand-alone Stripe fee line matched and booked by the daily job.
+    fetchAllIn<{ stripe_txn_id: string; entry_id: string | null }>(standaloneTxnIds, (c, a, b) =>
+      supabaseAdmin.from('online_payment_stripe_fee_lines').select('stripe_txn_id, entry_id').eq('org_id', orgId)
+        .in('stripe_txn_id', c).not('entry_id', 'is', null).order('stripe_txn_id').range(a, b)),
   ]);
   // A child's debit reversed after it landed: the child's `registration_returned` line (keyed by the registration).
   // The line is keyed by the registration alone, so it is tied to a payment only when exactly one REVERSED payment carried
@@ -153,7 +161,12 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
   const pay: Record<string, string[]> = {};
   for (const r of teamRows) push(pay, r.online_payment_id, r.entry_id);
   for (const r of itemRows) push(pay, r.online_payment_id, r.entry_id);
-  for (const p of payments) push(pay, p.id, p.processing_cost_entry_id);
+  for (const p of payments) { push(pay, p.id, p.processing_cost_entry_id); push(pay, p.id, p.stripe_extra_entry_id); }
+  // Stage 3: a dispute's fee and a family-paid fee taken back with the payment leave with the dispute's withdrawal.
+  const fees: Record<string, string[]> = {};
+  for (const p of payments) { push(fees, p.id, p.dispute_fee_entry_id); push(fees, p.id, p.reversal_fee_entry_id); }
+  const standalone: Record<string, string[]> = {};
+  for (const r of standaloneRows) push(standalone, r.stripe_txn_id, r.entry_id);
   const refunds: Record<string, string[]> = {};
   for (const r of refundRows) { push(refunds, r.stripe_refund_id, r.refund_entry_id); push(refunds, r.stripe_refund_id, r.processing_cost_entry_id); }
   const reversals: Record<string, string[]> = {};
@@ -165,7 +178,7 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
     const won = (d.won_back?.back ?? []).map(b => b.entryId).filter((x): x is string => !!x);
     disputes[d.stripe_dispute_id] = { amountCents: toCents(d.amount), feeCents: toCents(d.stripe_fee), lostEntryIds: lost, wonEntryIds: won };
   }
-  return { payments: pay, refunds, reversals, disputes };
+  return { payments: pay, refunds, reversals, disputes, fees, standalone };
 }
 
 /** Our rows behind every source a payout names, already named (who, what) for the screen. */
@@ -193,11 +206,12 @@ async function ourIndex(orgId: string, bts: readonly BtIn[], withEntries = false
   for (const d of disputes) disputeMap[d.stripe_dispute_id] = d.online_payment_id;
 
   const byIdWanted = [...new Set([...Object.values(refundMap), ...Object.values(disputeMap)])];
-  const cols = 'id, flow, rail, scope, receipt_no, stripe_charge_id, stripe_payment_intent_id, stripe_dispute_id, tournament_id, team_id, description, status, processing_cost_entry_id';
+  const cols = 'id, flow, rail, scope, receipt_no, stripe_charge_id, stripe_payment_intent_id, stripe_dispute_id, tournament_id, team_id, description, status, processing_cost_entry_id, stripe_extra_entry_id, dispute_fee_entry_id, reversal_fee_entry_id';
   type Row = {
     id: string; flow: 'tournament_team' | 'league_signup'; rail: 'card' | 'bank_debit'; scope: 'deposit' | 'balance' | 'full' | null;
     receipt_no: number | null; stripe_charge_id: string | null; stripe_payment_intent_id: string | null; stripe_dispute_id: string | null;
     tournament_id: string | null; team_id: string | null; description: string; status: string; processing_cost_entry_id: string | null;
+    stripe_extra_entry_id: string | null; dispute_fee_entry_id: string | null; reversal_fee_entry_id: string | null;
   };
   const rows = new Map<string, Row>();
   const reads = await Promise.all([
@@ -238,7 +252,8 @@ async function ourIndex(orgId: string, bts: readonly BtIn[], withEntries = false
     }
     return { id: r.id, chargeId: r.stripe_charge_id, paymentIntentId: r.stripe_payment_intent_id, disputeId: r.stripe_dispute_id, receiptNo: r.receipt_no, rail: r.rail, who, what };
   });
-  const entries = withEntries ? await entryIndex(orgId, list, refundIds, disputeIds) : undefined;
+  const standaloneTxnIds = bts.filter(b => b.type === 'stripe_fee' && !b.sourceId).map(b => b.id);
+  const entries = withEntries ? await entryIndex(orgId, list, refundIds, disputeIds, standaloneTxnIds) : undefined;
   return { payments, refunds: refundMap, disputes: disputeMap, ...(entries ? { entries } : {}) };
 }
 

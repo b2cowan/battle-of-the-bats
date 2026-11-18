@@ -1439,6 +1439,8 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:rule_items.display_order -->
 **`display_order`** (int, NOT NULL, default 0) — order within the section; also re-sorted client-side. _Dev/prod:_ prod tightened by migration 203 — **applied to BOTH envs 2026-07-27**.
 
+**Saving a section (mig 500, Board Ready trust close-out 8, 2026-11-18):** `PUT /api/admin/rules` saves a section's fields and its points in ONE step, `rule_section_save(p_rule, p_title, p_icon, p_division_ids, p_items jsonb)` (SECURITY DEFINER, service-role EXECUTE only, one transaction). Each point is upserted by its `id` — the Rules screen gives a NEW point its id (a uuid) before its first save, so a save retried after a timeout updates the point instead of inserting it twice — and a point id that belongs to another section is refused (`rule_item_foreign`), never moved. Every other point of the section is deleted. A point sent with no id gets `gen_random_uuid()`. Before 500 the save was several separate writes: a retried timeout could add a point twice, and a failure part-way left a half-applied save. Creating a section (`POST`) is still two inserts with a compensating delete.
+
 <!-- dict:col:rule_items.created_at -->
 **`created_at`** (timestamptz, nullable, default `now()`) — both envs since migration 201 (gotcha 1).
 
@@ -8868,7 +8870,7 @@ one test-mode invoice was voided in Stripe before the drop. Historical tax recor
 4. **Lock order (mig 345's, extended) — tournament row (`club_tournament_fee_word`, only when the book is on) → team row → THIS row → the refund row → ledger lines.** Never lock an online payment before its team: landing and refund would take the two locks in opposite orders.
 5. **One open Checkout per team** (`online_payments_one_open_per_team`, partial unique on `team_id WHERE status IN ('open','clearing')` since mig 382 — a clearing bank debit holds the slot too, gotcha 15): the pay route asks Stripe for the page FIRST and records the row after (with its session id), so two presses can never leave two payable pages — the press that loses the insert expires its own session at once and hands back the winner's. A Stripe read that fails is never taken as a closed session (review 2026-10-25, H1).
 6. **Who pays the fee decides the total** (`online_payments_arithmetic_chk`): `fee_payer = 'family'` → `total_amount = base_amount + fee_amount`; `fee_payer = 'club'` → `total_amount = base_amount`. `base_amount` is always what the team's paid figure rises by.
-7. **FieldLogicHQ's application fee is NEVER refunded** (owner ruling 2026-10-25, plan §0c): Stripe never returns its processing fee, so FieldLogicHQ keeps its fee on every refund. **`fee_amount` is the processing fee the payer or club sees; `application_fee_amount` (mig 498) is what FieldLogicHQ took of it** — the fee less Stripe's standard cost since Stripe-owned pricing (Stripe takes its share from the club's balance), and the whole fee on a payment opened before mig 498. Refunds and the club's books still read `fee_amount` (the club's whole cost of the fee, exact for a domestic card; Stripe's real fee per payment is Stripe-owned pricing Stage 3).
+7. **FieldLogicHQ's application fee is NEVER refunded** (owner ruling 2026-10-25, plan §0c): Stripe never returns its processing fee, so FieldLogicHQ keeps its fee on every refund. **`fee_amount` is the processing fee the payer or club sees; `application_fee_amount` (mig 498) is what FieldLogicHQ took of it** — the fee less Stripe's standard cost since Stripe-owned pricing (Stripe takes its share from the club's balance), and the whole fee on a payment opened before mig 498. Refunds and the club's books still read `fee_amount` (the club's whole cost of the fee, exact for a domestic card; since mig 501 Stripe's extra, a dispute's fee and Stripe's later stand-alone fees are their own lines: `stripe_fee_amount`).
 8. **A deleted team or tournament does not erase the payment**: `team_id` / `tournament_id` are `ON DELETE SET NULL` and `description` is frozen text, so the receipt stays readable. `org_id` cascades. The delete routes should refuse a team with a paid online payment until it is refunded.
 9. **The stored rate is data, not a restated price**: `fee_pct` / `fee_flat` are the rate used for this payment (the pricing facts live in `docs/agents/strategy/PLAN_PRICING_FACTS.md`).
 10. **Only paid payments are numbered.** `receipt_no` is taken at landing from `online_payment_receipt_seq` (see the column).
@@ -8917,6 +8919,14 @@ one test-mode invoice was voided in Stripe before the drop. Historical tax recor
 <!-- dict:col:online_payments.application_fee_amount -->
 **`application_fee_amount`** (numeric(12,2), NOT NULL, CHECK `>= 0 and <= fee_amount` `online_payments_application_fee_chk`; migration 498, Stripe-owned pricing Stage 2) — **FieldLogicHQ's application fee on this payment, exactly as Stripe was told when the Checkout opened** (`payment_intent_data.application_fee_amount`): `onlineFee().applicationFeeCents`, the fee less Stripe's standard Canadian cost on the whole charge (`STRIPE_STANDARD_COST`, `lib/plan-config.ts`; rate design A, 2026-11-17). Payments opened before mig 498 were backfilled with their `fee_amount` (the old setting took the whole fee). **Stored, never recomputed** — Stripe's price can move, what we took cannot; frozen by `online_payments_guard` (▶ 498). Written by the team pay route's insert and by `online_payment_league_open`'s required `p_application_fee` (refused at zero or above the fee). **GST/HST is inside it (R1)** and Stripe Tax never sees an application fee, so this column is the only per-payment source for FieldLogicHQ's tax return (GST/HST Stage 5 and Stripe-owned pricing Stage 3 read it). Not split per child (`online_payment_items.fee_share` splits `fee_amount`).
 
+<!-- dict:col:online_payments.stripe_fee_amount -->
+**`stripe_fee_amount`** (numeric(12,2), nullable, CHECK `>= 0` `online_payments_stripe_fee_chk`; migration 501, Stripe-owned pricing Stage 3) — **Stripe's own processing fee on this payment**: the `stripe_fee` fee detail on its charge's balance transaction, **never the transaction's `fee`** (which adds our application fee: probe $3.35 + $1.65 = $5.00). Written once by `online_payment_stripe_fee_set` (the landing, else the daily job's `stripe_fee_catch_up` within 35 days: Stripe makes the figure about a second after the payment succeeds). **NULL = not read yet, or a payment on an old `application` account** (never read: the platform paid Stripe there). Frozen by the guard (▶ 501). Stripe's standard cost is `fee_amount − application_fee_amount` (rate design A), so the extra is `stripe_fee_amount` less that.
+<!-- dict:col:online_payments.stripe_extra_entry_id -->
+**`stripe_extra_entry_id`** (uuid FK → `accounting_entries`, nullable; mig 501) — the **"Stripe’s extra · …"** cost line (word "Payment processing", the payment's own book, dated `paid_on`) for Stripe's fee above its standard cost (a foreign card +0.8%, a conversion +2%), in either payer mode. NULL when Stripe took its standard cost (every domestic payment in the probe, to the cent) or on an old account. Frozen by the guard.
+<!-- dict:col:online_payments.dispute_fee_entry_id -->
+**`dispute_fee_entry_id`** (uuid FK → `accounting_entries`, nullable; mig 501) — the **"Dispute fee · receipt N"** cost for the fee Stripe attached to this payment's dispute (the withdrawal's `stripe_fee` detail: $15 card, $5 bank debit; not returned on a win). Booked once by `online_payment_dispute_fee_book` on any dispute event (`bookDisputeFee`), Stripe-owned accounts only, landed payments only. Frozen by the guard.
+<!-- dict:col:online_payments.reversal_fee_entry_id -->
+**`reversal_fee_entry_id`** (uuid FK → `accounting_entries`, nullable; mig 501, owner ruling (f)) — family-pays mode only: the **"Payment processing · …"** cost `online_payment_reverse` posts when the payment is reversed (a lost card dispute, a bank debit returned after it cleared), for the fee the family paid that Stripe pulled back from the club with the payment (less any of it already given back in a refund). Club-pays mode never has one (`processing_cost_entry_id` already says it). Stripe-owned accounts only. Frozen by the guard.
 <!-- dict:col:online_payments.fee_payer -->
 **`fee_payer`** (text, NOT NULL, CHECK `family` | `club`) — A14, frozen from `org_payment_accounts.fee_payer` when the Checkout opened. Decides the total and whether the refund window offers the fee (only when the payer paid it).
 
@@ -9028,6 +9038,31 @@ one test-mode invoice was voided in Stripe before the drop. Historical tax recor
 <!-- dict:col:online_payment_items.created_at -->
 <!-- dict:col:online_payment_items.updated_at -->
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — row stamps.
+
+## `online_payment_stripe_fee_lines`
+<!-- dict:table:online_payment_stripe_fee_lines -->
+
+**Purpose (migration 501, Stripe-owned pricing Stage 3, owner ruling (d) 2026-11-18):** **one row per stand-alone Stripe fee line on a club's Stripe-owned account** — a `stripe_fee` balance transaction with no source, which Stripe bills hours after the event and words with the product and day ("Pre-Authorized Debit in Canada (2026-11-18): Payment Failure" $5; "Card Dispute Countered Fee (2026-11-18)" $15). The daily job (`standalone_stripe_fees`, `takeStandaloneStripeFees`) reads each club's lines of the last 10 days and calls `online_payment_stripe_fee_line_take`, which records the line once (unique `stripe_txn_id`) and books it on its payment's book when **exactly one** payment of its kind sits near its day (a debit that failed before it cleared, `status = 'returned'`, `returned_at` UTC day D−1..D; a card dispute answered, `answered_at` UTC day D−2..D+1), as "Returned debit fee · …" or "Dispute fee · receipt N". Otherwise it stays unmatched with its reason, never guessed. Written only by that function; RLS on, service role only.
+
+<!-- dict:col:online_payment_stripe_fee_lines.id -->
+<!-- dict:col:online_payment_stripe_fee_lines.org_id -->
+<!-- dict:col:online_payment_stripe_fee_lines.stripe_account_id -->
+<!-- dict:col:online_payment_stripe_fee_lines.created_at -->
+<!-- dict:col:online_payment_stripe_fee_lines.livemode -->
+**`id`, `org_id`** (FK organizations, cascade), **`stripe_account_id`** (must be the org's Stripe-owned account), **`livemode`**, **`created_at`** — as usual.
+<!-- dict:col:online_payment_stripe_fee_lines.stripe_txn_id -->
+**`stripe_txn_id`** (text NOT NULL, UNIQUE) — Stripe's balance transaction id (`txn_…`): the line is taken once; a replay answers `already`. The bank check's Payouts mapping finds what was booked for a payout's `stripe_fee` line by it.
+<!-- dict:col:online_payment_stripe_fee_lines.amount -->
+<!-- dict:col:online_payment_stripe_fee_lines.description -->
+<!-- dict:col:online_payment_stripe_fee_lines.stripe_created_at -->
+**`amount`** (numeric(12,2) NOT NULL) — as Stripe gives it: **negative = taken from the club** (a credit is recorded, never booked: `not_a_charge`). **`description`** — Stripe's wording, kept. **`stripe_created_at`** — when Stripe made it; the booked line is dated its Toronto day.
+<!-- dict:col:online_payment_stripe_fee_lines.kind -->
+**`kind`** (text NOT NULL, CHECK `debit_failure` | `dispute_countered` | `other`) — read from Stripe's wording by `standaloneFeeOf` (`lib/online-payment-stripe-fees.ts`); anything unrecognised (a returned countered fee, a new fee) is `other` and stays unmatched.
+<!-- dict:col:online_payment_stripe_fee_lines.online_payment_id -->
+<!-- dict:col:online_payment_stripe_fee_lines.entry_id -->
+<!-- dict:col:online_payment_stripe_fee_lines.booked_at -->
+<!-- dict:col:online_payment_stripe_fee_lines.unmatched_reason -->
+**`online_payment_id`** (FK, set null) — the one payment it matched. **`entry_id`** (FK `accounting_entries`, set null) / **`booked_at`** — the cost line booked for it. **`unmatched_reason`** (CHECK `no_payment` | `several_payments` | `not_a_charge` | `unknown_kind` | `refused`) — why it was not booked (`refused`: the book would not take the line).
 
 ## `online_payment_refunds`
 <!-- dict:table:online_payment_refunds -->

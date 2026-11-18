@@ -35,6 +35,7 @@ import PayoutsStatusLine from '@/components/admin/kit/club/PayoutsStatusLine';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib/export';
 import { useSeasonEmailOpen } from '@/components/admin/kit/useCommunicationsFacts';
+import { STAGE3_LINE_PREFIX } from '@/lib/online-payment-stripe-fees';
 
 interface BookLine {
   id: string; regId: string; player: string | null; day: string; amount: number; method: string | null; receiptNo?: number | null;
@@ -126,6 +127,15 @@ export default function MoneyPage() {
   const day = (d: string) => formatStoredDate(d);
   const finished = read.season.status === 'completed' || read.season.status === 'archived';
 
+  // The season's online-payment cost lines, each named by the start the database wrote it with.
+  const processingWhat = (note: string): string => {
+    const rest = (prefix: string) => note.slice(prefix.length);
+    if (note.startsWith('Processing fee refunded · ')) return W.what.processingBack(rest('Processing fee refunded · '));
+    if (note.startsWith(STAGE3_LINE_PREFIX.extra)) return W.what.processingExtra(rest(STAGE3_LINE_PREFIX.extra));
+    if (note.startsWith(STAGE3_LINE_PREFIX.disputeFee)) return W.what.processingDisputeFee(rest(STAGE3_LINE_PREFIX.disputeFee));
+    if (note.startsWith(STAGE3_LINE_PREFIX.failureFee)) return W.what.processingFailureFee(rest(STAGE3_LINE_PREFIX.failureFee));
+    return W.what.processing(note.replace(/^Payment processing · /, ''));
+  };
   const lineRows: Row[] = [
     ...read.lines.map((l): Row => ({
       key: l.kind === 'processing' ? `cost:${l.id}` : l.kind === 'returned' ? `returned:${l.id}` : l.id, day: l.day, player: l.player ?? '—',
@@ -133,10 +143,7 @@ export default function MoneyPage() {
         : l.kind === 'returned' && l.disputeLost ? DISPUTE_WORDS.moneyLine(l.receiptNo != null ? String(l.receiptNo) : '', disputeWhyShort(l.returnReason ?? null))
         : l.kind === 'returned' ? W.what.returned(l.receiptNo != null ? String(l.receiptNo) : '', reasonShort(l.returnReason ?? null))
         : l.kind === 'refund' ? W.what.refund(l.card?.stripe ? CM.madeInStripe : l.refundWhy)
-        : l.kind === 'processing'
-          ? ((l.note ?? '').startsWith('Processing fee refunded · ')
-            ? W.what.processingBack((l.note ?? '').replace(/^Processing fee refunded · /, ''))
-            : W.what.processing((l.note ?? '').replace(/^Payment processing · /, '')))
+        : l.kind === 'processing' ? processingWhat(l.note ?? '')
           : W.what.fee(l.priceKind),
       // 12b copy §5: a card payment's receipt after its method ("Online, card · receipt 1043").
       how: l.kind === 'returned' && l.disputeLost ? DISPUTE_WORDS.moneyHow

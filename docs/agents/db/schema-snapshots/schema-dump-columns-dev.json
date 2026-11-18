@@ -12213,6 +12213,132 @@
     "ordinal_position": 29
   },
   {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "stripe_account_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "stripe_txn_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "livemode",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "description",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "stripe_created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "online_payment_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "booked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "unmatched_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 14
+  },
+  {
     "table_name": "online_payments",
     "column_name": "id",
     "data_type": "uuid",
@@ -12652,6 +12778,42 @@
     "is_nullable": "NO",
     "column_default": null,
     "ordinal_position": 49
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "stripe_fee_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 50
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "stripe_extra_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 51
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "dispute_fee_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 52
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "reversal_fee_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 53
   },
   {
     "table_name": "online_refunds_unassigned",

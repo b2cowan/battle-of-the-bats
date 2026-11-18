@@ -69,7 +69,11 @@ export interface OurIndex {
  *   league); won after a loss: `won_back.back[].entryId`;
  * - a bank debit reversed after it landed: not stored by its writer, so found by source (tournament: the payment's
  *   "Returned by the bank" line; league: each child's `registration_returned` line).
- * A Stripe fee, a fee given back, a refund that bounced and a failed payout carried back have NO book line.
+ * - Stripe-owned pricing Stage 3 (mig 501): a payment also carries its "Stripe's extra" (`stripe_extra_entry_id`); a
+ *   dispute (either rail) carries its fee (`dispute_fee_entry_id`) and a family-paid fee taken back with it
+ *   (`reversal_fee_entry_id`); a stand-alone Stripe fee line carries what the daily job booked for it
+ *   (`online_payment_stripe_fee_lines.entry_id`).
+ * A fee given back, a refund that bounced, a failed payout carried back and an UNMATCHED Stripe fee have NO book line.
  */
 export interface PayoutEntryIndex {
   /** Our payment id → its receipt line(s) and its club-pays processing cost. */
@@ -80,6 +84,10 @@ export interface PayoutEntryIndex {
   reversals: Readonly<Record<string, readonly string[]>>;
   /** Stripe dispute id → what our book holds for it (card disputes). */
   disputes: Readonly<Record<string, DisputeFacts>>;
+  /** Stage 3 (mig 501): our payment id → its dispute fee and a family-paid fee taken back at a reversal (with the dispute). */
+  fees?: Readonly<Record<string, readonly string[]>>;
+  /** Stage 3: a stand-alone Stripe fee line's id → the line the daily job booked for it. */
+  standalone?: Readonly<Record<string, readonly string[]>>;
 }
 
 export interface DisputeFacts {
@@ -114,8 +122,10 @@ export const PAYOUT_LINE_WORDS = {
   refundBack: 'Refund didn’t reach the card',
   // 12c's own word for a debit the bank took back (`BANK_DEBIT_WORDS.receiptReversedTitle`).
   returned: 'Returned by the bank',
-  // Derived, owed to /marketing: our processing fee given back with a returned debit.
-  feeBack: 'Processing fee returned',
+  // Derived, owed to /marketing: OUR fee given back with a debit that failed before it cleared (Stripe gives its own back
+  // inside the returned line). Stripe-owned pricing Stage 3: "Processing fee returned" read as the whole fee coming back,
+  // which is true only on an old account, where our fee WAS the whole fee — so this says whose part it is, true on both.
+  feeBack: 'FieldLogicHQ’s fee returned',
   dispute: 'Dispute',
   disputeWon: 'Dispute won',
   // Derived, owed to /marketing: a Stripe fee taken from the club's own balance (12d-1 ruling 5).
@@ -176,9 +186,10 @@ export function mapPayoutLines(bts: readonly BtIn[], ours: OurIndex): PayoutLine
     const ids: readonly string[] =
       (kind === 'payment' ? p && ent.payments[p.id]
         : kind === 'refund' ? sid && ent.refunds[sid]
-        : kind === 'dispute' ? (d ? d.lostEntryIds : reversed)
+        : kind === 'dispute' ? [...(d ? d.lostEntryIds : reversed), ...((p && ent.fees?.[p.id]) || [])]
         : kind === 'dispute_won' ? d?.wonEntryIds
         : kind === 'returned' ? reversed
+        : kind === 'stripe_fee' && !sid ? ent.standalone?.[b.id]
         : null) || [];
     return { entryIds: [...ids], ...(sid && d && (kind === 'dispute' || kind === 'dispute_won') ? { dispute: { id: sid, amountCents: d.amountCents, feeCents: d.feeCents } } : {}) };
   };
