@@ -24,6 +24,7 @@ import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import TermsAcceptGate from '@/components/legal/TermsAcceptGate';
 import { adminKitAttr } from '@/lib/admin-kit-marker';
+import { orgForBrowser } from '@/lib/org-for-browser';
 import AdminChrome from './AdminChrome';
 
 const MEMBER_INSTALL = {
@@ -138,7 +139,7 @@ export default async function AdminLayout({
 
   const shell = (
     <OrgProvider
-      initialOrg={authCtx.org}
+      initialOrg={orgForBrowser(authCtx.org, authCtx.role)}
       initialUserRole={authCtx.role}
       initialUserCapabilities={authCtx.capabilities}
       clubHasPayouts={hasPayouts}

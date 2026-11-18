@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { withObservability, setRequestAuth } from '@/lib/observability';
+import { orgForBrowser } from '@/lib/org-for-browser';
 
 // Wrapped for observability: this is one of the hottest endpoints (fired on ~every authenticated
 // page load), so it anchors the calls-vs-errors metric, and it resolves the canonical auth
@@ -21,7 +22,8 @@ export const GET = withObservability(async (req: Request) => {
   });
 
   return NextResponse.json({
-    org: ctx.org,
+    // The billing facts go to the owner and admins only (Board Ready trust close-out 4).
+    org: orgForBrowser(ctx.org, ctx.role),
     userRole: ctx.role,
     userCapabilities: ctx.capabilities,
   });

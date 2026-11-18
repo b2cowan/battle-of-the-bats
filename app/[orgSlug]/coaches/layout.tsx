@@ -39,6 +39,7 @@ import { orgOwnerDisplayName } from '@/lib/member-names';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import styles from './coaches.module.css';
 import { termsGateFor } from '@/components/legal/TermsAcceptGate';
+import { orgForBrowser } from '@/lib/org-for-browser';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
@@ -158,9 +159,10 @@ export default async function CoachesLayout({
     const billingRecovery = wallRole === 'owner' && ownerBillingHref !== null
       && (await headers()).get('x-pathname') === ownerBillingHref;
     // A portal whose free time from FieldLogicHQ ended reads its own wall (Stage 4b): the coach cancelled nothing.
+    const wallViewerRole = billingRecovery ? 'owner' : null;
     const freeTimeEnded = !billingRecovery && authCtx.org.accountKind === 'team_workspace' ? await endedPortalFreeTime(authCtx.org.id) : null;
     return (
-      <OrgProvider initialOrg={authCtx.org} initialUserRole={billingRecovery ? 'owner' : null}>
+      <OrgProvider initialOrg={orgForBrowser(authCtx.org, wallViewerRole)} initialUserRole={wallViewerRole}>
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
           <div className={styles.coachesShell}>
@@ -233,7 +235,7 @@ export default async function CoachesLayout({
     const viewerIsOwner = initialUserRole === 'owner';
     const ownerName = viewerIsOwner ? null : await orgOwnerDisplayName(authCtx.org.id);
     return (
-      <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
+      <OrgProvider initialOrg={orgForBrowser(authCtx.org, initialUserRole)} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
           <div className={styles.coachesShell}>
@@ -290,7 +292,7 @@ export default async function CoachesLayout({
       // keeps the operator strip above and a real triad of doors below: where am I, who am I,
       // and a way out. The warm marker + theme wrapper match the portal shell exactly, so the
       // wall reads as this product rather than as an error page.
-      <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
+      <OrgProvider initialOrg={orgForBrowser(authCtx.org, initialUserRole)} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
           <div className={styles.coachesShell}>
@@ -343,7 +345,7 @@ export default async function CoachesLayout({
     // layout). Without this, OrgProvider fetches /api/org-context with no slug and a multi-org
     // user resolves to their DEFAULT org, not this team workspace — which mislabeled the sidebar
     // and scoped the notification bell to the wrong org (found 2026-07-13).
-    <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
+    <OrgProvider initialOrg={orgForBrowser(authCtx.org, initialUserRole)} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
       <CoachesProvider
         orgSlug={orgSlug}
         initialAssignments={assignments}
