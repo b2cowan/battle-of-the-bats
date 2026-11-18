@@ -1,5 +1,5 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+**Last updated:** 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
 Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
 rests on it.
 
@@ -84,6 +84,26 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
     accepts the current DPA): Supabase **[date]** · AWS **[date]** · Resend **[date]**. Stripe: in place.
   - **Google (the business Gmail):** a free consumer account; Google's business data-processing terms do not cover it. Listed
     honestly in the privacy policy §6 (P4).
+  - **ImprovMX** (added 2026-11-18): forwards mail to our @fieldlogichq.ca addresses into the Gmail inbox (MX records
+    resolve to mx1/mx2.improvmx.com, checked 2026-11-18; live since the 2026-11-12 receiving fix). Inbound mail is "stored
+    transiently in France, in AWS's Paris region, and is deleted once delivered"; outbound in France and the US. Its DPA
+    is "pre-signed by us, so you just need to countersign" — **NOT accepted with the service terms; countersigned [date]** (owner ruled 2026-11-18 to countersign, Q4).
+    No published sub-processor list; no certification. **Not named in the published privacy policy** (edits P1–P4,
+    `BOARD_READY_DATA_TERMS_REVIEW.md`).
+  - **Sub-processor notices to us** (read 2026-11-18): Supabase 30 days only if subscribed, 5 days to object; AWS 30 days
+    (email if subscribed); Resend 14 days in writing; Stripe list update, email if subscribed. Owner ruled 2026-11-18 to subscribe to all three (Q8); subscribed: **[not
+    recorded]**.
+- **Census 2026-11-18 (Board Ready data terms; path:line in `BOARD_READY_DATA_TERMS_REVIEW.md` §1), adding to 2026-11-05:**
+  web push payloads are encrypted for the device (`web-push` with the subscription keys), so the push service cannot read
+  them; the server (not visitors' browsers) fetches Google Fonts files for share images; calendar services pull a signed
+  feed only when a person subscribes; map addresses are plain links; a club's online payment sends Stripe the child's
+  first name and division (line items) and the children's full names with the season (payment description); server
+  `console.error` lines reach AWS CloudWatch (retention not set from the repo); bookkeeping receipts sit in AWS S3/DSQL
+  us-east-2. **AI:** the product calls no AI service, but AI assistant sessions can run read-only queries on the
+  production database (`scripts/db-query.mjs --prod`), so "never given to an AI service" is not yet true. **Owner ruled 2026-11-18 (Q3): assistant sessions read production only as counts and schema, never rows holding a person's information** — binding on sessions only once written into `AGENCY_RULES.md`.
+  **Auth email:** the product sends its own auth links through Resend; the host's stock "password changed" notice (on in
+  production since 2026-11-18) goes through whatever SMTP production Auth has, and the host's built-in mailer delivers only
+  to the project's team (owner question 5).
 - **Supabase encryption** (its own security page, [supabase.com/security](https://supabase.com/security), read 2026-11-08): "All
   customer data is encrypted at rest with AES-256 and in transit via TLS." Used in the privacy policy §10.
 - **Breach procedure and record:** `BREACH_PROCEDURE.md` v0.1, **owner-approved 2026-11-17**. The record lives in **a spreadsheet in
@@ -119,7 +139,9 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   settled before one is sent (`BUSINESS_DECISIONS.md` ~L3537).
 
 ## What does NOT exist
-- No cookie notice and no separate subprocessor list (the Privacy Policy's §6 is the first one).
+- No cookie notice and no published subprocessor list (the Privacy Policy's §6 is the only one live). A list and data
+  terms for clubs are **drafted 2026-11-18** (`drafts/SUBPROCESSOR_LIST.md`, `drafts/DATA_TERMS_FOR_ORGANIZATIONS.md`),
+  not approved or published.
 - ~~No published Terms of Service or privacy policy; no legal links.~~ **Superseded 2026-11-17 (Stage 6 step 6.7):** both are
   published in code as version 2026-11-17 (frozen files in `lib/legal-documents/`, the switch `LEGAL_PAGES_PUBLISHED` on), with
   the links in the site footer, the account menu and page, and the sign-in and sign-up cards, and acceptance at every door. **On

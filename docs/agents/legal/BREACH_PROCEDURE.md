@@ -12,6 +12,7 @@
 **Change log:** 0.1 · 2026-11-08 · First draft (GST/HST Stage 6 step 6.1). Statute and regulation text read this session [V].
 0.1 · 2026-11-12 · §1 gains "a fraudulent two-step reset"; §3 step 1 gains the account-takeover containment line (Board Ready two-step Part 4).
 0.1 · 2026-11-17 · Owner approved it, with the record as a sheet in the business Google account (§6 decided; sheet started, 16 headings and the "No breaches as of" line, walk part 4).
+0.1 · 2026-11-18 · §3 step 4 gains the club-notice deadline: no later than 72 hours after confirming it touches the club's information (owner ruling Q2, Board Ready data terms; `BOARD_READY_DATA_TERMS_REVIEW.md`). Supabase owes us notice within 48 hours where feasible (its DPA cl. 10).
 
 **No incident data in this repo, ever.** The record itself lives outside it (§6). This file holds the procedure and the
 record's shape only.
@@ -65,8 +66,9 @@ Write the reasoning down either way (§5, column 9). "No RROSH" with no reason i
    the recipient to delete. Do not wait for the assessment. If an account may have been taken over (for example a fraudulent two-step reset): sign the account out everywhere, reset its password, re-establish two-step with the real person, and check the account's activity.
 2. **Open the record entry** the same day (§5), even if it later proves not to be a breach.
 3. **Assess** (§2). Find out what information, whose, how many people, when it started and ended.
-4. **Club information?** Email the club's owner straight away with what you know (the report list below). Keep going on our
-   side; the club decides its own report.
+4. **Club information?** Email the club's owner straight away with what you know (the report list below), **and no later than
+   72 hours after confirming it touches the club's information** (owner ruling 2026-11-18, the Data Terms for organizations
+   §9). Send more as you learn it. Keep going on our side; the club decides its own report.
 5. **Our information with RROSH →** as soon as feasible after deciding the breach happened:
    - **Report to the Privacy Commissioner** in writing, using the OPC's PIPEDA breach report form (priv.gc.ca). It must give
      (SOR/2018-64 s. 2): the circumstances and cause if known; when it happened (or the approximate period); the information

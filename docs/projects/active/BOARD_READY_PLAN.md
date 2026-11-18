@@ -438,7 +438,7 @@ points here, so they aren't tracked twice)
   rep team, player or person still leaves its files; the dev club fixture files sample documents under the web name.
 - [ ] Backups: confirm what the Pro plan does (daily backups vs point-in-time recovery), decide whether PITR is worth the add-on, and write it down in `docs/agents/ops/`.
 - [ ] Publish the legal pages (privacy policy, terms) already tied to `GST_HST_STAGE6_TERMS_PLAN.md`, so this plan does not duplicate that work.
-- [ ] Data-processing terms for clubs and a sub-processor list (`LEGAL_INDEX.md` rows "not started") via `/legal`.
+- [ ] Data-processing terms for clubs and a sub-processor list via `/legal`. **Drafted 2026-11-18** (`docs/agents/legal/drafts/DATA_TERMS_FOR_ORGANIZATIONS.md`, `drafts/SUBPROCESSOR_LIST.md`; research `BOARD_READY_DATA_TERMS_REVIEW.md`); **owner questions 1–11 RULED as recommended 2026-11-18**; left: the owner approves both texts, his five steps (ImprovMX agreement, production sign-in email check, 90-day server logs, supplier notices, four dates), the AI rule written into `AGENCY_RULES.md`, `/accounting` on the objection refund, and `/plan` for the two pages.
 
 **0b · ~~Canadian data residency~~** **RULED NOT MOVING** (owner 2026-11-10; §8 keeps the estimate). The pack states
 plainly where data lives (USA, with the suppliers named), and that is all it needs to say.

@@ -5,7 +5,7 @@
 | **Version** | next after 2026-11-17 (posted with a new effective date under §13; no new use and no new kind of company, so no advance email is owed: what we collect does not change, one purpose narrows, one email and one invoice kind are gone, and one existing record is named in two rows) |
 | **Status** | draft — held to publish on the same day as the Payments Terms (owner call (b), recommended); not published |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
-| **Last reviewed** | 2026-11-18 |
+| **Last reviewed** | 2026-11-18 (0.2: Board Ready data terms) |
 | **Starts from** | `lib/legal-documents/privacy/2026-11-17.md`, word for word, with the changes in the log |
 
 **Change log**
@@ -21,6 +21,15 @@
      the Payments Terms draft's Before list item 7).
   Fixes the `LEGAL_INDEX.md` carry-forward row (`STRIPE_FEE_INVOICE_RETIREMENT.md`): MUST-FIX before the first production
   club sets up payouts. Nothing else changes.
+- **Draft 0.2 (2026-11-18, Board Ready data terms; owner Q11 "fold them in now")** — edits P1–P6, P8, P9 of
+  `BOARD_READY_DATA_TERMS_REVIEW.md` §3: §6 gains an **ImprovMX** row (forwards mail to our addresses; France until
+  delivered, and the US — live since 2026-11-12 and missing from the published version, the risky direction); the Google
+  row says the mail is forwarded by ImprovMX; "How we hold them to it" names ImprovMX's agreement; the push row says the
+  alert is encrypted so only the device can read it (`lib/web-push.ts:80-90`); one sentence points at the list; §7 says
+  mail to our addresses passes through France; §9's three backup sentences say "gone within 7 days"
+  (`BACKUPS_AND_RESTORE.md`); §5 points at the Data Terms. **Still no advance email under §13:** ImprovMX is an email
+  service, the same kind of company as Resend and Gmail. **Held back:** P7 (the password-changed email, after the
+  production SMTP check, Q5) and P10 (server-log retention, after Q7).
 
 **How to read this draft.** Customer text is everything after the first `---` line, up to "Before this can be
 published". Owner notes are in blockquotes that start `> NOTE`.
@@ -175,7 +184,8 @@ from the club's emails still gets the in-app note. We ask parents not to put hea
 
 **What we do with it:** store it, keep it secure, display it to the people the club authorizes, send the emails the club
 asks us to send, and help the club when it asks for support. **We do not sell it, we do not use it for advertising, and
-we do not use it for our own purposes.**
+we do not use it for our own purposes.** Our Data Terms for organizations make these commitments to each club as part of
+our Terms of Service.
 
 **What we don't do:** FieldLogicHQ does not show a player's name, date of birth or roster on any public page. A club can
 publish its schedules, standings, team names, and the names of coaches who choose to show theirs.
@@ -200,12 +210,17 @@ needs. We do not sell personal information, and we do not share it with advertis
 | **Supabase** | Database, sign-in and file storage | Everything stored in FieldLogicHQ | United States (Ohio) |
 | **Amazon Web Services (AWS)** | Hosts the website; holds our own business records (expenses and receipts, tax returns) | Everything that passes through the website. Our business records hold no customer's name or address | United States (Ohio) |
 | **Resend** | Sends our emails, and the emails clubs send through FieldLogicHQ | Recipient's name and email address, and the message | United States |
+| **ImprovMX** | Forwards email sent to our own addresses to our inbox | Messages people send us, which can include contact details | France (held only until delivered) and the United States |
 | **Stripe** | Card payments for our plans; and, when a club takes payments online, the club's own payment account, from which Stripe also takes FieldLogicHQ's fee | For our plans and invoices: the owner's email, the billing name and address, the card, and a reference to the account that made the purchase. For club payments: the payer's email, card, what is being paid for and the player names on the payment | Canada, the United States and other countries |
-| **Google** (a Gmail account) | Our business email inbox — the addresses on this page arrive there | Messages people send us, which can include contact details | The United States and other countries |
-| **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address and the alert text, which can name a person, a child or a team, or give an email address (for example "New sign-up: Henry Kim") | Varies |
+| **Google** (a Gmail account) | Our business email inbox — the addresses on this page arrive there, forwarded by ImprovMX | Messages people send us, which can include contact details | The United States and other countries |
+| **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address, and the alert, encrypted so that only your device can read it | Varies |
+
+The full list, with each company's own security pages and how we tell organizations about a new one, is at [address of
+the list].
 
 **How we hold them to it.** Supabase, AWS, Resend and Stripe each protect the personal information they handle for us under
-their standard data-processing terms, which form part of our agreement with each of them. Our Gmail inbox is a free account,
+their standard data-processing terms, which form part of our agreement with each of them. ImprovMX handles it under its
+data-processing agreement. Our Gmail inbox is a free account,
 which those business terms don't cover — so we keep what arrives there to what people send us.
 
 **Professional advisers.** We may share our business records with professional advisers, such as an accountant, who must
@@ -223,7 +238,7 @@ as this policy says, and we will tell account holders.
 ## 7. Information stored outside Canada
 
 FieldLogicHQ is run from Ontario, but **the companies in §6 store and process personal information outside Canada,
-mainly in the United States.** While it is there, it is protected by our agreements with them, but it is also subject to
+mainly in the United States.** Email sent to our own addresses passes through France on its way to our inbox. While it is there, it is protected by our agreements with them, but it is also subject to
 the laws of that country, and **the courts, law enforcement and national-security authorities there may be able to
 obtain it** under those laws.
 
@@ -257,8 +272,8 @@ and email addresses.
   or a parent's request, or the organization is deleted. **When an organization is deleted, its information and the files
   uploaded to it are deleted with it**, except our own tax records (above), the record of the Payments Terms its owners
   agreed to (above), and our record that the deletion happened (the
-  organization's name and web address, who deleted it, when and why). Copies in our routine database backups age out on
-  our database host's schedule.
+  organization's name and web address, who deleted it, when and why). Copies in our routine database backups are gone within
+  7 days.
 - **Two-step sign-in records** (§3) are kept while your account exists, or, for your set-up time in an organization, while
   that organization exists; they are deleted with the account or the organization. Your backup codes are removed when you
   turn two-step off or replace your phone; the record of codes recently accepted is cleared the next time you enter a code.
@@ -266,8 +281,8 @@ and email addresses.
   limit.
 - **Friend requests** (§5) are deleted when the club marks the season finished. If a club never does, they are deleted
   automatically 60 days after the season's last day, and the friend code on each sign-up is cleared at the same time. A
-  copy of the Friend requests list that a club downloaded is the club's own, and our routine database backups age out on our
-  database host's schedule. To have a friend request removed, ask the club: its registrar can delete a request at any time.
+  copy of the Friend requests list that a club downloaded is the club's own, and copies in our routine database backups are gone within
+  7 days. To have a friend request removed, ask the club: its registrar can delete a request at any time.
 - **A parent's answers about whether a player is coming** (§5). The words of a note are deleted 30 days after the event. The answer
   itself is the player's attendance record, which is the club's: it is kept as the team's attendance, and this clean-up never deletes
   it. Who set the answer (a parent's account) and the answer before it are removed 60 days after the last event on the team's
@@ -279,7 +294,7 @@ and email addresses.
   update them by hand. The in-app notes the coach receives about answers are kept like any other in-app note. An in-app note is kept until the person it was sent to deletes it, or until their account or the club is deleted (no end date today). A note can hold a name, a child’s name, an email address and, for a request to withdraw a child, the words the family wrote.
 - **Emails a club sends** (§5): the subject and message are deleted 12 months after the email is sent, and the names of the
   people it went to 24 months after; the date, sender, group and counts are kept while the organization exists. Deleting an
-  organization deletes these records with it. Copies in our routine database backups age out on our database host's schedule.
+  organization deletes these records with it. Copies in our routine database backups are gone within 7 days.
 - **Error reports** are deleted after 30 days; the detailed log of records our staff opened, after 90 days; performance
   measurements, after one year. The list of pages our staff visit in our own tools is kept with no set end date today.
 
@@ -362,6 +377,13 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
    record; the 2026-11-17 version does not name it).
 3. The billing address is still asked for before payouts (Stage 4 owner call (a), built: `hasBillingLocation`). If that
    step is ever dropped, the §3 purpose changes again.
+4. **(0.2)** ImprovMX's pre-signed DPA is countersigned (owner Q4). If not, §6 "How we hold them to it" says instead
+   "ImprovMX holds mail only until it is delivered."
+5. **(0.2)** The sub-processor list (`drafts/SUBPROCESSOR_LIST.md`) is live at a fixed address, which fills §6's
+   "[address of the list]". **If the list is not published by this version's day, cut that one sentence** — this version
+   must not wait for the list (it is the must-fix before the first production payout); the ImprovMX row stays either way.
+6. **(0.2)** The §5 Data Terms sentence stays only if the Data Terms publish the same day (they ride in the next Terms
+   version, owner Q6); otherwise cut it.
 
 **Publishing steps**
 1. Freeze the text as `lib/legal-documents/privacy/<date>.md` (the filter's output), add `{ version, sha256 }` to
@@ -371,4 +393,6 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
 
 ## For a lawyer's eye
 
-Nothing new: the five edits narrow a purpose, remove a retired email and invoice, and name an existing record.
+Nothing new: the five edits narrow a purpose, remove a retired email and invoice, and name an existing record. The 0.2
+edits name a supplier already in use and state facts; the only exposure they touch (privacy requests reaching a free Gmail
+account and a forwarder) is on file in `drafts/SUBPROCESSOR_LIST.md` § For a lawyer's eye.
