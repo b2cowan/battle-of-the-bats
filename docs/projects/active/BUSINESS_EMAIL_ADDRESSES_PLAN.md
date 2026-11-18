@@ -13,6 +13,10 @@ the forwarder dashboard + Route 53; nothing else starts until R1 comes back.
   way go out from `fieldlogichq@gmail.com`. That is the address the 2026-10-26 goal said no customer would see.
   Accepted in practice by the deferral at expected volume. Suggested trigger: set up the mailbox before the
   first reply to a *paying* client, not only after "a handful".
+- **R1 trigger: RULED 2026-11-18** (owner, `/brief do business-email`, choosing "Before 1st paying reply (Recommended)"):
+  the real mailbox (§2b shape A) is set up **before the first reply to a paying client**, which replaces "after a handful".
+  The owner had asked to drop the step because forwarding is in place; the agent noted that forwarding covers only
+  incoming mail, and that after Gmail's send-as ends in January 2027 a reply from Gmail shows `fieldlogichq@gmail.com`.
 **Owner ask (2026-10-26, restated 2026-11-12):** mail sent to our domain addresses (`hello@`, `support@`,
 `privacy@fieldlogichq.ca`) forwards into `fieldlogichq@gmail.com`, and we can reply as those addresses.
 PM brief: `BUSINESS_EMAIL_ADDRESSES_PM_BRIEF.md`.
