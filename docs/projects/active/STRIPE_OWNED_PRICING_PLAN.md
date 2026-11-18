@@ -363,7 +363,7 @@ probe account's lines, then match it as a credit); `/accounting` and `/review`; 
   walks it replaces are in §541. Found writing it, fixed the same day: on a club setting up payouts again (its account
   disconnected or on the old fee setting) the Before window printed the card rate alone (`app/api/admin/payouts/route.ts`: such a
   club now reads as before setup, both rates). For the walk: the walk seed takes `--org`, and
-  `scripts/run-stripe-fees-daily-dev.mjs` runs the daily job once on dev. The project closes on the owner's word after the walk.
+  `scripts/run-stripe-fees-daily-dev.mjs` runs the daily job once on dev. **The walk PASSED 41/41 (owner paste 2026-11-18).** The project closes on the owner's word; the step 17 finding below is still to build.
 
 **Stage 3's help and words (left by Stage 5, 2026-11-18, for this stage to write WITH its code; `/docs`, same rules: no
 dead anchors, `keywords` / `searchText` / `answerText` in the same pass).** Stage 5 ran before Stage 3 and left every
@@ -382,6 +382,26 @@ sentence about what the club's books, the Payouts tab or the refund window's cos
 - With Stage 2's "Left for Stage 3" list above (the Payouts tab map, the bank check's "on its way", the refund window's
   domestic-card exactness).
 Then Stage 5's close (the owner walk for Stages 2 to 5) runs after this stage.
+
+**Found in walk §541 step 17 (2026-11-18): a dispute that arrives before its payment lands is dropped silently, and Stripe
+is told it went fine.** Test card 4000000000000259 disputes the payment at the instant it is charged, so its dispute events
+beat the landing by about a second (dev: both dispute events processed at 15:20:42.3, no error; the payment landed at
+15:20:43.2; no dispute row, no "Dispute fee" line). `applyCardDispute` and `bookDisputeFee` look the payment up by charge or
+intent and, finding none (both ids are stored at the landing), `return` with a 200, so Stripe never redelivers. The existing
+"not landed yet, throw so Stripe redelivers" guard only covers a payment already found. A real dispute arrives days later, so
+this is a narrow race, not a launch blocker, but the loss is silent (no dispute record, no item for the club, no fee).
+- **Fix (small):** when a dispute names a charge/intent the books don't have yet, answer a retryable failure so Stripe
+  redelivers, as the found-but-unlanded case already does. Care: a dispute on a charge that will never be ours (another
+  platform, a non-FieldLogicHQ payment on the same account) must not retry for ever; bound it (e.g. only while the account's
+  newest open payment is under a few minutes old, or cap on the event's `attempts`).
+- **BUILT 2026-11-18 (uncommitted):** `applyCardDispute` now throws (Stripe redelivers) when no payment holds the dispute's charge
+  AND the account has a card payment started in the last 30 minutes that has not landed (`hasFreshUnlandedCardPayment`); any
+  other unknown dispute is let go as before, so nothing retries for ever. A bank debit's dispute can wait up to 30 minutes
+  behind an unrelated fresh card payment, then settles. Unit guard extended in `online-payments-card-dispute.test.ts` (21 pass).
+  Not yet replayed against dev with the 0259 card: re-run walk §541 W3 steps 13 to 17 without the resend workaround when convenient.
+- **Walk workaround (no longer needed once built):** resend the two dispute events with `stripe events resend <id> --account <acct>` once the
+  payment has landed (§541 step 17).
+- Route the build through `/plan`; it needs a unit test for the not-found-yet case and a replay test.
 
 ### Stage 4 — Retire the recovered-fee machinery
 The monthly Stripe-fee invoices, their daily job, the club's Stripe-fees list, alert line and overdue banner, the

@@ -141,6 +141,14 @@ describe('the webhook: every dispute event, any order; a bank debit keeps 12c’
   it('a card dispute is re-read from Stripe on every event, after the payment is known to be a card, and written by the one function', () => {
     const fn = body(LANDING, 'applyCardDispute');
     assert.match(fn, /op\.rail !== 'card'\) return;[\s\S]*retrieveDispute\(stripeAccountId, event\.id\)/);
+    // A dispute that beats its payment's landing (no row holds its charge yet) is retried, bounded to a fresh unlanded card
+    // payment, never for ever and never silently dropped (walk §541 step 17).
+    assert.match(fn, /if \(!op\) \{[\s\S]*?hasFreshUnlandedCardPayment\(stripeAccountId\)\) throw[\s\S]*?return;\s*\}/);
+    // ...and looks once more after that check, so a landing that finished in between is not read as "none landing".
+    assert.match(fn, /hasFreshUnlandedCardPayment\(stripeAccountId\)\) throw[\s\S]*?op = await findPayment\(\);\s*if \(!op\) return;/);
+    const fresh = body(LANDING, 'hasFreshUnlandedCardPayment');
+    assert.match(fresh, /\.eq\('rail', 'card'\)\.is\('landed_at', null\)/);
+    assert.match(fresh, /\.gte\('created_at', since\)/);
     assert.match(fn, /supabaseAdmin\.rpc\('online_payment_dispute_apply'/);
     // A card not landed yet is retried, never consumed.
     assert.match(fn, /!op\.landed_at && op\.status === 'open'\) throw/);

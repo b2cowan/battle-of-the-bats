@@ -535,9 +535,22 @@ export async function applyCardDispute(stripeAccountId: string, event: Pick<Stri
   const chargeId = typeof event.charge === 'string' ? event.charge : event.charge?.id;
   const intentId = typeof event.payment_intent === 'string' ? event.payment_intent : event.payment_intent?.id;
   if (!chargeId && !intentId) return;
-  let op = chargeId ? (await supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('stripe_charge_id', chargeId).maybeSingle()).data as DisputedPay | null : null;
-  if (!op && intentId) op = (await supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('stripe_payment_intent_id', intentId).maybeSingle()).data as DisputedPay | null;
-  if (!op || op.stripe_account_id !== stripeAccountId || op.rail !== 'card') return;
+  const findPayment = async (): Promise<DisputedPay | null> => {
+    let found = chargeId ? (await supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('stripe_charge_id', chargeId).maybeSingle()).data as DisputedPay | null : null;
+    if (!found && intentId) found = (await supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('stripe_payment_intent_id', intentId).maybeSingle()).data as DisputedPay | null;
+    return found;
+  };
+  let op = await findPayment();
+  if (!op) {
+    // Walk §541 step 17: a test dispute card disputes at the instant it is charged, so its events can beat the landing, which is
+    // when the payment's charge and intent ids are first stored. Finding nothing then is "not yet", not "never ours": retry
+    // while this account has a card payment started moments ago and still unlanded; a dispute on anything else is let go.
+    if (await hasFreshUnlandedCardPayment(stripeAccountId)) throw new Error('No payment holds this dispute’s charge yet, and one is landing; the dispute will be retried.');
+    // The landing may have finished between the first look and that check (it then reads as "none landing"): look once more.
+    op = await findPayment();
+    if (!op) return;
+  }
+  if (op.stripe_account_id !== stripeAccountId || op.rail !== 'card') return;
   // Paid at Stripe but not landed yet: throw, so Stripe redelivers once the landing is in (the line a loss takes back must
   // exist). A payment whose landing failed is recorded as it stands: the "isn't in the record" item already has the desk.
   if (!op.landed_at && op.status === 'open') throw new Error('This card payment has not landed yet; the dispute will be retried.');
@@ -557,6 +570,19 @@ export async function applyCardDispute(stripeAccountId: string, event: Pick<Stri
   if (error) throw new Error(error.message);
   const out = res as { disputeId: string; lostNow?: boolean; wonBack?: boolean; over?: number };
   await afterDisputeApplied(op.id, out);
+}
+
+/** How long after a card payment starts a dispute that names no known charge is still waited for (minutes). */
+const DISPUTE_BEFORE_LANDING_MINUTES = 30;
+
+/** True while the account has a card payment opened within the last half hour that has not landed (its ids are not stored yet). */
+async function hasFreshUnlandedCardPayment(stripeAccountId: string): Promise<boolean> {
+  const since = new Date(Date.now() - DISPUTE_BEFORE_LANDING_MINUTES * 60_000).toISOString();
+  const { data, error } = await supabaseAdmin.from('online_payments').select('id')
+    .eq('stripe_account_id', stripeAccountId).eq('rail', 'card').is('landed_at', null).in('status', ['open', 'paid'])
+    .gte('created_at', since).limit(1);
+  if (error) throw new Error(error.message);
+  return (data?.length ?? 0) > 0;
 }
 
 /** Everything after the dispute's write, each step once-only or read from the rows, so a replay owes nothing twice. */
