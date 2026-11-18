@@ -45,7 +45,7 @@ This file is the **index** of open work: **one line per project**. **A project's
 
 ## Chores
 
-- None open. The list carried into the shrink was closed by the owner on 2026-11-17; a new chore is one line here.
+- [ ] **Every PDF's footer date in the house form** — the shared PDF footer prints "Exported: 2026-11-18"; move it to the house date form for every document (owner 2026-11-18, Stage 10 A11; run it through `/plan` as one small item, the PDF check matches on the footer wording).
 
 ## Living documents (not tasks; they evolve in place)
 

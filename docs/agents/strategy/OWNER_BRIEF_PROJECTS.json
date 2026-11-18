@@ -221,7 +221,7 @@
       "goals": ["quality"], "lane": "later", "order": 43, "phase": "Planning",
       "stage": "Now: the new public look on production (Stages 0 to 8 and the page layout standard) → Next: Stage 9, the schedule editor refuses a game placed before a game it depends on",
       "next": "Look at how one game depends on another and every place a game's time is set, then bring you Stage 9's open questions.",
-      "remains": "Stage 9, ruled and not started; Stage 10, printable rules, to draw; then sponsors, emails in the page's look, and a clean-up of unused branding settings.",
+      "remains": "Stage 9, ruled and not started; Stage 10, printable rules, drawn and ruled 2026-11-18 (all twelve asks as recommended), its build prompt next; then sponsors, emails in the page's look, and a clean-up of unused branding settings.",
       "waitsOn": [], "finishesAfter": [],
       "youOwe": ["Rule the admin strip's small Dismiss button", "Rule showing the app bar only inside the installed app", "Rule Stage 2's four recorded calls: the Register card's start day, the count on invite-only events, the Finished stamp after a late reschedule, and the spots count"] },
     { "id": "bookkeeping", "name": "Owner bookkeeping", "track": "product", "state": "open", "checked": true,

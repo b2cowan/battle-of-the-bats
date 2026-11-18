@@ -1,0 +1,521 @@
+<title>Printable Rules Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house drawings page. Sticky numbered tabs, a View row, one section at a time. Screens at true size
+   (phone 390, desk 1280) on the light frame's shipped geometry; paper at true letter size (816 x 1056 px = 8.5 x 11 in
+   at 96 dpi) as the PDF kit draws it; all on a cooler document ground so they read as specimens. */
+:root{
+  --doc-bg:#E9ECEE; --doc-panel:#FFFFFF; --doc-ink:#1C2126; --doc-soft:#4A535C; --doc-dim:#6B747D; --doc-line:#D3D8DD;
+  --doc-accent:#2F5D50; --doc-flag:#8A5300; --doc-flag-bg:#FFF3DC; --doc-good:#2C6A2A; --doc-good-bg:#E6F0E2;
+  --f-title:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --f-text:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-paper:Helvetica,Arial,"Liberation Sans",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --doc-bg:#14181B; --doc-panel:#1D2226; --doc-ink:#E8ECEF; --doc-soft:#B9C1C8; --doc-dim:#8E979F; --doc-line:#323A40;
+  --doc-accent:#7FC2AE; --doc-flag:#F2B35C; --doc-flag-bg:#3A2C14; --doc-good:#8FD08A; --doc-good-bg:#1D3320; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doc-bg:#14181B; --doc-panel:#1D2226; --doc-ink:#E8ECEF; --doc-soft:#B9C1C8; --doc-dim:#8E979F; --doc-line:#323A40;
+  --doc-accent:#7FC2AE; --doc-flag:#F2B35C; --doc-flag-bg:#3A2C14; --doc-good:#8FD08A; --doc-good-bg:#1D3320; color-scheme:dark}
+body{background:var(--doc-bg);color:var(--doc-ink);font:15px/1.6 var(--f-text);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--doc-bg)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1360px;margin:0 auto}
+header.top{padding-block:20px 0}
+header.top h1{font:700 30px/1.1 var(--f-title);margin:0;text-wrap:balance}
+header.top p{margin:4px 0 0;color:var(--doc-dim);font-size:13px;max-width:90ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--doc-bg);border-bottom:1px solid var(--doc-line);margin-top:14px}
+nav.tabs .in{display:flex;overflow-x:auto;gap:2px}
+nav.tabs a{flex:none;padding:12px 12px 10px;color:var(--doc-soft);text-decoration:none;font-weight:600;font-size:14px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--doc-ink);border-bottom-color:var(--doc-accent)}
+nav.tabs a:focus-visible,button:focus-visible,label:focus-within{outline:2px solid var(--doc-accent);outline-offset:-2px}
+.viewrow{display:flex;align-items:center;gap:10px 16px;padding-block:10px;flex-wrap:wrap;font-size:13px;color:var(--doc-dim);min-height:44px}
+.vs{display:inline-flex;background:#FFFFFF;border:1px solid #D6D0C4;border-radius:999px;padding:3px}
+.vs button{font:600 13px/1 var(--f-text);border:0;background:none;color:#4E473D;border-radius:999px;padding:8px 14px;min-height:40px;cursor:pointer}
+.vs button[aria-pressed="true"]{background:#E8EDDC;color:#2F3A12}
+.bwlab{display:inline-flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;color:var(--doc-soft);font-weight:600}
+main{padding-block:8px 64px}
+h2{font:700 26px/1.15 var(--f-title);margin:0 0 6px;text-wrap:balance}
+h3{font:700 19px/1.2 var(--f-title);margin:22px 0 6px}
+.lede{max-width:80ch;color:var(--doc-soft);margin:0 0 16px}
+.row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.spec{min-width:0;max-width:100%}
+.cap{font:600 12px/1.3 var(--f-text);color:var(--doc-dim);letter-spacing:.03em;text-transform:uppercase;margin:0 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.note{max-width:390px;font-size:13.5px;color:var(--doc-soft);margin:8px 0 0}
+.note b{color:var(--doc-ink)}
+.side{max-width:380px;min-width:0;font-size:13.5px;color:var(--doc-soft)}
+.side p{margin:0 0 10px}.side b{color:var(--doc-ink)}
+.tag{display:inline-block;font:700 11px/1 var(--f-text);letter-spacing:.05em;padding:4px 7px;border-radius:4px;text-transform:uppercase}
+.tag.new{background:var(--doc-good-bg);color:var(--doc-good)}.tag.re{background:var(--doc-flag-bg);color:var(--doc-flag)}.tag.un{background:var(--doc-line);color:var(--doc-soft)}
+.panel{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 18px;margin:0 0 16px;max-width:92ch}
+.panel ul{margin:6px 0 0;padding-left:20px}.panel li{margin:0 0 4px}
+.phonebox{width:390px;height:760px;overflow-y:auto;overflow-x:hidden;border:1px solid var(--doc-line);border-radius:22px;background:#F6F5F2;position:relative}
+.cropbox{width:390px;border:1px solid var(--doc-line);border-radius:12px;background:#F6F5F2;overflow:hidden;position:relative}
+.deskwrap,.paperwrap{overflow-x:auto;max-width:100%}
+.deskwrap{border:1px solid var(--doc-line);border-radius:10px}
+.deskbox{width:1280px;height:600px;overflow:hidden;background:#F6F5F2;position:relative}
+.paperwrap{padding:4px 4px 10px}
+.mk{font:700 12px/1 var(--f-text);background:#D9480F;color:#FFFFFF;border:2px solid #FFFFFF;border-radius:999px;padding:6px 9px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35);white-space:nowrap;vertical-align:middle;margin-left:6px}
+.mk:hover{background:#B33A0A}
+.pmk{position:absolute;z-index:5}
+.pmk .mk{margin:0}
+body.differs .today{display:none}
+body.differs .same{opacity:.2}
+
+/* ── The screen specimen: the light frame as shipped (club colour role, Classic type). Geometry from TournamentFrame,
+   TournamentSideRail, PublicParts, ClubKit (.list/.row), PublicDisclosure and PublicRules. ── */
+.tf{--ground:#F6F5F2;--card:#FFFFFF;--text:#1F1B16;--soft:#4E473D;--dim:#6F675B;--line:#E4E0D8;--field:#D6D0C4;
+  --fill:#1E3A8A;--on:#FFFFFF;--ink:#1E3A8A;--acc:#C9A227;
+  background:var(--ground);color:var(--text);font:400 16px/1.5 var(--f-text);position:relative;color-scheme:light;min-height:100%;display:flex;flex-direction:column}
+.tf *{box-sizing:border-box}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.band{display:flex;align-items:center;gap:12px;min-height:72px;background:var(--fill);color:var(--on);border-bottom:3px solid var(--acc);flex:none}
+.band .logo{width:44px;height:44px;background:#FFFFFF;border-radius:10px;display:grid;place-items:center;flex:none}
+.band .bn{min-width:0;flex:1}
+.band .bn b{display:block;font:700 20px/1.1 var(--f-title)}
+.band .bn span{display:block;font:600 12px/1.3 var(--f-text);margin-top:3px}
+.band .host{font:700 14px/1 var(--f-text);min-height:44px;display:flex;align-items:center}
+.band .ico{width:44px;height:44px;display:grid;place-items:center}
+.dk .band{padding:0 32px}
+.dk .band .bn b{font-size:24px}
+.ph .band{padding:0 6px 0 16px}
+.dkbody{display:flex;flex:1;min-height:0}
+.rail{width:248px;flex:none;border-right:1px solid var(--line);background:var(--card);padding:24px 12px;display:flex;flex-direction:column;gap:2px}
+.rail span{display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:6px;font:600 16px/1.2 var(--f-text);color:var(--soft)}
+.rail span.on{background:var(--ground);color:var(--text);box-shadow:inset 3px 0 0 var(--ink)}
+.dkmain{flex:1;padding:28px 32px;min-width:0}
+.colm{max-width:960px;display:flex;flex-direction:column;gap:24px}
+.ttabs{background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:4px;padding:0 8px;overflow:hidden;flex:none}
+.ttabs span{font:600 14px/1 var(--f-text);color:var(--soft);min-height:44px;display:flex;align-items:center;padding:3px 8px 0;border-bottom:3px solid transparent;white-space:nowrap}
+.ttabs span.on{color:var(--text);border-bottom-color:var(--ink)}
+.phmain{padding:20px 16px 32px;display:flex;flex-direction:column;gap:24px}
+.notel{margin:0;color:var(--soft);font:400 14px/1.5 var(--f-text);min-width:0}
+.notel u{color:var(--ink);text-decoration:underline}
+.noterow{display:flex;gap:16px;align-items:flex-start}
+.noterow .notel{flex:1}
+/* The desk's button: R11's white outlined button, small (ClubKit .btnSecondary + .btnSm / PublicParts .hostBtn). */
+.dl{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:184px;padding:0 16px;border:1px solid var(--field);border-radius:8px;background:var(--card);color:var(--text);font:600 14px/1 var(--f-text);white-space:nowrap;flex:none}
+.dl .ic{width:18px;height:18px}
+.dl small{font:600 12px/1 var(--f-text);color:var(--dim)}
+/* The phone's: the standard's exception for a phone's secondary action, the bare symbol (as Calendar on the Schedule). */
+.sym{width:44px;height:44px;display:grid;place-items:center;border-radius:8px;color:var(--ink);flex:none;margin:-10px -10px 0 0}
+.spin{width:18px;height:18px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block}
+.list{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lr{position:relative;display:flex;align-items:center;gap:12px;min-height:60px;padding:12px 40px 12px 16px;border-top:1px solid var(--line)}
+.list>.lr:first-child{border-top:0}
+.lr .ic{color:var(--ink)}
+.lr .nm{flex:1;min-width:0;display:flex;flex-direction:column}
+.lr .nm b{font:600 16px/1.25 var(--f-text)}
+.lr .nm small{font:400 12px/1.3 var(--f-text);color:var(--dim)}
+.lr .nm em{font-style:normal;color:var(--dim);margin-right:6px}
+.lr::after{content:"";position:absolute;right:16px;top:50%;width:9px;height:9px;border:solid var(--dim);border-width:2px 2px 0 0;transform:translateY(-50%) rotate(45deg)}
+.ph .lr::after{transform:translateY(-75%) rotate(135deg)}
+.ph .lr.open::after{transform:translateY(-25%) rotate(-45deg)}
+.inpl{padding:12px 16px 16px;border-top:1px solid var(--line);background:var(--card)}
+.pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;font:400 16px/1.5 var(--f-text)}
+.pts li{display:grid;grid-template-columns:36px 1fr}
+.pts li i{font-style:normal;font-weight:600;color:var(--dim);font-variant-numeric:tabular-nums}
+.pts.bul{list-style:disc;padding-left:20px;display:block}.pts.bul li{display:list-item;padding-left:4px}.pts.bul li+li{margin-top:12px}
+.cact{display:flex;justify-content:flex-end;margin-top:8px}
+.cact .sym{margin:0;color:var(--text)}
+.win{width:640px;border:1px solid var(--line);border-radius:8px;background:var(--ground);overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.whead{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 20px;border-bottom:1px solid var(--line);background:var(--card)}
+.whead .ic{color:var(--ink)}
+.whead b{flex:1;font:700 18px/1.3 var(--f-text)}
+.whead b em{font-style:normal;color:var(--dim);margin-right:6px}
+.whead .sym{margin:0;color:var(--text)}
+.wbody{padding:16px 20px 20px}
+.backdrop{background:rgba(0,0,0,.45);padding:40px;display:grid;place-items:center}
+.fbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:400 13px/1.3 var(--f-text);color:var(--dim)}
+.fbar .pill{min-height:44px;display:inline-flex;align-items:center}
+.fbar .pill span{border:1px solid var(--line);border-radius:99px;padding:2px 10px;font-size:12.5px;color:var(--dim)}
+.fbar .pill.on span{background:var(--fill);border-color:var(--fill);color:var(--on);font-weight:700}
+.fbar a{color:var(--ink);min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
+.empty{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.empty .ic{width:24px;height:24px;color:var(--ink)}
+.empty .eb{font:700 11px/1.3 var(--f-text);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.empty b{font:700 20px/1.15 var(--f-title)}
+.empty p{margin:0;color:var(--soft);font-size:14px}
+.err{font-size:13px;color:#B03A22;margin:-16px 0 0}
+.dlb{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid var(--field);border-radius:8px;background:var(--card);color:var(--text);font:600 14px/1 var(--f-text);align-self:flex-start}
+
+/* ── The paper: what the PDF kit draws (Helvetica only; 1 pt = 1.333 px, 1 mm = 3.78 px) ── */
+.paper{--pc:#1E3A8A;--ph:#1E3A8A;width:816px;height:1056px;background:#FFFFFF;color:#111111;font-family:var(--f-paper);padding:53px 53px 26px;box-sizing:border-box;display:flex;flex-direction:column;box-shadow:0 1px 5px rgba(0,0,0,.28);position:relative;color-scheme:light;flex:none}
+.paper::before{content:"";position:absolute;left:0;right:0;top:0;height:30px;background:var(--pc)}
+.paper.nobar::before{display:none}
+.paper.crop{height:auto;padding-bottom:28px}
+.paper.crop::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22px;background:repeating-linear-gradient(135deg,#FFFFFF 0 6px,#EEF0F2 6px 12px)}
+body.bw .paper{filter:grayscale(1)}
+.pid{display:flex;align-items:center;gap:15px;padding-bottom:9px;border-bottom:1px solid #D2D2DC}
+.pid .plogo{height:45px;display:flex;align-items:center;flex:none}
+.pid .pn{min-width:0}
+.pid .pn b{display:block;font-size:18.7px;line-height:1.2;color:#141423}
+.pid .pn span{display:block;font-size:12px;color:#505064;margin-top:3px}
+.pcont{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:7px;border-bottom:1px solid #D2D2DC;margin-top:-8px}
+.pcont b{font-size:12px;color:#141423}.pcont span{font-size:10px;color:#505064}
+.pstamp{display:flex;gap:16px;align-items:center;margin-top:12px;padding:10px 12px;border:1px solid #B8B8B8;border-radius:3px;font-size:11.3px;line-height:1.45;color:#222222}
+.pstamp .qr{width:83px;height:83px;flex:none}
+.pstamp p{margin:0}.pstamp b{font-size:12px}
+.psec h4{display:flex;align-items:center;gap:8px;font-size:16px;line-height:1.2;font-weight:700;color:var(--ph);margin:17px 0 6px}
+.psec h4 .ic{width:16px;height:16px;stroke:var(--ph)}
+.psec h4 .lab{font-size:10.7px;font-weight:700;color:#333333;border:1px solid #888888;border-radius:2px;padding:1px 5px;margin-left:4px}
+.psec ol{list-style:none;margin:0;padding:0}
+.psec li{display:grid;grid-template-columns:40px 1fr;font-size:13.3px;line-height:1.45;margin:0 0 4px}
+.psec li i{font-style:normal;font-weight:700;color:#444444;font-variant-numeric:tabular-nums}
+.pres li{grid-template-columns:22px 1fr}
+.pres li span small{display:block;font-size:11.3px;color:#444444}
+.pfoot{margin-top:auto;display:flex;justify-content:space-between;gap:12px;font-size:9.3px;color:#6E6E7D}
+
+/* The asks. */
+.ask{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 18px;margin:0 0 14px;max-width:92ch}
+.ask.hl{outline:3px solid #D9480F}
+.ask h3{margin:0 0 4px}
+.ask .why{margin:0 0 10px;color:var(--doc-soft);font-size:14px}
+.ask label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:6px;cursor:pointer;min-height:44px;font-size:14px}
+.ask label:hover{background:var(--doc-bg)}
+.ask input[type=radio]{margin-top:4px;flex:none}
+.ask .rec{font-weight:700;color:var(--doc-good)}
+.ask textarea{width:100%;box-sizing:border-box;margin-top:8px;min-height:44px;font:14px/1.4 var(--f-text);padding:8px 10px;border:1px solid var(--doc-line);border-radius:6px;background:var(--doc-bg);color:var(--doc-ink)}
+.copybar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:6px 0 10px}
+.copybtn{font:700 14px/1 var(--f-text);min-height:44px;padding:0 18px;border-radius:6px;border:0;background:var(--doc-accent);color:var(--doc-panel);cursor:pointer}
+#paste{white-space:pre-wrap;background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:8px;padding:12px;font-size:13px;max-width:92ch}
+#paste:empty{display:none}
+@media (prefers-reduced-motion:no-preference){.spin{animation:sp .9s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Printable rules · Stage 10 drawings</h1>
+    <p>Public tournament pages, Stage 10. A download on the public Rules page, and the letter-size file it makes. Drawn 2026-11-18 on an example tournament; round 2, after the design review. <b>Ruled 2026-11-18: all twelve asks as recommended.</b> Nothing is built; the build prompt is next.</p>
+  </header>
+  <nav class="tabs" aria-label="Sections"><div class="in">
+    <a href="#page">1 · The Rules page</a>
+    <a href="#button">2 · The download’s states</a>
+    <a href="#print">3 · Page one</a>
+    <a href="#page2">4 · Page two</a>
+    <a href="#look">5 · Whose look</a>
+    <a href="#asks">6 · Asks</a>
+  </div></nav>
+  <div class="viewrow">
+    <span id="vlab">View</span>
+    <span class="vs" id="vsw" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></span>
+    <label class="bwlab" for="bw" id="bwl"><input type="checkbox" id="bw"> Print the paper in black and white</label>
+  </div>
+
+  <main>
+    <!-- 1 -->
+    <section id="page" data-tab data-view="1" hidden>
+      <h2>1 · The Rules page, with the download</h2>
+      <p class="lede">On a desk, “Download rules” sits where you marked it, at the right end of the “subject to change” line. It is the white outlined button every public page uses for a second action. On a phone the written standard gives a page’s second action a bare symbol with no border and no word, as the Schedule’s Calendar symbol has. So the download is a download symbol in the same place, at the line’s right end <b>(A10)</b>. With recommended A2, sections carry numbers on the page too, so “rule 3.2” on paper can be found on a phone. <b>Show only what differs</b> hides today’s page and dims what doesn’t change.</p>
+      <div class="row">
+        <div class="spec today"><p class="cap">Today · desk 1280 <span class="tag un">Unchanged</span></p><div class="deskwrap"><div class="deskbox" id="desk-today"></div></div></div>
+        <div class="spec"><p class="cap">Drawn · desk 1280 <span class="tag new">New</span> the button <span class="tag re">Restyled</span> numbers (A2)</p><div class="deskwrap"><div class="deskbox" id="desk-drawn"></div></div></div>
+      </div>
+      <h3>A section opened on a desk: the window</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · desk, Pitching limits open <span class="tag re">Restyled</span> numbers (A2)</p><div class="deskwrap" style="border-radius:10px"><div class="backdrop" id="desk-win"></div></div></div>
+        <div class="side"><p><b>The window is unchanged</b> apart from the numbers. It is 640 px wide, with the section’s icon and title in its title bar, then Copy link and Close. The points take a hanging number instead of a bullet, so a long point wraps under its own text.</p></div>
+      </div>
+      <h3>On a phone</h3>
+      <div class="row">
+        <div class="spec today"><p class="cap">Today · phone 390</p><div class="phonebox" id="ph-today"></div></div>
+        <div class="spec"><p class="cap">Drawn · phone 390, Pitching limits open in place</p><div class="phonebox" id="ph-drawn"></div></div>
+        <div class="side">
+          <p><b>The symbol.</b> 44 px, in the colour role’s ink, at the right end of the note’s first line. The note wraps beside it, as on a desk. Read aloud it says “Download the rules as a PDF”. Tab 2 shows the labelled-button alternative.</p>
+          <p><b>The tap.</b> The file opens in the browser’s or phone’s PDF viewer, where it can be saved, shared or printed. It is named after the event: <i>Riverdale Fall Classic 2026 rules.pdf</i>.</p>
+          <p><b>Numbers (A2).</b> Rows read “3 · Pitching limits”, and points read 3.1, 3.2. The numbers follow the organizer’s order, so moving a section renumbers it on the page and in the next download.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="button" data-tab hidden>
+      <h2>2 · The download’s states</h2>
+      <p class="lede">The file reads the same rules the page shows, through the same checks, so it can never print something the page hides. These crops show the phone page’s body only; its band and tabs are unchanged.</p>
+      <div class="row">
+        <div class="spec"><p class="cap">Narrowed to one division <span class="tag new">New</span> the symbol <span class="tag un">Unchanged</span> the division bar</p><div class="cropbox"><div class="tf ph"><div class="phmain" id="st-filter"></div></div></div>
+          <p class="note"><b>A1, recommended.</b> The page is showing U11 (a visitor’s saved division), and the file prints what the page shows: the rules for every division plus U11’s own, with U11 in its header. On a desk the button reads “Download U11 rules”. On a phone the division bar right above the list already says it. The division bar is drawn as it ships <b>(A12)</b>.</p></div>
+        <div class="spec"><p class="cap">After the tap <span class="tag new">New</span></p><div class="cropbox"><div class="tf ph"><div class="phmain" id="st-busy"></div></div></div>
+          <p class="note"><b>Preparing.</b> The symbol turns into a spinner while the file is made, about a second, and can’t be tapped twice. On a desk the button keeps its width and reads “Preparing…”. If it fails, a line appears under the note: “The rules couldn’t be prepared. Try again.”</p></div>
+        <div class="spec"><p class="cap">A10 option b · a labelled button <span class="tag re">Not recommended</span></p><div class="cropbox"><div class="tf ph"><div class="phmain" id="st-label"></div></div></div>
+          <p class="note"><b>The departure.</b> The white outlined button under the note, worded as on a desk. It is easier to find, but it would be the one phone page that breaks the ruled second-action rule, and that rule has a guard in the build.</p></div>
+      </div>
+      <div class="row" style="margin-top:22px">
+        <div class="spec"><p class="cap">Rules off, or none yet <span class="tag un">Unchanged</span></p><div class="cropbox"><div class="tf ph"><div class="phmain" id="st-empty"></div></div></div>
+          <p class="note"><b>No download.</b> The empty state stays as it is. There is nothing to print.</p></div>
+        <div class="spec"><p class="cap">Only downloads, no rule sections</p><div class="cropbox"><div class="tf ph"><div class="phmain" id="st-files"></div></div></div>
+          <p class="note"><b>No download either.</b> The downloads are files already, and a PDF listing them would be a page of names. The download needs at least one rule section.</p></div>
+        <div class="side" style="margin-top:22px">
+          <p><b>The admin preview</b> shows the download inert, like the preview’s other doors. <button class="mk" type="button" data-ask="A8">A8</button> asks whether the organizer needs a copy of their own.</p>
+          <p><b>A section held back</b> because its division’s schedule isn’t published never prints, the same as on the page.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="print" data-tab data-paper="1" hidden>
+      <h2>3 · Page one, at true size</h2>
+      <p class="lede">Letter paper, 8½ × 11 in, at the size it prints, with the recommended answers. The colour bar across the top, the logo-and-name band, the grey hairline and the footer are what every FieldLogicHQ PDF already draws. This file sits with the schedule and results printouts as one family. Tick <b>Print the paper in black and white</b> above to see it from a school-office printer.</p>
+      <div class="row">
+        <div class="spec"><p class="cap">The file, page 1 <span class="tag new">New</span> the document <span class="tag un">Unchanged</span> the kit’s header and footer</p><div class="paperwrap"><div id="paper1"></div></div></div>
+        <div class="side">
+          <p><b>The header</b> <button class="mk" type="button" data-ask="A5">A5</button> The kit’s 8 mm colour bar is drawn in the tournament’s colour. The logo follows, then the event’s name, then a line with “Tournament rules”, the dates and the host. The section headings take the colour, and every rule prints black. A long name breaks onto a second line instead of running off the page, a small change to the kit’s header.</p>
+          <p><b>The stamp</b> <button class="mk" type="button" data-ask="A3">A3</button><button class="mk" type="button" data-ask="A4">A4</button> Nothing records when a rule last changed, so the stamp says when this copy was made, on the tournament’s clock. It also carries the page’s own “subject to change” sentence and the live page’s address, with a code that opens it.</p>
+          <p><b>Sections</b> <button class="mk" type="button" data-ask="A2">A2</button> The organizer’s icon, the number and the title. Each point has a hanging number in a column sized to the widest number in the file (“12.10” fits).</p>
+          <p><b>Type</b> <button class="mk" type="button" data-ask="A6">A6</button> Helvetica, the kit’s one face: rules at 10 pt, headings at 12 pt, the name at 14 pt.</p>
+          <p><b>The footer</b> <button class="mk" type="button" data-ask="A11">A11</button> The shared footer prints the date as 2026-11-18, as on every FieldLogicHQ PDF. The automatic check on every PDF proves it is on every page and that no text runs into it.</p>
+          <p><b>Running onto page two.</b> A point never splits across pages. A section that splits keeps at least two points on each side; otherwise it moves whole to the next page.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="page2" data-tab data-paper="1" hidden>
+      <h2>4 · Page two: the continued section, a division-only section, the downloads</h2>
+      <p class="lede">Every page after the first gets the kit’s short header: the colour bar, the event’s name on the left, “Tournament rules (continued)” on the right, and a hairline, as the kit’s other long documents do. The section that ran over repeats its title with “(continued)”. Because this is the whole rulebook, the U13-only section carries a label <b>(A9)</b>. The downloads print as text <b>(A7)</b>.</p>
+      <div class="row">
+        <div class="spec"><p class="cap">The file, page 2 <span class="tag new">New</span> the document <span class="tag un">Unchanged</span> the kit’s short header</p><div class="paperwrap"><div id="paper2"></div></div></div>
+        <div class="side">
+          <p><b>“(continued)”</b> repeats the title without the icon, so it reads as the same section.</p>
+          <p><b>A division label</b> <button class="mk" type="button" data-ask="A9">A9</button> The page shows no label on a section kept to U13: narrowed to U11, it just leaves the section out. On paper the whole book is in a U11 coach’s hand, so the label says “U13 only”.</p>
+          <p><b>The downloads</b> <button class="mk" type="button" data-ask="A7">A7</button> They come last, as on the page, in the organizer’s order. A link prints its address. An uploaded file’s address is too long to type, so it says where to find it. The page never narrows downloads to a division, so the file doesn’t either.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="look" data-tab data-view="1" data-paper="1" hidden>
+      <h2>5 · Whose look prints</h2>
+      <p class="lede">You asked “club look or the tournament’s own”. <b>That is already ruled</b>: the file follows the same rule as the page’s band (Stage 1a), so it never becomes a second setting to keep in step. What is left is how much of the colour prints <b>(A5)</b>. Below is the top of page one for each plan, plus a tournament whose colour is too pale to read as type. <b>Show only what differs</b> dims the rules, which are the same in all four.</p>
+      <div class="row" id="looks"></div>
+    </section>
+
+    <!-- 6 -->
+    <section id="asks" data-tab hidden>
+      <h2>6 · Asks</h2>
+      <div class="panel">
+        <b>Settled, not asks</b> (standing constraints from the plan and the code):
+        <ul>
+          <li>The file reads the rules through the page’s own checks. A Rules page switched off, an unpublished tournament, or a section held back with its division never prints.</li>
+          <li>There is no download when there are no rule sections (tab 2).</li>
+          <li>The look follows the band’s rule (tab 5), and the paper is letter size.</li>
+          <li>It is made with the same PDF kit as every other FieldLogicHQ PDF, header and footer included, and goes through the same automatic check.</li>
+          <li>The plan held this behind the preview switch “until Stage 8”. Stage 8 has shipped and the switch is gone, so this reaches customers on its own release.</li>
+        </ul>
+      </div>
+      <p class="lede">Your four questions from the plan are here as A1 (the whole book or a division), A5 (the look, re-framed because whose look prints is already ruled), A3 and A4 (the stamp and the code) and A8 (an organizer’s copy). The drawing added A2, A6, A7 and A9, and the design review added A10 to A12. The first option of each is the recommendation. Pick one, add a note if you like, then copy your answers back into the chat.</p>
+      <div id="asklist"></div>
+      <div class="copybar"><button type="button" class="copybtn" id="copybtn">Copy my answers</button><span id="copied" role="status"></span></div>
+      <pre id="paste"></pre>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var I=function(n,c){return '<svg class="ic'+(c?' '+c:'')+'" aria-hidden="true"><use href="#i-'+n+'"/></svg>';};
+  var MK=function(a){return '<button class="mk" type="button" data-ask="'+a+'">'+a+'</button>';};
+  var CREST_IN='<path d="M20 3 34 8v11c0 9-6 15-14 18C12 34 6 28 6 19V8z" fill="#1E3A8A"/><path d="M20 7 30 10.5v8.5c0 7-4.5 11.5-10 14-5.5-2.5-10-7-10-14v-8.5z" fill="#C9A227"/><text x="20" y="25" text-anchor="middle" font-family="Arial" font-weight="700" font-size="11" fill="#1E3A8A">RM</text></svg>';
+  var CREST='<svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true">'+CREST_IN, PCREST='<svg viewBox="0 0 40 40" width="45" height="45" aria-hidden="true">'+CREST_IN;
+  var EV='Riverdale Fall Classic 2026', ADDR='www.fieldlogichq.ca/riverdale-minor-ball/fall-classic-2026/rules';
+  var NOTE='These rules are subject to change at the discretion of the tournament director. Updates will be posted on the News &amp; Announcements page. For questions or clarifications, contact the tournament office at <u>tournaments@riverdaleminor.ca</u>.';
+  var SHORT='These rules are subject to change at the discretion of the tournament director. Updates will be posted on the News &amp; Announcements page.';
+  var S=[
+    {n:1,i:'shield',t:'General',p:['All games follow the provincial association’s rules except where these rules say otherwise.','Teams check in at the tournament office by 7:30 p.m. Friday. Rosters are frozen at check-in.','Teams must be at their field 30 minutes before their scheduled start.','A team more than 15 minutes late forfeits the game 7–0.','No player may play for two teams in this tournament.','The tournament director’s decision on anything these rules do not cover is final.']},
+    {n:2,i:'book',t:'Game length and time limits',p:['Pool games are 6 innings or 1 hour 45 minutes, whichever comes first.','No new inning starts after 1 hour 30 minutes. The plate umpire keeps the official time.','Mercy rule: 15 runs after 3 innings, 10 after 4, 8 after 5.','A pool game tied at the time limit ends as a tie.','Playoff games have no time limit. A tied playoff game uses the international tie-breaker from the 8th inning.']},
+    {n:3,i:'alert',t:'Pitching limits',p:['U11 pitchers may throw 75 pitches a day; U13 pitchers 85.','A pitcher who throws 51 or more pitches in a day needs one full calendar day of rest before pitching again.','The home team keeps the official pitch count. Both coaches sign it after the game and hand it to the tournament office.','A pitcher removed from the mound may not return to pitch in the same game.','A team that breaks a pitching limit forfeits the game.']},
+    {n:4,i:'shield',t:'Equipment',p:['Bats must carry the USA Baseball or BBCOR stamp. The umpire may remove any bat.','Catchers wear a helmet, mask, throat guard, chest protector and shin guards, warm-ups included.','Metal cleats are not allowed in U11.']},
+    {n:5,i:'info',t:'Weather and lightning',p:['At the first lightning or thunder, everyone leaves the field. Play resumes 30 minutes after the last strike.','A game stopped after 4 innings (3½ with the home team ahead) is complete.','Schedule changes for weather are posted on the News &amp; Announcements page.','Entry fees are not refunded for games lost to weather.']},
+    {n:6,i:'tick',t:'Tie-breakers',p:['Head-to-head record between the tied teams.','Fewest runs allowed in pool play.','Most runs scored in pool play.','A coin toss by the tournament director.']},
+    {n:7,i:'help',t:'U13 baserunning',u13:true,p:['Leading off is allowed once the pitcher releases the ball.','The dropped third strike is in effect.','Stealing home is allowed.']}
+  ];
+  var R=[{l:'Field map and parking',f:true},{l:'Provincial association rulebook',a:'ballprovince.ca/rulebook-2026'},{l:'Pitch count sheet',f:true},{l:'Medical information form',f:true}];
+  var TABS=['Overview','Schedule','Standings','Playoffs','Teams','Rules'];
+
+  function band(dk){
+    return '<div class="band same"><span class="logo">'+CREST+'</span><span class="bn"><b>'+EV+'</b><span>Nov 21–23 · This weekend</span></span>'
+      +(dk?'<span class="host">Hosted by Riverdale Minor Ball ›</span>':'')+'<span class="ico">'+I('user')+'</span></div>';
+  }
+  var BTN=function(label){return '<span class="dl">'+I('down')+(label||'Download rules')+'<small>PDF</small></span>';};
+  var SYM='<span class="sym" role="img" aria-label="Download the rules as a PDF">'+I('down')+'</span>';
+  function pts(s,drawn){
+    return drawn?'<ol class="pts">'+s.p.map(function(p,k){return '<li><i>'+s.n+'.'+(k+1)+'</i><span>'+p+'</span></li>';}).join('')+'</ol>'
+      :'<ul class="pts bul">'+s.p.map(function(p){return '<li>'+p+'</li>';}).join('')+'</ul>';
+  }
+  function rows(drawn,openN,only,mk){
+    var h='<div class="list">';
+    S.forEach(function(s){
+      if(only&&s.u13)return;
+      var open=openN===s.n;
+      h+='<div class="lr '+(drawn?'':'same')+(open?' open':'')+'">'+I(s.i)+'<span class="nm"><b>'+(drawn?'<em>'+s.n+' ·</em>':'')+s.t+(mk&&s.n===1?MK('A2'):'')+'</b></span></div>';
+      if(open)h+='<div class="inpl">'+pts(s,drawn)+'<div class="cact"><span class="sym" role="img" aria-label="Copy a link to '+s.t+'">'+I('copy')+'</span></div></div>';
+    });
+    return h+'<div class="lr same">'+I('file')+'<span class="nm"><b>Downloads &amp; Resources</b><small>4 files</small></span></div></div>';
+  }
+  function desk(drawn){
+    var note='<div class="noterow"><p class="notel'+(drawn?' same':'')+'">'+NOTE+'</p>'+(drawn?BTN()+MK('A1'):'')+'</div>';
+    return '<div class="tf dk">'+band(true)+'<div class="dkbody"><div class="rail same">'+TABS.map(function(t){return '<span class="'+(t==='Rules'?'on':'')+'">'+t+'</span>';}).join('')+'</div>'
+      +'<div class="dkmain"><div class="colm">'+note+rows(drawn,null,false,drawn)+'</div></div></div></div>';
+  }
+  function phone(drawn){
+    var note='<div class="noterow"><p class="notel'+(drawn?' same':'')+'">'+NOTE+'</p>'+(drawn?SYM:'')+'</div>'+(drawn?'<div style="margin-top:-18px;text-align:right">'+MK('A10')+'</div>':'');
+    return '<div class="tf ph">'+band(false)+'<div class="ttabs same">'+TABS.map(function(t){return '<span class="'+(t==='Rules'?'on':'')+'">'+t+'</span>';}).join('')+'</div>'
+      +'<div class="phmain">'+note+rows(drawn,3)+'</div></div>';
+  }
+  document.getElementById('desk-today').innerHTML=desk(false);
+  document.getElementById('desk-drawn').innerHTML=desk(true);
+  document.getElementById('ph-today').innerHTML=phone(false);
+  document.getElementById('ph-drawn').innerHTML=phone(true);
+  document.getElementById('desk-win').innerHTML='<div class="tf" style="background:transparent;min-height:0"><div class="win"><div class="whead">'+I('alert')+'<b><em>3 ·</em>Pitching limits</b><span class="sym" role="img" aria-label="Copy link">'+I('copy')+'</span><span class="sym" role="img" aria-label="Close">'+I('x')+'</span></div><div class="wbody">'+pts(S[2],true)+'</div></div></div>';
+
+  var FBAR='<div class="fbar"><span>Division:</span><span class="pill"><span>U9</span></span><span class="pill on"><span>U11</span></span><span class="pill"><span>U13</span></span><span>·</span><a>View all →</a>'+MK('A12')+'</div>';
+  var SHORTROWS='<div class="list"><div class="lr">'+I('shield')+'<span class="nm"><b><em>1 ·</em>General</b></span></div><div class="lr">'+I('book')+'<span class="nm"><b><em>2 ·</em>Game length and time limits</b></span></div><div class="lr">'+I('alert')+'<span class="nm"><b><em>3 ·</em>Pitching limits</b></span></div></div>';
+  document.getElementById('st-filter').innerHTML='<div class="noterow"><p class="notel">'+SHORT+'</p>'+SYM+'</div>'+FBAR+SHORTROWS;
+  document.getElementById('st-busy').innerHTML='<div class="noterow"><p class="notel">'+SHORT+'</p><span class="sym" role="img" aria-label="Preparing the rules"><span class="spin" aria-hidden="true"></span></span></div>'
+    +'<p class="notel" style="color:#6F675B;font-size:12px;margin-top:-12px">If it fails:</p><div class="noterow" style="margin-top:-16px"><p class="notel">'+SHORT+'</p>'+SYM+'</div><p class="err">The rules couldn’t be prepared. Try again.</p>';
+  document.getElementById('st-label').innerHTML='<p class="notel">'+SHORT+'</p><span class="dlb" style="margin-top:-12px">'+I('down')+'Download rules<small style="font:600 12px/1 var(--f-text);color:#6F675B">PDF</small></span>'+SHORTROWS;
+  document.getElementById('st-empty').innerHTML='<div class="empty">'+I('book')+'<span class="eb">Rules</span><b>Rules coming soon</b><p>Rules and resources have not been published yet. Check back before game day.</p></div>';
+  document.getElementById('st-files').innerHTML='<p class="notel">'+SHORT+'</p><div class="list"><div class="lr">'+I('file')+'<span class="nm"><b>Downloads &amp; Resources</b><small>4 files</small></span></div></div>';
+
+  // An example code: real finder squares, the rest at random. It does not scan.
+  function qr(){
+    var n=25,c=3.32,seed=7,h='<svg class="qr" viewBox="0 0 '+(n*c)+' '+(n*c)+'" role="img" aria-label="Example code (does not scan)"><rect width="100%" height="100%" fill="#FFFFFF"/>';
+    function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
+    function finder(x,y){h+='<rect x="'+x*c+'" y="'+y*c+'" width="'+7*c+'" height="'+7*c+'" fill="#111"/><rect x="'+(x+1)*c+'" y="'+(y+1)*c+'" width="'+5*c+'" height="'+5*c+'" fill="#FFF"/><rect x="'+(x+2)*c+'" y="'+(y+2)*c+'" width="'+3*c+'" height="'+3*c+'" fill="#111"/>';}
+    for(var y=0;y<n;y++)for(var x=0;x<n;x++){
+      if((x<8&&y<8)||(x>n-9&&y<8)||(x<8&&y>n-9))continue;
+      if(rnd()<.48)h+='<rect x="'+x*c+'" y="'+y*c+'" width="'+c+'" height="'+c+'" fill="#111"/>';
+    }
+    finder(0,0);finder(n-7,0);finder(0,n-7);
+    return h+'</svg>';
+  }
+  function pid(logo,name,line){return '<div class="pid">'+(logo?'<span class="plogo">'+logo+'</span>':'')+'<span class="pn"><b>'+name+'</b><span>'+line+'</span></span></div>';}
+  function stamp(){return '<div class="pstamp">'+qr()+'<p><b>Rules as of Wed, Nov 18, 2026, 3:12 p.m.</b><br>'+SHORT+'<br>The current rules are always at <b>'+ADDR+'</b>, or scan the code.</p></div>';}
+  function sec(s,from,to,cont){
+    return '<div class="psec"><h4>'+(cont?'':I(s.i))+s.n+'&nbsp;&nbsp;'+s.t+(cont?' (continued)':'')+(s.u13&&!cont?'<span class="lab">U13 only</span>':'')+'</h4><ol>'
+      +s.p.slice(from,to).map(function(p,k){return '<li><i>'+s.n+'.'+(from+k+1)+'</i><span>'+p+'</span></li>';}).join('')+'</ol></div>';
+  }
+  function foot(pg){return '<div class="pfoot"><span>Exported: 2026-11-18&nbsp;&nbsp;·&nbsp;&nbsp;Generated by FieldLogicHQ</span><span>Page '+pg+' of 2</span></div>';}
+  var LINE='Tournament rules · Nov 21–23, 2026 · Hosted by Riverdale Minor Ball';
+  document.getElementById('paper1').innerHTML='<div class="paper">'+pid(PCREST,EV,LINE)
+    +'<span class="pmk" style="top:62px;right:16px">'+MK('A5')+'</span>'
+    +stamp()+'<span class="pmk" style="top:150px;left:14px">'+MK('A4')+'</span><span class="pmk" style="top:150px;right:16px">'+MK('A3')+'</span>'
+    +sec(S[0],0,6)+'<span class="pmk" style="top:268px;left:12px">'+MK('A2')+'</span>'
+    +sec(S[1],0,5)+sec(S[2],0,5)+sec(S[3],0,3)+sec(S[4],0,2)+foot(1)
+    +'<span class="pmk" style="bottom:8px;left:330px">'+MK('A11')+'</span></div>';
+  var res='<div class="psec pres"><h4>'+I('file')+'Downloads &amp; Resources</h4><ol>'+R.map(function(r){
+      return '<li><i>•</i><span><b>'+r.l+'</b><small>'+(r.f?'A file on the Rules page. Scan the code on page 1 to open it.':r.a)+'</small></span></li>';}).join('')+'</ol></div>';
+  document.getElementById('paper2').innerHTML='<div class="paper"><div class="pcont"><b>'+EV+'</b><span>Tournament rules (continued)</span></div>'
+    +sec(S[4],2,4,true)+sec(S[5],0,4)+sec(S[6],0,3)
+    +'<span class="pmk" style="top:335px;right:60px">'+MK('A9')+'</span>'
+    +res+'<span class="pmk" style="top:470px;right:60px">'+MK('A7')+'</span>'+foot(2)+'</div>';
+
+  // Tab 5: the top of page one per plan.
+  var LEAF='<svg viewBox="0 0 40 40" width="45" height="45" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#2F6B3A"/><path d="M20 8l3 7 6-2-3 6 5 3-7 1 1 7-5-5-5 5 1-7-7-1 5-3-3-6 6 2z" fill="#FFFFFF"/></svg>';
+  var SUN='<svg viewBox="0 0 40 40" width="45" height="45" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#F2C230"/><circle cx="20" cy="20" r="8" fill="#FFFFFF"/></svg>';
+  var LOOKS=[
+    {cap:'A club’s tournament (League Plus, Club)',sub:'The club’s colour and logo, or the tournament’s own where it has one and the club allows it, exactly as on the band.',pc:'#1E3A8A',ph:'#1E3A8A',logo:PCREST,name:EV,line:LINE},
+    {cap:'Tournament Plus, its own look',sub:'The event’s own colour and logo. With no colour picked, FieldLogicHQ’s plain look.',pc:'#2F6B3A',ph:'#2F6B3A',logo:LEAF,name:'Maple Fall Ball 2026',line:'Tournament rules · Nov 21–23, 2026'},
+    {cap:'A free tournament',sub:'No colour and no logo, as on the band: a near-black bar and black headings. The footer’s “Generated by FieldLogicHQ” is the only credit, as on every plan.',pc:'#1F1B16',ph:'#1F1B16',logo:'',name:'Northside Fall Tune-up',line:'Tournament rules · Nov 21–23, 2026'},
+    {cap:'A pale colour (a yellow team colour)',sub:'The bar keeps the colour. Headings in yellow on white would be unreadable (about 1.7 : 1, where type needs 4.5 : 1), so a colour that pale prints its headings in black.',pc:'#F2C230',ph:'#1F1B16',logo:SUN,name:'Sunnyside Classic 2026',line:'Tournament rules · Nov 21–23, 2026',guard:true}
+  ];
+  document.getElementById('looks').innerHTML=LOOKS.map(function(L){
+    return '<div class="spec"><p class="cap">'+L.cap+(L.guard?' <span class="tag new">New</span> the pale-colour rule':'')+'</p><div class="paperwrap"><div class="paper crop" style="--pc:'+L.pc+';--ph:'+L.ph+'">'
+      +pid(L.logo,L.name,L.line)+'<div class="same">'+sec(S[0],0,3)+'</div></div></div><p class="note">'+L.sub+'</p></div>';
+  }).join('');
+
+  // Tabs, routed on the hash. The View switch shows only where a tab compares; the paper toggle only where there is paper.
+  var tabs=[].slice.call(document.querySelectorAll('nav.tabs a')), secs=[].slice.call(document.querySelectorAll('section[data-tab]'));
+  var vsw=document.getElementById('vsw'), vlab=document.getElementById('vlab'), bwl=document.getElementById('bwl');
+  function show(id){
+    var t=document.getElementById(id); if(!t||!t.hasAttribute('data-tab'))id='page'; t=document.getElementById(id);
+    secs.forEach(function(s){s.hidden=s.id!==id;});
+    tabs.forEach(function(a){a.getAttribute('href')==='#'+id?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');});
+    var v=t.hasAttribute('data-view'), p=t.hasAttribute('data-paper');
+    vsw.hidden=!v; vlab.hidden=!v&&!p; bwl.hidden=!p;
+    if(!v)view(false);
+  }
+  var vAll=document.getElementById('v-all'), vDiff=document.getElementById('v-diff');
+  function view(d){document.body.classList.toggle('differs',d);vAll.setAttribute('aria-pressed',String(!d));vDiff.setAttribute('aria-pressed',String(d));}
+  vAll.onclick=function(){view(false);}; vDiff.onclick=function(){view(true);};
+  var bw=document.getElementById('bw'); bw.onchange=function(){document.body.classList.toggle('bw',bw.checked);};
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1));});
+  show(location.hash.slice(1));
+
+  var ASKS=[
+    {id:'A1',t:'Which rules print',why:'The page can be narrowed to one division (a visitor’s saved division, with “View all” beside it). The file needs one rule for what it holds.',
+      o:['What the page is showing at the tap. Narrowed to U11, the file holds the rules for every division plus U11’s own, with U11 in its header. On a desk the button reads “Download U11 rules”. For the whole book, tap View all first. No new control.','Always the whole rulebook, whatever the page is showing.','A small menu on the download: the whole rulebook, or one division.']},
+    {id:'A2',t:'Numbered rules',why:'The plan said “numbered rules”, but the page shows bullets. At the field, “rule 3.2” is how a coach and an umpire point at the same line. A number on paper that the phone doesn’t show can’t be found on the phone.',
+      o:['Numbers on both: the section number on each row and window title (3 · Pitching limits) and 3.1, 3.2 on its points, on the Rules page and in the file. They follow the organizer’s order, so moving a section renumbers it.','Bullets on both, as the page is today.','Numbers in the file only.']},
+    {id:'A3',t:'The date stamp',why:'The app doesn’t record when a rule was last edited, so an honest stamp can only say when this copy was made.',
+      o:['“Rules as of Wed, Nov 18, 2026, 3:12 p.m.”, on the tournament’s clock, with the page’s “subject to change” sentence and the live page’s address. No new data.','Also start recording when any rule last changed, and print “Last changed Nov 2” beside it. That is a database change, and rules written before it would show no date until their next edit.','No stamp.']},
+    {id:'A4',t:'A code to the live rules',why:'The page’s address is long to type off paper, and a code is one tap of a phone camera. The kit already makes these codes (the staff kit prints them).',
+      o:['Yes, beside the stamp, on page one only, about 2 cm square. It opens the Rules page showing every division.','No code, the address only.','A code on every page.']},
+    {id:'A5',t:'How much colour prints',why:'Whose look prints is already ruled by the band’s rule (tab 5). Every FieldLogicHQ PDF already draws an 8 mm colour bar across the top of each page. What is left is whether the headings take the colour too.',
+      o:['The kit’s colour bar, and the section headings in the colour. A colour too pale to read as type prints its headings in black; the rules print black.','The colour bar only; headings in black.','No colour at all: a black bar and black headings for every tournament.']},
+    {id:'A6',t:'Type',why:'The page can wear one of three type looks (Classic, Serif, Clean). Every FieldLogicHQ PDF prints in one built-in face, and printing the tournament’s would mean adding fonts to the kit every PDF shares. That is a bigger job than this stage.',
+      o:['The built-in face every FieldLogicHQ PDF uses. The colour and logo carry the look.','The tournament’s own type look in the file (new work in the shared PDF kit).']},
+    {id:'A7',t:'The downloads list',why:'A download is only a name and an address. An uploaded file’s address is long and machine-made, so nobody can type it off paper. A link to another site usually can be.',
+      o:['Each one by name. A link prints its address under the name; an uploaded file says “A file on the Rules page” and points at the code.','Each one by name with its full address, file or link.','Leave the downloads out of the file.']},
+    {id:'A8',t:'An organizer’s copy',why:'For the umpires’ binder. An organizer can already use the public download like anyone else. The question is whether they need a copy the public can’t get.',
+      o:['The public download only. The organizer gets the same file anyone can.','Also a Download button on the admin Rules screen: the same file, the same rules as the public page.','An organizer’s copy that prints everything, divisions not yet published included, marked “Organizer’s copy” on every page.']},
+    {id:'A9',t:'Division labels on paper',why:'A section can be kept to some divisions (here, U13 baserunning). The page shows no label, because narrowed to U11 it simply leaves the section out. A whole rulebook on paper prints every section, so a U11 coach can’t tell which apply to them.',
+      o:['Print “U13 only” beside the heading of a section kept to some divisions, in the file only. The page stays as it is.','The label on the page too, on each such row.','No label anywhere.']},
+    {id:'A10',t:'The download on a phone',why:'The written public-page standard gives a phone’s second action the bare symbol (no border, no word), as on the Schedule’s Calendar, and a check in the build guards it. A word is easier to find; a symbol keeps every phone page alike.',
+      o:['The bare download symbol at the right end of the note’s first line, read aloud as “Download the rules as a PDF”.','The labelled white outlined button under the note, recorded as a named exception to the standard (tab 2).']},
+    {id:'A11',t:'The date in the footer',why:'The shared footer on every FieldLogicHQ PDF prints “Exported: 2026-11-18”. This file’s stamp says “Wed, Nov 18, 2026, 3:12 p.m.”, so the same moment is written two ways on one page.',
+      o:['Leave the shared footer alone for this stage. The stamp is the one a reader uses. Putting the footer into the house date form for every PDF goes to the plan as its own small item.','Change the shared footer to “Exported: Nov 18, 2026” now, for every FieldLogicHQ PDF, in this stage.','Leave the date out of this file’s footer.']},
+    {id:'A12',t:'The division bar',why:'The Rules page’s “Division:” bar still has its small pills and type from before the new look. It shows above the rules whenever the page is narrowed.',
+      o:['Leave it as it ships in this stage; it goes on the plan’s “Later · Light-frame touch-ups” row.','Restyle it to the light frame’s row of choices in this stage (it is shared with other pages).']}
+  ];
+  var KEY='stage10-rules-pdf-asks-v1', saved={};
+  try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){saved={};}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  var list=document.getElementById('asklist');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask';d.id='ask-'+a.id;
+    var h='<h3>'+a.id+' · '+a.t+'</h3><p class="why">'+a.why+'</p>';
+    a.o.forEach(function(txt,i){
+      var oid='o-'+a.id+'-'+i, ch=(saved[a.id]&&saved[a.id].pick===i);
+      h+='<label for="'+oid+'"><input type="radio" id="'+oid+'" name="'+a.id+'" value="'+i+'"'+(ch?' checked':'')+'><span>'+(i===0?'<span class="rec">Recommended · </span>':'')+txt+'</span></label>';
+    });
+    h+='<textarea id="n-'+a.id+'" placeholder="Notes (optional)">'+((saved[a.id]&&saved[a.id].note)||'').replace(/</g,'&lt;')+'</textarea>';
+    d.innerHTML=h;list.appendChild(d);
+    d.addEventListener('change',function(e){if(e.target.name===a.id){saved[a.id]=saved[a.id]||{};saved[a.id].pick=Number(e.target.value);save();}});
+    d.querySelector('textarea').addEventListener('input',function(e){saved[a.id]=saved[a.id]||{};saved[a.id].note=e.target.value;save();});
+  });
+  document.getElementById('copybtn').onclick=function(){
+    var lines=['Stage 10 printable rules drawing: my answers'];
+    ASKS.forEach(function(a){
+      var s=saved[a.id]||{}, p=(typeof s.pick==='number')?s.pick:null;
+      lines.push(a.id+' · '+a.t+': '+(p===null?'(no pick)':String.fromCharCode(97+p)+(p===0?' (recommended)':'')+' — '+a.o[p])+(s.note?'\n   Note: '+s.note:''));
+    });
+    var txt=lines.join('\n'), out=document.getElementById('paste'), msg=document.getElementById('copied');
+    out.textContent=txt;
+    try{navigator.clipboard.writeText(txt).then(function(){msg.textContent='Copied.';},function(){msg.textContent='Select the text below and copy it.';});}
+    catch(e){msg.textContent='Select the text below and copy it.';}
+  };
+
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('.mk'); if(!b)return;
+    var id=b.getAttribute('data-ask'); location.hash='asks'; show('asks');
+    var el=document.getElementById('ask-'+id);
+    [].forEach.call(document.querySelectorAll('.ask.hl'),function(x){x.classList.remove('hl');});
+    if(el){el.classList.add('hl');el.scrollIntoView({block:'center'});}
+  });
+})();
+</script>
