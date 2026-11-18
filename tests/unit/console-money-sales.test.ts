@@ -43,7 +43,7 @@ function rec(id: string, over: Partial<SaleRecord> = {}): SaleRecord {
 function inv(id: string, over: Partial<MoneyInvoice> = {}): MoneyInvoice {
   return {
     id, number: '7C1E-0002', billingReason: 'subscription_cycle', subscriptionId: 'sub_1', periodStart: '2026-11-01T10:00:00.000Z',
-    periodEnd: '2026-12-01T10:00:00.000Z', planId: 'club', cycle: 'monthly', fromPlanId: null, description: null, feeInvoice: false, taxCents: 1151,
+    periodEnd: '2026-12-01T10:00:00.000Z', planId: 'club', cycle: 'monthly', fromPlanId: null, description: null, taxCents: 1151,
     status: 'paid', issuedAt: '2026-11-01T10:02:00.000Z', currency: 'cad', totalCents: 10001, amountDueCents: 10001, amountRemainingCents: 0,
     dueDate: null, markedUncollectibleAt: null, ...over,
   };
@@ -220,14 +220,10 @@ describe('the join: one row per sale', () => {
     assert.equal(withCharge.chargeUnread, false);
   });
 
-  it('a fee invoice owed and not charged yet: issued and due under its name, "Not charged yet", "Owes … · due …"', () => {
-    const fee = inv('in_fee', { feeInvoice: true, subscriptionId: null, number: '7C1E-0003', status: 'open', totalCents: 2644, amountRemainingCents: 2644,
-      dueDate: '2026-12-02T15:00:00.000Z', issuedAt: '2026-11-02T14:00:00.000Z' });
-    const r = one(joinSales({ records: [rec('in_fee', { kind: 'fee', status: 'open', paid_at: null, issued_at: '2026-11-02T14:00:00.000Z', total_cents: 2644, tax_total_cents: 304 })],
-      notes: [], charges: [], invoices: [fee], shownFrom: null }), 'in_fee');
-    assert.deepEqual(saleWhatWords(r), { main: 'Stripe fees on online payments · invoice 7C1E-0003', period: `Issued ${consoleDay(r.at)} · due ${consoleDay(fee.dueDate!)}` });
-    assert.equal(saleCardCell(r, true).text, 'Not charged yet');
-    assert.equal(saleStripeSays(r).text, `Owes $26.44 · due ${consoleDay(fee.dueDate!)}`);
+  it('a retired fee-invoice record (history, Stripe-owned pricing Stage 4) still reads under its name, with no period', () => {
+    const r = one(joinSales({ records: [rec('in_fee', { kind: 'fee', status: 'open', paid_at: null, issued_at: '2026-11-02T14:00:00.000Z', total_cents: 2644, tax_total_cents: 304, invoice_number: '7C1E-0003' })],
+      notes: [], charges: [], invoices: [], shownFrom: null }), 'in_fee');
+    assert.deepEqual(saleWhatWords(r), { main: 'Stripe fees on online payments · invoice 7C1E-0003', period: null });
   });
 
   it('a bare charge (no invoice) shows from Stripe as "No tax record · not an invoice", whatever its date', () => {

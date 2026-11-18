@@ -48,7 +48,6 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     const taxLines = await namedTaxLines(plan.taxes, rate => stripe.taxRates.retrieve(rate, {}, READ_OPTS));
     return NextResponse.json({
       note: 'credit_note', cardCents: plan.cardCents, beforeTaxCents: plan.beforeTaxCents, taxLines, capped: plan.capped,
-      feeInvoice: credit.target.isFeeInvoice,
     }, { headers: noStore });
   } catch (err) {
     return stripeErrorFacts(err).definite ? refuse(409, REFUND_WORDS.noteNotWorkedOut) : refuse(503, REFUND_WORDS.noteReadFailed);

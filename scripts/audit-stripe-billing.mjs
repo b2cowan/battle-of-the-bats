@@ -91,8 +91,9 @@ const EXPECTED_WEBHOOK_EVENTS = [
   // session). Found missing from the list on 2026-11-06 when the test sandbox's endpoint was compared with the code.
   'payment_method.attached',
   'payment_method.detached',
-  // A club's own Stripe-fees invoice (Club Tier Stage 12d-1): the webhook routes EVERY invoice.* event carrying the fee-invoice marker to
-  // that invoice's record (route.ts, the FEE_INVOICE_META branch), and docs/agents/ops/stripe-setup-guide.md Step 5 lists these four.
+  // Every invoice's tax record (GST/HST Stage 3 Part 1, `CHARGE_TAX_INVOICE_EVENTS` in lib/charge-tax-record.ts) and the purchase
+  // email (`invoice.paid`). First added for the club's own Stripe-fees invoice (Club Tier Stage 12d-1), which Stripe-owned pricing
+  // Stage 4 retired (2026-11-18); the four stay for the tax record. docs/agents/ops/stripe-setup-guide.md Step 5 lists them.
   'invoice.paid',
   'invoice.voided',
   'invoice.marked_uncollectible',

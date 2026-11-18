@@ -1,16 +1,19 @@
 # GST/HST on Stripe fees FieldLogicHQ recovers from a club
 
-> **⚠ RETIRES IN STAGE 4 of Stripe-owned pricing (owner R3, 2026-11-17).** Under Stripe-owned pricing Stripe charges the
-> **club's own account** for disputes, returned debits and foreign-card fees. We pay nothing to Stripe for these, so we
-> re-bill nothing, and there is nothing to tax. Once Stage 4 ships, **no recovery invoice exists** and this file's rules have
-> no live use. Until then it **stands for today's accounts** (created with `fees_collector: application`) and for any recovered
-> fee already billed (credit notes still reverse tax as described). Do not apply it to a Stripe-owned account. The tax on our
-> own fee is now in `PLATFORM_FEE_TAX_COLLECTION_METHOD.md` ("The R1 method"). Archive this file when Stage 4 is done.
->
-> **Stage 2 built 2026-11-18 (reviewed same day):** every account made since mig 498 is Stripe-owned, so the foreign-card
-> line is billed only for a payment on an old-setting account (dev only, three accounts being replaced; production has none).
-> Dispute and returned-debit lines read the platform balance and bill nothing there. Nothing taxed is created for a new
-> account, so no return line changes; lines already billed on old dev accounts keep the credit-note rules below.
+> **RETIRED 2026-11-18 (Stripe-owned pricing Stage 4, owner R3 2026-11-17; reviewed by /accounting the same day).** FieldLogicHQ no
+> longer invoices a club for Stripe's extras: the monthly "Stripe fees" invoice, fee lines on a subscription invoice, the credit
+> notes for a returned answering fee and the Stripe Tax code `txcd_90050001` on them are gone from the code
+> (`RECOVERED_FEE_TAX`, `FOREIGN_CARD_EXTRA_BPS` deleted), and migration 499 drops `platform_stripe_fees` and
+> `platform_fee_invoices`. Under Stripe-owned pricing Stripe charges the **club's own account** for disputes, returned debits
+> and foreign cards; we pay nothing to Stripe for them, so there is nothing to re-bill and nothing to tax. **Nothing below is
+> live guidance.** It is kept (not moved) as the record of how the old method was taxed, because other documents link to this path.
+> Production held 0 fee records, 0 fee invoices and 0 fee rows when it retired (read 2026-11-18), so no return line was ever
+> built from one; dev holds test-mode history only. History that remains: the `'fee'` kind on `platform_charge_tax_records` and
+> `platform_credit_note_tax_records` (the CHECK from mig 451 still allows it; a credit note on an old fee invoice inherits it);
+> Bookkeeping's Sales by month shows a "Fees billed back to clubs" row only in a month that has such a sale. The tax on **our own
+> application fee** is in `PLATFORM_FEE_TAX_COLLECTION_METHOD.md` ("The R1 method"). One lesson outlives the file: a Stripe Tax
+> code decides WHERE Stripe places the supply (`txcd_20030000` "General - Services" is origin-sourced in Canada; check any new
+> code's sourcing with a test calculation).
 
 **Last verified:** 2026-11-05
 **Re-verify by:** 2027-11-05, or when counsel or a professional answers D1 (is the payment service a taxable supply or an

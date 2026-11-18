@@ -8615,21 +8615,22 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 ## `platform_stripe_fees`
 <!-- dict:table:platform_stripe_fees -->
 
-**Purpose (migration 387 as `platform_debit_fees`, Stage 12c Part 6; renamed and widened by migration 390, Stage 12d-1, 2026-10-27):** **every Stripe fee a club's online payments cost the platform, recovered from the club on every plan** (owner 2026-10-26: "comped clubs do not get any reprieve on stripe fees in any capacity"). One row per payment and kind (and per dispute for a dispute's kinds; unique `platform_stripe_fees_key` on `online_payment_id, kind, dispute_id` NULLS NOT DISTINCT, so a replayed event records it once and a second dispute's fee is its own row). **Only a fee Stripe charged the PLATFORM is recorded** (owner 2026-10-27, "bill only what Stripe charged us"): the 12d-1 sandbox probe showed a card dispute's fee taken from the club's own Stripe balance (recorded on `online_payment_disputes.fee_paid_from = 'club'`, never here), and a bank debit's dispute fee charged to the platform (a platform balance transaction whose `source` is the dispute). Billed as a line on the club's subscription's next invoice (a pending Stripe invoice item on the subscription) when it has a live one, otherwise on the club's own monthly invoice (`platform_fee_invoices`). A returned or reversed bank debit is recorded at Stripe's own figure too (owner ruling 3, 2026-10-27: nothing when Stripe charged nothing). `lib/platform-stripe-fees.ts`. RLS on, grants to `anon`/`authenticated` revoked: server-only.
+**DROPPED by migration 499 (Stripe-owned pricing Stage 4, 2026-11-18); still on prod until 499 is applied there.** It held every
+Stripe fee a club's online payments cost the platform (a returned or reversed bank debit, a dispute's fees, a card from outside the
+club's country) and how each was billed back to the club (migrations 387 as `platform_debit_fees`, 390, 399). Under Stripe-owned
+pricing Stripe takes those from the club's own balance, so nothing records or bills them now; the code that did
+(`lib/platform-stripe-fees.ts`) was deleted in the same commit. Prod held 0 rows (counted 2026-11-18). Never re-create. **Delete
+this stub once 499 is applied to prod** and the snapshots are refreshed.
 
 <!-- dict:col:platform_stripe_fees.id -->
 <!-- dict:col:platform_stripe_fees.org_id -->
 <!-- dict:col:platform_stripe_fees.online_payment_id -->
 <!-- dict:col:platform_stripe_fees.kind -->
 <!-- dict:col:platform_stripe_fees.dispute_id -->
-**`id`** (uuid PK; the invoice item's idempotency key) / **`org_id`** (FK → `organizations.id` ON DELETE CASCADE, indexed) / **`online_payment_id`** (FK → `online_payments.id` ON DELETE CASCADE) / **`kind`** (text, CHECK `platform_stripe_fees_kind_chk`: `returned` | `reversed` (a bank debit that came back, 12c) | `dispute` | `dispute_answer` | `dispute_answer_returned` (a card dispute's fee, the answering fee, and that fee given back on a win — a **credit**, billed as a negative line) | `foreign_card` (Stripe's extra on a card issued outside the club's country, owner 2026-10-27)) / **`dispute_id`** (FK → `online_payment_disputes.id` ON DELETE CASCADE, partial index; set exactly for the three dispute kinds, `platform_stripe_fees_dispute_chk`).
-
 <!-- dict:col:platform_stripe_fees.amount -->
 <!-- dict:col:platform_stripe_fees.amount_source -->
 <!-- dict:col:platform_stripe_fees.livemode -->
 <!-- dict:col:platform_stripe_fees.exempt_reason -->
-**`amount`** (numeric(12,2), `> 0`; the sign is the kind's) / **`amount_source`** (text NOT NULL default `rate`, CHECK `stripe` | `rate` — Stripe's own figure at the time, or the published rate held as one constant in `lib/plan-config.ts` (canonical record PLAN_PRICING_FACTS.md) where Stripe gives no per-payment figure: the foreign-card extra; 12c's returned-debit CA$5 rows were `rate` until ruling 3 made a return Stripe's own figure) / **`livemode`** (boolean — the payment's mode) / **`exempt_reason`** (text, CHECK `comped` | `no_subscription` | `test_mode`; never with `billed_at`, `platform_stripe_fees_exempt_chk`) — **only `test_mode` is written from mig 390 on**; the other two are 12c rows from before the owner's ruling.
-
 <!-- dict:col:platform_stripe_fees.stripe_invoice_item_id -->
 <!-- dict:col:platform_stripe_fees.billed_at -->
 <!-- dict:col:platform_stripe_fees.billed_on -->
@@ -8638,7 +8639,6 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:platform_stripe_fees.bill_attempts -->
 <!-- dict:col:platform_stripe_fees.created_at -->
 <!-- dict:col:platform_stripe_fees.stripe_credit_note_id -->
-**`stripe_invoice_item_id`** / **`stripe_credit_note_id`** (text, migration 399; unique partial index `platform_stripe_fees_credit_note_key`; only on a `dispute_answer_returned`, `platform_stripe_fees_credit_note_chk`) / **`billed_at`** (set exactly when a line OR a credit note is held, `platform_stripe_fees_billed_chk`; the line id is written WITH the billed date, never before it) / **`billed_on`** (text, CHECK `subscription` | `own_invoice` | `credit_note`; set exactly when billed, `platform_stripe_fees_billed_on_chk`, NULL-safe; `credit_note` = owner ruling 7, 2026-10-27: a returned answering fee given back against the FINISHED invoice that carried its answering fee, as a Stripe credit note — lowering what is owed while that invoice is open, refunded to the card once paid — with no line and no `fee_invoice_id` of its own; while the answering fee's invoice is still to come, the credit is a negative line beside it, `subscription` / `own_invoice`, and the two net) / **`fee_invoice_id`** (FK → `platform_fee_invoices.id` ON DELETE RESTRICT, partial index; required for `own_invoice`, forbidden for `subscription` and `credit_note`; may be set before billing while the club's invoice is a draft) / **`bill_error`** (text ≤ 500, held for a person; shown and retried in platform admin) / **`bill_attempts`** (integer, default 0) / **`created_at`** — billed how and when, or why not yet. The unbilled, non-exempt rows have a partial index. **A fee returned to unbilled** (ruling 6): a `subscription` fee whose Stripe line is still pending on a subscription the club can no longer ride has the line deleted from Stripe and all three of `stripe_invoice_item_id`, `billed_at`, `billed_on` cleared together by the daily job, so the club's own monthly invoice bills it once.
 
 ## `online_payment_disputes`
 <!-- dict:table:online_payment_disputes -->
@@ -8663,7 +8663,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:online_payment_disputes.stripe_fee -->
 <!-- dict:col:online_payment_disputes.fee_paid_from -->
 <!-- dict:col:online_payment_disputes.livemode -->
-**`stripe_fee`** (numeric ≥ 0, Stripe's dispute fee as Stripe reported it) / **`fee_paid_from`** (text, CHECK `club` | `platform` — whose Stripe balance it came from; `club` means nothing is billed, `platform` means it is recovered through `platform_stripe_fees`) / **`livemode`** (must match the payment's; `online_payment_dispute_apply` refuses a mismatch).
+**`stripe_fee`** (numeric ≥ 0, Stripe's dispute fee as Stripe reported it) / **`fee_paid_from`** (text, CHECK `club` | `platform` — whose Stripe balance it came from; `club` = the club's own balance, which is the only value written since Stripe-owned pricing Stage 4 (2026-11-18); `platform` is history only — a fee Stripe charged FieldLogicHQ on an account made under the old fee setting, which we billed back until Stage 4 retired that (mig 499); the value stays allowed, nothing writes it and the record shows no fee line for it) / **`livemode`** (must match the payment's; `online_payment_dispute_apply` refuses a mismatch).
 
 <!-- dict:col:online_payment_disputes.opened_at -->
 <!-- dict:col:online_payment_disputes.closed_at -->
@@ -8683,15 +8683,17 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 ## `platform_fee_invoices`
 <!-- dict:table:platform_fee_invoices -->
 
-**Purpose (migration 390, Stage 12d-1, 2026-10-27 — owner rulings 2026-10-27):** a club with no subscription invoice to ride on (comped, free, cancelled) is sent **ONE invoice a month** for its Stripe fees (`platform_stripe_fees` with `billed_on = 'own_invoice'`), on the 1st, **in our email** (Stripe's own invoice email off), paid on Stripe's hosted invoice page. Unpaid: shown in platform admin, **one** reminder email, nothing switches off. Unique per club, mode and month. RLS on, grants to `anon`/`authenticated` revoked: server-only.
+**DROPPED by migration 499 (Stripe-owned pricing Stage 4, 2026-11-18); still on prod until 499 is applied there.** It held the
+club's own monthly FieldLogicHQ invoice of those Stripe fees (migrations 390 and 444). Prod held 0 rows (counted 2026-11-18); dev's
+one test-mode invoice was voided in Stripe before the drop. Historical tax records of such an invoice keep `kind = 'fee'` in
+`platform_charge_tax_records` / `platform_credit_note_tax_records` (that CHECK value stays). Never re-create. **Delete this stub once
+499 is applied to prod** and the snapshots are refreshed.
 
 <!-- dict:col:platform_fee_invoices.id -->
 <!-- dict:col:platform_fee_invoices.org_id -->
 <!-- dict:col:platform_fee_invoices.livemode -->
 <!-- dict:col:platform_fee_invoices.period_start -->
 <!-- dict:col:platform_fee_invoices.stripe_customer_id -->
-**`id`** (uuid PK) / **`org_id`** (FK → `organizations.id` ON DELETE CASCADE) / **`livemode`** / **`period_start`** (date, the 1st of the month the fees belong to) / **`stripe_customer_id`** (the club's FieldLogicHQ billing customer; created if the club had none).
-
 <!-- dict:col:platform_fee_invoices.stripe_invoice_id -->
 <!-- dict:col:platform_fee_invoices.invoice_number -->
 <!-- dict:col:platform_fee_invoices.status -->
@@ -8699,19 +8701,14 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:platform_fee_invoices.hosted_invoice_url -->
 <!-- dict:col:platform_fee_invoices.due_at -->
 <!-- dict:col:platform_fee_invoices.finalized_at -->
-**`stripe_invoice_id`** (partial UNIQUE) / **`invoice_number`** / **`status`** (text, CHECK `draft` | `open` | `paid` | `void` | `uncollectible`; anything past draft names its Stripe invoice and `finalized_at`, `platform_fee_invoices_final_chk`; partial index on the open ones) / **`amount_due`** / **`hosted_invoice_url`** (Stripe's pay page, re-read before each email: it expires) / **`due_at`** / **`finalized_at`**.
-
 <!-- dict:col:platform_fee_invoices.emailed_at -->
 <!-- dict:col:platform_fee_invoices.reminded_at -->
 <!-- dict:col:platform_fee_invoices.paid_at -->
 <!-- dict:col:platform_fee_invoices.send_error -->
 <!-- dict:col:platform_fee_invoices.created_at -->
 <!-- dict:col:platform_fee_invoices.updated_at -->
-**`emailed_at`** / **`reminded_at`** (our two emails, each once) / **`paid_at`** (set exactly when `paid`, `platform_fee_invoices_paid_chk`; from Stripe's `invoice.paid`) / **`send_error`** (text ≤ 500) / **`created_at`** / **`updated_at`**.
-
 <!-- dict:col:platform_fee_invoices.total -->
 <!-- dict:col:platform_fee_invoices.tax_lines -->
-**`total`** (numeric(12,2), nullable; migration 444, fee invoice alerts Part 1) Stripe's invoice total, **tax included**, in dollars; `amount_due` is Stripe's amount due and may differ from `total`, so Plan & billing's invoice row shows `total` and falls back to `amount_due` for a row written before 444. / **`tax_lines`** (jsonb array or null, `platform_fee_invoices_tax_lines_chk`; migration 444) Stripe's own named tax lines, `[{ "label": "HST (13%)", "cents": 49 }]`, so the page never calls Stripe. Both are written by `writeInvoiceState` (the finalize, the billing webhook and the daily re-read); a failed name lookup leaves `tax_lines` as it was. **Null until first synced after 444:** the reader then shows the plain difference between the total and the fee lines as one line named "Tax" (and none at all when the fee read was capped or a returned fee sits on the invoice, since the gap would then hold other money). The daily re-read fills **open** invoices only, so an invoice already paid or void before 444 keeps the "Tax" fallback permanently; nothing backfills it. Fees are taxed on top (`RECOVERED_FEE_TAX`), so the total is **not** the sum of the fee lines.
 
 ## `tournament_team_entry_adjustments`
 <!-- dict:table:tournament_team_entry_adjustments -->
@@ -8952,7 +8949,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`reversed_at`** (timestamptz, nullable) / **`stripe_dispute_id`** (text, nullable, partial UNIQUE `online_payments_dispute_key`; migration 382) — the dispute a payment was reversed on: a bank debit the bank reversed after it cleared (12c, `online_payment_reverse` at `charge.dispute.created`), or, **since migration 390**, a CARD payment whose dispute was lost (`online_payment_dispute_apply`; `online_payments_bank_chk` no longer keeps it bank-only). Every dispute, an inquiry included, is its own row in `online_payment_disputes`.
 
 <!-- dict:col:online_payments.card_country -->
-**`card_country`** (char(2), nullable, CHECK upper-case ISO; migration 390) — the card's issuing country from Stripe's charge, written by the server after the landing. A card from outside the club's connected account's country (`org_payment_accounts.country`, never a typed "CA") costs Stripe more, and that extra is billed to the club (`platform_stripe_fees.kind = 'foreign_card'`); the family pays the ordinary price.
+**`card_country`** (char(2), nullable, CHECK upper-case ISO; migration 390) — the card's issuing country from Stripe's charge, written by the server after the landing. A card from outside the club's connected account's country (`org_payment_accounts.country`, never a typed "CA") costs Stripe more; the family pays the ordinary price, and since Stripe-owned pricing Stripe takes that extra from the club's own balance (until Stage 4, 2026-11-18, FieldLogicHQ billed it back from this column; kept as a fact of the payment).
 
 <!-- dict:col:online_payments.over_amount -->
 <!-- dict:col:online_payments.over_whole -->

@@ -142,8 +142,8 @@ export const BILLING_ADDRESS_REQUIRED = 'billing_address_required';
 /**
  * GST/HST 6.4 (owner ruling Q6, 2026-11-13; O4 "not offered in Québec"): no new charge decision from a Québec billing address. The
  * stable code a purchase door refuses with (409). ⚠ It lives at the purchase gate (`requireBillingLocation(…, { purchase: true })`),
- * NOT in `checkBillingLocation`: that validator also decides the address on file, which club fee invoicing and the save path read,
- * and an account with Québec on file keeps renewing, moving down, cancelling, payouts, its fee invoices and saving the address.
+ * NOT in `checkBillingLocation`: that validator also decides the address on file, which the Payouts card's address line and the
+ * save path read, and an account with Québec on file keeps renewing, moving down, cancelling, payouts and saving the address.
  */
 export const BILLING_REGION_CLOSED = 'billing_region_closed';
 

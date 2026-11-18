@@ -2,6 +2,12 @@
 
 **Status:** on the board (Owner Morning Brief).
 
+> ⚠⚠ **SUBJECT RETIRED 2026-11-18 by Stripe-owned pricing Stage 4** (`STRIPE_OWNED_PRICING_PLAN.md` "Stage 4"; owner R3
+> 2026-11-17). The fee invoice these alerts announced no longer exists: Stripe takes its extras from the club's own balance.
+> The pill, page line and overdue banner for a fee invoice were removed; the one survivor is the failed-plan-payment pill
+> (Ask 7), now `lib/billing-door-alert.ts`. Walks §465, §466, §468, §469 are history. Closing this plan's part of the
+> `plan-billing` board line is the owner's call.
+
 Plan of record. PM brief: `FEE_INVOICE_ALERTS_PM_BRIEF.md`. Drawings (owner rulings, all eight asks A, 2026-11-05):
 https://claude.ai/artifact/4dmPojUsg4EspaphPVxSEc, source `FEE_INVOICE_ALERTS_DRAWINGS.html`. Design record: `memory/design_decisions.md`
 2026-11-05 "A FEE INVOICE THE CLUB OWES".

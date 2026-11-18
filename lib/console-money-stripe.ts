@@ -5,7 +5,6 @@ import {
   REFUND_WORDS, decideRefund, formatCents, cardWords, isWholeCents, remainingCents, stripeReasonFor, stripeRefusalWords,
   type MoneyCharge, type MoneyInvoice, type MoneyRead, type MoneyRefund, type MoneySubscription, type NextCharge, type RefundAsk,
 } from './console-money';
-import { FEE_INVOICE_META } from './online-payment-words';
 import { READ_OPTS, idOf, noteFacts, planCreditNote, refundIdOfNote, type CreditPlan, type CreditRefusal, type CreditTarget } from './console-money-credit';
 
 
@@ -87,7 +86,6 @@ export function toMoneyInvoice(inv: Stripe.Invoice, prices: PriceMap): MoneyInvo
     cycle: plan?.cycle ?? null,
     fromPlanId: credit ? priceOf(credit)?.planId ?? null : null,
     description: subscriptionId ? null : (charged?.description ?? null),
-    feeInvoice: !!inv.metadata?.[FEE_INVOICE_META],
     taxCents: taxOf(inv),
     status: inv.status ?? null,
     issuedAt: iso(inv.status_transitions?.finalized_at) ?? iso(inv.created),

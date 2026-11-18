@@ -22,7 +22,7 @@ const read = (p: string) => readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 
 // ── 1 · the classifier ────────────────────────────────────────────────────────────────────────────────────────────────
 const base: PurchaseFacts = {
-  billingReason: 'subscription_create', status: 'paid', kind: 'subscription', totalCents: 4407, feeInvoice: false,
+  billingReason: 'subscription_create', status: 'paid', kind: 'subscription', totalCents: 4407,
   subscriptionId: 'sub_123', subscriptionStatus: 'active', meta: {}, hasRecipient: true,
 };
 const is = (over: Partial<PurchaseFacts>) => classifyPurchase({ ...base, ...over });
@@ -63,11 +63,10 @@ describe('1 · which paid invoice earns the email (§3.2)', () => {
     assert.equal(is({ billingReason: 'subscription_cycle' }), null);
     assert.equal(is({ billingReason: 'subscription_cycle', meta: { choiceKind: NEXT_SEASON_CHOICE_KIND } }), null);
   });
-  it('a manual or threshold invoice, a club\'s fee invoice (by kind or by its marker): none', () => {
+  it('a manual or threshold invoice, a club\'s retired Stripe-fee invoice (kind fee, still on old records): none', () => {
     assert.equal(is({ billingReason: 'manual' }), null);
     assert.equal(is({ billingReason: 'subscription_threshold' }), null);
     assert.equal(is({ kind: 'fee' }), null);
-    assert.equal(is({ feeInvoice: true }), null);
   });
   it('not paid, a mock_ subscription, no subscription, or nobody on the record: none', () => {
     assert.equal(is({ status: 'open' }), null);
@@ -87,7 +86,7 @@ const record = (over: Partial<PurchaseRecord> = {}): PurchaseRecord => ({
 
 type Sent = { to: string; key: string };
 function harness(opts: {
-  row?: PurchaseRecord; stripe?: { feeInvoice?: boolean; meta?: Record<string, string>; subscriptionStatus?: string };
+  row?: PurchaseRecord; stripe?: { meta?: Record<string, string>; subscriptionStatus?: string };
   owners?: Array<{ userId: string; email: string }>; answer?: (to: string) => { status: string; refused?: boolean } | 'throw';
   buildThrows?: boolean;
 } = {}) {
@@ -99,7 +98,7 @@ function harness(opts: {
     async readRecord() { await Promise.resolve(); return { ...store.row }; },
     async readStripe() {
       await Promise.resolve();
-      return { feeInvoice: !!opts.stripe?.feeInvoice, meta: opts.stripe?.meta ?? {}, subscriptionStatus: opts.stripe?.subscriptionStatus ?? 'active', live: null };
+      return { meta: opts.stripe?.meta ?? {}, subscriptionStatus: opts.stripe?.subscriptionStatus ?? 'active', live: null };
     },
     async recipients() { return opts.owners ?? [{ userId: 'u1', email: 'owner@club.test' }]; },
     async claim(_id, at) { await Promise.resolve(); if (store.row.purchase_email_at) return false; store.row.purchase_email_at = at; return true; },
@@ -140,9 +139,9 @@ describe('2 · once only (§3.3)', () => {
     assert.deepEqual(both.map(r => r.outcome).sort(), ['already', 'sent']);
     assert.equal(h.sent.length, 1);
   });
-  it('a fee invoice, a renewal, a mock_ subscription and a backfilled row send nothing', async () => {
+  it('a retired fee-invoice record, a renewal, a mock_ subscription and a backfilled row send nothing', async () => {
     for (const h of [
-      harness({ stripe: { feeInvoice: true } }),
+      harness({ row: record({ kind: 'fee' }) }),
       harness({ row: record({ billing_reason: 'subscription_cycle' }) }),
       harness({ row: record({ stripe_subscription_id: 'mock_sub_1' }) }),
       harness({ row: record({ billing_reason: null }) }),

@@ -56,9 +56,6 @@ export type PayoutsView = {
   openPages?: number | null;
   openDisputes?: number | null;
   firstDisputeDue?: string | null;
-  /** 12d-1 Part 4: the club pays nothing for its plan (free time or the Founding comp), so the other-fees line adds
-   *  "Your plan doesn't change" (words §3.4 `record.otherFeesPlan`). */
-  planFree?: boolean;
   /** 12d-2 (words §3.3): the club has Accounting, where its payouts list lives; without it the owner's card carries it. */
   hasAccounting?: boolean;
   /** 12d-2: the club has connected payouts at some time (a payouts list exists). */
@@ -75,7 +72,8 @@ export type PayoutsView = {
     agreedVersionDate: string | null;
     currentVersionDate: string | null;
   } | null;
-  /** GST/HST Stage 2 Part 2b (owner ruling A): connected, but no billing address the Stripe-fee invoice can use — the owner's. */
+  /** GST/HST Stage 2 Part 2b (owner ruling A), kept by Stripe-owned pricing Stage 4 call (a): connected, but no billing address
+   *  on our records — the tax inside our fee needs its province. The owner's. */
   addressMissing?: boolean;
 };
 
@@ -263,8 +261,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
             <div className={ck.noticeBody}><b>{view.ending.title}</b> {view.ending.body}</div>
           </div>
         )}
-        {/* GST/HST Stage 2 Part 2b (owner ruling A): connected before payouts asked for the address. Its Stripe fees wait
-            unbilled until it is saved; saving reads the card again, and the line goes. */}
+        {/* GST/HST Stage 2 Part 2b (owner ruling A): connected before payouts asked for the address. Saving it reads the card
+            again, and the line goes. */}
         {isOwner && view.addressMissing && <AddressMissingLine orgSlug={orgSlug} />}
         {!payoutRows && <p className={pc.body}>{wind ? `${WD.body} ${LEAVING_WORDS.move.connected}` : body}</p>}
         {windLine && <p className={ck.hint}>{WD.title}. {WD.body}</p>}
@@ -416,7 +414,7 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
     </>
   );
   // 12d-1 words §3.4: the footnote under the record.
-  const otherFees = <p className={`${ck.hint} ${pc.otherFees}`}>{W.record.otherFees}{view.planFree ? ` ${W.record.otherFeesPlan}` : ''}</p>;
+  const otherFees = <p className={`${ck.hint} ${pc.otherFees}`}>{W.record.otherFees}</p>;
 
   if (!editing) {
     return (
@@ -576,7 +574,7 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
         <section>
           <h3 className={ck.label}>{W.before.costLabel}</h3>
           <p>{W.before.costRate(view.rateLabel, view.bankRateLabel ?? null)}</p>
-          <p className={ck.hint}>{W.before.otherFees}{view.planFree ? ` ${W.record.otherFeesPlan}` : ''}</p>
+          <p className={ck.hint}>{W.before.otherFees}</p>
           <p className={ck.hint}>{W.before.costExample(money(view.example.baseCents / 100), money(view.example.feeCents / 100),
             view.example.bankFeeCents != null ? money(view.example.bankFeeCents / 100) : null)}</p>
         </section>

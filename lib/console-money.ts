@@ -10,7 +10,7 @@
 import { consoleClock, consoleDay } from './console-dates';
 import { formatInOrgZone, formatStoredDate } from './timezone';
 import { planLabel, subscriptionStatusLabel } from './platform-labels';
-import { STRIPE_FEE_WORDS, brandLabel } from './online-payment-words';
+import { brandLabel } from './online-payment-words';
 import { parseCents } from './bookkeeping-expenses';
 import { isEndedSubscriptionStatus } from './stripe-billing-state';
 import { joinWithAnd, pluralize } from './utils';
@@ -41,8 +41,6 @@ export type MoneyInvoice = {
   fromPlanId: string | null;
   /** An invoice made in Stripe's dashboard: its first line's words. */
   description: string | null;
-  /** 12d-1 Part 4: FieldLogicHQ's own invoice of a club's Stripe fees (by its metadata), never "made in Stripe's dashboard". */
-  feeInvoice?: boolean;
   /**
    * GST/HST Stage 2 Part 3: the tax Stripe added to this invoice, in cents (already inside the charge's amount); null when none.
    * The amount only: WHY a charge was taxed the way it was is Stage 3's record.
@@ -244,7 +242,6 @@ export function paidForWords(c: MoneyCharge): { main: string; period: string | n
  */
 export function invoicePaidForWords(inv: MoneyInvoice, currency: string, opts: { withTax: boolean }): { main: string; period: string | null } {
   const tax = (period: string | null) => (opts.withTax ? withTax(period, inv.taxCents, currency) : period);
-  if (inv.feeInvoice) return { main: STRIPE_FEE_WORDS.paCharge(inv.number), period: null };
   if (!inv.subscriptionId) return { main: `Invoice made in Stripe${inv.description ? ` “${inv.description}”` : ''}`, period: null };
   const period = periodWords(inv.periodStart, inv.periodEnd);
   if (inv.billingReason === 'subscription_update') {
@@ -330,7 +327,6 @@ export function findPatterns(read: Pick<MoneyRead, 'charges' | 'subscriptions'>,
     const inv = c.invoice;
     // 5 · Not the subscription's: no invoice, or an invoice with no subscription (made in Stripe's dashboard).
     if (!inv) { flags.set(c.id, { kind: 'not_subscription', manualInvoice: false }); continue; }
-    if (inv.feeInvoice) continue; // 12d-1 Part 4: our own Stripe-fees invoice, named as one; never the warning
     if (!inv.subscriptionId) { flags.set(c.id, { kind: 'not_subscription', manualInvoice: true }); continue; }
     if (portal.has(inv.subscriptionId)) { flags.set(c.id, { kind: 'portal', subscriptionId: inv.subscriptionId }); continue; }
     if (second.has(inv.subscriptionId)) { flags.set(c.id, { kind: 'other_subscription', subscriptionId: inv.subscriptionId }); continue; }
@@ -755,8 +751,8 @@ export const REFUND_WORDS = {
 } as const;
 
 /** "$88.50 for the plan + $11.51 HST 13%": a credit note's split, in the refund window (R1). */
-export function creditSplitWords(beforeTaxCents: number, taxLines: ReadonlyArray<{ label: string; cents: number }>, currency: string, feeInvoice: boolean): string {
-  const what = `${formatCents(beforeTaxCents, currency)} for the ${feeInvoice ? 'Stripe fees' : 'plan'}`;
+export function creditSplitWords(beforeTaxCents: number, taxLines: ReadonlyArray<{ label: string; cents: number }>, currency: string): string {
+  const what = `${formatCents(beforeTaxCents, currency)} for the plan`;
   return [what, ...taxLines.map(t => `${formatCents(t.cents, currency)} ${t.label}`)].join(' + ');
 }
 

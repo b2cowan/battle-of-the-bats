@@ -220,11 +220,11 @@ describe('the record', () => {
     assert.equal(state.uncollectible_at, new Date((T0 + 86_400) * 1000).toISOString());
     assert.equal(state.stripe_payment_intent_id, null);
   });
-  it('the kind: the fee marker first, then a person = Premium, then whether it bills a plan', () => {
-    assert.equal(chargeTaxKind({ feeInvoice: true, buyerKind: 'club', subscriptionId: null }), 'fee');
-    assert.equal(chargeTaxKind({ feeInvoice: false, buyerKind: 'person', subscriptionId: 'sub_1' }), 'premium');
-    assert.equal(chargeTaxKind({ feeInvoice: false, buyerKind: 'club', subscriptionId: 'sub_1' }), 'subscription');
-    assert.equal(chargeTaxKind({ feeInvoice: false, buyerKind: 'unknown', subscriptionId: null }), 'one_off');
+  it('the kind: a person = Premium, then whether it bills a plan (never fee: that retired kind stays only as history)', () => {
+    assert.notEqual(chargeTaxKind({ buyerKind: 'club', subscriptionId: null }), 'fee');
+    assert.equal(chargeTaxKind({ buyerKind: 'person', subscriptionId: 'sub_1' }), 'premium');
+    assert.equal(chargeTaxKind({ buyerKind: 'club', subscriptionId: 'sub_1' }), 'subscription');
+    assert.equal(chargeTaxKind({ buyerKind: 'unknown', subscriptionId: null }), 'one_off');
   });
 });
 

@@ -28,7 +28,7 @@ function fixture(key: keyof typeof PLAN_CONFIG): BillingBodyViewProps {
     cancellation: ready({ currentPlan: key, ...impact, activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }),
     move: ready({ live: false, scheduledMove: null }),
   };
-  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} }, fees: createElement('div', { 'data-fees': true }, 'Stripe fees fixture') };
+  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
 }
 const html = (props: BillingBodyViewProps) => renderToStaticMarkup(createElement(BillingBodyView, props)).replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 const body = readCode('components/billing/BillingBody.tsx');
@@ -39,7 +39,7 @@ describe('the real shared billing body renders every profile', () => {
       const props = fixture(key), rendered = html(props);
       assert.ok(rendered.includes(props.profile.config.label));
       for (const item of props.profile.included.billing) assert.ok(rendered.includes(item), item);
-      const order = ['Your plan', "What's in use", 'Stripe fees fixture', "What's included"];
+      const order = ['Your plan', "What's in use", "What's included"];
       for (const item of order) assert.ok(rendered.includes(item), `Missing section: ${item}`);
       for (let i = 1; i < order.length; i++) assert.ok(rendered.indexOf(order[i - 1]) < rendered.indexOf(order[i]), order.join(' → '));
       if (props.profile.changes.length) assert.ok(rendered.indexOf('Change plan') < rendered.indexOf("What's included"));
@@ -50,7 +50,7 @@ describe('the real shared billing body renders every profile', () => {
       const props = fixture(key); props.snapshot.canManageBilling = false; props.snapshot.org.subscriptionStatus = state;
       const rendered = html(props);
       assert.match(rendered, /Only Falcons’ owner/);
-      assert.doesNotMatch(rendered, /Stripe fees fixture|billing-manage-btn|billing-reactivate-btn|<button|<a |9 of 15|CAD/);
+      assert.doesNotMatch(rendered, /billing-manage-btn|billing-reactivate-btn|<button|<a |9 of 15|CAD/);
     });
   }
   it('an isolated extra profile renders its own facts with no component edit or production mutation', () => {
@@ -171,11 +171,6 @@ describe('billing state distinctions in the rendered body', () => {
     assert.match(rendered, /Club · Association/); assert.match(rendered, /379 CAD \/ month/); assert.doesNotMatch(rendered, /219 CAD \/ month/);
     assert.ok(rendered.includes(PLAN_BILLING_PROFILES.club_large.included.article[0]));
   });
-  it('the actual fees component omits its section until a fee has been read', () => {
-    const { default: Fees } = load('components/billing/StripeFeesList.tsx') as { default: ComponentType<{ read: unknown }> };
-    assert.equal(renderToStaticMarkup(createElement(Fees, { read: null })), '');
-    assert.equal(renderToStaticMarkup(createElement(Fees, { read: { fees: [], invoices: [], planFree: false } })), '');
-  });
   it('loading and unavailable counts never render invented zeroes', () => {
     const props = fixture('club'); props.snapshot.usage = { status: 'loading' };
     assert.match(html(props), /Loading billing usage/); assert.doesNotMatch(html(props), /0 of 15 teams/);
@@ -204,13 +199,12 @@ describe('billing state distinctions in the rendered body', () => {
     assert.doesNotMatch(rendered, /billing-manage-btn|billing-cancel-btn|billing-reactivate-btn|data is kept for|Host one tournament at a time/);
     if (state !== 'ended') assert.ok(rendered.includes(W.portalFreeTime(portal).billingCard!));
   });
-  it('cancelled owners see bounded restoration and fees below reactivation', () => {
+  it('cancelled owners see bounded restoration below reactivation', () => {
     for (const key of ['team', 'club'] as const) {
       const props = fixture(key); props.snapshot.org.subscriptionStatus = 'canceled';
       const rendered = html(props);
       assert.match(rendered, key === 'team' ? /365 days/ : /90 days/);
       assert.doesNotMatch(rendered, /everything comes back|brings it all back/);
-      assert.ok(rendered.indexOf('billing-reactivate-btn') < rendered.indexOf('Stripe fees fixture'));
       if (key === 'team') {
         assert.match(rendered, /Basic tournament records stay available/);
         assert.ok(rendered.includes(W.reactivate.basicTitle));
@@ -251,5 +245,42 @@ describe('billing state distinctions in the rendered body', () => {
     assert.match(body, /query\.delete\(flag\)/); assert.match(body, /query\.size/); assert.match(body, /setJustChose\(true\)/);
     assert.match(body, /key=\{currentOrg\.id\}/); assert.match(body, /read\?\.identity === identity/); assert.match(body, /abort\.signal\.aborted/);
     const window = readCode('components/billing/PlanMoveDialog.tsx'); assert.doesNotMatch(window, /\/admin\//); assert.match(window, /returnTo,/);
+  });
+});
+
+describe('the failed-payment line gains the shipped door', () => {
+  const withStatus = (status: string, busy: string | null = null) => {
+    const props = fixture('club'); props.snapshot.org.subscriptionStatus = status as typeof props.snapshot.org.subscriptionStatus; props.actions.busy = busy as typeof props.actions.busy;
+    return props;
+  };
+  it('today’s sentence stays word for word, red-edged, with Payment method & invoices beside it', () => {
+    const rendered = html(withStatus('past_due'));
+    assert.ok(rendered.includes(W.plan.pastDue));
+    const callout = rendered.slice(rendered.lastIndexOf('<div', rendered.indexOf(W.plan.pastDue)));
+    assert.match(callout, /calloutDanger/);
+    assert.ok(callout.includes(`>${W.plan.payment}</button>`));
+    assert.doesNotMatch(callout.slice(0, callout.indexOf('</button>')), /disabled/);
+  });
+  it('busy: the button reads Opening payment portal… and is disabled, like the plan card’s own', () => {
+    const rendered = html(withStatus('past_due', 'portal'));
+    assert.ok(rendered.includes(W.plan.openingPortal));
+    const idx = rendered.indexOf(W.plan.pastDue);
+    assert.match(rendered.slice(idx, rendered.indexOf('</button>', idx)), /disabled/);
+  });
+  it('no failed payment, no line and no second door', () => {
+    const rendered = html(withStatus('active'));
+    assert.ok(!rendered.includes(W.plan.pastDue));
+    assert.equal(rendered.split(W.plan.payment).length - 1, 1, 'the plan card’s own button only');
+  });
+  it('the failed-payment line sits above the plan card', () => {
+    const rendered = html(withStatus('past_due'));
+    assert.ok(rendered.indexOf(W.plan.pastDue) < rendered.indexOf('Your plan'));
+  });
+  it('a non-owner never gets the line', () => {
+    const p = withStatus('past_due'); p.snapshot.canManageBilling = false;
+    assert.ok(!html(p).includes(W.plan.pastDue));
+  });
+  it('the body takes only its base and its teams door: no fee props, no fee read', () => {
+    assert.doesNotMatch(body, /feeLine|\bfees\??:|useStripeFeesRead|StripeFeesList|FeeInvoiceLine/);
   });
 });

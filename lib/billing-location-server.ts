@@ -17,6 +17,7 @@ import {
   currentReview,
   isClosedRegion,
   reviewSentence,
+  storedLocationStillValid,
   toStripeAddress,
   type BillingLocation,
   type BillingLocationField,
@@ -103,6 +104,17 @@ const toStored = (row: Row): StoredBillingLocation => ({
 export async function readBillingLocation(buyer: BillingBuyer): Promise<StoredBillingLocation | null> {
   const row = await readRow(buyer);
   return row ? toStored(row) : null;
+}
+
+/**
+ * Whether this buyer has a billing address on our records that still stands (the stored row, re-checked against today's US
+ * rule) — the address `requireBillingLocation` would accept, without its refusal. The Payouts card's "add your billing address"
+ * line reads it (Stripe-owned pricing Stage 4, owner 2026-11-18 call (a): the address stays required before payouts, because
+ * the GST/HST inside our application fee is worked out from the club's province).
+ */
+export async function hasBillingLocation(buyer: BillingBuyer): Promise<boolean> {
+  const stored = await readBillingLocation(buyer);
+  return !!stored && !!storedLocationStillValid(stored, usSalesOpen());
 }
 
 const real = (id: string | null | undefined): id is string => !!id && !id.startsWith('mock_');

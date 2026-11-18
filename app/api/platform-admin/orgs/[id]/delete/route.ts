@@ -182,9 +182,9 @@ export const DELETE = withObservability(async (req: NextRequest,
     );
   }
 
-  // 12d-2 (owner ruling 2, 2026-10-27): money in flight waits — an open card dispute, a bank debit clearing, a Stripe fee
-  // not billed or whose billing failed, the club's own Stripe-fee invoice unpaid. A count that can't be read refuses too:
-  // the money record of a club that still owes must never vanish silently.
+  // 12d-2 (owner ruling 2, 2026-10-27): money in flight waits — an open card dispute, a bank debit clearing. (The Stripe fees
+  // FieldLogicHQ billed back, and their invoices, retired with Stripe-owned pricing Stage 4.) A count that can't be read refuses
+  // too: the money record of a club that still owes must never vanish silently.
   const outstanding = await readOutstanding(id).catch(() => null);
   if (!outstanding) {
     return NextResponse.json({ error: 'Couldn’t read this club’s online payments. Try again.' }, { status: 503 });

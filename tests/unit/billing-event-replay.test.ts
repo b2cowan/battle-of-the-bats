@@ -12,7 +12,6 @@ import { receiveBillingEvent, type BillingEventClaim, type BillingEventOutcome, 
 import { AuditFirstError } from '../../lib/platform-audit.ts';
 import { isMoneyEntry } from '../../lib/platform-audit-reason.ts';
 import { STRIPE_API_VERSION } from '../../lib/stripe.ts';
-import { FEE_INVOICE_META } from '../../lib/online-payment-words.ts';
 import { filesUnder, functionBody, readCode } from './_source-code.ts';
 
 /**
@@ -319,7 +318,6 @@ describe('5 · refused before any claim or write', () => {
     ['an event Stripe no longer holds', w => { w.stored('evt_x', 'invoice.payment_failed'); w.events.delete('evt_x'); }, 'too_old'],
     ['a row older than Stripe keeps', w => w.stored('evt_x', 'invoice.payment_failed', { receivedAt: daysAgo(STRIPE_EVENT_RETENTION_DAYS + 11) }), 'too_old'],
     ['a type the audit refused (A1)', w => w.stored('evt_x', 'customer.subscription.updated'), 'not_replayable'],
-    ['a club’s Stripe-fees bill', w => w.stored('evt_x', 'invoice.payment_failed', {}, { metadata: { [FEE_INVOICE_META]: 'fee_1' } }), 'fee_invoice'],
     ['a bill for no plan (made by hand)', w => w.stored('evt_x', 'invoice.payment_succeeded', {}, { parent: null }), 'not_plan_bill'],
     ['another Stripe format', w => { w.stored('evt_x', 'invoice.payment_failed'); (w.events.get('evt_x') as { api_version: string }).api_version = '2025-01-27.acacia'; }, 'format'],
     ['no reason', w => w.stored('evt_x', 'invoice.payment_failed'), 'reason'],
@@ -486,12 +484,12 @@ describe('the audit, held by the build', () => {
     assert.match(engine, /getStripe\(\)\.events\.retrieve\(id\)/);
   });
 
-  it('the fetched facts read the handler’s own fee mark and the invoice’s subscription', () => {
+  it('the fetched facts read the invoice’s subscription and id', () => {
     const facts = fetchedEventFacts({
       id: 'evt_1', type: 'invoice.payment_failed', livemode: false, api_version: STRIPE_API_VERSION,
-      data: { object: { id: 'in_9', metadata: { [FEE_INVOICE_META]: 'x' }, parent: { subscription_details: { subscription: { id: 'sub_9' } } } } },
+      data: { object: { id: 'in_9', parent: { subscription_details: { subscription: { id: 'sub_9' } } } } },
     } as unknown as Stripe.Event);
-    assert.deepEqual([facts.feeInvoice, facts.invoiceSubscriptionId, facts.invoiceId], [true, 'sub_9', 'in_9']);
+    assert.deepEqual([facts.invoiceSubscriptionId, facts.invoiceId], ['sub_9', 'in_9']);
   });
 
   it('two stored instants at the same moment are not a change (Postgres and JS print one differently)', () => {

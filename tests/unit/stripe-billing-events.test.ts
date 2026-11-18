@@ -235,9 +235,9 @@ describe('the webhook wears it', () => {
     assert.match(handler, /export async function runVerifiedBillingEvent/, 'exported: the replay of a stored event (Stage 2 Part 5) calls the same function');
     assert.ok(route.indexOf('constructEvent(') < route.indexOf('receiveBillingEvent(event'), 'the signature is checked first');
   });
-  it('the customer-less return and the fee invoice come AFTER the claim, inside the seam', () => {
+  it('the customer-less return comes AFTER the claim, inside the seam', () => {
     assert.match(seam, /if \(!customerId\) return 'no_customer'/);
-    assert.match(seam, /syncFeeInvoiceFromEvent/);
+    assert.doesNotMatch(seam, /syncFeeInvoiceFromEvent|FEE_INVOICE_META/);
   });
   it('the subscription arm writes from a re-read subscription, and skips a stale one', () => {
     const sub = seam.slice(seam.indexOf("case 'customer.subscription.updated'"), seam.indexOf("case 'customer.subscription.deleted'"));

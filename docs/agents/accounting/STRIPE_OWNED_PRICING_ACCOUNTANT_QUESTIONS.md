@@ -23,6 +23,10 @@ an answer.
   fee.
 - We issue **no invoice per fee**. Stripe's payout report and the club's Stripe dashboard list each application fee. We could
   produce a monthly statement.
+- **Added 2026-11-18 (Stage 4 built):** we also issue **no other fee document**. The monthly invoice of Stripe's extras (disputes,
+  returned debits, foreign cards) is gone, because Stripe now charges those to the club's own account. So the application fee is the
+  only fee we charge a club on a payment, and Question 2c is the only place a fee document is in question. Production never
+  issued a fee invoice (0 on 2026-11-18); there is nothing from the old design for the accountant to review.
 - Stripe does not calculate or report tax on application fees. Our own records are the source for the return.
 
 ## Question 1 (first): taxable or exempt? (D1)

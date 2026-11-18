@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureError } from '@/lib/observability';
 import { stripeKeyIsLive } from '@/lib/stripe-mode';
 import { connectWebhookSecret, constructConnectEvent } from '@/lib/stripe-connect';
-import { applyCardDispute, applyRefundEvent, expireCheckoutSession, landCheckoutSession, recordDebitDisputeFee, returnDebit, reverseDebit } from '@/lib/online-payment-landing';
+import { applyCardDispute, applyRefundEvent, expireCheckoutSession, landCheckoutSession, returnDebit, reverseDebit } from '@/lib/online-payment-landing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -68,8 +68,6 @@ export const POST = withObservability(async (req: Request) => {
         const dispute = event.data.object as Stripe.Dispute;
         // 12c Part 6, unchanged: a bank debit reversed by the bank after it cleared (it returns early for a card).
         if (event.type === 'charge.dispute.created') await reverseDebit(account, dispute);
-        // 12d-1 Part 4: its fee at Stripe's figure, on every event (Stripe may post it after `created`); once.
-        await recordDebitDisputeFee(account, dispute);
         // 12d-1 Part 3: a card dispute, re-read from Stripe on every event (they state no order), written once per read
         // (it returns early for a bank debit).
         await applyCardDispute(account, dispute);

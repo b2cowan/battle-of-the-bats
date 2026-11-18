@@ -40,7 +40,8 @@ export type DisputeRead = {
   /** Stripe's dispute fee as Stripe charged it on the club's balance; null until Stripe reports one. */
   stripeFee: number | null;
   /** 'club' when that fee came off the club's own Stripe balance (the sandbox's card case, ruling 5): recorded, never
-   *  invoiced. A fee Stripe charges FieldLogicHQ instead is read from the platform's balance (`platformDisputeFees`). */
+   *  invoiced. (A fee Stripe charged FieldLogicHQ was read from the platform's balance and billed back until Stripe-owned
+   *  pricing Stage 4 retired that; nothing reads it now.) */
   feePaidFrom: 'club' | null;
   livemode: boolean;
   openedAt: string;
@@ -92,6 +93,8 @@ export type DisputeView = {
   openedAt: string;
   closedAt: string | null;
   stripeFee: number | null;
+  /** 'platform' is history only: a fee Stripe charged FieldLogicHQ on an account made before Stripe-owned pricing, which we
+   *  billed back until Stage 4 (2026-11-18). Nothing writes it now; the record shows no fee line for it. */
   feePaidFrom: 'club' | 'platform' | null;
   stripeDisputeId: string;
   /** When a loss was booked (the returned line), and when a later win put it back. */
@@ -113,9 +116,6 @@ export type DisputeRecord = DisputeView & {
   youAnswer: boolean;
   canCopy: boolean;
   showFee: boolean;
-  /** `{invoiceWhere}` for a fee Stripe charged FieldLogicHQ (12d-1 Part 4): the next subscription invoice, or the club's
-   *  own; null when there is no such fee or this reader doesn't read the fee line. */
-  feeWhere: 'next' | 'own' | null;
   /** `{factsList}` (the sentence under the buttons) and the text "Copy the facts" puts on the clipboard (§1.3). */
   factsList: string;
   factsText: string;

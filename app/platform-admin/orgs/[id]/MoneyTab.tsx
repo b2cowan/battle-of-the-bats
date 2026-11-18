@@ -34,7 +34,6 @@ import { errorOf, sendJson } from '../../console-fetch';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 import money from './money.module.css';
-import StripeFeesPanel from './StripeFeesPanel';
 import BillingAddressPanel, { BILLING_ADDRESS_ANCHOR, ReviewText, reviewOf, type BillingAddressRead } from './BillingAddressPanel';
 import { BILLING_LOCATION_CONSOLE_WORDS } from '@/lib/billing-location';
 
@@ -121,7 +120,7 @@ type SaleFilter = 'all' | 'unpaid' | 'look';
 type OpenSale = { number: string; refund: boolean; atTax: boolean };
 
 export default function MoneyTab({
-  orgId, orgName, ours, readsStripe, billsClub = false, marksLooks = false, startOnLook = false, stripeBase, club, billing, needsLook, openChargeId, onChargeClosed, onRefunded,
+  orgId, orgName, ours, readsStripe, marksLooks = false, startOnLook = false, stripeBase, club, billing, needsLook, openChargeId, onChargeClosed, onRefunded,
 }: {
   orgId: string;
   /** GST/HST Stage 3 Part 3b: may mark a sale as looked at (`refund`: Super admin, Billing). Support sees the list, never the door. */
@@ -132,8 +131,6 @@ export default function MoneyTab({
   billing: BillingAddressRead;
   /** GST/HST Stage 3 Part 3a: the sales that need a look, read once by the club record (they drive the dot too). */
   needsLook: ReturnType<typeof useNeedsLook>;
-  /** 12d-1 Part 4: may bill the club (`club_billing`), so the fees panel's Retry shows. */
-  billsClub?: boolean;
   orgName: string;
   ours: OurMoneyRecord;
   readsStripe: boolean;
@@ -488,9 +485,6 @@ export default function MoneyTab({
         </>
       )}
 
-      {/* 12d-1 Part 4: the Stripe fees the club's online payments caused, billed to the club; ours, read from our rows. */}
-      <StripeFeesPanel orgId={orgId} canRetry={billsClub} />
-
       {/* GST/HST Stage 1 Part 3: where the buyer is billed, and any "Needs review"; ours, read only. */}
       <BillingAddressPanel answer={billing} />
 
@@ -842,7 +836,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
 }
 
 /** The preview route's answer (GST/HST Part 6b, R1): Stripe's credit note for the figure typed. */
-type NotePreview = { note: 'credit_note'; cardCents: number; beforeTaxCents: number; taxLines: Array<{ label: string; cents: number }>; capped: boolean; feeInvoice: boolean };
+type NotePreview = { note: 'credit_note'; cardCents: number; beforeTaxCents: number; taxLines: Array<{ label: string; cents: number }>; capped: boolean };
 
 function RefundWindow({ orgId, orgName, charge, read, flaggedDuplicate, onClose, onDone }: {
   orgId: string; orgName: string; charge: MoneyCharge; read: MoneyRead; flaggedDuplicate: boolean;
@@ -890,7 +884,7 @@ function RefundWindow({ orgId, orgName, charge, read, flaggedDuplicate, onClose,
   // R2: Stripe emails the credit note, from the same sender as the receipt. R3: a charge that paid no invoice has none.
   const noteWords = !viaNote ? REFUND_WORDS.noInvoice
     : read.customer.email ? `A credit note goes to ${read.customer.email}.` : 'Stripe has no email for this customer, so the credit note is not emailed.';
-  const split = note && note.taxLines.length > 0 ? `: ${creditSplitWords(note.beforeTaxCents, note.taxLines, charge.currency, note.feeInvoice)}` : '';
+  const split = note && note.taxLines.length > 0 ? `: ${creditSplitWords(note.beforeTaxCents, note.taxLines, charge.currency)}` : '';
   const moved = note && asked && note.cardCents !== asked
     ? note.capped
       ? `Stripe can refund at most ${formatCents(note.cardCents, charge.currency)}: the rest of this invoice was credited before. `

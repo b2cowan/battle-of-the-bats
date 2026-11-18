@@ -21,8 +21,8 @@ import { tournamentTracksPayments } from './tournament-payments-tracked';
  *
  * This is the ONE count every ending window reads (Disconnect, the downgrade and cancel windows, the operator's plan
  * change and cancel, the deletion request) and the one list the operator's Delete refuses on (owner ruling 2,
- * 2026-10-27): money in flight is an open card dispute, a bank debit clearing, a Stripe fee not yet billed or whose
- * billing failed, and the club's own Stripe-fee invoice unpaid. A failed read throws — a window that says "nobody owes
+ * 2026-10-27): money in flight is an open card dispute or a bank debit clearing (the Stripe fees FieldLogicHQ billed back,
+ * and their invoices, retired with Stripe-owned pricing Stage 4). A failed read throws — a window that says "nobody owes
  * anything" because a count failed would be a lie, and a Delete that cannot count must not go ahead.
  */
 
@@ -40,16 +40,11 @@ export interface PaymentsOutstanding {
   openDisputes: number;
   /** The soonest answer-by date of an open dispute (an instant), when Stripe gives one. */
   firstDisputeDue: string | null;
-  /** Stripe fees not on any invoice yet (waiting for the next one), and those whose billing failed. */
-  feesUnbilled: number;
-  feesFailed: number;
-  /** The club's own Stripe-fee invoices still unpaid. */
-  invoicesUnpaid: number;
 }
 
 export const NOTHING_OUTSTANDING: PaymentsOutstanding = {
   connected: false, disconnected: false, familiesOwing: 0, teamsOwing: 0, openPages: 0, debitsClearing: 0,
-  openDisputes: 0, firstDisputeDue: null, feesUnbilled: 0, feesFailed: 0, invoicesUnpaid: 0,
+  openDisputes: 0, firstDisputeDue: null,
 };
 
 async function count(q: PromiseLike<{ count: number | null; error: unknown }>): Promise<number> {
@@ -123,19 +118,12 @@ export async function readOutstanding(orgId: string): Promise<PaymentsOutstandin
   const { data: acct, error } = await supabaseAdmin.from('org_payment_accounts').select('disconnected_at').eq('org_id', orgId).maybeSingle();
   if (error) throw error;
   if (!acct) return NOTHING_OUTSTANDING;
-  const [families, teams, pages, clearing, disputes, unbilled, failed, invoices] = await Promise.all([
+  const [families, teams, pages, clearing, disputes] = await Promise.all([
     familiesOwing(orgId),
     teamsOwing(orgId),
     countClubPayPages(orgId),
     count(supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'clearing')),
     supabaseAdmin.from('online_payment_disputes').select('due_by').eq('org_id', orgId).in('status', [...OPEN_DISPUTE_STATUSES]),
-    // A credit owed BACK to the club (a returned answering fee) is not money in flight to us (/review of Part 3).
-    count(supabaseAdmin.from('platform_stripe_fees').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
-      .is('billed_at', null).is('exempt_reason', null).is('bill_error', null).neq('kind', 'dispute_answer_returned')),
-    count(supabaseAdmin.from('platform_stripe_fees').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
-      .is('billed_at', null).is('exempt_reason', null).not('bill_error', 'is', null).neq('kind', 'dispute_answer_returned')),
-    // Unpaid: open, or one Stripe gave up collecting (still owed).
-    count(supabaseAdmin.from('platform_fee_invoices').select('id', { count: 'exact', head: true }).eq('org_id', orgId).in('status', ['open', 'uncollectible'])),
   ]);
   if (disputes.error) throw disputes.error;
   const dues = (disputes.data ?? []).map(d => d.due_by as string | null).filter((d): d is string => !!d).sort();
@@ -148,22 +136,17 @@ export async function readOutstanding(orgId: string): Promise<PaymentsOutstandin
     debitsClearing: clearing,
     openDisputes: (disputes.data ?? []).length,
     firstDisputeDue: dues[0] ?? null,
-    feesUnbilled: unbilled,
-    feesFailed: failed,
-    invoicesUnpaid: invoices,
   };
 }
 
-/** What the operator's Delete waits for (owner ruling 2): money in flight, each named. Empty = nothing in flight. */
-export type InFlight = 'disputes' | 'clearing' | 'fees_unbilled' | 'fees_failed' | 'invoices_unpaid';
+/** What the operator's Delete waits for (owner ruling 2): money in flight, each named. Empty = nothing in flight. (The Stripe
+ *  fees FieldLogicHQ billed back — unbilled, failed, or on an unpaid invoice — retired with Stripe-owned pricing Stage 4.) */
+export type InFlight = 'disputes' | 'clearing';
 
 export function moneyInFlight(o: PaymentsOutstanding): { kind: InFlight; n: number }[] {
   const out: { kind: InFlight; n: number }[] = [];
   if (o.openDisputes) out.push({ kind: 'disputes', n: o.openDisputes });
   if (o.debitsClearing) out.push({ kind: 'clearing', n: o.debitsClearing });
-  if (o.feesUnbilled) out.push({ kind: 'fees_unbilled', n: o.feesUnbilled });
-  if (o.feesFailed) out.push({ kind: 'fees_failed', n: o.feesFailed });
-  if (o.invoicesUnpaid) out.push({ kind: 'invoices_unpaid', n: o.invoicesUnpaid });
   return out;
 }
 
@@ -172,9 +155,6 @@ export function inFlightRefusal(items: readonly { kind: InFlight; n: number }[])
   const say: Record<InFlight, (n: number) => string> = {
     disputes: n => (n === 1 ? '1 card dispute is open' : `${n} card disputes are open`),
     clearing: n => (n === 1 ? '1 bank debit is still clearing' : `${n} bank debits are still clearing`),
-    fees_unbilled: n => (n === 1 ? '1 Stripe fee isn’t billed yet' : `${n} Stripe fees aren’t billed yet`),
-    fees_failed: n => (n === 1 ? '1 Stripe fee couldn’t be billed' : `${n} Stripe fees couldn’t be billed`),
-    invoices_unpaid: n => (n === 1 ? '1 invoice for Stripe fees is unpaid' : `${n} invoices for Stripe fees are unpaid`),
   };
   const parts = items.map(i => say[i.kind](i.n));
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];

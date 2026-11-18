@@ -19,9 +19,9 @@ describe('the one count every ending reads', () => {
     assert.match(src, /eq\('online_payments\.status', 'clearing'\)/);
     assert.match(src, /new Set\(owing\.filter/);
   });
-  it('counts open pages, clearing debits, open disputes and every unpaid Stripe fee, and a failed read throws', () => {
+  it('counts open pages, clearing debits, and open disputes, and a failed read throws', () => {
     const src = readCode(ENDINGS);
-    for (const k of ['countClubPayPages(orgId)', "eq('status', 'clearing')", 'OPEN_DISPUTE_STATUSES', "from('platform_fee_invoices')", "not('bill_error', 'is', null)"]) {
+    for (const k of ['countClubPayPages(orgId)', "eq('status', 'clearing')", 'OPEN_DISPUTE_STATUSES']) {
       assert.ok(src.includes(k), k);
     }
     assert.match(src, /if \(error\) throw error;/);
@@ -61,11 +61,11 @@ describe('every ending closes the open pages (ask 11)', () => {
 
 describe('the operator’s Delete refuses money in flight (owner ruling 2)', () => {
   const src = readCode('app/api/platform-admin/orgs/[id]/delete/route.ts');
-  it('refuses while a dispute is open, a debit clears or a Stripe fee is unbilled, failed or unpaid, and when it can’t count', () => {
+  it('refuses while a dispute is open, or a debit clears, and when it can’t count', () => {
     assert.match(src, /const outstanding = await readOutstanding\(id\)\.catch\(\(\) => null\);\s*if \(!outstanding\) \{/);
     assert.match(src, /if \(inFlight\.length\) \{\s*return NextResponse\.json\(\{ error: inFlightRefusal\(inFlight\), inFlight \}, \{ status: 409 \}\);/);
     const ends = readCode(ENDINGS);
-    for (const k of ['disputes', 'clearing', 'fees_unbilled', 'fees_failed', 'invoices_unpaid']) assert.ok(ends.includes(`kind: '${k}'`), k);
+    for (const k of ['disputes', 'clearing']) assert.ok(ends.includes(`kind: '${k}'`), k);
   });
   it('closes the club’s open pages before the delete', () => {
     const close = src.indexOf("closeClubPayPages(id, 'operator delete')");
@@ -161,11 +161,6 @@ describe('the /review of Part 3', () => {
     assert.match(src, /const again = await readOutstanding\(id\)\.catch\(\(\) => null\);/);
     assert.match(src, /if \(again\.openPages > 0\) \{/);
     assert.ok(src.indexOf('const again') < src.indexOf(".delete().eq('org_id', id)"));
-  });
-  it('a credit owed back to the club never blocks a delete; an invoice Stripe gave up on does', () => {
-    const src = readCode(ENDINGS);
-    assert.equal((src.match(/\.neq\('kind', 'dispute_answer_returned'\)/g) ?? []).length, 2);
-    assert.match(src, /\.in\('status', \['open', 'uncollectible'\]\)/);
   });
   it('a large club is counted in pages and chunks, never one unbounded list', () => {
     const src = readCode(ENDINGS);

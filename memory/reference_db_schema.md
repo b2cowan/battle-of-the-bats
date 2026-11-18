@@ -682,10 +682,6 @@ key NOT NULL, label NOT NULL, description NOT NULL, subject NOT NULL, heading NO
 id (uuid), event_type NOT NULL, source, source_event_id, org_id (uuid) → organizations.id, actor_user_id (uuid), actor_email, previous_plan_id, plan_id, previous_subscription_status, subscription_status, metadata (jsonb), occurred_at, created_at
 - Indexes: idx_platform_events_org_time, idx_platform_events_source_event, idx_platform_events_type_time
 
-### platform_fee_invoices
-id (uuid), org_id (uuid) → organizations.id NOT NULL, livemode (boolean), period_start NOT NULL, stripe_customer_id NOT NULL, stripe_invoice_id, invoice_number, status, amount_due (numeric), hosted_invoice_url, due_at, finalized_at, emailed_at, reminded_at, paid_at, send_error, created_at, updated_at, total (numeric), tax_lines (jsonb)
-- Indexes: platform_fee_invoices_period_key, platform_fee_invoices_stripe_key, platform_fee_invoices_unpaid_idx
-
 ### platform_feedback_replies
 id (uuid) NOT NULL, feedback_id (uuid) → feedback_submissions.id NOT NULL, staff_user_id (uuid) NOT NULL, staff_email NOT NULL, signed_name, to_email NOT NULL, body NOT NULL, status, attempt, account_email_id (uuid) → platform_account_emails.id, created_at, sending_at, finished_at, claimed_at
 - Indexes: platform_feedback_replies_feedback_idx, platform_feedback_replies_staff_idx
@@ -715,10 +711,6 @@ id (bigint) NOT NULL, actor_user_id (uuid) NOT NULL, searched_at
 
 ### platform_status_reading
 id, reading (jsonb), read_at, claimed_at
-
-### platform_stripe_fees
-id (uuid), org_id (uuid) → organizations.id NOT NULL, online_payment_id (uuid) → online_payments.id NOT NULL, kind NOT NULL, amount (numeric) NOT NULL, livemode (boolean), exempt_reason, stripe_invoice_item_id, billed_at, bill_error, created_at, dispute_id (uuid) → online_payment_disputes.id, amount_source, billed_on, fee_invoice_id (uuid) → platform_fee_invoices.id, bill_attempts (integer), stripe_credit_note_id
-- Indexes: platform_stripe_fees_credit_note_key, platform_stripe_fees_dispute_idx, platform_stripe_fees_invoice_idx, platform_stripe_fees_key, platform_stripe_fees_org_idx, platform_stripe_fees_unbilled_idx
 
 ### platform_user_notes
 id (uuid), user_id (uuid) NOT NULL, body NOT NULL, created_by_email NOT NULL, created_at
@@ -1162,7 +1154,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **285 tables** across 10 modules.
+Total: **283 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 25 tables
@@ -1171,6 +1163,6 @@ Total: **285 tables** across 10 modules.
 - Accounting: 9 tables
 - Stripe / Billing: 5 tables
 - Organization / Platform Core: 8 tables
-- Platform Admin: 32 tables
+- Platform Admin: 30 tables
 - CRM / Leads: 6 tables
 - Other: 101 tables

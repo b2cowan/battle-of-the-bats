@@ -39,7 +39,7 @@ describe('read only (ask 7): nothing writes, never a card or bank number, a name
     assert.doesNotMatch(lib, /\.(insert|update|upsert|delete)\(/);
     assert.doesNotMatch(lib, /card_last4|bank_last4|player_first_name/);
     const tab = readCode('app/platform-admin/orgs/[id]/OnlinePaymentsTab.tsx');
-    assert.match(tab, /<StripeFeesPanel orgId=\{orgId\} canRetry=\{false\} \/>/);
+    assert.doesNotMatch(tab, /StripeFeesPanel/);
     assert.doesNotMatch(tab, /'(PATCH|DELETE)'/);
   });
   it('Show the player logs every opening, and reads only this club’s payment', () => {
@@ -92,8 +92,8 @@ describe('the /review of 12d-2 (Parts 2, 4, 5)', () => {
     assert.match(cr, /!op\.account\.ended && !hasPlanFeature/);
   });
   it('the tab counts as the Health list does, and says "Nothing is open" only when its count is 0', () => {
-    assert.match(readCode('lib/platform-online-payments.ts'), /\.lt\('due_at', now\.toISOString\(\)\);\s*if \(pastDueError\) throw pastDueError;/);
     assert.match(readCode('app/platform-admin/orgs/[id]/OnlinePaymentsTab.tsx'), /const nothingOpen = read\.openItems === 0 && !read\.clearing;/);
+    assert.match(readCode('lib/platform-online-payments.ts'), /openItems: disputeRows\.length \+ split\.failing\.length,/);
   });
   it('the ending item waits on a failed read (a settle is final)', () => {
     const na = readCode('lib/needs-attention.ts');

@@ -2,8 +2,6 @@
 /** Admin chrome and destinations only; every plan shares the billing body. */
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { useClubBrief } from './ClubBriefProvider';
-import { overdueBannerFor } from '@/lib/fee-invoice-line';
 import { TabPageHeader } from './PlaceFrame';
 import BillingBody from '@/components/billing/BillingBody';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
@@ -14,11 +12,6 @@ import { NotYours } from './NotYours';
 
 export default function BillingKit() {
   const { currentOrg, userRole } = useOrg();
-  // After the owner pays in Stripe's tab, the line and the list re-read on return and the door's pill follows (Fee invoice alerts Part 3).
-  const { reload, status, brief } = useClubBrief();
-  // The pinned banner speaks for anything overdue once the brief says so (or while it is still on its way); if the brief failed or is out
-  // of date there is no banner, and the page draws the red line itself.
-  const bannerCoversOverdue = status === 'loading' || overdueBannerFor(brief?.feesOwed) != null;
   usePageTitle(W.page.title);
   const slug = currentOrg?.slug ?? '';
   const eyebrow = currentOrg && !isTournamentTier(currentOrg.planId) && !isTeamWorkspaceOrg(currentOrg)
@@ -30,6 +23,6 @@ export default function BillingKit() {
     {/* ⚖ Admin header Phase 3 (round 5, Q1): a club's header names Plan & billing, so the paper title goes; a tournament-only
         organization's copy (under Settings & access) keeps it, its header naming the organization (Q6). */}
     <TabPageHeader eyebrow={eyebrow} title={W.page.title} />
-    <BillingBody billingBase={getBillingHref({ slug, planId: currentOrg?.planId }, { host: 'admin' })} teamsHref={`/${slug}/admin/rep-teams`} onFeesMayHaveChanged={reload} bannerCoversOverdue={bannerCoversOverdue} />
+    <BillingBody billingBase={getBillingHref({ slug, planId: currentOrg?.planId }, { host: 'admin' })} teamsHref={`/${slug}/admin/rep-teams`} />
   </div>;
 }

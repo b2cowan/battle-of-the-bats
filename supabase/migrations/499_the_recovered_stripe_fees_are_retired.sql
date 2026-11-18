@@ -1,0 +1,38 @@
+-- ---------------------------------------------------------------
+-- Migration 499 — Stripe-owned pricing Stage 4: the recovered Stripe-fee tables are retired
+-- (build prompt docs/projects/active/STRIPE_OWNED_PRICING_STAGE4_BUILD_PROMPT.md step 6; plan STRIPE_OWNED_PRICING_PLAN.md
+-- "Stage 4"; owner call (b) 2026-11-18: drop, not freeze).
+--
+-- WHY: under Stripe-owned pricing (owner R3, 2026-11-17; built in Stage 2, mig 498) Stripe takes its own extras — a dispute's
+-- fees, a returned or reversed bank debit, a card issued outside the club's country — from the CLUB's balance. FieldLogicHQ no
+-- longer records them against the club or bills them back on a monthly "Stripe fees" invoice, so the two tables that held that
+-- machinery (12c's 387 → 12d-1's 390, 399, 444) have no writer and no reader left in the code (removed in the same commit).
+--
+-- WHAT GOES:
+--   · platform_stripe_fees   — every Stripe fee recorded against a club, and how it was billed.
+--   · platform_fee_invoices  — the club's own monthly invoice of those fees.
+--   Dropping a table drops its own indexes, CHECKs, RLS state, grants and outgoing foreign keys (to organizations,
+--   online_payments, online_payment_disputes, and platform_stripe_fees_invoice_fk ON DELETE RESTRICT to the invoices). Fees
+--   go first because they reference the invoices. Nothing else points at either table: no function, trigger, view or policy
+--   reads them, and no other table has a foreign key to them (checked on dev 2026-11-18).
+--
+-- WHAT STAYS (history, deliberately): the `'fee'` kind in the CHECKs of platform_charge_tax_records and
+-- platform_credit_note_tax_records (mig 451), and `online_payment_disputes.fee_paid_from`'s `'platform'` value (mig 390). A
+-- CHECK that still allows a value nothing writes harms nothing, and dev holds tax records of that kind. Narrowing them would be a
+-- separate, optional migration; /accounting (2026-11-18) recommends AGAINST it (the CHECK guards the six-year tax record, and
+-- narrowing would first need dev's 14 test records rewritten). Not done.
+--
+-- ROWS: prod held 0 in both tables (read-only count with the owner's yes, 2026-11-18). Dev held UAT Rep Club's 6 test-mode
+-- foreign-card fees ($7.50) and one October fee invoice, voided in Stripe test mode the same day before this ran.
+--
+-- ORDER (MANUAL_PROD_STEPS.json): apply WITH the promote that ships the Stage 4 code — in the release's migration step, minutes
+-- before the push — never earlier and never later. Not later: master's build hard-gates on schema parity (amplify.yml), so the
+-- code cannot ship while prod still has tables dev dropped. Not earlier: the code on production reads them until it ships. In
+-- the minutes between, the old code's reads fail safe (corrected 2026-11-18 by /review): the club brief's fees-owed read is
+-- caught and left out; Disconnect/Delete counts reach the tables only for a club with a payout account (prod has none);
+-- platform admin's Health › Online payments list reads "could not be read" until the deploy lands; the daily job runs at
+-- 11:15 UTC, outside a promote.
+-- ---------------------------------------------------------------
+
+DROP TABLE IF EXISTS public.platform_stripe_fees;
+DROP TABLE IF EXISTS public.platform_fee_invoices;

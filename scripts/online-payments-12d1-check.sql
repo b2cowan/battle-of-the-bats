@@ -7,7 +7,7 @@
 DO $op12d1$
 DECLARE
   v_org uuid; v_event uuid; v_div uuid; v_whole uuid; v_part uuid; v_exact uuid; v_op uuid; v_op2 uuid; v_op3 uuid;
-  v_res jsonb; v_err text; v_ok boolean; v_season uuid; v_reg uuid; v_reg2 uuid; v_lop uuid; v_d uuid; v_inv uuid;
+  v_res jsonb; v_err text; v_ok boolean; v_season uuid; v_reg uuid; v_reg2 uuid; v_lop uuid; v_d uuid;
   v_today date := (now() AT TIME ZONE 'America/Toronto')::date; v_n int; v_two uuid; v_xa uuid; v_xb uuid;
 BEGIN
   INSERT INTO organizations(name, slug, plan_id)
@@ -231,59 +231,8 @@ BEGIN
      OR (SELECT status FROM online_payments WHERE id = v_lop) <> 'paid' THEN
     RAISE EXCEPTION 'FAIL T12: a house-league win after a loss (%)', v_res; END IF;
 
-  -- ── Every Stripe fee ──
-  -- T13 · one fee per kind and payment, and per dispute for a dispute's kinds: a second dispute's fee is its own row.
-  INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, amount_source, dispute_id)
-  VALUES (v_org, v_op3, 'dispute', 15, 'stripe', v_d);
-  INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, amount_source, dispute_id)
-  VALUES (v_org, v_op3, 'dispute', 15, 'stripe', (SELECT id FROM online_payment_disputes WHERE stripe_dispute_id = 'du_d1_two'));
-  v_ok := false;
-  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, amount_source, dispute_id)
-    VALUES (v_org, v_op3, 'dispute', 15, 'stripe', v_d);
-  EXCEPTION WHEN unique_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T13: a dispute fee recorded twice'; END IF;
-  INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, amount_source) VALUES (v_org, v_op, 'foreign_card', 3.32, 'rate');
-  v_ok := false;
-  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, amount_source) VALUES (v_org, v_op, 'foreign_card', 3.32, 'rate');
-  EXCEPTION WHEN unique_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T13: a foreign-card fee recorded twice'; END IF;
-  v_ok := false;
-  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'dispute', 15);
-  EXCEPTION WHEN check_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T13: a dispute fee without its dispute'; END IF;
-
-  -- T14 · a fee is billed one way only: on the subscription's invoice (no own invoice), or on its own invoice (with it);
-  -- an exempt fee is never billed.
-  v_ok := false;
-  BEGIN UPDATE platform_stripe_fees SET stripe_invoice_item_id = 'ii_x', billed_at = now() WHERE online_payment_id = v_op AND kind = 'foreign_card';
-  EXCEPTION WHEN check_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T14: billed without saying how'; END IF;
-  INSERT INTO platform_fee_invoices(org_id, period_start, stripe_customer_id) VALUES (v_org, date_trunc('month', v_today)::date, 'cus_check12d1')
-  RETURNING id INTO v_inv;
-  v_ok := false;
-  BEGIN UPDATE platform_stripe_fees SET stripe_invoice_item_id = 'ii_x', billed_at = now(), billed_on = 'subscription', fee_invoice_id = v_inv
-    WHERE online_payment_id = v_op AND kind = 'foreign_card';
-  EXCEPTION WHEN check_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T14: billed on the subscription AND an own invoice'; END IF;
-  UPDATE platform_stripe_fees SET stripe_invoice_item_id = 'ii_x', billed_at = now(), billed_on = 'own_invoice', fee_invoice_id = v_inv
-    WHERE online_payment_id = v_op AND kind = 'foreign_card';
-  v_ok := false;
-  BEGIN UPDATE platform_stripe_fees SET exempt_reason = 'test_mode' WHERE online_payment_id = v_op AND kind = 'foreign_card';
-  EXCEPTION WHEN check_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T14: an exempt fee billed'; END IF;
-  -- One own invoice a month per club; an invoice that has gone out names Stripe's invoice; paid is stamped.
-  v_ok := false;
-  BEGIN INSERT INTO platform_fee_invoices(org_id, period_start, stripe_customer_id) VALUES (v_org, date_trunc('month', v_today)::date, 'cus_check12d1');
-  EXCEPTION WHEN unique_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T14: two own invoices in one month'; END IF;
-  v_ok := false;
-  BEGIN UPDATE platform_fee_invoices SET status = 'open' WHERE id = v_inv;
-  EXCEPTION WHEN check_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T14: an open invoice with no Stripe invoice'; END IF;
-  v_ok := false;
-  BEGIN DELETE FROM platform_fee_invoices WHERE id = v_inv;
-  EXCEPTION WHEN foreign_key_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T14: an invoice with billed fees deleted'; END IF;
+  -- ── Every Stripe fee ── T13 and T14 (one fee per kind and payment; a fee billed one way only; one own invoice a month)
+  -- retired with platform_stripe_fees and platform_fee_invoices (mig 499, Stripe-owned pricing Stage 4, 2026-11-18).
 
   -- T15 · (mig 396) an inquiry escalated to a chargeback moves forward (the same id, warning_under_review → needs_response).
   v_res := online_payment_dispute_apply(v_xb, 'du_d1_inq', 'warning_under_review', 'general', 63.60, 0, NULL, true, NULL, NULL, false, now());

@@ -20,8 +20,9 @@ const NO_REASON = new Set([
   'remove_early_access_note', 'copy_early_access_emails', 'export_early_access_leads', 'allow_early_access_contact',
   // Staff roles: a reason arrives when Stage 8 draws Staff.
   'invite_platform_user', 'update_platform_user', 'remove_platform_user',
-  // 12d-1 Part 4: the Stripe-fees job, and a retry of a fee that couldn't be billed (the fee's own error is its reason).
-  'stripe_fees_sweep', 'retry_stripe_fee',
+  // 12d-1 Part 4: the online-payments daily job (keeps its "Stripe fees" name: the GST/HST worksheet finds its backfill marker by
+  // it). The fee retry it once sat beside retired with the fees billed back (Stripe-owned pricing Stage 4).
+  'stripe_fees_sweep',
   // Stage 4b: the Coaches Portal free-time daily job (the ending reminders).
   'portal_free_time_sweep',
   // Stage 0 Part 11: the daily comparison with Stripe (reports only; its result row is its own record).

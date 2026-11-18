@@ -46,7 +46,7 @@ import { briefPlaceCount } from './club/ClubBriefProvider';
 import { kitCountText } from '@/lib/admin-kit-nav';
 import { MESSAGES_TAB } from '@/lib/invite-only-words';
 import styles from '@/components/coaches/CoachesBottomNav.module.css';
-import { useFeeAlert } from './useFeeAlert';
+import { useBillingDoorAlert } from './useBillingDoorAlert';
 
 const badge = (n: number): string => (n > 9 ? '9+' : String(n));
 
@@ -157,15 +157,16 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
     || (!tournamentBar && !!billingLink && isKitLinkActive(pathname, billingLink))
     || pathname === `${base}/notifications`;
   const moreChat = tournamentBar && chatInNav && !chatIsPrimary ? chatUnread : 0;
-  // Fee invoice alerts, Part 2: the Plan & billing signal rides More's pill (and the sheet's own row) — amber to pay, red overdue.
-  const feeAlert = useFeeAlert();
+  // Fee invoice alerts, Part 2 (Ask 7): the Plan & billing signal — a plan payment that didn't go through — rides More's pill
+  // (and the sheet's own row), amber.
+  const billingAlert = useBillingDoorAlert();
   const moreUnread = moreChat + notifUnread;
-  // ⚖ While a fee signal exists the pill shows ONLY its count, in its tone (owner, 2026-11-05): adding unread messages to an
-  // invoice count printed a number that read as invoices. The unread are still spoken in the label and listed in the sheet.
-  const moreBadge = feeAlert ? feeAlert.count : moreUnread;
-  // One spoken label: the unread part only when there are unread, then the fee part in its own words (never "invoices unread").
-  const moreLabel = ['More', ...(moreUnread > 0 ? [`${badge(moreUnread)} unread`] : []), ...(feeAlert ? [feeAlert.label] : [])].join(', ');
-  const feeTone = feeAlert ? (feeAlert.tone === 'red' ? styles.feeRed : styles.feeAmber) : '';
+  // ⚖ While the billing signal exists the pill shows ONLY its count, in its tone (owner, 2026-11-05): adding unread messages to it
+  // printed a number that read as something to pay. The unread are still spoken in the label and listed in the sheet.
+  const moreBadge = billingAlert ? billingAlert.count : moreUnread;
+  // One spoken label: the unread part only when there are unread, then the billing part in its own words.
+  const moreLabel = ['More', ...(moreUnread > 0 ? [`${badge(moreUnread)} unread`] : []), ...(billingAlert ? [billingAlert.label] : [])].join(', ');
+  const billingTone = billingAlert ? styles.billingAmber : '';
   const close = () => setMoreOpen(false);
 
   const row = (l: KitLink, count = 0) => {
@@ -245,7 +246,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
           <span className={styles.iconWrap}>
             {moreOpen ? <X size={22} strokeWidth={2} aria-hidden /> : <MoreHorizontal size={22} strokeWidth={moreActive ? 2.5 : 1.8} aria-hidden />}
             {moreActive && !moreOpen && <span className={styles.activeDot} />}
-            {!moreOpen && moreBadge > 0 && <span aria-hidden className={`${styles.tabCount}${feeTone ? ` ${feeTone}` : ''}`}>{feeAlert ? kitCountText(moreBadge) : badge(moreBadge)}</span>}
+            {!moreOpen && moreBadge > 0 && <span aria-hidden className={`${styles.tabCount}${billingTone ? ` ${billingTone}` : ''}`}>{billingAlert ? kitCountText(moreBadge) : badge(moreBadge)}</span>}
           </span>
           <span className={styles.label}>More</span>
         </button>
@@ -328,7 +329,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                     ))}
                     {billingLink && <Link className={styles.dropItem} href={billingLink.href} role="menuitem" id="admin-mob-billing" onClick={close} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
                       {billingLink.icon && <billingLink.icon size={17} aria-hidden />}<span>{billingLink.label}</span>
-                      {feeAlert && <span className={`${styles.dropCount} ${feeTone}`} aria-label={feeAlert.label}>{kitCountText(feeAlert.count)}</span>}
+                      {billingAlert && <span className={`${styles.dropCount} ${billingTone}`} aria-label={billingAlert.label}>{kitCountText(billingAlert.count)}</span>}
                     </Link>}
                   </div>
               </>

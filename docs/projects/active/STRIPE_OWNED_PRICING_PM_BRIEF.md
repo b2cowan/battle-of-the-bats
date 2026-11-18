@@ -35,5 +35,12 @@ straight from the club's Stripe balance, and we take only our margin.
    dev test clubs' old accounts take no new payments and are re-created through "Set up payouts again"; UAT Rep Club only
    after the payout test's payout steps (owner, 2026-11-18).
 3. The club's books record Stripe's fee.
-4. Retire the monthly Stripe-fee invoicing.
+4. Retire the monthly Stripe-fee invoicing. **Built on dev 2026-11-18** (before Stage 3, owner). A club no longer gets a
+   Stripe-fee invoice or its reminder, and Plan & billing loses its Stripe fees list, the "you owe" line and the red banner
+   (its menu pill keeps "Plan payment didn't go through"). Platform admin loses the fee card, its Retry and the two Health
+   rows; Delete waits only for open disputes and clearing debits. The billing address stays required before payouts (owner
+   call a: the tax inside our fee needs the province). The two fee tables are dropped (owner call b; production after this
+   code ships); Bookkeeping keeps its "Fees billed back to clubs" row for history (owner call c). Dev's one open October
+   test invoice was voided in Stripe. Reviews: /accounting nothing to fix; /legal: the privacy policy still names the fee
+   invoice, acceptable while payments are off, fixed in Stage 5's new version.
 5. Words, help, terms; owner walk. Then the tax on our fee (GST/HST Stage 5) builds on the final shape.

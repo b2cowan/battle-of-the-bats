@@ -23,7 +23,7 @@ import { filesUnder, readCode } from './_source-code.ts';
 
 const LANDING = 'lib/online-payment-landing.ts';
 const WEBHOOKS = ['app/api/payments/connect-webhook/route.ts', 'app/api/payments/connect-account-events/route.ts'];
-/** 12d-1 Part 4: the daily job acts only on money already taken (a dispute's due date, Stripe's fees already charged), so,
+/** 12d-1 Part 4: the daily job acts only on money already taken (a dispute's due date, a plan ending), so,
  *  like the webhooks, it keeps running when the switch goes off. It opens no pay page and takes no money. */
 const AFTER_THE_MONEY = ['app/api/platform-admin/stripe-fees-daily/route.ts'];
 const MIG = 'supabase/migrations/358_a_club_takes_payments_online.sql';
@@ -222,9 +222,9 @@ describe('every online-payments door reads the launch switch', () => {
 /**
  * Stripe-owned pricing, Stage 2 (plan STRIPE_OWNED_PRICING_PLAN.md; owner 2026-11-18 "refuse and re-create"). An account
  * made under the old fee setting opens no new payment and is replaced, never reused; every payment stores what we took;
- * and the foreign-card line never bills a club Stripe already charged.
+ * (Stage 4, 2026-11-18, retired the foreign-card and returned-debit fee lines with the monthly Stripe-fees invoice.)
  */
-describe('Stripe-owned pricing: the old fee setting, what we took, and no fee billed twice', () => {
+describe('Stripe-owned pricing: the old fee setting and what we took', () => {
   const MIG_498 = readCode('supabase/migrations/498_a_club_account_pays_stripe_its_own_fees.sql');
   const PAYOUTS = readCode('app/api/admin/payouts/route.ts');
 
@@ -243,12 +243,6 @@ describe('Stripe-owned pricing: the old fee setting, what we took, and no fee bi
 
   it('every reader of the account reads its fee setting (the one column list)', () => {
     assert.match(readCode('lib/online-payment-account.ts'), /PAYOUTS_ACCOUNT_COLUMNS =\s*'[^']*, fees_collector';/);
-  });
-
-  it('the foreign-card line bills only a payment on the account it was taken on, under the old setting', () => {
-    const fn = /export async function recordForeignCardFee[\s\S]*?\n}\n/.exec(readCode('lib/platform-stripe-fees.ts'))?.[0] ?? '';
-    assert.match(fn, /if \(!acct \|\| acct\.fees_collector !== 'application' \|\| acct\.stripe_account_id !== op\.stripe_account_id\) return;/);
-    assert.ok(fn.indexOf("fees_collector !== 'application'") < fn.indexOf('recordStripeFee('));
   });
 
   it('both pay routes store what we took and open only what canOpen allows', () => {

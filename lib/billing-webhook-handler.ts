@@ -38,8 +38,6 @@ import {
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
-import { syncFeeInvoiceFromEvent } from '@/lib/platform-stripe-fees';
-import { FEE_INVOICE_META } from '@/lib/online-payment-words';
 import { CHARGE_TAX_CREDIT_NOTE_EVENTS, CHARGE_TAX_INVOICE_EVENTS } from '@/lib/charge-tax-record';
 import { orgOfSubscription, recordCreditNoteTax, recordInvoiceRefunded, recordInvoiceTax, recordTaxOrReport } from '@/lib/charge-tax-record-server';
 import { buyerNameAfterCheckout } from '@/lib/billing-tax';
@@ -239,8 +237,8 @@ export async function runVerifiedBillingEvent(event: Stripe.Event, customerId: s
   if (isSubscriptionChargeEvent(event.type)) return handleSubscriptionChargeEvent(event, subscriptionChargeDeps());
 
   // GST/HST Stage 3 Part 1: every invoice we issue and every credit note keeps its tax record. A credit note has no plan work.
-  // An invoice's record is written AFTER the plan's own work, whatever that work answered (a club's Stripe-fees invoice, a
-  // stray subscription's invoice and a coach's own Premium are all recorded), so a club's plan never waits on our bookkeeping.
+  // An invoice's record is written AFTER the plan's own work, whatever that work answered (a
+  // stray subscription's invoice and a coach's own Premium are both recorded), so a club's plan never waits on our bookkeeping.
   // Reported, never thrown (the daily job's catch-up writes a record that failed here). A throw in the plan work skips it:
   // Stripe sends the event again.
   if ((CHARGE_TAX_CREDIT_NOTE_EVENTS as readonly string[]).includes(event.type)) {
@@ -264,14 +262,6 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
   if (!customerId) return 'no_customer';
   // The customer's messages (emails and the in-app notice): silent on a replay (owner ruling 1, 2026-11-08).
   const say = customerSenders({ email: sendTransactionalEmail, notify }, opts);
-
-  // 12d-1 Part 4: a club's own invoice of Stripe fees is written to its own row and NOTHING else. Read before the switch,
-  // because the invoice cases below would read its payment as the subscription's (a comped club with no subscription would
-  // turn "active", and a failed fee payment "past due").
-  if (event.type.startsWith('invoice.') && (event.data.object as Stripe.Invoice).metadata?.[FEE_INVOICE_META]) {
-    await syncFeeInvoiceFromEvent(event.data.object as Stripe.Invoice);
-    return 'processed';
-  }
 
   switch (event.type) {
     case 'checkout.session.completed': {

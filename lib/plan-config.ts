@@ -585,16 +585,6 @@ export const STRIPE_STANDARD_COST: Record<OnlinePaymentRail, { pctBps: number; f
   bankDebit: { pctBps: 100, flatCents: 40, capCents: 500 },
 };
 
-/**
- * Stripe's extra fee on a card issued outside the club's country (+0.8% of the charge, stripe.com/en-ca pricing, read
- * 2026-10-27), which Stripe charges the platform and the owner ruled is the club's, never the family's (Stage 12d,
- * 2026-10-27). Only on an account made under the old fee setting (`fees_collector: 'application'`): on a Stripe-owned
- * account Stripe takes it from the club itself, and this figure retires with the recovered-fee machinery (Stripe-owned
- * pricing Stage 4). Stripe gives no per-charge figure for it (plan §0, sandbox probe), so it is billed from this published rate
- * (the ruled fallback). Canonical record: the Facts doc's facilitated-payments section. Never typed elsewhere.
- */
-export const FOREIGN_CARD_EXTRA_BPS = 80;
-
 /** "3.5% + $1.50" — the rate as a customer reads it, printed from the constant above. */
 export function onlineFeeRateLabel(rail: OnlinePaymentRail): string {
   const { pctBps, flatCents } = ONLINE_PAYMENT_RATES[rail];

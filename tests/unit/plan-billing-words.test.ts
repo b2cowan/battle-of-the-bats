@@ -4,7 +4,6 @@ import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
 import { PLAN_CONFIG, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL } from '../../lib/plan-config.ts';
 import { freeTimeCopy } from '../../lib/free-time-copy.ts';
 import { portalFreeTimeCopy } from '../../lib/portal-free-time.ts';
-import { STRIPE_FEE_WORDS } from '../../lib/online-payment-words.ts';
 import { subscriptionStatusLabel } from '../../lib/platform-labels.ts';
 
 describe('shared billing vocabulary', () => {
@@ -31,7 +30,6 @@ describe('shared billing vocabulary', () => {
     assert.strictEqual(W.plan.status, subscriptionStatusLabel);
     assert.strictEqual(W.freeTime, freeTimeCopy);
     assert.strictEqual(W.portalFreeTime, portalFreeTimeCopy);
-    assert.strictEqual(W.stripeFees, STRIPE_FEE_WORDS);
     assert.equal(W.page.title, 'Plan & billing');
   });
 

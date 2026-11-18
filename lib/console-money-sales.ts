@@ -12,7 +12,7 @@
 import { consoleDate, consoleDay } from './console-dates';
 import { orgDayKey } from './timezone';
 import { countryInfo, regionName, type StoredBillingLocation } from './billing-location';
-import { brandLabel, STRIPE_FEE_WORDS } from './online-payment-words';
+import { brandLabel, FEE_INVOICE_HISTORY_LABEL } from './online-payment-words';
 import {
   BACKFILL_FLOOR_ISO, isCanadianGstHst, isRatedTaxReason,
   type ChargeTaxRecordRow, type CreditNoteTaxRecordRow, type StoredTaxLine,
@@ -241,14 +241,13 @@ export function saleWhatWords(row: SaleRow): { main: string; period: string | nu
   const inv = row.invoice;
   if (inv) {
     const words = invoicePaidForWords(inv, inv.currency ?? row.record?.currency ?? 'cad', { withTax: false });
-    if (!inv.feeInvoice && !inv.subscriptionId) return { ...words, period: 'Not the subscription’s' };
-    if (inv.feeInvoice && saleStatus(row) === 'open' && inv.dueDate) return { ...words, period: `Issued ${consoleDay(row.at)} · due ${consoleDay(inv.dueDate)}` };
+    if (!inv.subscriptionId) return { ...words, period: 'Not the subscription’s' };
     return words;
   }
   const r = row.record!;
   const no = r.invoice_number;
   switch (r.kind) {
-    case 'fee': return { main: STRIPE_FEE_WORDS.paCharge(no), period: null };
+    case 'fee': return { main: FEE_INVOICE_HISTORY_LABEL(no), period: null }; // history: retired by Stripe-owned pricing Stage 4
     case 'premium': return { main: `Coach Premium${no ? ` · invoice ${no}` : ''}`, period: null };
     case 'one_off': return { main: `Invoice made in Stripe${no ? ` · ${no}` : ''}`, period: null };
     default: return { main: `The subscription${no ? ` · invoice ${no}` : ''}`, period: null };

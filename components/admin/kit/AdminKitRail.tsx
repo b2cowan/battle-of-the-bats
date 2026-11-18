@@ -56,10 +56,10 @@ import { useAdminKitNav, useTournamentSettingsTabs } from './useAdminKitNav';
 import EventSwitchMenu from './EventSwitchMenu';
 import { briefPlaceCount } from './club/ClubBriefProvider';
 import { PERMIT_WORDS as PW } from '@/lib/permit-words';
-import { useFeeAlert } from './useFeeAlert';
+import { useBillingDoorAlert } from './useBillingDoorAlert';
 import styles from './AdminKitFrame.module.css';
 
-/** The amber waiting count, worn by a rail door (and the foot's Plan & billing, in red when a fee invoice is overdue). */
+/** The amber waiting count, worn by a rail door (and the foot's Plan & billing, for a plan payment that didn't go through). */
 function WaitingCount({ count, label, className = '', tone = 'amber' }: { count: number; label: string; className?: string; tone?: 'amber' | 'red' }) {
   if (count <= 0) return null;
   return <span className={`${styles.count}${tone === 'red' ? ` ${styles.countRed}` : ''}${className ? ` ${className}` : ''}`} aria-label={label}>{kitCountText(count)}</span>;
@@ -179,7 +179,7 @@ export default function AdminKitRail() {
     // The computer's foot (Part B, T1) — named `portalDoors` here, as the phone's list is in the More sheet (its own list: navigation Phase 3 changed the phone's bar, not the sheet's rows).
     inEvent, deskPortalDoors: portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
-  const feeAlert = useFeeAlert();
+  const billingAlert = useBillingDoorAlert();
   const currentOrg = useOrg().currentOrg;
   const clubName = currentOrg?.name ?? null;
   // ⚖ In the event's shell with an event to show, the event heads the sidebar (Phase 2) — its own pages, and the Tournaments
@@ -334,8 +334,8 @@ export default function AdminKitRail() {
           )}
           {billingLink && <Link href={billingLink.href} className={`${styles.item} ${styles.footItem}${isKitLinkActive(pathname, billingLink) ? ` ${styles.itemActive}` : ''}`} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
             {billingLink.icon && <billingLink.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{billingLink.label}</span>
-            {/* Fee invoice alerts, Part 2: an invoice to pay (amber), an overdue one (red) or a failed plan payment (amber). */}
-            {feeAlert && <WaitingCount count={feeAlert.count} label={feeAlert.label} tone={feeAlert.tone} className={strip.cornerCount} />}
+            {/* Fee invoice alerts, Part 2 (Ask 7): a plan payment that didn't go through (amber). */}
+            {billingAlert && <WaitingCount count={billingAlert.count} label={billingAlert.label} tone={billingAlert.tone} className={strip.cornerCount} />}
           </Link>}
           {isSandbox && (
             <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">

@@ -503,9 +503,9 @@ describe('13i · places in the sidebar, pages on the page', () => {
     assert.match(rail, /<ChevronDown size=\{16\} aria-hidden className=\{`\$\{styles\.eventChevron\} \$\{strip\.fullOnly\}`\} \/>/);
   });
 
-  it('N4 (navigation Phase 1): Plan & billing first (its fee pill on it), the sandbox’s Help, the hairline, the portal doors, then Collapse', () => {
+  it('N4 (navigation Phase 1): Plan & billing first (its plan-payment pill on it), the sandbox’s Help, the hairline, the portal doors, then Collapse', () => {
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<SidebarStripTip'));
-    const at = ['billingLink.href', 'feeAlert && <WaitingCount', 'helpHref', 'styles.footSep', 'portalDoors.map', '<CollapseSidebarRow'].map(m => foot.indexOf(m));
+    const at = ['billingLink.href', 'billingAlert && <WaitingCount', 'helpHref', 'styles.footSep', 'portalDoors.map', '<CollapseSidebarRow'].map(m => foot.indexOf(m));
     at.forEach((i, n) => assert.ok(i > 0 && (n === 0 || i > at[n - 1]), `foot order at ${n}`));
   });
 
@@ -515,7 +515,7 @@ describe('13i · places in the sidebar, pages on the page', () => {
     assert.match(sheet, /\{sheetGroups\.map\(group\)\}/);
     assert.doesNotMatch(sheet, /orgPageLink|\.\.\.orgLinks|group\('Organization'/, 'Organization’s pages are sheet rows again');
     const you = sheet.slice(sheet.indexOf('>You</div>'), sheet.indexOf('<MoreSheetFoot'));
-    assert.match(you, /id="admin-mob-billing"[\s\S]*feeAlert && <span className=\{`\$\{styles\.dropCount\} \$\{feeTone\}`\}/, 'Plan & billing and its fee pill left You');
+    assert.match(you, /id="admin-mob-billing"[\s\S]*billingAlert && <span className=\{`\$\{styles\.dropCount\} \$\{billingTone\}`\}/, 'Plan & billing and its plan-payment pill left You');
   });
 
   it('N11: every place’s tab row is the shared HubTabBar, through one frame; Organization’s tabs never include Plan & billing', () => {

@@ -137,7 +137,7 @@ When Stripe processes a subscription event it posts to `/api/billing/webhook`. T
 - refuses an event whose signature does not match `STRIPE_WEBHOOK_SECRET` (answers 400);
 - **ignores an event from the other mode** (a test event at a live site, or the reverse) and records that it did;
 - keeps a record of every event it receives, so a repeat delivery is recognised and not run twice;
-- re-reads the subscription, the charge and the platform-fee invoice from Stripe before acting, so the order events
+- re-reads the subscription, the charge and the invoice from Stripe before acting, so the order events
   arrive in does not matter. A dispute is the exception: it is taken from the event itself.
 
 **Locally**, install the [Stripe CLI](https://stripe.com/docs/stripe-cli), run `stripe login`, then leave this running:
@@ -226,21 +226,19 @@ A slot you replace is not forgotten: a subscription already on the old price is 
   - `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`, `charge.refunded` — a disputed or
     refunded **subscription** payment (Plans & pricing Stage 0; the owner added these to test mode 2026-11-03, and the
     live endpoint gets them in the reconciliation)
-  - `invoice.paid`, `invoice.voided`, `invoice.marked_uncollectible`, `invoice.finalized` — a club's own **Stripe-fees
-    invoice** (Club Tier Stage 12d-1). The webhook sends every `invoice.*` event that carries the fee-invoice marker to
-    that invoice's own record and nothing else, and re-reads the invoice from Stripe. **Since GST/HST Stage 3 Part 1 the same
-    events (with `invoice.payment_succeeded` / `invoice.payment_failed`) also write every invoice's TAX RECORD** (club plans,
-    Premium, fee invoices): `invoice.finalized` is when the tax becomes owed.
+  - `invoice.paid`, `invoice.voided`, `invoice.marked_uncollectible`, `invoice.finalized` — **every invoice's TAX RECORD**
+    (GST/HST Stage 3 Part 1; with `invoice.payment_succeeded` / `invoice.payment_failed`): club plans and Premium.
+    `invoice.finalized` is when the tax becomes owed; `invoice.paid` also sends the purchase email. (Club Tier Stage 12d-1
+    first added these four for a club's own Stripe-fees invoice; Stripe-owned pricing Stage 4 retired that invoice on
+    2026-11-18, and the four stay for the tax record.)
   - `credit_note.created`, `credit_note.updated`, `credit_note.voided` — GST/HST Stage 3 Part 1: each credit note's tax record, so
     a refund made in Stripe's own dashboard lands in our records too (our console refund and the fee credit also write it at once).
     Added by the owner 2026-11-07 on BOTH endpoints (test and live), MANUAL_PROD_STEPS 451. The daily online-payments
     job's catch-up still writes any note an event missed (up to a day late).
 
-> **Stripe-fees invoices (Club Tier Stage 12d-1).** A club with no subscription invoice to carry its Stripe fees (a
-> comped or free club, or a discounted subscription) gets its own monthly invoice on the 1st, raised on the **platform**
-> account, so its events arrive here, not at the Connect webhook. The product raises it to be paid on Stripe's hosted page
-> (`send_invoice`), with auto-advance off and Stripe's own invoice email never sent; FieldLogicHQ sends the email. A daily
-> job also re-reads every open fee invoice, so a missed event is caught the next morning.
+> **Stripe-fees invoices: retired (Stripe-owned pricing Stage 4, 2026-11-18).** Club Tier Stage 12d-1 billed a club for
+> Stripe's extras (disputes, returned debits, foreign cards) on its subscription invoice or a monthly invoice of its own.
+> Under Stripe-owned pricing Stripe takes those from the club's own balance, so FieldLogicHQ raises no such invoice.
 
 Save, then reveal the destination's **signing secret** (`whsec_…`) and copy it.
 
@@ -397,11 +395,11 @@ destinations were made before 12c, add all of these at once:
 | Connected accounts (`/api/payments/connect-webhook`) | `checkout.session.async_payment_failed` | 12c: a bank debit that comes back before it settles |
 | Connected accounts | `charge.dispute.created` | 12c: a bank debit the bank reverses after it cleared; 12d-1: a card dispute opens |
 | Connected accounts | `charge.dispute.updated`, `charge.dispute.closed`, `charge.dispute.funds_withdrawn`, `charge.dispute.funds_reinstated` | 12d-1: a card dispute moves (answered, won, lost), and Stripe's dispute fee is taken or returned. Without `closed`, a dispute never shows as won or lost |
-| Platform billing (`/api/billing/webhook`) | `invoice.paid`, `invoice.voided`, `invoice.marked_uncollectible`, `invoice.finalized` — plus `invoice.payment_succeeded` / `invoice.payment_failed` if the destination lacks them | 12d-1: a club's own Stripe-fees invoice turns paid, void or written off in platform admin. GST/HST Stage 3: every invoice's tax record |
+| Platform billing (`/api/billing/webhook`) | `invoice.paid`, `invoice.voided`, `invoice.marked_uncollectible`, `invoice.finalized` — plus `invoice.payment_succeeded` / `invoice.payment_failed` if the destination lacks them | GST/HST Stage 3: every invoice's tax record (first added in 12d-1 for the club's Stripe-fees invoice, retired by Stripe-owned pricing Stage 4) |
 | Platform billing (`/api/billing/webhook`) | `credit_note.created`, `credit_note.updated`, `credit_note.voided` | GST/HST Stage 3 Part 1: every credit note's tax record (a refund made in Stripe's dashboard too). Test AND live |
 
-The webhook re-reads each dispute and each fee invoice from Stripe on every event, so the order the events arrive in
-does not matter, and an extra event costs one read.
+The webhook re-reads each dispute from Stripe on every event, so the order the events arrive in does not matter, and an
+extra event costs one read.
 
 Why two and not one thin destination (probe 2026-10-25): Stripe accepts one thin destination carrying both, but the
 payments half would then need hand-parsed events and an extra Stripe read on every payment. That would rewrite the money

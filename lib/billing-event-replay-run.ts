@@ -2,7 +2,6 @@ import type Stripe from 'stripe';
 import { billingEventFacts, billingEventStore, type BillingEventClaim, type BillingEventFacts, type BillingEventOutcome } from './stripe-billing-events';
 import { stripeKeyIsLive } from './stripe-mode';
 import { STRIPE_API_VERSION } from './stripe';
-import { FEE_INVOICE_META } from './online-payment-words';
 import { AuditFirstError, writeAuditBeforeChange } from './platform-audit';
 import type { RunOptions } from './billing-event-customer-messages';
 import {
@@ -78,14 +77,11 @@ export function fetchedEventFacts(event: Stripe.Event): FetchedEventFacts {
   const object = event.data.object as unknown as Record<string, unknown>;
   const isInvoice = event.type.startsWith('invoice.');
   const parent = object.parent as { subscription_details?: { subscription?: unknown } } | null | undefined;
-  const metadata = (object.metadata ?? {}) as Record<string, unknown>;
   return {
     id: event.id,
     type: event.type,
     livemode: event.livemode,
     apiVersion: event.api_version ?? null,
-    // The handler's own test for a club's fee bill (`runPlanWork`, before its switch).
-    feeInvoice: isInvoice && !!metadata[FEE_INVOICE_META],
     invoiceSubscriptionId: isInvoice ? idOf(parent?.subscription_details?.subscription) : null,
     invoiceId: isInvoice ? idOf(object.id) : null,
   };

@@ -115,9 +115,6 @@ export const EMAIL_KINDS = {
   payments_terms_changed:               { klass: 'team', label: 'New payments terms' },
   payments_terms_reminder:              { klass: 'team', label: 'New payments terms reminder' },
   payments_ending_warning:              { klass: 'team', label: 'Online payments stopping' },
-  // 12d-1 Part 4: a club's own monthly invoice of Stripe fees and its one reminder (unlogged for the same reason).
-  stripe_fee_invoice:                   { klass: 'team', label: 'Stripe fees invoice' },
-  stripe_fee_invoice_reminder:          { klass: 'team', label: 'Stripe fees invoice reminder' },
   // ── family: never logged here ──────────────────────────────────────────────
   family_announcement:                  { klass: 'family', label: 'Team announcement' },
   family_game_update:                   { klass: 'family', label: 'Game update' },

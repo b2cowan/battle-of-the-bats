@@ -41,17 +41,10 @@ export const TAXED_CHECKOUT = {
   customer_update: { name: 'auto' },
 } as const;
 
-/**
- * A RECOVERED STRIPE FEE's tax (Ask 3, owner 2026-11-05; docs/agents/accounting/RECOVERED_STRIPE_FEES_TAX.md): consideration for our
- * payment service, taxed on top at the club's province rate. The code is `txcd_90050001` ("Platform Fee"), never the account's
- * SaaS preset, which describes the subscription. ⚠⚠ The code decides WHERE Stripe Tax places the supply: Part 6 (test mode
- * 2026-11-05, `.probe/gst2/part6-fee-code-2-run1.txt`) found `txcd_20030000` "General - Services" is ORIGIN-sourced in Canada, so
- * every club paid our head office's Ontario 13%; "Platform Fee" is destination-sourced (5 / 13 / 14 / 15 by the club's province,
- * US 0), which is the place of supply the accounting topic names (the club's address, Memo 3-3-6). Pick a new code only after
- * checking its sourcing with a tax calculation. ⚠ Club Stage 5's online-payment fee takes the SAME treatment and must share this
- * constant: if the payment service is ever ruled exempt (D1), both lose their tax together.
- */
-export const RECOVERED_FEE_TAX = { tax_behavior: 'exclusive', tax_code: 'txcd_90050001' } as const;
+// (Stripe-owned pricing Stage 4, 2026-11-18, retired `RECOVERED_FEE_TAX` — the Stripe Tax code `txcd_90050001` "Platform Fee" on
+// the Stripe fees FieldLogicHQ billed back to a club — with the billing itself. Its one lesson outlives it: a Stripe Tax code decides
+// WHERE the supply is placed; `txcd_20030000` "General - Services" was found ORIGIN-sourced in Canada (test mode 2026-11-05,
+// `.probe/gst2/part6-fee-code-2-run1.txt`), so check a code's sourcing with a tax calculation before using it.)
 
 /** Where we keep the name WE put on a Stripe customer, so a name the buyer typed on Stripe's page is never overwritten. */
 export const BUYER_NAME_META = 'fieldlogic_buyer_name';

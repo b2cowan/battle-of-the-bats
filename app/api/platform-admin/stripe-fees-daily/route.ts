@@ -5,9 +5,6 @@ import { withObservability } from '@/lib/observability';
 import { isCronRequest } from '@/lib/cron-auth';
 import { bookLostDisputesSweep, sendDisputeReminders } from '@/lib/online-payment-landing';
 import { sendEndingWarnings, sendTermsNotices } from '@/lib/online-payment-owner-notices';
-import {
-  releaseStrandedSubscriptionFees, remindUnpaidFeeInvoices, retryFailedFees, sendMonthlyFeeInvoices, sweepDisputeFees, syncOpenFeeInvoices,
-} from '@/lib/platform-stripe-fees';
 import { countOverdueEndings, sendEndingEmails } from '@/lib/plan-ending-server';
 import { backfillChargeTaxRecords, catchUpChargeTaxRecords } from '@/lib/charge-tax-record-server';
 import { catchUpPurchaseEmails } from '@/lib/purchase-details-server';
@@ -16,33 +13,31 @@ import { sendRenewalReminders } from '@/lib/renewal-reminder-server';
 /**
  * THE ONLINE-PAYMENTS DAILY JOB (Club Tier Stage 12d-1 Part 4; owner 2026-10-27, the build's ask 2: one new daily job).
  * Each step is decided from the rows and a once-only stamp, so it is safe to run any time and a run that stopped part-way
- * finishes on the next (a double-fire sends nothing twice). In order:
+ * finishes on the next (a double-fire sends nothing twice).
+ *
+ * ⚠ The path, the pg_cron job that calls it (`stripe_fees_tick`, mig 395, WATCHED AUTOMATION) and the audit action
+ * `stripe_fees_sweep` (the GST/HST worksheet finds the backfill's marker by it) keep their "stripe fees" names on purpose.
+ * The six steps that billed clubs for Stripe's extras were retired by Stripe-owned pricing Stage 4 (2026-11-18): Stripe now
+ * takes those from the club's own balance. In order:
  *   1. the dispute email three days before it is due, while unanswered (words §1.6 email 2);
- *   2. Stripe's dispute fees posted after the events stopped (an answering fee, or its return on a win);
- *   3. a retry of every fee whose billing failed (a passing Stripe error);
- *   4. Stripe's own state of every invoice still open (a missed webhook never leaves one unpaid on our side);
- *   5. (ruling 6) a fee whose line is still pending on a subscription that can no longer carry it, taken off it and
- *      returned to unbilled, before
- *   6. the club's own monthly invoice, gathering last month's fees — sent on the 1st, or the first run after it;
- *   7. the ONE reminder on an invoice past due (§7 ruling 3). Nothing switches off by itself;
- *   8. (Part 4b) a card dispute lost before its payment landed, whose booking at the landing failed;
- *   9. (12d-2, owner ruling 4) the payments terms changed: the owners' item and one email the day a club is found behind,
+ *   2. (Part 4b) a card dispute lost before its payment landed, whose booking at the landing failed;
+ *   3. (12d-2, owner ruling 4) the payments terms changed: the owners' item and one email the day a club is found behind,
  *      one reminder 14 days later (nothing while the version is the placeholder draft);
- *  10. (12d-2) an ending the owner didn't choose: the owners' item and one email (seven days before a comp runs out; the
+ *   4. (12d-2) an ending the owner didn't choose: the owners' item and one email (seven days before a comp runs out; the
  *      day a subscription payment fails), and the open pay pages of a club whose plan no longer offers online payments
  *      closed (free time runs out with no event of its own);
- *  11. (Plans end at the renewal date, Part C, G6) a cancel that waits: the "ends on" email a failed send left owed, and
+ *   5. (Plans end at the renewal date, Part C, G6) a cancel that waits: the "ends on" email a failed send left owed, and
  *      the ONE reminder seven days before the end — each stamped once on its row;
- *  12. (G3) the endings Stripe hasn't finished — a cancel still waiting more than three days past its date — counted on
+ *   6. (G3) the endings Stripe hasn't finished — a cancel still waiting more than three days past its date — counted on
  *      this job's record. Never acted on here: a platform admin finishes each from the club's record, after Stripe is read;
- *  13. (GST/HST Stage 3 Part 1) every invoice and credit note Stripe made in the last 35 days that has no tax record gets one
+ *   7. (GST/HST Stage 3 Part 1) every invoice and credit note Stripe made in the last 35 days that has no tax record gets one
  *      (a missed or failed webhook event), and every record still open has its payment state re-read; then
- *  13b. (GST/HST 6.4) the purchase email still owed by an invoice paid in the last three days (a webhook that failed or never
+ *   7b. (GST/HST 6.4) the purchase email still owed by an invoice paid in the last three days (a webhook that failed or never
  *      arrived), through the same send as the webhook — once only, on the record's stamp; then
- *  13c. (GST/HST 6.4 Part B) the yearly reminder: every owner of a yearly plan, 30 to 37 days before its next charge (a renewal, a
+ *   7c. (GST/HST 6.4 Part B) the yearly reminder: every owner of a yearly plan, 30 to 37 days before its next charge (a renewal, a
  *      yearly trial ending, a yearly next-season choice's first charge), the date and the amount with its tax as Stripe would charge
  *      it — once per charge date, on the account's stamp; under 30 days and still untold, it goes anyway and is counted `late`; then
- *  14. (Stage 4 Ask 11, owner 2026-11-06) the BACKFILL: invoices and credit notes from 2026-05-01 up to the first record the webhook
+ *   8. (Stage 4 Ask 11, owner 2026-11-06) the BACKFILL: invoices and credit notes from 2026-05-01 up to the first record the webhook
  *      wrote, 120 a run until none is missing.
  * One step's failure never stops the next.
  *
@@ -69,12 +64,6 @@ export const POST = withObservability(async (req: Request) => {
     }
   };
   await run('dispute_reminders', () => sendDisputeReminders(now));
-  await run('dispute_fees', () => sweepDisputeFees(now));
-  await run('retry_fees', () => retryFailedFees());
-  await run('sync_invoices', () => syncOpenFeeInvoices());
-  await run('stranded_fees', () => releaseStrandedSubscriptionFees(now));
-  await run('monthly_invoices', () => sendMonthlyFeeInvoices(now));
-  await run('invoice_reminders', () => remindUnpaidFeeInvoices(now));
   await run('lost_disputes', () => bookLostDisputesSweep(now));
   await run('terms_notices', () => sendTermsNotices(now));
   await run('ending_warnings', () => sendEndingWarnings(now));

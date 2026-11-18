@@ -29,8 +29,6 @@ export type PurchaseFacts = {
   status: string;
   kind: string;
   totalCents: number;
-  /** The invoice carries FEE_INVOICE_META (a club's Stripe-fees invoice). */
-  feeInvoice: boolean;
   subscriptionId: string | null;
   subscriptionStatus: string | null;
   meta: Readonly<Record<string, string>>;
@@ -44,7 +42,7 @@ export type PurchaseFacts = {
  */
 export function classifyPurchase(f: PurchaseFacts): PurchaseCase | null {
   if (f.status !== 'paid' || !f.hasRecipient) return null;
-  if (f.feeInvoice || f.kind === 'fee') return null;
+  if (f.kind === 'fee') return null; // a retired Stripe-fee invoice (history, Stripe-owned pricing Stage 4): never a purchase
   if (!f.subscriptionId || f.subscriptionId.startsWith('mock_')) return null;
   if (f.billingReason === 'subscription_create') {
     if (f.totalCents > 0) return f.meta[COMEBACK_META] === '1' ? 'comeback' : 'first';
@@ -247,9 +245,9 @@ export type PurchaseRunDeps<Live> = {
   /** The Stripe mode this server runs in: a record of the other mode's is never emailed from here. */
   live: boolean;
   readRecord(invoiceId: string): Promise<PurchaseRecord | null>;
-  /** What the classifier reads from Stripe (the invoice's fee marker and its subscription's metadata as it stood, the
-   *  subscription's status now), with whatever the build step needs again (`live`). */
-  readStripe(record: PurchaseRecord): Promise<{ feeInvoice: boolean; meta: Record<string, string>; subscriptionStatus: string | null; live: Live }>;
+  /** What the classifier reads from Stripe (its subscription's metadata as it stood, the subscription's status now), with
+   *  whatever the build step needs again (`live`). */
+  readStripe(record: PurchaseRecord): Promise<{ meta: Record<string, string>; subscriptionStatus: string | null; live: Live }>;
   recipients(record: PurchaseRecord): Promise<Array<{ userId: string; email: string }>>;
   /** Sets purchase_email_at = at where it is null; true when this run won it. */
   claim(invoiceId: string, at: string): Promise<boolean>;
@@ -284,7 +282,7 @@ export async function runPurchaseEmail<Live>(invoiceId: string, deps: PurchaseRu
   const stripeFacts = await deps.readStripe(record);
   const purchase = classifyPurchase({
     billingReason: record.billing_reason, status: record.status, kind: record.kind, totalCents: record.total_cents,
-    feeInvoice: stripeFacts.feeInvoice, subscriptionId: record.stripe_subscription_id, subscriptionStatus: stripeFacts.subscriptionStatus,
+    subscriptionId: record.stripe_subscription_id, subscriptionStatus: stripeFacts.subscriptionStatus,
     meta: stripeFacts.meta, hasRecipient: !!(record.org_id || record.user_id),
   });
   if (!purchase) return { outcome: 'none' };

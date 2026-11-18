@@ -53,14 +53,6 @@ describe('Q2 · a credit note’s PDF link goes only to a role that can refund',
     assert.match(code, /requirePlatformPower\('find_stripe'\)/);
   });
 
-  it('the console’s fee list sends an owed invoice’s pay link only to a role that can refund (Part 7, as Q2)', () => {
-    const code = readCode('app/api/platform-admin/orgs/[id]/money/stripe-fees/route.ts');
-    const gate = code.match(/const (\w+) = hasPlatformPower\(auth\.role, 'refund'\);/);
-    assert.ok(gate, 'the route asks the refund power');
-    assert.match(code, new RegExp(`readClubFees\\(id, \\{ limit: 100 \\}\\)\\)\\.map\\(f => \\(${gate![1]} \\? f : \\{ \\.\\.\\.f, payUrl: null \\}\\)\\)`));
-    assert.doesNotMatch(code, /fees: await readClubFees/, 'the raw fee list (with its links) is never sent as read');
-  });
-
   it('no other platform-admin route or console money module reads a credit note’s pdf', () => {
     const files = [...filesUnder('app/api/platform-admin', '.ts'), ...filesUnder('lib', '.ts').filter(f => /^lib\/(console-money|platform-story)/.test(f))];
     // Reading Stripe's `.pdf` off a note (`n.pdf`, `note?.pdf`); the ChargeCreditNote TYPE declaring the field reads nothing.

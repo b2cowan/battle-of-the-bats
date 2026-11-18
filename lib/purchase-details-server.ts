@@ -11,7 +11,6 @@ import { customerSenders, type RunOptions } from './billing-event-customer-messa
 import { orgOwnerEmails, type OwnerRecipient } from './notify-recipients';
 import { isDemoOrganizerEmail } from './demo-org';
 import { getUserPersonName } from './user-display';
-import { FEE_INVOICE_META } from './online-payment-words';
 import { getPlanFromPriceId } from './stripe-prices';
 import { PLAN_CONFIG } from './plan-config';
 import { getBillingHref, billingUrlOrgFromRow } from './billing-urls';
@@ -116,7 +115,7 @@ function purchaseDeps(opts: RunOptions): PurchaseRunDeps<StripeRead> {
       const sub = await stripe.subscriptions.retrieve(subscriptionId, {}, STRIPE_OPTS);
       // The metadata AS IT STOOD when the invoice was made (Stripe copies it onto the invoice), else the subscription's now.
       const meta = (inv.parent?.subscription_details?.metadata ?? sub.metadata ?? {}) as Record<string, string>;
-      return { feeInvoice: !!inv.metadata?.[FEE_INVOICE_META], meta, subscriptionStatus: sub.status, live: { inv, sub } };
+      return { meta, subscriptionStatus: sub.status, live: { inv, sub } };
     },
     recipients: recipientsOf,
     async claim(invoiceId, at) {

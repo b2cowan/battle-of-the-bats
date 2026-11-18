@@ -21,14 +21,15 @@
  *   · `untaxed` — deliberately, with the reason (the short list: card setup, the club's own sale, the dead add-on, the cancel
  *     toggles, the operator's read of the next charge).
  * Quotes (`invoices.createPreview`) are on the list for tax alone: a quote that disagrees with the charge is plan §7's risk.
- * The recovered Stripe fees are TAXED (Ask 3, owner 2026-11-05: on top, at the club's province rate), not exempt.
+ * (The recovered Stripe fees were TAXED too — Ask 3 — until Stripe-owned pricing Stage 4, 2026-11-18, retired them: Stripe now takes its extra
+ * fees from the club's own balance, so no call of ours bills a club for them and none is on the list.)
  *
  * Left out ON PURPOSE: `scripts/` (the seed scripts create Stripe TEST subscriptions for owner walks and never run for a
  * buyer) and `tests/`. Not charges, so not matched: `subscriptions.cancel`, schedule `release`, `billingPortal.sessions.create`
  * (edits no address since Part 3), the dev-only `/api/billing/mock-apply` toggle (no Stripe call; it answers "not found" in
- * production). Reductions, not charges, so not matched: `creditNotes.create` / `.preview` (lib/platform-stripe-fees.ts reverses
+ * production). Reductions, not charges, so not matched: `creditNotes.create` / `.preview` (lib/console-money-stripe.ts reverses
  * the tax by crediting the original LINE on a taxed invoice — Part 2; the matrix proves it, Part 6), `refunds.create` (platform
- * admin's refund, and the club's own on its account), `invoiceItems.del` (a pending fee line withdrawn). `subscriptionItems.del` has
+ * admin's refund, and the club's own on its account), `invoiceItems.del`. `subscriptionItems.del` has
  * no caller. Tax-changing edits (`invoices.update` / `addLines` / `updateLines`, `invoiceItems.update`) ARE matched, with no caller
  * today: the day one appears it needs its entry here.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -37,7 +38,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { AUTOMATIC_TAX, RECOVERED_FEE_TAX, TAXED_CHECKOUT } from '../../lib/billing-tax.ts';
+import { AUTOMATIC_TAX, TAXED_CHECKOUT } from '../../lib/billing-tax.ts';
 import { CHARGE_TAX_CREDIT_NOTE_EVENTS, CHARGE_TAX_INVOICE_EVENTS } from '../../lib/charge-tax-record.ts';
 import { between, filesUnder, readCode, sourceExists, stripComments } from './_source-code.ts';
 
@@ -203,20 +204,9 @@ type Tax =
   | { untaxed: string; onlyKeys?: string[] };
 
 const MOVE_DOWN = 'a move DOWN, at renewal and with no proration: it renews a subscription the buyer already bought through a checked path, and charges nothing new';
-const FEE_RECOVERY = 'the monthly Stripe-fee recovery: it bills a club that may have no paid plan. Since Part 2b (owner, Ask 8, 2026-11-05) a club gives '
-  + 'its billing address before it can take online payments, and a club with none still WAITS — its fees stay unbilled until it adds one '
-  + '(`placeable`, pinned in the Part 2b block below). So no fee goes out without an address, though the check is the invoice’s own, not `requireBillingLocation`';
 const QUOTE = 'a quote: charges nothing, so it needs no address of its own. It is on this list for its tax answer';
 
 const TAXED_CHECKOUT_SPREAD = { needs: ['...TAXED_CHECKOUT'] };
-/**
- * ⚠ A fee line's setting is its OWN tax treatment (exclusive, the general-services code); whether tax is worked out at all is
- * the invoice it lands on — the club's own fee invoice (taxed, its entry below) or the live subscription's next invoice. A fee
- * rides a subscription only when that subscription has tax on (`subscriptionToRide`, pinned in the fee block below), so a
- * subscription made before Stage 2 sends its club's fees to the club's own taxed invoice (/review 2026-11-05).
- */
-const FEE_LINE: Tax = { taxed: 'a recovered Stripe fee, taxed on top at the club’s province rate (Ask 3)', needs: ['...RECOVERED_FEE_TAX'] };
-
 /** THE LIST. A new charge goes on it in the same commit: its address answer (`checked` / `allowed`) and its tax answer. */
 const CHARGING_CALLS: Entry[] = [
   // ── checked: the address is required before the call ──
@@ -277,11 +267,6 @@ const CHARGING_CALLS: Entry[] = [
       + 'is a later stage’s tax question (owner, Ask 2a, 2026-11-04)',
     facts: [/mode: 'payment'/, /\{ \.\.\.on\(args\.accountId\), idempotencyKey: args\.idempotencyKey \}/],
     tax: { untaxed: 'the club’s own sale on the club’s own Stripe account, not ours (Club Stage 12; our payment fee’s tax is plan Stage 5)' } },
-  { file: 'lib/platform-stripe-fees.ts', call: 'invoiceItems.create', count: 3, allowed: FEE_RECOVERY, tax: FEE_LINE },
-  { file: 'lib/platform-stripe-fees.ts', call: 'invoices.create', count: 1, allowed: FEE_RECOVERY,
-    tax: { taxed: 'the club’s own monthly fee invoice (Ask 3)', needs: ['automatic_tax: AUTOMATIC_TAX'] } },
-  { file: 'lib/platform-stripe-fees.ts', call: 'invoices.finalizeInvoice', count: 1, allowed: FEE_RECOVERY,
-    tax: { inherits: 'finalizes the club’s own fee invoice, made with automatic tax by the invoices.create above', onlyKeys: ['auto_advance'] } },
 ];
 
 /**
@@ -349,10 +334,10 @@ describe('the matcher (proved on fixtures, so the census can fail without planti
 
   it('reads each call’s own arguments, nested and stringy, and the keys they write', () => {
     const [one, two] = chargingCalls(stripComments(
-      "stripe.invoiceItems.create({ a: f(1), b: ')', ...RECOVERED_FEE_TAX }, { k: `x${y}` });\nstripe.invoiceItems.create({ a: 2 })"));
-    assert.match(one.args, /\.\.\.RECOVERED_FEE_TAX \}, \{ k: `x\$\{y\}` \}$/);
+      "stripe.invoiceItems.create({ a: f(1), b: ')', ...TAXED_CHECKOUT }, { k: `x${y}` });\nstripe.invoiceItems.create({ a: 2 })"));
+    assert.match(one.args, /\.\.\.TAXED_CHECKOUT \}, \{ k: `x\$\{y\}` \}$/);
     assert.equal(two.args, '{ a: 2 }');
-    assert.deepEqual(keysIn(one.args), ['a', 'b', '...RECOVERED_FEE_TAX', 'k']);
+    assert.deepEqual(keysIn(one.args), ['a', 'b', '...TAXED_CHECKOUT', 'k']);
     assert.deepEqual(keysIn("id, clear === 'a:b' ? { cancel_at_period_end: false } : { cancel_at: '' }"), ['cancel_at_period_end', 'cancel_at']);
   });
 
@@ -494,7 +479,6 @@ describe('every Stripe charge in app/, lib/ and components/ is on the list', () 
   it('the shared tax settings still turn tax on (every `taxed` entry names them)', () => {
     assert.deepEqual(AUTOMATIC_TAX, { enabled: true });
     assert.deepEqual(TAXED_CHECKOUT.automatic_tax, AUTOMATIC_TAX);
-    assert.deepEqual(RECOVERED_FEE_TAX, { tax_behavior: 'exclusive', tax_code: 'txcd_90050001' });
   });
 
   it('nothing turns tax off, and nothing defines its own copy of the shared settings', () => {
@@ -502,7 +486,7 @@ describe('every Stripe charge in app/, lib/ and components/ is on the list', () 
       assert.doesNotMatch(code, /automatic_tax\s*:\s*\{\s*enabled\s*:\s*false/, `${file} turns Stripe's automatic tax OFF. Every charge of ours is taxed; `
         + 'a deliberately untaxed call sets no tax at all and is on CHARGING_CALLS as `untaxed` with its reason.');
       if (file === 'lib/billing-tax.ts') continue;
-      assert.doesNotMatch(code, /(?:const|let|var)\s+(?:AUTOMATIC_TAX|TAXED_CHECKOUT|RECOVERED_FEE_TAX)\b/,
+      assert.doesNotMatch(code, /(?:const|let|var)\s+(?:AUTOMATIC_TAX|TAXED_CHECKOUT)\b/,
         `${file} defines its own tax setting under a shared name: import it from lib/billing-tax.ts, the one the guard pins`);
     }
   });
@@ -564,7 +548,7 @@ describe('turning on online payments asks for the club’s billing address first
       assert.ok(at === -1 || check < at, `${ROUTE}: the address check must come before ${after} — a refusal creates and changes nothing`);
     }
     assert.match(connect, /if \(!address\.ok\) return address\.response;/, `${ROUTE}: connect must return the address refusal as is (409)`);
-    assert.match(connect, /kind: 'org'/, `${ROUTE}: connect checks the CLUB's own row, the one the fee invoice reads`);
+    assert.match(connect, /kind: 'org'/, `${ROUTE}: connect checks the CLUB's own row, the one the GST/HST inside our fee is worked out from`);
   });
 
   it(`${CARD}: the Before window asks first, and opens the window on the server's refusal`, () => {
@@ -578,24 +562,18 @@ describe('turning on online payments asks for the club’s billing address first
       + 'only once it can draw, or a failed address read blanks the window with no way out (/review 2026-11-05)');
   });
 
-  it(`${CARD}: a club connected without an address sees the line (owner ruling A), by the fee invoice's own test`, () => {
-    assert.match(CODE.get(ROUTE)!, /addressMissing: isOwner && facts && !facts\.disconnectedAt\s*\? !\(await clubFeeInvoicePlaceable\(ctx\.org\)/,
-      `${ROUTE}: addressMissing must use clubFeeInvoicePlaceable, the test invoiceOneClub waits on`);
+  it(`${CARD}: a club connected without an address sees the line (owner ruling A), by the stored-address test`, () => {
+    // Stripe-owned pricing Stage 4 (owner call (a), 2026-11-18): the address stays required before payouts — the GST/HST inside
+    assert.match(CODE.get(ROUTE)!, /addressMissing: isOwner && facts && !facts\.disconnectedAt\s*\? !\(await hasBillingLocation\(\{ kind: 'org', orgId: ctx\.org\.id, name: ctx\.org\.name \}\)\.catch\(\(\) => true\)\)/,
+      `${ROUTE}: addressMissing must use hasBillingLocation, the stored-address test`);
     assert.match(CODE.get(CARD)!, /isOwner && view\.addressMissing && <AddressMissingLine /, `${CARD}: the card must show the address line to the owner`);
     assert.match(between(CODE.get(CARD)!, 'function AddressMissingLine(', 'function PayoutsRecord(', `${CARD} AddressMissingLine`),
       /if \(address\.location\) return null;[\s\S]*onClick=\{\(\) => address\.edit\(\)\}/,
       `${CARD}: the line's button opens the Billing address window, and the line goes once the address is saved`);
-    assert.match(CODE.get('lib/platform-stripe-fees.ts')!, /if \(!\(await placeable\(location, existingCustomer\)\)\) \{/,
-      'lib/platform-stripe-fees.ts: invoiceOneClub must wait on placeable(), the same test the card reads');
-  });
-
-  it('lib/platform-stripe-fees.ts: a fee rides only a subscription that works tax out', () => {
-    const ride = between(CODE.get('lib/platform-stripe-fees.ts')!, 'async function subscriptionToRide(', 'async function lineFor(',
-      'lib/platform-stripe-fees.ts subscriptionToRide');
-    const check = ride.indexOf('if (!sub.automatic_tax?.enabled) return null;');
-    assert.ok(check >= 0 && check < ride.indexOf('return { customer:'),
-      'lib/platform-stripe-fees.ts: subscriptionToRide must send a club whose subscription has tax off to its own fee invoice — '
-      + 'a fee on that subscription’s invoice would go out without tax (Ask 3)');
+    const has = between(CODE.get('lib/billing-location-server.ts')!, 'export async function hasBillingLocation(', 'const real =', 'hasBillingLocation');
+    assert.match(has, /readBillingLocation\(buyer\)[\s\S]*storedLocationStillValid\(stored, usSalesOpen\(\)\)/,
+      'lib/billing-location-server.ts: hasBillingLocation must read the stored address and check it is still valid');
+    assert.match(CODE.get(ROUTE)!, /requireBillingLocation\(\{ kind: 'org'/, `${ROUTE}: connect still requires the address (Stage 4 call (a))`);
   });
 });
 
@@ -614,7 +592,7 @@ const GATE_DOORS: Record<string, { purchase: 'yes' | 'up_only' | 'no'; why: stri
   'app/api/billing/move/route.ts': { purchase: 'up_only', why: 'a move up is a purchase; a move down renews what was bought (it asks for an address for its tax only)' },
   // Not a purchase, so it passes no `purchase` — but it refuses Québec on its own (owner 2026-11-17, payments terms §14 over
   // Q6's "payouts untouched"): see the payouts test at the end of this block.
-  'app/api/admin/payouts/route.ts': { purchase: 'no', why: 'payouts connect: the club’s fee invoices, never a purchase (Québec refused by its own check)' },
+  'app/api/admin/payouts/route.ts': { purchase: 'no', why: 'payouts connect: the GST/HST inside our fee needs the province, never a purchase (Québec refused by its own check)' },
 };
 
 describe('a Québec billing address is refused at every purchase door, and only there (GST/HST 6.4, Q6)', () => {
@@ -669,7 +647,7 @@ describe('a Québec billing address is refused at every purchase door, and only 
     assert.equal(code.split('isClosedRegion(').length - 1, 1, 'one Québec check in the payouts route: connect only (agree again and the record are not refused)');
   });
 
-  it('the rule is not in checkBillingLocation (it also decides the address on file: fee invoices and saving read it)', () => {
+  it('the rule is not in checkBillingLocation (it also decides the address on file: the payouts card and saving read it)', () => {
     const fn = between(CODE.get('lib/billing-location.ts')!, 'export function checkBillingLocation(',
       'export function storedLocationStillValid(', 'checkBillingLocation');
     assert.doesNotMatch(fn, /isClosedRegion|QC/, 'checkBillingLocation must not refuse Québec: an account with it on file keeps everything else');
@@ -680,7 +658,7 @@ describe('a Québec billing address is refused at every purchase door, and only 
  * EVERY CHARGE LEAVES A TAX RECORD — GST/HST Stage 3 Part 1 (build prompt GST_HST_STAGE3_BUILD_PROMPT.md; owner rulings 2026-11-06).
  * The same list, a third answer: does the charge this call opens leave a record in `platform_charge_tax_records`? Only a Stripe
  * INVOICE on our own account does, through the billing webhook's writer (and the daily catch-up). So each entry above is either
- *   · `invoice` — what it opens is billed by a Stripe invoice on our account (a subscription's, or the club's fee invoice), or
+ *   · `invoice` — what it opens is billed by a Stripe invoice on our account (a subscription's), or
  *   · `none` — with the reason: it charges nothing (a quote, a card saved, a cancel), or it is not our sale (a family paying a club).
  * A charge that is ours and opens no invoice (a payment intent, a payment link, a one-time Checkout on our account) cannot claim
  * `invoice`, so it fails here until the writer learns it. A new entry above with no answer here fails too.
@@ -708,9 +686,6 @@ const TAX_RECORD: Record<string, { invoice: string } | { none: string }> = {
   'lib/billing-setup.ts checkout.sessions.create': { none: RECORD_NONE.setup },
   'lib/team-org-billing.ts checkout.sessions.create': { none: RECORD_NONE.dead },
   'lib/stripe-connect.ts checkout.sessions.create': { none: RECORD_NONE.club },
-  'lib/platform-stripe-fees.ts invoiceItems.create': { invoice: 'a fee line, billed on the club’s fee invoice or its subscription’s next invoice' },
-  'lib/platform-stripe-fees.ts invoices.create': { invoice: 'the club’s own fee invoice' },
-  'lib/platform-stripe-fees.ts invoices.finalizeInvoice': { invoice: 'the club’s own fee invoice' },
 };
 const NEVER_AN_INVOICE = ['paymentIntents.create', 'paymentLinks.create'];
 const WEBHOOK = 'lib/billing-webhook-handler.ts';
@@ -755,9 +730,9 @@ describe('every charge leaves a tax record (GST/HST Stage 3 Part 1)', () => {
     assert.ok(work > notes && invoices > work, `${WEBHOOK}: the invoice's tax record must be written after runPlanWork`);
     assert.ok(run.indexOf('recordInvoiceTax(invoiceId)', invoices) > invoices, `${WEBHOOK}: every invoice event must reach recordInvoiceTax`);
     assert.ok(!run.slice(work + 1, invoices).includes('return'), `${WEBHOOK}: nothing may return between the plan's work and the tax record`);
-    // Every early return (no customer, the fee invoice's own route, the stray subscription) is inside the plan's work, so a fee
-    // invoice and a customer-less event still reach the record.
-    for (const early of ['if (!customerId) return', 'FEE_INVOICE_META']) {
+    // Every early return (no customer, the stray subscription) is inside the plan's work, so a
+    // customer-less event still reaches the record.
+    for (const early of ['if (!customerId) return']) {
       assert.ok(plan.includes(early), `${WEBHOOK}: \`${early}\` must live in runPlanWork, or the events it returns for are never recorded`);
       assert.ok(!run.includes(early), `${WEBHOOK}: \`${early}\` in runVerifiedBillingEvent would skip the tax record`);
     }
@@ -778,10 +753,9 @@ describe('every charge leaves a tax record (GST/HST Stage 3 Part 1)', () => {
 
   it('every place that makes a credit note writes its record at once', () => {
     const makers = SOURCE_FILES.filter(f => /(?<![\w$])creditNotes\s*\.\s*create\s*\(/.test(CODE.get(f) ?? ''));
-    assert.ok(makers.length >= 2, `only ${makers.length} credit-note makers found: the census is broken`);
+    assert.ok(makers.length >= 1, `only ${makers.length} credit-note makers found: the census is broken`);
     const writes: Record<string, string> = {
       'lib/console-money-stripe.ts': 'store.recordCreditNote(made.note.id)',
-      'lib/platform-stripe-fees.ts': 'recordCreditNoteTax(madeNote.id)',
     };
     for (const f of makers) {
       assert.ok(writes[f], `${f} makes a credit note with no tax record written: call recordCreditNoteTax (inside recordTaxOrReport) after it, and pin it here`);

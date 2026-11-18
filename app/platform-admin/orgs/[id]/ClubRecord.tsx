@@ -121,7 +121,7 @@ export type ClubRecordProps = {
    *  connected, or a role without it; 'failed' = the tab shows, its read offers Read again). */
   onlinePayments: ClubOnlinePayments | 'failed' | null;
   /** The Money tab (Stage 3): our record's side, and whether this role reads Stripe's (A2). */
-  money: { readsStripe: boolean; billsClub?: boolean; marksLooks?: boolean; ours: OurMoneyRecord };
+  money: { readsStripe: boolean; marksLooks?: boolean; ours: OurMoneyRecord };
   /** Giving free time (a giver only): what the console knows before the click, and the window's bounds. */
   freeTime: {
     block: GiveBlock | null;
@@ -735,7 +735,6 @@ export default function ClubRecord(props: ClubRecordProps) {
               orgName={org.name}
               ours={props.money.ours}
               readsStripe={props.money.readsStripe}
-              billsClub={props.money.billsClub}
               marksLooks={props.money.marksLooks}
               startOnLook={startOnLook}
               stripeBase={props.stripeBase}
@@ -1389,7 +1388,7 @@ function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onCl
   useEffect(() => {
     void sendJson(`/api/platform-admin/orgs/${orgId}/delete`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
   }, [orgId]);
-  // 12d-2 (owner ruling 2): money in flight (an open dispute, a clearing debit, an unpaid or failed Stripe fee) waits too.
+  // 12d-2 (owner ruling 2): money in flight (an open dispute, a clearing debit) waits too.
   const inFlight = pre?.paymentsInFlight ?? null;
   // The public demo clubs are never deleted from the console (owner 2026-11-15).
   const demo = pre?.demoRefusal ?? null;

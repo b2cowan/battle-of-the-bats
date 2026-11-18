@@ -23,7 +23,6 @@ import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasBillingAccess } from '@/lib/roles';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import type { ClubTaken } from '@/lib/permit-dates-off-view';
-import type { FeesOwed } from '@/lib/fee-invoice-alert';
 import { isAdminProgramKey, repTeamsTabs, type AdminProgramKey, type ClubShape } from '@/lib/admin-kit-nav';
 import type { TimeAsksCard } from '@/lib/league-time-handoff';
 
@@ -44,8 +43,6 @@ export type ClubBrief = {
     /** `sent`: payments coaches say are on the way; `overdue`: the overdue band inside the count. */
     installmentsDue?: { sent: number; overdue?: number };
   };
-  /** Fee invoices the club owes FieldLogicHQ — OWNER ONLY (present only with billing access; absent otherwise and when the read failed). */
-  feesOwed?: FeesOwed;
   /** Stage 13d (A4): house league seasons asking for time — owners and admins on a plan with the club's schedule, only while
    *  a live season asks with no time given (absent otherwise and when the read failed). */
   timeAsks?: TimeAsksCard;

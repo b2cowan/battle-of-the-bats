@@ -6,15 +6,14 @@ import { formatStoredDate } from '@/lib/timezone';
 import type { ClubOnlinePayments, MessageRow } from '@/lib/platform-online-payments';
 import { errorOf, sendJson } from '../../console-fetch';
 import kit from '../../console.module.css';
-import StripeFeesPanel from './StripeFeesPanel';
 
 /**
  * A CLUB'S ONLINE PAYMENTS, READ ONLY (Club Tier Stage 12d-2 Part 5 — frame 6, words §6.1; ask 7). The platform team
  * answering "a family paid and it isn't there" and checking each morning that nothing is stuck. Tiles (the account, its
  * terms, the last 30 days, clearing debits, open disputes) open their panel; the panels are the open disputes (by receipt;
  * "Show the player" names the child or team on request, and the opening is logged), the Stripe messages we couldn't
- * process (absent when none; those still failing after 30 days fold under "Stopped retrying") and the fees billed to the
- * club (12d-1's panel, its Retry left on the Money tab). ⚠ NOTHING here writes; never a card or bank number.
+ * process (absent when none; those still failing after 30 days fold under "Stopped retrying"). (12d-1's "Fees billed to the
+ * club" panel retired with the fees themselves, Stripe-owned pricing Stage 4.) ⚠ NOTHING here writes; never a card or bank number.
  */
 
 const short = (v: string | null | undefined) => (v ? formatStoredDate(v, { withYear: false }) : '');
@@ -136,9 +135,6 @@ export default function OnlinePaymentsTab({ orgId, initial }: { orgId: string; i
           <Messages rows={read.messages.stopped} />
         </details>
       )}
-
-      {/* The fees billed to the club: 12d-1's panel, read only here (its Retry stays on the Money tab). */}
-      <StripeFeesPanel orgId={orgId} canRetry={false} />
     </div>
   );
 }

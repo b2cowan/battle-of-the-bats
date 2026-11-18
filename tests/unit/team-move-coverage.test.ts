@@ -63,10 +63,11 @@ const STAYS: Record<string, string> = {
   online_refunds_unassigned: 'a refund made in Stripe on a house-league payment, waiting for "whose was it?" (house league and online payments exclude the coach portal)',
   tournament_team_entry_adjustments: 'a tournament team’s entry lowered by a part refund of its card payment (online payments exclude the coach portal)',
   online_payment_clear_decisions: 'what happens to a club’s clearing bank debit when it clears, answered at an ending (online payments exclude the coach portal)',
-  platform_stripe_fees: 'a Stripe fee a club’s online payments cost the platform, recovered on its FieldLogicHQ invoice (online payments exclude the coach portal)',
+  // Retired by Stripe-owned pricing Stage 4 (mig 499, dropped on dev 2026-11-18): kept here until the prod snapshot, which still holds both, loses them too.
+  platform_stripe_fees: 'RETIRED: a Stripe fee a club’s online payments cost the platform, recovered on its FieldLogicHQ invoice (online payments exclude the coach portal)',
   // Club Tier 12d-1 (mig 390): both follow online payments, which exclude the coach portal.
   online_payment_disputes: 'a card dispute on a payment taken on the account’s own Stripe account (online payments exclude the coach portal)',
-  platform_fee_invoices: 'FieldLogicHQ’s own monthly invoice of Stripe fees to the account (online payments exclude the coach portal)',
+  platform_fee_invoices: 'RETIRED: FieldLogicHQ’s own monthly invoice of Stripe fees to the account (online payments exclude the coach portal)',
   stripe_connect_events: 'a log of Stripe’s events, kept for audit; its org_id is a plain label with no foreign key',
   // Support console (mig 380, 389): FieldLogicHQ's own records about the account, read only in the console.
   platform_refunds: 'a refund FieldLogicHQ staff made on the account’s own subscription charge (Support console Stage 3)',

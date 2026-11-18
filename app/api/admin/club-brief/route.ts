@@ -11,8 +11,6 @@ import { canOpenFamilies } from '@/lib/families-access';
 import { buildDuplicatePairs } from '@/lib/families-read';
 import { buildChildProposals } from '@/lib/children-duplicates-read';
 import { tournamentToday } from '@/lib/timezone';
-import { canSeeFeesOwed, type FeesOwed } from '@/lib/fee-invoice-alert';
-import { readFeesOwed } from '@/lib/fee-invoices-owed';
 import { canHouseLeague } from '@/lib/house-league-access';
 import { countLeagueRegistrationsWaiting } from '@/lib/league-registrations-waiting';
 import type { OrgRole } from '@/lib/types';
@@ -59,13 +57,8 @@ import type { TimeAsksCard } from '@/lib/league-time-handoff';
  *            read through the attention summary. Cost: ONE head count (no rows) per brief, by the registrations' org
  *            index (lib/league-registrations-waiting.ts). A failed read leaves the key ABSENT (no pill), never a calm 0.
  *
- * ── Fee invoice alerts, Part 2 (2026-11-05) ─────────────────────────────────────────────────────────
- *   feesOwed — { count, overdue }: FieldLogicHQ fee invoices the club still owes (open), and how many are past due. OWNER ONLY
- *            (`hasBillingAccess`): the key is ABSENT for anyone else and when the read fails. Not a "count" above — it is
- *            money the club owes US, so it has no acting role list and does not follow the rep-team scope.
- *            Part 4 (the overdue banner): while something is overdue it also carries `earliestOverdue` (the oldest due date) and,
- *            when EXACTLY ONE is overdue, `overdueInvoice` { invoiceNo, day, total, payUrl } so the banner can name and pay it
- *            (payUrl is https or null). Same owner-only gate, same one read of the club's own rows, no Stripe call.
+ * (Stripe-owned pricing Stage 4, 2026-11-18, retired `feesOwed` — the FieldLogicHQ Stripe-fee invoices a club owed — with the
+ * invoices themselves: Stripe takes those fees from the club's own balance.)
  */
 
 /** Who may act, per count — copied from the route that performs the action, never widened. ⚖ The two
@@ -236,16 +229,6 @@ export const GET = withObservability(async (req: Request) => {
     })());
   }
 
-  // ── Fee invoices the club owes (Fee invoice alerts, Part 2): OWNER ONLY — present for someone with the billing door,
-  // ABSENT (not zero) for everyone else. One read of the club's own open rows, no Stripe call. A failed read leaves it ABSENT
-  // (no pill) rather than a calm 0, and never takes the rest of the brief down with it.
-  let feesOwed: FeesOwed | undefined;
-  if (canSeeFeesOwed(ctx.role, ctx.capabilities)) {
-    reads.push((async () => {
-      try { feesOwed = await readFeesOwed(org.id); } catch (e) { console.error('[club-brief] the fee invoices owed read failed:', e); }
-    })());
-  }
-
   // ── House league asks for time (Stage 13d, A4): an owner or an admin — Accounting or not, giving time isn't money — on a
   // plan with the club's schedule. Present only while a live season asks with no time given; a failed read leaves it ABSENT.
   let timeAsks: TimeAsksCard | null = null;
@@ -267,7 +250,6 @@ export const GET = withObservability(async (req: Request) => {
       ? { teams: { active: teamIds.length, groups: new Set(teamRows.map(t => t.group_id).filter(Boolean)).size } }
       : {}),
     detail,
-    ...(feesOwed ? { feesOwed } : {}),
     ...(timeAsks ? { timeAsks } : {}),
   });
 }, { route: '/api/admin/club-brief' });

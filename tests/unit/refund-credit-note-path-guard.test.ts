@@ -10,8 +10,8 @@
  *      and nowhere else under the platform-admin routes or the console's money modules;
  *   2. a credit note is never asked with a top-level `amount` (Part 0 1a: it reverses no tax) and never with `quantity`
  *      (5a/5c: refused on a proration line); the refund's note is emailed by Stripe (R2), keyed by our record;
- *   3. the refund route learns the invoice BEFORE makeRefund and hands it on; the preview route writes nothing;
- *   4. the answering-fee credit (lib/platform-stripe-fees.ts) keeps its own email setting, `none` (unchanged by Part 6b).
+ *   3. the refund route learns the invoice BEFORE makeRefund and hands it on; the preview route writes nothing.
+ *      (A 4th pin, the answering-fee credit's own email setting, went with that credit — Stripe-owned pricing Stage 4, 2026-11-18.)
  * Read through `readCode`, which strips comments: a guard that reads prose proves the prose.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
@@ -82,12 +82,6 @@ describe('a refund of a charge that paid an invoice goes through a credit note',
     assert.match(preview, /readClubCharge\(stripe, chargeId, club,/);
     assert.match(preview, /creditTargetForCharge\(stripe, found\.paymentIntentId, \{ customerId: club\.customerId, live \}\)/);
     assert.doesNotMatch(preview, /\.insert\(|\.update\(|\.upsert\(|creditNotes\.create|refunds\.create|makeRefund/);
-  });
-
-  it('the answering-fee credit keeps Stripe’s email off (Plan & billing says it; Part 6b changes only the refund)', () => {
-    const fees = readCode('lib/platform-stripe-fees.ts');
-    const body = fees.slice(fees.indexOf('async function creditAgainst('));
-    assert.match(body, /email_type: 'none',/);
   });
 
   it('the planner caps in LINE units: the net of the invoice’s own lines, never the after-discount total (Part 4, J)', () => {

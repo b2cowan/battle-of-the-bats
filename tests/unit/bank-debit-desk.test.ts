@@ -237,8 +237,7 @@ describe('the /review of the whole (2026-10-26)', () => {
     assert.match(readCode('app/api/admin/tournament-dashboard/route.ts'), /!clearingNow && totDue && today > totDue/);
     assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/ledger/route.ts'), /reversedOf\.get\(l\.regId\)\?\.receiptNo/);
   });
-  it('a test-mode return is never billed on a live invoice; the returned line has its category word', async () => {
-    assert.match(readCode('lib/platform-stripe-fees.ts'), /if \(f\.livemode !== stripeKeyIsLive\(\)\) \{\s*await supabaseAdmin\.from\('platform_stripe_fees'\)\.update\(\{ exempt_reason: 'test_mode'/);
+  it('the returned line has its category word', async () => {
     const { categoryWord } = await import('../../lib/club-money-words.ts');
     assert.equal(categoryWord('registration_returned'), 'Returned by the bank');
   });

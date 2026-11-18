@@ -17,6 +17,7 @@ import { orgDayKey } from './timezone';
  *   · Credit notes are their own rows (Ask 3), dated by the note.
  */
 
+/** 'fee' is history only (FieldLogicHQ's Stripe-fee invoice, retired by Stripe-owned pricing Stage 4): nothing writes it now. */
 export const CHARGE_TAX_KINDS = ['subscription', 'premium', 'fee', 'one_off'] as const;
 export type ChargeTaxKind = (typeof CHARGE_TAX_KINDS)[number];
 
@@ -375,9 +376,10 @@ export function buildChargeTaxRecord(inv: InvoiceLike, ctx: RecordContext): Char
   };
 }
 
-/** Which kind of invoice this is: the fee marker first, then who buys (a person = Premium), then whether it bills a plan. */
-export function chargeTaxKind(facts: { feeInvoice: boolean; buyerKind: 'club' | 'person' | 'unknown'; subscriptionId: string | null }): ChargeTaxKind {
-  if (facts.feeInvoice) return 'fee';
+/** Which kind of invoice this is: who buys (a person = Premium), then whether it bills a plan. Never 'fee' now: that kind is
+ *  FieldLogicHQ's retired Stripe-fee invoice (Stripe-owned pricing Stage 4, 2026-11-18), kept in `CHARGE_TAX_KINDS` and the
+ *  tables' CHECK only so a record written before it still reads. */
+export function chargeTaxKind(facts: { buyerKind: 'club' | 'person' | 'unknown'; subscriptionId: string | null }): ChargeTaxKind {
   if (facts.buyerKind === 'person') return 'premium';
   return facts.subscriptionId ? 'subscription' : 'one_off';
 }

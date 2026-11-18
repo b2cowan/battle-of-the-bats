@@ -26,9 +26,6 @@ import PlanMoveDialog, { CONTACT_HREF } from './PlanMoveDialog';
 import PlanCycleDialog from './PlanCycleDialog';
 import FreeTimeBand from './FreeTimeBand';
 import PlanArticlePanel from './PlanArticlePanel';
-import StripeFeesList from './StripeFeesList';
-import FeeInvoiceLine from './FeeInvoiceLine';
-import { useStripeFeesRead } from './useStripeFeesRead';
 import PaymentsEndingSection, { moveDateLong } from './PaymentsEndingSection';
 import styles from './Billing.module.css';
 import ClubUpgradeSetup from './ClubUpgradeSetup';
@@ -77,9 +74,7 @@ export type BillingBodyViewProps = {
   profiles?: Registry; actions: Action; notice?: Notice | null; justChose?: boolean;
   /** A wait, not a failure (the white callout with an amber edge): a kept plan whose cheaper move couldn't come back. */
   waitNotice?: string | null;
-  cardWindowOpen?: boolean; foundingActive?: boolean; fees?: ReactNode;
-  /** Fee invoice alerts Part 3: the one line at the top while a fee invoice is owed (absent in the coaches portal). */
-  feeLine?: ReactNode;
+  cardWindowOpen?: boolean; foundingActive?: boolean;
   /** The plan whose details panel is open (`?plan=` or a Details link), and how it closes. */
   detail?: string | null; onCloseDetail?: () => void;
   /** GST/HST Stage 1 (drawing tab 6): the billing address on file, read on the plan card, and its Billing address button.
@@ -181,7 +176,7 @@ function PickWindow({ orgName, endsAt, since, pick, busy, onChange, onSave, onCl
 
 /** The actual billing presentation, also rendered by the isolated profile fixtures. No portal chrome or providers. */
 export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = PLAN_BILLING_PROFILES, actions: a,
-  notice, waitNotice = null, justChose = false, cardWindowOpen = false, foundingActive = false, fees, feeLine = null, detail = null, onCloseDetail = () => {},
+  notice, waitNotice = null, justChose = false, cardWindowOpen = false, foundingActive = false, detail = null, onCloseDetail = () => {},
   billingAddress = null,
 }: BillingBodyViewProps) {
   const org = s.org;
@@ -267,8 +262,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // Offer help without asserting cancellation, renewal, a price, or a retention clock.
   if (s.freeTime.status === 'error') return <><div className={styles.body}>
     {notice && <PageNotice notice={notice} />}
-    {/* Part 3 carried-in review item 1: the line was missing here, so an owner whose free-time read failed could owe and not be told. */}
-    {feeLine}
     <CoachCard className={styles.planCard}>
       <CoachEyebrow chip={<CoachChip tone="warn">{W.plan.unavailable}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
       <h2 className={styles.planName}>{profile.config.label}</h2>
@@ -277,7 +270,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       {keepLine}
       <div className={styles.planActions}>{keepButton}{retry}<a href={CONTACT_HREF} className="btn btn-outline">{W.change.contact}</a></div>
     </CoachCard>
-    {fees}
   </div>{panel}</>;
 
   const readRecovery = [s.usage, s.founding, s.gating, s.cancellation, s.move].some(read => read.status === 'error') ? retry : null;
@@ -297,7 +289,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     </CoachCard>
     <FreeTimeBand band={portalCopy!.band} />
     {readRecovery}
-    {keepPremium}{joinClub}{fees}
+    {keepPremium}{joinClub}
   </div>{panel}</>;
 
   if (cancelled && controlsReady) {
@@ -305,8 +297,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     const modules = new Set<string>([...ownProfile.config.moduleEntitlements, ...org.enabledAddons]);
     return <><div className={styles.body}>
       {notice && <PageNotice notice={notice} />}
-      {/* Part 4 (Q4): a cancelled club has no banner (its one page is this one), so the same line, both tones, opens it. */}
-      {feeLine}
       <CoachCard className={styles.reactivate}>
         <CoachEyebrow chip={<CoachChip tone="danger">{W.reactivate.chip(preflight?.cancelled?.at ?? null)}</CoachChip>}>
           {premium ? W.reactivate.premiumCancelled : W.reactivate.cancelled(org.name)}
@@ -350,7 +340,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         <a href={COACHES_TOURNAMENTS_PATH} className="btn btn-outline">{W.reactivate.basicDoor}</a>
       </CoachCard>}
       {readRecovery}
-      {fees}
     </div>{panel}</>;
   }
 
@@ -369,10 +358,9 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const endingContact = !portal && ft?.freeTime?.state === 'ending' && sale(ft.freeTime.plan);
   return <><div className={styles.body}>
     {notice && <PageNotice notice={notice} />}
-    {feeLine}
     {waitNotice && <p className={styles.waitCallout} role="status">{waitNotice}</p>}
     {readRecovery}
-    {/* Fee invoice alerts Part 3 (Ask 7): today's sentence, unchanged, as the red-edged callout, with the shipped Payment method & invoices door. */}
+    {/* Fee invoice alerts Part 3 (Ask 7): a failed plan payment, as the red-edged callout, with the shipped Payment method & invoices door. */}
     {org.subscriptionStatus === 'past_due' && <div className={`${styles.waitCallout} ${styles.calloutDanger} ${styles.lineBar}`} role="alert">
       <p className={styles.lineText}>{W.plan.pastDue}</p>
       <button type="button" className={`btn btn-outline ${styles.lineButton}`} onClick={a.portal} disabled={disabled}><CreditCard size={14} aria-hidden />{a.busy === 'portal' ? W.plan.openingPortal : W.plan.payment}</button>
@@ -469,7 +457,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       </> : <p className={styles.hint}>{W.founding.noAction}</p>}
     </CoachCard>}
     <ReadFailure read={s.founding} section="Founding Season status" />
-    {fees}
     {keepPremium}
     {(showChanges && changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
       {/* Part C (f): held until the cancel read lands — a waiting cancel makes these doors absent, so they never flash first. */}
@@ -555,19 +542,15 @@ function useBillingRead<T>(url: string | null, revision: string): BillingRead<T>
   return read?.identity === identity || read?.url === url ? read!.value : { status: 'loading' };
 }
 
-/** `onFeesMayHaveChanged`: the club admin passes the brief's `reload`, so the pill on the Plan & billing door follows a payment
- *  made in Stripe's tab; the coaches portal has no fee invoices and passes nothing.
- *  `bannerCoversOverdue`: the club admin says the pinned overdue banner is up (or on its way), so this page's own line is amber only;
- *  left out, the page draws the red line itself, so an overdue invoice is never unspoken when the brief failed or is stale. */
-export default function BillingBody({ billingBase, teamsHref, onFeesMayHaveChanged, bannerCoversOverdue }: { billingBase: string; teamsHref: string; onFeesMayHaveChanged?: () => void; bannerCoversOverdue?: boolean }) {
+export default function BillingBody({ billingBase, teamsHref }: { billingBase: string; teamsHref: string }) {
   const { currentOrg, userRole, loading, refresh } = useOrg();
   if (loading || !currentOrg || !userRole) return <LoadingState label={W.page.loading} />;
   // Plan & billing is the owner's alone (owner, 2026-10-29). No billing reads mount for anyone else, including free-time and cancelled states.
   if (userRole !== 'owner') return <LockedCard orgName={currentOrg.name} />;
-  return <BillingOwnerBody key={currentOrg.id} org={currentOrg} refresh={refresh} billingBase={billingBase} teamsHref={teamsHref} onFeesMayHaveChanged={onFeesMayHaveChanged} bannerCoversOverdue={bannerCoversOverdue} />;
+  return <BillingOwnerBody key={currentOrg.id} org={currentOrg} refresh={refresh} billingBase={billingBase} teamsHref={teamsHref} />;
 }
 
-type BillingOwnerProps = { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string; onFeesMayHaveChanged?: () => void; bannerCoversOverdue?: boolean };
+type BillingOwnerProps = { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string };
 function BillingOwnerBody(props: BillingOwnerProps) {
   const params = useSearchParams();
   // Keep the marker throughout waiting, on either side of the flip. No ordinary billing reads or payment controls mount.
@@ -575,10 +558,8 @@ function BillingOwnerBody(props: BillingOwnerProps) {
     ? <ClubUpgradeSetup orgSlug={props.org.slug} /> : <BillingPlanBody {...props} />;
 }
 
-function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveChanged, bannerCoversOverdue = false }: BillingOwnerProps) {
+function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerProps) {
   const router = useRouter();
-  // One read of the Stripe fees for the line above the plan card AND the list below (Fee invoice alerts Part 3).
-  const feeRead = useStripeFeesRead(org.slug, onFeesMayHaveChanged);
   const params = useSearchParams();
   const profile = PLAN_BILLING_PROFILES[org.planId];
   const ownProfile = PLAN_BILLING_PROFILES[ownPlanOf(org)];
@@ -856,8 +837,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
     });
   }
   return <>
-    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList read={feeRead} />} feeLine={<FeeInvoiceLine read={feeRead} overdue={org.subscriptionStatus === 'canceled' || !bannerCoversOverdue} />}
-      billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
+    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()}      billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
       freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? (founding.status === 'ready' && founding.data.isFoundingSeason ? founding.data.compUntil : null) : null}
       // A waiting cancel refuses every move: the window's door is Keep {Plan}, here the same question window.

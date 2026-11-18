@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-18",
-  "total": 163,
+  "total": 236,
   "counts": {
-    "tables": 6,
-    "columns": 75,
-    "indexes": 27,
-    "constraints": 21,
-    "rls": 34
+    "tables": 8,
+    "columns": 112,
+    "indexes": 38,
+    "constraints": 28,
+    "rls": 50
   },
   "items": [
     {
@@ -143,6 +143,70 @@
     },
     {
       "key": "check:only-dev:payments_terms_agreements.payments_terms_agreements_version_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_fee_invoices.platform_fee_invoices_final_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_fee_invoices.platform_fee_invoices_paid_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_fee_invoices.platform_fee_invoices_period_start_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_fee_invoices.platform_fee_invoices_send_error_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_fee_invoices.platform_fee_invoices_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_fee_invoices.platform_fee_invoices_tax_lines_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_amount_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_bill_error_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_billed_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_billed_on_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_credit_note_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_dispute_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_exempt_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_exempt_reason_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_kind_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:platform_stripe_fees.platform_stripe_fees_source_chk",
       "sig": ""
     },
     {
@@ -446,6 +510,154 @@
       "sig": ""
     },
     {
+      "key": "column:only-prod:platform_fee_invoices.amount_due",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.due_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.emailed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.finalized_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.hosted_invoice_url",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.invoice_number",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.paid_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.period_start",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.reminded_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.send_error",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.stripe_customer_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.stripe_invoice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.tax_lines",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.total",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_fee_invoices.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.amount_source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.bill_attempts",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.bill_error",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.billed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.billed_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.dispute_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.exempt_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.fee_invoice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.online_payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.stripe_credit_note_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:platform_stripe_fees.stripe_invoice_item_id",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:club_group_email_bodies.club_group_email_bodies_org_id_fkey",
       "sig": ""
     },
@@ -527,6 +739,34 @@
     },
     {
       "key": "constraint:only-dev:payments_terms_agreements.payments_terms_agreements_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:platform_fee_invoices.platform_fee_invoices_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:platform_fee_invoices.platform_fee_invoices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:platform_stripe_fees.platform_stripe_fees_dispute_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:platform_stripe_fees.platform_stripe_fees_invoice_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:platform_stripe_fees.platform_stripe_fees_online_payment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:platform_stripe_fees.platform_stripe_fees_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:platform_stripe_fees.platform_stripe_fees_pkey",
       "sig": ""
     },
     {
@@ -638,6 +878,50 @@
       "sig": ""
     },
     {
+      "key": "index:only-prod:platform_fee_invoices_period_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_fee_invoices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_fee_invoices_stripe_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_fee_invoices_unpaid_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_stripe_fees_credit_note_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_stripe_fees_dispute_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_stripe_fees_invoice_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_stripe_fees_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_stripe_fees_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_stripe_fees_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:platform_stripe_fees_unbilled_idx",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:club_group_email_bodies",
       "sig": ""
     },
@@ -659,6 +943,14 @@
     },
     {
       "key": "table:only-dev:payments_terms_agreements",
+      "sig": ""
+    },
+    {
+      "key": "table:only-prod:platform_fee_invoices",
+      "sig": ""
+    },
+    {
+      "key": "table:only-prod:platform_stripe_fees",
       "sig": ""
     }
   ]

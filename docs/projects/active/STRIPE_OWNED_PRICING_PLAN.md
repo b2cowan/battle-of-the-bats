@@ -229,6 +229,27 @@ platform-admin Stripe-fees panel and retry, the invoice emails, the fee kind in 
 their tests (about 20 code files, 6 dedicated test files, two tables retired by migration with the data dictionary and
 snapshots). Owner/`/accounting` call: keep the billing-address-before-payouts step (we still need the club's province for
 the tax inside our fee) — likely yes.
+**Built before Stage 3** (owner 2026-11-18; the census found them independent). Build prompt, with the census:
+[STRIPE_OWNED_PRICING_STAGE4_BUILD_PROMPT.md](STRIPE_OWNED_PRICING_STAGE4_BUILD_PROMPT.md). The daily job stays: it also
+runs production's reminders and tax catch-ups. Only its six fee-billing steps go.
+
+**Built on dev 2026-11-18.** Owner calls (2026-11-18): **(a)** keep the billing address before payouts (the Payouts card's
+address line now reads the stored address, `hasBillingLocation`); **(b)** drop the tables — mig 499 (dev applied; prod
+`pending` in MANUAL_PROD_STEPS, applied WITH the promote, since master's parity gate refuses the code while prod still has
+them; the old code's reads fail safe for those minutes; prod held 0 rows, read with the owner's yes); **(c)** keep Sales by
+month's "Fees billed back to clubs" row for history (/accounting confirmed; it also recommends NOT narrowing the `'fee'`
+CHECK). Dev's open October test-mode fee invoice (UAT Rep Club, $4.59) was **voided** in Stripe before the cut; its three
+unbilled fees were never billed, so the 2026-12-01 run is moot. `/review` found two more open test-mode fee invoices (of two
+deleted walk clubs, one on a test clock) that Stripe's plain list hides; both voided the same day. A Stripe SEARCH of every
+state now finds none open, and no pending fee item sits on any of the 18 dev customers. The fee-invoice marker's readers went too (production never
+had a fee invoice); an old dev one read straight from Stripe now shows as "Invoice made in Stripe". The plan-payment pill
+survived as `lib/billing-door-alert.ts`. Census corrections: §396 A11 is the dispute email (stays Held; E5, E8, E9
+withdrawn); §405's fee steps are F2, F5, F11 and C1 (rewritten), not F4 or A; the foreign-card rate was pinned by
+`bank-debit.test.ts`, not the Facts agreement test. Reviews: `/accounting` no MUST-FIX (its topic file retired);
+`/legal` (`docs/agents/legal/STRIPE_FEE_INVOICE_RETIREMENT.md`): the 2026-11-17 privacy policy names the fee invoice
+(~L34/48/174) — acceptable while payments are off, **MUST-FIX in Stage 5's privacy version before any production club sets
+up payouts**; it also lists the payments-terms §4/§5 lines for Stage 5. Help retired with `/docs` (org `stripe-fees` section
+gone); the help's remaining "who pays which fee" paragraphs stay Stage 5.
 
 ### Stage 5 — Words, help, terms, close
 Payments terms §4/§5 (`/legal`), help articles (org, tournaments, house league, accounting, platform admin — `/docs`),

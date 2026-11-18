@@ -385,8 +385,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Support SOP',
       heading: 'How to read a club\'s Online payments',
       summary: 'A club\'s Online payments tab, the Health list of clubs whose online payments need a look, and why Delete refuses while money is in flight.',
-      keywords: ['online payments', 'online payments tab', 'health online payments', 'needs a look', 'dispute', 'open dispute', 'card dispute', 'show the player', 'stripe messages', 'stopped retrying', 'fees billed to the club', 'stripe fee', 'terms', 'payments terms', 'clearing', 'bank debit', 'payouts', 'a family paid and it isn\'t there', 'delete refuses', 'money in flight', 'read only'],
-      searchText: 'online payments tab a club says a family paid and it isnt there account terms last 30 days clearing open disputes tiles panel receipt show the player opening a name is logged stripe messages we couldn’t process stopped retrying older than 30 days fees billed to the club retry stays on the money tab health online payments needs a look club what since open disputes by answer by date disconnected with a dispute open stripe closed the account stripe messages failed a stripe fee couldn’t be billed an invoice for stripe fees is unpaid not on the current payments terms a row leaves when it clears today counts the list super admin billing support read only test mode nothing here is real money delete refuses money in flight open dispute clearing debit stripe fee unbilled failed unpaid fee invoice wait for them to finish then delete payouts tab never connected no tab',
+      keywords: ['online payments', 'online payments tab', 'health online payments', 'needs a look', 'dispute', 'open dispute', 'card dispute', 'show the player', 'stripe messages', 'stopped retrying', 'stripe fee', 'terms', 'payments terms', 'clearing', 'bank debit', 'payouts', 'a family paid and it isn\'t there', 'delete refuses', 'money in flight', 'read only'],
+      searchText: 'online payments tab a club says a family paid and it isnt there account terms last 30 days clearing open disputes tiles panel receipt show the player opening a name is logged stripe messages we couldn’t process stopped retrying older than 30 days health online payments needs a look club what since open disputes by answer by date disconnected with a dispute open stripe closed the account stripe messages failed not on the current payments terms a row leaves when it clears today counts the list super admin billing support read only test mode nothing here is real money delete refuses money in flight open dispute clearing debit wait for them to finish then delete payouts tab never connected no tab',
       links: [
         { label: 'Online payments', href: '/platform-admin/online-payments' },
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
@@ -406,20 +406,19 @@ const platformAdminHelp: HelpPageContent = {
                 <HelpDef term="Terms">Draft, Version of a date, or Out of date, with when the owner agreed.</HelpDef>
                 <HelpDef term="Last 30 days">The total, with the count of payments and refunds.</HelpDef>
                 <HelpDef term="Clearing">How many bank debits are still clearing.</HelpDef>
-                <HelpDef term="Open disputes">How many, with the Stripe fees on them so far.</HelpDef>
+                <HelpDef term="Open disputes">How many, with Stripe&rsquo;s fees on them so far (Stripe takes those from the club&rsquo;s own Stripe balance).</HelpDef>
               </HelpDefs>
             </>
           ),
         },
         {
           id: 'club-online-payments-panels',
-          title: 'Disputes, Stripe messages and fees',
+          title: 'Disputes and Stripe messages',
           content: (
             <>
               <HelpDefs>
                 <HelpDef term="Open disputes">One row per payment, by receipt number and where it was (house league, or the tournament), with <strong>Why</strong>, <strong>Answer by</strong> and <strong>Held</strong>. <strong>Show the player</strong> names the child or team; opening a name is logged, and the page says so.</HelpDef>
                 <HelpDef term="Stripe messages we couldn&rsquo;t process">Shown only when a message is failing, with <strong>Message</strong>, <strong>Error</strong>, <strong>Received</strong> and <strong>Tries</strong>. Messages still failing after 30 days fold under <strong>Stopped retrying</strong>, so the panel never becomes permanent noise.</HelpDef>
-                <HelpDef term="Fees billed to the club">Each Stripe fee passed on to the club and where it was billed. <strong>Retry</strong> is not here: it stays on the club&rsquo;s Money tab.</HelpDef>
               </HelpDefs>
             </>
           ),
@@ -435,11 +434,9 @@ const platformAdminHelp: HelpPageContent = {
                 <li>a club that is disconnected with a dispute still open;</li>
                 <li>Stripe closing the account;</li>
                 <li>Stripe messages that failed;</li>
-                <li>a Stripe fee that couldn&rsquo;t be billed;</li>
-                <li>an invoice for Stripe fees that is unpaid;</li>
                 <li>a club not on the current payments terms, once final terms exist.</li>
               </ul>
-              <p>A row leaves when it clears: the dispute closes, the message is processed, the account reconnects or the invoice is paid. When nothing is wrong it reads <em>Nothing needs a look.</em> The amber count beside <strong>Online payments</strong> in the menu, and its row in Health on <strong>Today</strong>, count this list.</p>
+              <p>A row leaves when it clears: the dispute closes, the message is processed, or the account reconnects. When nothing is wrong it reads <em>Nothing needs a look.</em> The amber count beside <strong>Online payments</strong> in the menu, and its row in Health on <strong>Today</strong>, count this list.</p>
             </>
           ),
         },
@@ -448,7 +445,7 @@ const platformAdminHelp: HelpPageContent = {
           title: 'Why Delete refuses while money is in flight',
           content: (
             <>
-              <p>The <strong>Delete the club</strong> window refuses while the club&rsquo;s online payments have money in flight, and names each: an open card dispute, a bank debit still clearing, a Stripe fee not yet billed, a Stripe fee that couldn&rsquo;t be billed, or an unpaid invoice for Stripe fees. It says to wait for them to finish, then delete; the club&rsquo;s Online payments tab shows each one.</p>
+              <p>The <strong>Delete the club</strong> window refuses while the club&rsquo;s online payments have money in flight, and names each: an open card dispute or a bank debit still clearing. It says to wait for them to finish, then delete; the club&rsquo;s Online payments tab shows each one.</p>
               <HelpNote variant="info" title="Deleting never closes the Stripe account">Deletion disconnects the club&rsquo;s payouts first, and the Stripe account stays the club&rsquo;s own. Cancelling or moving a club to a plan without online payments never disconnects it either.</HelpNote>
             </>
           ),
@@ -722,7 +719,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to read Sales',
       summary: 'Bookkeeping › Reports › Sales shows what FieldLogicHQ invoiced each month, less voids and credit notes, with GST/HST, money collected and bad debts each in their own column.',
       keywords: ['sales', 'sales by month', 'revenue', 'invoiced', 'net sales', 'voided', 'credit notes', 'collected', 'written off', 'bad debt', 'recovered', 'before registration', 'part before registration', 'partial', 'before our record starts', 'not yet valued in CAD', 'refund with no credit note', 'line 101', 'business numbers', 'sales csv', 'accountant package', 'invoices-and-credit-notes.csv', 'gst-hst-worksheet.csv', 'gst-hst-credits.csv', 'gst-hst-as-filed.csv', 'a club no longer on file'],
-      searchText: 'how do i read sales bookkeeping reports view sales owner only private finance revenue by month sales invoiced before tax issue day paid or not voided credit notes taken off in the month they happened net sales gst hst held for cra not revenue collected payments received with tax written off bad debt outside net sales recovered paid after write-off yearly plan counts in the month billed band period this year to date last calendar year last quarter last month this month to date custom dates chips before registration part before registration partial live sales test sales stripe mode before our record starts may 1 2026 no sales invoiced not yet valued in cad bank of canada rate usd subtotal refund made in stripe dashboard no credit note listed not taken off still reduces income month refunded credit note reduces gst hst line 101 sentence differs by sales before registration voids which line 101 does not take off credit notes line 107 whole dollars before rounding not the figure on business numbers list price click a month split by kind plans coach premium fees billed back to clubs one-off charges every bill buyer coach sales csv totals only accountant package invoices-and-credit-notes.csv one row per invoice and credit note buyer club name coach no address status today listed for issued paid recovered voided written off gst hst treatment taxed zero-rated a club no longer on file sales could not be read package not created',
+      searchText: 'how do i read sales bookkeeping reports view sales owner only private finance revenue by month sales invoiced before tax issue day paid or not voided credit notes taken off in the month they happened net sales gst hst held for cra not revenue collected payments received with tax written off bad debt outside net sales recovered paid after write-off yearly plan counts in the month billed band period this year to date last calendar year last quarter last month this month to date custom dates chips before registration part before registration partial live sales test sales stripe mode before our record starts may 1 2026 no sales invoiced not yet valued in cad bank of canada rate usd subtotal refund made in stripe dashboard no credit note listed not taken off still reduces income month refunded credit note reduces gst hst line 101 sentence differs by sales before registration voids which line 101 does not take off credit notes line 107 whole dollars before rounding not the figure on business numbers list price click a month split by kind plans coach premium one-off charges fees billed back to clubs older month every bill buyer coach sales csv totals only accountant package invoices-and-credit-notes.csv one row per invoice and credit note buyer club name coach no address status today listed for issued paid recovered voided written off gst hst treatment taxed zero-rated a club no longer on file sales could not be read package not created',
       links: [
         { label: 'Bookkeeping', href: '/platform-admin/bookkeeping?view=reports&report=sales' },
         { label: 'Business numbers', href: '/platform-admin/business-numbers' },
@@ -783,7 +780,7 @@ const platformAdminHelp: HelpPageContent = {
           title: 'A month’s bills, the Sales CSV and the accountant package',
           content: (
             <>
-              <p>Click a month to open its window: the split by kind (Plans, Coach Premium, Fees billed back to clubs, One-off charges), then every bill behind the figures, in date order. A bill an individual bought reads <em>Coach</em>.</p>
+              <p>Click a month to open its window: the split by kind (Plans, Coach Premium, One-off charges, plus a <em>Fees billed back to clubs</em> line in an older month that holds one), then every bill behind the figures, in date order. A bill an individual bought reads <em>Coach</em>.</p>
               <HelpDefs>
                 <HelpDef term="Sales CSV">One row per month with every column, the period&rsquo;s total and the line-101 sentence. Totals only: no buyer is named. Amounts are positive; a figure below zero says so in the Note column.</HelpDef>
                 <HelpDef term="Accountant package">Now holds <em>invoices-and-credit-notes.csv</em> for the package&rsquo;s dates: one row per invoice issued, paid, voided or written off in them (<em>Listed for</em> says which), and one per credit note, linked to its bill. Each row has the sales and the GST/HST figures in its own currency and in CAD at the Bank of Canada rate, and its GST/HST treatment (taxed or zero-rated). The buyer is the club&rsquo;s name, <em>Coach</em> for an individual, or <em>A club no longer on file</em>; no address is included. <em>Status</em> is each bill&rsquo;s status today. The package also holds <em>gst-hst-worksheet.csv</em> (lines 101 to 109 for the same dates, the figures on Reports &rsaquo; GST/HST return), <em>gst-hst-credits.csv</em> (each expense behind line 106 and whether its credit counted, is held for the supplier&rsquo;s number or can&rsquo;t be claimed) and, when you marked a return as filed inside those dates, <em>gst-hst-as-filed.csv</em> (every filing and revision exactly as saved).</HelpDef>
@@ -800,7 +797,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to enter Stripe’s monthly fees as an expense',
       summary: 'Stripe’s fees to FieldLogicHQ are not stored anywhere; enter them once a month as one Bookkeeping expense from Stripe’s statement and monthly tax invoice.',
       keywords: ['stripe fees', 'stripe’s fees to us', 'processing fees', 'billing fees', 'stripe tax fee', 'monthly tax invoice', 'stripe statement', 'expense', 'bank charges', 'input tax credit', 'itc', 'gst/hst on stripe fees', 'payouts are net'],
-      searchText: 'how do i enter stripe fees stripe’s fees to us our cost expense once a month monthly statement monthly tax invoice dashboard documents supplier stripe gst hst number printed on the tax invoice category bank charges date of the tax invoice gst hst only the tax the tax invoice shows billing tax radar sigma fees processing fees card fees carry no gst hst no input tax credit itc never net fees against sales deposits are net sales stay gross keep the statement and tax invoice as the receipt six years fees billed back to clubs are income not this',
+      searchText: 'how do i enter stripe fees stripe’s fees to us our cost expense once a month monthly statement monthly tax invoice dashboard documents supplier stripe gst hst number printed on the tax invoice category bank charges date of the tax invoice gst hst only the tax the tax invoice shows billing tax radar sigma fees processing fees card fees carry no gst hst no input tax credit itc never net fees against sales deposits are net sales stay gross keep the statement and tax invoice as the receipt six years',
       links: [
         { label: 'Bookkeeping › Expenses', href: '/platform-admin/bookkeeping?view=expenses' },
       ],
@@ -814,7 +811,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Enter as GST/HST <strong>only the tax the tax invoice shows</strong>: it is on Stripe&rsquo;s Billing, Tax, Radar and Sigma fees. Card-processing fees carry no GST/HST and earn no credit.</li>
             <li>Attach the statement and the tax invoice as the receipt. Keep them six years.</li>
           </HelpSteps>
-          <HelpNote variant="warning" title="Never net the fees against sales">Stripe pays out after taking its fees, so a deposit is smaller than the sales behind it. Sales stay at their full amount; the fees are this expense. Fees billed back to clubs are income, not this cost.</HelpNote>
+          <HelpNote variant="warning" title="Never net the fees against sales">Stripe pays out after taking its fees, so a deposit is smaller than the sales behind it. Sales stay at their full amount; the fees are this expense.</HelpNote>
         </>
       ),
     },
@@ -1220,7 +1217,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to replay a Stripe update',
       summary: 'Super admin can run a plan-billing update that did not finish through the product again, with a reason, and see what it did to the club’s record.',
       keywords: ['replay', 'replay a stripe update', 'replay an update by its id', 'rerun', 're-run', 'run again', 'stripe update failed', 'update stripe gave up', 'evt id', 'event id', 'replayed a stripe update', 'replay result', 'replay failed', 'before and after'],
-      searchText: 'how do i replay a stripe update super admin only replay door still failing list plan billing replay an update by its id find update evt 30 days stripe keeps an update this update already finished refused kinds subscription changes checkout card added stripe fees bill later bill set aside not ours wrong account other stripe account no charge no refund no change in stripe no message to the customer needs attention notice not added change log reason replayed a stripe update replay failed replay result before after nothing changed story line fixed our own fault',
+      searchText: 'how do i replay a stripe update super admin only replay door still failing list plan billing replay an update by its id find update evt 30 days stripe keeps an update this update already finished refused kinds subscription changes checkout card added later bill set aside not ours wrong account other stripe account no charge no refund no change in stripe no message to the customer needs attention notice not added change log reason replayed a stripe update replay failed replay result before after nothing changed story line fixed our own fault',
       links: [
         { label: 'Stripe', href: '/platform-admin/watching-stripe' },
         { label: 'Audit log', href: '/platform-admin/audit' },
@@ -1238,7 +1235,7 @@ const platformAdminHelp: HelpPageContent = {
           <HelpDefs>
             <HelpDef term="When to use it">An update Stripe gave up on, or a re-run after we fixed our own fault. If the update already finished, the window says so: nothing is waiting to be redone.</HelpDef>
             <HelpDef term="What it never does">It does not charge, refund or change anything in Stripe, and it sends no message to the customer. A replayed failed payment also does not put its notice on the owners&rsquo; <em>Needs attention</em> list, because that notice is what feeds the list.</HelpDef>
-            <HelpDef term="What it refuses">Only the safe kinds run again: bills and payments, credit notes, disputes and refunds, a card removed, and the trial-ending reminder. A subscription created, changed or ended, a checkout, a card added and a club&rsquo;s Stripe-fees bill are refused, because running Stripe&rsquo;s old copy could write over what has changed since. A bill that is no longer the plan&rsquo;s latest, an update that names no customer, a charge that paid no plan bill, an update from the other Stripe account and a family payment are refused too. Each refusal says why.</HelpDef>
+            <HelpDef term="What it refuses">Only the safe kinds run again: bills and payments, credit notes, disputes and refunds, a card removed, and the trial-ending reminder. A subscription created, changed or ended, a checkout and a card added are refused, because running Stripe&rsquo;s old copy could write over what has changed since. A bill that is no longer the plan&rsquo;s latest, an update that names no customer, a charge that paid no plan bill, an update from the other Stripe account and a family payment are refused too. Each refusal says why.</HelpDef>
             <HelpDef term="How long it works">Stripe keeps an update for 30 days. After that the window says Stripe no longer has it, because the product stores no copy.</HelpDef>
             <HelpDef term="Where it is recorded">The <strong>Audit log</strong> keeps <em>Replayed a Stripe update</em> (your name and reason, written before the run), <em>Replay failed</em> if it could not run, and <em>Replay result</em> (the club&rsquo;s record before and after, written after the run). Open a result entry to see the old and new values; its <strong>Open Stripe</strong> link returns to the page. Super admin, Billing and Support also see a line on the club&rsquo;s <strong>Story</strong>, such as <em>Replayed a Stripe update</em> with the change, for example <em>Status: Past due &rarr; Active</em>. The reason is never shown to other roles.</HelpDef>
           </HelpDefs>
@@ -2153,7 +2150,7 @@ const platformAdminHelp: HelpPageContent = {
             <li><strong>Delete user accounts if required.</strong> If the deletion is part of a data erasure request and the people have no other clubs, delete their accounts from their person records after the club is removed.</li>
           </HelpSteps>
           <p>If you do not see <strong>Delete the club</strong> at the end of the Access tab, your role is not Super admin &mdash; hand the deletion to one.</p>
-          <p>The window also refuses while the club&rsquo;s online payments have money in flight (an open card dispute, a bank debit still clearing, a Stripe fee unbilled or failed, or an unpaid invoice for Stripe fees) and names each one. Wait for them to finish, then delete; see <em>How to read a club&rsquo;s Online payments</em>.</p>
+          <p>The window also refuses while the club&rsquo;s online payments have money in flight (an open card dispute or a bank debit still clearing) and names each one. Wait for them to finish, then delete; see <em>How to read a club&rsquo;s Online payments</em>.</p>
         </>
       ),
       faqs: [

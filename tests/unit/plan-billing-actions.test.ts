@@ -152,11 +152,6 @@ function environment() {
     if (endpoint.startsWith('/api/billing/location') && !init?.method) {
       return { ok: true, json: async () => ({ location: ADDRESS_ON_FILE, buyer: 'club', name: 'Falcons', usSalesOpen: false }) } as Response;
     }
-    // Fee invoice alerts Part 3: the Stripe fees are one background read for the line and the list (nothing owed here); like the
-    // address lookup, it is not a money request, so it is answered and not logged.
-    if (endpoint.startsWith('/api/billing/stripe-fees') && !init?.method) {
-      return { ok: true, json: async () => ({ fees: [], invoices: [], planFree: false }) } as Response;
-    }
     requests.push({ endpoint, init });
     const queued = answers.get(endpoint)?.shift();
     let data: unknown;

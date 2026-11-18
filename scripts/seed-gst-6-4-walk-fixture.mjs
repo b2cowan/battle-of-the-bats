@@ -180,7 +180,8 @@ async function setup() {
     const end = sub.items.data[0]?.current_period_end;
     c.periodEnd = end ? iso(end * 1000) : null;
     if (c.fee) {
-      // A club's recovered fee rides the subscription's next invoice (lib/platform-stripe-fees.ts); the reminder must ignore it.
+      // A non-plan line queued on the subscription's next invoice; the reminder must ignore it. (First modelled on a club's
+      // recovered Stripe fee, which Stripe-owned pricing Stage 4 retired; the plan-lines-only rule stays.)
       await stripe.invoiceItems.create({ customer: customer.id, subscription: sub.id, amount: 12345, currency: 'cad', description: 'Walk fixture: a queued fee', tax_behavior: 'exclusive', tax_code: 'txcd_90050001' });
       ok(`${c.name}: a queued fee item of $123.45 on ${sub.id}`);
     }

@@ -441,18 +441,7 @@ BEGIN
      OR NOT EXISTS (SELECT 1 FROM accounting_entries WHERE source_entity_id = v_op AND description LIKE 'Returned by the bank · %' AND payment_method = 'online_bank') THEN
     RAISE EXCEPTION 'FAIL T26: a team''s reversal (%)', v_res; END IF;
 
-  -- T27 · one failure fee per debit and kind; a billed row carries its invoice item; an exempt one is never billed.
-  INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'reversed', 5);
-  v_ok := false;
-  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'reversed', 5);
-  EXCEPTION WHEN unique_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: a fee recorded twice'; END IF;
-  v_ok := false;
-  -- Mig 390: says how it was billed, so only the exempt rule can refuse it.
-  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, exempt_reason, stripe_invoice_item_id, billed_at, billed_on)
-    VALUES (v_org, v_lop, 'reversed', 5, 'comped', 'ii_x', now(), 'subscription');
-  EXCEPTION WHEN check_violation THEN v_ok := true; END;
-  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: an exempt fee billed'; END IF;
+  -- T27 (one failure fee per debit and kind) retired with platform_stripe_fees (mig 499, Stripe-owned pricing Stage 4).
 
   -- ── /review of the whole (mig 388) ──
   -- T28 · a child the desk put back before its debit cleared has simply paid: the send-back is void, never handed out.

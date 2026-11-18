@@ -15,14 +15,11 @@ import { stripeProfileFor } from '@/lib/online-payment-profile';
 import { PAYMENTS_TERMS_VERSION, PAYOUTS_WORDS, TERMS_WORDS, termsStanding, termsVersionDate } from '@/lib/online-payment-words';
 import { recordPaymentsTermsAgreement } from '@/lib/payments-terms-agreement';
 import { clearSettled } from '@/lib/needs-attention';
-import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
-import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { endingNotice, readOutstanding, upcomingEnding } from '@/lib/online-payment-endings';
 import { closeClubPayPages } from '@/lib/online-pay-pages';
-import { requireBillingLocation } from '@/lib/billing-location-server';
+import { hasBillingLocation, requireBillingLocation } from '@/lib/billing-location-server';
 import { BILLING_LOCATION_WORDS, BILLING_REGION_CLOSED, isClosedRegion } from '@/lib/billing-location';
-import { clubFeeInvoicePlaceable } from '@/lib/platform-stripe-fees';
 import { requireFreshCode } from '@/lib/two-step-fresh';
 import { demoBillingRefusal } from '@/lib/demo-guard';
 
@@ -130,9 +127,6 @@ export const GET = withObservability(async (req: Request) => {
     openPages: out?.openPages ?? null,
     openDisputes: out?.openDisputes ?? null,
     firstDisputeDue: out?.firstDisputeDue ?? null,
-    // 12d-1 Part 4 (words §3.4): a club that pays nothing for its plan reads "Your plan doesn't change" beside the
-    // other-fees line, so a Stripe fee is never read as its comp being withdrawn. An extra read: a failure omits it.
-    planFree: await planIsFree(ctx.org.id),
     // 12d-2 Part 4 (words §5.1, ask 6): who agreed, when, to which version — the owner's read-out. An owner who has left
     // keeps their name: the stored email stands in once the user is gone.
     terms: isOwner && row?.terms_agreed_at ? {
@@ -151,21 +145,14 @@ export const GET = withObservability(async (req: Request) => {
     ending: isOwner && facts && !facts.disconnectedAt && c.planOffers
       ? await upcomingEnding(ctx.org.id).then(e => (e ? endingNotice(e, ctx.org.name, out) : null)).catch(() => null)
       : null,
-    // GST/HST Stage 2 Part 2b (owner ruling A): a club connected without a billing address — its Stripe fees wait unbilled
-    // (the same test the fee invoice waits on). The owner's, while connected. A failed read leaves the line off.
+    // GST/HST Stage 2 Part 2b (owner ruling A), kept by Stripe-owned pricing Stage 4 call (a), 2026-11-18: a club connected
+    // without a billing address on our records (the one setting up requires) — the GST/HST inside our fee needs its province.
+    // The owner's, while connected. A failed read leaves the line off.
     addressMissing: isOwner && facts && !facts.disconnectedAt
-      ? !(await clubFeeInvoicePlaceable(ctx.org).catch(() => true))
+      ? !(await hasBillingLocation({ kind: 'org', orgId: ctx.org.id, name: ctx.org.name }).catch(() => true))
       : false,
   });
 }, { route: '/api/admin/payouts' });
-
-async function planIsFree(orgId: string): Promise<boolean> {
-  const [facts, founding] = await Promise.all([
-    effectiveOrgFactsForId(orgId).catch(() => null),
-    workspaceHoldsFoundingComp(orgId).catch(() => false),
-  ]);
-  return !!facts?.freeTime || founding;
-}
 
 export const PATCH = withObservability(async (req: Request) => {
   const body = await req.json().catch(() => ({}));
@@ -229,9 +216,10 @@ export const POST = withObservability(async (req: Request) => {
       const policy = refundPolicyOf(body.refundPolicy);
       if (!policy.ok) return NextResponse.json({ error: policy.error || PAYOUTS_WORDS.before.policyRequired, code: 'refund_policy_required' }, { status: 400 });
       // GST/HST Stage 2 Part 2b (Ask 8): the club's billing address, before ANY Stripe call — a new account and a reconnect
-      // alike. The club's Stripe fees are invoiced and taxed by it, and Stripe refuses a taxed invoice it cannot place. A
-      // refusal (`billing_address_required`, or a held US address) creates and changes nothing; the card opens the window.
-      // The club's OWN row (kind 'org'), the one the fee invoice reads (`clubBillingLocation`), never the payout account's.
+      // alike. Kept by Stripe-owned pricing Stage 4 call (a), owner 2026-11-18: the GST/HST inside our application fee is
+      // worked out from the club's province, which must be known before its first fee. A refusal (`billing_address_required`,
+      // or a held US address) creates and changes nothing; the card opens the window. The club's OWN row (kind 'org'), the
+      // one the Payouts card's address line reads (`hasBillingLocation`), never the payout account's.
       const address = await requireBillingLocation({ kind: 'org', orgId: ctx.org.id, name: ctx.org.name, stripeCustomerId: ctx.org.stripeCustomerId ?? null });
       if (!address.ok) return address.response;
       // Online payments are not offered in Québec (payments terms §14, Terms of Service §17; owner 2026-11-17 over Q6's

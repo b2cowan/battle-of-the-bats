@@ -69,7 +69,7 @@ export type ReplayRow = {
 
 export type ReplayRefusalKey =
   | 'finished' | 'other_account' | 'too_old' | 'busy' | 'unknown' | 'change_log'
-  | 'set_aside' | 'not_ours' | 'not_replayable' | 'fee_invoice' | 'later_bill' | 'not_plan_bill' | 'format' | 'stripe_unread' | 'not_claimed'
+  | 'set_aside' | 'not_ours' | 'not_replayable' | 'later_bill' | 'not_plan_bill' | 'format' | 'stripe_unread' | 'not_claimed'
   | 'record_unread' | 'reason';
 
 export type ReplayRefusal = { key: ReplayRefusalKey; title: string; body: string };
@@ -102,8 +102,6 @@ export function replayRefusal(key: ReplayRefusalKey, facts: { processedAt?: stri
       return { key, title: 'This charge paid no plan bill', body: 'It was set aside when it arrived: the charge it is about paid no subscription bill, so plan billing has nothing to do with it.' };
     case 'not_replayable':
       return { key, title: 'This kind of update is not replayed', body: `A replay runs Stripe’s copy of ${facts.type ? `a ${facts.type} update` : 'the update'} as it was when Stripe sent it, and this kind would write that old copy over what has changed since. If the club’s plan looks wrong, the morning check against Stripe lists it on this page.` };
-    case 'fee_invoice':
-      return { key, title: 'This is a Stripe-fees bill, not plan billing', body: 'It is a club’s bill for its online payments’ Stripe fees. A replay is for plan billing only; the club’s Money tab retries a fee bill.' };
     case 'later_bill':
       return { key, title: 'A later bill has been made since', body: 'This bill is no longer the plan’s latest, so its paid-through date is out of date. The later bill’s own update speaks for the plan; if the club’s plan looks wrong, the morning check against Stripe lists it on this page.' };
     case 'not_plan_bill':
@@ -152,8 +150,6 @@ export type FetchedEventFacts = {
   type: string;
   livemode: boolean;
   apiVersion: string | null;
-  /** The event's invoice carries the Stripe-fees mark (a club's own fee bill). */
-  feeInvoice: boolean;
   /** For an invoice event: the subscription it bills, null for a bill made by hand. */
   invoiceSubscriptionId: string | null;
   invoiceId: string | null;
@@ -164,7 +160,6 @@ export function replayEventRefusal(row: ReplayRow, event: FetchedEventFacts, ctx
   if (event.id !== row.id || event.type !== row.type) return replayRefusal('unknown');
   if (event.livemode !== ctx.live) return replayRefusal('other_account');
   if (event.apiVersion !== ctx.apiVersion) return replayRefusal('format');
-  if (event.type.startsWith('invoice.') && event.feeInvoice) return replayRefusal('fee_invoice');
   if ((event.type === 'invoice.payment_succeeded' || event.type === 'invoice.payment_failed') && !event.invoiceSubscriptionId) {
     return replayRefusal('not_plan_bill');
   }

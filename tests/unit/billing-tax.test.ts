@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  AUTOMATIC_TAX, BILLING_REVIEW_HOLD, BILLING_TAX_WORDS, BUYER_NAME_META, RECOVERED_FEE_TAX, TAXED_CHECKOUT, buyerNameAfterCheckout, buyerNameUpdate, decideBuyerTax,
+  AUTOMATIC_TAX, BILLING_REVIEW_HOLD, BILLING_TAX_WORDS, BUYER_NAME_META, TAXED_CHECKOUT, buyerNameAfterCheckout, buyerNameUpdate, decideBuyerTax,
   namedTaxLines, quoteTax, taxLineLabel, taxWasWorkedOut,
 } from '../../lib/billing-tax.ts';
 import {
@@ -81,14 +81,6 @@ describe('Part 2 · what a taxed Stripe call carries', () => {
   it('a subscription checkout taxes by the customer, takes a GST/HST number, and never lets Stripe change the address', () => {
     assert.deepEqual(TAXED_CHECKOUT, { automatic_tax: { enabled: true }, tax_id_collection: { enabled: true }, customer_update: { name: 'auto' } });
     assert.equal('address' in TAXED_CHECKOUT.customer_update, false);
-  });
-
-  it('a recovered fee is a Platform Fee, taxed on top (Ask 3) at the CLUB\'s province, never the SaaS preset', () => {
-    assert.deepEqual(RECOVERED_FEE_TAX, { tax_behavior: 'exclusive', tax_code: 'txcd_90050001' });
-    assert.notEqual(RECOVERED_FEE_TAX.tax_code, 'txcd_10103001');
-    // GST/HST Stage 2 Part 6 (test mode 2026-11-05): "General - Services" is ORIGIN-sourced by Stripe Tax in Canada, so every club
-    // was charged our head office's Ontario 13%. A code goes here only after a tax calculation shows it follows the club's address.
-    assert.notEqual(RECOVERED_FEE_TAX.tax_code, 'txcd_20030000', 'General - Services taxes every club at Ontario 13%');
   });
 });
 

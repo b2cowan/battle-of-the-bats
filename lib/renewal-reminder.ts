@@ -93,9 +93,9 @@ export type PreviewLine = {
 };
 
 /**
- * The renewal's figures from the PLAN's lines only (/accounting 2026-11-13). A club's recovered Stripe fees queued on the
- * subscription ride the same invoice (lib/platform-stripe-fees.ts `subscriptionToRide`) and would inflate the price, the tax and
- * the total; a returned fee would deflate them. Before tax = the lines' amount after their discounts; the taxes are those lines'
+ * The renewal's figures from the PLAN's lines only (/accounting 2026-11-13). Any other line on the subscription's invoice would
+ * inflate the price, the tax and the total, and a credit line would deflate them (the case first found was a club's recovered
+ * Stripe fee riding the invoice, retired by Stripe-owned pricing Stage 4; the rule stays for any non-plan line). Before tax = the lines' amount after their discounts; the taxes are those lines'
  * own; the total adds only the taxes charged on top (exclusive), so price + tax = total. The plan is the first such line's price.
  */
 export function planLineFigures(lines: ReadonlyArray<PreviewLine>): {

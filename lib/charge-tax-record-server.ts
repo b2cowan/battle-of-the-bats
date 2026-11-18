@@ -5,7 +5,6 @@ import { supabaseAdmin } from './supabase-admin';
 import { stripeDashboardBase, stripeKeyIsLive } from './stripe-mode';
 import { captureError } from './observability/capture';
 import { ADMIN_EMAIL, SITE_URL, escapeHtml, sendEmail } from './email';
-import { FEE_INVOICE_META } from './online-payment-words';
 import { fetchAllIn, inParallel } from './supabase-paging';
 import { orgDayKey } from './timezone';
 import { buyerOfStripeCustomer, readSaleEvidence } from './billing-location-server';
@@ -157,7 +156,7 @@ async function contextOf(inv: Stripe.Invoice, captured: EvidenceCaptured): Promi
   const issued = invoiceIssuedAt(inv as unknown as InvoiceLike);
   const late = captured === 'event' && !!issued && Date.now() - Date.parse(issued) > LATE_FIRST_WRITE_MS;
   return {
-    kind: chargeTaxKind({ feeInvoice: !!inv.metadata?.[FEE_INVOICE_META], buyerKind: recordBuyer.kind, subscriptionId }),
+    kind: chargeTaxKind({ buyerKind: recordBuyer.kind, subscriptionId }),
     buyer: recordBuyer,
     evidence,
     readAt: new Date().toISOString(),

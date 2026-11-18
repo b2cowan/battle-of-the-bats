@@ -15,12 +15,11 @@ import { subscriptionStatusLabel, NO_LIMIT } from './platform-labels';
 import { formatCardOnFile } from './billing-format';
 import { freeTimeCopy } from './free-time-copy';
 import { portalFreeTimeCopy, KEEP_PREMIUM_LINE, PORTAL_FREE_TIME_HOSTING_LINE } from './portal-free-time';
-import { STRIPE_FEE_WORDS } from './online-payment-words';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
 import type { OrgPlan as OrgPlanKey } from './types';
 import { STATUS_WORD } from './tournament-status-words';
 import { BILLING_TAX_WORDS } from './billing-tax';
-import { FEE_ALERT_WORDS } from './fee-invoice-alert';
+import { BILLING_DOOR_ALERT_WORDS } from './billing-door-alert';
 
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
 /** "November 30" — a date the sentence has already given with its year. */
@@ -59,9 +58,9 @@ const charge = (plan: OrgPlanKey, billing: BillingCycle, cents?: number | null, 
   : price(billing === 'annual' ? PLAN_CONFIG[plan].annualPrice : PLAN_CONFIG[plan].monthlyPrice, billing);
 
 export const PLAN_BILLING_WORDS = {
-  /** The spoken labels of the Plan & billing door's pill (rail + phone More) — Fee invoice alerts Part 2; the object lives in
-   *  the tiny `fee-invoice-alert` module so the rail's bundle does not pull this whole file. */
-  feeAlert: FEE_ALERT_WORDS,
+  /** The spoken label of the Plan & billing door's pill (rail + phone More) — Fee invoice alerts Part 2; the object lives in
+   *  the tiny `billing-door-alert` module so the rail's bundle does not pull this whole file. */
+  billingDoorAlert: BILLING_DOOR_ALERT_WORDS,
   coverage: {
     eyebrow: 'Plan',
     title: (club: string) => `Covered by ${club}`,
@@ -172,7 +171,7 @@ export const PLAN_BILLING_WORDS = {
     premiumWaitBody: (iso: string, days: number, trialing = false, pastDue = false) => `Cancelling turns off Premium tools on ${day(iso)}, ${trialing ? 'when your trial ends' : pastDue ? SOONER : 'the end of the period you paid for'}. Basic tournament records stay available. Premium team data is kept for ${days} days after that and comes back if you reactivate within that time.`,
     waitDoor: (label: string) => `Cancel ${label}…`, waitTitle: (label: string) => `Cancel ${label}?`,
     // Renewal Stage 4: the lead says plainly that nothing is taken away early (the ruling: paid ahead, no refund). It names the
-    // PLAN payment (/legal + /accounting 2026-11-16): a club with online payments keeps its fee invoices until the date.
+    // PLAN payment (/legal + /accounting 2026-11-16).
     stays: (org: string, iso: string) => `${org} stays open until ${day(iso)}, the end of the period you paid for. Nothing is switched off before then, and no more plan payments are taken.`,
     premiumStays: (iso: string) => `Premium stays on until ${day(iso)}, the end of the period you paid for. No Premium tool stops before then, and no more Premium payments are taken.`,
     trialStays: (org: string, iso: string) => `Your trial ends on ${day(iso)}. ${org} keeps every tool until then, and no plan payment is taken.`,
@@ -476,5 +475,4 @@ export const PLAN_BILLING_WORDS = {
   },
   freeTime: freeTimeCopy,
   portalFreeTime: portalFreeTimeCopy,
-  stripeFees: STRIPE_FEE_WORDS,
 } as const;

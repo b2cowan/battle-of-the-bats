@@ -2,7 +2,6 @@
 // takes its Stripe client as an argument, so the guards run the real planner against a fake.
 import type Stripe from 'stripe';
 import { REFUND_WORDS } from './console-money';
-import { FEE_INVOICE_META } from './online-payment-words';
 
 /**
  * A platform-admin refund of a charge that paid an invoice goes through a Stripe CREDIT NOTE (GST/HST Stage 2 Part 6b; owner
@@ -65,8 +64,6 @@ export type CreditTarget = {
   creditedBeforeTaxCents: number;
   /** The positive lines, as on the invoice. */
   lines: CreditLine[];
-  /** True for our own monthly Stripe-fee invoice (its `FEE_INVOICE_META`): the window says so beside the note. */
-  isFeeInvoice: boolean;
 };
 
 export type CreditNoteLine = { type: 'invoice_line_item'; invoice_line_item: string; amount: number };
@@ -143,7 +140,6 @@ async function readCreditTarget(stripe: Stripe, invoiceId: string, owner: Credit
     creditedCents: (inv.pre_payment_credit_notes_amount ?? 0) + (inv.post_payment_credit_notes_amount ?? 0),
     creditedBeforeTaxCents,
     lines: lines.filter(l => l.amount > 0).map(l => ({ id: l.id, amount: l.amount, creditedCents: takenByLine.get(l.id) ?? 0 })),
-    isFeeInvoice: !!inv.metadata?.[FEE_INVOICE_META],
   };
 }
 

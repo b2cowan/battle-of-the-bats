@@ -96,7 +96,6 @@ function route() {
     '@/lib/online-payment-endings': { endingNotice: () => null, readOutstanding: async () => null, upcomingEnding: async () => null },
     '@/lib/online-pay-pages': { closeClubPayPages: async () => 0 },
     '@/lib/needs-attention': { clearSettled: async () => {} },
-    '@/lib/platform-stripe-fees': { clubFeeInvoicePlaceable: async () => true },
     '@/lib/supabase-admin': { supabaseAdmin: database.db },
     // The REAL billing-location-server runs, over the fake database; only its Stripe-facing neighbours are replaced.
     './supabase-admin': { supabaseAdmin: database.db },

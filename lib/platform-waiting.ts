@@ -88,7 +88,7 @@ const QUEUES: QueueDef[] = [
   { key: 'new_errors', group: 'health', label: 'New errors', why: 'An error first seen since your last visit', clearLabel: 'new errors', href: '/platform-admin/observability', entry: 'observability' },
   { key: 'new_feedback', group: 'health', label: 'New feedback', why: 'A message from inside the product nobody has triaged', clearLabel: 'new feedback', href: '/platform-admin/feedback', entry: 'feedback' },
   // Club Tier 12d-2 (words §6.1 `pa.rail`: the count is the length of the Health list).
-  { key: 'online_payments', group: 'health', label: 'Online payments', why: 'A club’s online payments need a look: a dispute, a closed account, a message we couldn’t process, an unpaid fee', clearLabel: 'online payments', href: '/platform-admin/online-payments', entry: 'online_payments' },
+  { key: 'online_payments', group: 'health', label: 'Online payments', why: 'A club’s online payments need a look: a dispute, a closed account, a message we couldn’t process, payments terms not agreed', clearLabel: 'online payments', href: '/platform-admin/online-payments', entry: 'online_payments' },
   // Growth (Stage 7, owner Q9 d): the three lead rows count through the one definition (lib/lead-numbers.ts); stuck is
   // shown on Leads and is never a row here.
   { key: 'new_leads', group: 'growth', label: 'New leads', why: 'A lead nobody has answered yet', clearLabel: 'new leads', href: '/platform-admin/early-access', entry: 'early_access' },

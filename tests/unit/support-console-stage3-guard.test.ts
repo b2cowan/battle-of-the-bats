@@ -395,7 +395,7 @@ describe('5 · nothing we write carries a card number, expiry, holder name, bill
 
 const TARGET_ON: CreditTarget = {
   invoiceId: 'in_1PlanOn', currency: 'cad', total: 247470, linesNetCents: 219000, creditedCents: 0, creditedBeforeTaxCents: 0,
-  lines: [{ id: 'il_plan', amount: 219000, creditedCents: 0 }], isFeeInvoice: false,
+  lines: [{ id: 'il_plan', amount: 219000, creditedCents: 0 }],
 };
 const TARGET_NB: CreditTarget = { ...TARGET_ON, invoiceId: 'in_1PlanNb', total: 251850 };
 const INVOICE_CHARGE: MoneyCharge = { ...CHARGE, amountCents: 247470, invoice: { id: 'in_1PlanOn', number: 'ABC-0001', billingReason: 'subscription_cycle',
