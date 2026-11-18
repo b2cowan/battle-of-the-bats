@@ -1437,7 +1437,7 @@ the studio and mirrored to the platform audit log.
 **`content`** (text, NOT NULL) — the bullet text (`<li>`).
 
 <!-- dict:col:rule_items.display_order -->
-**`display_order`** (int, NOT NULL, default 0) — order within the section; also re-sorted client-side. _Dev/prod:_ prod tightened by migration 203 — **applied to BOTH envs 2026-07-27**.
+**`display_order`** (int, NOT NULL, default 0) — order within the section; also re-sorted client-side. _Dev/prod:_ prod tightened by migration 203 — **applied to BOTH envs 2026-07-27**. Written as the point's position in the list sent, by `rule_section_save` (below).
 
 **Saving a section (mig 500, Board Ready trust close-out 8, 2026-11-18):** `PUT /api/admin/rules` saves a section's fields and its points in ONE step, `rule_section_save(p_rule, p_title, p_icon, p_division_ids, p_items jsonb)` (SECURITY DEFINER, service-role EXECUTE only, one transaction). Each point is upserted by its `id` — the Rules screen gives a NEW point its id (a uuid) before its first save, so a save retried after a timeout updates the point instead of inserting it twice — and a point id that belongs to another section is refused (`rule_item_foreign`), never moved. Every other point of the section is deleted. A point sent with no id gets `gen_random_uuid()`. Before 500 the save was several separate writes: a retried timeout could add a point twice, and a failure part-way left a half-applied save. Creating a section (`POST`) is still two inserts with a compensating delete.
 

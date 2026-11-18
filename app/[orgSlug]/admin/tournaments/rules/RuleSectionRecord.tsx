@@ -32,6 +32,17 @@ import type { RuleSection } from '@/lib/types';
 import RuleIconField from './RuleIconField';
 import styles from './rules.module.css';
 
+/** A v4 uuid for a new point. `crypto.randomUUID` is missing on an older iPad (Safari before 15.4); without this a section
+ *  with a new point could never save there. */
+function newPointId(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
 type PointDraft = { key: string; id: string | null; content: string };
 type Draft = { title: string; icon: string; some: boolean; divisionIds: string[]; points: PointDraft[] };
 export type RuleDivision = { id: string; name: string };
@@ -86,10 +97,19 @@ export default function RuleSectionRecord({
   const [draft, setDraft] = useState<Draft>(() => draftOf(section));
   const [seededFor, setSeededFor] = useState(section?.id ?? 'new');
   const [shownHeld, setShownHeld] = useState(false);
-  // A new point's server id once saved, by its row key — beside the draft, so the save's answer never changes what the
-  // record's signature reads (the venue record's lesson).
+  // A point's id by its row key — made here for a new point before its first save (trust close-out 8), then the one the
+  // save answers with — beside the draft, so the save's answer never changes what the record's signature reads (the venue
+  // record's lesson).
   const savedIds = useRef(new Map<string, string>());
   const changed = useRef(false);
+  /** A point's id: the one it was saved with, its stored one, or a new one made now and kept for every retry. */
+  const pointId = useCallback((p: PointDraft): string => {
+    const known = savedIds.current.get(p.key) ?? p.id;
+    if (known) return known;
+    const made = newPointId();
+    savedIds.current.set(p.key, made);
+    return made;
+  }, []);
 
   // A point with no words yet is simply not saved yet (it never holds the rest of the edit).
   const held = !draft.title.trim() ? W.titleHeld
@@ -110,8 +130,9 @@ export default function RuleSectionRecord({
         ...payload(draft),
         items: draft.points
           .filter(p => p.content.trim())
-          // The newest id first: a point re-added after it was emptied came back with a new one.
-          .map(p => ({ id: savedIds.current.get(p.key) ?? p.id, key: p.key, content: p.content.trim() })),
+          // The newest id first. A new point takes its id HERE, once, before its first save (Board Ready trust close-out 8):
+          // a save that timed out after the server wrote it is retried as the same point, so it is updated, never added twice.
+          .map(p => ({ id: pointId(p), key: p.key, content: p.content.trim() })),
       }, orgSlug, signal);
     } catch (e) {
       // A timeout is said as one; any other failure is said in words, never as a status code.
@@ -119,7 +140,7 @@ export default function RuleSectionRecord({
     }
     for (const [key, id] of Object.entries(created)) savedIds.current.set(key, id);
     changed.current = true;
-  }, [section, draft, payload, orgSlug]);
+  }, [section, draft, payload, orgSlug, pointId]);
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && editing && !creating, loading: false, sig: JSON.stringify(draft), blocked: editing ? held : null, write, failText: W.saveFailed,
   });

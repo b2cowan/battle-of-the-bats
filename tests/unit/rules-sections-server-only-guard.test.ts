@@ -79,13 +79,27 @@ describe('the sections route checks the club and the capability on every verb', 
     assert.doesNotMatch(verbText(code, 'PUT'), /divisionsOfEvent\(/);
     assert.match(code, /kept\.length \? \{ ids: kept \} : bad\('Bad divisions'\)/);
   });
-  it('a retry cannot race a save the client abandoned', () => {
-    assert.match(verbText(code, 'PUT'), /req\.signal\.aborted/);
-  });
-  it('a saved section’s points are only ever touched inside that section', () => {
+  // ⚖ Board Ready trust close-out 8 (owner 2026-11-18): the save is ONE database step, and a retried save names its points.
+  it('a section saves in one step: its fields and points through rule_section_save, nothing written beside it', () => {
     const put = verbText(code, 'PUT');
-    assert.match(put, /delete\(\)\.eq\('rule_id', id\)/);
-    assert.match(put, /update\(\{ content: item\.content, display_order: order \}\)\.eq\('rule_id', id\)/);
+    assert.match(put, /supabaseAdmin\.rpc\('rule_section_save', \{/);
+    assert.doesNotMatch(put, /from\('rule_items'\)|from\('rules'\)\.update/, 'a write outside the one step can be half-applied again');
+    assert.match(put, /rule_item_foreign/, 'another section’s point is refused in words');
+  });
+  it('the step upserts each point by id inside its own section, and deletes only that section’s others', () => {
+    const sql = readCode('supabase/migrations/500_a_rules_section_saves_in_one_step.sql');
+    assert.match(sql, /on conflict \(id\) do update\s+set content = excluded\.content, display_order = excluded\.display_order\s+where public\.rule_items\.rule_id = p_rule;/);
+    assert.match(sql, /if not found then\s+raise exception 'rule_item_foreign'/);
+    assert.match(sql, /delete from public\.rule_items where rule_id = p_rule and not \(id = any \(v_kept\)\);/);
+    assert.match(sql, /revoke all on function public\.rule_section_save\([^)]*\) from public, anon, authenticated;/);
+    assert.match(sql, /grant execute on function public\.rule_section_save\([^)]*\) to service_role;/);
+  });
+  it('the screen gives a new point its id before its first save, and sends it on every retry', () => {
+    const screen = readCode('app/[orgSlug]/admin/tournaments/rules/RuleSectionRecord.tsx');
+    assert.match(screen, /const made = newPointId\(\);\s*savedIds\.current\.set\(p\.key, made\);/);
+    // A v4 uuid on every browser (an older iPad has no crypto.randomUUID): the server's readSavedPoints refuses anything else.
+    assert.match(screen, /if \(typeof crypto\.randomUUID === 'function'\) return crypto\.randomUUID\(\);/);
+    assert.match(screen, /\.map\(p => \(\{ id: pointId\(p\), key: p\.key, content: p\.content\.trim\(\) \}\)\)/);
   });
   it('kill test: a verb without the gate is caught', () => {
     assert.doesNotMatch(verbText(code, 'DELETE').replace('await admit(req)', ''), /await admit\(req\)/);
@@ -114,10 +128,12 @@ describe('what a section may say', () => {
     assert.equal(readNewPoints('a').ok, false);
   });
   it('saved points: each with words and a key, keys unique', () => {
-    assert.equal(readSavedPoints([{ id: null, key: 'k1', content: 'a' }, { id: 'abc', key: 'k2', content: 'b' }]).ok, true);
+    const U1 = '6f1c2a8e-0b7d-4c1e-9a3f-1d2e3f4a5b6c';
+    assert.equal(readSavedPoints([{ id: null, key: 'k1', content: 'a' }, { id: U1, key: 'k2', content: 'b' }]).ok, true);
     assert.equal(readSavedPoints([]).ok, true);
     for (const bad of [
-      [{ id: 'same', key: 'k1', content: 'a' }, { id: 'same', key: 'k2', content: 'b' }],
+      [{ id: U1, key: 'k1', content: 'a' }, { id: U1, key: 'k2', content: 'b' }],
+      [{ id: 'abc', key: 'k', content: 'a' }], // a point id is a uuid (trust close-out 8: the database casts it)
       [{ id: null, key: 'k', content: '' }], [{ id: null, key: '', content: 'a' }], [{ id: 5, key: 'k', content: 'a' }],
       [{ id: null, key: 'k', content: 'a' }, { id: null, key: 'k', content: 'b' }], 'nope', [null],
     ]) assert.equal(readSavedPoints(bad).ok, false, JSON.stringify(bad));

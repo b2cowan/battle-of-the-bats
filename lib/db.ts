@@ -1302,10 +1302,11 @@ export async function createRuleSection(tournamentId: string, order: number, s: 
 }
 
 /**
- * The section and its points in one save: removed points deleted, changed ones updated, new ones inserted (each new
- * point's id comes back by its client key). A point whose id is gone (deleted in another tab, or emptied and dropped
- * by an earlier save) is added again rather than skipped, so nothing typed vanishes. `signal` abandons the request when
- * the record's save times out.
+ * The section and its points in one save (mig 500's `rule_section_save`, one transaction): each point is upserted by its
+ * id — the Rules screen makes a new point's id before its first save — and every other point of the section is deleted.
+ * A point whose id is gone (deleted in another tab, or emptied and dropped by an earlier save) is written again under that
+ * id, so nothing typed vanishes. Every point's id comes back by its client key. `signal` abandons the request when the
+ * record's save times out.
  */
 export async function saveRuleSectionWhole(id: string, s: RuleSectionDraft, orgSlug: string | undefined, signal?: AbortSignal): Promise<Record<string, string>> {
   const res = await ruleRequest(orgSlug, 'PUT', {

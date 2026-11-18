@@ -92,7 +92,7 @@ export const POST = withObservability(async (req: Request) => {
   return NextResponse.json({ id: data.id });
 }, { route: '/api/admin/rules' });
 
-/** The section and its points in one save: removed points deleted, changed ones updated, new ones inserted (their ids come back by key). */
+/** The section and its points in one save: removed points deleted, the rest upserted by id (every point's id comes back by key). */
 export const PUT = withObservability(async (req: Request) => {
   const a = await admit(req);
   if (a.error) return a.error;
@@ -115,46 +115,17 @@ export const PUT = withObservability(async (req: Request) => {
   const divisions = await keepEventDivisions(tournamentId, fields.value.divisionIds);
   if (divisions instanceof Response) return divisions;
 
-  const [{ error: e1 }, { data: current, error: e2 }] = await Promise.all([
-    supabaseAdmin.from('rules').update({ title: fields.value.title, icon: fields.value.icon, division_ids: divisions.ids }).eq('id', id),
-    supabaseAdmin.from('rule_items').select('id, content, display_order').eq('rule_id', id),
-  ]);
-  if (e1 || e2) return failed('save the section');
-
-  // The client gave up (its save timed out) — stop here rather than race the retry it is about to send.
-  if (req.signal.aborted) return failed('save the section');
-  const items = points.value;
-  const byId = new Map((current ?? []).map(c => [c.id as string, c]));
-  // A point whose id is not this section's (deleted in another tab, or a stray id) is added again rather than trusted.
-  const kept = new Set(items.filter(i => i.id && byId.has(i.id)).map(i => i.id as string));
-  const gone = (current ?? []).filter(c => !kept.has(c.id as string)).map(c => c.id as string);
-  if (gone.length) {
-    const { error } = await supabaseAdmin.from('rule_items').delete().eq('rule_id', id).in('id', gone);
-    if (error) return failed('save the section');
-  }
-  const changed = [...items.entries()].filter(([order, item]) => {
-    const was = item.id ? byId.get(item.id) : undefined;
-    return was && (was.content !== item.content || was.display_order !== order);
+  // ⚖ Board Ready trust close-out 8 (owner 2026-11-18): ONE database step — mig 500's `rule_section_save` (its header has
+  // the rules). Points are upserted by the id the screen gave them before their first save, so a retried save never adds one.
+  const { data: created, error } = await supabaseAdmin.rpc('rule_section_save', {
+    p_rule: id, p_title: fields.value.title, p_icon: fields.value.icon, p_division_ids: divisions.ids, p_items: points.value,
   });
-  const updated = await Promise.all(changed.map(([order, item]) =>
-    supabaseAdmin.from('rule_items').update({ content: item.content, display_order: order }).eq('rule_id', id).eq('id', item.id as string)));
-  if (updated.some(r => r.error)) return failed('save the section');
-
-  if (req.signal.aborted) return failed('save the section');
-  const created: Record<string, string> = {};
-  const fresh = [...items.entries()].filter(([, i]) => !i.id || !byId.has(i.id));
-  if (fresh.length) {
-    const { data, error } = await supabaseAdmin
-      .from('rule_items')
-      .insert(fresh.map(([order, i]) => ({ rule_id: id, content: i.content, display_order: order })))
-      .select('id, display_order');
-    if (error || !data) return failed('save the section');
-    for (const [order, i] of fresh) {
-      const made = data.find(r => r.display_order === order);
-      if (made) created[i.key] = made.id as string;
-    }
+  if (error) {
+    if (/\brule_item_foreign\b/.test(error.message ?? '')) return bad('Bad point');
+    if (/\brule_not_found\b/.test(error.message ?? '')) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return failed('save the section');
   }
-  return NextResponse.json({ created });
+  return NextResponse.json({ created: (created ?? {}) as Record<string, string> });
 }, { route: '/api/admin/rules' });
 
 export const PATCH = withObservability(async (req: Request) => {

@@ -7,6 +7,7 @@
  * are the Rules screen's own (title 120, a point 1000) and the icon list is the screen's picker.
  */
 import { RULE_ICONS } from './tournament-settings-words';
+import { isUuid } from './utils';
 
 export const RULE_TITLE_MAX = 120;
 export const RULE_POINT_MAX = 1000;
@@ -53,8 +54,9 @@ export function readSavedPoints(items: unknown): { ok: true; value: PointInput[]
     const p = (raw ?? {}) as { id?: unknown; key?: unknown; content?: unknown };
     if (typeof p.content !== 'string' || !p.content.trim() || p.content.trim().length > RULE_POINT_MAX) return { ok: false, problem: 'Bad point' };
     if (typeof p.key !== 'string' || !p.key || p.key.length > 100) return { ok: false, problem: 'Bad point' };
-    if (p.id != null && typeof p.id !== 'string') return { ok: false, problem: 'Bad point' };
-    out.push({ id: (p.id as string | null | undefined) ?? null, key: p.key, content: p.content.trim() });
+    // A point's id is a uuid: the screen makes a new point's before its first save (trust close-out 8), the database the rest.
+    if (p.id != null && !isUuid(p.id)) return { ok: false, problem: 'Bad point' };
+    out.push({ id: p.id ?? null, key: p.key, content: p.content.trim() });
   }
   if (new Set(out.map(p => p.key)).size !== out.length) return { ok: false, problem: 'Bad points' };
   const ids = out.map(p => p.id).filter((i): i is string => Boolean(i));
