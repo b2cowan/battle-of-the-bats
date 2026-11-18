@@ -6,6 +6,7 @@ import { isCronRequest } from '@/lib/cron-auth';
 import { bookLostDisputesSweep, catchUpStripeFees, sendDisputeReminders, takeStandaloneStripeFees } from '@/lib/online-payment-landing';
 import { sendEndingWarnings, sendTermsNotices } from '@/lib/online-payment-owner-notices';
 import { countOverdueEndings, sendEndingEmails } from '@/lib/plan-ending-server';
+import { closeAgainEndedFreeTime } from '@/lib/free-time-reclose-server';
 import { backfillChargeTaxRecords, catchUpChargeTaxRecords } from '@/lib/charge-tax-record-server';
 import { catchUpPurchaseEmails } from '@/lib/purchase-details-server';
 import { sendRenewalReminders } from '@/lib/renewal-reminder-server';
@@ -26,6 +27,9 @@ import { sendRenewalReminders } from '@/lib/renewal-reminder-server';
  *   4. (12d-2) an ending the owner didn't choose: the owners' item and one email (seven days before a comp runs out; the
  *      day a subscription payment fails), and the open pay pages of a club whose plan no longer offers online payments
  *      closed (free time runs out with no event of its own);
+ *   4b. (Free time on an ended club, owner ruling 2026-11-18) a club whose plan ended and that billing-status free time
+ *      reopened is closed again, through the one ending, once that free time ran out by date and it still hasn't paid: a
+ *      fresh 90-day window and the owners' "has ended" email (lib/free-time-reclose.ts). Only those clubs, never another;
  *   5. (Plans end at the renewal date, Part C, G6) a cancel that waits: the "ends on" email a failed send left owed, and
  *      the ONE reminder seven days before the end — each stamped once on its row;
  *   6. (G3) the endings Stripe hasn't finished — a cancel still waiting more than three days past its date — counted on
@@ -71,6 +75,9 @@ export const POST = withObservability(async (req: Request) => {
   await run('standalone_stripe_fees', () => takeStandaloneStripeFees());
   await run('terms_notices', () => sendTermsNotices(now));
   await run('ending_warnings', () => sendEndingWarnings(now));
+  // 4b. Free time on an ended club (owner ruling 2026-11-18): a club whose plan ended, that free time reopened, is closed
+  // again with a fresh 90-day window once that free time has run out by date and it still hasn't paid.
+  await run('free_time_close_again', () => closeAgainEndedFreeTime());
   await run('plan_ending_emails', () => sendEndingEmails(now));
   await run('overdue_endings', () => countOverdueEndings(now));
   await run('tax_records', () => catchUpChargeTaxRecords(now));
