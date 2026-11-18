@@ -97,8 +97,10 @@ export const GET = withObservability(async (req: Request) => {
   const facts = factsFromRow(row);
   const example = onlineFee(16_500, facts?.feePayer ?? 'family');
   // 12c Part 6 (words §4): both rates print wherever a rate does — before setup (a new account asks for bank debit too), and
-  // on an account that takes it; an account that doesn't prints today's card-only line.
-  const bank = !facts || takesBankDebit(facts);
+  // on an account that takes it; an account that doesn't prints today's card-only line. A club setting up again (its account
+  // disconnected, or on the old fee setting, Stripe-owned pricing Stage 2) is setting up a NEW account, so it reads as before
+  // setup: its "Before you set up payouts" window printed the card rate alone (found writing the Stages 2–5 walk, 2026-11-18).
+  const bank = !facts || !!facts.disconnectedAt || oldFeeSetting(facts) || takesBankDebit(facts);
   const bankExample = onlineFee(16_500, facts?.feePayer ?? 'family', 'bankDebit');
   // 12d-2 (words §4.1, ask 11): the Disconnect window's counts — the owner's, while connected. One read for every ending.
   // A failed count leaves the window's counts out rather than failing the card (the window never says "nobody owes" then).
