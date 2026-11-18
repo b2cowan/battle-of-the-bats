@@ -150,7 +150,7 @@ lead us to suspend online payments or your account under §11 of the Terms of Se
 - **After you disconnect** (§10), refunds of payments already made are made in Stripe.
 
 > NOTE — **O1 RULED (owner 2026-11-17): the refund policy is required** ("let's make sure we have the refund policy in
-> place"). Replaces A9's "optional, absent when blank". **BUILT 2026-11-17 (Club Stage 12, commit `HASH_PENDING`):** the
+> place"). Replaces A9's "optional, absent when blank". **BUILT 2026-11-17 (Club Stage 12, commit `1d15c9cd2`):** the
 > policy is written in "Before you set up payouts" beside the tick (Continue absent until both) and can be changed on the
 > Payouts card but never cleared; a connected club without one takes no payments (every pay door shows "How to pay").
 > ⚠ **One word for the owner (recommended, not applied — approved text):** the payer meets a "Refund policy" **link** beside
@@ -271,7 +271,7 @@ of Service §17), they are **not currently offered in Québec**.
 > `lib/billing-location-server.ts:277-280`). A club can only reach payouts with a plan, and a new plan is refused in
 > Québec, so the gap is an organization that already had a Québec address. Low; route to `/plan` with the surcharge
 > decision, since Québec is also where a passed-on card fee is banned outright.
-> **BUILT 2026-11-17 (Club Stage 12, commit `HASH_PENDING`; owner ruled the same day: refuse new setups, §14 over GST/HST
+> **BUILT 2026-11-17 (Club Stage 12, commit `1d15c9cd2`; owner ruled the same day: refuse new setups, §14 over GST/HST
 > Q6's "payouts untouched"):** setting up payouts, and reconnecting, refuse a Québec billing address on file (409
 > `billing_region_closed`: "We're not offering online payments in Québec yet, so we can't set up payouts with a billing
 > address there. …"). A club already taking payments is not touched, as Terms §17 keeps a Québec account's plan.
@@ -288,7 +288,7 @@ record who agreed, when, and to which version, and keep that record for at least
 > one on that row, so only the latest agreement is kept (the audit-log row is the only history). The Terms of Service
 > acceptance is an append-only record; the payments one should be too. Route to `/plan`: an append-only payments-terms
 > agreement record that outlives the organization, or cut the sentence to what is true.
-> **BUILT 2026-11-17 (Club Stage 12, mig 497, commit `HASH_PENDING`): the sentence is now true.** Every tick is kept in
+> **BUILT 2026-11-17 (Club Stage 12, mig 497, commit `1d15c9cd2`): the sentence is now true.** Every tick is kept in
 > `payments_terms_agreements`: the organization's id and name as text, the account's id and email as text, the version
 > shown (the server refuses any other), the exact sentence ticked, the action (set up · reconnect · agree again; earlier
 > standings copied in as backfill), the time. No IP. No foreign key, so deleting the organization or the account leaves
@@ -310,10 +310,10 @@ record who agreed, when, and to which version, and keep that record for at least
    PSP and likely not an MSB as built, moderately confident; no registration recommended. It holds only while the shape
    holds (§3 "never holds the payment"; no reserve, no payout schedule of ours, Stripe-hosted checkout). §4 now names the
    fee as a charge for our software's payment features, to match. Owner: rely on it, or apply to the Bank for certainty.
-3. ✅ **DONE 2026-11-17, commit `HASH_PENDING`.** ~~**The six-year record** keeps every version agreed to and survives an
+3. ✅ **DONE 2026-11-17, commit `1d15c9cd2`.** ~~**The six-year record** keeps every version agreed to and survives an
    organization's deletion, or §15 changes (§15 note; `/plan`).~~ Mig 497 (§15 note); prod apply rides the release.
 4. **A rate-change notice procedure** exists before the rate ever changes (§4 note).
-5. ✅ **DONE 2026-11-17, commit `HASH_PENDING`.** ~~**The refund policy is required by the product** (O1): no pay page
+5. ✅ **DONE 2026-11-17, commit `1d15c9cd2`.** ~~**The refund policy is required by the product** (O1): no pay page
    opens until the club has written one. Club Stage 12.~~ (§6 note; one word for the owner there.)
 6. **The Terms of Service's next version** (`drafts/TERMS_OF_SERVICE.md`, drafted 2026-11-17) publishes the same day.
 7. **The privacy policy's next version names this record** (found at the 2026-11-17 light review): its retention row
