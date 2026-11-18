@@ -1,15 +1,39 @@
 /* The Rules page. Its edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`;
    Public page layout standard R1–R3); figures are tabular frame-wide (TournamentFrame.module.css `.frame .main`). */
-.note { margin: 0; color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); overflow-wrap: anywhere; }
+/* The note's row (Stage 10, drawing tab 1): the fixed note in its own column, the download after it, top-aligned with the
+   note's first line — the note wraps beside it, never under it. */
+.noteRow { display: flex; align-items: flex-start; gap: 16px; }
+.note { flex: 1; min-width: 0; margin: 0; color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); overflow-wrap: anywhere; }
 .note a { display: inline-flex; align-items: center; min-height: 44px; color: var(--club-ink); }
+/* A10: on a desk the kit's white outlined small button (R11: ClubKit .btn + .btnSecondary + .btnSm) — the icon, the
+   words and a dim "PDF", at least 184 px. Scoped by the row so it outranks the kit's classes whatever their load order. */
+.noteRow .download { flex: none; gap: 8px; min-width: 184px; line-height: 1; white-space: nowrap; }
+.download > svg { flex: none; width: 18px; height: 18px; }
+.downloadLabel small { color: var(--club-dim); font: 600 0.75rem/1 var(--club-text-face); }
+.downloadName { display: none; }
+.download:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
+.download[data-inert] { cursor: default; }
+/* Under the frame's desk width, the bare symbol (the house rule for a secondary action, owner 2026-10-20; A10): no border,
+   no fill, no word, a 44 px box in the colour role's ink, pulled up so its 20 px glyph sits on the note's first line. The
+   drawing also pulled it 10 px right, to the column's edge; that spilled the tap box into the page gutter (the layout
+   check's content-overflow), so it stays inside the column. Named for a screen reader by its spoken line. */
+@media (max-width: 1023px) {
+  .noteRow .download { width: 44px; min-width: 0; height: 44px; margin: -10px 0 0 0; padding: 0; gap: 0; border-color: transparent; background: none; color: var(--club-ink); }
+  .download > svg { width: 20px; height: 20px; }
+  .downloadLabel { display: none; }
+  .downloadName { display: inline; }
+}
 .filter button, .filter a { min-height: 44px; display: inline-flex; align-items: center; }
 .filter > div { margin-bottom: 0 !important; }
 /* The rules are ONE framed list of link rows (PublicRuleSections → PublicDisclosure `joined`; standard A8). A rule's
    text is plain: the panel in the list (phone) or the window (desk) pads it. */
 .body { padding: 0; font: 400 1rem/1.5 var(--club-text-face); overflow-wrap: anywhere; }
-.items { margin: 0; padding-left: 20px; }
-.items li { padding-left: 4px; white-space: pre-wrap; }
-.items li + li { margin-top: 12px; }
+/* A2: the points are numbered 3.1, 3.2 with a hanging number (drawing tab 1): a 36 px column that widens only for a
+   longer number ("12.10"), the number in the dim ink, the text wrapping under its own text. */
+.items { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.items li { display: grid; grid-template-columns: var(--rule-number-col, 36px) minmax(0, 1fr); }
+.pointNumber { color: var(--club-dim); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pointText { white-space: pre-wrap; }
 .copy {
   display: flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px;
   border: 0; border-radius: 8px; padding: 0; background: transparent; color: var(--club-ink); cursor: pointer;

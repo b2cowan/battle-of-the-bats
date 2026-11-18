@@ -25,8 +25,11 @@ const isDesktop = () => window.matchMedia(DESKTOP).matches;
  * content drops open INSIDE the same list, directly under its row, between hairlines: the list's frame stays whole and
  * no second box is drawn in it. The caller's content is plain; the panel (or the window) pads it.
  */
-export default function PublicDisclosure({ title, sub, icon, action, children, modalOnDesktop = false, joined = false, id: anchor, open: controlledOpen, onOpenChange }: {
+export default function PublicDisclosure({ title, number, sub, icon, action, children, modalOnDesktop = false, joined = false, id: anchor, open: controlledOpen, onOpenChange }: {
   title: string; sub?: string; children: ReactNode; modalOnDesktop?: boolean;
+  /** The item's place in a numbered list ("3 · Pitching limits" — Rules, Stage 10 A2), dim, before the title on the row
+   *  and in the window's title. The dot is not read aloud. */
+  number?: number;
   /** One item of the caller's `PublicLinkList` rather than a list of one. */
   joined?: boolean;
   /** The item's own anchor (Rules' deep links scroll to it). */
@@ -48,6 +51,7 @@ export default function PublicDisclosure({ title, sub, icon, action, children, m
   const desk = useSyncExternalStore(subscribeDesktop, isDesktop, () => false);
   const modal = modalOnDesktop && desk;
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const lead = number === undefined ? null : <span className={styles.number}>{number}<span aria-hidden> ·</span> </span>;
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -59,14 +63,14 @@ export default function PublicDisclosure({ title, sub, icon, action, children, m
     <button className={`${kit.row} ${styles.toggle}`} type="button" data-modal={modal || undefined}
       aria-expanded={modal ? undefined : open} aria-controls={id} aria-haspopup={modal ? 'dialog' : undefined} onClick={() => setOpen(!open)}>
       {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
-      <span className={kit.rowMain}><span className={kit.rowName}>{title}</span>{sub && <span className={kit.rowSub}>{sub}</span>}</span>
+      <span className={kit.rowMain}><span className={kit.rowName}>{lead}{title}</span>{sub && <span className={kit.rowSub}>{sub}</span>}</span>
     </button>
     {modal
       ? <dialog ref={dialogRef} id={id} className={styles.modal} aria-labelledby={`${id}-title`}
           onClose={() => setOpen(false)} onClick={event => { if (event.target === event.currentTarget) setOpen(false); }}>
           <div className={styles.modalHead}>
             {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
-            <h2 id={`${id}-title`}>{title}{sub && <small>{sub}</small>}</h2>
+            <h2 id={`${id}-title`}>{lead}{title}{sub && <small>{sub}</small>}</h2>
             <span className={styles.modalActions}>
               {action}
               <button type="button" className={styles.modalClose} aria-label="Close" onClick={() => setOpen(false)}><X size={20} aria-hidden /></button>

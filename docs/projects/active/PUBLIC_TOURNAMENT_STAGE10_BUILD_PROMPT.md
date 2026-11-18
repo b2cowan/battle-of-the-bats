@@ -256,6 +256,30 @@ stopgap: build it once.
    `verify:changed`.
 7. Product-owner summary; the owner checks it on dev; commit on the owner's word.
 
+### Part 2 · as built (2026-11-18) — what Part 3 needs to know
+
+- **`PublicRules` reads `shapePublicRules`** with the FULL division list (the live page no longer cuts it; the preview never
+  did). Only `anchor, number, title, icon, items` cross to the client list (A9's label stays the file's). `PublicDisclosure`
+  gained an optional `number` (dim, "3 · " — the dot `aria-hidden`), on the row and the window title. Points are an `<ol
+  role="list">` with a hanging number: 36 px, widened per section only for a longer number ("12.10").
+- **The download is a plain link** (`target="_blank"`, `?view=all` carried only when the page has it), so **tab 2's
+  "Preparing…" spinner and failure line were NOT built**: a link opening the PDF viewer cannot know when the file arrives
+  or fails, so either state would be faked (this prompt's own instruction; told to the owner in the summary). New tab, not
+  the same window: an installed iPhone app on a PDF has no way back. Shown iff `shape.sections.length > 0`; a test runs
+  the same fixtures through the page and the route and asserts link ⇔ 200.
+- **Names:** the desk button is named by its visible words (voice control: label-in-name); under 1024 px a spoken-only
+  line "Download the rules as a PDF" / "…the U11 rules…" (not an `aria-label`, which would override the desk's words).
+- **The phone symbol is not pulled 10 px right** as drawn: that spilled the tap box into the page gutter (the layout
+  check's content-overflow at 361/768). It keeps the 10 px lift onto the note's first line.
+- **The note's sentence** moved to `lib/public-rules-shape.ts` (`RULES_SUBJECT_TO_CHANGE`; `rules-pdf.ts` re-exports it) so
+  the page does not pull the PDF kit into its bundle.
+- **Layout:** `pubt-rules-open` added (a section opened: the desk window and the phone panel); clean at 361/768/1440. No
+  narrowed entry — the fixture's sections are all untagged; narrowed states belong to Part 3's walk fixtures.
+- **Part 1 regression fixed here:** the band's long-name wrap calls `doc.getFont()`, which `pdf-export-contract.test.ts`'s
+  fake document lacked — 49 failures that `check:pdf` never ran. The fake now has `getFont`/`getFontSize`.
+- **Help (`/docs`):** `rules-records` (numbering, held-back sections, the download on every plan), the public FAQ
+  `faq-rules-resources` rewritten (no jump-links), the `export-format-pdf` paid-plan warning names the exception (G1).
+
 ## Part 3 · Review, the walk, the records
 
 1. `/simplify`, then `/review` (four lenses). Ask the review to try the side doors: a held-back section, a page switched

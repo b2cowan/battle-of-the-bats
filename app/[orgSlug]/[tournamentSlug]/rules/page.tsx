@@ -4,7 +4,6 @@ import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResource
 import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { publicPosts } from '@/lib/public-tournament-shape';
 import type { Division, Resource, RuleSection } from '@/lib/types';
 import PublicRules from '@/components/public/PublicRules';
 
@@ -42,9 +41,9 @@ export default async function RulesPage({
       getResources(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
     ]);
-    // A rule section aimed at a held-back division is not public yet, and the picker names only published divisions.
-    rules = publicPosts(rules, divisions);
-    divisions = divisions.filter(d => d.scheduleVisibility === 'published');
+    // ⚠ The FULL division list goes to the body. Its shape (`shapePublicRules`, shared with the printable copy) drops a
+    // rule section aimed at a held-back division and names only published divisions in the picker; a list cut here
+    // would let a held-back section through (Stage 10 Part 1, "as built").
   }
 
   // Public tournament pages Stage 8 Part 3a: the new body is the only body (the old RulesContent is gone).

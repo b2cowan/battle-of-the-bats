@@ -6,6 +6,9 @@ import { rulesViewAllUrl } from '../../lib/export/rules-qr.ts';
 import { CLUB_NEAR_BLACK } from '../../lib/club-colour-roles.ts';
 import { billingTestLoader } from './_billing-test-loader.ts';
 import type { Division, Resource, RuleSection } from '../../lib/types.ts';
+import type { ReactElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { readCode } from './_source-code.ts';
 
 /**
  * Public tournament pages Stage 10, Part 1: the printable rules. The shape the page and the file share (A1 narrowing, G2's
@@ -165,5 +168,92 @@ describe('Stage 10: the route answers only where the page would', () => {
     let last = 200;
     for (let i = 0; i < 31; i++) last = (await get('', '10.9.9.9')).status;
     assert.equal(last, 429);
+  });
+});
+
+// ── Part 2: the page. ──
+const pageLoad = billingTestLoader({
+  '@/lib/org-links': { orgLinks: async () => (path: string) => `/club${path}` },
+  'next/navigation': { useRouter: () => ({ refresh() {}, push() {} }) },
+});
+type RulesProps = Parameters<typeof import('../../components/public/PublicRules.tsx').default>[0];
+const { default: Rules } = pageLoad('components/public/PublicRules.tsx') as { default: (p: RulesProps) => Promise<ReactElement> };
+const page = async (o: { rules?: RuleSection[]; prefName?: string | null; view?: string; isPreview?: boolean; resources?: Resource[] } = {}) =>
+  renderToStaticMarkup(await Rules({
+    orgSlug: 'club', tournamentSlug: 'cup', pageEnabled: true, contactEmail: null, divisions: DIVS,
+    rules: o.rules ?? BOOK, resources: o.resources ?? LINKS, prefName: o.prefName ?? null, view: o.view, isPreview: o.isPreview,
+  }));
+const DOWNLOAD_LINK = /<a [^>]*href="\/club\/cup\/rules\/pdf(?:\?view=all)?"[^>]*target="_blank"/;
+
+describe('Stage 10 Part 2: the page numbers its rules and offers the file', () => {
+  it('A2 + G2: rows read "2 · Pitching limits" and points 2.1, 2.2 — the whole book’s numbers, kept when narrowed', async () => {
+    const book = await page({ rules: [rule('General'), rule('Pitching limits', ['d13'], ['Six innings.', 'Rest a day.']), rule('Weather')] });
+    assert.match(book, /<span class="number">2<span aria-hidden="true"> ·<\/span> <\/span>Pitching limits/);
+    assert.match(book, /<span class="pointNumber">2\.1<\/span><span class="pointText">Six innings\.<\/span>/);
+    assert.match(book, /<span class="pointNumber">2\.2<\/span>/);
+    const u11 = await page({ rules: [rule('General'), rule('Pitching limits', ['d13']), rule('Weather')], prefName: 'U11' });
+    assert.match(u11, /class="number">1</);
+    assert.match(u11, /class="number">3<span aria-hidden="true"> ·<\/span> <\/span>Weather/);
+    assert.doesNotMatch(u11, /Pitching limits/);
+    // A9: the division label is the file's only.
+    assert.doesNotMatch(book, /U13 only/);
+  });
+  it('a section whose last number is long widens its number column; a short one keeps the drawing’s 36 px', async () => {
+    const long = await page({ rules: Array.from({ length: 12 }, (_, n) => rule(`S${n + 1}`, null, Array.from({ length: 10 }, (_, i) => `Point ${i}.`))) });
+    assert.match(long, /--rule-number-col:max\(36px, calc\(4\.45ch \+ 12px\)\)/);
+    assert.doesNotMatch(await page({ rules: [rule('General')] }), /--rule-number-col/);
+  });
+  it('A10: the desk words and the phone’s spoken name, both for the whole book and narrowed (A1)', async () => {
+    const whole = await page();
+    assert.match(whole, DOWNLOAD_LINK);
+    assert.match(whole, />Download rules <small>PDF<\/small></);
+    assert.match(whole, />Download the rules as a PDF</);
+    const u13 = await page({ prefName: 'U13' });
+    assert.match(u13, />Download U13 rules <small>PDF<\/small></);
+    assert.match(u13, />Download the U13 rules as a PDF</);
+    // View all is carried to the file; no other view value is.
+    assert.match(await page({ prefName: 'U13', view: 'all' }), /href="\/club\/cup\/rules\/pdf\?view=all"/);
+    assert.match(await page({ view: 'x"><script>' }), /href="\/club\/cup\/rules\/pdf"/);
+  });
+  it('the download sits in the note’s row, after the shared “subject to change” sentence the file’s stamp prints', async () => {
+    const html = await page();
+    assert.match(html, /<div class="noteRow"><p class="note">These rules are subject to change at the discretion of the tournament director\. Updates will be posted on the News &amp; Announcements page\.<\/p><a /);
+    assert.match(readCode('components/public/PublicRules.tsx'), /\{RULES_SUBJECT_TO_CHANGE\}/);
+    assert.match(readCode('lib/export/rules-pdf.ts'), /import \{ RULES_SUBJECT_TO_CHANGE, type PublicRulesSection \} from '\.\.\/public-rules-shape'/);
+  });
+  it('the admin preview draws it inert, like its other doors (no link to the file)', async () => {
+    const html = await page({ isPreview: true });
+    assert.match(html, /<span class="[^"]*download[^"]*" data-inert="true">/);
+    assert.doesNotMatch(html, /rules\/pdf/);
+  });
+  it('the page and the file read ONE shape, and the page gets the FULL division list', () => {
+    assert.match(readCode('components/public/PublicRules.tsx'), /shapePublicRules\(\{ rules, resources, allDivisions: divisions, prefName, view \}\)/);
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/rules/pdf/route.ts'), /shapePublicRules\(\{ rules, resources, allDivisions: divisions, prefName, view \}\)/);
+    const live = readCode('app/[orgSlug]/[tournamentSlug]/rules/page.tsx');
+    assert.doesNotMatch(live, /publicPosts|scheduleVisibility/, 'the live page cuts nothing itself');
+    for (const file of ['components/public/PublicRules.tsx', 'components/public/PublicRuleSections.tsx']) {
+      assert.doesNotMatch(readCode(file), /divisionIds|publicPosts/, `${file} narrows nothing itself`);
+    }
+  });
+  // The page must hide the download in exactly the cases the file answers 404 (Part 1, "as built").
+  for (const [name, setup, query] of [
+    ['the whole book', {}, ''],
+    ['narrowed to U13', { cookie: 'U13' }, ''],
+    ['narrowed to a division with no sections, nothing untagged', { rules: [rule('Pitching limits', ['d13'])], cookie: 'U11' }, ''],
+    ['the same, with View all', { rules: [rule('Pitching limits', ['d13'])], cookie: 'U11' }, '?view=all'],
+    ['downloads only, no sections', { rules: [] }, ''],
+    ['only a held-back division’s section', { rules: [rule('U15 only', ['d15'])] }, ''],
+  ] as const) {
+    it(`the download shows exactly when the file is served: ${name}`, async () => {
+      const s = setup as { rules?: RuleSection[]; cookie?: string };
+      const served = (await harness(s)(query)).status === 200;
+      const html = await page({ rules: s.rules, prefName: s.cookie ?? null, view: query ? 'all' : undefined });
+      assert.equal(DOWNLOAD_LINK.test(html), served);
+      assert.doesNotMatch(html, /Rules coming soon/, 'the page still shows its sections or downloads');
+    });
+  }
+  it('no download on the empty and hidden states', async () => {
+    assert.doesNotMatch(await page({ rules: [], resources: [] }), /Download/);
+    assert.doesNotMatch(await page({ rules: [rule('U15 only', ['d15'])], resources: [] }), /Download/);
   });
 });

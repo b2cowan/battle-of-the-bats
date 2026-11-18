@@ -21,6 +21,11 @@
 import { publicPosts } from './public-tournament-shape';
 import type { Division, Resource, RuleSection } from './types';
 
+/** The page's fixed note, word for word (A3): the page's note and the file's stamp print this one sentence. Kept here,
+ *  not in the PDF kit, so the page reads it without pulling the kit into its bundle. */
+export const RULES_SUBJECT_TO_CHANGE =
+  'These rules are subject to change at the discretion of the tournament director. Updates will be posted on the News & Announcements page.';
+
 export interface PublicRulesSection {
   /** The row's link anchor — the old title-derived anchors, a repeated title disambiguated without moving the first. */
   anchor: string;

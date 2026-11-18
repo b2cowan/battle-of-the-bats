@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Check, Copy, ExternalLink, FileText } from 'lucide-react';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
 import { RuleIcon } from '@/lib/rule-icons';
@@ -7,8 +7,21 @@ import PublicDisclosure from './PublicDisclosure';
 import { PublicLinkList } from './PublicDoorRow';
 import styles from './PublicRules.module.css';
 
-type Section = { anchor: string; title: string; icon: string | null; items: string[] };
+/** `number` is the section's place in the whole published book (Stage 10 A2 + G2), so a narrowed page keeps it. */
+type Section = { anchor: string; number: number; title: string; icon: string | null; items: string[] };
 const DOWNLOADS_ANCHOR = 'rule-downloads-and-resources';
+
+/** A2: the points read 3.1, 3.2 with a hanging number. The column is the drawing's 36 px and widens only for a section
+ *  whose last number is longer ("12.10"): its digits, the dot and a 12 px gap. */
+function Points({ number, items }: { number: number; items: string[] }) {
+  const digits = `${number}${items.length}`.length;
+  const column = digits > 2 ? `max(36px, calc(${digits + 0.45}ch + 12px))` : undefined;
+  return <ol className={styles.items} role="list" style={column ? { '--rule-number-col': column } as CSSProperties : undefined}>
+    {items.map((item, index) => <li key={index}>
+      <span className={styles.pointNumber}>{number}.{index + 1}</span><span className={styles.pointText}>{item}</span>
+    </li>)}
+  </ol>;
+}
 
 function RuleLink({ anchor, title, shareAllDivisions }: { anchor: string; title: string; shareAllDivisions: boolean }) {
   const { copied, copy } = useCopyToClipboard();
@@ -54,12 +67,12 @@ export default function PublicRuleSections({ sections, resources, isPreview, sha
   return <>
     <PublicLinkList>
       {sections.map(section =>
-        <PublicDisclosure key={section.anchor} id={section.anchor} joined title={section.title} modalOnDesktop open={openAnchor === section.anchor}
+        <PublicDisclosure key={section.anchor} id={section.anchor} joined number={section.number} title={section.title} modalOnDesktop open={openAnchor === section.anchor}
           icon={<RuleIcon name={section.icon} size={20} aria-hidden />}
           action={isPreview ? undefined : <RuleLink anchor={section.anchor} title={section.title} shareAllDivisions={shareAllDivisions} />}
           onOpenChange={open => changeOpen(section.anchor, open)}>
           <div className={styles.body}>
-            <ul className={styles.items}>{section.items.map((item, index) => <li key={index}>{item}</li>)}</ul>
+            <Points number={section.number} items={section.items} />
           </div>
         </PublicDisclosure>)}
       {resources.length > 0 &&

@@ -69,6 +69,9 @@ class MockDoc {
   fontSize = 10;
   setTextColor() {}
   setFont(_family: string, style?: string) { this.font = style === 'bold' ? 'bold' : 'normal'; }
+  /** The band measures its name and puts the face back (Public tournament pages Stage 10's long-name wrap), as jsPDF does. */
+  getFont() { return { fontName: 'helvetica', fontStyle: this.font }; }
+  getFontSize() { return this.fontSize; }
   setDrawColor() {} setLineWidth() {} circle() {}
   /** Connector segments, recorded: the bracket's whole job is showing who plays whom next. */
   lines: { x1: number; y1: number; x2: number; y2: number }[] = [];

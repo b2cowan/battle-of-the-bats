@@ -70,3 +70,32 @@ describe('a tryout status card — Copy is built like Directions above it (owner
     assert.match(block, /\.copyLabel \{ display: none; \}/);
   });
 });
+
+describe('the public tournament Rules page — Download is its symbol under the frame’s desk width (Stage 10 A10, owner 2026-11-18)', () => {
+  const RULES_TSX = 'components/public/PublicRules.tsx';
+  const RULES_CSS = 'components/public/PublicRules.module.css';
+  // The frame's desk breakpoint is 1024 (its sidebar layout), so the symbol holds through a tablet, as the Schedule's
+  // Calendar does — wider than the ≤640 rule above, never narrower.
+  const block = () => {
+    const hit = readCode(RULES_CSS).split('@media (max-width: 1023px)').slice(1).find(b => b.includes('.download'));
+    assert.ok(hit, 'a phone block for .download');
+    return hit;
+  };
+  it('a desk: the kit small button, labelled "Download rules" with a dim PDF', () => {
+    const tsx = readCode(RULES_TSX);
+    assert.match(tsx, /kit\.btn\} \$\{kit\.btnSecondary\} \$\{kit\.btnSm\} \$\{styles\.download\}/);
+    assert.match(tsx, /'Download rules'\} <small>PDF<\/small>/);
+  });
+  it('a phone: borderless, fill-free, label hidden, a 44px box, named by its spoken line', () => {
+    const css = block();
+    assert.match(css, /width: 44px/);
+    assert.match(css, /height: 44px/);
+    assert.match(css, /border-color: transparent/);
+    assert.match(css, /background: none/);
+    assert.match(css, /\.downloadLabel \{ display: none; \}/);
+    // The phone's name is a spoken-only line rather than an aria-label: an aria-label would also replace the desk's
+    // visible words, and a voice-control user must be able to say what they see ("Download rules").
+    assert.match(css, /\.downloadName \{ display: inline; \}/);
+    assert.match(readCode(RULES_TSX), /'Download the rules as a PDF'/);
+  });
+});

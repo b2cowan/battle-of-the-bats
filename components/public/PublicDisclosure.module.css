@@ -16,6 +16,9 @@
 .toggle:not([data-modal])::after { transform: translateY(-75%) rotate(135deg); }
 .toggle[aria-expanded='true']::after { transform: translateY(-25%) rotate(-45deg); }
 .icon { display: grid; place-items: center; flex: none; color: var(--club-ink); }
+/* A numbered item's number ("3 · "), dim, at the title's own weight (Rules, Stage 10 A2; drawing tab 1). Its trailing
+   space is a real one, so a screen reader and a copy-paste both read "3 Pitching limits". */
+.number { color: var(--club-dim); font-variant-numeric: tabular-nums; }
 /* Opened in place: the content drops open inside the list, under its row, between hairlines (Part 3, owner's call left
    to the build: the list's frame stays whole; no box inside it). The caller's content is plain; this pads it. */
 .content { display: none; }

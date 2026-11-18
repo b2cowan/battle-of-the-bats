@@ -20,11 +20,10 @@ import { contrastRatio } from '../color-contrast';
 import { CLUB_NEAR_BLACK } from '../club-colour-roles';
 import { formatOrgShortWeekdayDay, utcToZonedInputs } from '../timezone';
 import { formatTime } from '../utils';
-import type { PublicRulesSection } from '../public-rules-shape';
+import { RULES_SUBJECT_TO_CHANGE, type PublicRulesSection } from '../public-rules-shape';
 
-/** The page's fixed note, word for word (A3) — the page's note and this stamp say the same sentence. */
-export const RULES_SUBJECT_TO_CHANGE =
-  'These rules are subject to change at the discretion of the tournament director. Updates will be posted on the News & Announcements page.';
+/** The page's fixed note, word for word (A3) — it lives with the page's shape, so the page reads it without this kit. */
+export { RULES_SUBJECT_TO_CHANGE };
 /** A7: an uploaded file cannot be printed; the reader is sent to it. */
 export const RULES_FILE_ON_PAGE = 'A file on the Rules page. Scan the code on page 1 to open it.';
 const RULES_FILE_ON_PAGE_NO_CODE = 'A file on the Rules page.';

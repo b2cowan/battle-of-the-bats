@@ -381,7 +381,7 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Define the structure',
       heading: 'Venues, contacts, communication, and rules',
       summary: 'Prepare the public information teams need before registration opens.',
-      keywords: ['venues', 'fields', 'contacts', 'public contact', 'communication', 'news posts', 'rules', 'resources', 'no venues yet', 'venue library', 'import venues', 'venues set up late', 'link typed field names'],
+      keywords: ['venues', 'fields', 'contacts', 'public contact', 'communication', 'news posts', 'rules', 'resources', 'no venues yet', 'venue library', 'import venues', 'venues set up late', 'link typed field names', 'numbered rules', 'rule numbers', 'download rules', 'rules pdf', 'print rules'],
       searchText: 'venues fields custom location contacts public contact email notifications communication news posts welcome message rules resources documents public site rename venue rename field rename diamond edit venue name field name updates everywhere live no venues set up yet create venues import from venue library league club somewhere else type it off-site set venues up late link typed field names to real records afterwards all games using one name renamed field follows linked games reorder rules change the order of sections links files points drag handle hold and drag move up move down',
       links: [
         { label: 'Venues', href: '../tournaments/venues' },
@@ -418,6 +418,8 @@ const tournamentsHelp: HelpPageContent = {
               <p><strong>Rules &amp; resources</strong> is two cards. <strong>Rules</strong> lists each section as families read it on the public site, with how many points it has and which divisions it applies to; its last row, <strong>Start from a sample</strong>, adds common sections you can copy and change. <strong>Resources &amp; downloads</strong> lists each link and file; its own <strong>Start from a sample</strong> adds common links (a sample link has no address until you open it and give it one).</p>
               <p>Tap a section to open it. It reads first, as families see it. The pencil lets you change all of it at once: its title, its icon, the divisions it applies to, and its points (add one, take one out, or move one by its handle). Your changes save as you go, and a small note says so; there is no Save button and nothing to lose by leaving. <strong>Delete this section</strong> at the end asks first. Links and files open the same way.</p>
               <p><strong>Add a section</strong> and <strong>Add a link or file</strong> ask in a window and add when you press the button. To change the order, drag a row by its handle (on a phone, hold it first), or tap the handle for <strong>Move up</strong> and <strong>Move down</strong>; each move saves.</p>
+              <p>The public Rules page numbers your sections in this order, and their points under them: <strong>3 · Pitching limits</strong>, then 3.1, 3.2, the same on every copy. Moving a section renumbers it on the page and in the next download. A section kept to a division whose schedule isn&rsquo;t published yet isn&rsquo;t shown or counted until it is.</p>
+              <p>Visitors can download what they&rsquo;re reading as a PDF with <strong>Download rules</strong>, beside the note at the top of the Rules page (on a phone, the download symbol). It prints in your event&rsquo;s look, with the time it was downloaded and a code that opens the live page, since your rules can change after someone prints them. The download is on every plan, including the free Tournament plan.</p>
             </>
           ),
         },
@@ -444,12 +446,17 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-rules-resources',
           question: 'How do I show rules or resources to teams?',
-          answerText: 'Add rules and documents from Rules & resources so they appear on the public tournament site. On the public Rules page, uploaded documents open in a new tab (so a PDF views in the browser instead of downloading), and long rule sets get jump-links so fans can skip to a section.',
-          keywords: ['rules', 'resources', 'documents', 'public site', 'pdf', 'jump links'],
+          answerText: 'Open Rules & resources and add sections, links and files. They appear on the public Rules page in the order you set. Each section is a numbered row (3 · Pitching limits, with points 3.1, 3.2) that opens in a window on a computer and in place on a phone, with a copy-link button to send someone straight to it. A visitor who picked a division sees every division\'s sections plus their own; View all shows the whole book, and the numbers stay the same either way. Download rules (on a phone, the download symbol) opens a PDF of what the visitor is looking at; tap View all first for the whole book. In the PDF a link prints with its address, and an uploaded file is named, with a code that opens the Rules page to get it. Uploaded documents open in a new tab, so a PDF views in the browser.',
+          keywords: ['rules', 'resources', 'documents', 'public site', 'pdf', 'download rules', 'rules pdf', 'print rules', 'numbered rules', 'rule numbers', 'copy link', 'view all', 'division'],
           answer: (
             <>
-              <p>Open <strong>Rules & resources</strong> and add the text, links, or documents teams need. These become part of the tournament public experience.</p>
-              <p>On the public <strong>Rules</strong> page, uploaded documents open in a new tab — a PDF views right in the browser instead of forcing a download — and when you have several rule sections, fans get quick jump-links to skip straight to the one they need.</p>
+              <p>Open <strong>Rules &amp; resources</strong> and add sections, links and files. They appear on the public <strong>Rules</strong> page in the order you set.</p>
+              <ul>
+                <li>Each section is a numbered row (<strong>3 · Pitching limits</strong>, with points 3.1, 3.2). It opens in a window on a computer and in place on a phone, with a copy-link button to send someone straight to it.</li>
+                <li>A visitor who picked a division sees every division&rsquo;s sections plus their own; <strong>View all</strong> shows the whole book. The numbers stay the same either way.</li>
+                <li><strong>Download rules</strong> (on a phone, the download symbol) opens a PDF of what the visitor is looking at. For the whole book, tap <strong>View all</strong> first. In the PDF a link prints with its address, and an uploaded file is named, with a code that opens the Rules page to get it.</li>
+                <li>Uploaded documents open in a new tab, so a PDF views in the browser.</li>
+              </ul>
             </>
           ),
         },

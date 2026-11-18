@@ -45,7 +45,9 @@ describe('Stage 6 Part 2: Rules renders the original content inside the preview 
   it('keeps the division preference and view=all escape hatch without applying the schedule publish gate', async () => {
     const tagged = props({
       rules: [rule('All divisions'), rule('U11 rule', ['u11']), rule('U13 rule', ['u13'])], prefName: 'U11',
-      divisions: [{ id: 'u11', name: 'U11' }, { id: 'u13', name: 'U13' }] as Props['divisions'],
+      // Stage 10: the body reads the FULL division list and narrows only to a published one (the shape it shares with
+      // the printable copy), so the fixture says these are published.
+      divisions: [{ id: 'u11', name: 'U11', scheduleVisibility: 'published' }, { id: 'u13', name: 'U13', scheduleVisibility: 'published' }] as Props['divisions'],
     });
     const filtered = await render(tagged);
     assert.match(filtered, /U11 rule: original/);
@@ -70,11 +72,14 @@ describe('Stage 6 Part 2: Rules renders the original content inside the preview 
     }));
     assert.match(html, /Conduct PDF/);
     assert.doesNotMatch(html, /Copy a link|mailto:|href="https:/);
+    // Stage 10 A10 + the build prompt's preview rule: the rules download is drawn inert, like the preview's other doors.
+    assert.doesNotMatch(html, /href="[^"]*rules\/pdf/);
   });
   it('sends only public section text and resource links to the interactive list', async () => {
     const tree = await Rules(props()) as ReactElement<{ children: ReactNode[] }>;
     const list = tree.props.children.at(-1) as ReactElement<{ sections: Record<string, unknown>[] }>;
-    assert.deepEqual(Object.keys(list.props.sections[0]).sort(), ['anchor', 'icon', 'items', 'title']);
+    // Stage 10 A2: a section carries its book number (G2); A9's division label stays the file's only.
+    assert.deepEqual(Object.keys(list.props.sections[0]).sort(), ['anchor', 'icon', 'items', 'number', 'title']);
   });
   it('has no jump pills, keeps a shared single-open state and initial/hash-change section reveal', () => {
     const code = readCode('components/public/PublicRuleSections.tsx');
