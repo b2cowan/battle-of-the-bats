@@ -1036,6 +1036,13 @@ ahead of the owner's rulings.
   ($1,200.00) — a money reading, needs its own small fix and test (stop rule: no money definition moves inside 13e); (4) Back from a child took two
   presses in a script (the window closes first) — walked with a call. **Next:** the owner's walk; then teardown.
 
+- 2026-11-17 — **13e walk §536 PASSED 40/40** (owner paste; 14 parts, no failures; the three calls came back unanswered, not counted). Teardown run
+  the same day (`fx-teardown-13e.mjs`, dev only; org and 13 sign-ins gone, read back clean). **Closed outside the walk:** the child's-record-window
+  fix was already committed (`330623954`); the closed-year headroom sentence was fixed 2026-11-18 — the Overview's "of that is what the teams still owe"
+  now reads the year's own teams Outstanding (the Teams table's figure, what Budget vs. Actual reads: $1,200.00), not the every-year position
+  ($1,800.00); pinned in `club-stage13e-b.test.ts`; words only, no money definition moved; not yet re-read in a browser.
+  **Next:** the closing check on staging. 13f, 13g and 13h are after launch (owner, 17 Nov).
+
 ## 11. The external review, cross-checked (2026-11-07)
 
 Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they

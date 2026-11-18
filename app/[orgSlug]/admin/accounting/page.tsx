@@ -178,8 +178,12 @@ export default function AccountingOverviewPage() {
     const a = summary.againstBudget;
     // "so far": against what the plan expected by today (the whole year's plan read as nearly all "under" in January).
     const under = Math.max(0, Math.round((a.revenue.plannedToDate - a.revenue.actual) * 100) / 100);
+    // The sentence is about THIS year's revenue, so "what the teams still owe" is this year's own (the Teams table's
+    // Outstanding, the year rule) — the same figure Budget vs. Actual reads. Never the every-year "Owed to the club" figure,
+    // which on a closed year also counts later years' bills ($1,800.00 where the year's own is $1,200.00).
+    const yearOwed = Math.round(summary.teams.reduce((sum, t) => sum + t.outstanding, 0) * 100) / 100;
     return {
-      headroom: SUMMARY_WORDS.headroom(a.headroom, under, summary.position.owedByTheTeams.amount, summary.year.lastDay < summary.today),
+      headroom: SUMMARY_WORDS.headroom(a.headroom, under, yearOwed, summary.year.lastDay < summary.today),
       held: SUMMARY_WORDS.teamsCashBand(summary.teamsCash.total, summary.teamsCash.teamCount),
     };
   }, [summary]);

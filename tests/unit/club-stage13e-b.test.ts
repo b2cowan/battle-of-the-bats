@@ -218,3 +218,17 @@ describe('B7 · a tournament’s or a season’s book opens the Ledger on All ti
     assert.equal(bookLedgerHref('/c/admin/accounting', 'b1', 'tournament'), '/c/admin/accounting/ledger?book=b1&date=all');
   });
 });
+
+describe('The Overview’s headroom sentence names THIS year’s teams owing, never the every-year figure', () => {
+  it('a closed year says $1,200.00 of the shortfall is owed, not the $1,800.00 every year adds up to', () => {
+    const sentence = SUMMARY_WORDS.headroom(500, 2000, 1200, true);
+    assert.match(sentence, /Revenue came in \$2,000\.00 under plan, and \$1,200\.00 of that is what the teams still owe\./);
+    assert.doesNotMatch(sentence, /1,800/);
+  });
+  it('the page feeds it the year’s own Teams outstanding, not the every-year position', () => {
+    const page = readCode('app/[orgSlug]/admin/accounting/page.tsx');
+    assert.match(page, /summary\.teams\.reduce\(\(sum, t\) => sum \+ t\.outstanding, 0\)/);
+    assert.match(page, /SUMMARY_WORDS\.headroom\(a\.headroom, under, yearOwed,/);
+    assert.doesNotMatch(page, /SUMMARY_WORDS\.headroom\([^)]*owedByTheTeams\.amount/);
+  });
+});
