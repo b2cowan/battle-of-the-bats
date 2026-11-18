@@ -46,7 +46,7 @@
       "next": "Make the test payments now, so the payouts have landed (8 days or more) when the full test runs.",
       "remains": "Built. Owed: the full payout test, the payments terms (not started), live payouts set up in Stripe, the tax on our fee (from the GST/HST project) and your switch-on.",
       "waitsOn": [], "finishesAfter": ["gst-hst", "stripe-admin"],
-      "youOwe": ["Set up live payouts to clubs in Stripe (platform settings and the two live notifications)", "Approve the payments terms once /legal drafts them", "Turn online payments on, once the terms exist"] },
+      "youOwe": ["When online payments are about to switch on: set up Stripe Connect in live (family payments to clubs, separate from the billing checklist)", "Approve the payments terms once /legal drafts them", "Turn online payments on, once the terms exist"] },
     { "id": "stripe-admin", "name": "Stripe clean-up, and Stripe from our admin", "track": "product", "state": "open", "checked": true,
       "files": ["STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md"], "ledger": ["Plans & pricing"],
       "goals": ["canada"], "lane": "now", "order": 3, "phase": "Planning",
