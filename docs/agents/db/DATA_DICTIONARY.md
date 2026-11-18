@@ -1887,6 +1887,10 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:club_schedules.finalized_by -->
 **`sent_at`** / **`sent_by`** (FK → `auth.users.id` ON DELETE SET NULL) — the last send of any kind (the list's "Last sent"); **`finalized_at`** / **`finalized_by`** — when it was finalized and by whom.
 
+<!-- dict:col:club_schedules.bill_dismissed_at -->
+<!-- dict:col:club_schedules.bill_dismissed_by -->
+**`bill_dismissed_at`** (timestamptz, nullable; **mig 496**, plan `CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md` Phase 8, owner ruling 2026-11-17 call C2) / **`bill_dismissed_by`** (FK → `auth.users.id` ON DELETE SET NULL) — a part SENT WITHOUT A BILL that someone with the club's Accounting marked "It's free": Needs attention's "sent without a bill" row no longer shows for it. Written by the schedule PATCH action `dismiss_unbilled` (money readers only, a FINAL part with no bill and no allocation; never bumps `version`). Nothing else reads it and no money depends on it; a bill made later clears the row on its own because the row asks "no bill".
+
 <!-- dict:col:club_schedules.changed_since_sent -->
 **`changed_since_sent`** (boolean, NOT NULL, default false) — gotcha 4; the list's amber "Changed since sent". Cleared by Send the changes.
 

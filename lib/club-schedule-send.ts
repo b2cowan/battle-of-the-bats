@@ -1163,12 +1163,12 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
       // must still be told (a bare 500 here left them never told, and the retry read the parent as already sent).
       if (!landed.length) throw e;
       console.error('[club-schedule-send] a part’s step failed after an earlier member landed — telling what landed:', e);
-      notAll = R.notSaved;
+      notAll = PART_WORDS.sentPartWay(R.notSaved);
       break;
     }
     if (!r.ok) {
       if (!landed.length) return r;
-      notAll = await r.response.clone().json().then((x: { error?: string }) => x.error ?? R.notSaved, () => R.notSaved);
+      notAll = PART_WORDS.sentPartWay(await r.response.clone().json().then((x: { error?: string }) => x.error ?? R.notSaved, () => R.notSaved));
       break;
     }
     landed.push(r.landed);

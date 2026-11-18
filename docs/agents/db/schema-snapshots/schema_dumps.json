@@ -4349,6 +4349,24 @@
         "column_default": null
       },
       {
+        "table_name": "club_schedules",
+        "pos": 32,
+        "column_name": "bill_dismissed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 33,
+        "column_name": "bill_dismissed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "diamonds",
         "pos": 1,
         "column_name": "id",
@@ -32436,6 +32454,13 @@
         "foreign_table": "rep_cost_allocations",
         "foreign_column": "id",
         "constraint_name": "club_schedules_allocation_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "bill_dismissed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedules_bill_dismissed_by_fkey"
       },
       {
         "table_name": "club_schedules",

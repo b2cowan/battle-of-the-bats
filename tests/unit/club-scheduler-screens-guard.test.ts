@@ -469,6 +469,32 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     assert.match(outside, /notice\?\.doors\.find\(d => d\.kind === 'season'\) \?\? notice\?\.doors\.find\(d => d\.kind === 'calendar'\)/, 'a door by its kind, never its address');
     assert.match(attention, /const count = ordered\.length \+ \(changed \? 1 : 0\) \+ outside\.length \+ unbilledParts\.length;/, 'the heading counts each permit\'s row (and each part sent without a bill)');
   });
+  it('walk §538 calls (owner 2026-11-17): the send window keeps its choices through Bill it…; a part sent free can be marked free; a sender without Accounting is told before the press', () => {
+    const send = readCode(`${KIT}/SendWindow.tsx`);
+    const words = readCode('lib/club-schedule-words.ts');
+    // C1: unticked teams and the corrections switch ride the page's window state through Bill it… and back.
+    const has = (src: string, text: string, why: string) => assert.ok(src.includes(text), why + ' — missing: ' + text);
+    has(send, 'useState<Set<string>>(() => new Set(keep?.unticked))', 'the window starts from what it held');
+    has(send, 'useState(keep?.corrections ?? true)', 'and so does the corrections switch');
+    has(send, 'onBillPart(p.id, { unticked: [...unticked], corrections })', 'Bill it… hands the choices to the page');
+    has(page, "keep: win?.kind === 'bill' ? win.keep : undefined", 'and the page hands them back');
+    // C2: the row is a money reader's, and a dismiss records the choice (mig 496) without touching the schedule.
+    has(page, "const unbilledSent = !own.canMoney ? [] : parts.filter(x => x.state === 'final' && !x.billed && !x.billDismissed", 'hidden from a reader without Accounting and from a part marked free');
+    has(page, "freeParts.map(x => <CoachToolbarMenuItem key={x.id} label={P.toolBillFree(x.label)}", 'a part marked free can still be billed, from Tools');
+    has(page, "const freeParts = !own.canMoney ? [] : parts.filter(x => x.state === 'final' && !x.billed && x.billDismissed", 'only a money reader, only an unbilled part marked free');
+    has(attention, 'onClick={() => onFreePart(p.id)}>{P.sentFree}', "the row's It's free button");
+    const dismiss = route.slice(route.indexOf("body.action === 'dismiss_unbilled'"), route.indexOf("'bad_action'"));
+    has(dismiss, "if (!r.canMoney) return schedulerRefusal(403, 'bill_money'", 'money readers only');
+    has(dismiss, "!row.part_of_schedule_id || row.state !== 'final' || row.bill_plan || row.allocation_id", 'only a sent part with no bill');
+    has(dismiss, 'bill_dismissed_at: new Date().toISOString(), bill_dismissed_by: actor', 'the record');
+    has(dismiss, 'if (row.bill_dismissed_at) return NextResponse.json({ version: row.version });', 'a second press keeps the first record');
+    assert.ok(!dismiss.includes('version: version + 1'), 'a record of a choice, not an edit: the version stays');
+    has(server, "part_label, bill_dismissed_at';", 'the schedule read selects the column');
+    // C4: the sentence is the owner's, shown only to a sender without Accounting under a part whose bill is set.
+    has(words, "billNeedsAccounting: 'Someone with the club’s Accounting sends this one.'", 'the owner’s sentence');
+    has(send, "const who = !canMoney && p.billSet ? P.billNeedsAccounting : '';", 'only without Accounting, only with a bill set');
+    has(page, 'keep={win.keep} canMoney={own.canMoney}', 'the page tells the window whether the sender can bill');
+  });
   it('"Take {day} off" writes ONLY the schedule’s own Dates off, through today’s Regenerate — no sync, nothing else (C2)', () => {
     // Session B: each permit's row adds ITS days, closing only its parks once the schedule uses more than one (P5 A).
     assert.match(page, /action: canChange \? \{ label: W\.takeDaysOff\(words\.days, at\), onClick: \(\) => setWin\(\{ kind: 'settings', regenerate: true, addDatesOff: row\.days\.map\(d => \(\{ day: d\.day, note: d\.note, venueIds: parks \}\)\) \}\) \} : null,/);

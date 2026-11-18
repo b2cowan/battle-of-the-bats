@@ -37,7 +37,7 @@ import ScheduleAttention from '@/components/admin/kit/club/schedules/ScheduleAtt
 import { FairSharesBand, FairSharesLines, FairSharesTeams, fairShares } from '@/components/admin/kit/club/schedules/FairShares';
 import NewScheduleWindow from '@/components/admin/kit/club/schedules/NewScheduleWindow';
 import BillWindow from '@/components/admin/kit/club/schedules/BillWindow';
-import SendWindow from '@/components/admin/kit/club/schedules/SendWindow';
+import SendWindow, { type SendKeep } from '@/components/admin/kit/club/schedules/SendWindow';
 import AnswerWindow from '@/components/admin/kit/club/money/AnswerWindow';
 import { SendLogWindow, SlotWindow, SwapWindow, TeamSlotsWindow, WhichWeeks, type PendingMove, type SendLogRow } from '@/components/admin/kit/club/schedules/ScheduleWindows';
 import { ScheduleStateChip, Swatch } from '@/components/admin/kit/club/schedules/ScheduleParts';
@@ -83,8 +83,9 @@ type Win =
   | { kind: 'fair' }
   /** `partId`: an added part's bill — from Send the changes' "Bill it…" (`back: 'send'`) or Needs attention's (a part sent
    *  without one). */
-  | { kind: 'bill'; partId?: string; back?: 'send' }
-  | { kind: 'send'; start: 'draft' | 'final' | 'changes' | 'bill'; bill?: object; partId?: string }
+  | { kind: 'bill'; partId?: string; back?: 'send'; keep?: SendKeep }
+  /** `keep`: what the window held when Bill it… was pressed (owner 2026-11-17, walk §538 call C1) — it comes back as it was. */
+  | { kind: 'send'; start: 'draft' | 'final' | 'changes' | 'bill'; bill?: object; partId?: string; keep?: SendKeep }
   | { kind: 'log' }
   | { kind: 'team'; teamId: string }
   | { kind: 'clearWeek' }
@@ -422,15 +423,29 @@ export default function SchedulePage() {
   // A part with no bill yet is said here, never in the bill tile (drawing tab 4, note 2).
   const partNotes = unsentParts.filter(x => !x.billed).map(x => P.notBilledYet(x.label));
   // A part SENT without a bill (tab 5, note 2): the shipped final-not-billed path — Bill the teams, then Review the bill.
-  const unbilledSent = parts.filter(x => x.state === 'final' && !x.billed && x.view.slots.some(sl => sl.teamIds.some(id => !isProgramHolder(id))))
+  // Hidden from a reader without the club's Accounting (it has no door they can use) and from a part marked free (walk §538 call C2).
+  const unbilledSent = !own.canMoney ? [] : parts.filter(x => x.state === 'final' && !x.billed && !x.billDismissed && x.view.slots.some(sl => sl.teamIds.some(id => !isProgramHolder(id))))
     .map(x => ({ id: x.id, text: P.sentNotBilled(x.label) }));
+  /** A part marked "It's free" can still be billed later: Tools › Bill {part}… (owner 2026-11-17, the review's undo — no extra line on the page). */
+  const freeParts = !own.canMoney ? [] : parts.filter(x => x.state === 'final' && !x.billed && x.billDismissed && x.view.slots.some(sl => sl.teamIds.some(id => !isProgramHolder(id))));
+  /** "It's free": the club sent this part without a bill on purpose, so its row goes (walk §538 call C2). */
+  async function markPartFree(partId: string) {
+    const part = parts.find(x => x.id === partId);
+    if (!part || busy) return;
+    setBusy(true);
+    const r = await moneyFetch(`/api/admin/schedules/${encodeURIComponent(partId)}?${q}`, jsonInit('PATCH', { action: 'dismiss_unbilled', version: part.version })).catch(() => null);
+    setBusy(false);
+    if (!r?.ok) { say(refusalText(r?.data, R.notSaved)); void load(); return; }
+    say(P.sentFreeSaid(part.label));
+    void load();
+  }
   /** The family member a window acts on: an added part's own view, or the schedule's. */
   const winPart = win?.kind === 'settings' || win?.kind === 'bill' ? parts.find(x => x.id === win.partId) ?? null : null;
   const winName = winPart ? winPart.label : s.name;
   const partWords = winPart ? { label: winPart.label, parentName: own.schedule.name } : null;
   /** Bill the teams opened from Send the changes' "Bill it…" goes back there; anywhere else it closes. */
   const billBacksToSend = win?.kind === 'bill' && win.back === 'send';
-  const billBack = () => setWin(billBacksToSend ? { kind: 'send', start: 'changes' } : null);
+  const billBack = () => setWin(billBacksToSend ? { kind: 'send', start: 'changes', keep: win?.kind === 'bill' ? win.keep : undefined } : null);
 
   // ── The permit's pulled dates (13c Session C, C2 = A): the words are scheduleOutsideWords'; the page adds the one ask,
   // a computer's only (as Regenerate is). The days go into the schedule's OWN Dates off, in today's Regenerate; nothing is
@@ -494,6 +509,7 @@ export default function SchedulePage() {
       {/* S1 A: Add time beside Settings…, first in Tools — it only adds; Settings… changes what is there. Phase 8 ruling 2: on a
           FINAL schedule only — a draft or a schedule in review is simply edited (Settings… holds the Permits picker). */}
       {canChange && final && <CoachToolbarMenuItem label={W.toolAddTime} hint={W.toolAddTimeHint} onSelect={() => setWin({ kind: 'settings', addTime: true })} />}
+      {canChange && freeParts.map(x => <CoachToolbarMenuItem key={x.id} label={P.toolBillFree(x.label)} hint={P.toolBillFreeHint} onSelect={() => setWin({ kind: 'bill', partId: x.id })} />)}
       {canChange && <CoachToolbarMenuItem label={W.toolSettings} hint={W.toolSettingsHint} onSelect={() => setWin(parts.length ? { kind: 'which', then: 'settings' } : { kind: 'settings' })} />}
       {canChange && <CoachToolbarMenuItem label={W.toolRegenerate} onSelect={() => setWin(parts.length ? { kind: 'which', then: 'regenerate' } : { kind: 'settings', regenerate: true })} />}
       {canChange && lens === 'grid' && <CoachToolbarMenuItem label={W.toolLockWeek(weekScope)} onSelect={lockWeek} />}
@@ -750,7 +766,8 @@ export default function SchedulePage() {
         changed={final && s.changedSinceSent} sentOn={formatStoredDate(s.sent?.at ?? '', { withYear: false })}
         changeTeams={changeTeams} partNotes={partNotes} outside={outsideRows} onAnswer={id => setWin({ kind: 'answer', id })}
         onSend={() => setWin({ kind: 'send', start: 'changes' })}
-        unbilledParts={unbilledSent} onBillPart={own.canMoney && canChange ? id => setWin({ kind: 'bill', partId: id }) : undefined} />
+        unbilledParts={unbilledSent} onBillPart={own.canMoney && canChange ? id => setWin({ kind: 'bill', partId: id }) : undefined}
+        onFreePart={own.canMoney && canChange ? id => void markPartFree(id) : undefined} />
       {!isPhone && fair && <FairSharesBand model={fair} onOpen={() => setWin({ kind: 'fair' })} />}
 
       {isPhone ? (
@@ -879,7 +896,8 @@ export default function SchedulePage() {
       {win?.kind === 'send' && (
         <SendWindow q={q} view={memberView(own, parts, win.partId)} start={win.start} bill={win.bill} onClose={() => setWin(null)} onStale={() => void load()}
           onSent={text => { setWin(null); setMoved(new Set()); say(text); void load(); }}
-          onBillPart={own.canMoney ? partId => setWin({ kind: 'bill', partId, back: 'send' }) : undefined} />
+          keep={win.keep} canMoney={own.canMoney}
+          onBillPart={own.canMoney ? (partId, keep) => setWin({ kind: 'bill', partId, back: 'send', keep }) : undefined} />
       )}
       {win?.kind === 'log' && <SendLogWindow view={own} log={own.sendLog} nameOf={nameOf} onClose={() => setWin(null)} />}
       {/* The one Answer window (Stage 11d, Ask 4) — the same from every door: Payment requests, the bell, this page. */}

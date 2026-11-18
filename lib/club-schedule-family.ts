@@ -87,6 +87,8 @@ export interface PartRead {
   sent: { at: string } | null;
   /** A bill rides with it (chosen at Send the changes, or made): Needs attention says so while it has none. Never money. */
   billed: boolean;
+  /** Sent without a bill and marked "It's free" (mig 496): Needs attention's "sent without a bill" row stays away. */
+  billDismissed: boolean;
   /** A sent part's own changes wait for Send the changes (Session 3: a part taken off, a part regenerated). */
   changedSinceSent: boolean;
   /** Those changes, team by team, as Needs attention lists them (empty while the part is unsent: its practices are new). */

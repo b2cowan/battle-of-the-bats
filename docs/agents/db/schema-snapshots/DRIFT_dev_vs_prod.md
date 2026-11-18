@@ -1,15 +1,15 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-18 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 140 divergence(s)** across dev/prod.
+**⚠️ 143 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 5 | 0 | — |
-| Columns | 60 | 0 | 2 |
+| Columns | 62 | 0 | 2 |
 | Indexes | 24 | 1 | 0 |
-| Constraints | 19 | 0 | — |
+| Constraints | 20 | 0 | — |
 | RLS / CHECK | 29 | 0 | 0 (RLS state) |
 
 ## Tables
@@ -24,7 +24,7 @@
 _none_
 
 ## Columns
-### Only in DEV (60)
+### Only in DEV (62)
 - `club_group_email_bodies.body`
 - `club_group_email_bodies.created_at`
 - `club_group_email_bodies.org_id`
@@ -75,6 +75,8 @@ _none_
 - `club_schedule_bill_rates.scale`
 - `club_schedule_bill_rates.schedule_id`
 - `club_schedule_slots.family_id`
+- `club_schedules.bill_dismissed_at`
+- `club_schedules.bill_dismissed_by`
 - `club_schedules.bill_price_mode`
 - `club_schedules.part_label`
 - `club_schedules.part_of_schedule_id`
@@ -127,7 +129,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (19)
+### Only in DEV (20)
 - `club_group_email_bodies.club_group_email_bodies_org_id_fkey`
 - `club_group_email_bodies.club_group_email_bodies_pkey`
 - `club_group_email_bodies.club_group_email_bodies_send_id_fkey`
@@ -142,6 +144,7 @@ _none_
 - `club_schedule_bill_rates.club_schedule_bill_rates_pkey`
 - `club_schedule_bill_rates.club_schedule_bill_rates_schedule_id_fkey`
 - `club_schedule_bill_rates.club_schedule_bill_rates_schedule_permit_key`
+- `club_schedules.club_schedules_bill_dismissed_by_fkey`
 - `club_schedules.club_schedules_part_of_schedule_id_fkey`
 - `org_time_date_off_venues.org_time_date_off_venues_date_off_id_fkey`
 - `org_time_date_off_venues.org_time_date_off_venues_org_id_fkey`

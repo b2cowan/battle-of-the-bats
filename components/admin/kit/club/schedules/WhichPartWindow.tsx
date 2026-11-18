@@ -5,8 +5,9 @@
  * edits half made. Then the shipped regenerate question or Settings window opens on that part alone; a regenerate of one
  * part never touches another.
  *
- * The choice is the shipped view switch (one white track) — up to three choices, as the switch's own rule says; past that,
- * a plain select (the olive View pill's job on a toolbar, a field's here).
+ * The choice is the shipped view switch (one white track) — up to three choices, as the switch's own rule says, and only
+ * while their names fit on that track (`fitsOneTrack`); past that, a plain select (the olive View pill's job on a toolbar,
+ * a field's here).
  */
 import { useState } from 'react';
 import KitDialog from '../KitDialog';
@@ -18,6 +19,13 @@ import { scheduleDates, slotDays, type ScheduleView } from '@/lib/club-schedule-
 import { memberView, type PartRead } from '@/lib/club-schedule-family';
 
 const PARENT = '__schedule';
+
+/** The switch's one white track is as wide as the dialog's field (about 36 characters of names, measured on the
+ *  "Time added Nov 17 (2)" run-off, 2026-11-17): three part names, or a schedule's own long name, ran off the dialog. Count
+ *  alone was not the rule — the names' width is. */
+const TRACK_CHARACTERS = 36;
+const fitsOneTrack = (choices: readonly { label: string }[]) =>
+  choices.length <= 3 && choices.reduce((n, c) => n + c.label.length, 0) <= TRACK_CHARACTERS;
 
 /** "Thu, Dec 10 · 14U AA" — when a member's time is, and who it is for (the page's meta line's words). */
 function summaryOf(v: ScheduleView): string {
@@ -60,7 +68,7 @@ export default function WhichPartWindow({ then, parentName, parentView, parts, o
     >
       <div className={ck.field}>
         <span className={ck.label} id="which-part-label">{P.whichPart}</span>
-        {choices.length <= 3 ? (
+        {fitsOneTrack(choices) ? (
           <ViewSwitch views={choices} value={picked} onChange={setPicked} label={P.whichPart} />
         ) : (
           <select className={ck.select} aria-labelledby="which-part-label" value={picked} onChange={e => setPicked(e.target.value)}>

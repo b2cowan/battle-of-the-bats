@@ -806,6 +806,10 @@
     "494_the_save_makes_an_added_part.sql": {
       "prod": "pending",
       "note": "Add time makes a part, Session 2 (plan CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md §8 Phase 8; build prompt CLUB_SCHEDULE_ADD_TIME_PARTS_BUILD_PROMPT.md). club_schedule_save re-made: 488's body exactly, plus part_of_schedule_id and part_label on its INSERT branch from p_data 'partOfScheduleId' / 'partLabel' (absent = a schedule of its own, as before). Signature and grants unchanged. INVISIBLE to check:migrations (function body only). ORDER: AFTER 491 (the columns and the part trigger); BEFORE the Session 2 code (Add time's save sends the two keys; without 494 the insert ignores them and the part would land as a schedule of its own — the old code never sends them, so it keeps working after the apply). Idempotent (create or replace). Applied to DEV 2026-11-17; tests/sql/schedule-part-save-fixture.sql 6/6 (schedule-parts 7/7, several-permits 5/5, date-off-venues 5/5 re-run green). Verify on prod: select position('partOfScheduleId' in pg_get_functiondef('public.club_schedule_save(uuid,uuid,uuid,integer,jsonb)'::regprocedure)) > 0 -> true."
+    },
+    "496_a_part_sent_free_can_be_marked_free.sql": {
+      "prod": "pending",
+      "note": "Add time as its own part, after walk §538 (owner ruling 2026-11-17 call C2 = C; plan CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md §8 Phase 8). Visible to check:migrations: columns club_schedules.bill_dismissed_at (timestamptz null) and club_schedules.bill_dismissed_by (uuid null, FK auth.users ON DELETE SET NULL). ORDER: AFTER 491 (the part columns); BEFORE the code that selects them (every schedule read selects bill_dismissed_at, not only the page: the schedule page, Send the changes, Finalize, Bill the teams, the coach's practice figures and accounting expenses panel, and the house-league schedule page all 500 until the columns exist, so apply 496 to production BEFORE the promote)."
     }
   }
 }

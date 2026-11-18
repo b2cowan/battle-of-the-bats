@@ -226,8 +226,10 @@ export interface ScheduleRow {
   part_of_schedule_id: string | null;
   /** A part's name on the page, "Time added Nov 16" (the row's `name` is "{parent} · {label}", kept by trigger). */
   part_label: string | null;
+  /** A part sent without a bill that the club marked "It's free" (mig 496): Needs attention's row stops showing for it. */
+  bill_dismissed_at: string | null;
 }
-const SCHEDULE_COLUMNS = 'id, org_id, name, state, starts_on, ends_on, settings, version, started_from_permit_id, started_from_schedule_id, reply_by, sent_at, sent_by, finalized_at, finalized_by, changed_since_sent, bill_line_id, bill_permit_id, bill_amount, bill_plan, bill_first_due, bill_dates, bill_scale, bill_price_mode, allocation_id, created_by, updated_by, created_at, updated_at, part_of_schedule_id, part_label';
+const SCHEDULE_COLUMNS = 'id, org_id, name, state, starts_on, ends_on, settings, version, started_from_permit_id, started_from_schedule_id, reply_by, sent_at, sent_by, finalized_at, finalized_by, changed_since_sent, bill_line_id, bill_permit_id, bill_amount, bill_plan, bill_first_due, bill_dates, bill_scale, bill_price_mode, allocation_id, created_by, updated_by, created_at, updated_at, part_of_schedule_id, part_label, bill_dismissed_at';
 
 export interface StoredSlot {
   id: string;
@@ -516,7 +518,8 @@ function cutKeeping(time: ScheduleTime, settings: ScheduleSettings, places: Club
   const pinned = new Set(keep?.pinned.map(s => s.key) ?? []);
   const held = familyClashes(slots.map(s => ({ id: s.key, venueId: s.venueId, facilityId: s.facilityId, startMs: s.startMs, endMs: s.endMs, teamIds: [] })), family);
   const free = slots.filter(s => pinned.has(s.key) || !held.get(s.key)?.placeWith);
-  return free.length ? { ok: true, slots: free } : no('no_time', R.noTime);
+  // The time was given; the family holds all of it. Say that, not "give the schedule its time first".
+  return free.length ? { ok: true, slots: free } : no('part_time_all_held', R.partTimeAllHeld);
 }
 
 /**
@@ -1066,7 +1069,7 @@ export async function readParts(orgId: string, parent: LoadedSchedule, opts: {
     parts: loaded.map((l, i) => ({
       id: l.row.id, label: l.row.part_label ?? l.row.name, state: l.row.state, version: l.row.version,
       startsOn: l.row.starts_on, endsOn: l.row.ends_on, sent: l.row.sent_at ? { at: l.row.sent_at } : null,
-      billed: !!l.row.bill_plan || !!l.row.allocation_id, changedSinceSent: l.row.changed_since_sent,
+      billed: !!l.row.bill_plan || !!l.row.allocation_id, billDismissed: !!l.row.bill_dismissed_at, changedSinceSent: l.row.changed_since_sent,
       changes: changes[i]?.teams ?? [], view: views[i],
     })),
   };

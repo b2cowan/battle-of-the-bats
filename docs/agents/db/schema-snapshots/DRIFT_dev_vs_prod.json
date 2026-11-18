@@ -1,11 +1,11 @@
 {
-  "generated": "2026-11-17",
-  "total": 140,
+  "generated": "2026-11-18",
+  "total": 143,
   "counts": {
     "tables": 5,
-    "columns": 62,
+    "columns": 64,
     "indexes": 25,
-    "constraints": 19,
+    "constraints": 20,
     "rls": 29
   },
   "items": [
@@ -334,6 +334,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:club_schedules.bill_dismissed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedules.bill_dismissed_by",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:club_schedules.bill_price_mode",
       "sig": ""
     },
@@ -427,6 +435,10 @@
     },
     {
       "key": "constraint:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_schedule_permit_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedules.club_schedules_bill_dismissed_by_fkey",
       "sig": ""
     },
     {

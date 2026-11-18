@@ -216,14 +216,14 @@ After the owner's yes on the storage decision:
 ## Close
 
 - [ ] `/simplify` → `/review` (high). `/dba` on the shipped migration.
-- [ ] `/marketing` on every new sentence (list them in `lib/club-schedule-words.ts`, one block "Time added as its own part"), incl. the Tools
+- [x] (2026-11-17) `/marketing` on every new sentence (list them in `lib/club-schedule-words.ts`, one block "Time added as its own part"), incl. the Tools
       hint, the promise, the meta line, the bill line, the two "which part?" questions, the coach's charge name.
-- [ ] `/legal` light check: the coach now gets a second bill email for the same schedule — confirm it stays a transactional message (CASL) and
+- [x] (2026-11-17; nothing blocks, see `docs/agents/legal/CASL_LATE_BILL_EMAIL.md` "Reviewed 2026-11-17") `/legal` light check: the coach now gets a second bill email for the same schedule — confirm it stays a transactional message (CASL) and
       the email says why it is separate.
-- [ ] `/docs`: the Schedules guide (Add time, parts, the Part filter, billing added time) and the coach-side bill help if it names corrections.
+- [x] (2026-11-17; three topics added to the Schedules guide, one sentence on the coach's bill help) `/docs`: the Schedules guide (Add time, parts, the Part filter, billing added time) and the coach-side bill help if it names corrections.
 - [ ] `check:spelling`, `verify:changed`, full `npm run typecheck` (shared modules change), focused suites; dev-server restart (new files);
       `check:layout --changed` on the schedule page, Add time, Send the changes.
-- [ ] An owner walk as a checkable Artifact (20–50 boxes, one action per step): add one practice for one team to a sent schedule; add spring time
+- [x] (PUBLISHED 2026-11-17 as §538: https://claude.ai/artifact/MLEQvE49KQyHW9vBtgcU4e, 50 steps; WALKED 2026-11-17, 50/50 pass; calls ruled C1 A build, C2 C both, C3 A as built, C4 C say it in the window; C1, C2, C4 BUILT 2026-11-17 uncommitted, mig 496 on DEV only, see plan Phase 8) An owner walk as a checkable Artifact (20–50 boxes, one action per step): add one practice for one team to a sent schedule; add spring time
       from a permit already on it; bill each part; send; see the coach's two charges; regenerate one part; take a part off.
 - [ ] Plan Phase 8 ticked with commit hashes; the PM brief's "where it stands"; TODO line; Claude memory. `/demos` at its cycle (not here).
 

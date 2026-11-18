@@ -1631,6 +1631,16 @@
   },
   {
     "table_name": "club_schedules",
+    "constraint_name": "club_schedules_bill_dismissed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "bill_dismissed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedules",
     "constraint_name": "club_schedules_bill_line_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "bill_line_id",

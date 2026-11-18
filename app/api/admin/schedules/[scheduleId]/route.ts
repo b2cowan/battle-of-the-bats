@@ -40,6 +40,8 @@ import type { KeepChange } from '@/lib/club-schedule-keep';
 //                      (`planMove`); the server re-validates (the one refusal: a team twice at once). UNDO (the 8-second
 //                      notice, part B) sends `{ undo: true, edits: [{ slotId, teamIds, locked, movedByHand }] }`: each slot
 //                      put back EXACTLY as it was — its teams and both flags — never "moved by hand" by the undo itself.
+//          dismiss_unbilled {} — "It's free" on a part sent without a bill (walk §538 call C2): its Needs attention row stays away.
+//                      Money readers only; a sent part with no bill. Never bumps the version.
 //          bill        { bill: null | { lineId, permitId, amount, plan, firstDue, dates } } — Bill the teams (Ask 23): the
 //                      bill rides with the schedule until Finalize. Money readers only; never on a final schedule (its
 //                      bill went out at Finalize and a bill's terms never change — 3d Ask 7b).
@@ -267,6 +269,22 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
         ...(!bill.value ? { bill_price_mode: DEFAULT_PRICE_MODE } : bill.value.mode ? { bill_price_mode: bill.value.mode } : {}),
         version: version + 1, updated_by: actor, updated_at: new Date().toISOString(),
       }).eq('id', scheduleId).eq('org_id', orgId).eq('version', version).select('version').maybeSingle();
+      if (error) throw error;
+      if (!data) return schedulerRefusal(409, 'changed', R.changed);
+      return NextResponse.json({ version: data.version });
+    }
+
+    // A part sent free on purpose: "It's free" clears its Needs attention row (walk §538 call C2). Money readers only, like the
+    // row's Bill it…; the part must be sent and have no bill. A record of the choice, not an edit: the version stays.
+    if (body.action === 'dismiss_unbilled') {
+      if (!r.canMoney) return schedulerRefusal(403, 'bill_money', R.billMoney);
+      const row = loaded.row;
+      if (!row.part_of_schedule_id || row.state !== 'final' || row.bill_plan || row.allocation_id) return schedulerRefusal(409, 'not_unbilled', R.dismissNotHere);
+      // Already marked: the first person's record stands (a second press, or a second tab, changes nothing).
+      if (row.bill_dismissed_at) return NextResponse.json({ version: row.version });
+      const { data, error } = await supabaseAdmin.from('club_schedules')
+        .update({ bill_dismissed_at: new Date().toISOString(), bill_dismissed_by: actor })
+        .eq('id', scheduleId).eq('org_id', orgId).eq('version', version).select('version').maybeSingle();
       if (error) throw error;
       if (!data) return schedulerRefusal(409, 'changed', R.changed);
       return NextResponse.json({ version: data.version });

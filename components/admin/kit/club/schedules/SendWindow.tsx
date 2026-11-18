@@ -90,7 +90,11 @@ interface Preview {
 /** "1.5 hours", "1 hour" — a part's time on its bill line. */
 
 
-export default function SendWindow({ q, view, start, bill, onSent, onStale, onClose, onBillPart }: {
+/** What the window holds that the person chose: the teams they unticked and the "Bill the corrections" switch. It rides the
+ *  page through Bill it… and back, so a round trip never resets it (owner 2026-11-17, walk §538 call C1). */
+export interface SendKeep { unticked: string[]; corrections: boolean }
+
+export default function SendWindow({ q, view, start, bill, keep, canMoney, onSent, onStale, onClose, onBillPart }: {
   q: string;
   view: ScheduleView;
   /** What opened it: Send on a draft (`draft`), Finalize and send (`final`), Send the changes (`changes`), or Send the bill
@@ -98,20 +102,24 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   start: 'draft' | 'final' | 'changes' | 'bill';
   /** The late bill's terms, as Bill the teams filled them in — they ride on the preview and the send; nothing is stored before. */
   bill?: object;
+  /** What the window held when it was last left for Bill it… (the page keeps it); absent = the defaults. */
+  keep?: SendKeep;
+  /** Whether the sender holds the club's Accounting: without it a bill set on a part is shown as "Bill set" and the send is held. */
+  canMoney: boolean;
   onSent: (text: string) => void;
   /** The schedule changed under the window: the page re-reads it. */
   onStale?: () => void;
   onClose: () => void;
   /** An added part's "Bill it…" / "Change…" (drawing tab 5): Bill the teams for that part, then back here. Absent for a
-   *  reader without the club's Accounting — they see "Not billed" or "Billed", and no door. */
-  onBillPart?: (partId: string) => void;
+   *  reader without the club's Accounting — they see "Not billed" or "Bill set", and no door. */
+  onBillPart?: (partId: string, keep: SendKeep) => void;
 }) {
   const [kind, setKind] = useState<SendKind>(start !== 'draft' ? start : view.bill ? 'review' : 'final');
   const [replyBy, setReplyBy] = useState(view.schedule.replyBy ?? addCalendarDays(tournamentToday(), 7));
   const [preview, setPreview] = useState<Preview | null>(null);
   const [failed, setFailed] = useState(false);
-  const [unticked, setUnticked] = useState<Set<string>>(() => new Set());
-  const [corrections, setCorrections] = useState(true);
+  const [unticked, setUnticked] = useState<Set<string>>(() => new Set(keep?.unticked));
+  const [corrections, setCorrections] = useState(keep?.corrections ?? true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -180,6 +188,13 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   const plainName = plainTeam ? (getsPlain(plainTeam)[0]?.name ?? getsPlain(plainTeam)[0]?.email ?? plainTeam.teamName) : null;
   const [variant, setVariant] = useState<'money' | 'plain'>('money');
   const firstParts = (shown?.parts ?? []).filter(p => p.first);
+  // A part's bill line, under its figure: what the time is, and — for a sender without the club's Accounting, whose Send is held
+  // while a bill is set — who sends this one, said before they press (owner 2026-11-17, walk §538 call C4).
+  const partBillSub = (p: (typeof firstParts)[number]) => {
+    const time = p.line ? P.billLineTime(hoursOf(p.line.minutes), p.line.permitNames, p.line.teamNames) : '';
+    const who = !canMoney && p.billSet ? P.billNeedsAccounting : '';
+    return time && who ? <>{time}<br />{who}</> : time || who || undefined;
+  };
   // The switch shows for a correction of the schedule's own, and ALSO whenever one is blocked (a sent part's correction can block
   // the send while the schedule has none of its own): the blocked send says why and can turn the billing off.
   const correctionShown = kind === 'changes' && (!!shown?.correctionBlocked
@@ -371,8 +386,8 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
               <SendRows>
                 <SendRow
                   title={<b>{p.line?.bill ? P.billLineSet(money(p.line.bill.cents), p.line.bill.teamNames, p.line.bill.payments, p.line.bill.firstDue ? formatStoredDate(p.line.bill.firstDue, { withYear: false }) : null) : p.billSet ? P.billedNoFigure : P.notBilled}</b>}
-                  sub={p.line ? P.billLineTime(hoursOf(p.line.minutes), p.line.permitNames, p.line.teamNames) : undefined}
-                  below={onBillPart ? <button type="button" className={sch.door} onClick={() => onBillPart(p.id)} disabled={busy}>{p.billSet ? P.billChange : P.billIt}</button> : null} />
+                  sub={partBillSub(p)}
+                  below={onBillPart ? <button type="button" className={sch.door} onClick={() => onBillPart(p.id, { unticked: [...unticked], corrections })} disabled={busy}>{p.billSet ? P.billChange : P.billIt}</button> : null} />
               </SendRows>
             </div>
           ))}

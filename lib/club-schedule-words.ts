@@ -95,6 +95,9 @@ export const SCHEDULE_REFUSALS = {
   justSent: 'This schedule was just sent. Give it a minute before sending again.',
   finalDelete: 'A final schedule has practices on teams’ schedules and a bill, so it can’t be deleted.',
   noTime: 'Give the schedule its time first: a venue, its facilities, the days and the hours.',
+  /** Add time: the form HAS time, but the schedule (or another part) already holds every place it cuts — the sentence says
+   *  that, never "give it time first" (owner question 2026-11-17: "isn't this data right above it?"). */
+  partTimeAllHeld: 'The schedule already uses all of this time. Choose other days, hours or dates.',
   /** Find the time reads the form's own rows; a form past the 40-row limit can't be read (it couldn't be saved either). */
   findTooManyRows: 'The schedule has more than 40 rows of hours, so the free time can’t be read. Combine some rows first.',
   tooManySlots: (max: number) => `That is more than ${max.toLocaleString('en-CA')} slots. Shorten the dates or lengthen the slots.`,
@@ -117,6 +120,8 @@ export const SCHEDULE_REFUSALS = {
   lineGone: 'That budget line isn’t the club’s any more. Pick the bill’s line again.',
   notACostLine: 'That budget line is money coming in. Bill from a cost line.',
   notSaved: 'We couldn’t save that just now. Try again.',
+  /** Marking a part free (owner 2026-11-17, walk §538 call C2): only a SENT part with no bill has a row to clear. */
+  dismissNotHere: 'That part has a bill, or has not been sent yet, so there is nothing to mark free.',
   billFinal: 'The bill went out at Finalize, and a bill’s terms never change. A change to the time is billed at Send the changes.',
   /** A final schedule's first bill, made later ("Send the bill"): what stops it, in words. */
   billAgain: 'Fill in the bill again.',
@@ -1526,8 +1531,8 @@ export const PART_WORDS = {
   /** Send the changes: the bill line's heading, per unsent part (tab 5, note 2). */
   billLineHead: (label: string) => `${label} · its bill`,
   notBilled: 'Not billed',
-  /** A reader without the club's Accounting: a bill rides with the part; its figure is for people with Accounting only. */
-  billedNoFigure: 'Billed',
+  /** A reader without the club's Accounting: a bill is set on the part; its figure is for people with Accounting only. ("Bill set", not "Billed": nothing has gone to the teams until the send.) */
+  billedNoFigure: 'Bill set',
   /** "1.5 hours of Halton Hills evenings for 14U AA". */
   billLineTime: (hours: string, permits: readonly string[], teams: readonly string[]) =>
     `${hours} of ${permits.length ? joinWithAnd([...permits]) : 'the time'} for ${PART_WORDS.metaTeams(teams)}`,
@@ -1543,13 +1548,21 @@ export const PART_WORDS = {
   billPartRest: (name: string, parent: string) =>
     `It goes to the team when you send the changes and arrives on its Money › Club tab as “${name}”. ${possessive(parent)} bill and its payments stay as they are.`,
   /** The coach's email: each part's bill, listed under the changes, and why it is separate (/legal light check). */
-  emailBillTitle: (name: string, phrase: string) => `${name}, a bill of its own: ${phrase}.`,
+  emailBillTitle: (name: string, phrase: string) => `A separate bill, ${name}: ${phrase}.`,
   emailBillsOutro: (bills: number) => (bills === 1
     ? 'The added time is billed on its own, so it is a separate charge on your Money › Club tab. Nothing already billed changes.'
     : 'Each part of the added time is billed on its own, as separate charges on your Money › Club tab. Nothing already billed changes.'),
   /** Needs attention: a part sent without a bill (the shipped final-not-billed path offers Review the bill). */
-  sentNotBilled: (label: string) => `${label} was sent without a bill. Bill the teams when you’re ready; its practices stay as they are.`,
+  sentNotBilled: (label: string) => `${label} was sent without a bill. You can bill the teams whenever you’re ready; its practices stay as they are.`,
   sentNotBilledChip: 'Not billed',
+  /** The row's second button (owner 2026-11-17, walk §538 call C2): the club sent this part free on purpose. */
+  sentFree: 'It’s free',
+  sentFreeSaid: (label: string) => `Noted: ${label} stays free. To bill it later, use Tools › Bill ${label}…`,
+  /** Tools, for a part marked free (the review's undo): the way back to billing it. */
+  toolBillFree: (label: string) => `Bill ${label}…`,
+  toolBillFreeHint: 'You sent it free. Bill it now if that changes.',
+  /** Send the changes, for a reader without the club's Accounting, under a part whose bill is set (owner 2026-11-17, walk §538 call C4). */
+  billNeedsAccounting: 'Someone with the club’s Accounting sends this one.',
   /** Regenerate and Settings… on a schedule with parts ask which part first (tab 4, ruling 4). */
   whichRegenTitle: 'Regenerate which part?',
   whichSettingsTitle: 'Settings for which part?',
@@ -1561,8 +1574,10 @@ export const PART_WORDS = {
   whichRegenGo: 'Choose a draft',
   whichSettingsGo: 'Open its settings',
   /** Taking an added part's only permit off removes the part (tab 4, Settings… note). */
-  takeOffPartTitle: (label: string) => `Take ${label} off?`,
+  takeOffPartTitle: (label: string) => `Take “${label}” off?`,
   takeOffPartDraft: (practices: number) => `Its ${pluralize(practices, 'practice')} go. Nobody has been told about them, and nothing else on the schedule moves.`,
-  takeOffPartLeaves: (label: string) => `Once that is sent, ${label} leaves the schedule. Its bill and what was sent are kept.`,
+  takeOffPartLeaves: (label: string) => `After you send the changes, “${label}” leaves the schedule. Its bill and what was sent stay on record.`,
   partTakenOff: (label: string) => `${label} is off the schedule.`,
+  /** A family send that is refused part-way: said after "Sent to …", with the refusal in the middle (it tells only what landed). */
+  sentPartWay: (refusal: string) => `Only part of it went out. ${refusal} The rest is still waiting to be sent.`,
 } as const;

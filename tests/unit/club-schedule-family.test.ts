@@ -89,7 +89,7 @@ describe('familyShown — the family read as one', () => {
     slots: [slot('c1', { venueId: 'prospect', facilityId: 'd1', key: 'prospect|d1|c1', teamIds: ['aa14'], startsAt: '2026-12-10T23:00:00.000Z', endsAt: '2026-12-11T00:30:00.000Z' })],
     fairness: { totals: totals({ slots: 1, seats: 1, handedOut: 1 }), teams: [result('aa14', { got: 1, nights: [4] })] },
   });
-  const part: PartRead = { id: 'C', label: 'Time added Nov 16', state: 'draft', version: 1, startsOn: '2026-12-10', endsOn: '2027-03-30', sent: null, billed: false, changedSinceSent: false, changes: [], view: partView };
+  const part: PartRead = { id: 'C', label: 'Time added Nov 16', state: 'draft', version: 1, startsOn: '2026-12-10', endsOn: '2027-03-30', sent: null, billed: false, billDismissed: false, changedSinceSent: false, changes: [], view: partView };
 
   it('a schedule with no parts reads exactly as before', () => {
     assert.equal(familyShown(parent, []), parent);

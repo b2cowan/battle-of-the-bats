@@ -25,7 +25,7 @@ const FIRST_ASKS = 3;
 /** Teams shown before "Show N more teams" (ask 3: as the hand-back asks fold). */
 const FIRST_TEAMS = 3;
 
-export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeTeams, partNotes = [], outside = [], unbilledParts = [], onAnswer, onSend, onBillPart }: {
+export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeTeams, partNotes = [], outside = [], unbilledParts = [], onAnswer, onSend, onBillPart, onFreePart }: {
   asks: readonly ScheduleAsk[];
   slots: readonly SlotView[];
   places: readonly SchedulePlace[];
@@ -45,6 +45,8 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
   onAnswer: (id: string) => void;
   onSend: () => void;
   onBillPart?: (partId: string) => void;
+  /** "It's free" on that row (owner 2026-11-17, walk §538 call C2): the club sent the part without a bill on purpose. */
+  onFreePart?: (partId: string) => void;
 }) {
   const [showAll, setShowAll] = useState(false);
   const [allTeams, setAllTeams] = useState(false);
@@ -129,6 +131,7 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
         <span className={sch.attentionKind}>{P.sentNotBilledChip}</span>
         <div className={sch.attentionBody}><b>{p.text}</b></div>
         {onBillPart && <button type="button" className="btn btn-outline" onClick={() => onBillPart(p.id)}>{P.billIt}</button>}
+        {onFreePart && <button type="button" className="btn btn-outline" onClick={() => onFreePart(p.id)}>{P.sentFree}</button>}
       </div>)}
     </section>
   );

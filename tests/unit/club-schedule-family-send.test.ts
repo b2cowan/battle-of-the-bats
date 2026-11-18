@@ -148,7 +148,7 @@ describe('the wiring (source)', () => {
   });
   it('Bill it… is a money reader\'s door only', () => {
     const page = readCode('app/[orgSlug]/admin/schedules/[scheduleId]/page.tsx');
-    assert.match(page, /onBillPart=\{own\.canMoney \? partId => setWin\(\{ kind: 'bill', partId, back: 'send' \}\) : undefined\}/);
+    assert.match(page, /onBillPart=\{own\.canMoney \? \(partId, keep\) => setWin\(\{ kind: 'bill', partId, back: 'send', keep \}\) : undefined\}/);
     assert.match(readCode('app/api/admin/schedules/[scheduleId]/send/route.ts'), /bill: money \? x\.line\.bill : null/);
   });
 });
