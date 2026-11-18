@@ -396,6 +396,17 @@ points here, so they aren't tracked twice)
       1. **The plain "Forgot your password?" reset sends none of our alarms** (it changes the password in the browser). Covering
          it means switching on the sign-in service's own "password changed" notice in production Auth settings (not done: the
          project changes no production Auth settings). The alarms' own advice points people to that reset.
+         **Closed another way (2026-11-18).** The owner switched the host's stock notice on that day and off again the same
+         day. Production Auth has no custom mail server, so the host's mailer reaches only the project's own team: the stock
+         notice never reached a customer, and on an in-app change it doubled our alarm. Instead our own "password changed"
+         email now covers the ordinary reset too (`15514dbd9`, on `dev`; production gets it with the next promote, and until
+         then an ordinary reset there sends nothing, as it always has). **Recommended (`/plan`, Data Terms follow-through
+         Section 2): keep it this way.** That is option (b), already built. Option (a), pointing production Auth's mail at
+         Resend and switching the stock text back on, is not needed: every account email already goes out from our own sender,
+         and a second template would be a second wording to keep in step. Nothing is owed on rewording the stock text.
+         Noted, not fixed: the route's "changed in the last 5 minutes" test reads the account's last-updated time, which other
+         account changes can move too, so a signed-in person could prompt one "password changed" email to their own address after
+         another kind of change (self only, at most one per 10 minutes).
       2. **The contact address now carries six emails' "write to us"** and the Part 3 hold promise: confirm it is read daily.
       3. **`TWO_STEP_CODE_KEY` on production** (Part 2 call 2) must exist and be backed up before the first backup code is made
          there (`/legal` carried it to `/release`).
@@ -438,7 +449,75 @@ points here, so they aren't tracked twice)
   rep team, player or person still leaves its files; the dev club fixture files sample documents under the web name.
 - [ ] Backups: confirm what the Pro plan does (daily backups vs point-in-time recovery), decide whether PITR is worth the add-on, and write it down in `docs/agents/ops/`.
 - [ ] Publish the legal pages (privacy policy, terms) already tied to `GST_HST_STAGE6_TERMS_PLAN.md`, so this plan does not duplicate that work.
-- [ ] Data-processing terms for clubs and a sub-processor list via `/legal`. **Drafted 2026-11-18** (`docs/agents/legal/drafts/DATA_TERMS_FOR_ORGANIZATIONS.md`, `drafts/SUBPROCESSOR_LIST.md`; research `BOARD_READY_DATA_TERMS_REVIEW.md`); **owner questions 1–11 RULED as recommended 2026-11-18**; left: the owner approves both texts, his five steps (ImprovMX agreement, production sign-in email check, 90-day server logs, supplier notices, four dates), the AI rule written into `AGENCY_RULES.md`, `/accounting` on the objection refund, and `/plan` for the two pages.
+- [ ] Data-processing terms for clubs and a sub-processor list via `/legal`. **Drafted 2026-11-18** (`docs/agents/legal/drafts/DATA_TERMS_FOR_ORGANIZATIONS.md`, `drafts/SUBPROCESSOR_LIST.md`; research `BOARD_READY_DATA_TERMS_REVIEW.md`); **owner questions 1–11 RULED as recommended 2026-11-18**; **both texts owner-approved and the owner's five steps done 2026-11-18** (ImprovMX agreement countersigned; the host's "password changed" email switched off; server logs expire after 90 days; supplier notices subscribed; the four dates filled); `/accounting` answered the objection refund (0a-6 below) and `/plan` planned the two pages (0a-5 below). Left: the `/legal` record pass and Terms edits, and the AI rule written into `AGENCY_RULES.md`.
+- [ ] **0a-5 · The Data Terms page and the list of companies** (planned 2026-11-18, `/plan`, Data Terms follow-through
+  Section 2; no code yet). Brief: `docs/agents/legal/DATA_TERMS_ACCEPTANCE_NOTE.md`. Both texts owner-approved 2026-11-18.
+  - **What a club sees (UX summary).** Two new public pages beside the Terms and the Privacy Policy, reached from the same
+    places: the site footer's legal links, Terms §4, and later the Security page.
+    - *Data Terms for organizations*: what we promise about the club's data. It is part of the Terms, so it changes only
+      when the Terms get a new version; each version keeps its own dated page, with the same "earlier versions" line as the
+      Terms. Nobody ticks anything new: a club's existing Terms tick covers it, and the acceptance record does not change.
+    - *The companies that handle your information*: one page naming each supplier, what it does, whose information it
+      touches and where. It is a living page: it changes without a Terms version, and every change adds a dated row to its
+      "Changes to this list" table.
+    - A new supplier: the owner emails each organization's owners by hand from the business address, 30 days ahead, and
+      records the date in that table. No send button is built at today's size.
+    - Who: everyone (public pages, no sign-in, no plan gate). Nothing changes inside the product.
+  - **Recommended sequence (by dependency).** Both pages go live the day the held Terms version publishes with the
+    Payments Terms, and T1–T4 ride that version:
+    1. *Build the shape ahead* (one session, any time before that day; no database, no drawing, as the pages use the
+       Terms' page layout): routes, registry entries, guards, footer links. With no version file yet both pages answer
+       "not found" and the footer shows no extra link, so the build can reach production early and show nothing.
+    2. *On the publishing day*, the commit that freezes the held Terms (with T1–T4), the privacy version (P1–P4 name
+       ImprovMX) and the Payments Terms also writes the Data Terms version at the Terms date and the list's first version.
+       The owner reads them on dev before the promote, as at 6.7.
+    - **The Payments Terms day is never held for these pages.** If step 1 is not built by then, the held Terms publish
+      without T1–T4, and T1–T4 and both pages ride the next Terms version (a minor change with no fresh acceptance, so the
+      fallback costs one more version and nothing else). The privacy draft already cuts its list sentence on the same rule.
+    - The list never goes live before the privacy version that names ImprovMX (the list draft's own rule); the cross-check
+      guard below enforces it.
+  - **Fit to the existing legal pages** (census 2026-11-18):
+    - *Data Terms*: a frozen dated file per carrying Terms version (`lib/legal-documents/data-terms/<terms-date>.md`), its
+      sha256 in `lib/legal-documents.ts`, checked by `tests/unit/legal-documents.test.ts` exactly as the Terms and Privacy
+      are (frozen hash, every file listed, no owner notes or brackets). New guard: every Data Terms version date is a Terms
+      version date and that Terms file names the Data Terms (T1), so the Data Terms can never change without a Terms
+      version. The page in force is the newest Data Terms version at or before the Terms `current`. It is not a door
+      document: `legal_acceptances`, the doors' `currentVersion` and the accept-again screen are untouched, and a guard
+      asserts the doors still record only Terms and Privacy. Check while building whether adding it to `LegalDocKey`
+      widens any door's loop; if it does, give it its own registry entry instead.
+    - *The list*: one living file (`lib/legal-documents/subprocessors.md`) with a registry entry `{ lastChange, sha256 }`.
+      Guards: a text edit without a new dated change row and a moved `lastChange` fails the build (the table cannot be
+      skipped); `lastChange` equals the newest row; every company in the list's table is named in the privacy version in
+      force (the drift the page exists to prevent, and what keeps the list from going live before ImprovMX is named); no
+      owner notes or brackets.
+    - *Addresses*: built only in `lib/legal-paths.ts` / `lib/legal-links.ts` (the legal-links guard): `/legal/data-terms`
+      (and `/legal/data-terms/<date>`) and `/legal/subprocessors`, with short redirects `/data-terms` and `/subprocessors`
+      shaped like `/privacy` (the frozen Terms link by the short form), added to the route list in
+      `tests/unit/legal-links-surfaces-guard.test.ts`; in no sitemap.
+    - *Links*: the marketing footer (`components/Footer.tsx`), each link rendered only when its page has a version. Not
+      `LegalFootLinks` at the sign-in doors: those keep Terms and Privacy, the two things a person accepts there. Phone
+      width checked with `check:layout --changed` (four links in the footer row).
+    - *The draft preview cannot serve these.* Since 6.7 the switch is `published`, so preview mode never runs
+      (`lib/legal-pages-switch.ts`). Nothing is revived for it: the texts were approved from the drafts, and the owner reads
+      the rendered pages on dev after the publishing commit.
+    - Security page (0c): links both through `legalPageHref` when it is built.
+  - **Asks (recommended answers; they stand unless the owner objects):** (1) T1–T4 ride the held Terms version, with the
+    fallback above; (2) the addresses `/legal/data-terms` and `/legal/subprocessors` ("sub-processors" is the word a
+    board's checklist uses; the page title stays in plain words); (3) the footer only, not the sign-in doors.
+  - **Words for `/marketing`** (one pass in the build session): the two footer link words and the list page's title line.
+  - [ ] Build session (the shape): routes, registry entries, the guards above, footer links. `/docs` writes the help line
+    that names the pages for the publishing day, not before (help must not point at a "not found" page).
+  - [ ] Publishing commit (the Payments Terms day): the version files, T1–T4 in the Terms, the Data Terms §6 address filled.
+- [ ] **0a-6 · Refunding unused plan time** (`/accounting` 2026-11-18, `docs/agents/accounting/REFUND_UNUSED_PLAN_TIME.md`;
+  it serves the Data Terms §6 objection refund and the Terms §8 "we end your plan" refund). Workable by hand today:
+  platform admin "End now" on the day the club picks, then "Refund this charge" → Part of it, which issues a credit note
+  reversing the tax. Two gaps, no code yet:
+  - [ ] (a) Nothing computes the unused part: staff work out days left ÷ days paid × the before-tax amount by hand. A
+    figure on the refund screen (the paid period and the end date) would remove the arithmetic. Worth building when the
+    first such refund is near; until then the `/accounting` note is the procedure.
+  - [ ] (b) Check whether a coach paying for several portals can be refunded at all: the support console refuses a Stripe
+    customer carried by more than one organization. A count on production first; a fix only if it blocks a real case.
+  - Note: Billing staff cannot refund a charge older than 6 months, so a late-year refund of a yearly plan needs Super admin.
 
 **0b · ~~Canadian data residency~~** **RULED NOT MOVING** (owner 2026-11-10; §8 keeps the estimate). The pack states
 plainly where data lives (USA, with the suppliers named), and that is all it needs to say.

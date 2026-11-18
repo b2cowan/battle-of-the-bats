@@ -44,3 +44,10 @@ is the owner's marked priority among the new modules.
 
 **Where it stands (2026-11-10):** friend requests are drawn (parent's question, friend code, registrar's queue, draft
 board, after-draft results), with 15 owner asks, all ruled 2026-11-10 as recommended; the build prompt is next (plan §5 Stage 1).
+
+**The two data pages (planned 2026-11-18).** Two public pages join the Terms and the Privacy Policy: the Data Terms for
+organizations (part of the Terms, changing only with a new Terms version, nothing new to tick) and the list of companies
+that handle a club's information (a living page with a dated change table; a new company is announced to every club's
+owners by email 30 days ahead). They go live with the Payments Terms; if the page work isn't ready that day, the Payments
+Terms go ahead and the data pages follow with the next Terms version. Success: a board member finds both from the footer,
+and the list always matches the privacy policy (the build checks it).
