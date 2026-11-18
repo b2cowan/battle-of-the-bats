@@ -363,7 +363,7 @@ probe account's lines, then match it as a credit); `/accounting` and `/review`; 
   walks it replaces are in §541. Found writing it, fixed the same day: on a club setting up payouts again (its account
   disconnected or on the old fee setting) the Before window printed the card rate alone (`app/api/admin/payouts/route.ts`: such a
   club now reads as before setup, both rates). For the walk: the walk seed takes `--org`, and
-  `scripts/run-stripe-fees-daily-dev.mjs` runs the daily job once on dev. **The walk PASSED 41/41 (owner paste 2026-11-18).** The project closes on the owner's word; the step 17 finding below is still to build.
+  `scripts/run-stripe-fees-daily-dev.mjs` runs the daily job once on dev. **The walk PASSED 41/41 (owner paste 2026-11-18) and the owner called it closed the same day.** The project closes on the owner's word; the step 17 finding below is built (`2e15d6669`) and called complete.
 
 **Stage 3's help and words (left by Stage 5, 2026-11-18, for this stage to write WITH its code; `/docs`, same rules: no
 dead anchors, `keywords` / `searchText` / `answerText` in the same pass).** Stage 5 ran before Stage 3 and left every
@@ -398,7 +398,7 @@ this is a narrow race, not a launch blocker, but the loss is silent (no dispute 
   AND the account has a card payment started in the last 30 minutes that has not landed (`hasFreshUnlandedCardPayment`); any
   other unknown dispute is let go as before, so nothing retries for ever. A bank debit's dispute can wait up to 30 minutes
   behind an unrelated fresh card payment, then settles. Unit guard extended in `online-payments-card-dispute.test.ts` (21 pass).
-  Not yet replayed against dev with the 0259 card: re-run walk §541 W3 steps 13 to 17 without the resend workaround when convenient.
+  Not replayed against dev with the 0259 card: the owner called the walk closed and the fix complete 2026-11-18 without it (a waiver, not a pass).
 - **Walk workaround (no longer needed once built):** resend the two dispute events with `stripe events resend <id> --account <acct>` once the
   payment has landed (§541 step 17).
 - Route the build through `/plan`; it needs a unit test for the not-found-yet case and a replay test.
