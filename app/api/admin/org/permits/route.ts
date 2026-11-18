@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, getAuthContextWithScope, unauthorized, forbidden, GROUP_UNSCOPED_ROLES } from '@/lib/api-auth';
+import { getAuthContextWithRole, getAuthContextWithScope, unauthorized, forbidden, repGroupScopeGuard, GROUP_UNSCOPED_ROLES } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
@@ -214,10 +214,27 @@ export const POST = withObservability(async (req: Request) => {
     /** The club's facilities per venue, in its order — what "every facility" and the overlap check read (the lookup's one read). */
     const facilities = async () => (await readClubPlaces(orgId)).byVenue;
 
+    /**
+     * ⚖ Board Ready trust close-out 10 (owner 2026-11-18): a member limited to some team groups holds a permit only for a team
+     * in them — the `?teams=1` list's rule, now asked on save. Checked on the team being saved AND, on an edit or a renewal,
+     * the team the stored permit is held for (a save replaces it: the rep-team link's rule). A team that isn't the club's is
+     * the database floor's to refuse (`permit_team`), in its own words.
+     */
+    const teamOutsideGroups = async (...teamIds: (string | null | undefined)[]): Promise<Response | null> => {
+      const ids = [...new Set(teamIds.filter((t): t is string => !!t && isUuid(t)))];
+      if (!ctx.repGroupIds || !ids.length) return null;
+      const { data, error } = await supabaseAdmin.from('rep_teams').select('id, group_id').eq('org_id', orgId).in('id', ids);
+      if (error) throw error;
+      const outside = (data ?? []).some(t => repGroupScopeGuard(ctx, (t as { group_id: string | null }).group_id));
+      return outside ? refusal(403, 'permit_team_group', 'That team isn’t in your team groups. Ask your club’s owner or an admin to hold a permit for it.') : null;
+    };
+
     // -- add-permit: Add permit (create asks) ---------------------------------
     if (action === 'add-permit') {
       const read = readPermitBody(body.data, await facilities(), canMoney);
       if (!read.ok) return refusal(400, read.code, read.error);
+      const outside = await teamOutsideGroups(read.draft.heldForTeamId);
+      if (outside) return outside;
       const id = await save(null, read.draft, null);
       if (id instanceof Response) return id;
       return NextResponse.json({ success: true, id });
@@ -256,6 +273,8 @@ export const POST = withObservability(async (req: Request) => {
     if (action === 'update-permit') {
       const read = readPermitBody(body.data, await facilities(), canMoney);
       if (!read.ok) return refusal(400, read.code, read.error);
+      const outside = await teamOutsideGroups(permit.heldForTeamId, read.draft.heldForTeamId);
+      if (outside) return outside;
       // The fiscal year's money moves with the start: a new start in a closed year with money on it is refused below.
       const startMoved = read.draft.startsOn !== permit.startsOn && (permit.cost != null || permit.budgetLineId != null);
       if (startMoved) {
@@ -269,6 +288,8 @@ export const POST = withObservability(async (req: Request) => {
 
     // -- renew-permit: a copy a year on (Ask 2) --------------------------------
     if (action === 'renew-permit') {
+      const outside = await teamOutsideGroups(permit.heldForTeamId);
+      if (outside) return outside;
       // ⚖ The same blocks, facilities, prices and issuer, the dates a year on; NO reference, document, cost, budget line
       // or dates off (a holiday moves — recorded at build, plan §6 Ask 2). Opened for editing by the screen.
       const yearOn = (d: string) => addCalendarMonths(d, 12);
