@@ -6,7 +6,19 @@ import { Mail, Check, X } from 'lucide-react';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { roleLabel } from '@/lib/member-access';
 import type { ConsumerHomeCoachInvite } from '@/lib/home-following';
+import KitDialog, { DialogCancel } from '@/components/shared/KitDialog';
+import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import styles from './PendingInvitationsCard.module.css';
+
+/**
+ * DECLINE ASKS FIRST (owner 2026-11-18). A decline cannot be taken back — a club's staff invitation is deleted, a coach
+ * invitation is answered and the club is told at once — and the two buttons sit side by side, so a mis-tap on a phone
+ * used to send a "no" the person never meant. Accept does not ask: it can be undone by leaving. The question is the one
+ * shared "are you sure" window (One Window Q11): a title, one sentence naming what happens, the answers.
+ */
+type DeclineAsk =
+  | { kind: 'coach'; id: string; club: string }
+  | { kind: 'member'; id: string; club: string; role: string };
 
 export type PendingInvite = {
   memberId: string;
@@ -41,6 +53,7 @@ export default function PendingInvitationsCard({
   const [coachItems, setCoachItems] = useState(coachInvitations);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [declineAsk, setDeclineAsk] = useState<DeclineAsk | null>(null);
 
   if (items.length === 0 && coachItems.length === 0) return null;
   const total = items.length + coachItems.length;
@@ -114,6 +127,13 @@ export default function PendingInvitationsCard({
     }
   }
 
+  /** The window's Decline: answer, then close the question (a refusal is said on the card, under its heading). */
+  async function confirmDecline(ask: DeclineAsk) {
+    if (ask.kind === 'coach') await respondCoach(ask.id, 'decline');
+    else await respond(ask.id, 'decline', ask.role);
+    setDeclineAsk(null);
+  }
+
   return (
     <section className={styles.wrap} aria-label="Pending invitations">
       <div className={styles.heading}>
@@ -147,7 +167,7 @@ export default function PendingInvitationsCard({
                   type="button"
                   className={styles.decline}
                   disabled={busy}
-                  onClick={() => respondCoach(invite.inviteId, 'decline')}
+                  onClick={() => setDeclineAsk({ kind: 'coach', id: invite.inviteId, club })}
                   aria-label={`Decline the invitation to coach ${team}`}
                 >
                   <X size={14} strokeWidth={2.5} aria-hidden />
@@ -189,7 +209,7 @@ export default function PendingInvitationsCard({
                   type="button"
                   className={styles.decline}
                   disabled={busy}
-                  onClick={() => respond(invite.memberId, 'decline', invite.role)}
+                  onClick={() => setDeclineAsk({ kind: 'member', id: invite.memberId, club: org, role: invite.role })}
                   aria-label={`Decline invitation to ${org}`}
                 >
                   <X size={14} strokeWidth={2.5} aria-hidden />
@@ -200,6 +220,31 @@ export default function PendingInvitationsCard({
           );
         })}
       </div>
+
+      {/* The window wears the portal's warm palette: it hangs off this marker, and Home's surface carries only the
+          --home-* tokens (the same wrapper Account › Security's windows use). */}
+      {declineAsk && (
+        <div style={{ display: 'contents' }} {...coachWarmAttr}>
+          <KitDialog
+            kind="question"
+            title="Decline this invitation?"
+            busy={busyId === declineAsk.id}
+            onClose={() => setDeclineAsk(null)}
+            footer={(
+              <>
+                <DialogCancel>Keep it</DialogCancel>
+                <button type="button" className="btn btn-danger" disabled={busyId === declineAsk.id} onClick={() => void confirmDecline(declineAsk)}>
+                  {busyId === declineAsk.id ? 'Declining…' : 'Decline'}
+                </button>
+              </>
+            )}
+          >
+            <p className={styles.dialogText}>
+              {declineAsk.club} will be told you declined, and will need to send a new invitation if you change your mind.
+            </p>
+          </KitDialog>
+        </div>
+      )}
     </section>
   );
 }

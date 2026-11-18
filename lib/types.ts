@@ -3513,6 +3513,10 @@ export type NotificationEventType =
   // Club Tier Stage 2, session 3 — the invitee DECLINED that invitation from their home page
   // (specimen 6 · 2b: "Declining tells Dana"). Same recipient, same targeted bell; TS-union only.
   | 'club_coach_declined'
+  // A person DECLINED a club staff invitation (Owner, Admin, Treasurer …) from their home page (owner 2026-11-18:
+  // the coach decline told the club and this one did not — the invitation just vanished). Reaches whoever sent it
+  // (the audit log's member_invited row), or the owners when that person has left. Targeted bell; TS-union only.
+  | 'member_invite_declined'
   // Club Tier Stage 2, B04 (mig 313) — a coach's own team moving into a club. 'team_move_requested'
   // reaches the side that must answer (the team's head coaches, or the club's owner and admins);
   // 'team_move_answered' tells the other side how it ended (moved / declined). Targeted lifecycle

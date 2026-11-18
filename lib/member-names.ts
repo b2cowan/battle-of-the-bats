@@ -32,6 +32,8 @@ export async function memberDisplayName(orgId: string, userId: string): Promise<
 }
 
 export type InvitationSender = {
+  /** The sender's account — who a decline tells (null when the invitation predates the log). */
+  userId: string | null;
   name: string | null;
   /** The sender's role in the org at the time of reading ('owner', 'admin', …), when known. */
   role: string | null;
@@ -46,7 +48,7 @@ export type InvitationSender = {
  * invitation predates the log or the read fails; the card then simply omits the "From" line.
  */
 export async function invitationSender(orgId: string, invitedUserId: string): Promise<InvitationSender> {
-  const empty: InvitationSender = { name: null, role: null, sentAt: null };
+  const empty: InvitationSender = { userId: null, name: null, role: null, sentAt: null };
   const { data, error } = await supabaseAdmin
     .from('org_audit_log')
     .select('actor_id, created_at')
@@ -66,7 +68,7 @@ export async function invitationSender(orgId: string, invitedUserId: string): Pr
       .maybeSingle<{ role: string }>(),
     memberDisplayName(orgId, data.actor_id),
   ]);
-  return { name, role: actor?.role ?? null, sentAt: data.created_at };
+  return { userId: data.actor_id, name, role: actor?.role ?? null, sentAt: data.created_at };
 }
 
 /** The organization owner's display name (the earliest owner when there are several), or null. */

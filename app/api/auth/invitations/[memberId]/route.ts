@@ -8,6 +8,10 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { startTwoStepGrace } from '@/lib/two-step-grace';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
+import { invitationSender } from '@/lib/member-names';
+import { roleLabel } from '@/lib/member-access';
+import { accountNameOf } from '@/lib/family-invitation';
+import { notify } from '@/lib/notify';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -26,6 +30,45 @@ async function getAuthenticatedUser() {
 }
 
 type Params = { params: Promise<{ memberId: string }> };
+
+/**
+ * A decline TELLS THE CLUB (owner 2026-11-18). Before this the pending row was deleted and nobody was told: the
+ * invitation just vanished from Members, while a club's coach invitation already told its sender
+ * (`club_coach_declined`). The bell reaches whoever sent it — the audit log's `member_invited` row, the one record
+ * that names the sender — or, when that person is no longer an active member (or the invitation predates the log),
+ * the club's owners. Best-effort: the decline has already happened, so a failed notice never undoes or errors it.
+ */
+async function tellClubMemberInviteDeclined(
+  member: { role: string; organization_id: string; display_name: string | null; organizations: unknown },
+  user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> | null },
+): Promise<void> {
+  try {
+    const orgId = member.organization_id;
+    const sender = await invitationSender(orgId, user.id);
+    const { data: active } = await supabaseAdmin
+      .from('organization_members')
+      .select('user_id, role')
+      .eq('organization_id', orgId)
+      .eq('status', 'active');
+    const activeRows = (active ?? []) as { user_id: string; role: string }[];
+    const recipients = sender.userId && activeRows.some(r => r.user_id === sender.userId)
+      ? [sender.userId]
+      : activeRows.filter(r => r.role === 'owner').map(r => r.user_id);
+    const ids = recipients.filter(id => id !== user.id);
+    if (ids.length === 0) return;
+    const who = member.display_name?.trim() || accountNameOf(user.user_metadata) || user.email || 'Someone';
+    const slug = orgSlugFromRelation(member.organizations);
+    await notify({
+      orgId,
+      eventType: 'member_invite_declined',
+      title: `${who} declined your invitation`,
+      body: `They won’t join as ${roleLabel(member.role)}.`,
+      userIds: ids,
+      excludeUserIds: [user.id],
+      link: slug ? `/${slug}/admin/org/members` : undefined,
+    });
+  } catch { /* the notice is best-effort */ }
+}
 
 function orgSlugFromRelation(rel: unknown): string | null {
   if (Array.isArray(rel)) return (rel[0] as { slug?: string } | undefined)?.slug ?? null;
@@ -82,6 +125,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     if (error) {
       return captureAndJson(error, { error: error.message }, 500);
     }
+    await tellClubMemberInviteDeclined(member, user);
     return NextResponse.json({ ok: true, declined: true });
   }
 

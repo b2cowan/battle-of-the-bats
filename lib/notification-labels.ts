@@ -49,6 +49,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   club_coach_listed:                 'Your club lists you as a coach',
   club_coach_joined:                 'Coach joined from your invitation',
   club_coach_declined:               'Coach declined your invitation',
+  member_invite_declined:            'Someone declined your invitation',
   team_move_requested:               'A request to bring a team into a club',
   team_move_answered:                'A team move answered',
   // Club Tier Stage 3a — money between a club and its teams (mig 315). Words are /marketing's drafts.
@@ -143,6 +144,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_coach_listed:                 'Your club chose to list you under Coaches on a team’s public page.',
   club_coach_joined:                 'A coach you invited from a team’s Coaches page accepted and joined the team.',
   club_coach_declined:               'A coach you invited from a team’s Coaches page declined the invitation.',
+  member_invite_declined:            'A person you invited to help run the club declined the invitation.',
   team_move_requested:               'A club asked to bring your own team in, or a coach asked to bring theirs into your club. Nothing moves until you say yes.',
   team_move_answered:                'A team you asked to bring into a club moved, or the other side declined.',
   club_money_received:               'Your club recorded a payment from your team, or confirmed one you sent.',
@@ -328,6 +330,7 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'club_coach_listed',
   'club_coach_joined',
   'club_coach_declined',
+  'member_invite_declined',
   // Rare, and it waits on the recipient's yes (or reports the answer to theirs).
   'team_move_requested',
   'team_move_answered',
@@ -440,6 +443,7 @@ export const NOTIFICATION_CATEGORY = {
   club_coach_listed:                  'know',
   club_coach_joined:                  'know',
   club_coach_declined:                'know',
+  member_invite_declined:             'know',
   // A team move: the request is a decision to make; the answer is news.
   team_move_requested:                'act',
   team_move_answered:                 'know',

@@ -45,6 +45,7 @@ export const EVENT_ICONS: Record<string, string> = {
   club_coach_listed:                 '🧑‍🏫',
   club_coach_joined:                 '🧑‍🏫',
   club_coach_declined:               '✉️',
+  member_invite_declined:            '✉️',
   team_move_requested:               '🤝',
   team_move_answered:                '🏟️',
   club_money_received:               '💵',

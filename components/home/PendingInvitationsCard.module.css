@@ -141,3 +141,8 @@
   color: var(--home-live);
   margin-bottom: 0.7rem;
 }
+
+/* The Decline question's sentence (the shared window draws the rest). */
+.dialogText {
+  margin: 0;
+}
