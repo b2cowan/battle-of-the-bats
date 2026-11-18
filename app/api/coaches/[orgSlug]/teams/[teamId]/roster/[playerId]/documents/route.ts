@@ -17,13 +17,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
+import { checkDocumentUpload, DOCUMENT_TYPE_REFUSAL } from '@/lib/document-upload';
 
-const ALLOWED_TYPES = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
 const MAX_SIZE = 10 * 1024 * 1024;
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
@@ -124,9 +119,6 @@ export const POST = withObservability(async (req: Request,
   if (!documentType || !DOCUMENT_TYPE_ORDER.includes(documentType as RepDocumentType)) {
     return NextResponse.json({ error: 'Invalid documentType' }, { status: 400 });
   }
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: 'File type not allowed. Use PDF, JPG, PNG, or DOCX.' }, { status: 400 });
-  }
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: 'File exceeds 10 MB limit' }, { status: 400 });
   }
@@ -139,12 +131,17 @@ export const POST = withObservability(async (req: Request,
     if (t && t.isActive && t.documentType === documentType) answersTemplateId = t.id;
   }
 
+  // Trust close-out 6: the type is what the bytes are, never the browser's claim; the key carries a cleaned name.
   const bytes = await file.arrayBuffer();
-  const storagePath = `${ctx.org.id}/teams/${teamId}/players/${playerId}/${crypto.randomUUID()}-${file.name}`;
+  const upload = checkDocumentUpload(bytes, file.name);
+  if (!upload) {
+    return NextResponse.json({ error: DOCUMENT_TYPE_REFUSAL }, { status: 400 });
+  }
+  const storagePath = `${ctx.org.id}/teams/${teamId}/players/${playerId}/${crypto.randomUUID()}-${upload.storedName}`;
 
   const { error: storageError } = await supabaseAdmin.storage
     .from('rep-team-documents')
-    .upload(storagePath, bytes, { contentType: file.type });
+    .upload(storagePath, bytes, { contentType: upload.contentType });
 
   if (storageError) {
     return NextResponse.json({ error: 'Storage upload failed' }, { status: 500 });
@@ -156,7 +153,7 @@ export const POST = withObservability(async (req: Request,
     orgId: player.orgId,
     documentType: documentType as RepDocumentType,
     storagePath,
-    fileName: file.name,
+    fileName: upload.displayName,
     fileSize: file.size,
     templateId: answersTemplateId,
     uploadedBy: ctx.user.id,
