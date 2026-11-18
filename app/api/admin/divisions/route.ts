@@ -108,7 +108,10 @@ export const GET = withObservability(async (req: Request) => {
   if (!ctx) return unauthorized();
   // The tournaments area, or the gate: the gate's board (CheckInBoard, on /check-in) lists teams by division, and a gate
   // volunteer holds no tournaments door. A capability-less coach row is refused (sweep 3 finding 3, 2026-11-10).
-  if (!canOpenModule(ctx, ctx.org, 'module_tournaments') && !canGate(ctx.role, ctx.capabilities)) return forbidden();
+  const tournamentsArea = canOpenModule(ctx, ctx.org, 'module_tournaments');
+  if (!tournamentsArea && !canGate(ctx.role, ctx.capabilities)) return forbidden();
+  // Board Ready trust close-out 5 (owner 2026-11-18): a gate-only volunteer is not sent the fees. The board reads id and name.
+  const fee = <T,>(v: T | null | undefined): T | null => (tournamentsArea ? v ?? null : null);
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return Response.json([]);
@@ -169,10 +172,10 @@ export const GET = withObservability(async (req: Request) => {
     playoffConfig: group.playoff_config,
     scheduleVisibility: group.schedule_visibility,
     playoffsAnnouncedAt: group.playoffs_announced_at ?? null,
-    depositAmount: group.deposit_amount ?? null,
-    depositDueDate: group.deposit_due_date ?? null,
-    totalFeeAmount: group.total_fee_amount ?? null,
-    totalFeeDueDate: group.total_fee_due_date ?? null,
+    depositAmount: fee(group.deposit_amount),
+    depositDueDate: fee(group.deposit_due_date),
+    totalFeeAmount: fee(group.total_fee_amount),
+    totalFeeDueDate: fee(group.total_fee_due_date),
     settings: (group.settings && typeof group.settings === 'object') ? group.settings : {},
     acceptedCount: acceptedByDivision[group.id] ?? 0,
     ...(withCounts ? {

@@ -209,8 +209,19 @@ describe('the named reads ask the door their screen implies (sweep 3 findings 1 
   });
   it('the divisions: the tournaments area, or the gate (the check-in board lists teams by division)', () => {
     const get = handler(readCode('app/api/admin/divisions/route.ts'), 'GET');
-    assert.ok(at(get, "if (!canOpenModule(ctx, ctx.org, 'module_tournaments') && !canGate(ctx.role, ctx.capabilities)) return forbidden();") < at(get, ".from('divisions')"));
+    assert.ok(at(get, "const tournamentsArea = canOpenModule(ctx, ctx.org, 'module_tournaments');") < at(get, ".from('divisions')"));
+    assert.ok(at(get, 'if (!tournamentsArea && !canGate(ctx.role, ctx.capabilities)) return forbidden();') < at(get, ".from('divisions')"));
     assert.match(readCode('components/admin/CheckInBoard.tsx'), /\/api\/admin\/divisions/);
+  });
+  it('the divisions: a gate-only volunteer is sent no fees (Board Ready trust close-out 5)', () => {
+    const get = handler(readCode('app/api/admin/divisions/route.ts'), 'GET');
+    assert.ok(get.includes('const fee = <T,>(v: T | null | undefined): T | null => (tournamentsArea ? v ?? null : null);'));
+    for (const f of ['depositAmount: fee(group.deposit_amount)', 'depositDueDate: fee(group.deposit_due_date)',
+      'totalFeeAmount: fee(group.total_fee_amount)', 'totalFeeDueDate: fee(group.total_fee_due_date)']) {
+      assert.ok(get.includes(f), f);
+    }
+    // The board itself reads only the id and name.
+    assert.doesNotMatch(readCode('components/admin/CheckInBoard.tsx'), /depositAmount|totalFeeAmount/);
   });
   for (const r of ['games', 'pool-slots', 'schedule-facility-lanes', 'venues', 'tournament-activity', 'tournament-branding']) {
     it(`${r}: the tournaments area, before anything is read`, () => {
