@@ -1,38 +1,53 @@
+/* An invitation on Home — drawn on Home's own recipe (2026-11-18, owner: "the font and shape of this does not look
+   like our product standard"). It was the last square HUD card on Home: an olive-tinted panel with a white strip
+   inside it, square mono buttons, a lime Accept. Now it is the claim card's recipe (FollowingList.module.css .claim):
+   one plain white rounded card, the section kicker, pill buttons.
+   ⚖ Accept is the INK chip, not lime (owner ruling 2026-07-30, the note on .nudgePrimary in ScoresClient.module.css):
+   ink = the main action on a screen you are already using; lime = the brand/conversion moment. And no tinted panel —
+   the same ruling took the claim card off its olive tint because the primary button sat on its own colour family.
+   Only Home renders this card, inside its .warm surface, so every value is a --home-* token: the Dark preference
+   remaps those tokens itself, and the old per-theme override block is gone with the literals it was patching. */
 .wrap {
   margin-bottom: 1.25rem;
-  padding: 1.1rem 1.15rem 1.2rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  background: rgba(var(--logic-lime-rgb), 0.05);
+  padding: 1rem 1.1rem 1.1rem;
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
 }
 
+/* The section kicker ("Workspaces", "Following"), with its envelope. */
 .heading {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
+  font-size: 0.66rem;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--logic-lime);
-  margin-bottom: 0.85rem;
+  color: var(--home-dim);
+  margin-bottom: 0.75rem;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
 }
 
+/* One invitation per row inside the one card; a hairline between two, never a card within a card. */
 .item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem 1rem;
   flex-wrap: wrap;
-  padding: 0.85rem 0.95rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.item + .item {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--home-line);
 }
 
 .info {
@@ -41,120 +56,88 @@
 
 /* Specimen 6: who is asking, when, and what the role opens — a sentence, not a code. */
 .headline {
-  font-size: 1rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.94rem;
   font-weight: 700;
   line-height: 1.3;
-  color: var(--fl-text);
+  color: var(--home-ink);
   overflow-wrap: anywhere;
 }
 
 .from {
-  margin-top: 0.3rem;
+  margin-top: 0.25rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.78rem;
-  color: var(--data-gray);
+  color: var(--home-dim);
 }
 
 .from strong {
-  color: var(--fl-text);
+  color: var(--home-ink-soft);
   font-weight: 700;
 }
 
 .opens {
-  margin-top: 0.45rem;
+  margin-top: 0.4rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.82rem;
-  line-height: 1.45;
-  color: var(--data-gray);
+  line-height: 1.5;
+  color: var(--home-dim);
 }
 
 .actions {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.6rem;
   flex-shrink: 0;
 }
 
+/* The claim card's .btn recipe. */
 .accept,
 .decline {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
+  padding: 0.6rem 1.05rem;
+  border-radius: var(--home-radius-pill);
   font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  padding: 0.5rem 0.8rem;
-  border-radius: 0;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
 .accept {
-  color: var(--pitch-black);
-  background: var(--logic-lime);
-  border: 1px solid var(--logic-lime);
+  background: var(--home-ink);
+  color: var(--home-paper);
 }
 
+/* Not brightness() — on a near-black fill that barely moves. Step to the softer ink instead. */
 .accept:hover:not(:disabled) {
-  background: #c7ed6f; /* token-exempt: brighter lime hover tint, no matching central token */
+  background: var(--home-ink-soft);
 }
 
 .decline {
-  color: var(--data-gray);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-color: var(--home-line-strong);
+  color: var(--home-ink);
 }
 
 .decline:hover:not(:disabled) {
-  color: var(--fl-text);
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--home-ink);
 }
 
 .accept:disabled,
 .decline:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+  opacity: 0.6;
+  cursor: default;
 }
 
 .error {
-  font-size: 0.75rem;
-  color: #fca5a5; /* token-exempt: consumer error-text tint; --pa-neg is console-only, not a semantic match */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.8rem;
+  color: var(--home-live);
   margin-bottom: 0.7rem;
 }
-
-/* ── Warm theme (pref-gated) ──────────────────────────────────────────────────
-   This card renders ONLY inside the consumer Home tab's warmTab surface, but its
-   rules above are dark-shell literals/tokens the warm surface never remaps — on
-   the warm paper the org name (near-white ink) was literally invisible. Same
-   additive-gate pattern as the auth block: nothing here fires under an explicit
-   Dark preference, so the dark rendering stays byte-identical. The lime accept
-   CTA + near-black ink is legible on both grounds and is left alone (E3 fill). */
-:global(html[data-user-theme="warm"]) .wrap {
-  border-color: rgba(var(--home-olive-rgb), 0.35);
-  background: var(--home-olive-soft);
-}
-
-:global(html[data-user-theme="warm"]) .heading { color: var(--home-olive); }
-
-:global(html[data-user-theme="warm"]) .item {
-  background: var(--home-card);
-  border-color: var(--home-line);
-}
-
-:global(html[data-user-theme="warm"]) .headline { color: var(--home-ink); }
-
-:global(html[data-user-theme="warm"]) .from,
-:global(html[data-user-theme="warm"]) .opens { color: var(--home-dim); }
-
-:global(html[data-user-theme="warm"]) .from strong { color: var(--home-ink-soft); }
-
-:global(html[data-user-theme="warm"]) .decline {
-  color: var(--home-dim);
-  border-color: var(--home-line-strong);
-}
-
-:global(html[data-user-theme="warm"]) .decline:hover:not(:disabled) {
-  color: var(--home-ink);
-  border-color: var(--home-dim);
-}
-
-:global(html[data-user-theme="warm"]) .error { color: var(--home-live); }

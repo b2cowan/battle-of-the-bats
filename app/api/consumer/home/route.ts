@@ -151,6 +151,13 @@ export const GET = withObservability(async () => {
       orgSlug: i.orgSlug,
       orgName: i.orgName,
       role: i.role,
+      // Specimen 6's lines (who is asking, when, what the role opens). Looked up above since 2026-09-26 but dropped
+      // here until 2026-11-18, so Home's card never showed them; the invitations list always passed them through.
+      roleLabel: i.roleLabel,
+      roleOpens: i.roleOpens,
+      inviterName: i.inviterName,
+      inviterRole: i.inviterRole,
+      invitedAt: i.invitedAt,
     })),
     coachInvites,
     workspaces,

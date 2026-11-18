@@ -158,6 +158,12 @@ export interface ConsumerHomePendingInvite {
   orgSlug: string | null;
   orgName: string | null;
   role: string;
+  /** Specimen 6: the role's name, what it opens, and who sent it when (optional — an older payload omits them). */
+  roleLabel?: string;
+  roleOpens?: string;
+  inviterName?: string | null;
+  inviterRole?: string | null;
+  invitedAt?: string | null;
 }
 
 /** A club's coach invitation waiting for this account (Club Tier Stage 2, specimen 6 · 2b). */
