@@ -1,0 +1,394 @@
+<title>Trust Fixes 1–11</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.calls { display: grid; gap: 14px; }
+.call { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.call:first-of-type { border-top: 0; padding-top: 0; }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready · trust close-out fixes 1–11 · Owner QA Ledger §539</span>
+    <h1>Who sees what, after the trust fixes</h1>
+    <p class="lead">Eleven small fixes from the third access review, ruled “as recommended” on Nov 18. Four of them change what a person sees or does, and those are what you walk here: who reads permits and the Venue library, a team-group limit holding on a permit, rules editing that saves each point once, and a coach’s document upload that checks the file. The other seven change nothing on screen and are proved below.</p>
+    <p class="lead">Written Nov 18, 2026 against the dev site. Every club, team and child here is test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Password</dt><dd><code>UATPassword2026!</code> for every account below</dd>
+      <dt>UAT Rep Club</dt><dd>Owner <code>uat-club-owner@uat-rep-club.local</code><br>Treasurer <code>uat-club-treasurer@uat-rep-club.local</code><br>League admin <code>uat-club-league-admin@uat-rep-club.local</code><br>Registrar <code>uat-club-registrar@uat-rep-club.local</code><br>Club home: <code>localhost:3000/uat-rep-club/admin</code></dd>
+      <dt>Coach (walk 4)</dt><dd><code>uat-coach@uat-test-org.local</code>, head coach of <b>UAT Test Team</b>: <code>localhost:3000/uat-test-org/coaches</code></dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. A private window per account saves signing out and in.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>Walk 4 needs two files on your computer:</b> any real PDF, and a fake one. To make the fake: open Notepad, type <code>hello</code>, Save as <code>not-a-pdf.pdf</code> with “Save as type” set to All files.</li>
+      <li>The walks can go in any order. Each one puts back what it adds (its last steps).</li>
+      <li>The dev server was restarted on Nov 18 for this work. If a page shows an error on every screen, ask me to restart it.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li><b>69 checks against dev, all passing</b>, each signed in as the real seat. In short:</li>
+      <li><b>1 · The “See it live” accounts</b> are turned away at every door that creates something real: a club, a league, a coach team, claiming a tournament entry, and a signed-in tournament sign-up. A real account is not. A build check fails if a door loses it. (You can’t reach these doors from inside the sandbox without leaving it, so this is not walked.)</li>
+      <li><b>2 · Behind the screens</b>: staff, a scorekeeper, a registrar and a coach are refused every permit and library read, and the permit file. The plain venue picker still answers everyone. Staff given Run tournaments read again.</li>
+      <li><b>3 · Confirm “same player”</b> is refused for an assistant without roster privacy, before any record is touched. “Not the same player” still works for them, and the head coach can confirm. The card hides Confirm whenever the details are hidden (build check). Dev has no returning-player pair on a tryout board to walk, see call C2.</li>
+      <li><b>4 · The club’s billing facts</b> (amount, billing period, renewal date, the payment processor’s ids) reach the owner’s and admins’ browsers only. The treasurer, league admin, registrar and a club coach get none, neither in the screen’s data nor in the page itself. Nothing on any screen changes.</li>
+      <li><b>5 · The check-in board</b> is no longer sent division fees. The owner and tournament staff still get them. The board looks the same.</li>
+      <li><b>6 · Uploads</b>: a web page posing as a PDF is refused on all three upload doors (coach player documents, club player documents, club templates). A real PDF with an odd name is kept, stored as a PDF under a cleaned name, and shown under the name you gave it.</li>
+      <li><b>7 · A mistyped week</b> in the house-league schedule’s data shows the current week, not an error. No screen sends a bad week, so there is nothing to walk.</li>
+      <li><b>8 · The retry.</b> A save sent twice (what a timeout and a retry do) leaves the new point once. Another section’s point is refused with nothing changed. Walk 3 checks that ordinary editing still works.</li>
+      <li><b>9 · “File attached”</b> is a backstop: today everyone who reads permits can open the file, so nobody sees it. An owner still sees the file’s name and size.</li>
+      <li><b>10 · Behind walk 2</b>: a limited member is refused a new permit for a team outside their groups. They can’t pick one on screen, so only the server shows this.</li>
+      <li><b>11 · “Confirm your email first.”</b> A signed-in parent whose email isn’t confirmed is told to confirm it, instead of “That didn’t go through.” It is almost impossible to reach on dev, so it is a build check.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="calls-h">
+    <h2 id="calls-h">Your calls (not counted in the walk)</h2>
+    <p class="lead">Tick the option you choose. Each comes back in the paste-back.</p>
+    <div class="calls" id="calls"></div>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks and calls)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+<script>
+(function () {
+  "use strict";
+  var KEY = "board-ready-trust-close-walk-v1";
+  var PAGE = "Board Ready · trust close-out fixes 1–11 · Owner QA Ledger §539";
+  var WALKS = [
+  {
+   "id": "T1",
+   "title": "Permits and the Venue library, seat by seat",
+   "job": "UAT Rep Club · owner, treasurer, league admin, registrar · computer",
+   "forText": "Permits and the Venue library are now read only by the people who schedule, run tournaments or handle money: the owner, admins, a league admin, anyone given Run tournaments, and anyone with Accounting. Staff, scorekeepers, registrars and coaches lose them. Their menus drop the rows, and typing the address sends them somewhere useful instead of a page that won’t load.",
+   "passes": "The owner, treasurer and league admin all see Permits and the Venue library. The registrar sees neither, keeps Organization with The board, and is sent away from both addresses.",
+   "notIn": "Staff and a scorekeeper (proved behind the screens; UAT Rep Club has neither seat). The permit file (no permit on dev has one).",
+   "who": "Four accounts, in order: owner, treasurer, league admin, registrar (card at the top).",
+   "where": "localhost:3000/uat-rep-club/admin",
+   "steps": [
+    { "stop": true, "who": "Owner", "d": "Sign in as the owner and open <code>localhost:3000/uat-rep-club/admin</code>.", "s": "The sidebar starts Overview · Calendar · <b>Permits</b> · Schedules." },
+    { "who": "Owner", "d": "Click <b>Permits</b>.", "s": "The Permits page lists the club’s three permits." },
+    { "who": "Owner", "d": "Click <b>Organization</b> in the sidebar.", "s": "Its tabs include <b>Venue library</b>." },
+    { "who": "Treasurer", "d": "Sign in as the treasurer and click <b>Permits</b> in the sidebar.", "s": "The same three permits. (The treasurer holds the club’s money, so they keep the list.)" },
+    { "who": "League admin", "d": "Sign in as the league admin and click <b>Permits</b> in the sidebar.", "s": "The same three permits. (A league admin schedules house league.)" },
+    { "who": "Registrar", "d": "Sign in as the registrar and read the sidebar.", "s": "No <b>Permits</b> row anywhere. Overview and Calendar are still there." },
+    { "who": "Registrar", "d": "Click <b>Organization</b>.", "s": "It opens <b>The board</b> (names and roles), with no Venue library tab." },
+    { "who": "Registrar", "d": "Type <code>localhost:3000/uat-rep-club/admin/permits</code> in the address bar.", "s": "You land on the club’s Overview, not a Permits page that fails to load." },
+    { "who": "Registrar", "d": "Type <code>localhost:3000/uat-rep-club/admin/org/venues</code> in the address bar.", "s": "You land on Organization’s <b>The board</b>." }
+   ]
+  },
+  {
+   "id": "T2",
+   "title": "A team-group limit holds on a permit",
+   "job": "UAT Rep Club · owner and league admin · computer",
+   "forText": "A member limited to some team groups can hold a permit only for a team in those groups. The save now checks this; before, it checked only that the team was the club’s. The league admin is limited to the Senior group for the walk, then put back.",
+   "passes": "Limited to Senior, the league admin sees only Senior teams, saves a Senior permit, and is refused when changing a permit held for a Junior team. Everything is put back.",
+   "notIn": "A brand-new permit for a Junior team (the screen never offers one; proved behind the screens). A permit held for the whole club (call C3).",
+   "who": "Owner and league admin (card at the top). Two private windows make this quick.",
+   "where": "Owner: localhost:3000/uat-rep-club/admin/org/members · League admin: localhost:3000/uat-rep-club/admin/permits",
+   "steps": [
+    { "stop": true, "who": "Owner · set up", "d": "Organization › Members › the league admin’s row (Manage). In “What … can open”, set <b>Rep teams</b> to <b>On</b> and press <b>Save</b>.", "s": "The window closes and the page says the league admin’s changes are saved." },
+    { "who": "Owner · set up", "d": "Open the league admin again, open the <b>Rep teams</b> fold, tick <b>Senior</b> only, and press <b>Save</b>.", "s": "Before saving, the fold reads “Only 1 group.” After, the page says the changes are saved." },
+    { "who": "League admin", "d": "On Permits, press <b>Add permit</b>, set <b>For</b> to <b>One team</b>, and open the <b>Team</b> list.", "s": "Only the Senior teams: 14U AA, 15U AA, 15U AAA, 16U AA." },
+    { "who": "League admin", "d": "Fill it in. Name <code>Walk Senior permit</code>, Team <b>15U AA</b>, From Apr 1, 2027, To Aug 31, 2027, one block at <b>Lions Park</b>, Tuesday, 6:00 p.m. to 8:00 p.m. Then press <b>Add permit</b>.", "s": "The window closes and <b>Walk Senior permit</b> is in the list." },
+    { "who": "Owner", "d": "On Permits, add <code>Walk Junior permit</code>: For <b>One team</b>, Team <b>13U AAA</b>, the same dates, one block at <b>Kinsmen Park</b>, Wednesday, 6:00 p.m. to 8:00 p.m.", "s": "<b>Walk Junior permit</b> is in the list. (The owner has no group limit.)" },
+    { "who": "League admin", "d": "Reload Permits. Open <b>Walk Junior permit</b>, press the pencil, and add <code> test</code> to the end of its Name.", "s": "The save note at the bottom right reads “That team isn’t in your team groups. Ask your club’s owner or an admin to hold a permit for it. · Retry”." },
+    { "who": "League admin", "d": "Press the window’s × twice (the first press stops on the unsaved change), then reopen Walk Junior permit.", "s": "Its name is still <b>Walk Junior permit</b>, with no “test”." },
+    { "who": "Owner · put back", "d": "Delete both walk permits: open each, press <b>Delete this permit</b>, then <b>Delete</b>.", "s": "The list is back to the club’s three permits." },
+    { "who": "Owner · put back", "d": "Members › the league admin: open the Rep teams fold, untick Senior, press <b>Save</b>. Open them again, set <b>Rep teams</b> to <b>Off</b>, press <b>Save</b>.", "s": "The league admin’s Rep teams reads Off again." }
+   ]
+  },
+  {
+   "id": "T3",
+   "title": "Rules save each point once",
+   "job": "UAT Rep Club · owner · computer",
+   "forText": "A rules section now saves in one step, and each new point is named before it is sent, so a save retried after a timeout updates the point instead of adding it twice. You can’t cause a timeout by hand (that was proved behind the screens); this walk checks that ordinary editing still saves, and that the public page shows each point once.",
+   "passes": "Adding, saving and removing points behave as before; the public Rules page shows each point exactly once; the section is deleted at the end.",
+   "notIn": "The retry itself (proved behind the screens). Creating many sections (unchanged).",
+   "who": "Owner (card at the top).",
+   "where": "Tournaments › UAT Rep Club Invitational 2026 › Rules &amp; resources · Public: localhost:3000/uat-rep-club/uat-rep-club-invitational-2026/rules",
+   "steps": [
+    { "stop": true, "d": "Open Tournaments, pick <b>UAT Rep Club Invitational 2026</b>, then <b>Rules &amp; resources</b>.", "s": "The Rules list (“As families read them on the public site”) has no sections, and an <b>Add a section</b> button." },
+    { "d": "Press <b>Add a section</b>. Section title <code>Walk rules</code>, first point <code>Arrive 30 minutes early.</code>, then <b>Add section</b>.", "s": "A row <b>Walk rules</b> with “1 point · every division” under it." },
+    { "d": "Open Walk rules, press the pencil, press <b>Add a point</b>, and type <code>Bring your own helmet.</code>", "s": "The save note goes Saving… then “✓ Saved”." },
+    { "d": "Press ✓ (Done).", "s": "Points lists “Arrive 30 minutes early.” then “Bring your own helmet.”, each once." },
+    { "d": "In a new tab, open <code>localhost:3000/uat-rep-club/uat-rep-club-invitational-2026/rules</code>.", "s": "Walk rules shows the same two points, each once." },
+    { "d": "Back in the admin, press the pencil and remove point 1 (its ×).", "s": "“✓ Saved”. Only “Bring your own helmet.” is left." },
+    { "d": "Reload the public tab.", "s": "Walk rules shows one point, “Bring your own helmet.”" },
+    { "d": "Put back: press ✓, then <b>Delete this section</b>, then <b>Delete section</b>.", "s": "The Rules list is empty again, and the public tab shows no Walk rules after a reload." }
+   ]
+  },
+  {
+   "id": "T4",
+   "title": "A coach’s upload is checked for what it really is",
+   "job": "UAT Test Org · head coach · computer",
+   "forText": "A player document is now checked by its contents, not by its name or what the browser says it is, and stored under a cleaned name. A real PDF goes in as before. A file that only pretends to be one is refused in plain words.",
+   "passes": "The real PDF is added under its own name; the fake is refused with the message; the list is back as it was at the end.",
+   "notIn": "The club’s own player documents and templates (proved behind the screens; same check).",
+   "who": "uat-coach@uat-test-org.local",
+   "where": "localhost:3000/uat-test-org/coaches › UAT Test Team › Roster › Indigo Test › Family &amp; paperwork",
+   "steps": [
+    { "stop": true, "d": "Open UAT Test Team’s <b>Roster</b>, click <b>Indigo Test</b>, then the <b>Family &amp; paperwork</b> tab.", "s": "A <b>Documents</b> section with an <b>Upload</b> button. Note what it lists now." },
+    { "d": "Press <b>Upload</b>, set Document type to <b>Other</b>, choose your real PDF, and press <b>Upload</b>.", "s": "The window closes and a new row shows your file’s name, Other, this season, its size and today." },
+    { "d": "Press <b>Upload</b> again, set the file picker to All files, choose <code>not-a-pdf.pdf</code>, and press <b>Upload</b>.", "s": "In the window: “File type not allowed. Use PDF, JPG, PNG, or DOCX.” Nothing is added." },
+    { "d": "Put back: press <b>Cancel</b>, then the bin on the PDF you added, then <b>Delete</b>.", "s": "The list is as it was in step 1." }
+   ]
+  }
+ ];
+  var CALLS = [
+   { "id": "C1", "q": "On the returning-player card, an assistant without roster privacy can still press “Not the same player” (it keeps two children’s records apart and joins nothing). Keep it?", "o": ["Keep as built (recommended)", "Hide it from them too"] },
+   { "id": "C2", "q": "Dev has no returning-player pair on a tryout board, so the card’s missing Confirm is a build check, not a walk step. Walk it too?", "o": ["The proof is enough (recommended)", "Seed a pair on dev and add a walk"] },
+   { "id": "C3", "q": "A member limited to some team groups can still save a permit held for the whole club. Your ruling covered teams only.", "o": ["Leave it (recommended: a club-wide permit names no team)", "Refuse it too (a small fix)"] },
+   { "id": "C4", "q": "A registrar’s Organization now holds only The board (the Venue library was their other tab).", "o": ["Fine as built (recommended)", "Something else (say what in the notes of walk 1)"] }
+  ];
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "T1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.calls = got.calls || {}; state.open = got.open || "T1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  var callsHost = document.getElementById("calls");
+  CALLS.forEach(function (c) {
+    var box = el("div", "call");
+    box.appendChild(el("p", null, "<b>" + c.id + ".</b> " + c.q));
+    var opts = el("div", "opts");
+    c.o.forEach(function (o, oi) {
+      var lab = el("label"); var cb = el("input"); cb.type = "checkbox"; cb.id = "call-" + c.id + "-" + oi;
+      cb.checked = state.calls[c.id] === oi;
+      cb.addEventListener("change", function () {
+        state.calls[c.id] = cb.checked ? oi : null; save();
+        c.o.forEach(function (_, k) { var other = document.getElementById("call-" + c.id + "-" + k); if (other && k !== oi) other.checked = false; });
+        refresh();
+      });
+      lab.appendChild(cb); lab.appendChild(el("span", null, o)); opts.appendChild(lab);
+    });
+    box.appendChild(opts);
+    callsHost.appendChild(box);
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", [s.stop ? "Stop check" : "", s.who || ""].filter(Boolean).join(" · ")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function callsSummary() {
+    return ["Calls:"].concat(CALLS.map(function (c) {
+      var pick = state.calls[c.id];
+      return "  " + c.id + " " + (pick == null ? "NOT ANSWERED" : c.o[pick]);
+    })).join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).concat(["", callsSummary()]).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick, note and call"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "T1" }; save(); render();
+    CALLS.forEach(function (c) { c.o.forEach(function (_, k) { var x = document.getElementById("call-" + c.id + "-" + k); if (x) x.checked = false; }); });
+  });
+  render();
+})();
+</script>

@@ -3,6 +3,85 @@
 > Plan of record: `BOARD_READY_PLAN.md` §5 Stage 0a. Prompt: `BOARD_READY_W1_ACCESS_SWEEP_PROMPT.md`. Earlier sweeps:
 > `TEAM_UPDATE_ALLOWLIST_FIX_PROMPT.md` § Second sweep (2026-10-16) and the Club Tier Stage 0 sweep.
 > **This session found and reported. Nothing was fixed.** Each fix waits for the owner's go and lands as its own commit.
+>
+> **State as of 2026-11-16 (a census of this report against the code on `dev`, read-only):** fixes A–E are committed
+> (2026-11-11) and in `release/2026-11-15`. Of 48 items: **28 fixed and confirmed, 9 left open on purpose (owner
+> calls), 9 open with no ruling (all small), 2 answerable only on production.** Two status lines below are stale and are
+> left as written: "Returning-player scan … still open (finding 4)" (fixed, `d8a6bb4c0`), and "a See it live session
+> can also create real clubs, leagues and teams" (today only a coach's team; club and league creation are turned away
+> by the one-club rule, which lets a request through if its own read fails). The 18 not-fixed items are the owner's
+> calls in `BOARD_READY_TRUST_CLOSE_CHECKLIST.html` (https://claude.ai/artifact/2KZrC64ucjBpWCgMkfPCej), numbered 1–18
+> there; the rulings are recorded here when they come back.
+>
+> **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**
+> - **Fix (small, one commit each, awaiting the owner's go to build):** 1 refuse the demo account at all three create doors + a
+>   build check · 2 permits and venue library read only by people who schedule, run tournaments or handle money · 3 "same
+>   player" Confirm only for a coach who can see roster details · 4 billing facts sent only to owner and admins · 5 fee totals
+>   not sent to check-in volunteers · 6 clean the name and check the type on upload · 7 a bad week in the address falls back
+>   to the current week · 8 rules save as one database step · 9 permit file name and size hidden from readers who can't open
+>   it ("File attached") · 10 permit save checks the member's own team groups · 11 "confirm your email first" message.
+> - **Fix (larger):** 12 a "Send a new link" button for a team's pay link (**its own short drawing session first**) · 13 an
+>   existing account is invited to accept, not attached on the spot (medium build) · 14 rules, files and links lock with a
+>   completed event.
+> - **Accepted as designed, reason on record:** 15 a coach's Remove ends the parent's link on every team (the window says
+>   so) · 16 staff who can open Communication see recipients (the screen's own rule) · 17 the shared anonymous-feedback cap
+>   of 40 a day (for now) · 18 sign-up names the club on a pending invitation, never the role (decided July, on purpose).
+> - **Checks:** 19 "yes, run the read" of old link rows on production (**RUN 2026-11-18, read-only: 3 link rows in all, 0 with a non-web address, 0 script-like; nothing to clean**) · 20 live
+>   Stripe, demo customers: **looked, none found (2026-11-18)**.
+> - **21** plan the small build "refuse a second caller for the same scheduled job and minute" **before the first live club**
+>   (a restored copy starts its jobs and calls the live site; Part C of the checklist does the by-hand step until then).
+> - **22** the public roadmap may say **"a full access review of who can see what, every finding resolved"** once the fixes
+>   above are live; until then it keeps "with its fixes live" (`PRODUCT_ROADMAP.md` §4 item 5).
+>
+> **Status, 13 (built 2026-11-18, dev; commit hash recorded on the queue's PROGRESS row):** an existing CONFIRMED account
+> is now invited (a pending row, `invited_email` left empty as the mark) and accepts or declines on Home; an unconfirmed one
+> gets the set-up invitation. Same chunk: demo and support addresses refused as invitees (one neutral answer); a demo
+> account refused at both accept doors; a member edit can't set a pending row's status; a yes from Home is to the role the
+> card showed; Cancel on a pending row sends no "removed" email and never deletes an account its owner already had.
+> Proof `.probe/existing-invite-prove.mjs` (dev, 34/34); guard `tests/unit/existing-account-invite-guard.test.ts`.
+> **Left, owner calls:** (a) a club's own COACH given a board role is still changed on the spot (asking first needs a
+> place for the pending role, a schema change); (b) a pending invitation never expires, holds a seat, and lands its
+> invitee on Home at every sign-in until they act; (c) the database's membership test (`is_org_member`,
+> `can_access_tournament`) ignores status, so a pending invitee's browser session can read the club's venue library and
+> its tournaments' team names (suspended members too: not new, now aimable at any existing account): one migration.
+> **Reported, not fixed:** "1,000 users" — the Members list is already fixed (`peopleSignInFacts`); the same page-1 read
+> is live in the program-year coaches list and the platform staff-delete tool (2–5 lines each). The support check fails
+> open on a database error and compares stored emails case-sensitively. The accept page without `?org` accepts the
+> oldest pending row. `scripts/backfill-invited-email.mjs` predates the empty-email mark.
+>
+> **BUILT 2026-11-18 — fixes 1–11 as ruled, one commit each on `dev` (2 and 9 share one):**
+> - 1 demo account refused at every create door + build check — `49c4c9934` 2026-11-18 (two doors beyond the ruling's
+>   three are guarded too, because both can create a coach team: claiming a tournament entry, and a signed-in sign-up).
+> - 2 + 9 permits and Venue library read only by those who schedule, run tournaments or handle money; "File attached" for a
+>   reader who can't open the file — `f781d0f0d` 2026-11-18.
+> - 3 "same player" Confirm only with roster privacy — `2137f6f12` 2026-11-18.
+> - 4 billing facts to owner and admins only — `140eed5a1` 2026-11-18.
+> - 5 no fees to a gate-only volunteer — `9ec647290` 2026-11-18.
+> - 6 upload type read from the file's bytes, stored name cleaned — `5258fae20` 2026-11-18.
+> - 7 a bad week falls back to the current week — `517f30e36` 2026-11-18.
+> - 8 a Rules section saves in one database step — `a3670460b` 2026-11-18. ⚠ **Production: apply migration 500 FIRST,
+>   then the code** (the new save calls `rule_section_save`; code first = every Rules section edit answers 500). Nothing
+>   else in fixes 1–11 touches the database.
+> - 10 a permit save checks the member's own team groups — `643c2dd05` 2026-11-18.
+> - 11 "confirm your email first" — `238bc70d3` 2026-11-18.
+> - Walk: `OWNER_QA_LEDGER.md` §539 (`BOARD_READY_TRUST_CLOSE_WALK.html`).
+>
+> **Two premises above were wrong, corrected at build:** (4) the billing facts never went through the role-summary hook;
+> they reached the browser through `/api/org-context` and the admin and Coaches Portal layouts, and those three are what
+> changed. (8) "one database step" alone could not stop the double point: a retried save whose new points carry no id is a
+> second insert however atomic it is. The screen now names each new point (its id) before its first save, and the one step
+> upserts by that id.
+>
+> **Found while building, not fixed (no ruling covers them; owner calls):**
+> - the club's player-document upload saves any `templateId` it is sent, unchecked (the coach route checks it);
+> - creating a Rules section (POST) is still two inserts with a compensating delete (a retried create could add a section);
+> - a member limited to some team groups can still save a permit held for the whole club (the ruling covered teams only);
+> - …and can still delete a permit, or replace its file, held for a team outside their groups (ruling 10 named saving,
+>   editing and renewing) — found by `/review` 2026-11-18;
+> - the house-league schedule's "outside the permit" warnings send the permit's days, hours and id to anyone who reads the
+>   season, a registrar included (ruling 2 named the Permits and Venue library screens) — `/review` 2026-11-18;
+> - the permit file upload still takes the browser's word for the file type and stores its raw name (ruling 6 named player
+>   documents and templates) — `/simplify` 2026-11-18.
 
 ## Scope and method
 

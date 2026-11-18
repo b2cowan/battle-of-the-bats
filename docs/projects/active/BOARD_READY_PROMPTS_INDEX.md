@@ -27,6 +27,10 @@ actually shipped. The order is set by dependency and rework risk, never by calen
 - **Fix E**, the inside-club seat reads: the two owner calls (the returning-player scan, the staff export), the scorekeeper
   feed, the permit file, group limits and the family-link revoke. **Waits for fix A to be committed** (neighbouring
   routes; it builds on A's census and guard). Sonnet. `BOARD_READY_W2_FIX_E_SEAT_READS_PROMPT.md`.
+- **Trust close-out fixes 1–11** (owner rulings 2026-11-18, as recommended): finished by
+  `BOARD_READY_TRUST_CLOSE_FINISH_PROMPT.md` (/simplify → /review → /docs → one commit per fix), **committed 2026-11-18**
+  (hashes in `BOARD_READY_ACCESS_SWEEP_3.md` under the RULED block); walk `OWNER_QA_LEDGER.md` §539. Fixes 12–14 and the
+  second-caller guard are separate work.
 
 If B and D both need a migration, each checks the latest migration number at commit time.
 
