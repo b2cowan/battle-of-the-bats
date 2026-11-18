@@ -136,10 +136,11 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
     fetchAllIn<{ id: string; source_entity_id: string }>(reversedTeams, (c, a, b) =>
       supabaseAdmin.from('accounting_entries').select('id, source_entity_id').eq('source_module', 'online_payment')
         .like('description', 'Returned by the bank · %').in('source_entity_id', c).order('id').range(a, b)),
-    // Stage 3 (ruling (d)): a stand-alone Stripe fee line matched and booked by the daily job.
-    fetchAllIn<{ stripe_txn_id: string; entry_id: string | null }>(standaloneTxnIds, (c, a, b) =>
-      supabaseAdmin.from('online_payment_stripe_fee_lines').select('stripe_txn_id, entry_id').eq('org_id', orgId)
-        .in('stripe_txn_id', c).not('entry_id', 'is', null).order('stripe_txn_id').range(a, b)),
+    // Stage 3 (ruling (d)): a stand-alone Stripe fee line the daily job recorded: booked (its line), or left unmatched with
+    // its reason (the bank check names it to record by hand). A line the job hasn't read yet has no row: neither.
+    fetchAllIn<{ stripe_txn_id: string; entry_id: string | null; unmatched_reason: string | null }>(standaloneTxnIds, (c, a, b) =>
+      supabaseAdmin.from('online_payment_stripe_fee_lines').select('stripe_txn_id, entry_id, unmatched_reason').eq('org_id', orgId)
+        .in('stripe_txn_id', c).order('stripe_txn_id').range(a, b)),
   ]);
   // A child's debit reversed after it landed: the child's `registration_returned` line (keyed by the registration).
   // The line is keyed by the registration alone, so it is tied to a payment only when exactly one REVERSED payment carried
@@ -166,7 +167,11 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
   const fees: Record<string, string[]> = {};
   for (const p of payments) { push(fees, p.id, p.dispute_fee_entry_id); push(fees, p.id, p.reversal_fee_entry_id); }
   const standalone: Record<string, string[]> = {};
-  for (const r of standaloneRows) push(standalone, r.stripe_txn_id, r.entry_id);
+  const unbooked: Record<string, string> = {};
+  for (const r of standaloneRows) {
+    push(standalone, r.stripe_txn_id, r.entry_id);
+    if (!r.entry_id && r.unmatched_reason) unbooked[r.stripe_txn_id] = r.unmatched_reason;
+  }
   const refunds: Record<string, string[]> = {};
   for (const r of refundRows) { push(refunds, r.stripe_refund_id, r.refund_entry_id); push(refunds, r.stripe_refund_id, r.processing_cost_entry_id); }
   const reversals: Record<string, string[]> = {};
@@ -178,7 +183,7 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
     const won = (d.won_back?.back ?? []).map(b => b.entryId).filter((x): x is string => !!x);
     disputes[d.stripe_dispute_id] = { amountCents: toCents(d.amount), feeCents: toCents(d.stripe_fee), lostEntryIds: lost, wonEntryIds: won };
   }
-  return { payments: pay, refunds, reversals, disputes, fees, standalone };
+  return { payments: pay, refunds, reversals, disputes, fees, standalone, unbooked };
 }
 
 /** Our rows behind every source a payout names, already named (who, what) for the screen. */
@@ -189,7 +194,9 @@ async function ourIndex(orgId: string, bts: readonly BtIn[], withEntries = false
   const charges = all.filter(i => i.startsWith('ch_') || i.startsWith('py_'));
   const refundIds = all.filter(i => i.startsWith('re_') || i.startsWith('pyr_'));
   const disputeIds = all.filter(i => i.startsWith('du_') || i.startsWith('dp_'));
-  if (!all.length) {
+  // A stand-alone Stripe fee has no source, so a payout of nothing else still needs the bank check's read of it.
+  const standaloneTxnIds = bts.filter(b => b.type === 'stripe_fee' && !b.sourceId).map(b => b.id);
+  if (!all.length && !(withEntries && standaloneTxnIds.length)) {
     const none = { payments: [], refunds: {}, disputes: {} };
     return withEntries ? { ...none, entries: { payments: {}, refunds: {}, reversals: {}, disputes: {} } } : none;
   }
@@ -252,7 +259,6 @@ async function ourIndex(orgId: string, bts: readonly BtIn[], withEntries = false
     }
     return { id: r.id, chargeId: r.stripe_charge_id, paymentIntentId: r.stripe_payment_intent_id, disputeId: r.stripe_dispute_id, receiptNo: r.receipt_no, rail: r.rail, who, what };
   });
-  const standaloneTxnIds = bts.filter(b => b.type === 'stripe_fee' && !b.sourceId).map(b => b.id);
   const entries = withEntries ? await entryIndex(orgId, list, refundIds, disputeIds, standaloneTxnIds) : undefined;
   return { payments, refunds: refundMap, disputes: disputeMap, ...(entries ? { entries } : {}) };
 }

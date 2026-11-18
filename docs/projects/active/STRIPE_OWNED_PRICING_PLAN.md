@@ -306,6 +306,58 @@ unmatched stand-alone fee "to record by hand" (the line is recorded with its rea
 teardown's entry deletes against the three new FKs; the countered fee's RETURN on a win (unseen in the probe: re-read the
 probe account's lines, then match it as a credit); `/accounting` and `/review`; the owner walk (Stage 5's step 6).
 
+**Follow-up built on dev 2026-11-18 (the words, help, terms and bank-check half).**
+- **Terms (`/legal`):** v0.2 narrowed per ruling (e): §4's exception covers only a debit that fails before it clears; §5's
+  bank-debit bullet and §7's returned-debit bullet (now two) follow; the returned-debit NOTE records the probe's later $5
+  "Payment Failure". Change log and O4 line say so; **the owner reads the changed sentences**.
+- **Words (`/marketing`):** kept "Stripe’s extra · …", "Dispute fee · receipt N", "Returned debit fee · …", ruling (f)'s
+  "Payment processing · …" and "FieldLogicHQ’s fee returned". Changed in mig 501 (prod `pending`, so edited in place and
+  the two functions re-applied on dev; 501 check PASSED with a new T8b): the answering fee reads **"Dispute fee · answered ·
+  receipt N"** (an answered dispute had two identical lines), and a bank debit's attached $5 reads **"Returned debit fee ·
+  receipt N"** (the product calls that dispute "Returned by the bank"). `/marketing` proposed "Returned by the bank ·
+  Stripe’s fee · …"; not taken: that prefix finds a team's returned line (`lib/online-payouts.ts`, the 12c check). The
+  Money page's prefixes cover both unchanged.
+- **Bank check:** Find names an unmatched stand-alone Stripe fee ("Stripe fee · not in your books", its amount, "in the payout
+  of {day}", link to the Payouts tab) while the check is off and the bank holds less. Never counted in the figure. Placed on
+  an account by its payout's other book lines (one with none is named anyway). Fees taken only, never a credit. The
+  instruction files it as a bank fee (Admin · Bank & payment fees, the existing "Add a bank fee" door), not an event's
+  Payment processing (`/accounting`: matched to no payment, it belongs to no event's net). Read stays select-only (rule 6).
+  `ourIndex` no longer skips a payout of stand-alone fees alone on the bank check's read.
+- **Help (`/docs`):** tournaments' new answer **"Where the processing fee shows in your books"**
+  (`#online-payments-fee-books`, split from "Who pays the processing fee", which had reached 535 words), house-league
+  Money, accounting `ledgers-payouts`, `payouts-tab-inside` ("FieldLogicHQ’s fee returned", Dispute covers a debit taken
+  back after clearing, Stripe fee), `bank-tab-find`. The refund sentences and `record.choiceHint.club` were re-read and are
+  still true (unchanged); the refund window's stale comment rewritten.
+- **Loose ends:** the walk seed's reset now clears the three new entry links' lines and the stand-alone fee lines (not run:
+  it wipes the walk tournament). The countered fee's **return** was still unseen on the probe account (re-read 2026-11-18,
+  `.probe/s3/out-bt-2.txt`): not built; re-read on the payout test. `house-league-money-guard` matched
+  `dispute_fee_entry_id` as a house-league write since `b7f8c4d74`; its pattern is now the whole word.
+- **`/accounting` review (2026-11-18):** no MUST-FIX; the books net to Stripe's result in every probed case, both modes; no
+  FieldLogicHQ tax or record issue (the s.232 credit record stays GST/HST Stage 5). Open, for the owner: (1) the won
+  dispute's returned $15 (books overstate by it; the bank check would offer "Add interest"): build the credit once seen;
+  (2) unmatched lines are never retried; (3) a dispute fee is skipped when the dispute arrives before the landing; (4) a fee
+  still unread after 35 days raises nothing. (2)–(4) change the daily job or the webhook: owner's word.
+- **`/review` (2026-11-18, high-risk, four lenses over `b7f8c4d74`, `b04c1b3d7` and this follow-up):** nothing Critical. Fixed
+  here, in mig 501 (re-applied on dev, check PASSED): the cost writer books nothing for a tournament whose fee book is off
+  (`tournament_fee_book_on`, as the landing books no receipt there); an answered inquiry (`warning_*`) is never a
+  countered-fee candidate. In the bank check: only fees taken (never a credit), and only from payouts that arrived after
+  the last check that matched (a settled fee is never asked for again). **Owner's word (the daily job runs by itself):** one
+  failing club or charge stops each daily step for every club after it (no per-item catch; the catch-up has no order and
+  counts skips as recorded); the steps have no time budget ahead of the plan-closing steps; a closed fiscal year makes the
+  extra's line raise (the landing re-dates; `stripe_fee_set` does not), so the fee is never stored; unmatched and refused
+  lines are final (a line read before our own webhook's stamp stays `no_payment`); the debit-failure window has no D+1;
+  Stripe's `tax` fee detail, if live mode bills one, is not counted (unverified). **Owner 2026-11-18: "go ahead and
+  harden" — BUILT on dev the same day:** each daily step counts a failing club, charge or line and goes on; the catch-up
+  reads connected accounts only, newest first, and counts only real writes (`failed` and honest `recorded` in the audit);
+  both Stripe steps run LAST, after the plan-closing and tax steps; a cost line in a closed fiscal year is dated today
+  (`online_payment_cost_out`); unmatched and refused stand-alone lines are tried again while the job's 10 days still list
+  them, re-checked under the payment's lock; the debit window gains D+1; a dispute fee whose event came before the landing
+  is booked from the stored dispute by the catch-up; `stripeFeeCents` counts Stripe's `tax` detail and reads "no
+  `stripe_fee` detail yet" as not there (never a stored 0). 501 check PASSED (new T7g); 498 unit tests in reach pass.
+- **Next:** commit (A: the follow-up; B: the daily job, its own) and the owner walk for Stages 2–5:
+  [STRIPE_OWNED_PRICING_WALK_AND_COMMIT_PROMPT.md](STRIPE_OWNED_PRICING_WALK_AND_COMMIT_PROMPT.md). Deploy order stands: mig 501 BEFORE the code (the Payouts tab reads its
+  columns).
+
 **Stage 3's help and words (left by Stage 5, 2026-11-18, for this stage to write WITH its code; `/docs`, same rules: no
 dead anchors, `keywords` / `searchText` / `answerText` in the same pass).** Stage 5 ran before Stage 3 and left every
 sentence about what the club's books, the Payouts tab or the refund window's cost line record:

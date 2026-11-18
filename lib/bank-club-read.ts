@@ -8,9 +8,9 @@ import { readPayouts } from './online-payouts';
 import { booksNowSay, stillWaitingOn, suspectsSince, suspectsStart, type BankLine, type WaitingItem } from './bank-check';
 import {
   CHECK_SELECT, ENTRY_SELECT, ONLINE_METHODS, WAITING_SELECT, beforeStartLines, beforeStartWindow, bookIdsOf, clubBooksOnDate,
-  entryToBankLine, isOnlineEntry,
+  entryIdsBesideFees, entryToBankLine, feesToRecord, isOnlineEntry,
   liveClubAccounts, onItsWay, onItsWayFloor, placeBooks, savedChecksOf,
-  type BankAccountRow, type BookMoveRow, type CheckRow, type ClubBook, type ClubSavedCheck, type EntryRow, type OnItsWay,
+  type BankAccountRow, type BookMoveRow, type CheckRow, type ClubBook, type ClubSavedCheck, type EntryRow, type FeeToRecord, type OnItsWay,
   type PayoutRowLike, type WaitingRow,
 } from './bank-club-map';
 import { checkedThrough, saveRefusal, type SaveRefusal } from './bank-club-rules';
@@ -128,8 +128,9 @@ async function readClubPayouts(orgId: string, from: string, today: string):
  * payout that arrived by D. `today` is the club's day (the Payouts read reaches past D for the "pays them out" day). With
  * online payments switched off there is no line at all, and nothing is read.
  */
-async function readOnItsWay(orgId: string, bookIds: readonly string[], date: string, today: string): Promise<OnItsWay> {
-  if (!onlinePaymentsOn()) return { state: 'none', cents: 0, lines: [] };
+async function readOnItsWay(orgId: string, bookIds: readonly string[], date: string, today: string): Promise<{ onItsWay: OnItsWay; feesToRecord: FeeToRecord[] }> {
+  const none = { onItsWay: { state: 'none', cents: 0, lines: [] } as OnItsWay, feesToRecord: [] };
+  if (!onlinePaymentsOn()) return none;
   const floor = onItsWayFloor(date);
   const [payouts, online] = await Promise.all([
     readClubPayouts(orgId, floor, today),
@@ -137,10 +138,14 @@ async function readOnItsWay(orgId: string, bookIds: readonly string[], date: str
       .in('ledger_id', c).eq('status', 'posted').in('payment_method', [...ONLINE_METHODS])
       .gt('entry_date', floor).lte('entry_date', date).order('entry_date').order('id').range(a, b)),
   ]);
-  if (payouts.kind === 'none') return { state: 'none', cents: 0, lines: [] };
-  const figured = onItsWay({ date, online, payouts: payouts.kind === 'read' ? payouts.rows : [] });
-  if (payouts.kind === 'unavailable') return { state: 'not_counted', reason: 'stripe_down', cents: null, lines: figured.lines };
-  return figured;
+  if (payouts.kind === 'none') return none;
+  const rows = payouts.kind === 'read' ? payouts.rows : [];
+  const figured = onItsWay({ date, online, payouts: rows });
+  if (payouts.kind === 'unavailable') return { onItsWay: { state: 'not_counted', reason: 'stripe_down', cents: null, lines: figured.lines }, feesToRecord: [] };
+  // Stage 3 (ruling (d)): an unmatched stand-alone Stripe fee, placed on this account by its payout's other lines.
+  const own = await fetchAllIn<{ id: string }>(entryIdsBesideFees(rows), (c, a, b) => supabaseAdmin.from('accounting_entries')
+    .select('id').in('id', c).in('ledger_id', [...bookIds]).order('id').range(a, b));
+  return { onItsWay: figured, feesToRecord: feesToRecord({ date, payouts: rows, ownEntryIds: new Set(own.map(r => r.id)) }) };
 }
 
 /** A suspect as Find lists it: the engine's line, its book, whether it is an online payment, and how it came (the
@@ -211,6 +216,8 @@ export interface ClubFigureForDate {
   /** Your books on D; null for a start (its books are the bank balance solved: `startBooks`). */
   booksCents: number | null;
   onItsWay: OnItsWay;
+  /** Stage 3 (ruling (d)): Stripe fees in a payout that reached the bank but in no book (Find names them; never counted). */
+  feesToRecord: FeeToRecord[];
   /** Ask 3: lines since the last match (since the start on a first check), newest first, at most SUSPECT_CAP. */
   suspects: { since: string; sinceMatch: boolean; total: number; lines: SuspectLine[] };
   /** Ask 2: the latest earlier check's "Not in the bank yet" items, asked "Still waiting?" (BC3 asks), and the start's
@@ -239,7 +246,7 @@ export async function figureForDate(orgId: string, account: ClubBankAccount, che
   const noSuspects = { since: date, sinceMatch: false, total: 0, lines: [] };
 
   if (kind === 'start' || !start || refused) {
-    return { date, kind, refused, booksCents: null, onItsWay: await readOnItsWay(orgId, bookIds, date, today), suspects: noSuspects,
+    return { date, kind, refused, booksCents: null, ...(await readOnItsWay(orgId, bookIds, date, today)), suspects: noSuspects,
       stillWaiting: [], beforeStart: null, replaces };
   }
   const { since } = suspectsStart(checks, date, start.date);
@@ -252,7 +259,10 @@ export async function figureForDate(orgId: string, account: ClubBankAccount, che
   ]);
   const s = suspectsSince({ lines: window, checks, date, startDate: start.date });
   return {
-    date, kind, refused, booksCents: books.get(date)!, onItsWay: oiw,
+    date, kind, refused, booksCents: books.get(date)!, ...oiw,
+    // A fee in a payout that arrived by the last check that matched was settled then (recorded, or the bank was in step
+    // without it): only one since then is named (/review 2026-11-18), so a recorded fee is never asked for again.
+    feesToRecord: oiw.feesToRecord.filter(f => f.date > s.since),
     suspects: { since: s.since, sinceMatch: s.sinceMatch, total: s.lines.length, lines: s.lines.slice(0, SUSPECT_CAP) },
     stillWaiting: stillWaitingOn(checks, date),
     beforeStart: look ? { ...look, lines: beforeStartLines(before, start).slice(0, SUSPECT_CAP) } : null,

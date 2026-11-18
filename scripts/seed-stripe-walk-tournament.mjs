@@ -226,28 +226,35 @@ if (fresh) {
 const tournamentId = t.id;
 
 // ── Reset: remove every walk registration except the filler ───────────────────
+// The online payment's own lines in the book: its club-pays processing cost and, since mig 501 (Stripe-owned pricing Stage
+// 3), Stripe's extra, a dispute's fee and a family-paid fee taken back at a reversal. Their foreign keys are NO ACTION, so
+// the payments go before the lines (the order below).
+const OP_COLS = 'id, processing_cost_entry_id, stripe_extra_entry_id, dispute_fee_entry_id, reversal_fee_entry_id';
 async function reset() {
   head('Reset — what is there, then what goes');
   const teams = await one('read teams', db.from('teams').select('id, name').eq('tournament_id', tournamentId));
   const doomed = teams.filter(x => x.name !== FILLER_NAME);
   const doomedIds = doomed.map(x => x.id);
-  const ops = await one('read online payments', db.from('online_payments').select('id, processing_cost_entry_id').eq('tournament_id', tournamentId));
+  const ops = await one('read online payments', db.from('online_payments').select(OP_COLS).eq('tournament_id', tournamentId));
   const opIds = ops.map(x => x.id);
   // Online payments that belong to a doomed team but carry no tournament id are caught too.
-  const extraOps = doomedIds.length ? await one('read online payments by team', db.from('online_payments').select('id, processing_cost_entry_id').in('team_id', doomedIds)) : [];
+  const extraOps = doomedIds.length ? await one('read online payments by team', db.from('online_payments').select(OP_COLS).in('team_id', doomedIds)) : [];
   for (const o of extraOps) if (!opIds.includes(o.id)) { opIds.push(o.id); ops.push(o); }
 
   const payments = await one('read team payments', db.from('tournament_team_payments').select('id, entry_id').eq('tournament_id', tournamentId));
   const receipts = await one('read fee receipts', db.from('tournament_fee_receipts').select('id, entry_id').eq('tournament_id', tournamentId));
   const items = opIds.length ? await one('read online items', db.from('online_payment_items').select('id, entry_id').in('online_payment_id', opIds)) : [];
   const refunds = opIds.length ? await one('read online refunds', db.from('online_payment_refunds').select('id, refund_entry_id, processing_cost_entry_id').in('online_payment_id', opIds)) : [];
+  // Stripe-owned pricing Stage 3 (mig 501): the stand-alone Stripe fee lines the daily job tied to these payments.
+  const feeLines = opIds.length ? await one('read Stripe fee lines', db.from('online_payment_stripe_fee_lines').select('id, entry_id').in('online_payment_id', opIds)) : [];
   const claims = doomedIds.length ? await one('read claims', db.from('team_workspace_claims').select('id').eq('tournament_id', tournamentId).in('tournament_team_id', doomedIds)) : [];
 
   // The ledger lines these rows posted — only lines in THIS tournament's own book are removed.
   const book = await one('read book', db.from('accounting_ledgers').select('id').eq('org_id', org.id).eq('entity_type', 'tournament').eq('entity_id', tournamentId).maybeSingle());
   const entryIds = [...new Set([
     ...payments.map(x => x.entry_id), ...receipts.map(x => x.entry_id), ...items.map(x => x.entry_id),
-    ...refunds.flatMap(x => [x.refund_entry_id, x.processing_cost_entry_id]), ...ops.map(x => x.processing_cost_entry_id),
+    ...refunds.flatMap(x => [x.refund_entry_id, x.processing_cost_entry_id]), ...ops.flatMap(x => [x.processing_cost_entry_id, x.stripe_extra_entry_id, x.dispute_fee_entry_id, x.reversal_fee_entry_id]),
+    ...feeLines.map(x => x.entry_id),
   ].filter(Boolean))];
   let ownEntryIds = [];
   if (book && entryIds.length) {
@@ -257,7 +264,7 @@ async function reset() {
 
   const before = {
     teams: teams.length, 'teams to remove': doomed.length, 'team payments': payments.length, 'online payments': ops.length,
-    'online items': items.length, 'online refunds': refunds.length, 'fee receipts': receipts.length,
+    'online items': items.length, 'online refunds': refunds.length, 'fee receipts': receipts.length, 'Stripe fee lines': feeLines.length,
     'ledger lines to remove': ownEntryIds.length, 'ledger lines in the tournament book': await bookCount(), 'workspace claims': claims.length,
   };
   console.log('  before:', JSON.stringify(before));
@@ -271,6 +278,8 @@ async function reset() {
       await del('delete unassigned refunds', db.from('online_refunds_unassigned').delete().in('online_payment_id', part));
       removed['online refunds'] += await del('delete online refunds', db.from('online_payment_refunds').delete().in('online_payment_id', part));
       removed['online items'] += await del('delete online items', db.from('online_payment_items').delete().in('online_payment_id', part));
+      // Gone with its payment: left behind, it would point at no payment and no line (both foreign keys set NULL).
+      await del('delete Stripe fee lines', db.from('online_payment_stripe_fee_lines').delete().in('online_payment_id', part));
     }
   }
   removed['team payments'] = await del('delete team payments', db.from('tournament_team_payments').delete().eq('tournament_id', tournamentId));

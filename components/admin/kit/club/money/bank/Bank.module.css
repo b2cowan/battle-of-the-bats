@@ -314,3 +314,6 @@ p.afterStart { margin: 0 0 0.75rem; }
   .bookRow { min-height: var(--tap-min, 44px); }
   .bookRow label { flex: 1; align-self: stretch; display: flex; align-items: center; }
 }
+
+/* Stripe-owned pricing Stage 3: one line per Stripe fee to record by hand, above the callout's hint. */
+.feeToRecord { display: block; margin-bottom: 0.3rem; }

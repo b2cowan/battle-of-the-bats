@@ -7,7 +7,7 @@
 DO $sop501$
 DECLARE
   v_org uuid; v_old_org uuid; v_event uuid; v_old_event uuid; v_div uuid; v_t1 uuid; v_t2 uuid; v_t3 uuid; v_t4 uuid;
-  v_club uuid; v_fam uuid; v_old uuid; v_deb uuid; v_ans uuid; v_lop uuid; v_season uuid; v_reg uuid;
+  v_club uuid; v_fam uuid; v_old uuid; v_deb uuid; v_ans uuid; v_t5 uuid; v_bnc uuid; v_lop uuid; v_season uuid; v_reg uuid;
   v_res jsonb; v_err text; v_n int; v_e public.accounting_entries%ROWTYPE;
   v_utc date := (now() AT TIME ZONE 'UTC')::date;
 BEGIN
@@ -31,6 +31,8 @@ BEGIN
   VALUES (v_event, v_div, 'Debit Ducks', 'd@example.invalid', 'accepted', 'pending') RETURNING id INTO v_t3;
   INSERT INTO teams(tournament_id, division_id, name, email, status, payment_status)
   VALUES (v_event, v_div, 'Answer Ants', 'a@example.invalid', 'accepted', 'pending') RETURNING id INTO v_t4;
+  INSERT INTO teams(tournament_id, division_id, name, email, status, payment_status)
+  VALUES (v_event, v_div, 'Bounce Bees', 'b@example.invalid', 'accepted', 'pending') RETURNING id INTO v_t5;
   INSERT INTO tournaments(org_id, year, name, slug, deposit_amount, total_fee_amount, settings)
   VALUES (v_old_org, 2026, '501 Old Cup', 'check-501-old', 100, 400, '{"fee_scope":"tournament"}'::jsonb) RETURNING id INTO v_old_event;
 
@@ -148,6 +150,11 @@ BEGIN
   -- A second failure line that day has no debit left to match: recorded, never guessed.
   v_res := online_payment_stripe_fee_line_take(v_org, 'acct_check501', 'txn_501_fail2', false, -5, 'Pre-Authorized Debit in Canada: Payment Failure', now(), 'debit_failure', v_utc);
   IF (v_res ->> 'matched')::boolean OR v_res ->> 'reason' <> 'no_payment' THEN RAISE EXCEPTION 'FAIL T7c: %', v_res; END IF;
+  -- Read again the next day (hardening 2026-11-18): an unmatched line is tried again, still recorded once.
+  v_res := online_payment_stripe_fee_line_take(v_org, 'acct_check501', 'txn_501_fail2', false, -5, 'Pre-Authorized Debit in Canada: Payment Failure', now(), 'debit_failure', v_utc);
+  IF NOT (v_res ->> 'retried')::boolean OR (v_res ->> 'matched')::boolean OR v_res ->> 'reason' <> 'no_payment'
+     OR (SELECT count(*) FROM online_payment_stripe_fee_lines WHERE stripe_txn_id = 'txn_501_fail2') <> 1 THEN
+    RAISE EXCEPTION 'FAIL T7g: an unmatched line was not tried again (%)', v_res; END IF;
   v_res := online_payment_stripe_fee_line_take(v_org, 'acct_check501', 'txn_501_credit', false, 15, 'Card Dispute Countered Fee Refund', now(), 'other', v_utc);
   IF v_res ->> 'reason' <> 'not_a_charge' THEN RAISE EXCEPTION 'FAIL T7d: a credit was not left unmatched (%)', v_res; END IF;
   v_res := online_payment_stripe_fee_line_take(v_org, 'acct_check501', 'txn_501_other', false, -2, 'Something new', now(), 'other', v_utc);
@@ -171,8 +178,20 @@ BEGIN
     'Card Dispute Countered Fee (' || v_utc || ')', now(), 'dispute_countered', v_utc);
   SELECT e.* INTO v_e FROM online_payment_stripe_fee_lines l JOIN accounting_entries e ON e.id = l.entry_id WHERE l.stripe_txn_id = 'txn_501_ctr';
   IF NOT (v_res ->> 'matched')::boolean OR v_e.amount <> 15
-     OR v_e.description <> 'Dispute fee · receipt ' || (SELECT receipt_no FROM online_payments WHERE id = v_ans) THEN
+     OR v_e.description <> 'Dispute fee · answered · receipt ' || (SELECT receipt_no FROM online_payments WHERE id = v_ans) THEN
     RAISE EXCEPTION 'FAIL T8: the countered fee was not booked on its dispute (%)', v_res; END IF;
+
+  -- T8b · a bank debit taken back after it cleared: its $5 reads as a returned debit's fee, never a dispute's.
+  INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id, rail)
+  VALUES (v_org, 'acct_check501', 'tournament_team', v_event, v_t5, 'full', 'Bounce Bees · fee', 100, 3.50, 2.06, 100,
+    'club', 0.025, 1.00, 'cs_501_' || gen_random_uuid(), 'bank_debit') RETURNING id INTO v_bnc;
+  PERFORM online_payment_land(v_bnc, now(), 'pi_501_b', 'py_501_b', NULL, NULL);
+  v_res := online_payment_dispute_fee_book(v_bnc, 5);
+  SELECT * INTO v_e FROM accounting_entries WHERE id = (SELECT dispute_fee_entry_id FROM online_payments WHERE id = v_bnc);
+  IF v_e.id IS NULL OR v_e.amount <> 5
+     OR v_e.description <> 'Returned debit fee · receipt ' || (SELECT receipt_no FROM online_payments WHERE id = v_bnc) THEN
+    RAISE EXCEPTION 'FAIL T8b: a debit''s dispute fee is worded as a dispute (% / %)', v_res, v_e.description; END IF;
 
   -- T9 · house league, family pays, US card: the extra lands on the SEASON's book.
   INSERT INTO league_seasons(org_id, name, slug, registration_fee) VALUES (v_org, 'Check 501 Season', 'check-501', 150) RETURNING id INTO v_season;

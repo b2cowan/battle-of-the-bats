@@ -233,6 +233,42 @@ export type OnItsWay =
   | { state: 'not_counted'; reason: 'stripe_down' | 'unlisted'; cents: null; lines: OnItsWayLine[] };
 
 
+/** A stand-alone Stripe fee inside a payout that reached the bank, which the daily job could not match to one payment
+ *  (Stripe-owned pricing Stage 3, owner ruling (d)): in no book, so Find names it to record by hand. */
+export interface FeeToRecord {
+  key: string;
+  /** The day its payout arrived: the day the bank received that much less. */
+  date: string;
+  /** What Stripe took, as a positive amount (it is money out). */
+  amountCents: number;
+}
+
+/**
+ * Ruling (d)'s "to record by hand": every unmatched stand-alone fee inside a payout that did not fail and arrived in
+ * [D − 30, D] (the on-its-way window). A payout whose other lines are all in another account's books is that account's;
+ * one with no book line at all can't be placed, so it is named here too (`ownEntryIds`: the payouts' book lines that are
+ * in THIS account's books). Never counted in the figure: counted, the check would balance with the books still short.
+ */
+export function feesToRecord(i: { date: string; payouts: readonly PayoutRowLike[]; ownEntryIds: ReadonlySet<string> }): FeeToRecord[] {
+  const floor = onItsWayFloor(i.date);
+  const out: FeeToRecord[] = [];
+  for (const p of i.payouts) {
+    if (p.status === 'failed' || !p.arrives || p.arrives < floor || p.arrives > i.date) continue;
+    // A fee TAKEN only (/accounting 2026-11-18): a credit (a fee Stripe gave back, left unmatched as not a charge) is money
+    // in, and these words would tell the treasurer to record it the wrong way round.
+    const fees = p.lines.filter(l => l.kind === 'stripe_fee' && l.unbooked && l.amount < 0);
+    if (!fees.length) continue;
+    const booked = p.lines.flatMap(l => l.entryIds ?? []);
+    if (booked.length && !booked.some(id => i.ownEntryIds.has(id))) continue;
+    for (const l of fees) out.push({ key: `stripe-fee:${l.id}`, date: p.arrives, amountCents: Math.abs(toCents(l.amount)) });
+  }
+  return out.sort((a, b) => (a.date === b.date ? a.key.localeCompare(b.key) : a.date < b.date ? 1 : -1));
+}
+
+/** The book lines of the payouts that hold a fee to record (the reader asks which of them are this account's). */
+export const entryIdsBesideFees = (payouts: readonly PayoutRowLike[]): string[] =>
+  [...new Set(payouts.filter(p => p.lines.some(l => l.kind === 'stripe_fee' && l.unbooked && l.amount < 0)).flatMap(p => p.lines.flatMap(l => l.entryIds ?? [])))];
+
 /**
  * Online-payment book lines in the account's books dated in (D − 30, D], minus every line inside a payout that arrived
  * on or before D and did not fail. Not counted when any payout arriving in [D − 30, D] that did not fail lists no lines

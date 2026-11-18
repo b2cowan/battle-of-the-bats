@@ -12,11 +12,15 @@
  */
 import type Stripe from 'stripe';
 
-/** Stripe's own processing fee on a charge's balance transaction, in cents: the `stripe_fee` details only, never `fee`.
- *  null when the transaction is not there yet (or not expanded). */
+/** Stripe's own processing fee on a charge's balance transaction, in cents: its `stripe_fee` details, and any `tax` detail
+ *  (Stripe's sales tax on its own fee, if live mode bills one: the club pays it to Stripe all the same), never `fee`, which
+ *  adds ours. null when the transaction is not there yet (or not expanded), or carries no `stripe_fee` detail yet: a 0
+ *  would be stored and never read again, so the daily job keeps asking instead (hardening, owner 2026-11-18). */
 export function stripeFeeCents(bt: Stripe.BalanceTransaction | string | null | undefined): number | null {
   if (!bt || typeof bt !== 'object') return null;
-  return (bt.fee_details ?? []).filter(d => d.type === 'stripe_fee').reduce((n, d) => n + d.amount, 0);
+  const details = bt.fee_details ?? [];
+  if (!details.some(d => d.type === 'stripe_fee')) return null;
+  return details.filter(d => d.type === 'stripe_fee' || d.type === 'tax').reduce((n, d) => n + d.amount, 0);
 }
 
 /** The balance transaction on a session's charge, when Stripe has made it and the read expanded it. */

@@ -167,6 +167,13 @@ export const BANK_WORDS = {
   markLine: (what: string) => `Not in the bank yet: ${what}`,
   onTheirWayRow: (n: number) => `Online payments · ${n}`,
   onTheirWayDetail: 'on their way, counted above',
+  // Stripe-owned pricing Stage 3, owner ruling (d), /marketing 2026-11-18: a stand-alone Stripe fee the daily job could not
+  // match to one payment (the reason is never shown: the treasurer's action is the same for each). Filed as a bank fee, the
+  // club-level word, never an event's Payment processing: matched to no payment, it belongs to no one event's net
+  // (/accounting 2026-11-18). "Add a bank fee" is the door that files it there.
+  feeToRecord: 'Stripe fee · not in your books',
+  feeToRecordIn: (day: string) => `in the payout of ${day}`,
+  feeToRecordHint: 'We couldn’t match this fee to one payment, so it isn’t in your books yet. Record it as a bank fee, under Admin · Bank & payment fees, dated the day of its payout.',
   booksCount: (n: number) => `${n} books`,
   markedDetail: 'not in the bank yet, counted above',
   undo: 'Undo',

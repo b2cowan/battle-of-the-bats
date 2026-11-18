@@ -367,6 +367,7 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
             shouldBeCents={band.shouldBeCents} onItsWay={fresh.onItsWay} payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
             onRetry={() => setAgain(n => n + 1)} waiting={waitingRows} asking={askingRows} />
           <BankFind key={date} figure={fresh} band={band} typed={typed !== null} marked={marked} busy={busy} onMark={mark} onUndo={unmark}
+            payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
             repeatOf={typed !== null ? sameGapAs(view.checks, date, band.differenceCents) : null}
             onAtStart={l => void atStart(l)} onAddLine={door => setAdding({
               // The gap, the statement's day, and the way it must go to close it: the bank holding more is money in.

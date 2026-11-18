@@ -88,6 +88,8 @@ export interface PayoutEntryIndex {
   fees?: Readonly<Record<string, readonly string[]>>;
   /** Stage 3: a stand-alone Stripe fee line's id → the line the daily job booked for it. */
   standalone?: Readonly<Record<string, readonly string[]>>;
+  /** Stage 3: a stand-alone Stripe fee line the daily job could not match to one payment → its reason. Not in the books. */
+  unbooked?: Readonly<Record<string, string>>;
 }
 
 export interface DisputeFacts {
@@ -113,6 +115,8 @@ export interface PayoutLine {
   entryIds?: string[];
   /** Bank check only: the card dispute of ours a `dispute` / `dispute_won` line is, with our stored amount and fee. */
   dispute?: { id: string; amountCents: number; feeCents: number };
+  /** Bank check only: a stand-alone Stripe fee the daily job left unmatched (its reason): in no book, to record by hand. */
+  unbooked?: string;
 }
 
 export const PAYOUT_LINE_WORDS = {
@@ -178,7 +182,7 @@ export function mapPayoutLines(bts: readonly BtIn[], ours: OurIndex): PayoutLine
 
   const ent = ours.entries;
   /** The book lines behind one Stripe line, only when the bank check asked (the Payouts tab's lines stay as they were). */
-  const booked = (kind: PayoutLineKind, b: BtIn, p: OurPayment | null): Pick<PayoutLine, 'entryIds' | 'dispute'> => {
+  const booked = (kind: PayoutLineKind, b: BtIn, p: OurPayment | null): Pick<PayoutLine, 'entryIds' | 'dispute' | 'unbooked'> => {
     if (!ent) return {};
     const sid = b.sourceId;
     const d = sid ? ent.disputes[sid] : undefined;
@@ -191,7 +195,8 @@ export function mapPayoutLines(bts: readonly BtIn[], ours: OurIndex): PayoutLine
         : kind === 'returned' ? reversed
         : kind === 'stripe_fee' && !sid ? ent.standalone?.[b.id]
         : null) || [];
-    return { entryIds: [...ids], ...(sid && d && (kind === 'dispute' || kind === 'dispute_won') ? { dispute: { id: sid, amountCents: d.amountCents, feeCents: d.feeCents } } : {}) };
+    const unbooked = kind === 'stripe_fee' && !sid ? ent.unbooked?.[b.id] : undefined;
+    return { entryIds: [...ids], ...(unbooked ? { unbooked } : {}), ...(sid && d && (kind === 'dispute' || kind === 'dispute_won') ? { dispute: { id: sid, amountCents: d.amountCents, feeCents: d.feeCents } } : {}) };
   };
 
   const lines: PayoutLine[] = [];

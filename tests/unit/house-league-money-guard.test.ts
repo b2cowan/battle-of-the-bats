@@ -39,7 +39,9 @@ describe('1 · one write, and nobody else touches house-league money', () => {
   it('no file flips the paid flag or writes a house-league line itself', () => {
     const offenders = CODE.filter(f => {
       const code = readCode(f);
-      return /registration_fee_paid\s*:/.test(code) || /fee_entry_id\s*:/.test(code)
+      // `\b`: the registration's own `fee_entry_id`, never a column that ends in it (online_payments.dispute_fee_entry_id,
+      // reversal_fee_entry_id — Stripe-owned pricing Stage 3, read by the Payouts map, never a house-league write).
+      return /registration_fee_paid\s*:/.test(code) || /\bfee_entry_id\s*:/.test(code)
         || /source_module:\s*'league_registration'/.test(code)
         || /from\('accounting_entries'\)\s*\.(insert|update|upsert)\(\{[^}]*league_registration/.test(code);
     });

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { figureCheck, suspectsSince } from '../../lib/bank-check.ts';
 import {
-  bookIdsOf, clubBooksOnDate, entryToBankLine, liveClubAccounts, onItsWay, onItsWayFloor, placeBooks, savedChecksOf,
+  bookIdsOf, clubBooksOnDate, entryIdsBesideFees, entryToBankLine, feesToRecord, liveClubAccounts, onItsWay, onItsWayFloor, placeBooks, savedChecksOf,
   type BankAccountRow, type CheckRow, type ClubBook, type EntryRow, type PayoutRowLike, type WaitingRow,
 } from '../../lib/bank-club-map.ts';
 import { mapPayoutLines, type BtIn, type OurIndex } from '../../lib/online-payouts-map.ts';
@@ -238,10 +238,53 @@ describe('the Payouts mapping carries the book lines (bank check only)', () => {
     assert.deepEqual(of('a3'), ['e-returned', 'e-debit-dispute-fee']);
     assert.deepEqual([of('txn_fail'), of('txn_unmatched')], [['e-failure-fee'], []]);
   });
+  it('Stage 3 (ruling (d)): a stand-alone fee the job left unmatched carries its reason; a booked one and one not read yet do not', () => {
+    const ours: OurIndex = { ...OURS, entries: { ...OURS.entries!, standalone: { txn_fail: ['e-failure-fee'] }, unbooked: { txn_lost: 'no_payment' } } };
+    const lines = mapPayoutLines([
+      bt({ id: 'txn_fail', type: 'stripe_fee', net: -500 }),
+      bt({ id: 'txn_lost', type: 'stripe_fee', net: -500 }),
+      bt({ id: 'txn_new', type: 'stripe_fee', net: -1_500 }),
+    ], ours);
+    assert.deepEqual(lines.map(l => l.unbooked ?? null), [null, 'no_payment', null]);
+    const plain = mapPayoutLines([bt({ id: 'txn_lost', type: 'stripe_fee', net: -500 })], { ...OURS, entries: undefined });
+    assert.equal('unbooked' in plain[0], false);
+  });
   it('the Payouts tab’s read (no entry index) is unchanged: no entryIds, no dispute', () => {
     const plain = mapPayoutLines([bt({ id: 'x', type: 'charge', net: 100, sourceId: 'ch_team' })], { ...OURS, entries: undefined });
     assert.equal('entryIds' in plain[0], false);
     assert.equal('dispute' in plain[0], false);
+  });
+});
+
+describe('Stage 3 (ruling (d)): a Stripe fee to record by hand', () => {
+  const fee = (id: string, cents: number, unbooked?: string) =>
+    ({ id, kind: 'stripe_fee', at: '2026-11-18T12:00:00Z', who: null, what: 'Stripe fee', receiptNo: null, amount: -cents / 100, entryIds: [], ...(unbooked ? { unbooked } : {}) }) as PayoutRowLike['lines'][number];
+  const pay = (id: string, entryIds: string[]) =>
+    ({ id, kind: 'payment', at: '2026-11-18T12:00:00Z', who: 'A', what: 'x', receiptNo: 1, amount: 10, entryIds }) as PayoutRowLike['lines'][number];
+  const payout = (id: string, arrives: string, lines: PayoutRowLike['lines'], status = 'paid'): PayoutRowLike =>
+    ({ id, arrives, status, contents: 'listed', lines }) as PayoutRowLike;
+  const D = '2026-11-20';
+  const payouts = [
+    payout('po_here', '2026-11-20', [pay('a', ['e-mine']), fee('f1', 500, 'no_payment'), fee('f2', 1_500)]),
+    payout('po_other', '2026-11-19', [pay('b', ['e-theirs']), fee('f3', 500, 'several_payments')]),
+    payout('po_fees_only', '2026-11-18', [fee('f4', 1_500, 'unknown_kind')]),
+    payout('po_failed', '2026-11-18', [fee('f5', 500, 'no_payment')], 'failed'),
+    payout('po_old', '2026-10-01', [fee('f6', 500, 'no_payment')]),
+    payout('po_later', '2026-11-21', [fee('f7', 500, 'no_payment')]),
+    // A credit (a fee Stripe gave back, unmatched as not a charge) is money in: never named as a fee to record.
+    payout('po_credit', '2026-11-20', [pay('c', ['e-mine']), fee('f8', -1_500, 'not_a_charge')]),
+  ];
+  it('names an unmatched fee in a payout that reached this account’s bank in the window, newest first, as money out', () => {
+    assert.deepEqual(feesToRecord({ date: D, payouts, ownEntryIds: new Set(['e-mine']) }), [
+      { key: 'stripe-fee:f1', date: '2026-11-20', amountCents: 500 },
+      { key: 'stripe-fee:f4', date: '2026-11-18', amountCents: 1_500 },
+    ]);
+  });
+  it('the payout of another account’s books is that account’s; a booked fee, a failed payout, one outside the window: never', () => {
+    assert.deepEqual(feesToRecord({ date: D, payouts, ownEntryIds: new Set(['e-theirs']) }).map(f => f.key), ['stripe-fee:f3', 'stripe-fee:f4']);
+  });
+  it('the reader asks only about the book lines beside a fee to record', () => {
+    assert.deepEqual(entryIdsBesideFees(payouts).sort(), ['e-mine', 'e-theirs']);
   });
 });
 
@@ -261,7 +304,7 @@ describe('the reader reads no year and writes nothing (rule 6)', () => {
   it('Stripe is read through the Payouts reader, never a second one; a failure is not counted, never a throw', () => {
     assert.match(src, /readPayouts\(/);
     assert.doesNotMatch(src, /stripe-connect|listPayoutsPage|balanceTransactions/);
-    assert.match(src, /if \(payouts\.kind === 'unavailable'\) return \{ state: 'not_counted', reason: 'stripe_down', cents: null, lines: figured\.lines \};/);
+    assert.match(src, /if \(payouts\.kind === 'unavailable'\) return \{ onItsWay: \{ state: 'not_counted', reason: 'stripe_down', cents: null, lines: figured\.lines \}, feesToRecord: \[\] \};/);
   });
   it('"Books now say" re-figures each check over its OWN books (Q3, O1), grouped by book list', () => {
     assert.match(src, /const k = c\.bookIds\.join\(','\);/);

@@ -21,6 +21,10 @@
   club's net in each payer mode, tax included, neither part refunded, our fee back on a returned debit); §5 replaced by
   "Stripe charges your organization directly" (Stripe's agreement and prices, the event fees, the club's net varies, a
   negative balance, price changes); §3, §6, §7, §10 and §12 follow. Needs the owner's approval again (O4).
+- **0.2, narrowed 2026-11-18 (owner ruling (e), Stripe-owned pricing Stage 3; after O4, before publication)** — our fee
+  comes back only when a bank debit fails before it clears; a debit the payer's bank takes back after it cleared is
+  handled as a dispute and neither part comes back. §4's exception, §5's bank-debit bullet and §7's returned-debit bullet
+  (now two bullets) changed; nothing else.
 
 **How to read this draft.** Customer text is everything after the first `---` line, up to "Before this can be
 published". Owner notes are in blockquotes that start `> NOTE`; they are not part of the terms. The shape follows the
@@ -101,9 +105,10 @@ payments, these Payments Terms apply.
   organization's billing address. Nothing is added on top.
 - **Neither part is refunded** when you refund a payment or when a payer wins a dispute: we keep our fee, and Stripe
   keeps its own under its pricing. So a processing fee your organization gives back in a refund is your organization's
-  cost. The one exception: when a bank debit is returned unpaid, our fee on that payment comes back to your organization
-  automatically. Stripe returns or keeps its own fee under its pricing, and may charge a separate fee for the returned
-  debit (§5).
+  cost. The one exception: when a bank debit fails before it clears, our fee on that payment comes back to your
+  organization automatically. Stripe returns or keeps its own fee under its pricing, and may charge a separate fee for
+  the failed debit (§5). A bank debit that the payer's bank takes back after it has cleared is not this exception: it is
+  handled as a dispute, and neither part comes back (§7).
 - **Changes to our rates.** We will email your organization's owners **at least 30 days before** a rate goes up. The new
   rate applies to payments started on or after the date in the email. A lower rate can apply straight away.
 
@@ -129,13 +134,24 @@ payments, these Payments Terms apply.
 > NS, 15/115 NB/NL/PE, 5/105 elsewhere). The record per paid fee and the fee statement are GST/HST Stage 5. Tax is inside
 > OUR part only, never inside Stripe's: words that say "the processing fee includes GST/HST" would overstate it.
 >
-> NOTE — The returned-debit exception: the Stage 1 probe (2026-11-17) returned Stripe's fee and auto-refunded our fee
-> to the club (the club netted $0). The text promises only OUR fee back (`/legal` Stage 5 review: test mode only, and we
-> promise nothing of Stripe's); the build prompt's "a returned debit gives both fees back" is the probe's result, not a
-> term. Stripe's Canadian pricing page (read 2026-11-18) lists "+ CA$5.00" for a failed or
-> disputed PAD; the test-mode probe charged no failure fee. Re-confirm both on the full payout test (on/after
-> 2026-11-25); if live behaves differently, cut the exception. `/accounting`: our fee coming back needs a credit record
-> for its tax (s.232), GST/HST Stage 5.
+> NOTE — **The returned-debit exception, narrowed (owner ruling (e), Stripe-owned pricing Stage 3, 2026-11-18).** A
+> bank debit comes back in one of two ways, and Stripe treats them differently (Stage 3 probe (f), `.probe/s3/`):
+> - **It fails before it clears** (`checkout.session.async_payment_failed`, the product's `returnDebit`): the payment
+>   never landed, so nothing was ever in the club's books; Stripe returns its own fee on the returned line and our fee
+>   comes back automatically (an `adjustment` "Application fee refund" on the club's balance). About 2½ hours later
+>   Stripe billed a **stand-alone $5.00 "Payment Failure" fee** with no source (correcting Stage 1's "no failure fee
+>   appeared"; the product matches it to its payment once a day and books it, ruling (d)). This is the exception.
+> - **It is taken back after it cleared** (`charge.dispute.created`, the product's `reverseDebit`): Stripe treats it as a
+>   dispute, keeps its fee, takes a $5.00 dispute fee on the withdrawal, and our fee is **not** refunded (probe: app fee
+>   refunded 0). The product posts "Returned by the bank" in the books. This is not the exception, so the text says
+>   neither part comes back. The earlier census claim that this case "leaves the books one fee low" was wrong (plan
+>   ruling (e)).
+>
+> The text still promises only OUR fee back, and nothing of Stripe's (test mode only); figures stay out of the terms (§5
+> note). "Handled as a dispute" says what happens to the fees; it does not promise the club can answer a debit dispute
+> (the product offers no answer for one: `reverseDebit` raises no answerer's notice; not checked against Stripe). Re-confirm
+> both cases on the full payout test (on/after 2026-11-25); if live behaves differently, change the exception.
+> `/accounting`: our fee coming back needs a credit record for its tax (s.232), GST/HST Stage 5.
 >
 > NOTE — The 30-day notice of a rate increase is a promise with no procedure yet. It mirrors Terms §8 "Price changes";
 > the same steps as `PRICE_CHANGE_NOTICE_PROCEDURE.md` should be written for the online-payment rate before a rate ever
@@ -150,7 +166,7 @@ organization's agreement with Stripe and at Stripe's prices, and they come out o
 Besides its fee for processing each payment, Stripe charges fees for some payments and events. They include fees for:
 - **a dispute:** a fee when a payer disputes a card payment, and a further fee if your organization answers it. Winning
   the dispute does not return the first fee; whether the answering fee comes back is set by Stripe's pricing;
-- **a bank debit** that is returned unpaid or disputed; and
+- **a bank debit** that fails, or that the payer's bank takes back after it has cleared; and
 - **a card issued outside Canada**, and **a currency conversion** where one is needed. This can happen whenever a payer
   from another country pays you, for example a visiting team at your tournament.
 
@@ -220,9 +236,12 @@ debit your organization's bank account, under its agreement with your organizati
   or bank decides the outcome.
 - **If the payer wins,** the disputed amount stays with them and neither part of the processing fee is returned (§4).
   Stripe's dispute fees come out of your organization's Stripe balance (§5).
-- **If a bank debit is returned unpaid,** the payment is marked returned in your books and the payer owes the amount
-  again. Our fee on it comes back (§4); any fee Stripe charges for the returned debit comes out of your organization's
-  Stripe balance (§5).
+- **If a bank debit fails before it clears,** the payment never reaches your books: it is marked returned and the payer
+  owes the amount again. Our fee on it comes back (§4); any fee Stripe charges for the failed debit comes out of your
+  organization's Stripe balance (§5).
+- **If the payer's bank takes back a bank debit after it has cleared,** it is handled as a dispute. It is marked
+  returned by the bank in your books, and the payer owes the amount again. Neither part of the processing fee comes back
+  (§4), and Stripe's dispute fee comes out of your organization's Stripe balance (§5).
 - If your organization's Stripe balance goes below zero, §5 applies.
 
 > NOTE — v0.2: the negative balance moved to §5 and now states the club's obligation (Stage 1 probe and Stripe's pages,
@@ -360,6 +379,9 @@ record who agreed, when, and to which version, and keep that record for at least
 - **O4** — APPROVED by the owner 2026-11-18 ("i approve"), as **v0.2** (Stripe-owned pricing Stage 5): §4 and §5
   rewritten, §3, §6, §7, §10 and §12 touched (change log), with `/legal`'s and `/accounting`'s Stage 5 fixes applied.
   Approved text, not yet published: publishing waits on the dependencies below.
+  **Narrowed after approval (owner ruling (e), 2026-11-18):** §4's exception, §5's bank-debit bullet and §7's
+  returned-debit bullets (change log). **APPROVED by the owner 2026-11-18 ("I approve"), after reading the changed
+  sentences.**
 - **O5** — the default payer setting (`/legal` Stage 5 review, owner question (b)): left for before switch-on (owner
   2026-11-18, "you can leave club pays it"); the default stays "Teams pay it" / "Families and teams pay it" until then.
 

@@ -22,8 +22,9 @@
 --       or a payment on an old account (never read).
 --   online_payments.stripe_extra_entry_id    NEW uuid FK: the "Stripe's extra · …" cost (Stripe's fee less its standard
 --       cost, fee_amount − application_fee_amount, when above zero).
---   online_payments.dispute_fee_entry_id     NEW uuid FK: the "Dispute fee · receipt N" cost of the fee attached to a
---       dispute (card or bank debit).
+--   online_payments.dispute_fee_entry_id     NEW uuid FK: the cost of the fee attached to a dispute: "Dispute fee ·
+--       receipt N" on a card, "Returned debit fee · receipt N" on a bank debit taken back after it cleared (/marketing
+--       2026-11-18: everywhere else that debit reads "Returned by the bank", never a dispute).
 --   online_payments.reversal_fee_entry_id    NEW uuid FK: ruling (f)'s "Payment processing · …" cost at a reversal.
 --   online_payments_guard()                  ▶ 501: the four new columns start NULL and are frozen outside the writers.
 --   online_payment_stripe_fee_lines (NEW)    one row per stand-alone Stripe fee line on a club's balance, matched or not.
@@ -68,7 +69,7 @@ COMMENT ON COLUMN public.online_payments.stripe_fee_amount IS
 COMMENT ON COLUMN public.online_payments.stripe_extra_entry_id IS
   'The "Stripe''s extra" cost line: stripe_fee_amount less Stripe''s standard cost (fee_amount - application_fee_amount), when above zero (a foreign card, a conversion). Mig 501.';
 COMMENT ON COLUMN public.online_payments.dispute_fee_entry_id IS
-  'The "Dispute fee" cost line for the fee Stripe attached to this payment''s dispute (card $15, bank debit $5). Mig 501.';
+  'The cost line for the fee Stripe attached to this payment''s dispute: "Dispute fee · receipt N" (card, $15) or "Returned debit fee · receipt N" (a bank debit taken back after it cleared, $5). Mig 501.';
 COMMENT ON COLUMN public.online_payments.reversal_fee_entry_id IS
   'Family-pays mode: the "Payment processing" cost posted when the payment was reversed (lost dispute, debit returned after clearing), for the fee the family paid that Stripe pulled back from the club. Mig 501.';
 
@@ -170,16 +171,27 @@ GRANT EXECUTE ON FUNCTION public.online_payment_stripe_owned(text) TO service_ro
 --    NULL when the book is gone (a deleted tournament). Callers hold the payment's locks and the write flag.
 CREATE OR REPLACE FUNCTION public.online_payment_cost_out(p_op uuid, p_day date, p_description text, p_amount numeric)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE v_op public.online_payments%ROWTYPE; v_method text;
+DECLARE v_op public.online_payments%ROWTYPE; v_method text; v_day date := p_day;
+  v_today date := (now() AT TIME ZONE 'America/Toronto')::date; v_closed date;
 BEGIN
   SELECT * INTO v_op FROM online_payments WHERE id = p_op;
   IF NOT FOUND THEN RAISE EXCEPTION 'Online payment not found'; END IF;
+  -- A day in a closed fiscal year is dated today, as the landing dates its own lines (mig 358): Stripe's figure can arrive
+  -- after the year closed, and a refused line would lose it (hardening, owner 2026-11-18).
+  v_closed := club_books_closed_through(v_op.org_id);
+  IF v_day IS NULL OR v_day > v_today THEN v_day := v_today; END IF;
+  IF v_closed IS NOT NULL AND v_day <= v_closed THEN v_day := v_today; END IF;
   v_method := CASE WHEN v_op.rail = 'bank_debit' THEN 'online_bank' ELSE 'online_card' END;
   IF v_op.flow = 'league_signup' THEN
-    RETURN online_payment_league_post_out(v_op.season_id, 'Payment processing', p_day, p_description, p_amount, v_op.id, NULL, v_method);
+    RETURN online_payment_league_post_out(v_op.season_id, 'Payment processing', v_day, p_description, p_amount, v_op.id, NULL, v_method);
   END IF;
   IF v_op.tournament_id IS NULL THEN RETURN NULL; END IF;
-  RETURN online_payment_post_out(v_op.tournament_id, 'Payment processing', p_day, p_description, p_amount, v_op.id, NULL, v_method);
+  -- A tournament whose fees are not kept in the books (the fee book off, mig 373: no Club plan or Accounting add-on, or a
+  -- free tournament) books no receipt and no processing cost at the landing (mig 390), so none of these either: never a
+  -- Stripe cost in a book that holds none of its payments (/review 2026-11-18). A debit that failed before it cleared has no
+  -- receipt but is still booked where the book is on (ruling (d)).
+  IF NOT tournament_fee_book_on(v_op.tournament_id) THEN RETURN NULL; END IF;
+  RETURN online_payment_post_out(v_op.tournament_id, 'Payment processing', v_day, p_description, p_amount, v_op.id, NULL, v_method);
 END $$;
 REVOKE ALL ON FUNCTION public.online_payment_cost_out(uuid, date, text, numeric) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.online_payment_cost_out(uuid, date, text, numeric) TO service_role;
@@ -242,8 +254,11 @@ BEGIN
   v_op := online_payment_lock_for_cost(p_online_payment);
   IF v_op.dispute_fee_entry_id IS NOT NULL THEN RETURN jsonb_build_object('already', true); END IF;
   PERFORM set_config('flhq.online_payment_write', 'on', true);
+  -- A bank debit's dispute is the debit taken back after it cleared: the product calls it "Returned by the bank", so its
+  -- fee reads as a returned debit's, never a dispute's (/marketing 2026-11-18). Not "Returned by the bank · …": that
+  -- prefix finds a team's returned line (lib/online-payouts.ts, the 12c check).
   v_entry := online_payment_cost_out(v_op.id, (now() AT TIME ZONE 'America/Toronto')::date,
-    'Dispute fee · receipt ' || v_op.receipt_no, v_fee);
+    CASE WHEN v_op.rail = 'bank_debit' THEN 'Returned debit fee · receipt ' ELSE 'Dispute fee · receipt ' END || v_op.receipt_no, v_fee);
   UPDATE online_payments SET dispute_fee_entry_id = v_entry, updated_at = now() WHERE id = v_op.id;
   PERFORM set_config('flhq.online_payment_write', 'off', true);
   RETURN jsonb_build_object('already', false, 'entryId', v_entry);
@@ -259,7 +274,7 @@ CREATE OR REPLACE FUNCTION public.online_payment_stripe_fee_line_take(
   p_created timestamptz, p_kind text, p_day date
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_line public.online_payment_stripe_fee_lines%ROWTYPE; v_ids uuid[]; v_op public.online_payments%ROWTYPE;
-  v_entry uuid; v_reason text; v_desc text;
+  v_entry uuid; v_reason text; v_desc text; v_retry boolean := false;
 BEGIN
   IF p_kind NOT IN ('debit_failure', 'dispute_countered', 'other') THEN RAISE EXCEPTION 'Unknown Stripe fee kind'; END IF;
   IF NOT EXISTS (SELECT 1 FROM org_payment_accounts a WHERE a.org_id = p_org AND a.stripe_account_id = p_stripe_account
@@ -272,7 +287,18 @@ BEGIN
     p_created, p_kind)
   ON CONFLICT (stripe_txn_id) DO NOTHING
   RETURNING * INTO v_line;
-  IF v_line.id IS NULL THEN RETURN jsonb_build_object('already', true); END IF;
+  IF v_line.id IS NULL THEN
+    -- Recorded before. Booked, or never a fee to book (a credit, an unknown kind): done. Left unmatched or refused: tried
+    -- again (hardening, owner 2026-11-18), since the payment's side can be stamped after Stripe's line is first read (a
+    -- late webhook) or a refusal can clear (a book reopened). Bounded by the job's look-back: a line older than it is not
+    -- listed again, so it stays as it last read.
+    SELECT * INTO v_line FROM online_payment_stripe_fee_lines WHERE stripe_txn_id = p_txn FOR UPDATE;
+    IF v_line.entry_id IS NOT NULL OR v_line.unmatched_reason IS NULL
+       OR v_line.unmatched_reason NOT IN ('no_payment', 'several_payments', 'refused') THEN
+      RETURN jsonb_build_object('already', true);
+    END IF;
+    v_retry := true;
+  END IF;
 
   IF p_amount >= 0 THEN v_reason := 'not_a_charge';
   ELSIF p_kind = 'other' THEN v_reason := 'unknown_kind';
@@ -280,13 +306,16 @@ BEGIN
     -- A debit that failed before it cleared (never landed, nothing else in the books), on this account, near the day.
     SELECT array_agg(p.id) INTO v_ids FROM online_payments p
      WHERE p.stripe_account_id = p_stripe_account AND p.rail = 'bank_debit' AND p.status = 'returned'
-       AND (p.returned_at AT TIME ZONE 'UTC')::date BETWEEN p_day - 1 AND p_day
+       -- D+1 too (hardening 2026-11-18): our return stamp can land after the UTC midnight of Stripe's dated line.
+       AND (p.returned_at AT TIME ZONE 'UTC')::date BETWEEN p_day - 1 AND p_day + 1
        AND NOT EXISTS (SELECT 1 FROM online_payment_stripe_fee_lines l
                         WHERE l.online_payment_id = p.id AND l.kind = 'debit_failure' AND l.id <> v_line.id);
   ELSE
     -- A card dispute this club answered near the day (answered_at is our first read of the answer).
     SELECT array_agg(DISTINCT p.id) INTO v_ids FROM online_payment_disputes d JOIN online_payments p ON p.id = d.online_payment_id
      WHERE p.stripe_account_id = p_stripe_account AND d.answered
+       -- An inquiry (`warning_*`) answered carries no countered fee (/review 2026-11-18): never a candidate.
+       AND d.status NOT LIKE 'warning%'
        AND (d.answered_at AT TIME ZONE 'UTC')::date BETWEEN p_day - 2 AND p_day + 1
        AND NOT EXISTS (SELECT 1 FROM online_payment_stripe_fee_lines l
                         WHERE l.online_payment_id = p.id AND l.kind = 'dispute_countered' AND l.id <> v_line.id);
@@ -295,12 +324,20 @@ BEGIN
   IF v_reason IS NULL AND array_length(v_ids, 1) > 1 THEN v_reason := 'several_payments'; END IF;
   IF v_reason IS NOT NULL THEN
     UPDATE online_payment_stripe_fee_lines SET unmatched_reason = v_reason WHERE id = v_line.id;
-    RETURN jsonb_build_object('already', false, 'matched', false, 'reason', v_reason);
+    RETURN jsonb_build_object('already', false, 'retried', v_retry, 'matched', false, 'reason', v_reason);
   END IF;
 
   v_op := online_payment_lock_for_cost(v_ids[1]);
+  -- Checked again under the payment's lock (hardening 2026-11-18): two runs at once (the cron and a person's Run) could
+  -- each see the one candidate before the other's line was committed. A second line of this kind is not this payment's.
+  IF EXISTS (SELECT 1 FROM online_payment_stripe_fee_lines l
+              WHERE l.online_payment_id = v_op.id AND l.kind = p_kind AND l.id <> v_line.id) THEN
+    UPDATE online_payment_stripe_fee_lines SET unmatched_reason = 'no_payment' WHERE id = v_line.id;
+    RETURN jsonb_build_object('already', false, 'retried', v_retry, 'matched', false, 'reason', 'no_payment');
+  END IF;
   v_desc := CASE WHEN p_kind = 'debit_failure' THEN 'Returned debit fee · ' || v_op.description
-                 ELSE 'Dispute fee · receipt ' || v_op.receipt_no END;
+                 -- The fee for answering a card dispute, told apart from the one taken when it opened (/marketing 2026-11-18).
+                 ELSE 'Dispute fee · answered · receipt ' || v_op.receipt_no END;
   PERFORM set_config('flhq.online_payment_write', 'on', true);
   BEGIN
     v_entry := online_payment_cost_out(v_op.id, (p_created AT TIME ZONE 'America/Toronto')::date, v_desc, -round(p_amount, 2));
@@ -314,7 +351,7 @@ BEGIN
     booked_at = CASE WHEN v_entry IS NOT NULL THEN now() END,
     unmatched_reason = CASE WHEN v_entry IS NULL THEN 'refused' END
    WHERE id = v_line.id;
-  RETURN jsonb_build_object('already', false, 'matched', v_entry IS NOT NULL, 'onlinePaymentId', v_op.id, 'entryId', v_entry,
+  RETURN jsonb_build_object('already', false, 'retried', v_retry, 'matched', v_entry IS NOT NULL, 'onlinePaymentId', v_op.id, 'entryId', v_entry,
     'reason', CASE WHEN v_entry IS NULL THEN 'refused' END);
 END $$;
 REVOKE ALL ON FUNCTION public.online_payment_stripe_fee_line_take(uuid, text, text, boolean, numeric, text, timestamptz, text, date) FROM PUBLIC, anon, authenticated;

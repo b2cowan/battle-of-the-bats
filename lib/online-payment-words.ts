@@ -877,8 +877,9 @@ export const REFUND_WORDS = {
   whoOrganizer: 'The organizer is ending it',
   whoTeam: 'The team asked to leave',
   feeCheckbox: (fee: string, total: string) => `Include the ${fee} processing fee · ${total} back`,
-  // Derived from §16 after the 2026-10-25 ruling (plan §0c): FieldLogicHQ keeps its fee on every refund, so a fee the club
-  // gives back is the club's whole cost — never "Stripe keeps part of it".
+  // Derived from §16 after the 2026-10-25 ruling (plan §0c). Neither part of the fee comes back on a refund (payments terms
+  // v0.2 §4): on a Stripe-owned account Stripe keeps its part and FieldLogicHQ its own, so a fee the club gives back is the
+  // club's whole cost and one "Payment processing" line. The words say whose cost it is, never how it splits.
   feeOnWhy: (fee: string) => `On because the organizer is ending it. The ${fee} comes from the club and shows in your books as Payment processing.`,
   feeOffWhy: (base: string) => `${base} back. Off because the team asked to leave; you can include it.`,
   feeOnChanged: (fee: string) => `The ${fee} comes from the club and shows in your books as Payment processing.`,

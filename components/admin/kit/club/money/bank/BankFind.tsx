@@ -29,6 +29,7 @@
  * Only a writer reaches this (`BankCheckForm`, mounted behind `canMove`).
  */
 import { useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import SearchField from '@/components/shared/SearchField';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -50,7 +51,7 @@ const PAGE_PHONE = 10;
 type Line = Figure['suspects']['lines'][number];
 
 
-export default function BankFind({ figure, band, typed, marked, busy, repeatOf = null, onMark, onUndo, onAtStart, onAddLine }: {
+export default function BankFind({ figure, band, typed, marked, busy, repeatOf = null, onMark, onUndo, onAtStart, onAddLine, payoutsHref }: {
   /** The server's figure for the day (a check's, with its books). */
   figure: Figure;
   /** The engine's band, figured with the marked items. */
@@ -69,6 +70,8 @@ export default function BankFind({ figure, band, typed, marked, busy, repeatOf =
   /** "Add the missing entry": the Ledger's add window, filled with the gap; with a door, "Add a bank fee" / "Add
    *  interest" (S3), filled with the word and the description too. */
   onAddLine: (door?: GapDoor) => void;
+  /** The Payouts tab, where a Stripe fee to record by hand is seen inside its payout. */
+  payoutsHref?: string;
 }) {
   const [open, setOpen] = useState(false); // "Show them", while the check isn't off
   const [pick, setPick] = useState<string | null>(null); // the possibility the callout names
@@ -131,6 +134,7 @@ export default function BankFind({ figure, band, typed, marked, busy, repeatOf =
   const listCount = lines.length + (onWay.length > 0 ? 1 : 0) + before.length;
   const door = gapDoorFor({ off, named: !!current, band });
   const bankMore = band.direction === 'bank_more';
+  const toRecord = off && !bankMore ? figure.feesToRecord ?? [] : [];
 
   const sinceHint = (suspects.sinceMatch ? W.linesSinceMatch : W.linesSinceStart)(when, suspects.total);
   const sinceTitle = (suspects.sinceMatch ? W.findSinceMatch : W.findSinceStart)(when);
@@ -216,6 +220,16 @@ export default function BankFind({ figure, band, typed, marked, busy, repeatOf =
       {/* A7 (D2): one plain line under the heading, before the callout. */}
       {off && repeatOf && <p className={s.repeat}>{W.sameGapLead} <b>{cents(band.offByCents)}</b> {W.sameGapTail(dayYear(repeatOf))}</p>}
 
+      {/* Stage 3 (ruling (d)): a Stripe fee in a payout that reached the bank but in no book. Named while the bank holds
+          less, beside whatever else the callout names; never counted in the figure, so it goes once it is recorded. */}
+      {toRecord.length > 0 && (
+        <Callout tone="info" role="note">
+          {toRecord.map(f => (
+            <span key={f.key} className={s.feeToRecord}><b>{W.feeToRecord}</b> · {cents(f.amountCents)} · {W.feeToRecordIn(day(f.date))}</span>
+          ))}
+          <span>{W.feeToRecordHint}{payoutsHref && <>{' '}<Link href={payoutsHref} className={s.inlineLink}>{W.payoutsTab}</Link></>}</span>
+        </Callout>
+      )}
       {off && current && (
         <HintCallout hint={current} target={target} bankMore={bankMore} busy={busy}
           onMark={() => onMark(itemOfLine(current.lines[0]))} onAtStart={() => onAtStart(current.lines[0])} onAddLine={() => onAddLine()}

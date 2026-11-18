@@ -35,6 +35,9 @@ describe('Stripe’s own fee on a charge is its stripe_fee detail, never the tra
   });
   it('not there yet (unexpanded or null) reads as null, so the landing leaves it for the daily job', () => {
     assert.equal(stripeFeeCents(null), null);
+    // Hardening 2026-11-18: no stripe_fee detail yet reads as not there (never a stored 0); Stripe's tax on its fee counts.
+    assert.equal(stripeFeeCents({ fee_details: [{ type: 'application_fee', amount: 165 }] } as never), null);
+    assert.equal(stripeFeeCents({ fee_details: [{ type: 'stripe_fee', amount: 335 }, { type: 'tax', amount: 44 }, { type: 'application_fee', amount: 165 }] } as never), 379);
     assert.equal(stripeFeeCents('txn_123'), null);
     assert.equal(chargeBalanceTransaction({ balance_transaction: null } as unknown as Stripe.Charge), null);
     assert.equal(chargeBalanceTransaction({ balance_transaction: 'txn_1' } as unknown as Stripe.Charge), null);
