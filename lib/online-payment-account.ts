@@ -55,17 +55,33 @@ function waitingOnStripe(a: PayoutsAccountFacts): boolean {
 export function payoutsState(a: PayoutsAccountFacts | null): PayoutsState {
   if (!a) return 'not_set_up';
   if (a.disconnectedAt) return 'disconnected';
-  if (a.cardPayments === 'active') return a.requirementsDue.length > 0 ? 'needs_attention' : 'taking_payments';
+  // No refund policy pauses payments as Stripe's demands do (owner 2026-11-17): the same "paused" card and Needs-attention item.
+  if (a.cardPayments === 'active') return a.requirementsDue.length > 0 || refundPolicyMissing(a) ? 'needs_attention' : 'taking_payments';
   if (!a.onboardingFinishedAt) return 'setting_up';
   return a.requirementsDue.length === 0 && waitingOnStripe(a) ? 'setting_up' : 'needs_attention';
 }
 
 /**
+ * THE REFUND POLICY IS REQUIRED (owner ruling 2026-11-17, replacing A9's "optional"; payments terms §6: "payers see it beside
+ * the Pay button before they pay"). Setting up asks for it and it cannot be cleared afterwards, so only a club that connected
+ * before the ruling can be without one — and until it writes one, no pay page opens.
+ */
+export function refundPolicyMissing(a: Pick<PayoutsAccountFacts, 'refundPolicy'>): boolean {
+  return !a.refundPolicy?.trim();
+}
+
+/** Paused for the refund policy alone: Stripe has card payments on and wants nothing — the card and the item say so. */
+export function pausedForRefundPolicy(a: PayoutsAccountFacts | null): boolean {
+  return !!a && !a.disconnectedAt && a.cardPayments === 'active' && a.requirementsDue.length === 0 && refundPolicyMissing(a);
+}
+
+/**
  * Whether a pay page may open now. Stripe's own capability decides, never the card's word: an account with a deadline
- * still takes payments until the deadline passes. A disconnected club takes none (A1: Disconnect stops new payments).
+ * still takes payments until the deadline passes. A disconnected club takes none (A1: Disconnect stops new payments), and
+ * neither does a club with no refund policy (owner 2026-11-17) — every pay door reads this one rule.
  */
 export function takesPayments(a: PayoutsAccountFacts | null): boolean {
-  return !!a && !a.disconnectedAt && a.cardPayments === 'active';
+  return !!a && !a.disconnectedAt && a.cardPayments === 'active' && !refundPolicyMissing(a);
 }
 
 /** 12c: the pay block offers bank debit beside the card only while the account takes payments AND bank debit is on. */
@@ -73,7 +89,8 @@ export function takesBankDebit(a: PayoutsAccountFacts | null): boolean {
   return takesPayments(a) && a!.bankDebit === 'active';
 }
 
-/** The Needs attention item is up exactly while the card says "needs attention"; it clears itself when that ends. */
+/** The Needs attention item is up exactly while the card says "needs attention" (Stripe's demand, or no refund policy); it
+ *  clears itself when that ends. */
 export function payoutsNeedAttention(a: PayoutsAccountFacts | null): boolean {
   return payoutsState(a) === 'needs_attention';
 }

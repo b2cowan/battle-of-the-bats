@@ -71,7 +71,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   club_payment_handed_off:           'The club received a family’s payment',
   club_payment_not_received:         'A coach says a payment never arrived',
   // Club Tier Stage 12a — online payments (mig 358). Words: CLUB_TIER_STAGE12A_COPY.md §19.
-  payouts_need_attention:            'Stripe needs something to keep online payments on',
+  payouts_need_attention:            'Online payments need something to stay on',
   online_payment_not_recorded:       'An online payment isn’t in the team’s record',
   card_refund_failed:                'A refund didn’t reach the card',
   // 12c words §5 `kind.*.label`.
@@ -158,7 +158,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_schedule_changes:             'Your club sent changes to your team’s slots on one of its schedules.',
   club_bill_arrived:                 'Your club billed your team for the time it got, with its payments on Money › Club.',
   club_guardians_asked:              'Your club asked you to add guardian emails for some of your players, on your Roster.',
-  payouts_need_attention:            'Stripe needs something more from the club to keep online payments on. The owner fixes it on the Payouts card.',
+  payouts_need_attention:            'Stripe needs something more from the club, or the club needs a refund policy, to keep online payments on. The owner fixes it on the Payouts card.',
   online_payment_not_recorded:       'A team paid by card, but the payment couldn’t be added to the team’s record. Refund it to the card.',
   card_refund_failed:                'A refund to a team’s card was returned. Send the team the money another way, then record the refund.',
   // 12c words §5 `kind.*.desc`.

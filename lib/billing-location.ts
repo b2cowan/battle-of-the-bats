@@ -87,6 +87,9 @@ export const BILLING_LOCATION_WORDS = {
   /** GST/HST 6.4 (owner ruling Q6, O4): every purchase door refuses a Québec billing address (`billing_region_closed`). Reviewed
    *  by /legal and /accounting 2026-11-13 (build prompt §6): copy it exactly. */
   regionClosed: 'We’re not selling in Québec yet, so we can’t take a purchase with a billing address there. If the province is wrong, correct it on your billing page and try again.',
+  /** Club Stage 12 (owner 2026-11-17, payments terms §14 over Q6's "payouts untouched"): setting up payouts, or setting them up
+   *  again, refuses a Québec billing address the same way — same code, its own subject. A club already taking payments keeps them. */
+  regionClosedPayouts: 'We’re not offering online payments in Québec yet, so we can’t set up payouts with a billing address there. If the province is wrong, correct it on your billing page and try again.',
   /** The address form's notice under Province when Québec is chosen. It never blocks the save (an account keeps everything else). */
   qcClosed: 'We’re not selling in Québec yet.',
 } as const;

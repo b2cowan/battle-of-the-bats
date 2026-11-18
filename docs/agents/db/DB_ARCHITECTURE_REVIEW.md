@@ -28,6 +28,27 @@
 
 ---
 
+### [2026-11-17] — Finding #53: Migration 497 (the payments-terms agreement record) reviewed before it was applied
+**Severity:** Advisory
+**Finding:** The payments terms §15 promise a record of every agreement, kept six years after the account closes. The record
+was four columns on `org_payment_accounts` (overwritten on each agreement, deleted with the org by mig 358's cascade; the
+`org_audit_log` row cascades too). Mig 497 adds `payments_terms_agreements`. Decisions:
+1. **A sibling, not `legal_acceptances`.** That table is a person's acceptance (no `org_id` by design) and is read as "has this
+   person accepted the current Terms"; a club's agreement would need a nullable `privacy_version`, an org column and new doors,
+   and every reader would have to skip it.
+2. **`org_id` and `user_id` are plain ids, no FK** (mig 451's retention pattern) — the record outlives the org and the account;
+   `org_name` and `user_email` are copied as text. Classified STAYS in `team-move-coverage.test.ts`; kept by the Milton demo
+   reset (`seed-prospect-demo.mjs` KEEP).
+3. **Append-only with NO exception** (no FK to set null), the 429/455 trigger shape; service_role keeps all four grants (house rule).
+4. **Changed at review:** no upper bound on `org_name` or `box_text` — `organizations.name` has none, and a cap would refuse a
+   real agreement. The email keeps 320.
+5. Index `(org_id, agreed_at DESC)` covers every read; no user index (nothing reads by person).
+**Tables affected:** payments_terms_agreements (new), org_payment_accounts (standing only, unchanged)
+**Recommendation:** Apply as amended. The six-year end needs a named trigger exception, built with the Terms/tax retention step.
+**Status:** Addressed — mig 497 written as amended 2026-11-17 (dev apply in the same build).
+
+---
+
 ### [2026-11-16] — Finding #52: Phase 8 storage — an added part of a final schedule is its own `club_schedules` row (B), not a parts table (A)
 **Severity:** Advisory (design review before any migration; owner call owed)
 **Finding:** Phase 8 (plan `CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`, prompt `CLUB_SCHEDULE_ADD_TIME_PARTS_BUILD_PROMPT.md`) needs, per

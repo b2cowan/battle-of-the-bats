@@ -72,6 +72,7 @@ const STAYS: Record<string, string> = {
   platform_refunds: 'a refund FieldLogicHQ staff made on the account’s own subscription charge (Support console Stage 3)',
   platform_charge_tax_records: 'FieldLogicHQ’s own tax record of an invoice it issued to the account (GST/HST Stage 3, mig 451): kept six years as it stood, never the team’s data, never re-pointed',
   platform_credit_note_tax_records: 'FieldLogicHQ’s own tax record of a credit note on the account’s invoice (GST/HST Stage 3, mig 451): kept six years, never re-pointed',
+  payments_terms_agreements: 'the evidence of which organization agreed to the payments terms (Club Stage 12, mig 497): append-only, kept six years as written, so it is never re-pointed to another organization',
   early_access_lead_dismissed_offers: 'FieldLogicHQ’s own sales-pipeline record that a lead is not this club (Support console leads, mig 398): platform data about a lead, never a team’s',
   platform_account_emails:'FieldLogicHQ’s log of an account email it sent, kept 90 days as it happened (Support console Stage 5)',
   team_entitlements: 'the old portal’s own plan — the move cancels it, and it stays as that portal’s record',

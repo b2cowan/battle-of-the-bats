@@ -7,7 +7,7 @@ import { payOptions } from '../../lib/team-pay-options.ts';
 import { onlineFee } from '../../lib/online-payment-fee.ts';
 import { readTeamPayToken, signTeamPayToken, teamPayPath } from '../../lib/team-pay-link.ts';
 import { refusalMessage, type RefusalFacts } from '../../lib/team-pay-refusal.ts';
-import { factsFromStripe, payoutsState, takesPayments, type PayoutsAccountFacts, type StripeAccountLike } from '../../lib/online-payment-account.ts';
+import { factsFromStripe, payoutsState, takesPayments, pausedForRefundPolicy, payoutsNeedAttention, refundPolicyMissing, type PayoutsAccountFacts, type StripeAccountLike } from '../../lib/online-payment-account.ts';
 
 /**
  * Club Tier Stage 12a, Parts 2–4: deposit or full (A7), the signed pay link, the pay route's refusals (copy §18) and the
@@ -296,7 +296,8 @@ describe('the pay route’s refusals (copy §18)', () => {
 describe('the Payouts card’s five states', () => {
   const acct = (over: Partial<PayoutsAccountFacts> = {}): PayoutsAccountFacts => ({
     stripeAccountId: 'acct_1', livemode: false, cardPayments: 'restricted', cardPaymentsReason: 'requirements_past_due',
-    onboardingFinishedAt: null, requirementsDue: [], requirementsDeadline: null, feePayer: 'family', refundPolicy: null,
+    // A refund policy is written (required since 2026-11-17): the states below are Stripe's; the policy's own cases follow.
+    onboardingFinishedAt: null, requirementsDue: [], requirementsDeadline: null, feePayer: 'family', refundPolicy: 'Refunded in full until Nov 30.',
     disconnectedAt: null, ...over,
   });
   const done = '2026-10-25T18:00:00Z';
@@ -323,6 +324,26 @@ describe('the Payouts card’s five states', () => {
     assert.equal(takesPayments(acct({ cardPayments: 'active', disconnectedAt: '2026-10-25T00:00:00Z' })), false);
     assert.equal(takesPayments(null), false);
   });
+
+  it('THE REFUND POLICY IS REQUIRED (owner 2026-11-17): none written pauses payments as Stripe does, and says so', () => {
+    const on = { onboardingFinishedAt: done, cardPayments: 'active' as const, cardPaymentsReason: null };
+    for (const blank of [null, '', '   ']) {
+      const a = acct({ ...on, refundPolicy: blank });
+      assert.equal(takesPayments(a), false, `no pay page opens with the policy ${JSON.stringify(blank)}`);
+      assert.equal(payoutsState(a), 'needs_attention', 'the same paused card');
+      assert.equal(pausedForRefundPolicy(a), true, 'paused for the policy alone');
+      assert.equal(payoutsNeedAttention(a), true, 'the same Needs-attention item');
+    }
+    const written = acct({ ...on });
+    assert.equal(takesPayments(written), true);
+    assert.equal(payoutsState(written), 'taking_payments');
+    assert.equal(pausedForRefundPolicy(written), false);
+    // Stripe wanting something comes first: the card says Stripe's reason, not the policy's.
+    assert.equal(pausedForRefundPolicy(acct({ ...on, refundPolicy: null, requirementsDue: ['x'] })), false);
+    assert.equal(pausedForRefundPolicy(acct({ ...on, refundPolicy: null, disconnectedAt: '2026-10-25T00:00:00Z' })), false, 'disconnected is its own state');
+    assert.equal(pausedForRefundPolicy(acct({ refundPolicy: null })), false, 'not taking payments anyway');
+    assert.equal(refundPolicyMissing({ refundPolicy: ' x ' }), false);
+  });
 });
 
 describe('a v2 account reads into the five states (plan §0d)', () => {
@@ -343,7 +364,7 @@ describe('a v2 account reads into the five states (plan §0d)', () => {
       stripeAccountId: a.id, livemode: false, cardPayments: columns.card_payments_status ?? null, cardPaymentsReason: columns.card_payments_reason ?? null,
       onboardingFinishedAt: finishedBefore || onboardingFinished ? '2026-10-25T18:00:00Z' : null,
       requirementsDue: columns.requirements_due ?? [], requirementsDeadline: columns.requirements_deadline ?? null,
-      feePayer: 'family', refundPolicy: null, disconnectedAt: null,
+      feePayer: 'family', refundPolicy: 'Refunded in full until Nov 30.', disconnectedAt: null,
     });
   };
 

@@ -142,6 +142,12 @@ export const ONLINE_NOTICE_WORDS = {
   // Copy 12a §20 (held for 12b): League and Club name families and teams.
   stripeNeedsBodyPausedFamilies:
     'Online payments are paused. Stripe needs something more from you. Families and teams see your “How to pay” text until it’s done. Nothing already paid is affected.',
+  // The refund policy is required (owner 2026-11-17): a club connected before the ruling, with none, is paused until it writes one.
+  policyNeedsTitle: 'Write a refund policy to turn online payments back on',
+  policyNeedsBody:
+    'Online payments are paused until your refund policy is written on the Payouts card. Teams see your “How to pay” text until then. Nothing already paid is affected.',
+  policyNeedsBodyFamilies:
+    'Online payments are paused until your refund policy is written on the Payouts card. Families and teams see your “How to pay” text until then. Nothing already paid is affected.',
   // Derived (not in the copy): Stripe asks ahead of a deadline while payments still work.
   stripeNeedsBodyStillOn: (byDeadline: string) =>
     `Stripe needs something more from you${byDeadline}. Online payments stay on until then. Nothing already paid is affected.`,
@@ -357,6 +363,9 @@ export const PAYOUTS_WORDS = {
   takingBody: (clubName: string) => `Payouts go to your bank account on Stripe’s schedule. Receipts go out in the name “${clubName}”.`,
   // Paused: Stripe has switched card payments off, so the pay page shows "How to pay" (`takesPayments` is false).
   needsBody: 'Stripe needs something more from you. Until then teams see your “How to pay” text instead of Pay now. Nothing already paid is affected.',
+  // Paused for the refund policy alone (owner 2026-11-17: required): the same paused card, its own reason and button.
+  policyNeedsBody: 'Write your refund policy to turn them back on. Teams can read it beside Pay before they pay. Until then they see your “How to pay” text instead of Pay now. Nothing already paid is affected.',
+  writePolicy: 'Write the refund policy',
   // Still on (derived, walk 2026-10-25): Stripe asks while card payments stay on — teams still see Pay now. Matches the
   // Needs-attention notice's "stay on" body; the card used to say "paused" here.
   needsTitleStillOn: 'Stripe needs something more from you',
@@ -396,6 +405,10 @@ export const PAYOUTS_WORDS = {
     moneyBody: 'Straight to your bank account through Stripe. FieldLogicHQ never holds it.',
     refundsLabel: 'Refunds',
     refundsBody: 'You set your own refund policy, and refunds come out of your Stripe balance.',
+    // Required (owner 2026-11-17): written here, before Stripe; "Continue to Stripe" waits for it as it waits for the tick.
+    policyLabel: 'Your refund policy',
+    policyHint: 'Teams can read it beside Pay before they pay. You can change it later on the Payouts card.',
+    policyRequired: 'Write your refund policy first.',
     termsCheckbox: (clubName: string) => `I agree to the FieldLogicHQ payments terms for ${clubName}.`,
     termsLink: 'Read the terms',
     cancel: 'Cancel',
@@ -423,7 +436,8 @@ export const PAYOUTS_WORDS = {
     policyLabel: 'Refund policy',
     policyHint: 'One or two sentences teams see beside Pay.',
     policyPlaceholder: 'For example: refunded in full until a date, then not refunded.',
-    policyEmpty: 'None written. Teams won’t see a Refund policy link.',
+    policyEmpty: 'None written. Online payments are paused until one is.',
+    policyRequired: 'A refund policy is required, so it can’t be left blank. Change the words instead.',
     edit: 'Edit payouts',
     done: 'Done',
   },
@@ -447,6 +461,7 @@ export const PAYOUTS_WORDS = {
     takingLink: 'Open Stripe',
     needsLead: 'Needs attention',
     needsBody: 'Online payments are paused: Stripe needs something from the owner.',
+    needsBodyPolicy: 'Online payments are paused: the owner needs to write a refund policy.',
     needsBodyStillOn: (deadline: string | null) =>
       deadline ? `Online payments are still on. Stripe needs something from the owner by ${deadline}.` : 'Online payments are still on. Stripe needs something from the owner.',
     needsOwnerHint: (home: PayoutsHome) => `The owner fixes it in ${home === 'club' ? 'Settings › Payouts' : 'Settings & access › Payouts'}.`,
@@ -470,6 +485,7 @@ const PAYOUTS_WORDS_FAMILIES = {
   title: { ...PAYOUTS_WORDS.title, not_set_up: 'Let families and teams pay online', taking_payments: 'Families and teams can pay online' },
   settingUpBody: (date: string) => `You started on ${date}. Families and teams keep seeing your “How to pay” text until setup is finished.`,
   needsBody: 'Stripe needs something more from you. Until then families and teams see your “How to pay” text instead of Pay now. Nothing already paid is affected.',
+  policyNeedsBody: 'Write your refund policy to turn them back on. Families and teams can read it beside Pay before they pay. Until then they see your “How to pay” text instead of Pay now. Nothing already paid is affected.',
   disconnectedBody: (date: string, name: string | null) =>
     `Disconnected ${date}${name ? ` by ${name}` : ''}. Payments already made stay in your books; refunds of them are made in Stripe. Families and teams see your “How to pay” text.`,
   before: {
@@ -477,6 +493,7 @@ const PAYOUTS_WORDS_FAMILIES = {
     whoTeams: 'Families and teams pay it',
     whoTeamsHint: 'Added to what the family or team pays.',
     whoClubHint: 'Families and teams pay the fee alone; the processing fee comes out of each payment.',
+    policyHint: 'Families and teams can read it beside Pay before they pay. You can change it later on the Payouts card.',
   },
   record: {
     ...PAYOUTS_WORDS.record,
@@ -487,7 +504,6 @@ const PAYOUTS_WORDS_FAMILIES = {
       club: 'Families and teams pay the fee alone. The processing fee comes out of each payment and shows in your books as Payment processing.',
     },
     policyHint: 'One or two sentences families and teams see beside Pay.',
-    policyEmpty: 'None written. Families and teams won’t see a Refund policy link.',
   },
   disconnect: { ...PAYOUTS_WORDS.disconnect, stops: 'Families and teams stop seeing Pay now right away, and pay links already emailed show your “How to pay” text instead.' },
   status: { ...PAYOUTS_WORDS.status, offBody: (date: string) => `The owner disconnected payouts on ${date}. Families and teams see the club’s payment instructions.` },

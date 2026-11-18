@@ -217,7 +217,8 @@ export function PayError({ message }: { message: string | null }) {
   return message ? <p className={styles.error} role="alert">{message}</p> : null;
 }
 
-/** The club's optional refund policy (A9) and its "How to pay" text as the other way to pay. */
+/** The club's refund policy and its "How to pay" text as the other way to pay. The policy is REQUIRED (owner 2026-11-17, over
+ *  A9's "optional"): no pay page opens without one (`takesPayments`), so the link is always here; the guard only types it. */
 export function PolicyAndOtherWays({ refundPolicy, howToPay }: { refundPolicy: string | null; howToPay: string | null }) {
   const [showPolicy, setShowPolicy] = useState(false);
   return (

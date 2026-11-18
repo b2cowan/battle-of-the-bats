@@ -12,6 +12,38 @@
 
 > **2026-11-04 (owner):** counsel no longer gates online payments in production. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real payments terms are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
 
+> **2026-11-17 (owner, on the payments terms draft, `docs/agents/legal/drafts/PAYMENTS_TERMS.md` v0.1):**
+> - **The refund policy is REQUIRED** ("let's make sure we have the refund policy in place"). Replaces A9's "one optional
+>   sentence … absent when blank". **Owed to the build:** no pay page opens until the club has written one; the Payouts card
+>   and the Before window say so. A dependency of publishing the payments terms (their §6 says payers see it before paying).
+> - **The passed-on fee is the club's own charge and responsibility** (payments terms §9); our concern is our fee, which we
+>   charge the club. No question to Stripe on surcharging. The "who pays" default is unchanged (not ruled). Research and the
+>   recommendation given before the ruling: `docs/agents/legal/CARD_SURCHARGE_PAYER_FEE.md`.
+> - **Found by `/legal`, for this plan:** the payments-terms agreement record keeps only the latest version on the payouts
+>   row and is deleted with the organization (mig 358:50-61), so the terms' "kept six years after your account closes" is not
+>   true yet; and setting up payouts does not check for a Québec billing address. Findings, not ruled: `/legal` recommends
+>   both before switch-on (the first, or cut the sentence).
+> - **BUILT 2026-11-17** (build prompt `CLUB_TIER_STAGE12_TERMS_RECORD_AND_REFUND_POLICY_BUILD_PROMPT.md`; owner yes to the
+>   UX summary, and **Québec ruled the same day: refuse new setups**, payments terms §14 over Q6's "payouts untouched"):
+>   - **The refund policy is required.** Asked in "Before you set up payouts" beside the tick ("Continue to Stripe" absent
+>     until both); the connect refuses without it and writes it on the new row and on a reconnect; the card's autosave can
+>     change it, never clear it. A connected club with none (dev only: Milton Bats; Dev Club Org is also Stripe-restricted)
+>     takes no payments (`takesPayments`, so every pay door shows "How to pay") and reads as the existing paused state
+>     with the policy's own words, a "Write the refund policy" button and the `payouts_need_attention` item, which settles
+>     when the policy is saved. UAT Rep Club has a policy, so the payout test from 2026-11-25 is undisturbed.
+>   - **Where the payer meets it (fact, item 4):** a "Refund policy" link beside Pay, its words shown when pressed; Stripe
+>     Checkout shows nothing of it. `/legal` recommends §6 read "can read it" (owner call, approved text).
+>   - **Every payments-terms tick is kept** in `payments_terms_agreements` (mig 497, dev applied; prod in
+>     MANUAL_PROD_STEPS): org id and name, account id and email, version, exact sentence, action (set up · reconnect ·
+>     agree again · backfill), time; no IP; no foreign key, so it outlives the organization and the account; append-only
+>     (lock check passed on dev). Written before the payouts row's standing changes. Changing who pays records nothing (it
+>     is refused while behind). `/dba` Finding #53. The version defect of GST_HST_STAGE6_TERMS_PLAN.md L247 was already
+>     fixed.
+>   - **Québec:** setting up or reconnecting refuses a Québec billing address (409 `billing_region_closed`, its own
+>     sentence); a club already taking payments is untouched.
+>   - Owed: the privacy policy's next version names the payments-terms record in its retention row (`/legal`, with the
+>     terms' publication); `/docs` (the help calls the policy optional).
+
 ## Received from Revenue readiness (2026-10-31)
 
 Owner ruling, 2026-10-31: Revenue readiness **hands off Gate B** (registration payments). It arrives here as work with a
@@ -442,6 +474,10 @@ What moved here, with its decision IDs:
   Returned bank debit, dispute and dispute-won lines are asserted only if the test account can produce them (a probe
   showed their line types exist in the sandbox). The treasurer reads it; a club that never connected has no tab. The
   steps held from §404 and §405 (payout steps, F1–F2 terms emails, B3, G ending emails) run in the same pass.
+  **Lead-time payments made 2026-11-17 (owner: "all done").** On dev, UAT Rep Club, 2026 Fall House League sign-ups: one
+  paid by the `0077` card, two by `4242`, one by bank debit, and a part refund to the card on one `4242` payment (added
+  to the recipe so the bank-debit and refund lines can sit in a landed payout). The pass runs on or after 2026-11-25,
+  once the Payouts tab shows a payout.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 

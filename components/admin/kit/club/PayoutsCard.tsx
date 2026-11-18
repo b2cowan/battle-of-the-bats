@@ -42,6 +42,8 @@ export type PayoutsView = {
   deadline: string | null;
   /** Stripe still has card payments on (teams see Pay now) — "needs attention" then means "still on", not "paused". */
   paymentsOn: boolean;
+  /** Paused for the refund policy alone (owner 2026-11-17: required): the card's reason, and its button opens the record. */
+  pausedForPolicy?: boolean;
   connectedAt: string | null;
   disconnectedAt: string | null;
   disconnectedBy: string | null;
@@ -192,8 +194,10 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
     }
   }
 
+  const forPolicy = state === 'needs_attention' && !!view.pausedForPolicy;
   const primary = () => {
-    if (state === 'not_set_up' || state === 'disconnected') setBefore(true);
+    if (forPolicy) setEditing(true);
+    else if (state === 'not_set_up' || state === 'disconnected') setBefore(true);
     else if (state === 'taking_payments') void goToStripe('dashboard');
     else void goToStripe('continue');
   };
@@ -203,7 +207,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
       : state === 'setting_up' ? W.settingUpBody(formatStoredDate(view.connectedAt, { withYear: false }))
         : state === 'taking_payments' ? W.takingBody(clubName)
           : state === 'needs_attention'
-            ? (view.paymentsOn ? W.needsBodyStillOn(view.deadline ? formatStoredDate(view.deadline, { withYear: false }) : null) : W.needsBody)
+            ? forPolicy ? W.policyNeedsBody : (view.paymentsOn ? W.needsBodyStillOn(view.deadline ? formatStoredDate(view.deadline, { withYear: false }) : null) : W.needsBody)
             : W.disconnectedBody(formatStoredDate(view.disconnectedAt, { withYear: false }), view.disconnectedBy);
   const hasRecord = state === 'setting_up' || state === 'taking_payments' || state === 'needs_attention';
   // 12d-2 (ask 4, the drawing's wind-down card): the plan no longer offers online payments, but the account stays connected —
@@ -220,7 +224,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   const editingRecord = editing && isOwner && hasRecord;
   // The review's call: a card that is setting up or needs attention keeps its primary button while editing (it is the owner's
   // way forward); only the taking-payments card's "Open Stripe" steps aside. Disconnect steps aside in all three.
-  const hidePrimary = editingRecord && state === 'taking_payments';
+  // Paused for the policy: the button IS "write it", so it steps aside once the record is open.
+  const hidePrimary = editingRecord && (state === 'taking_payments' || forPolicy);
 
   return (
     <>
@@ -273,7 +278,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         {isOwner ? (showPrimary && !hidePrimary && (
           <div className={pc.actions}>
             <button type="button" className="btn btn-lime" onClick={primary} disabled={opening}>
-              {opening ? W.opening : W.button[state]}
+              {opening ? W.opening : forPolicy ? W.writePolicy : W.button[state]}
               {state === 'taking_payments' && <>
                 <ExternalLink size={14} aria-hidden />
                 <span className="sr-only"> (opens in a new tab)</span>
@@ -361,6 +366,8 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSent, setLastSent] = useState<Record<string, unknown> | null>(null);
+  // Required (owner 2026-11-17): a blank policy is never sent — the words come back, and the line says why.
+  const [blankRefused, setBlankRefused] = useState(false);
 
   async function save(change: { feePayer?: OnlineFeePayer; refundPolicy?: string }) {
     setLastSent(change);
@@ -373,7 +380,14 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Couldn’t save');
-      onSaved({ ...(change.feePayer ? { feePayer: change.feePayer } : {}), ...(change.refundPolicy !== undefined ? { refundPolicy: change.refundPolicy.trim() } : {}) });
+      onSaved({
+        ...(change.feePayer ? { feePayer: change.feePayer } : {}),
+        ...(change.refundPolicy !== undefined ? {
+          refundPolicy: change.refundPolicy.trim(),
+          // Paused for the policy alone means Stripe has payments on and wants nothing: written, the club takes payments again.
+          ...(view.pausedForPolicy ? { pausedForPolicy: false, state: 'taking_payments' as const, paymentsOn: true } : {}),
+        } : {}),
+      });
       setDirty(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t save');
@@ -466,10 +480,14 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
               maxLength={300}
               value={policy}
               placeholder={W.record.policyPlaceholder}
-              onChange={e => { setPolicy(e.target.value); setDirty(true); }}
-              onBlur={() => { if (dirty) void save({ refundPolicy: policy }); }}
+              onChange={e => { setPolicy(e.target.value); setDirty(true); setBlankRefused(false); }}
+              onBlur={() => {
+                if (!dirty) return;
+                if (!policy.trim()) { setPolicy(view.refundPolicy); setDirty(false); setBlankRefused(true); return; }
+                void save({ refundPolicy: policy });
+              }}
             />
-            <p id={policyHintId} className={`${ck.hint} ${pc.fieldHint}`}>{W.record.policyHint}</p>
+            <p id={policyHintId} className={`${ck.hint} ${pc.fieldHint}`}>{blankRefused ? W.record.policyRequired : W.record.policyHint}</p>
           </dd>
         </div>
         {view.terms && <TermsRow terms={view.terms} onTerms={onTerms} />}
@@ -485,6 +503,10 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
   const W = payoutsWords(home);
   const [feePayer, setFeePayer] = useState<OnlineFeePayer>(view.feePayer);
   const [agreed, setAgreed] = useState(false);
+  // Required (owner 2026-11-17): written here, before Stripe. A reconnect starts from the club's earlier words.
+  const [policy, setPolicy] = useState(view.refundPolicy);
+  const policyId = useId();
+  const policyHintId = useId();
   const [showTerms, setShowTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -513,7 +535,7 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
     setError(null);
     try {
       // The version this window showed: the server refuses the connect if the payments terms moved meanwhile (6.3 A6).
-      const { url } = await post(orgSlug, { action: 'connect', feePayer, agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION });
+      const { url } = await post(orgSlug, { action: 'connect', feePayer, refundPolicy: policy.trim(), agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION });
       if (url) window.location.assign(url);
       else window.location.reload();
     } catch (e) {
@@ -539,8 +561,8 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
       footer={
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{W.before.cancel}</button>
-          {/* 12d-2 (ask 6): absent until the box is ticked, never disabled. */}
-          {agreed && (
+          {/* 12d-2 (ask 6): absent until the box is ticked and the refund policy written (owner 2026-11-17), never disabled. */}
+          {agreed && !!policy.trim() && (
             <button type="button" className="btn btn-lime" onClick={() => address.ensure(() => void go())} disabled={busy}>
               {busy ? W.opening : W.before.continue}
             </button>
@@ -575,6 +597,18 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
         <section>
           <h3 className={ck.label}>{W.before.refundsLabel}</h3>
           <p>{W.before.refundsBody}</p>
+          <label htmlFor={policyId} className={ck.label}>{W.before.policyLabel}</label>
+          <textarea
+            id={policyId}
+            className={ck.textarea}
+            aria-describedby={policyHintId}
+            rows={2}
+            maxLength={300}
+            value={policy}
+            placeholder={W.record.policyPlaceholder}
+            onChange={e => setPolicy(e.target.value)}
+          />
+          <p id={policyHintId} className={`${ck.hint} ${pc.fieldHint}`}>{W.before.policyHint}</p>
         </section>
         <label className={pc.terms}>
           <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} />

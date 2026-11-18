@@ -612,7 +612,9 @@ const GATE_DOORS: Record<string, { purchase: 'yes' | 'up_only' | 'no'; why: stri
   'app/api/billing/choose-next-season/route.ts': { purchase: 'yes', why: 'the Founding next-season choice' },
   'app/api/billing/move/preview/route.ts': { purchase: 'yes', why: 'the move-up quote (only a move up reaches the check)' },
   'app/api/billing/move/route.ts': { purchase: 'up_only', why: 'a move up is a purchase; a move down renews what was bought (it asks for an address for its tax only)' },
-  'app/api/admin/payouts/route.ts': { purchase: 'no', why: 'payouts connect: the club’s fee invoices, never a purchase' },
+  // Not a purchase, so it passes no `purchase` — but it refuses Québec on its own (owner 2026-11-17, payments terms §14 over
+  // Q6's "payouts untouched"): see the payouts test at the end of this block.
+  'app/api/admin/payouts/route.ts': { purchase: 'no', why: 'payouts connect: the club’s fee invoices, never a purchase (Québec refused by its own check)' },
 };
 
 describe('a Québec billing address is refused at every purchase door, and only there (GST/HST 6.4, Q6)', () => {
@@ -655,6 +657,16 @@ describe('a Québec billing address is refused at every purchase door, and only 
     const code = CODE.get('app/api/billing/move/preview/route.ts')!;
     const at = code.indexOf('if (typed.ok && isClosedRegion(typed.value))');
     assert.ok(at >= 0 && at < code.indexOf('previewMove('), 'the in-place preview must refuse a typed Québec address before the quote');
+  });
+
+  it('setting up payouts refuses a Québec address on file, with its own sentence, before the fresh code and any Stripe call (Club Stage 12)', () => {
+    const code = CODE.get('app/api/admin/payouts/route.ts')!;
+    const gate = code.indexOf('if (!address.ok) return address.response;');
+    const qc = code.indexOf('if (isClosedRegion(address.location)) {');
+    const refusal = code.indexOf('BILLING_LOCATION_WORDS.regionClosedPayouts, code: BILLING_REGION_CLOSED');
+    assert.ok(gate >= 0 && qc > gate && refusal > qc, 'payouts connect must refuse a Québec billing address right after the address gate');
+    assert.ok(qc < code.indexOf('requireFreshCode()') && qc < code.indexOf('createClubAccount('), 'the Québec refusal must come before the fresh code and Stripe');
+    assert.equal(code.split('isClosedRegion(').length - 1, 1, 'one Québec check in the payouts route: connect only (agree again and the record are not refused)');
   });
 
   it('the rule is not in checkBillingLocation (it also decides the address on file: fee invoices and saving read it)', () => {

@@ -15,6 +15,15 @@
 
 > **2026-11-04 (owner):** counsel no longer gates online payments in production. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real payments terms are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
 
+> **2026-11-17 · the refund policy is required, and every agreement to the payments terms is kept.** An owner writes the
+> club's refund policy in "Before you set up payouts", next to the terms tick, and can't continue to Stripe without it.
+> It can be changed later but never removed. A club connected before this with no policy shows "How to pay" to families
+> until the owner writes one, and the owner and treasurer get a Needs-attention item. Every tick of the payments terms is
+> now kept for good: who, which club, which version, the exact sentence and when, even after the club or the account is
+> deleted, which is what the payments terms promise. Setting up payouts with a Québec billing address is refused, as the
+> terms say online payments aren't offered there. Why it matters: these were two of the things the payments terms needed
+> before they can be published.
+
 ## What this is
 
 Today, clubs collect fees by e-Transfer, cheque or cash, and a volunteer marks each one paid by hand. Stage 12 lets a

@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-18",
-  "total": 143,
+  "total": 159,
   "counts": {
-    "tables": 5,
-    "columns": 64,
-    "indexes": 25,
-    "constraints": 20,
-    "rls": 29
+    "tables": 6,
+    "columns": 73,
+    "indexes": 27,
+    "constraints": 21,
+    "rls": 32
   },
   "items": [
     {
@@ -123,6 +123,18 @@
     },
     {
       "key": "check:only-dev:family_email_sends.family_email_sends_reply_to_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:payments_terms_agreements.payments_terms_agreements_action_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:payments_terms_agreements.payments_terms_agreements_text_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:payments_terms_agreements.payments_terms_agreements_version_shape",
       "sig": ""
     },
     {
@@ -382,6 +394,42 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:payments_terms_agreements.action",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:payments_terms_agreements.agreed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:payments_terms_agreements.box_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:payments_terms_agreements.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:payments_terms_agreements.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:payments_terms_agreements.org_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:payments_terms_agreements.terms_version",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:payments_terms_agreements.user_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:payments_terms_agreements.user_id",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:club_group_email_bodies.club_group_email_bodies_org_id_fkey",
       "sig": ""
     },
@@ -459,6 +507,10 @@
     },
     {
       "key": "constraint:only-dev:org_time_date_off_venues.org_time_date_off_venues_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:payments_terms_agreements.payments_terms_agreements_pkey",
       "sig": ""
     },
     {
@@ -558,6 +610,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:payments_terms_agreements_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:payments_terms_agreements_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-prod:club_schedule_slots_place_start",
       "sig": ""
     },
@@ -579,6 +639,10 @@
     },
     {
       "key": "table:only-dev:org_time_date_off_venues",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:payments_terms_agreements",
       "sig": ""
     }
   ]

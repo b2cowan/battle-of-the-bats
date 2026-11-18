@@ -8749,14 +8749,15 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 ## `org_payment_accounts`
 <!-- dict:table:org_payment_accounts -->
 
-**Purpose (migration 358, Stage 12a, 2026-10-25 — [CLUB_TIER_STAGE12_PAYMENTS_PLAN.md](../../projects/active/CLUB_TIER_STAGE12_PAYMENTS_PLAN.md) §0c, [schema review](../../projects/active/CLUB_TIER_STAGE12A_SCHEMA_REVIEW.md)):** the club's connected Stripe account — **one row per organization** (PK `org_id`). The club connects its OWN account: charges are direct charges on it, so FieldLogicHQ never holds the money; Stripe covers the club's unrecoverable losses, and the account shape — **Stripe Accounts v2** since migration 364 (owner 2026-10-25, plan §0d): Express Dashboard, `fees_collector = application`, `losses_collector = stripe` — lives in one place, [lib/stripe-connect.ts](../../../lib/stripe-connect.ts). The row holds only the CURRENT state; connect, disconnect, fee-payer change and terms agreement are also written to `org_audit_log` because the fee-payer history decides what a payer was charged. RLS is on, every grant to `anon`/`authenticated` revoked: server-only (service role).
+**Purpose (migration 358, Stage 12a, 2026-10-25 — [CLUB_TIER_STAGE12_PAYMENTS_PLAN.md](../../projects/active/CLUB_TIER_STAGE12_PAYMENTS_PLAN.md) §0c, [schema review](../../projects/active/CLUB_TIER_STAGE12A_SCHEMA_REVIEW.md)):** the club's connected Stripe account — **one row per organization** (PK `org_id`). The club connects its OWN account: charges are direct charges on it, so FieldLogicHQ never holds the money; Stripe covers the club's unrecoverable losses, and the account shape — **Stripe Accounts v2** since migration 364 (owner 2026-10-25, plan §0d): Express Dashboard, `fees_collector = application`, `losses_collector = stripe` — lives in one place, [lib/stripe-connect.ts](../../../lib/stripe-connect.ts). The row holds only the CURRENT state; connect, disconnect, fee-payer change and terms agreement are also written to `org_audit_log` because the fee-payer history decides what a payer was charged. **The payments-terms agreement's evidence is `payments_terms_agreements` (mig 497)** — this row's terms columns are the club's current standing only, and both this row and its audit lines are deleted with the organization. RLS is on, every grant to `anon`/`authenticated` revoked: server-only (service role).
 
 **Gotchas (read first):**
 1. **Stripe's facts are cached, never typed.** `card_payments_status`, `card_payments_reason`, `requirements_due`, `requirements_deadline`, `country` are re-read from Stripe (the v2 account, `lib/online-payment-landing.ts` `syncPayoutsAccount`) on every v2 account event — `v2.core.account[requirements].updated`, `v2.core.account[configuration.merchant].capability_status_updated`, `v2.core.account.closed`, all THIN events on the account webhook — and on the owner's return from Stripe's sign-up. A thin event carries no data, so order never matters. `onboarding_finished_at` is stamped once by the same sync and never cleared. Nothing on the screen writes them by hand. **Until migration 364 (2026-10-25) the row held v1's `charges_enabled` / `payouts_enabled` / `details_submitted` / `disabled_reason`; they are gone, and v2 has no such fields.**
 2. **A live/test switch is a NEW account id**, not an edit: the row is replaced through one function. A payment keeps its own `livemode`.
 3. **Disconnect stops new pay pages and nothing more** — Stripe, not FieldLogicHQ, carries the account's losses, so FieldLogicHQ cannot pause or reject it. `disconnected_at` is the stamp; payments already taken keep working and keep the account id they were taken on.
-4. **The terms evidence is all there or not there** (`org_payment_accounts_terms_chk`): `terms_version`, `terms_agreed_at` and `terms_agreed_by_email` are all NULL or all set. The email is kept as text because `terms_agreed_by` is `ON DELETE SET NULL` — the evidence must outlive the user row.
+4. **The terms STANDING is all there or not there** (`org_payment_accounts_terms_chk`): `terms_version`, `terms_agreed_at` and `terms_agreed_by_email` are all NULL or all set. The email is kept as text because `terms_agreed_by` is `ON DELETE SET NULL`. ⚠ Since mig 497 this is the standing, NOT the evidence: agreeing again overwrites it and the row cascades with the organization, so every tick is also kept, first, in `payments_terms_agreements`.
 5. **`fee_payer` is the A14 switch** — see the column. It is one setting for the whole club.
+6. **⚖ The refund policy is REQUIRED (owner ruling 2026-11-17, replacing A9's "optional").** See `refund_policy`: an account row without one takes no payments.
 
 <!-- dict:col:org_payment_accounts.org_id -->
 **`org_id`** (uuid PK, FK → `organizations.id` ON DELETE CASCADE) — the club; one connected account per org.
@@ -8791,13 +8792,13 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`fee_payer`** (text, NOT NULL, default `'family'`, CHECK `family` | `club`) — **A14: who pays the processing fee.** `family` = the payer pays the base plus the fee (the club nets the full fee, the default); `club` = the payer pays the base alone and the fee is the club's cost, posted as a "Payment processing" money-out line on the tournament's shelf. Screen words name who actually pays ("Teams pay it" / "The club pays it"). Each `online_payments` row freezes the value in force when its Checkout opened, so a later change never rewrites a past payment.
 
 <!-- dict:col:org_payment_accounts.refund_policy -->
-**`refund_policy`** (text, nullable, CHECK ≤ 300 chars) — A9: the club's one-sentence refund policy, shown to the payer before paying.
+**`refund_policy`** (text, nullable, CHECK ≤ 300 chars) — the club's refund policy, shown to the payer beside Pay (a "Refund policy" link that opens it) before paying. **REQUIRED since the owner's ruling of 2026-11-17** (payments terms §6): written in "Before you set up payouts" (the connect refuses without it, 400 `refund_policy_required`, and writes it on the new row and on a reconnect), and the Payouts card's autosave can change it but never clear it. Nullable only for rows written before the ruling (dev clubs): **a row with no policy takes no payments** — `takesPayments` is false, so every pay door shows "How to pay", and `payoutsState` reads `needs_attention` (the same paused card and `payouts_need_attention` item, with the policy's own words; `pausedForRefundPolicy` in `lib/online-payment-account.ts`).
 
 <!-- dict:col:org_payment_accounts.terms_version -->
 <!-- dict:col:org_payment_accounts.terms_agreed_by -->
 <!-- dict:col:org_payment_accounts.terms_agreed_by_email -->
 <!-- dict:col:org_payment_accounts.terms_agreed_at -->
-**`terms_version` / `terms_agreed_by` / `terms_agreed_by_email` / `terms_agreed_at`** (text; uuid FK → `auth.users.id` ON DELETE SET NULL; text; timestamptz — all nullable) — who agreed to the payments terms, which version, and when. All-or-none for the version, email and time (gotcha 4); `terms_agreed_by` may go NULL when the user is deleted while the email stays.
+**`terms_version` / `terms_agreed_by` / `terms_agreed_by_email` / `terms_agreed_at`** (text; uuid FK → `auth.users.id` ON DELETE SET NULL; text; timestamptz — all nullable) — who agreed to the payments terms, which version, and when: the CURRENT STANDING (the card's "Agreed by … version of …" row, the terms-changed notices, the platform tab). All-or-none for the version, email and time (gotcha 4); `terms_agreed_by` may go NULL when the user is deleted while the email stays. Overwritten by each agreement; the history is `payments_terms_agreements`.
 
 <!-- dict:col:org_payment_accounts.terms_notice_version -->
 <!-- dict:col:org_payment_accounts.terms_notice_at -->
@@ -8817,6 +8818,42 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:org_payment_accounts.created_at -->
 <!-- dict:col:org_payment_accounts.updated_at -->
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — row stamps.
+
+## `payments_terms_agreements`
+<!-- dict:table:payments_terms_agreements -->
+
+**Purpose (migration 497, Club Tier Stage 12, 2026-11-17 — [build prompt](../../projects/active/CLUB_TIER_STAGE12_TERMS_RECORD_AND_REFUND_POLICY_BUILD_PROMPT.md) Part B):** **one row per tick of the payments terms box** ("I agree to the FieldLogicHQ payments terms for ‹club›.") — the record the payments terms §15 promise: "We record who agreed, when, and to which version, and keep that record for at least six years after your account closes." Written by `recordPaymentsTermsAgreement` ([lib/payments-terms-agreement.ts](../../../lib/payments-terms-agreement.ts)) from the payouts route, **before** the `org_payment_accounts` standing changes, so the standing never says "agreed" without a record. Nothing in the product reads it yet: it is evidence. An organization's, where `legal_acceptances` is a person's — a sibling of that table, not an extension of it (`/dba` Finding #53).
+
+**Gotchas (read first):**
+1. **⚖ It outlives the organization and the account.** `org_id` and `user_id` are **plain ids with no foreign key**, on purpose (the mig-451 tax-record pattern, not even ON DELETE SET NULL): deleting a club or a person deletes no row and keeps whose it was. `org_name` and `user_email` are copied as text for the same reason. `tests/unit/payments-terms-agreement-record.test.ts` reads the snapshot: zero FKs. The team move leaves it (STAYS in `team-move-coverage.test.ts`); the Milton demo reset keeps it (`seed-prospect-demo.mjs` KEEP).
+2. **Append-only, with no exception.** Trigger `payments_terms_agreements_append_only` (BEFORE UPDATE OR DELETE, row) refuses every UPDATE and DELETE; `payments_terms_agreements_no_truncate` refuses TRUNCATE. P0001, message `A payments terms agreement cannot be …`. Proved by `scripts/payments-terms-agreements-lock-check.sql` (dev, rolled back). service_role keeps all four grants (rule 7): the trigger is the one place the refusal lives.
+3. **⏳ Retention: six years after the account closes (payments terms §15).** **No purge exists**, so none is needed now; the six-year end will need a NAMED exception in the trigger, built with the retention step that ends the Terms (`legal_acceptances`) and tax records (nothing expires before 2032).
+4. **No IP address and no device**, matching the Terms of Service record (mig 455, ruling R1).
+5. **Three actions tick; changing who pays does not.** Setting up (`set_up`), connecting again after a Disconnect (`reconnect`), agreeing to a newer version on the card (`agree_again`). The fee-payer change is refused while the agreement is behind, so it never ticks. `backfill` rows were copied by the migration from the standing that existed before it (dev: three test clubs; prod: none); they came with a set-up or a reconnect, which the standing does not say, and the earlier agreements that standing had overwritten are gone.
+6. **Service role only.** RLS on, no policies; `anon`/`authenticated` hold no privilege (rule 7).
+
+**Fields** (`id` uuid, default `gen_random_uuid()`):
+
+<!-- dict:col:payments_terms_agreements.id -->
+<!-- dict:col:payments_terms_agreements.org_id -->
+<!-- dict:col:payments_terms_agreements.org_name -->
+**`org_id`** (uuid, NOT NULL, **no FK**) / **`org_name`** (text, NOT NULL, not blank, no upper bound — `organizations.name` has none) — the organization that agreed, and its name at the moment of the tick. Index `payments_terms_agreements_org_idx (org_id, agreed_at DESC)`.
+
+<!-- dict:col:payments_terms_agreements.user_id -->
+<!-- dict:col:payments_terms_agreements.user_email -->
+**`user_id`** (uuid, nullable, **no FK**) / **`user_email`** (text, NOT NULL, 1–320 characters; `'unknown'` when the account has none) — the owner who ticked, and their email at the moment.
+
+<!-- dict:col:payments_terms_agreements.terms_version -->
+**`terms_version`** (text, NOT NULL, CHECK `payments_terms_agreements_version_shape`: `'placeholder-counsel-pending'` or `YYYY-MM-DD`) — the version the window showed (`PAYMENTS_TERMS_VERSION`); the route refuses a connect or an agreement sent with any other (409 `terms_changed`), so the version shown is the version recorded.
+
+<!-- dict:col:payments_terms_agreements.box_text -->
+**`box_text`** (text, NOT NULL, not blank) — **the exact sentence ticked**, built by the same words function the window renders (`PAYOUTS_WORDS.before.termsCheckbox(clubName)`), from the club's name.
+
+<!-- dict:col:payments_terms_agreements.action -->
+**`action`** (text, NOT NULL, CHECK `payments_terms_agreements_action_check`: `set_up` | `reconnect` | `agree_again` | `backfill`) — which action the tick came with (gotcha 5).
+
+<!-- dict:col:payments_terms_agreements.agreed_at -->
+**`agreed_at`** (timestamptz, NOT NULL, default now()) — when; the same instant the standing's `terms_agreed_at` carries.
 
 ## `online_payments`
 <!-- dict:table:online_payments -->

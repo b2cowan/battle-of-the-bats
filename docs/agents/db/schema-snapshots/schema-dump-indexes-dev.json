@@ -3050,6 +3050,16 @@
     "indexdef": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
   },
   {
+    "tablename": "payments_terms_agreements",
+    "indexname": "payments_terms_agreements_org_idx",
+    "indexdef": "CREATE INDEX payments_terms_agreements_org_idx ON public.payments_terms_agreements USING btree (org_id, agreed_at DESC)"
+  },
+  {
+    "tablename": "payments_terms_agreements",
+    "indexname": "payments_terms_agreements_pkey",
+    "indexdef": "CREATE UNIQUE INDEX payments_terms_agreements_pkey ON public.payments_terms_agreements USING btree (id)"
+  },
+  {
     "tablename": "pitch_decks",
     "indexname": "pitch_decks_persona_key",
     "indexdef": "CREATE UNIQUE INDEX pitch_decks_persona_key ON public.pitch_decks USING btree (persona)"

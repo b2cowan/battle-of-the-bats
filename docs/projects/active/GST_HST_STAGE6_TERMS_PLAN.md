@@ -246,7 +246,10 @@ The tick-box text is a placeholder (`TERMS_PLACEHOLDER`, version `'placeholder-c
 - **L4 researched** — money-services status under direct charges (the one with statutory penalties).
 - A small defect to fix in the same build [H, helper; lines 193–205 opened, V]: the payout **`connect`** action checks only
   that the box was ticked, not the version shown (the `agree_terms` action does, line 239). Harmless while the version is a
-  placeholder; must match before a dated version exists.
+  placeholder; must match before a dated version exists. **Fixed (verified 2026-11-17, Club Stage 12 terms-record build):**
+  `connect` refuses a version other than the one the window showed (409 `terms_changed`, the same check as `agree_terms`,
+  GST/HST 6.3 A6), pinned by `online-payments-terms.test.ts`; and since migration 497 the version recorded in
+  `payments_terms_agreements` is that same checked version.
 
 ---
 

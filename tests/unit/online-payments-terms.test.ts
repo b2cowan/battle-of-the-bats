@@ -61,7 +61,8 @@ describe('Agree is ABSENT until the box is ticked, in both windows (ask 6)', () 
   const card = readCode(CARD);
   it('the set-up window’s Continue to Stripe', () => {
     // GST/HST Stage 2 Part 2b: the press goes through the billing-address gate first (ensure → go); still absent until ticked.
-    assert.match(card, /\{agreed && \(\s*<button type="button" className="btn btn-lime" onClick=\{\(\) => address\.ensure\(\(\) => void go\(\)\)\} disabled=\{busy\}>/);
+    // Club Stage 12 (owner 2026-11-17): and absent until the refund policy is written.
+    assert.match(card, /\{agreed && !!policy\.trim\(\) && \(\s*<button type="button" className="btn btn-lime" onClick=\{\(\) => address\.ensure\(\(\) => void go\(\)\)\} disabled=\{busy\}>/);
     assert.doesNotMatch(card, /disabled=\{!agreed/);
   });
   it('the new terms window’s Agree', () => {
@@ -118,7 +119,7 @@ describe('the /review of 12d-2 (the terms)', () => {
     assert.match(route, /if \(agreeError\) throw agreeError;/);
     const card = readCode('components/admin/kit/club/PayoutsCard.tsx');
     assert.match(card, /action: 'agree_terms', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION/);
-    assert.match(card, /action: 'connect', feePayer, agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION/);
+    assert.match(card, /action: 'connect', feePayer, refundPolicy: policy\.trim\(\), agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION/);
   });
   it('an ending warning is claimed before it is sent, and compared as a moment', () => {
     const notices = readCode('lib/online-payment-owner-notices.ts');

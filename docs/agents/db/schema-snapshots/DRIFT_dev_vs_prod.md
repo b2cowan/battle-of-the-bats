@@ -2,29 +2,30 @@
 
 **Generated:** 2026-11-18 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 143 divergence(s)** across dev/prod.
+**⚠️ 159 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 5 | 0 | — |
-| Columns | 62 | 0 | 2 |
-| Indexes | 24 | 1 | 0 |
-| Constraints | 20 | 0 | — |
-| RLS / CHECK | 29 | 0 | 0 (RLS state) |
+| Tables | 6 | 0 | — |
+| Columns | 71 | 0 | 2 |
+| Indexes | 26 | 1 | 0 |
+| Constraints | 21 | 0 | — |
+| RLS / CHECK | 32 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (5)
+### Only in DEV (6)
 - `club_group_email_bodies`
 - `club_group_email_recipients`
 - `club_group_email_sends`
 - `club_schedule_bill_rates`
 - `org_time_date_off_venues`
+- `payments_terms_agreements`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (62)
+### Only in DEV (71)
 - `club_group_email_bodies.body`
 - `club_group_email_bodies.created_at`
 - `club_group_email_bodies.org_id`
@@ -87,6 +88,15 @@ _none_
 - `org_time_date_off_venues.date_off_id`
 - `org_time_date_off_venues.org_id`
 - `org_time_date_off_venues.org_venue_id`
+- `payments_terms_agreements.action`
+- `payments_terms_agreements.agreed_at`
+- `payments_terms_agreements.box_text`
+- `payments_terms_agreements.id`
+- `payments_terms_agreements.org_id`
+- `payments_terms_agreements.org_name`
+- `payments_terms_agreements.terms_version`
+- `payments_terms_agreements.user_email`
+- `payments_terms_agreements.user_id`
 
 ### Only in PROD (0)
 _none_
@@ -96,7 +106,7 @@ _none_
 - `family_email_sends.subject` — dev: `text|text|YES|` | prod: `text|text|NO|`
 
 ## Indexes
-### Only in DEV (24)
+### Only in DEV (26)
 - `club_group_email_bodies_org_idx`
 - `club_group_email_bodies_pkey`
 - `club_group_email_recipients_org_idx`
@@ -121,6 +131,8 @@ _none_
 - `org_time_date_off_venues_org_idx`
 - `org_time_date_off_venues_pkey`
 - `org_time_date_off_venues_venue_idx`
+- `payments_terms_agreements_org_idx`
+- `payments_terms_agreements_pkey`
 
 ### Only in PROD (1)
 - `club_schedule_slots_place_start`
@@ -129,7 +141,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (20)
+### Only in DEV (21)
 - `club_group_email_bodies.club_group_email_bodies_org_id_fkey`
 - `club_group_email_bodies.club_group_email_bodies_pkey`
 - `club_group_email_bodies.club_group_email_bodies_send_id_fkey`
@@ -150,6 +162,7 @@ _none_
 - `org_time_date_off_venues.org_time_date_off_venues_org_id_fkey`
 - `org_time_date_off_venues.org_time_date_off_venues_org_venue_id_fkey`
 - `org_time_date_off_venues.org_time_date_off_venues_pkey`
+- `payments_terms_agreements.payments_terms_agreements_pkey`
 
 ### Only in PROD (0)
 _none_
@@ -158,7 +171,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (29)
+### CHECK only in DEV (32)
 - `club_group_email_bodies.club_group_email_bodies_body_check`
 - `club_group_email_bodies.club_group_email_bodies_subject_check`
 - `club_group_email_recipients.club_group_email_recipients_basis_check`
@@ -188,6 +201,9 @@ _none_
 - `club_schedules.club_schedules_part_never_in_review`
 - `family_email_sends.family_email_sends_club_copy_check`
 - `family_email_sends.family_email_sends_reply_to_check`
+- `payments_terms_agreements.payments_terms_agreements_action_check`
+- `payments_terms_agreements.payments_terms_agreements_text_shape`
+- `payments_terms_agreements.payments_terms_agreements_version_shape`
 
 ### CHECK only in PROD (0)
 _none_

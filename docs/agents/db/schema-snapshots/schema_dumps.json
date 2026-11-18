@@ -15968,6 +15968,87 @@
         "column_default": null
       },
       {
+        "table_name": "payments_terms_agreements",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 3,
+        "column_name": "org_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 4,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 5,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 6,
+        "column_name": "terms_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 7,
+        "column_name": "box_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 8,
+        "column_name": "action",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 9,
+        "column_name": "agreed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "pitch_decks",
         "pos": 1,
         "column_name": "id",
@@ -41038,6 +41119,16 @@
         "indexdef": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
       },
       {
+        "tablename": "payments_terms_agreements",
+        "indexname": "payments_terms_agreements_org_idx",
+        "indexdef": "CREATE INDEX payments_terms_agreements_org_idx ON public.payments_terms_agreements USING btree (org_id, agreed_at DESC)"
+      },
+      {
+        "tablename": "payments_terms_agreements",
+        "indexname": "payments_terms_agreements_pkey",
+        "indexdef": "CREATE UNIQUE INDEX payments_terms_agreements_pkey ON public.payments_terms_agreements USING btree (id)"
+      },
+      {
         "tablename": "pitch_decks",
         "indexname": "pitch_decks_persona_key",
         "indexdef": "CREATE UNIQUE INDEX pitch_decks_persona_key ON public.pitch_decks USING btree (persona)"
@@ -47440,6 +47531,30 @@
       {
         "kind": "RLS",
         "table_name": "organizations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "payments_terms_agreements",
+        "detail": "payments_terms_agreements_action_check",
+        "check_clause": "(action = ANY (ARRAY['set_up'::text, 'reconnect'::text, 'agree_again'::text, 'backfill'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "payments_terms_agreements",
+        "detail": "payments_terms_agreements_text_shape",
+        "check_clause": "((char_length(btrim(org_name)) >= 1) AND ((char_length(btrim(user_email)) >= 1) AND (char_length(btrim(user_email)) <= 320)) AND (char_length(btrim(box_text)) >= 1))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "payments_terms_agreements",
+        "detail": "payments_terms_agreements_version_shape",
+        "check_clause": "((terms_version = 'placeholder-counsel-pending'::text) OR (terms_version ~ '^\\d{4}-\\d{2}-\\d{2}$'::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "payments_terms_agreements",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -49,6 +49,9 @@ function fakeDb(tables: Record<string, Row[]>) {
   return { db: { from, auth: { admin: { getUserById: async () => ({ data: { user: null } }) } } }, writes };
 }
 
+/** Required since 2026-11-17: the Before window sends it with every connect. */
+const POLICY = 'Refunded in full until Nov 30, then not refunded.';
+
 const ADDRESS_ROW: Row = {
   id: 'loc-club', org_id: CLUB, user_id: null, country: 'CA', region_code: 'ON', line1: '120 Elm Street', line2: null,
   city: 'Guelph', postal_code: 'N1H 4H2', confirmed_at: '2026-11-01T12:00:00Z', us_declaration_at: null, us_declaration_version: null,
@@ -92,6 +95,7 @@ function route() {
     '@/lib/module-entitlements': { hasModuleEntitlement: () => false },
     '@/lib/online-payment-endings': { endingNotice: () => null, readOutstanding: async () => null, upcomingEnding: async () => null },
     '@/lib/online-pay-pages': { closeClubPayPages: async () => 0 },
+    '@/lib/needs-attention': { clearSettled: async () => {} },
     '@/lib/platform-stripe-fees': { clubFeeInvoicePlaceable: async () => true },
     '@/lib/supabase-admin': { supabaseAdmin: database.db },
     // The REAL billing-location-server runs, over the fake database; only its Stripe-facing neighbours are replaced.
@@ -108,7 +112,7 @@ function route() {
     writes: database.writes,
     connect: (extra: Row = {}) => handlers.POST(new Request('http://localhost/api/admin/payouts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orgSlug: 'falcons-club', action: 'connect', feePayer: 'club', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION, ...extra }),
+      body: JSON.stringify({ orgSlug: 'falcons-club', action: 'connect', feePayer: 'club', refundPolicy: POLICY, agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION, ...extra }),
     })),
   };
 }
@@ -117,7 +121,7 @@ const accountWrites = (writes: Array<{ table: string }>) => writes.filter(w => w
 
 beforeEach(() => {
   stripeCalls = [];
-  tables = { billing_locations: [], org_payment_accounts: [], org_audit_log: [] };
+  tables = { billing_locations: [], org_payment_accounts: [], org_audit_log: [], payments_terms_agreements: [] };
 });
 
 describe('payouts connect asks for the billing address before Stripe', () => {
@@ -181,6 +185,63 @@ describe('payouts connect asks for the billing address before Stripe', () => {
     assert.equal(tables.org_payment_accounts[0].fee_payer, 'club');
   });
 
+  it('THE REFUND POLICY IS REQUIRED (owner 2026-11-17): a connect without one answers 400 and nothing is created or recorded', async () => {
+    tables.billing_locations.push({ ...ADDRESS_ROW });
+    for (const refundPolicy of [undefined, '', '   ', 42]) {
+      const api = route();
+      const res = await api.connect({ refundPolicy });
+      assert.equal(res.status, 400);
+      const body = await res.json();
+      assert.equal(body.code, 'refund_policy_required');
+      assert.equal(body.error, 'Write your refund policy first.');
+      assert.deepEqual(stripeCalls, []);
+      assert.deepEqual(accountWrites(api.writes), []);
+    }
+    const long = await route().connect({ refundPolicy: 'x'.repeat(301) });
+    assert.equal(long.status, 400);
+    assert.equal(tables.org_payment_accounts.length, 0);
+    assert.equal(tables.payments_terms_agreements.length, 0);
+  });
+
+  it('setting up writes the policy on the row and keeps the tick: who, the club, the version, the exact sentence, set_up', async () => {
+    tables.billing_locations.push({ ...ADDRESS_ROW });
+    await route().connect({ refundPolicy: `  ${POLICY}  ` });
+    assert.equal(tables.org_payment_accounts[0].refund_policy, POLICY, 'trimmed');
+    assert.equal(tables.payments_terms_agreements.length, 1);
+    const kept = tables.payments_terms_agreements[0];
+    assert.deepEqual(Object.keys(kept).sort(), ['action', 'agreed_at', 'box_text', 'org_id', 'org_name', 'terms_version', 'user_email', 'user_id'],
+      'no IP address and no device (the Terms of Service record’s rule)');
+    assert.deepEqual({ ...kept, agreed_at: undefined }, {
+      org_id: CLUB, org_name: 'Falcons', user_id: 'owner-1', user_email: 'owner@falcons.test', terms_version: PAYMENTS_TERMS_VERSION,
+      box_text: 'I agree to the FieldLogicHQ payments terms for Falcons.', action: 'set_up', agreed_at: undefined,
+    });
+    assert.equal(kept.agreed_at, tables.org_payment_accounts[0].terms_agreed_at, 'the record and the standing carry one time');
+  });
+
+  it('reconnecting keeps the tick as reconnect and saves the policy the window sent', async () => {
+    tables.billing_locations.push({ ...ADDRESS_ROW });
+    tables.org_payment_accounts.push({ ...DISCONNECTED });
+    await route().connect();
+    assert.equal(tables.org_payment_accounts[0].refund_policy, POLICY);
+    assert.deepEqual(tables.payments_terms_agreements.map(r => r.action), ['reconnect']);
+  });
+
+  it('Québec (payments terms §14, owner 2026-11-17 over Q6): setting up with a Québec address is refused 409, before the record and Stripe', async () => {
+    tables.billing_locations.push({ ...ADDRESS_ROW, region_code: 'QC', city: 'Montréal', postal_code: 'H2X 1Y4' });
+    for (const before of [[], [{ ...DISCONNECTED }]]) {
+      tables.org_payment_accounts = before.map(r => ({ ...r }));
+      const api = route();
+      const res = await api.connect();
+      assert.equal(res.status, 409);
+      const body = await res.json();
+      assert.equal(body.code, 'billing_region_closed');
+      assert.equal(body.error, 'We’re not offering online payments in Québec yet, so we can’t set up payouts with a billing address there. If the province is wrong, correct it on your billing page and try again.');
+      assert.deepEqual(stripeCalls, []);
+      assert.deepEqual(accountWrites(api.writes), []);
+    }
+    assert.equal(tables.payments_terms_agreements.length, 0);
+  });
+
   it('the terms are still asked first: no tick answers 400 and Stripe is not touched', async () => {
     const api = route();
     const res = await api.connect({ agreeToTerms: false });
@@ -217,6 +278,12 @@ function hookRunner() {
       const at = cursor++;
       if (!(at in slots)) slots[at] = { current: initial };
       return slots[at] as { current: T };
+    },
+    // The Before window's refund-policy box (Club Stage 12) labels itself with an id.
+    useId() {
+      const at = cursor++;
+      if (!(at in slots)) slots[at] = `id-${at}`;
+      return slots[at] as string;
     },
     useCallback<T>(callback: T, deps: readonly unknown[]) {
       const at = cursor++;
@@ -301,7 +368,7 @@ function cardHarness(options: { location: unknown; connectAnswers: Array<{ statu
   const PayoutsCard = (load('components/admin/kit/club/PayoutsCard.tsx') as { default: (props: Record<string, unknown>) => React.ReactElement }).default;
   const view = {
     state: 'not_set_up', isOwner: true, testMode: false, rateLabel: '2.9% + 30¢', bankRateLabel: null,
-    example: { baseCents: 16500, feeCents: 508, bankFeeCents: null }, feePayer: 'family', refundPolicy: '', requirementsDue: 0,
+    example: { baseCents: 16500, feeCents: 508, bankFeeCents: null }, feePayer: 'family', refundPolicy: POLICY, requirementsDue: 0,
     deadline: null, paymentsOn: false, connectedAt: null, disconnectedAt: null, disconnectedBy: null, teamsStillOwing: null,
     addressMissing: false,
   };
@@ -370,7 +437,7 @@ describe('the Before window keeps the fee choice while the address window is ope
     assert.ok(put, 'the address was saved');
     const posts = connectRequests(h);
     assert.equal(posts.length, 1);
-    assert.deepEqual(posts[0].body, { orgSlug: 'falcons-club', action: 'connect', feePayer: 'club', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION });
+    assert.deepEqual(posts[0].body, { orgSlug: 'falcons-club', action: 'connect', feePayer: 'club', refundPolicy: POLICY, agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION });
     assert.deepEqual(h.assigned, ['https://stripe.test/onboarding']);
   });
 

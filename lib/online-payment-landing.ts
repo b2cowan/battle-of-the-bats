@@ -6,7 +6,7 @@ import { notify } from './notify';
 import { clearSettled } from './needs-attention';
 import { getOrganizationBySlugForServer } from './server-organizations';
 import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTreasurer } from './online-payment-access';
-import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
+import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, pausedForRefundPolicy, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
 import { listRefunds, requestBankDebit, retrieveAccount, retrieveCheckout, retrieveDispute, refundToCard } from './stripe-connect';
 import { disputeFromStripe, isDisputeOpen, isInquiry, refundBlockedByDispute } from './online-payment-dispute';
 import { disputeOpenedEmailHtml, disputeReminderEmailHtml } from './online-dispute-email';
@@ -133,14 +133,19 @@ export async function syncPayoutsAccount(stripeAccountId: string): Promise<Payou
   const org = await orgById(row.org_id);
   if (org && payoutsState(factsFromRow(row)) === 'needs_attention') {
     const deadline = row.requirements_deadline ? W.byDeadline(row.requirements_deadline) : '';
+    // A League or Club's families pay online too (copy §20); Tournament Plus names teams.
+    const teamsOnly = org.planId === 'tournament' || org.planId === 'tournament_plus';
+    // Paused for the refund policy alone (owner 2026-11-17: required): the same item, its own reason. It settles itself when
+    // the policy is saved (the payouts PATCH asks), as Stripe's does when Stripe is satisfied.
+    const forPolicy = pausedForRefundPolicy(factsFromRow(row));
     await raiseOnce({
       org, userIds: await payoutsPeople(org), eventType: 'payouts_need_attention',
       subjectKey: 'stripeAccountId', subjectId: stripeAccountId,
-      title: W.stripeNeedsTitle,
-      body: row.card_payments_status === 'active'
+      title: forPolicy ? W.policyNeedsTitle : W.stripeNeedsTitle,
+      body: forPolicy ? (teamsOnly ? W.policyNeedsBody : W.policyNeedsBodyFamilies)
+        : row.card_payments_status === 'active'
         ? W.stripeNeedsBodyStillOn(deadline)
-        // A League or Club's families pay online too (copy §20); Tournament Plus names teams.
-        : org.planId === 'tournament' || org.planId === 'tournament_plus' ? W.stripeNeedsBodyPaused : W.stripeNeedsBodyPausedFamilies,
+        : teamsOnly ? W.stripeNeedsBodyPaused : W.stripeNeedsBodyPausedFamilies,
       link: payoutsHref(org),
     });
   }

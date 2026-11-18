@@ -6050,6 +6050,16 @@
     "update_rule": null
   },
   {
+    "table_name": "payments_terms_agreements",
+    "constraint_name": "payments_terms_agreements_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "pitch_decks",
     "constraint_name": "pitch_decks_persona_key",
     "constraint_type": "UNIQUE",

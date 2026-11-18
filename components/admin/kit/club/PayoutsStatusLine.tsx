@@ -67,7 +67,7 @@ export default function PayoutsStatusLine({ orgSlug, planId, home, treasurerLine
     const deadline = view.deadline ? formatStoredDate(view.deadline, { withYear: false }) : null;
     return (
       <p className={`${ck.hint} ${pc.statusLine}`}>
-        <RepChip tone="warn">{W.status.needsLead}</RepChip> {view.paymentsOn ? W.status.needsBodyStillOn(deadline) : W.status.needsBody} {W.status.needsOwnerHint(home)}
+        <RepChip tone="warn">{W.status.needsLead}</RepChip> {view.pausedForPolicy ? W.status.needsBodyPolicy : view.paymentsOn ? W.status.needsBodyStillOn(deadline) : W.status.needsBody} {W.status.needsOwnerHint(home)}
       </p>
     );
   }

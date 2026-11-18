@@ -7,18 +7,21 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { onlineFeeRateLabel } from '@/lib/plan-config';
 import { onlinePaymentsOn, stripeKeyIsTest, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canConnectPayouts, canSeePayouts } from '@/lib/online-payment-access';
-import { factsFromRow, payoutsState, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow, takesBankDebit } from '@/lib/online-payment-account';
+import { factsFromRow, payoutsState, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow, takesBankDebit, pausedForRefundPolicy } from '@/lib/online-payment-account';
 import { ONLINE_FEE_PAYERS, onlineFee, type OnlineFeePayer } from '@/lib/online-payment-fee';
 import { createClubAccount, dashboardLink, onboardingLink, prefillClubProfile, retrieveAccount } from '@/lib/stripe-connect';
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
 import { stripeProfileFor } from '@/lib/online-payment-profile';
-import { PAYMENTS_TERMS_VERSION, TERMS_WORDS, termsStanding, termsVersionDate } from '@/lib/online-payment-words';
+import { PAYMENTS_TERMS_VERSION, PAYOUTS_WORDS, TERMS_WORDS, termsStanding, termsVersionDate } from '@/lib/online-payment-words';
+import { recordPaymentsTermsAgreement } from '@/lib/payments-terms-agreement';
+import { clearSettled } from '@/lib/needs-attention';
 import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
 import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { endingNotice, readOutstanding, upcomingEnding } from '@/lib/online-payment-endings';
 import { closeClubPayPages } from '@/lib/online-pay-pages';
 import { requireBillingLocation } from '@/lib/billing-location-server';
+import { BILLING_LOCATION_WORDS, BILLING_REGION_CLOSED, isClosedRegion } from '@/lib/billing-location';
 import { clubFeeInvoicePlaceable } from '@/lib/platform-stripe-fees';
 import { requireFreshCode } from '@/lib/two-step-fresh';
 import { demoBillingRefusal } from '@/lib/demo-guard';
@@ -29,8 +32,18 @@ export const dynamic = 'force-dynamic';
 /**
  * The Payouts card (Club Tier Stage 12a, drawn 12a §1–§4). GET reads it — the owner and the treasurer (A1). POST is the
  * owner's: connect (after "Before you set up payouts"), continue setup, open Stripe, disconnect. PATCH is the record's
- * autosave: who pays the fee (A14) and the refund-policy sentence (A9). Every door reads the launch switch and the plan.
+ * autosave: who pays the fee (A14) and the refund-policy sentence (A9; REQUIRED since the owner's 2026-11-17 ruling — written
+ * in the Before window, never cleared). Every door reads the launch switch and the plan. Every tick of the payments terms is
+ * kept in `payments_terms_agreements` (mig 497) before the payouts row's standing changes.
  */
+
+/** The refund policy as sent: trimmed, required, at most 300 characters (mig 358's CHECK). */
+function refundPolicyOf(sent: unknown): { ok: true; text: string } | { ok: false; error: string } {
+  const text = typeof sent === 'string' ? sent.trim() : '';
+  if (text.length > 300) return { ok: false, error: 'Keep the refund policy to 300 characters.' };
+  if (!text) return { ok: false, error: '' };
+  return { ok: true, text };
+}
 
 const refused = () => NextResponse.json({ error: ONLINE_PAYMENTS_OFF_ERROR }, { status: 404 });
 /** The payments terms moved while the window was open (/review of 12d-2): `connect` and `agree_terms` refuse alike. */
@@ -106,6 +119,8 @@ export const GET = withObservability(async (req: Request) => {
     requirementsDue: facts?.requirementsDue.length ?? 0,
     deadline: facts?.requirementsDeadline ?? null,
     paymentsOn: takesPayments(facts),
+    // Paused for the refund policy alone (owner 2026-11-17): the card's reason and button, and the treasurer's line.
+    pausedForPolicy: pausedForRefundPolicy(facts),
     connectedAt: row?.connected_at ?? null,
     disconnectedAt: row?.disconnected_at ?? null,
     disconnectedBy: row?.disconnected_at ? await nameOf(row.disconnected_by) : null,
@@ -172,14 +187,17 @@ export const PATCH = withObservability(async (req: Request) => {
     update.fee_payer = body.feePayer as OnlineFeePayer;
   }
   if ('refundPolicy' in body) {
-    const text = typeof body.refundPolicy === 'string' ? body.refundPolicy.trim() : '';
-    if (text.length > 300) return NextResponse.json({ error: 'Keep the refund policy to 300 characters.' }, { status: 400 });
-    update.refund_policy = text || null;
+    // Required (owner 2026-11-17): it can be changed, never cleared — a blank one would close every pay page.
+    const policy = refundPolicyOf(body.refundPolicy);
+    if (!policy.ok) return NextResponse.json({ error: policy.error || PAYOUTS_WORDS.record.policyRequired, code: 'refund_policy_required' }, { status: 400 });
+    update.refund_policy = policy.text;
   }
   const { data, error } = await supabaseAdmin.from('org_payment_accounts').update(update).eq('org_id', ctx.org.id).select('org_id').maybeSingle();
   if (error) throw error;
   if (!data) return NextResponse.json({ error: 'Set up payouts first.' }, { status: 409 });
   if ('fee_payer' in update) await audit(ctx.org.id, ctx.user.id, 'payouts_fee_payer_changed', { feePayer: update.fee_payer });
+  // A club paused for want of a policy is back on: its Needs-attention item settles now, not at Stripe's next event.
+  if ('refund_policy' in update) await clearSettled({ orgIds: [ctx.org.id], kinds: ['payouts_need_attention'] });
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/payouts' });
 
@@ -207,12 +225,21 @@ export const POST = withObservability(async (req: Request) => {
       // The version the window showed, as `agree_terms` checks it (GST/HST Stage 6 step 6.3 A6): terms published while the
       // window was open are never agreed unread, and the row below stamps only the version the person read.
       if (body.termsVersion !== PAYMENTS_TERMS_VERSION) return termsChanged();
+      // The refund policy is written in the same window, before Stripe (owner 2026-11-17: required; payments terms §6).
+      const policy = refundPolicyOf(body.refundPolicy);
+      if (!policy.ok) return NextResponse.json({ error: policy.error || PAYOUTS_WORDS.before.policyRequired, code: 'refund_policy_required' }, { status: 400 });
       // GST/HST Stage 2 Part 2b (Ask 8): the club's billing address, before ANY Stripe call — a new account and a reconnect
       // alike. The club's Stripe fees are invoiced and taxed by it, and Stripe refuses a taxed invoice it cannot place. A
       // refusal (`billing_address_required`, or a held US address) creates and changes nothing; the card opens the window.
       // The club's OWN row (kind 'org'), the one the fee invoice reads (`clubBillingLocation`), never the payout account's.
       const address = await requireBillingLocation({ kind: 'org', orgId: ctx.org.id, name: ctx.org.name, stripeCustomerId: ctx.org.stripeCustomerId ?? null });
       if (!address.ok) return address.response;
+      // Online payments are not offered in Québec (payments terms §14, Terms of Service §17; owner 2026-11-17 over Q6's
+      // "payouts untouched"): setting up, and setting up again, refuse a Québec address as a purchase does — the address on
+      // file, same code, before any Stripe call. A club already taking payments is not touched.
+      if (isClosedRegion(address.location)) {
+        return NextResponse.json({ error: BILLING_LOCATION_WORDS.regionClosedPayouts, code: BILLING_REGION_CLOSED, buyer: 'club' }, { status: 409 });
+      }
       // Where the club's money is paid out to (Board Ready two-step, Part 2): a fresh code first, after every check above.
       const stale = await requireFreshCode();
       if (stale) return stale;
@@ -220,11 +247,13 @@ export const POST = withObservability(async (req: Request) => {
       const terms = { terms_version: PAYMENTS_TERMS_VERSION, terms_agreed_by: ctx.user.id, terms_agreed_by_email: ctx.user.email ?? 'unknown', terms_agreed_at: now };
       let accountId = row?.stripe_account_id ?? null;
       if (!accountId) {
+        // The tick is kept before anything is created (mig 497): it is true even if Stripe then refuses.
+        await recordPaymentsTermsAgreement({ org: ctx.org, user: ctx.user, action: 'set_up', at: now });
         const acct = await createClubAccount({ orgId: ctx.org.id, email: ctx.user.email ?? null, businessName: ctx.org.name });
         accountId = acct.id;
         const { error } = await supabaseAdmin.from('org_payment_accounts').upsert({
           org_id: ctx.org.id, stripe_account_id: acct.id, livemode: !stripeKeyIsTest(),
-          fee_payer: feePayer, connected_by: ctx.user.id, connected_at: now, ...terms,
+          fee_payer: feePayer, refund_policy: policy.text, connected_by: ctx.user.id, connected_at: now, ...terms,
         }, { onConflict: 'org_id', ignoreDuplicates: true });
         if (error) throw error;
         // What Stripe's sign-up would otherwise ask (walk 2026-10-25): the club's public site, or a description. Never blocks.
@@ -237,9 +266,11 @@ export const POST = withObservability(async (req: Request) => {
         if ((await retrieveAccount(accountId)).closed) {
           return NextResponse.json({ error: 'Stripe has closed this club’s payouts account, so it can’t be reconnected. Contact FieldLogicHQ support to set up a new one.' }, { status: 409 });
         }
-        await supabaseAdmin.from('org_payment_accounts').update({
-          disconnected_at: null, disconnected_by: null, fee_payer: feePayer, connected_by: ctx.user.id, connected_at: now, updated_at: now, ...terms,
+        await recordPaymentsTermsAgreement({ org: ctx.org, user: ctx.user, action: 'reconnect', at: now });
+        const { error: reconnectError } = await supabaseAdmin.from('org_payment_accounts').update({
+          disconnected_at: null, disconnected_by: null, fee_payer: feePayer, refund_policy: policy.text, connected_by: ctx.user.id, connected_at: now, updated_at: now, ...terms,
         }).eq('org_id', ctx.org.id);
+        if (reconnectError) throw reconnectError;
       }
       await audit(ctx.org.id, ctx.user.id, 'payouts_connected', { stripeAccountId: accountId, feePayer, termsVersion: PAYMENTS_TERMS_VERSION });
       const synced = await syncPayoutsAccount(accountId);
@@ -252,6 +283,7 @@ export const POST = withObservability(async (req: Request) => {
       if (!row) return NextResponse.json({ error: 'Set up payouts first.' }, { status: 409 });
       // The version the window showed (/review of 12d-2): terms published while it was open are never agreed unread.
       if (body.termsVersion !== PAYMENTS_TERMS_VERSION) return termsChanged();
+      await recordPaymentsTermsAgreement({ org: ctx.org, user: ctx.user, action: 'agree_again', at: now });
       const { error: agreeError } = await supabaseAdmin.from('org_payment_accounts').update({
         terms_version: PAYMENTS_TERMS_VERSION, terms_agreed_by: ctx.user.id, terms_agreed_by_email: ctx.user.email ?? 'unknown',
         terms_agreed_at: now, updated_at: now,
