@@ -13,7 +13,7 @@ This file is the **index** of open work: **one line per project**. **A project's
 ## Projects (status on the board)
 
 - [ ] **Our own GST/HST and the terms** — status on the board · plan [GST_HST_COLLECTION_PLAN.md](docs/projects/active/GST_HST_COLLECTION_PLAN.md)
-- [ ] **Families pay online** — status on the board · plan [CLUB_TIER_STAGE12_PAYMENTS_PLAN.md](docs/projects/active/CLUB_TIER_STAGE12_PAYMENTS_PLAN.md)
+- [ ] **Families pay online** — status on the board · plan [CLUB_TIER_STAGE12_PAYMENTS_PLAN.md](docs/projects/active/CLUB_TIER_STAGE12_PAYMENTS_PLAN.md) · [STRIPE_OWNED_PRICING_PLAN.md](docs/projects/active/STRIPE_OWNED_PRICING_PLAN.md)
 - [ ] **Stripe clean-up, and Stripe from our admin** — status on the board · plan [STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md](docs/projects/active/STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md)
 - [ ] **Plan and billing** — status on the board · plan [PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md](docs/projects/active/PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md)
 - [ ] **Club release** — status on the board · plan [CLUB_TIER_PRODUCTION_READINESS_PLAN.md](docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md)

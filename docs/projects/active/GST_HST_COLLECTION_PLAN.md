@@ -47,7 +47,10 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
   `GST_HST_STAGE4B_PM_BRIEF.md`). `/accounting` reviewed 2026-11-07 (`GST_HST_RETURN_LINES.md` §8): a bare void earns no line 107 adjustment (the
   drawings' "reversal on 107" is withdrawn), invoices before the registration date sit outside the return, a USD credit note's tax uses the original
   invoice's rate. Must exist before the first return with sales on it.
-- **Stage 5 — The online-payment fee:** NOT STARTED — tax on the fee, monthly statement per club. (Its address step is
+- **Stage 5 — The online-payment fee:** ON HOLD (owner 2026-11-17) behind [Stripe-owned pricing](STRIPE_OWNED_PRICING_PLAN.md)
+  Stage 2, which changes what our fee is. **R1 (owner 2026-11-17): the GST/HST is included in our fee and paid out of our
+  share — no monthly tax bill; supersedes T2 for the application fee.** What remains: record the tax inside each paid fee for
+  Bookkeeping and the return, and an information-only fee statement. Was: tax on the fee, monthly statement per club. (Its address step is
   done: brought forward as Stage 2 Part 2b, committed `947fd8192` 2026-11-05.) Depends on Club Stage 12,
   T2/T3, and **closes with Club Stage 12** (a required stage, not a trigger).
 - **Stage 6 — Terms:** PLANNED 2026-11-08 → [GST_HST_STAGE6_TERMS_PLAN.md](GST_HST_STAGE6_TERMS_PLAN.md) (+ PM brief); owner decision sheet (O1–O8, P1–P7 + three lookups) owed. Drafts v0.1 under `docs/agents/legal/drafts/`, not approved, not published. The renewal-date cancel is on production since the 2026-11-05 release (`d10261fdd`); what is left is in the plan's §5 (refresh, pages + links, acceptance at every door, the purchase email, the org-delete files fix, reviews, publication). Payments terms (L3) need no work until payments are switched on. Kickoff: [GST_HST_STAGE6_KICKOFF_PROMPT.md](GST_HST_STAGE6_KICKOFF_PROMPT.md).
@@ -284,6 +287,9 @@ trigger:** this plan is not done until Club Stage 12's fee-tax work ships.*
 - A **monthly fee statement per club** — fees taken, tax on them, our GST/HST number — because Stripe's application fee
   is not a tax invoice and Stripe Tax does not tax it.
 - How the tax is collected: added to the application fee at payment time vs billed monthly — decide with T2.
+  **RULED 2026-11-17 (R1): neither — the tax is included in our fee and paid out of our share** (a later monthly tax bill
+  sours first customers). The tax inside each paid fee still has to reach the return (lines 101/103); the fee statement is
+  information only. The fee's shape changes first under [Stripe-owned pricing](STRIPE_OWNED_PRICING_PLAN.md).
 - The cost recoveries we invoice clubs (disputes, returned debits, foreign cards) follow the accountant's answer (Stage 0
   6c); their credit-note math changes with Stage 2.
 - Club-facing words (set-up window, Payouts card, receipts) say what the fee includes; the payments terms say the fee
