@@ -548,7 +548,7 @@ FieldLogicHQ is **registered for GST/HST** (number received the week of 2026-10-
    FieldLogicHQ is registered, 0% for a verified US buyer).
 2. ⚠ **Superseded 2026-11-17 for the online-payment fee by R1** (entry "Stripe-owned pricing…" above): the GST/HST is
    now INSIDE our fee, paid out of our share, no tax bill to clubs; T3 stands.
-   ~~**GST/HST is charged on top of the online-payment fee, to the club (T2).** Published rates unchanged; tax added on top;
+   ~~**GST/HST is charged on top of the online-payment fee, to the club (T2).** Published rates unchanged; tax added on top;~~
    US clubs 0%. If counsel later rules the fee an exempt financial service, stop charging it.
 3. **The fee is always legally FieldLogicHQ's charge to the club (T3).** "Family pays" means the club passes its own cost
    on to its families as the club's charge. The lawyer writes it into the payments terms.
