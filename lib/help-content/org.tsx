@@ -222,6 +222,7 @@ const orgHelp: HelpPageContent = {
                   <li><strong>The person</strong> no longer sees it on Home and can&rsquo;t accept it. The link says <em>This invitation has run out. Ask [club] to send it again.</em></li>
                   <li><strong>Inviting the same email again</strong> says <em>Their invitation has run out. Resend it from their row on Members.</em></li>
                   <li><strong>It doesn&rsquo;t block them elsewhere.</strong> A run-out invitation doesn&rsquo;t stop that person from starting their own club or league. A coach who was offered a board role keeps coaching either way.</li>
+                  <li><strong>After another 30 days it is removed.</strong> Sixty days after the last send, a run-out invitation leaves Members on its own, and the member log notes <em>Invitation removed after it ran out</em>. To ask them again after that, send a new invitation.</li>
                 </ul>
             </>
           ),

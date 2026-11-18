@@ -54,8 +54,8 @@
 > ran out"; Resend restamps first and revives it (a seat check when reviving, /review); the same for a coach's waiting
 > board role. Removal: a nightly sweep (`lib/invitation-sweep.ts`) 60 days after the last send — the row goes, a waiting
 > role is cleared, and the account a new person's invitation made goes only when never confirmed, never signed in, of no
-> other use and made with that club's first invitation. Its schedule, migration 504, is written but NOT applied anywhere
-> (scheduler automation: the owner's go in conversation, its own commit). Proof `.probe/invitation-lapse-prove.mjs` (dev,
+> other use and made with that club's first invitation. Its schedule, migration 504, is its own commit (c252216ea, the
+> owner's go in conversation 2026-11-18), applied to dev; production after migration 502 and the code. Proof `.probe/invitation-lapse-prove.mjs` (dev,
 > 32/32); guard `tests/unit/invitation-lapse.test.ts` (with a census of every door that reads pending rows); (c) the database's membership test (`is_org_member`,
 > `can_access_tournament`) ignores status, so a pending invitee's browser session can read the club's venue library and
 > its tournaments' team names (suspended members too: not new, now aimable at any existing account): one migration —

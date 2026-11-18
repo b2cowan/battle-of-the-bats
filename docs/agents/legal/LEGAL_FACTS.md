@@ -53,8 +53,9 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   created. The invitation runs out 30 days after it was last sent (a Resend restarts it); a nightly sweep removes it 30 days after
   that (the pending row; a coach's waiting board role is cleared), and deletes the account only if never confirmed, never signed in
   to, used for nothing else, and made by this club's first invitation. The club's audit line "Invitation removed after it ran out"
-  keeps the email (append-only, kept while the organization exists, like Cancel's). **The sweep's schedule is NOT switched on in
-  production (owner's go owed): until it runs there, nothing is deleted and the privacy policy must not say so.** Topic:
+  keeps the email (append-only, kept while the organization exists, like Cancel's). **The sweep's schedule (mig 504, the owner's
+  go 2026-11-18) runs on dev only; production gets it after the code: until it runs there, nothing is deleted on production and
+  the privacy policy must not say so.** Topic:
   `CASL_MEMBER_INVITE_EMAILS.md`; draft `drafts/PRIVACY_POLICY.md` §9 (0.3, conditional).
 - No public sharing of a child's data (`BUSINESS_DECISIONS.md` ~L2871); no one-to-one adult–minor
   messaging (`docs/projects/active/COACH_PORTAL_CHUNK_D_COUNSEL_PACKET.md` ~L188).
