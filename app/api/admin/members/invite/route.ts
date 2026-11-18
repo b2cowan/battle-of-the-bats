@@ -1,24 +1,22 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { countsAsSeat, seatExemptRoles } from '@/lib/roles';
+import { countsAsSeat, seatRowsFilter } from '@/lib/roles';
 import { checkCrossOrgJoin, crossOrgJoinRefusalForAdmin } from '@/lib/org-membership-policy';
 import { isAssignableRole } from '@/lib/board-roles';
 import { memberOpensSentence, roleEmailLabel } from '@/lib/member-access';
 import { memberDisplayName } from '@/lib/member-names';
-import { acceptInvitePath, existingAccountInviteUrl } from '@/lib/invite-links';
+import { acceptInvitePath, sendExistingAccountInvite } from '@/lib/invite-links';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
+import { sendEmail, orgInviteHtml } from '@/lib/email';
 import { parseVolunteerJob, volunteerCapabilitiesFor, type VolunteerJob } from '@/lib/volunteer-jobs';
 import { INVITE_EMAIL_ACTION, VOLUNTEER_EMAIL_NOTE } from '@/lib/volunteer-words';
 import type { OrgRole } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { requireFreshCode } from '@/lib/two-step-fresh';
-import { startTwoStepGrace } from '@/lib/two-step-grace';
 import { findAuthUserByEmail } from '@/lib/auth-account-lookup';
 
 function getActionLink(data: unknown) {
@@ -75,12 +73,12 @@ export const POST = withObservability(async (req: Request) => {
 
   if (!skipSeatCheck) {
     // Count only the memberships that are seats — one rule, shared with the count read and the
-    // Members page (owner ruling 2026-09-13: coaching staff don't count).
+    // Members page (owner ruling 2026-09-13: coaching staff don't count; a coach's waiting board role does, P2b).
     const { count: seatCount } = await supabaseAdmin
       .from('organization_members')
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', org.id)
-      .not('role', 'in', `(${seatExemptRoles(planCfg).join(',')})`);
+      .or(seatRowsFilter(planCfg));
     const seatLimit = planCfg.seatLimit;
 
     if ((seatCount ?? 0) >= seatLimit) {
@@ -118,13 +116,20 @@ export const POST = withObservability(async (req: Request) => {
     // Check they're not already in THIS org
     const { data: sameMember } = await supabaseAdmin
       .from('organization_members')
-      .select('id, role, status')
+      .select('id, role, status, pending_role')
       .eq('organization_id', org.id)
       .eq('user_id', existingUser.id)
       .maybeSingle();
 
     // A pending row of either kind waits for the PERSON's yes (trust close-out 13): a second invitation never stands in for
-    // it — a pending coaching row would otherwise fall to the coach-row upgrade below and be made active on the spot.
+    // it — a pending coaching row would otherwise fall to the coach-row branch below. A coach's waiting board role (P2b)
+    // is a pending invitation too.
+    if (sameMember?.pending_role) {
+      return NextResponse.json({
+        error: 'They already have an invitation waiting. Resend it from their row on Members.',
+        code: 'already_invited',
+      }, { status: 409 });
+    }
     if (sameMember?.status === 'invited') {
       return NextResponse.json({
         error: sameMember.role === 'coach'
@@ -173,59 +178,50 @@ export const POST = withObservability(async (req: Request) => {
 
       await writeOrgAudit(org.id, user.id, existingUser.id, 'member_invited', { email, role, existingAccount: true, ...(job ? { purpose: job } : {}) });
 
-      const inviterName = await memberDisplayName(org.id, user.id);
-      await sendEmail(
-        email,
-        `You've been invited to ${org.name} on FieldLogicHQ`,
-        orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: existingAccountInviteUrl(appUrl), ctaLabel: INVITE_EMAIL_ACTION.signInToAccept, note: job ? VOLUNTEER_EMAIL_NOTE.existing[job] : null, opens, inviterName, existingAccount: true }),
-        { kind: 'org_invite', orgId: org.id, askedBy: user.id },
-      );
+      await sendExistingAccountInvite({
+        email, orgId: org.id, orgName: org.name, role, capabilities, inviterName: await memberDisplayName(org.id, user.id), askedBy: user.id,
+      });
 
       return NextResponse.json({ ok: true, added: false, existingAccount: true });
     }
 
     // An unconfirmed account with no row here leaves this block for the set-up invitation (above).
     if (sameMember) {
-    // Someone who already COACHES here holds this org's capability-less coach row (the plumbing
-    // every staff invite writes). Inviting them to the board gives that row the board role; their
-    // coaching lives on their team's staff list and is untouched. (It used to answer "already a
-    // member", and the Manage dialog now refuses coach rows — this is the door that works.)
-    // ⚠ RULED 2026-11-18 (owner): they accept too — queue prompt P2b, BOARD_READY_TRUST_FIX_PROMPTS.md. Until it is built,
-    // this one branch still makes the change on the spot. A coach's pending board
-    // role cannot sit on the coach row without cutting their coaching, and the table holds one row per person per club, so
-    // asking them first needs a place to keep the pending role (a schema change). Recorded in BOARD_READY_ACCESS_SWEEP_3.md.
-    // The volunteer's job rides along (null for every other role — a coach row is capability-less).
-    const { error: insertError } = await supabaseAdmin
-      .from('organization_members')
-      .update({ role, status: 'active', accepted_at: nowIso, capabilities })
-      .eq('id', sameMember.id)
-      .eq('organization_id', org.id)
-      .eq('role', 'coach');
+      // ⚖ A CLUB'S OWN COACH INVITED TO THE BOARD ACCEPTS IT TOO (owner ruling 2026-11-18, trust close-out 13 P2b, mig 503).
+      // They hold this org's capability-less coach row (the plumbing every staff invite writes; one row per person per
+      // club). It used to be rewritten to the board role on the spot. Now the board role WAITS on the row beside their
+      // coaching, which it never touches, and becomes theirs only when they accept it on Home (POST
+      // /api/auth/invitations/[memberId], which also starts their two-step days). Until then it holds the seat it reserves,
+      // as every pending invitation does, and opens nothing. Decline and Cancel clear it and leave the coach row as it was.
+      // The volunteer's job rides along as the waiting access (null for every other role).
+      const { data: offered, error: offerError } = await supabaseAdmin
+        .from('organization_members')
+        .update({ pending_role: role, pending_capabilities: capabilities, pending_invited_at: nowIso })
+        .eq('id', sameMember.id)
+        .eq('organization_id', org.id)
+        .eq('role', 'coach')
+        .eq('status', 'active')
+        .is('pending_role', null)
+        .select('id');
 
-    if (insertError) {
-      return captureAndJson(insertError, { error: insertError.message }, 500);
-    }
+      if (offerError) {
+        return captureAndJson(offerError, { error: 'The invitation couldn’t be created. Try again.' }, 500);
+      }
+      // Another invitation reached the row first, or it changed (/review): nothing was written.
+      if (!offered?.length) {
+        return NextResponse.json({
+          error: 'Their membership changed while you were inviting them. Reload Members to see it as it is now.',
+          code: 'member_changed',
+        }, { status: 409 });
+      }
 
-    await writeOrgAudit(org.id, user.id, existingUser.id, 'member_invited', { email, role, ...(job ? { purpose: job } : {}) });
-    // Two-step (Board Ready, Part 3): added straight to a seat the club already requires — their own 14 days from today.
-    await startTwoStepGrace(existingUser.id, org.id, role);
+      await writeOrgAudit(org.id, user.id, existingUser.id, 'member_invited', { email, role, existingAccount: true, keepsCoaching: true, ...(job ? { purpose: job } : {}) });
 
-    // ⚖ Both arrival paths end on the role's home (Stage 13b B3): the link lands where the row just written sends them, by the
-    // resolver sign-in and the accept page use. It always names THIS club (a bare sign-in sends a member of several clubs to
-    // their default one), so an answer outside it (the row could not be read back) falls back to the club's Overview.
-    const home = await destinationAfterAccept(existingUser.id, org.slug);
-    const landing = home.startsWith(`/${org.slug}/`) ? home : `/${org.slug}/admin`;
-    const signInUrl = `${appUrl}/auth/login?next=${encodeURIComponent(landing)}`;
+      await sendExistingAccountInvite({
+        email, orgId: org.id, orgName: org.name, role, capabilities, inviterName: await memberDisplayName(org.id, user.id), askedBy: user.id, keepsCoaching: true,
+      });
 
-    // Notify the existing user that they now have access to this org.
-    await sendEmail(
-      email,
-      `You've been added to ${org.name} on FieldLogicHQ`,
-      orgMemberAddedHtml({ orgName: org.name, roleLabel, signInUrl, ctaLabel: INVITE_EMAIL_ACTION.signIn, note: job ? VOLUNTEER_EMAIL_NOTE.added[job] : null, opens }),
-      { kind: 'org_member_added', orgId: org.id, askedBy: user.id },
-    );
-
-    return NextResponse.json({ ok: true, added: true });
+      return NextResponse.json({ ok: true, added: false, existingAccount: true });
     }
   }
 

@@ -430,7 +430,8 @@ export default function TournamentEventSettingsPage() {
       const allMembers = Array.isArray(members) ? members : [];
       setOwnerMember(allMembers.find((m: OrgMemberOption) => m.role === 'owner') ?? null);
       const eligible = allMembers
-        .filter((m: OrgMemberOption) => ['admin', 'staff'].includes(m.role))
+        // A coach's board role still WAITING for their yes (trust close-out 13 P2b) is not theirs yet: never a contact.
+        .filter((m: OrgMemberOption) => ['admin', 'staff'].includes(m.role) && !('coachInvite' in m && m.coachInvite))
         .sort((a: OrgMemberOption, b: OrgMemberOption) => {
           const roleOrder: Record<string, number> = { admin: 0, staff: 1 };
           const roleDiff = (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9);

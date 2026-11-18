@@ -229,7 +229,8 @@ export default function MembersKit() {
   const personCell = (m: KitMember) => {
     const isSelf = m.userId === user?.id;
     const name = memberName(m);
-    const second = [m.displayName ? m.email : null, m.title].filter(Boolean).join(' · ');
+    // P2b: a coach invited to the board is still coaching here while the invitation waits.
+    const second = [m.displayName ? m.email : null, m.title, m.coachInvite ? 'Coaches here' : null].filter(Boolean).join(' · ');
     return (
       <>
         <span className={styles.person}>
@@ -307,7 +308,7 @@ export default function MembersKit() {
         {rows.map(m => {
           const isSelf = m.userId === user?.id;
           const line = m.status === 'invited'
-            ? `${roleLabel(m.role)} · invited ${dayLabel(m.invitedAt)}`
+            ? `${roleLabel(m.role)} · invited ${dayLabel(m.invitedAt)}${m.coachInvite ? ' · coaches here' : ''}`
             : `${roleLabel(m.role)} · ${accessShort(m.role, m.access, m.capabilities)}${overrideChips(m.access).map(c => ` ${c.text}`).join('')}`;
           const twoStep = m.status === 'invited' ? null : twoStepPhrase(m);
           const body = (

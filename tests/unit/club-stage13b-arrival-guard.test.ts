@@ -55,21 +55,19 @@ describe('B2. every invite email says what the role opens', () => {
   const email = readCode('lib/email.ts');
   // Sliced between neighbours: the templates' `${…}` braces defeat a brace-matching reader.
   const inviteFn = between(email, 'export function orgInviteHtml(', 'export function assistantCoachInviteHtml(');
-  const addedFn = between(email, 'export function orgMemberAddedHtml(', 'export function memberSuspendedHtml(');
   const whatFn = between(email, 'function orgInviteWhatHtml(', 'export function orgInviteHtml(');
 
-  it('both emails carry the role’s line and the product line, from one helper', () => {
+  // The "You've been added" email is retired (trust close-out 13 P2b, 2026-11-18): nobody is added without accepting, so
+  // every reader of an invitation has yet to say yes and the role's line keeps "You'd".
+  it('the invitation carries the role’s line and the product line, from one helper', () => {
     assert.match(inviteFn, /orgInviteWhatHtml\(\{ note: p\.note, opens: p\.opens, orgEscaped: org \}\)/);
-    assert.match(addedFn, /orgInviteWhatHtml\(\{ note: p\.note, opens: [^}]*orgEscaped: org \}\)/);
+    assert.doesNotMatch(email, /orgMemberAddedHtml|alreadyHeld/, 'the retired "added" email is back');
     assert.match(whatFn, /const what = p\.note \?\? p\.opens;/,'a volunteer’s job note must stand in for the role’s line, never beside it');
     assert.match(whatFn, /escapeEmailHtml\(what\)/);
     assert.match(whatFn, /ORG_INVITE_EMAIL_WORDS\.about\(p\.orgEscaped\)/);
   });
 
-  it('the "added" email says the role as held ("You’ll"), and every role’s sentence starts where that swap reaches', () => {
-    assert.match(addedFn, /opens: p\.opens \? ORG_INVITE_EMAIL_WORDS\.alreadyHeld\(p\.opens\) : null/);
-    assert.doesNotMatch(inviteFn, /alreadyHeld/, 'the invite’s reader has not accepted yet: it keeps “You’d”');
-    assert.match(email, /alreadyHeld: \(sentence: string\) => sentence\.replace\(\/\^You'd \/, "You'll "\)/);
+  it('every role’s sentence is said as an offer ("You’d"), as the accept page reads it', () => {
     for (const role of [...BOARD_ROLES, 'coach' as OrgRole]) assert.match(memberOpensSentence(role, null), /^You'd /, role);
     // A volunteer's job sentence too, in case it ever reaches the role's line (today their job note stands in for it).
     for (const sentence of Object.values(VOLUNTEER_OPENS)) assert.match(sentence, /^You'd /);
@@ -80,12 +78,14 @@ describe('B2. every invite email says what the role opens', () => {
     for (const role of BOARD_ROLES) assert.ok(memberOpensSentence(role, null).length > 0, role);
   });
 
-  it('every sender passes the accept page’s sentence: the invite, both of its emails, and the resend', () => {
+  it('every sender passes the accept page’s sentence: the invite, the existing-account sender, and the resend', () => {
     const route = readCode('app/api/admin/members/invite/route.ts');
     assert.match(route, /const opens = memberOpensSentence\(role, capabilities\);/);
     assert.match(route, /orgInviteHtml\(\{[^)]*\bopens\b/);
-    assert.match(route, /orgMemberAddedHtml\(\{[^)]*\bopens\b/);
-    assert.match(readCode('lib/invite-links.ts'), /orgInviteHtml\(\{[^)]*opens: memberOpensSentence\(role, memberRow\?\.capabilities\)/);
+    const links = readCode('lib/invite-links.ts');
+    assert.match(links, /const opens = memberOpensSentence\(role, memberRow\?\.capabilities\);/);
+    assert.match(links, /orgInviteHtml\(\{[^)]*\bopens, inviterName/);
+    assert.match(links, /opens: memberOpensSentence\(p\.role, p\.capabilities\),/);
   });
 
   it('one name per role: the email says the screens’ name, in a sentence’s lower case', () => {
@@ -97,28 +97,27 @@ describe('B2. every invite email says what the role opens', () => {
 
   it('neither email carries commercial content, so CASL’s consent rules stay out of reach (/legal 2026-11-07)', () => {
     // docs/agents/legal/CASL_MEMBER_INVITE_EMAILS.md: the new-account invite has no consent basis for an offer.
-    for (const [name, fn] of [['invite', inviteFn], ['added', addedFn], ['what', whatFn]] as const) {
+    for (const [name, fn] of [['invite', inviteFn], ['what', whatFn]] as const) {
       assert.doesNotMatch(fn, /\/pricing|\/start\b|\/signup|PLAN_CONFIG|planLabel|formatPrice|Tournament Plus|free time|free season|upgrade/i, name);
     }
     const about = between(email, 'export const ORG_INVITE_EMAIL_WORDS', 'function orgInviteWhatHtml(');
     assert.doesNotMatch(about, /\$\s?\d|price|plan\b|free|try /i, 'the product line says what FieldLogicHQ is, never an offer');
   });
 
-  it('the "added" email escapes the club’s name, as the invite email does', () => {
-    assert.match(addedFn, /const org = escapeEmailHtml\(p\.orgName\);/);
-    assert.doesNotMatch(addedFn, /\$\{p\.orgName\}/, 'the club name goes into the HTML raw');
+  it('the invitation escapes the club’s name', () => {
+    assert.match(inviteFn, /const org = escapeEmailHtml\(p\.orgName\);/);
+    assert.doesNotMatch(inviteFn, /\$\{p\.orgName\}/, 'the club name goes into the HTML raw');
   });
 });
 
 describe('B3. both arrival paths end on the role’s home', () => {
-  it('the "added" email’s link comes from the resolver sign-in and the accept page use, not a role table', () => {
+  it('every accept lands where the resolver sends the role just accepted, not a role table', () => {
+    // Since P2b (2026-11-18) the invite route writes no membership, so it builds no landing: both accept doors do.
     const route = readCode('app/api/admin/members/invite/route.ts');
-    assert.match(route, /const home = await destinationAfterAccept\(existingUser\.id, org\.slug\);/);
-    assert.match(route, /const signInUrl = `\$\{appUrl\}\/auth\/login\?next=\$\{encodeURIComponent\(landing\)\}`;/);
-    // The old per-role landing, every board role sent to the Overview, is gone.
+    assert.doesNotMatch(route, /destinationAfterAccept|signInUrl/);
     assert.doesNotMatch(route, /role === 'coach' \? `\/\$\{org\.slug\}\/coaches` : `\/\$\{org\.slug\}\/admin`/);
-    // The link is built after the membership is written, so the resolver reads the role just given.
-    assert.ok(route.indexOf('destinationAfterAccept(') > route.indexOf("'member_invited'"), 'the link is built before the row exists');
+    const accept = readCode('app/api/auth/invitations/[memberId]/route.ts');
+    assert.match(accept, /destination: await destinationAfterAccept\(user\.id, orgSlug\)/);
   });
 
   it('the accept paths ask the same resolver sign-in asks for a board row', () => {

@@ -110,9 +110,9 @@ describe('the member route holds P1 and P2, and the invite writes the job', () =
     assert.ok(p2 < patch.indexOf('org_member_rep_group_scopes', start), 'P2 must run before the scope rows are written');
     assert.ok(p2 < patch.indexOf('.update(update)'), 'P2 must run before the row is written');
   });
-  it('the invite writes `capabilities` on both of its inserts (and the coach-row upgrade)', () => {
+  it('the invite writes `capabilities` on both of its inserts (and a coach\'s waiting board role, P2b)', () => {
     const invite = read('app/api/admin/members/invite/route.ts');
-    assert.match(invite, /update\(\{ role, status: 'active', accepted_at: nowIso, capabilities \}\)/);
+    assert.match(invite, /update\(\{ pending_role: role, pending_capabilities: capabilities, pending_invited_at: nowIso \}\)/);
     assert.equal((invite.match(/^\s+capabilities,$/gm) ?? []).length, 2, 'both inserts carry the job');
     assert.match(invite, /const capabilities = job \? volunteerCapabilitiesFor\(job\) : null;/);
   });

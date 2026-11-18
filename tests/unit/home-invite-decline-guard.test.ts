@@ -22,7 +22,8 @@ describe('Home invitation decline', () => {
 
   it('a staff invitation declined tells the club, as a coach invitation does', () => {
     const route = readCode('app/api/auth/invitations/[memberId]/route.ts');
-    assert.match(route, /await tellClubMemberInviteDeclined\(member, user\)/);
+    // One call for both declines (P2b): a pending row's, and a club coach's waiting board role, named by the role offered.
+    assert.match(route, /await tellClubMemberInviteDeclined\(\{ \.\.\.member, role: offeredRole \}, user\)/);
     assert.match(route, /eventType: 'member_invite_declined'/);
     assert.equal(NOTIFICATION_CATEGORY.member_invite_declined, 'know');
     assert.ok(NOTIFICATION_EVENT_LABELS.member_invite_declined);

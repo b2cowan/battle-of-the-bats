@@ -81,7 +81,8 @@ describe('Members — the board endpoints (A02, A13, S1-03, J10-006, J10-022)', 
 
   it('coaching-staff rows are refused by PATCH, DELETE and resend', () => {
     assert.equal((patch.match(/if \(target\.role === 'coach'\) return coachingStaffRowRefusal\(\);/g) ?? []).length, 2);
-    assert.match(read('app/api/admin/members/[memberId]/reinvite/route.ts'), /if \(member\.role === 'coach'\) return coachingStaffRowRefusal\(\);/);
+    // A coach's WAITING board role (trust close-out 13 P2b) is an invitation and is resent; the coaching row itself is refused.
+    assert.match(read('app/api/admin/members/[memberId]/reinvite/route.ts'), /if \(member\.role === 'coach' && !waiting\) return coachingStaffRowRefusal\(\);/);
   });
 
   it('a member whose access changed is emailed what changed (J10-020)', () => {

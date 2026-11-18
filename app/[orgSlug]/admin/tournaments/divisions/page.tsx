@@ -60,7 +60,8 @@ export default function DivisionsPage() {
       setGroups(await groupsRes.json() as DivisionRow[]);
       const all = membersRes.ok ? await membersRes.json() as DivisionMember[] : [];
       setMembers(all
-        .filter(m => ['owner', 'admin', 'staff'].includes(m.role))
+        // A coach's board role still WAITING for their yes (trust close-out 13 P2b) is not theirs yet: never a contact.
+        .filter(m => ['owner', 'admin', 'staff'].includes(m.role) && !('coachInvite' in m && m.coachInvite))
         .sort((a, b) => (a.displayName ?? a.email).localeCompare(b.displayName ?? b.email)));
       setError('');
     } catch (e) {

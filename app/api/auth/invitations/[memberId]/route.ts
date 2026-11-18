@@ -8,6 +8,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { startTwoStepGrace } from '@/lib/two-step-grace';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
+import { PENDING_INVITATION_FILTER, WAITING_ROLE_CLEARED, waitingBoardRole } from '@/lib/waiting-board-role';
 import { invitationSender } from '@/lib/member-names';
 import { roleLabel } from '@/lib/member-access';
 import { accountNameOf } from '@/lib/family-invitation';
@@ -78,7 +79,8 @@ function orgSlugFromRelation(rel: unknown): string | null {
 // POST /api/auth/invitations/[memberId] — accept ({action:'accept'}) or decline
 // ({action:'decline'}) a pending invitation the SESSION user owns.
 //
-// SECURITY: the target row must be status='invited' AND user_id === the session user.
+// SECURITY: the target row must be status='invited' (or a coach row with a waiting board role, P2b) AND user_id === the
+// session user.
 // We never trust the memberId alone — it is always re-scoped to the authenticated
 // user_id, so one user cannot accept/decline another's invite by guessing an id.
 // (Reconciliation has already re-pointed any email-matched invite onto this user_id.)
@@ -100,45 +102,68 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     return NextResponse.json({ error: "action must be 'accept' or 'decline'" }, { status: 400 });
   }
 
-  // Re-scope to the session identity: the invite must be theirs and still pending.
+  // Re-scope to the session identity: the invite must be theirs and still pending — a pending row, or a club's coach row
+  // with a board role WAITING on it (trust close-out 13 P2b, mig 503).
   const { data: member } = await supabaseAdmin
     .from('organization_members')
-    .select('id, role, organization_id, display_name, organizations(slug)')
+    .select('id, role, status, organization_id, display_name, pending_role, pending_capabilities, pending_invited_at, organizations(slug)')
     .eq('id', memberId)
     .eq('user_id', user.id)
-    .eq('status', 'invited')
+    .or(PENDING_INVITATION_FILTER)
     .maybeSingle();
 
   if (!member) {
     return NextResponse.json({ error: 'Invitation not found or already handled' }, { status: 404 });
   }
 
+  // ⚖ A club's coach offered a board role (P2b): the row is their coaching, so a decline clears the waiting role and never
+  // deletes the row, and an accept moves the waiting role onto it. Everything else about the answer is the same as a
+  // pending row's, and is said once below with `offeredRole` — the role the person was shown.
+  const waiting = waitingBoardRole(member);
+  const offeredRole = waiting ?? (member.role as string);
+
   if (action === 'decline') {
-    // Decline = remove the pending row. No 'declined' status (keeps the status CHECK
-    // at invited|active|suspended). The orphaned invite-only auth user is left as-is.
-    const { error } = await supabaseAdmin
-      .from('organization_members')
-      .delete()
-      .eq('id', member.id)
-      .eq('user_id', user.id)
-      .eq('status', 'invited');
-    if (error) {
-      return captureAndJson(error, { error: error.message }, 500);
+    if (waiting) {
+      const { data: cleared, error } = await supabaseAdmin
+        .from('organization_members')
+        .update(WAITING_ROLE_CLEARED)
+        .eq('id', member.id)
+        .eq('user_id', user.id)
+        .eq('role', 'coach')
+        // The offer read, never a newer one sent since (/review): a decline must not clear an offer the person never saw.
+        .eq('pending_role', waiting)
+        .eq('pending_invited_at', member.pending_invited_at)
+        .select('id');
+      if (error) return captureAndJson(error, { error: error.message }, 500);
+      if (!cleared?.length) return NextResponse.json({ error: 'Invitation not found or already handled' }, { status: 404 });
+    } else {
+      // Decline = remove the pending row. No 'declined' status (keeps the status CHECK
+      // at invited|active|suspended). The orphaned invite-only auth user is left as-is.
+      const { error } = await supabaseAdmin
+        .from('organization_members')
+        .delete()
+        .eq('id', member.id)
+        .eq('user_id', user.id)
+        .eq('status', 'invited');
+      if (error) {
+        return captureAndJson(error, { error: error.message }, 500);
+      }
     }
-    await tellClubMemberInviteDeclined(member, user);
+    // The club is told, naming the role offered (for a coach, the one that was WAITING, never 'coach').
+    await tellClubMemberInviteDeclined({ ...member, role: offeredRole }, user);
     return NextResponse.json({ ok: true, declined: true });
   }
 
   // A yes is to the role the person was SHOWN (trust close-out 13, /review): the club can still change a pending row's role,
   // so if it moved after their card loaded, nothing is accepted and they are asked to reload and see the new one. (A request
   // without a role — an older page — is taken as before.)
-  if (typeof body?.role === 'string' && body.role !== member.role) {
+  if (typeof body?.role === 'string' && body.role !== offeredRole) {
     return NextResponse.json({ error: 'This invitation changed since you opened it. Reload the page to see it as it is now.', code: 'invitation_changed' }, { status: 409 });
   }
 
   // ⚖ Verified Network (A03): belonging to another organization no longer blocks joining this one —
   // only a scorekeeper keeps one home organization. (Coaching rows elsewhere never counted.)
-  const join = await checkCrossOrgJoin(user.id, member.organization_id, member.role);
+  const join = await checkCrossOrgJoin(user.id, member.organization_id, offeredRole);
   if (join.blocked) {
     return NextResponse.json({ error: crossOrgJoinRefusalForInvitee(join), code: 'one_home_org' }, { status: 409 });
   }
@@ -154,32 +179,41 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     ?.trim()
     .slice(0, 60);
 
-  const memberUpdate: Record<string, unknown> = {
-    accepted_at: new Date().toISOString(),
-    status: 'active',
-  };
+  // A coach's waiting board role moves onto their (already active) row and is cleared; a pending row turns active.
+  const memberUpdate: Record<string, unknown> = waiting
+    ? { role: waiting, capabilities: member.pending_capabilities ?? null, accepted_at: new Date().toISOString(), ...WAITING_ROLE_CLEARED }
+    : { accepted_at: new Date().toISOString(), status: 'active' };
   if (!member.display_name && metaName) memberUpdate.display_name = metaName;
 
-  const { error } = await supabaseAdmin
+  // Guarded on what was read, so a Cancel or another answer in between leaves nothing accepted.
+  const write = supabaseAdmin
     .from('organization_members')
     .update(memberUpdate)
     .eq('id', member.id)
-    .eq('user_id', user.id)
-    .eq('status', 'invited');
+    .eq('user_id', user.id);
+  const { data: accepted, error } = await (waiting
+    // The offer read, to its date (/review): a Cancel and a new offer of the same role with other access in between leaves
+    // nothing accepted, rather than the withdrawn access.
+    ? write.eq('role', 'coach').eq('pending_role', waiting).eq('pending_invited_at', member.pending_invited_at)
+    : write.eq('status', 'invited')
+  ).select('id');
 
   if (error) {
     return captureAndJson(error, { error: error.message }, 500);
   }
+  if (!accepted?.length) {
+    return NextResponse.json({ error: 'Invitation not found or already handled' }, { status: 404 });
+  }
 
   // Two-step (Board Ready, Part 3): a seat the club already requires gets its own 14 days from today.
-  await startTwoStepGrace(user.id, member.organization_id, member.role);
+  await startTwoStepGrace(user.id, member.organization_id, offeredRole);
 
   const orgSlug = orgSlugFromRelation(member.organizations);
   return NextResponse.json({
     ok: true,
     accepted: true,
     orgSlug,
-    role: member.role,
+    role: offeredRole,
     // J10-011 (added 2026-09-25): where this role starts — the resolver sign-in uses.
     destination: await destinationAfterAccept(user.id, orgSlug),
   });

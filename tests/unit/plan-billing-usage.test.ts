@@ -61,6 +61,7 @@ describe('billing counts follow enforcement and effective limits', () => {
         eq: (...args: unknown[]) => { record.filters.push(['eq', ...args]); return query; },
         in: (...args: unknown[]) => { record.filters.push(['in', ...args]); return query; },
         not: (...args: unknown[]) => { record.filters.push(['not', ...args]); return query; },
+        or: (...args: unknown[]) => { record.filters.push(['or', ...args]); return query; },
         then: (done: (value: unknown) => unknown) => Promise.resolve({ count: broken === 'null' ? null : table === 'tournaments' ? 2 : 5, error: broken === 'error' ? new Error('failed') : null }).then(done),
       };
       return query;
@@ -82,8 +83,9 @@ describe('billing counts follow enforcement and effective limits', () => {
   });
   it('coaches and free officials are exempt exactly as in invite enforcement', async () => {
     const { queries } = await read('tournament');
-    assert.ok(queries[1].filters.some(f => JSON.stringify(f) === '["not","role","in","(coach,official)"]'));
-    assert.match(readCode('app/api/admin/members/invite/route.ts'), /seatExemptRoles\(planCfg\)/);
+    // A coach's waiting board role holds its seat (trust close-out 13, P2b): the one filter every seat count uses.
+    assert.ok(queries[1].filters.some(f => JSON.stringify(f) === '["or","role.not.in.(coach,official),and(status.eq.active,pending_role.not.in.(coach,official))"]'));
+    assert.match(readCode('app/api/admin/members/invite/route.ts'), /seatRowsFilter\(planCfg\)/);
   });
   for (const failure of ['error', 'null'] as const) it(`${failure} counts reject instead of returning an empty meter`, async () => {
     await assert.rejects(read('club', failure), /could not be read/);

@@ -34,6 +34,8 @@ export const EMAIL_KINDS = {
   house_league_coach_invite:            { klass: 'account', label: 'Invitation to coach a house league team', story: true },
   team_invitation:                      { klass: 'account', label: 'Invitation to claim a tournament team', story: true },
   // ── account: access ────────────────────────────────────────────────────────
+  // No longer sent (trust close-out 13 P2b, 2026-11-18: nobody is added to a club without accepting). Kept so the email
+  // log still names the ones sent before.
   org_member_added:                     { klass: 'account', label: 'Added to a club' },
   org_member_removed:                   { klass: 'account', label: 'Access removed' },
   org_member_suspended:                 { klass: 'account', label: 'Access suspended' },

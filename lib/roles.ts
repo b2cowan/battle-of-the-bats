@@ -122,10 +122,25 @@ export function countsAsSeat(role: OrgRole | string, plan: { officialsFreeSeats:
   return true;
 }
 
-/** The roles `countsAsSeat` excludes, for a database count (`.not('role', 'in', …)`). */
+/** The roles `countsAsSeat` excludes. A database count uses `seatRowsFilter`, never these alone. */
 export function seatExemptRoles(plan: { officialsFreeSeats: boolean }): string[] {
   return plan.officialsFreeSeats ? ['coach', 'official'] : ['coach'];
 }
+
+/**
+ * The seat count's filter for a database read, as `.or(seatRowsFilter(plan))`: a row is a seat when its role is one, OR
+ * when the board role WAITING on it is one (a club's coach invited to the board, trust close-out 13 P2b, mig 503). A
+ * pending invitation holds its seat, so a waiting board role does too. (`pending_role` is NULL on every other row, and
+ * NULL `not.in` is never true, so those rows count by their role alone.)
+ */
+export function seatRowsFilter(plan: { officialsFreeSeats: boolean }): string {
+  const exempt = `(${seatExemptRoles(plan).join(',')})`;
+  // A waiting role counts only on an ACTIVE coach row, the rows `waitingBoardRole` offers (/review: one answer everywhere).
+  return `role.not.in.${exempt},and(status.eq.active,pending_role.not.in.${exempt})`;
+}
+
+/** The volunteer figure's filter (plans where volunteers are free): a volunteer, or a coach's waiting volunteer role. */
+export const VOLUNTEER_ROWS_FILTER = 'role.eq.official,and(status.eq.active,pending_role.eq.official)';
 
 export function hasCapability(
   role: OrgRole,

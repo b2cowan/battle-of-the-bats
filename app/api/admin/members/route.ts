@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { memberSection, whatTheyCanOpen } from '@/lib/member-access';
+import { waitingBoardRole } from '@/lib/waiting-board-role';
 import type { OrgRole } from '@/lib/types';
 import {
   graceStartsFor, memberTwoStep, orgTwoStepFacts, peopleSignInFacts, type MemberTwoStep, type OrgTwoStepRow,
@@ -23,7 +24,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data: members, error: membersError } = await supabaseAdmin
     .from('organization_members')
-    .select('id, user_id, role, capabilities, invited_at, accepted_at, status, display_name, title')
+    .select('id, user_id, role, capabilities, invited_at, accepted_at, status, display_name, title, pending_role, pending_capabilities, pending_invited_at')
     .eq('organization_id', org.id);
 
   if (membersError) {
@@ -84,7 +85,11 @@ export const GET = withObservability(async (req: Request) => {
 
   const result = members.map(m => {
     const authUser = m.user_id ? people.get(m.user_id) : undefined;
-    const status = (m.status as 'invited' | 'active' | 'suspended') ?? 'active';
+    // ⚖ A club's coach with a board role WAITING (trust close-out 13 P2b): Members shows the invitation, on the board, as
+    // any pending invitation reads ("Invited", the role offered and what it would open), marked `coachInvite` so Manage
+    // offers only Resend and Cancel. Their coaching is unchanged and managed on the team's staff page, as before.
+    const waiting = waitingBoardRole(m);
+    const status = waiting ? 'invited' : (m.status as 'invited' | 'active' | 'suspended') ?? 'active';
     // An invitation has no seat yet ("—"); an account the read did not return is unknown, never "Off".
     // A suspended person cannot sign in, so no requirement runs for them: only On or Off, never the amber count (/review:
     // the Overview reminder counts active seats only, and the two must agree).
@@ -93,8 +98,8 @@ export const GET = withObservability(async (req: Request) => {
       : status === 'suspended'
         ? { state: authUser.twoStepOn ? 'on' : 'off' }
         : memberTwoStep(switches, m.role as string, graces.get(m.user_id) ?? null, authUser.twoStepOn, now);
-    const role = m.role as OrgRole;
-    const capabilities = (m.capabilities as Record<string, boolean> | null) ?? null;
+    const role = (waiting ?? m.role) as OrgRole;
+    const capabilities = ((waiting ? m.pending_capabilities : m.capabilities) as Record<string, boolean> | null) ?? null;
     return {
       // ── Added 2026-09-25 (Club Tier Stage 1), additively — every field below them is unchanged:
       //   section — which part of Members the row belongs to (the board, scorekeepers, or coaching
@@ -108,14 +113,15 @@ export const GET = withObservability(async (req: Request) => {
       email:                 authUser?.email ?? '(unknown)',
       displayName:           (m as any).display_name ?? null,
       title:                 (m as any).title ?? null,
-      role:                  m.role,
+      role,
       status,
-      capabilities:          (m.capabilities as Record<string, boolean> | null) ?? null,
-      invitedAt:             m.invited_at,
-      acceptedAt:            m.accepted_at ?? null,
+      capabilities,
+      invitedAt:             waiting ? m.pending_invited_at : m.invited_at,
+      acceptedAt:            waiting ? null : m.accepted_at ?? null,
       lastSignIn:            authUser?.lastSignInAt ?? null,
       assignedTournamentIds: assignmentMap.get(m.id) ?? [],
       repGroupIds:           repGroupScopeMap.get(m.id) ?? [],
+      ...(waiting ? { coachInvite: true } : {}),
       // Part 4: present (possibly null) only for an owner or admin viewer; absent for everyone else.
       ...(seesTwoStep ? { twoStep } : {}),
     };

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { WAITING_ROLE_CLEARED } from '@/lib/waiting-board-role';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { requireFreshCode } from '@/lib/two-step-fresh';
@@ -65,10 +66,11 @@ export const POST = withObservability(async (req: NextRequest,
   const stale = await requireFreshCode();
   if (stale) return stale;
 
-  // Promote the new owner first so the org is never briefly ownerless.
+  // Promote the new owner first so the org is never briefly ownerless. A board role waiting on a coach's row (trust
+  // close-out 13 P2b, mig 503) is moot once they own the club, and the row's CHECK allows a waiting role on a coach row only.
   const { error: promoteError } = await supabaseAdmin
     .from('organization_members')
-    .update({ role: 'owner' })
+    .update({ role: 'owner', ...WAITING_ROLE_CLEARED })
     .eq('organization_id', id)
     .eq('user_id', newOwnerUserId);
 

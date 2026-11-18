@@ -1742,16 +1742,15 @@ export function orgClosedHtml(p: {
 }
 
 /**
- * The invite and "added" emails' two lines (Club Tier Stage 13b B2). The role's line is the accept page's own sentence
+ * The invite email's two lines (Club Tier Stage 13b B2). The role's line is the accept page's own sentence
  * (`memberOpensSentence`, passed by the caller) so the email and the page the reader lands on never disagree; a volunteer's
  * job note stands in for it. ⚖ Not a commercial message (/legal, docs/agents/legal/CASL_MEMBER_INVITE_EMAILS.md): no plan,
- * price, offer or pricing/sign-up link may join these emails.
+ * price, offer or pricing/sign-up link may join these emails. (The "You've been added" email that shared them is retired:
+ * since trust close-out 13 P2b, 2026-11-18, nobody is added to a club without accepting.)
  */
 export const ORG_INVITE_EMAIL_WORDS = {
   // "for things like" (/legal): the line is a claim about EVERY sender, and not every org runs all three.
   about: (orgHtml: string) => `FieldLogicHQ is the online system ${orgHtml} uses for things like registration, schedules and results.`,
-  // The "added" email's reader already holds the role; the accept page, read before accepting, keeps "You'd".
-  alreadyHeld: (sentence: string) => sentence.replace(/^You'd /, "You'll "),
 } as const;
 
 function orgInviteWhatHtml(p: { note?: string | null; opens?: string | null; orgEscaped: string }): string {
@@ -1778,19 +1777,29 @@ export function orgInviteHtml(p: {
    * a plain sign-in, so it never expires.
    */
   existingAccount?: boolean;
+  /**
+   * The reader already COACHES in this club (trust close-out 13 P2b, owner 2026-11-18): they are offered a board role beside
+   * their coaching, which the invitation never touches. Only with `existingAccount`.
+   */
+  keepsCoaching?: boolean;
 }) {
   // org.name and the sender's name are editable by other people → escape before interpolating.
   const org = escapeEmailHtml(p.orgName);
   const who = p.inviterName ? `<strong>${escapeEmailHtml(p.inviterName)}</strong> invited you` : "You've been invited";
+  const coaching = p.existingAccount && p.keepsCoaching;
   const next = p.existingAccount
-    ? '<p>You already have a FieldLogicHQ account, so there’s nothing to set up. Sign in, then accept or decline the invitation on your Home page. Nothing changes until you accept.</p>'
+    ? `<p>You already have a FieldLogicHQ account, so there’s nothing to set up. Sign in, then accept or decline the invitation on your Home page. Nothing changes until you accept.${coaching ? ' Your coaching stays as it is either way.' : ''}</p>`
     : '<p>Click below to accept your invitation and set up your account.</p>';
   const foot = p.existingAccount
     ? "If you weren't expecting this invitation, you can ignore this email, or decline it when you sign in."
     : "This link expires in 24 hours. If you weren't expecting this invitation, you can safely ignore this email.";
+  // A coach is already part of the club, so they are asked to take the role on, never to "join".
+  const ask = coaching
+    ? `${who} to be ${withArticle(p.roleLabel)} at <strong>${org}</strong> on <strong>FieldLogicHQ</strong>.`
+    : `${who} to join <strong>${org}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.`;
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're invited</h2>
-    <p>${who} to join <strong>${org}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.</p>
+    <p>${ask}</p>
     ${orgInviteWhatHtml({ note: p.note, opens: p.opens, orgEscaped: org })}
     ${next}
     ${warmEmailButton(p.ctaLabel, p.inviteUrl)}
@@ -1873,30 +1882,6 @@ export function clubCoachInviteHtml(p: {
     <p>${line}</p>
     ${warmEmailButton('Accept and set up your account', p.inviteUrl)}
     <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">This link works for 7 days. If you weren't expecting this, you can safely ignore this email.</p>
-  `);
-}
-
-export function orgMemberAddedHtml(p: {
-  orgName: string;
-  roleLabel: string;
-  signInUrl: string;
-  ctaLabel: string;
-  /** A volunteer's job, said to them (`VOLUNTEER_EMAIL_NOTE`, Stage 6) — a fixed sentence, never user text. */
-  note?: string | null;
-  /** What the role opens — `memberOpensSentence`, as the invite email (Stage 13b B2). */
-  opens?: string | null;
-}) {
-  // org.name is editable by other people → escaped, as the invite email always did (this one did not until Stage 13b).
-  const org = escapeEmailHtml(p.orgName);
-  // The volunteer's note is their "what" and their "next" in one; everyone else gets the role's line, then "sign in".
-  const next = p.note ? '' : '<p>No action is required — just sign in to get started.</p>';
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You've been added to ${org}</h2>
-    <p>You now have access to <strong>${org}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.</p>
-    ${orgInviteWhatHtml({ note: p.note, opens: p.opens ? ORG_INVITE_EMAIL_WORDS.alreadyHeld(p.opens) : null, orgEscaped: org })}
-    ${next}
-    ${warmEmailButton(p.ctaLabel, p.signInUrl)}
-    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">If you weren't expecting this, you can safely ignore this email.</p>
   `);
 }
 

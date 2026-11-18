@@ -1,6 +1,7 @@
 import { supabaseAdmin } from './supabase-admin';
 import { roleLabel, memberOpensSentence } from './member-access';
 import { invitationSender } from './member-names';
+import { PENDING_INVITATION_FILTER, waitingBoardRole } from './waiting-board-role';
 
 /**
  * Invite reconciliation (mig 128).
@@ -30,7 +31,10 @@ export type ReconciledInvite = {
   organizationId: string;
   orgSlug: string | null;
   orgName: string | null;
+  /** The role offered — for a club's coach, the board role WAITING on their coach row (P2b), never 'coach'. */
   role: string;
+  /** A club's own coach offered a board role beside their coaching (trust close-out 13 P2b): either answer keeps it. */
+  keepsCoaching?: boolean;
 };
 
 type OrgRel = { slug?: string | null; name?: string | null };
@@ -186,20 +190,24 @@ export async function findPendingInviteByEmail(email: string | null | undefined)
  * `user_id`. Used by the post-login pending-invite UI (Phase 2). Read-only.
  */
 export async function listPendingInvitesForUser(userId: string): Promise<ReconciledInvite[]> {
+  // A pending row, or a club's coach row with a board role waiting on it (trust close-out 13 P2b, mig 503): both are an
+  // invitation the person has not answered, so both reach Home's card, the badge and the sign-in landing.
   const { data } = await supabaseAdmin
     .from('organization_members')
-    .select('id, organization_id, role, organizations(slug, name)')
+    .select('id, organization_id, role, status, pending_role, organizations(slug, name)')
     .eq('user_id', userId)
-    .eq('status', 'invited');
+    .or(PENDING_INVITATION_FILTER);
 
   return (data ?? []).map((row) => {
+    const waiting = waitingBoardRole(row);
     const org = orgFromRelation(row.organizations as OrgRelation);
     return {
       memberId: row.id,
       organizationId: row.organization_id,
       orgSlug: org?.slug ?? null,
       orgName: org?.name ?? null,
-      role: row.role,
+      role: waiting ?? row.role,
+      keepsCoaching: waiting ? true : undefined,
     };
   });
 }
@@ -225,10 +233,15 @@ export async function withInvitationDetails(invites: ReconciledInvite[]): Promis
   if (invites.length === 0) return [];
   const { data: rows } = await supabaseAdmin
     .from('organization_members')
-    .select('id, user_id, capabilities')
+    .select('id, user_id, capabilities, pending_capabilities')
     .in('id', invites.map(i => i.memberId));
   const userByMember = new Map((rows ?? []).map(r => [r.id as string, r.user_id as string]));
-  const capsByMember = new Map((rows ?? []).map(r => [r.id as string, (r.capabilities ?? null) as Record<string, boolean> | null]));
+  // A coach's waiting board role opens what its WAITING access says, never the coach row's (P2b).
+  const keepsCoaching = new Set(invites.filter(i => i.keepsCoaching).map(i => i.memberId));
+  const capsByMember = new Map((rows ?? []).map(r => [
+    r.id as string,
+    ((keepsCoaching.has(r.id as string) ? r.pending_capabilities : r.capabilities) ?? null) as Record<string, boolean> | null,
+  ]));
   return Promise.all(invites.map(async invite => {
     const userId = userByMember.get(invite.memberId);
     const sender = userId ? await invitationSender(invite.organizationId, userId) : null;

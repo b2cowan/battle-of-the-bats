@@ -15752,6 +15752,33 @@
         "column_default": null
       },
       {
+        "table_name": "organization_members",
+        "pos": 12,
+        "column_name": "pending_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_members",
+        "pos": 13,
+        "column_name": "pending_capabilities",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_members",
+        "pos": 14,
+        "column_name": "pending_invited_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "organizations",
         "pos": 1,
         "column_name": "id",
@@ -47391,6 +47418,12 @@
         "table_name": "organization_members",
         "detail": "organization_members_display_name_check",
         "check_clause": "(char_length(display_name) <= 60)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_members",
+        "detail": "organization_members_pending_role_check",
+        "check_clause": "((pending_role IS NULL) OR ((role = 'coach'::text) AND (pending_role <> ALL (ARRAY['coach'::text, 'owner'::text])) AND (pending_invited_at IS NOT NULL)))"
       },
       {
         "kind": "CHECK",

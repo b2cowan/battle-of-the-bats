@@ -182,8 +182,9 @@ describe('3 · the switches', () => {
 /** Every place a covered seat begins, and the call it makes. ⚖ A NEW place a seat begins joins this list. */
 const SEAT_STARTS: Record<string, RegExp> = {
   'app/api/auth/accept-invite/route.ts': /startTwoStepGrace\(user\.id, member\.organization_id, member\.role\)/,
-  'app/api/auth/invitations/[memberId]/route.ts': /startTwoStepGrace\(user\.id, member\.organization_id, member\.role\)/,
-  'app/api/admin/members/invite/route.ts': /startTwoStepGrace\(existingUser\.id, org\.id, role\)/,
+  // A pending invitation, or a club's coach accepting the board role waiting on their row (P2b, 2026-11-18 — the invite
+  // route used to start that seat on the spot and now starts nothing): one call, on the role they accepted.
+  'app/api/auth/invitations/[memberId]/route.ts': /startTwoStepGrace\(user\.id, member\.organization_id, offeredRole\)/,
   'app/api/admin/members/[memberId]/route.ts': /startTwoStepGrace\(target\.user_id, org\.id, resultingRole\)/,
   'app/api/platform-admin/orgs/[id]/transfer-ownership/route.ts': /startTwoStepGrace\(newOwnerUserId, id, 'owner'\)/,
   'lib/assistant-invites.ts': /startTwoStepGrace\(userId, row\.org_id, 'coach'\)/,

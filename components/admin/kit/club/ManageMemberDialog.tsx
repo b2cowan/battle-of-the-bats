@@ -142,6 +142,10 @@ export default function ManageMemberDialog({
   );
   const draftOpens = (cap: Capability) => draftAccess.find(a => a.module === cap)?.canOpen ?? false;
 
+  // ⚖ A club's coach with a board role waiting (trust close-out 13 P2b): the row is their coaching, which the member routes
+  // never edit (S1-03), so the window is the invitation's alone: what was offered, Resend, Cancel. To change the role, the
+  // club cancels and invites again (the coach's yes is to the role they were shown).
+  const coachInvite = member.coachInvite === true;
   // An owner's name and title are the owner's to edit (the route refuses anyone below owner — W2 fix E).
   const nameLocked = targetIsOwner && !viewerIsOwner;
   const canChangeRole = canManage && !targetIsOwner && !isSelf;
@@ -180,7 +184,8 @@ export default function ManageMemberDialog({
 
   // The removal warning names what the person keeps and loses (J4-036), read when the question opens.
   useEffect(() => {
-    if (ask !== 'remove') return;
+    // A coach's waiting board role (P2b) withdraws the offer only: nothing of theirs is lost, so there is nothing to read.
+    if (ask !== 'remove' || coachInvite) return;
     let stale = false;
     setImpact(null);
     setImpactFailed(false);
@@ -189,7 +194,7 @@ export default function ManageMemberDialog({
       .then(d => { if (!stale) setImpact(d as RemoveImpact); })
       .catch(() => { if (!stale) setImpactFailed(true); });
     return () => { stale = true; };
-  }, [ask, member.id, orgQuery]);
+  }, [ask, coachInvite, member.id, orgQuery]);
 
   // ⚖ On / Off, with the rows that differ from the role marked (owner, 2026-10-19 — the three-way "Role default /
   // Turn on / Turn off" and its "As a …" column did not fit a phone and made the reader add two columns). Picking what
@@ -358,7 +363,7 @@ export default function ManageMemberDialog({
   const identity = [
     member.displayName ? member.email : null,
     member.status === 'invited'
-      ? `${roleLabel(member.role)} · invited, not yet joined`
+      ? coachInvite ? `${roleLabel(member.role)} · invited, still coaching here` : `${roleLabel(member.role)} · invited, not yet joined`
       : since ? `${roleLabel(member.role)} since ${since}` : roleLabel(member.role),
     member.status === 'suspended' ? 'suspended' : null,
   ].filter(Boolean).join(' · ');
@@ -415,18 +420,30 @@ export default function ManageMemberDialog({
         identity={identity}
         onClose={onClose}
         busy={saving || acting}
-        footer={
+        footer={coachInvite ? (
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={acting}>Close</button>
+        ) : (
           <>
             <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving || acting}>Cancel</button>
             <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={saving || acting}>
               {saving ? 'Saving…' : 'Save'}
             </button>
           </>
-        }
+        )}
       >
         {refusal && <div ref={noticeRef}><PageNotice notice={refusalNotice(refusal, billingHref)} /></div>}
 
-        {targetIsOwner ? (
+        {coachInvite ? (
+          <div className={ck.field}>
+            <span className={ck.label}>Role offered</span>
+            <p className={styles.readValue}>{roleLabel(member.role)}</p>
+            <p className={ck.hint}>
+              {first === 'They' ? 'They coach' : `${first} coaches`} here, so the role becomes {first === 'They' ? 'theirs' : possessive(first)} only
+              when {first === 'They' ? 'they accept' : `${first} accepts`} it. Coaching stays as it is either way. To offer a different role, cancel
+              this invitation and invite {who} again.
+            </p>
+          </div>
+        ) : targetIsOwner ? (
           <p className={ck.hint}>Ownership can’t be changed here. Contact support if the organization’s owner needs to change.</p>
         ) : (
           <div className={ck.field}>
@@ -449,133 +466,135 @@ export default function ManageMemberDialog({
           </div>
         )}
 
-        <div className={styles.twoFields}>
-          <div className={ck.field}>
-            <label className={ck.label} htmlFor="kit-manage-title">Title</label>
-            <input id="kit-manage-title" className={ck.input} value={title} maxLength={80} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vice-president" disabled={nameLocked} />
-            <p className={ck.hint}>{nameLocked ? 'Only an owner can change an owner’s title.' : 'Shown under their name on this list.'}</p>
+        {!coachInvite && (<>
+          <div className={styles.twoFields}>
+            <div className={ck.field}>
+              <label className={ck.label} htmlFor="kit-manage-title">Title</label>
+              <input id="kit-manage-title" className={ck.input} value={title} maxLength={80} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vice-president" disabled={nameLocked} />
+              <p className={ck.hint}>{nameLocked ? 'Only an owner can change an owner’s title.' : 'Shown under their name on this list.'}</p>
+            </div>
+            <div className={ck.field}>
+              <label className={ck.label} htmlFor="kit-manage-name">Display name</label>
+              <input id="kit-manage-name" className={ck.input} value={displayName} maxLength={60} onChange={e => setDisplayName(e.target.value)} disabled={nameLocked} />
+              <p className={ck.hint}>{nameLocked ? 'Only an owner can change an owner’s name.' : 'Shown instead of their email.'}</p>
+            </div>
           </div>
-          <div className={ck.field}>
-            <label className={ck.label} htmlFor="kit-manage-name">Display name</label>
-            <input id="kit-manage-name" className={ck.input} value={displayName} maxLength={60} onChange={e => setDisplayName(e.target.value)} disabled={nameLocked} />
-            <p className={ck.hint}>{nameLocked ? 'Only an owner can change an owner’s name.' : 'Shown instead of their email.'}</p>
-          </div>
-        </div>
 
-        {isVolunteer && (canChangeJob ? (
-          <HelpingWithField id="kit-manage-purpose" value={job} onChange={setJob} />
-        ) : (
-          <div className={ck.field}>
-            <span className={ck.label}>{HELPING_WITH.label}</span>
-            <p className={styles.readValue}>{job ? HELPING_WITH.option[job] : '—'}</p>
-          </div>
-        ))}
+          {isVolunteer && (canChangeJob ? (
+            <HelpingWithField id="kit-manage-purpose" value={job} onChange={setJob} />
+          ) : (
+            <div className={ck.field}>
+              <span className={ck.label}>{HELPING_WITH.label}</span>
+              <p className={styles.readValue}>{job ? HELPING_WITH.option[job] : '—'}</p>
+            </div>
+          ))}
 
-        {!targetIsOwner && !isVolunteer && (
-          <div className={styles.accessBlock}>
-            <h3 className={styles.accessTitle}>What {first === 'They' ? 'they' : first} can open</h3>
-            <p className={ck.hint}>Each program starts the way every {roleLabel(role).toLowerCase()} has it.</p>
-            <table className={`${ck.table} ${styles.accessTable}`}>
-              <thead>
-                <tr>
-                  <th scope="col">Program</th>
-                  <th scope="col">For {who}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {draftAccess.map(a => {
-                  // ⚖ Families is never given to a member limited to some teams (Ask 12): the server refuses it; the row
-                  // says why, where it is (Club Tier Stage 5b).
-                  const familiesBarred = a.module === 'module_families' && familiesBarredFor(role, groupIds.length > 0);
-                  const sentence = familiesBarred ? FAMILIES_LIMITED_ROW
-                    // The Communications switch says what it covers, always, so turning it off never surprises (tab 4, ask 5).
-                    : consequence(a.module, saved.get(a.module) ?? false, a.canOpen, first, noun) ?? (a.module === 'module_communications' ? PLACE.switchLine : null);
-                  const fold = a.module === 'module_tournaments' && (canChangeAccess || canScopeTournaments) && a.canOpen ? 'tournaments'
-                    : a.module === 'module_rep_teams' && canScopeGroups && a.canOpen ? 'rep-teams'
-                    : a.module === 'module_members' && canChangeAccess ? 'members' : null;
-                  return (
-                    <AccessRow
-                      key={a.module}
-                      access={a}
-                      who={who}
-                      // Barred: no "On" to offer (absent beats disabled) — unless it is on now, so it can be turned off.
-                      editable={canChangeAccess && (!familiesBarred || a.canOpen)}
-                      onChange={on => setCap(a.module, on)}
-                      sentence={sentence}
-                      fold={fold}
-                    >
-                      {fold === 'tournaments' && (
-                        <>
-                          {canChangeAccess && draftOpens('module_tournaments') && (
-                            <div className={styles.foldList}>
-                              {TOURNAMENT_CONTROLS.map(c => (
-                                <label key={c.cap} className={styles.foldRow}>
-                                  <span>
-                                    {c.label}
-                                    {capOn(c.cap) !== roleGives(c.cap) && <span className={styles.changedLine}>Changed for {who}</span>}
-                                  </span>
-                                  <OnOffSelect className={`${ck.select} ${styles.foldSelect}`} on={capOn(c.cap)} onChange={on => setCap(c.cap, on)} label={c.label} />
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                          {canScopeTournaments && draftOpens('module_tournaments') && (
-                            <div className={styles.foldList}>
-                              <p className={ck.hint}>
-                                {assignments.length === 0
-                                  ? 'Every tournament. Tick some to limit them to those.'
-                                  : `Only ${assignments.length} tournament${assignments.length === 1 ? '' : 's'}.`}
-                              </p>
-                              {tournaments.map(t => (
-                                <label key={t.id} className={styles.checkRow}>
-                                  <input
-                                    type="checkbox"
-                                    checked={assignments.includes(t.id)}
-                                    onChange={() => setAssignments(prev => (prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]))}
-                                  />
-                                  <span>{t.name}{t.year ? ` ${t.year}` : ''}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                      {fold === 'rep-teams' && (
-                        <div className={styles.foldList}>
-                          <p className={ck.hint}>
-                            {groupIds.length === 0 ? 'Every team group. Tick some to limit them to those.' : `Only ${groupIds.length} group${groupIds.length === 1 ? '' : 's'}.`}
-                          </p>
-                          {repGroups.map(g => (
-                            <label key={g.id} className={styles.checkRow}>
-                              <input
-                                type="checkbox"
-                                checked={groupIds.includes(g.id)}
-                                onChange={() => setGroupIds(prev => (prev.includes(g.id) ? prev.filter(id => id !== g.id) : [...prev, g.id]))}
-                              />
-                              <span>{g.name}</span>
+          {!targetIsOwner && !isVolunteer && (
+            <div className={styles.accessBlock}>
+              <h3 className={styles.accessTitle}>What {first === 'They' ? 'they' : first} can open</h3>
+              <p className={ck.hint}>Each program starts the way every {roleLabel(role).toLowerCase()} has it.</p>
+              <table className={`${ck.table} ${styles.accessTable}`}>
+                <thead>
+                  <tr>
+                    <th scope="col">Program</th>
+                    <th scope="col">For {who}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {draftAccess.map(a => {
+                    // ⚖ Families is never given to a member limited to some teams (Ask 12): the server refuses it; the row
+                    // says why, where it is (Club Tier Stage 5b).
+                    const familiesBarred = a.module === 'module_families' && familiesBarredFor(role, groupIds.length > 0);
+                    const sentence = familiesBarred ? FAMILIES_LIMITED_ROW
+                      // The Communications switch says what it covers, always, so turning it off never surprises (tab 4, ask 5).
+                      : consequence(a.module, saved.get(a.module) ?? false, a.canOpen, first, noun) ?? (a.module === 'module_communications' ? PLACE.switchLine : null);
+                    const fold = a.module === 'module_tournaments' && (canChangeAccess || canScopeTournaments) && a.canOpen ? 'tournaments'
+                      : a.module === 'module_rep_teams' && canScopeGroups && a.canOpen ? 'rep-teams'
+                      : a.module === 'module_members' && canChangeAccess ? 'members' : null;
+                    return (
+                      <AccessRow
+                        key={a.module}
+                        access={a}
+                        who={who}
+                        // Barred: no "On" to offer (absent beats disabled) — unless it is on now, so it can be turned off.
+                        editable={canChangeAccess && (!familiesBarred || a.canOpen)}
+                        onChange={on => setCap(a.module, on)}
+                        sentence={sentence}
+                        fold={fold}
+                      >
+                        {fold === 'tournaments' && (
+                          <>
+                            {canChangeAccess && draftOpens('module_tournaments') && (
+                              <div className={styles.foldList}>
+                                {TOURNAMENT_CONTROLS.map(c => (
+                                  <label key={c.cap} className={styles.foldRow}>
+                                    <span>
+                                      {c.label}
+                                      {capOn(c.cap) !== roleGives(c.cap) && <span className={styles.changedLine}>Changed for {who}</span>}
+                                    </span>
+                                    <OnOffSelect className={`${ck.select} ${styles.foldSelect}`} on={capOn(c.cap)} onChange={on => setCap(c.cap, on)} label={c.label} />
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                            {canScopeTournaments && draftOpens('module_tournaments') && (
+                              <div className={styles.foldList}>
+                                <p className={ck.hint}>
+                                  {assignments.length === 0
+                                    ? 'Every tournament. Tick some to limit them to those.'
+                                    : `Only ${assignments.length} tournament${assignments.length === 1 ? '' : 's'}.`}
+                                </p>
+                                {tournaments.map(t => (
+                                  <label key={t.id} className={styles.checkRow}>
+                                    <input
+                                      type="checkbox"
+                                      checked={assignments.includes(t.id)}
+                                      onChange={() => setAssignments(prev => (prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]))}
+                                    />
+                                    <span>{t.name}{t.year ? ` ${t.year}` : ''}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {fold === 'rep-teams' && (
+                          <div className={styles.foldList}>
+                            <p className={ck.hint}>
+                              {groupIds.length === 0 ? 'Every team group. Tick some to limit them to those.' : `Only ${groupIds.length} group${groupIds.length === 1 ? '' : 's'}.`}
+                            </p>
+                            {repGroups.map(g => (
+                              <label key={g.id} className={styles.checkRow}>
+                                <input
+                                  type="checkbox"
+                                  checked={groupIds.includes(g.id)}
+                                  onChange={() => setGroupIds(prev => (prev.includes(g.id) ? prev.filter(id => id !== g.id) : [...prev, g.id]))}
+                                />
+                                <span>{g.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                        {fold === 'members' && draftOpens('module_members') && (
+                          <div className={styles.foldList}>
+                            <label className={styles.foldRow}>
+                              <span>
+                                Invite and manage members
+                                {capOn('manage_members') !== roleGives('manage_members') && <span className={styles.changedLine}>Changed for {who}</span>}
+                              </span>
+                              <OnOffSelect className={`${ck.select} ${styles.foldSelect}`} on={capOn('manage_members')} onChange={on => setCap('manage_members', on)} label="Invite and manage members" />
                             </label>
-                          ))}
-                        </div>
-                      )}
-                      {fold === 'members' && draftOpens('module_members') && (
-                        <div className={styles.foldList}>
-                          <label className={styles.foldRow}>
-                            <span>
-                              Invite and manage members
-                              {capOn('manage_members') !== roleGives('manage_members') && <span className={styles.changedLine}>Changed for {who}</span>}
-                            </span>
-                            <OnOffSelect className={`${ck.select} ${styles.foldSelect}`} on={capOn('manage_members')} onChange={on => setCap('manage_members', on)} label="Invite and manage members" />
-                          </label>
-                        </div>
-                      )}
-                    </AccessRow>
-                  );
-                })}
-              </tbody>
-            </table>
-            <p className={ck.hint}>Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p>
-          </div>
-        )}
+                          </div>
+                        )}
+                      </AccessRow>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className={ck.hint}>Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p>
+            </div>
+          )}
+        </>)}
 
         {twoStep && (
           <div className={`${ck.field} ${styles.twoStepField}`}>
@@ -655,13 +674,19 @@ export default function ManageMemberDialog({
           footer={
             <>
               <button type="button" className="btn btn-outline" onClick={closeAsk} disabled={acting}>{pending ? 'Keep it' : 'Cancel'}</button>
-              <button type="button" className="btn btn-danger" onClick={() => void remove()} disabled={acting || !impact} data-autofocus="">
+              <button type="button" className="btn btn-danger" onClick={() => void remove()} disabled={acting || (!impact && !coachInvite)} data-autofocus="">
                 {pending ? (acting ? 'Cancelling…' : 'Cancel invitation') : (acting ? 'Removing…' : 'Remove')}
               </button>
             </>
           }
         >
-          {!impact ? (
+          {coachInvite ? (
+            // P2b: only the waiting role is withdrawn. Their coaching and their account are not touched, and no email goes.
+            <p>
+              {first === 'They' ? 'They won’t' : `${first} won’t`} get the {roleLabel(member.role).toLowerCase()} role, and we won’t email
+              {' '}{who}. {first === 'They' ? 'Their' : possessive(first)} coaching stays as it is.
+            </p>
+          ) : !impact ? (
             impactFailed
               ? <p role="alert">We couldn’t check what removing them changes. Close this and try again.</p>
               : <LoadingState inline label="Loading what this changes…" />

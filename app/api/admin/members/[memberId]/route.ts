@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden, GROUP_UNSCOPED_ROLES } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { ALL_CAPABILITY_KEYS, hasCapability, countsAsSeat, seatExemptRoles } from '@/lib/roles';
+import { ALL_CAPABILITY_KEYS, hasCapability, countsAsSeat, seatRowsFilter } from '@/lib/roles';
 import { checkCrossOrgJoin, crossOrgJoinRefusalForAdmin } from '@/lib/org-membership-policy';
 import { describeAccessChange, isOwnerOnlyCapability } from '@/lib/member-access';
 import { coachingStaffRowRefusal, isAssignableRole } from '@/lib/board-roles';
+import { WAITING_ROLE_CLEARED, waitingBoardRole } from '@/lib/waiting-board-role';
 import { isVolunteerJobChangeOnly, volunteerHome, volunteerJobOf, withoutVolunteerJob } from '@/lib/volunteer-jobs';
 import { VOLUNTEER_REFUSAL } from '@/lib/volunteer-words';
 import { PLAN_CONFIG } from '@/lib/plan-config';
@@ -110,7 +111,7 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
 
   const { data: target } = await supabaseAdmin
     .from('organization_members')
-    .select('id, role, user_id, status')
+    .select('id, role, user_id, status, pending_role')
     .eq('id', memberId)
     .eq('organization_id', org.id)
     .single();
@@ -120,6 +121,27 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   }
   // A pending row is an invitation being withdrawn: they never had access, so there is nothing to tell them was removed.
   const pendingInvite = target.status === 'invited';
+
+  // ⚖ A club's coach invited to the board (trust close-out 13 P2b, owner 2026-11-18): Cancel withdraws the WAITING role
+  // only. The row is their coaching, so it is never deleted, no account question arises, and no email goes.
+  const waiting = waitingBoardRole(target);
+  if (waiting) {
+    const { data: cleared, error: clearError } = await supabaseAdmin
+      .from('organization_members')
+      .update(WAITING_ROLE_CLEARED)
+      .eq('id', memberId)
+      .eq('organization_id', org.id)
+      .eq('role', 'coach')
+      // The offer read (/review): a Cancel never withdraws a different role another admin offered since.
+      .eq('pending_role', waiting)
+      .select('id');
+    if (clearError) return NextResponse.json({ error: clearError.message }, { status: 500 });
+    if (!cleared?.length) return NextResponse.json({ error: 'That invitation was already answered. Reload the page.' }, { status: 409 });
+    await writeOrgAudit(org.id, ctx.user.id, target.user_id, 'member_removed', {
+      role: waiting, pendingInvite: true, keptCoaching: true, membershipOnly: true,
+    });
+    return NextResponse.json({ ok: true, membershipOnly: true, keptCoaching: true });
+  }
 
   if (target.role === 'coach') return coachingStaffRowRefusal();
 
@@ -347,7 +369,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
         .from('organization_members')
         .select('id', { count: 'exact', head: true })
         .eq('organization_id', org.id)
-        .not('role', 'in', `(${seatExemptRoles(planCfg).join(',')})`);
+        .or(seatRowsFilter(planCfg));
       if ((seatCount ?? 0) >= planCfg.seatLimit) {
         return NextResponse.json(
           {

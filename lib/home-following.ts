@@ -164,6 +164,8 @@ export interface ConsumerHomePendingInvite {
   inviterName?: string | null;
   inviterRole?: string | null;
   invitedAt?: string | null;
+  /** A club's own coach offered a board role beside their coaching (trust close-out 13 P2b). */
+  keepsCoaching?: boolean;
 }
 
 /** A club's coach invitation waiting for this account (Club Tier Stage 2, specimen 6 · 2b). */

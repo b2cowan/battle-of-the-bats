@@ -32,6 +32,8 @@ export type PendingInvite = {
   inviterName?: string | null;
   inviterRole?: string | null;
   invitedAt?: string | null;
+  /** A club's own coach offered a board role beside their coaching (trust close-out 13 P2b). */
+  keepsCoaching?: boolean;
 };
 
 /**
@@ -185,7 +187,9 @@ export default function PendingInvitationsCard({
           return (
             <div key={invite.memberId} className={styles.item}>
               <div className={styles.info}>
-                <div className={styles.headline}>{org} invited you to join as {role}</div>
+                <div className={styles.headline}>
+                  {invite.keepsCoaching ? `${org} invited you to be its ${role}` : `${org} invited you to join as ${role}`}
+                </div>
                 {invite.inviterName && (
                   <div className={styles.from}>
                     From <strong>{invite.inviterName}</strong>
@@ -194,6 +198,8 @@ export default function PendingInvitationsCard({
                   </div>
                 )}
                 {invite.roleOpens && <div className={styles.opens}>{invite.roleOpens}</div>}
+                {/* P2b: the board role sits beside their coaching; neither answer touches it. */}
+                {invite.keepsCoaching && <div className={styles.opens}>You keep coaching either way.</div>}
               </div>
               <div className={styles.actions}>
                 <button

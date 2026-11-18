@@ -8,16 +8,22 @@
  *   2. its email says "sign in to accept", never "you now have access", and never the set-up page (whose form sets a password);
  *   3. a demo's shared account and FieldLogicHQ support are refused as invitees, and a demo account can't accept;
  *   4. no member edit turns a pending row into a membership — only the person does;
- *   5. cancelling a pending invitation sends no "access removed" email and never deletes an account its owner already had.
- * ⚠ The one branch left on the spot is a club's own COACH made a board member (an owner call, recorded in the sweep report).
+ *   5. cancelling a pending invitation sends no "access removed" email and never deletes an account its owner already had;
+ *   6. a club's own COACH given a board role accepts it too (owner 2026-11-18, P2b, mig 503): the role WAITS on their coach
+ *      row, which accept, decline and Cancel never delete; "You've been added" is retired.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode, between } from './_source-code.ts';
 
 const invite = readCode('app/api/admin/members/invite/route.ts');
-// The existing-account branch's new pending write, up to the coach-row upgrade that follows it.
-const pendingBranch = between(invite, 'if (!sameMember && existingUser.email_confirmed_at) {', 'const { error: insertError } = await supabaseAdmin');
+// The existing-account branch's new pending write, up to the coach-row branch that follows it.
+// (`readCode` strips comments, so every anchor is code.)
+const pendingBranch = between(invite, 'if (!sameMember && existingUser.email_confirmed_at) {', 'if (sameMember) {');
+// The coach-row branch (P2b), to the new person's set-up invitation.
+const coachBranch = between(invite, 'if (sameMember) {', 'const next = encodeURIComponent(acceptInvitePath(');
+const links = readCode('lib/invite-links.ts');
+const existingSender = between(links, 'export async function sendExistingAccountInvite(', 'export async function sendPendingInviteLink(');
 
 describe('1. the existing-account write is a pending invitation', () => {
   it('writes status invited, with no accepted_at', () => {
@@ -29,11 +35,12 @@ describe('1. the existing-account write is a pending invitation', () => {
   });
   it('starts no two-step days: those begin on the yes, in the accept routes', () => {
     assert.doesNotMatch(pendingBranch, /startTwoStepGrace/);
-    assert.match(readCode('app/api/auth/invitations/[memberId]/route.ts'), /startTwoStepGrace\(user\.id, member\.organization_id, member\.role\)/);
+    assert.match(readCode('app/api/auth/invitations/[memberId]/route.ts'), /startTwoStepGrace\(user\.id, member\.organization_id, offeredRole\)/);
   });
-  it('the only `active` write left in the route is the coach-row upgrade', () => {
-    assert.equal((invite.match(/status: 'active'/g) ?? []).length, 1);
-    assert.match(invite, /\.update\(\{ role, status: 'active', accepted_at: nowIso, capabilities \}\)[\s\S]{0,160}\.eq\('role', 'coach'\)/);
+  it('the route writes no membership at all: no `active` status, no accepted_at, no two-step start (P2b)', () => {
+    assert.doesNotMatch(invite, /status: 'active'/);
+    assert.doesNotMatch(invite, /accepted_at:/);
+    assert.doesNotMatch(invite, /startTwoStepGrace\(/);
   });
   it('a second invitation to someone already pending says so — a pending coaching row included, before the coach upgrade', () => {
     assert.match(invite, /if \(sameMember\?\.status === 'invited'\) \{[\s\S]{0,400}code: 'already_invited'/);
@@ -46,27 +53,28 @@ describe('1. the existing-account write is a pending invitation', () => {
 });
 
 describe('2. the email asks them to sign in and accept', () => {
-  it('the route sends the invitation email in its existing-account form, to Home', () => {
-    assert.match(pendingBranch, /orgInviteHtml\(\{[^}]*existingAccount: true \}\)/);
-    assert.match(pendingBranch, /inviteUrl: existingAccountInviteUrl\(appUrl\)/);
-    assert.match(pendingBranch, /ctaLabel: INVITE_EMAIL_ACTION\.signInToAccept/);
+  it('the route sends the invitation email in its existing-account form, to Home, from the one sender', () => {
+    assert.match(pendingBranch, /await sendExistingAccountInvite\(\{/);
     assert.doesNotMatch(pendingBranch, /orgMemberAddedHtml|generateLink|acceptInvitePath/);
+    assert.match(existingSender, /inviteUrl: existingAccountInviteUrl\(appUrl\)/);
+    assert.match(existingSender, /ctaLabel: INVITE_EMAIL_ACTION\.signInToAccept/);
+    assert.match(existingSender, /existingAccount: true,/);
+    assert.match(existingSender, /opens: memberOpensSentence\(p\.role, p\.capabilities\)/);
   });
   it('the link is a plain sign-in that lands on Home, never the set-up page', () => {
     const links = readCode('lib/invite-links.ts');
     assert.match(links, /return `\$\{appUrl\}\/auth\/login\?next=\$\{encodeURIComponent\('\/discover'\)\}`;/);
   });
   it('a resend of such an invitation goes the same way, with no generated link and no email backfill', () => {
-    const links = readCode('lib/invite-links.ts');
     const own = between(links, 'if (memberRow && authUser.email_confirmed_at && isInvitationToOwnAccount(memberRow, authUser.invited_at)) {', "return { ok: true, existingAccount: true };");
-    assert.match(own, /existingAccount: true/);
+    assert.match(own, /await sendExistingAccountInvite\(\{/);
     assert.doesNotMatch(own, /generateLink|invited_email/);
     assert.ok(links.indexOf('isInvitationToOwnAccount(memberRow') < links.indexOf('generateLink(genParams)'), 'the link is generated first');
   });
   it('the existing-account email drops the set-up and the 24 hours', () => {
     const email = readCode('lib/email.ts');
     const fn = between(email, 'export function orgInviteHtml(', 'export function assistantCoachInviteHtml(');
-    assert.match(fn, /p\.existingAccount\s*\?\s*'<p>You already have a FieldLogicHQ account, so there’s nothing to set up\./);
+    assert.match(fn, /p\.existingAccount\s*\?\s*`<p>You already have a FieldLogicHQ account, so there’s nothing to set up\./);
   });
 });
 
@@ -80,8 +88,9 @@ describe('3. demo and support addresses', () => {
   });
   it('a yes from Home is to the role the card showed', () => {
     const accept = readCode('app/api/auth/invitations/[memberId]/route.ts');
-    assert.match(accept, /if \(typeof body\?\.role === 'string' && body\.role !== member\.role\) \{[\s\S]{0,200}code: 'invitation_changed'/);
-    assert.ok(accept.indexOf("code: 'invitation_changed'") < accept.indexOf(".update(memberUpdate)"));
+    assert.match(accept, /if \(typeof body\?\.role === 'string' && body\.role !== offeredRole\) \{[\s\S]{0,200}code: 'invitation_changed'/);
+    assert.match(accept, /const offeredRole = waiting \?\? \(member\.role as string\);/);
+    assert.ok(accept.indexOf("code: 'invitation_changed'") < accept.indexOf('.update(memberUpdate)'));
     assert.match(readCode('components/home/PendingInvitationsCard.tsx'), /body: JSON\.stringify\(\{ action, role \}\)/);
   });
   it('a demo account can accept at neither accept door', () => {
@@ -119,5 +128,65 @@ describe('5. cancelling a pending invitation', () => {
   it('the window calls it what it is', () => {
     const dialog = readCode('components/admin/kit/club/ManageMemberDialog.tsx');
     assert.match(dialog, /\{pending \? 'Cancel invitation…' : 'Remove…'\}/);
+  });
+});
+
+describe('6. a club\'s own coach given a board role accepts it too (P2b, owner 2026-11-18)', () => {
+  it('the invite parks the role on the coach row, never rewriting it', () => {
+    assert.match(coachBranch, /\.update\(\{ pending_role: role, pending_capabilities: capabilities, pending_invited_at: nowIso \}\)/);
+    assert.match(coachBranch, /\.eq\('role', 'coach'\)\s*\.eq\('status', 'active'\)\s*\.is\('pending_role', null\)/);
+    assert.doesNotMatch(coachBranch, /update\(\{ role[,\s]/, 'the coach row is given the board role on the spot again');
+    assert.match(coachBranch, /await sendExistingAccountInvite\(\{[^}]*keepsCoaching: true/);
+    assert.match(invite, /if \(sameMember\?\.pending_role\) \{[\s\S]{0,200}code: 'already_invited'/);
+  });
+  it('"You\'ve been added" is retired: no template, no sender, no volunteer note, no bare "Sign in" button', () => {
+    for (const file of ['lib/email.ts', 'app/api/admin/members/invite/route.ts', 'lib/invite-links.ts']) {
+      assert.doesNotMatch(readCode(file), /orgMemberAddedHtml|kind: 'org_member_added'/, file);
+    }
+    const words = readCode('lib/volunteer-words.ts');
+    assert.doesNotMatch(words, /\badded: \{/);
+    assert.doesNotMatch(words, /signIn: 'Sign in'/);
+  });
+  it('one test, one filter and one clear for a waiting role, shared by every door', () => {
+    const w = readCode('lib/waiting-board-role.ts');
+    assert.match(w, /row\.role === 'coach' && row\.status === 'active' && row\.pending_role \? row\.pending_role : null/);
+    assert.match(w, /PENDING_INVITATION_FILTER = 'status\.eq\.invited,and\(status\.eq\.active,role\.eq\.coach,pending_role\.not\.is\.null\)'/);
+    for (const file of ['app/api/auth/invitations/[memberId]/route.ts', 'lib/invite-reconciliation.ts']) {
+      assert.match(readCode(file), /\.or\(PENDING_INVITATION_FILTER\)/, file);
+    }
+  });
+  it('accept moves the waiting role onto the row and starts two-step on it; decline clears it and never deletes the row', () => {
+    const accept = readCode('app/api/auth/invitations/[memberId]/route.ts');
+    const decline = between(accept, "if (action === 'decline') {", '} else {');
+    assert.match(decline, /if \(waiting\) \{[\s\S]*\.update\(WAITING_ROLE_CLEARED\)/);
+    assert.doesNotMatch(decline, /\.delete\(\)/, 'a decline deletes their coaching row');
+    assert.match(accept, /\? \{ role: waiting, capabilities: member\.pending_capabilities \?\? null, accepted_at: new Date\(\)\.toISOString\(\), \.\.\.WAITING_ROLE_CLEARED \}/);
+    assert.match(accept, /write\.eq\('role', 'coach'\)\.eq\('pending_role', waiting\)/);
+    assert.match(accept, /startTwoStepGrace\(user\.id, member\.organization_id, offeredRole\)/);
+  });
+  it('Cancel and Resend reach the waiting role; Cancel never deletes the coach row', () => {
+    const route = readCode('app/api/admin/members/[memberId]/route.ts');
+    const del = route.slice(route.indexOf('export const DELETE'), route.indexOf('export const PATCH'));
+    const coachCancel = between(del, 'if (waiting) {', "if (target.role === 'coach') return coachingStaffRowRefusal();");
+    assert.match(coachCancel, /\.update\(WAITING_ROLE_CLEARED\)/);
+    assert.doesNotMatch(coachCancel, /\.delete\(\)|deleteUser|sendEmail/);
+    const resend = readCode('app/api/admin/members/[memberId]/reinvite/route.ts');
+    assert.match(resend, /if \(member\.role === 'coach' && !waiting\) return coachingStaffRowRefusal\(\);/);
+    const send = between(links, 'const waiting = waitingBoardRole(memberRow);', 'isInvitationToOwnAccount(memberRow, authUser.invited_at)');
+    assert.match(send, /role: waiting, capabilities: memberRow\.pending_capabilities,[\s\S]{0,200}keepsCoaching: true/);
+    assert.match(send, /\.update\(\{ pending_invited_at: new Date\(\)\.toISOString\(\) \}\)/);
+  });
+  it('a waiting board role holds its seat in every seat count', () => {
+    assert.match(readCode('lib/roles.ts'), /return `role\.not\.in\.\$\{exempt\},and\(status\.eq\.active,pending_role\.not\.in\.\$\{exempt\}\)`;/);
+    for (const file of ['app/api/admin/members/invite/route.ts', 'app/api/admin/members/[memberId]/route.ts', 'app/api/admin/members/count/route.ts', 'lib/billing-usage.ts']) {
+      const code = readCode(file);
+      assert.match(code, /\.or\(seatRowsFilter\((planCfg|plan)\)\)/, file);
+      assert.doesNotMatch(code, /\.not\('role', 'in'/, `${file}: a seat count that misses a waiting board role`);
+    }
+  });
+  it('a coach taken off their last team keeps the invitation, as an ordinary pending one', () => {
+    const cleanup = between(readCode('lib/coach-membership.ts'), 'async function cleanupOrphanedGuestOrgMembership(', 'export interface CalendarLinkState');
+    assert.match(cleanup, /\.delete\(\)[\s\S]{0,160}\.eq\('role', 'coach'\)\s*\.is\('pending_role', null\)/, 'the waiting role is deleted with the row');
+    assert.match(cleanup, /role: kept\.pending_role,[\s\S]{0,200}status: 'invited',/);
   });
 });

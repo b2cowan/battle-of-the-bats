@@ -52,9 +52,9 @@ export const VOLUNTEER_OPENS: Record<VolunteerJob, string> = {
 
 /**
  * The invitation email's note, by job: `invite` for a new account, `existing` for an account the person already has (they
- * sign in and accept — Board Ready trust close-out 13), and `added` for a club's coach made a board member on the spot.
+ * sign in and accept — Board Ready trust close-out 13; a club's own coach too, since P2b retired the "added" email).
  */
-export const VOLUNTEER_EMAIL_NOTE: Record<'invite' | 'existing' | 'added', Record<VolunteerJob, string>> = {
+export const VOLUNTEER_EMAIL_NOTE: Record<'invite' | 'existing', Record<VolunteerJob, string>> = {
   invite: {
     scoring: 'You’ll enter game scores from your phone. Once your account is set up, it opens straight to today’s games.',
     gate: 'You’ll check teams in at the gate from your phone. Once your account is set up, it opens straight to Check-in.',
@@ -65,15 +65,10 @@ export const VOLUNTEER_EMAIL_NOTE: Record<'invite' | 'existing' | 'added', Recor
     gate: 'You’ll check teams in at the gate from your phone. Once you accept, it opens straight to Check-in.',
     both: 'You’ll enter game scores and check teams in at the gate, from your phone. Once you accept, it opens straight to today’s games, one tap from Check-in.',
   },
-  added: {
-    scoring: 'Sign in to enter game scores. You’ll land on today’s games.',
-    gate: 'Sign in to check teams in at the gate. You’ll land on Check-in.',
-    both: 'Sign in to enter game scores and check teams in. You’ll land on today’s games, one tap from Check-in.',
-  },
 };
 
 /** Every invitation email's two buttons, for every role (one spelling, sentence case). */
-export const INVITE_EMAIL_ACTION = { accept: 'Accept invitation', signIn: 'Sign in', signInToAccept: 'Sign in to accept' } as const;
+export const INVITE_EMAIL_ACTION = { accept: 'Accept invitation', signInToAccept: 'Sign in to accept' } as const;
 
 /** The scorekeeper's words (Stage 6 V1 + V2). The game-state chips are `GAME_STATE_WORD` (lib/game-day-words). */
 export const SCOREKEEPER_WORDS = {

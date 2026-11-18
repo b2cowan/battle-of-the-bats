@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { WAITING_ROLE_CLEARED } from './waiting-board-role';
 import { getAuthContext, unauthorized, forbidden } from './api-auth';
 import { NextResponse } from 'next/server';
 import {
@@ -979,12 +980,50 @@ async function cleanupOrphanedGuestOrgMembership(orgId: string, userId: string):
     .limit(1);
   if (error) throw error;
   if (data && data.length > 0) return; // still on a team's staff in this org
-  await supabaseAdmin
+  // ⚖ A board role WAITING on the row (trust close-out 13 P2b, mig 503) outlives their coaching: the club asked, and the
+  // person has not answered. The row becomes the ordinary pending invitation for that role (an invitation to their own
+  // account: `invited_email` stays empty), so Members, Home's card, Resend and Cancel go on working. It used to be
+  // deleted with the rest, losing the invitation without a word to anyone.
+  // The common case (nothing waiting) stays one statement: the delete skips a row with a role waiting.
+  const { data: deleted, error: deleteError } = await supabaseAdmin
     .from('organization_members')
     .delete()
     .eq('organization_id', orgId)
     .eq('user_id', userId)
-    .eq('role', 'coach');
+    .eq('role', 'coach')
+    .is('pending_role', null)
+    .select('id');
+  if (deleteError) throw deleteError;
+  if (deleted?.length) return;
+  const { data: kept, error: keepError } = await supabaseAdmin
+    .from('organization_members')
+    .select('id, pending_role, pending_capabilities, pending_invited_at')
+    .eq('organization_id', orgId)
+    .eq('user_id', userId)
+    .eq('role', 'coach')
+    .eq('status', 'active')
+    .not('pending_role', 'is', null)
+    .maybeSingle();
+  if (keepError) throw keepError;
+  if (!kept) return;
+  const { error: convertError } = await supabaseAdmin
+    .from('organization_members')
+    .update({
+      role: kept.pending_role,
+      capabilities: kept.pending_capabilities ?? null,
+      status: 'invited',
+      invited_at: kept.pending_invited_at,
+      accepted_at: null,
+      // The mark of an invitation to the person's own account (isInvitationToOwnAccount): a later Cancel keeps it.
+      invited_email: null,
+      ...WAITING_ROLE_CLEARED,
+    })
+    .eq('id', kept.id)
+    .eq('role', 'coach')
+    // The offer read (/review): a decline or Cancel in between leaves nothing to revive.
+    .eq('pending_role', kept.pending_role)
+    .eq('pending_invited_at', kept.pending_invited_at);
+  if (convertError) throw convertError;
 }
 
 // ── A coach's calendar link (Club Tier Stage 6d, mig 323) ─────────────────────────────────────

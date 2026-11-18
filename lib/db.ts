@@ -3688,7 +3688,10 @@ export async function cleanupOrphanedCoachMembership(orgId: string, userId: stri
     .delete()
     .eq('organization_id', orgId)
     .eq('user_id', userId)
-    .eq('role', 'coach');
+    .eq('role', 'coach')
+    // A board role WAITING on the row (trust close-out 13 P2b) is never deleted with it: see the live twin in
+    // lib/coach-membership.ts (cleanupOrphanedGuestOrgMembership), which keeps it as a pending invitation.
+    .is('pending_role', null);
 }
 
 /**

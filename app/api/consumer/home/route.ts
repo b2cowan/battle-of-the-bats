@@ -158,6 +158,7 @@ export const GET = withObservability(async () => {
       inviterName: i.inviterName,
       inviterRole: i.inviterRole,
       invitedAt: i.invitedAt,
+      keepsCoaching: i.keepsCoaching,
     })),
     coachInvites,
     workspaces,

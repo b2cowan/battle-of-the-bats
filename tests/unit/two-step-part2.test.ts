@@ -32,7 +32,7 @@ const FRESH_CODE_DOORS: Record<string, string[]> = {
   'app/api/admin/payouts/route.ts': ['createClubAccount(', 'onboardingLink(row.stripe_account_id', 'dashboardLink(', "update({ disconnected_at: now"],
   'app/api/admin/members/invite/route.ts': ['findAuthUserByEmail(email)'],
   'app/api/admin/members/[memberId]/route.ts': ['.update(update)', "'rep_group_scope_changed'"],
-  'app/api/platform-admin/orgs/[id]/transfer-ownership/route.ts': [".update({ role: 'owner' })"],
+  'app/api/platform-admin/orgs/[id]/transfer-ownership/route.ts': [".update({ role: 'owner', ...WAITING_ROLE_CLEARED })"],
   'app/api/platform-admin/company-users/route.ts': ['auth.admin.createUser('],
   'app/api/platform-admin/company-users/[id]/route.ts': ['updatePlatformUser(id'],
   'app/api/auth/two-step/backup-codes/route.ts': ['createBackupCodes('],

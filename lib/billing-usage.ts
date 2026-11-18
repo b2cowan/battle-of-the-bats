@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getNonArchivedRepTeamCount } from './db';
 import { PLAN_CONFIG } from './plan-config';
-import { seatExemptRoles } from './roles';
+import { seatRowsFilter, VOLUNTEER_ROWS_FILTER } from './roles';
 import { SLOT_STATUSES } from './tournament-slot';
 import type { Organization } from './types';
 import type { BillingUsage } from './plan-billing-data';
@@ -18,11 +18,11 @@ export async function readBillingUsage(org: Organization): Promise<BillingUsage>
     supabaseAdmin.from('tournaments').select('id', { count: 'exact', head: true })
       .eq('org_id', org.id).in('status', [...SLOT_STATUSES]),
     supabaseAdmin.from('organization_members').select('id', { count: 'exact', head: true })
-      .eq('organization_id', org.id).not('role', 'in', `(${seatExemptRoles(plan).join(',')})`),
+      .eq('organization_id', org.id).or(seatRowsFilter(plan)),
     // Only plans with free scorekeeper seats show the figure; the rest skip the query.
     plan.officialsFreeSeats
       ? supabaseAdmin.from('organization_members').select('id', { count: 'exact', head: true })
-        .eq('organization_id', org.id).eq('role', 'official')
+        .eq('organization_id', org.id).or(VOLUNTEER_ROWS_FILTER)
       : Promise.resolve({ count: 0, error: null }),
   ]);
   for (const result of [tournaments, staff, officials]) {

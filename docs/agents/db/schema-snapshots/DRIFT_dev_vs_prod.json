@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-18",
-  "total": 283,
+  "total": 287,
   "counts": {
     "tables": 10,
-    "columns": 135,
+    "columns": 138,
     "indexes": 48,
     "constraints": 37,
-    "rls": 53
+    "rls": 54
   },
   "items": [
     {
@@ -143,6 +143,10 @@
     },
     {
       "key": "check:only-dev:org_payment_accounts.org_payment_accounts_fees_collector_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organization_members.organization_members_pending_role_check",
       "sig": ""
     },
     {
@@ -575,6 +579,18 @@
     },
     {
       "key": "column:only-dev:org_time_date_off_venues.org_venue_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_members.pending_capabilities",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_members.pending_invited_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_members.pending_role",
       "sig": ""
     },
     {

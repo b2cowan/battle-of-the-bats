@@ -41,7 +41,11 @@
 > Proof `.probe/existing-invite-prove.mjs` (dev, 34/34); guard `tests/unit/existing-account-invite-guard.test.ts`.
 > **Left, owner calls:** (a) a club's own COACH given a board role is still changed on the spot (asking first needs a
 > place for the pending role, a schema change) — **RULED 2026-11-18 (owner): they accept too**, built as its own queue
-> prompt (P2b in `BOARD_READY_TRUST_FIX_PROMPTS.md`); (b) a pending invitation never expires, holds a seat, and lands its
+> prompt (P2b in `BOARD_READY_TRUST_FIX_PROMPTS.md`) — **BUILT 2026-11-18 (P2b, mig 503; commit hash on the queue's
+> PROGRESS row):** the board role waits on the coach's row beside their coaching until they accept it on Home; decline
+> and Cancel leave the coach as they were; the waiting role holds its seat; "You've been added" is retired (nobody is
+> added to a club without accepting). Proof `.probe/coach-board-invite-prove.mjs` (dev, 30/30); guard
+> `tests/unit/existing-account-invite-guard.test.ts` §6. Production: migration 503 FIRST, then the code; (b) a pending invitation never expires, holds a seat, and lands its
 > invitee on Home at every sign-in until they act — **RULED 2026-11-18 (owner, as recommended with /legal): an
 > unaccepted invitation runs out (30 days, a resend restarts it) and lapsed ones are removed**, queue prompt P2c; (c) the database's membership test (`is_org_member`,
 > `can_access_tournament`) ignores status, so a pending invitee's browser session can read the club's venue library and

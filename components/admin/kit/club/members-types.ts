@@ -24,6 +24,12 @@ export interface KitMember {
    * alone, never The board tab). null = an invitation, or a state the server could not read ("—").
    */
   twoStep?: MemberTwoStep | null;
+  /**
+   * A club's own coach with a board role WAITING for their yes (trust close-out 13 P2b): the row reads as that invitation
+   * (`role`, `status: 'invited'`, `invitedAt` are the offer's). Manage offers only Resend and Cancel; their coaching is
+   * unchanged and managed on the team's staff page.
+   */
+  coachInvite?: boolean;
 }
 
 /** "On", "Off", "Not set up · 9 days left", "Not set up" (ask E: past the deadline stays amber, no count). */
