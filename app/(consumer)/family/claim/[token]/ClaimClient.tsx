@@ -176,6 +176,7 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
     if (data.error === 'password_short') return setError(W.passwordTooShort);
     if (data.error === 'name_required') { setAskName(true); return setError(W.firstNameRequired); }
     if (data.error === 'email_mismatch') return setError(W.emailNoMatch(maskedEmail));
+    if (data.error === 'email_unconfirmed') return setError(W.emailUnconfirmed);
     if (data.error === 'account_exists') { setStep('existing'); setPassword(''); return setError(W.accountExists); }
     if (status === 404 || data.error === 'another_email') { reloadFromTop(); return; }
     setError(W.failed);

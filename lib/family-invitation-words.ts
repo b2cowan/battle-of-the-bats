@@ -61,6 +61,8 @@ export const FAMILY_INVITATION_WORDS = {
     required: 'Required',
     joining: 'Joining…',
     failed: 'That didn’t go through. Try again in a moment.',
+    /** Board Ready trust close-out 11 (owner 2026-11-18): the join refuses an account whose email isn't confirmed yet. */
+    emailUnconfirmed: 'Confirm your email first. Open the confirmation email we sent you, then come back to this invitation.',
     tooMany: 'Too many tries. Wait a few minutes, then try again.',
     /** C: signed in as someone else (ruling 5). On a rep team the line names the coach, not the club. */
     another: {
