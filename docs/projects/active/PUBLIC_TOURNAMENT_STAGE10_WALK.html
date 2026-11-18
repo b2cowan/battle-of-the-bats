@@ -1,0 +1,691 @@
+<title>Printable Rules Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.calls { display: grid; gap: 14px; }
+.call { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.call:first-of-type { border-top: 0; padding-top: 0; }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Public tournament pages · Stage 10 · Owner QA Ledger §542</span>
+    <h1>The rules, on the page and on paper</h1>
+    <p class="lead">Stage 10 gives the public Rules page numbered sections and a “Download rules” button that opens a letter-size PDF: the club’s or organizer’s look, a stamp saying when it was made, a code to the live page, the sections and points as the page shows them, and the downloads written out. You walk it as a visitor on a computer and a phone, read the file, narrow it to a division, check each look, try the refusals, and look at the organizer’s preview.</p>
+    <p class="lead">Written Nov 18, 2026 against the dev site. Every club and person here is test data. 49 steps in 8 walks. This walk checks what was built; it has no “Preparing…” spinner or failure line, because a plain link can’t know when a file arrives (recorded).</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Walks 1 to 7</dt><dd>Nobody. They are public pages, so use a normal window with no sign-in.</dd>
+      <dt>Walk 8 only</dt><dd><code>uat-owner@uat-test-org.local</code> · <code>UATPassword2026!</code> · <code>http://localhost:3000/auth/login</code></dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li>The test clubs are already built on dev (three organizations: <code>s10walk-club</code>, <code>s10walk-plus</code>, <code>s10walk-free</code>). To rebuild them: <code>node .probe/s10-rules-walk-fixture.mjs setup</code>. To remove everything this walk made: <code>node .probe/s10-rules-walk-fixture.mjs undo</code>.</li>
+      <li>Walk them in order. Walks 4, 5 and 8 change something and put it back in their last step.</li>
+      <li>Open the PDFs in your browser’s own viewer (Chrome, Edge or Safari). They open in a new tab.</li>
+      <li>Steps marked “optional” are skippable: a printer or a phone camera. Skipping one doesn’t stop a Pass.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li><b>The refusals under pressure.</b> A held-back division’s section never prints, whichever way it is asked for: View all, a made-up saved division, a cookie naming the held-back division, or a garbage cookie. A tournament that is a draft, a Rules page switched off, a cancelled club and another club’s slug are all “Not found”.</li>
+      <li><b>If the divisions can’t be read</b> (a database blip), the file says it couldn’t be prepared instead of printing a held-back section. Found and fixed in the review.</li>
+      <li><b>Odd characters.</b> An emoji or a non-Western letter used to garble its whole line in the file; now accents fold to their plain letter and anything with no Western form is left out. Found and fixed in the review.</li>
+      <li><b>A very long section</b> (100 points, 1,000 characters each) pages without losing or repeating a point. A logo that can’t be read prints no logo and the download still works.</li>
+      <li><b>Layout.</b> At 361, 768 and 1440 pixels the narrowed page has no sideways scroll and no tap target under 44 pixels. The “Division:” bar’s own two low-contrast spots are the known old styling, listed under “Later · Light-frame touch-ups”.</li>
+      <li><b>The 29 PDF documents</b> the product makes still pass their check, with the Rules file among them.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+<script>
+(function () {
+  "use strict";
+  var KEY = "public-tournament-stage10-walk-v1";
+  var PAGE = "Public tournament pages · Stage 10 · Owner QA Ledger §542";
+  var WALKS = [
+ {
+  "id": "W1",
+  "title": "The page: numbers and the download, on a computer",
+  "job": "Riverton Rules Cup · no sign-in · computer",
+  "forText": "The public Rules page now numbers its sections and points, and has a “Download rules” button at the right end of the “subject to change” note. You open it as a visitor would, with a computer-sized window.",
+  "passes": "Sections are numbered 1 to 7 in order with no U15 section; a section opens with numbered points; “7.10” has room; the button is there and opens the file in a new tab.",
+  "notIn": "A phone-sized window (walk 2). What is inside the file (walk 3).",
+  "who": "Nobody: the page is public.",
+  "where": "http://localhost:3000/s10walk-club/rules-cup/rules",
+  "steps": [
+   {
+    "stop": true,
+    "who": "Visitor",
+    "d": "In a normal browser window, open <code>http://localhost:3000/s10walk-club/rules-cup/rules</code>.",
+    "s": "The Rules page of “Riverton Rules Cup”. If it says “Rules unavailable” or the page is not found, stop: the fixture is not built (see Before you start)."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Look at the list of rule rows.",
+    "s": "Seven rows, each starting with a dim number: <b>1 · Pitching limits</b>, <b>2 · Mercy rule</b>, <b>3 · Time limits</b>, <b>4 · Roster and eligibility</b>, <b>5 · Equipment</b>, <b>6 · Conduct and spectators</b>, <b>7 · Protests and disputes</b>. No “U15 playoffs” row."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Look at the note above the list: “These rules are subject to change…”.",
+    "s": "At its right end, a small white outlined button: a download icon, <b>Download rules</b> and a dim <b>PDF</b>."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Click <b>4 · Roster and eligibility</b>.",
+    "s": "A window titled “4 · Roster and eligibility” with four points numbered <b>4.1</b> to <b>4.4</b> in a column on the left. Close it."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Click <b>7 · Protests and disputes</b>.",
+    "s": "Twelve points. The numbers <b>7.10</b>, <b>7.11</b> and <b>7.12</b> sit in a slightly wider column and don’t touch their text."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Close it, then click <b>Download rules</b>.",
+    "s": "A new browser tab opens with a PDF (letter size, three pages). The Rules page stays where it was. Leave the PDF tab open for walk 3."
+   }
+  ]
+ },
+ {
+  "id": "W2",
+  "title": "The page on a phone",
+  "job": "Riverton Rules Cup · no sign-in · phone-sized window",
+  "forText": "On a phone the download is a bare symbol, no border and no word. Use a phone, or narrow the browser window to about 390 pixels wide (in Chrome: F12, then the phone icon).",
+  "passes": "A bare symbol sits at the end of the note’s first line; a section opens in place with numbered points; the symbol opens the file.",
+  "notIn": "The file’s contents (walk 3).",
+  "who": "Nobody.",
+  "where": "http://localhost:3000/s10walk-club/rules-cup/rules",
+  "steps": [
+   {
+    "stop": false,
+    "who": "Visitor · phone",
+    "d": "At about 390 pixels wide, open <code>http://localhost:3000/s10walk-club/rules-cup/rules</code>.",
+    "s": "The same seven numbered rows. The page doesn’t scroll sideways."
+   },
+   {
+    "stop": false,
+    "who": "Visitor · phone",
+    "d": "Look at the “subject to change” note.",
+    "s": "At the end of its first line, a bare download symbol: no border, no fill, no word. Easy to hit with a thumb (about 44 pixels square)."
+   },
+   {
+    "stop": false,
+    "who": "Visitor · phone",
+    "d": "Tap <b>4 · Roster and eligibility</b>.",
+    "s": "It opens in place, under its row, with points <b>4.1</b> to <b>4.4</b> numbered. No window pops up."
+   },
+   {
+    "stop": false,
+    "who": "Visitor · phone",
+    "d": "Tap the download symbol.",
+    "s": "The PDF opens in a new tab."
+   }
+  ]
+ },
+ {
+  "id": "W3",
+  "title": "The file: club look, whole book",
+  "job": "Riverton Rules Cup · the PDF from walk 1",
+  "forText": "What is printed. The file holds exactly what the page shows, in the club’s green, with a stamp, a code, numbered sections, and the downloads written out.",
+  "passes": "Page one has the colour bar, the name band, the stamp box with a code; sections and points are numbered like the page; two sections carry their division tag; the held-back U15 text is nowhere; a long section runs onto the next page cleanly; the downloads are readable text.",
+  "notIn": "Other looks (walk 6). A division-narrowed file (walk 4).",
+  "who": "Nobody.",
+  "where": "The PDF tab from walk 1 (or open it again: the Download rules button).",
+  "steps": [
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Look at the top of page 1.",
+    "s": "A thick green bar across the very top, then <b>Riverton Rules Cup</b> in bold, and under it a line like “Tournament rules · the event’s dates · Hosted by Riverton Minor Ball”."
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Look at the box below the band.",
+    "s": "“<b>Rules as of</b>” with today’s date and the time you pressed Download (for example “Wed, Nov 18, 2026, 3:12 p.m.”), the “subject to change” sentence, an address ending <code>/s10walk-club/rules-cup/rules</code>, and a small square code at its left."
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Look at the section headings.",
+    "s": "Green, with a small icon and the page’s number: <b>1  Pitching limits</b>, <b>2  Mercy rule</b>… Points under them are numbered <b>1.1</b>, <b>1.2</b>… in a column on the left, rules in black."
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Look at the headings “2 Mercy rule” and “3 Time limits”.",
+    "s": "A small tag beside each: <b>U13 only</b> on Mercy rule, <b>U11 only</b> on Time limits. No other heading has a tag."
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Press Ctrl+F and search for <code>SECRET</code>, then for <code>U15</code>.",
+    "s": "No match for either. The held-back U15 section is not in the file."
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Find the first point under <b>5  Equipment</b>.",
+    "s": "It reads “No metal cleats on turf fields.” as plain, whole text. (The page’s warning-sign symbol in front of it isn’t printed; the rest of the line is not garbled.)"
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Scroll to where <b>6  Conduct and spectators</b> crosses onto the next page.",
+    "s": "The next page opens with a short band, “Tournament rules (continued)”, then the heading <b>6  Conduct and spectators (continued)</b> with no icon."
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Look at the bottom of every page.",
+    "s": "No heading sits alone at a page’s bottom and no point is cut in half. Each page’s footer shows “Exported:” with a date and “Page 1 of 3”, “Page 2 of 3”…"
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Find <b>7  Protests and disputes</b>, point <b>7.10</b>.",
+    "s": "The number prints in full and doesn’t crowd its text."
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Look at the last block, “Downloads &amp; Resources”.",
+    "s": "<b>Rulebook on the league site</b> with its web address printed under it, and <b>Field map</b> with “A file on the Rules page. Scan the code on page 1 to open it.”"
+   },
+   {
+    "stop": false,
+    "who": "Reader · optional · optional",
+    "d": "Point a phone camera at the code on page 1.",
+    "s": "The phone shows an address ending <code>/rules?view=all</code>. (On dev the address starts with localhost, so the phone may only show it, not open it. That is fine: read the address.)"
+   }
+  ]
+ },
+ {
+  "id": "W4",
+  "title": "Narrowed to a division",
+  "job": "Riverton Rules Cup · a saved division · computer",
+  "forText": "A visitor who has picked a division sees that division’s sections plus the ones for everyone, and the file matches. The numbers keep their gaps so “rule 4.2” means the same line on every copy. “View all” brings the whole book back.",
+  "passes": "Narrowed to U13: the page and the file drop U11’s section, numbers keep their gap, the button and the file name U13; View all restores everything.",
+  "notIn": "The division picker on the Schedule page: this tournament has no games, so you save the division with one line instead (step 1).",
+  "who": "Nobody.",
+  "where": "http://localhost:3000/s10walk-club/rules-cup/rules",
+  "steps": [
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "On <code>http://localhost:3000/s10walk-club/rules-cup/rules</code>, press F12, open the Console, paste <code>document.cookie=\"fl_agpref_s10walk-club=U13; path=/\"</code>, press Enter, and reload the page.",
+    "s": "A “Division:” bar appears above the list with U11 and U13 and a “View all →” link. U13 is the highlighted one. (The bar is the old styling: a known, separate clean-up.)"
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Read the numbers on the rows.",
+    "s": "Six rows: <b>1</b> Pitching limits, <b>2</b> Mercy rule, <b>4</b> Roster and eligibility, <b>5</b> Equipment, <b>6</b> Conduct, <b>7</b> Protests. <b>3 · Time limits</b> (U11’s) is gone and the number 3 is not reused."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Look at the download button.",
+    "s": "It reads <b>Download U13 rules</b> with the dim PDF."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Click it and look at the top of the file.",
+    "s": "The line under the name reads “U13 rules · the event’s dates · Hosted by…”."
+   },
+   {
+    "stop": false,
+    "who": "Reader",
+    "d": "Look through the file’s sections.",
+    "s": "<b>2  Mercy rule</b> with its “U13 only” tag; no “Time limits” section anywhere; the numbers run 1, 2, 4, 5, 6, 7."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Back on the page, click <b>View all →</b>.",
+    "s": "Seven rows again, including <b>3 · Time limits</b>. The button reads <b>Download rules</b> again."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Click <b>Download rules</b>.",
+    "s": "The whole book: both the “U13 only” and the “U11 only” tags, all seven sections, no division in the top line."
+   },
+   {
+    "stop": false,
+    "who": "Visitor · put back",
+    "d": "In the Console paste <code>document.cookie=\"fl_agpref_s10walk-club=; path=/; max-age=0\"</code> and press Enter, then reload.",
+    "s": "No “Division:” bar; the whole book, as at the start."
+   }
+  ]
+ },
+ {
+  "id": "W5",
+  "title": "A held-back division, and the numbers move",
+  "job": "Riverton Rules Cup · computer + a terminal",
+  "forText": "A section aimed at a division whose schedule is not published is held back from everyone, in the page and in the file. When the division is published, the section appears and every later number moves up by one.",
+  "passes": "U15’s section is invisible until U15 is published; then it appears as 5 and Equipment, Conduct and Protests become 6, 7 and 8, in the page and in the file; holding it back again restores the first numbering.",
+  "notIn": "The organizer’s own screens for publishing a division.",
+  "who": "Nobody: the publish and hold-back are one-line commands against the dev fixture.",
+  "where": "http://localhost:3000/s10walk-club/rules-cup/rules",
+  "steps": [
+   {
+    "stop": true,
+    "who": "Visitor",
+    "d": "Reload <code>http://localhost:3000/s10walk-club/rules-cup/rules</code>.",
+    "s": "Seven rows, the last “7 · Protests and disputes”, and no U15 row. If it already shows eight, run the hold-back command in step 6 first."
+   },
+   {
+    "stop": false,
+    "who": "You · terminal",
+    "d": "In the project folder run <code>node .probe/s10-rules-walk-fixture.mjs publish-u15</code>.",
+    "s": "“U15 published on s10walk-club/rules-cup.”"
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Reload the page.",
+    "s": "Eight rows: <b>5 · U15 playoffs</b> has appeared, and Equipment, Conduct and Protests are now <b>6</b>, <b>7</b> and <b>8</b>."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Click <b>Download rules</b> and look for “U15 only”.",
+    "s": "The file has <b>5  U15 playoffs</b> with a “U15 only” tag, and the later sections numbered 6, 7, 8."
+   },
+   {
+    "stop": false,
+    "who": "You · put back",
+    "d": "Run <code>node .probe/s10-rules-walk-fixture.mjs hold-u15</code>.",
+    "s": "“U15 held back on s10walk-club/rules-cup.”"
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Reload the page and press Ctrl+F for <code>U15</code>.",
+    "s": "Seven rows again, 1 to 7, and no match for “U15”."
+   }
+  ]
+ },
+ {
+  "id": "W6",
+  "title": "Four looks, and a free plan",
+  "job": "Three other organizations · the PDF each",
+  "forText": "The file wears the same look the page’s top band wears: a club’s colour, a paid organizer’s own colour and logo, a very pale colour (headings fall back to black so they can be read), and the free plan’s neutral look. A free tournament gets the download too.",
+  "passes": "Each file’s bar matches its page’s band; the pale colour’s headings are black; the free file has no logo and a neutral bar; the free page offers the download.",
+  "notIn": "A real black-and-white printer is optional (the last step).",
+  "who": "Nobody.",
+  "where": "http://localhost:3000/s10walk-plus/own-look/rules · http://localhost:3000/s10walk-plus/pale-look/rules · http://localhost:3000/s10walk-free/free-cup/rules",
+  "steps": [
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Open <code>http://localhost:3000/s10walk-plus/own-look/rules</code> and click <b>Download rules</b>.",
+    "s": "The page’s band is a deep pink with a crossed-bats logo. The file has a deep pink bar, the same logo beside the name, and pink headings."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Open <code>http://localhost:3000/s10walk-plus/pale-look/rules</code> and click <b>Download rules</b>.",
+    "s": "The page’s band is pale yellow. The file’s top bar is the same yellow, but the section headings are <b>black</b>, not yellow, and there is no logo."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Open <code>http://localhost:3000/s10walk-free/free-cup/rules</code> and look for the download.",
+    "s": "The free plan’s page has the <b>Download rules</b> button too, with no upgrade message."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Click it and look at page 1.",
+    "s": "A near-black bar, no logo, black headings. The footer still reads “Exported:” and “Page 1 of 3”, with “Generated by FieldLogicHQ”."
+   },
+   {
+    "stop": false,
+    "who": "Reader · optional · optional",
+    "d": "Print page 1 of any file on a black-and-white printer.",
+    "s": "The bar prints as a grey band; headings, numbers and points stay readable; the code still scans."
+   }
+  ]
+ },
+ {
+  "id": "W7",
+  "title": "Where the file refuses",
+  "job": "Fixture addresses · no sign-in",
+  "forText": "The file is only ever offered where the page is. A Rules page switched off, a draft tournament and another club’s tournament all get the same plain “Not found”, never a file.",
+  "passes": "Every address below answers “Not found” (plain text, no file) and the switched-off page offers no button.",
+  "notIn": "A visitor narrowed to a division with no sections (held by tests).",
+  "who": "Nobody.",
+  "where": "http://localhost:3000",
+  "steps": [
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Open <code>http://localhost:3000/s10walk-club/no-rules/rules</code>.",
+    "s": "A page titled “Rules unavailable”, and no download button."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Open <code>http://localhost:3000/s10walk-club/no-rules/rules/pdf</code>.",
+    "s": "The words “Not found”. No file."
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Open <code>http://localhost:3000/s10walk-club/draft-cup/rules/pdf</code>.",
+    "s": "“Not found”. (The draft tournament isn’t public.)"
+   },
+   {
+    "stop": false,
+    "who": "Visitor",
+    "d": "Open <code>http://localhost:3000/s10walk-plus/rules-cup/rules/pdf</code>.",
+    "s": "“Not found”. (Riverton’s tournament, asked for under Summit’s address.)"
+   }
+  ]
+ },
+ {
+  "id": "W8",
+  "title": "The organizer’s preview has no live download",
+  "job": "UAT Test Org owner · admin preview · computer",
+  "forText": "An organizer previewing their Rules page sees the button drawn but not working, like the preview’s other doors, so a preview never hands out a file.",
+  "passes": "The preview shows the numbered section and a dimmed download that does nothing when clicked.",
+  "notIn": "The public pages (walks 1 to 7).",
+  "who": "Tournament Plus owner: uat-owner@uat-test-org.local · UATPassword2026! · localhost:3000/auth/login",
+  "where": "http://localhost:3000/uat-test-org/admin/tournaments/preview/uat-import-smoke/rules",
+  "steps": [
+   {
+    "stop": true,
+    "who": "You · terminal",
+    "d": "Run <code>node .probe/s10-rules-walk-fixture.mjs preview-on</code>.",
+    "s": "“Added “S10 WALK PREVIEW — Pitching limits” to uat-test-org/uat-import-smoke.”"
+   },
+   {
+    "stop": false,
+    "who": "Owner",
+    "d": "Sign in as the owner, then open <code>http://localhost:3000/uat-test-org/admin/tournaments/preview/uat-import-smoke/rules</code>.",
+    "s": "The preview of UAT Import Smoke Tournament’s Rules page, with the row <b>1 · S10 WALK PREVIEW — Pitching limits</b>."
+   },
+   {
+    "stop": false,
+    "who": "Owner",
+    "d": "Look at the “subject to change” note.",
+    "s": "The download is drawn at its right end, but it is not a link: hovering it gives no hand cursor."
+   },
+   {
+    "stop": false,
+    "who": "Owner",
+    "d": "Click it.",
+    "s": "Nothing happens: no new tab, no file."
+   },
+   {
+    "stop": false,
+    "who": "You · put back",
+    "d": "Run <code>node .probe/s10-rules-walk-fixture.mjs preview-off</code> and reload the preview.",
+    "s": "The “S10 WALK PREVIEW” row is gone."
+   }
+  ]
+ }
+];
+
+  var CALLS = [];
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "W1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.calls = got.calls || {}; state.open = got.open || "W1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  var callsHost = document.getElementById("calls") || document.createElement("div");
+  CALLS.forEach(function (c) {
+    var box = el("div", "call");
+    box.appendChild(el("p", null, "<b>" + c.id + ".</b> " + c.q));
+    var opts = el("div", "opts");
+    c.o.forEach(function (o, oi) {
+      var lab = el("label"); var cb = el("input"); cb.type = "checkbox"; cb.id = "call-" + c.id + "-" + oi;
+      cb.checked = state.calls[c.id] === oi;
+      cb.addEventListener("change", function () {
+        state.calls[c.id] = cb.checked ? oi : null; save();
+        c.o.forEach(function (_, k) { var other = document.getElementById("call-" + c.id + "-" + k); if (other && k !== oi) other.checked = false; });
+        refresh();
+      });
+      lab.appendChild(cb); lab.appendChild(el("span", null, o)); opts.appendChild(lab);
+    });
+    box.appendChild(opts);
+    callsHost.appendChild(box);
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", [s.stop ? "Stop check" : "", s.who || ""].filter(Boolean).join(" · ")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function callsSummary() {
+    return ["Calls:"].concat(CALLS.map(function (c) {
+      var pick = state.calls[c.id];
+      return "  " + c.id + " " + (pick == null ? "NOT ANSWERED" : c.o[pick]);
+    })).join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).concat(CALLS.length ? ["", callsSummary()] : []).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "W1" }; save(); render();
+    CALLS.forEach(function (c) { c.o.forEach(function (_, k) { var x = document.getElementById("call-" + c.id + "-" + k); if (x) x.checked = false; }); });
+  });
+  render();
+})();
+</script>

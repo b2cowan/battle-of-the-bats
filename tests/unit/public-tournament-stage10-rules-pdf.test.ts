@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { shapePublicRules } from '../../lib/public-rules-shape.ts';
-import { rulesBandLine, rulesHeadingColour, rulesPdfFilename, rulesStampLine } from '../../lib/export/rules-pdf.ts';
+import { printableText, rulesBandLine, rulesHeadingColour, rulesPdfFilename, rulesStampLine } from '../../lib/export/rules-pdf.ts';
+import { DEFAULT_PDF_SETTINGS } from '../../lib/export/pdf.ts';
 import { rulesViewAllUrl } from '../../lib/export/rules-qr.ts';
 import { CLUB_NEAR_BLACK } from '../../lib/club-colour-roles.ts';
 import { billingTestLoader } from './_billing-test-loader.ts';
@@ -80,6 +81,31 @@ describe('Stage 10: the shape the Rules page and its file share', () => {
   });
 });
 
+describe('Stage 10: the file prints only what its one face can (one stray character must not ruin a whole line)', () => {
+  it('keeps Western text, curly quotes, dashes and the ellipsis exactly', () => {
+    const kept = 'Équipe À la mode — “quoted” it’s 9–11 … œ €5 · ½';
+    assert.equal(printableText(kept), kept);
+  });
+  it('folds an accent to its letter and leaves out what has no Western form', () => {
+    assert.equal(printableText('Zażółć'), 'Zazóc', 'ż and ć fold, ó is already Western, ł has no Western form');
+    assert.equal(printableText('⚠️ No metal cleats'), 'No metal cleats');
+    assert.equal(printableText('Fun 😀 day'), 'Fun day');
+    assert.equal(printableText('世界'), '');
+  });
+  it('a real document with an emoji and a Polish word draws every line in one byte face', async () => {
+    const { jsPDF } = await import('jspdf');
+    const { buildRulesPdfDoc } = await import('../../lib/export/rules-pdf.ts');
+    const doc = buildRulesPdfDoc(jsPDF, {
+      eventName: 'Łódź Cup 😀', dates: null, hostedBy: null, narrowedTo: null, resources: [], stampedAt: '2026-11-18T20:12:00.000Z',
+      liveAddress: 'x.ca/rules', qrDataUrl: null,
+      sections: [{ anchor: 'a', number: 1, title: 'Cleats ⚠️', icon: null, divisionLabel: null, items: ['⚠️ No metal cleats, ever.'] }],
+      settings: { ...DEFAULT_PDF_SETTINGS, accentColor: '#1d4ed8' },
+    });
+    const raw = Buffer.from(doc.output('arraybuffer') as ArrayBuffer).toString('latin1');
+    assert.match(raw, /\(No metal cleats, ever\.\)/, 'the point is written as plain single-byte text');
+  });
+});
+
 describe('Stage 10: the file’s words', () => {
   it('A5: headings wear the colour at 4.5 : 1 on white, else ink; a malformed colour is ink', () => {
     assert.equal(rulesHeadingColour('#1E3A8A'), '#1E3A8A');
@@ -106,7 +132,7 @@ describe('Stage 10: the file’s words', () => {
 
 // ── The route: the real handler, with only the database, the request host and the forward replaced. ──
 type Tournament = { id: string; name: string; status: string; publicHiddenPages?: string[]; startDate: string | null; endDate: string | null };
-function harness(o: { org?: Record<string, unknown> | null; tournament?: Tournament | null; rules?: RuleSection[]; cookie?: string } = {}) {
+function harness(o: { org?: Record<string, unknown> | null; tournament?: Tournament | null; rules?: RuleSection[]; cookie?: string; divisionsFail?: boolean } = {}) {
   const org = o.org === undefined ? { id: 'org', name: 'Riverdale Minor Ball', slug: 'club', planId: 'tournament', subscriptionStatus: 'active' } : o.org;
   const tournament = o.tournament === undefined
     ? { id: 't', name: 'Fall Classic 2026', status: 'active', startDate: '2026-11-21', endDate: '2026-11-23' } : o.tournament;
@@ -118,7 +144,11 @@ function harness(o: { org?: Record<string, unknown> | null; tournament?: Tournam
       getPublicTournamentBySlug: async () => tournament,
       getRules: async () => o.rules ?? BOOK,
       getResources: async () => LINKS,
-      getDivisions: async () => DIVS,
+      // A failed read answers [] unless the caller asked for it strictly (as the real reader does).
+      getDivisions: async (_id: string, opts?: { strict?: boolean }) => {
+        if (o.divisionsFail) { if (opts?.strict) throw new Error('divisions'); return []; }
+        return DIVS;
+      },
     },
     'next/headers': { cookies: async () => ({ get: (n: string) => (n === 'fl_agpref_club' && o.cookie ? { value: o.cookie } : undefined) }) },
     '@/lib/module-entitlements': { resolveOrgHomeHref: async () => null },
@@ -162,6 +192,13 @@ describe('Stage 10: the route answers only where the page would', () => {
     const res = await harness({ rules: [rule('Pitching limits', ['d13'])], cookie: 'U11' })();
     assert.equal(res.status, 404);
     assert.equal((await harness({ rules: [rule('Pitching limits', ['d13'])], cookie: 'U11' })('?view=all')).status, 200);
+  });
+  it('a failed divisions read is a 503, never a file that prints a held-back division’s section', async () => {
+    // With no divisions known, every tag reads as stale and the U15 (held-back) section would print as an untagged one.
+    const res = await harness({ rules: [rule('U15 only', ['d15']), rule('Everyone')], divisionsFail: true })();
+    assert.equal(res.status, 503);
+    assert.equal(res.headers.get('cache-control'), 'no-store');
+    assert.notEqual(res.headers.get('content-type'), 'application/pdf');
   });
   it('a visitor past the limit is told to wait, not served', async () => {
     const get = harness();
@@ -233,6 +270,14 @@ describe('Stage 10 Part 2: the page numbers its rules and offers the file', () =
     assert.doesNotMatch(live, /publicPosts|scheduleVisibility/, 'the live page cuts nothing itself');
     for (const file of ['components/public/PublicRules.tsx', 'components/public/PublicRuleSections.tsx']) {
       assert.doesNotMatch(readCode(file), /divisionIds|publicPosts/, `${file} narrows nothing itself`);
+    }
+  });
+  it('every icon the organizer can pick is drawn in the file (a seventh icon cannot silently print as a Shield)', async () => {
+    const { RULE_ICONS } = await import('../../lib/tournament-settings-words.ts');
+    const src = readCode('lib/export/rules-pdf.ts');
+    for (const { value } of RULE_ICONS) {
+      if (value === 'Shield') continue; // the default branch draws it
+      assert.match(src, new RegExp(`case '${value}'`), `${value} has no drawing in rules-pdf.ts`);
     }
   });
   // The page must hide the download in exactly the cases the file answers 404 (Part 1, "as built").

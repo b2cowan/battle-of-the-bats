@@ -172,7 +172,10 @@ function offlineFallback() {
 function navigationHandler(request, pathname) {
   return fetch(request).then(function (res) {
     // Keep a copy of good, non-redirected public tournament pages for offline use.
-    if (res && res.ok && !res.redirected && isPublicTournamentPage(pathname)) {
+    // Pages only: a file at a page's address (the printable rules, /rules/pdf) says "Rules as of" this moment and is sent
+    // `no-store`; a copy kept on the device would outlive a section the organizer later hides.
+    var isHtml = (res && res.headers && res.headers.get('Content-Type') || '').indexOf('text/html') === 0;
+    if (res && res.ok && !res.redirected && isHtml && isPublicTournamentPage(pathname)) {
       var copy = res.clone();
       caches.open(PAGES_CACHE).then(function (cache) {
         return cache.put(request, copy).then(function () {

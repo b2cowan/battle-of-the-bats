@@ -645,11 +645,14 @@ export async function getOrgVenues(orgId: string): Promise<OrgVenue[]> {
 }
 
 // --- Divisions ---
-export async function getDivisions(tournamentId?: string, options: ReadOptions = {}): Promise<Division[]> {
+/** `strict`: a failed read THROWS instead of reading as "no divisions" — for a reader that FILTERS by division (the
+ *  printable rules: with no divisions every tag reads as stale and a held-back division's section would print). */
+export async function getDivisions(tournamentId?: string, options: ReadOptions & { strict?: boolean } = {}): Promise<Division[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   let query = client.from('divisions').select('*, pools(*)').order('display_order', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
+  if (options.strict && (error || !data)) throw error ?? new Error('divisions');
   if (error || !data) {
     if (error) console.error('getDivisions error', error);
     return [];

@@ -446,14 +446,14 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-rules-resources',
           question: 'How do I show rules or resources to teams?',
-          answerText: 'Open Rules & resources and add sections, links and files. They appear on the public Rules page in the order you set. Each section is a numbered row (3 · Pitching limits, with points 3.1, 3.2) that opens in a window on a computer and in place on a phone, with a copy-link button to send someone straight to it. A visitor who picked a division sees every division\'s sections plus their own; View all shows the whole book, and the numbers stay the same either way. Download rules (on a phone, the download symbol) opens a PDF of what the visitor is looking at; tap View all first for the whole book. In the PDF a link prints with its address, and an uploaded file is named, with a code that opens the Rules page to get it. Uploaded documents open in a new tab, so a PDF views in the browser.',
+          answerText: 'Open Rules & resources and add sections, links and files. They appear on the public Rules page in the order you set. Each section is a numbered row (3 · Pitching limits, with points 3.1, 3.2) that opens in a window on a computer and in place on a phone, with a copy-link button to send someone straight to it. A visitor who picked a division sees the sections that apply to every division plus their own division\'s; View all shows the whole book, and the numbers stay the same either way. Download rules (on a phone, the download symbol) opens a PDF of what the visitor is looking at; tap View all first for the whole book. In the PDF a link prints with its address, and an uploaded file is named, with a code that opens the Rules page to get it. Uploaded documents open in a new tab, so a PDF views in the browser.',
           keywords: ['rules', 'resources', 'documents', 'public site', 'pdf', 'download rules', 'rules pdf', 'print rules', 'numbered rules', 'rule numbers', 'copy link', 'view all', 'division'],
           answer: (
             <>
               <p>Open <strong>Rules &amp; resources</strong> and add sections, links and files. They appear on the public <strong>Rules</strong> page in the order you set.</p>
               <ul>
                 <li>Each section is a numbered row (<strong>3 · Pitching limits</strong>, with points 3.1, 3.2). It opens in a window on a computer and in place on a phone, with a copy-link button to send someone straight to it.</li>
-                <li>A visitor who picked a division sees every division&rsquo;s sections plus their own; <strong>View all</strong> shows the whole book. The numbers stay the same either way.</li>
+                <li>A visitor who picked a division sees the sections that apply to every division plus their own division&rsquo;s; <strong>View all</strong> shows the whole book. The numbers stay the same either way.</li>
                 <li><strong>Download rules</strong> (on a phone, the download symbol) opens a PDF of what the visitor is looking at. For the whole book, tap <strong>View all</strong> first. In the PDF a link prints with its address, and an uploaded file is named, with a code that opens the Rules page to get it.</li>
                 <li>Uploaded documents open in a new tab, so a PDF views in the browser.</li>
               </ul>

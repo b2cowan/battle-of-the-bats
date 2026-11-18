@@ -2128,6 +2128,20 @@ export const SCREENS = [
       await row.click();
       await page.locator('dialog[open] ol, section[id^="rule-"] [data-open="true"] ol').first().waitFor({ state: 'visible' });
     } },
+  // Stage 10 (printable rules), Part 3: the NARROWED page — a visitor who picked U13 sees the untagged sections plus U13's, the
+  // filter bar, and the download reading "Download U13 rules" (a phone's bare symbol, spoken as "…the U13 rules…"). Part 2 could
+  // not measure it: the shared fixtures' sections are all untagged. This needs the walk's fixture
+  // (`node .probe/s10-rules-walk-fixture.mjs setup`, dev only), so it is measured only where that event is served.
+  { id: 'pubt-rules-narrowed',    session: 'anon', path: () => '/s10walk-club/rules-cup/rules',                       ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/rules',
+    onlyWhereServed: 'the Stage 10 walk fixture (s10walk-club) exists on dev only',
+    interact: async (page) => {
+      // The picker's own memory: the saved-division cookie the Rules page reads on the server (7 days, per organization).
+      await page.context().addCookies([{ name: 'fl_agpref_s10walk-club', value: encodeURIComponent('U13'), url: new URL(page.url()).origin }]);
+      await page.reload();
+      await page.locator('[data-public-frame-band]').waitFor({ state: 'visible' });
+      await page.locator('a[href$="/rules/pdf"]').first().waitFor({ state: 'attached' });
+    } },
   // the real links (Stage 7 Part 2, the walk fixture); the ready marker fails loudly if the page is not focused.
   { id: 'pubt-pay-focused',       session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/pay/not-a-real-link', ready: '[data-public-frame-focused-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/pay/[token]' },

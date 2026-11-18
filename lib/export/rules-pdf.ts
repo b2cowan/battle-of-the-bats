@@ -22,10 +22,9 @@ import { formatOrgShortWeekdayDay, utcToZonedInputs } from '../timezone';
 import { formatTime } from '../utils';
 import { RULES_SUBJECT_TO_CHANGE, type PublicRulesSection } from '../public-rules-shape';
 
-/** The page's fixed note, word for word (A3) — it lives with the page's shape, so the page reads it without this kit. */
-export { RULES_SUBJECT_TO_CHANGE };
-/** A7: an uploaded file cannot be printed; the reader is sent to it. */
-export const RULES_FILE_ON_PAGE = 'A file on the Rules page. Scan the code on page 1 to open it.';
+/** A7: an uploaded file cannot be printed; the reader is sent to it. (The page's fixed note lives in the shape module,
+ *  so the page reads it without this kit.) */
+const RULES_FILE_ON_PAGE = 'A file on the Rules page. Scan the code on page 1 to open it.';
 const RULES_FILE_ON_PAGE_NO_CODE = 'A file on the Rules page.';
 export const RULES_DOWNLOADS_HEADING = 'Downloads & Resources';
 
@@ -153,8 +152,36 @@ function drawIcon(doc: any, name: string | null, x: number, top: number, rgb: Rg
   }
 }
 
+// ── Words the file's one face (Helvetica, A6) can print. ──
+// jsPDF's Helvetica is single-byte (Western/WinAnsi): ONE character outside it (an emoji, "Ł", a Cree syllable) makes
+// jsPDF write the WHOLE string as two-byte units, which prints as garbage and is wrapped at the wrong width. An
+// organizer's rule such as "⚠️ No metal cleats" is realistic, so every string the file prints is first made printable:
+// accents fold to their letter ("ż" → "z"), anything else with no Western form is left out.
+const WIN_ANSI_EXTRAS = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
+export function printableText(text: string): string {
+  let dropped = false;
+  let out = '';
+  for (const ch of text) {
+    const cp = ch.codePointAt(0)!;
+    if (cp <= 0xff || WIN_ANSI_EXTRAS.includes(ch)) { out += ch; continue; }
+    const base = ch.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (base !== ch && [...base].every(b => b.codePointAt(0)! <= 0xff)) out += base; else dropped = true;
+  }
+  return dropped ? out.replace(/ {2,}/g, ' ').replace(/^ +| +$/gm, '') : out;
+}
+function printableOptions(o: RulesPdfOptions): RulesPdfOptions {
+  const p = printableText;
+  return {
+    ...o,
+    eventName: p(o.eventName), hostedBy: o.hostedBy && p(o.hostedBy), narrowedTo: o.narrowedTo && p(o.narrowedTo),
+    sections: o.sections.map(s => ({ ...s, title: p(s.title), divisionLabel: s.divisionLabel && p(s.divisionLabel), items: s.items.map(p) })),
+    resources: o.resources.map(r => ({ ...r, label: p(r.label), url: p(r.url) })),
+  };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildRulesPdfDoc(jsPDFClass: any, opts: RulesPdfOptions): any {
+export function buildRulesPdfDoc(jsPDFClass: any, rawOpts: RulesPdfOptions): any {
+  const opts = printableOptions(rawOpts);
   const doc = new jsPDFClass({ orientation: 'portrait', unit: 'mm', format: 'letter' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -250,9 +277,12 @@ export function buildRulesPdfDoc(jsPDFClass: any, opts: RulesPdfOptions): any {
   const textW = contentWidth - numCol;
 
   // A point's lines: its own line breaks kept, each paragraph wrapped under the text, never under the number.
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(POINT_PT);
-  const linesOf = (text: string): string[] =>
-    text.split(/\r?\n/).flatMap(p => (p.trim() ? doc.splitTextToSize(p, textW) as string[] : ['']));
+  // ⚠ Measured in the point's own face every time: a section with no points ends on its heading (bold, 12 or 8 pt), and
+  // the next section's points would otherwise be wrapped at the heading's width.
+  const linesOf = (text: string): string[] => {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(POINT_PT);
+    return text.split(/\r?\n/).flatMap(p => (p.trim() ? doc.splitTextToSize(p, textW) as string[] : ['']));
+  };
   const pointH = (lines: string[]) => lines.length * POINT_LH + POINT_GAP;
 
   // ── A heading: icon (first page of a section only), "3  Pitching limits", the division label (A9). ──

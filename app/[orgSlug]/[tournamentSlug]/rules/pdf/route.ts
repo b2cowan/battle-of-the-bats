@@ -38,14 +38,23 @@ export const dynamic = 'force-dynamic';
 const perVisitor = new FixedWindowRateLimiter(60_000, 30);
 const everyone = new FixedWindowRateLimiter(60_000, 600);
 
-/** The event's logo as a PNG data URL, derived once per logo per server (sharp; jsPDF draws neither SVG nor webp). A
- *  logo that fails to derive prints no logo, never a failed download. */
+/** The event's logo as a PNG data URL, derived once per logo per server (sharp; jsPDF draws neither SVG nor webp).
+ *  `deriveLogoDataUrl` never throws: a logo that fails to derive is null and prints no logo, never a failed download.
+ *  ⚠ A failure is kept for a MINUTE only: a slow fetch or storage blip must not print that event's file without its
+ *  logo until the server restarts, and a logo that can never derive (undecodable, too large) must not be re-fetched
+ *  and re-decoded on every download. */
+const LOGO_FAILURE_MS = 60_000;
 const logoCache = new Map<string, Promise<string | null>>();
 function logoDataUrl(url: string): Promise<string | null> {
   let hit = logoCache.get(url);
   if (!hit) {
-    hit = deriveLogoDataUrl(url).catch(() => null);
+    hit = deriveLogoDataUrl(url);
     logoCache.set(url, hit);
+    const mine = hit;
+    void mine.then(v => {
+      if (v !== null) return;
+      setTimeout(() => { if (logoCache.get(url) === mine) logoCache.delete(url); }, LOGO_FAILURE_MS).unref?.();
+    });
     if (logoCache.size > 100) logoCache.delete(logoCache.keys().next().value!);
   }
   return hit;
@@ -72,11 +81,21 @@ export const GET = withObservability(async (req: Request,
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament || !isPublicPageEnabled(tournament, 'rules')) return notFound();
 
-  const [rules, resources, divisions] = await Promise.all([
-    getRules(tournament.id, { admin: true }),
-    getResources(tournament.id, { admin: true }),
-    getDivisions(tournament.id, { admin: true }),
-  ]);
+  // ⚠ Strict reads: a failed divisions read must not turn into "no divisions" (every tag would read as stale and a
+  // held-back division's section would print into a file that outlives the page). A failure is a 503, never a file.
+  let rules, resources, divisions;
+  try {
+    [rules, resources, divisions] = await Promise.all([
+      getRules(tournament.id, { admin: true, strict: true }),
+      getResources(tournament.id, { admin: true, strict: true }),
+      getDivisions(tournament.id, { admin: true, strict: true }),
+    ]);
+  } catch (e) {
+    console.error('rules pdf: a read failed', e);
+    return new Response('The rules could not be prepared. Try again in a minute.', {
+      status: 503, headers: { ...HEADERS, 'Retry-After': '30', 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
   const prefName = (await cookies()).get(`fl_agpref_${orgSlug}`)?.value ?? null;
   const shape = shapePublicRules({ rules, resources, allDivisions: divisions, prefName, view });
   if (shape.sections.length === 0) return notFound();
@@ -89,12 +108,12 @@ export const GET = withObservability(async (req: Request,
   const origin = siteOriginForHost(await requestHost(), resolveSameHostOrigin(req)).replace(/\/$/, '');
   const rulesPage = `${origin}${href(`/${tournamentSlug}/rules`)}`;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  const [logo, qr] = await Promise.all([
+  const [logo, qr, { default: jsPDF }] = await Promise.all([
     band.logoUrl ? logoDataUrl(band.logoUrl) : Promise.resolve(null),
     rulesQrDataUrl(rulesViewAllUrl(rulesPage)),
+    import('jspdf'),
   ]);
 
-  const { default: jsPDF } = await import('jspdf');
   const doc = buildRulesPdfDoc(jsPDF, {
     eventName: tournament.name,
     // The band's spelling, but always with the year: the band drops this year's, and paper outlives the year.

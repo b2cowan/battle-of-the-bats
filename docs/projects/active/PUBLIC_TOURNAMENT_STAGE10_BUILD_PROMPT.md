@@ -291,6 +291,13 @@ stopgap: build it once.
 3. **Records:** plan §9 row 10 (built, commits, the walk), the board's Public tournament line in the same commit, the
    ledger section. `/release` carries it with the next promote. There is no migration and no switch.
 
+### Part 3 · as built (2026-11-18)
+
+- **`/simplify`** (four lenses) applied: the logo cache keeps a failure for a minute only (was forever), `import('jspdf')` joins the route's parallel wait, two unused exports gone, a test that every icon the organizer can pick has a drawing in the file.
+- **`/review`** (correctness, security and multi-tenant, regression, concurrency; high-risk tier). Every side door the prompt listed is closed. Fixed: a failed divisions read printed a held-back section (`getDivisions` gained `strict`; the route answers 503); emoji and non-Western letters garbled a whole line (`printableText` in `rules-pdf.ts`, accents folded, the rest left out); a section with no points mis-measured the next one's text; the service worker kept a copy of the file (pages only now); one help sentence. **Left to the owner:** the shared per-visitor limit trusts a forged header (`lib/rate-limit.ts`); the live page has the same failed-divisions weakness the file had; the admin preview now hides sections of an unpublished division like the live page; the old "Division:" bar's two low-contrast spots (A12) show on the narrowed page and are not yet in the layout baseline.
+- **Layout:** `pubt-rules-narrowed` added (the fixture's U13 saved by cookie; marked `onlyWhereServed`, which the runner reads only once the other session's uncommitted runner change lands). Measured on dev at 361, 768 and 1440: no sideways scroll, no tap target under 44 px; the only findings are the Division bar's own.
+- **The walk** (§542): `.probe/s10-rules-walk-fixture.mjs` (`setup`, `publish-u15`, `hold-u15`, `preview-on`, `preview-off`, `show`, `undo`); `docs/projects/active/PUBLIC_TOURNAMENT_STAGE10_WALK.html`, 8 walks, 49 steps. The route was also fetched from the running dev server for every fixture before publishing.
+
 ## Not in Stage 10 (say so if a step drifts toward one)
 
 - An organizer's copy, an admin-screen button, or held-back sections in any file (A8).
