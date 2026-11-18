@@ -83,6 +83,8 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'app/api/platform-admin/orgs/[id]/record/route.ts': ['writer', 'console record edits (stored vs proposed)'],
   'lib/free-time-writes.ts': ['writer', 'gives, changes and ends free time; reads the stored plan, status and Stripe subscription to refuse'],
   'lib/free-time-list.ts': ['other', "'subscription_status' here is a grant KIND (org_overrides.type), not the org's column"],
+  'lib/free-time-reclose.ts': ['other', "free time on an ended club (owner 2026-11-18): 'subscription_status' names the grant KIND; the stored status beside the door's answer is a fact handed in, the rule reads both"],
+  'lib/free-time-reclose-server.ts': ['stored', "free time on an ended club (owner 2026-11-18): an ENDED club is a stored fact (its own status, its suspension stamp), read beside the door's answer (effectiveOrgFactsForId), which also decides; the daily job's candidates are clubs still ended on their own and reopened by a marked grant"],
   'lib/portal-free-time.ts': ['other', "Stage 4b: 'subscription_status' names the grant KIND that holds a free-time portal open (org_overrides.type), not the org's column"],
   'app/platform-admin/orgs/[id]/FreeTimeWindows.tsx': ['other', "'subscription_status' here is a grant KIND (the Give window's choice), not the org's column"],
   'lib/workspace-upgrade.ts': ['stored', "Stage 4b: mirrors the flip's own gate (mig 414), which compares the club's STORED plan and subscription, never the door's — free days must not read as a settled Club subscription"],

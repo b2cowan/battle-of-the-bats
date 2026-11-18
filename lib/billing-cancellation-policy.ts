@@ -7,6 +7,10 @@ export const BILLING_RETENTION_DAYS = 90;
 /** A full season cycle for a standalone coach (owner, 2026-09-24). */
 export const COACHES_PORTAL_RETENTION_DAYS = 365;
 
+/** The `retentionReason` an ORGANIZATION's ending tags its records with (lib/plan-ending.ts `applyEnding`): what the
+ *  reactivation restores, and what the retention sweep pauses while free time lets the club back in. */
+export const CANCELLATION_REASONS: readonly string[] = ['account_cancellation', 'stripe_subscription_deleted'];
+
 export type CancellationKind = 'organization' | 'premium';
 export const retentionDaysForKind = (kind: CancellationKind): number =>
   kind === 'premium' ? COACHES_PORTAL_RETENTION_DAYS : BILLING_RETENTION_DAYS;

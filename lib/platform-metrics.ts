@@ -206,7 +206,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .limit(5000),
     supabaseAdmin
       .from('platform_events')
-      .select('event_type, occurred_at')
+      .select('event_type, occurred_at, metadata')
       .in('event_type', [
         'subscription_canceled', 'plan_downgraded', 'subscription_past_due', 'subscription_recovered',
         'subscription_started', 'plan_upgraded',
@@ -231,7 +231,9 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const overrides = ((overridesRes.data ?? []) as OverrideRow[])
     .filter(row => !sandboxOrgIdSet.has(row.org_id));
   if (eventsRes.error) console.warn('[platform-admin] platform events metric failed', eventsRes.error);
-  const events = eventsRes.error ? [] : ((eventsRes.data ?? []) as PlatformEventRow[]);
+  // A club closed AGAIN when free time that reopened it ran out (owner ruling 2026-11-18) churned once, at its first end.
+  const events = eventsRes.error ? [] : ((eventsRes.data ?? []) as Array<PlatformEventRow & { metadata?: { freeTimeEnded?: boolean } | null }>)
+    .filter(e => !(e.event_type === 'subscription_canceled' && e.metadata?.freeTimeEnded === true));
   const ownerOrgIds = new Set(
     members
       .filter(member => (member.status ?? 'active') !== 'suspended')

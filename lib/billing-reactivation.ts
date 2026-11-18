@@ -1,6 +1,7 @@
 import { supabaseAdmin } from './supabase-admin';
 import { SLOT_STATUSES, withinFreeSlots } from './tournament-slot';
 import { withdrawPendingEnding } from './plan-ending-store';
+import { CANCELLATION_REASONS } from './billing-cancellation-policy';
 
 /**
  * REACTIVATION RESTORES EVERYTHING CANCELLATION TOOK (A07, Club Tier Stage 1b).
@@ -23,7 +24,8 @@ import { withdrawPendingEnding } from './plan-ending-store';
  * beyond it stay retained and visible on the billing page, exactly like a downgrade's remainder.
  */
 
-const CANCELLATION_REASONS = ['account_cancellation', 'stripe_subscription_deleted'];
+// CANCELLATION_REASONS: the reasons an organization's ending tags its records with (lib/billing-cancellation-policy.ts,
+// shared with the retention sweep's free-time pause).
 
 export type ReactivationResult = {
   /** The account had been suspended by a cancellation, and is not any more. */

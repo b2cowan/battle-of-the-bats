@@ -58,9 +58,10 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     return NextResponse.json({ error: "End a Coaches Portal's free time from its own Access list." }, { status: 409 });
   }
 
+  // Ending free time that reopened an ended club closes it again (`endClubOverride`); a failure there is a warning.
   if (target.kind === 'override') {
     const r = await endClubOverride({ orgId: id, overrideId: target.overrideId, reason, actorEmail: actor, extra });
-    return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.error }, { status: r.status });
+    return r.ok ? NextResponse.json({ ok: true, warnings: r.warnings ?? [] }) : NextResponse.json({ error: r.error }, { status: r.status });
   }
 
   // Free time's newest change, undone (Support console Stage 4, T10): the earlier last day again, under the same cap and
@@ -68,7 +69,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   if (target.kind === 'override_end') {
     if (target.lastDay < earliestLastDay()) {
       const r = await endClubOverride({ orgId: id, overrideId: target.overrideId, reason, actorEmail: actor, extra });
-      return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.error }, { status: r.status });
+      return r.ok ? NextResponse.json({ ok: true, warnings: r.warnings ?? [] }) : NextResponse.json({ error: r.error }, { status: r.status });
     }
     const r = await changeFreeTimeEnd({
       orgId: id, overrideId: target.overrideId, expectedExpiresAt: target.expectedExpiresAt, lastDay: target.lastDay, reason,

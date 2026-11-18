@@ -236,6 +236,8 @@ export type EndedEvent = {
   retainedTournamentIds: string[];
   /** The idempotency key: one `subscription_canceled` per ending, whichever door, whichever replay. */
   sourceEventId: string;
+  /** A club closed AGAIN when free time that reopened it ran out (lib/free-time-reclose.ts): not a second churn. */
+  freeTimeEnded?: boolean;
 };
 
 // ── Pure rules ───────────────────────────────────────────────────────────────────────────────────
@@ -859,6 +861,8 @@ export async function applyEnding(
     stripeEndedAt?: string | null;
     /** Said on the row's "ended" entry — who finished an overdue ending, and why (G3). */
     note?: string;
+    /** Free time that reopened an ended club ran out: the same ending, its event marked so churn counts the club once. */
+    freeTimeEnded?: boolean;
   },
   deps: EndingDeps,
 ): Promise<ApplyResult> {
@@ -926,6 +930,7 @@ export async function applyEnding(
     account, intentId: intent.id, source: isRequest ? 'app' : 'stripe', requestedBy: p.actor.door,
     actorUserId: p.actor.userId ?? intent.createdBy, actorEmail: p.actor.email ?? intent.createdByEmail, reason, endedAt, retentionUntil,
     retainedTournamentIds: allRetained, sourceEventId: `intent:${intent.id}:subscription_canceled`,
+    ...(p.freeTimeEnded ? { freeTimeEnded: true } : {}),
   });
 
   // 5 · the pay pages close (a Coaches Portal's too — decision 2, owner 2026-11-01). AFTER the event, so a slow Stripe can

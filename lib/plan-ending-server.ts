@@ -391,6 +391,7 @@ export const endingDeps: EndingDeps = {
         retentionUntil: e.retentionUntil,
         retainedTournamentIds: e.retainedTournamentIds,
         intentId: e.intentId,
+        ...(e.freeTimeEnded ? { freeTimeEnded: true } : {}),
         ...(e.account.isCoachesPortal ? { scope: 'coaches_portal', teamWorkspaceId: e.account.teamWorkspaceId } : {}),
       },
     });

@@ -364,6 +364,8 @@ export type ClubFacts = {
   payingThroughStripe: boolean;
   /** `lastDay` is null for a grant with no end date. */
   runningPlanGrant: { id: string; plan: OrgPlan; lastDay: string | null } | null;
+  /** Its own plan has ended (stored status `canceled`): billing-status free time reopens it (`REOPENED_ENDED_CLUB`). */
+  planEnded?: boolean;
 };
 
 /** What the server read about the giver and the server. */
@@ -473,6 +475,32 @@ export function decideGive(req: GiveRequest, club: ClubFacts, ctx: GiveContext, 
     }
     return { ok: true, row: { type: 'module_addon', value: null, target: { addons: [...new Set(addons as string[])] }, expires_at }, lastDay, reason };
   }
-  // A billing status: the club reads as active while unpaid (the drawn choice).
-  return { ok: true, row: { type: 'subscription_status', value: 'active', target: null, expires_at }, lastDay, reason };
+  // A billing status: the club reads as active while unpaid (the drawn choice). Given to a club whose plan has ENDED it
+  // reopens it (owner ruling 2026-11-18, free time on an ended club): the mark is what tells the end to close it again.
+  return {
+    ok: true,
+    row: { type: 'subscription_status', value: 'active', target: reopensEndedClub(club) ? { [REOPENED_ENDED_CLUB]: true } : null, expires_at },
+    lastDay,
+    reason,
+  };
+}
+
+/**
+ * FREE TIME ON AN ENDED CLUB (owner ruling 2026-11-18, all four answers as recommended). Billing-status free time is the
+ * only kind that lets a club whose plan ended back in (the door replaces its status; a plan or sections leave it locked
+ * out). Given to such a club it brings everything back, as an operator plan change does (lib/free-time-reclose.ts), and
+ * the grant carries this mark in its `target`. When the free time stops and the club still has not paid, the mark is how
+ * the end (End it now, Put it back, the daily job for a date end) knows to close it again with a fresh 90-day window.
+ */
+export const REOPENED_ENDED_CLUB = 'reopenedEndedClub';
+
+/** Billing-status free time given now would reopen this club: its plan has ended. */
+export function reopensEndedClub(club: Pick<ClubFacts, 'planEnded'>): boolean {
+  return club.planEnded === true;
+}
+
+/** The grant row reopened an ended club (its `target` carries the mark). */
+export function isReopeningGrant(row: { type: string; target?: unknown }): boolean {
+  return row.type === 'subscription_status'
+    && !!row.target && typeof row.target === 'object' && (row.target as Record<string, unknown>)[REOPENED_ENDED_CLUB] === true;
 }

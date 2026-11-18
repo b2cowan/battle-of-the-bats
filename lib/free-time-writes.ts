@@ -7,6 +7,7 @@ import { hasLiveSubscription } from './plan-move';
 import { grantsEnabled } from './entitlement-grants';
 import { endClubOverride } from './club-record-changes';
 import { staffBelongsToClub, type StaffIdentity } from './staff-own-club';
+import { reopenEndedClub } from './free-time-reclose-server';
 import {
   canGiveIndefinitely,
   decideGive,
@@ -15,6 +16,7 @@ import {
   formatLongDay,
   freeTimeBlockOf,
   isGrantRunning,
+  isReopeningGrant,
   lastDayOfInstant,
   lastDayRefusal,
   planGrantBlockOf,
@@ -92,6 +94,7 @@ export async function readClubFacts(orgId: string, opts: { withGrant?: boolean }
       subscriptionStatus: (club.subscription_status ?? 'active') as SubscriptionStatus,
     }),
     runningPlanGrant: running ? { id: running.id, plan: running.plan, lastDay: running.lastDay } : null,
+    planEnded: club.subscription_status === 'canceled',
   };
 }
 
@@ -114,7 +117,7 @@ export async function freeTimeDoorFacts(orgId: string, staff: StaffIdentity): Pr
 export type GiveInput = { orgId: string; kind: unknown; plan?: unknown; addons?: unknown; lastDay: unknown; indefinite?: unknown; reason: unknown; actor: Actor };
 
 /** Give free time. Writes only when `decideGive` says yes. */
-export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: true; override: { id: string } }> {
+export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: true; override: { id: string }; warnings: string[] }> {
   const club = await readClubFacts(input.orgId);
   if (!club) return { ok: false, status: 404, error: 'Club not found.' };
   const ctx = await readGiveContext(club.id, input.actor);
@@ -150,7 +153,11 @@ export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: tr
     return { ok: false, status: 409, error: `${club.name} already has a plan given as free time. Give it more time from that entry instead of a second grant.` };
   }
   if (error || !created) return { ok: false, status: 500, error: 'Nothing was given. The server could not save it. Your answers are kept; try again.' };
-  return { ok: true, override: { id: created.id } };
+  // Free time on an ended club (owner ruling 2026-11-18): billing-status free time brings back what the ending took, as an
+  // operator's plan change does. After the row and the grant, like that change: a failed restore is a warning, never a
+  // failed give (the club can already sign in).
+  const warning = isReopeningGrant(decision.row) ? await reopenEndedClub(club.id) : null;
+  return { ok: true, override: { id: created.id }, warnings: warning ? [warning] : [] };
 }
 
 export type ChangeInput = {
@@ -254,7 +261,7 @@ export async function staleSentence(orgId: string, overrideId: string, createdBy
 }
 
 /** End a running grant now, with its reason (the existing end path). A comp period is not free time and is refused. */
-export async function endFreeTimeNow(input: { orgId: string; overrideId: string; reason: unknown; actor: Actor; extra?: Record<string, unknown> }): Promise<Refusal | { ok: true }> {
+export async function endFreeTimeNow(input: { orgId: string; overrideId: string; reason: unknown; actor: Actor; extra?: Record<string, unknown> }): Promise<Refusal | { ok: true; warnings: string[] }> {
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!reason) return { ok: false, status: 400, error: "Say why you're ending it early." };
   // A comp period is a billing tag (Founding Season's cohort mark): it gives nothing to end, and Founding's access moves
@@ -265,5 +272,5 @@ export async function endFreeTimeNow(input: { orgId: string; overrideId: string;
   // One that ran out by itself is not "ended early": leave it as it is.
   if (!isGrantRunning(row)) return { ok: false, status: 409, error: 'That free time has already ended. Nothing was changed.' };
   const result = await endClubOverride({ orgId: input.orgId, overrideId: input.overrideId, reason, actorEmail: input.actor.email, extra: input.extra });
-  return result.ok ? { ok: true } : { ok: false, status: result.status, error: result.error };
+  return result.ok ? { ok: true, warnings: result.warnings ?? [] } : { ok: false, status: result.status, error: result.error };
 }

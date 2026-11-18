@@ -51,5 +51,5 @@ export const POST = withObservability(async (req: NextRequest,
     actor: { id: auth.user.id, email: auth.user.email!, role: auth.role },
   });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
-  return NextResponse.json({ override: result.override });
+  return NextResponse.json({ override: result.override, warnings: result.warnings });
 }, { route: '/api/platform-admin/orgs/[id]/overrides' });

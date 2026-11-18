@@ -88,6 +88,8 @@ export type ClubRecordProps = {
     lastDay: string | null;
     /** A comp period carrying Founding Season's end: read-only, given at sign-up. */
     founding: boolean;
+    /** Billing-status free time that reopened the club after its plan ended: its end closes it again while unpaid. */
+    reopenedEndedClub: boolean;
     reason: string | null; createdBy: string | null; createdAt: string; endedAt: string | null; running: boolean;
   }>;
   ownAddress: { address: string; status: string } | null;
@@ -829,14 +831,14 @@ export default function ClubRecord(props: ClubRecordProps) {
       )}
       {win?.kind === 'give' && props.freeTime && (
         <GiveWindow org={org} freeTime={props.freeTime} rows={props.overrides} onChangeEnd={row => setWin({ kind: 'changeEnd', row })}
-          onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
+          onDone={warnings => { setWin(null); setNotice(warnings.length ? `Done. ${warnings.join(' ')}` : null); router.refresh(); }} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'changeEnd' && props.freeTime && (
         <ChangeEndWindow org={org} row={win.row} freeTime={props.freeTime}
           onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'endNow' && (
-        <EndNowWindow org={org} row={win.row} onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
+        <EndNowWindow org={org} row={win.row} onDone={warnings => { setWin(null); setNotice(warnings.length ? `Done. ${warnings.join(' ')}` : null); router.refresh(); }} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'portalGive' && props.portalFreeTime?.give && props.portalFreeTime.ownerUserId && (
         <PortalGiveWindow coachId={props.portalFreeTime.ownerUserId} coachName={props.portalFreeTime.coachName} give={props.portalFreeTime.give}

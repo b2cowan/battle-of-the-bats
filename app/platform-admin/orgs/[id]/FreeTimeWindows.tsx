@@ -10,6 +10,7 @@ import DateInput from '@/components/shared/DateInput';
 import { CLUB_SECTIONS, planLabel, sectionLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { dayAfterWords, formatLongDay, monthDayOf, type GiveBlock } from '@/lib/free-time';
 import { possessive } from '@/lib/utils';
+import { CLOSES_AGAIN_WORDS } from '@/lib/free-time-story';
 import RecordWindow from '../../RecordWindow';
 import { errorOf, sendJson } from '../../console-fetch';
 import kit from '../../console.module.css';
@@ -17,6 +18,12 @@ import styles from '../../record.module.css';
 import type { ClubRecordProps } from './ClubRecord';
 
 type FreeTimeRow = ClubRecordProps['overrides'][number];
+
+/** What Billing-status free time brings back to an ended club (owner ruling 2026-11-18). /marketing signs the words off. */
+const REOPENS = 'its public site goes back on and its tournaments are restored, up to its plan’s limit';
+
+/** The server's warnings on a yes (a restore or a close-again that failed): shown on the record, never a refusal. */
+const warningsOf = (data: Record<string, unknown>) => (Array.isArray(data.warnings) ? (data.warnings as string[]) : []);
 
 // ── Free time: the words, the line where the door would be, and its three windows ──────────────────────────────────
 /** What a running grant gives, in a few words: "Club", "Accounting, House league", "Billing status". */
@@ -56,10 +63,12 @@ const GIVE_CHOICES: Array<{ kind: GiveKind; label: string; sub: string }> = [
 
 export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }: {
   org: ClubRecordProps['org']; freeTime: FreeTimeBounds; rows: FreeTimeRow[];
-  onChangeEnd: (row: FreeTimeRow) => void; onDone: () => void; onClose: () => void;
+  onChangeEnd: (row: FreeTimeRow) => void; onDone: (warnings: string[]) => void; onClose: () => void;
 }) {
   const planBlock = freeTime.planBlock;
-  const [kind, setKind] = useState<GiveKind | null>(planBlock ? null : 'plan_tier');
+  // Free time on an ended club (owner ruling 2026-11-18): only Billing status lets it back in, so that is the first choice.
+  const ended = org.status === 'canceled';
+  const [kind, setKind] = useState<GiveKind | null>(ended ? 'subscription_status' : planBlock ? null : 'plan_tier');
   const [plan, setPlan] = useState(freeTime.plansAbove[0]?.id ?? '');
   const [addons, setAddons] = useState<string[]>([]);
   const [lastDay, setLastDay] = useState('');
@@ -80,6 +89,10 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
     } else if (kind === 'module_addon') {
       const names = addons.map(sectionLabel).join(', ');
       sentence = names ? <>{org.name} gets {b(`${names}, with no end date`)}. {endsBy}</> : 'Choose the sections to give.';
+    } else if (ended) {
+      sentence = <>{possessive(org.name)} plan has ended. Free time lets it back in {b('with no end date')}: {REOPENS}. It stays until staff
+        end it; then, if it still hasn’t paid, it is closed again, its information is kept for 90 days from that day, and the owner is
+        emailed the new date. Nothing is charged.</>;
     } else {
       sentence = <>{org.name} reads as {b('active, with no end date')} while unpaid. {endsBy}</>;
     }
@@ -96,6 +109,10 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
         ? <>{org.name} gets {b(`${names} through ${through}`)}, then {addons.length === 1 ? 'it turns' : 'they turn'} off by itself. Nothing
           is charged or deleted, and the owner is not emailed.</>
         : 'Choose the sections to give.';
+    } else if (ended) {
+      sentence = <>{possessive(org.name)} plan has ended. Free time lets it back in {b(`through ${through}`)}: {REOPENS}. On{' '}
+        {dayAfterWords(lastDay)}, if it still hasn’t paid, it is closed again, its information is kept for 90 days from that day, and the
+        owner is emailed the new date. Nothing is charged.</>;
     } else {
       sentence = <>{org.name} reads as {b(`active through ${through}`)} while unpaid, then goes back to its own billing status by itself.
         Nothing is charged or deleted, and the owner is not emailed.</>;
@@ -121,7 +138,7 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
           last_day: indefinite ? undefined : lastDay, indefinite: indefinite || undefined, reason,
         });
         if (!ok) return errorOf(data, 'Nothing was given. The server could not save it. Your answers are kept; try again.');
-        onDone();
+        onDone(warningsOf(data));
         return null;
       }}
       onClose={onClose}
@@ -144,6 +161,14 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
               <span><span className={styles.choiceLabel}>{c.label}</span><span className={styles.choiceSub}>{c.sub}</span></span>
             </label>
           ))}
+          {ended && (kind === 'plan_tier' || kind === 'module_addon') && (
+            // Owner ruling 2026-11-18: said, never refused. A plan or sections alone leave an ended club locked out.
+            <p className={styles.refuseLine}>
+              <Lock size={15} aria-hidden className={styles.refuseIcon} />
+              <span>{possessive(org.name)} plan has ended, so {kind === 'plan_tier' ? 'a whole plan' : 'sections'} alone won’t let it back
+                in. It stays locked out. Give Billing status to bring it back.</span>
+            </p>
+          )}
         </div>
       </div>
       {kind === 'module_addon' && (
@@ -267,18 +292,20 @@ export function ChangeEndWindow({ org, row, freeTime, onDone, onClose }: {
 }
 
 export function EndNowWindow({ org, row, onDone, onClose }: {
-  org: ClubRecordProps['org']; row: FreeTimeRow; onDone: () => void; onClose: () => void;
+  org: ClubRecordProps['org']; row: FreeTimeRow; onDone: (warnings: string[]) => void; onClose: () => void;
 }) {
   const subject = freeTimeSubject(row, org.planLabel);
   const insteadOf = row.lastDay ? <> instead of on {formatLongDay(row.lastDay)}</> : <> (it had no end date)</>;
-  const then = row.type === 'plan_tier'
+  // Free time that reopened an ended club, which still hasn't paid: ending it closes the club again (owner ruling 2026-11-18).
+  const closesAgain = row.reopenedEndedClub && org.status === 'canceled';
+  const then = closesAgain ? <>{CLOSES_AGAIN_WORDS}</> : row.type === 'plan_tier'
     ? <>It goes back to {org.planLabel} at once; anyone using the tools that come only with {subject} is moved out on their next click.</>
     : row.type === 'module_addon' ? <>{row.addons.length === 1 ? 'It turns' : 'They turn'} off at once.</>
     : <>The club reads its own billing status again at once.</>;
   return (
     <RecordWindow
       title={`End ${possessive(org.name)} free time now`}
-      sentence={<>{possessive(org.name)} <strong>{subject}</strong> free time ends <strong>now</strong>{insteadOf}. {then} Nothing is deleted.</>}
+      sentence={<>{possessive(org.name)} <strong>{subject}</strong> free time ends <strong>now</strong>{insteadOf}. {then}{closesAgain ? null : ' Nothing is deleted.'}</>}
       whyPlaceholder="Why are you ending it early?"
       footNote="Writes a new entry in the Story."
       cancelLabel="Keep it"
@@ -286,7 +313,7 @@ export function EndNowWindow({ org, row, onDone, onClose }: {
       onConfirm={async reason => {
         const { ok, data } = await sendJson(`/api/platform-admin/orgs/${org.id}/overrides/${row.id}`, 'DELETE', { reason });
         if (!ok) return errorOf(data, 'Nothing was ended. The server could not save it.');
-        onDone();
+        onDone(warningsOf(data));
         return null;
       }}
       onClose={onClose}

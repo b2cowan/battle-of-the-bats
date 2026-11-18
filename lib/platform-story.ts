@@ -395,7 +395,9 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
       continue;
     }
     const title = e.event_type === 'plan_downgraded' ? `Downgraded: ${planName(e.previous_plan_id)} → ${planName(e.plan_id)}`
-      : e.event_type === 'subscription_canceled' ? (e.source === 'stripe' ? 'Subscription ended in Stripe' : 'Subscription cancelled by the customer')
+      : e.event_type === 'subscription_canceled'
+        ? (obj(e.metadata)?.freeTimeEnded === true ? 'Closed again: free time ended, still unpaid'
+          : e.source === 'stripe' ? 'Subscription ended in Stripe' : 'Subscription cancelled by the customer')
       : e.event_type === 'subscription_past_due' ? 'A payment was missed'
       : 'Payment recovered';
     const moneyEvent = e.event_type === 'subscription_past_due' ? 'missed' as const : e.event_type === 'subscription_recovered' ? 'recovered' as const

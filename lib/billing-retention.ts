@@ -10,7 +10,8 @@ import { formatStoredDate, tournamentToday } from './timezone';
 import { orderByKeepPriority } from './billing-downgrade-order';
 import { SLOT_STATUSES, withinFreeSlots } from './tournament-slot';
 import type { Organization, OrgPlan } from './types';
-import { ownPlanOf } from './entitlement-grants';
+import { effectiveOrgFactsById, ownPlanOf } from './entitlement-grants';
+import { countdownPaused } from './free-time-reclose';
 import { getBillingHref, billingUrlOrgFromRow } from './billing-urls';
 import {
   BILLING_RETENTION_DAYS, COACHES_PORTAL_RETENTION_DAYS,
@@ -483,6 +484,23 @@ async function sendRetentionEmail(
   return true;
 }
 
+/**
+ * THE COUNTDOWN PAUSES WHILE AN ENDED CLUB IS LET BACK IN (free time on an ended club, owner ruling 2026-11-18). A
+ * cancellation's records are warned about and moved to pending purge only while the club, read THROUGH THE DOOR, is still
+ * ended. A club on billing-status free time (staff helping it), or one that paid again and whose restore failed, is
+ * skipped: its information is never flagged for deletion while it is in use. When the free time ends the club is closed
+ * again with a fresh window (lib/free-time-reclose.ts). A move to a lower plan's records (the club stays active) and a
+ * Coaches Portal's (its own free time and restore) are untouched.
+ */
+async function withoutPausedCountdowns(rows: RetainedRecordProcessRow[]): Promise<RetainedRecordProcessRow[]> {
+  // Only a cancellation's record on a club still ended on its own can pause: the door is read for those clubs alone.
+  const couldPause = (r: RetainedRecordProcessRow) => countdownPaused(r.metadata?.retentionReason, orgFromJoinedRow(r)?.subscription_status, 'active');
+  const orgIds = rows.filter(couldPause).map(r => r.org_id);
+  if (orgIds.length === 0) return rows;
+  const facts = await effectiveOrgFactsById(orgIds);
+  return rows.filter(r => !countdownPaused(r.metadata?.retentionReason, orgFromJoinedRow(r)?.subscription_status, facts.get(r.org_id)?.subscriptionStatus));
+}
+
 function groupByOrg(rows: RetainedRecordProcessRow[]) {
   const grouped = new Map<string, RetainedRecordProcessRow[]>();
   for (const row of rows) {
@@ -509,7 +527,7 @@ export async function processBillingRetentionExpiry(actorEmail: string) {
     .lte('retention_until', warningCutoff.toISOString());
   if (expiringError) throw expiringError;
 
-  const expiring = (((expiringRaw ?? []) as unknown) as RetainedRecordProcessRow[]).filter(row => {
+  const expiring = (await withoutPausedCountdowns(((expiringRaw ?? []) as unknown) as RetainedRecordProcessRow[])).filter(row => {
     const leadDays = row.metadata?.retentionReason === COACHES_PORTAL_RETENTION_REASON
       ? COACHES_PORTAL_RETENTION_WARNING_DAYS
       : BILLING_RETENTION_WARNING_DAYS;
@@ -537,12 +555,12 @@ export async function processBillingRetentionExpiry(actorEmail: string) {
 
   const { data: expiredRaw, error: expiredError } = await supabaseAdmin
     .from('billing_retained_records')
-    .select('id, org_id, record_type, display_name, retained_state, retention_until, warning_sent_at, purge_notice_sent_at, organizations(name, slug, plan_id, account_kind, subscription_status)')
+    .select('id, org_id, record_type, display_name, retained_state, retention_until, warning_sent_at, purge_notice_sent_at, metadata, organizations(name, slug, plan_id, account_kind, subscription_status)')
     .eq('retained_state', 'retained_inactive')
     .lte('retention_until', now.toISOString());
   if (expiredError) throw expiredError;
 
-  const expired = ((expiredRaw ?? []) as unknown) as RetainedRecordProcessRow[];
+  const expired = await withoutPausedCountdowns(((expiredRaw ?? []) as unknown) as RetainedRecordProcessRow[]);
   let pendingPurgeRecords = 0;
   let pendingPurgeEmailsSent = 0;
 

@@ -11,7 +11,7 @@ import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { holdsSlot } from '@/lib/tournament-slot';
 import { effectiveOrgFactsOf } from '@/lib/entitlement-grants';
 import { freeTimeDoorFacts } from '@/lib/free-time-writes';
-import { canGiveIndefinitely, capMonthsFor, earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
+import { canGiveIndefinitely, capMonthsFor, earliestLastDay, grantablePlansAbove, isGrantRunning, isReopeningGrant, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
 import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { stripeStillBills } from '@/lib/stripe-billing-state';
 import { stripeDashboardBase } from '@/lib/stripe-mode';
@@ -59,7 +59,7 @@ async function getTeamMoves(orgId: string): Promise<ClubRecordProps['teamMoves']
 }
 
 type OverrideRow = {
-  id: string; type: string; value: string | null; target: { addons?: string[]; plan?: string } | null; starts_at: string | null; expires_at: string | null;
+  id: string; type: string; value: string | null; target: { addons?: string[]; plan?: string; reopenedEndedClub?: boolean } | null; starts_at: string | null; expires_at: string | null;
   reason: string | null; created_by: string | null; created_at: string; revoked_at: string | null; revoked_by: string | null;
 };
 
@@ -76,6 +76,7 @@ function overrideRows(rows: OverrideRow[], now = new Date()): ClubRecordProps['o
     expiresAt: o.expires_at,
     lastDay: o.expires_at ? lastDayOfInstant(o.expires_at) : null,
     founding: o.type === 'comp_period' && !!o.expires_at && isFoundingSeasonCompExpiry(o.expires_at),
+    reopenedEndedClub: isReopeningGrant(o),
     reason: o.reason,
     createdBy: o.created_by,
     createdAt: o.created_at,

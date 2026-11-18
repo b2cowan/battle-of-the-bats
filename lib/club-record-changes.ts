@@ -11,6 +11,8 @@
 import { supabaseAdmin } from './supabase-admin';
 import { auditFirst, writePlatformAuditLog } from './platform-audit';
 import { CLUB_SECTIONS } from './platform-labels';
+import { isReopeningGrant } from './free-time';
+import { closeAgainAfterEnd } from './free-time-reclose-server';
 
 // The four add-on sections and their names live with the console's other words (client-safe), re-exported here.
 export { CLUB_SECTIONS, sectionLabel } from './platform-labels';
@@ -133,10 +135,10 @@ export async function endClubOverride(opts: {
   reason: string | null;
   actorEmail: string;
   extra?: Record<string, unknown>;
-}): Promise<ChangeResult & { override?: { id: string; revoked_at: string; revoked_by: string } }> {
+}): Promise<ChangeResult & { override?: { id: string; revoked_at: string; revoked_by: string }; warnings?: string[] }> {
   const alreadyEnded = { ok: false as const, status: 404, error: 'That override has already ended.' };
   // A wrong id, another club's row or an already-ended one ends nothing, so it writes no row either.
-  const { data: live, error: readError } = await supabaseAdmin.from('org_overrides').select('id')
+  const { data: live, error: readError } = await supabaseAdmin.from('org_overrides').select('id, type, target')
     .eq('id', opts.overrideId).eq('org_id', opts.orgId).is('revoked_at', null).maybeSingle();
   if (readError) return { ok: false, status: 500, error: 'The override could not be ended.' };
   if (!live) return alreadyEnded;
@@ -157,5 +159,9 @@ export async function endClubOverride(opts: {
     await first.failed('already ended');
     return alreadyEnded;
   }
-  return { ok: true, override: updated[0] as { id: string; revoked_at: string; revoked_by: string } };
+  // Free time that reopened an ended club (owner ruling 2026-11-18): every way staff end it (End it now, Put it back)
+  // comes through here, so here the club is closed again when it still has not paid. A failure is a warning: the grant
+  // has ended, and the daily job tries the close again.
+  const warning = isReopeningGrant(live) ? await closeAgainAfterEnd(opts.orgId, opts.actorEmail) : null;
+  return { ok: true, override: updated[0] as { id: string; revoked_at: string; revoked_by: string }, ...(warning ? { warnings: [warning] } : {}) };
 }

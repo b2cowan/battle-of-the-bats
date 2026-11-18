@@ -1,7 +1,7 @@
 import { consoleDay } from './console-dates';
 import { overrideWhat, sectionLabel, subscriptionStatusLabel } from './platform-labels';
 import { possessive } from './utils';
-import { earliestLastDay, formatLongDay, formatShortDay, isGrantRunning, lastDayOfInstant } from './free-time';
+import { earliestLastDay, formatLongDay, formatShortDay, isGrantRunning, isReopeningGrant, lastDayOfInstant } from './free-time';
 import { isFoundingSeasonCompExpiry } from './plan-config';
 import { obj, planName, putBackOf, str, whyFields, type AuditRow, type PutBack, type StoryEntry } from './platform-story-view';
 
@@ -18,13 +18,20 @@ import { obj, planName, putBackOf, str, whyFields, type AuditRow, type PutBack, 
 
 const THE_PRODUCT = 'The product';
 
+/**
+ * What ending free time that reopened an ended club does (owner ruling 2026-11-18), said the same in the End it now window
+ * and on the Story's Put it back. /marketing signs the words off.
+ */
+export const CLOSES_AGAIN_WORDS =
+  'Its plan has ended and it has not paid, so it is closed again at once: its public site goes off, its tournaments are archived, and its information is kept for 90 days from today. The owner is emailed the new date.';
+
 export type FreeTimeStoryRow = {
-  id: string; type: string; value: string | null; target: { addons?: string[]; plan?: string } | null; starts_at: string | null; expires_at: string | null;
+  id: string; type: string; value: string | null; target: { addons?: string[]; plan?: string; reopenedEndedClub?: boolean } | null; starts_at: string | null; expires_at: string | null;
   reason: string | null; created_by: string | null; created_at: string; revoked_at: string | null; revoked_by: string | null;
 };
 
 export function freeTimeStoryEntries(input: {
-  org: { name: string; plan_id: string | null };
+  org: { name: string; plan_id: string | null; subscription_status?: string | null };
   overrides: FreeTimeStoryRow[];
   /** The club's audit entries, newest first (the Story's own read). */
   audit: AuditRow[];
@@ -97,17 +104,23 @@ export function freeTimeStoryEntries(input: {
     // The end it was GIVEN with: the first change's "was", or (never changed) the current end. Null: given with no end date.
     const originalEnd = changes[0] ? (typeof changes[0].old_value === 'string' ? changes[0].old_value : null) : o.expires_at;
 
+    // Free time on an ended club (owner ruling 2026-11-18): it reopened the club, and its end closes it again while unpaid.
+    const reopened = !isPortal && isReopeningGrant(o);
+    const closesAgain = reopened && org.subscription_status === 'canceled';
     const given: StoryEntry = {
       key: `override:${o.id}`, at: o.created_at, kind: 'staff',
       title: originalEnd ? `Free time given: ${subject} through ${short(originalEnd)}` : `Free time given: ${subject}, no end date`,
-      sub: !originalEnd ? 'Stays until staff end it'
+      sub: reopened ? 'Reopened the ended club; it closes again when this free time ends, unless the club pays'
+        : !originalEnd ? 'Stays until staff end it'
         : isPortal ? 'Then back to the free Coaches Portal by itself' : isPlan ? `Then back to ${ownPlan} by itself` : undefined,
       who: o.created_by ?? 'Staff', why: o.reason ?? null, whyNotRecorded: !o.reason,
     };
     const newestChange = changes.at(-1) ?? null;
     const endNowWords = (lastDayIso: string) => isPortal
       ? `${possessive(org.name)} Premium free time ends now instead of on ${formatLongDay(lastDayOfInstant(lastDayIso))}. The coach goes back to the free Coaches Portal at once. Nothing is deleted.`
-      : `${possessive(org.name)} ${subject} free time ends now instead of on ${formatLongDay(lastDayOfInstant(lastDayIso))}.${isPlan ? ` It goes back to ${ownPlan} at once.` : ''} Nothing is deleted.`;
+      : closesAgain
+        ? `${possessive(org.name)} ${subject} free time ends now instead of on ${formatLongDay(lastDayOfInstant(lastDayIso))}. ${CLOSES_AGAIN_WORDS}`
+        : `${possessive(org.name)} ${subject} free time ends now instead of on ${formatLongDay(lastDayOfInstant(lastDayIso))}.${isPlan ? ` It goes back to ${ownPlan} at once.` : ''} Nothing is deleted.`;
     markPutBack(given, running && !newestChange && o.expires_at ? {
       kind: isPortal ? 'portal_end_now' : 'override',
       title: `End ${possessive(org.name)} free time now`,

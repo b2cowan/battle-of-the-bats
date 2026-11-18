@@ -138,13 +138,15 @@ A **past-due** club is deliberately *not* locked out.
 
 **To restore an ended club:** change its plan back to active from platform admin. That path also brings back its
 public site and its tournaments (up to the plan's limit), and warns if it cannot.
-⚠ **Known gap (read in the code 2026-11-18, not yet seen on dev):** giving free time to an ended club lifts the wall
-(the club can work again), but it does not run the "bring the site and tournaments back" step that a plan change,
-a checkout and a Stripe reactivation all run — so its public site stays off and its tournaments stay archived.
-A plan change is the wrong substitute for goodwill, because it has no end date. **Recommended fix (owner question 3):**
-giving free time to an ended club runs the same restore step; when that free time runs out, the club is ended again
-and the existing rules close it (the public site already reads the live status). Until it ships: give the free time,
-then check the club's public site and tournaments yourself and tell the club what is still off.
+**To let an ended club back in for a while, as a favour:** the club › Access › **Give free time** › **Billing status**
+(owner ruling 2026-11-18; the window starts on it for an ended club). It brings the club fully back, the same way
+a plan change does: sign-in, the public site, the tournaments up to the plan's limit, and the deletion countdown
+stopped. When the free time stops (its last day, End it now, or Put it back) and the club still hasn't paid, it is
+closed again exactly as when its plan ended, with a **fresh 90 days** from that day and the owner emailed the new
+date. A date end is picked up by the daily job (step `free_time_close_again`), so allow up to a day. A plan or
+sections given as free time do **not** let an ended club in (the window says so). If the record shows "bringing
+restoring the public site and tournaments failed" or "closing the club again failed", check the club's site and tournaments by hand; the daily job
+retries a failed close.
 
 **Delete** removes the club's rows and stored files and cannot be undone. Never use it to suspend.
 
@@ -173,8 +175,13 @@ already in Release safety Stage 3 — before the paying clubs pass ~20 (owner qu
 1. ✅ **RULED 2026-11-18 — no customer sees the owner's Gmail.** Every "Contact us", the emails' fallback contact and
    the feedback reply-to now read support@; the Gmail stays only on mail sent to the owner; a unit test holds it.
 2. **Internal reply aims** in §1: confirm them, or set your own. They stay internal.
-3. **Restoring an ended club with free time** leaves its site and tournaments off (§4). Recommended: the small fix in
-   §4, through `/billing`, before the first live club.
+3. ✅ **RULED 2026-11-18 — free time brings an ended club fully back, and the closing returns when it ends** (all four
+   answers as recommended: bring it fully back; email the owner the new date; say, never refuse, a plan or sections;
+   close again only clubs free time reopened). Built on dev; §4 says what support now sees. `/legal` 2026-11-18: OK as
+   built (Privacy §9 and Terms §9 only promise "kept 90 days", and the window only ever moves later; the re-sent
+   "has ended" email stays a data notice). Two follow-ups for the owner, not blockers: **(a)** should the club be
+   warned before its free time stops (today it learns of the closing afterwards)? **(b)** should the "has ended"
+   email be capped (it repeats each time free time on an ended club runs out)?
 4. **Telling every club** is email by hand; revisit before ~20 paying clubs (§5).
 5. **An incident email to club owners**: the legal chat confirms it needs no unsubscribe line (owner 2026-11-18:
    left with the legal chat).
