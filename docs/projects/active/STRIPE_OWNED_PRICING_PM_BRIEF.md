@@ -27,8 +27,13 @@ straight from the club's Stripe balance, and we take only our margin.
 - The club's books match its Stripe payouts, including Stripe's fee.
 
 ## Phases
-1. Prove it in test mode and settle the pricing (no product code).
-2. New club accounts and our margin-only fee.
+1. Prove it in test mode and settle the pricing (no product code). **Done 2026-11-17.**
+2. New club accounts and our margin-only fee. **Built 2026-11-18.** Families see the same fee; on a $100 card payment we
+   now take $1.65 and Stripe takes $3.35 from the club, which still nets $100. Each payment keeps what we took (the only
+   record our tax return can use). The club's Payouts card and set-up window now say Stripe's extras (a foreign card, a
+   currency conversion, a dispute, a returned debit) come out of its Stripe balance, with no invoice from us. The three
+   dev test clubs' old accounts take no new payments and are re-created through "Set up payouts again"; UAT Rep Club only
+   after the payout test's payout steps (owner, 2026-11-18).
 3. The club's books record Stripe's fee.
 4. Retire the monthly Stripe-fee invoicing.
 5. Words, help, terms; owner walk. Then the tax on our fee (GST/HST Stage 5) builds on the final shape.

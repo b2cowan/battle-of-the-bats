@@ -10,7 +10,7 @@ import { leaguePayPath } from '@/lib/league-pay-link';
 import { openSignupLink } from '@/lib/league-signup-link';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { throttlePublicForm } from '@/lib/public-form-throttle';
-import { toDollars } from '@/lib/online-payment-fee';
+import { canOpen, toDollars } from '@/lib/online-payment-fee';
 import { BANK_DEBIT_WORDS as B, PAY_WORDS as W } from '@/lib/online-payment-words';
 import { LEAGUE_PAY_WORDS as LW, childList } from '@/lib/league-pay-words';
 import { isMaskedEmail } from '@/lib/utils';
@@ -60,7 +60,7 @@ async function openSessionFor(seasonId: string, signupKey: string, rail: 'card' 
  * scoped to one sign-up. It RE-READS what is owed at this moment (never trusting the page), refuses a sign-up with
  * nothing to pay (ended, not accepted yet, already paid) or a payment still being checked, and opens ONE Checkout
  * Session on the club's own account for every child still owing — a line per child, the processing fee a line of its
- * own while families pay it (A14), the application fee always the whole fee. One open session per sign-up: a second
+ * own while families pay it (A14), the application fee our margin (the fee less Stripe's standard cost, stored with it). One open session per sign-up: a second
  * press (or a second tab) gets the same page back. The children and their split are recorded with the payment
  * (`online_payment_league_open`), so the landing books one line per child.
  */
@@ -93,8 +93,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   // The page showed one amount; the re-read must agree, or the family checks the new amount first. (A bank button whose
   // account no longer takes bank debit is the same: the page reloads without it.)
   if (!fee || fee.totalCents !== shownTotalCents) return NextResponse.json({ error: W.error.amountChanged, changed: true }, { status: 409 });
-  // Stripe refuses an application fee that is not below the charge (only possible when the club pays on a tiny amount).
-  if (fee.applicationFeeCents >= fee.totalCents) return NextResponse.json({ error: W.error.tooSmall }, { status: 409 });
+  // The whole fee must be below the charge (a club-pays payment of a dollar or so would leave the club below zero once
+  // Stripe and we are paid), and our margin above zero (Stripe-owned pricing; `canOpen` is the one rule).
+  if (!canOpen(fee)) return NextResponse.json({ error: W.error.tooSmall }, { status: 409 });
   const account = facts.account!;
 
   const who = shares.map(s => s.description.split(' · ')[0]).join(', ');
@@ -148,6 +149,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     p_description: description,
     p_payer_email: email ?? facts.guardianEmail,
     p_fee_amount: toDollars(fee.feeCents),
+    p_application_fee: toDollars(fee.applicationFeeCents),
     p_fee_payer: fee.feePayer,
     p_fee_pct: fee.pctBps / 100,
     p_fee_flat: toDollars(fee.flatCents),

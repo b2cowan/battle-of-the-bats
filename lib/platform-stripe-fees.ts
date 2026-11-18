@@ -163,14 +163,20 @@ export async function recordDisputeFees(p: {
  * (`FOREIGN_CARD_EXTRA_BPS`) on what the card was charged. Called once Stripe says the card is paid (both flows, and their
  * replays), whether or not the payment could be recorded; a refund leaves it billed (held ruling). The family's total
  * never changes.
+ *
+ * ⚠ Only a payment taken on an account under the OLD fee setting (`fees_collector: 'application'`): on a Stripe-owned
+ * account (every account since mig 498) Stripe takes the 0.8% from the club's own balance, so billing it here would charge
+ * the club twice (Stripe-owned pricing Stage 2, 2026-11-18). A payment on an account since replaced is not billed either.
+ * This line retires with the rest of the recovered-fee machinery in Stage 4.
  */
 export async function recordForeignCardFee(onlinePaymentId: string): Promise<void> {
   try {
     const { data: op } = await supabaseAdmin.from('online_payments')
-      .select('id, org_id, rail, card_country, total_amount, livemode')
+      .select('id, org_id, rail, card_country, total_amount, livemode, stripe_account_id')
       .eq('id', onlinePaymentId).maybeSingle();
     if (!op || op.rail !== 'card' || !op.card_country) return;
-    const { data: acct } = await supabaseAdmin.from('org_payment_accounts').select('country').eq('org_id', op.org_id).maybeSingle();
+    const { data: acct } = await supabaseAdmin.from('org_payment_accounts').select('country, stripe_account_id, fees_collector').eq('org_id', op.org_id).maybeSingle();
+    if (!acct || acct.fees_collector !== 'application' || acct.stripe_account_id !== op.stripe_account_id) return;
     const home = ((acct?.country as string | null) ?? '').toUpperCase();
     if (!home || home === String(op.card_country).toUpperCase()) return;
     await recordStripeFee({

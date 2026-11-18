@@ -9,10 +9,13 @@
  *   - 'family' (the default): the payer pays the base plus the fee; the club receives the base.
  *   - 'club': the payer pays the base alone; the fee comes out of it, and the club's books show it as a
  *     "Payment processing" cost — never as less fee revenue.
- * Either way the application fee FieldLogicHQ takes is the whole fee: FieldLogicHQ pays Stripe's own processing fee out
- * of it (the 2026-07-28 model, plan §0c).
+ * Stripe-owned pricing (rate design A, ruled 2026-11-17; plan STRIPE_OWNED_PRICING_PLAN.md): the club's account pays Stripe
+ * its own fee, and the application fee FieldLogicHQ takes is the fee LESS Stripe's standard Canadian cost on the whole
+ * charge (`STRIPE_STANDARD_COST`). The payer's fee and the club's net are what they were; only the split moved. The
+ * application fee is stored on the payment when its Checkout opens (`online_payments.application_fee_amount`) and never
+ * recomputed: Stripe's price can change, what we took cannot.
  */
-import { FOREIGN_CARD_EXTRA_BPS, ONLINE_PAYMENT_RATES, type OnlinePaymentRail } from './plan-config';
+import { FOREIGN_CARD_EXTRA_BPS, ONLINE_PAYMENT_RATES, STRIPE_STANDARD_COST, type OnlinePaymentRail } from './plan-config';
 
 export type OnlineFeePayer = 'family' | 'club';
 
@@ -25,9 +28,12 @@ export interface OnlineFee {
   feeCents: number;
   /** What the payer is charged. */
   totalCents: number;
-  /** FieldLogicHQ's application fee: the whole fee. */
+  /** Stripe's standard cost on what the payer is charged — Stripe takes it from the club's balance. */
+  stripeCostCents: number;
+  /** FieldLogicHQ's application fee: the fee less Stripe's standard cost (our margin, its GST/HST inside it, R1). */
   applicationFeeCents: number;
-  /** What reaches the club's Stripe balance from this payment. */
+  /** What the club nets from this payment once Stripe's standard cost and our fee are taken (a domestic payment; Stripe's
+   *  extras — a foreign card, a conversion, a dispute — come off it at Stripe). */
   clubReceivesCents: number;
   feePayer: OnlineFeePayer;
   rail: OnlinePaymentRail;
@@ -48,17 +54,39 @@ export function onlineFee(baseCents: number, feePayer: OnlineFeePayer, rail: Onl
   const pctCents = Math.floor((baseCents * pctBps + 5_000) / 10_000);
   const feeCents = pctCents + flatCents;
   const totalCents = feePayer === 'family' ? baseCents + feeCents : baseCents;
+  const stripeCostCents = stripeStandardCostCents(totalCents, rail);
   return {
     baseCents,
     feeCents,
     totalCents,
-    applicationFeeCents: feeCents,
+    stripeCostCents,
+    applicationFeeCents: feeCents - stripeCostCents,
     clubReceivesCents: totalCents - feeCents,
     feePayer,
     rail,
     pctBps,
     flatCents,
   };
+}
+
+/**
+ * Stripe's standard Canadian cost on a charge (`STRIPE_STANDARD_COST`): the percentage rounded half-up to the cent, as
+ * Stripe rounds it (the probe's $105.00 card charge cost exactly $3.35), plus the flat part, within the cap.
+ */
+export function stripeStandardCostCents(chargedCents: number, rail: OnlinePaymentRail): number {
+  const { pctBps, flatCents, capCents } = STRIPE_STANDARD_COST[rail];
+  const cost = Math.floor((chargedCents * pctBps + 5_000) / 10_000) + flatCents;
+  return capCents === null ? cost : Math.min(cost, capCents);
+}
+
+/**
+ * Whether a Checkout may open at this fee — the one rule both pay routes read. The WHOLE fee must be below what the payer
+ * is charged (only a club-pays payment of a dollar or so fails: the club would net below zero once Stripe and we are
+ * paid), and our margin must be above zero. On today's rates the margin never reaches zero (smallest: $0.59, a bank debit
+ * of a cent; $1.15 by card — a unit test walks every base); refusing is the guard if a rate or Stripe's price ever made it.
+ */
+export function canOpen(fee: Pick<OnlineFee, 'feeCents' | 'totalCents' | 'applicationFeeCents'>): boolean {
+  return fee.feeCents < fee.totalCents && fee.applicationFeeCents > 0;
 }
 
 /**

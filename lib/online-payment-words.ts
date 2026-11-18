@@ -94,10 +94,10 @@ export function termsStanding(agreedVersion: string | null | undefined, current:
 }
 
 /** GST/HST Stage 2 Part 2b (owner ruling A, 2026-11-05): a club connected before payouts asked for its billing address. Its
- *  Stripe fees wait unbilled until the address is saved; the card says so, with the Billing address window as the door. The
- *  owner's. "Stripe fees", never "monthly fee invoice": a comped club must not read its plan as being billed. */
+ *  The card asks for it, with the Billing address window as the door. The owner's. Stripe-owned pricing Stage 2: Stripe now
+ *  charges the club its own fees, so the line no longer promises an invoice; it says only that our fee needs the address. */
 export const PAYOUTS_ADDRESS_WORDS = {
-  missing: 'Add your club’s billing address so your invoice for Stripe fees can go out.',
+  missing: 'Add your club’s billing address. FieldLogicHQ needs it for the fee it charges on your payments.',
   /** The address couldn't be read on the way to Stripe: the Before window stays, and pressing again reads again. */
   readFailed: 'We couldn’t check your club’s billing address. Try again.',
 } as const;
@@ -394,7 +394,7 @@ export const PAYOUTS_WORDS = {
     costExample: (base: string, fee: string, bankFee: string | null = null) =>
       (bankFee ? `On a ${base} fee, the processing fee is ${fee} by card and ${bankFee} by bank debit.` : `On a ${base} fee, the card fee is ${fee}.`),
     // 12d-1 words §3.4 (§7 ruling 7): directly under the rates, before the example.
-    otherFees: 'Stripe may charge other fees on your payments, such as for a card dispute, a returned bank debit or a card issued outside your country. FieldLogicHQ passes them on to you on an invoice.',
+    otherFees: 'The processing fee covers Stripe’s charge and FieldLogicHQ’s. Stripe may take more for a card issued outside your country, a currency conversion, a dispute or a returned bank debit. That comes out of your Stripe balance, so you may receive less on those payments.',
     whoLabel: 'Who pays it',
     whoTeams: 'Teams pay it',
     whoTeamsHint: 'Added to what the team pays.',
@@ -424,7 +424,7 @@ export const PAYOUTS_WORDS = {
     feeRead: { family: 'Teams pay it: it’s added to what they pay', club: 'The club pays it: it comes out of each payment' },
     feeRates: (rate: string, bankRate: string | null = null) => (bankRate ? `${rate} per card payment · ${bankRate} per bank debit` : `${rate} per card payment`),
     // 12d-1 words §3.4: under the rates line. `otherFeesPlan` is appended for a club that pays nothing for its plan.
-    otherFees: 'Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.',
+    otherFees: 'The processing fee covers Stripe’s charge and FieldLogicHQ’s. Stripe takes more for a card issued outside your country, a currency conversion, a dispute or a returned bank debit. That comes out of your Stripe balance, so you may receive less on those payments.',
     otherFeesPlan: 'Your plan doesn’t change.',
     feeEditLabel: 'Who pays the processing fee',
     choice: { family: 'Teams pay it', club: 'The club pays it' },

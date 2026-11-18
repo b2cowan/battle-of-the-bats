@@ -201,13 +201,75 @@ describe('every online-payments door reads the launch switch', () => {
     assert.match(code, /configurations: \['merchant'\]/);
   });
 
-  it('the four account rulings are in the one creation call (plan §0c, §0d)', () => {
-    const create = /export async function createClubAccount[\s\S]*?\n}\n/.exec(readCode('lib/stripe-connect.ts'))?.[0] ?? '';
+  it('the four account rulings are in the one creation call (plan §0c, §0d; Stripe-owned pricing 2026-11-17)', () => {
+    const code = readCode('lib/stripe-connect.ts');
+    const create = /export async function createClubAccount[\s\S]*?\n}\n/.exec(code)?.[0] ?? '';
     assert.match(create, /dashboard: 'express'/);
-    assert.match(create, /fees_collector: 'application'/);
+    // R3 (owner 2026-11-17): Stripe charges the club its own fees; our application fee is only our margin.
+    assert.match(create, /fees_collector: 'stripe'/);
+    assert.doesNotMatch(create, /fees_collector: 'application'/);
     assert.match(create, /losses_collector: 'stripe'/);
-    assert.match(create, /idempotencyKey: `club-account:\$\{args\.orgId\}`/);
+    // One key per org, NEW for the new setting: the old setting's dev accounts used `club-account:<org>`.
+    assert.match(create, /idempotencyKey: clubAccountIdempotencyKey\(args\.orgId\)/);
+    assert.match(code, /return `club-account:stripe-fees:\$\{orgId\}`;/);
+    // The row records the setting the account was made with, and it is the one in the creation call.
+    assert.match(code, /export const CLUB_ACCOUNT_FEES_COLLECTOR = 'stripe' as const;/);
     // One fixed body under that key: what Stripe's form is handed goes in a separate call (/review 2026-10-25).
     assert.doesNotMatch(create, /profile/);
+  });
+});
+
+/**
+ * Stripe-owned pricing, Stage 2 (plan STRIPE_OWNED_PRICING_PLAN.md; owner 2026-11-18 "refuse and re-create"). An account
+ * made under the old fee setting opens no new payment and is replaced, never reused; every payment stores what we took;
+ * and the foreign-card line never bills a club Stripe already charged.
+ */
+describe('Stripe-owned pricing: the old fee setting, what we took, and no fee billed twice', () => {
+  const MIG_498 = readCode('supabase/migrations/498_a_club_account_pays_stripe_its_own_fees.sql');
+  const PAYOUTS = readCode('app/api/admin/payouts/route.ts');
+
+  it('setting up again REPLACES an old-setting account (a new Stripe account, the old facts emptied), never reconnects it', () => {
+    assert.match(PAYOUTS, /const replacing = !!row && oldFeeSetting\(factsFromRow\(row\)\);/);
+    assert.match(PAYOUTS, /if \(!accountId \|\| replacing\) \{/);
+    const replace = /if \(replacing\) \{[\s\S]*?\n {8}\} else \{/.exec(PAYOUTS)?.[0] ?? '';
+    assert.match(replace, /stripe_account_id: acct\.id, fees_collector: CLUB_ACCOUNT_FEES_COLLECTOR/);
+    for (const col of ['card_payments_status: null', 'onboarding_finished_at: null', 'requirements_due: []', 'country: null', 'bank_debit_status: null', 'disconnected_at: null']) {
+      assert.ok(replace.includes(col), col);
+    }
+    assert.match(replace, /\.eq\('stripe_account_id', row!\.stripe_account_id\)/, 'only the row still holding the old account');
+    // A brand-new account writes its setting too.
+    assert.match(PAYOUTS, /upsert\(\{\s*org_id: ctx\.org\.id, stripe_account_id: acct\.id, fees_collector: CLUB_ACCOUNT_FEES_COLLECTOR,/);
+  });
+
+  it('every reader of the account reads its fee setting (the one column list)', () => {
+    assert.match(readCode('lib/online-payment-account.ts'), /PAYOUTS_ACCOUNT_COLUMNS =\s*'[^']*, fees_collector';/);
+  });
+
+  it('the foreign-card line bills only a payment on the account it was taken on, under the old setting', () => {
+    const fn = /export async function recordForeignCardFee[\s\S]*?\n}\n/.exec(readCode('lib/platform-stripe-fees.ts'))?.[0] ?? '';
+    assert.match(fn, /if \(!acct \|\| acct\.fees_collector !== 'application' \|\| acct\.stripe_account_id !== op\.stripe_account_id\) return;/);
+    assert.ok(fn.indexOf("fees_collector !== 'application'") < fn.indexOf('recordStripeFee('));
+  });
+
+  it('both pay routes store what we took and open only what canOpen allows', () => {
+    const team = readCode('app/api/pay/team/[token]/route.ts');
+    const league = readCode('app/api/pay/league/[token]/route.ts');
+    assert.match(team, /application_fee_amount: toDollars\(fee\.applicationFeeCents\)/);
+    assert.match(league, /p_application_fee: toDollars\(fee\.applicationFeeCents\)/);
+    for (const r of [team, league]) {
+      assert.match(r, /if \(!canOpen\(fee\)\) return NextResponse\.json\(\{ error: W\.error\.tooSmall \}/);
+      assert.doesNotMatch(r, /applicationFeeCents >= fee\.totalCents/);
+    }
+  });
+
+  it('mig 498: what we took is required, no more than the fee, frozen by the guard, and the league opening must be told it', () => {
+    assert.match(MIG_498, /ALTER COLUMN application_fee_amount SET NOT NULL/);
+    assert.match(MIG_498, /CHECK \(application_fee_amount >= 0 AND application_fee_amount <= fee_amount\)/);
+    assert.match(MIG_498, /OR NEW\.application_fee_amount IS DISTINCT FROM OLD\.application_fee_amount/);
+    assert.match(MIG_498, /p_fee_amount numeric, p_application_fee numeric, p_fee_payer text/);
+    assert.match(MIG_498, /IF v_app IS NULL OR v_app <= 0 OR v_app > v_fee THEN/);
+    assert.match(MIG_498, /CHECK \(fees_collector IN \('application', 'stripe'\)\)/);
+    // No default: the one account creation writes it, so a forgotten writer fails rather than guessing.
+    assert.doesNotMatch(MIG_498, /fees_collector text[^;]*DEFAULT/);
   });
 });

@@ -111,7 +111,7 @@ describe('a card issued outside the club’s country', () => {
   it('compares with the club’s connected account’s country, never a typed "CA"', () => {
     const src = readCode(FEES);
     const fn = /export async function recordForeignCardFee[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
-    assert.match(fn, /from\('org_payment_accounts'\)\.select\('country'\)/);
+    assert.match(fn, /from\('org_payment_accounts'\)\.select\('country, stripe_account_id, fees_collector'\)/);
     assert.match(fn, /if \(!home \|\| home === String\(op\.card_country\)\.toUpperCase\(\)\) return;/);
     assert.doesNotMatch(fn, /'CA'/);
   });

@@ -34,6 +34,22 @@ export interface PayoutsAccountFacts {
   disconnectedAt: string | null;
   /** 12c (mig 386): Stripe's `acss_debit_payments` capability — a Canadian pre-authorized debit. `null` = not read yet. */
   bankDebit?: CardPaymentsStatus | null;
+  /** Who pays Stripe's fees on this account, as it was created (mig 498, Stripe-owned pricing). `'application'` = the old
+   *  setting: it opens no new payment (owner 2026-11-18). Absent is read as the current setting. */
+  feesCollector?: FeesCollector;
+}
+
+/** Stripe's `fees_collector` on a club account: immutable once created. Every account since mig 498 is `'stripe'`. */
+export type FeesCollector = 'application' | 'stripe';
+
+/**
+ * An account made under the old fee setting (FieldLogicHQ paid Stripe's fees). Under Stripe-owned pricing our application
+ * fee is only our margin, so a payment on such an account would leave us paying Stripe's whole fee out of a margin: it
+ * opens no new payment, and setting up payouts again replaces it with a new account (owner 2026-11-18). Dev only —
+ * production never had one.
+ */
+export function oldFeeSetting(a: Pick<PayoutsAccountFacts, 'feesCollector'> | null | undefined): boolean {
+  return a?.feesCollector === 'application';
 }
 
 /**
@@ -82,10 +98,11 @@ export function pausedForRefundPolicy(a: PayoutsAccountFacts | null): boolean {
 /**
  * Whether a pay page may open now. Stripe's own capability decides, never the card's word: an account with a deadline
  * still takes payments until the deadline passes. A disconnected club takes none (A1: Disconnect stops new payments), and
- * neither does a club with no refund policy (owner 2026-11-17) — every pay door reads this one rule.
+ * neither does a club with no refund policy (owner 2026-11-17), nor an account under the old fee setting (owner
+ * 2026-11-18, `oldFeeSetting`) — every pay door reads this one rule.
  */
 export function takesPayments(a: PayoutsAccountFacts | null): boolean {
-  return !!a && !a.disconnectedAt && a.cardPayments === 'active' && !refundPolicyMissing(a);
+  return !!a && !a.disconnectedAt && a.cardPayments === 'active' && !refundPolicyMissing(a) && !oldFeeSetting(a);
 }
 
 /** 12c: the pay block offers bank debit beside the card only while the account takes payments AND bank debit is on. */
@@ -101,7 +118,7 @@ export function payoutsNeedAttention(a: PayoutsAccountFacts | null): boolean {
 
 /** The columns every reader of the account selects, and their mapping back to the facts the rule takes. */
 export const PAYOUTS_ACCOUNT_COLUMNS =
-  'org_id, stripe_account_id, livemode, card_payments_status, card_payments_reason, onboarding_finished_at, requirements_due, requirements_deadline, fee_payer, refund_policy, disconnected_at, bank_debit_status';
+  'org_id, stripe_account_id, livemode, card_payments_status, card_payments_reason, onboarding_finished_at, requirements_due, requirements_deadline, fee_payer, refund_policy, disconnected_at, bank_debit_status, fees_collector';
 
 export interface PayoutsAccountRow {
   org_id: string;
@@ -116,6 +133,7 @@ export interface PayoutsAccountRow {
   refund_policy: string | null;
   disconnected_at: string | null;
   bank_debit_status?: CardPaymentsStatus | null;
+  fees_collector?: FeesCollector;
 }
 
 export function factsFromRow(r: PayoutsAccountRow | null | undefined): PayoutsAccountFacts | null {
@@ -132,6 +150,7 @@ export function factsFromRow(r: PayoutsAccountRow | null | undefined): PayoutsAc
     refundPolicy: r.refund_policy,
     disconnectedAt: r.disconnected_at,
     bankDebit: r.bank_debit_status ?? null,
+    ...(r.fees_collector ? { feesCollector: r.fees_collector } : {}),
   };
 }
 

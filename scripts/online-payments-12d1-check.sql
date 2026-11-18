@@ -27,9 +27,9 @@ BEGIN
   -- says what Stripe says), and the whole of it is flagged extra.
   PERFORM tournament_team_payment_record(v_whole, 400, v_today, 'Payment', 'etransfer', NULL);
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
   VALUES (v_org, 'acct_check12d1', 'tournament_team', v_event, v_whole, 'balance', 'Riverside Rockets · balance', 400,
-    15.50, 415.50, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_op;
+    15.50, 15.50, 415.50, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_op;
   v_res := online_payment_land(v_op, now(), 'pi_d1_w', 'ch_d1_w', 'visa', '4242');
   IF (SELECT total_paid FROM teams WHERE id = v_whole) <> 800
      OR (SELECT over_amount FROM online_payments WHERE id = v_op) <> 400
@@ -41,9 +41,9 @@ BEGIN
   -- T2 · more than owed: $300 by cheque, then $300 by card on a $400 entry. Booked in full; $200 extra, not "whole".
   PERFORM tournament_team_payment_record(v_part, 300, v_today, 'Payment', 'cheque', NULL);
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
   VALUES (v_org, 'acct_check12d1', 'tournament_team', v_event, v_part, 'balance', 'Oakville Owls · balance', 300,
-    12, 312, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_op2;
+    12, 12, 312, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_op2;
   v_res := online_payment_land(v_op2, now(), 'pi_d1_p', 'ch_d1_p', 'visa', '4242');
   IF (SELECT total_paid FROM teams WHERE id = v_part) <> 600
      OR (SELECT over_amount FROM online_payments WHERE id = v_op2) <> 200
@@ -53,9 +53,9 @@ BEGIN
 
   -- T3 · exactly what is owed: no flag. A replayed landing writes nothing and leaves the flag as it was.
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
   VALUES (v_org, 'acct_check12d1', 'tournament_team', v_event, v_exact, 'full', 'Milton Mets · full', 400,
-    15.50, 415.50, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_op3;
+    15.50, 15.50, 415.50, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_op3;
   PERFORM online_payment_land(v_op3, now(), 'pi_d1_e', 'ch_d1_e', 'visa', '4242');
   IF (SELECT over_amount FROM online_payments WHERE id = v_op3) IS NOT NULL OR online_payment_over_left(v_op3) <> 0 THEN
     RAISE EXCEPTION 'FAIL T3: an exact payment was flagged'; END IF;
@@ -100,14 +100,14 @@ BEGIN
   VALUES (v_event, v_div, 'Halton Hawks', 'h@example.invalid', 'accepted', 'pending') RETURNING id INTO v_two;
   PERFORM tournament_team_payment_record(v_two, 400, v_today, 'Payment', 'cheque', NULL);
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
   VALUES (v_org, 'acct_check12d1', 'tournament_team', v_event, v_two, 'balance', 'Halton Hawks · balance', 100,
-    5, 105, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_xa;
+    5, 5, 105, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_xa;
   PERFORM online_payment_land(v_xa, now() - interval '1 hour', 'pi_d1_xa', 'ch_d1_xa', 'visa', '4242');
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
   VALUES (v_org, 'acct_check12d1', 'tournament_team', v_event, v_two, 'balance', 'Halton Hawks · balance', 60,
-    3.60, 63.60, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_xb;
+    3.60, 3.60, 63.60, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_xb;
   PERFORM online_payment_land(v_xb, now(), 'pi_d1_xb', 'ch_d1_xb', 'visa', '4242');
   IF online_payment_over_left(v_xa) <> 100 OR online_payment_over_left(v_xb) <> 60 THEN
     RAISE EXCEPTION 'FAIL T4c: two extras before a refund (% and %)', online_payment_over_left(v_xa), online_payment_over_left(v_xb); END IF;
@@ -207,7 +207,7 @@ BEGIN
   VALUES (v_org, v_season, 'Ivy', 'Kim', 'G', 'K', 'k@example.invalid', 'active', 150) RETURNING id INTO v_reg2;
   v_lop := gen_random_uuid();
   PERFORM online_payment_league_open(v_lop, v_org, 'acct_check12d1', v_season, 'kim-signup', 'Kim family', 'k@example.invalid',
-    11.50, 'family', 0.035, 1.50, false, 'cs_check12d1_' || gen_random_uuid(),
+    11.50, 11.50, 'family', 0.035, 1.50, false, 'cs_check12d1_' || gen_random_uuid(),
     jsonb_build_array(jsonb_build_object('registrationId', v_reg, 'description', 'Henry Kim · U11', 'amount', 150, 'feeShare', 5.75),
                       jsonb_build_object('registrationId', v_reg2, 'description', 'Ivy Kim · U9', 'amount', 150, 'feeShare', 5.75)));
   PERFORM online_payment_league_land(v_lop, now(), 'pi_d1_kim', 'ch_d1_kim', 'visa', '0259');

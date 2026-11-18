@@ -69,7 +69,9 @@ describe('siblings in one checkout (§0e a)', () => {
   it('the club pays the fee (A14): the family is charged the base alone', () => {
     const club = onlineFee(30_000, 'club');
     assert.equal(club.totalCents, 30_000);
-    assert.equal(club.applicationFeeCents, club.feeCents);
+    // Stripe-owned pricing (rate design A): our share is the fee less Stripe's standard cost on the base.
+    assert.equal(club.applicationFeeCents, club.feeCents - club.stripeCostCents);
+    assert.ok(club.applicationFeeCents > 0 && club.applicationFeeCents < club.feeCents);
   });
 });
 

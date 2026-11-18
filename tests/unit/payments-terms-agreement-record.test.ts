@@ -75,11 +75,14 @@ describe('the record is written before the standing changes, in every action tha
     assert.ok(rec > connect.indexOf('requireFreshCode()'), 'after the checks');
     assert.ok(rec < connect.indexOf('createClubAccount('), 'before Stripe');
     assert.ok(rec < connect.indexOf(".upsert("), 'before the standing');
+    // Stripe-owned pricing (owner 2026-11-18): replacing an old-setting account is a set-up too, recorded before its update.
+    assert.ok(rec < connect.indexOf('stripe_account_id: acct.id, fees_collector: CLUB_ACCOUNT_FEES_COLLECTOR, livemode'), 'before the replacement');
   });
   it('reconnecting: after Stripe’s closed-account check, before the row is updated, and the update’s error is checked', () => {
     const rec = connect.indexOf("action: 'reconnect'");
     assert.ok(rec > connect.indexOf('.closed)'), 'a reconnect Stripe refuses records nothing');
-    assert.ok(rec < connect.indexOf('disconnected_at: null'), 'before the standing');
+    // The LAST clearing of the disconnect is the reconnect's (the one before it replaces an old-setting account, below).
+    assert.ok(rec < connect.lastIndexOf('disconnected_at: null'), 'before the standing');
     assert.match(connect, /if \(reconnectError\) throw reconnectError;/);
   });
   it('agreeing again: after the tick and the version, before the row', () => {
@@ -93,7 +96,7 @@ describe('THE REFUND POLICY IS REQUIRED (owner 2026-11-17)', () => {
     const connect = /case 'connect': \{[\s\S]*?\n    case 'agree_terms'/.exec(ROUTE)?.[0] ?? '';
     const refuse = connect.indexOf("PAYOUTS_WORDS.before.policyRequired, code: 'refund_policy_required'");
     assert.ok(refuse > 0 && refuse < connect.indexOf('requireBillingLocation('));
-    assert.equal(connect.split('refund_policy: policy.text').length - 1, 2, 'the new row and the reconnect both store the policy');
+    assert.equal(connect.split('refund_policy: policy.text').length - 1, 3, 'the new row, the replaced account (Stripe-owned pricing) and the reconnect all store the policy');
   });
   it('the Payouts card’s autosave can change it, never clear it — and saving it settles the paused item at once', () => {
     const patch = /export const PATCH = [\s\S]*?\n\}, \{ route/.exec(ROUTE)?.[0] ?? '';

@@ -220,7 +220,7 @@ BEGIN
   -- T20 · siblings in ONE checkout: one payment, a line per child through the writer, both paid; the fee is no revenue.
   v_op := gen_random_uuid();
   PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'aa11bb22', 'Sib One, Sib Two', 's@example.invalid',
-    12.00, 'family', 0.0350, 1.50, false, 'cs_check_' || v_op::text,
+    12.00, 12.00, 'family', 0.0350, 1.50, false, 'cs_check_' || v_op::text,
     jsonb_build_array(
       jsonb_build_object('registrationId', v_s1, 'description', 'Sib One · B', 'amount', 150, 'feeShare', 6.00),
       jsonb_build_object('registrationId', v_s2, 'description', 'Sib Two · B', 'amount', 150, 'feeShare', 6.00)));
@@ -254,7 +254,7 @@ BEGIN
     guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
   VALUES (v_org, v_season, v_div2, 'Late', 'Decline', 'P', 'G', 'l@example.invalid', 'active', 150, 'cc33dd44') RETURNING id INTO v_s3;
   v_op := gen_random_uuid();
-  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'cc33dd44', 'Late Decline', NULL, 6.75, 'family', 0.0350, 1.50,
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'cc33dd44', 'Late Decline', NULL, 6.75, 6.75, 'family', 0.0350, 1.50,
     false, 'cs_check_' || v_op::text, jsonb_build_array(jsonb_build_object('registrationId', v_s3, 'description', 'Late Decline · B', 'amount', 150, 'feeShare', 6.75)));
   PERFORM 1 FROM league_registration_close(v_org, v_season, v_s3, 'declined', NULL, NULL, false, false, NULL, NULL, NULL, NULL);
   v_res := online_payment_league_land(v_op, now(), 'pi_check_' || v_op::text, NULL, NULL, NULL);
@@ -268,7 +268,7 @@ BEGIN
     guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
   VALUES (v_org, v_season, v_div2, 'Hand', 'First', 'P', 'G', 'h@example.invalid', 'active', 150, 'ee55ff66') RETURNING id INTO v_s4;
   v_op := gen_random_uuid();
-  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'ee55ff66', 'Hand First', NULL, 6.75, 'family', 0.0350, 1.50,
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'ee55ff66', 'Hand First', NULL, 6.75, 6.75, 'family', 0.0350, 1.50,
     false, 'cs_check_' || v_op::text, jsonb_build_array(jsonb_build_object('registrationId', v_s4, 'description', 'Hand First · B', 'amount', 150, 'feeShare', 6.75)));
   PERFORM 1 FROM club_league_money(v_org, v_season, v_s4, 'receive', NULL, v_day, 'cash', NULL, NULL);
   v_res := online_payment_league_land(v_op, now(), 'pi_check_' || v_op::text, NULL, NULL, NULL);
@@ -281,7 +281,7 @@ BEGIN
     guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
   VALUES (v_org, v_season, v_div2, 'Club', 'Pays', 'P', 'G', 'c@example.invalid', 'active', 150, 'aa77bb88') RETURNING id INTO v_s5;
   v_op := gen_random_uuid();
-  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'aa77bb88', 'Club Pays', NULL, 6.75, 'club', 0.0350, 1.50,
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'aa77bb88', 'Club Pays', NULL, 6.75, 6.75, 'club', 0.0350, 1.50,
     false, 'cs_check_' || v_op::text, jsonb_build_array(jsonb_build_object('registrationId', v_s5, 'description', 'Club Pays · B', 'amount', 150, 'feeShare', 6.75)));
   v_res := online_payment_league_land(v_op, now(), 'pi_check_' || v_op::text, NULL, NULL, NULL);
   IF (SELECT total_amount FROM online_payments WHERE id = v_op) <> 150 OR league_reg_received(v_s5) <> 150
@@ -302,7 +302,7 @@ BEGIN
     guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
   VALUES (v_org, v_season, v_div2, 'Closed', 'Year', 'P', 'G', 'y@example.invalid', 'active', 150, 'cc99dd00') RETURNING id INTO v_s6;
   v_op := gen_random_uuid();
-  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'cc99dd00', 'Closed Year', NULL, 6.75, 'family', 0.0350, 1.50,
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'cc99dd00', 'Closed Year', NULL, 6.75, 6.75, 'family', 0.0350, 1.50,
     false, 'cs_check_' || v_op::text, jsonb_build_array(jsonb_build_object('registrationId', v_s6, 'description', 'Closed Year · B', 'amount', 150, 'feeShare', 6.75)));
   v_res := online_payment_league_land(v_op, TIMESTAMPTZ '2026-03-15 15:00+00', 'pi_check_' || v_op::text, NULL, NULL, NULL);
   IF jsonb_array_length(v_res->'unrecorded') <> 0 OR (v_res->>'day')::date <> v_today
@@ -392,10 +392,10 @@ BEGIN
   INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,
     guardian_first_name, guardian_last_name, guardian_email, status, fee_amount)
   VALUES (v_org, v_season, v_div2, 'Two', 'Pages', 'P', 'G', 't@example.invalid', 'active', 150) RETURNING id INTO v_s7;
-  PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check', v_season, v_s7::text, 'Two Pages', NULL, 6.75, 'family', 0.0350, 1.50,
+  PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check', v_season, v_s7::text, 'Two Pages', NULL, 6.75, 6.75, 'family', 0.0350, 1.50,
     false, 'cs_check_a_' || v_s7::text, jsonb_build_array(jsonb_build_object('registrationId', v_s7, 'description', 'Two Pages · B', 'amount', 150, 'feeShare', 6.75)));
   BEGIN
-    PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check', v_season, 'other-key', 'Two Pages', NULL, 6.75, 'family', 0.0350, 1.50,
+    PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check', v_season, 'other-key', 'Two Pages', NULL, 6.75, 6.75, 'family', 0.0350, 1.50,
       false, 'cs_check_b_' || v_s7::text, jsonb_build_array(jsonb_build_object('registrationId', v_s7, 'description', 'Two Pages · B', 'amount', 150, 'feeShare', 6.75)));
     RAISE EXCEPTION 'FAIL T28: a second open payment for one child went through';
   EXCEPTION WHEN raise_exception THEN

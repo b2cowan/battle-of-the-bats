@@ -559,8 +559,10 @@ export function formatAnnualSavings(planKey: OrgPlan): string | null {
  * line and fails the build when these drift from it. Never type a rate anywhere else — screens print it with
  * `onlineFeeRateLabel()`, and the arithmetic is `onlineFee()` in `lib/online-payment-fee.ts`.
  *
- * Basis points and cents, so the arithmetic is exact: 350 bps = 3.5%. "All-in" means FieldLogicHQ pays Stripe's own
- * processing fee out of it (plan §0c). The same rates apply whoever pays the fee (A14). `bankDebit` is Stage 12c's.
+ * Basis points and cents, so the arithmetic is exact: 350 bps = 3.5%. "All-in" is what the payer or the club sees: one
+ * processing fee, Stripe's own cost inside it. Since Stripe-owned pricing (ruled 2026-11-17, rate design A) Stripe takes its
+ * cost from the club's balance and FieldLogicHQ's application fee is the rest (`STRIPE_STANDARD_COST` below). The same
+ * rates apply whoever pays the fee (A14). `bankDebit` is Stage 12c's.
  */
 export const ONLINE_PAYMENT_RATES = {
   card:      { pctBps: 350, flatCents: 150 },
@@ -570,9 +572,25 @@ export const ONLINE_PAYMENT_RATES = {
 export type OnlinePaymentRail = keyof typeof ONLINE_PAYMENT_RATES;
 
 /**
+ * STRIPE'S price, not ours: its standard Canadian cost for a domestic payment (stripe.com/en-ca/pricing, read 2026-11-17;
+ * the Stripe-owned pricing probe charged exactly these, `.probe/sop/RESULTS.md`). Card 2.9% + $0.30; Canadian
+ * pre-authorized debit 1% + $0.40, capped at $5.00. It is on the WHOLE charge, as Stripe charges it. Under rate design A
+ * (`BUSINESS_DECISIONS.md` 2026-11-17 "Stripe-owned pricing…") our application fee is the processing fee less this, so
+ * the family-facing rates above never move when Stripe's price does — only our margin does. Canonical record: the Facts
+ * doc's facilitated-payments line, which a unit test holds these to. If Stripe changes its price, change both together;
+ * a payment already opened keeps the application fee it stored (`online_payments.application_fee_amount`).
+ */
+export const STRIPE_STANDARD_COST: Record<OnlinePaymentRail, { pctBps: number; flatCents: number; capCents: number | null }> = {
+  card:      { pctBps: 290, flatCents: 30, capCents: null },
+  bankDebit: { pctBps: 100, flatCents: 40, capCents: 500 },
+};
+
+/**
  * Stripe's extra fee on a card issued outside the club's country (+0.8% of the charge, stripe.com/en-ca pricing, read
  * 2026-10-27), which Stripe charges the platform and the owner ruled is the club's, never the family's (Stage 12d,
- * 2026-10-27). Stripe gives no per-charge figure for it (plan §0, sandbox probe), so it is billed from this published rate
+ * 2026-10-27). Only on an account made under the old fee setting (`fees_collector: 'application'`): on a Stripe-owned
+ * account Stripe takes it from the club itself, and this figure retires with the recovered-fee machinery (Stripe-owned
+ * pricing Stage 4). Stripe gives no per-charge figure for it (plan §0, sandbox probe), so it is billed from this published rate
  * (the ruled fallback). Canonical record: the Facts doc's facilitated-payments section. Never typed elsewhere.
  */
 export const FOREIGN_CARD_EXTRA_BPS = 80;

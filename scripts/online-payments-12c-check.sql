@@ -20,8 +20,8 @@ BEGIN
 
   -- A $100 deposit paid online by card, landed through the tournament's writer.
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
-  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_team, 'deposit', 'Riverside Rockets · deposit', 100, 5, 105,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_team, 'deposit', 'Riverside Rockets · deposit', 100, 5, 5, 105,
     'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_op;
   v_res := online_payment_land(v_op, now(), 'pi_c12_' || gen_random_uuid(), 'ch_c12_' || gen_random_uuid(), 'visa', '4242');
   IF (SELECT total_paid FROM teams WHERE id = v_team) <> 100 THEN RAISE EXCEPTION 'FAIL T1: the deposit did not land'; END IF;
@@ -111,8 +111,8 @@ BEGIN
   INSERT INTO teams(tournament_id, division_id, name, email, status, payment_status)
   VALUES (v_event, v_div, 'Paid Whole', 'w@example.invalid', 'accepted', 'pending') RETURNING id INTO v_full;
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
-  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_full, 'full', 'Paid Whole · entry', 400, 15.50, 415.50,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_full, 'full', 'Paid Whole · entry', 400, 15.50, 15.50, 415.50,
     'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_op2;
   PERFORM online_payment_land(v_op2, now(), 'pi_c12_' || gen_random_uuid(), NULL, 'visa', '4242');
   IF (SELECT payment_status FROM teams WHERE id = v_full) <> 'paid' THEN RAISE EXCEPTION 'FAIL T9: not paid in full'; END IF;
@@ -126,8 +126,8 @@ BEGIN
   INSERT INTO teams(tournament_id, division_id, name, email, status, payment_status)
   VALUES (v_event, v_div, 'Dashboard Team', 'd@example.invalid', 'accepted', 'pending') RETURNING id INTO v_dash;
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
-  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_dash, 'deposit', 'Dashboard Team · deposit', 100, 5, 105,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_dash, 'deposit', 'Dashboard Team · deposit', 100, 5, 5, 105,
     'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_op2;
   PERFORM online_payment_land(v_op2, now(), 'pi_c12_' || gen_random_uuid(), NULL, 'visa', '4242');
   v_ref := online_payment_refund_open(v_op2, false, NULL, NULL, NULL, 'stripe_dashboard', NULL, 25, NULL);
@@ -137,8 +137,8 @@ BEGIN
 
   -- T11 · a full refund (12a, "All of it") still makes the team owe: no adjustment.
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
-  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_team, 'deposit', 'Riverside Rockets · deposit again', 100, 5, 105,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_team, 'deposit', 'Riverside Rockets · deposit again', 100, 5, 5, 105,
     'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_op2;
   PERFORM online_payment_land(v_op2, now(), 'pi_c12_' || gen_random_uuid(), NULL, 'visa', '4242');
   v_ref := online_payment_refund_open(v_op2, true, 'team_left', NULL, NULL, 'app');
@@ -151,8 +151,8 @@ BEGIN
   INSERT INTO teams(tournament_id, division_id, name, email, status, payment_status)
   VALUES (v_event, v_div, 'Bank Team', 'b@example.invalid', 'accepted', 'pending') RETURNING id INTO v_bankteam;
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id, rail)
-  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'deposit', 'Bank Team · deposit', 100, 3.50, 103.50,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id, rail)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'deposit', 'Bank Team · deposit', 100, 3.50, 3.50, 103.50,
     'family', 0.025, 1.00, 'cs_check12c_' || gen_random_uuid(), 'bank_debit') RETURNING id INTO v_op;
 
   -- T12 · clearing: no book, no receipt number, the team's paid figure unmoved; a second payment can't open.
@@ -166,8 +166,8 @@ BEGIN
   v_err := NULL;
   BEGIN
     INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-      fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
-    VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'full', 'Bank Team · entry', 400, 15.50, 415.50,
+      fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+    VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'full', 'Bank Team · entry', 400, 15.50, 15.50, 415.50,
       'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid());
   EXCEPTION WHEN unique_violation THEN v_err := 'unique';
   END;
@@ -186,8 +186,8 @@ BEGIN
   -- T14 · a debit that clears lands as 'online_bank', with its receipt number given then; a replay writes nothing; a late
   -- "completed" can't move it back to clearing.
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id, rail)
-  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'deposit', 'Bank Team · deposit', 100, 3.50, 103.50,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id, rail)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'deposit', 'Bank Team · deposit', 100, 3.50, 3.50, 103.50,
     'family', 0.025, 1.00, 'cs_check12c_' || gen_random_uuid(), 'bank_debit') RETURNING id INTO v_op;
   PERFORM online_payment_clearing(v_op, 'pi_c12_bank2', '6789');
   v_res := online_payment_land(v_op, now(), 'pi_c12_bank2', 'ch_c12_bank2', NULL, NULL);
@@ -205,8 +205,8 @@ BEGIN
   DECLARE v_card uuid;
   BEGIN
     INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-      fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
-    VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'balance', 'Card Team · balance', 50, 2, 52,
+      fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+    VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'balance', 'Card Team · balance', 50, 2, 2, 52,
       'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_card;
     IF (SELECT status FROM online_payments WHERE id = v_card) <> 'open' THEN RAISE EXCEPTION 'FAIL T14: the card fixture is not open'; END IF;
     IF online_payment_clearing(v_card, 'pi_x', NULL) THEN RAISE EXCEPTION 'FAIL T14: a card payment cleared'; END IF;
@@ -222,8 +222,8 @@ BEGIN
   IF (SELECT entry_lowered FROM teams WHERE id = v_bankteam) <> 0 THEN RAISE EXCEPTION 'FAIL T14c: a stale lowered entry'; END IF;
   -- T14d · a part refund on a payment that never reached the team's record is refused (/dba).
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
-  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_dash, 'balance', 'Dashboard Team · balance', 300, 12, 312,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_dash, 'balance', 'Dashboard Team · balance', 300, 12, 12, 312,
     'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_op2;
   PERFORM online_payment_land_failed(v_op2, now(), 'pi_c12_' || gen_random_uuid(), NULL, 'visa', '4242', 'test: not recorded');
   v_err := NULL;
@@ -250,7 +250,7 @@ BEGIN
   -- T16 · siblings on one bank debit: while it clears neither child can be put in another payment; it lands as 'online_bank'.
   v_lop := gen_random_uuid();
   PERFORM online_payment_league_open(v_lop, v_org, 'acct_check12c', v_season, 'grant-signup', 'Grant family', 'g@example.invalid',
-    8.50, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
+    8.50, 8.50, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
     jsonb_build_array(jsonb_build_object('registrationId', v_reg, 'description', 'Henry Grant · U11', 'amount', 150, 'feeShare', 4.25),
                       jsonb_build_object('registrationId', v_reg2, 'description', 'Lily Grant · U9', 'amount', 150, 'feeShare', 4.25)),
     'bank_debit');
@@ -259,7 +259,7 @@ BEGIN
   v_err := NULL;
   BEGIN
     PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check12c', v_season, 'lily-alone', 'Lily', 'g@example.invalid',
-      5.25, 'family', 0.035, 1.50, false, 'cs_check12c_' || gen_random_uuid(),
+      5.25, 5.25, 'family', 0.035, 1.50, false, 'cs_check12c_' || gen_random_uuid(),
       jsonb_build_array(jsonb_build_object('registrationId', v_reg2, 'description', 'Lily Grant · U9', 'amount', 150, 'feeShare', 5.25)));
   EXCEPTION WHEN others THEN v_err := SQLERRM; END;
   IF v_err IS DISTINCT FROM 'A payment for a child in this sign-up is already open' THEN
@@ -272,13 +272,13 @@ BEGIN
   VALUES (v_org, v_season, 'Rose', 'Grant', 'P', 'G', 'g@example.invalid', 'active', 150) RETURNING id INTO v_op2;
   v_op := gen_random_uuid();
   PERFORM online_payment_league_open(v_op, v_org, 'acct_check12c', v_season, 'grant-signup', 'Rose', 'g@example.invalid',
-    5.25, 'family', 0.035, 1.50, false, 'cs_check12c_' || gen_random_uuid(),
+    5.25, 5.25, 'family', 0.035, 1.50, false, 'cs_check12c_' || gen_random_uuid(),
     jsonb_build_array(jsonb_build_object('registrationId', v_op2, 'description', 'Rose Grant · U7', 'amount', 150, 'feeShare', 5.25)));
   IF (SELECT status FROM online_payments WHERE id = v_op) <> 'open' THEN RAISE EXCEPTION 'FAIL T16b: a sibling off the debit could not pay'; END IF;
   v_ok := false;
   BEGIN
     PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check12c', v_season, 'grant-signup', 'Rose', 'g@example.invalid',
-      5.25, 'family', 0.035, 1.50, false, 'cs_check12c_' || gen_random_uuid(),
+      5.25, 5.25, 'family', 0.035, 1.50, false, 'cs_check12c_' || gen_random_uuid(),
       jsonb_build_array(jsonb_build_object('registrationId', v_op2, 'description', 'Rose Grant · U7', 'amount', 150, 'feeShare', 5.25)));
   EXCEPTION WHEN others THEN v_ok := true; END;
   IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T16b: two open pages for one sign-up'; END IF;
@@ -338,8 +338,8 @@ BEGIN
   INSERT INTO teams(tournament_id, division_id, name, email, status, payment_status)
   VALUES (v_event, v_div, 'Stripe Team', 's@example.invalid', 'accepted', 'pending') RETURNING id INTO v_dash;
   INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
-    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
-  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_dash, 'deposit', 'Stripe Team · deposit', 100, 5, 105,
+    fee_amount, application_fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_dash, 'deposit', 'Stripe Team · deposit', 100, 5, 5, 105,
     'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_op2;
   PERFORM online_payment_land(v_op2, now(), 'pi_c12_' || gen_random_uuid(), NULL, 'visa', '4242');
   v_ref := online_payment_refund_record_dashboard(v_op2, NULL, 30, 0, 're_c12_tdash', now(), NULL, NULL);
@@ -369,7 +369,7 @@ BEGIN
   VALUES (v_org, v_season, 'Iris', 'Lee', 'P', 'L', 'l@example.invalid', 'active', 150, 'IRISLEE1') RETURNING id INTO v_reg;
   v_lop := gen_random_uuid();
   PERFORM online_payment_league_open(v_lop, v_org, 'acct_check12c', v_season, 'IRISLEE1', 'Iris', 'l@example.invalid',
-    4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
+    4.75, 4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
     jsonb_build_array(jsonb_build_object('registrationId', v_reg, 'description', 'Iris Lee · U9', 'amount', 150, 'feeShare', 4.75)),
     'bank_debit');
   PERFORM online_payment_clearing(v_lop, 'pi_c12_iris', '4321');
@@ -392,7 +392,7 @@ BEGIN
   VALUES (v_org, v_season, 'Jack', 'Lee', 'P', 'L', 'l@example.invalid', 'active', 150, 'JACKLEE1') RETURNING id INTO v_reg2;
   v_lop := gen_random_uuid();
   PERFORM online_payment_league_open(v_lop, v_org, 'acct_check12c', v_season, 'JACKLEE1', 'Jack', 'l@example.invalid',
-    4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
+    4.75, 4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
     jsonb_build_array(jsonb_build_object('registrationId', v_reg2, 'description', 'Jack Lee · U9', 'amount', 150, 'feeShare', 4.75)),
     'bank_debit');
   PERFORM online_payment_clearing(v_lop, 'pi_c12_jack', '4321');
@@ -461,7 +461,7 @@ BEGIN
   VALUES (v_org, v_season, 'Kai', 'Lee', 'P', 'L', 'l@example.invalid', 'active', 150, 'KAILEE01') RETURNING id INTO v_reg;
   v_lop := gen_random_uuid();
   PERFORM online_payment_league_open(v_lop, v_org, 'acct_check12c', v_season, 'KAILEE01', 'Kai', 'l@example.invalid',
-    4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
+    4.75, 4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
     jsonb_build_array(jsonb_build_object('registrationId', v_reg, 'description', 'Kai Lee · U9', 'amount', 150, 'feeShare', 4.75)),
     'bank_debit');
   PERFORM online_payment_clearing(v_lop, 'pi_c12_kai', '4321');

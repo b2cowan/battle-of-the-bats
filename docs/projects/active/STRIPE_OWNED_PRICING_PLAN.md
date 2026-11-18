@@ -161,6 +161,61 @@ New accounts created with Stripe-owned pricing; our application fee becomes marg
 record (Facts doc + plan config + their tests) updated; dev test accounts re-created (the setting is immutable); the
 account-setting guard test updated to the new pinned values; Payouts card and Before window words. `/strategy` drift check.
 
+**Owner ruling 2026-11-18 (Stage 2 step 5, the old dev accounts): refuse and re-create.** An account made under the old
+setting (`fees_collector: 'application'`; dev only: `dev-club-org`, `milton-bats`, `uat-rep-club`; production has none)
+opens no new payment, and setting up payouts again makes a NEW Stripe-owned account rather than reusing it. One fee rule
+lives in the code. The owner redoes Stripe's hosted test sign-up once per dev club.
+
+**Owner ruling 2026-11-18 (the payout test meets the ruling above): split the pass.** UAT Rep Club holds the 2026-11-17
+lead-time payments for the full payout test (on/after 2026-11-25, ruled to run as planned). Mig 498 marked its account
+disconnected and it now refuses new payments, but the Payouts tab reads Stripe live through the row's account id (not
+`disconnected_at`), so **the payout steps run on 2026-11-25 as planned on the old account — and UAT Rep Club must NOT be
+re-created before they are done** (setting up again replaces the account, and the tab would then read the new, empty one).
+After them, the owner re-creates UAT Rep Club (Stripe's hosted test form), and the held steps that need a connected club
+taking payments — walk §405's Disconnect counts with a page paid, the ending emails (G) and the terms emails (F1–F2) — run
+on the new account. They test the leaving flows, not the fee model. `milton-bats` and `dev-club-org` can be re-created at
+any time.
+
+**Build (Stage 2 session, 2026-11-18), found in the code beyond the prompt:**
+1. **The foreign-card line would bill a Stripe-owned club twice.** `recordForeignCardFee` bills Stripe's published +0.8%
+   on every foreign card whatever the account; on a `stripe` account Stripe takes that 0.8% from the club itself. It now
+   bills only a payment taken on an `application` account. The dispute and returned/reversed-debit lines read the
+   PLATFORM's balance, which is empty on a `stripe` account, so they bill nothing there without a change.
+2. **"Too small" must test the whole fee.** The pay routes refused when the application fee reached the total; with the
+   margin smaller, a ~$1.40 club-pays payment would pass while the club nets below zero. The rule is now `canOpen()` in
+   `lib/online-payment-fee.ts`: the whole fee below the total and a margin above zero.
+3. **A reconnect reused the account,** so an old one would have come back. Each account now records its fee setting
+   (`org_payment_accounts.fees_collector`); `takesPayments()` refuses an `application` one, and setting up again replaces
+   it with a new account under a new idempotency key (`club-account:stripe-fees:<org>`: a Stripe key can outlive a day,
+   and the old body under the old key would hand back the old account). The migration marks the three dev rows
+   disconnected, so their cards offer "Set up payouts again".
+4. **Our share of each payment is stored, never recomputed:** `online_payments.application_fee_amount` (existing rows
+   = their `fee_amount`, which is what the old setting took), frozen by the guard. Stripe Tax never sees an application
+   fee, so this is the only per-payment source for our GST/HST return.
+
+**Left for Stage 3 (found here, not built):** the Payouts tab map labels a `fee` adjustment on a returned debit "Processing
+fee returned" (`lib/online-payouts-map.ts`), which a Stripe fee taken from the club's balance could wear; the bank check's
+"on its way" (`lib/bank-club-map.ts`) assumes the book lines net to the payout, off by Stripe's extras on a `stripe`
+account; the refund window's "the fee is the club's whole cost" is exact only for a domestic card. Events from a REPLACED
+dev account (a refund or dispute on an old dev payment) no longer map to the club's row: dev only, accepted.
+
+**Carried to Stages 4–5 from the Stage 2 reviews (2026-11-18):**
+- `/legal`: **never publish `drafts/PAYMENTS_TERMS.md` with §4/§5 as they stand** ("we pay Stripe's fee", "we bill" the
+  extras) — add it to the draft's "Before this can be published" list when Stage 5 starts. The published privacy policy
+  (2026-11-17) names the club's "monthly invoice for its Stripe fees": a new privacy version ships with Stage 5. The Before
+  window carries no line about Stripe's own agreement, its price changes or a negative balance debited from the club's
+  bank: Stage 5 §5, earlier only if payments could switch on first. `otherFeesPlan` ("Your plan doesn't change.") no
+  longer follows from anything: retire it with the Stage 4/5 words. The billing-address line now reads "FieldLogicHQ needs
+  it for the fee it charges", true only while the address-before-payouts step stays (the open Stage 4 call).
+- `/accounting` (`PLATFORM_FEE_TAX_COLLECTION_METHOD.md` Stage 2 review): GST/HST Stage 5 reads `application_fee_amount`
+  only on rows with `paid_at` set and `livemode`, dates by `paid_at` in Toronto (never `paid_on`), and must SNAPSHOT the
+  province/country, rate and tax cents when the fee is taken (`billing_locations` is editable); a returned debit's credit
+  record carries its own date. Confirm in the Stage 5 probe that Stripe returns our fee on a debit reversed after it
+  cleared. Tax is inside OUR share, not inside `fee_amount`: words that say "the fee includes GST/HST" would overstate it.
+- `/strategy` drift check (Facts doc reconcile 2026-11-18): `memory/project_pricing_strategy.md:19` ("GST/HST on top of the
+  payment fee") → `/strategy` memory pass; `lib/billing-tax.ts:49` comment (online-payment fee "takes the SAME
+  treatment" as the taxed-on-top recovered fee) → `/billing`; the help and terms items as above.
+
 ### Stage 3 — The club's books record Stripe's real fee
 Today the club's books record only our fee (and only when the club pays it). Under Stripe-owned pricing Stripe's fee comes
 off the club's balance on every payment, whoever pays our fee, and Stripe keeps it on a refund. Each payment's landing
@@ -188,6 +243,108 @@ writes one. A club-ticked refund or a lost dispute leaves our fee and its tax in
 the accountant list `STRIPE_OWNED_PRICING_ACCOUNTANT_QUESTIONS.md` (D1 first; the new facts lean slightly toward taxable, not
 a conclusion). It recommends **keeping the billing-address-before-payouts step**: the province must be known before the
 first fee.
+
+#### Help articles to rewrite (found in Stage 2, 2026-11-18)
+
+Found by `/docs`, not edited (the build prompt: do not rewrite these twice). Paths are `lib/help-content/`; line numbers
+are the 2026-11-18 file state and will drift, so re-grep by article id. **Retires 4** = the article describes the monthly
+Stripe-fees invoice machinery, so it is cut or collapsed when Stage 4 deletes the machinery. **Rewrite 5** = it stays but
+its words about who pays which fee change. Every one of these is still true for any account that is on the old model until
+Stage 4. Every entry also has `keywords` / `searchText` / `answerText` terms to clean in the same pass (noted where they
+sit). Nothing found misleads a club today: online payments are off in production.
+
+**Org (`org.tsx`)**
+- 1780-1844, section `stripe-fees` "Stripe fees on your online payments", all four sub-topics (`stripe-fees-which`,
+  `-where`, `-list`, `-alerts`): "FieldLogicHQ passes them on to every club on every plan", "billed to the club at
+  FieldLogicHQ's published rate" (foreign card), "A club with a paid subscription gets each fee as a line on its next
+  FieldLogicHQ invoice", the Stripe fees list, "A number on Plan & billing", "A red line on every admin page". **Retires 4**
+  (the whole section; its anchor `#stripe-fees` is linked from `org.tsx` 1709, `tournaments.tsx` 1274 and
+  `house-league.tsx` 1614, so those links go with it). Section `keywords` (1784) and `searchText` (1785) are all fee-invoice
+  terms: drop them with the section.
+- 1709, sub-topic `settings-t-payouts-related` "Payouts: terms, the payouts list and Stripe fees": "Other Stripe fees, such
+  as for disputes, returned bank debits and cards issued outside your country, are billed to the club. FieldLogicHQ passes
+  them on to every club on every plan". The quoted note is card copy from `lib/online-payment-words.ts`. **Retires 4.**
+  The section `keywords` / `searchText` (1688, 1689: "returned bank debit fee", "card dispute fee", "foreign card",
+  "invoice of its own", "stripe fees passed on", "next fieldlogichq invoice") go with it.
+- 1699, sub-topic `settings-t-payouts` "Payouts: let teams pay online": "chooses who pays the processing fee ... The card
+  prints both rates ... under the Processing fee row ... What it costs". The family-facing rate is unchanged, so only a
+  re-read against terms §4 (the row name and the worked line) is owed. **Rewrite 5 (check only).**
+- 389, section `club-plan-and-billing`: "a line at the top while you owe an invoice for Stripe fees ... Stripe fees when any
+  exist". **Retires 4.** `searchText` 384 carries "stripe fees taxed".
+- 437, sub-topic `club-plan-and-billing-t-taxes`: "Stripe fees we bill back to the club carry the same tax." **Retires 4.**
+
+**Tournaments (`tournaments.tsx`)**
+- 1205, sub-topic `online-payments-bank-debit-returned`, note "When Stripe charges a fee for a debit that comes back": "billed
+  to the club at Stripe's own figure as a Returned bank debit line on its next FieldLogicHQ invoice ... A club with no
+  subscription invoice is sent an invoice of its own ... Cards issued outside your country carry an extra Stripe fee,
+  passed on the same way." **Retires 4**, and what replaces it (Stripe takes it from the club's balance at Stripe) is
+  **Rewrite 5**.
+- 1274, sub-topic `online-payments-dispute-ends`, "The fees." paragraph: "If you win, Stripe gives the answering fee back
+  and FieldLogicHQ returns it: taken off the invoice that charged it ... either taken from the club's Stripe balance, or
+  passed on to the club on a FieldLogicHQ invoice ... never both." **Retires 4** (the invoice branch); the Stripe-balance
+  branch stays and the paragraph becomes the one-way answer in Stage 5.
+- 1007 / 1008, section `online-payments` `keywords` and `searchText`: "returned bank debit fee", "next fieldlogichq invoice",
+  "invoice of its own", "stripe fees passed on every club", "foreign card", "dispute fee", "answering fee comes back if you
+  win". **Retires 4.**
+- 1090-1092, sub-topic `online-payments-fee` "Who pays the processing fee": "The fee comes out of each payment, so you
+  receive the entry fee less the fee", and 1032 `online-payments-setup` "What it costs". The family rates and the club's
+  net are unchanged, but "the processing fee" is now Stripe's fee plus our margin taken separately. **Rewrite 5.**
+- 1230, sub-topic `online-payments-refunds`: "FieldLogicHQ's processing fee is never refunded, so a processing fee you give
+  back comes from the club", and 1272 (`online-payments-dispute-ends`, "Lost"): "FieldLogicHQ's processing fee isn't
+  returned." Legal §4: "not refunded" now covers our margin only, Stripe also keeps its fee on a refund, a returned debit
+  gives both back. **Rewrite 5.**
+
+**House league (`house-league.tsx`)**
+- 1637, sub-topic `registrations-bank-debit`: "When Stripe charges a fee for a debit that comes back, it is billed to the club
+  at Stripe's own figure as a Returned bank debit line on its next FieldLogicHQ invoice ... A club with no subscription
+  invoice, such as a complimentary or free plan, is sent an invoice of its own. Stripe's fees are passed on to every club on
+  every plan. Cards issued outside your country carry an extra Stripe fee, passed on the same way." **Retires 4**, plus
+  **Rewrite 5** for the replacement sentence.
+- 1614, sub-topic `registrations-dispute-ends`, "The fees." paragraph (same sentence as `tournaments.tsx` 1274, including
+  the `#stripe-fees` link). **Retires 4**, then **Rewrite 5** as above.
+- 1371 / 1372, section `registrations` `keywords` and `searchText`: "stripe fees", "dispute fee", "answering fee returned",
+  "refunded to the card". **Retires 4.**
+- 1547 (`registrations-refund-card`) and 1611 (`registrations-dispute-ends`, "Lost"): "When it is ticked the club pays that
+  fee back" and "FieldLogicHQ's processing fee isn't returned." Same legal §4 point as tournaments 1230. **Rewrite 5.**
+
+**Accounting (`accounting.tsx`)** (`payouts-tab` section)
+- 848, `payouts-tab-inside`, "Returned by the bank": "Processing fee returned when our processing fee came back with it."
+  The fee that comes back is now both Stripe's and ours. **Rewrite 5.**
+- 850, same sub-topic, "Stripe fee": "A Stripe fee taken from the club's own balance." Already describes the new model but
+  covers only disputes and a debit's fee on the payout listing: re-read against what the payout detail actually prints
+  after Stage 2. **Rewrite 5 (check only).**
+- 112 (`ledgers-payouts`, "A processing fee the club pays shows in the tournament's own book as Payment processing") and 833
+  (`payouts-tab-list`, "Amount ... after the processing fee when the club pays it): the figures are unchanged, so these
+  probably stay; `searchText` 812 has "processing fee returned" and "stripe fee". **Rewrite 5 (check only).**
+
+**Platform admin (`platform-admin.tsx`)**
+- 422 (`club-online-payments-panels`, "Fees billed to the club"): "Each Stripe fee passed on to the club and where it was
+  billed. Retry is not here: it stays on the club's Money tab." **Retires 4.**
+- 409 (`club-online-payments-tab`, "Open disputes": "with the Stripe fees on them so far"). **Retires 4** (the fee figure
+  becomes Stripe's, not ours).
+- 438-439 (`club-online-payments-health`): "a Stripe fee that couldn't be billed", "an invoice for Stripe fees that is
+  unpaid", and the closing line "or the invoice is paid". **Retires 4.**
+- 451 (`club-online-payments-delete`) and 2156 (`delete-organization`): the "money in flight" list names "a Stripe fee not
+  yet billed ... a Stripe fee that couldn't be billed, or an unpaid invoice for Stripe fees". **Retires 4.**
+- 388 / 389, section `club-online-payments` `keywords` and `searchText`: "fees billed to the club", "stripe fee", "a stripe
+  fee couldn't be billed", "an invoice for stripe fees is unpaid", "stripe fee unbilled failed unpaid fee invoice".
+  **Retires 4.**
+- 1223 / 1241 (`replay-stripe-update`, "What it refuses"): "a club's Stripe-fees bill are refused" and `searchText` "stripe
+  fees bill later". **Retires 4.**
+- 725 / 786 (`bookkeeping-sales`, `bookkeeping-sales-month-and-files`): "the split by kind (Plans, Coach Premium, Fees billed
+  back to clubs, One-off charges)" and `searchText` "fees billed back to clubs". **Retires 4** (the kind goes with the
+  fee record; the Stage 4 line already lists "the fee kind in the tax records").
+- 798-817, section `bookkeeping-stripe-fees` "How to enter Stripe's monthly fees as an expense": "Stripe's fees to
+  FieldLogicHQ", "Card-processing fees carry no GST/HST", and the warning "Fees billed back to clubs are income, not this
+  cost". Under the new model most card-processing fees never reach us, so what the owner enters from the statement shrinks
+  to Billing/Tax/Radar/Sigma plus any old-model account. `keywords` / `searchText` (802, 803) include "processing fees",
+  "payouts are net", "fees billed back to clubs are income". **Rewrite 5** (with `/accounting`; the retired invoice
+  sentence goes in Stage 4).
+
+**Families (`families.tsx`)**: nothing to change (181, 215 say only that the processing fee is never counted as dues).
+
+**Shared source of the sentences:** `lib/online-payment-words.ts` (already in the `/legal` bullet below). The org card note
+at `org.tsx` 1709 and the tournaments / house-league notes quote it, so fix the words once there, then re-read the articles.
 
 **`/legal` read, 2026-11-17 (Stage 1), what Stage 5 must carry:**
 - `drafts/PAYMENTS_TERMS.md` §4: cut "out of it we pay Stripe's own processing fee"; Stripe takes its fee from the club's

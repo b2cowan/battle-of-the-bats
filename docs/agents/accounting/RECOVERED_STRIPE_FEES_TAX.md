@@ -6,6 +6,11 @@
 > no live use. Until then it **stands for today's accounts** (created with `fees_collector: application`) and for any recovered
 > fee already billed (credit notes still reverse tax as described). Do not apply it to a Stripe-owned account. The tax on our
 > own fee is now in `PLATFORM_FEE_TAX_COLLECTION_METHOD.md` ("The R1 method"). Archive this file when Stage 4 is done.
+>
+> **Stage 2 built 2026-11-18 (reviewed same day):** every account made since mig 498 is Stripe-owned, so the foreign-card
+> line is billed only for a payment on an old-setting account (dev only, three accounts being replaced; production has none).
+> Dispute and returned-debit lines read the platform balance and bill nothing there. Nothing taxed is created for a new
+> account, so no return line changes; lines already billed on old dev accounts keep the credit-note rules below.
 
 **Last verified:** 2026-11-05
 **Re-verify by:** 2027-11-05, or when counsel or a professional answers D1 (is the payment service a taxable supply or an

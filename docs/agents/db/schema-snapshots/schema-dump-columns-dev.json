@@ -12645,6 +12645,15 @@
     "ordinal_position": 48
   },
   {
+    "table_name": "online_payments",
+    "column_name": "application_fee_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 49
+  },
+  {
     "table_name": "online_refunds_unassigned",
     "column_name": "id",
     "data_type": "uuid",
@@ -14083,6 +14092,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 32
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "fees_collector",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 33
   },
   {
     "table_name": "org_people",

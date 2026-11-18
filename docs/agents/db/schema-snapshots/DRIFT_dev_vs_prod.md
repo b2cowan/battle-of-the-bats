@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-18 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 159 divergence(s)** across dev/prod.
+**⚠️ 163 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 6 | 0 | — |
-| Columns | 71 | 0 | 2 |
+| Columns | 73 | 0 | 2 |
 | Indexes | 26 | 1 | 0 |
 | Constraints | 21 | 0 | — |
-| RLS / CHECK | 32 | 0 | 0 (RLS state) |
+| RLS / CHECK | 34 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (6)
@@ -25,7 +25,7 @@
 _none_
 
 ## Columns
-### Only in DEV (71)
+### Only in DEV (73)
 - `club_group_email_bodies.body`
 - `club_group_email_bodies.created_at`
 - `club_group_email_bodies.org_id`
@@ -85,6 +85,8 @@ _none_
 - `family_email_sends.names_cleared_at`
 - `family_email_sends.reply_to`
 - `family_email_sends.words_cleared_at`
+- `online_payments.application_fee_amount`
+- `org_payment_accounts.fees_collector`
 - `org_time_date_off_venues.date_off_id`
 - `org_time_date_off_venues.org_id`
 - `org_time_date_off_venues.org_venue_id`
@@ -171,7 +173,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (32)
+### CHECK only in DEV (34)
 - `club_group_email_bodies.club_group_email_bodies_body_check`
 - `club_group_email_bodies.club_group_email_bodies_subject_check`
 - `club_group_email_recipients.club_group_email_recipients_basis_check`
@@ -201,6 +203,8 @@ _none_
 - `club_schedules.club_schedules_part_never_in_review`
 - `family_email_sends.family_email_sends_club_copy_check`
 - `family_email_sends.family_email_sends_reply_to_check`
+- `online_payments.online_payments_application_fee_chk`
+- `org_payment_accounts.org_payment_accounts_fees_collector_chk`
 - `payments_terms_agreements.payments_terms_agreements_action_check`
 - `payments_terms_agreements.payments_terms_agreements_text_shape`
 - `payments_terms_agreements.payments_terms_agreements_version_shape`

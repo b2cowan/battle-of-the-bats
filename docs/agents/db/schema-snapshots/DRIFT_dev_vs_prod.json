@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-18",
-  "total": 159,
+  "total": 163,
   "counts": {
     "tables": 6,
-    "columns": 73,
+    "columns": 75,
     "indexes": 27,
     "constraints": 21,
-    "rls": 32
+    "rls": 34
   },
   "items": [
     {
@@ -123,6 +123,14 @@
     },
     {
       "key": "check:only-dev:family_email_sends.family_email_sends_reply_to_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payments.online_payments_application_fee_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_payment_accounts.org_payment_accounts_fees_collector_chk",
       "sig": ""
     },
     {
@@ -379,6 +387,14 @@
     },
     {
       "key": "column:only-dev:family_email_sends.words_cleared_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.application_fee_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_payment_accounts.fees_collector",
       "sig": ""
     },
     {

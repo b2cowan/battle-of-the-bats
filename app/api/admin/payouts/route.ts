@@ -7,9 +7,9 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { onlineFeeRateLabel } from '@/lib/plan-config';
 import { onlinePaymentsOn, stripeKeyIsTest, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canConnectPayouts, canSeePayouts } from '@/lib/online-payment-access';
-import { factsFromRow, payoutsState, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow, takesBankDebit, pausedForRefundPolicy } from '@/lib/online-payment-account';
+import { factsFromRow, oldFeeSetting, payoutsState, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow, takesBankDebit, pausedForRefundPolicy } from '@/lib/online-payment-account';
 import { ONLINE_FEE_PAYERS, onlineFee, type OnlineFeePayer } from '@/lib/online-payment-fee';
-import { createClubAccount, dashboardLink, onboardingLink, prefillClubProfile, retrieveAccount } from '@/lib/stripe-connect';
+import { CLUB_ACCOUNT_FEES_COLLECTOR, createClubAccount, dashboardLink, onboardingLink, prefillClubProfile, retrieveAccount } from '@/lib/stripe-connect';
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
 import { stripeProfileFor } from '@/lib/online-payment-profile';
 import { PAYMENTS_TERMS_VERSION, PAYOUTS_WORDS, TERMS_WORDS, termsStanding, termsVersionDate } from '@/lib/online-payment-words';
@@ -246,16 +246,37 @@ export const POST = withObservability(async (req: Request) => {
       const feePayer: OnlineFeePayer = ONLINE_FEE_PAYERS.includes(body.feePayer) ? body.feePayer : 'family';
       const terms = { terms_version: PAYMENTS_TERMS_VERSION, terms_agreed_by: ctx.user.id, terms_agreed_by_email: ctx.user.email ?? 'unknown', terms_agreed_at: now };
       let accountId = row?.stripe_account_id ?? null;
-      if (!accountId) {
+      // An account made under the old fee setting is REPLACED, never reused (owner 2026-11-18, Stripe-owned pricing Stage 2):
+      // the setting is immutable at Stripe, so setting up again makes a new Stripe-owned account in its place.
+      const replacing = !!row && oldFeeSetting(factsFromRow(row));
+      if (!accountId || replacing) {
         // The tick is kept before anything is created (mig 497): it is true even if Stripe then refuses.
         await recordPaymentsTermsAgreement({ org: ctx.org, user: ctx.user, action: 'set_up', at: now });
         const acct = await createClubAccount({ orgId: ctx.org.id, email: ctx.user.email ?? null, businessName: ctx.org.name });
         accountId = acct.id;
-        const { error } = await supabaseAdmin.from('org_payment_accounts').upsert({
-          org_id: ctx.org.id, stripe_account_id: acct.id, livemode: !stripeKeyIsTest(),
-          fee_payer: feePayer, refund_policy: policy.text, connected_by: ctx.user.id, connected_at: now, ...terms,
-        }, { onConflict: 'org_id', ignoreDuplicates: true });
-        if (error) throw error;
+        if (replacing) {
+          // The old account's Stripe facts are not the new one's: emptied here, read afresh by the sync below. Only the row
+          // still holding the old account is changed, so two presses cannot both replace it.
+          const { data: replaced, error } = await supabaseAdmin.from('org_payment_accounts').update({
+            stripe_account_id: acct.id, fees_collector: CLUB_ACCOUNT_FEES_COLLECTOR, livemode: !stripeKeyIsTest(),
+            card_payments_status: null, card_payments_reason: null, bank_debit_status: null, onboarding_finished_at: null,
+            requirements_due: [], requirements_deadline: null, country: null, stripe_synced_at: null,
+            disconnected_at: null, disconnected_by: null,
+            fee_payer: feePayer, refund_policy: policy.text, connected_by: ctx.user.id, connected_at: now, updated_at: now, ...terms,
+          }).eq('org_id', ctx.org.id).eq('stripe_account_id', row!.stripe_account_id).select('org_id');
+          if (error) throw error;
+          // Nothing matched: a second press replaced it first. Its account is this one (the same idempotency key), so go on;
+          // anything else changed the row under us, and the club presses again rather than linking a stray account.
+          if (!replaced?.length && (await readAccount(ctx.org.id))?.stripe_account_id !== acct.id) {
+            return NextResponse.json({ error: 'Your payouts changed while this was saving. Please try again.' }, { status: 409 });
+          }
+        } else {
+          const { error } = await supabaseAdmin.from('org_payment_accounts').upsert({
+            org_id: ctx.org.id, stripe_account_id: acct.id, fees_collector: CLUB_ACCOUNT_FEES_COLLECTOR, livemode: !stripeKeyIsTest(),
+            fee_payer: feePayer, refund_policy: policy.text, connected_by: ctx.user.id, connected_at: now, ...terms,
+          }, { onConflict: 'org_id', ignoreDuplicates: true });
+          if (error) throw error;
+        }
         // What Stripe's sign-up would otherwise ask (walk 2026-10-25): the club's public site, or a description. Never blocks.
         // The app's own address only — never the request's Host, which a client can name (/review 2026-10-25).
         const profile = await stripeProfileFor(ctx.org, process.env.NEXT_PUBLIC_APP_URL ?? '').catch(() => null);
@@ -272,7 +293,7 @@ export const POST = withObservability(async (req: Request) => {
         }).eq('org_id', ctx.org.id);
         if (reconnectError) throw reconnectError;
       }
-      await audit(ctx.org.id, ctx.user.id, 'payouts_connected', { stripeAccountId: accountId, feePayer, termsVersion: PAYMENTS_TERMS_VERSION });
+      await audit(ctx.org.id, ctx.user.id, 'payouts_connected', { stripeAccountId: accountId, feePayer, termsVersion: PAYMENTS_TERMS_VERSION, ...(replacing ? { replacedAccount: row!.stripe_account_id, replacedFor: 'old_fee_setting' } : {}) });
       const synced = await syncPayoutsAccount(accountId);
       if (payoutsState(factsFromRow(synced)) === 'taking_payments') return NextResponse.json({ url: null });
       return NextResponse.json({ url: await onboardingLink(accountId, back(true), back(false)) });

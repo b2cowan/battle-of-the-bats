@@ -15,8 +15,12 @@ import type { StripeProfile } from './online-payment-profile';
  *     `requirements_collector` comes back `stripe`);
  *   - Stripe covers losses (`losses_collector: 'stripe'`) — with the Express Dashboard that is a public preview, so the
  *     account is CREATED on the preview API version below;
- *   - FieldLogicHQ pays Stripe's processing fee (`fees_collector: 'application'`, Stripe's "you handle pricing"), so the
- *     application fee is the whole all-in fee.
+ *   - Stripe charges the CLUB its own fees (`fees_collector: 'stripe'`, Stripe-owned pricing — owner R3 + rate design A,
+ *     2026-11-17, plan STRIPE_OWNED_PRICING_PLAN.md): Stripe takes its processing fee and its extras (a foreign card, a
+ *     dispute) from the club's balance, and the application fee is only FieldLogicHQ's margin (`onlineFee()`). The
+ *     setting is immutable per account; an account made under the old `'application'` setting (dev only) opens no new
+ *     payment and is replaced, never reused, when the club sets up payouts again (owner 2026-11-18). The setting is
+ *     recorded on the club's row (`org_payment_accounts.fees_collector`) as `CLUB_ACCOUNT_FEES_COLLECTOR`.
  * ⚠ The preview version is for account creation ONLY. Every other call stays on the repo's pinned version
  * (`lib/stripe.ts`): the two disagree on the onboarding link's body (probe 2026-10-25, plan §0d).
  */
@@ -28,6 +32,18 @@ const ACCOUNT_INCLUDE: Stripe.V2.Core.AccountRetrieveParams['include'] = ['confi
 /** The connected account to act on, as Stripe's request option. */
 function on(accountId: string): Stripe.RequestOptions {
   return { stripeAccount: accountId };
+}
+
+/** The fee setting every club account is created with, as the club's row records it. */
+export const CLUB_ACCOUNT_FEES_COLLECTOR = 'stripe' as const;
+
+/**
+ * The idempotency key of a club's account creation: one per org. `stripe-fees` names the setting: the dev accounts made
+ * under the old setting used `club-account:<org>`, and Stripe can keep a key past a day — re-creating under that key could
+ * hand back the old account (or refuse the changed body). A new setting gets a new key.
+ */
+export function clubAccountIdempotencyKey(orgId: string): string {
+  return `club-account:stripe-fees:${orgId}`;
 }
 
 export async function createClubAccount(args: {
@@ -43,13 +59,13 @@ export async function createClubAccount(args: {
       dashboard: 'express',
       defaults: {
         currency: 'cad',
-        responsibilities: { fees_collector: 'application', losses_collector: 'stripe' },
+        responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' },
       },
       // 12c: bank debit (Canadian pre-authorized debit) beside the card; the pay block offers it once Stripe turns it on.
       configuration: { merchant: { capabilities: { card_payments: { requested: true }, acss_debit_payments: { requested: true } } } },
       metadata: { org_id: args.orgId },
     },
-    { apiVersion: CONNECT_ACCOUNT_API_VERSION, idempotencyKey: `club-account:${args.orgId}` },
+    { apiVersion: CONNECT_ACCOUNT_API_VERSION, idempotencyKey: clubAccountIdempotencyKey(args.orgId) },
   );
 }
 

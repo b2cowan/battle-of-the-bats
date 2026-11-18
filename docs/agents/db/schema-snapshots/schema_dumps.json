@@ -12647,6 +12647,15 @@
         "column_default": null
       },
       {
+        "table_name": "online_payments",
+        "pos": 49,
+        "column_name": "application_fee_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "online_refunds_unassigned",
         "pos": 1,
         "column_name": "id",
@@ -14084,6 +14093,15 @@
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 33,
+        "column_name": "fees_collector",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
         "column_default": null
       },
       {
@@ -46793,6 +46811,12 @@
       {
         "kind": "CHECK",
         "table_name": "online_payments",
+        "detail": "online_payments_application_fee_chk",
+        "check_clause": "((application_fee_amount >= (0)::numeric) AND (application_fee_amount <= fee_amount))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
         "detail": "online_payments_arithmetic_chk",
         "check_clause": "(((fee_payer = 'family'::text) AND (total_amount = (base_amount + fee_amount))) OR ((fee_payer = 'club'::text) AND (total_amount = base_amount)))"
       },
@@ -47089,6 +47113,12 @@
         "table_name": "org_payment_accounts",
         "detail": "org_payment_accounts_fee_payer_chk",
         "check_clause": "(fee_payer = ANY (ARRAY['family'::text, 'club'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_fees_collector_chk",
+        "check_clause": "(fees_collector = ANY (ARRAY['application'::text, 'stripe'::text]))"
       },
       {
         "kind": "CHECK",

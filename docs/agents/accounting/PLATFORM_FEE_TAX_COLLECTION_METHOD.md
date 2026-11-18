@@ -44,6 +44,26 @@ disputes, returned debits and foreign cards; nothing of Stripe's passes through 
 - **Needs the club's province before the first payment.** With the tax inside every fee at the moment it is taken, we cannot
   wait to learn the province. The billing-address-before-payouts step must stay (owner ask 3 in the plan; recommended yes).
 
+### Stage 2 review (2026-11-18): what GST/HST Stage 5 must still store per fee
+
+Stage 2 stores `online_payments.application_fee_amount` (mig 498, frozen). It is the **amount** only; it is not yet a tax record.
+
+- **It is written when the Checkout OPENS**, so an `open`, `expired` or `returned` row carries a figure for a fee never kept.
+  The return source is only rows that are paid (`paid_at` set; statuses paid, partly_refunded, refunded, reversed) **and
+  `livemode = true`** (dev and test payments must never reach a return).
+- **Dates:** use `paid_at` (timestamptz) converted to the Toronto day for the period. **Never `paid_on`**: it is clamped to
+  today and moved forward inside a closed club fiscal year, so it can fall in the wrong GST period. A bank debit's `paid_at`
+  is the settlement, days after the fee reached our balance (`clearing_at`); which date is the tax point is the accountant's
+  question already listed (Q2), and both are stored.
+- **Province and rate are NOT stored per payment.** The club's address is one editable `billing_locations` row; a move
+  changes every past payment's province if it is read live. Stage 5 must snapshot, at the moment the fee is taken (or at
+  the first paid-landing), the province or country used, the rate used (rates change) and the tax inside the fee in cents.
+  Older rows (dev only; production has no payout account) need no backfill.
+- **Refunds of our fee:** a club-ticked refund never refunds it (the refund calls do not pass `refund_application_fee`), and a
+  lost dispute leaves it. So the only reversal is a returned debit, which has `clearing_at` and `returned_at`; the amount is
+  `application_fee_amount`. Stage 5's credit record needs its own date (it can land in a later period than the fee) and must
+  say the fee and tax it reverses; nothing more needs storing now.
+
 **Everything below is the earlier (2026-11-05 to 2026-11-17) analysis, kept for history.**
 
 **Last verified:** 2026-11-17
