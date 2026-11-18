@@ -18,7 +18,7 @@ const repTeamsHelp: HelpPageContent = {
           <p>Every team page has a <strong>What the club sees</strong> panel that says this in three columns:</p>
           <ul>
             <li><strong>Yours to run</strong> — the team&apos;s name, division, colour and group; its seasons (start, close, reopen); its coaches; tryout sign-ups; the documents families sign; allocations and payment-request decisions.</li>
-            <li><strong>The coach&apos;s, and you can read it</strong> — the roster, the schedule and results, payment requests, how many families are connected, and a closed season&apos;s record, roster and staff. Three money lines sit here too: the team&apos;s cash on hand (one figure; never its other spending or the rest of its books), what it recorded paying the payees you share, and what each family owes and has paid (on Families). The team&apos;s coaches are told the club sees these.</li>
+            <li><strong>The coach&apos;s, and you can read it</strong> — the roster, the schedule and results, payment requests, and a closed season&apos;s record, roster and staff. Three money lines sit here too: the team&apos;s cash on hand (one figure; never its other spending or the rest of its books), what it recorded paying the payees you share, and what each family owes and has paid (on Families). The team&apos;s coaches are told the club sees these.</li>
             <li><strong>The coach&apos;s alone</strong> — attendance, lineups, awards, player development, opponents and scouting, and practice plans.</li>
           </ul>
           <p>A team&apos;s coaches never get season buttons: the club starts and closes a club team&apos;s seasons, and the coaches are told each time.</p>
@@ -425,17 +425,17 @@ const repTeamsHelp: HelpPageContent = {
     {
       id: 'shared-library',
       group: 'Org-level tools',
-      heading: 'Shared library: tags, awards & opponent books',
-      summary: 'Curate game tags, money tags, and award types that every team shares — and decide whether your teams may share their opponent scouting books with each other.',
-      keywords: ['shared library', 'shared tags', 'shared awards', 'org tags', 'org award types', 'standardize tags', 'organization wide tags', 'game tags', 'money tags', 'award types',
+      heading: 'Shared library: tags, awards, drills & opponent books',
+      summary: 'Curate game tags, money tags, award types and drills that every team shares — and decide whether your teams may share their opponent scouting books with each other.',
+      keywords: ['shared library', 'shared tags', 'shared awards', 'shared drills', 'org tags', 'org award types', 'standardize tags', 'organization wide tags', 'game tags', 'money tags', 'award types', 'drills',
         // Club Shared Book — an admin looks for this by what a coach asked them for ("let the
         // teams share scouting"), not by the feature's name. Search reads keywords, not prose.
         'share opponent books', 'club shared book', 'teams share scouting', 'scouting across teams',
         'opponent book sharing', 'let coaches see each other', 'club scouting memory'],
-      searchText: 'shared library shared tags shared awards org tags organization wide tags money tags game tags award types standardize vocabulary across teams provincials rivalry winter dome mvp hustle blue chip curate rename merge retire admin owner shared tag every team picker teams can share their opponent books with each other club shared book scouting across teams opponent book sharing switch off by default two switches admin enables head coach opts in each team decides read only cannot edit another team notes labelled with team and writer see theirs while sharing yours stop sharing immediately never leaves the organization club plan only',
+      searchText: 'shared library shared drills drills practice drill picker retire restore shared tags shared awards org tags organization wide tags money tags game tags award types standardize vocabulary across teams provincials rivalry winter dome mvp hustle blue chip curate rename merge retire admin owner shared tag every team picker teams can share their opponent books with each other club shared book scouting across teams opponent book sharing switch off by default two switches admin enables head coach opts in each team decides read only cannot edit another team notes labelled with team and writer see theirs while sharing yours stop sharing immediately never leaves the organization club plan only',
       content: (
         <>
-          <p>Coaches build their own <strong>tags</strong> (labels on games and expenses) and <strong>award types</strong> (MVP, Hustle, etc.) team by team. If you&apos;d rather every team use the same vocabulary — one &ldquo;Provincials&rdquo; game tag, one &ldquo;Winter dome&rdquo; money tag, one league-wide &ldquo;MVP&rdquo; award — curate them once in the <strong>Shared library</strong>.</p>
+          <p>Coaches build their own <strong>tags</strong> (labels on games and expenses), <strong>award types</strong> (MVP, Hustle, etc.) and <strong>drills</strong> team by team. If you&apos;d rather every team use the same vocabulary — one &ldquo;Provincials&rdquo; game tag, one &ldquo;Winter dome&rdquo; money tag, one league-wide &ldquo;MVP&rdquo; award — curate them once in the <strong>Shared library</strong>.</p>
         </>
       ),
       subtopics: [
@@ -444,7 +444,7 @@ const repTeamsHelp: HelpPageContent = {
           title: 'Curating the shared set',
           content: (
             <>
-              <p>Open <strong>Rep teams → Shared Library</strong>. Three lists sit side by side: <strong>Game tags</strong>, <strong>Money tags</strong>, and <strong>Award types</strong>. Add, rename, merge, or delete tags; add award types (with an icon), edit them, and retire or restore them — the same tools a coach has for their own, but applied org-wide.</p>
+              <p>Open <strong>Rep teams → Shared library</strong>. Four lists follow the opponent-book switch: <strong>Game tags</strong>, <strong>Money tags</strong>, <strong>Award types</strong> and <strong>Drills</strong>. Add, rename, merge, or delete tags; add award types (with an icon), edit them, and retire or restore them; add drills the same way — the same tools a coach has for their own, but applied org-wide.</p>
               <p>Managing the shared library is limited to <strong>owners and admins</strong>. It replaces the idea of a coach &ldquo;promoting&rdquo; their own tag — instead of collecting tags from many teams, you author the shared set from one place.</p>
               <p>Coaches can <strong>see</strong> the shared set from their side — shared tags are listed <strong>read-only</strong> in every team&apos;s tag manager and under the team&apos;s <strong>Settings → Tags</strong>, each marked &ldquo;Shared by your club&rdquo; — so a rename here reaches them with no surprises.</p>
             </>
@@ -454,7 +454,7 @@ const repTeamsHelp: HelpPageContent = {
           id: 'shared-library-coach-view',
           title: 'What coaches see, and what they can change',
           content: (
-            <p>A shared tag or award type reaches every coach in the organization the moment you create it. It appears in <strong>every team&apos;s</strong> picker in <strong>blue</strong> (each team&apos;s own private tags stay green, with a small legend). Coaches can <strong>apply</strong> shared tags and hand out shared awards, but they can&apos;t rename or remove them — that stays with you. A team&apos;s own tags keep working exactly as before, right alongside the shared ones.</p>
+            <p>A shared tag, award type or drill reaches every coach in the organization the moment you create it. Tags and award types appear in <strong>every team&apos;s</strong> picker in <strong>blue</strong> (each team&apos;s own private tags stay green, with a small legend), and drills appear in each coach&apos;s drill picker beside the team&apos;s own. Coaches can <strong>apply</strong> shared tags, hand out shared awards and pull shared drills into a practice, but they can&apos;t rename or remove them — that stays with you. Retiring a drill keeps every practice plan that already used it. A team&apos;s own tags keep working exactly as before, right alongside the shared ones.</p>
           ),
         },
         {
@@ -474,9 +474,9 @@ const repTeamsHelp: HelpPageContent = {
           id: 'faq-shared-library',
           question: 'How do I make one set of tags or awards for every team?',
           answer: (
-            <p>Go to <strong>Rep teams → Shared Library</strong> and add them under <strong>Game tags</strong>, <strong>Money tags</strong>, or <strong>Award types</strong>. Anything you add shows in every team&apos;s picker in <strong>blue</strong>; coaches can apply it but only you (an owner or admin) can rename, merge, retire, or remove it. Each team&apos;s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels.</p>
+            <p>Go to <strong>Rep teams → Shared library</strong> and add them under <strong>Game tags</strong>, <strong>Money tags</strong> or <strong>Award types</strong>. Anything you add shows in every team&apos;s picker in <strong>blue</strong>; coaches can apply it but only you (an owner or admin) can rename, merge, retire, or remove it. Shared <strong>Drills</strong> work the same way, except that a drill can be edited, retired or brought back, not merged or removed. Each team&apos;s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels.</p>
           ),
-          answerText: 'Go to Rep teams then Shared Library and add them under Game tags, Money tags, or Award types. Anything you add shows in every team\'s picker in blue; coaches can apply it but only an owner or admin can rename, merge, retire, or remove it. Each team\'s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels. Managing the shared library is limited to owners and admins.',
+          answerText: 'Go to Rep teams then Shared library and add them under Game tags, Money tags, or Award types. Anything you add shows in every team\'s picker in blue; coaches can apply it but only an owner or admin can rename, merge, retire, or remove it. Shared Drills work the same way, except that a drill can be edited, retired or brought back, not merged or removed. Each team\'s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels. Managing the shared library is limited to owners and admins.',
           keywords: ['shared library', 'org wide tags', 'standardize tags', 'shared awards', 'every team same tags', 'promote tag'],
         },
         {
@@ -484,12 +484,12 @@ const repTeamsHelp: HelpPageContent = {
           question: 'A coach asked me to let our teams see each other’s scouting notes. How?',
           answer: (
             <>
-              <p>Go to <strong>Rep teams → Shared Library</strong> and turn on <strong>&ldquo;Teams can share their opponent books with each other&rdquo;</strong>. That switch alone shares nothing — it gives each head coach a switch of their own in <strong>Team settings</strong>, and only the teams that opt in take part.</p>
+              <p>Go to <strong>Rep teams → Shared library</strong> and turn on <strong>&ldquo;Teams can share their opponent books with each other&rdquo;</strong>. That switch alone shares nothing — it gives each head coach a switch of their own in <strong>Team settings</strong>, and only the teams that opt in take part.</p>
               <p>Once two teams are sharing, each sees the other&apos;s record, book line and observations on an opponent&apos;s page, labelled with the team and the writer, and <strong>read-only</strong> — nobody can edit or delete another team&apos;s notes. A coach sees the club&apos;s books only while sharing their own, and switching off removes their book from everyone else&apos;s pages straight away.</p>
               <p>It never crosses your organization, and it&apos;s part of the <strong>Club plan</strong> — on other plans the switch isn&apos;t shown.</p>
             </>
           ),
-          answerText: 'Go to Rep teams then Shared Library and turn on "Teams can share their opponent books with each other". That switch alone shares nothing — it gives each head coach a switch of their own in Team settings, and only the teams that opt in take part. Once two teams are sharing, each sees the other\'s record, book line and observations on an opponent\'s page, labelled with the team and the writer, and read-only: nobody can edit or delete another team\'s notes. A coach sees the club\'s books only while sharing their own, and switching off removes their book from everyone else\'s pages straight away. It never crosses your organization, and it is part of the Club plan — on other plans the switch is not shown. Only owners and admins can change it.',
+          answerText: 'Go to Rep teams then Shared library and turn on "Teams can share their opponent books with each other". That switch alone shares nothing — it gives each head coach a switch of their own in Team settings, and only the teams that opt in take part. Once two teams are sharing, each sees the other\'s record, book line and observations on an opponent\'s page, labelled with the team and the writer, and read-only: nobody can edit or delete another team\'s notes. A coach sees the club\'s books only while sharing their own, and switching off removes their book from everyone else\'s pages straight away. It never crosses your organization, and it is part of the Club plan — on other plans the switch is not shown. Only owners and admins can change it.',
           keywords: ['share opponent books', 'teams share scouting', 'club shared book', 'scouting across teams', 'let coaches see each other', 'opponent book sharing', 'club scouting memory'],
         },
       ],
@@ -538,8 +538,8 @@ const repTeamsHelp: HelpPageContent = {
             <li>Team schedule (games, practices, events) and the roster.</li>
             <li>Team finances — player dues and installments, expenses, fundraisers, a season budget, and payment requests to the org.</li>
           </ul>
-          <p>As an admin you oversee the structure: team and program-year setup, tryouts, document templates, and program-year status. Allocations and payment requests are answered on the <a href="../help/accounting#allocations">Accounting</a> page. Admins can view rosters but coaches own the day-to-day team operations. For the coach&apos;s view, see the <a href="../help/coaches">Coaches Portal guide</a>.</p>
-          <p>The program-year roster exports as a spreadsheet or as a <strong>printable roster</strong> on your club&apos;s paper — numbers, names and positions, grouped by each player&apos;s standing with a count on every heading. Like the applicant list, it carries <strong>no dates of birth and no guardian contacts</strong>; those stay in the spreadsheet.</p>
+          <p>As an admin you oversee the structure: team and season setup, tryouts, document templates, and whether a season is live or closed. Allocations and payment requests are answered on the <a href="../help/accounting#allocations">Accounting</a> page. Admins can view rosters but coaches own the day-to-day team operations. For the coach&apos;s view, see the <a href="../help/coaches">Coaches Portal guide</a>.</p>
+          <p>A season&apos;s roster exports as a spreadsheet or as a <strong>printable roster</strong> on your club&apos;s paper — numbers, names and positions, grouped by each player&apos;s standing with a count on every heading. Like the applicant list, it carries <strong>no dates of birth and no guardian contacts</strong>; those stay in the spreadsheet.</p>
         </>
       ),
     },
@@ -549,21 +549,17 @@ const repTeamsHelp: HelpPageContent = {
       // plainly that there isn't one, and why.
       id: 'family-adoption',
       group: 'Org-level tools',
-      heading: 'Seeing which teams have families connected',
-      summary: 'Each team card shows how many families are connected and whether anyone is waiting on a coach — counts only, never who.',
+      heading: 'Seeing which families are connected',
+      summary: 'The club does not see which families a coach has connected — no names, no email addresses and no list. Families are reached through their coach.',
       keywords: ['families', 'family', 'connected families', 'guardians', 'family access', 'adoption', 'which teams are using it', 'parents connected', 'rep teams list'],
-      searchText: 'families connected count per team rep teams list card guardians a coach club wide line how many families across teams adoption read only counts never names never email addresses coaches keep the contacts premium coaches portal family access hidden when zero',
+      searchText: 'families connected rep teams list guardians a coach adoption how many families no count never names never email addresses coaches keep the contacts premium coaches portal family access what the club sees no list of families',
       links: [
         { label: 'Coaches Portal guide — families and the season recap', href: '../help/coaches#premium-family-access' },
       ],
       content: (
         <>
-          <p>On your <strong>Rep teams</strong> list, a team that has started connecting families shows an extra number on its card:</p>
-          <ul>
-            <li><strong>Families</strong> — how many parents or guardians are connected to that team&apos;s players.</li>
-          </ul>
-          <p>A club-wide line under the page title totals the same thing across every team, so you can see at a glance how far the feature has actually spread.</p>
-          <p><strong>These are counts, and only counts.</strong> No name, email address or relationship appears here, and there&apos;s nothing to click through to — the club sees adoption, the coach keeps the contacts. The numbers are hidden on a team that hasn&apos;t connected anyone, so a list of teams that never turned it on isn&apos;t a column of zeros.</p>
+          <p>Each coach invites and manages their own team&apos;s families from the Coaches Portal. The club does not get a list of them: the <strong>Rep teams</strong> board has no families column, and no name, email address or relationship appears on a team&apos;s page.</p>
+          <p>The club doesn&apos;t see a count of connected families either: the coach keeps the contacts.</p>
           <p>Family access is a <strong>Premium Coaches Portal</strong> feature and is set up by the coach on their own team — see the <a href="../help/coaches#premium-family-access">Coaches Portal guide</a>.</p>
         </>
       ),
@@ -571,12 +567,12 @@ const repTeamsHelp: HelpPageContent = {
         {
           id: 'faq-family-adoption-who',
           question: 'Can I see which families are connected to a team?',
-          answerText: 'No. The Rep teams list shows counts only — how many families are connected to each team. There is no list of names or email addresses behind those numbers, by design: the coach invites and manages their own team\'s families, and the club sees whether it is being used, not who is in it. If you need to reach a family, that goes through their coach.',
-          keywords: ['who is connected', 'list of families', 'family names', 'parent emails', 'see the families'],
+          answerText: 'No. The club has no list of the families a coach has connected — no names and no email addresses, by design: the coach invites and manages their own team\'s families. If you need to reach a family, that goes through their coach.',
+          keywords: ['who is connected', 'list of families', 'family names', 'parent emails', 'see the families', 'how many families are connected'],
           answer: (
             <>
-              <p>No. The list shows <strong>counts only</strong> — how many families each team has connected. There&apos;s no list of names or addresses behind those numbers.</p>
-              <p>That&apos;s deliberate: the coach invites and manages their own team&apos;s families, and the club sees <em>whether</em> it&apos;s being used, not <em>who</em> is in it. If you need to reach a family, that goes through their coach.</p>
+              <p>No. The club has no list of the families a coach has connected — no names and no email addresses.</p>
+              <p>That&apos;s deliberate: the coach invites and manages their own team&apos;s families. If you need to reach a family, that goes through their coach.</p>
             </>
           ),
         },
@@ -591,7 +587,7 @@ const repTeamsHelp: HelpPageContent = {
       searchText: 'a team’s history closed seasons completed archived past season record read only roster schedule coaches documents record figures reopen start next season on the team page',
       content: (
         <>
-          <p>A team&apos;s <strong>History</strong> lists its closed seasons. Open one to read that year as a record: its roster, schedule, coaches and documents, with the season&apos;s record and figures. Nothing on it can be changed. Starting the next season, or reopening one, is done from the team&apos;s page (<a href="#recipe-seasons">How to start the next season</a>).</p>
+          <p>A team&apos;s <strong>History</strong> lists its closed seasons; reach it from <strong>Past seasons</strong> (<strong>Full history</strong> beside a team). A closed season in the <strong>Seasons</strong> list on the team&apos;s page opens that season&apos;s record directly. Open one to read that year as a record: its roster, schedule and results, coaches and documents, with the season&apos;s record and figures. Nothing on it can be changed. Starting the next season, or reopening one, is done from the team&apos;s page (<a href="#recipe-seasons">How to start the next season</a>).</p>
         </>
       ),
     },
@@ -606,8 +602,8 @@ const repTeamsHelp: HelpPageContent = {
         <>
           <p>Two housekeeping tools sit with the team list:</p>
           <ul>
-            <li><strong>Rename Team URLs</strong>, in the Teams tab&rsquo;s toolbar — update team URL slugs (in bulk) when names or branding change, so public links stay tidy.</li>
-            <li><strong>Past seasons</strong>, a tab of Rep teams — review archived seasons. Completed and archived program years keep their rosters, schedules, and finances as history. On a past season&rsquo;s roster, a player&rsquo;s name opens the child&rsquo;s page for anyone who can open Families.</li>
+            <li><strong>Rename team URLs</strong>, in the Teams tab&rsquo;s toolbar — update team URL slugs (in bulk) when names or branding change, so public links stay tidy.</li>
+            <li><strong>Past seasons</strong>, a tab of Rep teams — review closed seasons. Completed and archived seasons keep their rosters, schedules, and finances as history. On a past season&rsquo;s roster, a player&rsquo;s name opens the child&rsquo;s page for anyone who can open Families.</li>
           </ul>
         </>
       ),

@@ -8,6 +8,48 @@
 
 ---
 
+### 2026-11-18 — The Club release is an OPEN launch: any club may buy Club, Club · Association or League Plus at the flip, with no invitation step; no club demo for launch (Decided)
+**Status:** **Decided** (owner, 2026-11-18, the Club readiness Stage 8 writing session: "open", and "no club demo is fine for launch").
+**Decision:**
+1. **Open, not invite-only.** From the gate flip, any club can self-serve buy **Club**, **Club · Association** or **League
+   Plus** at list price through Stripe checkout (Club and Club · Association with their 90-day trial, card collected; League
+   Plus with its trial, as configured). No invitation list, no approval step, no cap on how many clubs.
+2. **No club demo for launch.** The two sandboxes stay as they are; the shop window for Club at launch is the coach demo
+   (a coach's season inside a club-plan org). Only "not for launch" was ruled; when a club demo comes is not.
+**Rationale:** Club and Club · Association were already Decided self-serve at the release (2026-09-25) and League Plus goes on
+sale with it (2026-11-06); the only open question was whether an invitation step should sit in front of checkout. An open
+launch is the faster path to the evidence the 2026-07-28 entry said the top of the ladder lacks (willingness to pay at
+$219 / $379 / $89 has never met a paying club). The club demo is a curation project of its own (an admin-role shared demo
+account, a seed, a checker, tour beats), not launch work. **Pre-revenue realism:** the release is no longer "5–10 founder-
+managed clubs", so support load is uncapped by design; the owner remains the only responder.
+**Affects:** GTM / launch posture; the support posture; the gate-flip runbook; the public Club and League Plus pages (no
+"we set up Club with you" or "talk to us" framing survives the flip). **No price, plan name, capacity band, SKU, trial
+length or gate value moves.** Drift check (applicable items): `lib/plan-config.ts` and `lib/plan-features.ts` untouched;
+`PLAN_PRICING_FACTS.md` already records Club, Club · Association and League Plus as self-serve at the release (its
+"Purchasable today?" column changes at the flip, not now); `BRAND_STRATEGY.md`, `memory/project_pricing_strategy.md` and
+README state no Club cohort or invitation rule (the only "invite-only" in them is the free Tournament plan's event, unrelated).
+**Divergences found, all already routed in `docs/agents/ops/CLUB_GATE_FLIP_RUNBOOK.md` Step 0:** `/start/club` says "Club has
+no self-serve free path … We set up Club with you directly … Talk to us about Club"; `/for-clubs` and `/pricing` frame Club
+as interest capture; `PRICING_PAGE_COPY.md` ~378 holds band prices "until the early-access cohort opens". The readiness
+plan's §10 Q1 and Stage 11 Ask 5 reasoned from the invite-only posture (history, not re-opened).
+**Handoff:**
+HANDOFF → `/plan` — the Step 0 "on-sale pages" build in `CLUB_GATE_FLIP_RUNBOOK.md`: a real self-serve Club and League Plus
+start (replacing the consultative `/start/club`), a Club · Association card, every Club / League Plus page reading the live gate.
+HANDOFF → `/marketing` — the words for that build: Club and League Plus sold as buyable at the flip, with no managed-onboarding
+or "we'll reach out" promise; the `/for-clubs` coach-demo block re-worded to say honestly it is a coach's season inside a club.
+HANDOFF → `/billing` — no action now; at the flip, all three plans go `live` together (runbook Steps 3–4).
+HANDOFF → ops — `docs/agents/ops/CLUB_SUPPORT_AND_ROLLBACK_RUNBOOK.md` already assumes an open launch; revisit a service-notice
+door to every club owner and the outside uptime monitor before ~20 paying clubs.
+HANDOFF → `/demos` — no club demo at launch; when one comes is open (the 2026-11-06 summary-layer entry's handoff is the natural
+moment, not ruled).
+**Supersedes:** **2026-07-28 — League & Club: the managed early-access cohort is WITHDRAWN**, part 4 only ("the cohort shape is
+preserved as an input": 5–10 Club / 10–15 League, invite-only, founder-managed, under comp) — the shape does not carry into the
+Club release. Its "under comp" half was already superseded for Club by 2026-09-25 (no Founding Season offer on Club).
+**Relates to:** 2026-09-25 Club · Association purchasable at the Club release; 2026-11-06 League Plus on sale with the Club
+release; 2026-11-06 Club's headline promise (the summary layer follows the release).
+
+---
+
 ### 2026-11-17 — Stripe-owned pricing: each club's Stripe account pays Stripe's own fees and we keep only our margin; the family-facing rates stay; the GST/HST on our fee is INSIDE it (Decided; not built)
 **Status:** **Decided** (owner, 2026-11-17). R1–R3 in the GST/HST Stage 5 kickoff conversation; the test-mode trial's
 **GO** and the rate design **A** ("agree with your recommendation") in the Stripe-owned pricing Stage 1 session the same
@@ -3326,7 +3368,7 @@ HANDOFF → `/billing` — none.
 1. **The ~August 2026 managed early-access cohort is WITHDRAWN** (5–10 Club, 10–15 League under the Founding-Season comp). Not re-dated — removed from the roadmap. The 2026-06-22 entry that ratified it is superseded.
 2. **League is parked as a whole.** It re-enters as a **full League capability evaluation**, owner-started, **after the Coach Portal work is finalised**. No launch decision is open meanwhile and no readiness/hardening work is scheduled.
 3. **Availability is unchanged and stays unchanged:** League Plus, Club, and Club · Association remain **early-access / non-purchasable**; the **free League floor stays `Held` with its flag OFF in production**. Nothing is to be flipped while parked.
-4. **The cohort shape is preserved as an input, not rejected.** 5–10 Club / 10–15 League, invite-only, founder-managed, under comp — that shape re-enters the future evaluation as a starting proposal if the capability clears the bar.
+4. **The cohort shape is preserved as an input, not rejected.** 5–10 Club / 10–15 League, invite-only, founder-managed, under comp — that shape re-enters the future evaluation as a starting proposal if the capability clears the bar. *(Superseded 2026-11-18: the Club release is an open launch — see that entry.)*
 **Rationale:** The 2026-06-22 decision made the open date contingent on a readiness checklist rather than the calendar; the checklist was written and **never walked**, so "is League ready?" has never had an evidence-based answer. What *is* known does not support opening: house-league in-season work was never started and carries live defects — most seriously, **waitlist/pending audiences silently email nobody while reporting a green "0 delivered" success**, provider failures are counted as sent, and there is no guardian dedupe, reply path, or rainout notification. A league admin cannot presently trust that a message reached parents, which alone makes the product unfit for a real season. Two further checklist dependencies (Billing & Accounting Coherence; Admin IA & Multi-Module Nav) are also unstarted, and **no Club has ever been provisioned end-to-end** through to a full coaching staff in populated portals. Parking is therefore consistent with the original ratification, not a reversal of it. Inventory preserved at `docs/projects/active/PROGRAM_LEAGUE_AND_CLUB.md`.
 **Commercial consequences (recorded deliberately):**
 - **The top of the ladder stays unvalidated.** Club $219 · Club · Association $379 · League Plus $89 remain untested against a single paying customer — precisely what the cohort existed to fix. Willingness-to-pay on the highest-ACV tiers stays a hypothesis, and the 2026-06-22 Club band/reprice/whole-staff decisions stay unvalidated with it.

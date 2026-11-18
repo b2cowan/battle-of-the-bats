@@ -538,7 +538,6 @@ function WhatTheClubSees() {
             <li>The roster</li>
             <li>The schedule and results</li>
             <li>Payment requests</li>
-            <li>How many families are connected</li>
             <li>A closed season’s record, roster and staff</li>
             {/* What Club Tier Stage 3b (the team's cash, D1) and Ledger Parity (shared payees, D7) let the club read —
                 each line says what it never includes (Ask 4c; the coach's Club tab says the same from their side). */}

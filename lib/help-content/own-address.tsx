@@ -29,14 +29,18 @@ const ownAddressHelp: HelpPageContent = {
       group: 'Set it up',
       heading: 'The two records, and why you keep both',
       summary: 'Record 1 is the padlock check, record 2 sends visitors to your site. Add both where you bought the address.',
-      keywords: ['own address', 'own domain', 'custom domain', 'web address', 'records', 'cname', 'record 1', 'record 2', 'padlock check', 'your site', 'sites.fieldlogichq.ca', 'padlock', 'certificate', 'https', 'security warning', 'keep record 1', 'dns', 'dns records', 'manage dns'],
-      searchText: 'add two records where you bought the address sign in look for a setting called dns dns records or manage dns type cname name value copy keep both records for as long as you use this address padlock renews only while record 1 is there security warning if removed delete the old www record first some places want the whole name like www type only the part shown copy both as a message for whoever looks after the domain email is not affected change nothing else there',
+      keywords: ['own address', 'own domain', 'custom domain', 'web address', 'records', 'cname', 'record 1', 'record 2', 'padlock check', 'your site', 'sites.fieldlogichq.ca', 'padlock', 'certificate', 'https', 'security warning', 'keep record 1', 'dns', 'dns records', 'manage dns', 'use your own address', 'use a name other than www', 'another website service still has this address'],
+      searchText: 'use your own address next type the rest of your address use a name other than www another website service still has this address remove it from that service’s domain settings then press try again add two records where you bought the address sign in look for a setting called dns dns records or manage dns type cname name value copy keep both records for as long as you use this address padlock renews only while record 1 is there security warning if removed delete the old www record first some places want the whole name like www type only the part shown copy both as a message for whoever looks after the domain email is not affected change nothing else there',
       content: (
         <>
           <p>
+            The owner starts on the club&rsquo;s <strong>Public site &rsaquo; Web address</strong> row: press <strong>Use your own address</strong>,
+            type the rest of your address and press <strong>Next</strong>. (<strong>Use a name other than www</strong> is there if your club keeps
+            its own website at www.) The two records then appear on the row.
+          </p>
+          <p>
             Sign in where you bought your address and look for a setting called <strong>DNS</strong>, <strong>DNS records</strong> or{' '}
-            <strong>Manage DNS</strong>. Add the two records shown on your club&rsquo;s <strong>Public site &rsaquo; Web address</strong> row,
-            exactly as shown.
+            <strong>Manage DNS</strong>. Add the two records shown on that row, exactly as shown.
           </p>
           <HelpDefs>
             <HelpDef term="1 · Padlock check">
@@ -51,6 +55,11 @@ const ownAddressHelp: HelpPageContent = {
           </HelpDefs>
           <p>
             Some places want the whole name, like <code>www.yourclub.ca</code>. If yours adds <code>yourclub.ca</code> by itself, type only the part shown.
+          </p>
+          <p>
+            If you see <strong>Another website service still has this address</strong>, the address is still set up with a service you used
+            before, such as an old website builder. Remove it from that service&rsquo;s domain settings, then press <strong>Try again</strong>.
+            Nothing has changed on your site.
           </p>
           <HelpNote variant="info" title="Someone else looks after your address?">
             Press <strong>Copy both as a message</strong> on the row. It copies a plain message, with this page&rsquo;s link, that you can send

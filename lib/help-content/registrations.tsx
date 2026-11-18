@@ -31,11 +31,11 @@ const registrationsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to work the daily registration review queue',
       summary: 'Review pending players, confirm details, and keep the queue from backing up.',
-      keywords: ['daily review', 'to review', 'pending registrations', 'approve', 'decline', 'mark received', 'pay by card', 'pay link', 'fee', 'review queue', 'division full', 'add to the waitlist instead', 'select several', 'bulk approve'],
+      keywords: ['daily review', 'to review', 'view menu', 'friend requests', 'pending registrations', 'approve', 'decline', 'mark received', 'pay by card', 'pay link', 'fee', 'review queue', 'division full', 'add to the waitlist instead', 'select several', 'bulk approve'],
       searchText: 'division is full add to the waitlist instead one notice per sign-up to the house league desk several children one reference daily review queue to review pending registrations approve waitlist decline mark received fee owing payment search player name parent email status views view switch status tabs duplicate confirm tick several rows approve promote waitlist mark received move division email one at a time decline withdraw',
       content: (
         <>
-          <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the view switch at the left of the toolbar (To review, Active, Waitlist, Ended) plus the search box are how you move through it. Tick several rows and a bar offers Approve, Promote, Waitlist, Mark received, Move division and Email for all of them at once.</p>
+          <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the <strong>View</strong> menu in the toolbar (To review, Active, Waitlist, Ended, and Friend requests when the season takes them) plus the search box are how you move through it. Tick several rows and a bar offers Approve, Promote, Waitlist, Mark received, Move division and Email for all of them at once.</p>
           <ol>
             <li>Open <strong>Registrations</strong> and start on the <strong>To review</strong> view.</li>
             <li>Use the <strong>search box</strong> (player name or parent email, including a second parent&apos;s) to find a specific family or spot duplicates.</li>
@@ -65,12 +65,12 @@ const registrationsHelp: HelpPageContent = {
       heading: 'How to promote a waitlisted player',
       summary: 'Move the next player from the waitlist to active when a spot opens.',
       keywords: ['promote waitlist', 'waitlisted player', 'capacity', 'active registration'],
-      searchText: 'promote waitlisted player waitlist position queue capacity spot opens active registration auto promote manual promote notification email email families sent log notifications log',
+      searchText: 'promote waitlisted player view menu waitlist view waitlist position queue capacity spot opens active registration auto promote manual promote notification email email families sent log notifications log',
       content: (
         <>
           <p>Promote from the waitlist when a division has room and you&apos;re ready to offer the spot. Promotion happens only when a spot frees, and a new sign-up never jumps the queue.</p>
           <ol>
-            <li>Choose <strong>Waitlist</strong> at the left of the toolbar.</li>
+            <li>Open the <strong>View</strong> menu in the toolbar and choose <strong>Waitlist</strong>.</li>
             <li>Start with position #1 unless your organization has a documented exception.</li>
             <li>Click <strong>Promote</strong> on that player&apos;s row.</li>
             <li>Confirm the player moved to <strong>Active</strong> and that the queue positions compacted.</li>
@@ -192,7 +192,7 @@ const registrationsHelp: HelpPageContent = {
       searchText: 'pay by card card payment records itself bank debit clearing online bank debit email the pay link refund to the card record the refund sent another way to review pending review default view default tab search box player name parent email mark received fee owing days amber add registration walk-in row actions decline withdraw release the spot refunded kept by the club confirm finished season locked registrations locked mark received undo correct the price stay open',
       content: (
         <>
-          <p>The Registrations page opens on the <strong>To review</strong> view. Work the list by approving, waitlisting, or declining each row — declining opens a window that asks what happened to any money, and tells you whether the waitlist will move up on its own to fill the spot.</p>
+          <p>The Registrations page opens on the <strong>To review</strong> view (the <strong>View</strong> menu in the toolbar changes it). Work the list by approving, waitlisting, or declining each row — declining opens a window that asks what happened to any money, and tells you whether the waitlist will move up on its own to fill the spot.</p>
           <p>The <strong>search box</strong> finds a player or parent email across all views when a family contacts you directly. When a family pays by hand, click <strong>Mark received</strong> on their row: it records the whole amount still owing, with the date and how. A family who pays by card from their sign-up page needs nothing from you (the Fee cell reads <em>Online, card</em> with a receipt number; a bank debit reads <em>clearing</em> until it clears, then <em>Online, bank debit</em>), and <strong>Email the pay link</strong> in the row&rsquo;s menu sends a family who owes their link. If you marked one by mistake, <strong>Undo: marked received by mistake</strong> takes it back; if the money is going back to the family, decline or withdraw the registration and choose <strong>Refunded</strong>. To add a player outside the public form, use <strong>Add registration</strong>.</p>
           <p>When the season is finished (completed or archived), its registrations are locked: the row actions and <strong>Add registration</strong> are gone, and a line at the top says so. <strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong> and <strong>Email families</strong> stay, because fees still arrive after the last game.</p>
           <p>The full day-to-day workflow, including the Fee column, ending a registration, correcting a price and moving a child to another division, is in <em>Managing registrations day to day</em> in the House league guide.</p>

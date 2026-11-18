@@ -11,7 +11,7 @@ const accountingHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Who can use Accounting',
       summary: 'Accounting is a Club-plan module; owners and treasurers work here, admins need it granted.',
-      keywords: ['accounting access', 'club plan', 'add-on', 'treasurer', 'permission', 'access restricted', 'cannot see allocations', 'where did allocations go'],
+      keywords: ['accounting access', 'isn’t one of your pages', 'club plan', 'add-on', 'treasurer', 'permission', 'access restricted', 'cannot see allocations', 'where did allocations go'],
       searchText: 'accounting access club plan add-on enable module treasurer admin owner permission capability access restricted who can use unlock contact owner allocations payment requests moved from rep teams admin with rep teams cannot see allocations',
       content: (
         <>
@@ -19,7 +19,7 @@ const accountingHelp: HelpPageContent = {
           <p>Once it’s enabled, who can do what:</p>
           <ul>
             <li><strong>Owners and treasurers</strong> — everything: the books, allocations, payment requests, reminders and the budget.</li>
-            <li><strong>Admins</strong> — only if the owner grants them the accounting permission. Without it, Accounting stays hidden.</li>
+            <li><strong>Admins</strong> — only if the owner grants them the accounting permission. Without it, Accounting stays out of the menu, and opening its address shows a page that says <em>Accounting isn’t one of your pages</em>, with a way back.</li>
             <li><strong>Coaches</strong> never open Accounting. They see their own side of the same money on their team’s <strong>Club</strong> screen in the Coaches Portal.</li>
           </ul>
           <HelpNote variant="info" title="Allocations and Payment requests live here now">They used to sit under Rep teams. They are club money, so they moved to Accounting — which means an admin who holds Rep teams but not the accounting permission no longer sees them. Old links and bookmarks still land on the right page.</HelpNote>
@@ -38,12 +38,12 @@ const accountingHelp: HelpPageContent = {
           <p>Accounting is one page, and its tabs run across the top:</p>
           <HelpDefs>
             <HelpDef term="Overview">The board summary: where the club stands today, the year against the budget, how many teams need you, and the club’s books.</HelpDef>
+            <HelpDef term="Budget">The year’s plan, revenue first and then expenses, line by line.</HelpDef>
             <HelpDef term="Teams">Every team’s money with the club for the year, and each team’s account inside it.</HelpDef>
             <HelpDef term="Ledger">One book at a time, read like a bank statement. The <strong>Book</strong> pill switches between the club’s books.</HelpDef>
             <HelpDef term="Bank">The club’s bank balance checked against its books, a day at a time. See <a href="#bank-tab">Checking your bank balance</a>.</HelpDef>
             <HelpDef term="Allocations">What the club bills its teams, and what is coming due.</HelpDef>
             <HelpDef term="Payment requests">What the teams ask of the club, waiting for your answer.</HelpDef>
-            <HelpDef term="Budget">The year’s plan, revenue first and then expenses, line by line.</HelpDef>
             <HelpDef term="Budget vs. Actual">The year’s plan against what the club’s books actually moved.</HelpDef>
             <HelpDef term="Payouts">The last tab. Each Stripe payout to the club’s bank account and what is inside it, so a line on the bank statement can be matched to the payments behind it. See <a href="#payouts-tab">Matching a payout to your bank statement</a>.</HelpDef>
           </HelpDefs>
@@ -702,7 +702,7 @@ const accountingHelp: HelpPageContent = {
       id: 'budget',
       heading: 'The Budget: planning the year',
       summary: 'The year’s plan, revenue first and then expenses; a line opens to read, the pencil edits it, and a cost line can be allocated to the teams.',
-      keywords: ['budget', 'plan', 'budget line', 'add line', 'by period', 'start from last year’s plan', 'allocate from a line', 'from the teams', 'opening balance', 'closing balance', 'categories', 'words your teams use', 'fiscal year pill', 'quarters', 'pays for', 'permit', 'permits', 'rental', 'contract', 'being billed', 'being billed (draft)', 'draft schedule', 'fair shares', 'billed twice', 'double bill'],
+      keywords: ['budget', 'plan', 'total revenue', 'total expenses', 'budget line', 'add line', 'by period', 'start from last year’s plan', 'allocate from a line', 'from the teams', 'opening balance', 'closing balance', 'categories', 'words your teams use', 'fiscal year pill', 'quarters', 'pays for', 'permit', 'permits', 'rental', 'contract', 'being billed', 'being billed (draft)', 'draft schedule', 'fair shares', 'billed twice', 'double bill'],
       searchText: 'budget plan the year budget line add line year pill view list by period when filter no date yet columns months quarters export excel csv tools categories words your teams use revenue first from the teams worked out from the allocations never typed expenses planned allocated collected opening balance net for the year closing balance a line opens to read pencil edits saves as you type allocate from a line allocate remove a line only while it has no allocations start from last year’s plan start from this year’s plan empty year no plan yet one way to bill teams new allocation in the line window fiscal year pill lock dot short year 8 months quarters from the first month opening balance locked carried from last year the club paid it pays for permits that name the line permit cost more than this line plans open the permit town dome rental contract pay the town ledger expense being billed draft a draft schedule a schedule in review not billed yet when it’s sent draft no amount yet fair shares read only each team’s hours and share open the schedule schedules bill the teams a schedule bills this line billing all of it allocating it here too bills the same teams twice charged twice double bill warns never blocks',
       content: (
         <p>The <strong>Budget</strong> tab is the club’s plan for one year. Every line here is something the club expects to take in or spend, and Budget vs. Actual later reads the year’s real books against it.</p>
@@ -714,6 +714,7 @@ const accountingHelp: HelpPageContent = {
           content: (
             <>
               <p>The <strong>Fiscal year</strong> pill picks the year: a lock marks a closed year, a dot after the pill’s year means it is the year today falls in, and a short year says how many months it runs. <strong>View</strong> reads the plan as a <strong>List</strong> or <strong>By period</strong>; By period adds a <strong>Columns</strong> choice of <strong>Months</strong> or <strong>Quarters</strong> (three months at a time from the year’s first month), and on a phone it opens scrolled to this month. While any line has no date, a <strong>When</strong> filter (All, No date yet, Dated) appears on the List. <strong>Export</strong> writes the plan as it reads on screen, as Excel or CSV.</p>
+              <p>Across the top, a band gives <strong>Total revenue</strong>, <strong>Total expenses</strong> and <strong>Closing balance</strong> for the whole year, whichever view or filter is under it.</p>
               <HelpDefs>
                 <HelpDef term="Revenue first">The plan opens with money coming in. <strong>From the teams</strong> is a row worked out from the allocations — it is never typed — and it opens to the allocations that add up to it.</HelpDef>
                 <HelpDef term="Then expenses">Each line shows <strong>Planned</strong>, <strong>Allocated</strong> and <strong>Collected</strong>. A part-billed cost line says how much is not allocated: the club pays that part itself unless you allocate it. A line a schedule is about to bill says that instead (<em>$27,000.00 being billed (draft)</em>; see <a href="#budget-allocate">Allocating a cost line</a>).</HelpDef>

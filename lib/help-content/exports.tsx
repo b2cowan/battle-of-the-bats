@@ -233,7 +233,7 @@ const exportsHelp: HelpPageContent = {
           </p>
           <p>
             <strong>Printed lists leave contact details out.</strong> The PDF of House league season
-            registrations, of rep-team tryout applicants and of the rep program-year roster gives you
+            registrations, of rep-team tryout applicants and of a rep team&apos;s roster gives you
             players, dates and status — never a date of birth, a guardian name, an email or a phone
             number. A printed page gets forwarded and left on tables, so those columns stay in the
             spreadsheet exports, which live under the <em>Roster with contacts</em> document.
