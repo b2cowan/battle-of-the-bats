@@ -13,10 +13,12 @@ Nothing below was built when this was written.
 
 | Order | Prompt | Items | Kind | Status |
 |---|---|---|---|---|
-| 1 | P1 Access fixes 1–11 | calls 1–11 | build | not started |
+| 1 | P1 Access fixes 1–11 | calls 1–11 | build | DONE 2026-11-18 49c4c9934 (1), f781d0f0d (2+9), 2137f6f12 (3), 140eed5a1 (4), 9ec647290 (5), 5258fae20 (6), 517f30e36 (7), a3670460b (8, mig 500: on production the migration goes first, then the code), 643c2dd05 (10), 238bc70d3 (11), records 0dc863151. Built in its own chat (row marked by the P2 chat); owner walk §539 owed |
 | 2 | P4 Refuse a second caller for the same job and minute | call 21 | build (before the first live club) | not started |
-| 3 | P2 Existing account gets an invitation | call 13 | build (medium) | DONE 2026-11-18, the commit "Board Ready trust close-out 13: an existing account is invited…" (run ahead of P4 on the owner's word; proved on dev 34/34; reviewed; /legal + /docs applied). Its coach-to-board branch is row 3b. Two owner calls left on the board: invitations that never expire, the database member test ignoring status |
+| 3 | P2 Existing account gets an invitation | call 13 | build (medium) | DONE 2026-11-18, the commit "Board Ready trust close-out 13: an existing account is invited…" (run ahead of P4 on the owner's word; proved on dev 34/34; reviewed; /legal + /docs applied). Its coach-to-board branch is row 3b; its two open calls were ruled "as recommended" the same day and are rows 3c and 3d |
 | 3b | P2b A club's own coach given a board role accepts it too | call 13, owner ruling 2026-11-18 | build (small schema change) | not started |
+| 3c | P2c An unaccepted invitation runs out | call 13 open call (b), owner ruling 2026-11-18 | build | not started |
+| 3d | P2d The database's member test counts only active members | call 13 open call (c), owner ruling 2026-11-18 | build (one migration) | not started |
 | 4 | P3 Lock rules, files and links on a completed event | call 14 | build | not started |
 | 5 | P5 "Send a new link" button for a team's pay link | call 12 | drawing session only | not started |
 
@@ -181,6 +183,65 @@ RULES
 - /review before done; /legal (the "added" email retires); offer /docs for the Members help. One-spelling gate.
 - npm run verify:changed and typecheck. Branch dev; explicit pathspecs; no commit without my yes; the board line moves in the
   same commit. Finish with a short walk list in product-owner voice.
+```
+
+---
+
+## P2c — An unaccepted invitation runs out (call 13, open call (b), owner ruling 2026-11-18)
+
+```
+Board Ready — trust call 13, open call (b) (build). Owner ruled 2026-11-18, "as recommended" (the P2 chat's and /legal's):
+an unaccepted club invitation no longer waits forever. Today a pending organization_members row (a new person's or, since P2,
+an existing account's) never expires: it holds a seat, keeps its invitee landing on Home at every sign-in until they act,
+and is never removed (/legal: docs/agents/legal/CASL_MEMBER_INVITE_EMAILS.md recommendation 3, backlog L9).
+
+THE RULING, AND WHAT IS YOURS TO DECIDE
+- An invitation runs out after 30 days (the P2 chat's default; tell the owner if the code argues for another number). A resend
+  starts the 30 days again. A lapsed invitation holds no seat, is not on Home, cannot be accepted (both accept doors), and
+  Members shows it as run out with Resend and Cancel.
+- Removing lapsed rows (retention): decide from the code whether lapsing is read at use (no job) with a purge later, or a nightly
+  job. ⚠ A new scheduled job must respect P4's "one caller per job and minute" guard if P4 has landed; if it has not, say so. Read
+  how Club Communications' nightly retention runs and reuse it rather than inventing a second scheduler.
+- A new person's lapsed invitation leaves an unconfirmed account the invitation made: say what happens to it (the
+  member-account-keep rule in lib/member-account-keep.ts decides deletes; never delete an account its owner already had).
+- The sign-up page's "You've been invited" message and the self-serve resend (lib/invite-reconciliation.ts findPendingInviteByEmail,
+  /api/auth/resend-invite) must not offer a lapsed invitation as live.
+
+RULES
+- Argue from the code; Implementation Plan + plain-language UX summary first (inviter, invitee, other admins).
+- Schema change? DEV first, DATA_DICTIONARY + npm run refresh:snapshots same unit, production order in the hand-off.
+- Prove on DEV with a probe under .probe/ (age a row by hand: it lapses, frees the seat, can't be accepted; a resend revives it;
+  nothing else moves). Never --prod, never seed mid-run.
+- /review; /legal (what the privacy policy may now say about unaccepted invitations); offer /docs (Members help). Spelling gate.
+- verify:changed + typecheck. Branch dev, explicit pathspecs, no commit without my yes, board line in the same commit. Walk list
+  in product-owner voice at the end.
+```
+
+---
+
+## P2d — The database's member test counts only active members (call 13, open call (c), owner ruling 2026-11-18)
+
+```
+Board Ready — trust call 13, open call (c) (build, one migration). Owner ruled 2026-11-18, "as recommended": the database's
+membership test counts only ACTIVE members. Found by P2's security review: `is_org_member()` and `can_access_tournament()`
+(migrations 009 / 072, read the LIVE bodies on dev) ignore organization_members.status, so a PENDING invitee (now including an
+existing account with a live session, since P2) and a SUSPENDED member can read, through their own browser session, the club's
+venue library (org_venues, org_venue_facilities) and its tournaments' team names (teams, policy teams_member_read_for_live_feed,
+also over Realtime). Every other membership policy found had no authenticated SELECT grant (re-check, don't trust this list).
+
+THE CHANGE
+- Both functions require status = 'active'. Before writing it, list EVERY policy and function that calls them (dev
+  information_schema / pg_policies), and say for each who loses access: it must be only pending and suspended rows. Check the
+  coach rows (capability-less 'coach' role, active) and any team-workspace or tournament-staff path still pass.
+- Prove on DEV with the authenticated key as (1) a pending invitee, (2) a suspended member, (3) an active member and (4) a club
+  coach: reads of org_venues / org_venue_facilities / teams return nothing for 1–2 and as before for 3–4. A probe under .probe/,
+  never --prod, never seed mid-run.
+- DATA_DICTIONARY (the two functions' meaning) + npm run refresh:snapshots in the same unit. Production order in the hand-off
+  (it only narrows reads, so say whether it can go before or after the code; there may be no code).
+- ⚠ Do not touch the database checks/gates themselves (WATCHED_PATHS in scripts/check-agent-automation.mjs); if a check must
+  learn the new rule, stop and tell me.
+- /review (RLS posture is high-risk). verify:changed + typecheck. Branch dev, explicit pathspecs, no commit without my yes,
+  board line in the same commit. Walk list in product-owner voice at the end.
 ```
 
 ---

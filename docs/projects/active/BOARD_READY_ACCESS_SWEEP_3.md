@@ -42,9 +42,11 @@
 > **Left, owner calls:** (a) a club's own COACH given a board role is still changed on the spot (asking first needs a
 > place for the pending role, a schema change) — **RULED 2026-11-18 (owner): they accept too**, built as its own queue
 > prompt (P2b in `BOARD_READY_TRUST_FIX_PROMPTS.md`); (b) a pending invitation never expires, holds a seat, and lands its
-> invitee on Home at every sign-in until they act; (c) the database's membership test (`is_org_member`,
+> invitee on Home at every sign-in until they act — **RULED 2026-11-18 (owner, as recommended with /legal): an
+> unaccepted invitation runs out (30 days, a resend restarts it) and lapsed ones are removed**, queue prompt P2c; (c) the database's membership test (`is_org_member`,
 > `can_access_tournament`) ignores status, so a pending invitee's browser session can read the club's venue library and
-> its tournaments' team names (suspended members too: not new, now aimable at any existing account): one migration.
+> its tournaments' team names (suspended members too: not new, now aimable at any existing account): one migration —
+> **RULED 2026-11-18 (owner, as recommended): both count only active members**, queue prompt P2d.
 > **Reported, not fixed:** "1,000 users" — the Members list is already fixed (`peopleSignInFacts`); the same page-1 read
 > is live in the program-year coaches list and the platform staff-delete tool (2–5 lines each). The support check fails
 > open on a database error and compares stored emails case-sensitively. The accept page without `?org` accepts the

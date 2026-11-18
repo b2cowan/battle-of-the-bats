@@ -52,7 +52,9 @@ and no platform line; `app/api/admin/members/invite/route.ts`; `lib/invite-links
   address (`invite/route.ts`, `generateLink` then the `invited` insert). "You can safely ignore this email" is true for the
   reader (nothing is charged or sent). **Checked 2026-11-18:** nothing ever removes an unaccepted invitation, and since
   trust close-out 13 an existing account's invitation is a pending row too (it holds a seat and sends its reader to Home at
-  each sign-in until they act). An owner call on that build.
+  each sign-in until they act). **Ruled 2026-11-18 (owner, recommendation 3 taken):** an unaccepted invitation runs out
+  after 30 days (a resend restarts it) and lapsed ones are removed — to be built (Board Ready trust queue P2c). Until it is,
+  the privacy policy must still not say unaccepted invitations are deleted.
 
 ## Recommendation
 1. CASL: no change needed. Keep both emails free of commercial content. A guard that fails the build when either template
