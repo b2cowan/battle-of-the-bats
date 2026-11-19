@@ -8,7 +8,7 @@ import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
 import type { OrgPlan } from '@/lib/types';
 import {
   isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, gatedPlanTag, closedProgramPlansSentence,
-  isPlanOpen, gatedPlanSentence, availableNowSentence,
+  isPlanOpen, gatedPlanSentence, availableNowSentence, PLAN_AVAILABLE_NOW,
 } from '@/lib/plan-config';
 import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import { createClient } from '@/lib/supabase-server';
@@ -71,7 +71,9 @@ const MODULE_CARDS: Array<{
     href: '/for-coaches',
     planKey: 'team',
     planLabel: 'Coaches Portal',
-    liveBadge: 'Free to start',
+    // Not "Free to start" (owner 2026-11-19): this card opens /for-coaches, which sells only the paid Premium
+    // Coaches Portal (no trial). PLAN_AVAILABLE_NOW is the paid plans' badge (W41).
+    liveBadge: PLAN_AVAILABLE_NOW,
     tagline: 'Manage your team. Not your inbox.',
     features: [
       'Full roster management with positions and season history',
@@ -248,7 +250,9 @@ const PERSONAS: Persona[] = [
     label: 'Coaches Portal',
     question: 'Coaching a single team?',
     body: 'Roster, lineups, budget, and documents — a complete team workspace, whether or not your organization is on FieldLogicHQ.',
-    liveBadge: 'Free to start · no credit card',
+    // No "free" and no "no credit card" (owner 2026-11-19): "I'm a coach" opens /for-coaches, which sells only the
+    // paid Premium Coaches Portal, paid at sign-up with no trial.
+    liveBadge: PLAN_AVAILABLE_NOW,
     cta: "I'm a coach",
     href: '/for-coaches',
   },
@@ -423,7 +427,7 @@ export default async function HomePage({
                   canon sentence, from the gate. */}
               {[
                 teamOpen
-                  ? 'Tournament organizers and coaches can start today — free, no credit card required.'
+                  ? 'Tournament organizers and coaches can start today. Tournament is free, with no credit card required.'
                   : `Tournament organizers can start today — free, no credit card required. ${gatedPlanSentence('team')}`,
                 closedPlansLine,
               ].filter(Boolean).join(' ')}

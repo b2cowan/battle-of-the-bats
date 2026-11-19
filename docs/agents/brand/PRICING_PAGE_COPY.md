@@ -13,6 +13,20 @@
 > comp only** (they run to September 30, 2027): the billing page's free-season words, the lock lines' `Free for you
 > through {date}`, and the `founding_*` emails. Those are served from the Founding canon and stay as they are.
 
+> ### ⚠ AMENDMENT 2026-11-19 — "free" comes off the coach MARKETING doors (`BUSINESS_DECISIONS.md` 2026-11-19, "'Coach a team' opens the PAID Premium Coaches Portal sign-up…", owner, Decided)
+> "Coach a team" opens the **paid Premium** sign-up (chooser card, Get started menu, coach demo button), and a coach gets the
+> free Basic Coaches Portal **by registering a team for a tournament**. So **no coach marketing surface says "free"**
+> (home coach cards and the "One platform. Every role." line, /for-coaches, the /pricing coach card and FAQs, the chooser,
+> the menu), and **/pricing's coaches band shows Premium only, with no Basic strip**. **Door-from-a-tournament copy keeps
+> "free".** Where this document states a live coach line with "free", it is **superseded by this note until `/marketing`
+> rewrites it**: the "standalone free teams" definition below (Basic = the free floor for tournament participants; **standalone
+> free teams are no longer promoted**), the homepage coach badge `Free to start · no credit card` (**now `Available now`**,
+> W41's paid-plan word), and the live credit-card FAQ answer in Section 9 (**drop "The Basic Coaches Portal is free with no
+> time limit too."**). The Basic Coaches Portal itself, its name and its free status are unchanged. The historical amendment
+> blocks further down (e.g. the 2026-07-26 two-family framing) are history and are not rewritten.
+> **OPEN (owner, not decided):** the tournament page's "Set up your team — free" banner and the coach hub's "Start a free team
+> home" button open the paid checkout today; copy for them waits on the owner's ruling.
+
 ---
 
 ### 🆕 The Club team limit — the unit is "teams with a Premium Coaches Portal", and house league is unlimited — RULED 2026-11-19 (owner: *"I agree with your recommendations"*; `/marketing` main session; decision logged in `BUSINESS_DECISIONS.md` 2026-11-19). **Supersedes** every bare "Up to 15 teams" / "16 to 30 teams" / "How many teams does your club run?" below.

@@ -98,6 +98,10 @@ rulings), the lines each recommendation turns on opened by the review session, t
   persona cards, and one of its three reasons is untouched: every coach starts on a free Basic Coaches Portal, so a
   price on that door overstates the cost. Prices sit in three rows in the home page's pricing section instead, which
   that ruling and the 2026-08-08 one allow. Ask 24 offers the one exception worth arguing and recommends against it.
+  **⚠ Amended 2026-11-19** (`BUSINESS_DECISIONS.md` "'Coach a team' opens the PAID Premium Coaches Portal sign-up…"): the
+  "every coach starts on a free Basic Coaches Portal" reason above no longer holds on a marketing door. "Coach a team"
+  opens the paid Premium sign-up; the free portal comes only from registering a team for a tournament. The rule itself
+  (no price on the coach door) is unchanged.
 - **Three audiences for buying, four for landing.** A house league board and a club board buy from one band but search
   for different things and need different first sentences. /for-leagues and /for-clubs stay two pages and two nav
   entries; only the order follows the bands.
@@ -116,13 +120,13 @@ rulings), the lines each recommendation turns on opened by the review session, t
 | Tournament organizer | Free plan, live demo, walkthrough, a page that names the pain | Nothing says League Plus or Club starts from the same account; "Start Tournament Plus free" is not free of a payment method | One line on the cross-sells (W71) |
 | House league board | Four real pains, the season in four steps | No picture, no demo; the trial is one sentence; no answer on switching, information or stopping; titled "For house league administrators" | Real screens in the four steps, and the trial steps (W67, W68) |
 | Club board | Plain price, both sizes, every coach included | The page is about coaches; no treasurer, no registrar; nothing to take to a board meeting; no picture | "What each person at your club gets" (W69) |
-| Coach | Free start, live demo, clear page | The free portal has no place on /pricing; "Free right now" on the paid card; no way to pass the Clubs page on | The coaches band, and "Copy a link for your club" (W58, W71) |
+| Coach | Free start, live demo, clear page *(⚠ "free start" struck 2026-11-19: the marketing doors open the paid Premium sign-up, `BUSINESS_DECISIONS.md` 2026-11-19)* | The free portal has no place on /pricing; "Free right now" on the paid card; no way to pass the Clubs page on | The coaches band, and "Copy a link for your club" (W58, W71) |
 
 ### The ideas, and the product fact each relies on (found 2026-11-18)
 
 | Idea (words) | For | Page | Relies on | Size | Stage |
 |---|---|---|---|---|---|
-| Three audience bands (W58, W75) | all | /pricing | the six plans in `lib/plan-config.ts`; the free Basic Coaches Portal | a section rebuilt | S3 |
+| Three audience bands (W58, W75) | all | /pricing | the six plans in `lib/plan-config.ts`; ~~the free Basic Coaches Portal~~ *(amended 2026-11-19: not shown on /pricing)* | a section rebuilt | S3 |
 | Three-door picker (W59) | all | /pricing | the bands | words | S3 |
 | Three doors, three price rows (W60 to W62) | all | home | the four persona pages; prices from config | two sections rebuilt | S3 |
 | Nav order, footer column, menu entry (W63) | all | every page | `components/Navbar.tsx:17-23`, `components/Footer.tsx:34-52` (no Leagues or Clubs link today) | words | S3 (footer: S1) |
@@ -284,7 +288,7 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
   2026-11-18 by three audience bands (W58, Ask 21):** those rows grouped by price, and a league board and a club board
   are the same buyer. Running a tournament (Tournament, Tournament Plus) · Running a league or a club (League Plus, Club,
   Club · Association, each under a label that says what a club runs) · Coaching one team (the free Basic Coaches Portal
-  beside Premium, one full-width band). Each band reads the gate and shows only open plans; band 2 does not render until
+  beside Premium, one full-width band; **⚠ amended 2026-11-19: Premium only, no Basic strip**). Each band reads the gate and shows only open plans; band 2 does not render until
   one of its plans is open; a closed plan stays in the strip. With both open, the League Plus and Club bridge cards
   under the grid are removed (W75). `/pricing` only: the home page stops rendering the grid when all three are open.
 - The role picker on `/pricing`: three doors when all three plans are open, each jumping to its band (W59); the
@@ -525,7 +529,8 @@ changed. Where an ask offered options, the recommended one is the ruling:
 - **Ask 32:** B. **Club leads the pricing page** from the flip: the one lime button and the olive edge move from
   Tournament Plus to Club. Never the words "Most popular".
 - **Ask 34:** as drawn: band headings at the card-title size; one lime per view is read per screenful; the free Basic
-  Coaches Portal is a strip above Premium.
+  Coaches Portal is a strip above Premium. **⚠ Amended 2026-11-19: the Basic strip is dropped** (the coaches band is
+  Premium only; `BUSINESS_DECISIONS.md` 2026-11-19). The heading and lime-button calls stand.
 
 Also settled on 2026-11-18 by the owner's questions, inside Ask 33: once its plan is open, the last band of /for-clubs
 and /for-leagues has one button ("Start free with Tournament" leaves; W30, W36). And noted, not changed: the billing
@@ -559,7 +564,7 @@ audience review's (2026-11-18). All ruled as recommended (above):
 
 | # | Call | Recommendation |
 |---|---|---|
-| 21 | Three audience bands on /pricing, labelled by what a club runs, not as a ladder; the coaches band shows the free Basic Coaches Portal beside Premium (replaces Ask 4) | Yes, as drawn |
+| 21 | Three audience bands on /pricing, labelled by what a club runs, not as a ladder; the coaches band shows the free Basic Coaches Portal beside Premium (replaces Ask 4) *(⚠ amended 2026-11-19: the coaches band shows Premium only; the Basic Coaches Portal is reached through tournament registration, `BUSINESS_DECISIONS.md` 2026-11-19)* | Yes, as drawn |
 | 22 | The role picker has three doors, each jumping to its band | Yes |
 | 23 | The home page: three audience doors, all four roles as full cards, three price rows instead of the six plan cards | Yes, as drawn |
 | 24 | A price on the home page doors (a re-frame of the 2026-08-07 ruling): A no price on any door; B "from" the League Plus price on the league and club door only. Never a price on the coach door | A |
@@ -572,4 +577,4 @@ audience review's (2026-11-18). All ruled as recommended (above):
 | 31 | Lines not true today, fixed at the next promote: three answers that describe customers; "Free right now" on the Premium card; "Start Tournament Plus free". For Tournament Plus: say the 14-day trial, or switch it off | Fix now; say the trial |
 | 32 | Which card leads /pricing once Club is on sale: A Tournament Plus keeps the one lime button; B Club takes it. Never the words "Most popular" | B |
 | 33 | The paths between audiences: "your events, teams and staff stay where they are"; "Copy a link for your club"; one line under the coach demo. Added at the owner's question (2026-11-18): once its plan is open, the last band of /for-clubs and /for-leagues has one button; "Start free with Tournament" leaves it (W30, W36), and the hero's quiet tournament link stays | Yes |
-| 34 | Three drawing calls from `/design`: the band headings at the card-title size (so "Available now" stays the page's one display heading); one lime button per view read per screenful (the Leagues and Clubs pages repeat the same lime action in the hero, on the plan card and in the bottom band, as they do live today); the free Basic Coaches Portal as a strip above Premium | As drawn on all three |
+| 34 | Three drawing calls from `/design`: the band headings at the card-title size (so "Available now" stays the page's one display heading); one lime button per view read per screenful (the Leagues and Clubs pages repeat the same lime action in the hero, on the plan card and in the bottom band, as they do live today); the free Basic Coaches Portal as a strip above Premium *(⚠ the Basic strip dropped 2026-11-19, `BUSINESS_DECISIONS.md`; the other two calls stand)* | As drawn on all three |

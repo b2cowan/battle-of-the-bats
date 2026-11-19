@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import ViewerAwarePlans from './ViewerAwarePlans';
-import { CHAT_PAUSED } from '@/lib/chat-pause';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
@@ -56,7 +55,9 @@ const BUYER_SEGMENTS: Array<{
   {
     eyebrow: 'Coach or team manager',
     title: 'I manage one competitive team.',
-    body: 'Your free Coaches Portal follows every tournament you enter. Premium is the operations HQ for one competitive team — roster, lineups, budget, and schedule. No org account needed.',
+    // No "free Coaches Portal" here (owner 2026-11-19): no marketing door sells the free portal; a coach gets it by
+    // entering a tournament.
+    body: 'The Premium Coaches Portal is the operations HQ for one competitive team — roster, lineups, budget, and schedule. No org account needed.',
     cta: interestButtonLabel(['team']),
     earlyAccess: true,
     initialPlanInterest: ['coaches_portal'],
@@ -236,7 +237,9 @@ export default async function PricingPage() {
     if (faq.q === 'What if I only manage one competitive team?' && teamCheckoutOpen) {
       return {
         ...faq,
-        a: `Use the Coaches Portal. Registering for a tournament gives you the free portal — your tournament record${CHAT_PAUSED ? ' and schedule' : ', schedule, and team chat'} in one place. The Premium Coaches Portal is the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? `Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and it's free through ${FOUNDING_SEASON_END_LABEL} — normally ${teamPrice}/month.` : `It's ${teamPrice}/month, cancel any time.`} If your organization moves to Club later, you won't be charged for the portal again.`,
+        // No "free portal" sentence (owner 2026-11-19): a coach gets the free portal by entering a tournament; the
+        // pricing page sells only Premium to a coach.
+        a: `Use the Premium Coaches Portal, the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? `Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and it's free through ${FOUNDING_SEASON_END_LABEL} — normally ${teamPrice}/month.` : `It's ${teamPrice}/month, cancel any time.`} If your organization moves to Club later, you won't be charged for the portal again.`,
       };
     }
     if (faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {
@@ -259,7 +262,9 @@ export default async function PricingPage() {
         .filter(faq => faq.q !== 'What happens after the Founding Season offer ends?')
         .map(faq =>
           faq.q === 'Do I need a credit card to get started?'
-            ? { ...faq, a: 'No. Tournament is free — no credit card, no time limit. The Basic Coaches Portal is free with no time limit too. Paid plans use secure Stripe Checkout.' }
+            // Owner 2026-11-19: no "Basic Coaches Portal is free" sentence, and no bare "No" — the Premium portal
+            // takes a card at sign-up.
+            ? { ...faq, a: 'Not for Tournament: it is free, with no credit card and no time limit. Paid plans, the Premium Coaches Portal included, use secure Stripe Checkout.' }
             : faq,
         );
 

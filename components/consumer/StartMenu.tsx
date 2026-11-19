@@ -62,7 +62,7 @@ export default function StartMenu({
           <div className={styles.startGroup} aria-hidden>More ways to start</div>
           <Link href={coachHref} role="menuitem" className={styles.startItem} onClick={close}>
             <span className={styles.startItemTitle}>Coach a team</span>
-            <span className={styles.startItemSub}>A free team home for your season — no organization needed.</span>
+            <span className={styles.startItemSub}>The Premium Coaches Portal for your team — no organization needed.</span>
           </Link>
           <Link href="/auth/signup?account=1" role="menuitem" className={styles.startItem} onClick={close}>
             <span className={styles.startItemTitle}>Join a team</span>

@@ -191,7 +191,8 @@ three open cards the sentence must show in **both** views. Same words, handed to
 
 ### W18. FAQ: "Do I need a credit card to get started?"
 - **Today (after the Founding Season window):** "No. Tournament is free — no credit card, no time limit. The Basic Coaches Portal is free with no time limit too. Paid plans use secure Stripe Checkout."
-- **Open:** keep those three sentences and add **"League Plus: {leagueTrialLine} Club and Club · Association: {clubTrialLine}"** so the answer to "do I need a card" is true for the three plans that take one.
+  - **⚠ Amended 2026-11-19** (`BUSINESS_DECISIONS.md` "'Coach a team' opens the PAID Premium Coaches Portal sign-up…"): the sentence "The Basic Coaches Portal is free with no time limit too." is **dropped**; no coach marketing surface says "free". `/marketing` re-words the answer.
+- **Open:** keep those three sentences *(amended 2026-11-19: two, without the Basic Coaches Portal sentence)* and add **"League Plus: {leagueTrialLine} Club and Club · Association: {clubTrialLine}"** so the answer to "do I need a card" is true for the three plans that take one.
 - **Closed also changes:** No. (The Founding Season variant of this answer is history; the window closed 2026-10-25.)
 
 ### W19. FAQ: "Is there a setup fee or onboarding cost?"
@@ -482,6 +483,7 @@ final shape) or **S3b** (a selling section; it does not hold the flip). Reviewed
     **"If your club is on Club or Club · Association, every coach's Premium Coaches Portal is included."** (`/design`: the
     Basic portal is drawn as a strip across the top of the band, above Premium, because its few lines do not fill a
     column; plan Ask 34.)
+  - **⚠ Amended 2026-11-19** (`BUSINESS_DECISIONS.md` "'Coach a team' opens the PAID Premium Coaches Portal sign-up…"): **Band 3 drops the Basic Coaches Portal strip and its "Free" price line.** The band is the Premium Coaches Portal card (plus the Club-included line); the free portal is reached through tournament registration, not from /pricing. The original words above stay as the record of Ask 21 / Ask 34 as first ruled.
 - **Closed also changes:** No. While a plan is closed it stays in the strip (W6) and its band shows only open plans;
   band 2 does not render until one of its plans is open.
 - **Why:** a visitor finds their plans without reading the other two groups. The labels over band 2 state what a club
@@ -499,6 +501,7 @@ final shape) or **S3b** (a selling section; it does not hold the flip). Reviewed
   3. Label "Coach or team manager" · **"I coach one team."** · body **"Your free Coaches Portal follows every tournament
      you enter. Premium is the operations HQ for one competitive team: roster, lineups, budget, and schedule."** · link
      **"See the Coaches Portal"**.
+  - **⚠ Amended 2026-11-19** (`BUSINESS_DECISIONS.md` "'Coach a team' opens the PAID Premium Coaches Portal sign-up…"): door 3's body **no longer says "Your free Coaches Portal…"**. The door leads to the paid Premium sign-up; `/marketing` re-words the body with no "free". The words above stay as the record.
 - **Closed also changes:** No (the four-door picker stays while League Plus and Club are closed; "live products lead"
   still orders it).
 
@@ -513,8 +516,9 @@ final shape) or **S3b** (a selling section; it does not hold the flip). Reviewed
      roadmap row's own link labels.
   3. Eyebrow "Coaches Portal" · badge "Free to start · no credit card" · **"Coaching a single team?"** · body unchanged ·
      links "I'm a coach", "See it live — no sign-up".
+     **⚠ Amended 2026-11-19** (`BUSINESS_DECISIONS.md` "'Coach a team' opens the PAID Premium Coaches Portal sign-up…"): card 3's badge is **"Available now"** (W41's paid-plan word), **not** "Free to start · no credit card"; "body unchanged" now means the W41 body with no "free" in it, and the "I'm a coach" link opens the paid Premium sign-up. Card 1 (Tournament) keeps its badge.
 - **No price on any door** (the 2026-08-07 ruling stands; a price on the coach door would overstate the cost, because
-  every coach starts free). Plan Ask 24 offers the one exception worth arguing: "from {League Plus price}/mo" on door 2;
+  every coach starts free *(⚠ amended 2026-11-19: that reason no longer holds on a marketing door; the no-price rule stands)*). Plan Ask 24 offers the one exception worth arguing: "from {League Plus price}/mo" on door 2;
   `/marketing` and `/strategy` both recommend against it (the club we aim at first pays the Club price, and a League Plus
   anchor on the door pulls it toward the smaller plan).
 - **Closed also changes:** No (the two cards and the row stay while both plans are closed; with one open, that plan's
@@ -527,7 +531,7 @@ final shape) or **S3b** (a selling section; it does not hold the flip). Reviewed
   - **"Running a league or a club"** · **"League Plus is {League Plus price}/mo. Club is {Club price}/mo for up to 15
     teams, and Club · Association is {Club · Association price}/mo for up to 30."** · **"See league and club plans"**
   - **"Coaching one team"** · **"The Coaches Portal is free. Premium is {Premium price}/mo."** · **"See the Coaches
-    Portal"**
+    Portal"** *(⚠ amended 2026-11-19: "The Coaches Portal is free." is dropped; the row names Premium and its price only. `BUSINESS_DECISIONS.md` 2026-11-19.)*
   - Under the rows: **"Prices are in Canadian dollars, {plusTax}."** then the availability line, then the existing
     "Compare all plans in detail" link, reworded **"See every plan and price"** (the persona pages' label).
 - **Closed also changes:** No (the grid and its strip stay on the home page until all three plans are open; the build

@@ -8,6 +8,46 @@
 
 ---
 
+### 2026-11-19 — "Coach a team" opens the PAID Premium Coaches Portal sign-up; "free" comes off every coach marketing door, except the doors that come from a tournament (Decided)
+**Status:** **Decided** (owner, 2026-11-19: *"I agree with A except for the doors from a tournament, so places like public
+tournament pages keep theirs because the 'free coach portal' is the one user set up when they join tournaments"*). One
+related point is **OPEN** (below); it is not decided.
+**Decision:** (option A, with the owner's exception)
+1. **New coaches can no longer start a free team home from a marketing door.** "Coach a team" opens the **paid Premium
+   Coaches Portal** sign-up everywhere a marketing surface offers it: the Get started chooser card, the top bar's Get
+   started menu, and the coach demo's start button. A coach gets the free (Basic) Coaches Portal **by registering a team for
+   a tournament**.
+2. **"Free" comes off every coach marketing surface:** the homepage's two coach cards (the badge becomes "Available now",
+   W41's paid-plan word) and its "One platform. Every role." line, /for-coaches, the /pricing coach card and its FAQs, the
+   chooser and the menu. **/pricing's coaches band no longer shows the free Basic Coaches Portal beside Premium.**
+3. **The exception:** a door that comes **from a tournament** (the public tournament pages' coach banner and the
+   tournament-side coach doors) **keeps its "free" wording**, because the free portal is the one a coach gets from
+   tournaments.
+4. **Unchanged:** the Basic Coaches Portal is **not removed**. No price, plan name, capacity band, feature key or gate value
+   moves. The `/start/team` page still exists by direct URL; it is simply no longer promoted from the marketing doors.
+**Rationale:** since the Founding Season closed (2026-10-26) the Premium Coaches Portal has no trial and is paid at
+sign-up. The homepage coach card said "Free to start · no credit card" but led to a page that sells only the $29 plan. The
+owner found that inaccurate: a card that says free must lead to something free.
+**OPEN (asked of the owner 2026-11-19, NOT decided):** the public tournament page's banner for coaches says "Set up your
+team — free" but its button opens the paid Premium checkout (`/coaches/start`); the same is true of the signed-in coach
+hub's "Start a free team home" button for a tournament-only coach. Either point those buttons at the free team setup (the
+exception above then holds true) or drop "free" from them. Until ruled, that wording is a known inaccuracy.
+**Affects:** the home page, /for-coaches, /pricing (coach card, coaches band, FAQs including the credit-card answer), the
+Get started chooser and menu, the coach demo's start button; positioning only. **No price, plan name, band, feature key or
+gate.** `PLAN_PRICING_FACTS.md` (naming canon) and the on-sale plan and copy docs carry amendment notes.
+**Handoff:** HANDOFF → `/marketing`: re-word the surfaces in point 2 (badge "Available now"; no "free" on a coach marketing
+surface; the credit-card FAQ loses its "Basic Coaches Portal is free" sentence; Band 3 loses the Basic strip; W59 door 3 and
+W60 card 3 per `CLUB_ON_SALE_COPY.md`); and word the OPEN tournament-door question once the owner rules. HANDOFF → `/docs`:
+any help article that tells a coach to "start a free team home" from Get started (the tournament path is unchanged).
+HANDOFF → `/plan`: none new beyond the S3 surfaces already in `CLUB_ON_SALE_PAGES_PLAN.md` (amended there). HANDOFF →
+`/billing`: none; no gate moves.
+**Supersedes (in part):** 2026-11-18 "On-sale pages: the plan grid and the home page sort by AUDIENCE…" (Ask 21) and the
+Basic strip on /pricing (Ask 34): **only** the clause that the coaches band shows the free Basic Coaches Portal beside
+Premium. The three-band grouping and everything else in that entry stand. Also narrows the 2026-08-07 homepage rule that
+the persona cards "state availability and the absence of a payment barrier": the coach card can no longer state a free start.
+
+---
+
 ### 2026-11-19 — The free League plan is RETIRED for good, and the Founding Season is REMOVED from the product; its three holders keep their promise as ordinary free time (Decided)
 **Status:** **Decided** (owner, 2026-11-19: *"we need to remove the free league plan as an option, we are not offering it…
 also remove anything related to the founding season"*; on the holders: **"Keep promise as free time"**).
@@ -97,6 +137,7 @@ Plan of record: `CLUB_ON_SALE_PAGES_PLAN.md` "Owner asks"; drawings `CLUB_ON_SAL
    club runs ("A house league" · "A club with rep teams · up to 15 teams" · "A club with 16 to 30 teams"), **not as steps**
    (League Plus and Club stay peers, `BRAND_STRATEGY.md` §7). The coaches band shows the free Basic Coaches Portal beside
    Premium. The League Plus and Club bridge cards under the grid go (their band says it). Replaces the old Ask 4 (a grid in two rows).
+   **⚠ Amended by 2026-11-19 "'Coach a team' opens the PAID Premium Coaches Portal sign-up…": the coaches band no longer shows the free Basic Coaches Portal beside Premium.**
 2. **The role picker has the same three doors**, each jumping to its band (Ask 22). The four-door picker stays while League
    Plus and Club are closed.
 3. **The home page is a router, not a second price list** (Ask 23): three audience doors (the middle one links to both the

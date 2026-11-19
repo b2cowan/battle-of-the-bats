@@ -107,31 +107,20 @@ const INVITE_ASIDE = {
 // Coaches Portal launch (BUSINESS_DECISIONS 2026-07-20 D2 + FOUNDING_SEASON_COACHES_FREE_PLAN
 // Phase 3): the "Coach a team" door flips WITH the team checkout gate, so the whole coaches launch
 // (door + $0 Premium comp path + copy) turns on together per environment when the gate reopens —
-// never a "Free" door landing on a gated dead end. Open → the live free team setup; gated → the
-// express-interest explainer.
-const FREE_TEAM_BODY = 'A free team home for your season — no organization needed. Track your registrations and team.';
+// never a door landing on a gated dead end. Open → the Premium sign-up; gated → the express-interest explainer.
+// Owner ruling 2026-11-19: the card no longer offers a free team home (it did once the promo closed) and says
+// nothing "free" — the Premium portal is paid at sign-up with no trial. The free Basic portal is the one a coach
+// gets by entering a tournament; only a door that comes from a tournament may say "free".
+const PREMIUM_BODY = "Your team's operations HQ — roster, lineups, budget, schedule, and documents. No organization needed.";
 
-function coachOption(checkoutOpen: boolean, promoActive: boolean): StartOption {
+function coachOption(checkoutOpen: boolean): StartOption {
   // Where the card leads AND which words it wears come from THE one coach rule (lib/start-menu.ts): the top bar's
   // menu and the coach demo read it too, so every "Coach a team" opens the same door (The first look, rule 8).
-  const door = coachStartDoor(checkoutOpen, promoActive);
-  const base = { href: COACH_DOOR_HREF[door], icon: Users, title: 'Coach a team' };
-  // Founding Season 2027 (owner-approved 2026-09-07): while the signup window is open the coach
-  // door opens the PREMIUM Coaches Portal — the product every "Start free" advertises — instead
-  // of the free Basic team (which kept the homepage's own offer button from delivering the offer).
-  // The Basic door survives as the quiet line beneath the cards. Post-window, today's Basic door
-  // and "Free" pill return on their own.
-  if (door === 'premium') {
-    return {
-      ...base,
-      accent: 'coach',
-      label: 'Premium Coaches Portal',
-      body: `Your team's operations HQ — roster, lineups, budget, schedule, and documents. Free through ${FOUNDING_SEASON_END_LABEL}, no organization needed.`,
-    };
-  }
-  return door === 'free'
-    ? { ...base, accent: 'free', label: 'Coach', body: FREE_TEAM_BODY }
-    : { ...base, label: 'Coach', body: FREE_TEAM_BODY, tag: { text: gatedPlanTag('team') } };
+  const door = coachStartDoor(checkoutOpen);
+  const base = { href: COACH_DOOR_HREF[door], icon: Users, title: 'Coach a team', label: 'Premium Coaches Portal', body: PREMIUM_BODY };
+  return door === 'premium'
+    ? { ...base, accent: 'coach' }
+    : { ...base, tag: { text: gatedPlanTag('team') } };
 }
 
 // S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — no League or
@@ -162,11 +151,9 @@ export default async function StartPage() {
   const [checkoutOpen, clubOpen, leaguePlusOpen] = await Promise.all([
     isCoachesPortalPurchasable(), isPaidDoorOpen('club'), isPaidDoorOpen('league'),
   ]);
-  // The Premium promo drives the coach card; the Tournament Plus promo drives the organizer card.
-  const coachPromo = isFoundingSeasonPromoActive('team');
+  // The Tournament Plus promo drives the organizer card; the coach card reads the checkout gate alone.
   const tournamentPromo = isFoundingSeasonPromoActive('tournament_plus');
-  const coach = coachOption(checkoutOpen, coachPromo);
-  const showBasicLine = checkoutOpen && coachPromo;
+  const coach = coachOption(checkoutOpen);
   // /start/league sells League Plus while it is on sale; the free League starter card shows only while it is not (the
   // flag governs only the free floor, On-sale pages S2).
   const leagueCard = leaguePlusOpen ? LEAGUE_PLUS_OPTION : leagueStarterLive ? LEAGUE_OPTION : null;
@@ -212,16 +199,8 @@ export default async function StartPage() {
           })}
         </div>
 
-        {/* The Basic companion's door while the coach card opens Premium (Founding Season 2027):
-            a quiet line, not a card — it is the "and it stays free after" reassurance for the coach
-            who only enters tournaments, and the honest answer to "does coaching with us end in
-            September?" (BUSINESS_DECISIONS 2026-08-07 warned against overstating that cost). */}
-        {showBasicLine && (
-          <p className={styles.basicLine}>
-            Just entering tournaments?{' '}
-            <Link href="/start/team" className={styles.basicLineLink}>The Basic Coaches Portal is free with no end date →</Link>
-          </p>
-        )}
+        {/* (The "Basic Coaches Portal is free with no end date" quiet line is gone, owner 2026-11-19: no marketing
+            door offers the free team home; a coach gets the free portal by entering a tournament.) */}
 
         {/* Two quiet lines, deliberately separated from the cards and from each other: the first is
             for someone who was invited, the second for someone who has already been here. Neither

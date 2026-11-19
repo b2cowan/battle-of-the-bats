@@ -1,41 +1,39 @@
 import 'server-only';
 import { cache } from 'react';
 import { isCoachesPortalPurchasable, isLeagueDoorOpen } from './plan-gating-server';
-import { isFoundingSeasonPromoActive } from './plan-config';
 import { START_DOOR_PATH } from './start-door';
 
 /**
  * THE ONE "COACH A TEAM" RULE (The first look, rule 8 / F14, owner 2026-10-19: one door per thing). Every
  * "Coach a team" — the /start card, the top bar's Get started menu and the coach demo's start button — leads
  * where this says, so the doors can never disagree about which product a coach is starting again:
- *   • Coach Premium while team checkout is open AND the Founding Season promo runs (owner-approved 2026-09-07:
- *     the coach door opens the product every "Start free" advertises; the free Basic team stays reachable as
- *     /start's quiet line beneath the cards);
- *   • the free team setup when checkout is open and the promo is over;
- *   • the /for-coaches explainer while checkout is gated (BUSINESS_DECISIONS 2026-07-20 D2: never a "Free" door
+ *   • the Premium Coaches Portal sign-up while team checkout is open (owner 2026-11-19: was "the free team setup
+ *     once the promo is over" — no marketing door offers the free team home any more);
+ *   • the /for-coaches explainer while checkout is gated (BUSINESS_DECISIONS 2026-07-20 D2: never a door
  *     landing on a gated dead end).
- * Pure, so /start (which already holds both answers) keys its card's words off the same decision.
+ * Pure, so /start (which already holds the checkout answer) keys its card's words off the same decision.
  */
-export type CoachDoor = 'premium' | 'free' | 'gated';
+export type CoachDoor = 'premium' | 'gated';
 
-export function coachStartDoor(checkoutOpen: boolean, promoActive: boolean): CoachDoor {
-  if (!checkoutOpen) return 'gated';
-  return promoActive ? 'premium' : 'free';
+// ⚠ Owner ruling 2026-11-19 (BUSINESS_DECISIONS.md): no marketing door offers a free standalone team home any
+// more. Open checkout → Premium, promo or not; the free Basic portal is the one a coach gets by entering a
+// tournament, and only a door that comes FROM a tournament may say "free". Do not bring a 'free' door back here.
+export function coachStartDoor(checkoutOpen: boolean): CoachDoor {
+  return checkoutOpen ? 'premium' : 'gated';
 }
 
 export const COACH_DOOR_HREF: Record<CoachDoor, string> = {
   premium: START_DOOR_PATH.premium,
-  free: START_DOOR_PATH.team,
   gated: '/for-coaches',
 };
 
-export function coachStartHref(checkoutOpen: boolean, promoActive: boolean): string {
-  return COACH_DOOR_HREF[coachStartDoor(checkoutOpen, promoActive)];
+export function coachStartHref(checkoutOpen: boolean): string {
+  return COACH_DOOR_HREF[coachStartDoor(checkoutOpen)];
 }
 
 /** The rule above, resolved — for the mounts that do not already hold the checkout answer. */
 export async function getCoachStartHref(): Promise<string> {
-  return coachStartHref(await isCoachesPortalPurchasable(), isFoundingSeasonPromoActive('team'));
+  return coachStartHref(await isCoachesPortalPurchasable());
 }
 
 /**
