@@ -8,7 +8,7 @@ import { memberOpensSentence, roleEmailLabel } from '@/lib/member-access';
 import { memberDisplayName } from '@/lib/member-names';
 import { acceptInvitePath, sendExistingAccountInvite } from '@/lib/invite-links';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
-import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { isPlatformAdminEmailStrict } from '@/lib/platform-auth';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml } from '@/lib/email';
 import { parseVolunteerJob, volunteerCapabilitiesFor, type VolunteerJob } from '@/lib/volunteer-jobs';
@@ -63,7 +63,14 @@ export const POST = withObservability(async (req: Request) => {
   // away, and a staff account holding a club seat is refused support work on that club (lib/staff-own-club.ts).
   // ONE neutral answer for both (/review): two distinct refusals would let any club admin test an address for "is this
   // FieldLogicHQ support?".
-  if (isDemoOrganizerEmail(email) || await isPlatformAdminEmail(email)) {
+  // ⚖ Leftover call 13 (owner 2026-11-19): when the staff read can't answer, refuse with "try again" rather than let the
+  // address through; the strict read fails the same way for every address (a demo one too), so the refusal says nothing
+  // about it.
+  const staff = await isPlatformAdminEmailStrict(email);
+  if (staff === null) {
+    return NextResponse.json({ error: 'We couldn’t check that address just now. Try again.', code: 'address_check_failed' }, { status: 503 });
+  }
+  if (staff || isDemoOrganizerEmail(email)) {
     return NextResponse.json({ error: 'That address can’t be invited to a club.', code: 'address_not_invitable' }, { status: 403 });
   }
 

@@ -58,6 +58,25 @@ export async function isPlatformAdminEmail(email: string): Promise<boolean> {
 }
 
 /**
+ * The same question, for a door that must not let a staff address through when the read fails (Board Ready leftover call
+ * 13, owner 2026-11-19: a club's member invite). `null` = it couldn't be answered; the caller refuses with "try again".
+ * ⚖ The database is read FIRST, for every address, so a failed read answers null whatever the address is: an answer that
+ * still said "staff" for a bootstrap address during an outage would let a club admin probe which addresses are staff.
+ * `isPlatformAdminEmail` keeps its soft answer for its other callers, which want it.
+ */
+export async function isPlatformAdminEmailStrict(email: string): Promise<boolean | null> {
+  const typed = email.trim().toLowerCase();
+  const { data, error } = await supabaseAdmin
+    .from('platform_users')
+    .select('role')
+    .eq('email', typed)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (error) return null;
+  return !!data || isBootstrapAdmin(typed);
+}
+
+/**
  * The staff session, or null. ⚖ PLATFORM STAFF ALWAYS USE TWO-STEP, with no grace period (Board Ready · two-step sign-in,
  * owner ruling 2026-11-10): one stolen password here opens every customer. A staff session without it throws
  * TwoStepRequiredError — the set-up step in a page, a 401 in a route — and one whose last code is over 30 days old is

@@ -80,8 +80,15 @@ describe('2. the email asks them to sign in and accept', () => {
 
 describe('3. demo and support addresses', () => {
   it('the invite refuses both, with ONE neutral answer, before anything is read or written', () => {
-    const at = invite.indexOf('if (isDemoOrganizerEmail(email) || await isPlatformAdminEmail(email))');
+    const at = invite.indexOf('const staff = await isPlatformAdminEmailStrict(email);');
     assert.ok(at > 0);
+    assert.match(invite, /if \(staff \|\| isDemoOrganizerEmail\(email\)\) \{\s*return NextResponse\.json\(\{ error: 'That address can’t be invited to a club\.', code: 'address_not_invitable' \}/);
+    // Leftover call 13 (owner 2026-11-19): a read that can't answer refuses with "try again", never lets the address through.
+    assert.match(invite, /if \(staff === null\) \{\s*return NextResponse\.json\(\{ error: 'We couldn’t check that address just now\. Try again\.', code: 'address_check_failed' \}, \{ status: 503 \}\);/);
+    const strict = readCode('lib/platform-auth.ts');
+    const body = strict.slice(strict.indexOf('export async function isPlatformAdminEmailStrict'));
+    // The database first, for every address: a failed read is null whatever the address is (no staff oracle in an outage).
+    assert.ok(body.indexOf('if (error) return null;') < body.indexOf('isBootstrapAdmin(typed)'), 'the read answers before the bootstrap list');
     assert.ok(at < invite.indexOf('findAuthUserByEmail(email)'));
     assert.ok(at < invite.indexOf(".from('organization_members')"), 'the seat count runs first');
     assert.doesNotMatch(invite, /belongs to FieldLogicHQ support|code: 'platform_staff'/, 'a refusal that names support is an oracle');
