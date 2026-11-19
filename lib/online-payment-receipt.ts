@@ -6,6 +6,7 @@ import { warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagrap
 import { formatStoredDate } from './timezone';
 import { loadTeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-view';
+import { payLinkCause, type PayLinkCause } from './team-pay-refusal';
 import { payLinkSecret, teamPayUrl } from './team-pay-link';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { BANK_DEBIT_EMAIL_WORDS as D, DISPUTE_WORDS, ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, SCOPE_WORDS, cardLabel, money, receiptLabel } from './online-payment-words';
@@ -214,13 +215,13 @@ export async function sendRefundEmail(refundId: string, extra?: { lead?: string;
  */
 export async function sendTeamPayLink(
   teamId: string,
-  opts: { askIfLost?: boolean } = {},
-): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: 'ask' }> {
+  opts: { askIfLost?: boolean; stampAt?: string } = {},
+): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: 'ask'; cause?: PayLinkCause | 'send_failed' }> {
   const facts = await loadTeamPayFacts(teamId);
   if (!facts) return { error: 'That team couldn’t be found.' };
   const refusal = refusalMessage(facts);
-  if (refusal) return { error: refusal };
-  if (!facts.teamEmail) return { error: 'This team has no email address.' };
+  if (refusal) return { error: refusal, cause: facts.refusal ?? undefined };
+  if (!facts.teamEmail) return { error: 'This team has no email address.', cause: 'no_email' };
   const payLink = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId, version: facts.linkVersion });
   if (!payLink) return { error: 'Pay links aren’t set up on this server.' };
   // Owner ruling 5 (2026-10-27): after a lost card dispute the reminders leave the team out; one send asks first.
@@ -238,49 +239,74 @@ export async function sendTeamPayLink(
     how ? warmEmailParagraph(escapeHtml(E.otherWays(how))) : '',
   ].filter(Boolean).join('\n'), face?.club ?? null);
   const result = await sendEmail(facts.teamEmail, E.linkSubject(facts.teamName, facts.tournament.name), html, { ...face?.sendOpts, kind: 'team_pay_link', orgId: facts.org.id });
-  if (result.status === 'provider_error') return { error: 'Couldn’t send the pay link. Try again.' };
-  const sentAt = new Date().toISOString();
-  await supabaseAdmin.from('teams').update({ pay_link_sent_at: sentAt }).eq('id', teamId);
+  if (result.status === 'provider_error') return { error: 'Couldn’t send the pay link. Try again.', cause: 'send_failed' };
+  // "Send a new link" stamps the send with its stop's own moment (`stampAt`), which is how the record tells "replaced"
+  // from "stopped" without a column of its own (`payLinkLineState`).
+  // Stamped only while the link this email carried is still the team's current one (/review, call 12): a stop or a
+  // second replace that landed while it was sending made it a dead link, and a "sent" (or a slower replace's older
+  // stamp) must not overwrite what the record should say about the link that IS current.
+  const sentAt = opts.stampAt ?? new Date().toISOString();
+  await supabaseAdmin.from('teams').update({ pay_link_sent_at: sentAt }).eq('id', teamId).eq('link_version', facts.linkVersion);
   return { sentTo: facts.teamEmail, sentAt };
 }
 
 /**
- * "Send a new link" for a tournament team (mig 467; the server half — the club's button is a `/design` session). Stops EVERY
- * link already sent to this team, then emails the team the new one with the same words as "Email the pay link".
+ * "Send a new link" and "Stop the pay link" for a tournament team (mig 467; Board Ready call 12, asks 3, 6 and 8). Stops
+ * EVERY link already sent to this team; `mode: 'send'` then emails the team the new one with the same words as "Email the
+ * pay link", `mode: 'stop'` sends nothing.
  *
- * The stop comes first and does not depend on the team being able to pay: a forwarded link shows the team's receipts even
- * when nothing is owed, and a team with no email address still has a link someone else may hold. So it answers
- * `stopped: true` whatever the send does, and says plainly when the new link did not go (`notSent`), the same shape as the
- * family link's "the old one is already stopped" (`replaceSignupLink`). Pressing again mints the next version.
+ * The stop does not depend on the team being able to pay: a forwarded link shows the team's receipts even when nothing is
+ * owed, and a team with no email address still has a link someone else may hold. So a send answers `stopped: true`
+ * whatever the email does, and says plainly when the new link did not go (`notSent`, with its `cause`), the same shape as
+ * the family link's "the old one is already stopped" (`replaceSignupLink`). Pressing again mints the next version.
+ *
+ * Ask 6: after a lost card dispute a SEND asks first, and the ask comes BEFORE the stop — a refused send leaves the link
+ * exactly as it was (`stopped: false`, nothing moved). The window already asks; this holds it for a stale window.
+ * Ask 8: no tournament-status check here on purpose — stopping works on a COMPLETED event (a deliberate exception to the
+ * completed-event lock, call 14; `tests/unit/team-pay-link-version.test.ts` pins it). The send half still refuses there
+ * ("tournament_over"), so a completed event can stop a link and never invite a payment.
  */
 export async function replaceTeamPayLink(
   teamId: string,
-  opts: { askIfLost?: boolean } = {},
+  opts: { mode?: 'send' | 'stop'; askIfLost?: boolean } = {},
 ): Promise<
   | { stopped: true; sentTo: string; sentAt: string }
-  | { stopped: true; notSent: string; disputeLost?: 'ask' }
-  | { stopped: false; error: string }
+  | { stopped: true; notSent: string; cause: PayLinkCause | 'send_failed' | null }
+  | { stopped: true; stoppedOnly: true; cause: PayLinkCause | null }
+  | { stopped: false; error: string; disputeLost?: 'ask' }
 > {
+  const mode = opts.mode ?? 'send';
   if (!payLinkSecret()) return { stopped: false, error: 'Pay links aren’t set up on this server.' };
+  if (mode === 'send' && opts.askIfLost && await teamLostDispute(teamId)) {
+    return { stopped: false, error: DISPUTE_WORDS.sendAnywayBody(true), disputeLost: 'ask' };
+  }
   // The next version is one past the team's current one. A conditional update, so two presses at once cannot both claim the
   // same number (the second sees a changed version and tries again).
   let replaced = false;
+  let stamp = '';
   for (let attempt = 0; attempt < 3 && !replaced; attempt++) {
     const { data: team, error } = await supabaseAdmin.from('teams').select('link_version').eq('id', teamId).maybeSingle();
     if (error) throw error;
     if (!team) return { stopped: false, error: 'That team couldn’t be found.' };
     const current = Number(team.link_version ?? 0);
+    // Taken per attempt, so a press that lost the race to another never writes an OLDER moment over the winner's.
+    stamp = new Date().toISOString();
     const { data: moved, error: upError } = await supabaseAdmin.from('teams')
-      .update({ link_version: current + 1, link_replaced_at: new Date().toISOString() })
+      .update({ link_version: current + 1, link_replaced_at: stamp })
       .eq('id', teamId).eq('link_version', current).select('id').maybeSingle();
     if (upError) throw upError;
     replaced = !!moved;
   }
   if (!replaced) return { stopped: false, error: 'Couldn’t replace the link. Try again.' };
-  const sent: Awaited<ReturnType<typeof sendTeamPayLink>> = await sendTeamPayLink(teamId, { askIfLost: opts.askIfLost })
-    .catch(() => ({ error: 'Couldn’t send the pay link. Try again.' }));
+  if (mode === 'stop') {
+    const facts = await loadTeamPayFacts(teamId).catch(() => null);
+    return { stopped: true, stoppedOnly: true, cause: facts ? payLinkCause(facts) : null };
+  }
+  // Asked above (or answered yes): the send never asks a second time, and carries the stop's moment as its own stamp.
+  const sent: Awaited<ReturnType<typeof sendTeamPayLink>> = await sendTeamPayLink(teamId, { stampAt: stamp })
+    .catch(() => ({ error: 'Couldn’t send the pay link. Try again.', cause: 'send_failed' as const }));
   return 'error' in sent
-    ? { stopped: true, notSent: sent.error, ...(sent.disputeLost === 'ask' ? { disputeLost: 'ask' as const } : {}) }
+    ? { stopped: true, notSent: sent.error, cause: sent.cause ?? null }
     : { stopped: true, sentTo: sent.sentTo, sentAt: sent.sentAt };
 }
 
@@ -350,8 +376,9 @@ export async function sendLeaguePayLink(
   return { sentTo: facts.guardianEmail, sentAt };
 }
 
-/** A card dispute lost (and not won back since) on one of this team's payments, as the payment reminders read it. */
-async function teamLostDispute(teamId: string): Promise<boolean> {
+/** A card dispute lost (and not won back since) on one of this team's payments, as the payment reminders read it. The
+ *  team record reads it too (call 12, ask 6), so "Send a new link?" asks in the same window before anything stops. */
+export async function teamLostDispute(teamId: string): Promise<boolean> {
   const { count } = await supabaseAdmin.from('online_payment_disputes').select('id, online_payments!inner(team_id)', { count: 'exact', head: true })
     .eq('online_payments.team_id', teamId).eq('status', 'lost').not('lost_booked_at', 'is', null).is('won_back_at', null);
   return (count ?? 0) > 0;

@@ -4,6 +4,7 @@ import { createHmac } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { readTeamPayToken, signTeamPayToken, teamPayUrl } from '../../lib/team-pay-link.ts';
 import { readLeaguePayToken, signLeaguePayToken } from '../../lib/league-pay-link.ts';
+import { payLinkCause, payLinkLineState } from '../../lib/team-pay-refusal.ts';
 
 /**
  * A tournament team's pay link can be replaced (Board Ready W2 fix D, item 2; mig 467). The house-league family link has had a
@@ -140,6 +141,48 @@ describe('the doors: one reader, every minter asks for the version', () => {
   });
 });
 
+describe('call 12: the record’s "Pay link" line reads sent / replaced / stopped from the two stamps', () => {
+  const sent = '2026-11-12T15:00:00.000Z';
+  const stop = '2026-11-18T15:00:00.000Z';
+  it('no stamp: the bare "Pay link"', () => assert.equal(payLinkLineState(null, null), null));
+  it('only a send: sent', () => assert.deepEqual(payLinkLineState(sent, null), { kind: 'sent', at: sent }));
+  it('a stop after the last send (or none): stopped', () => {
+    assert.deepEqual(payLinkLineState(sent, stop), { kind: 'stopped', at: stop });
+    assert.deepEqual(payLinkLineState(null, stop), { kind: 'stopped', at: stop });
+  });
+  it('a send stamped at the stop’s moment: replaced', () => assert.deepEqual(payLinkLineState(stop, stop), { kind: 'replaced', at: stop }));
+  it('a send after the stop: sent again ("until the next send")', () => {
+    const later = '2026-11-20T15:00:00.000Z';
+    assert.deepEqual(payLinkLineState(later, stop), { kind: 'sent', at: later });
+  });
+  it('the cause: the refusal code, else no email, else null (a new link can go out)', () => {
+    assert.equal(payLinkCause({ refusal: 'tournament_over', teamEmail: 'a@b.ca' }), 'tournament_over');
+    assert.equal(payLinkCause({ refusal: null, teamEmail: null }), 'no_email');
+    assert.equal(payLinkCause({ refusal: null, teamEmail: 'a@b.ca' }), null);
+  });
+});
+
+describe('call 12: who sees the line, and what the record is told', () => {
+  const route = read('app/api/admin/tournaments/[tournamentId]/registrations/payments/route.ts');
+  it('the line is the doors’ own rule: the launch switch and whoever runs tournaments (canRefundOnline)', () => {
+    assert.match(route, /const linkDesk = onlinePaymentsOn\(\) && !!facts && canRefundOnline\(member, g\.ctx\.org\);/);
+    assert.match(route, /everPaidOnline \|\| \(facts\.teamStatus === 'accepted' && facts\.takesCards && !\(await isOurTournamentTeam/);
+  });
+  it('the address and the dispute are told only to a reader who sees the line', () => {
+    assert.match(route, /teamEmail: linkLine \? facts\?\.teamEmail \?\? null : null,/);
+    assert.match(route, /disputeLost: linkLine \? await teamLostDispute/);
+  });
+  it('the record: one Pay link line holds the items; the due row keeps only Record (ask 1)', () => {
+    const screen = read('app/[orgSlug]/admin/tournaments/registrations/components/TeamPayments.tsx');
+    assert.ok(!screen.includes('OW.dueMenuLabel'), 'the ⋯ left the last due row');
+    assert.match(screen, /\{online\?\.linkLine && \(/);
+    assert.match(screen, /label=\{PL\.menuNew\} hint=\{PL\.menuNewHint\}/);
+    assert.match(screen, /label=\{PL\.menuStop\} hint=\{PL\.menuStopHint\}/);
+    // No copy button (ask 4): the new link goes by email only.
+    assert.ok(!/clipboard/i.test(screen.slice(screen.indexOf('online?.linkLine'), screen.indexOf('online?.linkLine') + 1500)));
+  });
+});
+
 describe('"Send a new link", the server half (the club’s button is a /design session)', () => {
   const src = read('lib/online-payment-receipt.ts');
   const start = src.indexOf('export async function replaceTeamPayLink');
@@ -164,6 +207,39 @@ describe('"Send a new link", the server half (the club’s button is a /design s
     assert.ok(at > route.indexOf('canRefundOnline('), 'after the power check');
     assert.ok(at > route.indexOf('requireTournamentInOrg(ctx, tournamentId)'), 'after the event-in-club check');
     assert.match(route.slice(at, at + 700), /team\?\.tournament_id !== tournamentId/);
+  });
+
+  it('call 12 ask 6: a send after a lost card dispute is refused BEFORE the version moves (the old link keeps working)', () => {
+    const ask = body.indexOf('await teamLostDispute(teamId)');
+    assert.ok(ask > 0, 'the dispute is read inside the replace');
+    assert.ok(ask < body.indexOf('link_version: current + 1'), 'and before the bump');
+    assert.match(body.slice(ask - 80, ask + 160), /mode === 'send' && opts\.askIfLost/);
+    assert.match(body, /stopped: false, error: DISPUTE_WORDS\.sendAnywayBody\(true\), disputeLost: 'ask'/);
+    // The send never asks a second time (it was asked above, or answered yes).
+    assert.match(body, /await sendTeamPayLink\(teamId, \{ stampAt: stamp \}\)/);
+  });
+
+  it('call 12 asks 3 and 6: "Stop the pay link" / "Only stop the link" stops and sends nothing', () => {
+    const stop = body.indexOf("if (mode === 'stop')");
+    assert.ok(stop > body.indexOf('link_version: current + 1'), 'after the bump');
+    assert.ok(stop < body.indexOf('await sendTeamPayLink('), 'and before any send');
+    assert.match(body.slice(stop, stop + 260), /stopped: true, stoppedOnly: true, cause:/);
+  });
+
+  it('call 12 ask 8: stopping works on a COMPLETED tournament — a deliberate exception to the completed-event lock (call 14)', () => {
+    // Do NOT add the lock to this door in a "lock every route" pass. The send half refuses a completed event by itself
+    // (team-pay-facts' 'tournament_over'), so a completed event can stop a link and never invite a payment.
+    assert.ok(!/tournament_over|status === 'completed'|refusal/.test(body.slice(0, body.indexOf("if (mode === 'stop')"))),
+      'nothing about the event or the refusal is read before the stop');
+    const route = read('app/api/admin/tournaments/[tournamentId]/registrations/online-payments/route.ts');
+    assert.ok(!route.includes('requireWritableTournament'), 'the online-payment doors take no completed-event lock');
+    assert.ok(!/LOCKED_RESULTS|'completed'/.test(route), 'and no inline one');
+    assert.match(read('lib/team-pay-facts.ts'), /t\.status === 'completed' \|\| t\.status === 'archived'\) refusal = 'tournament_over'/);
+  });
+
+  it('call 12 ask 7: a replace stamps the send with the stop’s own moment, so the record tells replaced from stopped', () => {
+    assert.match(body, /link_replaced_at: stamp/);
+    assert.match(src, /const sentAt = opts\.stampAt \?\? new Date\(\)\.toISOString\(\);/);
   });
 
   it('migration 467 adds the version with a default of 0 and a non-negative check', () => {

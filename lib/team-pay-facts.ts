@@ -33,6 +33,9 @@ export interface TeamPayFacts {
   options: PayOptions | null;
   /** Why the team cannot pay online right now, or null when it can. */
   refusal: PayRefusal;
+  /** Board Ready call 12 (ask 2): the club takes card payments for this tournament (switch, account, tracking, plan),
+   *  whatever this one team owes — the team record's "Pay link" line shows on every accepted team while it does. */
+  takesCards: boolean;
   /** 12c: the club's account takes bank debit (the pay block shows the second button). */
   bankDebit: boolean;
   /** 12c: the team's latest bank debit, when it is on its way (clearing) or came back before it cleared (returned). */
@@ -132,6 +135,8 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
     depositPaid,
     options,
     refusal,
+    takesCards: onlinePaymentsOn() && takesPayments(account) && tournamentTracksPayments(t.settings)
+      && hasPlanFeature(org.planId, 'online_payments') && !isOrgBillingSuspended(org),
     bankDebit,
     debit,
   };

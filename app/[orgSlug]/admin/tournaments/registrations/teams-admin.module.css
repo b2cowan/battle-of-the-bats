@@ -682,6 +682,9 @@
 .payRefunded .payAmt { text-decoration: line-through; color: var(--text-tertiary); }
 .payTag { margin-left: 0.4rem; white-space: nowrap; font-size: var(--type-support); color: var(--text-tertiary); }
 .paySent { margin: 0.25rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+/* Board Ready call 12: the pay link's one line under the payments — its words left, the payment rows' 44px ⋯ right. */
+.payLinkLine { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; min-height: 44px; margin-top: 0.25rem; border-top: 1px solid var(--home-line); }
+.payLinkLineText { font-size: var(--type-support); color: var(--text-tertiary); min-width: 0; }
 .payViewList { margin: 0; }
 .payViewList > div { display: grid; grid-template-columns: minmax(8rem, 14rem) 1fr; gap: 0.2rem 1rem; padding: 0.3rem 0; border-bottom: 1px solid var(--home-line); }
 .payViewList dt { color: var(--text-tertiary); }

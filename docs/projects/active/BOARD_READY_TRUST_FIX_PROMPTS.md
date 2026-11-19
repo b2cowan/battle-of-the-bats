@@ -20,11 +20,13 @@ Nothing below was built when this was written.
 | 3c | P2c An unaccepted invitation runs out | call 13 open call (b), owner ruling 2026-11-18 | build | DONE 2026-11-18 c67c20035 (the run-out rule and the removal) + c252216ea (the nightly schedule, mig 504, on the owner's go in this chat; applied to dev, job id 21) (read at use, no schema change; proved on dev 32/32, `.probe/invitation-lapse-prove.mjs`; /simplify, /review (4 lenses, 6 fixes incl. a seat check when Resend revives one), /docs (org help) and /legal (draft privacy §9 bullet held until the removal runs on production) done). The nightly REMOVAL (60 days after the last send) is built, proved by hand, and scheduled on dev. Production order: mig 502 and 503 first (as before), then the code, then 504. Owner browser walk owed |
 | 3d | P2d The database's member test counts only active members | call 13 open call (c), owner ruling 2026-11-18 | build (one migration) | DONE 2026-11-18, the commit "Board Ready trust close-out 13 (c): the database's member test counts only active members…" (mig 505, function bodies only, applied to dev; production either side of the promote, no code depends on it). Census wider than the finding: a pending or suspended person could also WRITE a tournament's venue facilities and facility lanes, closed by the same change. Proved on dev before (all four in) and after 21/21 (`.probe/member-test-active-only-prove.mjs`); /review (4 lenses, no defect; 2 record wording fixes applied). No screen changes, so no /docs and no browser walk. Reported, not fixed: any ACTIVE member of any role can still write those two tables from their own browser (owner call) |
 | 4 | P3 Lock rules, files and links on a completed event | call 14 | build | DONE 2026-11-18, the commit "Board Ready trust close-out 14: a completed tournament's rules, links and files lock with it…" (no schema change, so nothing to order on production; it goes with the next promote). The three routes take the existing shared guard (scope + club + not completed, the schedule routes' own words); the Rules screen reads the tournaments' lock (banner, no add/samples/handles, read-only records, a locked empty line). Reopen exists and lifts it; a SEALED event never reopens, so its rules page is fixed for good (as its results are). Copy, delete and the club purge are untouched. Proved on dev 26/26 (`.probe/completed-event-lock-prove.mjs`); /review (3 lenses: 1 fix applied, 1 test tightened, 1 noted); /docs (Tournaments help: lock + reopen answers, the Rules article, and the copy answers now say the Rules page's files come along). Owner browser walk owed |
-| 5 | P5 "Send a new link" button for a team's pay link | call 12 | drawing session only | DONE 2026-11-18, the commit "Board Ready trust call 12: the pay-link button drawn…" (drawing only): https://claude.ai/artifact/XGaoqcuEuo2973Mc4vsq5F, source `BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html`, round 2 after /design + /ux. All nine asks RULED 2026-11-18 as recommended (1A–9A): (1) one Pay link line under the payments on every team, its ⋯ holding Email the pay link + Send a new link, the due row keeps only Record; (2) the same people as Email the pay link (owner, admins, Run tournaments); (3) "Stop the pay link" when no new link can go out; (4) no copy button; (5) the old link's words unchanged; (6) a lost dispute is asked in the same window before anything stops, with "Only stop the link"; (7) the line reads "Pay link replaced/stopped {date}" until the next send; (8) stopping still works on a completed tournament (a deliberate exception to the lock); (9) Stop answers red-tinted, Send a new link lime. Build notes on the drawing: the record must be told the replaced date, a show-the-line flag and an ever-paid-online flag; the server should return a cause code (its "tournament over" sentence misreads here); dispute-first + stop-only is about a day with tests; someone with the old page open who hasn't pressed Pay is refused (gap accepted). The button's build prompt is not yet written. mig 467 to production BEFORE that build's code |
+| 5 | P5 "Send a new link" button for a team's pay link | call 12 | drawing session only | DONE 2026-11-18, the commit "Board Ready trust call 12: the pay-link button drawn…" (drawing only): https://claude.ai/artifact/XGaoqcuEuo2973Mc4vsq5F, source `BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html`, round 2 after /design + /ux. All nine asks RULED 2026-11-18 as recommended (1A–9A): (1) one Pay link line under the payments on every team, its ⋯ holding Email the pay link + Send a new link, the due row keeps only Record; (2) the same people as Email the pay link (owner, admins, Run tournaments); (3) "Stop the pay link" when no new link can go out; (4) no copy button; (5) the old link's words unchanged; (6) a lost dispute is asked in the same window before anything stops, with "Only stop the link"; (7) the line reads "Pay link replaced/stopped {date}" until the next send; (8) stopping still works on a completed tournament (a deliberate exception to the lock); (9) Stop answers red-tinted, Send a new link lime. Build notes on the drawing: the record must be told the replaced date, a show-the-line flag and an ever-paid-online flag; the server should return a cause code (its "tournament over" sentence misreads here); dispute-first + stop-only is about a day with tests; someone with the old page open who hasn't pressed Pay is refused (gap accepted). The button's build prompt is row 6. mig 467 is already on production (applied 2026-11-15, release history), so that build has no production order of its own unless it adds a migration |
+| 6 | P6 Build the pay-link button | call 12, asks 1A–9A ruled 2026-11-18 | build | DONE 2026-11-18, the commit "Board Ready trust close-out 12: the pay-link button…" (no schema change, so nothing to order on production; it goes with the next promote). One Pay link line under a team's payments (Email the pay link · Send a new link · Stop the pay link), the window in its three forms, the answer as the record's status line; the server's stop-only mode, the dispute asked BEFORE the stop, cause codes; stopping works on a completed event (pinned). Proved on dev 37/37 (`.probe/pay-link-button-prove.mjs`); /review (4 lenses: 2 Medium race fixes + 1 Low applied; rest recorded); /docs (Tournaments help: the line, and a new answer "Sending a new pay link, or stopping it"); /legal not needed (the email's words and recipient are unchanged); /accounting none. Owner browser walk owed. Every row is now DONE: the next chat runs the END OF QUEUE checklist |
 
 Status values: `not started` · `in progress (what is done, what is left)` · `DONE <date> <commit hashes>` · `BLOCKED <why>`.
 Why this order: P1 is small and in one area; P4 must land before the first live club; P2 and P3 are independent builds; P5 is a
-drawing, so it goes last and its build is a later session after the owner rules its asks.
+drawing, so it goes last and its build is a later session after the owner rules its asks. P6 is that build (prompt written
+2026-11-18 after the owner ruled all nine asks).
 
 ## CONDUCTOR (the chat that was just pasted the launcher line follows this, and only this)
 
@@ -61,14 +63,13 @@ You are the conductor of a queue of build prompts. You run ONE prompt per chat, 
   `in progress` with exactly what is done and what is left, and tell the owner to clear and paste the launcher line again. P1 has
   eleven items; splitting it into two chats at a commit boundary is expected, not a failure.
 
-**Never** run two prompts in one chat. **Never** build P5's button (its prompt is a drawing session). **Never** commit, push, or
+**Never** run two prompts in one chat. **Never** build the button under P5 (P5 is the drawing; the build is P6, in its own chat). **Never** commit, push, or
 touch production without the owner's yes in that chat.
 
-## END OF QUEUE checklist (only when every row is DONE except P5's build)
+## END OF QUEUE checklist (only when every row is DONE)
 
-Tell the owner, one line each: (a) P5's drawing is published and his asks are owed, and after he pastes them back the button's
-build prompt is a new one (offer to write it); (b) the order to apply the migrations on production, collected from each
-prompt's hand-off (note: mig 467 is dev-only and goes before its code); (c) the public roadmap's access-review line may change to
+Tell the owner, one line each: (a) the pay-link button (P5 drawing, P6 build) is done, and what of its walk is owed; (b) the order to apply the migrations on production, collected from each
+prompt's hand-off (mig 467 went to production 2026-11-15, per the release history; check it there rather than restating it); (c) the public roadmap's access-review line may change to
 "a full access review of who can see what, every finding resolved" only once these fixes are live (call 22); (d) the sweep report's
 status lines and the board lines are current; (e) the by-hand restore step stays in the checklist even after P4.
 
@@ -324,4 +325,92 @@ RULES
 - Follow the board's paste-back convention: the owner's reply starts with a short label so a later session can find it.
 - Publish the artifact; add a line to docs/projects/active/BOARD_READY_PLAN.md and move the board line in docs/agents/strategy/OWNER_BRIEF_PROJECTS.json in the same unit of work. Do not commit without my confirmation; branch dev; explicit pathspecs.
 - Note the production order for the later build: mig 467 is dev-only, apply to prod BEFORE the code.
+  [Corrected 2026-11-18: mig 467 was applied to production 2026-11-15, per the release history. This line is kept as the prompt was written.]
+```
+
+---
+
+## P6 — Build the pay-link button (call 12; asks 1A–9A ruled 2026-11-18)
+
+```
+Board Ready — trust call 12 (build). The owner ruled all nine asks of the drawing "as recommended" on 2026-11-18
+(paste-back "Pay link button (drawings Nov 18, 2026)"). Build what the drawing shows; do not redraw it.
+
+READ FIRST
+1. The drawing: docs/projects/active/BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html (published
+   https://claude.ai/artifact/XGaoqcuEuo2973Mc4vsq5F). Its tabs are the spec: where the line sits and who sees it, the window
+   in its three forms, the answer in the record (four states), the phone, the old link's page (unchanged), and the asks tab.
+   Its NEW/UNCHANGED tags carry build notes; read every one.
+2. The rulings in words: docs/projects/active/BOARD_READY_PLAN.md, the "Call 12 … DRAWN 2026-11-18" block (asks 1–9 and the
+   build notes). ⚠ That block is in the working copy, uncommitted alongside other sessions' plan edits; stage only your own
+   hunks of that file.
+3. The code (mapped 2026-11-18; re-read it, the map can be stale):
+   - Server half, W2 fix D 90d2f23b0 (mig 467: teams.link_version + teams.link_replaced_at; the version lives in the link's
+     signature): lib/online-payment-receipt.ts replaceTeamPayLink (~256) and sendTeamPayLink (~215); the only caller,
+     app/api/admin/tournaments/[tournamentId]/registrations/online-payments/route.ts action 'replace_pay_link' (~62). No screen
+     calls it.
+   - The screen: app/[orgSlug]/admin/tournaments/registrations/components/TeamPayments.tsx — the "Still due" block (~591), the
+     ⋯ on the LAST due row only (~603, CoachToolbarMenu glyph, one item "Email the pay link"), "Pay link sent {date}" (~614),
+     the lost-dispute window PayLinkAnywayWindow (OnlinePaymentWindows.tsx ~340). Words: lib/online-payment-words.ts (~750–790).
+   - What the record reads: app/api/admin/tournaments/[tournamentId]/registrations/payments/route.ts GET (~87–137), which
+     carries only pay_link_sent_at and online.payLink (true only when the team can pay now).
+   - Refusals: lib/team-pay-facts.ts, lib/team-pay-refusal.ts (strings only; 'tournament_over' reads "is no longer in").
+   - The family-link model to copy: the house league's "Send a new link?" (replaceSignupLink, league-signup-link.test.ts).
+
+THE BUILD (the ruled asks; the drawing has the exact words)
+1. One "Pay link" line under the payments on every team that shows it; its ⋯ holds the items. The due row keeps only
+   Record (the ⋯ leaves the last due row).
+2. Who: the same people the server lets email a pay link (owner, admins, anyone with "Run tournaments"; today
+   canRefundOnline = create_tournaments). Treasurer-only Accounting seats, scorekeepers, check-in and coaches don't see the
+   line, and the server refuses them (it already does; prove it).
+   When the line shows: every accepted team while the tournament takes card payments, AND any team that ever paid by card
+   (even one later declined), because its link still shows receipts.
+3. The menu: "Email the pay link" only while the team can pay now (today's rule); "Send a new link" when it can pay now and
+   has an email; otherwise "Stop the pay link". The item stays after a stop; pressing it again stops whatever link is current.
+4. No copy button.
+5. The old link's page keeps its words. No change to the public pay page.
+6. A team that lost a card dispute is asked IN THE SAME WINDOW, before anything stops: Cancel · "Only stop the link" ·
+   "Send a new link". "Send a new link" there stops and sends in one step and never opens a second window.
+7. The line reads "Pay link replaced {date}" / "Pay link stopped {date}" until the next send, then "Pay link sent {date}"
+   again. The answer shows as the record's quiet status line (not a toast), in the four states the drawing shows: sent;
+   stopped, nothing owed; stopped but the email didn't go (both halves said); nothing changed (the stop failed).
+8. Stopping still works on a COMPLETED tournament, a deliberate exception to the completed-event lock (call 14). Pin it with
+   a guard test so a later "lock every route" pass doesn't remove it by accident. Email the pay link stays refused there.
+9. Stop answers red-tinted (the danger button), Send a new link lime, from the shipped window kit (the window "Email the pay
+   link anyway?" uses).
+
+SERVER CHANGES THE DRAWING NEEDS (each small; confirm from the code)
+- A STOP-ONLY answer: today every replace also tries to send. Asks 3 and 6 need "stop, send nothing".
+- The DISPUTE CHECK BEFORE THE STOP: today replaceTeamPayLink stops first and asks about a lost dispute afterwards (the
+  drawing's "about a day with its tests"). The record already reads each payment's dispute, so the window knows before it opens;
+  the server must still refuse to stop-and-send without the yes, and must check BEFORE it moves the version.
+- A CAUSE CODE, not a sentence: refusalMessage hands back strings, and for a completed event it says the team "is no longer
+  in" the tournament. Return the cause as a code (nothing owed, tournament over, declined, no email, …) and let the record pick
+  its own sentence. Keep the public pay page's and the reminders' sentences unchanged.
+- What the record must be told: when the link was last stopped, whether that was a replace (sent) or a stop (nothing sent),
+  whether to show the line, and whether the team ever paid online. Decide from the code whether replaced-vs-stopped can be
+  derived (pay_link_sent_at vs link_replaced_at) or needs a column. A column is a migration: dev first,
+  docs/agents/db/DATA_DICTIONARY.md + npm run refresh:snapshots in the same unit, and the hand-off states the production
+  order (migration before code).
+- The launch switch: the route answers 404 while online payments are off. Say what that means for stopping a link a team
+  already paid through, and recommend; don't widen the switch without asking.
+- Accepted gap (ask 6's note, do not close): someone with the old page open who hasn't pressed Pay is refused and needs the
+  new email.
+
+RULES
+- Argue from the code; if a ruled ask can't be built as drawn, stop and say so before building around it.
+- Before code: Implementation Plan + a plain-language UX summary for a product manager (what owner/admin/Run-tournaments see;
+  what treasurer, scorekeeper, check-in and coach don't; what a family holding the old link sees).
+- Prove on DEV only with a probe under .probe/ (extend fixd-probe.mjs or write a new one): send-new-link moves the version,
+  the old link is refused and the new one opens; stop-only sends no email; a lost-dispute team is refused a stop-and-send
+  without the yes and the version does NOT move; stop works on a completed tournament; a refused role is refused. Never
+  --prod; never seed mid-run. Extend tests/unit/team-pay-link-version.test.ts and the payments guards.
+- One-spelling gate on every new string (npm run check:spelling); dates via the house date helpers.
+- Agents, in order: /simplify if you add a shared helper; /review; /docs (the Tournaments help on team payments and the pay
+  link: the new line, Send a new link, Stop the pay link). /legal only if the email's words or who receives it change (the
+  new link goes out in today's pay-link email); /accounting none (nothing charged changes) — say so.
+- npm run verify:changed and npm run typecheck. Branch dev; explicit pathspecs; no commit without my yes; the board line in
+  docs/agents/strategy/OWNER_BRIEF_PROJECTS.json and the sweep report (BOARD_READY_ACCESS_SWEEP_3.md, a "Status, 12" line)
+  move in the same commit. Browser testing is mine: finish with a short walk list in product-owner voice (one action per
+  step), on the Stripe walk tournament (scripts/seed-stripe-walk-tournament.mjs).
 ```

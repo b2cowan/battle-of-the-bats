@@ -99,6 +99,18 @@
 > checks don't accept as a refusal. The "nothing changed" checks in the same probes hold, so no write got through; the
 > probes' expectation wants updating.
 >
+> **Status, 12 (built 2026-11-18, dev; commit hash on the queue's PROGRESS row; to the drawing `BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html`,
+> asks 1A–9A):** a tournament team's record ends in one "Pay link" line for whoever runs tournaments (`canRefundOnline`), on
+> every accepted team while the club takes cards and on any team that ever paid online; its ⋯ holds Email the pay link
+> (today's rule), Send a new link (can pay now + has an email) or Stop the pay link. The ⋯ left the last Still due row. Server:
+> `replace_pay_link` takes `mode: 'stop'` (stop, send nothing); a send after a lost card dispute is refused BEFORE the version
+> moves unless answered; answers carry a cause CODE and the record words it (the pay page's sentences unchanged); stopping
+> works on a COMPLETED event, a deliberate exception to call 14 pinned in `tests/unit/team-pay-link-version.test.ts`. No
+> schema change: replaced/stopped read from `pay_link_sent_at` vs `link_replaced_at` (a replace stamps both with one moment;
+> a send stamps only while its version is current). Proof `.probe/pay-link-button-prove.mjs` (dev, 37/37). Launch switch:
+> while online payments are off the line is hidden and the door answers 404, as every online door does (not widened).
+> Accepted gap (ask 6): someone with the old page open who hasn't pressed Pay is refused and needs the new email.
+>
 > **BUILT 2026-11-18 — fixes 1–11 as ruled, one commit each on `dev` (2 and 9 share one):**
 > - 1 demo account refused at every create door + build check — `49c4c9934` 2026-11-18 (two doors beyond the ruling's
 >   three are guarded too, because both can create a coach team: claiming a tournament entry, and a signed-in sign-up).

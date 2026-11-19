@@ -13,6 +13,8 @@ import {
   changeTeamPayment, listEntryAdjustments, listTeamPaymentsForRecord, paymentErrorResponse, paymentsPostToBook, recordTeamPayment, removeTeamPayment,
 } from '@/lib/team-payments-server';
 import { loadTeamPayFacts } from '@/lib/team-pay-facts';
+import { payLinkCause, payLinkLineState } from '@/lib/team-pay-refusal';
+import { teamLostDispute } from '@/lib/online-payment-receipt';
 import { canRefundOnline } from '@/lib/online-payment-access';
 import { announceTeamPaid } from '@/lib/team-payment-notices';
 import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
@@ -94,7 +96,7 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
     listTeamPaymentsForRecord(teamId as string),
     paymentsPostToBook(tournamentId),
     loadTeamPayFacts(teamId as string),
-    supabaseAdmin.from('teams').select('pay_link_sent_at, status').eq('id', teamId as string).maybeSingle(),
+    supabaseAdmin.from('teams').select('pay_link_sent_at, link_replaced_at, status').eq('id', teamId as string).maybeSingle(),
     listEntryAdjustments(teamId as string),
     // 12d-1 (ask 12): a pay page open while the desk records by hand — the notice says who opened it, for what, and when.
     openTeamPayPages(teamId as string),
@@ -113,11 +115,25 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
     return new Map<string, DisputeRecord>();
   });
   for (const p of payments) if (p.online) p.online.dispute = disputes.get(p.online.id) ?? null;
+  // Board Ready call 12 (asks 1–3, 7): the "Pay link" line, for whoever may email the pay link (the server's own rule for
+  // the doors). On every accepted team while the club takes cards here, and on any team that ever paid online (even one
+  // later declined: its link still shows receipts). Never the club's own team, which owes nothing. Behind the launch
+  // switch, as its doors are (they answer 404 while it is off).
+  const linkDesk = onlinePaymentsOn() && !!facts && canRefundOnline(member, g.ctx.org);
+  const everPaidOnline = payments.some(p => !!p.online) || !!facts?.debit;
+  const linkLine = linkDesk && !!facts && (everPaidOnline || (facts.teamStatus === 'accepted' && facts.takesCards && !(await isOurTournamentTeam(g.ctx.org.id, teamId as string))));
   const online = {
     payLink: facts?.refusal === null && canRefundOnline(member, g.ctx.org),
     payLinkSentAt: (team?.pay_link_sent_at as string | null) ?? null,
     // 12d-2 (ask 4): refunds keep working after a downgrade — the launch switch alone stops them, never the plan.
     refunds: onlinePaymentsOn() && !!facts?.account && !facts.account.disconnectedAt && canRefundOnline(member, g.ctx.org),
+    linkLine,
+    // What the line reads, and what its ⋯ offers: null cause = "Send a new link" (can pay now, has an email); otherwise
+    // "Stop the pay link", worded by the record from the cause. The address and a lost dispute are the window's.
+    linkState: linkLine ? payLinkLineState((team?.pay_link_sent_at as string | null) ?? null, (team?.link_replaced_at as string | null) ?? null) : null,
+    linkCause: linkLine && facts ? payLinkCause(facts) : null,
+    teamEmail: linkLine ? facts?.teamEmail ?? null : null,
+    disputeLost: linkLine ? await teamLostDispute(teamId as string).catch(() => false) : false,
   };
   // 12c Part 6 (words §3.7): the team's bank debit — clearing, returned, or reversed — and, for one ended while it clears,
   // what happens when it clears.

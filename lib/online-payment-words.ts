@@ -762,6 +762,58 @@ export const PAY_WORDS = {
   },
 } as const;
 
+/**
+ * Board Ready call 12 — a team's "Pay link" line, its ⋯, the window in its three forms and the record's answer (drawing
+ * BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html, asks 1A–9A ruled 2026-11-18). The window's words are the house league's
+ * "Send a new link?" with "family" changed to the team. `cause` sentences are the record's own, from the server's cause
+ * CODE (never the pay page's refusal: for a completed event it says the team "is no longer in" the tournament).
+ */
+export const PAY_LINK_LINE_WORDS = {
+  line: 'Pay link',
+  sent: (date: string) => `Pay link sent ${date}`,
+  replaced: (date: string) => `Pay link replaced ${date}`,
+  stopped: (date: string) => `Pay link stopped ${date}`,
+  menuLabel: 'More for the pay link',
+  menuNew: 'Send a new link',
+  menuNewHint: 'Stops the link they have now',
+  menuStop: 'Stop the pay link',
+  menuStopHint: 'No new link goes out right now',
+  newTitle: 'Send a new link?',
+  stopTitle: 'Stop the pay link?',
+  stopsNow: (team: string) => `${team}’s current pay link stops working straight away, including any copy that was forwarded.`,
+  /** "The new one goes to {email}." — the address bold, between the two parts. */
+  goesToLead: 'The new one goes to',
+  wrongAddress: 'If that address is wrong, change the email first.',
+  underWay: 'A payment already on the card page still goes through. Anyone who has the old page open but hasn’t pressed Pay yet will need the new email.',
+  underWayStop: 'A payment already on the card page still goes through.',
+  stopWhy: (cause: string) => `${cause}, so no new link goes out. Any pay-link email sent from now on carries the new link.`,
+  goNew: 'Send a new link',
+  goStop: 'Stop the link',
+  goOnlyStop: 'Only stop the link',
+  /** Why no new link can go out, one sentence per cause (window 2's second paragraph; the answer lowers its first letter). */
+  cause: {
+    nothingOwed: 'Nothing is owed',
+    over: 'The tournament is over',
+    declined: 'The team was declined',
+    withdrew: 'The team withdrew',
+    notAccepted: 'The team hasn’t been accepted yet',
+    notTaking: 'The club isn’t taking card payments right now',
+    unrecorded: 'A card payment is still being recorded',
+    clearing: 'A bank debit is still clearing',
+    noEmail: 'This team has no email address',
+  },
+  // The answer, the record's quiet status line under the Pay link line (ask 7; never a toast).
+  doneSent: (email: string) => `New link sent to ${email}. The old one has stopped.`,
+  doneStopped: (because: string | null) => (because
+    ? `The old link has stopped. No new link was sent, because ${because}.`
+    : 'The old link has stopped. No new link was sent.'),
+  notSent: (why: string) => `The old link has stopped, but the new one didn’t send. ${why}`,
+  notSentNoEmail: 'This team has no email address. Add one with Edit this team, then use Email the pay link.',
+  notSentRetry: 'Use Email the pay link to try again.',
+  failed: 'Couldn’t replace the link. Try again. The old link still works.',
+  failedStop: 'Couldn’t stop the link. Try again. The old link still works.',
+} as const;
+
 /** The team's record: an online row, its ⋯, the view and the refund windows (copy §15–§16). */
 export const TEAM_ROW_WORDS = {
   method: (receiptNo: string) => `Online, card · receipt ${receiptNo}`,
@@ -777,7 +829,6 @@ export const TEAM_ROW_WORDS = {
   refundFailedSub: (amount: string, day: string) => `${amount} sent back ${day}`,
   test: 'Test, no money moved',
   menuLabel: 'More for this payment',
-  dueMenuLabel: 'More for what is due',
   menuView: 'View the payment',
   menuRefund: (bank = false) => (bank ? 'Refund to the bank account' : 'Refund to the card'),
   // F6 (12c): one name for one act, in both flows.

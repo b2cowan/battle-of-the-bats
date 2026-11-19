@@ -16,9 +16,10 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { TEAM_ENTRY_WORDS as EW, TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, OVER_WORDS as XW, PAY_OPEN_WORDS as PW, SCOPE_WORDS, howPaidWords, money, reasonShort, receiptLabel } from '@/lib/online-payment-words';
+import { TEAM_ENTRY_WORDS as EW, TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, OVER_WORDS as XW, PAY_OPEN_WORDS as PW, PAY_LINK_LINE_WORDS as PL, SCOPE_WORDS, howPaidWords, money, reasonShort, receiptLabel } from '@/lib/online-payment-words';
 import type { TeamDebit } from '@/lib/team-pay-facts';
-import { KeepOverWindow, PayLinkAnywayWindow, PaymentViewWindow, RefundWindow, type OverPreset, type RefundSend } from './OnlinePaymentWindows';
+import type { PayLinkCause } from '@/lib/team-pay-refusal';
+import { KeepOverWindow, PayLinkAnywayWindow, PayLinkReplaceWindow, PaymentViewWindow, RefundWindow, payLinkCauseSentence, type OverPreset, type RefundSend } from './OnlinePaymentWindows';
 import type { OpenPayPage } from '@/lib/online-pay-pages';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import DisputeBlock, { disputeShows } from '@/components/admin/kit/club/DisputeBlock';
@@ -69,8 +70,14 @@ interface Props {
 /** 12d-1: the extra still standing on a posted online payment, or null. */
 const overOf = (p: TeamPayment) => (p.status === 'posted' && p.online?.over && p.online.over.leftCents > 0 ? p.online.over : null);
 
-/** Online payments on this record (Club Tier Stage 12a): may the pay link go out, when it last did, may a card be refunded. */
-type OnlineInfo = { payLink: boolean; payLinkSentAt: string | null; refunds: boolean };
+/** Online payments on this record (Club Tier Stage 12a): may the pay link go out, when it last did, may a card be refunded.
+ *  Board Ready call 12: the "Pay link" line — whether it shows, what it reads, why no new link can go out (null = it can),
+ *  the address a new one goes to, and a lost card dispute (the window asks first). */
+type OnlineInfo = {
+  payLink: boolean; payLinkSentAt: string | null; refunds: boolean;
+  linkLine?: boolean; linkState?: { kind: 'sent' | 'replaced' | 'stopped'; at: string } | null;
+  linkCause?: PayLinkCause | null; teamEmail?: string | null; disputeLost?: boolean;
+};
 
 /** What a team has paid: posted rows only, each net of its part refunds (12c) — a row refunded in full, or reversed by the
  *  bank (12c Part 6), stays on the record but never counts. */
@@ -134,6 +141,10 @@ export default function TeamPayments(props: Props) {
   const [keeping, setKeeping] = useState<TeamOnlinePayment | null>(null);
   // 12d-1 ruling 5: "Email the pay link" after a lost card dispute asks first.
   const [linkAnyway, setLinkAnyway] = useState(false);
+  // Board Ready call 12: "Send a new link?" / "Stop the pay link?" — which form of the window is open.
+  const [replacing, setReplacing] = useState<'send' | 'stop' | 'dispute' | null>(null);
+  // An "Email the pay link" on its way: the menus wait, so a second press can't send twice or stop the link mid-send.
+  const [linkSending, setLinkSending] = useState(false);
 
   const base = `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/payments`;
   const orgParam = orgQuery ? orgQuery.replace(/^\?/, '&') : '';
@@ -180,7 +191,7 @@ export default function TeamPayments(props: Props) {
   useEffect(() => () => onFormOpen?.(false), [onFormOpen]);
 
   // Nothing else is live while a write is in flight, the list is still loading, or the record is doing something else.
-  const locked = busy || payments === null || Boolean(form?.saving) || Boolean(edit?.saving);
+  const locked = busy || linkSending || payments === null || Boolean(form?.saving) || Boolean(edit?.saving);
 
   /** One write: send it, say why in the form if it fails; on success the form closes at once (`done`), then the list and the
    *  page are re-read. */
@@ -271,10 +282,33 @@ export default function TeamPayments(props: Props) {
 
   async function emailPayLink(despiteLostDispute = false) {
     setFlash(null);
-    const { error, data } = await onlineSend({ action: 'email_pay_link', teamId, ...(despiteLostDispute ? { despiteLostDispute } : {}) });
+    setLinkSending(true);
+    const { error, data } = await onlineSend({ action: 'email_pay_link', teamId, ...(despiteLostDispute ? { despiteLostDispute } : {}) })
+      .finally(() => setLinkSending(false));
     if (error && data.code === 'dispute_lost_ask') { setLinkAnyway(true); return; }
     setFlash(error ? OW.linkFailedToast : OW.linkSentToast(String(data.sentTo ?? '')));
     if (!error) setOnline(o => (o ? { ...o, payLinkSentAt: String(data.sentAt ?? new Date().toISOString()) } : o));
+    if (!error) await load();
+  }
+
+  // Board Ready call 12 (asks 3, 6, 7): which form the window opens in, from what the record already knows.
+  const linkCause = online?.linkCause ?? null;
+  const openReplace = () => setReplacing(linkCause !== null ? 'stop' : online?.disputeLost ? 'dispute' : 'send');
+
+  /** "Send a new link" / "Stop the pay link": the answer is the record's quiet status line (never a toast), then the
+   *  line re-reads ("Pay link replaced/stopped {date}"). A stale window for a lost dispute opens its dispute form. */
+  async function replaceLink(mode: 'send' | 'stop') {
+    setFlash(null);
+    const { error, data } = await onlineSend({ action: 'replace_pay_link', teamId, mode, ...(replacing === 'dispute' ? { despiteLostDispute: true } : {}) });
+    if (error && data.code === 'dispute_lost_ask') { setReplacing('dispute'); return; }
+    setReplacing(null);
+    if (error) { setFlash(mode === 'stop' ? PL.failedStop : PL.failed); return; }
+    const cause = (data.cause ?? null) as PayLinkCause | 'send_failed' | null;
+    const because = payLinkCauseSentence(cause, teamStatus);
+    if (typeof data.sentTo === 'string') setFlash(PL.doneSent(data.sentTo));
+    else if (data.stoppedOnly) setFlash(PL.doneStopped(because ? because.charAt(0).toLowerCase() + because.slice(1) : null));
+    else setFlash(PL.notSent(cause === 'no_email' ? PL.notSentNoEmail : because ? `${because}.` : PL.notSentRetry));
+    await load();
   }
 
   async function refund(body: RefundSend): Promise<string | null> {
@@ -600,23 +634,35 @@ export default function TeamPayments(props: Props) {
                   {canRecord && !clearing && (
                     <button type="button" className={screenParts.plainButton} onClick={() => openRecord(d.key)} disabled={locked} aria-label={`${W.record} ${d.label.toLowerCase()}`}>{W.record}</button>
                   )}
-                  {online?.payLink && d === due[due.length - 1] && (
-                    <CoachToolbarMenu variant="glyph" overWindow label={OW.dueMenuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
-                      <CoachToolbarMenuItem label={OW.menuEmailLink} onSelect={() => void emailPayLink()} />
-                    </CoachToolbarMenu>
-                  )}
                 </span>
               </div>
             )))}
           </div>
           {/* 12c Part 6: a debit that came back before it cleared — on the due row's foot, with the bank's reason. */}
           {debit?.state === 'returned' && <p className={styles.paySent}>{OW.debitReturned(day(debit.returnedAt), reasonShort(debit.reason))}</p>}
-          {online?.payLink && online.payLinkSentAt && <p className={styles.paySent}>{OW.linkSent(formatStoredDate(online.payLinkSentAt, { withYear: false }))}</p>}
           {canRecord && form?.key === 'other' && recordForm}
           {canRecord && !form && !clearing && (
             <button type="button" className={styles.payLink} onClick={() => openRecord('other')} disabled={locked}>{W.recordOther}</button>
           )}
         </>
+      )}
+
+      {/* Board Ready call 12 (asks 1–3, 7): the pay link's one home, under the payments on every team that shows it (it
+          takes the place of the old "Pay link sent" foot line; the due row keeps only Record). Its ⋯ is the payment rows'. */}
+      {online?.linkLine && (
+        <div className={styles.payLinkLine}>
+          <span className={styles.payLinkLineText}>
+            {online.linkState
+              ? PL[online.linkState.kind](formatStoredDate(online.linkState.at, { withYear: false }))
+              : PL.line}
+          </span>
+          <CoachToolbarMenu variant="glyph" overWindow label={PL.menuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
+            {online.payLink && <CoachToolbarMenuItem label={OW.menuEmailLink} onSelect={() => void emailPayLink()} />}
+            {linkCause === null
+              ? <CoachToolbarMenuItem label={PL.menuNew} hint={PL.menuNewHint} onSelect={openReplace} />
+              : <CoachToolbarMenuItem label={PL.menuStop} hint={PL.menuStopHint} onSelect={openReplace} />}
+          </CoachToolbarMenu>
+        </div>
       )}
 
       {flash && <p className={styles.paySent} role="status">{flash}</p>}
@@ -634,6 +680,10 @@ export default function TeamPayments(props: Props) {
       })()}
       {linkAnyway && (
         <PayLinkAnywayWindow onClose={() => setLinkAnyway(false)} send={async () => { setLinkAnyway(false); await emailPayLink(true); }} />
+      )}
+      {replacing && (
+        <PayLinkReplaceWindow key={replacing} form={replacing} teamName={teamName} email={online?.teamEmail ?? null}
+          because={payLinkCauseSentence(linkCause, teamStatus)} go={replaceLink} onClose={() => setReplacing(null)} />
       )}
       {keeping && (
         <KeepOverWindow teamName={teamName} extraCents={keeping.over?.leftCents ?? 0} keep={keepOver} onClose={() => setKeeping(null)} />

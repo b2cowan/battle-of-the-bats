@@ -27,8 +27,9 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import { formatStoredDate } from '@/lib/timezone';
 import {
-  DISPUTE_WORDS, OVER_WORDS as O, PAY_VIEW_WORDS as V, REFUND_WORDS as R, SCOPE_WORDS, cardLabel, money, paidAtLabel, receiptLabel,
+  DISPUTE_WORDS, OVER_WORDS as O, PAY_LINK_LINE_WORDS as PL, PAY_VIEW_WORDS as V, REFUND_WORDS as R, SCOPE_WORDS, cardLabel, money, paidAtLabel, receiptLabel,
 } from '@/lib/online-payment-words';
+import type { PayLinkCause } from '@/lib/team-pay-refusal';
 import { CARD_REFUND_WORDS } from '@/lib/house-league-money-words';
 import { clockOf } from '@/lib/league-card-refunds';
 import { possessive } from '@/lib/utils';
@@ -329,6 +330,69 @@ export function KeepOverWindow({ teamName, extraCents, keep, onClose }: {
         <input className={ck.input} maxLength={500} value={reason} onChange={e => setReason(e.target.value)} aria-required="true" autoFocus />
       </label>
       {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
+    </KitDialog>
+  );
+}
+
+/** Board Ready call 12: why no new link can go out, in the record's words, from the server's cause code (window 2). */
+export function payLinkCauseSentence(cause: PayLinkCause | 'send_failed' | null, teamStatus: string | null): string | null {
+  const C = PL.cause;
+  switch (cause) {
+    case null:
+    case 'send_failed': return null;
+    case 'nothing_owed':
+    case 'our_team': return C.nothingOwed;
+    case 'tournament_over': return C.over;
+    case 'not_accepted': return teamStatus === 'rejected' ? C.declined : teamStatus === 'withdrawn' ? C.withdrew : C.notAccepted;
+    case 'switch_off':
+    case 'not_taking_payments':
+    case 'not_tracked': return C.notTaking;
+    case 'unrecorded_payment': return C.unrecorded;
+    case 'clearing': return C.clearing;
+    case 'no_email': return C.noEmail;
+  }
+}
+
+/**
+ * Board Ready call 12 (drawing tab 2; asks 3, 6, 9): one window, three forms.
+ *   send     "Send a new link?" — the team can pay now and has an email: Cancel · Send a new link (lime).
+ *   stop     "Stop the pay link?" — no new link can go out; the second paragraph names why: Cancel · Stop the link (red).
+ *   dispute  "Send a new link?" for a team that lost a card dispute — asked HERE, before anything stops, the shipped
+ *            dispute words in the foot's amber line: Cancel · Only stop the link (red) · Send a new link (lime).
+ * `go` runs the answer and closes the window (the record says what happened, ask 7); it never opens a second window.
+ */
+export function PayLinkReplaceWindow({ form, teamName, email, because, go, onClose }: {
+  form: 'send' | 'stop' | 'dispute';
+  teamName: string;
+  email: string | null;
+  /** Window 2's cause sentence ("Nothing is owed"); null when the stop is a choice (the team could be sent one). */
+  because: string | null;
+  go: (mode: 'send' | 'stop') => Promise<void>;
+  onClose: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const run = (mode: 'send' | 'stop') => { setBusy(true); void go(mode); };
+  const stop = form === 'stop';
+  return (
+    <KitDialog kind="question" raised title={stop ? PL.stopTitle : PL.newTitle} onClose={onClose} busy={busy}
+      footerAbove={form === 'dispute' ? DISPUTE_WORDS.sendAnywayBody(true) : undefined}
+      footer={(
+        <>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{R.cancel}</button>
+          {stop && <button type="button" className="btn btn-danger" onClick={() => run('stop')} disabled={busy}>{PL.goStop}</button>}
+          {form === 'dispute' && <button type="button" className="btn btn-danger" onClick={() => run('stop')} disabled={busy}>{PL.goOnlyStop}</button>}
+          {!stop && <button type="button" className="btn btn-lime" onClick={() => run('send')} disabled={busy}>{PL.goNew}</button>}
+        </>
+      )}>
+      <p>{PL.stopsNow(teamName)}</p>
+      {stop
+        ? <>{because && <p>{PL.stopWhy(because)}</p>}<p>{PL.underWayStop}</p></>
+        : (
+          <>
+            <p>{PL.goesToLead} <strong>{email}</strong>.{form === 'send' && <> {PL.wrongAddress}</>}</p>
+            {form === 'send' && <p>{PL.underWay}</p>}
+          </>
+        )}
     </KitDialog>
   );
 }
