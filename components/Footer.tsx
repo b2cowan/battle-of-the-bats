@@ -9,6 +9,7 @@ import styles from './Footer.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
 import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
 import { PRIVACY_TITLE, TERMS_TITLE } from '@/lib/legal-words';
+import { useClientSignedIn } from '@/lib/use-client-signed-in';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
 // (Consumer-shell routes like /discover are handled earlier via isConsumerShellPath.)
@@ -55,16 +56,33 @@ const FOOTER_GROUPS = [
       ['Coaches', '/for-coaches'],
     ],
   },
-  {
-    heading: 'Get started',
-    links: [
-      ['Start free', '/start/tournament'],
-      // "Coaches Portal", not "Coaches": "Built for" now holds a "Coaches" link to a different page.
-      ['Coaches Portal', '/coaches/start'],
-      ['Sign in', '/auth/login'],
-    ],
-  },
 ] as const;
+
+type FooterLink = readonly [label: string, href: string];
+
+/**
+ * The account column (owner 2026-11-19). It holds ONE door to the chooser, never a door per product.
+ *
+ * It used to carry "Start free" → the tournament sign-up and "Coaches Portal" → the Premium sign-up: the same words
+ * as the homepage's button leading somewhere else, two of four products with nothing saying why those two, and a
+ * coach link that skipped the one coach rule (`lib/start-menu.ts`) — so it would have gone on opening Premium after
+ * the Founding Season window closed. The chooser (/start) already knows what is on sale and where each door leads;
+ * this component is pathname-only and cannot. ⚠ Do not add a sign-up door here: a new product earns a card on the
+ * chooser, and "Built for" beside this column already answers "is this for me?".
+ *
+ * "Get started", not "Start free": the top bar's words for the same door, and the chooser may hold a paid door one
+ * day (W43, ruled 2026-11-18 — no "start free" over paid doors).
+ *
+ * Signed in, the column stops offering a sign-in and a sign-up to somebody who has both — the pair the top bar
+ * already swaps for. "Open app" is offered on marketing ground only: on the app's own tabs you are already in it.
+ */
+const ACCOUNT_HEADING = 'Account';
+const SIGNED_OUT_LINKS: readonly FooterLink[] = [
+  ['Get started', '/start'],
+  ['Sign in', '/auth/login'],
+];
+const OPEN_APP_LINK: FooterLink = ['Open app', '/discover'];
+const YOUR_ACCOUNT_LINK: FooterLink = ['Your account', '/account'];
 
 /**
  * Which ground the footer is landing on. `null` = don't render at all.
@@ -121,9 +139,19 @@ export default function Footer() {
   const pathname = usePublicPathname();
   const legal = useLegalLinks();
   const surface = resolveSurface(pathname);
+  // The shared sign-in read (a local cookie read; inert where the footer does not render). Starts signed-out, like
+  // the top bar, so the server's HTML is the stranger's footer and nobody's identity is baked into a cached page.
+  const signedIn = useClientSignedIn(surface !== null);
   if (!surface) return null;
 
   const skin = surface === 'warm' ? styles.warm : '';
+  const accountLinks: readonly FooterLink[] = !signedIn
+    ? SIGNED_OUT_LINKS
+    : surface === 'marketing' ? [OPEN_APP_LINK, YOUR_ACCOUNT_LINK] : [YOUR_ACCOUNT_LINK];
+  const groups: readonly { heading: string; links: readonly FooterLink[] }[] = [
+    ...FOOTER_GROUPS,
+    { heading: ACCOUNT_HEADING, links: accountLinks },
+  ];
   // The footer yields its QR exactly where the page renders the same unit as content of its
   // own: the Account TAB's stacked page (phone/tablet) and the desktop shell's Get-the-app
   // section (Phase 2). EXACT matches only — a prefix would strip the QR from every other
@@ -144,7 +172,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {FOOTER_GROUPS.map(group => {
+          {groups.map(group => {
             const links = group.links.filter(
               ([, href]) => href !== pathname && (href !== DEMOS_PATH || showDemosLink),
             );

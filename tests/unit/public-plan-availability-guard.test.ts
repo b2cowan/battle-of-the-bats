@@ -114,7 +114,19 @@ describe('the on-sale switch reaches every public plan page', () => {
     const footer = readCode('components/Footer.tsx');
     assert.match(footer, /heading: 'Built for'/);
     for (const href of ['/for-tournament-organizers', '/for-leagues', '/for-clubs', '/for-coaches']) assert.ok(footer.includes(`'${href}'`), href);
-    assert.match(footer, /\['Coaches Portal', '\/coaches\/start'\]/);
     assert.equal(footer.match(/\['Coaches',/g)?.length, 1);
+  });
+
+  // ⚖ UPDATED IN THE OPEN (owner 2026-11-19): W63's test pinned a "Coaches Portal" → /coaches/start link here. The
+  // owner replaced the footer's per-product sign-up doors with ONE door to the chooser, which already knows what is
+  // on sale and where the coach door leads (lib/start-menu.ts) — the footer is pathname-only and cannot.
+  it('the footer holds one door to the chooser, never a sign-up door per product; signed in, it stops offering sign-in', () => {
+    const footer = readCode('components/Footer.tsx');
+    assert.match(footer, /\['Get started', '\/start'\]/);
+    // Any spelling of a sign-up door: a path under the chooser, the coach sign-up, or one of the constants that name them.
+    assert.doesNotMatch(footer, /\/start\/|\/coaches\/start|COACHES_START_PATH|START_DOOR_PATH|COACH_DOOR_HREF/, 'a sign-up door belongs on the chooser');
+    assert.doesNotMatch(footer, /['"`]Start free['"`]/i);
+    assert.match(footer, /const signedIn = useClientSignedIn\(surface !== null\);/);
+    assert.match(footer, /!signedIn\s*\?\s*SIGNED_OUT_LINKS/);
   });
 });
