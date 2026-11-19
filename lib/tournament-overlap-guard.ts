@@ -139,7 +139,8 @@ const toOrderGame = (g: ProposedGameRow, id: string): OrderGame => ({
   awayPlaceholder: g.away_placeholder ?? null,
 });
 
-export type OrderRefusalBody = { error: string; code: 'game-order'; gameId: string; otherGameId: string; field: OrderField };
+/** `lead`: the sentence's bold fact (the start of `error`), so a screen that draws the red line can bold it (Stage 9). */
+export type OrderRefusalBody = { error: string; lead: string; code: 'game-order'; gameId: string; otherGameId: string; field: OrderField };
 export type OverlapRefusalBody = { error: string; code: 'overlap'; gameId: string; otherGameId: string };
 export type GameWriteRefusal = { status: 409; body: OverlapRefusalBody | OrderRefusalBody };
 
@@ -181,7 +182,7 @@ async function orderRefusal(
   });
   return {
     status: 409,
-    body: { error: `${w.lead}${w.rest}`, code: 'game-order', gameId: w.gameId, otherGameId: w.otherGameId, field: opts.field ?? 'when' },
+    body: { error: `${w.lead}${w.rest}`, lead: w.lead, code: 'game-order', gameId: w.gameId, otherGameId: w.otherGameId, field: opts.field ?? 'when' },
   };
 }
 

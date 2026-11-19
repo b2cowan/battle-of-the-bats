@@ -14,7 +14,7 @@
 import { useState } from 'react';
 import BottomSheet from '@/components/admin/BottomSheet';
 import TimeInput from '@/components/shared/TimeInput';
-import WhereField from '@/components/venue/WhereField';
+import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import type { Division, Game, Team, Tournament, Venue } from '@/lib/types';
@@ -31,7 +31,7 @@ import ms from './MoveSheet.module.css';
 export type MoveTarget = { date: string; time: string; venueId: string | null; venueFacilityId: string | null; location: string | null };
 
 export default function MoveSheet({
-  game, games, teams, divisions, venues, tournament, days, today, tells, onClose, onMove,
+  game, games, teams, divisions, venues, tournament, days, today, tells, orderLine, onClose, onMove,
 }: {
   game: Game;
   /** Every game of the tournament (the line checks against all of them). */
@@ -45,6 +45,9 @@ export default function MoveSheet({
   today: string;
   /** A published game on a plan with phone alerts: the lime says it tells both teams. */
   tells: boolean;
+  /** The game-order rule (Stage 9, tab 2): the red line under Day and Start when this day and time would put the game
+   *  before one it waits for (or a game it feeds before it ends); Move waits until the time works. */
+  orderLine?: (to: { date: string; time: string }) => { lead: string; rest: string } | null;
   onClose: () => void;
   onMove: (to: MoveTarget) => void;
 }) {
@@ -64,9 +67,12 @@ export default function MoveSheet({
   const unchanged = date === (game.date ?? '') && time === (game.time ?? '').slice(0, 5) && samePlace(where, whereOfGame(game, venues));
   const dayChoices = Array.from(new Set([...days, ...(date ? [date] : [])])).sort();
   const venueOptions = tournamentVenueOptions(venues);
+  // A12: a spot both taken and out of order shows both red lines; either holds Move.
+  const order = !unchanged && date && time ? orderLine?.({ date, time }) ?? null : null;
+  const held = refused || !!order;
 
   const move = () => {
-    if (refused || unchanged || !date || !time) return;
+    if (held || unchanged || !date || !time) return;
     onMove({ date, time, ...placeOfWhere(where) });
   };
 
@@ -79,7 +85,7 @@ export default function MoveSheet({
       footer={(
         <div className={ms.foot}>
           <button type="button" className={screenParts.plainButton} onClick={onClose}>{G.cancel}</button>
-          <button type="button" className={`btn btn-lime ${ms.go}`} onClick={move} disabled={refused || unchanged || !date || !time}>
+          <button type="button" className={`btn btn-lime ${ms.go}`} onClick={move} disabled={held || unchanged || !date || !time}>
             {tells ? M.moveTells : M.move}
           </button>
         </div>
@@ -89,15 +95,16 @@ export default function MoveSheet({
         <div className={ms.pair}>
           <label className={ck.field}>
             <span className={ck.label}>{G.fields.day}</span>
-            <select className={ck.select} value={date} onChange={e => setDate(e.target.value)}>
+            <select className={ck.select} value={date} onChange={e => setDate(e.target.value)} aria-invalid={order ? true : undefined}>
               {dayChoices.map(d => <option key={d} value={d}>{W.dayLabel(d, today)}</option>)}
             </select>
           </label>
           <label className={ck.field}>
             <span className={ck.label}>{G.fields.start}</span>
-            <TimeInput className={ck.input} step={300} value={time} onChange={v => setTime(v)} />
+            <TimeInput className={ck.input} step={300} value={time} onChange={v => setTime(v)} aria-invalid={order ? true : undefined} />
           </label>
         </div>
+        {order && <WhereLine tone="refuse" lead={order.lead} rest={order.rest} />}
         <WhereField
           idPrefix={`move-${game.id}`}
           sport={tournament?.sport}

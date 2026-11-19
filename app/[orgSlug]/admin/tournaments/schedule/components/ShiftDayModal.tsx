@@ -28,6 +28,7 @@ import { addCalendarDays, tournamentToday } from '@/lib/timezone';
 import { NIL_TEAM_ID } from '@/lib/schedule-change-classify';
 import { planBulkReschedule, SHIFT_PRESET_MINUTES, type PlannedShift, type ReschedulableGame } from '@/lib/schedule-shift';
 import { orderLengthsOf } from '@/lib/game-order';
+import { orderRefusalWords, orderWordsGameOf } from '@/lib/game-order-words';
 import { gameLengthMinutes } from '@/lib/booking-length';
 import { bracketGameLabel } from '@/lib/playoff-bracket';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
@@ -208,6 +209,16 @@ export default function ShiftDayModal({
   const tells = [...plan.shifts.map(s => s.id), ...plan.cancelIds]
     .some(id => divisions.find(d => d.id === games.find(g => g.id === id)?.divisionId)?.scheduleVisibility === 'published');
   const blocked = plan.newViolations.length > 0;
+  // The callout names the pair (Stage 9, tab 5): "Semifinal 2 would end at 5:00 p.m., after the Final starts (4:30 p.m.)."
+  const orderWords = useMemo(() => {
+    if (!plan.newViolations.length) return null;
+    const moved = new Map(plan.shifts.map(s => [s.id, s.to]));
+    const after = new Map(games.map(g => {
+      const to = moved.get(g.id);
+      return [g.id, orderWordsGameOf({ ...g, date: to?.date ?? g.date, time: to?.time ?? g.time }, divisions, teams)] as const;
+    }));
+    return orderRefusalWords({ problems: plan.newViolations, games: after, door: 'rain-delay', lengths });
+  }, [plan, games, divisions, teams, lengths]);
   const refused = refusals.size > 0;
   const nothingToDo = plan.shifts.length === 0 && plan.cancelIds.length === 0;
   const cancellingPlayoff = visibleGames.some(g => cancelling.has(g.id) && g.isPlayoff);
@@ -375,7 +386,7 @@ export default function ShiftDayModal({
                       {isCancel ? RW.cancelled : to ? rainDelayMove(g.time ?? '', to.time, to.date !== g.date) : formatTime(g.time)}
                     </span>
                     {' · '}{where}
-                    {flagged && <span className={rd.refuse}><AlertTriangle size={13} aria-hidden /> {RW.beforeFeeder}</span>}
+                    {flagged && <span className={rd.refuse}><AlertTriangle size={13} aria-hidden /> {W.conflicts.order}</span>}
                     {refuseWords && <span className={rd.refuse}><Ban size={13} aria-hidden /> <b>{refuseWords.lead}</b>{refuseWords.rest}</span>}
                     {club && <span className={rd.club}><AlertTriangle size={13} aria-hidden /> {club}</span>}
                   </>
@@ -390,7 +401,9 @@ export default function ShiftDayModal({
           })}
         </ClubRowList>
       )}
-      {blocked && <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>{RW.bracketOrder}</Callout>}
+      {blocked && orderWords && (
+        <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}><b>{orderWords.lead}</b>{orderWords.rest}</Callout>
+      )}
       {cancellingPlayoff && !blocked && <Callout tone="warn" icon={<AlertTriangle size={16} aria-hidden />}>{RW.cancellingPlayoff}</Callout>}
       {error && <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>{error}</Callout>}
     </>

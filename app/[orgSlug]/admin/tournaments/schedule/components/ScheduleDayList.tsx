@@ -43,10 +43,11 @@ export type ScheduleRowCtx = { teams: Team[]; divisions: Division[]; venues: Ven
 type Ctx = ScheduleRowCtx;
 
 /** The state the score can't say, as its chip — the day's rows and the bracket's cards wear the same one. A game still
- *  to play wears no state chip, so its conflict takes the place (walk §294): amber "Tight turnover", red "Double-booked".
- *  `conflict` is already `toPlayConflict`'s — only a game still to play has one. */
+ *  to play wears no state chip, so its conflict takes the place (walk §294): amber "Tight turnover", red "Double-booked",
+ *  red "Out of order" (Stage 9, both games of the pair). `conflict` is already `toPlayConflict`'s — only a game still to
+ *  play has one — and `shownConflict`'s when a game has several (A12). */
 export function stateChip(g: Game, state: ScheduleState, conflict: ScheduleConflict | null = null): ReactNode {
-  if (conflict) return <RepChip tone={conflict === 'overlap' ? 'bad' : 'warn'}>{W.conflicts[conflict]}</RepChip>;
+  if (conflict) return <RepChip tone={conflict === 'buffer' ? 'warn' : 'bad'}>{W.conflicts[conflict]}</RepChip>;
   const tie = state === 'final' && g.homeScore != null && g.homeScore === g.awayScore;
   const chip = tie ? GAME_STATE_WORD.tie : CHIP_TONE[state] !== undefined ? W.states[state] : null;
   return chip ? <RepChip tone={tie ? 'neutral' : CHIP_TONE[state]}>{chip}</RepChip> : null;

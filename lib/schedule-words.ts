@@ -52,8 +52,10 @@ export const SCHEDULE_DAY_WORDS = {
   tools: TEAMS_WORDS.tools,
   groups: { conflicts: 'Conflicts', division: 'Division', stage: 'Stage', status: TEAMS_WORDS.filterStatus },
   /** A game still to play too close to another on its diamond (walk §294, ruled 2026-10-12): the row's chip and the
-   *  Filter's Conflicts rows say the same word. Both games of a tight pair wear it. */
-  conflicts: { buffer: 'Tight turnover', overlap: 'Double-booked' } satisfies Record<ScheduleConflict, string>,
+   *  Filter's Conflicts rows say the same word. Both games of a tight pair wear it. `order` (Stage 9, A6): a playoff
+   *  game before a game it waits for ends — both games of the pair wear it (`lib/game-order-words.ts` reads this). The
+   *  menu lists them in this order. */
+  conflicts: { buffer: 'Tight turnover', overlap: 'Double-booked', order: 'Out of order' } satisfies Record<ScheduleConflict, string>,
   stages: { pool: 'Round robin', playoff: 'Playoffs' } satisfies Record<ScheduleStage, string>,
   states: {
     needsScore: GAME_STATE_WORD.needsScore,
@@ -623,6 +625,8 @@ export const GAME_WINDOW_WORDS = {
     division: 'Division', stage: 'Stage', day: 'Day', start: 'Start', length: 'Length', away: 'Away', home: 'Home',
     awaySlot: 'Away slot', homeSlot: 'Home slot', notes: 'Notes', notesPlaceholder: 'Optional', choose: 'Choose…',
     seeds: 'Seeds', winners: 'Winner of…', losers: 'Loser of…', teams: 'Teams',
+    /** A bracket with no name of its own, in Add game's pickers (Stage 9, A9: "Bracket 2 · Semifinal 1 winner"). */
+    bracketN: (n: number) => `Bracket ${n}`,
   },
   noDate: 'No date yet',
   noPlace: 'No place yet',
@@ -709,6 +713,9 @@ export const MOVE_WORDS = {
   putBack: (when: string, where: string, otherDay: boolean) => `Put back ${otherDay ? 'on' : 'at'} ${[when, where].filter(Boolean).join(' · ')}`,
   /** Undo found the game somewhere else (moved again, or by someone else): it is left where it is. */
   movedSince: 'That game has moved since — nothing was put back.',
+  /** A move the server refused (Stage 9, tab 6): the notice's error face, the server's own sentence after it. The game
+   *  is already back where it was. */
+  notMoved: (reason: string) => `Not moved: ${reason}`,
   cancelled: 'Game cancelled',
   backOn: 'Game back on',
   undo: 'Undo',
@@ -758,8 +765,8 @@ export const RAIN_DELAY_WORDS = {
   cancelGame: 'Cancel game',
   cancelled: 'Cancelled',
   moveInstead: 'Move instead',
-  beforeFeeder: 'before the game that feeds it',
-  bracketOrder: 'This would put a playoff game before the game that feeds it. Push fewer games, or a different amount, so every playoff game stays after its feeders.',
+  // A pair out of order: the row's mark is the schedule's chip word, the callout the rule's own sentence
+  // (`orderRefusalWords`, door 'rain-delay', Stage 9 tab 5).
   cancellingPlayoff: "You're cancelling a playoff game. Its place in the bracket needs settling by hand afterwards.",
   noGames: 'No games left to move.',
   noGamesBody: 'This moves or cancels the games still to play on a day. Once a day has games, come back for a rain delay or a day running behind.',
@@ -823,6 +830,10 @@ export function bracketWhen(date?: string | null, time?: string | null): string 
 }
 
 export const BRACKET_WORDS = {
+  /** The bracket editor's game-order banner (Stage 9, tab 4, A3): only a problem this edit makes holds Save. */
+  fixToSave: 'Fix this to save',
+  alreadySaved: 'Already saved this way · you can still save',
+  toFixCount: (n: number) => `${n} to fix`,
   /** "Single elimination · the top 4 of the round robin" (a playoffs-only event: "Single elimination · 4 teams"). */
   caption: (format: string, qualifying: number, fromRoundRobin: boolean) =>
     qualifying > 0 ? `${format} · ${fromRoundRobin ? `the top ${qualifying} of the round robin` : count(qualifying, 'team', 'teams')}` : format,

@@ -664,3 +664,31 @@ describe('buildScheduleMetrics', () => {
     });
   });
 });
+
+// Public tournament Stage 9 (tab 1): playoff games out of order are a health issue, weighed like an overlap.
+describe('buildScheduleMetrics: the game-order rule', () => {
+  const division = { id: 'd1', name: 'U13 Boys', settings: { game_duration_minutes: 90 } } as unknown as Division;
+  const playoff = (id: string, code: string, time: string, o: Partial<ScheduleMetricGame> = {}): ScheduleMetricGame => ({
+    ...game(id, '', '', '2026-11-21', time, `v-${id}`), homeTeamId: null, awayTeamId: null,
+    isPlayoff: true, bracketCode: code, bracketId: 'b1', ...o,
+  });
+  const sf2 = playoff('sf2', 'SF2', '15:00');
+  const final = playoff('fin', 'FIN', '14:15', { homePlaceholder: 'Winner SF2' });
+
+  it('lists "Playoff games out of order" with its first pair and takes 7 like an overlap', () => {
+    const metrics = buildScheduleMetrics({ games: [sf2, final], divisions: [division], includePlayoffs: true });
+    const issue = metrics.issues.find(i => i.code === 'game_order');
+    assert.ok(issue);
+    assert.equal(issue.title, 'Playoff games out of order');
+    assert.equal(issue.conflictKind, 'order');
+    assert.equal(issue.detail, 'The Final starts at 2:15 p.m., before Semifinal 2 ends at 4:30 p.m.');
+    const fixed = buildScheduleMetrics({ games: [sf2, { ...final, time: '16:30' }], divisions: [division], includePlayoffs: true });
+    assert.equal(fixed.issues.some(i => i.code === 'game_order'), false);
+    assert.equal(fixed.healthBreakdown.conflicts - metrics.healthBreakdown.conflicts, 7);
+  });
+
+  it('reads nothing when the view leaves playoffs out', () => {
+    const metrics = buildScheduleMetrics({ games: [sf2, final], divisions: [division] });
+    assert.equal(metrics.issues.some(i => i.code === 'game_order'), false);
+  });
+});

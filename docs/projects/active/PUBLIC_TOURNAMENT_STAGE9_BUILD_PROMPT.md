@@ -188,6 +188,47 @@ Build to the drawing; name the shipped component in each step and reuse it.
 8. **`/docs`:** the schedule help guides gain the rule (what "Out of order" means, how to fix it, that pool play counts).
 9. Product-owner summary; the owner checks it on dev; commit on the owner's word.
 
+## Part 2 handoff (built 2026-11-19, read before Part 3)
+
+Part 2 is built on dev (commit on the owner's word after his browser check; see `git log --grep "Stage 9, Part 2"`).
+What it decided, and what Part 3's review and walk should know:
+
+- **One conflict per chip, every kind in the Filter.** `ScheduleConflict` gained `'order'`; `shownConflict` is A12's
+  order (Double-booked, Out of order, Tight turnover); `matchesScheduleFilter` takes every kind a game has, so a game
+  both double-booked and out of order is under both rows. The page's `orderById` keeps both games of each pair, to-play
+  only, like a clash. The timeline block draws `data-conflict="order"` like an overlap (outline and tint, no legend).
+- **Health:** issue `game_order` ("Playoff games out of order", detail = the earliest pair's sentence, "N more pairs"
+  after it), `conflictKind: 'order'` drives "Show them". **Deduction: 7 per pair, the overlap's weight, taken AFTER the
+  venue-coverage scaling** (the rule reads days and times, never a field). Pool pairs count **once per playoff game**
+  (`orderIssuePairs`), not once per late pool game. The dashboard reads the same score.
+- **Drag (A4):** the timeline's drop verdict checks a taken field first, then the rule (`orderDragReasonForChange`); one
+  verdict per 15-minute spot. "The semifinals run until 1:00 p.m." when the dragged game waits for several.
+- **Game window:** the red line under the field that changed (`when` > `length` > `sources`), from `orderLineForChange`;
+  a line holds day, start, place, length AND the sides (`changesOf(..., { sources: false })`); the pill shows the order
+  words unless an overlap also refuses (A12). Add game's line is the same, under Day and Start; its server refusal is
+  now a red line at the foot. The read view splits the When row from Length and Where to put its line under When, and
+  the subtitle wears the chip. **Bracket pickers name the bracket only in Add game** (a game being edited already sits
+  in its own bracket); the new game takes the picked source's `bracketId` and `bracketLabel`.
+- **Move notice error face:** `NoticePill error` (red, Ban, close button, no timer). Used for **any** server refusal of a
+  drop or a sheet move ("Not moved: " + the server's sentence), not only the order rule. Undo's refusal still opens the
+  message window.
+- **The server's reply gained `lead`** beside `error` (`OrderRefusalBody`), read by `orderLineOfReply`, so the length
+  windows and the reinstate line can bold the fact. The division record and the event page show the line under Game
+  length; their save word says "Couldn't save". Reinstate from the window shows the line beside the button.
+- **Bracket editor (A3):** "Fix this to save" vs "Already saved this way · you can still save", judged against the
+  bracket AS STORED (never a starter just seeded); Save is disabled only by the first.
+- **Rain delay:** the callout is `orderRefusalWords` door `rain-delay`; the row mark is the chip word, "Out of order".
+- **Layout check:** two new entries that never save, `admin-t-schedule-add-game-order` (Add game, Playoffs, a Winner
+  source) and `admin-t-schedule-move-order` (the day's latest playoff game; on a phone its sheet at 8:00 a.m.). **The
+  UAT fixture holds no stored out-of-order pair**, so the chip, the health row and the bracket editor's banner are
+  measured only by Part 3's walk fixtures.
+- **Help:** new FAQ `faq-game-out-of-order`; pointers in the double-booked FAQ, Schedule health, the rain delay and
+  the build-by-hand step.
+- **Gate state (not this work):** the full unit suite's other-area failures, `layout-run-journal.test.ts` typecheck,
+  `check-admin-type` (Billing / KitDialog stylesheets went DOWN in another session's tree), `check-admin-old-look`
+  (`schedule-admin.module.css` 100 → 103, untouched by this work), `check-css-selectors` (platform-admin, public-site,
+  `schedule-admin` dead classes, all pre-existing).
+
 ## Part 3 · Review, the walk, the records
 
 1. `/simplify`, then `/review` (four lenses). Ask the review to try the side doors: a second admin's change between

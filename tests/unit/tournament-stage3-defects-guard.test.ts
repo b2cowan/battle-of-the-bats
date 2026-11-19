@@ -89,7 +89,8 @@ describe('F69 — both generators are offered only the slots no kept game holds'
     const p = readCode(PLAYOFFS);
     assert.match(p, /action: 'replace-division-playoffs'/);
     assert.doesNotMatch(p, /'bulk-save'|'delete-division-playoff-games'/);
-    assert.match(p, /if \(data\.code === 'schedule_changed' \|\| data\.code === 'shape_held'\) onStale\?\.\(\);/);
+    // A draft the game-order rule now refuses is stale the same way (Stage 9, tab 6).
+    assert.match(p, /if \(data\.code === 'schedule_changed' \|\| data\.code === 'shape_held' \|\| data\.code === 'game-order'\) onStale\?\.\(\);/);
   });
 });
 
@@ -106,8 +107,11 @@ describe('F71 — a refused save says why', () => {
     // The refusal says the route's own reason; it can be BECAUSE the game changed, so a quiet re-read (no loading
     // state — the open window survives it), then throw: the window's save word shows why, a drop goes back.
     assert.match(save.slice(refused, reread), /const reason = await readRefusal\(res, SCHEDULE_REFUSAL\.gameFallback\);\s*void reloadGames\(\);\s*throw new Error\(reason\);/);
-    // Every caller that is not the window says it in the message window, and a drop's block goes back.
-    assert.match(page, /setGames\(prev => prev\.map\(x => \(x\.id === gameId \? g : x\)\)\);\s*setFeedback\(\{ isOpen: true, title: SCHEDULE_REFUSAL_TITLE\.saveGame,/);
+    // A drop or the phone's sheet: the block goes back and the move's own notice says why, in its error face, until
+    // closed (Public tournament Stage 9, tab 6: it replaced the message window there).
+    assert.match(page, /setGames\(prev => prev\.map\(x => \(x\.id === gameId \? g : x\)\)\);\s*setNotice\(\{ key: Date\.now\(\), message: MW\.notMoved\(/);
+    // Undo, the other caller that is not the window, still says it in the message window.
+    assert.match(page, /say\(MW\.putBack\(w\.when, w\.where, otherDay\)\);\s*\} catch \(e\) \{\s*setFeedback\(\{ isOpen: true, title: SCHEDULE_REFUSAL_TITLE\.saveGame,/);
   });
 
   it('one helper reports a refused write — never the sandbox\'s by-design refusal', () => {

@@ -21,7 +21,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEventHandler, type ReactNode, type Ref } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Check, ChevronRight, Info, Trash2 } from 'lucide-react';
+import { AlertTriangle, Ban, Check, ChevronRight, Info, Trash2, X } from 'lucide-react';
 import { isLiveSeasonStatus } from '@/lib/season-live';
 import { twoOpenPageNote, twoOpenTitle } from '@/lib/club-season-words';
 import LoadingState from '@/components/shared/LoadingState';
@@ -460,27 +460,41 @@ export function SavePill({ saving, dirty, error, held, onRetry, inline = false }
  * Diamond 3 · Undo"). Shared by every admin screen that wears the kit, club screens included. A notice with an action
  * lingers as a sentence notice (~8s), holds while the pointer or the keyboard is on it (a timed control a person can
  * reach), and leaves the moment its action is taken. The pill still never blocks a tap beside it; only it takes one.
+ *
+ * `error`: the notice's error face (Public tournament Stage 9, tab 6: a move the server refused, "Not moved: …"). Red,
+ * the Ban mark, no action, a close button, and it STAYS until closed: the reader has to see why nothing moved.
  */
-export function NoticePill({ message, onDone, news = false, inline = false, action }: {
+export function NoticePill({ message, onDone, news = false, inline = false, action, error = false }: {
   message: string; onDone: () => void; news?: boolean;
   /** INSIDE A WINDOW (KitDialog's `status`): pinned by the window to its body's corner, as `SavePill inline` is. */
   inline?: boolean;
   action?: { label: string; onAction: () => void };
+  error?: boolean;
 }) {
   const [phase, setPhase] = useState<'shown' | 'fading'>('shown');
   const [held, setHeld] = useState(false);
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; }, [onDone]);
-  const hasAction = !!action;
+  const hasAction = !!action && !error;
   useEffect(() => {
-    if (held) return;
+    if (held || error) return;
     const linger = news || hasAction ? NEWS_LINGER_MS : LINGER_MS;
     const fade = window.setTimeout(() => setPhase('fading'), linger);
     const leave = window.setTimeout(() => done.current(), linger + FADE_MS);
     return () => { window.clearTimeout(fade); window.clearTimeout(leave); };
-  }, [news, hasAction, held]);
+  }, [news, hasAction, held, error]);
   const hold = () => { setPhase('shown'); setHeld(true); };
   const release = () => setHeld(false);
+  if (error) {
+    return (
+      <div className={inline ? `${styles.savePill} ${styles.savePillInline}` : styles.savePill} data-state="error" role="alert">
+        <span className={`${styles.saveStatus} ${styles.saveStatusError}`}><Ban size={13} aria-hidden /> {message}</span>
+        <button type="button" className={styles.noticeClose} aria-label="Close" onClick={() => done.current()}>
+          <X size={14} aria-hidden />
+        </button>
+      </div>
+    );
+  }
   return (
     <div
       className={inline ? `${styles.savePill} ${styles.savePillInline}` : styles.savePill}

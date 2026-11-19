@@ -184,7 +184,9 @@
   cursor: default;
 }
 
-.block[data-conflict="overlap"] {
+/* A pair out of order (Stage 9) is drawn like a double-booked pair: the same outline and tint, no new fill. */
+.block[data-conflict="overlap"],
+.block[data-conflict="order"] {
   outline: 1.5px solid var(--danger);
   background: color-mix(in srgb, var(--danger) 14%, var(--surface));
 }
@@ -668,6 +670,10 @@
 :global([data-admin-kit]) .blockWarn { color: var(--text-tertiary); }
 :global([data-admin-kit]) .block[data-conflict="overlap"] .blockWarn { color: var(--danger-light); }
 :global([data-admin-kit]) .block[data-conflict="buffer"] .blockWarn { color: var(--warning-light); }
+/* A pair out of order (Public tournament Stage 9) is drawn like a double-booked pair, written on the kit's tokens with no
+   kit scope: after the kit's `.block` above, so its background-color wins the equal-weight tie by source order. */
+.block[data-conflict="order"] { background-color: color-mix(in srgb, var(--danger) 14%, var(--card-bg)); }
+.block[data-conflict="order"] .blockWarn { color: var(--danger-light); }
 
 :global([data-admin-kit]) .empty { color: var(--text-tertiary); border-color: var(--home-line-strong); }
 :global([data-admin-kit]) .gridHint { color: var(--text-tertiary); border-top-color: var(--home-line); }

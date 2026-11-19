@@ -10,7 +10,7 @@
 import { bracketGameLabel, bracketRoundLabel } from './playoff-bracket.ts';
 import { formatTime, possessive } from './utils.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
-import { teamOrSlotWords } from './schedule-words.ts';
+import { SCHEDULE_DAY_WORDS, teamOrSlotWords } from './schedule-words.ts';
 import {
   dateTimeAt, newOrderProblems, orderGameLength, orderLengthsOf, type OrderGame, type OrderLengths, type OrderProblem,
 } from './game-order.ts';
@@ -243,14 +243,19 @@ export function orderWordsGameOf(g: ScheduleGameLike, divisions: readonly Named[
  * The refusal a one-game change would get from the server, or null (Stage 9: the screen refuses exactly what the
  * server refuses). `change.id` absent = a game being added. The game window, the move sheet and Add game call it.
  */
-export function orderRefusalForChange(input: {
+export interface OrderChangeInput {
   games: readonly ScheduleGameLike[];
   change: Partial<ScheduleGameLike> & { id?: string };
   divisions: readonly (Named & { settings?: { game_duration_minutes?: unknown } | null })[];
   tournament?: { settings?: { game_duration_minutes?: unknown } | null } | null;
   teams: readonly Named[];
   field?: OrderField;
-}): string | null {
+}
+
+/** The pairs a one-game change creates, with the picture after it (null when it creates none). */
+export function orderChangeCheck(input: OrderChangeInput): {
+  id: string; problems: OrderProblem[]; games: Map<string, OrderWordsGame>; lengths: OrderLengths;
+} | null {
   const before = input.games.map(g => orderWordsGameOf(g, input.divisions, input.teams));
   const id = input.change.id ?? 'new:0';
   const base = input.games.find(g => g.id === id) ?? { id, divisionId: null, date: null, time: null };
@@ -260,16 +265,65 @@ export function orderRefusalForChange(input: {
   const lengths = orderLengthsOf(input.divisions, input.tournament);
   const problems = newOrderProblems(before, after, lengths);
   if (!problems.length) return null;
+  return { id, problems, games: new Map(after.map(g => [g.id, g])), lengths };
+}
+
+/**
+ * The game window's red line for a one-game change (tab 3): the bold fact, the way out, and the save pill's held words
+ * ("Not saved: Semifinal 2 isn’t over by then"); null when the change creates no problem.
+ */
+export function orderLineForChange(input: OrderChangeInput): (OrderWords & { pill: string }) | null {
+  const c = orderChangeCheck(input);
+  if (!c) return null;
   const w = orderRefusalWords({
-    problems, games: new Map(after.map(g => [g.id, g])), door: 'game', editedId: id, field: input.field ?? 'when', lengths,
+    problems: c.problems, games: c.games, door: 'game', editedId: c.id, field: input.field ?? 'when', lengths: c.lengths,
   });
-  return w.lead + w.rest;
+  return { lead: w.lead, rest: w.rest, pill: orderPillWords(pickOrderProblem(c.problems, c.id), c.games, c.id) };
+}
+
+/** The same judgement as one sentence (the server's `error`), or null. */
+export function orderRefusalForChange(input: OrderChangeInput): string | null {
+  const w = orderLineForChange(input);
+  return w ? w.lead + w.rest : null;
+}
+
+/** The timeline's red spot for a drag (A4), or null: the reason chip's words. */
+export function orderDragReasonForChange(input: OrderChangeInput): string | null {
+  const c = orderChangeCheck(input);
+  return c ? orderDragReason(c.problems.filter(p => p.sourceId === c.id || p.dependentId === c.id), c.games, c.id) : null;
+}
+
+/**
+ * The pairs as an organizer counts them: a playoff game that starts before pool play ends is ONE problem, however many
+ * pool games run late (the rule keeps one pair per pool game, A7); the latest-ending pool game speaks for it.
+ */
+export function orderIssuePairs(problems: readonly OrderProblem[]): OrderProblem[] {
+  const out: OrderProblem[] = [];
+  const pool = new Map<string, OrderProblem>();
+  for (const p of problems) {
+    if (p.kind !== 'pool') { out.push(p); continue; }
+    const had = pool.get(p.dependentId);
+    if (!had || p.sourceEnd > had.sourceEnd) pool.set(p.dependentId, p);
+  }
+  return [...out, ...pool.values()].sort((a, b) => a.dependentStart - b.dependentStart || b.sourceEnd - a.sourceEnd);
+}
+
+/**
+ * A server reply's game-order refusal as the red line draws it (bold lead, then the way out), or null when the reply is
+ * another refusal. The server sends `lead` beside `error` (`lib/tournament-overlap-guard.ts`).
+ */
+export function orderLineOfReply(body: unknown): OrderWords | null {
+  const b = body as { code?: unknown; error?: unknown; lead?: unknown } | null;
+  if (!b || b.code !== 'game-order' || typeof b.error !== 'string') return null;
+  const lead = typeof b.lead === 'string' && b.error.startsWith(b.lead) ? b.lead : '';
+  return { lead, rest: b.error.slice(lead.length) };
 }
 
 // ── The screens' words (Part 2 reads these; written here so the rule's sentences have one home) ──────────────────
 
-/** The chip on both games of a pair (A6; stored sentence case, the shared chip renders capitals). */
-export const OUT_OF_ORDER_CHIP = 'Out of order';
+/** The chip on both games of a pair (A6; stored sentence case, the shared chip renders capitals). The schedule's
+ *  Conflicts words hold it, so the chip and the Filter row are one string. */
+export const OUT_OF_ORDER_CHIP = SCHEDULE_DAY_WORDS.conflicts.order;
 
 /** The health window's issue row ("Playoff games out of order") and its detail for one pair. */
 export const ORDER_ISSUE_TITLE = 'Playoff games out of order';
@@ -277,7 +331,8 @@ export const ORDER_ISSUE_TITLE = 'Playoff games out of order';
 export function orderIssueWords(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>): string {
   const dep = games.get(p.dependentId);
   const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId));
-  return fin(`${cap(orderGameName(dep))} starts at ${clock(p.dependentStart)}, before ${srcName} ends at ${clock(p.sourceEnd)}`);
+  // A day only when the two differ ("… starts on Sat, Nov 21 at 9:00 a.m., before Quarterfinal 2 ends on Sun, Nov 22 …").
+  return fin(`${cap(orderGameName(dep))} starts ${at(p.dependentStart, p.sourceEnd)}, before ${srcName} ends ${at(p.sourceEnd, p.dependentStart)}`);
 }
 
 /** The game window's read view, under When, from this game's own side (A5). */
@@ -299,9 +354,21 @@ export function orderReadWords(p: OrderProblem, games: ReadonlyMap<string, Order
 }
 
 /** The timeline's red spot while dragging (A4): "Semifinal 2 runs until 4:30 p.m., so the Final can't go here". */
-export function orderDragReason(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>, draggedId: string): string {
+export function orderDragReason(
+  problems: OrderProblem | readonly OrderProblem[],
+  games: ReadonlyMap<string, OrderWordsGame>,
+  draggedId: string,
+): string {
+  const list = Array.isArray(problems) ? problems : [problems as OrderProblem];
+  const p = pickOrderProblem(list, draggedId);
   const dep = games.get(p.dependentId);
   const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId));
+  // "The semifinals run until 1:00 p.m.": the dragged game waits for several (tab 2).
+  const mine = list.filter(q => q.dependentId === draggedId && q.kind !== 'pool');
+  if (draggedId === p.dependentId && p.kind !== 'pool' && mine.length > 1) {
+    const latest = Math.max(...mine.map(q => q.sourceEnd));
+    return `${cap(sourcesPlural(mine.map(q => games.get(q.sourceId))))} run until ${clock(latest)}, so ${orderGameName(dep)} can’t go here`;
+  }
   if (draggedId === p.dependentId) return `${cap(srcName)} runs until ${clock(p.sourceEnd)}, so ${orderGameName(dep)} can’t go here`;
   const who = p.kind === 'pool' ? 'this game' : srcName;
   return `${cap(orderGameName(dep))} starts at ${clock(p.dependentStart)}, so ${who} can’t go here`;

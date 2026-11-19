@@ -2,7 +2,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   NO_SCHEDULE_FILTER, eventDays, fieldKeyOf, filtersOn, gamesByDay, matchesScheduleFilter, matchesScheduleSearch,
-  openingDay, scheduleStateOf, stepDay, type ScheduleFilter,
+  openingDay, scheduleStateOf, shownConflict, stepDay, type ScheduleFilter,
 } from '../../lib/schedule-day.ts';
 import { SCHEDULE_DAY_WORDS as W } from '../../lib/schedule-words.ts';
 import type { Division, Game, Tournament } from '../../lib/types.ts';
@@ -148,9 +148,20 @@ describe('conflicts in every view (walk §294)', () => {
     // Nothing ticked: a conflict changes nothing.
     assert.equal(matchesScheduleFilter(game, 'scheduled', NO_SCHEDULE_FILTER, 'buffer'), true);
   });
+  test('a game both double-booked and out of order: Double-booked on the chip, found under both rows (A12)', () => {
+    const game = g({ id: 'c' });
+    assert.equal(shownConflict(['order', 'overlap']), 'overlap');
+    assert.equal(shownConflict(['buffer', 'order']), 'order');
+    assert.equal(shownConflict([]), null);
+    for (const kind of ['overlap', 'order'] as const) {
+      assert.equal(matchesScheduleFilter(game, 'scheduled', { ...NO_SCHEDULE_FILTER, conflicts: [kind] }, ['overlap', 'order']), true, kind);
+    }
+    assert.equal(matchesScheduleFilter(game, 'scheduled', { ...NO_SCHEDULE_FILTER, conflicts: ['buffer'] }, ['overlap', 'order']), false);
+  });
   test('the chip and the Filter say one word each', () => {
     assert.equal(W.conflicts.buffer, 'Tight turnover');
     assert.equal(W.conflicts.overlap, 'Double-booked');
+    assert.equal(W.conflicts.order, 'Out of order');
     assert.equal(W.groups.conflicts, 'Conflicts');
   });
   test('the clash check flags BOTH games of a tight pair', async () => {

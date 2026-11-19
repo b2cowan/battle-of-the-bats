@@ -3,6 +3,8 @@ import { resolveGameTiming, type ConflictKind } from './schedule-conflict.ts';
 import { computeTournamentStandings } from './tie-breakers.ts';
 import { gameLengthMinutes } from './booking-length.ts';
 import { isStandardSingleEliminationBracket, nextBracketCodeViaWinner } from './playoff-bracket.ts';
+import { findOrderProblems, orderLengthsOf } from './game-order.ts';
+import { ORDER_ISSUE_TITLE, orderIssuePairs, orderIssueWords, orderWordsGameOf } from './game-order-words.ts';
 import {
   resolveVenuePlacement,
   placementsShareSurface,
@@ -69,8 +71,9 @@ export interface ScheduleIssue {
   detail: string;
   count: number;
   participantKeys?: string[];
-  /** A clash issue's kind, so the schedule's "Show them" ticks the right Filter row without reading codes (walk §294). */
-  conflictKind?: ConflictKind;
+  /** A clash issue's kind, so the schedule's "Show them" ticks the right Filter row without reading codes (walk §294).
+   *  `order`: playoff games out of order (Stage 9, `lib/game-order.ts`). */
+  conflictKind?: ConflictKind | 'order';
 }
 
 export interface TeamScheduleMetrics {
@@ -518,8 +521,9 @@ export function buildScheduleMetrics(options: BuildScheduleMetricsOptions): Sche
 
   const conflictSummary = scanVenueConflicts(scopedGames, options, divisions, tournament);
   const aggregate = aggregateMetrics(teamMetrics, expectedGamesPerParticipant, maxGamesPerDay, conflictSummary, scopedGames);
-  const issues = buildIssues(teamMetrics, aggregate, expectedGamesPerParticipant, maxGamesPerDay);
-  const healthBreakdown = buildHealthBreakdown(teamMetrics, aggregate, expectedGamesPerParticipant, maxGamesPerDay);
+  const order = includePlayoffs ? scanGameOrder(options.games, divisionId, divisions, teams, tournament) : null;
+  const issues = buildIssues(teamMetrics, aggregate, expectedGamesPerParticipant, maxGamesPerDay, order);
+  const healthBreakdown = buildHealthBreakdown(teamMetrics, aggregate, expectedGamesPerParticipant, maxGamesPerDay, order?.count ?? 0);
   const healthScore = Math.max(0, Math.min(100, Math.round(
     healthBreakdown.gameBalance +
     healthBreakdown.rest +
@@ -721,6 +725,7 @@ function buildIssues(
   aggregate: ReturnType<typeof aggregateMetrics>,
   expectedGamesPerParticipant: number | undefined,
   maxGamesPerDay: number,
+  order: GameOrderSummary | null = null,
 ): ScheduleIssue[] {
   const issues: ScheduleIssue[] = [];
 
@@ -773,6 +778,19 @@ function buildIssues(
       title: 'Venue or facility overlaps',
       detail: `${aggregate.venueConflictCount} overlapping slot${aggregate.venueConflictCount === 1 ? '' : 's'} found.`,
       count: aggregate.venueConflictCount,
+    });
+  }
+
+  // Stage 9 (A5, tab 1): a playoff game before a game it waits for ends. An error like an overlap; one row, its first pair
+  // in words; "Show them" filters the schedule to the games wearing the chip.
+  if (order && order.count > 0) {
+    issues.push({
+      severity: 'error',
+      code: 'game_order',
+      conflictKind: 'order',
+      title: ORDER_ISSUE_TITLE,
+      detail: order.count === 1 ? order.first : `${order.first} ${order.count - 1} more ${order.count === 2 ? 'pair' : 'pairs'} out of order.`,
+      count: order.count,
     });
   }
 
@@ -855,6 +873,7 @@ function buildHealthBreakdown(
   aggregate: ReturnType<typeof aggregateMetrics>,
   expectedGamesPerParticipant: number | undefined,
   maxGamesPerDay: number,
+  orderPairs = 0,
 ): ScheduleHealthBreakdown {
   const targetDelta = expectedGamesPerParticipant
     ? teamMetrics.reduce((total, team) => total + Math.abs(team.gameCount - expectedGamesPerParticipant), 0)
@@ -885,10 +904,39 @@ function buildHealthBreakdown(
      * points that were never earned; it can never score worse than a schedule with real clashes.
      *
      * Coverage is applied AFTER the penalties floor at zero, so genuine conflicts still dominate.
+     *
+     * A pair out of order (Stage 9) weighs as much as an overlap, 7 (the build's choice, recorded in the plan), taken
+     * AFTER coverage: the order rule reads days and times, never a field, so an unplaced schedule can still be wrong.
      */
-    conflicts: clampScore(15 - aggregate.venueConflictCount * 7 - aggregate.bufferConflictCount * 3 - aggregate.unresolvedFacilityLaneCount * 1.5)
-      * aggregate.venueCheckCoverage,
+    conflicts: clampScore(
+      clampScore(15 - aggregate.venueConflictCount * 7 - aggregate.bufferConflictCount * 3 - aggregate.unresolvedFacilityLaneCount * 1.5)
+        * aggregate.venueCheckCoverage
+      - orderPairs * 7,
+    ),
   };
+}
+
+interface GameOrderSummary {
+  /** Pairs as an organizer counts them (`orderIssuePairs`: one per playoff game that starts before pool play ends). */
+  count: number;
+  /** The earliest pair, in the health row's words. */
+  first: string;
+}
+
+/** Playoff games out of order (Stage 9): the division's games, pool and playoff, whatever the view's own scope. */
+function scanGameOrder(
+  games: ScheduleMetricGame[],
+  divisionId: string | undefined,
+  divisions: Division[],
+  teams: ScheduleMetricTeam[],
+  tournament: Tournament | null,
+): GameOrderSummary | null {
+  const rows = games
+    .filter(g => g.id && (!divisionId || g.divisionId === divisionId))
+    .map(g => orderWordsGameOf({ ...g, id: g.id as string, date: g.date ?? null, time: g.time ?? null }, divisions, teams));
+  const pairs = orderIssuePairs(findOrderProblems(rows, orderLengthsOf(divisions, tournament)));
+  if (!pairs.length) return null;
+  return { count: pairs.length, first: orderIssueWords(pairs[0], new Map(rows.map(g => [g.id, g]))) };
 }
 
 function scanVenueConflicts(

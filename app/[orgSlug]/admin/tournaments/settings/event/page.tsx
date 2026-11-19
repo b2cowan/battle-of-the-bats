@@ -59,6 +59,8 @@ import es from './event-settings.module.css';
 import { RegistrationQuestionsList, useRegistrationQuestions } from './RegistrationQuestions';
 import LoadingState from '@/components/shared/LoadingState';
 import FeeFilingSetting from './FeeFilingSetting';
+import { orderLineOfReply } from '@/lib/game-order-words';
+import { WhereLine } from '@/components/venue/WhereField';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
@@ -230,6 +232,7 @@ export default function TournamentEventSettingsPage() {
   // Save lifecycle — the floating pill (2026-09-20 / 2026-10-01): "Saving…", then "✓ Saved" fades; only a failure stays.
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState('');
+  const [lengthRefusal, setLengthRefusal] = useState<{ lead: string; rest: string } | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // The event's record, opened by the status's Change (Stage 5, P5).
@@ -586,8 +589,13 @@ export default function TournamentEventSettingsPage() {
 
         if (!tournamentRes.ok) {
           const d = await tournamentRes.json();
-          throw new Error(d.error ?? 'Failed to save tournament settings');
+          // A8 (Stage 9): the default length would run a game past one that waits for it. The line under the field
+          // says why; the save word says it did not save.
+          const order = orderLineOfReply(d);
+          setLengthRefusal(order);
+          throw new Error(order ? 'Couldn’t save' : d.error ?? 'Failed to save tournament settings');
         }
+        setLengthRefusal(null);
         if (!brandingRes.ok) {
           const d = await brandingRes.json();
           throw new Error(d.error ?? 'Failed to save scoring settings');
@@ -1560,6 +1568,7 @@ export default function TournamentEventSettingsPage() {
                     min="1" max="600" step="5"
                     value={gameDurationMinutes}
                     onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) setGameDurationMinutes(n); }}
+                    aria-invalid={lengthRefusal ? true : undefined}
                   />
                 </label>
                 {/* "Turnover", the generator's word for the gap between games on one diamond (walk §294, one word). */}
@@ -1575,6 +1584,7 @@ export default function TournamentEventSettingsPage() {
                   />
                 </label>
               </div>
+              {lengthRefusal && <WhereLine tone="refuse" lead={lengthRefusal.lead} rest={lengthRefusal.rest} />}
               <p className={es.note}>
                 {/* The house clock ("9:45 a.m."), which ends the sentence: no second period (F114, "a.m.."). */}
                 Example: a {gameDurationMinutes}-minute game at 8:00 a.m. → the next game on that {fieldNounFor(currentTournament?.sport).toLowerCase()} no earlier than {formatTime(minutesToTime(8 * 60 + gameDurationMinutes + bufferMinutes))}

@@ -11,8 +11,12 @@ import {
 } from '../../lib/game-order.ts';
 import {
   orderDragReason,
+  orderDragReasonForChange,
   orderGameName,
+  orderIssuePairs,
   orderIssueWords,
+  orderLineForChange,
+  orderLineOfReply,
   orderPillWords,
   orderReadWords,
   orderRefusalWords,
@@ -338,6 +342,49 @@ describe('game order: the words (tab 6)', () => {
     assert.equal(src.lead + src.rest, 'Out of order. The Final starts at 2:15 p.m., before this game ends. Move this game earlier, or move the Final to 4:30 p.m. or later.');
     assert.equal(orderDragReason(p, m, 'fin'), 'Semifinal 2 runs until 4:30 p.m., so the Final can’t go here');
     assert.equal(orderPillWords(p, m, 'fin'), 'Not saved: Semifinal 2 isn’t over by then');
+  });
+
+  it('the drag names both semifinals when the Final waits for both (tab 2)', () => {
+    const games = [...sf('11:30', '11:30'), fin('15:00')];
+    const after = [...games.slice(0, 2), { ...games[2], time: '12:30' }];
+    const problems = newOrderProblems(games, after);
+    assert.equal(orderDragReason(problems, byId(after), 'fin'), 'The semifinals run until 1:00 p.m., so the Final can’t go here');
+    // The earlier game dragged past the Final (tab 2's second band).
+    const late = [{ ...games[0], time: '14:00' }, games[1], games[2]];
+    assert.equal(orderDragReason(newOrderProblems(games, late), byId(late), 'sf1'), 'The Final starts at 3:00 p.m., so Semifinal 1 can’t go here');
+  });
+
+  it('the issue names a day only when the two games are on different days', () => {
+    const games = [g('qf2', { date: D2, time: '09:00' }), g('sf1', { date: D, time: '09:00', awayPlaceholder: 'Winner QF2' })];
+    const [p] = findOrderProblems(games);
+    assert.equal(orderIssueWords(p, byId(games)),
+      'Semifinal 1 starts on Sat, Nov 21 at 9:00 a.m., before Quarterfinal 2 ends on Sun, Nov 22 at 10:30 a.m.');
+  });
+
+  it('pool play counts once per playoff game in the health issue', () => {
+    const games = [pool('p1', { time: '14:00' }), pool('p2', { time: '15:00' }), g('qf1', { time: '15:15' })];
+    const all = findOrderProblems(games);
+    assert.equal(all.length, 2);
+    const issue = orderIssuePairs(all);
+    assert.equal(issue.length, 1);
+    assert.equal(issue[0].sourceId, 'p2'); // the latest-ending pool game speaks for it
+  });
+
+  it('the game window\'s line for a one-game change, and a reply read back into a line', () => {
+    const games = [
+      { id: 'sf2', divisionId: 'u13', bracketId: 'b1', bracketCode: 'SF2', isPlayoff: true, status: 'scheduled', date: D, time: '15:00', durationMinutes: 90 },
+      { id: 'fin', divisionId: 'u13', bracketId: 'b1', bracketCode: 'FIN', isPlayoff: true, status: 'scheduled', date: D, time: '17:00', durationMinutes: 90, homePlaceholder: 'Winner SF2' },
+    ];
+    const input = { games, divisions: [{ id: 'u13', name: 'U13 Boys' }], teams: [], change: { id: 'fin', time: '14:15' } };
+    const line = orderLineForChange(input);
+    assert.ok(line);
+    assert.equal(line.lead, 'Semifinal 2 ends at 4:30 p.m.');
+    assert.equal(line.pill, 'Not saved: Semifinal 2 isn’t over by then');
+    assert.equal(orderLineForChange({ ...input, change: { id: 'fin', time: '16:30' } }), null); // exactly at the end
+    assert.equal(orderDragReasonForChange(input), 'Semifinal 2 runs until 4:30 p.m., so the Final can’t go here');
+    const reply = { error: line.lead + line.rest, lead: line.lead, code: 'game-order' };
+    assert.deepEqual(orderLineOfReply(reply), { lead: line.lead, rest: line.rest });
+    assert.equal(orderLineOfReply({ error: 'Diamond 2 is taken', code: 'overlap' }), null);
   });
 
   it('no em dashes (A10)', () => {

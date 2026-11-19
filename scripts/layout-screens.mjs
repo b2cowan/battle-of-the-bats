@@ -307,6 +307,30 @@ async function openScheduleAddGame(page) {
   await page.locator('button[aria-label="Add game"]:visible').first().click();
   await page.locator('[role="dialog"]').first().waitFor({ state: 'attached', timeout: 15_000 });
 }
+/** Add game as a playoff game waiting on an earlier one (Public tournament Stage 9, tab 3): Stage → Playoffs, Away → the
+ *  first "Winner of…". At the default 9:00 a.m. on the shown day it waits for pool play or that game, so the red line
+ *  stands under Day and Start and Add game is held. Nothing is saved: Add game asks, it never autosaves. */
+async function openScheduleAddPlayoffGame(page) {
+  await openScheduleAddGame(page);
+  const dialog = page.locator('[role="dialog"]').first();
+  const fieldSelect = (name) => dialog.locator('label').filter({ has: page.locator('span', { hasText: new RegExp(`^${name}$`) }) }).locator('select').first();
+  await fieldSelect('Stage').selectOption('playoff');
+  const away = fieldSelect('Away');
+  const winner = await away.locator('optgroup[label="Winner of…"] option').first().getAttribute('value').catch(() => null);
+  if (winner) await away.selectOption(winner);
+}
+/** The day's latest playoff game from the timeline (Stage 9, tab 2): on a phone its move sheet with Start set to 8:00
+ *  a.m., before what it waits for, so the red line stands and Move is held; at a desk the click opens its window. Move
+ *  is never pressed, so nothing is saved. */
+async function openScheduleMoveOutOfOrder(page) {
+  await pickTournamentScheduleView(page, 'Timeline');
+  await filterTournamentScheduleStage(page, 'Playoffs');
+  await page.locator('[data-fit]:visible').last().click();
+  const dialog = page.locator('[role="dialog"]').first();
+  await dialog.waitFor({ state: 'attached', timeout: 15_000 });
+  const start = dialog.locator('input[type="time"]');
+  if (await start.count() > 0 && await page.getByRole('button', { name: /^Move/ }).count() > 0) await start.first().fill('08:00');
+}
 /** Schedule health's window, from its header button (owner 2026-10-19) — a phone's button is the bare pulse, so it is
  *  found by the tour's anchor rather than its words. The entry's scope measures the window alone. */
 async function openScheduleHealth(page) {
@@ -1840,6 +1864,9 @@ export const SCREENS = [
     // so its selector would have measured the page behind; the opener's wait fails the entry when the window is missing.
     ['admin-t-schedule-playoff-generator', (p) => openScheduleTool(p, 'Playoff generator', '[data-kit-dialog]'), '[data-kit-dialog]'],
     ['admin-t-schedule-add-game', openScheduleAddGame, '[role="dialog"]'],
+    // Stage 9: the game-order rule's red line in Add game, and the move sheet held by it (nothing is saved by either).
+    ['admin-t-schedule-add-game-order', openScheduleAddPlayoffGame, '[role="dialog"]'],
+    ['admin-t-schedule-move-order', openScheduleMoveOutOfOrder, '[role="dialog"]'],
   ].map(([id, interact, scope]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1', interact,
     ...(scope ? { scope } : {}),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/schedule?tournamentId=${c.tournamentId}` })),

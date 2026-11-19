@@ -3,7 +3,11 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation';
 import { Plus, Pencil, X, Trophy, MapPin, Globe, Wrench } from 'lucide-react';
 import { nextManualBracketCode } from '@/lib/playoff-bracket';
-import { orderRefusalForChange, type OrderField } from '@/lib/game-order-words';
+import {
+  orderDragReasonForChange, orderLineForChange, orderLineOfReply, orderReadWords, orderRefusalForChange, orderWordsGameOf, pickOrderProblem,
+  type OrderChangeInput, type OrderField,
+} from '@/lib/game-order-words';
+import { findOrderProblems, orderLengthsOf, orderProblemsById } from '@/lib/game-order';
 import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { useTournament } from '@/lib/tournament-context';
 import { formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
@@ -38,7 +42,7 @@ import AddVenuesWindow from '@/components/admin/tournament/AddVenuesWindow';
 import { TournamentAdminHeader } from '@/components/admin/tournament/TournamentAdminUI';
 // The page's own parts (Stage 3 Part 0 split them out; none brings a stylesheet the lines above don't).
 import GameWindow, { type GameSaveReply } from './components/GameWindow';
-import { startsInUrgentLane, type GamePatch, type GameWindowForm } from '@/lib/game-window-form';
+import { lengthOfBox, startsInUrgentLane, type GamePatch, type GameWindowForm } from '@/lib/game-window-form';
 import PublishScheduleModal from './components/PublishScheduleModal';
 import ResolveFacilitiesModal from './components/ResolveFacilitiesModal';
 import { useScheduleData } from './useScheduleData';
@@ -50,7 +54,7 @@ import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
 import {
   eventDays, fieldKeyOf, filtersOn, gamesByDay, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
-  scheduleStateOf, SCHEDULE_STATES, stepDay, toPlayConflict, type ScheduleConflict, type ScheduleFilter, type ScheduleState, type ScheduleView,
+  scheduleStateOf, SCHEDULE_STATES, shownConflict, stepDay, toPlayConflict, type ScheduleConflict, type ScheduleFilter, type ScheduleState, type ScheduleView,
 } from '@/lib/schedule-day';
 import { buildConflictMap, type ConflictInfo } from '@/lib/schedule-conflict';
 import { overlapPool } from '@/lib/tournament-overlap';
@@ -102,11 +106,13 @@ export default function AdminSchedulePage() {
   } = useScheduleData({ tournamentId, tournamentLoading, orgSlug });
   // The game window (S2): the game it shows, or Add game's empty one — one window, whichever view opened it.
   const [openGameId, setOpenGameId] = useState<string | null>(null);
+  /** Putting a cancelled game back, refused by the game-order rule: the window's line beside the button (Stage 9). */
+  const [reinstateRefusal, setReinstateRefusal] = useState<{ gameId: string; lead: string; rest: string } | null>(null);
   const [creatingGame, setCreatingGame] = useState(false);
   // The published-game question (A36), asked over the window; its answer settles the window's ✓.
   const [moveAsk, setMoveAsk] = useState<{ game: Game; near: boolean; answer: (move: boolean) => void } | null>(null);
   // Every move ends in a notice with Undo (A36) — the browser session's, like the location resolver's: no new data.
-  const [notice, setNotice] = useState<{ key: number; message: string; action?: { label: string; onAction: () => void } } | null>(null);
+  const [notice, setNotice] = useState<{ key: number; message: string; action?: { label: string; onAction: () => void }; error?: boolean } | null>(null);
   const say = (message: string, action?: { label: string; onAction: () => void }) => setNotice({ key: Date.now(), message, action });
   // The games as they stand, for an Undo pressed after a re-read (its closure's copy is older).
   const gamesRef = useRef(games);
@@ -290,9 +296,9 @@ export default function AdminSchedulePage() {
   const showAppliedRef = useRef(false);
   useEffect(() => {
     if (showAppliedRef.current || tournamentLoading || gamesLoading || !tournamentId) return;
-    if (showParam !== 'overlap' && showParam !== 'buffer') return;
+    if (showParam !== 'overlap' && showParam !== 'buffer' && showParam !== 'order') return;
     showAppliedRef.current = true;
-    if (scheduled.some(g => conflictOf(g) === showParam)) showConflicts(showParam);
+    if (scheduled.some(g => conflictsOf(g).includes(showParam))) showConflicts(showParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showParam, tournamentLoading, gamesLoading, tournamentId]);
 
@@ -444,8 +450,51 @@ export default function AdminSchedulePage() {
    * The game-order rule (Stage 9, `lib/game-order.ts`): the server's own sentence when this change puts a game before
    * one it waits for (its Semifinals, its division's pool play), else null. Only a problem the change CREATES (A2).
    */
-  function gameOrderProblem(change: Parameters<typeof orderRefusalForChange>[0]['change'], field?: OrderField): string | null {
-    return orderRefusalForChange({ games, change, divisions, tournament: currentTournament, teams, field });
+  function gameOrderProblem(change: OrderChangeInput['change'], field?: OrderField): string | null {
+    return orderRefusalForChange(orderChange(change, field));
+  }
+  /** The rule's one-game question on the page's games: the drag's red spot, the move sheet's and the game window's lines. */
+  function orderChange(change: OrderChangeInput['change'], field?: OrderField): OrderChangeInput {
+    return { games, change, divisions, tournament: currentTournament, teams, field };
+  }
+
+  /**
+   * Add game's bracket (A9, Stage 9): the bracket of the source picked; else the division's one bracket, so its Winner /
+   * Loser slots resolve; the first hand-added game mints its own id (`mint`; advancement is scoped by it). Several
+   * brackets and no pick: none, and the rule reads its sources as every game they could mean.
+   */
+  function addedGameBracket(form: GameWindowForm): { bracketId: string | null; bracketLabel: string | null; mint: boolean } {
+    const inDivision = games.filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.bracketId);
+    const picked = form.bracketId ? inDivision.find(g => g.bracketId === form.bracketId) : undefined;
+    if (picked) return { bracketId: picked.bracketId ?? null, bracketLabel: picked.bracketLabel ?? null, mint: false };
+    const ids = Array.from(new Set(inDivision.map(g => g.bracketId)));
+    if (ids.length === 1) return { bracketId: ids[0] ?? null, bracketLabel: inDivision[0].bracketLabel ?? null, mint: false };
+    return { bracketId: null, bracketLabel: null, mint: ids.length === 0 };
+  }
+  /** Add game's form as the game-order rule reads it (the window's red line and the save's own check). */
+  function addedGameChange(form: GameWindowForm, bracketId: string | null): OrderChangeInput['change'] {
+    const playoff = form.stage === 'playoff';
+    return {
+      divisionId: form.divisionId || null, isPlayoff: playoff, bracketId, bracketCode: null,
+      homePlaceholder: playoff ? form.homePlaceholder || null : null, awayPlaceholder: playoff ? form.awayPlaceholder || null : null,
+      date: form.date || null, time: form.time || null, durationMinutes: lengthOfBox(form.durationMinutes),
+      homeTeamId: form.homeTeamId || null, awayTeamId: form.awayTeamId || null,
+    };
+  }
+  /** The game window's red line (tab 3): Add game's form, or an edit of a game, as the server would judge it. */
+  function windowOrderLine(form: GameWindowForm, gameId: string | null, field: OrderField) {
+    if (!gameId) return orderLineForChange(orderChange(addedGameChange(form, addedGameBracket(form).bracketId), field));
+    const self = games.find(g => g.id === gameId);
+    if (!self) return null;
+    return orderLineForChange(orderChange({
+      id: gameId, date: form.date || null, time: form.time || null, durationMinutes: lengthOfBox(form.durationMinutes),
+      ...(self.isPlayoff ? { homePlaceholder: form.homePlaceholder || null, awayPlaceholder: form.awayPlaceholder || null } : {}),
+    }, field));
+  }
+  /** The read view's line under When (A5): the game's earliest pair, from its own side. */
+  function windowOrderRead(g: Game) {
+    const pairs = orderById.get(g.id);
+    return pairs?.length ? orderReadWords(pickOrderProblem(pairs, g.id), orderGameMap, g.id) : null;
   }
 
   /** Add game's Save — the window's create mode asks, it never autosaves (24 September). The Add window's wiring. */
@@ -488,19 +537,13 @@ export default function AdminSchedulePage() {
       data.awayTeamId = form.awayTeamId || null;
       data.homePlaceholder = form.homePlaceholder || null;
       data.awayPlaceholder = form.awayPlaceholder || null;
-      // A hand-added game joins the division's one bracket, so its Winner/Loser slots resolve; the first one mints
-      // its own bracket id (advancement is scoped by it). Several brackets (tiered or split): none.
-      const ids = Array.from(new Set(games.filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.bracketId).map(g => g.bracketId)));
-      data.bracketId = ids.length === 1 ? ids[0] : (ids.length === 0 ? crypto.randomUUID() : null);
+      const bracket = addedGameBracket(form);
+      data.bracketId = bracket.bracketId ?? (bracket.mint ? crypto.randomUUID() : null);
+      if (bracket.bracketLabel) data.bracketLabel = bracket.bracketLabel;
     }
-    // A playoff game before what it waits for, or a pool game run past a playoff game's start (A7).
-    const problem = gameOrderProblem({
-      divisionId: form.divisionId, isPlayoff: !!data.isPlayoff, bracketId: (data.bracketId as string | null) ?? null,
-      bracketCode: code ?? null, homePlaceholder: (data.homePlaceholder as string | null) ?? null,
-      awayPlaceholder: (data.awayPlaceholder as string | null) ?? null, date: form.date, time: form.time,
-      durationMinutes: data.durationMinutes as number | null, homeTeamId: data.homeTeamId as string | null,
-      awayTeamId: data.awayTeamId as string | null,
-    });
+    // A playoff game before what it waits for, or a pool game run past a playoff game's start (A7). The window's own
+    // red line already holds Add game; this is the same judgement on the form as sent.
+    const problem = gameOrderProblem(addedGameChange(form, (data.bracketId as string | null) ?? null));
     if (problem) throw new Error(problem);
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const res = await fetch(`/api/admin/games${orgQuery}`, {
@@ -593,8 +636,10 @@ export default function AdminSchedulePage() {
       setCrossNote(reply.crossLine);
       setPermitNote(reply.permitLine ?? null);
     } catch (e) {
+      // Refused (a second admin's change, a stale screen): the game snaps back and the move's own notice says why, in
+      // its error face, until closed (Stage 9, tab 6). Nothing was written, so nobody was told.
       setGames(prev => prev.map(x => (x.id === gameId ? g : x)));
-      setFeedback({ isOpen: true, title: SCHEDULE_REFUSAL_TITLE.saveGame, message: e instanceof Error ? e.message : SCHEDULE_REFUSAL.gameFallback, type: 'warning' });
+      setNotice({ key: Date.now(), message: MW.notMoved(e instanceof Error ? e.message : SCHEDULE_REFUSAL.gameFallback), error: true });
       // The copy put back was taken before any question: the schedule as it stands now replaces it.
       void reloadGames();
     }
@@ -709,6 +754,17 @@ export default function AdminSchedulePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, id }),
     });
+    // Putting a cancelled game back from its window, refused by the game-order rule (Stage 9, tab 6): the sentence is
+    // the window's red line beside the button, not a message window (One Window).
+    if (!res.ok && action === 'revert-to-scheduled' && openGameId === id) {
+      const line = orderLineOfReply(await res.clone().json().catch(() => null));
+      if (line) {
+        setReinstateRefusal({ gameId: id, ...line });
+        await reloadGames();
+        return false;
+      }
+    }
+    setReinstateRefusal(null);
     const refused = await refusedWrite(res, action === 'cancel' ? SCHEDULE_REFUSAL_TITLE.cancelGame : SCHEDULE_REFUSAL_TITLE.reinstateGame);
     await reloadGames();
     return !refused;
@@ -902,16 +958,33 @@ export default function AdminSchedulePage() {
     const all = buildConflictMap(overlapPool(scheduled, teams), divisions, currentTournament);
     return new Map([...all].filter(([id, info]) => toPlayConflict(stateById.get(id) ?? 'scheduled', info.kind)));
   }, [scheduled, teams, divisions, currentTournament, stateById]);
-  const conflictOf = useCallback((g: Game) => conflictMap.get(g.id)?.kind ?? null, [conflictMap]);
+  // The game-order rule (Stage 9, tab 1): every pair out of order on open, BOTH games of each (A5), kept to games still to
+  // play like a clash. Nothing is locked (A2): the chip says it, the organizer moves either game.
+  const orderGames = useMemo(() => scheduled.map(g => orderWordsGameOf(g, divisions, teams)), [scheduled, divisions, teams]);
+  const orderLengths = useMemo(() => orderLengthsOf(divisions, currentTournament), [divisions, currentTournament]);
+  const orderById = useMemo(() => {
+    const all = orderProblemsById(findOrderProblems(orderGames, orderLengths));
+    return new Map([...all].filter(([id]) => toPlayConflict(stateById.get(id) ?? 'scheduled', 'order')));
+  }, [orderGames, orderLengths, stateById]);
+  const orderGameMap = useMemo(() => new Map(orderGames.map(g => [g.id, g])), [orderGames]);
+  /** Every conflict a game has (the Filter finds it under each, A12) and the one its chip says (`shownConflict`). */
+  const conflictsOf = useCallback((g: Game): ScheduleConflict[] => {
+    const out: ScheduleConflict[] = [];
+    const clash = conflictMap.get(g.id)?.kind;
+    if (clash) out.push(clash);
+    if (orderById.has(g.id)) out.push('order');
+    return out;
+  }, [conflictMap, orderById]);
+  const conflictOf = useCallback((g: Game) => shownConflict(conflictsOf(g)), [conflictsOf]);
   const searched = scheduled.filter(g => matchesScheduleSearch(
     resolveTeam(g.homeTeamId, g.homePlaceholder), resolveTeam(g.awayTeamId, g.awayPlaceholder), search));
-  const filtered = searched.filter(g => matchesScheduleFilter(g, stateOf(g), filter, conflictOf(g)));
+  const filtered = searched.filter(g => matchesScheduleFilter(g, stateOf(g), filter, conflictsOf(g)));
   // The Bracket view's Filter (owner 2026-10-19): the arrows are its division and every game in it is a playoff, so a
   // Division or Stage pick made in another view rests here — out of the menu and the line, never emptying the bracket
   // — and is back in Day or All games. What still narrows a bracket (Conflicts, Status, the field) or a Search lists
   // the games it matches, and the view says so.
   const bracketFilter: ScheduleFilter = { ...filter, divisions: [], stages: [] };
-  const bracketMatched = searched.filter(g => matchesScheduleFilter(g, stateOf(g), bracketFilter, conflictOf(g)));
+  const bracketMatched = searched.filter(g => matchesScheduleFilter(g, stateOf(g), bracketFilter, conflictsOf(g)));
   const filteredIds = new Set(filtered.map(g => g.id));
   const dayGames = filtered.filter(g => g.date === day);
   // Bracket view's export reads the Filter that view shows, never a resting Division or Stage pick it cannot see.
@@ -1118,12 +1191,12 @@ export default function AdminSchedulePage() {
     closeHealth();
     if (shownView === 'bracket') { setView('all'); return; }
     if (shownView === 'all') return;
-    if (scheduled.some(g => g.date === day && conflictOf(g) === kind)) return;
-    const first = days.find(d => scheduled.some(g => g.date === d && conflictOf(g) === kind));
+    if (scheduled.some(g => g.date === day && conflictsOf(g).includes(kind))) return;
+    const first = days.find(d => scheduled.some(g => g.date === d && conflictsOf(g).includes(kind)));
     if (first) setChosenDay(first);
   }
   const healthIssueAction: IssueAction = ({ conflictKind: kind }) =>
-    kind && !healthRulesDirty && scheduled.some(g => conflictOf(g) === kind) ? { label: W.showThem, onClick: () => showConflicts(kind) } : null;
+    kind && !healthRulesDirty && scheduled.some(g => conflictsOf(g).includes(kind)) ? { label: W.showThem, onClick: () => showConflicts(kind) } : null;
   // Closing Schedule health's window drops an unsaved draft of the rules (the window asked first) and folds the editor.
   function closeHealth() {
     setHealthOpen(false);
@@ -1187,10 +1260,14 @@ export default function AdminSchedulePage() {
   const stageCounts = countBy(g => (g.isPlayoff ? 'playoff' : 'pool'));
   const stateCounts = countBy(g => stateOf(g));
   const fieldCounts = countBy(g => fieldKeyOf(g));
-  const conflictCounts = countBy(g => conflictOf(g) ?? '');
+  // A game counts under every kind it has (A12: a double-booked game out of order is under both rows).
+  const conflictCounts = countBase.reduce((m, g) => {
+    for (const k of conflictsOf(g)) m.set(k, (m.get(k) ?? 0) + 1);
+    return m;
+  }, new Map<string, number>());
   // Conflicts: a row per kind on the view — absent on a clean view, as Field is with one diamond. A kind still ticked
   // keeps its row (at 0) so it can be unticked after the last such game is fixed.
-  const conflictKinds = (['buffer', 'overlap'] as const).filter(k => (conflictCounts.get(k) ?? 0) > 0 || filter.conflicts.includes(k));
+  const conflictKinds = (['buffer', 'overlap', 'order'] as const).filter(k => (conflictCounts.get(k) ?? 0) > 0 || filter.conflicts.includes(k));
   const fieldLabels = new Map<string, string>();
   for (const g of scheduled) {
     const key = fieldKeyOf(g);
@@ -1523,6 +1600,9 @@ export default function AdminSchedulePage() {
         <ScheduleTimeline
           games={scheduled}
           conflictMap={conflictMap}
+          conflictOf={conflictOf}
+          orderDropReason={(g, to) => orderDragReasonForChange(orderChange({ id: g.id, ...to }))}
+          orderMoveLine={(g, to) => orderLineForChange(orderChange({ id: g.id, ...to }))}
           stateOf={stateOf}
           venues={venues}
           divisions={divisions}
@@ -1679,11 +1759,15 @@ export default function AdminSchedulePage() {
           askMove={askMove}
           notice={notice}
           onNoticeDone={() => setNotice(null)}
+          orderLine={windowOrderLine}
+          orderRead={windowOrderRead}
+          reinstateRefusal={windowGame && reinstateRefusal?.gameId === windowGame.id && windowGame.status === 'cancelled' ? reinstateRefusal : null}
+          outOfOrder={!!windowGame && conflictOf(windowGame) === 'order'}
         />
       )}
 
       {notice && !windowGame && !creatingGame && (
-        <NoticePill key={notice.key} message={notice.message} action={notice.action} onDone={() => setNotice(null)} />
+        <NoticePill key={notice.key} message={notice.message} action={notice.action} error={notice.error} onDone={() => setNotice(null)} />
       )}
 
       {/* A published game's move asks once (A36) — over the window, at its ✓. */}

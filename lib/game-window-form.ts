@@ -28,6 +28,9 @@ export interface GameWindowForm {
   awaySlotId: string;
   homeSlotId: string;
   notes: string;
+  /** Add game, in a division with several brackets: the bracket of the source picked (A9, Stage 9). The new game
+   *  joins it, so its Winner / Loser sides resolve to that bracket's games only. Absent = the page decides. */
+  bracketId?: string;
 }
 
 /** What an edit sends (the games route's `update`): only the keys that changed. */
@@ -79,8 +82,9 @@ export function whenWhereChanged(f: GameWindowForm, s: GameWindowForm): boolean 
 export function changesOf(
   f: GameWindowForm,
   s: GameWindowForm,
-  /** `length`: false while a refused overlap holds the length too (it places the game as surely as its start does). */
-  opts: { whenWhere: boolean; playoff: boolean; length?: boolean },
+  /** `length`: false while a refused overlap holds the length too (it places the game as surely as its start does).
+   *  `sources`: false while the game-order rule refuses a playoff side (Stage 9): both sides wait. */
+  opts: { whenWhere: boolean; playoff: boolean; length?: boolean; sources?: boolean },
 ): GamePatch {
   const out: GamePatch = {};
   if (opts.whenWhere) {
@@ -90,7 +94,9 @@ export function changesOf(
   }
   if (opts.length !== false && f.durationMinutes !== s.durationMinutes) out.durationMinutes = lengthOfBox(f.durationMinutes);
   if (f.notes !== s.notes) out.notes = f.notes.trim() || null;
-  if (opts.playoff) {
+  if (opts.playoff && opts.sources === false) {
+    // Held: the red line under Away and Home says why.
+  } else if (opts.playoff) {
     // A playoff side is a team OR its slot (a seed, a winner, a loser): both keys go together.
     if (f.homeTeamId !== s.homeTeamId || f.homePlaceholder !== s.homePlaceholder) { out.homeTeamId = f.homeTeamId || null; out.homePlaceholder = f.homePlaceholder || null; }
     if (f.awayTeamId !== s.awayTeamId || f.awayPlaceholder !== s.awayPlaceholder) { out.awayTeamId = f.awayTeamId || null; out.awayPlaceholder = f.awayPlaceholder || null; }

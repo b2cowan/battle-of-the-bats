@@ -477,7 +477,9 @@ export default function PlayoffGenerator({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         // The bracket this draft was made from is out of date: reload it, so the next Generate builds from what is there.
-        if (data.code === 'schedule_changed' || data.code === 'shape_held') onStale?.();
+        // A draft that now starts a game before one it waits for (Stage 9, tab 6: another admin moved a game while this
+        // one was choosing) is stale the same way; its sentence says "Make the drafts again".
+        if (data.code === 'schedule_changed' || data.code === 'shape_held' || data.code === 'game-order') onStale?.();
         throw new Error(refusalReason(res.status, data.error, DRAFT_SAVE_FAILED.other));
       }
       onComplete();

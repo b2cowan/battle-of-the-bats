@@ -95,11 +95,20 @@ export function stepDay(days: readonly string[], day: string, dir: -1 | 1): stri
  * turnover, allowed ("Tight turnover"); `overlap` — two at once ("Double-booked"): refused on a known diamond since A37,
  * so an older pair, or two games on the same TYPED place (never refused, only warned). The Timeline's clash check (`buildConflictMap`) decides the kind; it flags BOTH games of a pair.
  */
-export type ScheduleConflict = ConflictKind;
+export type ScheduleConflict = ConflictKind | 'order';
 
 /** The conflict a row says, or null: only a game still to play — once played, the gap no longer matters. */
 export function toPlayConflict(state: ScheduleState, kind: ScheduleConflict | null | undefined): ScheduleConflict | null {
   return state === 'scheduled' && kind ? kind : null;
+}
+
+/**
+ * The one chip a game with several conflicts wears (A12, Stage 9): Double-booked, then Out of order (a playoff game
+ * before a game it waits for, `lib/game-order.ts`), then Tight turnover. The Filter still finds it under each.
+ */
+export function shownConflict(kinds: readonly (ScheduleConflict | null | undefined)[]): ScheduleConflict | null {
+  for (const k of ['overlap', 'order', 'buffer'] as const) if (kinds.includes(k)) return k;
+  return null;
 }
 
 export interface ScheduleFilter {
@@ -127,18 +136,20 @@ export function fieldKeyOf(g: Pick<Game, 'venueId' | 'venueFacilityId' | 'schedu
 }
 
 /** Does a game pass the Filter? An empty group passes everything; a ticked group passes what it ticks. `conflict` is
- *  the row's own (`toPlayConflict`), so the Conflicts group finds exactly the rows that wear the chip. */
+ *  the row's own (`toPlayConflict`), so the Conflicts group finds exactly the rows that wear the chip — every kind the
+ *  game has, so a game both double-booked and out of order is under both rows (A12). */
 export function matchesScheduleFilter(
   g: Pick<Game, 'divisionId' | 'isPlayoff' | 'venueId' | 'venueFacilityId' | 'scheduleFacilityLaneId' | 'location'>,
   state: ScheduleState,
   f: ScheduleFilter,
-  conflict: ScheduleConflict | null = null,
+  conflict: ScheduleConflict | readonly ScheduleConflict[] | null = null,
 ): boolean {
   if (f.divisions.length > 0 && !f.divisions.includes(g.divisionId)) return false;
   if (f.stages.length > 0 && !f.stages.includes(g.isPlayoff ? 'playoff' : 'pool')) return false;
   if (f.states.length > 0 && !f.states.includes(state)) return false;
   if (f.fields.length > 0 && !f.fields.includes(fieldKeyOf(g))) return false;
-  if (f.conflicts.length > 0 && (!conflict || !f.conflicts.includes(conflict))) return false;
+  const kinds: readonly ScheduleConflict[] = conflict == null ? [] : typeof conflict === 'string' ? [conflict] : conflict;
+  if (f.conflicts.length > 0 && !kinds.some(k => f.conflicts.includes(k))) return false;
   return true;
 }
 

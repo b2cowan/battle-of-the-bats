@@ -1,8 +1,9 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Trophy, Check, RefreshCw, Sparkles, AlertTriangle, Layers, Plus, Trash2 } from 'lucide-react';
+import { Trophy, Check, RefreshCw, Sparkles, AlertTriangle, Layers, Plus, Trash2, Ban } from 'lucide-react';
 import { Division, Team, Venue, Tournament, Game, PlayoffTierConfig } from '@/lib/types';
-import { findOrderProblems, orderLengthsOf, type OrderProblem } from '@/lib/game-order';
+import { findOrderProblems, orderLengthsOf, orderPairKey, type OrderProblem } from '@/lib/game-order';
+import { BRACKET_WORDS as BW } from '@/lib/schedule-words';
 import { orderIssueWords, type OrderWordsGame } from '@/lib/game-order-words';
 import { nextPow2, seedOrder, gamesToBracketPreview, computeBracketColumns, suggestDefaultTiers, validateTierRanges, remapTierSeed, displayRoundTitle } from '@/lib/playoff-bracket';
 import { hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
@@ -88,6 +89,10 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
     KIT_SURFACE.alert,
   );
   const violationsHeaderStyle = kx({ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f87171', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }, KIT_INK.danger);
+  // "Already saved this way" (A3): the soft ink, not the refusal's red; alone, the banner is a plain card.
+  // On the kit's answer directly (no `kx`): the admin is always on the kit.
+  const savedBannerStyle: React.CSSProperties = { marginBottom: '1rem', padding: '0.7rem 0.9rem', ...KIT_SURFACE.card };
+  const savedHeaderStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem', ...KIT_INK.secondary };
   const violationsListStyle = kx({ margin: 0, paddingLeft: '1.1rem', fontSize: '0.78rem', color: 'var(--white-60)', lineHeight: 1.5 }, KIT_INK.tertiary);
   // Freeze the division + mode on mount so a mid-edit shift in the page's derived
   // `playoffBuilderDivision` can't retarget the save or flip build/edit mode.
@@ -201,9 +206,9 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
 
   // The game-order rule (Stage 9, `lib/game-order.ts`): the server's own judgement, a game before its feeder ENDS.
   // Scoped PER TIER — codes repeat across tiers, so each tier is its own bracket here (a row's tier is its bracket).
-  const orderRows = useMemo(() => {
+  const rowsForOrder = useCallback((rows: PreviewRow[]) => {
     const ownLength = new Map(existingGames.map(g => [g.id, g.durationMinutes ?? null]));
-    return new Map(preview.map((p, i): [string, OrderWordsGame] => {
+    return new Map(rows.map((p, i): [string, OrderWordsGame] => {
       const id = p.sourceGameId || `row:${i}`;
       return [id, {
         id, divisionId: division.id, divisionName: division.name, bracketId: `tier:${p.pool || ''}`, bracketCode: p.code,
@@ -212,11 +217,18 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         homePlaceholder: p.home, awayPlaceholder: p.away,
       }];
     }));
-  }, [preview, existingGames, division.id, division.name]);
-  const violations = useMemo(
-    () => findOrderProblems([...orderRows.values()], orderLengthsOf([division], tournament)),
-    [orderRows, division, tournament],
-  );
+  }, [existingGames, division.id, division.name]);
+  const orderRows = useMemo(() => rowsForOrder(preview), [rowsForOrder, preview]);
+  // A3: only a problem THIS edit makes stops Save ("Fix this to save"); one the bracket was already saved with lists
+  // under "Already saved this way" and Save still works (the schedule's chip keeps saying it, tab 1).
+  const { toFix, alreadySaved } = useMemo(() => {
+    const lengths = orderLengthsOf([division], tournament);
+    // "Already saved" is the bracket as stored, never a starter the organizer just seeded.
+    const stored = isEditMode ? gamesToBracketPreview(existingGames) : [];
+    const loaded = new Set(findOrderProblems([...rowsForOrder(stored).values()], lengths).map(orderPairKey));
+    const now = findOrderProblems([...orderRows.values()], lengths);
+    return { toFix: now.filter(p => !loaded.has(orderPairKey(p))), alreadySaved: now.filter(p => loaded.has(orderPairKey(p))) };
+  }, [orderRows, rowsForOrder, isEditMode, existingGames, division, tournament]);
 
   // Live bracket health — same structural read-out as the Plus auto-generator
   // (tightest turnaround, worst-case games/day, longest run), recomputed as the
@@ -341,10 +353,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
       setFeedback({ isOpen: true, title: 'Nothing to save', message: 'Seed a first round or add at least one game before saving.', type: 'warning' });
       return;
     }
-    if (violations.length > 0) {
-      setFeedback({ isOpen: true, title: 'Fix the bracket order first', message: violations.map(violationText).join('\n'), type: 'danger' });
-      return;
-    }
+    if (toFix.length > 0) return; // held: the banner's "Fix this to save" says why
     setLoading(true);
     try {
       // Preserve each existing game's own bracketId + bracketLabel so multi-bracket
@@ -442,9 +451,9 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
           <span style={{ fontSize: 'var(--type-heading)', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.25 }}>
             Editing bracket <span style={{ fontWeight: 650, color: 'var(--text-secondary)' }}>· {editDivision.name}</span>
           </span>
-          {violations.length > 0 && (
+          {toFix.length > 0 && (
             <span style={orderIssuesStyle}>
-              <AlertTriangle size={12} /> {violations.length} order issue{violations.length === 1 ? '' : 's'}
+              <AlertTriangle size={12} /> {BW.toFixCount(toFix.length)}
             </span>
           )}
         </div>
@@ -465,8 +474,8 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
             type="button"
             className={`btn btn-lime btn-data ${bb.editorBtn}`}
             onClick={save}
-            disabled={loading || preview.length === 0}
-            title={violations.length > 0 ? 'Fix the bracket order — a game is scheduled before the game that feeds it' : undefined}
+            disabled={loading || preview.length === 0 || toFix.length > 0}
+            title={toFix.length > 0 ? BW.fixToSave : undefined}
           >
             {loading ? <><RefreshCw className="spin" size={14} /> Saving…</> : <><Check size={14} /> Save bracket</>}
           </button>
@@ -567,14 +576,28 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
           </>
         )}
 
-        {violations.length > 0 && (
-          <div style={violationsBannerStyle}>
-            <div style={violationsHeaderStyle}>
-              <AlertTriangle size={14} /> A game is scheduled before the game that feeds it
-            </div>
-            <ul style={violationsListStyle}>
-              {violations.map((v, i) => <li key={i}>{violationText(v)}</li>)}
-            </ul>
+        {(toFix.length > 0 || alreadySaved.length > 0) && (
+          <div style={toFix.length > 0 ? violationsBannerStyle : savedBannerStyle} role={toFix.length > 0 ? 'alert' : 'status'}>
+            {toFix.length > 0 && (
+              <>
+                <div style={violationsHeaderStyle}>
+                  <Ban size={14} aria-hidden /> {BW.fixToSave}
+                </div>
+                <ul style={violationsListStyle}>
+                  {toFix.map(v => <li key={orderPairKey(v)}>{violationText(v)}</li>)}
+                </ul>
+              </>
+            )}
+            {alreadySaved.length > 0 && (
+              <>
+                <div style={{ ...savedHeaderStyle, ...(toFix.length > 0 ? { marginTop: '0.6rem' } : {}) }}>
+                  <AlertTriangle size={14} aria-hidden /> {BW.alreadySaved}
+                </div>
+                <ul style={violationsListStyle}>
+                  {alreadySaved.map(v => <li key={orderPairKey(v)}>{violationText(v)}</li>)}
+                </ul>
+              </>
+            )}
           </div>
         )}
 

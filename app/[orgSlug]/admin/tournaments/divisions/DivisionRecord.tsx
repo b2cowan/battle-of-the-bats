@@ -35,6 +35,8 @@ import { formatStoredDate } from '@/lib/timezone';
 import { clampRunDiffCap, normalizeTieBreakers, type TieBreaker } from '@/lib/tie-breakers';
 import type { Division, DivisionSettings, TournamentSettings } from '@/lib/types';
 import { useOrg } from '@/lib/org-context';
+import { orderLineOfReply } from '@/lib/game-order-words';
+import { WhereLine } from '@/components/venue/WhereField';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import styles from './DivisionRecord.module.css';
 
@@ -214,6 +216,7 @@ export default function DivisionRecord({
   const [form, setForm] = useState<Form>(() => formOf(division, eventBreakers));
   const [shownMistake, setShownMistake] = useState(false);
   const [leaveError, setLeaveError] = useState('');
+  const [lengthRefusal, setLengthRefusal] = useState<{ lead: string; rest: string } | null>(null);
   const formRef = useRef(form);
   const formForRef = useRef(formFor);
   // The division and the event's scopes as they are NOW (a re-read after a save), for the save that runs next.
@@ -245,10 +248,18 @@ export default function DivisionRecord({
         action: 'update', id,
         data: payloadOf(f, d, { tournamentId: tournament.id, order: d?.order ?? order, scopes: scopesRef.current }),
       }, W.saveFailed, signal);
-      if (!r.ok) throw new Error(r.json?.error && !/[_A-Z]{6,}/.test(r.json.error) ? r.json.error : W.saveFailed);
+      if (!r.ok) {
+        // A8 (Stage 9): a length that would run a game past one that waits for it. The line under Game length says
+        // why; the save word says it did not save.
+        const order = orderLineOfReply(r.json);
+        setLengthRefusal(order);
+        if (order) throw new Error(W.saveFailed);
+        throw new Error(r.json?.error && !/[_A-Z]{6,}/.test(r.json.error) ? r.json.error : W.saveFailed);
+      }
       savedSigRef.current = fSig;
       changed.current = true;
       setLeaveError('');
+      setLengthRefusal(null);
     });
     chain.current = run;
     return run;
@@ -267,6 +278,7 @@ export default function DivisionRecord({
     setForm(formOf(division, eventBreakers));
     setShownMistake(false);
     setLeaveError('');
+    setLengthRefusal(null);
     settle();
   }
   const set = (patch: Partial<Form>) => { setForm(f => ({ ...f, ...patch })); setLeaveError(''); if (!creating) touch(); };
@@ -501,11 +513,12 @@ export default function DivisionRecord({
           {(scopes.timing === 'per_division' || form.ownTiming) && (
             <div className={screenParts.recordFields}>
               <label className={ck.field}><span className={ck.label}>{W.gameMinutes}</span>
-                <input className={ck.input} type="number" min="1" max="600" step="5" inputMode="numeric" placeholder={String(eventMinutes)} value={form.gameMinutes} onChange={e => set({ gameMinutes: e.target.value })} /></label>
+                <input className={ck.input} type="number" min="1" max="600" step="5" inputMode="numeric" placeholder={String(eventMinutes)} value={form.gameMinutes} onChange={e => set({ gameMinutes: e.target.value })} aria-invalid={lengthRefusal ? true : undefined} /></label>
               <label className={ck.field}><span className={ck.label}>{W.bufferMinutes}</span>
                 <input className={ck.input} type="number" min="0" max="120" step="5" inputMode="numeric" placeholder={String(eventBuffer)} value={form.bufferMinutes} onChange={e => set({ bufferMinutes: e.target.value })} /></label>
             </div>
           )}
+          {lengthRefusal && <WhereLine tone="refuse" lead={lengthRefusal.lead} rest={lengthRefusal.rest} />}
         </div>
       )}
 

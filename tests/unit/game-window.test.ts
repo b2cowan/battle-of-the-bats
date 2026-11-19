@@ -62,6 +62,11 @@ describe('the form writes back only what changed', () => {
     const f = edit({ time: '17:30', date: '2026-10-10', notes: 'Moved' });
     assert.deepEqual(changesOf(f, saved, { whenWhere: false, playoff: false }), { notes: 'Moved' });
   });
+  test('a playoff side the game-order rule refuses waits; the notes still save (Stage 9)', () => {
+    const f = edit({ homePlaceholder: 'Winner SF2', notes: 'Moved' });
+    assert.deepEqual(changesOf(f, saved, { whenWhere: true, playoff: true, sources: false }), { notes: 'Moved' });
+    assert.deepEqual(changesOf(f, saved, { whenWhere: true, playoff: true }), { notes: 'Moved', homeTeamId: saved.homeTeamId || null, homePlaceholder: 'Winner SF2' });
+  });
   test('a day and a start are changed, never emptied', () => {
     assert.deepEqual(changesOf(edit({ date: '', time: '' }), saved, { whenWhere: true, playoff: false }), {});
   });
@@ -177,7 +182,9 @@ describe('the window wears what it promises', () => {
     assert.match(hook, /isRefusedOverlap\(conflict\)/);
     assert.match(win, /const \{ refused: overlaps, line: overlapLine \} = useOverlapLine\(/);
     // It holds only what THIS edit places (a legacy double-booking never traps ✓ over a notes edit).
-    assert.match(win, /const refused = overlaps && \(creating \|\| movePending \|\| form\.durationMinutes !== saved\.durationMinutes\);/);
+    assert.match(win, /const overlapRefused = overlaps && \(creating \|\| movePending \|\| form\.durationMinutes !== saved\.durationMinutes\);/);
+    // The game-order rule's red line holds too (Stage 9), on what the edit changes, as the server judges it.
+    assert.match(win, /const refused = overlapRefused \|\| orderHeld;/);
   });
   test('one score editor in the product: the window\'s Score opens Results\' own editor in place (owner 2026-10-19)', () => {
     assert.match(win, /import \{[^}]*\bScoreEditor\b[^}]*\} from '\.\.\/\.\.\/results\/ResultsList';/);

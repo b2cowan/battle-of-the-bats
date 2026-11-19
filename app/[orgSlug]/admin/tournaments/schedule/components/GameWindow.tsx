@@ -41,6 +41,8 @@ import {
   changesOf, emptyGameForm, formOfGame, lengthOfBox, startsInUrgentLane, whenWhereChanged, type GamePatch, type GameWindowForm,
 } from '@/lib/game-window-form';
 import { scheduleStateOf, type ScheduleState } from '@/lib/schedule-day';
+import { sourceSide } from '@/lib/game-order';
+import type { OrderField, OrderWords } from '@/lib/game-order-words';
 import { GAME_WINDOW_WORDS as G, SCHEDULE_DAY_WORDS as W, slotWords } from '@/lib/schedule-words';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import type { ClashLine } from '@/lib/venue-clash-words';
@@ -82,7 +84,7 @@ export interface GameWindowContext {
 
 export default function GameWindow({
   game, ctx, canWrite, steps, onSave, onCreate, onClose, onCancelGame, onReinstate, onToggleKeep, onDelete,
-  onEditBracket, loadSlots, createDefaults, askMove, notice, onNoticeDone,
+  onEditBracket, loadSlots, createDefaults, askMove, notice, onNoticeDone, orderLine, orderRead, outOfOrder, reinstateRefusal,
 }: {
   /** The game to read and edit, or null to create one (Add game). */
   game: Game | null;
@@ -105,6 +107,16 @@ export default function GameWindow({
   /** The page's notice after a move or a cancel (with Undo), shown in the window's corner while it is open. */
   notice?: { key: number; message: string; action?: { label: string; onAction: () => void } } | null;
   onNoticeDone?: () => void;
+  /** The game-order rule on this form (Stage 9, tab 3): the red line, the field it goes under, and the save pill's
+   *  held words, when the form's day, start, length or sides would put a game before one it waits for. The page
+   *  judges it (`lib/game-order-words.ts`), the same judgement the server makes. `gameId` null = Add game. */
+  orderLine?: (form: GameWindowForm, gameId: string | null, field: OrderField) => (OrderWords & { pill: string }) | null;
+  /** The read view's line under When: what is out of order, from this game's own side (A5). */
+  orderRead?: (g: Game) => OrderWords | null;
+  /** The game wears "Out of order" (its subtitle carries the chip, as its row does). */
+  outOfOrder?: boolean;
+  /** Putting this cancelled game back was refused by the game-order rule: the line beside the button (tab 6). */
+  reinstateRefusal?: OrderWords | null;
 }) {
   const creating = game === null;
   const noun = fieldNounFor(ctx.tournament?.sport);
@@ -149,7 +161,19 @@ export default function GameWindow({
   // It holds only what THIS edit places — a new game, or a change of day, start, place or length — as the server
   // does. A game already sharing its diamond from before the rule still shows the red line (it is true) but never
   // traps ✓ while only its notes or teams change.
-  const refused = overlaps && (creating || movePending || form.durationMinutes !== saved.durationMinutes);
+  const overlapRefused = overlaps && (creating || movePending || form.durationMinutes !== saved.durationMinutes);
+  // The game-order rule (Stage 9, tab 3): judged on what this edit changes, the line under the field that is wrong
+  // (day and start, length, or the sides); only a problem the edit CREATES (A2), as the server judges it.
+  const sidesChanged = isPlayoff && (form.homePlaceholder !== saved.homePlaceholder || form.awayPlaceholder !== saved.awayPlaceholder);
+  const orderField: OrderField | null = creating ? 'when'
+    : form.date !== saved.date || form.time !== saved.time ? 'when'
+      : form.durationMinutes !== saved.durationMinutes ? 'length'
+        : sidesChanged ? 'sources' : null;
+  const order = editing && canWrite && orderField && orderLine ? orderLine(form, game?.id ?? null, orderField) : null;
+  // A red line holds what it speaks of. Out of order holds everything that places the game: day, start, place,
+  // length and the sides, so nothing half-saves past the rule.
+  const orderHeld = !!order;
+  const refused = overlapRefused || orderHeld;
   // Day, start and place wait: for ✓'s question on a published game, and while the overlap refuses them.
   const holdWhenWhere = published || refused;
 
@@ -170,7 +194,7 @@ export default function GameWindow({
       const s = savedRef.current;
       const hold = holdWhenWhere || typingStart.current;
       // A refused overlap holds the length as well as the day, start and place: the server would refuse it too.
-      const patch = changesOf(f, s, { whenWhere: !hold, playoff: isPlayoff, length: !refused });
+      const patch = changesOf(f, s, { whenWhere: !hold, playoff: isPlayoff, length: !refused, sources: !orderHeld });
       if (Object.keys(patch).length === 0) return;
       const reply = await onSave(id, patch);
       if (forRef.current !== id) return;
@@ -179,6 +203,9 @@ export default function GameWindow({
         ...f,
         ...(hold ? { date: s.date, time: s.time, where: s.where } : {}),
         ...(refused ? { durationMinutes: s.durationMinutes } : {}),
+        ...(orderHeld && isPlayoff ? {
+          homeTeamId: s.homeTeamId, awayTeamId: s.awayTeamId, homePlaceholder: s.homePlaceholder, awayPlaceholder: s.awayPlaceholder,
+        } : {}),
       };
       savedRef.current = next;
       setSaved(next);
@@ -187,7 +214,7 @@ export default function GameWindow({
     });
     chain.current = run;
     return run;
-  }, [game?.id, holdWhenWhere, refused, isPlayoff, onSave]);
+  }, [game?.id, holdWhenWhere, refused, orderHeld, isPlayoff, onSave]);
   const sig = JSON.stringify(form);
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && !creating, loading: false, sig, blocked: null, write, failText: 'Couldn’t save',
@@ -292,6 +319,7 @@ export default function GameWindow({
     <span className={gw.head}>
       <span>{[divisionName, round].filter(Boolean).join(' · ')}</span>
       {chip && <RepChip tone={state === 'pendingReview' ? 'warn' : state === 'playingNow' ? 'good' : 'neutral'}>{chip}</RepChip>}
+      {!chip && outOfOrder && !editing && <RepChip tone="bad">{W.conflicts.order}</RepChip>}
       {editing && !creating && <span>· editing</span>}
     </span>
   );
@@ -333,14 +361,27 @@ export default function GameWindow({
   const [scoreEdited, setScoreEdited] = useState(false);
 
   // ── Read first ──
+  // Out of order on open (Stage 9, A5): the line under When, in this game's own words. Shown, never locked (A2).
+  const orderSaid = game && !editing && game.status === 'scheduled' ? orderRead?.(game) ?? null : null;
+  const whenFact = <div><dt>{G.facts.when}</dt><dd>{saved.date ? `${formatShortWeekdayDate(saved.date)}${saved.time ? ` · ${formatTime(saved.time)}` : ''}` : G.noDate}</dd></div>;
+  const restFacts = (
+    <>
+      <div><dt>{G.facts.length}</dt><dd>{G.minutes(timing.durationMinutes)}</dd></div>
+      <div><dt>{G.facts.where}</dt><dd>{placeWords(saved.where)}</dd></div>
+    </>
+  );
   const readBody = game && (
     <>
       <RecordSection title={G.sections.whenWhere}>
-        <dl className={gw.facts}>
-          <div><dt>{G.facts.when}</dt><dd>{saved.date ? `${formatShortWeekdayDate(saved.date)}${saved.time ? ` · ${formatTime(saved.time)}` : ''}` : G.noDate}</dd></div>
-          <div><dt>{G.facts.length}</dt><dd>{G.minutes(timing.durationMinutes)}</dd></div>
-          <div><dt>{G.facts.where}</dt><dd>{placeWords(saved.where)}</dd></div>
-        </dl>
+        {orderSaid ? (
+          <>
+            <dl className={gw.facts}>{whenFact}</dl>
+            <WhereLine tone="refuse" lead={orderSaid.lead} rest={orderSaid.rest} />
+            <dl className={gw.facts}>{restFacts}</dl>
+          </>
+        ) : (
+          <dl className={gw.facts}>{whenFact}{restFacts}</dl>
+        )}
         {line && !editing && line}
       </RecordSection>
 
@@ -425,12 +466,16 @@ export default function GameWindow({
             {game.status === 'cancelled' && <button type="button" className={screenParts.plainButton} onClick={() => leave(() => onReinstate(game))}>{G.reinstateGame}</button>}
             <RecordDelete onClick={() => leave(() => onDelete(game))}>{G.deleteGame}</RecordDelete>
           </div>
+          {reinstateRefusal && <WhereLine tone="refuse" lead={reinstateRefusal.lead} rest={reinstateRefusal.rest} />}
         </RecordSection>
       )}
     </>
   );
 
   // ── The form the pencil opens (and Add game's) ──
+  // The game-order line sits under the field that is wrong (tab 3), and that field's border wears the refusal's red.
+  const orderUnder = (f: OrderField) => (order && orderField === f ? true : undefined);
+  const orderLineUnder = (f: OrderField) => (order && orderField === f ? <WhereLine tone="refuse" lead={order.lead} rest={order.rest} /> : null);
   const dayChoices = Array.from(new Set([...ctx.days, ...(form.date ? [form.date] : [])])).sort();
   const divisionTeams = ctx.teams.filter(t => t.divisionId === form.divisionId);
   const field = (label: string, control: ReactNode, wide = false) => (
@@ -449,25 +494,50 @@ export default function GameWindow({
     const blocked = game?.bracketCode
       ? descendantBracketCodes(game.bracketCode, groupGames.map(x => ({ code: x.bracketCode || '', refs: [x.homePlaceholder, x.awayPlaceholder] })))
       : new Set<string>();
-    const codes = groupGames.filter(x => x.bracketCode && x.id !== game?.id && !blocked.has(x.bracketCode)).map(x => x.bracketCode as string);
-    const opts = buildPlaceholderOptions(seedCount, codes);
-    const assigned = new Set(groupGames.filter(x => x.id !== game?.id).flatMap(x => [x.homePlaceholder, x.awayPlaceholder]).filter((x): x is string => !!x));
     const teamId = isHome ? form.homeTeamId : form.awayTeamId;
     const ph = isHome ? form.homePlaceholder : form.awayPlaceholder;
     const otherPh = isHome ? form.awayPlaceholder : form.homePlaceholder;
-    const value = teamId ? `team:${teamId}` : ph ? `ph:${ph}` : '';
-    const avail = (s: string) => s === ph || (!assigned.has(s) && s !== otherPh);
+    // A9 (Stage 9): Add game in a division with several brackets names each earlier game by its bracket ("Gold ·
+    // Semifinal 1 winner") and the new game joins the bracket picked; once one side waits on a bracket, the other side
+    // offers that bracket's games only. A game being edited already sits in its own bracket, so its list is that one.
+    const bracketIds = creating ? Array.from(new Set(groupGames.map(x => x.bracketId).filter((b): b is string => !!b))) : [];
+    const named = bracketIds.length > 1;
+    const otherWaits = !!sourceSide(otherPh) && !!form.bracketId;
+    const groups = named
+      ? bracketIds.filter(b => !otherWaits || b === form.bracketId).map((b, i) => ({
+          id: b, label: groupGames.find(x => x.bracketId === b && x.bracketLabel)?.bracketLabel?.trim() || G.fields.bracketN(i + 1),
+        }))
+      : [{ id: '', label: '' }];
+    const inGroup = (b: string) => groupGames.filter(x => !b || x.bracketId === b);
+    const seedOpts = buildPlaceholderOptions(seedCount, []).seeds;
+    const sourceOpts = groups.map(grp => {
+      const codes = inGroup(grp.id).filter(x => x.bracketCode && x.id !== game?.id && !blocked.has(x.bracketCode)).map(x => x.bracketCode as string);
+      const assigned = new Set(inGroup(grp.id).filter(x => x.id !== game?.id).flatMap(x => [x.homePlaceholder, x.awayPlaceholder]).filter((x): x is string => !!x));
+      const mine = !grp.id || grp.id === form.bracketId;
+      const avail = (s: string) => (mine && s === ph) || (!assigned.has(s) && !(mine && s === otherPh));
+      const opts = buildPlaceholderOptions(seedCount, codes);
+      const say = (s: string) => (grp.label ? `${grp.label} · ${slotWords(s)}` : slotWords(s));
+      const val = (s: string) => `ph:${s}${grp.id ? `@${grp.id}` : ''}`;
+      return { winners: opts.winners.filter(avail).map(s => ({ s, label: say(s), value: val(s) })), losers: opts.losers.filter(avail).map(s => ({ s, label: say(s), value: val(s) })) };
+    });
+    const winners = sourceOpts.flatMap(o => o.winners);
+    const losers = sourceOpts.flatMap(o => o.losers);
+    const seedsTaken = new Set(groupGames.filter(x => x.id !== game?.id).flatMap(x => [x.homePlaceholder, x.awayPlaceholder]).filter((x): x is string => !!x));
+    const seeds = seedOpts.filter(s => s === ph || (!seedsTaken.has(s) && s !== otherPh));
+    const value = teamId ? `team:${teamId}` : ph ? `ph:${ph}${named && sourceSide(ph) && form.bracketId ? `@${form.bracketId}` : ''}` : '';
     const onPick = (v: string) => {
       const tid = v.startsWith('team:') ? v.slice(5) : '';
-      const p = v.startsWith('ph:') ? v.slice(3) : '';
-      set(isHome ? { homeTeamId: tid, homePlaceholder: p } : { awayTeamId: tid, awayPlaceholder: p });
+      const [p, picked] = v.startsWith('ph:') ? v.slice(3).split('@') : ['', undefined];
+      // The bracket follows the source picked; a seed or a team leaves it to the other side's pick.
+      const bracketId = picked ?? (sourceSide(otherPh) ? form.bracketId : undefined);
+      set({ ...(isHome ? { homeTeamId: tid, homePlaceholder: p } : { awayTeamId: tid, awayPlaceholder: p }), ...(creating ? { bracketId } : {}) });
     };
     return (
-      <select className={ck.select} value={value} disabled={playedOrWaiting} onChange={e => onPick(e.target.value)}>
+      <select className={ck.select} value={value} disabled={playedOrWaiting} onChange={e => onPick(e.target.value)} aria-invalid={orderUnder('sources')}>
         <option value="">{G.fields.choose}</option>
-        {opts.seeds.filter(avail).length > 0 && <optgroup label={G.fields.seeds}>{opts.seeds.filter(avail).map(s => <option key={s} value={`ph:${s}`}>{slotWords(s)}</option>)}</optgroup>}
-        {opts.winners.filter(avail).length > 0 && <optgroup label={G.fields.winners}>{opts.winners.filter(avail).map(s => <option key={s} value={`ph:${s}`}>{slotWords(s)}</option>)}</optgroup>}
-        {opts.losers.filter(avail).length > 0 && <optgroup label={G.fields.losers}>{opts.losers.filter(avail).map(s => <option key={s} value={`ph:${s}`}>{slotWords(s)}</option>)}</optgroup>}
+        {seeds.length > 0 && <optgroup label={G.fields.seeds}>{seeds.map(s => <option key={s} value={`ph:${s}`}>{slotWords(s)}</option>)}</optgroup>}
+        {winners.length > 0 && <optgroup label={G.fields.winners}>{winners.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</optgroup>}
+        {losers.length > 0 && <optgroup label={G.fields.losers}>{losers.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</optgroup>}
         {divisionTeams.length > 0 && <optgroup label={G.fields.teams}>{divisionTeams.map(t => <option key={t.id} value={`team:${t.id}`}>{t.name}</option>)}</optgroup>}
       </select>
     );
@@ -522,24 +592,27 @@ export default function GameWindow({
       )}
       <div className={gw.pair}>
         {field(G.fields.day, (
-          <select className={ck.select} value={form.date} onChange={e => set({ date: e.target.value })}>
+          <select className={ck.select} value={form.date} onChange={e => set({ date: e.target.value })} aria-invalid={orderUnder('when')}>
             {!form.date && <option value="">{G.noDate}</option>}
             {dayChoices.map(d => <option key={d} value={d}>{W.dayLabel(d, ctx.today)}</option>)}
           </select>
         ))}
         {field(G.fields.start, (
           // F107: the start waits while it is being typed; leaving the box saves it as one move.
-          <TimeInput className={ck.input} value={form.time} onChange={v => set({ time: v })}
+          <TimeInput className={ck.input} value={form.time} onChange={v => set({ time: v })} aria-invalid={orderUnder('when')}
             onFocus={() => { typingStart.current = true; }}
             onBlur={() => { typingStart.current = false; touch(); }} />
         ))}
       </div>
+      {orderLineUnder('when')}
       {field(G.fields.length, (
         <input className={ck.input} type="number" inputMode="numeric" min={5} max={600} step={5}
-          placeholder={G.inheritedLength(inheritedBy, divisionName, inheritedLen)}
+          placeholder={G.inheritedLength(inheritedBy, divisionName, inheritedLen)} aria-invalid={orderUnder('length')}
           value={form.durationMinutes} onChange={e => set({ durationMinutes: e.target.value })} />
       ))}
+      {orderLineUnder('length')}
       {sides}
+      {orderLineUnder('sources')}
       <div className={gw.where}>
         <WhereField
           idPrefix={`game-${game?.id ?? 'new'}`}
@@ -562,7 +635,8 @@ export default function GameWindow({
 
   // The save word: transient. A refused value says why it has not saved (red, as a held field does); a published
   // game's move waiting for ✓ is plain "Unsaved changes" — the note above the form already says ✓ asks first.
-  const heldWords = refused ? G.held.refused(noun.toLowerCase()) : null;
+  // A12: a value both double-booked and out of order says the overlap (the server's own order); both lines show.
+  const heldWords = overlapRefused ? G.held.refused(noun.toLowerCase()) : order ? order.pill : null;
 
   if (creating) {
     return (
@@ -582,7 +656,8 @@ export default function GameWindow({
         )}
       >
         {formBody}
-        {leaveError && <p className={gw.audit} role="alert">{leaveError}</p>}
+        {/* The server's refusal of a stale form (another admin's change): the same red line, at the foot (tab 3). */}
+        {leaveError && <WhereLine tone="refuse" rest={leaveError} />}
       </KitDialog>
     );
   }

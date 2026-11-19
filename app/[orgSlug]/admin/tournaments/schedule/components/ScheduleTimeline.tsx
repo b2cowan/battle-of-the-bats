@@ -21,7 +21,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { ChevronLeft, ChevronRight, AlertTriangle, Plus } from 'lucide-react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, pointerWithin, type DragEndEvent, type DragMoveEvent } from '@dnd-kit/core';
 import type { Game, Division, Venue, Tournament, Team } from '@/lib/types';
-import { gamePoolId, type ScheduleState } from '@/lib/schedule-day';
+import { gamePoolId, type ScheduleConflict, type ScheduleState } from '@/lib/schedule-day';
 import { resolveGameTiming, checkVenueConflict, toConflictGame, turnoverSide, type ConflictInfo, type ConflictResult } from '@/lib/schedule-conflict';
 import { isRefusedOverlap, overlapOtherName, overlapOtherTimes, overlapPool, type OverlapGame } from '@/lib/tournament-overlap';
 import { MOVE_WORDS as M, slotWords } from '@/lib/schedule-words';
@@ -87,6 +87,8 @@ type Side = { name: string; slot: boolean; score: number | null; won: boolean };
 type BlockDisplay = {
   top: number; height: number; accent: string; division: string; round: string; time: string;
   away: Side; home: Side; info: ConflictInfo | undefined; title: string; state: ScheduleState;
+  /** The one conflict the block shows (A12: Double-booked, then Out of order, then Tight turnover). */
+  conflict: ScheduleConflict | null;
 };
 
 /** The words a block has room for: its height is the game's length, so the words fit the block (owner, 2026-10-19 —
@@ -128,7 +130,7 @@ function TimelineBlock({ g, ghost, display, draggable, onSelect, onOpen }: {
   };
   const fit = fitFor(display.height);
   // A ghost (outside the Filter, or another division's clash) says no state; a game still to play's conflict is its chip.
-  const conflict = !ghost && display.info ? display.info.kind : null;
+  const conflict = !ghost ? display.conflict : null;
   const chip = ghost ? null : stateChip(g, display.state, conflict);
   // Compact and one-line blocks share one line between the teams: "Aces 6 · Storm 3" once played, "Aces vs Storm" before.
   const { away, home } = display;
@@ -156,7 +158,7 @@ function TimelineBlock({ g, ghost, display, draggable, onSelect, onOpen }: {
     <div
       ref={setNodeRef}
       className={`${styles.block} ${ghost ? styles.ghost : ''} ${draggable ? styles.draggable : ''} ${tap ? styles.selectable : ''} ${isDragging ? styles.dragging : ''}`}
-      data-conflict={!ghost && display.info ? display.info.kind : undefined}
+      data-conflict={conflict ?? undefined}
       data-state={display.state}
       data-fit={fit}
       style={style}
@@ -282,6 +284,9 @@ export default function ScheduleTimeline({
   today: todayProp,
   tellsFor,
   conflictMap,
+  conflictOf,
+  orderDropReason,
+  orderMoveLine,
   stateOf,
 }: {
   games: Game[];
@@ -313,6 +318,13 @@ export default function ScheduleTimeline({
   tellsFor?: (g: Game) => boolean;
   /** The page's clash map (walk §294: one map for every view's chip, Filter and colour). */
   conflictMap: Map<string, ConflictInfo>;
+  /** The page's one conflict per game, the game-order rule's included (Stage 9); absent, the clash map's kind. */
+  conflictOf?: (g: Game) => ScheduleConflict | null;
+  /** The game-order rule for a drag (Stage 9, A4): the red spot's reason when this move would put a game before one it
+   *  waits for (or a game it feeds before it ends), else null. Checked after a taken field (an overlap wins, A12). */
+  orderDropReason?: (g: Game, to: { date: string; time: string }) => string | null;
+  /** The same for the phone's move sheet: its red line under Day and Start (tab 2). */
+  orderMoveLine?: (g: Game, to: { date: string; time: string }) => { lead: string; rest: string } | null;
   /** Each game's state, the page's one reading of it — a block's chip and score are its Day row's (owner, 2026-10-19). */
   stateOf: (g: Game) => ScheduleState;
 }) {
@@ -338,6 +350,7 @@ export default function ScheduleTimeline({
   const [dragPreview, setDragPreview] = useState<{ colKey: string; top: number; height: number; kind: 'free' | 'buffer' | 'overlap'; time: string; reason?: string } | null>(null);
   // The last refused drop's reason, for a screen reader (the band said it while dragging).
   const [refusedNote, setRefusedNote] = useState('');
+  const verdictAt = useRef<{ spot: string; verdict: ReturnType<typeof dropVerdict> } | null>(null);
   // "Now" line — current time in minutes, ticked each minute.
   const [nowMin, setNowMin] = useState(() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); });
   useEffect(() => {
@@ -499,7 +512,8 @@ export default function ScheduleTimeline({
       : '';
     // A grey block is a game the page's Search or Filter leaves out (the page never narrows by division here).
     const title = `${div?.name ?? ''}${pool ? ` · ${pool.name}` : ''} · ${formatTime(g.time || '')}${ghost ? ' (outside the filter)' : ''}${conflictNote}`;
-    return { top, height, accent, division: div?.name ?? '', round, time: formatTime(g.time || ''), away, home, info, title, state };
+    const conflict = ghost ? null : conflictOf ? conflictOf(g) : info?.kind ?? null;
+    return { top, height, accent, division: div?.name ?? '', round, time: formatTime(g.time || ''), away, home, info, title, state, conflict };
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -521,7 +535,10 @@ export default function ScheduleTimeline({
     newStart = Math.round(newStart / SNAP) * SNAP;
     newStart = Math.max(0, Math.min(24 * 60 - SNAP, newStart));
     const t = resolveGameTiming(divById.get(g.divisionId || ''), tournament, g.durationMinutes);
-    const verdict = dropVerdict(g, targetCol, newStart);
+    // One verdict per spot: a drag fires many moves over the same 15-minute slot, and the verdict reads every game.
+    const spot = `${g.id}|${targetCol.key}|${newStart}`;
+    const verdict = verdictAt.current?.spot === spot ? verdictAt.current.verdict : dropVerdict(g, targetCol, newStart);
+    verdictAt.current = { spot, verdict };
     const top = (newStart - axis.start) * PX_PER_MIN;
     const height = Math.max(30, t.durationMinutes * PX_PER_MIN);
     setDragPreview(prev =>
@@ -540,17 +557,22 @@ export default function ScheduleTimeline({
       },
       allGames: conflictGames, divisions, tournament,
     });
-    if (!result) return { kind: 'free' };
-    if (!isRefusedOverlap(result)) return { kind: 'buffer' };
-    const other = result.conflictingGame as OverlapGame;
-    return {
-      kind: 'overlap',
-      reason: M.dropRefused(col.facility || col.venue, overlapOtherName(other, divisions), overlapOtherTimes(other, divisions, tournament).end),
-    };
+    if (result && isRefusedOverlap(result)) {
+      const other = result.conflictingGame as OverlapGame;
+      return {
+        kind: 'overlap',
+        reason: M.dropRefused(col.facility || col.venue, overlapOtherName(other, divisions), overlapOtherTimes(other, divisions, tournament).end),
+      };
+    }
+    // The game-order rule (Stage 9, A4): refused like a taken field, the same band and its reason chip.
+    const order = orderDropReason?.(g, { date: day, time: minToTime(start) });
+    if (order) return { kind: 'overlap', reason: order };
+    return result ? { kind: 'buffer' } : { kind: 'free' };
   }
 
   function handleDragEnd(event: DragEndEvent) {
     setDragPreview(null);
+    verdictAt.current = null;
     if (!onMove) return;
     const { active, over, delta } = event;
     const g = focusedGames.find(x => x.id === active.id) || unplacedGames.find(x => x.id === active.id);
@@ -784,6 +806,7 @@ export default function ScheduleTimeline({
           days={eventDays ?? days}
           today={todayProp ?? todayISO}
           tells={tellsFor?.(sheetGame) ?? false}
+          orderLine={orderMoveLine ? to => orderMoveLine(sheetGame, to) : undefined}
           onClose={() => setSheetGame(null)}
           onMove={to => { void onMove(sheetGame.id, to, 'sheet'); setSheetGame(null); }}
         />

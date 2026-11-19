@@ -682,6 +682,18 @@
 .noticeAction:hover { text-decoration: underline; text-underline-offset: 3px; }
 .noticeAction:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
 @media (max-width: 768px) { .noticeAction { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); } }
+/* The notice's error face (`NoticePill error`, Stage 9): the sentence wraps, the mark is the refusal's red, and the
+   close button is the pill's only control. */
+.saveStatusError { white-space: normal; }
+.saveStatusError svg { color: var(--danger-light); flex: none; }
+.noticeClose {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 0.5rem; min-width: 1.75rem; min-height: 1.75rem; padding: 0;
+  border: none; border-radius: 999px; background: none; color: var(--text-tertiary); cursor: pointer; flex: none;
+}
+.noticeClose:hover { color: var(--danger-light); }
+.noticeClose:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (max-width: 768px) { .noticeClose { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); } }
 /* A page carrying the pill leaves it a corner, so the page's last line is never under the word. */
 .savePillPage { padding-bottom: calc(2.25rem + 1.25rem); }
 @media (prefers-reduced-motion: reduce) { .savePill { transition: none; } }
