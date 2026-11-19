@@ -161,6 +161,12 @@ export default function RuleSectionRecord({
     resetRefused();
     setShownHeld(false);
   }
+  // ⚖ Leftover call 14 (owner 2026-11-19): the event locked while the record was open — it turns read-only (nothing typed
+  // here could save any more); the stored section is what it shows.
+  if (editing && !canWrite) {
+    setEditing(false);
+    setDraft(draftOf(section));
+  }
   const change = (nextDraft: Draft) => { setDraft(nextDraft); if (!creating) touch(); resetRefused(); };
 
   // ── Add a section: the same window, asking ──

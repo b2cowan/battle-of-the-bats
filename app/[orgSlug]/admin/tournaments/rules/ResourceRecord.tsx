@@ -86,6 +86,12 @@ export default function ResourceRecord({
     consumeChanged: () => { const was = changed.current; changed.current = false; return was; },
     onAfterSave: reread => { if (reread) setSeededFor(''); },
   });
+  // ⚖ Leftover call 14 (owner 2026-11-19): the event locked while the record was open — it turns read-only (nothing typed
+  // here could save any more). Re-seeded below from the stored resource.
+  if (editing && !canWrite) {
+    setEditing(false);
+    setSeededFor('');
+  }
   if (seededFor !== (resource?.id ?? 'new')) {
     setSeededFor(resource?.id ?? 'new');
     setEditing(false);

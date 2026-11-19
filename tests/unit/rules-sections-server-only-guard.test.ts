@@ -178,3 +178,12 @@ describe('a completed event’s Rules screen draws no way to change it', () => {
     assert.match(screen, /locked \? W\.noResourcesLocked : W\.noResources/);
   });
 });
+
+describe('an open record turns read-only when its event locks (leftover call 14, owner 2026-11-19)', () => {
+  it('the rules section and the resource leave edit mode as soon as they can no longer write', () => {
+    const section = readCode('app/[orgSlug]/admin/tournaments/rules/RuleSectionRecord.tsx');
+    assert.match(section, /if \(editing && !canWrite\) \{\s*setEditing\(false\);\s*setDraft\(draftOf\(section\)\);\s*\}/);
+    const resource = readCode('app/[orgSlug]/admin/tournaments/rules/ResourceRecord.tsx');
+    assert.match(resource, /if \(editing && !canWrite\) \{\s*setEditing\(false\);\s*setSeededFor\(''\);\s*\}/);
+  });
+});

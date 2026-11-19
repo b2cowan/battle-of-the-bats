@@ -115,9 +115,9 @@ describe('order: the portal\'s reorder standard (owner 2026-10-12, superseding A
   it('no card offers a Layout: the public Rules page never read one (Stage 8 Part 4a, owner 2026-11-04)', () => {
     const src = code(`${RULES}/RulesAdmin.tsx`);
     assert.doesNotMatch(src, /layoutMenu|chooseLayout|rulesLayout|resourcesLayout|CoachToolbarMenu|W\.tools\b/);
-    // Each card's head is its add, nothing else.
-    assert.match(src, /actions=\{addButton\(W\.addSection, \(\) => setOpenSection\('new'\)\)\}/);
-    assert.match(src, /actions=\{addButton\(W\.addResource, \(\) => setOpenResource\('new'\)\)\}/);
+    // Each card's head is its add, nothing else (and none on a locked event: trust close-out 14, owner 2026-11-18).
+    assert.match(src, /actions=\{locked \? undefined : addButton\(W\.addSection, \(\) => setOpenSection\('new'\)\)\}/);
+    assert.match(src, /actions=\{locked \? undefined : addButton\(W\.addResource, \(\) => setOpenResource\('new'\)\)\}/);
     assert.doesNotMatch(code('lib/tournament-settings-words.ts'), /rulesLayout|resourcesLayout|oneColumn|twoColumns|aList|layoutFailed|onPublicSite/);
     assert.doesNotMatch(read(`${RULES}/rules.module.css`), /\.tool\b/);
     // The save path drops a write of either key (the stored values stay, unread — like ask C's columns).
