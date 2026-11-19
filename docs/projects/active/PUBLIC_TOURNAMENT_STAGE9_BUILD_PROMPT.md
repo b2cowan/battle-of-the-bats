@@ -190,7 +190,7 @@ Build to the drawing; name the shipped component in each step and reuse it.
 
 ## Part 2 handoff (built 2026-11-19, read before Part 3)
 
-Part 2 is built on dev (commit on the owner's word after his browser check; see `git log --grep "Stage 9, Part 2"`).
+Part 2 is built and committed `975661b1e` (2026-11-19, on the owner's word; the browser check was not recorded as run).
 What it decided, and what Part 3's review and walk should know:
 
 - **One conflict per chip, every kind in the Filter.** `ScheduleConflict` gained `'order'`; `shownConflict` is A12's
@@ -252,3 +252,14 @@ What it decided, and what Part 3's review and walk should know:
   advancer's exact-case match; `save-bracket` not being one transaction; a cancelled pool game holding seeding forever.
 - Any public page change (the public Schedule already sorts by time; it simply stops receiving out-of-order data).
 - House league, club and coach schedules (they share none of this code).
+
+## Part 3 as built (2026-11-19)
+
+- **Simplify and review:** four cleanup lenses and four review lenses ran over both parts; the fixes are listed in QA ledger §544.
+  Two real defects (the event default-length refusal read from the wrong save; "revert score" on a cancelled game skipped the
+  rule), the bracket editor now judges pool play and a new game's length as the server does, and the playoff generator ends
+  pool play by each pool game's own length.
+- **Walk:** https://claude.ai/artifact/4ivXmnzL9yYjGhPejxhE8Q, 50 steps in 8 walks, 3 calls; fixtures `.probe/stage9-walk.mjs` (`--setup`, `--second-admin`, `--undo`,
+  `--sentences`). Dev holds the test games until the walker runs `--undo`.
+- **Layout:** ten schedule screens clean at 361, 768 and 1440; the move-order entry pins its page clock and taps its block.
+- **Open items** (each its own `/plan` item) are in QA ledger §544.

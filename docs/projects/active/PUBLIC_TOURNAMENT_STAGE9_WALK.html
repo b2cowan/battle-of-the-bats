@@ -1,0 +1,733 @@
+<title>Game Order Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.calls { display: grid; gap: 14px; }
+.call { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.call:first-of-type { border-top: 0; padding-top: 0; }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Public tournament pages · Stage 9 · the game-order rule</span>
+    <h1>Out of order, on screen and at every door</h1>
+    <p class="lead">A tournament game can no longer be saved to start before a game it waits for has ended: a Final before its Semifinals end, a 3rd Place game before the Semifinal whose loser it takes, any playoff game before its division’s last pool game ends. A schedule that is already out of order is shown (a red chip on both games, a health row, a Filter row), never locked. You open test games that are out of order, try to make more, and fix some.</p>
+    <p class="lead">Written Nov 19, 2026 against the dev site. Every club, team and game here is test data. 50 steps in 8 walks, plus 3 calls for you that are not counted. The steps do one thing each.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> (dev; the dev server must be running)</dd>
+      <dt>Account</dt><dd><code>fchp-host@dev.local</code> · <code>devpass123</code> (the host of FCHP Open Cup, org <code>fchp-plus-club</code>)</dd>
+      <dt>Terms screen</dt><dd>If “We’ve published our Terms” appears, tick the box and press Continue. It is a dev account.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-in. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li>The test games are built by step 1 of walk 1: <code>node --env-file=.env.local .probe/stage9-walk.mjs --setup</code> (also rebuilds them if you want a clean start). They sit on <b>Sat, Dec 5, 2026</b>, in the future, so they count as still to play (a played game never wears a chip). The script moves the event’s dates to Dec 5 to 6 and the last step of walk 8 puts them back.</li>
+      <li>Three test divisions: <b>Walk U13 Boys</b> (pool play, semifinals, a Final and 3rd Place game that are out of order), <b>Walk U15 Tiers</b> (Gold and Silver, each with SF1, SF2 and a Final) and <b>Walk U11 Girls</b> (a Final that starts exactly when its Semifinal ends).</li>
+      <li>Walk them in order. Walk 6 fixes the U13 order, so do walks 3 and 4 first. Walk 5 adds one game (walk 8’s last step removes it).</li>
+      <li>Walks 1, 3, 4, 5, 6, 7 and 8 need a computer-width window; walk 2 a phone-width one (F12, device toolbar).</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved (don’t re-do these)</h2>
+    <ul class="plain">
+      <li><b>Every door refuses on the server</b> when a stale screen or a second admin sends a bad save: the game window, Add game, the bracket editor, both generators, the rain delay and its Undo, putting a cancelled game back, the CSV import and the two default-length settings. 22 of 22 direct-request checks passed on dev, and nothing is written by a refusal.</li>
+      <li><b>The rule itself</b> (reused codes across tiers and divisions, a game with no bracket, lower-case placeholders, equal starts, the length chain, cancelled games, pool play, before-and-after) and every sentence: unit tests pass.</li>
+      <li><b>The review found two real defects, both fixed:</b> the event’s default-length refusal never reached its red line, and putting a cancelled game back through the scoring screen skipped the rule. The bracket editor now also judges pool play and a new game’s length the way the server does; the playoff generator works out when pool play ends from each pool game’s own length.</li>
+      <li><b>Layout:</b> ten schedule screens, including the new Add-game and move-sheet screens, measured at 361, 768 and 1440 pixels with no new findings.</li>
+      <li><b>Not proved:</b> I could not open these test games in a browser myself (the host account stops at the Terms screen, and I do not accept terms on your behalf), so the chips, the health row and the Filter row are seen for the first time in walk 1.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="rec-h">
+    <h2 id="rec-h">Recorded, not walked</h2>
+    <ul class="plain">
+      <li>Scoring a Grand Final can reinstate a cancelled second final without the rule. A direct request with an oddly written date or time (like <code>2026-8-9</code>) is read as no date, so the rule skips it (the overlap check has the same gap). The build check that keeps new writers behind the rule accepts a call to the length guard as proof, and would miss a few unusual ways of writing games. A few notices and red lines go stale in rare orders (a refused drop’s error notice overwritten by a slower earlier move; the reinstate line after closing the window).</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="calls-h">
+    <h2 id="calls-h">Calls for you (not counted)</h2>
+    <div class="calls" id="calls"></div>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "public-tournament-stage9-walk-v1";
+  var PAGE = "Public tournament pages · Stage 9 · the game-order rule";
+  var WALKS = [
+ {
+  "id": "W1",
+  "title": "On open: the chips, the health row and the Filter",
+  "job": "Three walk divisions · computer",
+  "forText": "The schedule now says when two playoff games are in the wrong order: a Final that starts before its Semifinals end, a Quarterfinal that starts before pool play ends. Both games of a pair wear a red chip, Schedule health lists the pairs, and the Filter can find them. Nothing is locked. You open the test games and read what the page says.",
+  "passes": "Five games wear Out of order, two wear Double-booked, nine wear nothing; the health row and the Filter agree with the chips.",
+  "notIn": "Moving anything (walk 6), the game windows (walk 3), the phone (walk 2).",
+  "who": "The dev host account (see Sign in as above).",
+  "where": "Schedule page, Day view, Sat, Dec 5, on a computer-width window",
+  "steps": [
+   {
+    "stop": false,
+    "who": "You · setup",
+    "d": "In the project folder run <code>node --env-file=.env.local .probe/stage9-walk.mjs --setup</code>.",
+    "s": "It prints <code>ready: 3 divisions, 15 games on 2026-12-05</code>. It also moves the event’s dates to Dec 5 to 6 until you run the last step of walk 8."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open <code>http://localhost:3000/fchp-plus-club/admin/tournaments/schedule?tournamentId=f7c3f393-9d7c-4d27-815b-45f376aefd79</code> and sign in. If a “We’ve published our Terms” screen appears, tick its box and press Continue.",
+    "s": "The Schedule page for FCHP Open Cup, Day view, Sat, Dec 5, listing the games of Walk U13 Boys, Walk U15 Tiers and Walk U11 Girls (15 games). If another day shows, pick Sat, Dec 5."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Look at the Walk U13 Boys games: the Hawks vs Blaze pool game (10:30 a.m.), Quarterfinal 1 (11:30 a.m.) and Semifinals 1 and 2 (1:00 p.m.).",
+    "s": "Each of the four wears a red chip reading <b>OUT OF ORDER</b>."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Look at the Walk U13 Boys Final (2:00 p.m.) and 3rd Place game (2:30 p.m.).",
+    "s": "Both read <b>DOUBLE-BOOKED</b> (they share Walk Diamond 3). The Final is also out of order, but a game wears one chip and Double-booked wins."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Look at the Walk U15 Tiers and Walk U11 Girls games.",
+    "s": "No chip on any of them. Gold and Silver reuse the codes SF1, SF2 and FIN and are judged apart."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Switch the View pill to Timeline and find Quarterfinal 1 at 11:30 a.m. in the Walk Diamond 4 column.",
+    "s": "Its block is outlined and tinted red, the same look as a double-booked block. There is no legend and no new colour."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open Schedule health (the pulse button in the header).",
+    "s": "A row <b>Playoff games out of order</b>. Its detail reads “Quarterfinal 1 starts at 11:30 a.m., before Walk U13 Boys pool play ends at 12:00 p.m.” followed by “2 more pairs”."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Press <b>Show them ›</b> on that row.",
+    "s": "The window closes and the schedule lists only the games in those pairs: Quarterfinal 1, the Hawks vs Blaze game, both semifinals and the Final."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open Filter, look at the Conflicts group, then press Reset.",
+    "s": "A row <b>Out of order</b> is ticked with a count of 5 (the Final counts under Out of order and under Double-booked). After Reset all 15 games are back."
+   }
+  ]
+ },
+ {
+  "id": "W2",
+  "title": "On a phone: chips and the move sheet",
+  "job": "Phone-width window",
+  "forText": "The same rule on a phone: the chip on each row, and the move sheet that tells you why a time will not do and holds its Move button.",
+  "passes": "Chips sit in the rows without sideways scroll; the sheet shows the red line under Day and Start at 10:30 and clears at 11:30.",
+  "notIn": "Dragging (walk 6; a phone moves with the sheet, not a drag).",
+  "who": "The dev host account.",
+  "where": "Same Schedule page in a 390-pixel-wide window (F12, device toolbar)",
+  "steps": [
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Press F12, turn on the device toolbar, pick a phone about 390 wide, and reload the schedule page.",
+    "s": "The Day view as a single column of game rows. The page does not scroll sideways."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Look at the Quarterfinal 1 row and the Semifinal 1 row.",
+    "s": "Each carries the red <b>OUT OF ORDER</b> chip in its usual place on the row."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Switch View to Timeline and tap <b>Next field</b> until the field header reads Walk Diamond 7.",
+    "s": "One block at 12:00 p.m.: the Gold Final of Walk U15 Tiers. No chip, no outline."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Tap the Gold Final block.",
+    "s": "The move sheet opens with Day (Sat, Dec 5) and Start (12:00 p.m.) filled in."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Set Start to 10:30 a.m.",
+    "s": "A red line under Day and Start: “<b>The semifinals end at 11:30 a.m.</b> The Final waits for both winners: start it at 11:30 a.m. or later.” Both field borders turn red and Move is greyed out."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Set Start to 11:30 a.m., then close the sheet without pressing Move.",
+    "s": "At 11:30 the line goes and Move turns on (exactly at the semifinals’ end is allowed). Closing leaves the Final at 12:00 p.m. with no notice."
+   }
+  ]
+ },
+ {
+  "id": "W3",
+  "title": "The game window: three lines and both sides",
+  "job": "Walk U13 Boys and Walk U15 Tiers · computer",
+  "forText": "Open a game and the window now says, from that game’s own side, what is out of order; edit a game and the red line sits under the field that is wrong (Day and Start, Length, or Away and Home) and holds the save.",
+  "passes": "Three read views show their own side’s sentence; the four edits are refused under the right field and leave the game as it was.",
+  "notIn": "Add game (walk 5), moving by drag (walk 6).",
+  "who": "The dev host account.",
+  "where": "Schedule page, Day view, computer-width window (turn the device toolbar off)",
+  "steps": [
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Turn the device toolbar off. Click Walk U13 Boys Semifinal 1 (1:00 p.m.).",
+    "s": "The window opens to read. The chip <b>OUT OF ORDER</b> is beside the title, and under When a red line: “<b>Out of order.</b> The Final starts at 2:00 p.m., before this game ends. Move this game earlier, or move the Final to 2:30 p.m. or later.”"
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Close it and click the Walk U13 Boys Final (2:00 p.m.).",
+    "s": "The chip reads DOUBLE-BOOKED. Under When: “<b>Out of order.</b> Semifinal 2 ends at 2:30 p.m., after this game starts. Move this game to 2:30 p.m. or later, or move Semifinal 2 earlier.” A second red line says the diamond is shared. Both lines show."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Close it and click Walk U13 Boys Quarterfinal 1 (11:30 a.m.).",
+    "s": "Under When: “<b>Out of order.</b> Walk U13 Boys pool play ends at 12:00 p.m., after this game starts. Move this game to 12:00 p.m. or later, or end pool play earlier.”"
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Close it. Open the Gold Final (Walk U15 Tiers, 12:00 p.m., Walk Diamond 7), press the pencil (Edit), and set Start to 10:30 a.m.",
+    "s": "A red line under Day and Start: “<b>The semifinals end at 11:30 a.m.</b> The Final waits for both winners: start it at 11:30 a.m. or later.” The tick is held and the save pill reads “Not saved: Semifinal 2 isn’t over by then”. Close the window: the Final is still at 12:00 p.m."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open Gold Semifinal 1 (10:00 a.m., Walk Diamond 5), press Edit, and type 200 in Length.",
+    "s": "The red line is under Length: “<b>The Final starts at 12:00 p.m.</b> At 200 min, Semifinal 1 would end at 1:20 p.m. Keep it to 120 min, or move the Final later.” Close without saving."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open Walk U13 Boys Quarterfinal 1, press Edit, and set Away to the Semifinal 1 winner.",
+    "s": "The red line is under Away and Home: “<b>Semifinal 1 ends at 2:30 p.m.</b> This game starts at 11:30 a.m., before Semifinal 1’s winner is known. Pick another game, or change the time.” Close without saving."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open Walk U13 Boys Semifinal 1, press Edit, and set Start to 3:00 p.m.",
+    "s": "Refused, under Day and Start: “<b>The 3rd Place game starts at 2:30 p.m.</b> It waits for Semifinal 1’s loser: start Semifinal 1 by 1:00 p.m., or move the 3rd Place game later.” Moving a Semifinal later is blocked. Close without saving."
+   }
+  ]
+ },
+ {
+  "id": "W4",
+  "title": "The bracket editor: old problems and new ones",
+  "job": "Walk U13 Boys and Walk U15 Tiers · computer",
+  "forText": "The editor tells apart a problem the bracket was already saved with (listed, never in the way) and a problem your edit just made (listed, and Save is held until you fix it). Pool play now counts here too.",
+  "passes": "Save works with the old three listed; a new problem holds Save until undone; the two tiers never mix.",
+  "notIn": "Saving a bracket (nothing here saves).",
+  "who": "The dev host account.",
+  "where": "Schedule page, Bracket view",
+  "steps": [
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Switch View to Bracket, pick Walk U13 Boys, and press <b>Edit bracket</b>.",
+    "s": "The editor opens. A quiet block headed <b>Already saved this way · you can still save</b> lists three lines: the Final before Semifinal 1 ends, the Final before Semifinal 2 ends, and Quarterfinal 1 before Walk U13 Boys pool play ends at 12:00 p.m. There is no “Fix this to save” block and Save is enabled."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "On the 3rd Place card set the time to 1:30 p.m.",
+    "s": "A new block <b>Fix this to save</b> appears with “2 to fix” (3rd Place before each semifinal ends). Save is greyed out and its hover says “Fix this to save”. The three old lines stay under “Already saved this way”."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Set the 3rd Place time back to 2:30 p.m.",
+    "s": "The “Fix this to save” block goes and Save works again."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Leave the editor without saving.",
+    "s": "Back on the Bracket view. Nothing changed."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Pick Walk U15 Tiers and press Edit bracket.",
+    "s": "No banner at all: Gold and Silver each reuse SF1, SF2 and FIN, and nothing is flagged."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Set the Gold Final’s time to 11:00 a.m., then leave without saving.",
+    "s": "“Fix this to save” with “1 to fix”, about the Gold Final and its semifinals only. Silver shows nothing."
+   }
+  ]
+ },
+ {
+  "id": "W5",
+  "title": "Add game in a division with two brackets",
+  "job": "Walk U15 Tiers · computer",
+  "forText": "A hand-added playoff game joins the bracket of the game it waits for. In a division with Gold and Silver, the pickers say which bracket, and the red line replaces the old grey line.",
+  "passes": "The picker names the bracket; the line is red under Day and Start and holds Add game; 11:30 clears it; the new game lands in Gold.",
+  "notIn": "Round-robin Add game (the server probe covers it).",
+  "who": "The dev host account.",
+  "where": "Schedule page, Add game window",
+  "steps": [
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Press Add game. Choose Division Walk U15 Tiers, Stage Playoffs, Day Sat, Dec 5, Start 10:30 a.m. (pick Seed #5 for Home if it asks).",
+    "s": "The playoff fields show: Home and Away pickers."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open the Away picker.",
+    "s": "The winner and loser choices name their bracket: “Gold · Semifinal 1 winner”, “Gold · Semifinal 2 winner”, “Silver · Semifinal 1 winner” and so on, not four unlabeled “Semifinal 1” rows."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Pick “Gold · Semifinal 1 winner”.",
+    "s": "A red line (a Ban mark, bold first sentence) under Day and Start: “<b>Semifinal 1 ends at 11:30 a.m.</b> The playoff game waits for its winner: start it at 11:30 a.m. or later, or move Semifinal 1 earlier.” Add game is held. The grey line at the foot is gone."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Set Start to 11:30 a.m.",
+    "s": "The line goes and Add game can be pressed."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Press Add game, then look at Walk U15 Tiers in the Bracket view.",
+    "s": "The new game sits in the Gold bracket (it took its source’s bracket). Silver is unchanged. The last step of walk 8 removes it."
+   }
+  ]
+ },
+ {
+  "id": "W6",
+  "title": "Dragging on the timeline",
+  "job": "Walk U13 Boys and Walk U15 Tiers · computer",
+  "forText": "While you drag, a spot that would put a game out of order turns red with the reason, the same moment a taken field does. Nothing lands there. A move that keeps the order, or one that was already out of order and stays so, lands.",
+  "passes": "Three refusals show their reason and land nothing; four moves land; the chips change as the order is fixed.",
+  "notIn": "The phone (it moves with the sheet, walk 2).",
+  "who": "The dev host account.",
+  "where": "Schedule page, Timeline view, computer-width window",
+  "steps": [
+   {
+    "stop": false,
+    "who": "You",
+    "d": "In Timeline, scroll to the Walk Diamond 7 column and drag the Gold Final (12:00 p.m.) up to 10:30 a.m. Hold, do not release.",
+    "s": "The spot under the block turns red with a reason: “The semifinals run until 11:30 a.m., so the Final can’t go here”."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Release.",
+    "s": "The Final jumps back to 12:00 p.m. Nothing is saved and no notice appears."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Drag Gold Semifinal 1 (Walk Diamond 5, 10:00 a.m.) down to 12:30 p.m. and hold, then release.",
+    "s": "Red while held: “The Final starts at 12:00 p.m., so Semifinal 1 can’t go here”. After release it is still at 10:00 a.m."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Drag the Gold Final to exactly 11:30 a.m. and release, then press Undo in the notice.",
+    "s": "It lands (a start exactly at the semifinals’ end is allowed) with no red anywhere and a “Moved” notice with Undo. Undo puts it back at 12:00 p.m."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Drag the Hawks vs Blaze pool game (Walk Diamond 2, 10:30 a.m.) down to 12:30 p.m. and hold, then release.",
+    "s": "Red while held, the reason naming a playoff game that starts earlier (like “Semifinal 1 starts at 1:00 p.m., so this game can’t go here”). It stays at 10:30 a.m."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Drag the Walk U13 3rd Place game (Walk Diamond 3, 2:30 p.m.) down to 4:00 p.m. and release.",
+    "s": "It lands. Its Double-booked chip and the Final’s both disappear, and the Final now wears <b>OUT OF ORDER</b> (it was hidden behind Double-booked)."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Drag the Walk U13 Final from 2:00 p.m. to 2:15 p.m. and release.",
+    "s": "It lands: the Final is still out of order, but an existing problem never locks you out. The chip stays."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Drag the Final to 2:30 p.m. and release.",
+    "s": "It lands. The chips leave the Final and both Semifinals. Quarterfinal 1 and the pool game keep theirs."
+   }
+  ]
+ },
+ {
+  "id": "W7",
+  "title": "The rain delay",
+  "job": "Walk U15 Tiers · computer",
+  "forText": "The rain delay checks its shift by the same rule, per division and bracket, and names the pair it would break.",
+  "passes": "Pushing one semifinal alone is refused with the named sentence; pushing every game together is not.",
+  "notIn": "Applying a delay or its Undo (the server probe covers the Undo).",
+  "who": "The dev host account.",
+  "where": "Schedule page, Tools, Rain delay",
+  "steps": [
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open Tools, Rain delay. Choose Day Sat, Dec 5, Division Walk U15 Tiers, Field Walk Diamond 5 (the Gold Semifinal 1 only), Shift 60 minutes.",
+    "s": "The Semifinal 1 row shows its new time and is marked Out of order. A red callout reads “<b>Semifinal 1 would end at 12:30 p.m.</b>, after the Final starts (12:00 p.m.). Push the Final as well, or push the games by less.” The apply button is held."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Change Field to All fields.",
+    "s": "The callout goes. Every Walk U15 Tiers game moves 60 minutes together, so the order holds, and the apply button works."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Close the window without applying.",
+    "s": "No game changed."
+   }
+  ]
+ },
+ {
+  "id": "W8",
+  "title": "Game length, a second admin, and a fix that saves",
+  "job": "Walk U11 Girls, Walk U15 Tiers, Walk U13 Boys · computer",
+  "forText": "A longer default game length can put a game out of order too, so it is refused on the line beside Save. A change a second admin made behind your screen is refused by the server. And a move that fixes a problem always saves.",
+  "passes": "Both length boxes refuse with the line and save nothing; the stale screen is refused by the server; the fix saves and clears the chips and the health row.",
+  "notIn": "Nothing left over: the last step removes every test game and puts the event’s dates back.",
+  "who": "The dev host account.",
+  "where": "Divisions, Settings, then the Schedule page",
+  "steps": [
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open the Walk U11 Girls division and type 100 in Game length.",
+    "s": "A red line under Game length: “<b>The Walk U11 Girls Final starts at 10:30 a.m.</b> At 100 min, Semifinal 1 would end at 10:40 a.m. Move the Final first, or keep 90 min.” The save word says “Couldn’t save”. Clear the box when done: the line goes as you edit."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open the event’s settings (the page with Game duration), type 100 in Game duration and press Save.",
+    "s": "A red line under the field: “<b>The Walk U13 Boys 3rd Place game starts at 2:30 p.m.</b> At 100 min, the semifinals would end at 2:40 p.m. Move the 3rd Place game first, or keep 90 min.” The save says “Couldn’t save”. Reload: the duration is back to what it was. (If you did walk 6, the 3rd Place game has moved and a different Walk game is named.)"
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "On the Schedule page open Silver Semifinal 2 (Walk U15 Tiers, 10:00 a.m., Walk Diamond 9) and press Edit. Leave it open. In the project folder run <code>node --env-file=.env.local .probe/stage9-walk.mjs --second-admin</code>.",
+    "s": "The script prints “Another admin moved the Silver Final to 11:30 a.m.” Your open window still shows the old picture."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "In the open window set Start to 10:30 a.m.",
+    "s": "Your screen has no objection, but the server refuses. The game stays at 10:00 a.m. and a red refusal reads “<b>The Final starts at 11:30 a.m.</b> It waits for Semifinal 2’s winner: start Semifinal 2 by 10:00 a.m., or move the Final later.” Say in Notes where it showed (under Start, or a red notice)."
+   },
+   {
+    "stop": false,
+    "who": "You",
+    "d": "Open Walk U13 Boys Quarterfinal 1, press Edit, and set Start to 12:00 p.m.",
+    "s": "It saves with no red line: exactly at the end of pool play is allowed. The chips on Quarterfinal 1 and the Hawks vs Blaze game go. If you did walk 6, no Walk U13 Boys game has a chip and Schedule health no longer lists “Playoff games out of order”."
+   },
+   {
+    "stop": false,
+    "who": "You · put back",
+    "d": "Run <code>node --env-file=.env.local .probe/stage9-walk.mjs --undo</code>.",
+    "s": "It prints that it removed 3 walk divisions and put the event’s dates back. Reload the schedule: the Walk games are gone."
+   }
+  ]
+ }
+];
+  var CALLS = [
+ {
+  "id": "C1",
+  "q": "In a double-elimination or consolation bracket, two different games can be named the same in a refusal (for example both “Winners Bracket, Game 1”). Fix the names now, or leave it as its own item?",
+  "o": [
+   "Fix it in this stage",
+   "Leave it as its own item",
+   "Leave it; those brackets are rare"
+  ]
+ },
+ {
+  "id": "C2",
+  "q": "When the two games are on different days, several “way out” sentences give a time with no day (“move the Final to 5:30 p.m. or later”). The drawing’s sentences have no day there. Add the day only when the days differ?",
+  "o": [
+   "Add the day when the days differ",
+   "Keep the sentences as drawn"
+  ]
+ },
+ {
+  "id": "C3",
+  "q": "On the event settings page, one Save sends three writes together. When the default game length is refused, the name, dates and scoring changes in the same Save have already been saved. Make it all-or-nothing, or leave?",
+  "o": [
+   "Make it all-or-nothing (its own item)",
+   "Leave it as it is"
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "W1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.calls = got.calls || {}; state.open = got.open || "W1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  var callsHost = document.getElementById("calls") || document.createElement("div");
+  CALLS.forEach(function (c) {
+    var box = el("div", "call");
+    box.appendChild(el("p", null, "<b>" + c.id + ".</b> " + c.q));
+    var opts = el("div", "opts");
+    c.o.forEach(function (o, oi) {
+      var lab = el("label"); var cb = el("input"); cb.type = "checkbox"; cb.id = "call-" + c.id + "-" + oi;
+      cb.checked = state.calls[c.id] === oi;
+      cb.addEventListener("change", function () {
+        state.calls[c.id] = cb.checked ? oi : null; save();
+        c.o.forEach(function (_, k) { var other = document.getElementById("call-" + c.id + "-" + k); if (other && k !== oi) other.checked = false; });
+        refresh();
+      });
+      lab.appendChild(cb); lab.appendChild(el("span", null, o)); opts.appendChild(lab);
+    });
+    box.appendChild(opts);
+    callsHost.appendChild(box);
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", [s.stop ? "Stop check" : "", s.who || ""].filter(Boolean).join(" · ")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function callsSummary() {
+    return ["Calls:"].concat(CALLS.map(function (c) {
+      var pick = state.calls[c.id];
+      return "  " + c.id + " " + (pick == null ? "NOT ANSWERED" : c.o[pick]);
+    })).join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).concat(CALLS.length ? ["", callsSummary()] : []).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "W1" }; save(); render();
+    CALLS.forEach(function (c) { c.o.forEach(function (_, k) { var x = document.getElementById("call-" + c.id + "-" + k); if (x) x.checked = false; }); });
+  });
+  render();
+})();
+</script>
