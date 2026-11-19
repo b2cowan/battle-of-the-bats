@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
@@ -7,10 +7,10 @@ import LoadingState from '@/components/shared/LoadingState';
 import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 
-type PageState = 'waiting' | 'ready' | 'submitting' | 'joinFailed' | 'retrying' | 'joinRefused' | 'joinLapsed' | 'expired';
+type PageState = 'waiting' | 'ready' | 'submitting' | 'joinFailed' | 'retrying' | 'joinRefused' | 'joinLapsed' | 'joinChoose' | 'expired';
 /** `terms`: the join refused the Terms box (step 6.3) — back to the form, with the line, to tick it again.
  *  `lapsed`: the invitation ran out (30 days from its last send, P2c) — no retry helps; the club has to send it again. */
-type JoinOutcome = 'joined' | 'failed' | 'refused' | 'terms' | 'lapsed';
+type JoinOutcome = 'joined' | 'failed' | 'refused' | 'terms' | 'lapsed' | 'choose';
 
 type InviteContext = {
   orgSlug: string | null;
@@ -20,7 +20,10 @@ type InviteContext = {
   roleOpens: string | null;
   inviterName: string | null;
   status: string | null;
+  /** Set (with `code: 'choose_club'`) when no club was named and more than one invitation is waiting (leftover call 12). */
+  clubs?: InviteClub[];
 };
+type InviteClub = { slug: string; name: string };
 
 /**
  * Specimen 6, "from the email link": who is asking, what the role opens, and an honest failure.
@@ -53,6 +56,10 @@ export default function AcceptInviteForm({
   const [lastName, setLastName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [invite, setInvite] = useState<InviteContext | null>(null);
+  // ⚖ Leftover call 12 (owner 2026-11-19): with no club in the link and more than one invitation waiting, the page asks which
+  // club and the person chooses; nothing picks one for them, and the club not chosen stays waiting on their home page.
+  const [clubs, setClubs] = useState<InviteClub[] | null>(null);
+  const [chosenSlug, setChosenSlug] = useState<string | null>(null);
   // The Terms box (step 6.3, §20 (1)): nothing while the legal pages are off. The server refuses the JOIN without it (the
   // password is set in the browser before the server sees anything, so the form checks the box before it does either).
   const terms = useTermsTick();
@@ -62,24 +69,40 @@ export default function AcceptInviteForm({
   const orgName = invite?.orgName ?? linkOrgName;
   const roleName = invite?.roleLabel ?? linkRoleLabel;
   const inviter = invite?.inviterName ?? linkInviter;
-  const orgSlug = invite?.orgSlug ?? linkOrgSlug;
+  const orgSlug = chosenSlug ?? invite?.orgSlug ?? linkOrgSlug;
+  const choosing = !chosenSlug && !!clubs && clubs.length > 1;
+
+  // The chosen club, readable inside the auth listener's reads: a read made without a club (the listener re-fires on a tab
+  // refocus) never overwrites the chosen club's title once a choice is made.
+  const chosenRef = useRef<string | null>(null);
+  const [joiningSlug, setJoiningSlug] = useState<string | null>(null);
+
+  const loadInvite = useCallback(async (slug: string | null) => {
+    const qs = slug ? `?org=${encodeURIComponent(slug)}` : '';
+    const response = await fetch(`/api/auth/accept-invite${qs}`, { cache: 'no-store' });
+    if (!response.ok) return;
+    const data = await response.json().catch(() => null) as InviteContext | null;
+    if (!data || (!slug && chosenRef.current)) return;
+    if (data.clubs && data.clubs.length > 1) setClubs(data.clubs);
+    else setInvite(data);
+  }, []);
+
+  /** The person chose a club: read that club's invitation (title, role, inviter) and join only it. */
+  function chooseClub(slug: string) {
+    chosenRef.current = slug;
+    setChosenSlug(slug);
+    setErrorMsg('');
+    void loadInvite(slug);
+  }
 
   useEffect(() => {
     const supabase = createClient();
-
-    async function loadInvite() {
-      const qs = linkOrgSlug ? `?org=${encodeURIComponent(linkOrgSlug)}` : '';
-      const response = await fetch(`/api/auth/accept-invite${qs}`, { cache: 'no-store' });
-      if (!response.ok) return;
-      const data = await response.json().catch(() => null) as InviteContext | null;
-      if (data) setInvite(data);
-    }
 
     // The /auth/callback page exchanges the link's token (PKCE or implicit flow) and lands here
     // with the session already in cookies; INITIAL_SESSION fires with it.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-        void loadInvite();
+        void loadInvite(linkOrgSlug);
         // A session that lands after the 5s wait (a slow network) still wins over "expired".
         setPageState(prev => (prev === 'waiting' || prev === 'expired' ? 'ready' : prev));
       }
@@ -94,15 +117,15 @@ export default function AcceptInviteForm({
       subscription.unsubscribe();
       clearTimeout(timer);
     };
-  }, [linkOrgSlug]);
+  }, [linkOrgSlug, loadInvite]);
 
   /** Step 2 on its own — the join. Called after the password is set, and again by "Try again". */
-  const join = useCallback(async (): Promise<JoinOutcome> => {
+  const joinAs = useCallback(async (slug: string | null): Promise<JoinOutcome> => {
     try {
       const res = await fetch('/api/auth/accept-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim(), orgSlug, ...termsFields }),
+        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim(), orgSlug: slug, ...termsFields }),
       });
       const data = await res.json().catch(() => ({}));
       const termsLine = termsRefusal(data);
@@ -111,6 +134,12 @@ export default function AcceptInviteForm({
         return 'terms';
       }
       if (!res.ok) {
+        // The page's first read didn't answer, so the join was sent without a club: it asks which (call 12).
+        if (data?.code === 'choose_club' && Array.isArray(data.clubs)) {
+          setClubs(data.clubs as InviteClub[]);
+          setErrorMsg('');
+          return 'choose';
+        }
         setErrorMsg(typeof data?.error === 'string' ? data.error : '');
         // A policy refusal (a scorekeeper keeps one home organization) or a run-out invitation will not change on a
         // retry; anything else is worth one.
@@ -126,13 +155,25 @@ export default function AcceptInviteForm({
       setErrorMsg('');
       return 'failed';
     }
-  }, [firstName, lastName, orgSlug, router, termsFields, termsRefusal]);
+  }, [firstName, lastName, router, termsFields, termsRefusal]);
+  const join = useCallback(() => joinAs(orgSlug), [joinAs, orgSlug]);
 
   function settle(outcome: JoinOutcome) {
     if (outcome === 'failed') setPageState('joinFailed');
     if (outcome === 'refused') setPageState('joinRefused');
     if (outcome === 'lapsed') setPageState('joinLapsed');
     if (outcome === 'terms') setPageState('ready');
+    if (outcome === 'choose') setPageState('joinChoose');
+  }
+
+  /** After the password: the person names the club, and only that join is sent (the password is never asked again). */
+  async function chooseAndJoin(slug: string) {
+    chooseClub(slug);
+    // The question stays on screen with "Joining…" on the chosen club (not the join-failed alert) until the answer lands.
+    setJoiningSlug(slug);
+    const outcome = await joinAs(slug);
+    setJoiningSlug(null);
+    settle(outcome);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -198,6 +239,35 @@ export default function AcceptInviteForm({
 
   // One account step (The first look, Stage 1c, 2026-10-19): the heading names the club and the role, the inviter is the
   // one sub line, and the fields are the shared ones without the email the invitation already knows (plan rule 4).
+  // Leftover call 12: more than one club is waiting and none was named. Before the password, the question is the page; after
+  // it (the first read hadn't answered), the password is kept and only the join waits for the answer.
+  const asking = (choosing && (pageState === 'ready' || pageState === 'waiting')) || pageState === 'joinChoose';
+  if (asking && clubs) {
+    const afterPassword = pageState === 'joinChoose';
+    return (
+      <StartColumn>
+        <StartHead
+          title="Which club are you joining?"
+          sub={afterPassword ? 'Your password is saved. You have invitations from more than one club.' : 'You have invitations from more than one club.'}
+        />
+        <div className={accountForm.form}>
+          <p className={accountForm.body}>Choose one. The other invitations stay open on your home page, to accept or decline there, until they run out.</p>
+          {clubs.map(club => (
+            <button
+              key={club.slug}
+              type="button"
+              className={accountForm.secondary}
+              disabled={joiningSlug !== null}
+              onClick={() => (afterPassword ? void chooseAndJoin(club.slug) : chooseClub(club.slug))}
+            >
+              {joiningSlug === club.slug ? 'Joining…' : club.name}
+            </button>
+          ))}
+        </div>
+      </StartColumn>
+    );
+  }
+
   return (
     <StartColumn>
       <StartHead

@@ -42,6 +42,29 @@ function orgFromRelation(organizations: unknown): { slug?: string; name?: string
   return (organizations as { slug?: string; name?: string } | null) ?? null;
 }
 
+/** The code both doors answer when the club must be chosen (leftover call 12); the page reads `clubs`. */
+const CHOOSE_CLUB = 'choose_club';
+
+/**
+ * The clubs whose invitation to this person is LIVE (status invited, within 30 days of its last send), oldest first — the
+ * one set the GET and the POST decide "choose a club" on, so they cannot disagree. Throws when the read fails: a read
+ * that didn't come back must never let the join pick a club.
+ */
+async function liveInvitationClubs(userId: string): Promise<{ slug: string; name: string }[]> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('invited_at, organizations!inner(slug, name)')
+    .eq('user_id', userId)
+    .eq('status', 'invited')
+    .gte('invited_at', invitationLapseCutoff())
+    .order('invited_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).flatMap(r => {
+    const org = orgFromRelation(r.organizations);
+    return org?.slug ? [{ slug: org.slug, name: org.name ?? org.slug }] : [];
+  });
+}
+
 export const GET = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) {
@@ -51,6 +74,17 @@ export const GET = withObservability(async (req: Request) => {
   // The link names its club (J10-010). When the person holds invitations to more than one, read
   // THAT club's — otherwise the page would title itself with whichever row sorted first.
   const linkOrg = new URL(req.url).searchParams.get('org');
+  // ⚖ Leftover call 12 (owner 2026-11-19): with no club named and more than one LIVE invitation waiting, the page asks which
+  // club; neither this read nor the join picks one. The same rule as the POST (one helper), so the two can't disagree.
+  if (!linkOrg) {
+    const clubs = await liveInvitationClubs(user.id);
+    if (clubs.length > 1) {
+      return NextResponse.json({
+        ok: true, code: CHOOSE_CLUB, clubs,
+        orgSlug: null, role: null, status: 'invited', orgName: null, roleLabel: null, roleOpens: null, inviterName: null, inviterRole: null,
+      });
+    }
+  }
   let query = supabaseAdmin
     .from('organization_members')
     .select('role, status, organization_id, capabilities, invited_at, organizations!inner(slug, name)')
@@ -97,6 +131,20 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const body = await req.json().catch(() => ({}));
+  const linkOrg = typeof body.orgSlug === 'string' && body.orgSlug ? body.orgSlug : null;
+
+  // ⚖ Leftover call 12 (owner 2026-11-19): no club named and more than one live invitation → refused with the clubs to
+  // choose from; it never picks one, and every invitation stays waiting (none declined, none used). Asked FIRST: a refused
+  // join records nothing (no Terms agreement, no name), and the page sends both again with the club chosen.
+  if (!linkOrg) {
+    const clubs = await liveInvitationClubs(user.id);
+    if (clubs.length > 1) {
+      return NextResponse.json(
+        { error: 'You have invitations from more than one club. Choose the club you’re joining.', code: CHOOSE_CLUB, clubs },
+        { status: 409 },
+      );
+    }
+  }
 
   // The Terms box (GST/HST Stage 6 step 6.3, §20 (1), the census's `staff_invite`): the invitation made the account, and the
   // page set its password in the browser before this request, so the refusal sits on the JOIN — asked only while the person
@@ -125,13 +173,10 @@ export const POST = withObservability(async (req: Request) => {
   // Find the pending member row for this user.
   // Use supabaseAdmin to bypass RLS — the user's session may not yet have
   // org-level read access before accepted_at is set.
-  // A user can momentarily hold more than one pending 'invited' row (e.g. invited to a club and
-  // to their own Coaches Portal stub). Accept the oldest deterministically — `.limit(1)` keeps
-  // `.maybeSingle()` from erroring on >1 row. The membership rule below (Verified Network) decides
-  // whether the join may happen. (The /home pending-invites card accepts multiple invites individually.)
-  // The page sends the club from its link (J10-010) so a person invited to two clubs joins the one
-  // whose link they followed; without it, the oldest pending invitation (the previous behaviour).
-  const linkOrg = typeof body.orgSlug === 'string' && body.orgSlug ? body.orgSlug : null;
+  // The membership rule below (Verified Network) decides whether the join may happen. (The /home pending-invites card
+  // accepts multiple invites individually.) The page sends the club from its link (J10-010) so a person invited to two
+  // clubs joins the one whose link they followed; without it, the ONE live invitation (two or more were refused at the
+  // top, leftover call 12: this used to take the oldest). `.limit(1)` keeps `.maybeSingle()` from erroring on >1 row.
   // ⚖ Only a LIVE invitation is accepted (P2c): 30 days from its last send (lib/invitation-lapse.ts).
   const cutoff = invitationLapseCutoff();
   let pending = supabaseAdmin
