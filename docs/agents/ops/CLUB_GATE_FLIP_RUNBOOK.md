@@ -120,6 +120,20 @@ new ones if wanted).
 Ship it with the normal release while the three database rows still say `early_access`. Check on production that
 nothing changed for a visitor (still "Coming soon"), because the pages now follow the gate and the gate is closed.
 
+**The doors' database change goes first (S2, added 2026-11-19):** migration 508 (`organizations.start_plan`, the plan a
+paid door made the organization to buy) is applied to production **before** the promote that carries the doors. Its
+readers tolerate the column being absent, but the doors write it, so the flip must never come before it.
+
+## Step 3b — the Terms are live on production (before the flip; `/legal` S2 review, 2026-11-19)
+
+The doors take money, and a sale must carry a Terms tick and an acceptance record. Checkout refuses Club, Club ·
+Association and League Plus on a live key while the legal pages are off (`legal_pages_unpublished`), and the build fails
+if the switch is turned off while the doors exist, but confirm it in the product too:
+1. Signed out on production, `/legal/terms` shows version 2026-11-17 (or the current one), and `/start/tournament`'s step 1
+   shows the Terms tick.
+2. After the first live purchase (Step 5), confirm — as a count, never a person's row — that an acceptance record exists
+   for that buyer's account.
+
 ## Step 4 — flip
 
 1. Platform admin › Plans & pricing: **Request live** for `club`, `club_large` and `league`; approve; apply. Each

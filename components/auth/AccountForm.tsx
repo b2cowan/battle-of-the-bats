@@ -14,9 +14,9 @@ export { styles as accountForm };
  */
 
 /** The start column on the warm paper: 420px, centred, no card around the form (plan rule 1). */
-export function StartColumn({ children }: { children: ReactNode }) {
+export function StartColumn({ children, pageClassName }: { children: ReactNode; /** Inside the admin's first-run frame: its paper rule (onboarding's `PlanStep.module.css` `.page`). */ pageClassName?: string }) {
   return (
-    <div className={styles.page}>
+    <div className={pageClassName ? `${styles.page} ${pageClassName}` : styles.page}>
       <div className={styles.column}>{children}</div>
     </div>
   );

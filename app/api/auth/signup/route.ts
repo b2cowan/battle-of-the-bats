@@ -8,7 +8,7 @@ import { findPendingInviteByEmail } from '@/lib/invite-reconciliation';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect } from '@/lib/signup-verification';
-import { parseStartDoor, parseStartPricing, startDoorLinkPath } from '@/lib/start-door';
+import { paidDoorPick, parseStartDoor, parseStartPricing, startDoorLinkPath } from '@/lib/start-door';
 import { lockStartDoorOrUndo } from '@/lib/founding-season';
 import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
 import { termsDoorFrom } from '@/lib/legal-acceptance-rules';
@@ -49,6 +49,11 @@ async function rollbackAuthUser(id: string) {
  *    going.
  * A page loaded before this release still sends an organization name; that is the organization door, and the name is
  * asked again on step 2.
+ *
+ * **Start a club** (`startDoor: 'club'`, On-sale pages S2) is the organization door's twin: the same account, invite
+ * guard and link, landing on /start/club, with only a Club or Club · Association pick remembered. It locks no door (no
+ * Founding comp on a paid door, Ask 14). Whether Club is on sale is asked where the club is made, not here: an account
+ * is never refused for it.
  */
 export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
@@ -59,13 +64,15 @@ export const POST = withObservability(async (req: Request) => {
     // The two doors this route serves (the census, step 6.3 B1): the follow nudge says so; every other form is `signup`.
     const termsDoor = termsDoorFrom(body?.termsDoor, ['follow'], 'signup');
 
-    const organizationDoor = parseStartDoor(startDoor, ['organization'] as const) !== null
-      || (orgName !== undefined && orgName !== null);
+    // The door that makes an organization: Run a tournament, or Start a club. An old page's organization name is Run a tournament.
+    const orgDoor = parseStartDoor(startDoor, ['organization', 'club'] as const)
+      ?? (orgName !== undefined && orgName !== null ? 'organization' as const : null);
+    const organizationDoor = orgDoor !== null;
 
-    // Where the link returns: the organization door's step 2. An account-only (fan) sign-up can pass its own return
+    // Where the link returns: the door's step 2. An account-only (fan) sign-up can pass its own return
     // path — e.g. the Follows feed or the tournament page they were on — else Home (/discover); validated to a
     // same-origin relative path (safeNextPath) so it can never become an open redirect.
-    const returnPath = organizationDoor ? startDoorLinkPath('organization') : safeNextPath(next, '/discover');
+    const returnPath = orgDoor ? startDoorLinkPath(orgDoor) : safeNextPath(next, '/discover');
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -107,13 +114,15 @@ export const POST = withObservability(async (req: Request) => {
     // (which greet by first_name) have the person's real name. The organization door adds the
     // remembered door (lib/start-door.ts — screens only, never an entitlement) with the pricing
     // page's plan and billing, so the plan step opens with that plan chosen on any device (A6).
-    const pricing = organizationDoor ? parseStartPricing(plan, billing) : null;
+    const pricing = orgDoor === 'organization' ? parseStartPricing(plan, billing)
+      : orgDoor === 'club' ? paidDoorPick('club', parseStartPricing(plan, billing))
+      : null;
     const userMetadata = {
       first_name: normalizedFirstName,
       last_name: normalizedLastName,
       full_name: fullName,
       display_name: fullName,
-      ...(organizationDoor ? { start: { door: 'organization', ...(pricing ?? {}) } } : {}),
+      ...(orgDoor ? { start: { door: orgDoor, ...(pricing ?? {}) } } : {}),
     };
     if (normalizedPassword.length < 8) {
       return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
@@ -200,7 +209,7 @@ export const POST = withObservability(async (req: Request) => {
 
     // The Founding Season offer after the close reads a locked copy of the door (lib/founding-season.ts, edge (a)
     // 2026-10-19); a failed lock has already undone the account.
-    if (organizationDoor && !(await lockStartDoorOrUndo(userId, 'organization'))) {
+    if (orgDoor === 'organization' && !(await lockStartDoorOrUndo(userId, 'organization'))) {
       userId = null;
       return NextResponse.json({ error: 'Account could not be created. Please try again.' }, { status: 500 });
     }
@@ -213,7 +222,7 @@ export const POST = withObservability(async (req: Request) => {
       // Note: the founding-season welcome email is NOT sent here — it fires ~1 day after the user
       // actually selects Tournament Plus on the plan step (app/api/billing/create-checkout).
       await sendSignupVerificationEmail({
-        to: normalizedEmail, origin, actionLink, next: returnPath, door: organizationDoor ? 'organization' : null,
+        to: normalizedEmail, origin, actionLink, next: returnPath, door: orgDoor,
         firstName: normalizedFirstName,
       });
     }

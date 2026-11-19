@@ -242,6 +242,8 @@ const CALLERS: Record<string, string> = {
   'app/(consumer)/start/tournament/StartTournamentForm.tsx': 'the start step’s send',
   'app/(consumer)/start/league/StartLeagueForm.tsx': 'the start step’s send',
   'app/(consumer)/start/team/StartTeamForm.tsx': 'the start step’s send',
+  // the paid doors (On-sale pages S2): one create step on the same shared form, through the same start step's send
+  'app/(consumer)/start/StartPaidDoorForm.tsx': 'the start step’s send',
   'app/team/TeamSignupClient.tsx': 'its own gate',
   'app/[orgSlug]/admin/onboarding/page.tsx': 'its own gate',
   'components/billing/BillingBody.tsx': 'its post(), through its own gate',
@@ -253,6 +255,7 @@ const HOSTS: Record<string, string> = {
   'app/(consumer)/start/tournament/StartTournamentForm.tsx': 'app/(consumer)/start/StartDoorForm.tsx',
   'app/(consumer)/start/league/StartLeagueForm.tsx': 'app/(consumer)/start/StartDoorForm.tsx',
   'app/(consumer)/start/team/StartTeamForm.tsx': 'app/(consumer)/start/StartDoorForm.tsx',
+  'app/(consumer)/start/StartPaidDoorForm.tsx': 'app/(consumer)/start/StartDoorForm.tsx',
   'app/team/TeamSignupClient.tsx': 'app/team/TeamSignupClient.tsx',
   'app/[orgSlug]/admin/onboarding/page.tsx': 'app/[orgSlug]/admin/onboarding/page.tsx',
   'components/billing/BillingBody.tsx': 'components/billing/BillingBody.tsx',
@@ -500,7 +503,7 @@ describe('the line (C2, drawing tab 5): §20 (3), only while the pages are on', 
     // Where the plan can have trial days, the line reads the plan's own settings (never a hard-coded "no trial").
     // (the line takes the plan's trial days as a number and says the conditional sentence itself when they are above zero)
     for (const f of ['components/billing/PlanCycleDialog.tsx', 'components/billing/PlanArticlePanel.tsx', 'components/billing/BillingBody.tsx',
-      'components/PricingSection.tsx', 'app/[orgSlug]/admin/onboarding/PlanStep.tsx', 'app/[orgSlug]/admin/onboarding/AddressStep.tsx',
+      'components/PricingSection.tsx', 'app/[orgSlug]/admin/onboarding/PlanStep.tsx', 'app/[orgSlug]/admin/onboarding/PaidPlanStep.tsx', 'app/[orgSlug]/admin/onboarding/AddressStep.tsx',
       'app/team/TeamSignupClient.tsx']) {
       assert.ok(/<PlanTermsLine\b[^>]*trial=\{[^}]*trialDays/i.test(sourceOf.get(f)!),`${f}: the line must say "if your plan starts with a trial" where the plan has trial days`);
     }
@@ -510,7 +513,7 @@ describe('the line (C2, drawing tab 5): §20 (3), only while the pages are on', 
   });
   it('exactly these files render the line', () => {
     assert.deepEqual(filesMatching(/<PlanTermsLine\b/), [
-      'app/[orgSlug]/admin/onboarding/AddressStep.tsx', 'app/[orgSlug]/admin/onboarding/PlanStep.tsx', 'app/team/TeamSignupClient.tsx',
+      'app/[orgSlug]/admin/onboarding/AddressStep.tsx', 'app/[orgSlug]/admin/onboarding/PaidPlanStep.tsx', 'app/[orgSlug]/admin/onboarding/PlanStep.tsx', 'app/team/TeamSignupClient.tsx',
       'components/PricingSection.tsx', 'components/billing/BillingBody.tsx', 'components/billing/PlanArticlePanel.tsx',
       'components/billing/PlanCycleDialog.tsx', 'components/billing/PlanMoveDialog.tsx',
     ]);

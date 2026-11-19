@@ -160,8 +160,16 @@ describe('first-time setup asks for the address on its own screen, not the windo
   });
   it('the screen is the coach sign-up\'s fields and the shipped step line, left at three labels (Ask 2 C)', () => {
     assert.match(step, /variant="start"/);
-    assert.match(step, /<StartSteps current=\{3\} labels=\{RUN_A_TOURNAMENT_STEPS\} \/>/);
+    // the screen is step 3 of whichever door's line it is shown for (default: Run a tournament's); the paid doors pass their own
+    assert.match(step, /steps = RUN_A_TOURNAMENT_STEPS,/);
+    assert.match(step, /<StartSteps current=\{3\} labels=\{steps\} \/>/);
     assert.doesNotMatch(step, /Address'/, 'the step line gains no fourth label');
+    const doors = readCode('lib/start-door.ts');
+    for (const line of [
+      /RUN_A_TOURNAMENT_STEPS = \['Account', 'Organization', 'Plan'\] as const;/,
+      /CLUB_START_STEPS = \['Account', 'Club', 'Plan'\] as const;/,
+      /LEAGUE_PLUS_START_STEPS = \['Account', 'League', 'Plan'\] as const;/,
+    ]) assert.match(doors, line, 'every door keeps three labels, and none of them is Address');
   });
   it('a US hold removes the button and Back keeps the draft (the draft lives in the page)', () => {
     assert.match(step, /\{!form\.usClosed && \(/);

@@ -48,7 +48,7 @@ describe('the lists', () => {
     for (const r of countryInfo('US')!.regions) assert.equal(checkBillingLocation({ ...buffalo, regionCode: r.code }, open).ok, true, r.code);
   });
   it('region names', () => {
-    assert.equal(regionName('CA', 'QC'), 'Quebec');
+    assert.equal(regionName('CA', 'QC'), 'Québec');
     assert.equal(regionName('US', 'NY'), 'New York');
     assert.equal(regionName('US', 'ON'), null);
   });
@@ -130,7 +130,7 @@ describe('the check', () => {
     if (!nl.ok) assert.equal(nl.errors.postalCode, 'A postal code in Newfoundland and Labrador starts with A.');
     else assert.fail();
     const qc = checkBillingLocation({ ...guelph, regionCode: 'QC' }, closed);
-    if (!qc.ok) assert.equal(qc.errors.postalCode, 'A postal code in Quebec starts with G, H or J.');
+    if (!qc.ok) assert.equal(qc.errors.postalCode, 'A postal code in Québec starts with G, H or J.');
     else assert.fail();
     // No province chosen: only the province is asked for, never a postal sentence about a province nobody chose.
     const none = checkBillingLocation({ ...guelph, regionCode: '' }, closed);

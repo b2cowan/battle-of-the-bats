@@ -1723,7 +1723,7 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Product SOP',
       heading: 'How to work with plans, pricing, and feature matrix changes',
       summary: 'Live product packaging changes require the approved catalog workflow — sequenced by customer impact.',
-      keywords: ['plans pricing', 'plans & pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign', 'risk ladder', 'plan config', 'gating', 'stripe mode', 'production', 'test', 'change note', 'catalog records', 'planning', 'promotions', 'promotion', 'campaign tracking', 'coupon', 'promo'],
+      keywords: ['plans pricing', 'plans & pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign', 'risk ladder', 'plan config', 'gating', 'stripe mode', 'production', 'test', 'change note', 'catalog records', 'planning', 'promotions', 'promotion', 'campaign tracking', 'coupon', 'promo', 'start a club page', 'start a league season page', 'open a plan for sign-up'],
       searchText: 'promotions campaign tracking renamed coupon promo trial launch retention offer for the record not linked to checkout or stripe how do i work with plans pricing feature matrix changes stripe mode production test dropdown product catalog workspace planning feature matrix catalog records change note optional stripe price id',
       links: [
         { label: 'Plans & pricing', href: '/platform-admin/plans-pricing' },
@@ -1742,7 +1742,7 @@ const platformAdminHelp: HelpPageContent = {
           content: (
             <>
               <ol>
-                <li><strong>Gating status</strong> (live / early access) — controls whether a plan is offered. Reversible.</li>
+                <li><strong>Gating status</strong> (live / early access) — controls whether a plan is offered. Reversible. It also opens the paid start pages: Club or Club · Association live opens <strong>Start a club</strong> (and its /start card); League Plus live turns <strong>Start a league season</strong> into the League Plus start. Early access, each page is its interest page again; an organization a start page already made keeps its plan step, which says the plan isn&rsquo;t open for sign-up.</li>
                 <li><strong>Config limits</strong> (tournament caps, seat caps, trial days) — affects what customers on the plan can do.</li>
                 <li><strong>Stripe price IDs</strong> — affects real billing; a wrong ID can break checkout or charge the wrong amount.</li>
                 <li><strong>Feature matrix</strong> — which modules each plan actually includes; highest blast radius and least immediately reversible, because it changes what existing customers can <em>do</em>, not just what a plan is advertised as.</li>

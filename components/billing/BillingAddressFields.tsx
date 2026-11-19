@@ -116,8 +116,8 @@ export default function BillingAddressFields({ form, idPrefix, subject, variant 
   const info = countryInfo(draft.country);
   const onWindow = variant === 'window';
   const k = onWindow
-    ? { field: billing.field, label: billing.label, input: billing.select, select: billing.select, hint: billing.hint, error: styles.error }
-    : { field: start.field, label: start.label, input: start.input, select: start.select, hint: start.hint, error: styles.errorStart };
+    ? { field: billing.field, label: billing.label, input: billing.select, select: billing.select, hint: billing.hint, error: styles.error, notice: styles.amberLine }
+    : { field: start.field, label: start.label, input: start.input, select: start.select, hint: start.hint, error: styles.errorStart, notice: styles.amberLineStart };
   const auto = (part: string) => (subject.kind === 'club' ? `billing ${part}` : part);
 
   const id = (name: string) => `${idPrefix}-${name}`;
@@ -143,7 +143,7 @@ export default function BillingAddressFields({ form, idPrefix, subject, variant 
           onChange={event => setCountry(event.target.value)}>
           {BILLING_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
         </select>
-        {usClosed && !onWindow ? <p className={styles.amberLine} role="status">{BILLING_LOCATION_WORDS.usClosed}</p> : err('country')}
+        {usClosed && !onWindow ? <p className={k.notice} role="status">{BILLING_LOCATION_WORDS.usClosed}</p> : err('country')}
       </div>
       {!usClosed && info && <>
         <div className={k.field}>
@@ -157,7 +157,7 @@ export default function BillingAddressFields({ form, idPrefix, subject, variant 
           </select>
           {/* GST/HST 6.4 (Q6): a notice, never an error. The address saves; only a purchase from it is refused (by the server). */}
           {errors.regionCode ? err('regionCode') : qcClosed
-            ? <p id={id('region-closed')} className={styles.amberLine} role="status">{BILLING_LOCATION_WORDS.qcClosed}</p> : null}
+            ? <p id={id('region-closed')} className={k.notice} role="status">{BILLING_LOCATION_WORDS.qcClosed}</p> : null}
         </div>
         <div className={k.field}>
           {label('line1', F.line1, true)}

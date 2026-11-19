@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import EarlyAccessForm, { type EarlyAccessSaved } from './EarlyAccessForm';
-import { interestButtonLabel } from '@/lib/plan-config';
+import { GATED_PLAN_INTEREST_LINE, interestButtonLabel } from '@/lib/plan-config';
 import styles from './EarlyAccessModalTrigger.module.css';
 
 type EarlyAccessModalTriggerProps = {
@@ -79,7 +79,7 @@ export default function EarlyAccessModalTrigger({
                   {saved ? 'You’re on the list' : 'Tell us what you want to see next'}
                 </h2>
                 <p className={styles.copy} aria-live="polite">
-                  {!saved && 'Share a few details and we’ll let you know when your plan opens.'}
+                  {!saved && GATED_PLAN_INTEREST_LINE}
                   {saved?.wantsUpdates && <>We&apos;ve saved your request. When the plans you picked open, we&apos;ll write to <strong>{saved.email}</strong>.</>}
                   {saved && !saved.wantsUpdates && <>We&apos;ve saved your request. You won&apos;t get an email when it opens, as you asked.</>}
                 </p>

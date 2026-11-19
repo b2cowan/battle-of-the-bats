@@ -10,6 +10,7 @@ import { RUN_A_TOURNAMENT_STEPS, type StartBilling } from '@/lib/start-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PlanStep.module.css';
 import PlanTermsLine from '@/components/legal/PlanTermsLine';
+import { planTermsTrial } from '@/lib/plan-trial-line';
 
 /**
  * THE BILLING ADDRESS SCREEN of first-time setup (GST/HST Stage 1, owner rulings 2026-11-04 on
@@ -26,8 +27,13 @@ import PlanTermsLine from '@/components/legal/PlanTermsLine';
  *   · The draft lives in the page, not here, so Back keeps what was typed.
  *   · A US address while US sales are closed shows the amber line under Country and no button (the sign-up page's rule).
  */
-export default function AddressStep({ orgName, plan, billing, form, saving, failed, error, onContinue, onBack }: {
+export default function AddressStep({ orgName, plan, billing, form, saving, failed, error, onContinue, onBack, steps = RUN_A_TOURNAMENT_STEPS, trialDays }: {
   orgName: string;
+  /** The door's step line: Run a tournament's, or a paid door's ("Account · Club · Plan", On-sale pages S2). */
+  steps?: readonly string[];
+  /** A paid door's TRUE trial (the server's, trap B): above 0 the line says this purchase starts one, 0 says nothing of a
+   *  trial. Null (unread) or absent: the plan's own length, as Run a tournament shows (`planTermsTrial`). */
+  trialDays?: number | null;
   /** The paid plan being bought and its billing period: named under the heading, so the owner knows what this is for. */
   plan: OrgPlan;
   billing: StartBilling;
@@ -57,14 +63,19 @@ export default function AddressStep({ orgName, plan, billing, form, saving, fail
         <StartHead
           title={F.title}
           sub={`${orgName} · ${PLAN_CONFIG[plan].label}, ${formatPlanPeriodPrice(plan, billing)}${PLAN_CONFIG[plan].monthlyPrice > 0 ? ` ${BILLING_TAX_WORDS.plusTax}` : ''}`}
-          steps={<StartSteps current={3} labels={RUN_A_TOURNAMENT_STEPS} />}
+          steps={<StartSteps current={3} labels={steps} />}
         />
         <form className={accountForm.form} onSubmit={submit}>
           <p className={accountForm.hint}>{F.intro}</p>
           <BillingAddressFields form={form} idPrefix="setup-address" subject={{ kind: 'club', name: orgName }} variant="start" disabled={saving} />
           {message && <p className={accountForm.error} role="alert">{message}</p>}
           {/* §20 (3) above Continue to checkout, at the column's fine-print size (step 6.3, drawing tab 5, pin 4). */}
-          {!form.usClosed && PLAN_CONFIG[plan].monthlyPrice > 0 && <PlanTermsLine place="column" trial={PLAN_CONFIG[plan].trialDays} />}
+          {!form.usClosed && PLAN_CONFIG[plan].monthlyPrice > 0 && (
+            <PlanTermsLine
+              place="column"
+              trial={planTermsTrial(trialDays, PLAN_CONFIG[plan].trialDays)}
+            />
+          )}
           {!form.usClosed && (
             <button type="submit" className={accountForm.primary} disabled={saving} aria-busy={saving || undefined}>
               {saving ? F.saving : 'Continue to checkout'}

@@ -20,7 +20,9 @@ import styles from './CoachWelcomeCard.module.css';
  */
 const ICONS = { check: Check, clock: Clock, search: Search } as const;
 
-export function CoachWelcomeCard({ icon, quiet = false, title, sub, children }: {
+export function CoachWelcomeCard({ icon, quiet = false, title, sub, children, pageClassName }: {
+  /** Passed to the start column: the paid doors' wait sits in the admin's first-run frame (On-sale pages S2). */
+  pageClassName?: string;
   /** The well's mark; none for the setting-up card, whose loading line is the only motion on the page. */
   icon?: keyof typeof ICONS;
   /** The ink-soft well, for "We can't find that payment" (amber is only ever a notice's edge). */
@@ -32,7 +34,7 @@ export function CoachWelcomeCard({ icon, quiet = false, title, sub, children }: 
 }) {
   const Icon = icon ? ICONS[icon] : null;
   return (
-    <StartColumn>
+    <StartColumn pageClassName={pageClassName}>
       <div className={Icon ? styles.card : styles.cardBare}>
         {Icon && (
           <div className={quiet ? styles.wellQuiet : styles.well} aria-hidden>

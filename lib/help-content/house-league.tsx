@@ -97,8 +97,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Plans and limits — free League vs. League Plus',
       summary: 'The free League plan runs one season at a time, and a finished season doesn’t count; League Plus and Club lift the caps and add exports.',
-      keywords: ['free league', 'league plus', 'club', 'limits', 'caps', 'upgrade', 'team limit', 'one season at a time', 'season limit', 'create season refused', 'reopen refused'],
-      searchText: 'free league plan league plus club limits caps one season at a time getting ready registration open registration closed running holds it finished season holds nothing last season never blocks the next complete it first reopen refused names the season one division eight teams 8 teams upgrade unlimited exports league exports plan gating',
+      keywords: ['free league', 'league plus', 'club', 'limits', 'caps', 'upgrade', 'team limit', 'one season at a time', 'season limit', 'create season refused', 'reopen refused', 'start a league season', 'start league plus', 'setting up your league'],
+      searchText: 'free league plan league plus club limits caps one season at a time getting ready registration open registration closed running holds it finished season holds nothing last season never blocks the next complete it first reopen refused names the season one division eight teams 8 teams upgrade unlimited exports league exports plan gating start a league season page start on league plus open for sign-up account league name billing address stripe back out nothing charged setting up your league free league start tell us you are interested',
       content: (
         <>
           <p>House league is available on the free <strong>League</strong> plan, on <strong>League Plus</strong>, and on <strong>Club</strong>. The free League plan is a real product, not a trial — it just has caps so it fits a small house league:</p>
@@ -109,6 +109,7 @@ const houseLeagueHelp: HelpPageContent = {
             <li><strong>Limited exports</strong> — schedule and registration exports are part of League Plus.</li>
           </ul>
           <p>When you hit a cap, the product tells you which one and points to <strong>League Plus</strong>, which removes all three caps and turns on exports. If another season holds the one place, <strong>Create season</strong> names it, and <strong>Reopen the season</strong> on a finished season says so in its window, with no Reopen button, until you complete the other one. Club includes everything in League Plus plus the rest of the platform.</p>
+          <p>A new league can start straight on League Plus from the <strong>Start a league season</strong> page while League Plus is open for sign-up: your account, the league&rsquo;s name, the League Plus plan, a billing address, then payment on Stripe&rsquo;s page. Back out of Stripe&rsquo;s page and you return to the plan, with nothing charged; <strong>Setting up your league</strong> waits a few seconds after you pay. While League Plus isn&rsquo;t open for sign-up, the page shows the free League start or a way to tell us you&rsquo;re interested.</p>
         </>
       ),
     },

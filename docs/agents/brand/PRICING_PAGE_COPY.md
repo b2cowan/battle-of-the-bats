@@ -15,6 +15,24 @@
 
 ---
 
+### 🆕 The Club team limit — the unit is "teams with a Premium Coaches Portal", and house league is unlimited — RULED 2026-11-19 (owner: *"I agree with your recommendations"*; `/marketing` main session; decision logged in `BUSINESS_DECISIONS.md` 2026-11-19). **Supersedes** every bare "Up to 15 teams" / "16 to 30 teams" / "How many teams does your club run?" below.
+
+**The rule.** A label never defines the limit. The limit counts **the teams a club gives a Premium Coaches Portal**, whatever the club calls them (rep, select, all-star, travel, development; every type counts the same). **Not counted:** house league teams (unlimited on Club and Club · Association), teams entered in the club's own tournaments, archived teams. The list of labels appears once, beside the definition, never as the definition. "Rep teams" stays as the module's name in a feature list ("Tournaments, house league, rep teams and accounting"); it is never the unit of the limit.
+
+| Surface | Words |
+|---|---|
+| Plan step heading (Club door) | **How many teams will have a Premium Coaches Portal?** |
+| Line under it | **Rep, select, all-star: whatever your club calls them. House league teams are unlimited.** |
+| Club card | **Premium Coaches Portal for every coach on up to 15 teams, no per-team fee** · **Unlimited house league teams** |
+| Club · Association card | **Premium Coaches Portal for every coach on 16 to 30 teams** (house league carries from "Everything in Club") |
+| Pricing and billing lists (no Association card beside them) | **Premium Coaches Portal for every coach on up to 15 teams, or up to 30 on Club · Association — no per-team fee** · **Unlimited house league teams** |
+| FAQ ("How does the team limit on Club work?") and the for-clubs page | **The limit counts the teams you give a Premium Coaches Portal, whatever you call them: rep, select, all-star, travel. House league teams are unlimited. Archived teams and teams entered in your tournaments aren't counted.** |
+| Start door (Start a club) | **…Choose Club or Club · Association by how many teams will have a Premium Coaches Portal. House league teams are unlimited.** |
+
+**⚠ "Unlimited" is a promise.** Revisit before any house league size-based price, player meter or fair-use cap, and before the free League floor's future is ruled (it caps at 8 teams per season). **Do not** write "unlimited" about tournament teams or anything else: only house league was verified.
+
+---
+
 ### 🆕 The on-sale pages, Part 0 (the S1 words) — RULED 2026-11-18 (owner: *"I agree with all 33 recommendations"*; `/marketing` main session; source of record `docs/projects/active/CLUB_ON_SALE_COPY.md`, plan `CLUB_ON_SALE_PAGES_PLAN.md`, build `CLUB_ON_SALE_S1_BUILD_PROMPT.md`). No prices, no trial lengths: every number is read from `PLAN_CONFIG` / checkout. **Not built** until S1.
 
 This section carries what S1 ships: the words that are **wrong today while a plan is closed** (the copy doc's "Closed words that change" table), the three Facts-true fixes (W72, W73, W74), and the trial sentence family. The **open-state** words (the Club · Association card, the bands, the starts, "How the trial works"…) stay in `CLUB_ON_SALE_COPY.md` until S2 and S3 write them here. Placeholders: `{closedPlansLine}` = `closedProgramPlansSentence(gating)`; `{interestLine}` = `GATED_PLAN_INTEREST_LINE`; `{plusTax}` = `BILLING_TAX_WORDS.plusTax`. Each plan reads its **own** live switch; a page naming two plans shows a plan's closed words only while that plan is closed.
@@ -37,7 +55,7 @@ This section carries what S1 ships: the words that are **wrong today while a pla
 | `/pricing` "Available now" intro (W10) | **Organization plans for tournaments and operations, plus the standalone Premium Coaches Portal for coaches. {closedPlansLine}** (retires "early interest"). |
 | `/pricing` League Plus bridge, last sentence (W11) | **League Plus is built, but not open for sign-up. {interestLine}** Button label stays. |
 | `/pricing` Club bridge, last sentence (W12) | **Club is coming soon — it isn't open for sign-up yet. {interestLine}** Button label stays. |
-| `/pricing` "what they cover" section (W13) | Body: **League Plus and Club are shown here so you can see what they cover.** Last paragraph: **If you want either plan, start on a live tournament plan now, or tell us you're interested and we'll let you know when it opens.** Third card: **Share your details and which plans you want. We'll let you know when they open — no commitment.** Middle card keeps `{closedPlansLine}`; eyebrow follows W6. |
+| `/pricing` "what they cover" section (W13) | Body: **League Plus and Club are shown here so you can see what they cover.** Last paragraph: **If you want either plan, start on a live tournament plan now, or tell us you're interested. Tick the box on the form if you'd like an email when it opens.** Third card: **Share your details and which plans you want — no commitment. Tick the box on the form if you'd like an email when they open.** (Both changed 2026-11-19 with the interest line, owner ruling: no email is promised to a visitor who leaves the updates box unticked.) Middle card keeps `{closedPlansLine}`; eyebrow follows W6. |
 | FAQ "Is the platform only for tournaments?" (W14) | Replace "…are the next parts of the platform. They're shown here so your organization can plan ahead." with **League Plus and Club — covering house league seasons, rep team management, and accounting — are shown here so your organization can plan ahead. {closedPlansLine}** |
 | FAQ "Can I buy League Plus, Club, or the Coaches Portal today?" (W15) | Last clause becomes **{closedPlansLine} {interestLine}** (retires "plan ahead and express interest"). |
 | `/pricing` bottom call to action (W21) | Lead ends **{closedPlansLine} {interestLine}** (was "…Express interest to be notified."). Buttons and the small line stay. |
@@ -307,7 +325,7 @@ them; never retype a status. Shown only when the **live** gate says the plan is 
 | **League Plus** (parked — no imminence) | **Not open yet** | League Plus is built, but not open for sign-up. | Built, but not open for sign-up. |
 | **Club** (a release is under way) | **Coming soon** | Club is coming soon — it isn't open for sign-up yet. | Not open for sign-up yet. |
 | Both closed, one sentence (read from the gate; each half drops out when its plan opens) | — | Club is coming soon, and League Plus is built but not open for sign-up. | — |
-| Beside an interest door (replaces "Join early access for launch updates") | — | Tell us you're interested and we'll let you know when it opens. | — |
+| Beside an interest door (replaces "Join early access for launch updates"); also the interest window's intro | — | Tell us you're interested. Tick the box on the form if you'd like an email when it opens. (owner ruling 2026-11-19, `/legal`'s sentence) | — |
 
 - **Never "early access"** where a customer reads it — the programme was withdrawn 2026-07-28. (The
   platform admin's own lead pipeline keeps the name; it is internal.)

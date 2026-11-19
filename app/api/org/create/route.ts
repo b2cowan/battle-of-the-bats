@@ -15,6 +15,9 @@ import { slugifyOrgName } from '@/lib/utils';
 import { requireAcceptance } from '@/lib/legal-acceptance';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { hasLiveInvitation } from '@/lib/invite-reconciliation';
+import { paidDoorOf, parseStartPaidPlan } from '@/lib/start-door';
+import { isPaidDoorOpen } from '@/lib/start-plan-server';
+import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
 
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
@@ -59,7 +62,7 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }
     // Nobody starts an organization without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch,
-    // the Founding Season comp included. Off (production until 6.7): passes, nothing read.
+    // the Founding Season comp included. Live since step 6.7 (2026-11-17, `lib/legal-pages-switch.ts`).
     const terms = await requireAcceptance(user);
     if (!terms.ok) return terms.response;
 
@@ -87,10 +90,39 @@ export const POST = withObservability(async (req: Request) => {
       );
     }
 
-    const { orgName, orgSlug } = await req.json().catch(() => ({}));
+    const { orgName, orgSlug, startPlan: rawStartPlan } = await req.json().catch(() => ({}));
+    // A paid door (On-sale pages S2): Start a club sends `club` or `club_large`, Start a league season `league`. The
+    // organization is still made on the free Tournament plan, with NO Founding comp (Ask 14), and remembers the plan
+    // (organizations.start_plan) for the plan step, an abandoned checkout and the wait after Stripe.
+    const startPlan = rawStartPlan === undefined || rawStartPlan === null ? null : parseStartPaidPlan(rawStartPlan);
+    if (rawStartPlan !== undefined && rawStartPlan !== null && !startPlan) {
+      return NextResponse.json({ error: 'Invalid plan.' }, { status: 400 });
+    }
+    const paidDoor = startPlan ? paidDoorOf(startPlan) : null;
+    const nameWord = paidDoor === 'club' ? 'club' : paidDoor === 'league' ? 'league' : 'organization';
     const normalizedOrgName = typeof orgName === 'string' ? orgName.trim() : '';
     if (!normalizedOrgName) {
-      return NextResponse.json({ error: 'Enter an organization name.' }, { status: 400 });
+      return NextResponse.json({ error: paidDoor === 'club' ? 'Enter a club name.' : paidDoor === 'league' ? 'Enter a league name.' : 'Enter an organization name.' }, { status: 400 });
+    }
+    if (paidDoor) {
+      // The door is on sale, read from the live gate (the page shows the interest form while it is closed; this holds when
+      // the page is bypassed or the gate closed between the two).
+      if (!(await isPaidDoorOpen(paidDoor))) {
+        return NextResponse.json({ error: 'This plan is not open for sign-up yet.', code: 'plan_not_on_sale' }, { status: 403 });
+      }
+      // Trap D: a coach's own Coaches Portal does not count as a real organization (above), so a Premium coach would
+      // otherwise make a second organization here and strand their team outside it. Their club starts in place, from their
+      // portal's Plan & billing (the "Start your club" window), which keeps the team. The page sends them there first.
+      if (paidDoor === 'club') {
+        const portal = await getActiveOwnedTeamWorkspace(user.id);
+        if (portal) {
+          return NextResponse.json({
+            error: 'Your Coaches Portal becomes your club, with your team in it. Start your club from your portal’s Plan & billing.',
+            code: 'start_club_in_place',
+            href: `/${portal.orgSlug}/coaches/billing`,
+          }, { status: 409 });
+        }
+      }
     }
 
     // Public URL is auto-generated from the org name (the user refines it later in
@@ -110,9 +142,15 @@ export const POST = withObservability(async (req: Request) => {
 
     const org = await createOrganization(normalizedOrgName, slug, 'tournament');
     if (!org) {
-      return NextResponse.json({ error: 'Failed to create organization. The name or URL may already be taken.' }, { status: 400 });
+      return NextResponse.json({ error: `Failed to create your ${nameWord}. The name or URL may already be taken.` }, { status: 400 });
     }
     orgId = org.id;
+    if (startPlan) {
+      // Part of the door's promise: without it the plan step and the return from Stripe would treat a club as a tournament
+      // organization, so a failed write undoes the creation (the catch below deletes the organization).
+      const { error: startPlanError } = await supabaseAdmin.from('organizations').update({ start_plan: startPlan }).eq('id', org.id);
+      if (startPlanError) throw startPlanError;
+    }
 
     const member = await createOrganizationMember(org.id, user.id, 'owner');
     if (!member) {
@@ -128,7 +166,7 @@ export const POST = withObservability(async (req: Request) => {
     // is open — and after it, when the ACCOUNT was made by the close and this is the organization its Run a tournament
     // sign-up came for (A5 + edge (a), 2026-10-19; the one rule, lib/founding-season.ts). Non-fatal — creation
     // succeeds even if this insert fails.
-    if (foundingSeasonOfferFor(user, 'organization')) {
+    if (!startPlan && foundingSeasonOfferFor(user, 'organization')) {
       try {
         await ensureFoundingSeasonCompPeriod(org.id, 'system', `Founding Season — Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`);
       } catch (compErr) {
@@ -137,7 +175,7 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     // Account-first (Part 2): the organization is made, so Home's waiting workspace has done its job.
-    await clearStartDoor(user.id, ['organization']);
+    await clearStartDoor(user.id, paidDoor ? [paidDoor] : ['organization']);
 
     return NextResponse.json({ ok: true, orgSlug: org.slug });
   } catch (err) {

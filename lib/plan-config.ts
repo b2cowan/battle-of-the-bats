@@ -177,8 +177,11 @@ export function gatedPlanNote(planKey: OrgPlan): string {
   return planKey === 'league' ? 'Built, but not open for sign-up.' : 'Not open for sign-up yet.';
 }
 
-/** The line that replaces "Join early access for launch updates" beside an interest door. */
-export const GATED_PLAN_INTEREST_LINE = "Tell us you're interested and we'll let you know when it opens.";
+/**
+ * The line beside an interest door. It promises no email: the interest form's updates box opens unticked and only a
+ * tick is consent (owner ruling 2026-11-19, `/legal`'s sentence; the interest window's intro reads it too).
+ */
+export const GATED_PLAN_INTEREST_LINE = "Tell us you're interested. Tick the box on the form if you'd like an email when it opens.";
 
 /**
  * The one sentence naming the closed programme plans together, read from the live gate: "Club is coming

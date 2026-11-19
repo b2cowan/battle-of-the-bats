@@ -225,6 +225,55 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
 - **Screens:** `/start`, `/start/club`, `/start/league`, the account step, the name step, the plan step (new variant),
   the billing address screen, the payment return, Home's waiting card.
 - **Reviews:** `/review` high-risk tier (money, accounts, terms acceptance); `/legal` on the plan step's promises.
+- **Built 2026-11-19** (prompt `CLUB_ON_SALE_S2_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S2_WALK.html`, Owner QA Ledger §545). Not yet
+  committed (the owner's yes). What the build found and decided, against the plan above:
+  - **`startup_tasks` does not exist** on either database (mig 026 was never applied; the code ignores the missing column, which
+    is also why a cancelled checkout opened New tournament). The intended plan lives in a new column instead,
+    **`organizations.start_plan`** (mig 508, owner ruling 2026-11-19 "New field on the organization"), written by
+    `/api/org/create`'s new `startPlan`, read by `lib/start-plan-server.ts`, cleared by the webhook when a paid plan lands. Applied
+    to dev 2026-11-19; **production must have it before the promote** (runbook Step 3).
+  - **`previewClubCheckout` cannot serve trap B** (it takes only the two Club bands and only runs on the Premium→Club path). The
+    plan step reads `/api/billing/start-plan`, and checkout and the step share one rule, `trialDaysAfterHistory` (lib/start-door.ts).
+  - **The Terms are already live in dev's code** (`LEGAL_PAGES_PUBLISHED` true since 2026-11-17, `e5be7d3b5`; production until
+    that promote reads false). "Fail visibly" is four layers (`/legal` S2 review): checkout refuses the three plans on a live key
+    while the legal pages are off (`legal_pages_unpublished`); the census tests list the new routes; a guard fails the build if the
+    switch is off while the doors exist; the flip runbook's new Step 3b.
+  - **League door:** `/start/league` sells League Plus while it is on sale; the free League starter shows only while League Plus
+    is closed and `LEAGUE_STARTER_BETA` is on (so on dev it is reached with "show as closed").
+  - **Trap D:** an owner of a real organization goes to that organization's own plan step if a paid door made it and it is still
+    free, else to its Plan & billing; a member who is not an owner goes to their usual landing; a Premium coach (Start a club only)
+    to their portal's Plan & billing. `/api/org/create` enforces the organization and portal halves itself.
+  - **The wait** reuses the Coaches Portal return's card (`StartPlanSetup`), keyed on Stripe's session id
+    (`?setup=1&door=…&session_id={CHECKOUT_SESSION_ID}`); backing out of Stripe returns to `?choosePlan=1`.
+  - **Proved on dev in Stripe test mode** (a probe, 2026-11-19): Club, Club · Association and League Plus purchases end to end
+    (plan, trialing, 90/90/30-day trials, prices, an acceptance row each), the back-out and the sign-in resume, Québec stopped before
+    Stripe, both signed-in owners, the closed state, and the wait forced to show (dev's deployed webhook usually lands the plan
+    before the browser returns). All throwaway accounts, organizations and Stripe customers deleted, proved by search. **Not
+    proved:** the Premium-coach redirect (no fixture coach outside a club) — walk step G3.
+  - **Reviews:** `/billing` (Part 0), `/legal` (`docs/agents/legal/ON_SALE_PAGES_S2_REVIEW.md`), `/accounting`
+    (`docs/agents/accounting/START_DOORS_CHECKOUT_REVIEW.md`: no change to what is charged or recorded; the no-second-trial line
+    gained "plus applicable taxes"), `/review` high-risk (four lenses; seven confirmed findings fixed, six recorded in the walk's
+    call C5 and below), `/design` on the screens.
+  - **Recorded, not fixed:** two tabs naming a club at once can make two organizations (Run a tournament has the same gap);
+    `/api/billing/move` has no Terms-off refusal (dead today; S4's path); a hung plan-step read stays blank; a reopened Founding
+    window would let a door organization pick Tournament Plus free; `getPlanGatingMap` is read several times per request.
+  - **Simplify + docs pass 2026-11-19** (prompt `CLUB_ON_SALE_S2_SIMPLIFY_DOCS_PROMPT.md`), nothing a visitor sees changed:
+    the two paid-door forms became one (`StartPaidDoorForm.tsx`; `StartClubForm` / `StartLeaguePlusForm` deleted);
+    `StartDoorForm`'s per-door maps folded into one `DOOR_COPY` entry per door (`account`, `signup`, `pick`); the two plan
+    steps share `PlanStepParts.tsx` (start button, Compare every plan); `PAID_DOOR_STEPS`, `openPaidDoorPlans`,
+    `isCompletedCheckoutOf`, `planTermsTrial` and `isLeagueDoorOpen` (start menu + Home's card) each hold a rule written
+    twice before; the plan step's offer reads the gate, the trial overrides (once) and Stripe's history together; the
+    paid plan step's "Go to Home" is a `Link` (lint). `/review` re-review of the changed hunks: equivalent, no finding.
+    Help (true in both gate states, not gated): org "How to set up your club" (the Start a club steps, the wait, the
+    back-out), Club plan & billing (address step, the plan step's trial line), house-league Plans and limits (the
+    League Plus start, conditional on it being open), coaches' Plan & billing FAQ (a Premium coach on Start a club is
+    sent to Start your club), staff Plans & pricing (gating opens the start pages). Walk §545 steps A1 and I3 re-worded
+    to the no-Free/Paid-pill ruling another session applied to `/start` the same day (republished v2); that session's
+    page change also broke `on-sale-doors-s2.test.ts`'s pill count, updated here. **Listed, not done:** a request-scoped
+    cache for `getPlanGatingMap` (shared, outside S2); one Stripe-return session reader shared with the Coach Premium
+    return; one poll interval shared by the three setup waits; the wait not blocking on the offer read when `?door=` is
+    present (a visible speed-up); a shared helper for the two door pages' signed-in branch (the S2 page tests stub
+    `start-plan-server` by name).
 
 ### S3 — The pages' open state (depends on S1 + S2 + the words ruled)
 
@@ -251,6 +300,17 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
   line in `CLUB_ON_SALE_COPY.md` switches on the gate.
 - The interest form follows the gate (Ask 5): offered only for a closed plan; with all three open it appears on no
   public page; its own closed-state words fixed.
+- **⚖ One place for the status pill (owner 2026-11-19).** Today the same pill sits in four places: above the name on
+  the `/pricing` plan cards, under the price on the `/for-clubs` and `/for-leagues` plan cards, top-right on the home
+  doors, top-left above the title on the home role cards. Nobody chose that; each page placed it itself. **Rule: the
+  status pill sits on the card's first line, on the right when the card has a small label on the left** (the home doors
+  already do this). Every card S3 rebuilds follows it, open and closed. Check the drawings against this rule BEFORE
+  building, and correct a drawing that breaks it rather than building it as drawn.
+- **League Plus's closed words (owner 2026-11-19, words through `/marketing`).** "Not open yet" and "built, but not open
+  for sign-up… the clearest signal we have for when to open it" came from 2026-09-28, when League Plus was parked with
+  no release. Since 2026-11-06 (`BUSINESS_DECISIONS.md`) it goes on sale WITH Club, so that reason is gone. Until the
+  flip, League Plus says what Club says ("Coming soon"); `/marketing` writes its closed sentence. The tag helper, its
+  tests and the strip's group-tag rule (W6) simplify with it, since both plans then wear one word.
 - **Screens:** `/pricing`, home, `/for-clubs`, `/for-leagues`, `/for-tournament-organizers`, `/for-coaches` (Club line
   only), the interest form, the public nav and the Get started menu.
 
@@ -265,6 +325,19 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
 - `/for-leagues` and `/for-clubs`: one picture of the real screen in each of the four steps / four modules (W67). The
   pictures are shot from a fixture club built for the purpose with invented names (never the live demo clubs, never a
   production row), by a capture script kept with the build so `/demos` can re-shoot them each release cycle.
+  - **⚖ Owner, 2026-11-19: before any picture is built, show him BOTH options side by side and he chooses** — (A) real
+    screenshots of the product, (B) drawn pictures of the same screens. His reason: our screenshots have historically
+    looked much worse than the drawings, and if the drawings look much better he will go that route. (His point is that
+    the drawings look better than our SCREENSHOTS of the product, not better than the product.) The comparison must
+    be fair to both: (A) is the product captured at its best (tight crop on the part that sells, 2× pixels, a fixture
+    with realistic data, no browser chrome, phone shots where the screen reads better narrow), not a full-page grab;
+    (B) is drawn FROM the real screen (same layout, same words, same controls; cleaner, never a feature the product lacks).
+    Same eight screens, both options, at true size on the page they will sit in.
+  - **Refresh on a schedule, either way (owner 2026-11-19):** the pictures are rotated quarterly or twice a year to keep
+    the pages fresh, whether or not the screens changed, so both options carry the same periodic job. The cadence is
+    decided at S3b. The one difference left: between refreshes, a screen that changes is caught by re-running the
+    screenshot script, while a drawing needs someone to notice. W67's caption ("These are the product's own screens…")
+    fits (A); (B) needs its own wording and a `/legal` read.
 - `/for-leagues`, `/for-clubs`: "Questions a board asks" before the bottom call to action (W70); its first four answers
   also join the `/pricing` FAQ, which is grouped under three small headings. Answer 6 (a year's cost) shows only while
   the plan is open. **Ships only with the Terms and Privacy Policy live on production** (the answer links to it), and
@@ -449,6 +522,23 @@ Also settled on 2026-11-18 by the owner's questions, inside Ask 33: once its pla
 and /for-leagues has one button ("Start free with Tournament" leaves; W30, W36). And noted, not changed: the billing
 address screen stays the second half of step 3 with a three-label step line (the 2026-11-04 ruling; the owner was told
 one of its two reasons does not apply to a paid-only door and did not ask for a fourth label).
+
+**⚖ RULED 2026-11-19 (owner, from the S1 walk, §543), each as proposed:**
+
+- **The interest line** when the updates box is unticked: "Tell us you're interested and we'll let you know when it
+  opens." (and the interest window's intro line, which made the same promise, and `/pricing`'s "and we'll let you know
+  when it opens") becomes `/legal`'s sentence, **"Tell us you're interested. Tick the box on the form if you'd like an
+  email when it opens."** One spelling everywhere; built first in S2.
+- **A team move ends the coach's own plan at once with no refund** (`lib/team-ownership-transfer.ts`; Terms 2026-11-17
+  §8 promises a cancelled plan runs to the end of the paid period): (a) say it where the coach says yes to the move —
+  their own plan ends today and the unused part of what they paid is not refunded, with the date it would have run to;
+  (b) one Terms sentence carving the move out, drafted by `/legal` as a Terms-version change (Terms are published; not a
+  quiet edit); (c) keep "you won't be charged for your own Coaches Portal again" (true) and show the "everything comes
+  with it" lines (coach help, the Plan & billing Club card, settings) only while Club is open; (d) a prorated refund is a
+  separate, later decision. Not built in S2 (they are the team-move flow's screens, not the doors); the owner chooses
+  the session.
+- **The tax words stay inside Tournament Plus's trial sentence**, as S1 built it (one sentence from one function, for
+  all four plans).
 
 **What the rulings start (in order of dependency):** the records they change (`/strategy` log and Facts doc,
 `/marketing` canon), then S1. Build prompt: `CLUB_ON_SALE_S1_BUILD_PROMPT.md`. Agreement to the recommendations is not a

@@ -395,6 +395,7 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'app/api/admin/org-settings/two-step/overview/route.ts': ['live-row', "two-step Part 4 Overview notice: a coach's own team workspace (isTeamWorkspaceOrg) gets no notice; the org row is read fresh per request, so a flipped club reads as a club"],
   'lib/team-workspace-entitlements.ts': ['live-row', 'the entitlement mapper; re-exports the one definition'],
   'lib/legal-acceptance-plans.ts': ['live-row', "the Terms screen's cancel door (6.3): reads the row fresh and hands the tag to getBillingHref, so a flipped club's door is its club billing page"],
+  'lib/start-plan-server.ts': ['live-row', "On-sale pages S2: the paid doors' signed-in owner check finds the organization its owner already runs and excludes a Coaches Portal (account_kind team_workspace / plan team), which is not a real organization; read fresh per request, so a portal that has flipped into a club is found as the club and sent to its own billing page"],
   'lib/team-workspace-provisioning.ts': ['portal-only', 'CREATES a workspace organization (account_kind team_workspace, status active); a club is never created here'],
   'lib/team-checkout.ts': ['tombstone-aware', 'portal checkout and syncTeamWorkspaceSubscription, which excludes a tombstone (this build); the reactivation guard rejects a flipped org'],
   'lib/team-org-billing.ts': ['portal-only', 'the org_team_addon billing mode (a club adding a team); keyed on the workspace, never on a club that was one'],

@@ -29,6 +29,12 @@ import {
 import type { BillingLocation } from '@/lib/billing-location';
 import { requireAcceptance } from '@/lib/legal-acceptance';
 import { BUYER_USER_META, COMEBACK_META } from '@/lib/plan-growth';
+import { legalPagesMode } from '@/lib/legal-pages-switch';
+import { stripeKeyIsTest } from '@/lib/stripe-mode';
+import { PAID_DOOR_PLANS, paidDoorOf, parseStartPaidPlan, trialDaysAfterHistory, type StartPaidPlan } from '@/lib/start-door';
+import { readStartPlan, startPlanCancelPath, startPlanSuccessPath } from '@/lib/start-plan-server';
+
+const isStartPaidPlan = (plan: unknown): plan is StartPaidPlan => parseStartPaidPlan(plan) !== null;
 
 /** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
 const PLUS_WELCOME_DELAY_DAYS = 1;
@@ -97,6 +103,17 @@ export const POST = withObservability(async (req: Request) => {
   if (!terms.ok) return terms.response;
 
   const planKey = typeof body.planKey === 'string' ? body.planKey : undefined;
+  // FAIL VISIBLY, NOT QUIETLY (On-sale pages S2, `/legal` review 2026-11-19, docs/agents/legal/ON_SALE_PAGES_S2_REVIEW.md):
+  // with the legal pages off, requireAcceptance passes everyone, so a live sale of Club or League Plus would take money
+  // with no Terms tick and no record. Refused for the three plans the new doors sell, on a live key only (a test key is
+  // dev); Tournament Plus and the Coaches Portal, on sale before the Terms existed, are not stopped by it.
+  if (isStartPaidPlan(planKey) && legalPagesMode() === 'off' && !stripeKeyIsTest(process.env.STRIPE_SECRET_KEY)) {
+    console.error(`[create-checkout] refused ${planKey}: the legal pages are off on a live key`);
+    return new Response(JSON.stringify({
+      error: 'We can’t start a plan right now. Nothing has been charged. Please try again later or email support@fieldlogichq.ca.',
+      code: 'legal_pages_unpublished',
+    }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+  }
   const returnTo = typeof body.returnTo === 'string' ? body.returnTo : undefined;
   const requestedBillingCycle = body.billingCycle;
   const billingCycle = normalizeBillingCycle(requestedBillingCycle);
@@ -178,7 +195,17 @@ export const POST = withObservability(async (req: Request) => {
   // Paying for the club lands on the CLUB's Plan & billing address (it exists on both sides of the flip — see
   // lib/workspace-upgrade.ts), carrying the in-place marker. LEAVING the payment page returns to where the coach was: nothing
   // changed, so their free days are exactly as they were.
-  const successReturnTo = inPlaceClubName ? inPlaceReturnPath(auth.org.slug) : safeReturnTo;
+  // A paid door's organization (On-sale pages S2) buying the plan it was made for: Stripe returns to the wait, which holds
+  // until the webhook has written the plan (trap A — the page would otherwise read `tournament` and open New tournament),
+  // and backing out lands on the same Club or League Plus plan step (an abandoned checkout keeps its plan).
+  const startPlan = !inPlaceClubName && ownPlanOf(auth.org) === 'tournament' && isStartPaidPlan(planKey)
+    ? await readStartPlan(auth.org.id)
+    : null;
+  const doorCheckout = !!startPlan && PAID_DOOR_PLANS[paidDoorOf(startPlan)].includes(planKey as StartPaidPlan);
+  const successReturnTo = inPlaceClubName ? inPlaceReturnPath(auth.org.slug)
+    : doorCheckout && startPlan ? startPlanSuccessPath(auth.org.slug, paidDoorOf(startPlan))
+    : safeReturnTo;
+  const cancelReturnTo = doorCheckout ? startPlanCancelPath(auth.org.slug) : safeReturnTo;
   const isOnboardingPlanSelection = safeReturnTo.includes('/admin/onboarding');
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');
 
@@ -410,9 +437,8 @@ export const POST = withObservability(async (req: Request) => {
   // they used, so it does not count. (Asked of Stripe only when there is a trial to withhold.)
   // GST/HST 6.4: also the purchase email's "Welcome back" (a paid comeback's one email, ruling Q3), so it is always asked.
   const returning = await hadSubscriptionBefore(customerId);
-  const trialDays = mergedConfig.trialDays > 0 && !returning
-    ? mergedConfig.trialDays
-    : 0;
+  // The one rule the paid doors' plan step also shows before checkout (trap B, lib/start-plan-server.ts).
+  const trialDays = trialDaysAfterHistory(mergedConfig.trialDays, returning);
 
   await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
 
@@ -434,8 +460,10 @@ export const POST = withObservability(async (req: Request) => {
       metadata,
     },
     metadata,
-    success_url: appendSuccess(`${appUrl}${successReturnTo}`),
-    cancel_url: `${appUrl}${safeReturnTo}`,
+    // A door's wait carries Stripe's own session id (its `{CHECKOUT_SESSION_ID}` placeholder), so it can say at once when
+    // there is no payment behind the page; every other return keeps its `success=1`.
+    success_url: doorCheckout ? `${appUrl}${successReturnTo}` : appendSuccess(`${appUrl}${successReturnTo}`),
+    cancel_url: `${appUrl}${cancelReturnTo}`,
   });
 
   return new Response(JSON.stringify({ url: session.url }), {

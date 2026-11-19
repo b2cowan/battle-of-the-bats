@@ -4,6 +4,7 @@ import { connection } from 'next/server';
 import { supabaseAdmin } from './supabase-admin';
 import { PLAN_CONFIG } from './plan-config';
 import type { OrgPlan } from './types';
+import { paidDoorOpen, type PaidDoor } from './start-door';
 
 export type PlanGatingMap = Record<OrgPlan, boolean>; // true = gated (early_access)
 
@@ -84,4 +85,22 @@ async function readGatingRows(): Promise<PlanGatingMap> {
  */
 export async function isCoachesPortalPurchasable(): Promise<boolean> {
   return !(await getPlanGatingMap()).team;
+}
+
+/**
+ * "Is this paid door on sale?" (On-sale pages S2): Start a club with either Club band, Start a league season with League
+ * Plus — the rule is `paidDoorOpen` (lib/start-door.ts). Here, beside the other named gate questions, so the layouts'
+ * Get started menu can ask it without loading the doors' server half (lib/start-plan-server.ts re-exports it).
+ */
+export async function isPaidDoorOpen(door: PaidDoor): Promise<boolean> {
+  return paidDoorOpen(await getPlanGatingMap(), door);
+}
+
+/**
+ * Does /start/league open at all? While League Plus is on sale, or while the free League starter's flag is on (the flag
+ * governs only the free floor). The Get started menu and Home's waiting card ask this one question; the page itself
+ * also needs to know WHICH start it shows, so it asks the two halves.
+ */
+export async function isLeagueDoorOpen(): Promise<boolean> {
+  return process.env.LEAGUE_STARTER_BETA === 'true' || (await isPaidDoorOpen('league'));
 }

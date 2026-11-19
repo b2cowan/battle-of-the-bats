@@ -603,6 +603,21 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
           const previousPlan = currentOrg?.plan_id as OrgPlan | undefined;
           const previousStatus = currentOrg?.subscription_status as string | null | undefined;
 
+          // On-sale pages S2: a paid door's remembered plan (organizations.start_plan, mig 508) has done its job once a paid
+          // plan lands; left set, a club that later lapsed back to free would be sent through the door's plan step again
+          // (/review 2026-11-19). Its own statement, AFTER the plan write, so it can never fail that write; best effort, and
+          // a database without the column (production before mig 508) is not an error.
+          if (planKey !== 'tournament') {
+            const { error: startPlanError } = await supabaseAdmin
+              .from('organizations')
+              .update({ start_plan: null })
+              .eq('id', updatedOrg.id)
+              .not('start_plan', 'is', null);
+            if (startPlanError && startPlanError.code !== '42703' && startPlanError.code !== 'PGRST204') {
+              console.error('[billing-webhook] start_plan clear failed (non-fatal):', startPlanError);
+            }
+          }
+
           // The growth half of the Billing events card: a first subscription, or a paying org moving up.
           // Written FIRST, before the side effects below: if one of them throws, Stripe retries this event,
           // and the retry finds the org already updated, so the move would never be classified again.

@@ -24,7 +24,7 @@ import { reconcilePendingInvitesForUser, listPendingInvitesForUser, withInvitati
 import { listPendingClubCoachInvitesForEmail } from '@/lib/assistant-invites';
 import { readStartDoor } from '@/lib/start-door';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
-import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { getPlanGatingMap, isLeagueDoorOpen, isPaidDoorOpen } from '@/lib/plan-gating-server';
 import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
 import { getSignedInUser } from '@/lib/two-step-session';
 
@@ -132,15 +132,18 @@ export const GET = withObservability(async () => {
   // already in a real organization (the pages' and /api/league/create's and /api/org/create's own gates). The finish
   // card's no-workspace rule used to hide those last two.
   const start = readStartDoor(user.user_metadata);
-  const makesAnOrganization = start?.door === 'league' || start?.door === 'organization';
-  const leagueBetaOff = start?.door === 'league' && process.env.LEAGUE_STARTER_BETA !== 'true';
+  const makesAnOrganization = start?.door === 'league' || start?.door === 'organization' || start?.door === 'club';
+  // /start/league opens while League Plus is on sale or the free League starter's flag is on; /start/club only while a Club
+  // band is on sale (On-sale pages S2). A closed door's card would lead to an interest page, so it hides.
+  const leagueClosed = start?.door === 'league' && !(await isLeagueDoorOpen());
+  const clubClosed = start?.door === 'club' && !(await isPaidDoorOpen('club'));
   // Coach Premium (Part 3): /coaches/start shows an interest form while the Premium checkout is closed, and its checkout
   // turns away an account that already owns a live Premium portal — the card would lead to neither.
   // A read that fails hides the card: it is a way in, never the gate (the checkout refuses either case itself).
   const premiumOpens = start?.door !== 'premium' || await Promise.all([getPlanGatingMap(), getActiveOwnedTeamWorkspace(user.id)])
     .then(([gating, portal]) => !gating.team && !portal, () => false);
   const stepOpens = premiumOpens && (!makesAnOrganization || (
-    !leagueBetaOff && pendingInvites.length === 0 && !(await userBelongsToOtherRealOrg(user.id))
+    !leagueClosed && !clubClosed && pendingInvites.length === 0 && !(await userBelongsToOtherRealOrg(user.id))
   ));
   const waitingWorkspace = start && stepOpens ? { door: start.door } : null;
 

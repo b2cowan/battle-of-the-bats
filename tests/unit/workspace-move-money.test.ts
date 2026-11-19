@@ -628,8 +628,12 @@ describe('4 · a coach with no subscription buys Club on the same workspace', ()
     const page = readCode('app/[orgSlug]/admin/org/billing/page.tsx');
     assert.match(page, /isTeamWorkspaceOrg\(auth\.org\)[\s\S]*redirect\(pathWithSearchParams\(getBillingHref\(auth\.org, \{ host: 'coach', purpose: 'return' \}\), await searchParams\)\)/);
     const checkout = readCode('app/api/billing/create-checkout/route.ts');
-    assert.match(checkout, /const successReturnTo = inPlaceClubName \? inPlaceReturnPath\(auth\.org\.slug\) : safeReturnTo;/);
-    assert.match(checkout, /success_url: appendSuccess\(`\$\{appUrl\}\$\{successReturnTo\}`\),\s*cancel_url: `\$\{appUrl\}\$\{safeReturnTo\}`,/, 'cancel is unchanged: the coach keeps what they had');
+    // The in-place club return outranks everything. A paid door's checkout (On-sale pages S2) is a different customer — a brand-new
+    // organization on the free plan — and its own return and cancel paths are read only when the move is NOT an in-place club.
+    assert.match(checkout, /const successReturnTo = inPlaceClubName \? inPlaceReturnPath\(auth\.org\.slug\)\s*: doorCheckout && startPlan \? startPlanSuccessPath\(auth\.org\.slug, paidDoorOf\(startPlan\)\)\s*: safeReturnTo;/);
+    assert.match(checkout, /const startPlan = !inPlaceClubName && ownPlanOf\(auth\.org\) === 'tournament' && isStartPaidPlan\(planKey\)/, 'a coach moving into the club is never a paid door');
+    assert.match(checkout, /const cancelReturnTo = doorCheckout \? startPlanCancelPath\(auth\.org\.slug\) : safeReturnTo;/, 'cancel is unchanged for everyone but a paid door: the coach keeps what they had');
+    assert.match(checkout, /success_url: doorCheckout \? `\$\{appUrl\}\$\{successReturnTo\}` : appendSuccess\(`\$\{appUrl\}\$\{successReturnTo\}`\),\s*cancel_url: `\$\{appUrl\}\$\{cancelReturnTo\}`,/);
     assert.match(checkout, /url: appendSuccess\(`\$\{appUrl\}\$\{successReturnTo\}`\),\s*applied: true,\s*planKey,\s*billingCycle,\s*restoredCount/, 'the dev checkout returns the same place');
   });
 
@@ -645,7 +649,9 @@ describe('4 · a coach with no subscription buys Club on the same workspace', ()
 
   it('the trial: an ordinary Club checkout still withholds it from a customer that ever held a subscription — and cannot see another customer’s history', () => {
     const checkout = readCode('app/api/billing/create-checkout/route.ts');
-    assert.match(checkout, /const returning = await hadSubscriptionBefore\(customerId\);[\s\S]{0,80}mergedConfig\.trialDays > 0 && !returning/);
+    assert.match(checkout, /const returning = await hadSubscriptionBefore\(customerId\);[\s\S]{0,200}const trialDays = trialDaysAfterHistory\(mergedConfig\.trialDays, returning\);/);
+    // the one rule, shared with the paid doors' plan step so a card never promises a trial checkout withholds (trap B)
+    assert.match(readCode('lib/start-door.ts'), /return configuredTrialDays > 0 && !returning \? configuredTrialDays : 0;/);
     assert.match(readCode('lib/plan-move.ts'), /subscriptions\.list\(\{ customer: customerId/, 'scoped to ONE Stripe customer — the limit reported in the hand-off');
   });
 });

@@ -115,7 +115,7 @@ const UPGRADE_BRIDGES = [
   {
     headline: 'Running a club with rep teams, house league, and tournaments?',
     // W12 closed: the canon sentence plus the interest line.
-    body: `Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. The Premium Coaches Portal is included for your whole coaching staff — every team, no per-team fee — priced by club size (up to 15 teams, or up to 30 on Club · Association). Start directly on Club — you don't need to have been on League Plus first. ${gatedPlanSentence('club')} ${GATED_PLAN_INTEREST_LINE}`,
+    body: `Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. The Premium Coaches Portal is included for every coach on up to 15 teams, or up to 30 on Club · Association, with no per-team fee. House league teams are unlimited. Start directly on Club — you don't need to have been on League Plus first. ${gatedPlanSentence('club')} ${GATED_PLAN_INTEREST_LINE}`,
     from: null,
     to: null,
     label: 'Club executives',
@@ -179,6 +179,11 @@ const FAQS = [
     q: 'Is there a limit on how many staff accounts I can have?',
     // The free plan has no volunteers since the invite-only build (R7): the host and up to two staff enter every score.
     a: `Not on any paid plan. Tournament Plus, League Plus, and Club all include unlimited staff seats — add as many admins, schedulers, and volunteers as you need, and volunteers who score games or work the gate never count as seats. The free Tournament plan includes ${PLAN_CONFIG.tournament.seatLimit} staff seats, yours included: the people who run the event and enter its scores.`,
+  },
+  {
+    q: 'How does the team limit on Club work?',
+    // Decided 2026-11-19 (BUSINESS_DECISIONS.md): the limit counts teams with a Premium Coaches Portal, never a team label.
+    a: `The limit counts the teams you give a Premium Coaches Portal, whatever you call them: rep, select, all-star, travel. House league teams are unlimited. Archived teams and teams entered in your tournaments aren't counted.`,
   },
   {
     q: 'Is there a setup fee or onboarding cost?',
@@ -412,12 +417,12 @@ export default async function PricingPage() {
               <p className={kit.body}>
                 League Plus is focused on house league registration, divisions, seasons, public organization
                 pages, and registrar workflows. Club adds rep teams and accounting — plus a Premium Coaches
-                Portal for your whole coaching staff, every team included with no per-team fee — for
+                Portal for every coach on up to 15 teams, or up to 30 on Club · Association, with no per-team fee — for
                 organizations that need the complete operating system.
               </p>
               <p className={kit.body}>
-                If you want either plan, start on a live tournament plan now, or tell us you&apos;re interested
-                and we&apos;ll let you know when it opens.
+                If you want either plan, start on a live tournament plan now, or tell us you&apos;re interested.
+                Tick the box on the form if you&apos;d like an email when it opens.
               </p>
               <EarlyAccessModalTrigger
                 className={`${kit.btn} ${kit.btnSecondary}`}
@@ -445,7 +450,7 @@ export default async function PricingPage() {
                 },
                 {
                   label: interestButtonLabel(),
-                  body: 'Share your details and which plans you want. We\'ll let you know when they open — no commitment.',
+                  body: 'Share your details and which plans you want — no commitment. Tick the box on the form if you\'d like an email when they open.',
                 },
               ].map(s => (
                 <div key={s.label} className={`${kit.card} ${kit.cardFlat} ${kit.cardEdge}`}>

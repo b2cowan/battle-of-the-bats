@@ -429,7 +429,10 @@ describe('6 · Québec', () => {
   it('the address form shows the notice under Province when Québec is chosen, and never as an error', () => {
     const form = read('components/billing/BillingAddressFields.tsx');
     assert.ok(form.includes('const qcClosed = isClosedRegion(draft);'));
-    assert.match(form, /errors\.regionCode \? err\('regionCode'\) : qcClosed\s*\? <p id=\{id\('region-closed'\)\} className=\{styles\.amberLine\} role="status">\{BILLING_LOCATION_WORDS\.qcClosed\}<\/p>/);
+    assert.match(form, /errors\.regionCode \? err\('regionCode'\) : qcClosed\s*\? <p id=\{id\('region-closed'\)\} className=\{k\.notice\} role="status">\{BILLING_LOCATION_WORDS\.qcClosed\}<\/p>/);
+    // The notice wears each surface's own amber (On-sale pages S2, /design 2026-11-19): the window's, or the sign-up page's.
+    assert.match(form, /notice: styles\.amberLine \}/);
+    assert.match(form, /notice: styles\.amberLineStart \}/);
     // It never blocks the save: the form's own check is checkBillingLocation, which accepts Québec (above).
     assert.doesNotMatch(form, /qcClosed[^\n]*setErrors|qcClosed[^\n]*disabled/);
   });

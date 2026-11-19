@@ -73,7 +73,7 @@ describe('the markup in the warm look (a customised template)', () => {
 
 describe('the confirmation email’s next step (U6)', () => {
   it('a start door names its step 2 when the link returns there', () => {
-    for (const door of ['team', 'league', 'organization', 'premium'] as const) {
+    for (const door of ['team', 'league', 'organization', 'premium', 'club'] as const) {
       assert.equal(verificationNextStep({ door, next: startDoorLinkPath(door) }), door);
     }
   });
@@ -103,6 +103,7 @@ describe('the confirmation email’s next step (U6)', () => {
       league: 'Then you’ll name your league.',
       organization: 'Then you’ll name your organization and pick a plan.',
       premium: 'Then you’ll name your team and choose its sport.',
+      club: 'Then you’ll name your club and choose its plan.',
       registration: 'Then we’ll connect you to your team’s registration.',
       home: 'Then you’ll land on your Home page.',
       onward: 'Then you’re in.',

@@ -132,7 +132,8 @@
 }
 /* The live free doors (coach / free) wear the olive accent tile. */
 .cardIcon[data-accent='coach'],
-.cardIcon[data-accent='free'] {
+.cardIcon[data-accent='free'],
+.cardIcon[data-accent='paid'] {
   color: var(--home-olive);
   background: var(--home-olive-soft);
 }
@@ -155,7 +156,7 @@
   color: var(--home-dim);
 }
 
-/* Free pill = ink-on-lime (the pillOn treatment; raw lime never renders as text on warm). */
+/* The only pill left: a door that is not live yet — a quiet admin-blue tint. There is no Free / Paid pill (owner 2026-11-19). */
 .tag {
   font-family: var(--font-data); /* type-ok: plan chip */
   font-size: 0.55rem;
@@ -164,14 +165,9 @@
   text-transform: uppercase; /* type-ok: plan chip */
   border-radius: var(--home-radius-pill);
   padding: 0.16rem 0.5rem;
-  color: var(--home-ink);
-  background: var(--home-lime);
-  white-space: nowrap;
-}
-/* Not-yet-live doors: quiet admin-blue tint, never a lime "Free". */
-.tag[data-tone='soon'] {
   color: var(--home-blue);
   background: rgba(var(--home-blue-rgb), 0.12);
+  white-space: nowrap;
 }
 
 .cardTitle {

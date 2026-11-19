@@ -16,6 +16,7 @@ export const VERIFICATION_NEXT_STEP: Record<VerificationNextStep, string> = {
   league: 'Then you’ll name your league.',
   organization: 'Then you’ll name your organization and pick a plan.',
   premium: 'Then you’ll name your team and choose its sport.',
+  club: 'Then you’ll name your club and choose its plan.',
   registration: 'Then we’ll connect you to your team’s registration.',
   home: 'Then you’ll land on your Home page.',
   onward: 'Then you’re in.',

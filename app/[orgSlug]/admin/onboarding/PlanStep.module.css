@@ -102,6 +102,25 @@
 .error { margin-top: 0.75rem; }
 .external { flex: none; }
 
+/* The paid doors' plan step (PaidPlanStep, On-sale pages S2). The trial sentence sits under the tax line in the card's
+   secondary ink (it is a promise, not a note); the Terms sentence naming the club takes the paid-plan line's own size,
+   just above it. League Plus is one card in the 420px start column at every width. */
+.trial {
+  margin: 0.375rem 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--home-ink-soft);
+}
+.behalf {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--home-dim);
+}
+.choicesOne { display: grid; gap: 0.75rem; }
+
 @media (min-width: 900px) {
   .column { max-width: 900px; padding-top: 1rem; }
   /* The sub line keeps a reading measure on the wide column. */
@@ -113,4 +132,6 @@
   }
   /* The buttons line up across the two cards, at each card's foot: the list takes the spare height. */
   .points { flex: 1 0 auto; }
+  /* One plan (League Plus): the start column stays 420px, as on steps 1 and 2. */
+  .columnOne { max-width: 420px; }
 }

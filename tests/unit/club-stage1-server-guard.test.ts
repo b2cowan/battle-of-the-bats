@@ -218,7 +218,9 @@ describe('1b — the move between plans (Ask 4, D7) and the second-subscription 
 
   it('no second trial: checkout omits the trial for a customer who has had a subscription', () => {
     const src = read('app/api/billing/create-checkout/route.ts');
-    assert.match(src, /const returning = await hadSubscriptionBefore\(customerId\);[\s\S]{0,80}mergedConfig\.trialDays > 0 && !returning/);
+    assert.match(src, /const returning = await hadSubscriptionBefore\(customerId\);[\s\S]{0,200}const trialDays = trialDaysAfterHistory\(mergedConfig\.trialDays, returning\);/);
+    // the one rule, shared with the paid doors' plan step so a card never promises a trial checkout withholds (trap B)
+    assert.match(read('lib/start-door.ts'), /return configuredTrialDays > 0 && !returning \? configuredTrialDays : 0;/);
     assert.match(src, /\.\.\.\(trialDays > 0 \? \{ trial_period_days: trialDays \} : \{\}\)/);
   });
 

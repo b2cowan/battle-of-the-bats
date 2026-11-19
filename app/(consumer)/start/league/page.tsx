@@ -10,6 +10,9 @@ import { getAuthDestination } from '@/lib/auth-destination';
 import { startStepViewer } from '@/lib/start-door-server';
 import { hasLiveInvitation } from '@/lib/invite-reconciliation';
 import StartLeagueForm from './StartLeagueForm';
+import StartPaidDoorForm from '../StartPaidDoorForm';
+import { paidDoorPick, parseStartPricing, readStartDoor } from '@/lib/start-door';
+import { isPaidDoorOpen, paidDoorRedirect } from '@/lib/start-plan-server';
 import styles from '../start.module.css';
 import { gatedPlanTag, gatedPlanSentence, interestButtonLabel, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
 
@@ -18,14 +21,15 @@ export const metadata: Metadata = {
 };
 
 /**
- * /start/league — the Free League Starter on-ramp.
- *  - LEAGUE_STARTER_BETA on  → a real create path (StartLeagueForm) → the house-league
- *    onboarding wizard. The free floor caps at 1 season / 1 division / 8 teams.
- *  - LEAGUE_STARTER_BETA off → the express-interest waitlist (self-serve not live yet).
- * Unlisted capped beta: not linked from marketing until caps + first-value data are proven
- * (the /start picker also reflects the flag).
+ * /start/league — Start a league season, read from the live gate on every visit.
+ *  - LEAGUE PLUS ON SALE (On-sale pages S2) → the League Plus start (StartPaidDoorForm): account, the league's name,
+ *    then the one-card League Plus plan step, billing address and Stripe. Signed-in gates as Start a club
+ *    (`paidDoorRedirect`), without the coach one: a coach's league is a separate organization, and no team moves.
+ *  - else LEAGUE_STARTER_BETA on → the Free League Starter (StartLeagueForm) → the house-league onboarding wizard. The
+ *    free floor caps at 1 season / 1 division / 8 teams. The flag governs only this free floor.
+ *  - else → the express-interest page (W54).
  */
-export default async function StartLeaguePage({ searchParams }: { searchParams: Promise<{ league?: string | string[]; confirmed?: string | string[] }> }) {
+export default async function StartLeaguePage({ searchParams }: { searchParams: Promise<{ league?: string | string[]; confirmed?: string | string[]; plan?: string | string[]; billing?: string | string[] }> }) {
   // Back from the verification link: the flag, and — on a link sent before account-first (2026-10-18), for one
   // release — the league name typed before it.
   const sp = await searchParams;
@@ -34,6 +38,17 @@ export default async function StartLeaguePage({ searchParams }: { searchParams: 
   const user = await getAuthUserCached();
   if (user?.email && (await isPlatformAdminEmail(user.email))) {
     redirect('/platform-admin');
+  }
+
+  if (await isPaidDoorOpen('league')) {
+    const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+    const linkPick = paidDoorPick('league', parseStartPricing(first(sp.plan), first(sp.billing)));
+    if (!user?.email) return <StartPaidDoorForm door="league_plus" viewer={null} pricing={linkPick} />;
+    const elsewhere = await paidDoorRedirect({ id: user.id, email: user.email }, 'league');
+    if (elsewhere) redirect(elsewhere);
+    const remembered = readStartDoor(user.user_metadata);
+    const pricing = linkPick ?? (remembered?.door === 'league' ? remembered.pricing ?? null : null);
+    return <StartPaidDoorForm door="league_plus" viewer={await startStepViewer(user)} confirmed={confirmed} pricing={pricing} />;
   }
 
   if (process.env.LEAGUE_STARTER_BETA === 'true') {

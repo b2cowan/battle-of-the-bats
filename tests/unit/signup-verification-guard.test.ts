@@ -96,11 +96,11 @@ describe('every sign-up refuses a staff address', () => {
 });
 
 describe('the screens', () => {
-  it('the two /start forms: one account step that names its door, shows the block and keeps entries', () => {
+  it('every /start form: one account step that names its door, shows the block and keeps entries', () => {
     // Account-first (2026-10-18): the name moved to step 2, so the link carries the door, not the name. The full
     // shape is pinned in account-first-signup.test.ts.
     const step = readCode('app/(consumer)/start/StartDoorForm.tsx');
-    assert.match(step, /startDoor: door,/);
+    assert.match(step, /startDoor: copy\.account,/);
     assert.match(step, /setPassword\(''\);\s*setVerifyEmail\(emailNorm\);/);
     assert.match(step, /<VerifyEmailSent\s+tone="start"/);
     assert.match(step, /onChangeEmail=\{\(\) => \{ setVerifyEmail\(null\); setChangingEmail\(true\); \}\}/);
@@ -110,6 +110,8 @@ describe('the screens', () => {
     ] as const) {
       assert.match(readCode(f), new RegExp(`<StartDoorForm door="${door}"`));
     }
+    // the paid doors (On-sale pages S2) are the same one form, through their one create step
+    assert.match(readCode('app/(consumer)/start/StartPaidDoorForm.tsx'), /<StartDoorForm door=\{door\}/);
   });
   it('the coach join page: returns to itself and, back from the link with nothing to choose, links the registration', () => {
     const src = readCode('app/coaches/join/page.tsx');

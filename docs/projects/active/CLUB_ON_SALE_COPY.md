@@ -33,7 +33,7 @@ Every line has an id (W1, W2, ...). Each says what a visitor reads **today while
 | `{clubTrialLine}` | `clubTrialLine()` with the length checkout will use for Club and Club · Association |
 | `{leagueTrialLine}` | the same sentence with League Plus's own trial length (new, see W1) |
 | `{closedPlansLine}` | `closedProgramPlansSentence(gating)`: "Club is coming soon, and League Plus is built but not open for sign-up." (or whichever half is still true) |
-| `{interestLine}` | `GATED_PLAN_INTEREST_LINE`: "Tell us you're interested and we'll let you know when it opens." |
+| `{interestLine}` | `GATED_PLAN_INTEREST_LINE`: "Tell us you're interested. Tick the box on the form if you'd like an email when it opens." (owner ruling 2026-11-19, `/legal`'s sentence; it replaced "…and we'll let you know when it opens.", which promised an email the unticked box does not send. Every quotation of the old sentence below reads as this one.) |
 | `{support email}` | `FIELDLOGICHQ_CONTACT_EMAIL` |
 
 ---
@@ -69,6 +69,8 @@ plan's price carries none (canon, 2026-11-05: a price that cannot be bought is n
 
 **The two closed tags and sentences** stay as the canon has them: League Plus "Not open yet" / "League Plus is built, but not
 open for sign-up."; Club "Coming soon" / "Club is coming soon — it isn't open for sign-up yet.".
+**⚖ Superseded for League Plus (owner 2026-11-19):** League Plus goes on sale with Club (2026-11-06), so its "parked"
+words no longer fit. It wears "Coming soon" too; its closed sentence is `/marketing`'s to write (plan S3).
 
 ---
 
@@ -432,7 +434,7 @@ The form is offered only for a plan whose switch is closed. With all three open 
 | Where | Today | Proposed |
 |---|---|---|
 | Window kicker | "Early access" | **"Express interest"** |
-| Window intro | "Share a few details and we'll use them for release updates and early access planning." | **"Share a few details and we'll let you know when your plan opens."** |
+| Window intro | "Share a few details and we'll use them for release updates and early access planning." | ~~"Share a few details and we'll let you know when your plan opens."~~ → **`{interestLine}`** (owner ruling 2026-11-19, in code with S2) |
 | Saved, with updates | "We've saved your request and we'll write to {email} as the areas you picked become ready." | **"We've saved your request. When the plans you picked open, we'll write to {email}."** |
 | Saved, no updates | "We've saved your request for early access planning. You won't get release emails, as you asked." | **"We've saved your request. You won't get an email when it opens, as you asked."** |
 | Close button label | "Close early access form" | **"Close the form"** |
@@ -601,6 +603,8 @@ final shape) or **S3b** (a selling section; it does not hold the flip). Reviewed
     vs. Actual. Under 03, the existing link **"See a coach's season"** (the live demo) while the demo doors are on.
 - Alt text names the screen ("The registrations list for a house league season"). No figure is quoted in a caption.
 - **Closed also changes: Yes** (the pictures are true in both states).
+- **⚖ Owner, 2026-11-19:** screenshots vs. drawn pictures is NOT settled — S3b shows him both, side by side, and he
+  chooses (plan S3b). The caption above is for screenshots; a drawn picture needs its own.
 - **This is not a demo** and promises none (ruled 2026-11-18: no club demo for launch).
 - **Conditions (`/legal`):** shot from a club built for the purpose with invented names; never the live demo clubs
   (anyone can type into them), never a production row; no birth date, medical field, real-looking email or phone, real
@@ -772,6 +776,35 @@ choose (each is a small reading of a ruled line, flagged for the owner, not a ne
 - **W23 and the /for-coaches closed note:** "{tag} — it isn't open for sign-up yet." (the sentence's own words after the
   tag, so the tag is not said twice).
 - **W50 / W54 sub-lines:** the tag lowercased after the name ("Club — coming soon", "League Plus — not open yet").
+
+**In code (S2, built 2026-11-19; the doors, open state):** W43 open (the `/start` description names only the doors on
+sale), W44, W45, W46, W47, W48, W49, W51, W52, W53, and the interest line's new sentence (`{interestLine}`, owner ruling
+2026-11-19) everywhere it is read, the interest window's intro included. Where the build had to choose (each a small
+reading of a ruled line or a gap the copy doc left, flagged for the owner and `/marketing`, not a new ruling):
+- **The availability line (Ask 15)** is the ruled sentence from `BUSINESS_DECISIONS.md` (Ask 9), "Available to
+  organizations in Canada, outside Québec for now. Prices are in Canadian dollars.", set as step 1's small print on both
+  paid doors (where the free league's small print sat), not the drawing's filled box: the kit retired tinted panels.
+  `/legal` proposed "For organizations in Canada, …"; the ruled spelling was kept, one spelling everywhere.
+- **W48 / W53 the Terms sentence:** `/legal` (S2 review 1(c)) added one sentence above each paid button, "You’re starting
+  this plan for {name}, and you confirm you’re allowed to agree to the Terms on its behalf.", because step 1's tick is
+  made before the club has a name. Not in the drawings.
+- **A returning customer's plan step:** no trial sentence; the shipped "You’ve had a subscription before, so there’s no
+  second trial. The full charge, plus applicable taxes, is due today at checkout." instead (the tax clause added by
+  `/accounting`, 2026-11-19; the same line in the in-product plan-change window gains it too), and the button reads "Start Club" (not "Start your
+  Club trial").
+- **W52 placeholder:** the copy doc's "e.g. Milton Minor Softball" (the league door's existing one), not the drawing's
+  "e.g. Riverside House League".
+- **The wait ("Setting up your club / league")** — words the copy doc does not carry, taken from the drawing and the
+  shipped Coaches Portal return: "Setting up your club" · "Payment received. This takes a few seconds."; after ~50 s
+  "Still setting up your club" · "Payment received. Please don’t start another payment. Check again in a minute." ·
+  Check again; with no payment behind the page, at once, "We can’t find that payment" · "If you’ve just paid, your club
+  is being set up. Otherwise, choose a plan to finish starting it." · Choose a plan. → `/marketing` to confirm.
+- **A door closed after the club was made:** the plan step says "Club isn’t open for sign-up right now. {name} is saved,
+  and you can come back to this step." → `/marketing` to confirm.
+- **The billing address screen's intro** says "your club" on the league door too: it is the shipped sentence every
+  organization reads on that screen, Run a tournament's included, left as shipped.
+- **Not in S2 (S3's, already planned):** the League Plus pricing card still reads "Start free" and "No credit card
+  required" while it now opens the League Plus start when open; S3 writes that card's trial-and-payment sentence.
 
 ---
 

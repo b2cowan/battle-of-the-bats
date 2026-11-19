@@ -74,6 +74,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/renewal-reminder-server.ts': ['stored', 'GST/HST 6.4 Part B yearly reminder: reads the subscription the account HOLDS (its own status, to find a yearly plan Stripe will charge) and its own plan_id (to name the plan and see a waiting move down in Stripe\'s preview). Free time is not billed, so it is never reminded of'],
   'lib/plan-ending-server.ts': ['writer', 'the one ending (Plans end at renewal): reads the plan the club holds (plan_id, own plan) and writes the cancelled status; Stage 2: the move to the free plan writes plan_id, tournament_limit and an active status (the downgrade route no longer writes them itself)'],
   'lib/billing-urls.ts': ['other', "billingUrlOrgFromRow maps a row's plan_id / subscription_status onto the resolver's shape; the resolver only picks a destination, never gates"],
+  'lib/start-plan-server.ts': ['stored', "On-sale pages S2 (paid doors): asks whether an owned organization has PAID yet (stored plan_id still 'tournament' with a remembered start plan) to resume its plan step rather than Plan & billing — the plan it HOLDS, never an entitlement; free time must not read as a purchase. Routing only, never a gate"],
   'lib/club-record-changes.ts': ['writer', "the console's section writer (compare-and-set on the stored sections)"],
   'app/api/platform-admin/bulk-operations/route.ts': ['writer', 'bulk plan, status and section changes (stored)'],
   'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts': ['writer', 'console cancel'],

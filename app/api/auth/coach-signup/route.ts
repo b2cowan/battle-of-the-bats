@@ -10,7 +10,7 @@ import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import {
   sendSignupVerificationEmail, shouldRequireEmailVerification, takeCoachSignupBudget, verificationRedirect, verificationReturnPath,
 } from '@/lib/signup-verification';
-import { parseStartDoor } from '@/lib/start-door';
+import { paidDoorPick, parseStartDoor, parseStartPricing } from '@/lib/start-door';
 import { lockStartDoorOrUndo } from '@/lib/founding-season';
 import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
 import { termsDoorFrom, type AcceptanceDoor } from '@/lib/legal-acceptance-rules';
@@ -56,6 +56,8 @@ export const POST = withObservability(async (req: NextRequest) => {
     continueName?: unknown;
     inviteToken?: unknown;
     startDoor?: unknown;
+    plan?: unknown;
+    billing?: unknown;
     acceptTerms?: unknown;
     termsVersion?: unknown;
     termsDoor?: unknown;
@@ -69,6 +71,9 @@ export const POST = withObservability(async (req: NextRequest) => {
   // Account-first (owner A3, 2026-10-18): Start a team / Start a league send only the account and name their door. The
   // account remembers it (lib/start-door.ts — screens only, never an entitlement), and the link lands on its step 2.
   const startDoor = parseStartDoor(body.startDoor, ['team', 'league'] as const);
+  // The league door while League Plus is on sale (On-sale pages S2): a League Plus pick from the pricing page rides on
+  // the account like Run a tournament's, so the plan step opens on that billing. Any other pick reads as none.
+  const leaguePick = startDoor === 'league' ? paidDoorPick('league', parseStartPricing(body.plan, body.billing)) : null;
 
   if (!email || !password) {
     return json({ error: 'Email and password are required.' }, 400);
@@ -106,7 +111,7 @@ export const POST = withObservability(async (req: NextRequest) => {
   const fullName = `${firstName} ${lastName}`.trim();
   const userMetadata = {
     first_name: firstName, last_name: lastName, full_name: fullName, display_name: fullName,
-    ...(startDoor ? { start: { door: startDoor } } : {}),
+    ...(startDoor ? { start: { door: startDoor, ...(leaguePick ?? {}) } } : {}),
   };
 
   // ── Verify by link (production): the account waits, unconfirmed, until the person opens the email ──

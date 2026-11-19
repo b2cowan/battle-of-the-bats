@@ -16,6 +16,8 @@
 /* A standing reason the main action is absent (US sales closed): amber, never red — nobody made a mistake. */
 .amber { color: var(--badge-warning-ink); }
 .amberLine { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--badge-warning-ink); }
+/* The sign-up page's own amber, beside its own red (.errorStart): the badge ink above is the dark-surface amber and washes out on this page's cream. */
+.amberLineStart { margin: 0; font-size: var(--type-body); line-height: 1.45; color: var(--home-amber); }
 
 .declaration { display: flex; align-items: flex-start; gap: 0.6rem; line-height: 1.45; cursor: pointer; }
 .declaration input { flex: none; width: 18px; height: 18px; margin: 0.15rem 0 0; }

@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { ExternalLink } from 'lucide-react';
 import StartSteps from '@/components/auth/StartSteps';
 import { StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
 import ChoicePair from '@/components/shared/ChoicePair';
@@ -10,6 +9,7 @@ import { RUN_A_TOURNAMENT_STEPS, runATournamentPick, type StartBilling, type Sta
 import type { OrgPlan } from '@/lib/types';
 import styles from './PlanStep.module.css';
 import PlanTermsLine from '@/components/legal/PlanTermsLine';
+import { ComparePlansLink, PlanStartButton } from './PlanStepParts';
 
 /**
  * THE PLAN STEP (The first look, Stage 3a — Ask 4, F07, F08; gate G3–G5 ruled 2026-10-20, drawn at
@@ -71,15 +71,9 @@ export default function PlanStep({ orgName, pricing, initialBilling, foundingOff
 
   function startButton(plan: PlanStepChoice, label: string) {
     return (
-      <button
-        type="button"
-        className={`${plan === first ? accountForm.primary : accountForm.secondary} ${styles.start}`}
-        onClick={() => onChoose(plan, billing)}
-        disabled={busy}
-        aria-busy={loading === plan || undefined}
-      >
-        {loading === plan ? 'Starting…' : label}
-      </button>
+      <PlanStartButton lead={plan === first} busy={busy} starting={loading === plan} onClick={() => onChoose(plan, billing)}>
+        {label}
+      </PlanStartButton>
     );
   }
 
@@ -130,10 +124,7 @@ export default function PlanStep({ orgName, pricing, initialBilling, foundingOff
         <div className={styles.choices}>{first === 'tournament' ? <>{freeCard}{plusCard}</> : <>{plusCard}{freeCard}</>}</div>
         {error && <p className={`${accountForm.error} ${styles.error}`} role="alert">{error}</p>}
         <StartFoot>
-          <a href="/pricing" target="_blank" rel="noopener noreferrer" className={accountForm.footLink}>
-            Compare every plan <ExternalLink size={14} strokeWidth={2} aria-hidden className={styles.external} />
-            <span className="sr-only"> (opens in a new tab)</span>
-          </a>
+          <ComparePlansLink />
         </StartFoot>
       </div>
     </div>

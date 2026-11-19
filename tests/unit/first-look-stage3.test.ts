@@ -7,7 +7,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { filesUnder, readCode } from './_source-code.ts';
 import { PLAN_CONFIG, formatPlanPeriodPrice, pickedPlanLabel } from '../../lib/plan-config.ts';
-import { parseStartPricing, runATournamentPick } from '../../lib/start-door.ts';
+import { PAID_DOOR_PLANS, START_PATH_FOR_PLAN, parseStartPricing, runATournamentPick } from '../../lib/start-door.ts';
 
 /** Every plan card in PricingSection's PLANS list, as `{ key, ctaHref }`, read from the source. */
 function pricingCards(): { key: string; ctaHref: string }[] {
@@ -22,16 +22,21 @@ function pricingCards(): { key: string; ctaHref: string }[] {
 describe('3a — the plan step (Ask 4, F07, F08; G3–G6)', () => {
   const step = readCode('app/[orgSlug]/admin/onboarding/PlanStep.tsx');
 
-  it('G6: no plan but Tournament and Tournament Plus can send a pricing button to the tournament door', () => {
+  it('G6 (rewritten in On-sale pages S2): every org plan card points at a door that sells it, whatever the gate says', () => {
+    // The old guard read the code's copy of the gate (PLAN_CONFIG.gatingStatus), which production's live rows override:
+    // a plan opened in platform admin would have sent its button to Run a tournament with this still green. Now the
+    // card's link must be the door that sells its plan in BOTH gate states, and a closed card renders no link at all.
     const cards = pricingCards();
     assert.deepEqual(cards.map(c => c.key), ['tournament', 'tournament_plus', 'league', 'club'], 'the scan read every card');
     for (const card of cards) {
-      if (card.key === 'tournament' || card.key === 'tournament_plus') continue;
-      if (card.ctaHref !== '/start/tournament') continue;
-      // A gated plan renders "Express interest", never its link. The day one opens it needs ITS OWN door (G6: League
-      // Plus and Club are not made by Run a tournament), and this fails until it has one.
-      assert.equal(PLAN_CONFIG[card.key as keyof typeof PLAN_CONFIG].gatingStatus, 'early_access', `${card.key} would make a tournament organization`);
+      const plan = card.key as keyof typeof START_PATH_FOR_PLAN;
+      assert.equal(card.ctaHref, START_PATH_FOR_PLAN[plan], `${card.key}'s button opens the door that sells it`);
+      const door = card.ctaHref === '/start/club' ? 'club' : card.ctaHref === '/start/league' ? 'league' : null;
+      if (door) assert.ok((PAID_DOOR_PLANS[door] as readonly string[]).includes(card.key), `${card.ctaHref} sells ${card.key}`);
+      else assert.ok(card.key === 'tournament' || card.key === 'tournament_plus', `Run a tournament sells only the two tournament plans, not ${card.key}`);
     }
+    // Club · Association has no card of its own yet (S3 adds it); its door is Start a club's.
+    assert.equal(START_PATH_FOR_PLAN.club_large, '/start/club');
     assert.match(readCode('components/PricingSection.tsx'), /\{isGated \? \(\s*<EarlyAccessModalTrigger/, 'a gated card renders no start link');
   });
 
@@ -44,7 +49,8 @@ describe('3a — the plan step (Ask 4, F07, F08; G3–G6)', () => {
     const ps = readCode('components/PricingSection.tsx');
     assert.match(ps, /if \(plan\.key === 'team'\) return plan\.ctaHref;\s*return withStartPricing\(plan\.ctaHref, parseStartPricing\(plan\.key, billing\)\);/);
     const form = readCode('app/(consumer)/start/StartDoorForm.tsx');
-    assert.match(form, /const shownPick = runATournamentPick\(pricing\);/);
+    assert.match(form, /const shownPick = copy\.pick\?\.of\(pricing\) \?\? null;/);
+    assert.match(form, /pick: \{ of: runATournamentPick, confirmedAfter: 'your organization' \},/, 'Run a tournament names only its own two picks');
     assert.match(form, /\{shownPick && \(/, 'step 1 never names a pick the plan step would drop (F08)');
     assert.match(form, /<strong>\{pickedPlanLabel\(shownPick\.plan, shownPick\.billing\)\}<\/strong>, from/);
   });
@@ -58,7 +64,8 @@ describe('3a — the plan step (Ask 4, F07, F08; G3–G6)', () => {
     const choose = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
     assert.match(choose, /if \(planKey === activePlan\) \{\s*setPlanLoading\(planKey\);\s*try \{/);
     assert.match(step, /\{first === 'tournament' \? <>\{freeCard\}\{plusCard\}<\/> : <>\{plusCard\}\{freeCard\}<\/>\}/, 'the pick comes first');
-    assert.match(step, /className=\{`\$\{plan === first \? accountForm\.primary : accountForm\.secondary\} \$\{styles\.start\}`\}/, 'the one lime');
+    assert.match(step, /<PlanStartButton lead=\{plan === first\}/, 'the one lime');
+    assert.match(readCode('app/[orgSlug]/admin/onboarding/PlanStepParts.tsx'), /className=\{`\$\{lead \? accountForm\.primary : accountForm\.secondary\} \$\{styles\.start\}`\}/);
     assert.match(step, /title="How do you want to start\?"/);
     assert.doesNotMatch(step, /League Plus|'league'|'club'/);
     const page = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
@@ -81,7 +88,8 @@ describe('3a — the plan step (Ask 4, F07, F08; G3–G6)', () => {
     const css = readCode('app/[orgSlug]/admin/onboarding/PlanStep.module.css');
     assert.match(css, /\.column \{\s*width: 100%;\s*max-width: 420px;/);
     assert.match(css, /@media \(min-width: 900px\) \{\s*\.column \{ max-width: 900px;/);
-    assert.match(step, /<a href="\/pricing" target="_blank" rel="noopener noreferrer"/, 'Compare every plan opens the pricing page in a new tab');
+    assert.match(step, /<ComparePlansLink \/>/);
+    assert.match(readCode('app/[orgSlug]/admin/onboarding/PlanStepParts.tsx'), /<a href="\/pricing" target="_blank" rel="noopener noreferrer"/, 'Compare every plan opens the pricing page in a new tab');
   });
 });
 
@@ -143,7 +151,7 @@ describe('3b — the welcome and checkout complete (Ask 5b, F06, F17; G1, G2)', 
   it('both routes in the app’s warm frame, never the marketing chrome', () => {
     assert.match(readCode('lib/consumer-routes.ts'), /WARM_JOURNEY_PREFIXES = \[[^\]]*'\/coaches\/checkout'/);
     assert.match(readCode('app/coaches/checkout/layout.tsx'), /return <CoachJourneyChrome>\{children\}<\/CoachJourneyChrome>;/);
-    assert.match(card, /<StartColumn>/);
+    assert.match(card, /<StartColumn pageClassName=\{pageClassName\}>/, 'the one start column; the optional class is only the paid doors’ first-run frame (S2)');
   });
 });
 

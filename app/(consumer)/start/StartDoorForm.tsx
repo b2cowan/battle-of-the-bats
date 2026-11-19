@@ -11,21 +11,42 @@ import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 import type { TermsSend } from '@/lib/legal-acceptance-rules';
 import { pickedPlanLabel } from '@/lib/plan-config';
-import { RUN_A_TOURNAMENT_STEPS, START_DOOR_PATH, runATournamentPick, startDoorLinkPath, startPricingParams, withStartPricing, type StartPricing, type StartStepViewer } from '@/lib/start-door';
-
-/** The doors this form serves (Coach Premium keeps its own card, with the same account-first steps — Part 3). */
-type FormDoor = 'team' | 'league' | 'organization';
+import {
+  CLUB_START_STEPS, LEAGUE_PLUS_START_STEPS, RUN_A_TOURNAMENT_STEPS, START_DOOR_PATH, paidDoorPick, runATournamentPick, startDoorLinkPath,
+  startPricingParams, withStartPricing, type StartDoor, type StartPricing, type StartStepViewer,
+} from '@/lib/start-door';
 
 /**
- * Each door's words, step 1 and step 2 (The first look, Stage 1, owner rulings 2026-10-19; the hub's S1 drawings). The
- * heading repeats the words of the button the person tapped (plan rule 3); step 2 keeps step 1's heading and sub line
- * (`nameSub` only where step 1's would be wrong on step 2).
+ * The doors this form serves (Coach Premium keeps its own card, with the same account-first steps — Part 3). `club` and
+ * `league_plus` are the paid doors (On-sale pages S2): League Plus's account is the `league` door's, carrying its pick.
+ */
+type FormDoor = 'team' | 'league' | 'organization' | 'club' | 'league_plus';
+
+/** Ask 15 (ruled 2026-11-18, `BUSINESS_DECISIONS.md`): said on step 1 of the paid doors, before anything is made, so a
+ *  Québec or US organization learns it here rather than at its billing address. */
+const AVAILABILITY_LINE = 'Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars.';
+
+/**
+ * Each door, in one place: where its account is made and what the account remembers, the pricing-page pick it names, and
+ * its words for step 1 and step 2 (The first look, Stage 1, owner rulings 2026-10-19; the hub's S1 drawings). The heading
+ * repeats the words of the button the person tapped (plan rule 3); step 2 keeps step 1's heading and sub line (`nameSub`
+ * only where step 1's would be wrong on step 2).
  */
 const DOOR_COPY: Record<FormDoor, {
+  /** The door the account remembers (lib/start-door.ts): League Plus's account is the `league` door's, carrying its pick. */
+  account: StartDoor;
+  /** Where the account is made: the coach sign-up for a team or a league, the organization sign-up for Run a tournament
+   *  and Start a club (it keeps the Sign-up Invite Guard). */
+  signup: '/api/auth/coach-signup' | '/api/auth/signup';
+  /** The pricing-page pick step 1 names — only one this door's plan step can sell (F08) — and where it is confirmed, in
+   *  the step-1 callout ("You'll confirm it after naming your …"). No `pick`: the door names none. */
+  pick?: { of: (pricing: StartPricing | null) => StartPricing | null; confirmedAfter: string };
   title: string; sub: string; nameSub?: string; steps: readonly string[]; nextStep: string; accountSmallPrint?: string;
   label: string; placeholder: string; autoComplete: string; nameHint?: string; nameSmallPrint?: string; submit: string; empty: string; failed: string;
 }> = {
   team: {
+    account: 'team',
+    signup: '/api/auth/coach-signup',
     title: 'Start a team',
     sub: 'A free team home, no organization needed',
     steps: ['Account', 'Team'],
@@ -40,6 +61,8 @@ const DOOR_COPY: Record<FormDoor, {
     failed: 'Could not create your team.',
   },
   league: {
+    account: 'league',
+    signup: '/api/auth/coach-signup',
     title: 'Start a league season',
     sub: 'Run a house-league season — registration, draft, scheduling, standings, and parent comms.',
     steps: ['Account', 'League'],
@@ -55,6 +78,9 @@ const DOOR_COPY: Record<FormDoor, {
     failed: 'Could not create your league.',
   },
   organization: {
+    account: 'organization',
+    signup: '/api/auth/signup',
+    pick: { of: runATournamentPick, confirmedAfter: 'your organization' },
     title: 'Run a tournament',
     sub: 'Free to start. You\'ll name your organization next.',
     // Step 2 IS the naming step, so "you'll name it next" would be wrong there; the promise's first half stays.
@@ -68,13 +94,42 @@ const DOOR_COPY: Record<FormDoor, {
     empty: 'Enter an organization name.',
     failed: 'Could not create your organization.',
   },
-};
-
-/** Where each door's account is made: the coach sign-up for a team or a league, the organization sign-up for Run a tournament (it keeps the Sign-up Invite Guard). */
-const SIGNUP_ROUTE: Record<FormDoor, string> = {
-  team: '/api/auth/coach-signup',
-  league: '/api/auth/coach-signup',
-  organization: '/api/auth/signup',
+  // W46–W47 (ruled 2026-11-18; drawing tab 6). No small print: the availability line takes its place.
+  club: {
+    account: 'club',
+    signup: '/api/auth/signup',
+    pick: { of: pricing => paidDoorPick('club', pricing), confirmedAfter: 'your club' },
+    title: 'Start a club',
+    // "Club · Association" never breaks on its dot (/design 2026-11-19): non-breaking spaces around it.
+    sub: 'Create your account, name your club, then choose Club or Club · Association.',
+    nameSub: 'Name your club, then choose Club or Club · Association.',
+    steps: CLUB_START_STEPS,
+    nextStep: 'naming your club',
+    accountSmallPrint: AVAILABILITY_LINE,
+    label: 'Club or association name',
+    placeholder: 'e.g. Milton Minor Baseball Association',
+    autoComplete: 'organization',
+    submit: 'Create club',
+    empty: 'Enter a club name.',
+    failed: 'Could not create your club.',
+  },
+  // W51–W52 (ruled 2026-11-18; drawing tab 7): the free floor's small print is gone; the placeholder is the league door's own.
+  league_plus: {
+    account: 'league',
+    signup: '/api/auth/coach-signup',
+    title: 'Start a league season',
+    sub: 'Create your account, name your league, then start League Plus.',
+    nameSub: 'Name your league, then start League Plus.',
+    steps: LEAGUE_PLUS_START_STEPS,
+    nextStep: 'naming your league',
+    accountSmallPrint: AVAILABILITY_LINE,
+    label: 'League or organization name',
+    placeholder: 'e.g. Milton Minor Softball',
+    autoComplete: 'organization',
+    submit: 'Create league',
+    empty: 'Enter a league name.',
+    failed: 'Could not create your league.',
+  },
 };
 
 /** A door's create function: sends its request through `send`, answers where to go next, or null (the Terms window closed). */
@@ -82,7 +137,7 @@ export type StartCreate = (name: string, send: TermsSend) => Promise<string | nu
 
 /** A door's create step, carrying the pricing page's plan for an account that signs in instead of signing up. */
 function stepHref(door: FormDoor, pricing: StartPricing | null): string {
-  return withStartPricing(START_DOOR_PATH[door], pricing);
+  return withStartPricing(START_DOOR_PATH[DOOR_COPY[door].account], pricing);
 }
 
 /**
@@ -132,8 +187,8 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
   // The Terms box (step 6.3, §20 (1)): nothing while the legal pages are off.
   const terms = useTermsTick();
   const nextStep = stepHref(door, pricing);
-  // Only a pick this door can sell is named (F08): the plan step would drop any other.
-  const shownPick = runATournamentPick(pricing);
+  // Only a pick this door can sell is named (F08): the plan step would drop any other. A pick implies the door's `pick`.
+  const shownPick = copy.pick?.of(pricing) ?? null;
   const setField: Record<keyof AccountValues, (value: string) => void> = {
     firstName: setFirstName, lastName: setLastName, email: setSignupEmail, password: setPassword,
   };
@@ -155,13 +210,13 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
 
     let signupRes: Response;
     try {
-      signupRes = await fetch(SIGNUP_ROUTE[door], {
+      signupRes = await fetch(copy.signup, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: emailNorm, password, firstName: firstName.trim(), lastName: lastName.trim(),
           // The account remembers its door; the server points the link at that door's step 2.
-          startDoor: door,
+          startDoor: copy.account,
           ...(pricing ? startPricingParams(pricing) : {}),
           ...terms.fields,
         }),
@@ -239,7 +294,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
           email={verifyEmail}
           lead={<>Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to {copy.nextStep}.</>}
           after={<>Open it on any phone or computer.</>}
-          resendNext={startDoorLinkPath(door)}
+          resendNext={startDoorLinkPath(copy.account)}
           onChangeEmail={() => { setVerifyEmail(null); setChangingEmail(true); }}
           signInHref={`/auth/login?next=${encodeURIComponent(nextStep)}&email=${encodeURIComponent(verifyEmail)}`}
         />
@@ -252,7 +307,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
                 <Tag size={18} strokeWidth={1.8} aria-hidden />
                 <span>
                   <strong>{pickedPlanLabel(shownPick.plan, shownPick.billing)}</strong>, from
-                  the pricing page. You&apos;ll confirm it after naming your organization.
+                  the pricing page. You&apos;ll confirm it after naming {copy.pick?.confirmedAfter}.
                 </span>
               </p>
             )}

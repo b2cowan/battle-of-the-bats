@@ -16218,6 +16218,15 @@
     "ordinal_position": 55
   },
   {
+    "table_name": "organizations",
+    "column_name": "start_plan",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 56
+  },
+  {
     "table_name": "payments_terms_agreements",
     "column_name": "id",
     "data_type": "uuid",

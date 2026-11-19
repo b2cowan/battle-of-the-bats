@@ -442,7 +442,8 @@ export const PLAN_BILLING_WORDS = {
     freeTitle: () => `Your ${PLAN_CONFIG.team.label} free time ends when your club starts`,
     freeWarning: (through: string | null) => `${through ? `Free through ${day(through)}. ` : ''}The days left don’t carry over. If you leave before finishing, nothing changes and your free time keeps running.`,
     trial: (days: number) => clubTrialLine(days),
-    noTrial: 'You’ve had a subscription before, so there’s no second trial. The full charge is due today at checkout.',
+    // "plus applicable taxes" (On-sale pages S2, `/accounting` 2026-11-19): the card beside it shows the pre-tax price.
+    noTrial: `You’ve had a subscription before, so there’s no second trial. The full charge, ${BILLING_TAX_WORDS.plusTax}, is due today at checkout.`,
     firstCharge: (iso: string | null) => iso ? `First charge, ${day(iso)}` : 'First charge when the trial ends',
     monthly: 'Monthly', yearly: 'Yearly', billing: 'Billing',
     checkAgain: 'Check again', previewFailed: 'We couldn’t check the charge. Please check again.',

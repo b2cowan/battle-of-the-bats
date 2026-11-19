@@ -22,7 +22,7 @@ export const CANADIAN_PROVINCES: readonly Province[] = [
   { code: 'NU', name: 'Nunavut' },
   { code: 'ON', name: 'Ontario' },
   { code: 'PE', name: 'Prince Edward Island' },
-  { code: 'QC', name: 'Quebec' },
+  { code: 'QC', name: 'Québec' }, // one spelling with the product's own sentences ("outside Québec for now"; /design 2026-11-19)
   { code: 'SK', name: 'Saskatchewan' },
   { code: 'YT', name: 'Yukon' },
 ] as const;

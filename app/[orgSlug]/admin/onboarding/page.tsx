@@ -23,9 +23,14 @@ import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/l
 import type { FreeFloor, OrgPlan } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
-import { parseStartBilling, parseStartPricing } from '@/lib/start-door';
+import { PAID_DOOR_STEPS, parseStartBilling, parseStartPricing, type StartPlanOffer } from '@/lib/start-door';
 import PlanStep from './PlanStep';
+import PaidPlanStep from './PaidPlanStep';
 import AddressStep from './AddressStep';
+import StartPlanSetup from './StartPlanSetup';
+import planStepStyles from './PlanStep.module.css';
+import { CoachWelcomeCard } from '@/components/consumer/CoachWelcomeCard';
+import { accountForm } from '@/components/auth/AccountForm';
 import styles from './onboarding.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import DateInput from '@/components/shared/DateInput';
@@ -308,6 +313,9 @@ function OnboardingPageLegacy() {
   const planChoiceRequired = searchParams.get('choosePlan') === '1';
   const continueSetup = searchParams.get('continueSetup') === '1';
   const planSelectionSucceeded = searchParams.get('success') === '1';
+  // Back from Stripe on a paid door (On-sale pages S2, trap A): the wait, until the webhook has written the plan.
+  const setupReturn = searchParams.get('setup') === '1';
+  const setupSessionId = searchParams.get('session_id');
   // The plan picked on the pricing page rides here from Run a tournament's step 2 and is the one the plan step
   // preselects and names (Account-First Sign-up A6, 2026-10-18; The first look G4, 2026-10-20 — the free pick too).
   // A preselection the person can change, never a price.
@@ -332,6 +340,30 @@ function OnboardingPageLegacy() {
     return () => { live = false; };
   }, [offerKey, offerSlug]);
   const foundingOfferHeld = !!offerKey && offerAnswer?.key === offerKey && offerAnswer.held;
+
+  // A PAID DOOR's organization (On-sale pages S2): the plan it came to buy, its on-sale plans and each one's true trial,
+  // from the server (`organizations.start_plan`, trap B). Asked whenever the plan step or the wait shows, and only for a
+  // free organization; the step waits for the answer so a club buyer never sees Run a tournament's cards first.
+  const startOfferSlug = currentOrg?.planId === 'tournament' && (planChoiceRequired || setupReturn) ? currentOrg.slug : null;
+  // A failed read is said, never read as "no door": a club buyer silently shown Run a tournament's cards could buy the
+  // wrong plan (/review 2026-11-19). Try again asks once more.
+  const [startOffer, setStartOffer] = useState<{ slug: string; offer: StartPlanOffer | null; failed: boolean } | null>(null);
+  const [startOfferTry, setStartOfferTry] = useState(0);
+  useEffect(() => {
+    if (!startOfferSlug) return;
+    let live = true;
+    fetch(`/api/billing/start-plan?orgSlug=${encodeURIComponent(startOfferSlug)}`, { cache: 'no-store' })
+      .then(async res => {
+        if (!res.ok) throw new Error(`start-plan ${res.status}`);
+        const data = await res.json() as { offer?: StartPlanOffer | null };
+        if (live) setStartOffer({ slug: startOfferSlug, offer: data.offer ?? null, failed: false });
+      })
+      .catch(() => { if (live) setStartOffer({ slug: startOfferSlug, offer: null, failed: true }); });
+    return () => { live = false; };
+  }, [startOfferSlug, startOfferTry]);
+  const startOfferRead = !startOfferSlug || startOffer?.slug === startOfferSlug;
+  const startOfferFailed = !!startOfferSlug && startOffer?.slug === startOfferSlug && startOffer.failed;
+  const paidOffer = startOfferSlug && startOffer?.slug === startOfferSlug ? startOffer.offer : null;
 
   function isFirstRunPlanEditable(progress: StartupProgress | null = startupProgress) {
     if (!currentOrg || currentOrg.onboardingCompletedAt) return false;
@@ -417,6 +449,8 @@ function OnboardingPageLegacy() {
       userRole !== 'owner' ||
       startupProgress?.wizardAvailable === false ||
       planChoiceRequired ||
+      // A paid door's return from Stripe is the wait, never New tournament (trap A: the plan may not have landed yet).
+      setupReturn ||
       !startupProgress ||
       activeModal ||
       planChooserOpen ||
@@ -444,7 +478,7 @@ function OnboardingPageLegacy() {
     openNew('first_run', { onCreated: finishFirstRun, onClose: closeWorkflowModal });
     // The window's own handlers are read when it opens; `firstRunOpened` keeps it to one opening per visit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting, router]);
+  }, [loading, currentOrg, userRole, planChoiceRequired, setupReturn, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting, router]);
 
   useEffect(() => {
     if (
@@ -1438,7 +1472,31 @@ function OnboardingPageLegacy() {
     return null;
   }
 
+  if (setupReturn && currentOrg.planId === 'tournament') {
+    // Until the offer is read the door is not known; the wait's own words name it, so hold a beat rather than guess.
+    if (!startOfferRead) return null;
+    const doorParam = searchParams.get('door');
+    const setupDoor = doorParam === 'league' || doorParam === 'club' ? doorParam : paidOffer?.door ?? 'club';
+    return <StartPlanSetup orgSlug={currentOrg.slug} sessionId={setupSessionId} door={setupDoor} />;
+  }
+
   if (planChoiceRequired) {
+    // A paid door's plan step waits for the server's offer, so a club buyer never sees Run a tournament's cards first.
+    if (!startOfferRead) return null;
+    if (startOfferFailed) {
+      return (
+        <CoachWelcomeCard pageClassName={planStepStyles.page} icon="clock" quiet title="We couldn’t load your plans" sub="Nothing has been charged. Please try again.">
+          <button
+            type="button"
+            className={accountForm.primary}
+            onClick={() => { setStartOffer(null); setStartOfferTry(n => n + 1); }}
+          >
+            Try again
+          </button>
+        </CoachWelcomeCard>
+      );
+    }
+    const paidCard = paidOffer && addressAsk ? paidOffer.cards.find(c => c.plan === addressAsk.planKey) : undefined;
     return (<>
       {/* GST/HST Stage 1: a paid choice with no billing address on file is refused (choosePlan → addressAsk). This page is a
           walk through numbered steps, so it asks on a screen of its own instead of the window (owner 2026-11-04). */}
@@ -1453,6 +1511,18 @@ function OnboardingPageLegacy() {
           error={planError}
           onContinue={() => void continueFromAddress()}
           onBack={() => { setPlanError(''); setAddressFailed(false); setAddressAsk(null); }}
+          steps={paidOffer ? PAID_DOOR_STEPS[paidOffer.door] : undefined}
+          trialDays={paidCard?.trialDays}
+        />
+      ) : paidOffer ? (
+        <PaidPlanStep
+          orgName={currentOrg.name}
+          offer={paidOffer}
+          pricing={pricing}
+          initialBilling={lastCycle}
+          loading={planLoading}
+          error={planError}
+          onChoose={choosePlan}
         />
       ) : (
         <PlanStep

@@ -26,3 +26,12 @@ export function clubTrialLine(trialDays: number = PLAN_CONFIG.club.trialDays): s
 export function planTrialLine(trialDays: number): string {
   return `${trialDays}-day trial — you add a payment method at checkout, and you’re first charged, ${BILLING_TAX_WORDS.plusTax}, when the trial ends.`;
 }
+
+/**
+ * What the Terms line above a paid button says of the trial (`PlanTermsLine`'s `trial`), from a paid door's TRUE trial
+ * (the server's, trap B): above 0 this purchase starts one (`'known'`); 0 says nothing of a trial; unread or absent falls
+ * back to the plan's own length, where checkout decides ("If your plan starts with a trial…").
+ */
+export function planTermsTrial(trialDays: number | null | undefined, planOwnTrialDays: number): 'known' | number {
+  return trialDays == null ? planOwnTrialDays : trialDays > 0 ? 'known' : 0;
+}

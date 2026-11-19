@@ -8,21 +8,46 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import styles from '../start.module.css';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { gatedPlanTag, gatedPlanSentence, interestButtonLabel, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
+import { paidDoorPick, parseStartPricing, readStartDoor } from '@/lib/start-door';
+import { startStepViewer } from '@/lib/start-door-server';
+import { isPaidDoorOpen, paidDoorRedirect } from '@/lib/start-plan-server';
+import StartPaidDoorForm from '../StartPaidDoorForm';
 
-export const metadata: Metadata = {
-  title: 'Explore Club — FieldLogicHQ',
-};
+/** The tab says what the page is for in each state (open: the door; closed: the interest page, as S1 left it). */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await isPaidDoorOpen('club')) ? 'Start a club — FieldLogicHQ' : 'Explore Club — FieldLogicHQ' };
+}
+
+type Param = string | string[] | undefined;
+const first = (value: Param) => (Array.isArray(value) ? value[0] : value);
 
 /**
- * /start/club while Club is closed (W50, ruled 2026-11-18): the canon closed sentence and the interest door. The
- * consultative "we set up Club with you" page is gone — the 2026-11-18 open-launch ruling struck exactly that line.
- * The real Club start (account → club name → plan) replaces this page when Club is open: S2 of the on-sale pages.
+ * /start/club — Start a club (On-sale pages S2), read from the live gate on every visit.
+ *  - OPEN (Club or Club · Association on sale): signed out → step 1, the account, with the pricing page's pick; signed in
+ *    → step 2, the club's name, unless a gate sends them elsewhere first (`paidDoorRedirect`: staff; an owner of a real
+ *    organization to that organization's plan step or Plan & billing; a live invitation to Home; a Premium coach to their
+ *    own portal's "Start your club", trap D). Step 3 is the plan step in the club's own setup.
+ *  - CLOSED (W50, ruled 2026-11-18): the canon closed sentence and the interest door, as S1 left it.
  */
-export default async function StartClubPage() {
+export default async function StartClubPage({ searchParams }: {
+  searchParams: Promise<{ confirmed?: Param; plan?: Param; billing?: Param }>;
+}) {
   const supabase = await createClient();
   const user = await getSignedInUser(supabase);
   if (user?.email && (await isPlatformAdminEmail(user.email))) {
     redirect('/platform-admin');
+  }
+
+  if (await isPaidDoorOpen('club')) {
+    const sp = await searchParams;
+    const linkPick = paidDoorPick('club', parseStartPricing(first(sp.plan), first(sp.billing)));
+    if (!user?.email) return <StartPaidDoorForm door="club" viewer={null} pricing={linkPick} />;
+    const elsewhere = await paidDoorRedirect({ id: user.id, email: user.email }, 'club');
+    if (elsewhere) redirect(elsewhere);
+    // The newer choice — the one in the address — wins over the one remembered at sign-up (as Run a tournament).
+    const remembered = readStartDoor(user.user_metadata);
+    const pricing = linkPick ?? (remembered?.door === 'club' ? remembered.pricing ?? null : null);
+    return <StartPaidDoorForm door="club" viewer={await startStepViewer(user)} confirmed={first(sp.confirmed) === '1'} pricing={pricing} />;
   }
 
   return (

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import {
   ArrowRight,
+  Building2,
   CalendarDays,
   Trophy,
   Users,
@@ -12,24 +13,53 @@ import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { isCoachesPortalPurchasable } from '@/lib/plan-gating-server';
 import { COACH_DOOR_HREF, coachStartDoor } from '@/lib/start-menu';
-import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_YEAR_LABEL, gatedPlanTag } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, gatedPlanTag } from '@/lib/plan-config';
 import styles from './start.module.css';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { isPaidDoorOpen } from '@/lib/start-plan-server';
 
-export const metadata: Metadata = {
-  title: 'Get started — FieldLogicHQ',
-  // W43 closed (ruled 2026-11-18): no "start free" over paid doors, and no doors the chooser does not show while closed.
-  description: 'Tell us your job and get started — run a tournament or coach a team.',
-};
+/** W43 (ruled 2026-11-18): the description names only the doors the chooser shows, read from the live gate. */
+export async function generateMetadata(): Promise<Metadata> {
+  const [clubOpen, leaguePlusOpen] = await Promise.all([isPaidDoorOpen('club'), isPaidDoorOpen('league')]);
+  const description = clubOpen && leaguePlusOpen
+    ? 'Tell us your job and get started — run a tournament, coach a team, start a league season, or start a club.'
+    : clubOpen
+      ? 'Tell us your job and get started — run a tournament, coach a team, or start a club.'
+      : leaguePlusOpen
+        ? 'Tell us your job and get started — run a tournament, coach a team, or start a league season.'
+        // Closed: no "start free" over paid doors, and no doors the chooser does not show.
+        : 'Tell us your job and get started — run a tournament or coach a team.';
+  return { title: 'Get started — FieldLogicHQ', description };
+}
 
 type StartOption = {
   href: string;
   icon: LucideIcon;
-  accent?: 'free' | 'coach';
+  accent?: 'free' | 'coach' | 'paid';
   label: string;
   title: string;
   body: string;
-  tag?: { text: string; tone?: 'free' | 'soon' };
+  /** Only a status that is NOT a price: a door that is not live yet. There is no Free / Paid pill (owner 2026-11-19):
+   *  every door can lead to a paid plan, so the price talk lives in the card's sentence and on the page it opens. */
+  tag?: { text: string };
+};
+
+/** The paid doors' cards (W44–W45, On-sale pages S2): shown only while their plan is on sale, after the two free doors. */
+const CLUB_OPTION: StartOption = {
+  href: '/start/club',
+  icon: Building2,
+  accent: 'paid',
+  label: 'Club executive',
+  title: 'Start a club',
+  body: 'Tournaments, house league, rep teams and accounting in one place. Choose Club or Club · Association by how many teams will have a Premium Coaches Portal. House league teams are unlimited.',
+};
+const LEAGUE_PLUS_OPTION: StartOption = {
+  href: '/start/league',
+  icon: CalendarDays,
+  accent: 'paid',
+  label: 'League admin',
+  title: 'Start a league season',
+  body: 'Run a house league season — registration, draft, scheduling, standings, and parent messaging.',
 };
 
 // Founding Season 2027 (owner-approved 2026-09-07): while the signup window is open the pill on
@@ -45,7 +75,6 @@ function tournamentOption(promoActive: boolean): StartOption {
     body: promoActive
       ? `Create a tournament free — your teams, schedule, brackets, and a public site. Tournament Plus, with public registration, is free through ${FOUNDING_SEASON_END_LABEL}. No credit card.`
       : 'Create a tournament free — your teams, schedule, brackets, and a public site. No credit card.',
-    tag: { text: promoActive ? `${FOUNDING_SEASON_YEAR_LABEL} season free` : 'Free', tone: 'free' },
   };
 }
 
@@ -98,12 +127,11 @@ function coachOption(checkoutOpen: boolean, promoActive: boolean): StartOption {
       accent: 'coach',
       label: 'Premium Coaches Portal',
       body: `Your team's operations HQ — roster, lineups, budget, schedule, and documents. Free through ${FOUNDING_SEASON_END_LABEL}, no organization needed.`,
-      tag: { text: `${FOUNDING_SEASON_YEAR_LABEL} season free`, tone: 'free' },
     };
   }
   return door === 'free'
-    ? { ...base, accent: 'free', label: 'Coach', body: FREE_TEAM_BODY, tag: { text: 'Free', tone: 'free' } }
-    : { ...base, label: 'Coach', body: FREE_TEAM_BODY, tag: { text: gatedPlanTag('team'), tone: 'soon' } };
+    ? { ...base, accent: 'free', label: 'Coach', body: FREE_TEAM_BODY }
+    : { ...base, label: 'Coach', body: FREE_TEAM_BODY, tag: { text: gatedPlanTag('team') } };
 }
 
 // S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — no League or
@@ -117,7 +145,6 @@ const LEAGUE_OPTION: StartOption = {
   label: 'League admin',
   title: 'Start a league season',
   body: 'Run a house-league season — registration, draft, scheduling, standings, and parent comms.',
-  tag: { text: 'Free', tone: 'free' },
 };
 
 export default async function StartPage() {
@@ -132,15 +159,23 @@ export default async function StartPage() {
   // League Starter is an unlisted capped beta: the card only exists while the flag is
   // on (S1-1 rider — nothing not-yet-live is promoted on this surface).
   const leagueStarterLive = process.env.LEAGUE_STARTER_BETA === 'true';
-  const checkoutOpen = await isCoachesPortalPurchasable();
+  const [checkoutOpen, clubOpen, leaguePlusOpen] = await Promise.all([
+    isCoachesPortalPurchasable(), isPaidDoorOpen('club'), isPaidDoorOpen('league'),
+  ]);
   // The Premium promo drives the coach card; the Tournament Plus promo drives the organizer card.
   const coachPromo = isFoundingSeasonPromoActive('team');
   const tournamentPromo = isFoundingSeasonPromoActive('tournament_plus');
   const coach = coachOption(checkoutOpen, coachPromo);
   const showBasicLine = checkoutOpen && coachPromo;
-  const options: StartOption[] = leagueStarterLive
-    ? [tournamentOption(tournamentPromo), coach, LEAGUE_OPTION]
-    : [tournamentOption(tournamentPromo), coach];
+  // /start/league sells League Plus while it is on sale; the free League starter card shows only while it is not (the
+  // flag governs only the free floor, On-sale pages S2).
+  const leagueCard = leaguePlusOpen ? LEAGUE_PLUS_OPTION : leagueStarterLive ? LEAGUE_OPTION : null;
+  const options: StartOption[] = [
+    tournamentOption(tournamentPromo),
+    coach,
+    ...(clubOpen ? [CLUB_OPTION] : []),
+    ...(leagueCard ? [leagueCard] : []),
+  ];
 
   return (
     <div className={styles.page}>
@@ -163,7 +198,7 @@ export default async function StartPage() {
                   <div className={styles.cardTop}>
                     <span className={styles.cardLabel}>{opt.label}</span>
                     {opt.tag && (
-                      <span className={styles.tag} data-tone={opt.tag.tone}>{opt.tag.text}</span>
+                      <span className={styles.tag}>{opt.tag.text}</span>
                     )}
                   </div>
                   <div className={styles.cardTitle}>{opt.title}</div>
