@@ -60,6 +60,17 @@
 > `can_access_tournament`) ignores status, so a pending invitee's browser session can read the club's venue library and
 > its tournaments' team names (suspended members too: not new, now aimable at any existing account): one migration —
 > **RULED 2026-11-18 (owner, as recommended): both count only active members**, queue prompt P2d.
+> **Status, 13 (c) (built 2026-11-18, dev, migration 505; commit hash on the queue's PROGRESS row):** both functions
+> require `status = 'active'` (and carry `search_path ''`); nothing else in them moved. The census found the gap WIDER
+> than the finding: besides the three reads, `authenticated` holds INSERT/UPDATE/DELETE on `venue_facilities` and
+> `schedule_facility_lanes` under `can_access_tournament`, so a pending or suspended person could also WRITE those; the
+> same change closes it. Every other caller holds no `authenticated` grant for its command. Who lost access: only
+> `invited` and `suspended` rows; coach rows (all `active`) and a coach's waiting board role are unchanged. Proof
+> `.probe/member-test-active-only-prove.mjs` (dev, before: all four in; after: 21/21). Production: function bodies only,
+> independent of the code, either side of the promote. **Reported, not fixed:** any ACTIVE member of any role (a
+> scorekeeper, a coach) can still write `venue_facilities` and `schedule_facility_lanes` from their own browser
+> session, because the policy asks only "member of this club, assigned to this tournament", not a capability; the app
+> writes both through the service role, so revoking the browser's write grant is likely a one-line fix (owner call).
 > **Reported, not fixed:** "1,000 users" — the Members list is already fixed (`peopleSignInFacts`); the same page-1 read
 > is live in the program-year coaches list and the platform staff-delete tool (2–5 lines each). The support check fails
 > open on a database error and compares stored emails case-sensitively. The accept page without `?org` accepts the
