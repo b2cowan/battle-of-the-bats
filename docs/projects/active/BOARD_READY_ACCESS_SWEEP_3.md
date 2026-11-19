@@ -13,6 +13,25 @@
 > calls in `BOARD_READY_TRUST_CLOSE_CHECKLIST.html` (https://claude.ai/artifact/2KZrC64ucjBpWCgMkfPCej), numbered 1–18
 > there; the rulings are recorded here when they come back.
 >
+> **Leftovers census 2026-11-19 (P7, report-only, nothing built).** The findings reported while building calls 1–21, each
+> re-read against the code on `dev`: **28 found; 3 dropped** (e, the house-league "outside the permit" payload, is already
+> runners-only, `schedule/route.ts:83,92-117`; a sealed event's lock is one-way, which follows from call 14; the pay-link
+> line hidden while online payments are off is by design); **2 chores** (delete `scripts/backfill-invited-email.mjs`; the
+> three sweep-3 fix B probes' coach-refused expectations, cause to trace first); **1 too small to call** (pay-link refusals
+> without a cause code read "try again"); **22 answered by 16 owner calls** on
+> `BOARD_READY_LEFTOVERS_CALLS.html` (https://claude.ai/artifact/QBdaJMkkMjA4tqRrsHyDXv). Page call → finding: 1 = c + d
+> (club-wide permits, delete and file replace skip the group check, `org/permits/route.ts:223-230,326-351`,
+> `permits/document/route.ts`); 2 = d wider (a scoped member opens any permit's file); 3 = g (browser write on
+> `venue_facilities` / `schedule_facility_lanes`); 4 = h, staff delete (`company-users/[id]/route.ts:77-81`, unpaged
+> `listUsers()` = 50 a page, case-sensitive, silent skip); 5 = pay-link race (two presses, stop during a send, the
+> success answer ignores the stamp, `online-payment-receipt.ts:249,286-300`); 6 = automatic emails mint a live link after
+> a stop (`teamPayNowLink`, `:401-410`, and the bank-debit email); 7 = the §539 put-backs that didn't save and §540's
+> missing audit row; 8 = no audit row for stop/replace/email the pay link; 9 = h, program-year coaches list; 10 = f plus
+> five other uploads that trust `file.type`; 11 = a; 12 = j; 13 = i (fail-open half; the case half isn't real); 14 = m;
+> 15 = b (recommended ACCEPT); 16 = l (recommended ACCEPT). **Record gap:** P6's "/review … rest recorded" was never
+> written down; calls 5, 6, 8 and the too-small item come from a fresh read-only review of `9eb8d468c` on 2026-11-19.
+> /legal read the page (no call blocked; four wording points applied); /design read it (applied). Rulings pending.
+>
 > **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**
 > - **Fix (small, one commit each, awaiting the owner's go to build):** 1 refuse the demo account at all three create doors + a
 >   build check · 2 permits and venue library read only by people who schedule, run tournaments or handle money · 3 "same

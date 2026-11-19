@@ -1,0 +1,197 @@
+<title>Access Review Leftovers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: the trust close-out checklist's house look. One reading column; calls as lettered radio rows, grouped by what I recommend; what was left off; one paste-back at the foot. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #8a5200; --warn-soft: #fbefd9;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.card.key { border-color: var(--accent); }
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.tally div { display: grid; gap: 2px; padding: 10px 12px; border-radius: 8px; background: var(--bg); }
+.tally b { font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tally span { color: var(--muted); font-size: 13px; }
+.first { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+ul.plain li { max-width: 68ch; }
+.grp { display: grid; gap: 10px; }
+.grp > h2 { padding-top: 16px; margin-top: 8px; border-top: 1px solid var(--line); }
+.grp > h2:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+.call { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; }
+.call .top { display: flex; gap: 10px; align-items: baseline; }
+.call .n { font: 600 12px/1 var(--font-mono); color: var(--muted); flex: none; }
+.call h4 { margin: 0; font-size: 15.5px; line-height: 1.3; text-wrap: balance; min-width: 0; }
+.call .what { color: var(--ink); }
+.call .size { font-size: 13.5px; color: var(--muted); }
+.call .size b { font-weight: 600; color: var(--ink); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opts label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opts input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.opts .rec { font: 600 11px/1 var(--font-mono); color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin-left: 4px; white-space: nowrap; }
+.btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; min-height: 40px; }
+.btn.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.btn:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { h1 { font-size: 25px; } }
+@media (pointer: coarse) { .btn { min-height: 44px; } .opts label { padding: 11px 10px; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <span class="eyebrow">Board Ready · access review leftovers · 19 November 2026</span>
+    <h1>Fix or accept what the trust fixes left behind</h1>
+    <p class="lead">While the trust fixes were being built, the builds found smaller problems and wrote them down without fixing them. None has your ruling yet. Until each one is fixed, or accepted with a reason on record, the public roadmap can’t say “every finding resolved”. Nothing is built from this page. The fixes you choose become one build session afterwards.</p>
+  </header>
+
+  <div class="card key">
+    <h3>What I found</h3>
+    <div class="tally">
+      <div><b>28</b><span>leftovers found, each checked against the product as it is today</span></div>
+      <div><b>3</b><span>dropped: already fixed, already ruled, or by design</span></div>
+      <div><b>22</b><span>answered by the 16 calls below (some calls cover two or three)</span></div>
+      <div><b>3</b><span>left off the calls: two chores and one too small to rule</span></div>
+    </div>
+    <p>None is serious, and none lets one club see another club’s people.</p>
+    <p class="first"><b>Read call 7 early.</b> Two of your edits in an earlier walk didn’t save, and nobody knows why. A save that silently doesn’t stick would matter more than anything else here, if it is real.</p>
+    <p>One gap in the records. The pay-link button’s review said it “recorded the rest”, but nothing it left unfixed was written down anywhere. I had its code read again from scratch. Calls 5, 6 and 8 are what that turned up.</p>
+  </div>
+
+  <div class="card">
+    <h3>How to answer</h3>
+    <p>The first answer on each call (A) is my recommendation and is already selected. Change only the ones you disagree with. Then press <b>Build the summary</b> at the foot and paste it into the chat. Your picks are saved in this browser.</p>
+    <p>“Trust call N” means your answer to call N on the trust close-out checklist. “Pay-link ask N” means your answer to ask N on the pay-link button drawing.</p>
+  </div>
+
+  <div id="calls" class="grp"></div>
+
+  <div class="card">
+    <h2>Not put to you</h2>
+    <ul class="plain">
+      <li><b>Dropped, already fixed:</b> the house-league schedule’s “outside the permit” lines were said to send a permit’s days and hours to a registrar. They don’t. Only people who run the season get them.</li>
+      <li><b>Dropped, already ruled:</b> a sealed tournament’s rules, links and files can never be unlocked, because a sealed event never reopens. That follows from your lock ruling (trust call 14).</li>
+      <li><b>Dropped, by design:</b> the pay-link line is hidden while online payments are switched off, like every other online payment control.</li>
+      <li><b>Chore, in the build session unless you object:</b> delete an old one-off clean-up script for invitation emails. Run again, it would make invitations to existing accounts look like invitations to new people.</li>
+      <li><b>Chore:</b> three old test scripts for the access review now expect the wrong answer for a coach, so they report failures that aren’t real. A small change, after I find out why a coach is now shown a page before the refusal.</li>
+      <li><b>Too small for a call (I recommend accepting it; say so in the notes if not):</b> when the pay-link server isn’t set up, or a team was deleted a moment earlier, the window says “try again” instead of naming the cause. It only happens on a server that isn’t set up properly.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Paste-back</h2>
+    <label for="notes"><h3>Notes (optional)</h3></label>
+    <textarea id="notes" placeholder="Anything you want me to know, by call number."></textarea>
+    <div class="row"><button class="btn primary" id="build" type="button">Build the summary</button><button class="btn" id="copy" type="button">Copy</button><span class="progress" id="overall"></span></div>
+    <pre class="out" id="out">Press Build the summary.</pre>
+  </div>
+</div>
+
+<script>
+(function(){
+var KEY = "br-leftovers-v2";
+var S = { calls:{}, notes:"" };
+try { var raw = localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); for (var k in o) S[k] = o[k]; } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+/* First option (A) is the recommendation and starts selected. */
+var CALLS = [
+ {g:"Fix first: someone can do what they shouldn’t, or a club’s instruction is ignored (6)"},
+ {id:1, t:"A member limited to some team groups can still manage permits outside them", what:"Your trust call 10 stopped them holding a permit for a team outside their groups. They can still add, edit and renew a permit held for the whole club, and switch a team’s permit to the whole club. They can also delete any team’s permit and replace any permit’s file. Today that means a league admin, or someone who runs tournaments, limited to a group.", size:"a small build, under two hours. No screen change, though the form can also stop offering “the whole club” to them.", o:["Fix: a whole-club permit counts as outside their groups, and deleting a permit or replacing its file gets the same check","Leave as is"]},
+ {id:2, t:"A member limited to some team groups can open the file of any team’s permit", what:"They see the whole club’s list of permits, which is right: anyone booking time needs to see what the club holds, so they don’t double-book. But they can also open the issuer’s file for a team outside their groups, and that file can show fees.", size:"small, built with call 1. No screen change. Outside their groups they would see “File attached”, as your trust call 9 has it.", o:["Fix: they open files only for their own groups’ teams and the whole club’s permits; the list stays whole","Limit the whole list to their groups too","Leave as is"]},
+ {id:3, t:"A scorekeeper or coach could rename or remove a tournament’s playing fields from their browser", what:"The database still lets any active member of the club change a tournament’s playing fields and their lanes, with a hand-built request. No screen lets them, and the product itself never uses that permission. If someone did it, games would sit on a renamed or missing field.", size:"one small database change, under an hour. No screen change.", o:["Fix: take that permission away","Leave as is"]},
+ {id:4, t:"Removing a FieldLogicHQ staff member can leave their sign-in working", what:"The removal looks the person up among only the first 50 accounts, and the email’s capitals must match exactly. Past that, their staff access ends but their sign-in stays, and nobody is told. This is in platform admin only, and it will happen once there are more than 50 accounts.", size:"small, under an hour. No screen change. If the lookup fails, the removal stops and says so, instead of half-finishing. Staff access always ends; the sign-in itself is deleted only when nothing else uses the account (no club seat, no other sign-in history), as the invitation clean-up already does.", o:["Fix: find the account properly, refuse rather than half-remove, and delete the sign-in only when nothing else uses it","Leave as is"]},
+ {id:5, t:"Two people acting on one pay link at the same moment", what:"If two admins press Send a new link at once, the team gets two emails, and the first email’s link is already dead. If one presses Stop while the other is sending, a working link can reach the team while the line says “stopped”, and the message on screen and the line disagree. A double click in one window is already blocked. This needs two people within a second of each other.", size:"small, about an hour. No screen change. The second press is told “someone just replaced this link” and nothing is sent.", o:["Fix: the second of two presses is refused, and nothing goes out on a link that was just stopped","Leave as is"]},
+ {id:6, t:"After a stop, the automatic emails still carry a working pay link", what:"After you stop a link, the next acceptance email or balance reminder gives the team a new working link, and the line still says “Pay link stopped”. The old, forwarded link stays dead. But if the club stopped the link because the contact address is wrong, that automatic email sends the amount owed, with a working link, to the wrong person. A club’s stop is an instruction to us, and today the automatic emails don’t follow it.", size:"small, about an hour. No screen change.", o:["Fix: after a stop, automatic emails leave the Pay button out until someone sends a new link; when an automatic email does carry one, the line reads “Pay link sent [date]”, as pay-link ask 7 says a send does","Add one sentence to the help article instead","Leave as is"]},
+ {g:"Look into (1)"},
+ {id:7, t:"Two walk edits didn’t save, and one action left no record", what:"In your walk of the first eleven trust fixes, two edits you reversed didn’t reach the database: a rules section kept both its points, and a league admin’s Rep teams switch and Senior group limit stayed changed. Both saves were tried again afterwards and worked. In the invitation walk, a second invitation after a Decline, and its Cancel, left no activity record, though both normally write one.", size:"one short investigation session. Any fix is ruled after it.", o:["Look into it: one session tries to make it happen again","Leave it until it happens again"]},
+ {g:"Fix, cheap: each makes the product match what it already promises (7)"},
+ {id:8, t:"Nothing records who stopped or replaced a pay link", what:"The line shows the date only. Stopping a link cuts off a payer, so a club may want to know who did it. Emailing the pay link records nothing either.", size:"small, under an hour. No screen change. It goes into the club’s activity record, which only the owner and admins read: who did it, what they did and when, never the payer’s email address.", o:["Fix: record who stopped, replaced or emailed a pay link, and when","Leave as is"]},
+ {id:9, t:"A program year’s coaches list shows blank emails once there are 1,000 accounts", what:"The list looks up coaches’ emails among only the first 1,000 accounts on the platform. Past that, a coach shows with a blank email. The Members screen had the same problem and was fixed in this queue.", size:"small, under an hour, using the Members screen’s fix. No screen change, and no one new sees the emails.", o:["Fix it the way the Members screen was fixed","Leave as is"]},
+ {id:10, t:"The permit file upload trusts the browser’s word for the file type, and keeps the name as sent", what:"Your trust call 6 fixed this for player documents and document templates. The permit file was missed. A file renamed to look like a PDF would be stored as a PDF, and its shown name can carry odd characters.", size:"under an hour for the permit, using trust call 6’s checker. No screen change.", more:"Five other uploads trust the type the same way: the resource files on a tournament’s Rules page, the club logo, the hero banner, the tournament logo and the registration upload. Each is served only as the type it claimed, from a short allowed list. All six together would be about half a day.", o:["Fix the permit upload; accept the other five, since each is served only as an allowed type","Fix all six the same way","Leave as is"]},
+ {id:11, t:"An admin’s player-document upload can be tied to another club’s template", what:"When an owner or admin uploads a player’s document, the product saves whichever template the request names, unchecked. The coach’s upload checks the template belongs to that team. A wrong link would make “On file” or “Needs signing” read wrong. It takes a hand-built request by an owner or admin.", size:"under an hour, using the coach upload’s own check. No screen change.", o:["Fix: the same check as the coach’s upload","Leave as is"]},
+ {id:12, t:"The invitation page can accept a different club than it shows", what:"Every invitation email names its club, and then the page joins exactly the club it shows. If the link names no club, the page shows the newest invitation but joining takes the oldest. That only happens if the page’s first read failed, or the request is hand-built. Your trust call 13 was that a person joins only what they agreed to.", size:"under an hour, plus one new question on the invitation page.", o:["Fix: with no club named and two invitations waiting, ask which club; never pick one, and the one not chosen stays waiting","Leave as is"]},
+ {id:13, t:"A club can invite a FieldLogicHQ staff address if our check fails to answer", what:"If the database read fails at that moment, the invitation goes through. Staff still can’t do support work on that club afterwards, because another check refuses it. The old finding also said the check minds capitals; it doesn’t, because staff addresses are always stored in lower case.", size:"under an hour. No screen change.", o:["Fix: when the check can’t answer, refuse and say try again","Leave as is"]},
+ {id:14, t:"A rules section left open for editing when the tournament is completed stays editable", what:"If another admin completes the event while you have a rules section or a resource open, its fields stay editable with no way back to reading, and every save is refused. Nothing is lost or changed.", size:"under an hour, no change to how the screen looks.", o:["Fix: the open record turns read-only when the event locks","Leave as is"]},
+ {g:"Accept: I recommend no fix (2)"},
+ {id:15, t:"Adding a rules section that times out could add it twice", what:"Your trust call 8 made saving a rules section one step. Adding a new one is still two steps. A double click is already blocked. A duplicate needs the server to finish while its answer is lost, and the person then pressing Add again. The worst case is an extra section they can see and delete.", size:"if fixed: a database change and a few hours.", o:["Accept: the worst case is an extra section the person can see and delete","Fix it as one step, as saving was"]},
+ {id:16, t:"A coach offered a board role shows on the board list while the offer waits", what:"While a club’s coach hasn’t yet answered a board-role offer, the Members screen shows them on the board as “Invited · Treasurer · coaches here”, not under Coaching staff. Their coaching is unchanged, and the team staff screens still show it. Separately, creating a club or league doesn’t notice a waiting board role, but the one-club rule already refuses that person first, with “Your account already has a workspace”.", size:"if fixed: under an hour for the creation check. The Members screen would need a drawing.", o:["Accept both: the row shows the offer where the role will land, and the one-club rule answers first","Fix the creation check only; accept the Members screen"]}
+];
+
+function letter(i){ return String.fromCharCode(65 + i); }
+function answer(c){ var v = S.calls[c.id]; return (typeof v === "number" && v >= 0 && v < c.o.length) ? v : 0; }
+function render(){
+  var h = "";
+  CALLS.forEach(function(c){
+    if (c.g) { h += '<h2>' + esc(c.g) + '</h2>'; return; }
+    var a = answer(c);
+    h += '<div class="call" id="call-' + c.id + '"><div class="top"><span class="n">' + c.id + '</span><h4 id="t' + c.id + '">' + esc(c.t) + '</h4></div>'
+      + '<p class="what">' + esc(c.what) + '</p>' + (c.more ? '<p class="what">' + esc(c.more) + '</p>' : '')
+      + '<p class="size"><b>Size:</b> ' + esc(c.size) + '</p><div class="opts" role="radiogroup" aria-labelledby="t' + c.id + '">';
+    c.o.forEach(function(op, i){
+      var rid = "c" + c.id + "o" + i;
+      h += '<label for="' + rid + '"><input type="radio" id="' + rid + '" name="c' + c.id + '" value="' + i + '"' + (a === i ? " checked" : "") + '><span><b>' + letter(i) + '</b> · ' + esc(op) + (i === 0 ? '<span class="rec">recommended</span>' : '') + '</span></label>';
+    });
+    h += '</div></div>';
+  });
+  document.getElementById("calls").innerHTML = h;
+}
+function list(){ return CALLS.filter(function(c){ return c.id; }); }
+function count(){ return list().filter(function(c){ return answer(c) !== 0; }).length; }
+function summary(){
+  var L = [];
+  L.push("Board Ready leftovers: owner rulings (" + new Date().toISOString().slice(0, 10) + ")");
+  L.push("Calls: " + list().map(function(c){ return c.id + letter(answer(c)); }).join(" · "));
+  var diff = list().filter(function(c){ return answer(c) !== 0; });
+  L.push(diff.length ? "Changed from my recommendation:" : "None changed from my recommendation.");
+  diff.forEach(function(c){ L.push("  " + c.id + letter(answer(c)) + ". " + c.t + " → " + c.o[answer(c)]); });
+  var n = (S.notes || "").trim();
+  L.push("Notes: " + (n || "(none)"));
+  return L.join("\n");
+}
+var built = false;
+function refresh(){ var n = count(); document.getElementById("overall").textContent = n ? n + " changed from my recommendation" : "None changed"; if (built) document.getElementById("out").textContent = summary(); }
+
+render(); refresh();
+var notes = document.getElementById("notes"); notes.value = S.notes || "";
+notes.addEventListener("input", function(){ S.notes = notes.value; save(); refresh(); });
+document.getElementById("calls").addEventListener("change", function(e){
+  var t = e.target; if (!t.name || t.name.charAt(0) !== "c") return;
+  S.calls[t.name.slice(1)] = Number(t.value); save(); refresh();
+});
+document.getElementById("build").addEventListener("click", function(){ built = true; document.getElementById("out").textContent = summary(); });
+document.getElementById("copy").addEventListener("click", function(){
+  built = true;
+  var text = summary(); var out = document.getElementById("out"); out.textContent = text;
+  var btn = this;
+  function reset(){ setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+  function selectIt(){ var r = document.createRange(); r.selectNodeContents(out); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected: press Ctrl+C"; reset(); }
+  try { navigator.clipboard.writeText(text).then(function(){ btn.textContent = "Copied"; reset(); }, selectIt); } catch (e) { selectIt(); }
+});
+})();
+</script>

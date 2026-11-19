@@ -22,9 +22,11 @@ Nothing below was built when this was written.
 | 4 | P3 Lock rules, files and links on a completed event | call 14 | build | DONE 2026-11-18, the commit "Board Ready trust close-out 14: a completed tournament's rules, links and files lock with it…" (no schema change, so nothing to order on production; it goes with the next promote). The three routes take the existing shared guard (scope + club + not completed, the schedule routes' own words); the Rules screen reads the tournaments' lock (banner, no add/samples/handles, read-only records, a locked empty line). Reopen exists and lifts it; a SEALED event never reopens, so its rules page is fixed for good (as its results are). Copy, delete and the club purge are untouched. Proved on dev 26/26 (`.probe/completed-event-lock-prove.mjs`); /review (3 lenses: 1 fix applied, 1 test tightened, 1 noted); /docs (Tournaments help: lock + reopen answers, the Rules article, and the copy answers now say the Rules page's files come along). Owner browser walk owed |
 | 5 | P5 "Send a new link" button for a team's pay link | call 12 | drawing session only | DONE 2026-11-18, the commit "Board Ready trust call 12: the pay-link button drawn…" (drawing only): https://claude.ai/artifact/XGaoqcuEuo2973Mc4vsq5F, source `BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html`, round 2 after /design + /ux. All nine asks RULED 2026-11-18 as recommended (1A–9A): (1) one Pay link line under the payments on every team, its ⋯ holding Email the pay link + Send a new link, the due row keeps only Record; (2) the same people as Email the pay link (owner, admins, Run tournaments); (3) "Stop the pay link" when no new link can go out; (4) no copy button; (5) the old link's words unchanged; (6) a lost dispute is asked in the same window before anything stops, with "Only stop the link"; (7) the line reads "Pay link replaced/stopped {date}" until the next send; (8) stopping still works on a completed tournament (a deliberate exception to the lock); (9) Stop answers red-tinted, Send a new link lime. Build notes on the drawing: the record must be told the replaced date, a show-the-line flag and an ever-paid-online flag; the server should return a cause code (its "tournament over" sentence misreads here); dispute-first + stop-only is about a day with tests; someone with the old page open who hasn't pressed Pay is refused (gap accepted). The button's build prompt is row 6. mig 467 is already on production (applied 2026-11-15, release history), so that build has no production order of its own unless it adds a migration |
 | 6 | P6 Build the pay-link button | call 12, asks 1A–9A ruled 2026-11-18 | build | DONE 2026-11-18, the commit "Board Ready trust close-out 12: the pay-link button…" (no schema change, so nothing to order on production; it goes with the next promote). One Pay link line under a team's payments (Email the pay link · Send a new link · Stop the pay link), the window in its three forms, the answer as the record's status line; the server's stop-only mode, the dispute asked BEFORE the stop, cause codes; stopping works on a completed event (pinned). Proved on dev 37/37 (`.probe/pay-link-button-prove.mjs`); /review (4 lenses: 2 Medium race fixes + 1 Low applied; rest recorded); /docs (Tournaments help: the line, and a new answer "Sending a new pay link, or stopping it"); /legal not needed (the email's words and recipient are unchanged); /accounting none. Owner browser walk owed. Every row is now DONE: the next chat runs the END OF QUEUE checklist |
+| 7 | P7 The leftover findings, each put to the owner as fix or accept | the findings reported while building rows 1–6; call 22 | ruling preparation (report-only, nothing built) | in progress (2026-11-19: census DONE, 28 found, 3 dropped, 2 chores, 1 too small, 22 put to the owner as 16 calls; page published https://claude.ai/artifact/QBdaJMkkMjA4tqRrsHyDXv, source `BOARD_READY_LEFTOVERS_CALLS.html`, after /legal and /design; census note in the sweep report. LEFT: the owner's paste-back, then record the rulings and write P8 per the block's "WHEN THE PASTE-BACK COMES") |
 
-**END OF QUEUE checklist RUN 2026-11-18** (its own chat, records only, nothing built). The queue is finished; a chat pasted
-the launcher line again should say so and stop. Production order, from `supabase/migrations/MANUAL_PROD_STEPS.json` and each
+**END OF QUEUE checklist RUN 2026-11-18** (its own chat, records only, nothing built). Row 7 was added on 2026-11-19 for
+the leftovers it found, so the queue runs again; after row 7 the END OF QUEUE checklist does NOT re-run (its five lines
+are answered here), and the chat reports the queue finished. Production order, from `supabase/migrations/MANUAL_PROD_STEPS.json` and each
 row's hand-off: **500, 502, 503 before the code** · **504 after 502 and the code** · **505 either side** (467 applied
 2026-11-15, per that file). Found at the checklist: call 22's wording "every finding resolved" is NOT yet true once these go
 live. About twelve findings reported while building have no ruling (the sweep report's "Found while building, not fixed"
@@ -34,7 +36,8 @@ under "Status, 13"). Each needs a fix-or-accept ruling first.
 Status values: `not started` · `in progress (what is done, what is left)` · `DONE <date> <commit hashes>` · `BLOCKED <why>`.
 Why this order: P1 is small and in one area; P4 must land before the first live club; P2 and P3 are independent builds; P5 is a
 drawing, so it goes last and its build is a later session after the owner rules its asks. P6 is that build (prompt written
-2026-11-18 after the owner ruled all nine asks).
+2026-11-18 after the owner ruled all nine asks). P7 is the leftovers' ruling preparation; the fixes it rules in get their own
+build prompt (P8), written by the P7 chat only after the owner's paste-back.
 
 ## CONDUCTOR (the chat that was just pasted the launcher line follows this, and only this)
 
@@ -421,4 +424,90 @@ RULES
   docs/agents/strategy/OWNER_BRIEF_PROJECTS.json and the sweep report (BOARD_READY_ACCESS_SWEEP_3.md, a "Status, 12" line)
   move in the same commit. Browser testing is mine: finish with a short walk list in product-owner voice (one action per
   step), on the Stripe walk tournament (scripts/seed-stripe-walk-tournament.mjs).
+```
+
+---
+
+## P7 — The leftover findings, each put to the owner as fix or accept (ruling preparation; written 2026-11-19)
+
+```
+Board Ready — the trust close-out's leftovers (ruling preparation, REPORT-ONLY). Nothing is built in this session.
+
+WHY THIS EXISTS
+The END OF QUEUE checklist (2026-11-18) found that call 22's roadmap wording, "a full access review of who can see what,
+every finding resolved", will not be true once rows 1–6 go live: about twelve findings were reported while building them
+and none has a ruling. "Resolved" means each one is FIXED or ACCEPTED AS DESIGNED with a reason on record. This session
+turns each leftover into one owner call with a recommendation, so a later session (P8) can build the ones ruled "fix".
+
+READ FIRST (in this order)
+1. docs/projects/active/BOARD_READY_ACCESS_SWEEP_3.md: the RULED 2026-11-18 block and every "Status, …" block under it,
+   especially "Found while building, not fixed" (after fixes 1–11) and the "Reported, not fixed" / "Noted, not fixed"
+   lines under Status 13, 13 (c) and 14.
+2. docs/projects/active/BOARD_READY_TRUST_CLOSE_CHECKLIST.html: the house pattern for owner calls (the CALLS array, radio
+   rows, one paste-back). Copy its look and paste-back shape; do not invent a new one.
+3. The commit messages of the queue's builds (git log --since=2026-11-17 --grep=trust -i, full bodies) and each row's
+   PROGRESS note: some leftovers are recorded only there ("rest recorded", "1 noted").
+
+THE CENSUS (seed list, NOT the whole list; the census is the job)
+Known leftovers, as recorded. For each, re-read the live code first: it may already be fixed, wider than written, or wrong.
+ a. The club's player-document upload saves any document template it is sent, unchecked (the coach's route checks it).
+ b. Creating a Rules section is still two inserts with a compensating delete (a retried create could add a section twice).
+ c. A member limited to some team groups can still save a permit held for the whole club.
+ d. …and can still delete a permit, or replace its file, held for a team outside their groups.
+ e. The house-league schedule's "outside the permit" warnings send the permit's days, hours and id to anyone who reads the
+    season, a registrar included.
+ f. The permit file upload still trusts the browser's file type and stores the raw file name.
+ g. Any ACTIVE member of any role (a scorekeeper, a coach) can write a tournament's venue facilities and facility lanes from
+    their own browser (the app writes both through the service role, so the browser grant may simply be revoked).
+ h. Two lists still read only the first 1,000 platform users (the program-year coaches list; the platform staff-delete tool).
+ i. The support-address check fails OPEN on a database error, and compares stored emails case-sensitively.
+ j. The accept page without a club named in its address accepts the oldest pending invitation.
+ k. A one-off backfill script for invited emails predates the empty-email mark (a re-run would undo it).
+ l. While a coach's board role waits, the person shows on the board, not under Coaching staff; club and league creation's
+    pending-invitation checks don't see a waiting board role.
+ m. A Rules record already open in edit mode when its event is completed keeps its fields (its saves are refused).
+ n. Whatever the P6 /review recorded and did not fix, and the P3 /review "1 noted" (find them; they are not listed here).
+Housekeeping, not a call: the old sweep-3 fix B probes' "a coach row is refused" checks expect the wrong answer (the
+request now meets an HTML page first). List it as a chore with its size, do not put it to the owner.
+Then widen: look for anything else the queue's builds recorded as reported, noted, left or accepted that has no ruling.
+Already ruled (do NOT re-ask): calls 1–22, the pay-link asks 1A–9A (incl. ask 6's accepted gap), 13 (a)/(b)/(c).
+
+FOR EACH LEFTOVER, RECORD
+- Is it real today (file:line in the record, never in the owner's page)? Already fixed → say so and drop it.
+- In plain words: who could do what they shouldn't, or what could go wrong, and how likely. Rank: Serious / Medium / Small.
+- The recommendation: FIX (with its size: lines, a migration or not, a screen change or not) or ACCEPT (with the reason
+  that would go on record). Recommend on merit; a past ruling is a reason to cite, not an authority.
+- Does it touch what a person's information shows to whom? If yes, it goes through /legal before the page is published.
+
+THE OWNER'S PAGE
+- One checkable page, docs/projects/active/BOARD_READY_LEFTOVERS_CALLS.html, published as a Claude Artifact (load
+  artifact-design first): one call per leftover (group two only when one fix answers both), the recommended option first,
+  each call in product-owner words (what a person sees or could do; no file names, no table names), one paste-back at the
+  bottom. Calls only; no walk steps. Say at the top how many leftovers the census found and how many dropped as already fixed.
+- Run /design on the page before handing it over (house rule for every page the owner rules from).
+
+RULES THAT BIND THIS SESSION
+- REPORT-ONLY. No code, no migrations, no probes that write. Reading dev is fine (db-query --dev, counts and schema);
+  production is never touched.
+- Argue from the code, not from the record: several Status lines in the sweep report were stale before.
+- Disagree out loud: if a leftover is not worth a call (too small to matter, or obviously fixed by the next promote), say so
+  and recommend accepting or dropping it, rather than padding the page.
+- Do not touch hooks, settings or the database checks. Do not change the public roadmap's wording (call 22 waits until the
+  fixes ruled in are built AND live).
+- Close-out: the sweep report gets one short "Leftovers census 2026-11-19" note (count found, dropped, page link); PROGRESS
+  row 7 moves; the board line in docs/agents/strategy/OWNER_BRIEF_PROJECTS.json moves in the same commit (commit only that
+  file's Board Ready lines if another session has the file open; see the partial-commit memory). Branch dev; explicit
+  pathspecs; no commit without my yes.
+
+WHEN THE PASTE-BACK COMES (same chat, if it is not heavy; otherwise a fresh one through the launcher line)
+- Record each ruling in the sweep report's RULED block, as ruled and nothing more.
+- The ones ruled ACCEPT: record the reason; they are resolved.
+- The ones ruled FIX: write P8, "Build the leftover fixes", into this file as a new PROGRESS row and prompt block, in the
+  style of P1 (one commit each, a probe on dev for every server change, the production order of any migration). Do not
+  start building it in this chat.
+- Then say whether call 22's wording can change once P8 is live, or what still stands in the way.
+
+DONE LOOKS LIKE
+Every leftover is on the owner's page with a recommendation, or reported as already fixed or not worth a call. The page is
+published and linked. Nothing was built.
 ```
