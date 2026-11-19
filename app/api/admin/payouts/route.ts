@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { writeOrgAudit } from '@/lib/org-audit';
 import { withObservability } from '@/lib/observability';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -78,8 +79,9 @@ async function readAccount(orgId: string): Promise<PayoutsAccountRow & {
   return data as never;
 }
 
+/** Through the one writer (it used to read no answer at all). */
 async function audit(orgId: string, actorId: string, action: string, payload: Record<string, unknown>) {
-  await supabaseAdmin.from('org_audit_log').insert({ org_id: orgId, actor_id: actorId, action, payload });
+  await writeOrgAudit(orgId, actorId, null, action, payload);
 }
 
 async function nameOf(userId: string | null): Promise<string | null> {

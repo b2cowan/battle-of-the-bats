@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { writePlatformEvent } from './platform-events';
+import { writeOrgAudit } from './org-audit';
 import { isStripeConfigured } from './billing-mock';
 import { stripe } from './stripe';
 import { supabaseAdmin } from './supabase-admin';
@@ -233,17 +234,6 @@ async function bell(p: Parameters<typeof notify>[0]): Promise<void> {
 }
 
 // ── The record ────────────────────────────────────────────────────────────────────────────────────
-
-async function writeOrgAudit(orgId: string, actorId: string, targetId: string, action: string, payload: Record<string, unknown>) {
-  const { error } = await supabaseAdmin.from('org_audit_log').insert({
-    org_id: orgId,
-    actor_id: actorId,
-    target_id: targetId,
-    action,
-    payload,
-  });
-  if (error) console.error('[team-move] audit write error:', error);
-}
 
 async function recordBothSides(p: {
   link: Pick<TeamOrgLinkRow, 'id' | 'linked_org_id' | 'team_workspace_id' | 'rep_team_id'>;

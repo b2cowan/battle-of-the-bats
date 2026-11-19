@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { reportUnwritten } from './observability/report-unwritten';
 
 /**
  * ONE ROW IN AN ORGANIZATION'S AUDIT LOG (`org_audit_log`) — awaited, and never thrown.
@@ -12,8 +13,10 @@ import { supabaseAdmin } from './supabase-admin';
  * started can be dropped when the server freezes the worker after the response, so a fire-and-forget
  * write is not a log. (`tests/unit/no-unsent-db-writes.test.ts` refuses the `void …from(` shape.)
  *
- * A failed write is logged and swallowed: the change it records has already happened, and a log row
- * must never turn a successful change into an error for the person who made it.
+ * A failed write is swallowed: the change it records has already happened, and a log row must never
+ * turn a successful change into an error for the person who made it. It opens an issue instead
+ * (`reportUnwritten`, which keeps the payload out: it holds emails and access maps). Every product
+ * writer of this table goes through here (`tests/unit/org-audit-failure-reported.test.ts`).
  */
 export async function writeOrgAudit(
   orgId: string,
@@ -22,6 +25,7 @@ export async function writeOrgAudit(
   action: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
+  let failure: unknown = null;
   try {
     const { error } = await supabaseAdmin.from('org_audit_log').insert({
       org_id: orgId,
@@ -30,9 +34,9 @@ export async function writeOrgAudit(
       action,
       payload,
     });
-    if (error) console.error(`[org-audit] ${action} not written:`, error.message);
+    failure = error;
   } catch (e) {
-    // The message only — the payload holds emails and access maps, and a thrown error can carry the body.
-    console.error(`[org-audit] ${action} not written:`, e instanceof Error ? e.message : String(e));
+    failure = e;
   }
+  if (failure) await reportUnwritten('org_audit_log', action, orgId, failure);
 }

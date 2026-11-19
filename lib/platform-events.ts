@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { reportUnwritten } from './observability/report-unwritten';
 import { classifyGrowthMove, isRecoveryTransition, type PlanMoveInput } from './plan-growth';
 
 export type PlatformEventType =
@@ -101,7 +102,7 @@ export async function writePlatformEvent(input: PlatformEventInput): Promise<voi
         .maybeSingle();
 
       if (lookupError) {
-        console.error('[platform-events] lookup error:', lookupError);
+        await reportUnwritten('platform_events', input.eventType, input.orgId ?? null, lookupError);
         return;
       }
       if (existing) return;
@@ -124,12 +125,11 @@ export async function writePlatformEvent(input: PlatformEventInput): Promise<voi
         occurred_at: input.occurredAt ?? new Date().toISOString(),
       });
 
-    if (error) {
-      console.error('[platform-events] write error:', error);
-    }
+    // A failed event opens an issue: its type and club only, never its metadata or the actor's email.
+    if (error) await reportUnwritten('platform_events', input.eventType, input.orgId ?? null, error);
   } catch (err) {
     // A network/fetch-layer rejection (rare) must not propagate to the caller's request path.
-    console.error('[platform-events] write threw (swallowed):', err);
+    await reportUnwritten('platform_events', input.eventType, input.orgId ?? null, err);
   }
 }
 

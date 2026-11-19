@@ -89,7 +89,7 @@ describe('no code edits or deletes a line', () => {
   it('finds the known writers (the scan is not vacuous)', () => {
     const inserts = chains.filter((c) => /\.insert\(/.test(c.chain)).map((c) => c.file);
     assert.ok(inserts.includes('lib/platform-audit.ts'), 'lib/platform-audit.ts inserts');
-    assert.ok(inserts.includes('lib/billing-retention.ts'), 'lib/billing-retention.ts inserts');
+    // lib/billing-retention.ts inserted directly until 2026-11-19; it now writes through lib/platform-audit.ts.
   });
 
   it('no .update( / .delete( / .upsert( on the table', () => {

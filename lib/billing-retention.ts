@@ -2,6 +2,8 @@ import 'server-only';
 
 import { PLAN_CONFIG } from './plan-config';
 import { supabaseAdmin } from './supabase-admin';
+import { writeOrgAudit } from './org-audit';
+import { writePlatformAuditLog } from './platform-audit';
 import { orgOwnerEmails } from './notify-recipients';
 import { billingRetentionWarningHtml, SITE_URL } from './email';
 import { sendTransactionalEmail } from './platform-email-templates';
@@ -414,18 +416,14 @@ export async function restoreRetainedDowngradeTournaments(
   };
 }
 
+/** The billing routes' activity line, through the one writer (it used to read no answer at all). */
 export async function writeOrgBillingAudit(
   orgId: string,
   actorUserId: string,
   action: string,
   details: Record<string, unknown>,
 ) {
-  await supabaseAdmin.from('org_audit_log').insert({
-    org_id: orgId,
-    actor_id: actorUserId,
-    action,
-    payload: details,
-  });
+  await writeOrgAudit(orgId, actorUserId, null, action, details);
 }
 
 function orgFromJoinedRow(row: RetainedRecordProcessRow) {
@@ -583,18 +581,12 @@ export async function processBillingRetentionExpiry(actorEmail: string) {
     pendingPurgeRecords += ids.length;
   }
 
-  await supabaseAdmin.from('platform_audit_log').insert({
-    actor_email: actorEmail,
-    org_id: null,
-    action: 'process_billing_retention_expiry',
-    field: 'billing_retained_records',
-    old_value: null,
-    new_value: {
-      warningEmailsSent,
-      warningRecordsTagged,
-      pendingPurgeEmailsSent,
-      pendingPurgeRecords,
-    },
+  // Through the console's writer, so a failed line opens an issue. No reason: a product job run by hand (owner Q6's list).
+  await writePlatformAuditLog(actorEmail, null, 'process_billing_retention_expiry', 'billing_retained_records', null, {
+    warningEmailsSent,
+    warningRecordsTagged,
+    pendingPurgeEmailsSent,
+    pendingPurgeRecords,
   });
 
   return {

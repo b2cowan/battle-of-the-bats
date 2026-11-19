@@ -145,6 +145,26 @@
 >   steps (several presses in one tick). No defect; the ledger's "route to /debug if it recurs" stands. **One new finding,
 >   leftover call 17:** a failed activity-record line is swallowed by design and reaches only the server log, so a missing
 >   line would go unnoticed. **RULED 2026-11-19 (owner): fix it** (report it to the issue feed, no payload): queue row 9b.
+>   **Status, 17 (P9b, 2026-11-19, built on dev):** a failed line is still swallowed and now opens one issue through
+>   `lib/observability/report-unwritten.ts` (record, action, the line's org id in the context, a SQLSTATE-shaped code;
+>   never the payload or an error's message; bounded 2 s, then a 60 s no-wait latch; it does not mark the request
+>   captured, so a request's own returned 5xx still gets its issue). Census (helper agent): the same shape in the
+>   team-move copy (deleted, now the shared writer), `writePlatformAuditLog` and `writePlatformEvent` (both now report);
+>   four `org_audit_log` writers that never read the insert's answer (billing `writeOrgBillingAudit`, payouts `audit()`,
+>   the Connect account-events `payouts_closed_by_stripe` line) and the retention run's raw `platform_audit_log` insert,
+>   all moved onto the writers (the retention run as the no-reason job it already was on `platform-audit-reason.ts`).
+>   Guard: `tests/unit/org-audit-failure-reported.test.ts` (each record table has exactly one product writer). Proved on
+>   dev 14/14 (`.probe/p9b-unwritten-prove.ts`: a made-up club's line opens one issue, a second counts against it, it
+>   closes, cleaned). Proved along the way: `error_events.org_id` is a foreign key, so an issue given a club that doesn't
+>   exist is lost; hence the context. **Put to the owner as leftover call 18 (fix or accept, 2026-11-19), not yet ruled:**
+>   writers of other tables that never read their insert's answer: (a) `platform_record_opens` (staff's who-opened-what
+>   trail), (b) the Sent-email search counter (`lib/sent-log.ts`: a failed insert lets the daily brake fail open),
+>   (c) the two Stripe Connect webhooks' `stripe_connect_events` writes. Recommended: fix all three, one small change
+>   (read the answer; (a) and (c) report like call 17, (b) refuses the search when it can't count). Also asked, (d): the
+>   general fix for the foreign key (record_error_event drops an unknown org id). Recommended: accept for now (the
+>   context carries the club; shared observability work, no finding against access). **RULED 2026-11-19 (owner): fix
+>   (a)–(c), accept (d), as recommended** (d's reason on record: the context carries the club, and an unknown club is
+>   not an access finding). The build is queue row 9c. Call 22's wording now waits on 9c being live.
 >   Dismissed with reason: a Rules Delete reads any "not found" as already gone (only a dev recompile gives a foreign one).
 >
 > **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**

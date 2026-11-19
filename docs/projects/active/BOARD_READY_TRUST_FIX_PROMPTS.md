@@ -27,7 +27,8 @@ Nothing below was built when this was written.
 | 8b | P8b Build the leftover fixes, second half | leftover calls 4, 5, 6, 8, 9, 11, 12 + the owner's Word-file question | build (no migration expected) | DONE 2026-11-19: Word files on permits 150947d52 (owner yes; mig 507, production BEFORE the code), 9 750957c34, 11 707f7b0d2, 4 7d05bc66a, 12 24daf5d95 + records c1b328ceb; then 5, 6 and 8 (the pay-link trio) in ONE commit "Board Ready leftover fixes 5, 6 and 8…" (no schema change; proof 23/23, `.probe/pay-link-trio-prove.mjs`; /simplify, /review, /docs, /legal done). Owner questions recorded in the sweep report: the coach portal's Pay now while stopped RULED and built the same day (commit "Board Ready leftover 6, the coach portal…"); the pay-link rows on the activity screen RULED "owner only" the same day, its build is row 8c. Next: P8c |
 | 8c | P8c Show the pay-link actions on the owner's activity screen | the P8b owner call (a), ruled 2026-11-19 "Owner only, as recommended" | build (small, no migration expected) | DONE 2026-11-19, the commit "Board Ready P8c: the pay-link actions on the owner's Audit log…" (no schema change, so nothing to order on production; it goes with the next promote). The three actions join the owner's one list (a filter would be a new control, so none); separate named list in code so "member changes" keeps its meaning. Words: "Emailed the pay link" · "Sent a new pay link (the old one stopped)" · "Stopped the pay link", plus "(stopped at the same moment, so it doesn't work)" and "(the new one didn't go out)"; To = "{team}, {tournament}" at read time, this organization only, never the team's address. Proof `.probe/audit-log-pay-link-prove.mjs` 33/33 on dev; unit 21/21. /review (4 lenses: 6 fixed incl. a failed name read now fails honestly instead of saying "Deleted"; 3 accepted), /docs (Organization + Tournaments help), /legal (re-verified, no wording change), /accounting none. Read as "no TEAM address": the acting member's own email was already in every row (the export's Actor Email). Owner browser check owed. Next: P9b |
 | 9 | P9 Look into the walk edits that didn't save | leftover call 7, ruled 2026-11-19 | investigation (report-only) | DONE 2026-11-19, the commit "Board Ready trust-fix queue P9: the walk edits that didn't save…" (records only, nothing built). All three NOT REPRODUCED on dev, each driven through the real screens (Playwright) as well as the routes: the Rules put-back 3 runs (slow, fast, pressing on with a save still in flight), the Members window put-back 2 runs plus a sign-in swap test, §540 W2's second invitation and Cancel 2 runs; every save landed with its activity line, and none of these screens can say saved without the server's yes. The day's record shows the missing requests never reached the server (no activity line, nothing in the issue feed, every landed line the owner's own). All three sit on compound put-back steps (several presses in one tick); nothing more is provable. Probes `.probe/rules-put-back-ui.mjs`, `memberdbg-ui.mjs`, `memberdbg-swap.mjs`, `p2-w2-screens.cjs`, `p2-w2-repro.mjs`, `p9-actor-check.mjs`; fixtures cleaned. One new finding, put to the owner as leftover call 17 (a failed activity-record line reaches only the server log) and RULED 2026-11-19 "fix it": row 9b. Considered and dismissed: a Rules Delete reads any "not found" as already gone (only a dev recompile gives a foreign one). Call 22 answered under the P9 block |
-| 9b | P9b A failed activity-record line opens an issue | leftover call 17 (found by P9), ruled 2026-11-19 "fix it" | build (small, no migration) | not started (prompt written 2026-11-19 by the P9 chat) |
+| 9b | P9b A failed activity-record line opens an issue | leftover call 17 (found by P9), ruled 2026-11-19 "fix it" | build (small, no migration) | DONE 2026-11-19, the commit "Board Ready leftover call 17: a failed record line opens an issue…" (no schema change; nothing to order on production, it goes with the next promote). writeOrgAudit, writePlatformAuditLog and writePlatformEvent report a failed line through lib/observability/report-unwritten.ts (action + the line's club + a code, never the payload; bounded; doesn't mark the request captured, a one-option change to capture.ts). The census moved the team-move copy and four never-checked writers (billing, payouts, Connect closed, the retention run) onto the writers. Proved on dev 14/14 (`.probe/p9b-unwritten-prove.ts`); unit guard + 279/279 related; /simplify (4 lenses, applied), /review (4 lenses: 2 Medium fixed, 3 Low fixed, rest accepted); /docs none (no screen); /legal none (no person data leaves; the issue carries only the feed's usual sign-in attribution); /accounting none. NEW: leftover call 18 (three other tables' writers never read their answer + the feed's foreign key) put to the owner and RULED the same day "fix (a)–(c), accept (d)": row 9c |
+| 9c | P9c The other records that never check a line saved | leftover call 18 (a)–(c), ruled 2026-11-19 | build (small, no migration) | not started (prompt written 2026-11-19 by the P9b chat) |
 
 **END OF QUEUE checklist RUN 2026-11-18** (its own chat, records only, nothing built). Row 7 was added on 2026-11-19 for
 the leftovers it found, so the queue runs again; rows 8 and 9 were added by the P7 chat on 2026-11-19 after the owner's
@@ -807,4 +808,37 @@ Board Ready board line. No commit without my yes.
 
 DONE LOOKS LIKE
 A failed activity-record line opens one issue naming the action and the club, and nothing else changes.
+```
+
+## P9c — The other records that never check a line saved (leftover call 18 (a)–(c), ruled 2026-11-19; written 2026-11-19 by the P9b chat)
+
+```
+Board Ready — leftover call 18 (build, small). Owner ruled 2026-11-19: "Fix a–c, accept d (Recommended)".
+
+THE FINDING (P9b's census, 2026-11-19): three writers never read their insert's answer, so a failed line vanishes.
+- (a) lib/platform-record-opens.ts (~line 40): staff's who-opened-which-record trail; its catch {} logs nothing.
+- (b) lib/sent-log.ts takeSentEmailSearch (~line 176): the daily Sent-email search counter. A failed insert means
+  the search is not counted, so the daily brake fails OPEN.
+- (c) app/api/payments/connect-webhook/route.ts (~line 47) and app/api/payments/connect-account-events/route.ts
+  (~line 58): the stripe_connect_events ledger insert and its update calls (processed_at / error / org_id stamps).
+(d) was ACCEPTED: the issue feed's foreign key on error_events.org_id (report-unwritten.ts carries the club in the
+context instead). Do not build it.
+
+THE FIX
+- (a) and (c): read the answer; a failure opens an issue the way call 17 does (lib/observability/report-unwritten.ts;
+  widen its RECORDS map with the two tables). Never the row. The webhook's answer to Stripe is unchanged by a ledger
+  STAMP failure; decide from the code whether a failed ledger INSERT (the idempotency row) should fail the event so
+  Stripe retries (it is the dedup key, unlike an audit line); say which and why in the commit.
+- (b): when the count can't be written, refuse the search with the existing "try again" answer (fail closed), and
+  report it. Check the screen shows that answer sensibly (no new words unless needed).
+- Extend tests/unit/org-audit-failure-reported.test.ts's one-writer census to these tables, and a unit guard for (b)
+  failing closed.
+
+RULES: no schema change; /review on the change; /docs only if (b)'s refusal is new words on a screen; /legal none
+expected (no person data leaves). Proof on dev: force each failure through a probe (made-up ids), see the issue
+open, then close and clean it. Close-out: PROGRESS row 9c, the sweep report's call 18 line, the Board Ready board
+line. No commit without my yes.
+
+DONE LOOKS LIKE
+None of the three can lose a line silently; the search brake can't fail open; nothing else changes.
 ```

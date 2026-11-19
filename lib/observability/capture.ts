@@ -49,6 +49,9 @@ export interface CaptureOptions {
   userAgent?: string | null;
   requestContext?: Record<string, unknown> | null;
   title?: string | null;
+  /** false = this report is a SIDE issue, not the request's own failure, so it must not stop withObservability's
+   *  returned-5xx safety net from capturing that failure (a failed record line, `report-unwritten.ts`). Default true. */
+  marksRequestCaptured?: boolean;
 }
 
 // Routes whose failures are treated as CRITICAL — drives Phase-4 first-occurrence alerting.
@@ -107,7 +110,7 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
   try {
     // Tell withObservability's returned-5xx safety net this request was already reported, so it
     // won't also capture a generic fallback for the same failure. No-op outside a request context.
-    markRequestCaptured();
+    if (opts.marksRequestCaptured !== false) markRequestCaptured();
     const reqCtx = getRequestContext();
     const route = opts.route ?? reqCtx?.route;
     const method = opts.method ?? reqCtx?.method;

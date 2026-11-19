@@ -75,7 +75,8 @@ describe('the Health list (words §6.2)', () => {
   it('the Story gains the online-payment events', () => {
     const story = readCode('lib/platform-story.ts');
     for (const a of ['payouts_fee_payer_changed', 'payouts_terms_agreed', 'payouts_closed_by_stripe']) assert.ok(story.includes(`'${a}'`), a);
-    assert.match(readCode('app/api/payments/connect-account-events/route.ts'), /action: 'payouts_closed_by_stripe'/);
+    // Through the one activity writer since Board Ready leftover call 17 (2026-11-19).
+    assert.match(readCode('app/api/payments/connect-account-events/route.ts'), /writeOrgAudit\(acct\.org_id, null, null, 'payouts_closed_by_stripe'/);
   });
 });
 

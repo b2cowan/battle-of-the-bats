@@ -64,6 +64,8 @@ const NO_REASON_ACTIONS: Record<string, string> = {
   // carries support's reason); a sign-in with a real code cancelled it (the product's own rule).
   two_step_reset_confirmed: 'the person’s own press on the confirmation link; support’s reason is on the request row',
   two_step_reset_cancelled: 'the product cancelled it: the person signed in with a real code (a staff cancel carries its reason)',
+  // lib/billing-retention.ts, through the writer since Board Ready leftover call 17 (2026-11-19).
+  process_billing_retention_expiry: 'product job (a person presses run: Retention › Process); on lib/platform-audit-reason.ts NO_REASON',
 };
 
 /** Every writer call: the file, its text from the opening paren to the matching close. */

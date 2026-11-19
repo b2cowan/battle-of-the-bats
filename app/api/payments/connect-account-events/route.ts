@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { writeOrgAudit } from '@/lib/org-audit';
 import { withObservability, captureError } from '@/lib/observability';
 import { stripeKeyIsLive } from '@/lib/stripe-mode';
 import { connectAccountWebhookSecret, parseAccountEvent } from '@/lib/stripe-connect';
@@ -76,7 +77,8 @@ export const POST = withObservability(async (req: Request) => {
         const { count, error: countError } = await supabaseAdmin.from('org_audit_log').select('id', { count: 'exact', head: true })
           .eq('org_id', acct.org_id).eq('action', 'payouts_closed_by_stripe').contains('payload', { stripeAccountId: account });
         if (countError) throw countError;
-        if (!count) await supabaseAdmin.from('org_audit_log').insert({ org_id: acct.org_id, actor_id: null, action: 'payouts_closed_by_stripe', payload: { stripeAccountId: account } });
+        // Through the one writer (it used to read no answer at all): a failed line opens an issue, never fails the event.
+        if (!count) await writeOrgAudit(acct.org_id, null, null, 'payouts_closed_by_stripe', { stripeAccountId: account });
       }
     } else {
       row = await syncPayoutsAccount(account);
