@@ -1640,6 +1640,8 @@ the studio and mirrored to the platform audit log.
 
 **Purpose:** tournament-attached **surfaces** within a venue (Diamond 1, Court A) — what schedule lanes resolve to and what `games.venue_facility_id` pins.
 
+**Who writes (mig 506, Board Ready leftover call 3, 2026-11-19):** everyone READS (the `anon_read_venue_facilities` SELECT policy; the public schedule reads it); **only the server writes** (`app/api/admin/venues/route.ts`, `lib/tournament-venue.ts`, `lib/tournament-venue-copy.ts`, service role). Before 506 any active member of the tournament's club (a scorekeeper, staff) could insert, rename or delete a field from their own browser (mig 095's write policies + grant); 506 dropped the three write policies and revoked INSERT/UPDATE/DELETE/TRUNCATE from `authenticated` and `anon`.
+
 **Gotchas:** (1) **`venue_id` → `diamonds.id`** (ON DELETE CASCADE), not a `venues` table. (2) **`settings` jsonb is a DEAD column** — declared as per-facility timing overrides but **nothing reads/writes it**; the mappers strip it. Game timing comes from `resolveGameTiming` (per-game → division → tournament), never facility settings. (3) `tournament_id` is denormalized (must agree with the parent venue). (4) The legacy `save` action auto-creates one default facility; the newer `save-venue` does not.
 
 **Fields** (boilerplate `id`, `created_at` omitted):
@@ -2141,6 +2143,8 @@ the studio and mirrored to the platform audit log.
 <!-- dict:table:schedule_facility_lanes -->
 
 **Purpose:** **temporary** scheduling lanes ("Field 1/2" per division) that the auto-scheduler generates games against **before** real venues exist, then **resolves** to a concrete venue + facility — back-filling `games.diamond_id`/`venue_facility_id`/`location`.
+
+**Who writes (mig 506, Board Ready leftover call 3, 2026-11-19):** everyone READS (`anon_read_schedule_facility_lanes`); **only the server writes** (`app/api/admin/schedule-facility-lanes/route.ts`, `lib/tournament-venue-copy.ts`, service role). Before 506 any active member of the tournament's club could write lanes from their own browser (mig 104's write policies + grant); 506 dropped them and revoked INSERT/UPDATE/DELETE/TRUNCATE from `authenticated` and `anon`.
 
 **Gotchas:** (1) **Staging layer** — the `resolve` action maps each lane to a `diamonds` venue (+ optional facility) and bulk-updates every game on the lane (`location = ${venue.name} - ${facility.name}`, falling back to the lane `label`). (2) `UNIQUE(tournament_id, division_id, label)` — `ensure` is idempotent (swallows 23505). (3) **Table-missing is handled gracefully** (error 42P01 → `[]`/clear message) — some envs may lack it. (4) `resolve` rejects (403) a facility/venue from a different tournament. (5) `updated_at` **is** code-maintained here (set on resolve).
 

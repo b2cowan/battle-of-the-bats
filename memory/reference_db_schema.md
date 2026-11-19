@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-18 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-19 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-18
+# DB Schema Reference — 2026-11-19
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -603,7 +603,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tagline, description, co
 - Indexes: org_public_site_content_org_id_key
 
 ### organization_members
-id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, role, invited_at, accepted_at, capabilities (jsonb), status, display_name, title, invited_email
+id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, role, invited_at, accepted_at, capabilities (jsonb), status, display_name, title, invited_email, pending_role, pending_capabilities (jsonb), pending_invited_at
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
@@ -875,6 +875,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → c
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, starts_on NOT NULL, ends_on NOT NULL, settings (jsonb), version (integer), started_from_permit_id (uuid) → org_permits.id, started_from_schedule_id (uuid) → club_schedules.id, reply_by, sent_at, sent_by (uuid), finalized_at, finalized_by (uuid), changed_since_sent (boolean), bill_line_id (uuid) → org_budget_lines.id, bill_permit_id (uuid) → org_permits.id, bill_amount (numeric), bill_plan, bill_first_due, bill_dates, bill_scale (numeric), allocation_id (uuid) → rep_cost_allocations.id, created_by (uuid), updated_by (uuid), created_at, updated_at, bill_price_mode, part_of_schedule_id (uuid) → club_schedules.id, part_label, bill_dismissed_at, bill_dismissed_by (uuid)
 - Indexes: club_schedules_allocation_idx, club_schedules_bill_line_idx, club_schedules_bill_permit_idx, club_schedules_created_by_idx, club_schedules_finalized_by_idx, club_schedules_from_schedule_idx, club_schedules_org_idx, club_schedules_part_label_once, club_schedules_part_of_idx, club_schedules_permit_idx, club_schedules_sent_by_idx, club_schedules_updated_by_idx
 
+### cron_call_receipts
+id (uuid), job_name NOT NULL, path NOT NULL, issued_at, used_at
+- Indexes: cron_call_receipts_job_issued_idx
+
 ### error_events
 id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, source, route, http_method, status_code (integer), error_name, error_message, stack_trace, org_id (uuid) → organizations.id, org_slug, user_id (uuid), user_email, user_role, request_id, ip_address, user_agent, request_context (jsonb), created_at
 - Indexes: idx_error_events_group_org, idx_error_events_group_time, idx_error_events_occurred, idx_error_events_org_time
@@ -993,9 +997,13 @@ id (uuid), online_payment_id (uuid) → online_payments.id NOT NULL, org_id (uui
 id (uuid), online_payment_id (uuid) → online_payments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, amount (numeric) NOT NULL, fee_refunded (numeric), reason, note, origin, status, failure_reason, stripe_refund_id, refund_entry_id (uuid) → accounting_entries.id, processing_cost_entry_id (uuid) → accounting_entries.id, created_by (uuid), created_at, updated_at, succeeded_at, online_payment_item_id (uuid) → online_payment_items.id, partial_reason, booked_at, part_refund (boolean), failed_at, family_emailed_at, family_email_failed_at, resolved_by (uuid), stripe_created_at, family_answer, family_answer_by (uuid), family_answer_at
 - Indexes: online_payment_refunds_cost_entry_idx, online_payment_refunds_created_by_idx, online_payment_refunds_entry_idx, online_payment_refunds_family_answer_by_idx, online_payment_refunds_item_idx, online_payment_refunds_org_idx, online_payment_refunds_payment_idx, online_payment_refunds_resolved_by_idx, online_payment_refunds_stripe_child_key
 
+### online_payment_stripe_fee_lines
+id (uuid), org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, stripe_txn_id NOT NULL, livemode (boolean) NOT NULL, amount (numeric) NOT NULL, description, stripe_created_at NOT NULL, kind NOT NULL, online_payment_id (uuid) → online_payments.id, entry_id (uuid) → accounting_entries.id, booked_at, unmatched_reason, created_at
+- Indexes: online_payment_stripe_fee_lines_entry_idx, online_payment_stripe_fee_lines_org_idx, online_payment_stripe_fee_lines_payment_idx, online_payment_stripe_fee_lines_txn_key
+
 ### online_payments
-id (uuid), org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, flow NOT NULL, tournament_id (uuid) → tournaments.id, team_id (uuid) → teams.id, scope NOT NULL, description NOT NULL, payer_email, base_amount (numeric) NOT NULL, fee_amount (numeric) NOT NULL, total_amount (numeric) NOT NULL, fee_payer NOT NULL, fee_pct (numeric) NOT NULL, fee_flat (numeric) NOT NULL, currency, rail, status, livemode (boolean), stripe_checkout_session_id, stripe_payment_intent_id, stripe_charge_id, card_brand, card_last4, receipt_no (bigint), paid_on, paid_at, landed_at, land_error, processing_cost_entry_id (uuid) → accounting_entries.id, receipt_emailed_at, created_at, updated_at, season_id (uuid) → league_seasons.id, signup_key, bank_last4, clearing_at, returned_at, return_reason, return_detail, reversed_at, stripe_dispute_id, card_country, over_amount (numeric), over_whole (boolean), over_kept_reason, over_kept_by (uuid), over_kept_at, application_fee_amount (numeric) NOT NULL
-- Indexes: online_payments_clearing_idx, online_payments_cost_entry_idx, online_payments_dispute_key, online_payments_intent_key, online_payments_one_open_per_signup, online_payments_one_open_per_team, online_payments_open_idx, online_payments_org_idx, online_payments_over_idx, online_payments_over_kept_by_idx, online_payments_receipt_key, online_payments_season_idx, online_payments_session_key, online_payments_team_idx, online_payments_tournament_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, flow NOT NULL, tournament_id (uuid) → tournaments.id, team_id (uuid) → teams.id, scope NOT NULL, description NOT NULL, payer_email, base_amount (numeric) NOT NULL, fee_amount (numeric) NOT NULL, total_amount (numeric) NOT NULL, fee_payer NOT NULL, fee_pct (numeric) NOT NULL, fee_flat (numeric) NOT NULL, currency, rail, status, livemode (boolean), stripe_checkout_session_id, stripe_payment_intent_id, stripe_charge_id, card_brand, card_last4, receipt_no (bigint), paid_on, paid_at, landed_at, land_error, processing_cost_entry_id (uuid) → accounting_entries.id, receipt_emailed_at, created_at, updated_at, season_id (uuid) → league_seasons.id, signup_key, bank_last4, clearing_at, returned_at, return_reason, return_detail, reversed_at, stripe_dispute_id, card_country, over_amount (numeric), over_whole (boolean), over_kept_reason, over_kept_by (uuid), over_kept_at, application_fee_amount (numeric) NOT NULL, stripe_fee_amount (numeric), stripe_extra_entry_id (uuid) → accounting_entries.id, dispute_fee_entry_id (uuid) → accounting_entries.id, reversal_fee_entry_id (uuid) → accounting_entries.id
+- Indexes: online_payments_clearing_idx, online_payments_cost_entry_idx, online_payments_dispute_fee_entry_idx, online_payments_dispute_key, online_payments_extra_entry_idx, online_payments_intent_key, online_payments_one_open_per_signup, online_payments_one_open_per_team, online_payments_open_idx, online_payments_org_idx, online_payments_over_idx, online_payments_over_kept_by_idx, online_payments_receipt_key, online_payments_reversal_fee_entry_idx, online_payments_season_idx, online_payments_session_key, online_payments_team_idx, online_payments_tournament_idx
 
 ### online_refunds_unassigned
 id (uuid), org_id (uuid) → organizations.id NOT NULL, online_payment_id (uuid) → online_payments.id NOT NULL, stripe_refund_id NOT NULL, amount (numeric) NOT NULL, stripe_created_at, created_at, assigned_at, assigned_by (uuid)
@@ -1154,7 +1162,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **283 tables** across 10 modules.
+Total: **285 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 25 tables
@@ -1165,4 +1173,4 @@ Total: **283 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 30 tables
 - CRM / Leads: 6 tables
-- Other: 101 tables
+- Other: 103 tables
