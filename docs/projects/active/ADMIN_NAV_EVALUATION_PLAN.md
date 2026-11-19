@@ -1070,3 +1070,24 @@ It is the owner's call whether to open it.
     reproduce it on a phone width: a server fetch of three made-up addresses (`/x`, `/x/y`, `/x/y/z`, 2026-11-19) carried
     no bar markup, so it most likely mounts client-side on a two-segment address that matches the tournament route
     (`params.tournamentSlug` set) before `notFound()`. Fix at the bar's own gate, not by styling the 404. Short walk.
+
+## The leftover calls, RULED 2026-11-19 (owner: "1. i agree … 5. i agree", each as recommended)
+
+The five open calls carried through walk §524 (Phase 5's four, 5b's one), put to the owner in one sitting:
+
+1. **The Game day chip stays the portal's olive** (closed as built; the drawing's red is retired). Red means something is
+   wrong everywhere else in the product (overdue, failed, refused); game day is good news, and a red chip would read as an
+   alarm every game day.
+2. **The phone's lone "+" row stays — already ruled.** T4, 2026-11-13 ("?"-only rows go, the phone's lone "+" row stays);
+   it was carried onto the open list by mistake. Closed, nothing to build.
+3. **A live team's Season's End page keeps its own title** while the bar names the team (closed as built). Every page that
+   is not a sidebar row follows that one rule at both widths; an exception here would bring back the drift Phase 5 removed.
+4. **The phone's team sheet shows season words only** (closed as built). The sheet's job is to switch teams; a record would
+   load every team's games to open a switcher, and the record is one tap away on the team.
+5. **The Family figure stops saying "No contact" to a coach who may not see contacts — CHANGE.** "No contact" reads as
+   "this family left no phone or email", which is false: the screen tells the coach something untrue. The figure says the
+   details are hidden instead (recommendation "Not shared", the caption "Kept to the head coach" kept); the exact words go
+   through `/marketing` and `check:spelling` before the build.
+   - [ ] **Build (small, recorded not started):** the coach-without-the-contact-grant Family figure wording above, with
+     its help line if one quotes it, and a step in the next walk. Fold it into the same small piece of work as the 404
+     bar above (the owner's recommendation, 2026-11-19).
