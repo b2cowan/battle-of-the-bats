@@ -60,6 +60,9 @@ export const RULES_WORDS = {
   resources: 'Resources & downloads',
   addResource: 'Add a link or file',
   noResources: 'No links or files yet. Add one, or start from a sample.',
+  // A completed event's empty cards (trust close-out 14): the adds are gone, so the line names no control.
+  noRulesLocked: 'No rules were added.',
+  noResourcesLocked: 'No links or files were added.',
   linkSampleCaption: 'Common links to add and fill in',
   loadFailed: 'The rules didn’t load.',
   // The section's record

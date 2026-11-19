@@ -69,7 +69,8 @@ describe('the sections route checks the club and the capability on every verb', 
   });
   it('every verb checks the event of every row it touches', () => {
     for (const v of ['POST', 'PUT', 'PATCH', 'DELETE']) assert.match(verbText(code, v), /eventAllowed\(/, `${v} checks the event`);
-    assert.match(code, /scopeGuard\(ctx, tournamentId\) \?\? \(await requireTournamentInOrg\(ctx, tournamentId\)\)/);
+    // In scope, the club's, and not completed (trust close-out 14, 2026-11-18: a completed event's rules lock).
+    assert.match(code, /return requireWritableTournament\(ctx, tournamentId\)/);
   });
   it('a section’s divisions must be the same event’s', () => {
     assert.match(code, /from\('divisions'\)\.select\('id'\)\.eq\('tournament_id', tournamentId\)\.in\('id', divisionIds\)/);
@@ -147,5 +148,33 @@ describe('migration 466', () => {
     const sql = readSource(`supabase/migrations/${f}`).replace(/--.*$/gm, '');
     assert.match(sql, /revoke insert, update, delete on public\.rules, public\.rule_items from authenticated/i);
     assert.doesNotMatch(sql, /revoke[^;]*\bselect\b/i);
+  });
+});
+
+/**
+ * A COMPLETED EVENT'S RULES, FILES AND LINKS LOCK WITH IT (Board Ready trust close-out 14, owner ruling 2026-11-18). The routes
+ * refuse through `requireWritableTournament` (pinned above and in the resources guard); the screen draws no way to try, so a
+ * button that always errors never comes back: the page reads the tournaments' one `isLocked`, wears the read-only banner, and
+ * every way to write (the two adds, the two samples rows, the handles, each record's edit and delete) reads the lock.
+ */
+describe('a completed event’s Rules screen draws no way to change it', () => {
+  const page = readCode('app/[orgSlug]/admin/tournaments/rules/page.tsx');
+  const screen = readCode('app/[orgSlug]/admin/tournaments/rules/RulesAdmin.tsx');
+  it('the page passes the tournaments’ own lock, and the screen wears the read-only banner', () => {
+    assert.match(page, /const \{[^}]*\bisLocked\b[^}]*\} = useTournament\(\)/);
+    assert.match(page, /<RulesAdmin [^>]*locked=\{isLocked\}/);
+    assert.match(screen, /<TournamentAdminHeader[^>]*locked=\{locked\}/);
+  });
+  it('no add, no samples, no handles, and each record opens read-only', () => {
+    assert.equal((screen.match(/actions=\{locked \? undefined : addButton\(/g) ?? []).length, 2, 'both cards’ add');
+    assert.equal((screen.match(/\{!locked && \(\s*<ClubRow[^>]*onClick=\{\(\) => setSamplesFor\(/g) ?? []).length, 2, 'both samples rows');
+    assert.equal((screen.match(/grip=\{locked \? undefined : handle\}/g) ?? []).length, 2, 'both lists’ handles');
+    assert.equal((screen.match(/disabled=\{pageSaving \|\| locked\}/g) ?? []).length, 2, 'both lists’ moves');
+    assert.equal((screen.match(/canWrite=\{!locked\}/g) ?? []).length, 2, 'both records');
+    assert.equal((screen.match(/\bcanWrite\b/g) ?? []).length, 2, 'no record is handed any other canWrite (bare, true, or the like)');
+  });
+  it('an empty card names no control it no longer draws', () => {
+    assert.match(screen, /locked \? W\.noRulesLocked : W\.noRules/);
+    assert.match(screen, /locked \? W\.noResourcesLocked : W\.noResources/);
   });
 });

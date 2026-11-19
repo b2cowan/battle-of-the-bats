@@ -43,8 +43,8 @@ export function missingChecks(verb: string): string[] {
   const need: Array<[string, RegExp]> = [
     ['the club (getAuthContextWithScope, org required)', /getAuthContextWithScope\(\{[^}]*requireOrgSlug:\s*true/],
     ['the post_rules capability', /hasCapability\([^)]*'post_rules'\)/],
-    ['the event scope (scopeGuard)', /scopeGuard\(/],
-    ['the event belongs to the club (requireTournamentInOrg)', /requireTournamentInOrg\(/],
+    // In scope, the club's, and not completed — one guard (trust close-out 14, 2026-11-18: a completed event's files lock).
+    ['the event is in scope, the club’s and not completed (requireWritableTournament)', /requireWritableTournament\(/],
   ];
   return need.filter(([, re]) => !re.test(verb)).map(([name]) => name);
 }
@@ -113,7 +113,7 @@ describe('the route checks the club and the capability on both verbs', () => {
 
   it('kill test: a verb missing a check is named', () => {
     assert.deepEqual(missingChecks(post.replace(/hasCapability\([^)]*\)/, 'true')), ['the post_rules capability']);
-    assert.deepEqual(missingChecks(post.replace(/requireTournamentInOrg\(/, 'noop(')), ['the event belongs to the club (requireTournamentInOrg)']);
+    assert.deepEqual(missingChecks(post.replace(/requireWritableTournament\(/, 'noop(')), ['the event is in scope, the club’s and not completed (requireWritableTournament)']);
     assert.deepEqual(missingChecks(post.replace('requireOrgSlug: true', 'requireOrgSlug: false')), ['the club (getAuthContextWithScope, org required)']);
   });
 });
@@ -148,8 +148,8 @@ describe('no client writes the link rows', () => {
     assert.match(code, /hasCapability\([^)]*'post_rules'\)/);
     assert.match(code, /export const POST\b/);
     assert.match(code, /export const PATCH\b/);
-    assert.equal((code.match(/requireTournamentInOrg\(/g) ?? []).length >= 3, true, 'create, one-row update and reorder each check the event');
-    assert.equal((code.match(/scopeGuard\(/g) ?? []).length >= 3, true);
+    // In scope, the club's and not completed (trust close-out 14: a completed event's links lock).
+    assert.equal((code.match(/requireWritableTournament\(/g) ?? []).length >= 3, true, 'create, one-row update and reorder each check the event');
     assert.match(code, /resourceLinkProblem\(/);
     assert.match(code, /resourceLabelProblem\(/);
   });

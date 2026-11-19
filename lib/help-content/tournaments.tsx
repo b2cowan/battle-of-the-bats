@@ -274,7 +274,7 @@ const tournamentsHelp: HelpPageContent = {
             <li><strong>Public presence</strong> — branding and public page settings.</li>
             <li><strong>Content</strong> — rules, resources, and welcome content.</li>
           </ul>
-          <p>Teams, registrations, waitlists, games, scores, standings, champions, payment status, reminders, uploaded files, message history, and private admin notes stay with the event you reused &mdash; they are never copied.</p>
+          <p>Teams, registrations, waitlists, games, scores, standings, champions, payment status, reminders, uploaded files, message history, and private admin notes stay with the event you reused &mdash; they are never copied. The one exception is the Rules page: with <strong>Content</strong>, its links and files come along, and a file still opens in the new draft.</p>
           <p>Reusing a setup is on Tournament Plus, League Plus, and Club; on the Tournament plan each door shows a lock line instead.</p>
         </>
       ),
@@ -282,7 +282,7 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-reuse-previous-tournament-setup',
           question: 'Can I reuse a previous tournament setup?',
-          answerText: 'Yes, on Tournament Plus and above. Tap Reuse this setup on a finished tournament’s dashboard, its Summary, or its record, or Reuse setup on its row in the Tournaments list. Enter the new dates, choose what to bring forward, and tap Create the draft. You can also reuse a previous setup when you start a New tournament. Teams, results, payments, files, and history stay behind.',
+          answerText: 'Yes, on Tournament Plus and above. Tap Reuse this setup on a finished tournament’s dashboard, its Summary, or its record, or Reuse setup on its row in the Tournaments list. Enter the new dates, choose what to bring forward, and tap Create the draft. You can also reuse a previous setup when you start a New tournament. Teams, results, payments, and history stay behind; the Rules page’s links and files come along with Content.',
           keywords: ['reuse setup', 'reuse this setup', 'previous tournament', 'next year', 'clone', 'Tournament Plus', 'create the draft'],
           popular: true,
           answer: (
@@ -292,10 +292,10 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-repeat-event-never-copies',
           question: 'What is never copied into the new draft?',
-          answerText: 'Teams, registrations, waitlists, games, scores, standings, champions, payments, files, message history, summaries, and private notes are not copied.',
-          keywords: ['never copied', 'teams', 'scores', 'payments', 'registrations', 'files'],
+          answerText: 'Teams, registrations, waitlists, games, scores, standings, champions, payments, files, message history, summaries, and private notes are not copied. The one exception is the Rules page: when you bring Content forward, its links and files come along, and a file still opens in the new draft.',
+          keywords: ['never copied', 'teams', 'scores', 'payments', 'registrations', 'files', 'rules files'],
           answer: (
-            <p>Operational history stays behind. The new draft does not copy teams, registrations, waitlists, games, scores, standings, champions, payments, uploaded files, message history, archived summaries, or private admin notes.</p>
+            <p>Operational history stays behind. The new draft does not copy teams, registrations, waitlists, games, scores, standings, champions, payments, uploaded files, message history, archived summaries, or private admin notes. The one exception is the Rules page: when you bring <strong>Content</strong> forward, its links and files come along, and a file still opens in the new draft.</p>
           ),
         },
         {
@@ -420,6 +420,7 @@ const tournamentsHelp: HelpPageContent = {
               <p><strong>Add a section</strong> and <strong>Add a link or file</strong> ask in a window and add when you press the button. To change the order, drag a row by its handle (on a phone, hold it first), or tap the handle for <strong>Move up</strong> and <strong>Move down</strong>; each move saves.</p>
               <p>The public Rules page numbers your sections in this order, and their points under them: <strong>3 · Pitching limits</strong>, then 3.1, 3.2, the same on every copy. Moving a section renumbers it on the page and in the next download. A section kept to a division whose schedule isn&rsquo;t published yet isn&rsquo;t shown or counted until it is.</p>
               <p>Visitors can download what they&rsquo;re reading as a PDF with <strong>Download rules</strong>, beside the note at the top of the Rules page (on a phone, the download symbol). It prints in your event&rsquo;s look, with the time it was downloaded and a code that opens the live page, since your rules can change after someone prints them. The download is on every plan, including the free Tournament plan.</p>
+              <p>A completed tournament reads only here; reopen it from the <strong>Tournaments</strong> list to change anything.</p>
             </>
           ),
         },
@@ -2784,7 +2785,7 @@ const tournamentsHelp: HelpPageContent = {
               <ul>
                 <li><strong>Draft</strong> &mdash; <strong>Activate</strong> puts the public site online. It needs dates and a division first; the record says what to add.</li>
                 <li><strong>Active</strong> &mdash; <strong>Mark complete</strong>, which on the Tournament plan frees your tournament slot, or <strong>Move back to draft</strong>, which takes the public site offline so every link you&rsquo;ve shared stops working.</li>
-                <li><strong>Completed</strong> &mdash; <strong>Reopen</strong> makes its results editable again and moves it back to Tournaments. On the Tournament plan it needs a free slot; if another tournament holds it, the record says which before you tap. <strong>Archive</strong> takes its public site offline.</li>
+                <li><strong>Completed</strong> &mdash; <strong>Reopen</strong> makes its results, rules, links and files editable again and moves it back to Tournaments. On the Tournament plan it needs a free slot; if another tournament holds it, the record says which before you tap. <strong>Archive</strong> takes its public site offline.</li>
                 <li><strong>Archived</strong> &mdash; <strong>Bring back</strong> returns it as Completed, with its public site online at the same links.</li>
               </ul>
               <p>On Tournament Plus and above, a finished tournament&rsquo;s <strong>Permanent record</strong> offers <strong>Seal</strong>, which keeps a permanent public record of its results under <strong>Past tournaments</strong> on your club&rsquo;s Tournaments page. Sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
@@ -2810,20 +2811,20 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-where-mark-complete',
           question: 'Where do I mark a tournament complete?',
-          answerText: 'When every game is in, your tournament dashboard shows "Every game’s in — ready to finalize" with a Mark tournament complete button. You can also open the tournament from the Tournaments list and tap Mark complete in its record. Either way it asks first. Completing locks the results; to make changes afterwards, reopen it from the Tournaments list.',
-          keywords: ['mark complete', 'ready to finalize', 'finalize tournament', 'close out', 'dashboard prompt', 'lock results', 'Manage Tournaments'],
+          answerText: 'When every game is in, your tournament dashboard shows "Every game’s in — ready to finalize" with a Mark tournament complete button. You can also open the tournament from the Tournaments list and tap Mark complete in its record. Either way it asks first. Completing locks the results, and the Rules page’s sections, links and files with them; to make changes afterwards, reopen it from the Tournaments list.',
+          keywords: ['mark complete', 'ready to finalize', 'finalize tournament', 'close out', 'dashboard prompt', 'lock results', 'lock rules', 'Manage Tournaments'],
           popular: true,
           answer: (
-            <p>When every game is in, your tournament <strong>dashboard</strong> shows <strong>Every game&rsquo;s in &mdash; ready to finalize</strong> with a <strong>Mark tournament complete</strong> button. You can also open the tournament from the <strong>Tournaments</strong> list and tap <strong>Mark complete</strong> in its record. Either way it asks first. Completing locks the results and standings as final; to make changes afterwards, reopen it from the <strong>Tournaments</strong> list.</p>
+            <p>When every game is in, your tournament <strong>dashboard</strong> shows <strong>Every game&rsquo;s in &mdash; ready to finalize</strong> with a <strong>Mark tournament complete</strong> button. You can also open the tournament from the <strong>Tournaments</strong> list and tap <strong>Mark complete</strong> in its record. Either way it asks first. Completing locks the results and standings as final, and the Rules page&rsquo;s sections, links and files with them; to make changes afterwards, reopen it from the <strong>Tournaments</strong> list.</p>
           ),
         },
         {
           id: 'faq-reopen-completed',
           question: 'How do I change a completed tournament?',
-          answerText: 'A completed tournament’s results are locked. Open it from the Tournaments list and tap Reopen: its results become editable again and it moves back to Active. A sealed tournament can’t be reopened.',
-          keywords: ['reopen', 'results are locked', 'locked', 'edit completed tournament', 'undo complete', 'change results after complete'],
+          answerText: 'A completed tournament’s results are locked, and so are its Rules & resources: its sections, links and files read only, while the public Rules page and its downloads stay as they were. Open it from the Tournaments list and tap Reopen: it all becomes editable again and it moves back to Active. A sealed tournament can’t be reopened.',
+          keywords: ['reopen', 'results are locked', 'locked', 'edit completed tournament', 'undo complete', 'change results after complete', 'edit rules after complete', 'rules locked', 'change a file after complete', 'rules and resources'],
           answer: (
-            <p>A completed tournament&rsquo;s results are locked. Open it from the <strong>Tournaments</strong> list and tap <strong>Reopen</strong>: its results become editable again and it moves back to <strong>Active</strong>, with its public site still online. A sealed tournament can&rsquo;t be reopened.</p>
+            <p>A completed tournament&rsquo;s results are locked, and so are its <strong>Rules &amp; resources</strong>: its sections, links and files read only, while the public Rules page and its downloads stay as they were. Open it from the <strong>Tournaments</strong> list and tap <strong>Reopen</strong>: it all becomes editable again and it moves back to <strong>Active</strong>, with its public site still online. A sealed tournament can&rsquo;t be reopened.</p>
           ),
         },
         {

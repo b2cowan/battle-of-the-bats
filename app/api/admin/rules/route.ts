@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { forbidden, getAuthContextWithScope, requireTournamentInOrg, scopeGuard, unauthorized } from '@/lib/api-auth';
+import { forbidden, getAuthContextWithScope, requireWritableTournament, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasCapability } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
 import { readNewPoints, readSavedPoints, readSectionFields } from '@/lib/rule-section-input';
-
 /**
  * THE RULES PAGE'S SECTIONS AND THEIR POINTS (Board Ready W2 fix B, the third part of sweep 3 finding 2, 2026-11-11). The browser
  * used to write `rules` and `rule_items` itself under policies that asked only "is a member of this event's club": a club's
  * assistant coach or scorekeeper (no `post_rules`) could rewrite or delete the public Rules page. Every write now comes here:
  * the caller must be a member of THIS club with `post_rules`, in scope for the event, and the event must be the club's. A
- * section's divisions must be the SAME event's divisions.
+ * section's divisions must be the SAME event's divisions. A COMPLETED event's sections are locked (trust close-out 14, owner
+ * 2026-11-18): every verb answers 409 with the schedule routes' own words until the event is reopened.
  *
  *   POST    ?orgSlug  { tournamentId, order, title, icon, divisionIds, items: [text] }        → { id }
  *   PUT     ?orgSlug  { id, title, icon, divisionIds, items: [{ id|null, key, content }] }     → { created: { key: id } }
@@ -30,9 +30,9 @@ const bad = (error: string) => NextResponse.json({ error }, { status: 400 });
 const failed = (what: string) => NextResponse.json({ error: `Couldn’t ${what}` }, { status: 500 });
 const validOrder = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 100000;
 
-/** The event is in scope and the club's. */
+/** The event is in scope, the club's, and not completed (trust close-out 14: a completed event's rules are locked). */
 async function eventAllowed(ctx: Ctx, tournamentId: string): Promise<Response | null> {
-  return scopeGuard(ctx, tournamentId) ?? (await requireTournamentInOrg(ctx, tournamentId));
+  return requireWritableTournament(ctx, tournamentId);
 }
 
 /** Every division named belongs to THIS event (the browser path never asked). Null = fine. */

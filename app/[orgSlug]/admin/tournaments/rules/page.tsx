@@ -6,7 +6,7 @@ import RulesAdmin from './RulesAdmin';
 import LoadingState from '@/components/shared/LoadingState';
 
 export default function RulesAdminPage() {
-  const { currentTournament, loading } = useTournament();
+  const { currentTournament, loading, isLocked } = useTournament();
   const { currentOrg } = useOrg();
   usePageTitle('Rules & resources');
 
@@ -20,5 +20,5 @@ export default function RulesAdminPage() {
     );
   }
 
-  return <RulesAdmin tournament={currentTournament} orgSlug={currentOrg?.slug} />;
+  return <RulesAdmin tournament={currentTournament} orgSlug={currentOrg?.slug} locked={isLocked} />;
 }

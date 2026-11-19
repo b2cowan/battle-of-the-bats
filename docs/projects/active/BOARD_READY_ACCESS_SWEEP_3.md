@@ -83,6 +83,22 @@
 > "OK, nothing run" and opens an error in the platform error log, which emails once (review 2026-11-18). Proof `.probe/cron-receipt-prove.mjs` (dev); guard
 > `tests/unit/cron-receipt-guard.test.ts`. Production: migration 502 FIRST, then the code. The by-hand Part C step stays.
 >
+> **Status, 14 (built 2026-11-18, dev; commit hash on the queue's PROGRESS row; closes finding 2's open owner call):** the
+> Rules sections, link rows and file upload/delete routes now refuse every write on a COMPLETED event, through the existing
+> shared guard `requireWritableTournament` (the definition and the 409 `LOCKED_RESULTS` words every other locked route uses;
+> archived is not locked, as nowhere else is). The Rules & resources screen reads the tournaments' `isLocked`: the read-only
+> banner, no adds, no samples, no handles, records open read-only, and an empty card names no control. No schema change.
+> Unchanged: the public Rules page and downloads; copying a completed event (direct writes into a draft, so the copy's rows
+> edit freely, and deleting a copy's file row keeps the file the locked source still names); delete and the club purge.
+> Reopen (Tournaments list, `create_tournaments`) lifts it. **One-way where reopen is:** a SEALED event never reopens, and a
+> one-at-a-time plan needs a free slot to reopen. Proof `.probe/completed-event-lock-prove.mjs` (dev, 26/26); guards
+> `tests/unit/rules-sections-server-only-guard.test.ts` (with the screen) and `resources-bucket-server-only-guard.test.ts`.
+> **Noted, not fixed:** a record already open in edit mode when the event is completed keeps its fields, and its saves are
+> refused; and the earlier `.probe/sweep3-fixB*-prove.mjs` "a coach row is refused" checks fail: the coach's request is now
+> answered by an HTML page with a 200 before it reaches the route (probably the two-step step; not traced), which those
+> checks don't accept as a refusal. The "nothing changed" checks in the same probes hold, so no write got through; the
+> probes' expectation wants updating.
+>
 > **BUILT 2026-11-18 — fixes 1–11 as ruled, one commit each on `dev` (2 and 9 share one):**
 > - 1 demo account refused at every create door + build check — `49c4c9934` 2026-11-18 (two doors beyond the ruling's
 >   three are guarded too, because both can create a coach team: claiming a tournament entry, and a signed-in sign-up).
@@ -491,4 +507,4 @@ Resend, AWS).
 
 ## Carried in from TODO (2026-11-17, One Board Session 2)
 
-- [ ] **Owner call still open (finding 2):** neither the file-store route nor the rules route locks a completed event. The file-store, link-row and Rules fixes are built (W2 fix B and after); their migrations go to production after the code.
+- [x] **Owner call (finding 2), RULED 2026-11-18 (call 14) and BUILT the same day (see "Status, 14"):** the file-store, link-row and rules routes now lock a completed event. Was: neither the file-store route nor the rules route locks a completed event. The file-store, link-row and Rules fixes are built (W2 fix B and after); their migrations go to production after the code.

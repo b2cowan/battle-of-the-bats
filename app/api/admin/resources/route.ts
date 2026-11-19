@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { forbidden, getAuthContextWithScope, requireTournamentInOrg, scopeGuard, unauthorized } from '@/lib/api-auth';
+import { forbidden, getAuthContextWithScope, requireWritableTournament, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasCapability } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
 import { resourceLabelProblem, resourceLinkProblem } from '@/lib/resource-file-storage';
-
 /**
  * THE RULES PAGE'S LINKS AND FILES, AS ROWS (Board Ready W2 fix B follow-up, sweep 3 finding 2's second half, 2026-11-11).
  * The browser used to write the `resources` table itself under a policy that asked only "is a member of this event's club":
  * a club's assistant coach or scorekeeper (no `post_rules`) could add, rename, repoint or reorder the public Rules page's links.
  * Every row write now comes here: the caller must be a member of THIS club with `post_rules`, in scope for the event, and the
- * event must be the club's. The FILE itself is stored and removed by `/api/admin/resources/file`.
+ * event must be the club's. The FILE itself is stored and removed by `/api/admin/resources/file`. A COMPLETED event's links are
+ * locked (trust close-out 14, owner 2026-11-18): 409 with the schedule routes' own words until the event is reopened.
  *
  *   POST   ?orgSlug  { tournamentId, label, url, order }   → { id }
  *   PATCH  ?orgSlug  { id, label?, url?, order? }          → { ok }     one row
@@ -39,10 +39,8 @@ export const POST = withObservability(async (req: Request) => {
   const body = (await req.json().catch(() => null)) as { tournamentId?: unknown; label?: unknown; url?: unknown; order?: unknown } | null;
   const tournamentId = typeof body?.tournamentId === 'string' ? body.tournamentId : '';
   if (!tournamentId) return bad('Missing tournamentId');
-  const denied = scopeGuard(ctx, tournamentId);
-  if (denied) return denied;
-  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
-  if (wrongOrg) return wrongOrg;
+  const refused = await requireWritableTournament(ctx, tournamentId);
+  if (refused) return refused;
 
   const labelProblem = resourceLabelProblem(body?.label);
   if (labelProblem) return bad(labelProblem);
@@ -77,10 +75,8 @@ export const PATCH = withObservability(async (req: Request) => {
     if (error) return NextResponse.json({ error: 'Couldn’t read the list' }, { status: 500 });
     if ((rows ?? []).length !== ids.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     for (const tournamentId of new Set((rows ?? []).map(r => r.tournament_id as string))) {
-      const denied = scopeGuard(ctx, tournamentId);
-      if (denied) return denied;
-      const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
-      if (wrongOrg) return wrongOrg;
+      const refused = await requireWritableTournament(ctx, tournamentId);
+      if (refused) return refused;
     }
     const results = await Promise.all((ids as string[]).map((id, order) => supabaseAdmin.from('resources').update({ display_order: order }).eq('id', id)));
     if (results.some(r => r.error)) return NextResponse.json({ error: 'Couldn’t save the order' }, { status: 500 });
@@ -93,10 +89,8 @@ export const PATCH = withObservability(async (req: Request) => {
   const { data: row, error: readError } = await supabaseAdmin.from('resources').select('id, tournament_id, url').eq('id', id).maybeSingle();
   if (readError) return NextResponse.json({ error: 'Couldn’t read the item' }, { status: 500 });
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const denied = scopeGuard(ctx, row.tournament_id as string);
-  if (denied) return denied;
-  const wrongOrg = await requireTournamentInOrg(ctx, row.tournament_id as string);
-  if (wrongOrg) return wrongOrg;
+  const refused = await requireWritableTournament(ctx, row.tournament_id as string);
+  if (refused) return refused;
 
   const updates: Record<string, unknown> = {};
   if (body?.label !== undefined) {

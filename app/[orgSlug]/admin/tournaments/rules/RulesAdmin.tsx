@@ -17,10 +17,14 @@
  *               settings stay, unread.)
  *   saving      every write reports its failure — the record's pill, or this page's for an order. No
  *               browser alert, no leave dialog, no patched browser Back (there is nothing unsaved to protect).
+ *   locked      a COMPLETED event's rules, files and links lock with the rest of it (Board Ready trust close-out 14, owner
+ *               2026-11-18; the routes refuse every write). The page wears the tournament screens' read-only banner and
+ *               draws no way to change anything: no add, no samples, no handles, and each record opens to read only.
+ *               Reopen (the Tournaments list) gives it all back.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TournamentAdminHeader } from '@/components/admin/tournament/TournamentAdminUI';
 import { ClubRow, ClubRowList, ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { ReorderList, ReorderRow } from '@/components/admin/tournament/ReorderList';
@@ -39,7 +43,7 @@ import LoadingState from '@/components/shared/LoadingState';
 
 /** Rules & resources' "?" (A56): its own help sub-topic. */
 
-export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tournament; orgSlug?: string }) {
+export default function RulesAdmin({ tournament, orgSlug, locked = false }: { tournament: Tournament; orgSlug?: string; locked?: boolean }) {
   const [rules, setRules] = useState<RuleSection[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
   const [divisions, setDivisions] = useState<RuleDivision[]>([]);
@@ -122,10 +126,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   );
   return (
     <div className={repKit.page}>
-      <AdminPageHeader
-        title={W.title}
-        inlineActions
-      />
+      <TournamentAdminHeader title={W.title} locked={locked} />
 
       {loadError && rules.length === 0 && resources.length === 0 ? (
         <LoadFailed title={W.loadFailed} onRetry={() => { setLoading(true); void refresh(); }} />
@@ -138,24 +139,26 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
             list
             className={styles.headCard}
             title={<>{W.rules}<span className={styles.headCaption}>{W.rulesCaption}</span></>}
-            actions={addButton(W.addSection, () => setOpenSection('new'))}
+            actions={locked ? undefined : addButton(W.addSection, () => setOpenSection('new'))}
           >
-            {rules.length === 0 && <p className={styles.cardEmpty}>{W.noRules}</p>}
+            {rules.length === 0 && <p className={styles.cardEmpty}>{locked ? W.noRulesLocked : W.noRules}</p>}
             <ClubRowList inset label={W.rules}>
-              <ReorderList ids={rules.map(s => s.id)} names={rules.map(s => s.title)} onMove={moveSection} disabled={pageSaving}>
+              <ReorderList ids={rules.map(s => s.id)} names={rules.map(s => s.title)} onMove={moveSection} disabled={pageSaving || locked}>
                 {rules.map(s => (
                   <ReorderRow key={s.id} id={s.id}>
                     {({ handle, itemRef, itemStyle }) => (
                       <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenSection(s.id)} chevron
                         mark={<RuleIcon name={s.icon} size={18} className={styles.iconMark} aria-hidden />}
                         title={s.title} caption={sectionCaption(s.items.length, sectionNames(s))}
-                        grip={handle} itemRef={itemRef} itemStyle={itemStyle} />
+                        grip={locked ? undefined : handle} itemRef={itemRef} itemStyle={itemStyle} />
                     )}
                   </ReorderRow>
                 ))}
               </ReorderList>
-              <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesFor('sections')} chevron
-                title={W.sample} caption={W.sampleCaption} />
+              {!locked && (
+                <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesFor('sections')} chevron
+                  title={W.sample} caption={W.sampleCaption} />
+              )}
             </ClubRowList>
           </ClubSection>
 
@@ -164,23 +167,25 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
             list
             className={styles.headCard}
             title={W.resources}
-            actions={addButton(W.addResource, () => setOpenResource('new'))}
+            actions={locked ? undefined : addButton(W.addResource, () => setOpenResource('new'))}
           >
-            {resources.length === 0 && <p className={styles.cardEmpty}>{W.noResources}</p>}
+            {resources.length === 0 && <p className={styles.cardEmpty}>{locked ? W.noResourcesLocked : W.noResources}</p>}
             <ClubRowList inset label={W.resources}>
-              <ReorderList ids={resources.map(r => r.id)} names={resources.map(r => r.label)} onMove={moveResource} disabled={pageSaving}>
+              <ReorderList ids={resources.map(r => r.id)} names={resources.map(r => r.label)} onMove={moveResource} disabled={pageSaving || locked}>
                 {resources.map(r => (
                   <ReorderRow key={r.id} id={r.id}>
                     {({ handle, itemRef, itemStyle }) => (
                       <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenResource(r.id)} chevron
                         title={r.label} caption={resourceCaption(r.url, isResourceFile(r.url))}
-                        grip={handle} itemRef={itemRef} itemStyle={itemStyle} />
+                        grip={locked ? undefined : handle} itemRef={itemRef} itemStyle={itemStyle} />
                     )}
                   </ReorderRow>
                 ))}
               </ReorderList>
-              <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesFor('links')} chevron
-                title={W.sample} caption={W.linkSampleCaption} />
+              {!locked && (
+                <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesFor('links')} chevron
+                  title={W.sample} caption={W.linkSampleCaption} />
+              )}
             </ClubRowList>
           </ClubSection>
         </>
@@ -199,7 +204,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
           tournamentId={tournament.id}
           orgSlug={orgSlug}
           divisions={divisions}
-          canWrite
+          canWrite={!locked}
           order={nextRuleOrder}
           prev={sIdx > 0 ? { id: rules[sIdx - 1].id, name: rules[sIdx - 1].title } : null}
           next={sIdx >= 0 && sIdx < rules.length - 1 ? { id: rules[sIdx + 1].id, name: rules[sIdx + 1].title } : null}
@@ -215,7 +220,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
           resource={openResource === 'new' ? null : resources[rIdx]}
           tournamentId={tournament.id}
           orgSlug={orgSlug}
-          canWrite
+          canWrite={!locked}
           order={nextResourceOrder}
           prev={rIdx > 0 ? { id: resources[rIdx - 1].id, name: resources[rIdx - 1].label } : null}
           next={rIdx >= 0 && rIdx < resources.length - 1 ? { id: resources[rIdx + 1].id, name: resources[rIdx + 1].label } : null}

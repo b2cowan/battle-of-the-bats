@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { forbidden, getAuthContextWithScope, requireTournamentInOrg, scopeGuard, unauthorized } from '@/lib/api-auth';
+import { forbidden, getAuthContextWithScope, requireWritableTournament, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasCapability } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
@@ -13,12 +13,12 @@ import {
   resourceObjectPath,
 } from '@/lib/resource-file-storage';
 import { keyStillNamed } from '@/lib/resource-file-server';
-
 /**
  * THE RULES SCREEN'S FILES (Board Ready W2 fix B, sweep 3 finding 2). The `resources` bucket used to let ANY signed-in account
  * upload and delete from the browser; it now takes no browser writes at all. Upload and delete come here: the caller must be a
  * member of THIS club with `post_rules`, in scope for the event, and the event must be the club's. The row writes (the link's
- * name and address) stay on the Rules screen's own path; this route stores and removes the FILE.
+ * name and address) stay on the Rules screen's own path; this route stores and removes the FILE. A COMPLETED event's files are
+ * locked (trust close-out 14, owner 2026-11-18): 409 with the schedule routes' own words until the event is reopened.
  *
  *   POST   ?orgSlug&tournamentId  (multipart `file`)  → { url }   filed under {orgId}/{tournamentId}/{uuid}-{name}
  *   DELETE ?orgSlug               ({ resourceId })    → { ok }    takes the ROW id, never a path: the row says which file
@@ -31,11 +31,9 @@ export const POST = withObservability(async (req: Request) => {
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
-  const denied = scopeGuard(ctx, tournamentId);
-  if (denied) return denied;
-  // The event must be this club's BEFORE the write: the id becomes part of the stored path.
-  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
-  if (wrongOrg) return wrongOrg;
+  // The event must be this club's (and not completed) BEFORE the write: the id becomes part of the stored path.
+  const refused = await requireWritableTournament(ctx, tournamentId);
+  if (refused) return refused;
 
   // Refused before the body is read when it is plainly too large (the file's own size is checked again below).
   if (Number(req.headers.get('content-length')) > RESOURCE_MAX_BYTES + 256 * 1024) {
@@ -78,10 +76,8 @@ export const DELETE = withObservability(async (req: Request) => {
   // Already gone (deleted in another tab): the caller treats this as done. Row ids are random UUIDs, so this does not help anyone
   // guess another club's.
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const denied = scopeGuard(ctx, row.tournament_id as string);
-  if (denied) return denied;
-  const wrongOrg = await requireTournamentInOrg(ctx, row.tournament_id as string);
-  if (wrongOrg) return wrongOrg;
+  const refused = await requireWritableTournament(ctx, row.tournament_id as string);
+  if (refused) return refused;
 
   // The row goes first (it is what the public page lists); the stored file follows, and only when nothing else names it.
   const { error: rowError } = await supabaseAdmin.from('resources').delete().eq('id', row.id);
