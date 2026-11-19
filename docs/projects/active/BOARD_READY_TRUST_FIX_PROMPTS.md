@@ -22,11 +22,14 @@ Nothing below was built when this was written.
 | 4 | P3 Lock rules, files and links on a completed event | call 14 | build | DONE 2026-11-18, the commit "Board Ready trust close-out 14: a completed tournament's rules, links and files lock with it…" (no schema change, so nothing to order on production; it goes with the next promote). The three routes take the existing shared guard (scope + club + not completed, the schedule routes' own words); the Rules screen reads the tournaments' lock (banner, no add/samples/handles, read-only records, a locked empty line). Reopen exists and lifts it; a SEALED event never reopens, so its rules page is fixed for good (as its results are). Copy, delete and the club purge are untouched. Proved on dev 26/26 (`.probe/completed-event-lock-prove.mjs`); /review (3 lenses: 1 fix applied, 1 test tightened, 1 noted); /docs (Tournaments help: lock + reopen answers, the Rules article, and the copy answers now say the Rules page's files come along). Owner browser walk owed |
 | 5 | P5 "Send a new link" button for a team's pay link | call 12 | drawing session only | DONE 2026-11-18, the commit "Board Ready trust call 12: the pay-link button drawn…" (drawing only): https://claude.ai/artifact/XGaoqcuEuo2973Mc4vsq5F, source `BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html`, round 2 after /design + /ux. All nine asks RULED 2026-11-18 as recommended (1A–9A): (1) one Pay link line under the payments on every team, its ⋯ holding Email the pay link + Send a new link, the due row keeps only Record; (2) the same people as Email the pay link (owner, admins, Run tournaments); (3) "Stop the pay link" when no new link can go out; (4) no copy button; (5) the old link's words unchanged; (6) a lost dispute is asked in the same window before anything stops, with "Only stop the link"; (7) the line reads "Pay link replaced/stopped {date}" until the next send; (8) stopping still works on a completed tournament (a deliberate exception to the lock); (9) Stop answers red-tinted, Send a new link lime. Build notes on the drawing: the record must be told the replaced date, a show-the-line flag and an ever-paid-online flag; the server should return a cause code (its "tournament over" sentence misreads here); dispute-first + stop-only is about a day with tests; someone with the old page open who hasn't pressed Pay is refused (gap accepted). The button's build prompt is row 6. mig 467 is already on production (applied 2026-11-15, release history), so that build has no production order of its own unless it adds a migration |
 | 6 | P6 Build the pay-link button | call 12, asks 1A–9A ruled 2026-11-18 | build | DONE 2026-11-18, the commit "Board Ready trust close-out 12: the pay-link button…" (no schema change, so nothing to order on production; it goes with the next promote). One Pay link line under a team's payments (Email the pay link · Send a new link · Stop the pay link), the window in its three forms, the answer as the record's status line; the server's stop-only mode, the dispute asked BEFORE the stop, cause codes; stopping works on a completed event (pinned). Proved on dev 37/37 (`.probe/pay-link-button-prove.mjs`); /review (4 lenses: 2 Medium race fixes + 1 Low applied; rest recorded); /docs (Tournaments help: the line, and a new answer "Sending a new pay link, or stopping it"); /legal not needed (the email's words and recipient are unchanged); /accounting none. Owner browser walk owed. Every row is now DONE: the next chat runs the END OF QUEUE checklist |
-| 7 | P7 The leftover findings, each put to the owner as fix or accept | the findings reported while building rows 1–6; call 22 | ruling preparation (report-only, nothing built) | in progress (2026-11-19: census DONE, 28 found, 3 dropped, 2 chores, 1 too small, 22 put to the owner as 16 calls; page published https://claude.ai/artifact/QBdaJMkkMjA4tqRrsHyDXv, source `BOARD_READY_LEFTOVERS_CALLS.html`, after /legal and /design; census note in the sweep report. LEFT: the owner's paste-back, then record the rulings and write P8 per the block's "WHEN THE PASTE-BACK COMES") |
+| 7 | P7 The leftover findings, each put to the owner as fix or accept | the findings reported while building rows 1–6; call 22 | ruling preparation (report-only, nothing built) | in progress (2026-11-19: census DONE, 28 found, 3 dropped, 2 chores, 1 too small, 22 put to the owner as 16 calls; page published https://claude.ai/artifact/QBdaJMkkMjA4tqRrsHyDXv, source `BOARD_READY_LEFTOVERS_CALLS.html`, after /legal and /design; census note in the sweep report. census committed c08739b35. Owner ruled 2026-11-19 "1A–16A, none changed", recorded in the sweep report's RULED 2026-11-19 block; P8 and P9 written) DONE 2026-11-19 c08739b35 + the commit "Board Ready trust-fix queue P7: the owner's leftover rulings recorded, and P8 + P9 written…" |
+| 8 | P8 Build the leftover fixes | leftover calls 1–6, 8–14 (fix parts) + the two chores, ruled 2026-11-19 | build (one small migration, call 3) | not started (prompt written 2026-11-19) |
+| 9 | P9 Look into the walk edits that didn't save | leftover call 7, ruled 2026-11-19 | investigation (report-only) | not started (prompt written 2026-11-19) |
 
 **END OF QUEUE checklist RUN 2026-11-18** (its own chat, records only, nothing built). Row 7 was added on 2026-11-19 for
-the leftovers it found, so the queue runs again; after row 7 the END OF QUEUE checklist does NOT re-run (its five lines
-are answered here), and the chat reports the queue finished. Production order, from `supabase/migrations/MANUAL_PROD_STEPS.json` and each
+the leftovers it found, so the queue runs again; rows 8 and 9 were added by the P7 chat on 2026-11-19 after the owner's
+rulings. After row 9 the END OF QUEUE checklist does NOT re-run (its five lines are answered here); the row-9 chat
+reports the queue finished and answers call 22 (see P7's close-out note under the P9 block). Production order, from `supabase/migrations/MANUAL_PROD_STEPS.json` and each
 row's hand-off: **500, 502, 503 before the code** · **504 after 502 and the code** · **505 either side** (467 applied
 2026-11-15, per that file). Found at the checklist: call 22's wording "every finding resolved" is NOT yet true once these go
 live. About twelve findings reported while building have no ruling (the sweep report's "Found while building, not fixed"
@@ -37,7 +40,8 @@ Status values: `not started` · `in progress (what is done, what is left)` · `D
 Why this order: P1 is small and in one area; P4 must land before the first live club; P2 and P3 are independent builds; P5 is a
 drawing, so it goes last and its build is a later session after the owner rules its asks. P6 is that build (prompt written
 2026-11-18 after the owner ruled all nine asks). P7 is the leftovers' ruling preparation; the fixes it rules in get their own
-build prompt (P8), written by the P7 chat only after the owner's paste-back.
+build prompt (P8), written by the P7 chat only after the owner's paste-back. P8 builds before P9 so the investigation
+reads the product as P8 leaves it; P9 is report-only and touches none of P8's areas, so a stalled P8 doesn't block it.
 
 ## CONDUCTOR (the chat that was just pasted the launcher line follows this, and only this)
 
@@ -511,3 +515,155 @@ DONE LOOKS LIKE
 Every leftover is on the owner's page with a recommendation, or reported as already fixed or not worth a call. The page is
 published and linked. Nothing was built.
 ```
+
+---
+
+## P8 — Build the leftover fixes (leftover calls ruled 2026-11-19; written 2026-11-19)
+
+```
+Board Ready — the trust close-out's leftover fixes (build). Owner ruled leftover calls 1A–16A "none changed" on 2026-11-19.
+
+READ FIRST (in this order)
+1. docs/projects/active/BOARD_READY_ACCESS_SWEEP_3.md: the "Leftovers census 2026-11-19" note (page call → finding, with
+   file:line) and the "RULED 2026-11-19" block under it. That block is your scope, word for word.
+2. docs/projects/active/BOARD_READY_LEFTOVERS_CALLS.html: the CALLS array. Each call's "what" and "size" are what the
+   owner read; option A is what he chose. Don't build beyond it.
+3. How P1 was done (PROGRESS row 1 and commits 49c4c9934..238bc70d3): one commit per fix, a probe under .probe/, a status
+   line per item in the sweep report.
+Out of scope: call 7 (that is P9), the accepted items (10's five other uploads, 15, 16, the too-small item), anything
+in the public roadmap's wording (call 22).
+
+THE FIXES (page call numbers; the chosen option)
+1+2 (one commit; they share the group check). A member limited to some team groups:
+   - a whole-club permit counts as OUTSIDE their groups, on the stored permit and on the draft (add, edit, renew; and a
+     switch from a team to the whole club). Today `teamOutsideGroups` (app/api/admin/org/permits/route.ts:223-230) drops
+     a null team.
+   - deleting a permit (the delete-permit branch, :326-351) and replacing its file (permits/document/route.ts POST) get
+     the same check. Move the check to a shared server helper so the document route can use it.
+   - opening a permit's file (permits/document GET) is allowed only for their own groups' teams and the whole club's
+     permits. Outside them they see "File attached" and nothing more, as trust call 9 has it: check that the list and
+     window payloads also hide the name/size for those permits, not only the GET. The LIST stays whole (owner's ruling).
+   - The form may stop offering "the whole club" to them (the page said "can"): do it only if it is a small change.
+3. Take away the browser's write permission on a tournament's playing fields and lanes (venue_facilities,
+   schedule_facility_lanes): drop the INSERT/UPDATE/DELETE policies and revoke insert/update/delete from authenticated
+   (and anon). First re-prove no browser-client code writes either table (the census found none; every write is the
+   service role). Migration on dev first; DATA_DICTIONARY.md + npm run refresh:snapshots in the same unit. Production:
+   either side of the promote (no code depends on it); say so in the hand-off.
+4. Removing a FieldLogicHQ staff member (app/api/platform-admin/company-users/[id]/route.ts:76-83): find the sign-in
+   with findAuthUserIdByEmail (lib/auth-account-lookup.ts:34: paged, case-insensitive, fails closed); if the lookup
+   fails, refuse and remove nothing, with a sentence that says so. Staff access always ends; the sign-in is deleted only
+   when nothing else uses the account (no club seat, no other sign-in history), using the same no-other-use test the
+   invitation sweep and the member Cancel use (lib/invitation-sweep.ts ~:134; app/api/admin/members/[memberId]/route.ts
+   ~:173-254). Don't invent a second test.
+5. Two people on one pay link (lib/online-payment-receipt.ts): replaceTeamPayLink's race loser (:286-300) is refused
+   ("someone just replaced this link") and sends nothing, instead of re-bumping; sendTeamPayLink is passed the version
+   its own bump made and sends nothing if the version has moved; the send's stamp (:249) is checked (rows updated), and a
+   send whose stamp didn't land answers "went out, but the link was stopped meanwhile" rather than "sent".
+6. After a stop, automatic emails (teamPayNowLink :401-410, used by the acceptance email and the balance reminder; and
+   lib/bank-debit-email.ts:57) leave the Pay button out until someone sends a new link. "Stopped" is what the line reads
+   (payLinkLineState, lib/team-pay-refusal.ts:36): decide it on the server from the same stamps, one rule in one place.
+   When an automatic email does carry a link, stamp the send so the line reads "Pay link sent [date]" (pay-link ask 7).
+   Check the league pay link (bank-debit-email.ts:75) has the same stop rule; if it has no stop, say so and leave it.
+8. Record who stopped, replaced or emailed a pay link, and when, in the club's activity record (owner and admins read
+   it): the admin, the action, the time; never the payer's email address.
+9. The program-year coaches list (app/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/coaches/route.ts:58)
+   reads emails the way the Members screen does (peopleSignInFacts, lib/two-step-club-status.ts:30). No new reader sees
+   an email.
+10. The permit file upload (permits/document/route.ts:83-105) uses trust call 6's checker (checkDocumentUpload,
+   lib/document-upload.ts:73): type from the bytes, a cleaned display name. The permit allows PDF/JPEG/PNG only, so a
+   DOCX is refused with the permit's own sentence (the shared refusal names DOCX). The five other uploads are ACCEPTED:
+   don't touch them.
+11. The club's player-document upload (app/api/admin/rep-teams/teams/[teamId]/players/[playerId]/documents/route.ts:82,
+   116) keeps a template id only when the coach route would (coaches/…/roster/[playerId]/documents/route.ts:125-132):
+   an active template that applies to this team and matches the document type. Fix the DATA_DICTIONARY.md line that
+   calls the column unvalidated (~4858).
+12. The invitation page (app/api/auth/accept-invite/route.ts; AcceptInviteForm.tsx): with no club named and more than one
+   live invitation waiting, the server refuses with a "choose a club" code and the page asks which club; it never picks
+   one; the one not chosen stays waiting (not declined, not used). Make the GET's order and the POST's agree. New page
+   words go through the spelling gate. This is a consent screen: /legal before hand-off.
+13. The staff-address check in the invite route (app/api/admin/members/invite/route.ts:66): when the read errors, refuse
+   with "try again", and the refusal depends only on the error, never on the address (a club admin must not be able to
+   probe which addresses are staff). Add a strict variant; do NOT change isPlatformAdminEmail (lib/platform-auth.ts:55)
+   for its other callers, which want the soft answer. Confirm the typed address is lower-cased before the compare.
+14. An open rules or resource record turns read-only when its event locks (RuleSectionRecord.tsx:96/315 and
+   ResourceRecord.tsx: editing && canWrite, or an effect). No change to how the screen looks.
+Chores (the page said "unless you object"; he didn't):
+ - Delete scripts/backfill-invited-email.mjs (its one-time job is done; a re-run would erase the existing-account mark).
+ - The three sweep-3 fix B probes (.probe/sweep3-fixB-prove.mjs:81, -fixB2-:59, -fixB3-:87): first trace WHY a coach's
+   request now meets an HTML page before the route (if it is the two-step page, say so); then correct the expectation
+   and re-run on dev. Report the cause in the sweep report.
+
+RULES THAT BIND THIS SESSION
+- Argue from the code, not the census: re-read each item's live code first and tell me if it is already fixed or the
+  premise is wrong BEFORE building it.
+- Before any code: the Implementation Plan and a plain-language product-manager UX summary (what each role sees
+  differently). Then build.
+- Branch dev only. Explicit pathspecs, never git add -A. One commit per fix (1+2 together); after each commit
+  git show --stat HEAD and confirm only your files landed. No commit or push without my yes.
+- Every server change gets a proof on DEV under .probe/ (db-query --dev; never --prod; never seed mid-run): the allowed
+  person works, the refused person is refused, nothing else changed.
+- Spelling gate on new customer text (npm run check:spelling); times only via formatTime().
+- Agents, in order: /simplify (the shared permit check is a new helper), /review, /docs (Permits / Venue library help
+  for group-limited members; the pay-link help for the stop rule and the activity record; the invitation page's
+  question), /legal (12 always; 4, 6 and 8 as its read said), /accounting none expected (nothing charged changes).
+- npm run verify:changed and npm run typecheck (auth and shared modules are touched). Report anything skipped.
+- Do not touch hooks, settings or the database checks. Do not edit the public roadmap's wording.
+- Context heavy before the end: stop at a commit boundary and mark the row in progress with what is done and left;
+  splitting P8 into two chats is expected.
+- Browser testing is mine: finish with a short walk list in product-owner voice (who signs in as what, what they should
+  and should not see).
+
+DONE LOOKS LIKE
+Each fix built with its proof, or reported already fixed / premise wrong. The sweep report gets a status line per item
+(commit hash, date). PROGRESS row 8 and the Board Ready board line move in the same commit as the work. The hand-off
+names the production order (call 3's migration: either side of the promote; nothing else in P8 needs one unless a fix
+adds a migration) alongside the queue's existing order (500, 502, 503 before the code; 504 after 502 and the code; 505
+either side).
+```
+
+---
+
+## P9 — Look into the walk edits that didn't save (leftover call 7, ruled 2026-11-19; written 2026-11-19)
+
+```
+Board Ready — leftover call 7 (investigation, REPORT-ONLY). Owner ruled 2026-11-19: "Look into it: one session tries to
+make it happen again." Nothing is fixed in this session; any fix is ruled after it.
+
+WHAT HAPPENED (as recorded; read the records, then the code)
+- Owner QA Ledger walk §539 (the first eleven trust fixes), its read-back (docs/projects/active/OWNER_QA_LEDGER.md,
+  ~line 28528; commit 2f7afc61f): two of the owner's put-backs didn't reach the database: a "Walk rules" rules section
+  kept both its points, and a league admin's Rep teams switch and Senior group limit stayed changed. Both routes were
+  replayed afterwards and worked. Recorded as "not explained, an open question, not a finding against the fixes".
+- Walk §540 W2 steps 6–7 (~line 28540): a second invitation of an existing account after a Decline, and its Cancel,
+  wrote no audit row, though both routes write one. Recorded as "one unexplained gap; route to /debug if it recurs".
+
+THE JOB
+- Use /debug's method (.claude/commands/debug.md). For each of the three, form the likely causes from the code (a save
+  the screen debounces and drops on close; an optimistic state that never posted; a refused save shown as saved; an
+  audit write that swallows its error; a different route than the replay used) and try to reproduce each on DEV, the way
+  the owner did it (the screen's own clicks, through a probe or by reasoning from the component's code), not only by
+  calling the route.
+- For each: REPRODUCED (with the exact steps and the cause, file:line) / NOT REPRODUCED (what was tried) / EXPLAINED
+  WITHOUT A DEFECT (e.g. the read-back read too early).
+- Anything reproduced: write it as a fix-or-accept call with a recommendation and size, in the house page style
+  (append to BOARD_READY_LEFTOVERS_CALLS.html as calls 17+, or a new small page if that reads better; /design first).
+
+RULES
+- REPORT-ONLY: no code fixes, no migrations. Probes that write go to DEV only, against test fixtures, and clean up after
+  themselves; never --prod; never seed mid-run; no rows holding a person's information read on production.
+- Argue from the code. Don't touch hooks, settings or the database checks.
+- Close-out: a status line in the sweep report and the QA ledger's two entries (positive facts with anchors); PROGRESS
+  row 9; the Board Ready board line. No commit without my yes.
+
+DONE LOOKS LIKE
+Each of the three is reproduced, not reproduced, or explained, on record. If any is a defect, its call is on the owner's
+page. Then answer call 22 (below).
+```
+
+**P7 close-out note: can call 22's wording change once P8 is live?** Yes, on three conditions. (1) P8's fixes are on
+production, with migration 505 and call 3's migration applied (call 22 waits for the fixes to be live, not built).
+(2) P9 ends with each of its three either explained or ruled (a reproduced defect is a new finding and needs its ruling
+first). (3) Neither P8 nor P9 records a new finding left without a ruling: a build that writes "noted, not fixed" puts it
+back to the owner first. With the 2026-11-19 rulings, every other leftover is resolved: fixed by P8, or accepted with
+its reason on record. The roadmap line is then "a full access review of who can see what, every finding resolved". The
+owner's browser walks of rows 3b, 3c, 4 and 6 and the queue's production order are separate from the wording.

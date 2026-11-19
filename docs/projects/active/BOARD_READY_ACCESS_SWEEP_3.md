@@ -30,7 +30,27 @@
 > five other uploads that trust `file.type`; 11 = a; 12 = j; 13 = i (fail-open half; the case half isn't real); 14 = m;
 > 15 = b (recommended ACCEPT); 16 = l (recommended ACCEPT). **Record gap:** P6's "/review … rest recorded" was never
 > written down; calls 5, 6, 8 and the too-small item come from a fresh read-only review of `9eb8d468c` on 2026-11-19.
-> /legal read the page (no call blocked; four wording points applied); /design read it (applied). Rulings pending.
+> /legal read the page (no call blocked; four wording points applied); /design read it (applied).
+>
+> **RULED 2026-11-19 (owner, leftovers paste-back: "Calls 1A–16A, none changed from my recommendation", no notes).**
+> FIX (built by P8): 1 a whole-club permit counts as outside a scoped member's groups, and deleting a permit or replacing
+> its file gets the same check · 2 a scoped member opens files only for their own groups' teams and the whole club's
+> permits; the list stays whole · 3 take the browser write permission on a tournament's playing fields and lanes away ·
+> 4 staff removal finds the account properly, refuses rather than half-removes, and deletes the sign-in only when nothing
+> else uses it · 5 the second of two pay-link presses is refused, and nothing goes out on a link that was just stopped ·
+> 6 after a stop, automatic emails leave the Pay button out until someone sends a new link; when an automatic email does
+> carry one, the line reads "Pay link sent [date]" · 8 record who stopped, replaced or emailed a pay link, and when ·
+> 9 the program-year coaches list is fixed the way the Members screen was · 10 the permit upload is fixed (call 6's
+> checker) · 11 the club's document upload gets the coach upload's template check · 12 with no club named and two
+> invitations waiting, ask which club; never pick one, and the one not chosen stays waiting · 13 when the staff-address
+> check can't answer, refuse and say try again · 14 an open rules or resource record turns read-only when the event locks.
+> LOOK INTO (P9): 7 one session tries to make the §539 unsaved put-backs and §540's missing audit row happen again.
+> ACCEPTED, resolved: 10 the five other uploads (Rules-page resource files, club logo, hero banner, tournament logo,
+> registration upload): each is served only as the type it claimed, from a short allowed list · 15 adding a rules section
+> stays two steps: the worst case is an extra section the person can see and delete · 16 a coach's waiting board role
+> shows on the board list, and the creation check doesn't see it: the row shows the offer where the role will land, and
+> the one-club rule answers first · the page's too-small item (pay-link refusals without a cause read "try again"),
+> accepted with no objection in the notes. The page's two chores go into P8, as the page said ("unless you object").
 >
 > **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**
 > - **Fix (small, one commit each, awaiting the owner's go to build):** 1 refuse the demo account at all three create doors + a
