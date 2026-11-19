@@ -13,11 +13,7 @@
  * `game_date` to the next day.
  */
 
-import {
-  findBracketSchedulingViolations,
-  type BracketSchedulingViolation,
-  type BracketTimingGame,
-} from './playoff-bracket.ts';
+import { findOrderProblems, orderPairKey, type OrderGame, type OrderLengths, type OrderProblem } from './game-order.ts';
 
 /** Only a not-yet-played game may be shifted or cancelled. */
 export const SHIFTABLE_STATUS = 'scheduled';
@@ -32,7 +28,11 @@ export interface ReschedulableGame {
   time: string | null; // game_time, 'HH:MM' or 'HH:MM:SS'
   status: string;
   isPlayoff?: boolean | null;
+  divisionId?: string | null;
+  bracketId?: string | null;
   bracketCode?: string | null;
+  /** The game's own length; the division's and the event's come in `lengths`. */
+  durationMinutes?: number | null;
   homePlaceholder?: string | null;
   awayPlaceholder?: string | null;
 }
@@ -66,10 +66,10 @@ export interface BulkReschedulePlan {
   cancelIds: string[];
   /** Requested ids that can't be actioned (already played, missing, or no date/time). */
   skipped: SkippedGame[];
-  /** Ordering violations this change would NEWLY introduce — non-empty means block. */
-  newViolations: BracketSchedulingViolation[];
-  /** Ordering violations that already existed (informational; not caused by this change). */
-  preexistingViolations: BracketSchedulingViolation[];
+  /** Pairs this change would NEWLY put out of order (`lib/game-order.ts`) — non-empty means block. */
+  newViolations: OrderProblem[];
+  /** Pairs already out of order (informational; not caused by this change). */
+  preexistingViolations: OrderProblem[];
 }
 
 /**
@@ -100,17 +100,19 @@ export function shiftWallClock(
   return { date: `${y}-${mo}-${d}`, time: `${hh}:${mm}` };
 }
 
-function toTimingGame(g: ReschedulableGame): BracketTimingGame {
-  return {
-    code: g.bracketCode ?? null,
-    home: g.homePlaceholder ?? null,
-    away: g.awayPlaceholder ?? null,
-    date: g.date,
-    time: g.time,
-  };
-}
-
-const violationKey = (v: BracketSchedulingViolation): string => `${v.game}>${v.feeder}`;
+const toOrderGame = (g: ReschedulableGame): OrderGame => ({
+  id: g.id,
+  divisionId: g.divisionId ?? null,
+  bracketId: g.bracketId ?? null,
+  bracketCode: g.bracketCode ?? null,
+  isPlayoff: !!g.isPlayoff,
+  status: g.status,
+  date: g.date,
+  time: g.time,
+  durationMinutes: g.durationMinutes ?? null,
+  homePlaceholder: g.homePlaceholder ?? null,
+  awayPlaceholder: g.awayPlaceholder ?? null,
+});
 
 /**
  * Plan a bulk shift/cancel against the full set of a tournament's games. Computes the moved
@@ -123,6 +125,8 @@ const violationKey = (v: BracketSchedulingViolation): string => `${v.game}>${v.f
 export function planBulkReschedule(
   allGames: ReschedulableGame[],
   input: BulkRescheduleInput,
+  /** The division and event default lengths, for when a game ends (the one chain). */
+  lengths: OrderLengths = {},
 ): BulkReschedulePlan {
   const byId = new Map(allGames.map((g) => [g.id, g]));
   const cancelSet = new Set(input.cancelIds);
@@ -149,21 +153,21 @@ export function planBulkReschedule(
     shifts.push({ id, from: { date: g.date, time: g.time }, to: shiftWallClock(g.date, g.time, input.shiftMinutes) });
   }
 
-  // Bracket-ordering: BEFORE = current times; AFTER = shifted times, cancelled games removed.
+  // The game-order rule: BEFORE = current times; AFTER = shifted times, cancelled games removed.
   const shiftTo = new Map(shifts.map((s) => [s.id, s.to]));
-  const beforeGames: BracketTimingGame[] = [];
-  const afterGames: BracketTimingGame[] = [];
+  const beforeGames: OrderGame[] = [];
+  const afterGames: OrderGame[] = [];
   for (const g of allGames) {
-    beforeGames.push(toTimingGame(g));
+    beforeGames.push(toOrderGame(g));
     if (validCancelSet.has(g.id)) continue; // cancelled → no timing constraint in the after picture
     const moved = shiftTo.get(g.id);
-    afterGames.push(moved ? { ...toTimingGame(g), date: moved.date, time: moved.time } : toTimingGame(g));
+    afterGames.push(moved ? { ...toOrderGame(g), date: moved.date, time: moved.time } : toOrderGame(g));
   }
 
-  const before = findBracketSchedulingViolations(beforeGames);
-  const after = findBracketSchedulingViolations(afterGames);
-  const beforeKeys = new Set(before.map(violationKey));
-  const newViolations = after.filter((v) => !beforeKeys.has(violationKey(v)));
+  const before = findOrderProblems(beforeGames, lengths);
+  const after = findOrderProblems(afterGames, lengths);
+  const beforeKeys = new Set(before.map(orderPairKey));
+  const newViolations = after.filter((v) => !beforeKeys.has(orderPairKey(v)));
 
   return { shifts, cancelIds: validCancelIds, skipped, newViolations, preexistingViolations: before };
 }

@@ -78,8 +78,27 @@ describe('planBulkReschedule', () => {
     // Push SF1 to 16:00, after the 14:00 final → the final would precede its feeder.
     const plan = planBulkReschedule(bracketGames(), { shiftMinutes: 360, shiftIds: ['sf1'], cancelIds: [] });
     assert.equal(plan.newViolations.length, 1);
-    assert.equal(plan.newViolations[0].game, 'F1');
-    assert.equal(plan.newViolations[0].feeder, 'SF1');
+    assert.equal(plan.newViolations[0].dependentId, 'f1');
+    assert.equal(plan.newViolations[0].sourceId, 'sf1');
+  });
+
+  it('judges the feeder\'s END, not its start (Stage 9, A1)', () => {
+    // SF2 12:00 + 90 min ends 13:30. +60 starts it at 13:00, ending 14:30, after the 14:00 Final starts.
+    const plan = planBulkReschedule(bracketGames(), { shiftMinutes: 60, shiftIds: ['sf2'], cancelIds: [] });
+    assert.deepEqual(plan.newViolations.map(v => `${v.sourceId}>${v.dependentId}`), ['sf2>f1']);
+    // A shorter game of its own clears it; so does a shorter division default.
+    assert.equal(planBulkReschedule(bracketGames({ sf2: { durationMinutes: 60 } }), { shiftMinutes: 60, shiftIds: ['sf2'], cancelIds: [] }).newViolations.length, 0);
+    const divided = bracketGames({ sf1: { divisionId: 'u13' }, sf2: { divisionId: 'u13' }, f1: { divisionId: 'u13' } });
+    assert.equal(planBulkReschedule(divided, { shiftMinutes: 60, shiftIds: ['sf2'], cancelIds: [] }, { divisionMinutes: { u13: 60 } }).newViolations.length, 0);
+  });
+
+  it('two divisions that both have an SF1 never judge each other\'s games (the old tournament-wide scope)', () => {
+    const games = [
+      ...bracketGames({ sf1: { divisionId: 'u13' }, sf2: { divisionId: 'u13' }, f1: { divisionId: 'u13' } }),
+      g({ id: 'u11sf1', divisionId: 'u11', time: '10:00', isPlayoff: true, bracketCode: 'SF1' }),
+    ];
+    const plan = planBulkReschedule(games, { shiftMinutes: 240, shiftIds: ['u11sf1'], cancelIds: [] });
+    assert.equal(plan.newViolations.length, 0);
   });
 
   it('does NOT count a pre-existing violation as newly introduced', () => {

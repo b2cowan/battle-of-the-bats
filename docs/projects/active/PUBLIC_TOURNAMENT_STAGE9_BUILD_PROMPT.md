@@ -132,6 +132,35 @@ round names from `bracketGameLabel` ("Final", "Semifinal 2", "3rd Place").
 6. `npm run verify:changed`, `npm run typecheck` (shared modules and a route contract change). Product-owner summary;
    commit on the owner's word.
 
+## Part 1 handoff (built 2026-11-18, read before Part 2)
+
+Part 1 is built, probed and committed (see `git log --grep "Stage 9, Part 1"`). What Part 2 builds on:
+
+- **The rule:** `lib/game-order.ts`: `orderEdges`, `findOrderProblems(games, lengths)`, `newOrderProblems(before,
+  after, lengths)`, `orderProblemsById` (both games of a pair, A5), `orderLengthsOf(divisions, tournament)`. A problem
+  is `{ sourceId, dependentId, kind: 'winner' | 'loser' | 'pool', sourceStart, sourceEnd, dependentStart }` in
+  calendar minutes. Pool edges are kept **one pair per pool game** (so a second late pool game is a new problem);
+  the words name the latest-ending one.
+- **The words:** `lib/game-order-words.ts`: `orderRefusalWords` (every door's refusal, `{ lead, rest }`, by `door`
+  and `field`), and the screens' sentences already written for Part 2: `OUT_OF_ORDER_CHIP`, `ORDER_ISSUE_TITLE`,
+  `orderIssueWords` (health row, bracket banner), `orderReadWords` (read view, from each side), `orderDragReason`
+  (the red spot, A4), `orderPillWords` (the save pill). `orderRefusalForChange` is the screen's one-game check (the
+  game window, the move sheet and Add game call it through the page's `gameOrderProblem`).
+- **The server's reply:** `409 { error, code: 'game-order', gameId, otherGameId, field: 'when' | 'length' | 'sources' }`.
+  `field` says which line the game window puts it under (tab 3). An overlap still replies `code: 'overlap'` and wins
+  when a save makes both (A12).
+- **Already moved onto the rule:** the schedule page's check (now every game, pool included), the bracket editor's
+  list (ids, per tier, end not start, round names), the rain delay's planner and row marks. **Not yet:** the bracket
+  editor still holds Save on ANY problem (the A3 split, Part 2 step 4), and its banner / the rain delay callout still
+  read their old words (Part 2 steps 4 and 5).
+- **Owner may revisit:** the 3rd Place sentence adds ", or move Semifinal 1 earlier" (the drawing's tab 6 omits it on
+  the loser row only); kept for consistency with the winner row. A one-line change in `orderRefusalWords`.
+- **The probe:** `.probe/stage9-order-probe.mjs` (FCHP Open Cup on dev, builds its own division, undoes itself;
+  `--undo` cleans up after an aborted run). 22/22 on 2026-11-18. Part 3's walk fixtures can start from its setup.
+- **Gate state at hand-off (not this work):** ~29 unit tests in other areas, `layout-run-journal.test.ts` typecheck,
+  the lint plugin load in `verify-changed.mjs`, and two `check:admin-*` baselines failed on the shared tree.
+- **Restart the dev server** before the owner's browser check (new files, shared modules).
+
 ## Part 2 · The screens
 
 Build to the drawing; name the shipped component in each step and reuse it.

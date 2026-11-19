@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Pencil, X, Trophy, MapPin, Globe, Wrench } from 'lucide-react';
-import { bracketGameLabel, findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
+import { nextManualBracketCode } from '@/lib/playoff-bracket';
+import { orderRefusalForChange, type OrderField } from '@/lib/game-order-words';
 import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { useTournament } from '@/lib/tournament-context';
 import { formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
@@ -439,22 +440,12 @@ export default function AdminSchedulePage() {
     }
   }
 
-  /** A playoff game can't start on or before a game that feeds it, or after a game it feeds (the bracket's order). */
-  function bracketOrderProblem(c: { id?: string; divisionId: string; code: string; home?: string | null; away?: string | null; date?: string | null; time?: string | null }): string | null {
-    const others = games
-      .filter(g => g.isPlayoff && g.divisionId === c.divisionId && g.id !== c.id)
-      .map(g => ({ code: g.bracketCode, home: g.homePlaceholder, away: g.awayPlaceholder, date: g.date, time: g.time }));
-    const involved = findBracketSchedulingViolations([...others, { code: c.code, home: c.home ?? null, away: c.away ?? null, date: c.date ?? '', time: c.time ?? '' }])
-      .filter(v => v.game === c.code || v.feeder === c.code);
-    if (involved.length === 0) return null;
-    // The rounds by their names ("The final", "Semifinal 1"), never the bracket's internal codes.
-    return involved.map(v => {
-      const game = bracketGameLabel(v.game);
-      const feeder = bracketGameLabel(v.feeder);
-      return v.reason === 'earlier-date'
-        ? `${game} is on an earlier day than ${feeder}, which feeds it.`
-        : `${game} must start after ${feeder} on the same day — set a later time, or move it to a later day.`;
-    }).join(' ');
+  /**
+   * The game-order rule (Stage 9, `lib/game-order.ts`): the server's own sentence when this change puts a game before
+   * one it waits for (its Semifinals, its division's pool play), else null. Only a problem the change CREATES (A2).
+   */
+  function gameOrderProblem(change: Parameters<typeof orderRefusalForChange>[0]['change'], field?: OrderField): string | null {
+    return orderRefusalForChange({ games, change, divisions, tournament: currentTournament, teams, field });
   }
 
   /** Add game's Save — the window's create mode asks, it never autosaves (24 September). The Add window's wiring. */
@@ -501,9 +492,16 @@ export default function AdminSchedulePage() {
       // its own bracket id (advancement is scoped by it). Several brackets (tiered or split): none.
       const ids = Array.from(new Set(games.filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.bracketId).map(g => g.bracketId)));
       data.bracketId = ids.length === 1 ? ids[0] : (ids.length === 0 ? crypto.randomUUID() : null);
-      const problem = bracketOrderProblem({ divisionId: form.divisionId, code, home: form.homePlaceholder, away: form.awayPlaceholder, date: form.date, time: form.time });
-      if (problem) throw new Error(problem);
     }
+    // A playoff game before what it waits for, or a pool game run past a playoff game's start (A7).
+    const problem = gameOrderProblem({
+      divisionId: form.divisionId, isPlayoff: !!data.isPlayoff, bracketId: (data.bracketId as string | null) ?? null,
+      bracketCode: code ?? null, homePlaceholder: (data.homePlaceholder as string | null) ?? null,
+      awayPlaceholder: (data.awayPlaceholder as string | null) ?? null, date: form.date, time: form.time,
+      durationMinutes: data.durationMinutes as number | null, homeTeamId: data.homeTeamId as string | null,
+      awayTeamId: data.awayTeamId as string | null,
+    });
+    if (problem) throw new Error(problem);
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const res = await fetch(`/api/admin/games${orgQuery}`, {
       method: 'POST',
@@ -635,13 +633,17 @@ export default function AdminSchedulePage() {
   /** The games route's `update`, for one game: only the keys that changed. Throws the route's reason when refused. */
   async function writeGameFields(gameId: string, patch: GamePatch, self: Game | undefined): Promise<GameSaveReply> {
     if (!self) throw new Error(SCHEDULE_REFUSAL.gameFallback);
-    if (self.isPlayoff && self.bracketCode && ('date' in patch || 'time' in patch || 'homePlaceholder' in patch || 'awayPlaceholder' in patch)) {
-      const problem = bracketOrderProblem({
-        id: gameId, divisionId: self.divisionId, code: self.bracketCode,
-        home: 'homePlaceholder' in patch ? patch.homePlaceholder : self.homePlaceholder,
-        away: 'awayPlaceholder' in patch ? patch.awayPlaceholder : self.awayPlaceholder,
-        date: patch.date ?? self.date, time: patch.time ?? self.time,
-      });
+    // Every game, pool or playoff (A7): its time, its length or what it waits for.
+    if ('date' in patch || 'time' in patch || 'durationMinutes' in patch || 'homePlaceholder' in patch || 'awayPlaceholder' in patch) {
+      const field: OrderField = 'date' in patch || 'time' in patch ? 'when' : 'durationMinutes' in patch ? 'length' : 'sources';
+      const problem = gameOrderProblem({
+        id: gameId,
+        ...('date' in patch ? { date: patch.date ?? null } : {}),
+        ...('time' in patch ? { time: patch.time ?? null } : {}),
+        ...('durationMinutes' in patch ? { durationMinutes: patch.durationMinutes ?? null } : {}),
+        ...('homePlaceholder' in patch ? { homePlaceholder: patch.homePlaceholder ?? null } : {}),
+        ...('awayPlaceholder' in patch ? { awayPlaceholder: patch.awayPlaceholder ?? null } : {}),
+      }, field);
       if (problem) throw new Error(problem);
     }
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';

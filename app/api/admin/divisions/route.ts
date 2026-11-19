@@ -12,6 +12,7 @@ import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { INVITE_REFUSALS } from '@/lib/invite-only-words';
+import { tournamentLengthOrderRefusal } from '@/lib/tournament-overlap-guard';
 
 function tournamentLockedResponse() {
   return Response.json(
@@ -262,7 +263,7 @@ export const POST = withObservability(async (req: Request) => {
     else if (action === 'update' && id) {
       const { data: ag } = await supabaseAdmin
         .from('divisions')
-        .select('tournament_id, playoff_config')
+        .select('tournament_id, playoff_config, settings')
         .eq('id', id)
         .single();
 
@@ -272,6 +273,17 @@ export const POST = withObservability(async (req: Request) => {
         const wrongOrg = await requireTournamentInOrg(ctx, ag.tournament_id);
         if (wrongOrg) return wrongOrg;
         if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
+        // Stage 9, A8: the division's default length moves when every game without its own length ENDS, so it is
+        // refused, like any door, when it puts a game before one it waits for. The form writes `settings` whole.
+        const lengthOf = (s: unknown) => {
+          const v = (s as Record<string, unknown> | null)?.game_duration_minutes;
+          return typeof v === 'number' && v > 0 ? v : null;
+        };
+        const nextLength = lengthOf(data.settings ?? {});
+        if (nextLength !== lengthOf(ag.settings)) {
+          const refused = await tournamentLengthOrderRefusal(ag.tournament_id, { divisionId: id, minutes: nextLength });
+          if (refused) return Response.json(refused.body, { status: refused.status });
+        }
       }
 
       // Merge playoff_config defensively. coinTossResults is owned by the

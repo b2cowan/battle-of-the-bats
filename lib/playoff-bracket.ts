@@ -1015,69 +1015,11 @@ export function inferGamePoolSides<G extends SidePoolInferableGame>(
   return merged === MIXED_POOL ? null : merged;
 }
 
-export interface BracketTimingGame {
-  code?: string | null;
-  home?: string | null;
-  away?: string | null;
-  date?: string | null;
-  time?: string | null;
-}
-
-export interface BracketSchedulingViolation {
-  /** Dependent game's code. */
-  game: string;
-  /** Feeder game's code it is scheduled at/before. */
-  feeder: string;
-  reason: 'earlier-date' | 'same-day-unordered';
-}
-
 const ADVANCEMENT_REF_RE = /^(?:winner|loser)\s+(.+)$/i;
 
-function timingStartMinutes(time?: string | null): number | null {
-  if (!time) return null;
-  const m = /^(\d{1,2}):(\d{2})/.exec(time);
-  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
-}
-
-/**
- * Detect games scheduled before a game they depend on. A dependent game (one whose
- * Home/Away is `Winner <code>` / `Loser <code>`) must come AFTER the referenced
- * feeder. Unscheduled games (no date) can't be "before" anything, so they're
- * skipped — this lets a structure-only bracket save. Cross-day ordering needs no
- * times (a later date is always fine); SAME-day pairs require both times in order,
- * because otherwise the feeder's winner can't reach the dependent in time.
- *
- * Pure + dependency-free for `node --test`.
- */
-export function findBracketSchedulingViolations(games: BracketTimingGame[]): BracketSchedulingViolation[] {
-  const byCode = new Map<string, BracketTimingGame>();
-  for (const g of games) if (g.code) byCode.set(g.code.trim().toUpperCase(), g);
-
-  const out: BracketSchedulingViolation[] = [];
-  const seen = new Set<string>();
-  for (const y of games) {
-    if (!y.date) continue; // an unscheduled dependent can't be "before" its feeder
-    for (const ph of [y.home, y.away]) {
-      const m = (ph ?? '').match(ADVANCEMENT_REF_RE);
-      if (!m) continue;
-      const x = byCode.get(m[1].trim().toUpperCase());
-      if (!x || x === y || !x.date) continue; // feeder unscheduled → can't compare
-      let reason: BracketSchedulingViolation['reason'] | null = null;
-      if (y.date < x.date) {
-        reason = 'earlier-date';
-      } else if (y.date === x.date) {
-        const ys = timingStartMinutes(y.time);
-        const xs = timingStartMinutes(x.time);
-        if (ys == null || xs == null || ys <= xs) reason = 'same-day-unordered';
-      }
-      if (reason) {
-        const key = `${y.code}>${x.code}`;
-        if (!seen.has(key)) { seen.add(key); out.push({ game: y.code ?? '?', feeder: x.code ?? '?', reason }); }
-      }
-    }
-  }
-  return out;
-}
+// (The game-order check that lived here, `findBracketSchedulingViolations`, keyed sources by code alone and judged a
+// start against a start. It moved to `lib/game-order.ts` in Public tournament Stage 9: scoped by division and bracket,
+// judged against the earlier game's END.)
 
 export interface ManualCodeGame {
   bracketCode?: string | null;

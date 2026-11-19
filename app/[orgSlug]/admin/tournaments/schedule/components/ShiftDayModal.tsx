@@ -27,6 +27,7 @@ import { formatTime } from '@/lib/utils';
 import { addCalendarDays, tournamentToday } from '@/lib/timezone';
 import { NIL_TEAM_ID } from '@/lib/schedule-change-classify';
 import { planBulkReschedule, SHIFT_PRESET_MINUTES, type PlannedShift, type ReschedulableGame } from '@/lib/schedule-shift';
+import { orderLengthsOf } from '@/lib/game-order';
 import { gameLengthMinutes } from '@/lib/booking-length';
 import { bracketGameLabel } from '@/lib/playoff-bracket';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
@@ -146,19 +147,21 @@ export default function ShiftDayModal({
   const cancelIds = visibleGames.filter(g => cancelling.has(g.id)).map(g => g.id);
   const allResched: ReschedulableGame[] = useMemo(() => games.map(g => ({
     id: g.id, date: g.date, time: g.time, status: g.status, isPlayoff: g.isPlayoff, bracketCode: g.bracketCode,
+    divisionId: g.divisionId, bracketId: g.bracketId ?? null, durationMinutes: g.durationMinutes ?? null,
     homePlaceholder: g.homePlaceholder, awayPlaceholder: g.awayPlaceholder,
   })), [games]);
+  const lengths = useMemo(() => orderLengthsOf(divisions, tournament), [divisions, tournament]);
   const shiftKey = shiftIds.join(',');
   const cancelKey = cancelIds.join(',');
   const plan = useMemo(
-    () => planBulkReschedule(allResched, { shiftMinutes: shiftIds.length ? shiftMinutes : 0, shiftIds, cancelIds }),
+    () => planBulkReschedule(allResched, { shiftMinutes: shiftIds.length ? shiftMinutes : 0, shiftIds, cancelIds }, lengths),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allResched, shiftMinutes, shiftKey, cancelKey],
+    [allResched, shiftMinutes, shiftKey, cancelKey, lengths],
   );
   const shiftToById = new Map(plan.shifts.map(s => [s.id, s.to]));
 
-  // ── The check: the bracket's order, the tournament's own overlap rule, the club's other bookings ──
-  const violationCodes = new Set(plan.newViolations.flatMap(v => [v.game, v.feeder]));
+  // ── The check: the game-order rule (`lib/game-order.ts`), the tournament's own overlap rule, the club's other bookings ──
+  const violationIds = new Set(plan.newViolations.flatMap(v => [v.sourceId, v.dependentId]));
   const nameOfTeam = (id: string | null | undefined) => (id ? teams.find(t => t.id === id)?.name : null);
   const refusals = useMemo(() => refusedOverlapsById({
     proposed: [
@@ -350,7 +353,7 @@ export default function ShiftDayModal({
           {visibleGames.map(g => {
             const isCancel = cancelling.has(g.id);
             const to = shiftToById.get(g.id);
-            const flagged = !!g.bracketCode && violationCodes.has(g.bracketCode);
+            const flagged = violationIds.has(g.id);
             const refusal = refusals.get(g.id);
             const found = to ? clubFindings[clubKey(g.id, to)] : undefined;
             const club = !isCancel && found?.length

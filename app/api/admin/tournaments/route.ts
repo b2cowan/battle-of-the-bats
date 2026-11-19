@@ -26,6 +26,7 @@ import { hasFiniteSlots, needsFreeSlot, readSlotHolders, visibleHolder } from '@
 import { activationMissing } from '@/lib/tournament-activation';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
+import { tournamentLengthOrderRefusal } from '@/lib/tournament-overlap-guard';
 
 function isDateValue(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -851,6 +852,14 @@ export const POST = withObservability(async (req: Request) => {
       if (readErr) throw readErr;
 
       const merged = { ...(existing?.settings ?? {}), ...sanitized };
+
+      // Stage 9, A8: a new default length moves when every game without its own length ENDS, so it is refused, like
+      // any door, when it puts a game before one it waits for.
+      if ('game_duration_minutes' in sanitized
+        && sanitized.game_duration_minutes !== (existing?.settings as Record<string, unknown> | null)?.game_duration_minutes) {
+        const refused = await tournamentLengthOrderRefusal(id, { divisionId: null, minutes: sanitized.game_duration_minutes as number });
+        if (refused) return Response.json(refused.body, { status: refused.status });
+      }
 
       const { error } = await supabase
         .from('tournaments')

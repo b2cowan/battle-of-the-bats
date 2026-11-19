@@ -21,6 +21,7 @@ import {
 } from '../shared';
 import { withObservability } from '@/lib/observability';
 import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
+import { tournamentOverlapRefusal, type ProposedGameRow } from '@/lib/tournament-overlap-guard';
 
 export const runtime = 'nodejs';
 
@@ -161,6 +162,14 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
       tournament: auth.tournament,
     });
     validateTournamentScheduleCommitAgainstContext(prepared, context);
+
+    // The one guard every games writer calls (Stage 9, A7): an import adds pool games only, so it is refused when it
+    // runs a division's pool play past a playoff game's start. Before any write; the preview stays open to fix.
+    const refused = await tournamentOverlapRefusal(tournamentId, [
+      ...prepared.createRows.map((row): ProposedGameRow => ({ ...buildTournamentScheduleGameInsert(row.normalized, tournamentId, ''), id: null })),
+      ...prepared.updateRows.map((row): ProposedGameRow => ({ ...buildTournamentScheduleGameUpdate(row.normalized), id: row.targetId })),
+    ], { door: 'import' });
+    if (refused) return json(refused.body, refused.status);
 
     const writtenGameIds = await applyRows({
       batchId: batch.id,

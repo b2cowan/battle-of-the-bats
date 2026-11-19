@@ -1,0 +1,317 @@
+/**
+ * THE GAME-ORDER RULE'S WORDS (Public tournament Stage 9, A10: "the fact that blocks it, then the way out"; every
+ * sentence is the drawing's tab 6, `docs/projects/active/BRACKET_GAME_ORDER_RULE_DRAWINGS.html`). The rule itself is
+ * `lib/game-order.ts`. The server writes these sentences into its refusal (`error`), the screens show `error` only, so
+ * a refusal reads the same at every door. A refusal is `{ lead, rest }`: the lead is the bold fact, the rest the way out.
+ *
+ * Games are named by round (`bracketGameLabel`: "the Final", "Semifinal 2", "the 3rd Place game"); pool play by its
+ * division ("U13 Boys pool play"); times the house way (`formatTime`: "3:00 p.m."); a day only when it differs.
+ */
+import { bracketGameLabel, bracketRoundLabel } from './playoff-bracket.ts';
+import { formatTime, possessive } from './utils.ts';
+import { formatShortWeekdayDate } from './timezone.ts';
+import { teamOrSlotWords } from './schedule-words.ts';
+import {
+  dateTimeAt, newOrderProblems, orderGameLength, orderLengthsOf, type OrderGame, type OrderLengths, type OrderProblem,
+} from './game-order.ts';
+
+/** A game as the words need it: the rule's game, its division's name, and (for a pool game) its matchup. */
+export interface OrderWordsGame extends OrderGame {
+  divisionName?: string | null;
+  /** A pool game's "Storm vs Aces"; unused for a playoff game. */
+  matchup?: string | null;
+}
+
+/** Which door is refusing: each has its own way out (tab 6). */
+export type OrderDoor =
+  | 'game'            // the game window, the move sheet, a drop, Add game
+  | 'pair'            // the bracket editor's save, the rain delay's Undo: no one edited game
+  | 'rain-delay'
+  | 'reinstate'
+  | 'playoff-draft'
+  | 'pool-draft'
+  | 'import'
+  | 'length-default'; // A8: a division's or the event's default length
+
+/** Which of the game window's fields the line goes under (tab 3). */
+export type OrderField = 'when' | 'length' | 'sources';
+
+export interface OrderWords { lead: string; rest: string }
+
+const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+/** One period at the end, never two ("4:30 p.m." already ends a sentence). */
+const fin = (s: string) => (s.endsWith('.') ? s : `${s}.`);
+
+/** A game's name in a sentence: "the Final", "Semifinal 2", "the 3rd Place game"; a pool game by its matchup. */
+export function orderGameName(g: OrderWordsGame | undefined, opts: { division?: boolean } = {}): string {
+  if (!g) return 'the other game';
+  const div = opts.division && g.divisionName ? `${g.divisionName} ` : '';
+  if (!g.isPlayoff) return g.matchup?.trim() || 'a pool game';
+  if (!g.bracketCode?.trim()) return `the ${div}playoff game`;
+  const label = bracketGameLabel(g.bracketCode);
+  if (/\d$/.test(label) || label.includes(', Game ')) return `${div}${label}`;
+  if (/Place$/.test(label)) return `the ${div}${label} game`;
+  return `the ${div}${label}`;
+}
+
+const clock = (minutes: number) => formatTime(dateTimeAt(minutes).time);
+const dayOf = (minutes: number) => dateTimeAt(minutes).date;
+/** "4:30 p.m.", or "on Sun, Nov 22 at 4:30 p.m." when it falls on another day than `from`. */
+const at = (minutes: number, from: number) =>
+  dayOf(minutes) === dayOf(from) ? `at ${clock(minutes)}` : `on ${formatShortWeekdayDate(dayOf(minutes))} at ${clock(minutes)}`;
+const poolPlay = (g: OrderWordsGame | undefined) => `${g?.divisionName?.trim() || 'the division’s'} pool play`;
+
+/** The round shared by several sources, in the plural ("the semifinals"), or "its earlier games". */
+function sourcesPlural(sources: readonly (OrderWordsGame | undefined)[]): string {
+  const rounds = new Set(sources.map(s => (s?.isPlayoff ? bracketRoundLabel(s.bracketCode) : '')));
+  const [round] = [...rounds];
+  if (rounds.size === 1 && round && /^(Quarterfinal|Semifinal)$/.test(round)) return `the ${round.toLowerCase()}s`;
+  return 'its earlier games';
+}
+
+const waitsFor = (kinds: readonly ('winner' | 'loser' | 'pool')[]) => {
+  const same = kinds.every(k => k === kinds[0]);
+  const noun = same ? `${kinds[0]}s` : 'results';
+  return kinds.length === 2 ? `both ${noun}` : `all ${kinds.length} ${noun}`;
+};
+
+export interface OrderRefusalInput {
+  /** The pairs this change creates (`newOrderProblems`), at least one. */
+  problems: readonly OrderProblem[];
+  games: ReadonlyMap<string, OrderWordsGame>;
+  lengths?: OrderLengths;
+  door: OrderDoor;
+  /** The game the organizer changed, when there is one. */
+  editedId?: string | null;
+  /** The game window's field that changed (`'when'` when unsure). */
+  field?: OrderField;
+  /** A8: the default length being saved and the one it replaces. */
+  length?: { minutes: number; was: number };
+}
+
+/** The pair a refusal speaks of: the edited game's first, the one that ends latest among its sources. */
+export function pickOrderProblem(problems: readonly OrderProblem[], editedId?: string | null): OrderProblem {
+  const mine = editedId ? problems.filter(p => p.sourceId === editedId || p.dependentId === editedId) : [];
+  const pool = mine.length ? mine : problems;
+  return [...pool].sort((a, b) => b.sourceEnd - a.sourceEnd || a.dependentStart - b.dependentStart)[0];
+}
+
+/**
+ * The refusal, by door and side. The edited game is the dependent ("The Final waits for its winner") or the source
+ * ("It waits for Semifinal 1's winner"); a door with no one edited game names the pair.
+ */
+export function orderRefusalWords(input: OrderRefusalInput): OrderWords & { gameId: string; otherGameId: string } {
+  const { problems, games, door } = input;
+  const p = pickOrderProblem(problems, input.editedId);
+  const src = games.get(p.sourceId);
+  const dep = games.get(p.dependentId);
+  const pool = p.kind === 'pool';
+  const srcName = pool ? poolPlay(dep) : orderGameName(src);
+  const depName = orderGameName(dep);
+  const end = p.sourceEnd;
+  const start = p.dependentStart;
+  const editedIsSource = !!input.editedId && input.editedId === p.sourceId && input.editedId !== p.dependentId;
+  const ids = editedIsSource
+    ? { gameId: p.sourceId, otherGameId: p.dependentId }
+    : { gameId: p.dependentId, otherGameId: p.sourceId };
+  const say = (lead: string, rest: string) => ({ lead: fin(lead), rest: rest ? ` ${fin(rest)}` : '', ...ids });
+
+  // Everything this dependent newly waits on, for "the semifinals end at 1:00 p.m." (bracket sources only).
+  const mineAsDependent = problems.filter(q => q.dependentId === p.dependentId && q.kind !== 'pool');
+
+  switch (door) {
+    case 'rain-delay':
+      return say(`${cap(srcName)} would end at ${clock(end)}, after ${depName} starts (${clock(start)})`,
+        `Push ${depName} as well, or push the games by less`);
+    case 'reinstate':
+      if (editedIsSource) {
+        const who = pool ? orderGameName(src) : srcName;
+        return say(`${cap(who)} is ${at(p.sourceStart, start)} and would end after ${depName} starts (${clock(start)})`,
+          `Move ${depName} later first, then put ${pool ? 'this game' : srcName} back`);
+      }
+      return say(`${cap(srcName)} ends ${at(end, start)}`, `Move ${depName} to ${clock(end)} or later first, then put it back`);
+    case 'playoff-draft':
+      return say(`The schedule changed while you were choosing: this draft starts ${depName} before ${srcName} ends`,
+        'Make the drafts again');
+    case 'pool-draft':
+    case 'import':
+      if (pool) {
+        return say(`This ${door === 'import' ? 'import' : 'draft'} ends ${poolPlay(dep)} ${at(end, start)}, after ${depName} starts (${clock(start)})`,
+          'Move the playoffs later first, or end pool play earlier');
+      }
+      break;
+    case 'length-default': {
+      const len = input.length;
+      const depFull = cap(orderGameName(dep, { division: true }));
+      const many = mineAsDependent.length > 1;
+      const what = pool ? poolPlay(dep) : many ? sourcesPlural(mineAsDependent.map(q => games.get(q.sourceId))) : srcName;
+      const latest = many ? Math.max(...mineAsDependent.map(q => q.sourceEnd)) : end;
+      return say(`${depFull} starts ${at(start, p.sourceStart)}`,
+        `${len ? `At ${len.minutes} min, ` : ''}${fin(`${what} would end at ${clock(latest)}`)} Move ${depName} first${len ? `, or keep ${len.was} min` : ''}`);
+    }
+    default:
+      break;
+  }
+
+  if (door === 'game' && input.editedId) {
+    const field = input.field ?? 'when';
+    if (editedIsSource) {
+      // The edited game runs into a game that waits for it.
+      if (pool) return say(`${cap(depName)} starts ${at(start, p.sourceStart)}`, `It waits for ${poolPlay(dep)}, so this game has to end by then`);
+      const srcLen = src ? orderGameLength(src, input.lengths) : end - p.sourceStart;
+      const room = start - p.sourceStart;
+      if (field === 'length' && room > 0) {
+        return say(`${cap(depName)} starts ${at(start, p.sourceStart)}`,
+          `At ${srcLen} min, ${fin(`${srcName} would end at ${clock(end)}`)} Keep it to ${room} min, or move ${depName} later`);
+      }
+      return say(`${cap(depName)} starts ${at(start, p.sourceStart)}`,
+        `It waits for ${possessive(srcName)} ${p.kind}: start ${srcName} by ${clock(start - srcLen)}${dayOf(start - srcLen) === dayOf(p.sourceStart) ? '' : ` on ${formatShortWeekdayDate(dayOf(start - srcLen))}`}, or move ${depName} later`);
+    }
+    // The edited game waits for a game that isn't over by then.
+    if (pool) {
+      const laterDay = dayOf(end) !== dayOf(start);
+      const matchup = src?.matchup?.trim();
+      return say(`${cap(srcName)} ends ${at(end, start)}`,
+        `${matchup ? `(${matchup}). ` : ''}${cap(depName)} waits for the standings: ${laterDay ? `move it to that day, ${clock(end)} or later` : `start it at ${clock(end)} or later`}`);
+    }
+    if (field === 'sources') {
+      return say(`${cap(srcName)} ends ${at(end, start)}`,
+        `This game starts at ${clock(start)}, before ${possessive(srcName)} ${p.kind} is known. Pick another game, or change the time`);
+    }
+    if (mineAsDependent.length > 1) {
+      const latest = Math.max(...mineAsDependent.map(q => q.sourceEnd));
+      const laterDay = dayOf(latest) !== dayOf(start);
+      return say(`${cap(sourcesPlural(mineAsDependent.map(q => games.get(q.sourceId))))} end ${at(latest, start)}`,
+        `${cap(depName)} waits for ${waitsFor(mineAsDependent.map(q => q.kind))}: ${laterDay ? `move it to that day, ${clock(latest)} or later` : `start it at ${clock(latest)} or later`}`);
+    }
+    if (dayOf(p.sourceStart) !== dayOf(start)) {
+      return say(`${cap(srcName)} is on ${formatShortWeekdayDate(dayOf(p.sourceStart))} at ${clock(p.sourceStart)}`,
+        `${cap(depName)} waits for its ${p.kind}: move it to that day, ${clock(end)} or later`);
+    }
+    return say(`${cap(srcName)} ends at ${clock(end)}`,
+      `${cap(depName)} waits for its ${p.kind}: start it at ${clock(end)} or later, or move ${srcName} earlier`);
+  }
+
+  // A door with no one edited game ('pair', and any door's fallback): name the pair.
+  return say(`${cap(depName)} starts ${at(start, p.sourceStart)}, before ${srcName} ends at ${clock(end)}`,
+    pool ? `Move ${depName} to ${clock(end)} or later, or end pool play earlier`
+      : `Move ${depName} to ${clock(end)} or later, or move ${srcName} earlier`);
+}
+
+// ── The screens' half: the same judgement the server makes, on the games the page holds ────────────────────────────
+
+/** A game as the admin schedule holds it (`Game` in `lib/types.ts`). */
+export interface ScheduleGameLike {
+  id: string;
+  divisionId: string | null;
+  bracketId?: string | null;
+  bracketCode?: string | null;
+  isPlayoff?: boolean | null;
+  status?: string | null;
+  date: string | null;
+  time: string | null;
+  durationMinutes?: number | null;
+  homePlaceholder?: string | null;
+  awayPlaceholder?: string | null;
+  homeTeamId?: string | null;
+  awayTeamId?: string | null;
+}
+
+type Named = { id: string; name?: string | null };
+
+/** The page's game, as the words read it: its division's name and, for a pool game, "Storm vs Aces". */
+export function orderWordsGameOf(g: ScheduleGameLike, divisions: readonly Named[], teams: readonly Named[]): OrderWordsGame {
+  const team = (id: string | null | undefined) => (id ? teams.find(t => t.id === id)?.name ?? null : null);
+  return {
+    id: g.id,
+    divisionId: g.divisionId ?? null,
+    divisionName: divisions.find(d => d.id === g.divisionId)?.name ?? null,
+    bracketId: g.bracketId ?? null,
+    bracketCode: g.bracketCode ?? null,
+    isPlayoff: !!g.isPlayoff,
+    status: g.status ?? 'scheduled',
+    date: g.date || null,
+    time: g.time ? g.time.slice(0, 5) : null,
+    durationMinutes: g.durationMinutes ?? null,
+    homePlaceholder: g.homePlaceholder ?? null,
+    awayPlaceholder: g.awayPlaceholder ?? null,
+    matchup: `${teamOrSlotWords(team(g.awayTeamId), g.awayPlaceholder)} vs ${teamOrSlotWords(team(g.homeTeamId), g.homePlaceholder)}`,
+  };
+}
+
+/**
+ * The refusal a one-game change would get from the server, or null (Stage 9: the screen refuses exactly what the
+ * server refuses). `change.id` absent = a game being added. The game window, the move sheet and Add game call it.
+ */
+export function orderRefusalForChange(input: {
+  games: readonly ScheduleGameLike[];
+  change: Partial<ScheduleGameLike> & { id?: string };
+  divisions: readonly (Named & { settings?: { game_duration_minutes?: unknown } | null })[];
+  tournament?: { settings?: { game_duration_minutes?: unknown } | null } | null;
+  teams: readonly Named[];
+  field?: OrderField;
+}): string | null {
+  const before = input.games.map(g => orderWordsGameOf(g, input.divisions, input.teams));
+  const id = input.change.id ?? 'new:0';
+  const base = input.games.find(g => g.id === id) ?? { id, divisionId: null, date: null, time: null };
+  const defined = Object.fromEntries(Object.entries(input.change).filter(([, v]) => v !== undefined));
+  const proposed = orderWordsGameOf({ ...base, ...defined, id } as ScheduleGameLike, input.divisions, input.teams);
+  const after = [...before.filter(g => g.id !== id), proposed];
+  const lengths = orderLengthsOf(input.divisions, input.tournament);
+  const problems = newOrderProblems(before, after, lengths);
+  if (!problems.length) return null;
+  const w = orderRefusalWords({
+    problems, games: new Map(after.map(g => [g.id, g])), door: 'game', editedId: id, field: input.field ?? 'when', lengths,
+  });
+  return w.lead + w.rest;
+}
+
+// ── The screens' words (Part 2 reads these; written here so the rule's sentences have one home) ──────────────────
+
+/** The chip on both games of a pair (A6; stored sentence case, the shared chip renders capitals). */
+export const OUT_OF_ORDER_CHIP = 'Out of order';
+
+/** The health window's issue row ("Playoff games out of order") and its detail for one pair. */
+export const ORDER_ISSUE_TITLE = 'Playoff games out of order';
+
+export function orderIssueWords(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>): string {
+  const dep = games.get(p.dependentId);
+  const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId));
+  return fin(`${cap(orderGameName(dep))} starts at ${clock(p.dependentStart)}, before ${srcName} ends at ${clock(p.sourceEnd)}`);
+}
+
+/** The game window's read view, under When, from this game's own side (A5). */
+export function orderReadWords(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>, gameId: string): OrderWords {
+  const dep = games.get(p.dependentId);
+  const pool = p.kind === 'pool';
+  const srcName = pool ? poolPlay(dep) : orderGameName(games.get(p.sourceId));
+  const depName = orderGameName(dep);
+  if (gameId === p.dependentId) {
+    return {
+      lead: 'Out of order.',
+      rest: ` ${cap(srcName)} ends at ${clock(p.sourceEnd)}, after this game starts. Move this game to ${clock(p.sourceEnd)} or later, or ${pool ? 'end pool play earlier' : `move ${srcName} earlier`}.`,
+    };
+  }
+  return {
+    lead: 'Out of order.',
+    rest: ` ${cap(depName)} starts at ${clock(p.dependentStart)}, before this game ends. Move this game earlier, or move ${depName} to ${clock(p.sourceEnd)} or later.`,
+  };
+}
+
+/** The timeline's red spot while dragging (A4): "Semifinal 2 runs until 4:30 p.m., so the Final can't go here". */
+export function orderDragReason(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>, draggedId: string): string {
+  const dep = games.get(p.dependentId);
+  const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId));
+  if (draggedId === p.dependentId) return `${cap(srcName)} runs until ${clock(p.sourceEnd)}, so ${orderGameName(dep)} can’t go here`;
+  const who = p.kind === 'pool' ? 'this game' : srcName;
+  return `${cap(orderGameName(dep))} starts at ${clock(p.dependentStart)}, so ${who} can’t go here`;
+}
+
+/** The game window's save pill while an order line stands: "Not saved: Semifinal 2 isn't over by then". */
+export function orderPillWords(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>, gameId: string): string {
+  const dep = games.get(p.dependentId);
+  if (gameId === p.dependentId) {
+    return `Not saved: ${p.kind === 'pool' ? 'pool play' : orderGameName(games.get(p.sourceId))} isn’t over by then`;
+  }
+  return `Not saved: ${orderGameName(dep)} starts before this ends`;
+}

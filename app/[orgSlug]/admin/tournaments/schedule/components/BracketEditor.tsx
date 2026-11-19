@@ -2,7 +2,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Trophy, Check, RefreshCw, Sparkles, AlertTriangle, Layers, Plus, Trash2 } from 'lucide-react';
 import { Division, Team, Venue, Tournament, Game, PlayoffTierConfig } from '@/lib/types';
-import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview, computeBracketColumns, suggestDefaultTiers, validateTierRanges, remapTierSeed, displayRoundTitle } from '@/lib/playoff-bracket';
+import { findOrderProblems, orderLengthsOf, type OrderProblem } from '@/lib/game-order';
+import { orderIssueWords, type OrderWordsGame } from '@/lib/game-order-words';
+import { nextPow2, seedOrder, gamesToBracketPreview, computeBracketColumns, suggestDefaultTiers, validateTierRanges, remapTierSeed, displayRoundTitle } from '@/lib/playoff-bracket';
 import { hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import { formatVenueLocation } from '@/lib/venue-label';
@@ -197,19 +199,24 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
   );
   const dirty = useMemo(() => serializeRows(preview) !== baseline, [preview, baseline]);
 
-  // Scope the feed-order check PER TIER — codes repeat across tiers, so a global
-  // check would cross-match "Winner SF1" to the wrong tier's game.
-  const violations = useMemo(() => {
-    const groups = new Map<string, PreviewRow[]>();
-    for (const p of preview) {
-      const k = p.pool || '';
-      const arr = groups.get(k) ?? groups.set(k, []).get(k)!;
-      arr.push(p);
-    }
-    return [...groups.values()].flatMap(rows =>
-      findBracketSchedulingViolations(rows.map(p => ({ code: p.code, home: p.home, away: p.away, date: p.date, time: p.time }))),
-    );
-  }, [preview]);
+  // The game-order rule (Stage 9, `lib/game-order.ts`): the server's own judgement, a game before its feeder ENDS.
+  // Scoped PER TIER — codes repeat across tiers, so each tier is its own bracket here (a row's tier is its bracket).
+  const orderRows = useMemo(() => {
+    const ownLength = new Map(existingGames.map(g => [g.id, g.durationMinutes ?? null]));
+    return new Map(preview.map((p, i): [string, OrderWordsGame] => {
+      const id = p.sourceGameId || `row:${i}`;
+      return [id, {
+        id, divisionId: division.id, divisionName: division.name, bracketId: `tier:${p.pool || ''}`, bracketCode: p.code,
+        isPlayoff: true, status: 'scheduled', date: p.date || null, time: p.time || null,
+        durationMinutes: p.sourceGameId ? ownLength.get(p.sourceGameId) ?? null : null,
+        homePlaceholder: p.home, awayPlaceholder: p.away,
+      }];
+    }));
+  }, [preview, existingGames, division.id, division.name]);
+  const violations = useMemo(
+    () => findOrderProblems([...orderRows.values()], orderLengthsOf([division], tournament)),
+    [orderRows, division, tournament],
+  );
 
   // Live bracket health — same structural read-out as the Plus auto-generator
   // (tightest turnaround, worst-case games/day, longest run), recomputed as the
@@ -224,10 +231,12 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         ),
     [preview, division.settings?.game_duration_minutes, tournament?.settings?.game_duration_minutes, minRestMinutes],
   );
-  const violationText = (v: { game: string; feeder: string; reason: string }) =>
-    v.reason === 'earlier-date'
-      ? `${v.game} is on an earlier day than ${v.feeder}, which feeds it.`
-      : `${v.game} must start after ${v.feeder} (same day) — set a later time, or move it to a later day.`;
+  // "Gold · the Final starts at 2:15 p.m., before Semifinal 2 ends at 4:30 p.m." (rounds by name, never codes).
+  const violationText = (v: OrderProblem) => {
+    const text = orderIssueWords(v, orderRows);
+    const tier = orderRows.get(v.dependentId)?.bracketId?.slice('tier:'.length);
+    return tier ? `${tier} · ${text.replace(/^The /, 'the ')}` : text;
+  };
 
   function seedFirstRound() {
     const n = Math.max(2, Math.min(advancing, teams.length || advancing));

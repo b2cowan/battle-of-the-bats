@@ -48,6 +48,7 @@ import {
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
 import { placesAGame, tournamentOverlapRefusal, type ProposedGameRow } from '@/lib/tournament-overlap-guard';
+import type { OrderDoor } from '@/lib/game-order-words';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { gameReferencesRefusal, type GameReferenceRow } from '@/lib/game-references';
 
@@ -94,8 +95,10 @@ async function overlapRefused(
   tournamentId: string,
   rows: readonly ProposedGameRow[],
   removedIds?: Iterable<string>,
+  /** Stage 9: which door is asking, for the game-order refusal's way out (`lib/game-order-words.ts`). */
+  door?: OrderDoor,
 ): Promise<Response | null> {
-  const refusal = await tournamentOverlapRefusal(tournamentId, rows, { removedIds });
+  const refusal = await tournamentOverlapRefusal(tournamentId, rows, { removedIds, door });
   return refusal
     ? new Response(JSON.stringify(refusal.body), { status: refusal.status, headers: { 'Content-Type': 'application/json' } })
     : null;
@@ -622,11 +625,12 @@ export const POST = withObservability(async (req: Request) => {
         game_time: g.time || null,
         ...resolvedVenueByIndex[gi],
         is_playoff: true,
+        bracket_id: g.bracketId || null,
         bracket_code: g.bracketCode || null,
         home_placeholder: g.homePlaceholder || null,
         away_placeholder: g.awayPlaceholder || null,
         ...(g.sourceGameId ? {} : { status: 'scheduled', duration_minutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : null }),
-      })), removableIds);
+      })), removableIds, 'pair');
       if (refusedBracket) return refusedBracket;
       const inserts: Record<string, unknown>[] = [];
       for (const [gi, g] of (games as any[]).entries()) {
@@ -751,8 +755,9 @@ export const POST = withObservability(async (req: Request) => {
 
       const refusedDraft = await overlapRefused(
         divRow.tournament_id,
-        rows.map(r => ({ ...r, division_id: divisionId, status: 'scheduled' })),
+        rows.map(r => ({ ...r, division_id: divisionId, status: 'scheduled', is_playoff: false })),
         replaceIds,
+        'pool-draft',
       );
       if (refusedDraft) return refusedDraft;
       // The replace is TOLD (Stage 3 Part 5, owner 2026-10-09): what it replaces is read BEFORE it goes.
@@ -837,6 +842,7 @@ export const POST = withObservability(async (req: Request) => {
         divRow.tournament_id,
         rows.map(r => ({ ...r, division_id: divisionId, status: 'scheduled', is_playoff: true })),
         replaceIds,
+        'playoff-draft',
       );
       if (refusedDraft) return refusedDraft;
       // What it replaces, read before it goes — a re-placed game whose teams are known is told as a move.
@@ -1101,17 +1107,9 @@ export const PATCH = withObservability(async (req: Request) => {
         location: (g.location ?? null) as string | null,
       }));
 
+      // A shift that NEWLY puts a game before one it waits for is refused by the one game-order rule, inside
+      // `overlapRefused` below (Stage 9: scoped by division and bracket, judged on the earlier game's end).
       const plan = planBulkReschedule(allGames, { shiftMinutes, shiftIds, cancelIds });
-
-      // Hard-block (locked owner decision): a shift that would NEWLY place a playoff game
-      // before the games that feed it would silently corrupt bracket advancement.
-      if (plan.newViolations.length > 0) {
-        return new Response(JSON.stringify({
-          error: 'This change would schedule a playoff game before the games that feed it. Adjust the times so every playoff game stays after its feeders.',
-          code: 'bracket-order',
-          violations: plan.newViolations,
-        }), { status: 409, headers: { 'Content-Type': 'application/json' } });
-      }
 
       if (plan.shifts.length === 0 && plan.cancelIds.length === 0) {
         return new Response(JSON.stringify({
@@ -1123,7 +1121,7 @@ export const PATCH = withObservability(async (req: Request) => {
       const refusedShift = await overlapRefused(bulkTournamentId, [
         ...plan.shifts.map((sh): ProposedGameRow => ({ id: sh.id, game_date: sh.to.date, game_time: sh.to.time })),
         ...plan.cancelIds.map((cid): ProposedGameRow => ({ id: cid, status: 'cancelled' })),
-      ]);
+      ], undefined, 'rain-delay');
       if (refusedShift) return refusedShift;
       const { data: result, error: rpcErr } = await supabaseAdmin.rpc('bulk_reschedule_games', {
         p_tournament_id: bulkTournamentId,
@@ -1277,7 +1275,7 @@ export const PATCH = withObservability(async (req: Request) => {
       const refusedRestore = await overlapRefused(restoreTournamentId, [
         ...movable.map((r: { id: string; date: string; time: string }): ProposedGameRow => ({ id: r.id, game_date: r.date, game_time: r.time })),
         ...back.map((rid): ProposedGameRow => ({ id: rid, status: 'scheduled' })),
-      ]);
+      ], undefined, 'pair');
       if (refusedRestore) return refusedRestore;
       if (movable.length) {
         const { error: rpcErr } = await supabaseAdmin.rpc('bulk_reschedule_games', {
@@ -1434,7 +1432,7 @@ export const PATCH = withObservability(async (req: Request) => {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
       // Meant for a cancelled game, but nothing checks that — on a final game it would reopen the result.
       if (finalLocked) return finalResultLockedResponse();
-      const refused = await overlapRefused(gameRow.tournamentId, [{ id, status: 'scheduled' }]);
+      const refused = await overlapRefused(gameRow.tournamentId, [{ id, status: 'scheduled' }], undefined, 'reinstate');
       if (refused) return refused;
       scheduleBefore = await readScheduleSnapshot(id);
       const { error } = await supabase.from('games').update({ status: 'scheduled' }).eq('id', id);
