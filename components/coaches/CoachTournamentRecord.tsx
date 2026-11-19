@@ -365,6 +365,9 @@ export default async function CoachTournamentRecord({
     try {
       const facts = await loadTeamPayFacts(teamId);
       if (facts?.refusal === 'clearing') payOnline = { state: 'clearing' };
+      // Board Ready leftover 6, owner ruling 2026-11-19 (P8b): the club stopped the team's link and nobody has sent one
+      // since. A link minted here would undo the stop, so the coach is told to ask for one instead.
+      else if (facts && facts.refusal === null && facts.linkStopped) payOnline = { state: 'stopped' };
       else if (facts && facts.refusal === null) {
         const href = teamPayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId, version: facts.linkVersion });
         if (href) payOnline = { state: 'ready', href };

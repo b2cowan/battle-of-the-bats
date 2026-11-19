@@ -126,9 +126,14 @@
 >   no CASL angle; LEGAL_INDEX row note; no help may say the club can check these rows until a screen shows them);
 >   /accounting none. Also fixed in passing: the stop window's "{team}'s" now uses `possessive()` (the possessive guard).
 >   **Owner calls:** (a) show the pay-link rows on the owner's activity screen, and should admins read the record? (/legal:
->   admins reading colleagues' actions is a need-to-know choice); (b) the coach portal's own Pay now still works while the
->   club has the link stopped (a signed-in team coach; not an email, so outside ruling 6) — stop it there too (one
->   condition)? Not fixed, recorded: an operator-customised acceptance template drops the Pay button yet the stamp says
+>   admins reading colleagues' actions is a need-to-know choice) — **RULED 2026-11-19 (owner): "Owner only, as
+>   recommended"**: the three actions join the owner's activity screen; who reads the record is unchanged (admins still
+>   don't). Build prompt P8c written (queue row 8c). Idea, not ruled: "Pay link stopped Nov 19 by {name}" on the line itself; (b) the coach portal's own Pay now still worked while the
+>   club had the link stopped — **RULED 2026-11-19 (owner, "go with your recommendation"): stop it there too; BUILT the same
+>   day** in the commit "Board Ready leftover 6, the coach portal…": a stopped link gives the coach's Registration card no
+>   Pay now and the line "To pay online, ask your organizer to email you a pay link." (never "records payment manually");
+>   unit guard `coach-pay-now-guard` 8/8 (the rule itself proved on dev in the trio's 23/23); Coaches and Tournaments help
+>   updated. (a) stays open. Not fixed, recorded: an operator-customised acceptance template drops the Pay button yet the stamp says
 >   "sent" (bulk door); the team receipt's "View receipt" (nothing owed) also stamps "sent"; the legacy unscoped audit view
 >   would show the raw action names.
 >

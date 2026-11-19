@@ -24,7 +24,8 @@ Nothing below was built when this was written.
 | 6 | P6 Build the pay-link button | call 12, asks 1A–9A ruled 2026-11-18 | build | DONE 2026-11-18, the commit "Board Ready trust close-out 12: the pay-link button…" (no schema change, so nothing to order on production; it goes with the next promote). One Pay link line under a team's payments (Email the pay link · Send a new link · Stop the pay link), the window in its three forms, the answer as the record's status line; the server's stop-only mode, the dispute asked BEFORE the stop, cause codes; stopping works on a completed event (pinned). Proved on dev 37/37 (`.probe/pay-link-button-prove.mjs`); /review (4 lenses: 2 Medium race fixes + 1 Low applied; rest recorded); /docs (Tournaments help: the line, and a new answer "Sending a new pay link, or stopping it"); /legal not needed (the email's words and recipient are unchanged); /accounting none. Owner browser walk owed. Every row is now DONE: the next chat runs the END OF QUEUE checklist |
 | 7 | P7 The leftover findings, each put to the owner as fix or accept | the findings reported while building rows 1–6; call 22 | ruling preparation (report-only, nothing built) | in progress (2026-11-19: census DONE, 28 found, 3 dropped, 2 chores, 1 too small, 22 put to the owner as 16 calls; page published https://claude.ai/artifact/QBdaJMkkMjA4tqRrsHyDXv, source `BOARD_READY_LEFTOVERS_CALLS.html`, after /legal and /design; census note in the sweep report. census committed c08739b35. Owner ruled 2026-11-19 "1A–16A, none changed", recorded in the sweep report's RULED 2026-11-19 block; P8 and P9 written) DONE 2026-11-19 c08739b35 + the commit "Board Ready trust-fix queue P7: the owner's leftover rulings recorded, and P8 + P9 written…" |
 | 8 | P8 Build the leftover fixes | leftover calls 1–6, 8–14 (fix parts) + the two chores, ruled 2026-11-19 | build (one small migration, call 3) | DONE 2026-11-19 (whole scope, with row 8b), first half: 329fb446f (1+2), 0598f4ee9 (10), c9a40bc46 (3, mig 506: production either side of the promote), 2feb3cf16 (13), bc7173346 (14), ee5a16daa (chore: backfill script deleted) + the records commit; the fix B probes' cause traced (two-step redirect) and the probes corrected (local). Proofs 29/29, 8/8, 18/18, 8/8. The second half is row 8b |
-| 8b | P8b Build the leftover fixes, second half | leftover calls 4, 5, 6, 8, 9, 11, 12 + the owner's Word-file question | build (no migration expected) | DONE 2026-11-19: Word files on permits 150947d52 (owner yes; mig 507, production BEFORE the code), 9 750957c34, 11 707f7b0d2, 4 7d05bc66a, 12 24daf5d95 + records c1b328ceb; then 5, 6 and 8 (the pay-link trio) in ONE commit "Board Ready leftover fixes 5, 6 and 8…" (no schema change; proof 23/23, `.probe/pay-link-trio-prove.mjs`; /simplify, /review, /docs, /legal done). Two owner questions recorded in the sweep report (pay-link rows on the activity screen / admins reading it; the coach portal's Pay now while stopped). Next: P9 |
+| 8b | P8b Build the leftover fixes, second half | leftover calls 4, 5, 6, 8, 9, 11, 12 + the owner's Word-file question | build (no migration expected) | DONE 2026-11-19: Word files on permits 150947d52 (owner yes; mig 507, production BEFORE the code), 9 750957c34, 11 707f7b0d2, 4 7d05bc66a, 12 24daf5d95 + records c1b328ceb; then 5, 6 and 8 (the pay-link trio) in ONE commit "Board Ready leftover fixes 5, 6 and 8…" (no schema change; proof 23/23, `.probe/pay-link-trio-prove.mjs`; /simplify, /review, /docs, /legal done). Owner questions recorded in the sweep report: the coach portal's Pay now while stopped RULED and built the same day (commit "Board Ready leftover 6, the coach portal…"); the pay-link rows on the activity screen RULED "owner only" the same day, its build is row 8c. Next: P8c |
+| 8c | P8c Show the pay-link actions on the owner's activity screen | the P8b owner call (a), ruled 2026-11-19 "Owner only, as recommended" | build (small, no migration expected) | not started (prompt written 2026-11-19 by the P8b chat) |
 | 9 | P9 Look into the walk edits that didn't save | leftover call 7, ruled 2026-11-19 | investigation (report-only) | not started (prompt written 2026-11-19) |
 
 **END OF QUEUE checklist RUN 2026-11-18** (its own chat, records only, nothing built). Row 7 was added on 2026-11-19 for
@@ -687,6 +688,41 @@ Agents, in order: /simplify (only if you add a shared helper: 4's reuse or 11's 
 for the stop rule, the "second press" answer and the activity record; the invitation page's question; staff removal is
 platform-admin only, no help), /legal (12 always; 4, 6, 8 as its read says), /accounting none expected.
 When every item is DONE: mark PROGRESS rows 8 and 8b DONE, move the Board Ready board line, and the next chat runs P9.
+```
+
+---
+
+## P8c — Show the pay-link actions on the owner's activity screen (ruled 2026-11-19; written 2026-11-19 by the P8b chat)
+
+```
+Board Ready — the pay-link rows on the owner's activity screen (build, small). Owner ruled 2026-11-19: "Owner only, as
+recommended."
+
+READ FIRST
+1. docs/projects/active/BOARD_READY_ACCESS_SWEEP_3.md: the P8b status line for 5, 6, 8 and its "Owner calls" (a), RULED.
+2. docs/agents/db/DATA_DICTIONARY.md `org_audit_log`: the "Pay-link actions" paragraph (pay_link_emailed | replaced |
+   stopped; payload tournamentId, teamId, linkWorks / asked; target null; never an address). Written since commit
+   0d37431e9 by the online-payments route.
+3. The owner's activity screen and its route: it asks scope=members (MEMBER_AUDIT_ACTIONS) and labels each action; the
+   legacy unscoped view (app/api/admin/members/audit/route.ts) has no labels for these. docs/agents/legal/
+   AUDIT_LOG_SCOPE_WORDING.md (its re-verify trigger fires when the screen gains an event kind).
+
+THE CHANGE
+- The three actions show on the owner's activity screen with words in the log's existing style, naming the team and the
+  tournament (read their names at read time; the payload holds only ids). "Emailed the pay link" with linkWorks false
+  says the link was stopped meanwhile. Never an email address.
+- Who reads the record does NOT change: owner only (admins still don't; that is a wider ruling about the whole record).
+- Decide from the code whether they join the members scope or get their own scope/filter, and say why. No drawing session
+  unless it adds a control the screen doesn't have (then STOP and ask).
+
+RULES
+- Argue from the code; tell me before building if a premise is wrong. Implementation Plan + PM UX summary first.
+- Proof on DEV under .probe/: the owner sees the rows with the right words; an admin is still refused the record; no
+  address anywhere in the response.
+- One spelling (npm run check:spelling). Agents: /review; /docs (the activity screen's help: what it lists); /legal
+  (the screen's scope note against the new event list, AUDIT_LOG_SCOPE_WORDING.md); /accounting none.
+- npm run verify:changed and typecheck. Branch dev; explicit pathspecs; no commit without my yes; the board line and this
+  row move in the same commit. Browser testing is mine: a short walk list.
 ```
 
 ---

@@ -55,6 +55,16 @@ describe('the Registration card never claims a manual process while Pay now is o
     assert.ok(ready > -1 && clearing > ready && manual > clearing, 'the manual line comes after both online branches');
   });
 
+  it('Board Ready leftover 6 (owner 2026-11-19): a link the club STOPPED gives no Pay now, and says to ask for one', () => {
+    const block = record.slice(record.indexOf('let payOnline'), record.indexOf('const coachPhase'));
+    assert.match(block, /facts\.refusal === null && facts\.linkStopped\) payOnline = \{ state: 'stopped' \}/);
+    assert.ok(block.indexOf('facts.linkStopped') < block.indexOf('teamPayUrl('), 'decided before any link is minted');
+    const stopped = card.indexOf("payOnline?.state === 'stopped'");
+    const manual = card.indexOf('Your organizer records payment manually');
+    assert.ok(stopped > -1 && manual > stopped, 'the stopped branch never reaches the manual line');
+    assert.match(card.slice(stopped, manual), /To pay online, ask your organizer to email you a pay link\./);
+  });
+
   it('the button is a plain link to the pay page, with no payment logic in the card', () => {
     assert.match(card, /<a className=\{`btn btn-primary \$\{styles\.payButton\}`\} href=\{payOnline\.href\}>Pay now<\/a>/);
     assert.doesNotMatch(card, /loadTeamPayFacts|supabase/);

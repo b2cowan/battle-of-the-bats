@@ -19,7 +19,9 @@ import styles from './TournamentRegistrationCard.module.css';
  */
 
 /** What the pay page says about this entry right now: open (a link), or a bank debit on its way, or no online payment. */
-export type RegistrationPayOnline = { state: 'ready'; href: string } | { state: 'clearing' } | null;
+/** `stopped`: the club takes cards but stopped this team's pay link (Board Ready leftover 6) — no button, and never the
+ *  "records payment manually" line, which would be untrue. */
+export type RegistrationPayOnline = { state: 'ready'; href: string } | { state: 'clearing' } | { state: 'stopped' } | null;
 
 const money = formatMoney;
 
@@ -155,6 +157,11 @@ export default function TournamentRegistrationCard({
             </>
           ) : payOnline?.state === 'clearing' ? (
             <p className={styles.note}>Your bank payment is on its way. You don’t need to pay again; your organizer will email you when it clears.</p>
+          ) : payOnline?.state === 'stopped' ? (
+            <>
+              {paymentInstructions && <p className={styles.payInstructions}>{paymentInstructions}</p>}
+              <p className={styles.note}>To pay online, ask your organizer to email you a pay link.</p>
+            </>
           ) : (
             <>
               {paymentInstructions && <p className={styles.payInstructions}>{paymentInstructions}</p>}
