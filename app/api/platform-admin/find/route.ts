@@ -10,7 +10,7 @@ import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { roleEmailLabel } from '@/lib/member-access';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { getStripe } from '@/lib/stripe';
-import { findStripeItem } from '@/lib/console-money-stripe';
+import { customerSharing, findStripeItem, type CustomerWorkspace } from '@/lib/console-money-stripe';
 import { stripeKeyIsLive } from '@/lib/online-payments-switch';
 import { listSentEmails } from '@/lib/sent-log';
 import {
@@ -153,14 +153,17 @@ const readers: FindReaders = {
         .catch(() => null);
       if (item && item.livemode === stripeKeyIsLive()) {
         const [orgsRes, portalsRes] = await Promise.all([
-          supabaseAdmin.from('organizations').select(orgCols).eq('stripe_customer_id', item.customerId).limit(2),
-          supabaseAdmin.from('team_workspaces').select('billing_owner_org_id').eq('stripe_customer_id', item.customerId),
+          supabaseAdmin.from('organizations').select(orgCols).eq('stripe_customer_id', item.customerId).order('id'),
+          supabaseAdmin.from('team_workspaces').select('billing_owner_org_id, billing_owner_user_id, workspace_org_id').eq('stripe_customer_id', item.customerId),
         ]);
         if (orgsRes.error || portalsRes.error) throw new Error(FIND_FAILED);
         const orgs = (orgsRes.data ?? []) as OrgCols[];
-        // Exactly one club, or none: a customer two clubs share (or a portal another club pays for) is never shown as either's.
-        const shared = ((portalsRes.data ?? []) as Array<{ billing_owner_org_id: string | null }>).some(w => w.billing_owner_org_id !== orgs[0]?.id);
-        add(orgs.length === 1 && !shared ? orgs[0] : null, kind === 'payment' ? 'charge' : 'invoice', {
+        // One club, or none: a customer two clubs share (or a portal another club pays for) is never shown as either's. The rule
+        // is the Money tab's own (`customerSharing`), so Find opens exactly the records whose Money tab reads the charge; a coach's
+        // several portals each read it, and Find names the first.
+        const shared = orgs.length === 0
+          || customerSharing(orgs[0].id, orgs.map(o => o.id), (portalsRes.data ?? []) as CustomerWorkspace[]).shared;
+        add(!shared ? orgs[0] : null, kind === 'payment' ? 'charge' : 'invoice', {
           number: kind === 'invoice_number' ? number.toUpperCase() : number,
           amountCents: item.amountCents, currency: item.currency, at: item.at, chargeId: item.chargeId,
         });

@@ -272,7 +272,7 @@ describe('the reader applies the mark; the rules stay pure', () => {
   });
   it('Today counts only sales a club’s Money tab would show (one organization, not shared), once per invoice', () => {
     const wait = readCode('lib/console-money-sales-tax-wait.ts');
-    assert.match(wait, /customerSharing\(ids\[0\], ids\.length, /, 'customerSharing owns the one-organization rule');
+    assert.match(wait, /customerSharing\(ids\[0\], ids, /, 'customerSharing owns the holders rule');
     assert.match(wait, /new Map\(paged\.filter\(r => shown\.has\(r\.stripe_customer_id\)\)\.map\(r => \[r\.stripe_invoice_id, r\]\)\)/);
     assert.match(wait, /\.order\('stripe_invoice_id'\)\.range\(from, to\)/, 'a unique order under the pages');
     assert.match(wait, /\.neq\('status', 'void'\)/);

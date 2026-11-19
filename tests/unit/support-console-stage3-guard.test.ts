@@ -275,15 +275,37 @@ describe('2 · every refusal the server makes before Stripe is asked', () => {
     const ME = '3150a614-8a71-48df-8740-5f4962795fad';
     const personPaid = (workspaceOrg: string) => ({ billing_owner_org_id: null, billing_owner_user_id: 'user-1', workspace_org_id: workspaceOrg });
     // The walk case: a coach bought Premium as a person; the one workspace on the customer is this record's own.
-    assert.deepEqual(customerSharing(ME, 1, [personPaid(ME)]), { shared: false, coversOtherPortals: false });
+    assert.deepEqual(customerSharing(ME, [ME], [personPaid(ME)]), { shared: false, coversOtherPortals: false });
     // The same coach's customer also pays for another portal: read it, and say so.
-    assert.deepEqual(customerSharing(ME, 1, [personPaid(ME), personPaid('other-portal')]), { shared: false, coversOtherPortals: true });
+    assert.deepEqual(customerSharing(ME, [ME], [personPaid(ME), personPaid('other-portal')]), { shared: false, coversOtherPortals: true });
     // A portal this club pays for is the club's own.
-    assert.equal(customerSharing(ME, 1, [{ billing_owner_org_id: ME, billing_owner_user_id: null, workspace_org_id: 'p' }]).shared, false);
+    assert.equal(customerSharing(ME, [ME], [{ billing_owner_org_id: ME, billing_owner_user_id: null, workspace_org_id: 'p' }]).shared, false);
     // Another club on the customer, a second org row, or a workspace with no payer at all stays shared.
-    assert.equal(customerSharing(ME, 1, [{ billing_owner_org_id: 'other-club', billing_owner_user_id: null, workspace_org_id: 'p' }]).shared, true);
-    assert.equal(customerSharing(ME, 2, []).shared, true);
-    assert.equal(customerSharing(ME, 1, [{ billing_owner_org_id: null, billing_owner_user_id: null, workspace_org_id: ME }]).shared, true);
+    assert.equal(customerSharing(ME, [ME], [{ billing_owner_org_id: 'other-club', billing_owner_user_id: null, workspace_org_id: 'p' }]).shared, true);
+    assert.equal(customerSharing(ME, [ME, 'another-org'], []).shared, true);
+    assert.equal(customerSharing(ME, [], []).shared, true, 'a record that does not hold the customer');
+    assert.equal(customerSharing(ME, [ME], [{ billing_owner_org_id: null, billing_owner_user_id: null, workspace_org_id: ME }]).shared, true);
+  });
+
+  it('a coach paying for several portals as a person: each portal reads and refunds their one customer (Board Ready 0a-6 (b))', () => {
+    const ME = '3150a614-8a71-48df-8740-5f4962795fad';
+    const TWO = '7a0c2f4e-1b9d-4c33-9e1a-2d5b8f604c11';
+    const paidBy = (user: string | null, workspaceOrg: string, club: string | null = null) =>
+      ({ billing_owner_org_id: club, billing_owner_user_id: user, workspace_org_id: workspaceOrg });
+    // Checkout reuses the coach's customer and payment writes it on BOTH portals' organizations: not shared, from either side.
+    assert.deepEqual(customerSharing(ME, [ME, TWO], [paidBy('user-1', ME), paidBy('user-1', TWO)]), { shared: false, coversOtherPortals: true });
+    assert.deepEqual(customerSharing(TWO, [ME, TWO], [paidBy('user-1', ME), paidBy('user-1', TWO)]), { shared: false, coversOtherPortals: true });
+    assert.equal(customerSharing(ME, [ME, TWO, 'third'], [paidBy('user-1', ME), paidBy('user-1', TWO), paidBy('user-1', 'third')]).shared, false);
+    // Still shared: two different people on one customer; a holder that is not one of the coach's portals (a club's own
+    // record); a portal on it another club pays for; a portal with no payer.
+    assert.equal(customerSharing(ME, [ME, TWO], [paidBy('user-1', ME), paidBy('user-2', TWO)]).shared, true);
+    assert.equal(customerSharing(ME, [ME, 'a-club'], [paidBy('user-1', ME)]).shared, true);
+    assert.equal(customerSharing(ME, [ME, TWO], [paidBy('user-1', ME), paidBy('user-1', TWO), paidBy(null, 'p', 'other-club')]).shared, true);
+    assert.equal(customerSharing(ME, [ME, TWO], [paidBy('user-1', ME), paidBy(null, TWO)]).shared, true);
+    // The org's own record reads every holder (no count), and Find asks the same rule rather than its own copy.
+    assert.match(readCode('lib/console-money-store.ts'), /from\('organizations'\)\.select\('id'\)\.eq\('stripe_customer_id', customerId\)/);
+    assert.match(readCode('lib/console-money-store.ts'), /customerSharing\(orgId, holderIds, ws\)/);
+    assert.match(readCode('app/api/platform-admin/find/route.ts'), /customerSharing\(orgs\[0\]\.id, orgs\.map\(o => o\.id\), /);
   });
 
   it('amounts: whole cents above zero, never above Stripe’s remainder; "all" with a changed remainder is refused', () => {
@@ -834,8 +856,9 @@ describe('7 · Find builds a Stripe query only for a whole Stripe or invoice num
   it('Find’s Stripe read takes exactly one club by the item’s customer, in this site’s mode, and writes nothing', () => {
     const route = readCode('app/api/platform-admin/find/route.ts');
     assert.match(route, /item\.livemode === stripeKeyIsLive\(\)/);
-    assert.match(route, /add\(orgs\.length === 1 && !shared \? orgs\[0\] : null,/);
-    assert.match(route, /from\('team_workspaces'\)\.select\('billing_owner_org_id'\)\.eq\('stripe_customer_id', item\.customerId\)/);
+    assert.match(route, /add\(!shared \? orgs\[0\] : null,/);
+    assert.match(route, /const shared = orgs\.length === 0\s*\|\| customerSharing\(/);
+    assert.match(route, /from\('team_workspaces'\)\.select\('billing_owner_org_id, billing_owner_user_id, workspace_org_id'\)\.eq\('stripe_customer_id', item\.customerId\)/);
     assert.match(route, /invoiceNumberQuery\(number\) : null\)\s*\.catch\(\(\) => null\);/, 'Stripe down never costs the clubs and people');
     assert.match(route, /if \(!org \|\| seen\.has\(org\.id\) \|\| isDemoOrgSlug\(org\.slug\)\) return;/);
     assert.doesNotMatch(route, /\.insert\(|\.update\(|\.upsert\(/);

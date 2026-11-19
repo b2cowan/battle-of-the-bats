@@ -513,10 +513,31 @@ points here, so they aren't tracked twice)
   platform admin "End now" on the day the club picks, then "Refund this charge" → Part of it, which issues a credit note
   reversing the tax. Two gaps, no code yet:
   - [ ] (a) Nothing computes the unused part: staff work out days left ÷ days paid × the before-tax amount by hand. A
-    figure on the refund screen (the paid period and the end date) would remove the arithmetic. Worth building when the
-    first such refund is near; until then the `/accounting` note is the procedure.
-  - [ ] (b) Check whether a coach paying for several portals can be refunded at all: the support console refuses a Stripe
-    customer carried by more than one organization. A count on production first; a fix only if it blocks a real case.
+    figure on the refund screen (the paid period and the end date) would remove the arithmetic. **HELD (owner
+    2026-11-19)** until the first such refund is near; until then the `/accounting` note is the procedure. Not built.
+  - [x] (b) Can a coach paying for several portals be refunded at all? **Checked 2026-11-19: no real case today.**
+    - **The refusal:** `clubStripeFacts` → `customerSharing` (`lib/console-money-store.ts`, `lib/console-money-stripe.ts`).
+      It marks the customer shared when the number of `organizations` rows carrying it is not exactly 1, or when a
+      portal on it is paid by another club or by no payer. A shared customer is refused everywhere in the console: the
+      refund route returns "That charge is not this club's." with nothing sent, and the Money tab itself answers
+      `shared` and reads no charges.
+    - **Why a coach hits it:** a second portal's checkout reuses the coach's own Stripe customer
+      (`buyerStripeCustomer`), and payment writes that customer onto each portal's organization row (`lib/team-checkout.ts`).
+      Two personal portals means two rows, so the customer counts as shared. The `coversOtherPortals` carve-out only
+      applies when a single organization row carries the customer.
+    - **Production, counts only (2026-11-19):** 5 organizations, 1 portal, **0** organizations or portals with a real
+      Stripe customer. So there are 0 customers on two or more organizations, 0 of them coaches' portals, and 0 coaches
+      paying for two or more portals.
+    - **Fixed anyway, owner "go ahead with the fix" (2026-11-19):** the first coach to pay for a second portal would have
+      been refused. `customerSharing` now takes the list of organizations holding the customer. Several holders are not
+      shared when every one is a portal the SAME person pays for as a person (no club payer). Anything else stays shared:
+      two people, a club's own record, a portal another club pays for, or a portal with no payer. The rule runs everywhere
+      it did before (each portal's Money tab, its refund, Needs a look, the Today count, the GST/HST return's "which club
+      shows it"), and Find now asks the same rule instead of its own stricter copy. That copy had hidden a coach's portal
+      even with ONE portal. Each portal reads the coach's whole customer, with the existing "covers other portals" line.
+      This is the read the console already used for a coach's single customer, so ownership stays customer-wide. It is
+      not per subscription: `/accounting` confirmed the credit note and our tax records follow the charge's own invoice,
+      so the books are right from either portal's tab. Its note gained step 5: pick the charge for the portal being ended.
   - Note: Billing staff cannot refund a charge older than 6 months, so a late-year refund of a yearly plan needs Super admin.
 
 **0b · ~~Canadian data residency~~** **RULED NOT MOVING** (owner 2026-11-10; §8 keeps the estimate). The pack states

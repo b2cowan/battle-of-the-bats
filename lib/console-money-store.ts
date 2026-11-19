@@ -64,13 +64,14 @@ export async function clubStripeFacts(orgId: string): Promise<{ name: string; cu
   let portalSubscriptionIds: string[] = [];
   if (customerId) {
     const [orgs, workspaces] = await Promise.all([
-      supabaseAdmin.from('organizations').select('id', { count: 'exact', head: true }).eq('stripe_customer_id', customerId),
+      supabaseAdmin.from('organizations').select('id').eq('stripe_customer_id', customerId),
       supabaseAdmin.from('team_workspaces').select('billing_owner_org_id, billing_owner_user_id, workspace_org_id, stripe_subscription_id').eq('stripe_customer_id', customerId),
     ]);
     if (orgs.error) throw orgs.error;
     if (workspaces.error) throw workspaces.error;
     const ws = (workspaces.data ?? []) as Array<CustomerWorkspace & { stripe_subscription_id: string | null }>;
-    ({ shared: customerShared, coversOtherPortals } = customerSharing(orgId, orgs.count ?? 0, ws));
+    const holderIds = ((orgs.data ?? []) as Array<{ id: string }>).map(o => o.id);
+    ({ shared: customerShared, coversOtherPortals } = customerSharing(orgId, holderIds, ws));
     portalSubscriptionIds = ws.map(w => w.stripe_subscription_id).filter((v): v is string => !!v);
   }
   return { name: row.name, customerId, customerShared, coversOtherPortals, subscriptionId: row.stripe_subscription_id, portalSubscriptionIds };

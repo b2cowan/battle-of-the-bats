@@ -32,7 +32,7 @@ const WAIT_COLUMNS = [
 type WaitRecord = NeedsLookRecord & { stripe_customer_id: string };
 
 /**
- * Which organization shows each Stripe customer's sales: a customer that exactly one organization holds and no other club shares.
+ * Which organization shows each Stripe customer's sales: a customer no other club shares (`customerSharing`'s rule).
  * Also read by the GST/HST return's route (Stage 4b Session B) to say "on no club's list" for a shared customer's sale, so the
  * worksheet and this count can never disagree on which sales a club shows.
  */
@@ -53,8 +53,9 @@ export async function visibleCustomers(): Promise<Map<string, string>> {
     if (mine) mine.push(w); else portals.set(w.stripe_customer_id, [w]);
   }
   const out = new Map<string, string>();
-  // `customerSharing` owns the rule (exactly one organization holds it, no other club's portal on it), as on a club's own read.
-  for (const [customerId, ids] of holders) if (!customerSharing(ids[0], ids.length, portals.get(customerId) ?? []).shared) out.set(customerId, ids[0]);
+  // `customerSharing` owns the rule (one organization holds it, or several portals one coach pays for; no other club's portal on
+  // it), as on a club's own read. A coach's several portals each show the sale; the list names the first.
+  for (const [customerId, ids] of holders) if (!customerSharing(ids[0], ids, portals.get(customerId) ?? []).shared) out.set(customerId, ids[0]);
   return out;
 }
 

@@ -160,13 +160,21 @@ export type CustomerWorkspace = { billing_owner_org_id: string | null; billing_o
  * has no club payer (`billing_owner_org_id` null, `billing_owner_user_id` set): the customer is the coach's, it is not another
  * club's, and it covers every portal the coach pays for — so it does not make the customer shared, but a portal other than
  * this record's is named to the reader. A workspace with NO payer at all is unknown, so it stays shared (the safe side).
+ * `holderOrgIds` are the organizations whose record carries the customer. One holder is the usual case. Several are allowed
+ * only when every one is a portal the SAME coach pays for as a person: their second portal's checkout reuses their customer
+ * and payment writes it on each portal's organization (Board Ready 0a-6 (b), owner 2026-11-19), and that customer is still one
+ * person's, read whole on each of their portals with the "covers other portals" line. Anything else on it stays shared.
  */
-export function customerSharing(orgId: string, orgCount: number, workspaces: CustomerWorkspace[]): { shared: boolean; coversOtherPortals: boolean } {
+export function customerSharing(orgId: string, holderOrgIds: readonly string[], workspaces: CustomerWorkspace[]): { shared: boolean; coversOtherPortals: boolean } {
   const anotherClub = workspaces.some(w => w.billing_owner_org_id !== null
     ? w.billing_owner_org_id !== orgId
     : w.billing_owner_user_id === null);
-  const coversOtherPortals = workspaces.some(w => w.billing_owner_org_id === null && w.billing_owner_user_id !== null && w.workspace_org_id !== orgId);
-  return { shared: orgCount !== 1 || anotherClub, coversOtherPortals };
+  const personal = workspaces.filter(w => w.billing_owner_org_id === null && w.billing_owner_user_id !== null);
+  const coversOtherPortals = personal.some(w => w.workspace_org_id !== orgId);
+  const onePersonsPortals = new Set(personal.map(w => w.billing_owner_user_id)).size === 1
+    && holderOrgIds.every(id => personal.some(w => w.workspace_org_id === id));
+  const holdersOk = holderOrgIds.includes(orgId) && (holderOrgIds.length === 1 || onePersonsPortals);
+  return { shared: !holdersOk || anotherClub, coversOtherPortals };
 }
 
 /**

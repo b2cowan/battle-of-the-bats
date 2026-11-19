@@ -72,8 +72,13 @@ right to a refund you have under the law".
    is promised plainly; "from the day your plan ends" fixes what "unused" counts from.
 3. **For `/plan` (product gaps, no code here):** (a) an "unused part" figure in the End-now / refund flow, so staff are not doing
    the day arithmetic by hand (the same need already exists for Terms §8's "we end your plan" refund); (b) check whether a coach
-   paying for several portals can be refunded at all (the shared-customer refusal).
+   paying for several portals can be refunded at all (the shared-customer refusal). (a) is HELD (owner 2026-11-19) until the
+   first such refund is near. (b) is built 2026-11-19: a coach's several portals each read and refund their one customer.
 4. **Run it through the console only.** A refund from Stripe's dashboard issues no note, so the tax on it is not recovered.
+5. **A coach with several portals (added 2026-11-19):** that coach's Money tab lists the charges for ALL of their portals. Refund
+   the charge whose invoice is for the portal being ended (match the plan and the paid period on the charge), and take the
+   days from that portal's period. The credit note and our tax record follow the charge's own invoice, so the books are
+   right whichever portal's tab it was refunded from; only the choice of charge needs care.
 
 ## Sources
 - ETA s.232 and SOR/91-44 s.3; GST/HST Memorandum 12.2 (April 2008) — as cited and accessed in
