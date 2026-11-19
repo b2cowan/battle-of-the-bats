@@ -174,7 +174,7 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
   onboarding plan step (first paint), house-league home + season page (cap prompt), the footer.
 - **Risk:** low (closed output unchanged apart from the listed word fixes). **Gate before S2:** the build route table shows the five pages dynamic.
 - **Built 2026-11-18** (prompt `CLUB_ON_SALE_S1_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S1_WALK.html`, Owner QA Ledger §
-  "On-sale pages S1"). The commit hash is recorded here when the owner commits. Proved before building: production
+  "On-sale pages S1"). Committed `4ded7e325` 2026-11-19 (owner's yes). Proved before building: production
   served all five pages with `x-nextjs-prerender: 1` and `s-maxage=31536000`, and a production-style build marked all
   five `○` (home and `/start/*` `ƒ`). The fix is one line in the one reader: `getPlanGatingMap()` calls `connection()`,
   so every route that reads the gate renders per request. Pages ask `isPlanOpen()`; dev's "show as closed" is the
