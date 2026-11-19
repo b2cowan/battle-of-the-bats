@@ -52,6 +52,39 @@
 > the one-club rule answers first · the page's too-small item (pay-link refusals without a cause read "try again"),
 > accepted with no objection in the notes. The page's two chores go into P8, as the page said ("unless you object").
 >
+> **Status, leftovers (P8, first chat, 2026-11-19, dev; each premise re-read against the code first):**
+> - **1 + 2** committed 329fb446f: one rule in `lib/permit-group-scope.ts`; a no-team permit (club, rep OR league, wider than the
+>   census's "whole club") is outside a limit on the stored permit and the draft; delete and file replace ask it; a file
+>   opens for the groups' teams and no-team permits, outside it the window sends no name or size and the GET is 403; the
+>   list is whole; the form offers only One team. Proof `.probe/permit-groups-prove.mjs` 29/29.
+> - **10** committed 0598f4ee9: the permit upload uses call 6's checker narrowed to PDF/JPEG/PNG (a Word file refused in the
+>   permit's words); type, key and shown name from the bytes. Proof `.probe/permit-upload-prove.mjs` 8/8.
+> - **3** committed c9a40bc46: mig 506 (write policies dropped; INSERT/UPDATE/DELETE and TRUNCATE revoked from authenticated and
+>   anon; TRUNCATE is wider than the census and is a write that skips row security). Re-proved no browser writer. Before:
+>   owner, staff and a scorekeeper each renamed a field, added one and renamed a lane from the browser; after 18/18
+>   refused (`.probe/fields-lanes-browser-write-prove.mjs`). Production: either side of the promote.
+> - **13** committed 2feb3cf16: `isPlatformAdminEmailStrict` reads the database first for every address (a failed read is
+>   "can't tell" whatever the address, so an outage reveals no staff or demo address); the invite answers 503 "try
+>   again". The typed address was already trimmed and lower-cased. Proof `.probe/invite-staff-strict-prove.mjs` 8/8.
+> - **14** committed bc7173346: an open rules section or resource leaves edit mode the moment it can't write (client only;
+>   the browser walk proves it).
+> - Agents: /simplify + /review (report-only, no defect above low; applied: one group-limit read in the permits GET, the
+>   demo check after the strict read); /docs (Organization help › Permits: three sub-topics, two new answers); /legal not
+>   needed for these six (nothing collected, emailed or agreed changes); /accounting none.
+> - **Chore, the backfill script** committed ee5a16daa: deleted; the dictionary line says so.
+> - **Chore, the fix B probes**: CAUSE — `coach@dev.local` has a verified two-step factor and the probes' sign-in link
+>   makes a session that never typed a code, so `proxy.ts` (the `/api/admin/*` branch, `isOrgAdmin` has no `api` guard)
+>   turns the request to `/auth/login` with a 307 before the route runs; the probes followed the redirect into the
+>   sign-in page's HTML. Still a refusal. The probes now don't follow redirects and count a redirect to the sign-in page as
+>   refused: fixB 38/38, fixB2 25/25, fixB3 34/34 on dev (local files, `.probe/` is not tracked).
+> - **Left for the next P8 chat:** 4, 5, 6, 8, 9, 11, 12.
+> - **Found while building, not fixed (owner calls):** (i) `getAuthContextWithRole` ignores its group-scope read's error,
+>   so a failed read makes a limited member unlimited for that request (pre-existing, shared; every scoped route);
+>   (ii) a limited member opening a permit outside their groups still sees its Edit, Renew, Delete and Replace controls,
+>   which answer with the refusal's words (the server is the wall; hiding them is a small window change).
+>   Fixed on the way: the guard `tournament-stage5-settings.test.ts` "no card offers a Layout" had failed since P3
+>   (f4b54f94d made the Add buttons `locked ? undefined : …`); it now pins that, in commit bc7173346.
+>
 > **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**
 > - **Fix (small, one commit each, awaiting the owner's go to build):** 1 refuse the demo account at all three create doors + a
 >   build check · 2 permits and venue library read only by people who schedule, run tournaments or handle money · 3 "same

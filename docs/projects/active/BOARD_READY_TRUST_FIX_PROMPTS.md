@@ -23,7 +23,8 @@ Nothing below was built when this was written.
 | 5 | P5 "Send a new link" button for a team's pay link | call 12 | drawing session only | DONE 2026-11-18, the commit "Board Ready trust call 12: the pay-link button drawn…" (drawing only): https://claude.ai/artifact/XGaoqcuEuo2973Mc4vsq5F, source `BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html`, round 2 after /design + /ux. All nine asks RULED 2026-11-18 as recommended (1A–9A): (1) one Pay link line under the payments on every team, its ⋯ holding Email the pay link + Send a new link, the due row keeps only Record; (2) the same people as Email the pay link (owner, admins, Run tournaments); (3) "Stop the pay link" when no new link can go out; (4) no copy button; (5) the old link's words unchanged; (6) a lost dispute is asked in the same window before anything stops, with "Only stop the link"; (7) the line reads "Pay link replaced/stopped {date}" until the next send; (8) stopping still works on a completed tournament (a deliberate exception to the lock); (9) Stop answers red-tinted, Send a new link lime. Build notes on the drawing: the record must be told the replaced date, a show-the-line flag and an ever-paid-online flag; the server should return a cause code (its "tournament over" sentence misreads here); dispute-first + stop-only is about a day with tests; someone with the old page open who hasn't pressed Pay is refused (gap accepted). The button's build prompt is row 6. mig 467 is already on production (applied 2026-11-15, release history), so that build has no production order of its own unless it adds a migration |
 | 6 | P6 Build the pay-link button | call 12, asks 1A–9A ruled 2026-11-18 | build | DONE 2026-11-18, the commit "Board Ready trust close-out 12: the pay-link button…" (no schema change, so nothing to order on production; it goes with the next promote). One Pay link line under a team's payments (Email the pay link · Send a new link · Stop the pay link), the window in its three forms, the answer as the record's status line; the server's stop-only mode, the dispute asked BEFORE the stop, cause codes; stopping works on a completed event (pinned). Proved on dev 37/37 (`.probe/pay-link-button-prove.mjs`); /review (4 lenses: 2 Medium race fixes + 1 Low applied; rest recorded); /docs (Tournaments help: the line, and a new answer "Sending a new pay link, or stopping it"); /legal not needed (the email's words and recipient are unchanged); /accounting none. Owner browser walk owed. Every row is now DONE: the next chat runs the END OF QUEUE checklist |
 | 7 | P7 The leftover findings, each put to the owner as fix or accept | the findings reported while building rows 1–6; call 22 | ruling preparation (report-only, nothing built) | in progress (2026-11-19: census DONE, 28 found, 3 dropped, 2 chores, 1 too small, 22 put to the owner as 16 calls; page published https://claude.ai/artifact/QBdaJMkkMjA4tqRrsHyDXv, source `BOARD_READY_LEFTOVERS_CALLS.html`, after /legal and /design; census note in the sweep report. census committed c08739b35. Owner ruled 2026-11-19 "1A–16A, none changed", recorded in the sweep report's RULED 2026-11-19 block; P8 and P9 written) DONE 2026-11-19 c08739b35 + the commit "Board Ready trust-fix queue P7: the owner's leftover rulings recorded, and P8 + P9 written…" |
-| 8 | P8 Build the leftover fixes | leftover calls 1–6, 8–14 (fix parts) + the two chores, ruled 2026-11-19 | build (one small migration, call 3) | not started (prompt written 2026-11-19) |
+| 8 | P8 Build the leftover fixes | leftover calls 1–6, 8–14 (fix parts) + the two chores, ruled 2026-11-19 | build (one small migration, call 3) | DONE 2026-11-19, first half: 329fb446f (1+2), 0598f4ee9 (10), c9a40bc46 (3, mig 506: production either side of the promote), 2feb3cf16 (13), bc7173346 (14), ee5a16daa (chore: backfill script deleted) + the records commit; the fix B probes' cause traced (two-step redirect) and the probes corrected (local). Proofs 29/29, 8/8, 18/18, 8/8. The second half is row 8b |
+| 8b | P8b Build the leftover fixes, second half | leftover calls 4, 5, 6, 8, 9, 11, 12 + the owner's Word-file question | build (no migration expected) | not started (prompt written 2026-11-19 by the P8 chat) |
 | 9 | P9 Look into the walk edits that didn't save | leftover call 7, ruled 2026-11-19 | investigation (report-only) | not started (prompt written 2026-11-19) |
 
 **END OF QUEUE checklist RUN 2026-11-18** (its own chat, records only, nothing built). Row 7 was added on 2026-11-19 for
@@ -619,6 +620,73 @@ Each fix built with its proof, or reported already fixed / premise wrong. The sw
 names the production order (call 3's migration: either side of the promote; nothing else in P8 needs one unless a fix
 adds a migration) alongside the queue's existing order (500, 502, 503 before the code; 504 after 502 and the code; 505
 either side).
+```
+
+---
+
+## P8b — Build the leftover fixes, second half (written 2026-11-19 by the P8 chat)
+
+```
+Board Ready — the trust close-out's leftover fixes, SECOND HALF (build). P8's first chat built 1+2, 10, 3, 13, 14 and the
+chores (PROGRESS row 8). This chat builds the rest of P8's scope: fixes 4, 5, 6, 8, 9, 11, 12, exactly as P8's block
+words them, with P8's RULES THAT BIND THIS SESSION and DONE LOOKS LIKE (read the P8 block above in full; it binds here).
+
+READ FIRST
+1. The P8 block above (the fixes' words, file:line hints, rules).
+2. docs/projects/active/BOARD_READY_ACCESS_SWEEP_3.md: the RULED 2026-11-19 block and "Status, leftovers (P8, first chat …)".
+3. The first chat's commits for the pattern: 329fb446f..ee5a16daa (one commit per fix, a proof under .probe/, a status
+   line per item; proofs sign in with a magic link and send `redirect: 'manual'`; a person with two-step on gets a 307 to
+   /auth/login before any /api/admin route runs, so pick un-two-stepped fixture people or count that as refused).
+
+ASK FIRST (one question, then carry on while you wait only on items it doesn't touch):
+- The owner asked 2026-11-19 why permit files refuse Word documents. Answer given: nothing in P8 decided it; permits have
+  taken only PDF/JPG/PNG since they were built (the window opens the file in the browser, which shows a PDF or picture and
+  only downloads a .docx), and player documents already take Word. Recommended: allow it (pass 'docx' in the permit
+  route's kinds and change its refusal sentence and the Permits help's two lines). Ask "allow Word files on permits?";
+  on a yes, build it as its own small commit with a proof; on a no, record "kept PDF/JPG/PNG, owner 2026-11-…".
+
+PREMISES ALREADY RE-READ BY THE FIRST CHAT (re-check the code; it may have moved):
+- 5 is HALF WRONG as P8 words it: replaceTeamPayLink's loser does not re-bump on top; it re-reads and bumps the NEXT
+  version, so two presses both succeed, the version moves by 2 and TWO emails go out (the first link already dead).
+  Fix the outcome P8 asks for: the second press is refused ("someone just replaced this link"), sends nothing.
+  sendTeamPayLink takes no version today (it re-reads), and its stamp (lib/online-payment-receipt.ts ~:249) ignores rows
+  updated; the client toasts "sent" whatever happened.
+- 6: "stopped" has no flag of its own (a stop bumps teams.link_version and stamps link_replaced_at later than
+  pay_link_sent_at); teamPayNowLink (~:401) and the bank-debit email (lib/bank-debit-email.ts:57) build a live link at
+  the current version, which quietly reverses a stop. Callers: registrations/bulk/route.ts:173, admin/teams/route.ts:697,
+  registrations/payment-reminders/route.ts:219, and the :125 link in the same file (trace which email uses it). The
+  league family link (bank-debit-email.ts:75) has NO stop concept (only Send a new link): say so and leave it.
+- 8: the club's activity record (org_audit_log, writeOrgAudit in lib/org-audit.ts) is OWNER-ONLY on screen, and its
+  screen asks scope=members (MEMBER_AUDIT_ACTIONS), so a new pay-link row is shown nowhere. P7's page told the owner "no
+  screen change" and "owner and admins read it" (the second half is wrong). Build the ruled part: write a row for stop,
+  replace and email (admin id, action, time, tournament and team ids; NEVER an email address). Do not change who reads the
+  record or the screen; put "show pay-link rows on the owner's activity screen? and should admins read it?" to the owner
+  in the hand-off as a question.
+- 4: the no-other-use test is ONE shared function, readAccountKeepFacts(userId, orgId) in
+  lib/member-account-keep-server.ts:14 + accountKeptReason in lib/member-account-keep.ts:35 (P8's "~:134 / ~:173-254"
+  points at its two callers). It is org-shaped; a staff removal has no org: reuse it (e.g. a null org meaning "any club
+  seat counts") rather than inventing a second test, and say what you did. It counts organization_members rows with no
+  status filter, active Basic coach-team memberships and live family links. company-users DELETE today: unpaged
+  listUsers(), case-sensitive match, silent skip; findAuthUserIdByEmail throws on a read error (fails closed).
+- 9: the coaches route reads emails with ONE listUsers({ perPage: 1000 }) page across the whole platform and ignores
+  the read's error; peopleSignInFacts (lib/two-step-club-status.ts:30) is the Members screen's reader. Note in the
+  hand-off: a member granted module_rep_teams without module_members sees coach emails there but not on Members (owner
+  call, not a fix here).
+- 11: TRUE as worded; the coach route's check is inline (roster/[playerId]/documents/route.ts:125-132) — consider a
+  small shared helper both routes call. DATA_DICTIONARY.md ~4858 ("unvalidated") and ~4883 ("gotcha 2").
+- 12: GET orders invited-then-active, newest first; POST takes the OLDEST live invitation (invited only, 30-day cutoff);
+  the club is named only by org slug (?org= / body.orgSlug); codes exist (demo_account, invitation_lapsed,
+  one_home_org, join_failed). The page normally sends GET's slug, so POST picks only when GET failed or hadn't answered.
+  Consent screen: /legal before hand-off, always.
+
+FOUND BY THE FIRST CHAT, NOT IN SCOPE (do not build; they are in the sweep report as owner calls): getAuthContextWithRole
+ignores its group-scope read error (a limited member reads as unlimited for that request); a limited member sees Edit /
+Renew / Delete / Replace on a permit outside their groups (refused in words).
+
+Agents, in order: /simplify (only if you add a shared helper: 4's reuse or 11's check), /review, /docs (the pay-link help
+for the stop rule, the "second press" answer and the activity record; the invitation page's question; staff removal is
+platform-admin only, no help), /legal (12 always; 4, 6, 8 as its read says), /accounting none expected.
+When every item is DONE: mark PROGRESS rows 8 and 8b DONE, move the Board Ready board line, and the next chat runs P9.
 ```
 
 ---
