@@ -85,6 +85,30 @@
 >   Fixed on the way: the guard `tournament-stage5-settings.test.ts` "no card offers a Layout" had failed since P3
 >   (f4b54f94d made the Add buttons `locked ? undefined : …`); it now pins that, in commit bc7173346.
 >
+> **Status, leftovers (P8b, second chat, 2026-11-19, dev; premises re-read first, all held as the P8b prompt worded them):**
+> - **Word files on permits** (the owner's question; asked, "allow" 2026-11-19) committed 150947d52: the upload takes the checker's
+>   four types; **mig 507** was needed (the bucket's allowed types and `org_permits_document_type_check` each listed three).
+>   PRODUCTION: mig 507 BEFORE the code. Proof `.probe/permit-upload-prove.mjs` 11/11.
+> - **9** committed 750957c34: the season coaches list reads emails through `peopleSignInFacts`; a failed read answers 503 and
+>   the past-season page says so (not "no coaches"). Proof `.probe/program-year-coaches-emails-prove.mjs` 6/6. Owner note: a
+>   member with Rep teams but not Members sees coach emails here, not on Members.
+> - **11** committed 707f7b0d2: one rule (`lib/player-document-template.ts`) at both upload doors; dictionary gotcha fixed.
+>   Proof `.probe/club-doc-template-prove.mjs` 9/9.
+> - **4** committed 7d05bc66a: paged case-insensitive lookup; the member keep test reused with a null org (any club seat counts);
+>   every read and the sign-in delete before the staff row goes; a failure refuses with nothing removed. Proof
+>   `.probe/staff-removal-prove.mjs` 9/9 (a probe super admin with two-step).
+> - **12** committed 24daf5d95: GET and POST share one live-invitations read; two or more and no club named → "Which club are
+>   you joining?", asked before the Terms record or the name; the others stay invited. Proof
+>   `.probe/accept-invite-choose-prove.mjs` 12/12. Not built (review Low): no "choose a different club" from a dead end
+>   (the other invitation still waits on Home).
+> - Agents: /simplify folded into /review (no duplication worth merging; the new helpers right-sized); /review (report-only,
+>   no High; applied: the history page's error, the sign-in deleted before the staff row, the chooser's "Joining…", the
+>   title guard, a source-guard test); /docs (Organization help: permits' Word lines, "Invited by more than one club?");
+>   /legal (no blocker, no policy change; wording "…until they run out" applied; LEGAL_INDEX row 59 line); /accounting none.
+>   Typecheck: clean apart from `tests/unit/layout-run-journal.test.ts` (another session's, committed 202c23ece).
+> - **Left for the next P8b chat: 5, 6, 8** (the pay link's two presses, the stop rule for automatic emails, the activity
+>   record), all in `lib/online-payment-receipt.ts` and its callers; the P8b block's premises for them stand.
+>
 > **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**
 > - **Fix (small, one commit each, awaiting the owner's go to build):** 1 refuse the demo account at all three create doors + a
 >   build check · 2 permits and venue library read only by people who schedule, run tournaments or handle money · 3 "same
