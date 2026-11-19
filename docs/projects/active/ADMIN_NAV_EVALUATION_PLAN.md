@@ -1060,4 +1060,13 @@ It is the owner's call whether to open it.
 
 ## Carried in from TODO (2026-11-17, One Board Session 2)
 
-- [ ] **Owner call: the 404 page's bottom bar.** On an unrecognised address the root 404 sits outside every shell, so on a phone the visitor bar falls back to its dark skin (found in the Phase 3 walk 2026-11-11). Decide: the warm skin on the 404, or no bottom bar there.
+- [x] **Owner call: the 404 page's bottom bar.** On an unrecognised address the root 404 sits outside every shell, so on a phone the visitor bar falls back to its dark skin (found in the Phase 3 walk 2026-11-11). Decide: the warm skin on the 404, or no bottom bar there.
+  **RULED 2026-11-19 — no bar** (owner: "I agree with your recommendation"). The reason: the bar is the tournament
+  visitor bar (Home · Scores · Chat · Account), which belongs only on a real event's pages and takes that event's look;
+  on a made-up address there is no event, so it has no look to take, and its doors lead into an event that does not
+  exist. The 404 keeps its one next step, "Go to Home" (the system-screen family's rule, walk passed 2026-10-23).
+  Painting it warm would hide the misfire rather than fix it.
+  - [ ] **Build (small, recorded not started):** the tournament bar does not render on a not-found page. First
+    reproduce it on a phone width: a server fetch of three made-up addresses (`/x`, `/x/y`, `/x/y/z`, 2026-11-19) carried
+    no bar markup, so it most likely mounts client-side on a two-segment address that matches the tournament route
+    (`params.tournamentSlug` set) before `notFound()`. Fix at the bar's own gate, not by styling the 404. Short walk.
