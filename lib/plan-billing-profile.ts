@@ -142,8 +142,8 @@ const CLUB_ARTICLE = [
   // Deliberately absent from every other plan (a single-team customer has no siblings to
   // share with), which makes it one of the few things only this tier can offer.
   'Club Shared Book — your teams share opponent scouting notes across the club',
-  'Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee',
-  'Up to 15 teams — or up to 30 on Club · Association',
+  'Premium Coaches Portal for every coach on up to 15 teams, or up to 30 on Club · Association — no per-team fee',
+  'Unlimited house league teams',
 ];
 
 const TOURNAMENT_BILLING = [
@@ -183,7 +183,7 @@ const CLUB_BILLING = [
   'Bank statement checks against your books',
   'Families: every household across your programs',
   'Your club’s public site',
-  'House league and tournaments',
+  'Unlimited house league teams, and tournaments',
   'Unlimited board and staff members',
 ];
 

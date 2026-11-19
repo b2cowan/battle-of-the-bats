@@ -4,7 +4,7 @@ import { HelpNote } from '@/components/help/HelpBlocks';
 const repTeamsHelp: HelpPageContent = {
   title: 'Rep teams',
   role: 'Admin, Owner',
-  intro: 'Rep teams is where your club runs its competitive teams. The club owns each team — its name, group, seasons and coaches — and each team’s coaches run it day-to-day in their Coaches Portal. It is part of the Club plan, which includes the Premium Coaches Portal for your whole coaching staff — every team, no per-team fee. (A coach can also run a single team independently on the standalone Premium Coaches Portal.)',
+  intro: 'Rep teams is where your club runs its competitive teams. The club owns each team — its name, group, seasons and coaches — and each team’s coaches run it day-to-day in their Coaches Portal. It is part of the Club plan, which includes the Premium Coaches Portal for every coach on every team you set up here, up to your plan’s limit, with no per-team fee. (A coach can also run a single team independently on the standalone Premium Coaches Portal.)',
   sections: [
     {
       id: 'franchise-model',
@@ -45,7 +45,7 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'Plans and access',
       summary: 'Rep teams is a Club-plan module; owners and admins run teams, seasons and coaches.',
       keywords: ['club plan', 'add-on', 'access', 'owner', 'treasurer', 'admin', 'coach access', 'team manager', 'registrar'],
-      searchText: 'rep teams club plan add-on access owner treasurer admin permission cost allocation owner treasurer only coach scoped team group limit registrar team manager',
+      searchText: 'rep teams club plan add-on access owner treasurer admin permission cost allocation owner treasurer only coach scoped team group limit registrar team manager team limit how many teams 15 teams 30 teams club association premium coaches portal select team all-star team travel team house league unlimited archived teams tournament teams not counted',
       content: (
         <>
           <p>Rep teams is included with the <strong>Club</strong> plan. If your org doesn&apos;t have it, the module is hidden.</p>
@@ -57,6 +57,21 @@ const repTeamsHelp: HelpPageContent = {
           <p>A rep club doesn&apos;t need a registrar: the paperwork a registrar does elsewhere belongs to each team&apos;s <strong>team manager</strong>, whom the head coach adds from the team&apos;s Staff page.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-club-team-limit',
+          question: 'How does the team limit on Club work?',
+          answerText: 'The limit counts the teams you give a Premium Coaches Portal, whatever you call them: rep, select, all-star, travel. House league teams are unlimited. Archived teams and teams entered in your tournaments aren’t counted. Every team you set up under Rep teams counts the same, up to 15 on Club or 30 on Club · Association.',
+          keywords: ['team limit', 'how many teams', '15 teams', '30 teams', 'select team', 'all-star team', 'travel team', 'house league unlimited', 'archived teams', 'club association', 'team places'],
+          popular: true,
+          answer: (
+            <>
+              <p>The limit counts the teams you give a Premium Coaches Portal, whatever you call them: rep, select, all-star, travel. House league teams are unlimited. Archived teams and teams entered in your tournaments aren&apos;t counted.</p>
+              <p>Every team you set up under <strong>Rep teams</strong> counts the same, up to 15 on Club or 30 on Club &middot; Association.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'team-board',

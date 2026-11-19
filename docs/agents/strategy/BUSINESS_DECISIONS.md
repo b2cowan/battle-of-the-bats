@@ -8,6 +8,46 @@
 
 ---
 
+### 2026-11-19 — The Club team limit counts teams that get a Premium Coaches Portal, whatever the club calls them; house league teams are UNLIMITED (Decided)
+**Status:** **Decided** (owner, 2026-11-19, accepting the `/marketing` recommendation: "I agree with your recommendations").
+**Decision:**
+1. **What the limit counts.** The 15 (Club) and 30 (Club · Association) team limits count **the teams a club gives a Premium
+   Coaches Portal**: every team set up under Rep teams and not archived. **Every team type counts equally** (rep, select,
+   all-star, travel, development; whatever the club calls them, which is already the rule in the Facts doc, now stated for
+   customers). **Not counted:** house league teams, teams entered in the club's own tournaments, and archived teams.
+2. **House league teams are UNLIMITED on Club and Club · Association** (as they already are on League Plus). Verified in
+   code 2026-11-19: only the free League floor caps house league (8 teams per season); every paid plan is uncapped, and the
+   Club count reads Rep teams only. This is a **newly stated inclusion, not a new behaviour**: no gate, price, band size or
+   plan name moves.
+3. **A label never defines the limit.** No customer surface defines the unit by a team label (a list of examples may appear
+   once, beside the definition, never as the definition). The unit is "teams with a Premium Coaches Portal".
+4. **Words accepted for the surfaces** (written by `/marketing`, recorded in `PRICING_PAGE_COPY.md`): plan-step heading
+   *How many teams will have a Premium Coaches Portal?*, with the line *Rep, select, all-star: whatever your club calls them.
+   House league teams are unlimited.*; Club bullets *Premium Coaches Portal for every coach on up to 15 teams, no per-team
+   fee* and *Unlimited house league teams*; Club · Association bullet *Premium Coaches Portal for every coach on 16 to 30
+   teams*; FAQ and for-clubs line *The limit counts the teams you give a Premium Coaches Portal, whatever you call them: rep,
+   select, all-star, travel. House league teams are unlimited. Archived teams and teams entered in your tournaments aren't
+   counted.*
+**Rationale:** the old card asked "How many teams does your club run?" and said "Up to 15 teams" with no unit, so a president
+adding up house league teams would think they needed the upper band, and a club that says "select" or "all-star" could not
+tell "rep teams" applied to it. Defining the limit by what the club gets (a portal per team) is true to how the product
+counts, survives any club's vocabulary, and survives a future team type. Stating house league as unlimited turns the
+exclusion into a reason to buy, and it is already true.
+**⚠ Risk, recorded on purpose:** "unlimited" is a promise that is hard to retract. **Revisit this entry before any house
+league size-based price, player-count meter or fair-use cap is proposed**, and before the free League floor's future is
+ruled (it caps at 8, which is the contrast the Club card now draws).
+**Affects:** the plan step and its paid-plan twin, the pricing cards, the pricing FAQ, the for-clubs page, the start door,
+the billing plan profile; the Facts doc (capacity cells and the Club-teams line); positioning only. **No price, band, gate or
+plan name.**
+**Handoff:** HANDOFF → `/marketing`: wording is settled (above); record it in `PRICING_PAGE_COPY.md` and apply it to every
+surface in one pass (one-spelling rule). HANDOFF → `/billing`: none; no gate or limit value moves. HANDOFF → `/plan`: none.
+HANDOFF → `/docs`: the in-app Rep teams and billing help articles say "every team, no per-team fee" and may need the unit
+and the house league line.
+**Supersedes:** nothing. Refines the Facts doc's "all team types count equally" line and the 2026-06-22 Club repackaging copy
+("up to 15 teams"), which stay true.
+
+---
+
 ### 2026-11-18 — On-sale pages: the plan grid and the home page sort by AUDIENCE, in three bands (Decided; Asks 21 to 23)
 **Status:** **Decided** (owner, 2026-11-18, on the drawings' "Your calls" paste-back: "I agree with all 33 recommendations").
 Plan of record: `CLUB_ON_SALE_PAGES_PLAN.md` "Owner asks"; drawings `CLUB_ON_SALE_PAGES_DRAWINGS.html` (`const ASKS=`).

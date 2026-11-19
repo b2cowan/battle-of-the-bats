@@ -306,8 +306,8 @@ export default async function ForCoachesPage() {
               <span className={kit.eyebrow}>Club</span>
               <span className={kit.title}>Is your organization on FieldLogicHQ yet?</span>
               <span className={kit.body}>
-                Club includes the Premium Coaches Portal for your whole coaching staff — every coach,
-                every team, no per-team fee — plus tournaments, house league, rep teams, and accounting.
+                Club includes the Premium Coaches Portal for every coach on up to 15 teams, or up to 30
+                on Club · Association, with no per-team fee — plus tournaments, house league, rep teams, and accounting.
               </span>
               <span className={fp.crossCta}>See what Club includes</span>
             </Link>

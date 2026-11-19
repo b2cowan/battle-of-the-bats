@@ -197,7 +197,8 @@ export default async function ForClubsPage() {
                   <span className={kit.price}>{formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}</span>
                   <span className={kit.small}>/month</span>
                 </div>
-                <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.club.annualPrice)}/year — save two months · priced by club size (up to 15 teams · up to 30 on Club · Association)</p>
+                <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.club.annualPrice)}/year — save two months · priced by the teams you give a Premium Coaches Portal (up to 15 · up to 30 on Club · Association)</p>
+                <p className={kit.small}>Rep, select, all-star, travel: whatever you call them. House league teams are unlimited. Archived teams and teams entered in your tournaments aren&apos;t counted.</p>
               </div>
               <p><span className={kit.tag}>{gatedPlanTag('club')}</span></p>
               <p className={kit.body}>
