@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { whatTheyCanOpen } from '../../lib/member-access.ts';
-import { auditChangeSentence, describeOverrideChange, MEMBER_AUDIT_ACTIONS } from '../../lib/member-audit.ts';
+import {
+  AUDIT_LOG_ACTIONS, auditChangeSentence, describeOverrideChange, isPayLinkAuditAction, MEMBER_AUDIT_ACTIONS, PAY_LINK_AUDIT_ACTIONS,
+} from '../../lib/member-audit.ts';
 import {
   accessSummary, accessShort, overrideChips, consequence, roleGuideCell,
 } from '../../components/admin/kit/club/member-summary.ts';
@@ -183,5 +185,33 @@ describe('the audit log reads as sentences (specimen 11)', () => {
 
   it('the board\'s log is member changes only — no billing events', () => {
     assert.ok(!MEMBER_AUDIT_ACTIONS.some(a => a.startsWith('plan_') || a.includes('cancel') || a.includes('billing')));
+  });
+
+  // Board Ready P8c (owner 2026-11-19): the owner's log also lists a team's pay link emailed, replaced or stopped.
+  it('the owner\'s log lists the member changes and the three pay-link actions, nothing else', () => {
+    assert.deepEqual([...AUDIT_LOG_ACTIONS], [...MEMBER_AUDIT_ACTIONS, 'pay_link_emailed', 'pay_link_replaced', 'pay_link_stopped']);
+    assert.deepEqual([...PAY_LINK_AUDIT_ACTIONS], ['pay_link_emailed', 'pay_link_replaced', 'pay_link_stopped']);
+    assert.ok(!AUDIT_LOG_ACTIONS.some(a => a.startsWith('plan_') || a.includes('cancel') || a.includes('billing') || a.startsWith('family_')));
+    assert.ok(isPayLinkAuditAction('pay_link_stopped'));
+    assert.ok(!isPayLinkAuditAction('member_invited'));
+  });
+
+  it('says each pay-link action in the log\'s words, and a link that never worked says so', () => {
+    const t = 'aaaaaaaa-0000-0000-0000-000000000000';
+    assert.equal(auditChangeSentence('pay_link_emailed', { tournamentId: t, teamId: t, linkWorks: true }), 'Emailed the pay link');
+    assert.equal(auditChangeSentence('pay_link_emailed', { tournamentId: t, teamId: t, linkWorks: false }),
+      'Emailed the pay link (stopped at the same moment, so it doesn’t work)');
+    assert.equal(auditChangeSentence('pay_link_replaced', { tournamentId: t, teamId: t, linkWorks: true }), 'Sent a new pay link (the old one stopped)');
+    assert.equal(auditChangeSentence('pay_link_replaced', { tournamentId: t, teamId: t, linkWorks: false }),
+      'Sent a new pay link (stopped at the same moment, so it doesn’t work)');
+    assert.equal(auditChangeSentence('pay_link_stopped', { tournamentId: t, teamId: t, asked: 'stop' }), 'Stopped the pay link');
+    assert.equal(auditChangeSentence('pay_link_stopped', { tournamentId: t, teamId: t, asked: 'send' }), 'Stopped the pay link (the new one didn’t go out)');
+    // A row missing its flag reads as the plain action, never as a failure it can't prove.
+    assert.equal(auditChangeSentence('pay_link_emailed', null), 'Emailed the pay link');
+    assert.equal(auditChangeSentence('pay_link_stopped', {}), 'Stopped the pay link');
+    // Never an address: no sentence carries an @.
+    for (const a of ['pay_link_emailed', 'pay_link_replaced', 'pay_link_stopped']) {
+      assert.ok(!auditChangeSentence(a, { email: 'coach@example.com', sentTo: 'coach@example.com' }).includes('@'));
+    }
   });
 });

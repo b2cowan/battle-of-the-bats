@@ -128,12 +128,12 @@
 >   **Owner calls:** (a) show the pay-link rows on the owner's activity screen, and should admins read the record? (/legal:
 >   admins reading colleagues' actions is a need-to-know choice) — **RULED 2026-11-19 (owner): "Owner only, as
 >   recommended"**: the three actions join the owner's activity screen; who reads the record is unchanged (admins still
->   don't). Build prompt P8c written (queue row 8c). Idea, not ruled: "Pay link stopped Nov 19 by {name}" on the line itself; (b) the coach portal's own Pay now still worked while the
+>   don't). Build prompt P8c written (queue row 8c); **BUILT 2026-11-19** (P8c chat), the commit "Board Ready P8c: the pay-link actions on the owner's Audit log…" (no schema change): the three actions join the owner's log in one list (no filter: a new control would need a drawing), worded "Emailed the pay link" / "Sent a new pay link (the old one stopped)" / "Stopped the pay link" (+ "(stopped at the same moment, so it doesn’t work)" and "(the new one didn’t go out)"), To = "{team}, {tournament}" read at read time inside this organization, never the team's address; a failed name read fails the log honestly rather than saying "Deleted". Scope note, empty line ("Nothing listed yet."), pager ("entries") and the export summary follow. Proof `.probe/audit-log-pay-link-prove.mjs` 33/33 on dev (owner sees the words; an admin is refused 403; no team address in the response; another club's tournament never named); unit `member-summary` 21/21. /review (4 lenses; 6 fixed, 3 accepted), /docs (Organization + Tournaments help), /legal (`AUDIT_LOG_SCOPE_WORDING.md` re-verified, no wording change; "each time" holds once row 9b lands); /accounting none. Owner browser check owed. Idea, not ruled: "Pay link stopped Nov 19 by {name}" on the line itself; (b) the coach portal's own Pay now still worked while the
 >   club had the link stopped — **RULED 2026-11-19 (owner, "go with your recommendation"): stop it there too; BUILT the same
 >   day** in the commit "Board Ready leftover 6, the coach portal…": a stopped link gives the coach's Registration card no
 >   Pay now and the line "To pay online, ask your organizer to email you a pay link." (never "records payment manually");
 >   unit guard `coach-pay-now-guard` 8/8 (the rule itself proved on dev in the trio's 23/23); Coaches and Tournaments help
->   updated. (a) stays open. Not fixed, recorded: an operator-customised acceptance template drops the Pay button yet the stamp says
+>   updated. (a) built (above). Not fixed, recorded: an operator-customised acceptance template drops the Pay button yet the stamp says
 >   "sent" (bulk door); the team receipt's "View receipt" (nothing owed) also stamps "sent"; the legacy unscoped audit view
 >   would show the raw action names.
 >

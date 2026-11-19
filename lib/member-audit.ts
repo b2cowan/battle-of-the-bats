@@ -10,7 +10,8 @@ import { HELPING_WITH } from './volunteer-words';
  *
  * The log records what it records today — member changes, nothing wider (specimen 11: no filters,
  * no search, no logins, money or settings; widening what it logs is a separate decision). One widening
- * was ruled: the two-step switches (Board Ready, owner 2026-11-10), because they decide who may sign in.
+ * was ruled: the two-step switches (Board Ready, owner 2026-11-10), because they decide who may sign in. A second:
+ * a team's pay link emailed, replaced or stopped (Board Ready P8c, owner 2026-11-19).
  */
 
 /** The member changes the board's log shows (the route's `?scope=members`). */
@@ -27,6 +28,23 @@ export const MEMBER_AUDIT_ACTIONS = [
   'two_step_requirement_on',
   'two_step_requirement_off',
 ] as const;
+
+/**
+ * A team's pay link emailed, replaced or stopped (Board Ready leftover 8 writes them; owner ruling 2026-11-19, P8c:
+ * "Owner only, as recommended" — they show on the owner's log, who reads it is unchanged). Not member changes, so a
+ * list of their own; the log shows both in ONE list (specimen 11: no filters). Their "To" is the team and its
+ * tournament, named by the route at read time (the row holds only ids, never an address).
+ */
+export const PAY_LINK_AUDIT_ACTIONS = ['pay_link_emailed', 'pay_link_replaced', 'pay_link_stopped'] as const;
+
+/** Everything the owner's log lists (the route's `?scope=members`): the member changes and the pay-link actions. */
+export const AUDIT_LOG_ACTIONS = [...MEMBER_AUDIT_ACTIONS, ...PAY_LINK_AUDIT_ACTIONS] as const;
+
+export const isPayLinkAuditAction = (action: string): boolean =>
+  (PAY_LINK_AUDIT_ACTIONS as readonly string[]).includes(action);
+
+/** A pay-link email that went while a stop or replace landed (`linkWorks: false`): its link never worked. */
+const DEAD_ON_ARRIVAL = '(stopped at the same moment, so it doesn’t work)';
 
 const PROGRAM_LABEL: Partial<Record<string, string>> = Object.fromEntries(
   MEMBER_PROGRAMS.map(p => [p.module, p.label]),
@@ -127,6 +145,13 @@ export function auditChangeSentence(action: string, payload: Record<string, unkn
       return p.which === 'coaches' ? 'Two-step sign-in required for coaches' : 'Two-step sign-in required for the board';
     case 'two_step_requirement_off':
       return p.which === 'coaches' ? 'Two-step sign-in no longer required for coaches' : 'Two-step sign-in no longer required for the board';
+    case 'pay_link_emailed':
+      return p.linkWorks === false ? `Emailed the pay link ${DEAD_ON_ARRIVAL}` : 'Emailed the pay link';
+    case 'pay_link_replaced':
+      return p.linkWorks === false ? `Sent a new pay link ${DEAD_ON_ARRIVAL}` : 'Sent a new pay link (the old one stopped)';
+    case 'pay_link_stopped':
+      // `asked: 'send'` = a "Send a new link" whose new link did not go: recorded as what it was.
+      return p.asked === 'send' ? 'Stopped the pay link (the new one didn’t go out)' : 'Stopped the pay link';
     default:
       return action;
   }

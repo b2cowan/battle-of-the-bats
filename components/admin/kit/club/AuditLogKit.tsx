@@ -7,11 +7,13 @@
  *   member change the log already records (plus a Rep Teams group change), the same export, still
  *   owner-only. The page names the organization when it asks (A04), and the rail links here (H08).
  *
- *   ⚠ HONEST STATES: a failed load says "The audit log didn't load. Try again." — and "No member
- *   changes yet" appears ONLY after a read that actually succeeded (today's page printed "No audit
+ *   ⚠ HONEST STATES: a failed load says "The audit log didn't load. Try again." — and "Nothing listed
+ *   yet" appears ONLY after a read that actually succeeded (today's page printed "No audit
  *   events recorded yet." under an Unauthorized error for months).
  *
- * Deliberately NOT added (specimen 11): filters, search, or events beyond member changes.
+ * Deliberately NOT added (specimen 11): filters or search. Events beyond member changes: only a team's pay link
+ * emailed, replaced or stopped (Board Ready P8c, owner 2026-11-19), in the same one list — its "To" is the team and
+ * its tournament. A new event kind changes the scope note below (and AUDIT_LOG_SCOPE_WORDING.md's re-verify).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -112,7 +114,8 @@ export default function AuditLogKit() {
     createdAt: auditWhen(r.createdAt, today),
     actionLabel: r.sentence ?? r.actionLabel,
     actorEmail: r.actorName ? `${r.actorName} (${r.actorEmail})` : r.actorEmail,
-    targetEmail: r.targetName ? `${r.targetName} (${r.targetEmail})` : r.targetEmail,
+    // A pay-link row's "To" is a team, not a person: its name alone, never "Rockets, Spring Classic (—)".
+    targetEmail: r.targetName && r.targetEmail !== '—' ? `${r.targetName} (${r.targetEmail})` : (r.targetName || r.targetEmail),
   }));
   const handleExportXLSX = () => downloadXLSX(
     buildFilename({ org: slug, dataset: 'member-audit' }, 'xlsx'),
@@ -141,8 +144,9 @@ export default function AuditLogKit() {
       {/* What this log covers, said up front so a change it doesn't record isn't mistaken for a missing one. */}
       <p className={styles.scope}>
         Lists changes to who has access and what they can do: invites, removals, role and access changes,
-        suspensions, and two-step sign-in settings. Other activity (schedule and score edits, money, family
-        records, sign-ins) isn’t listed here.
+        suspensions, and two-step sign-in settings. It also lists each time a team’s pay link is emailed,
+        replaced or stopped. Other activity (schedule and score edits, payments and refunds, family records,
+        sign-ins) isn’t listed here.
       </p>
 
       {status === 'error' ? (
@@ -156,7 +160,7 @@ export default function AuditLogKit() {
       ) : status === 'loading' && !data ? (
         <LoadingState label="Loading the audit log…" />
       ) : rows.length === 0 ? (
-        <p className={styles.none}>No member changes yet.</p>
+        <p className={styles.none}>Nothing listed yet.</p>
       ) : (
         <>
           <div className={`${ck.tableFrame} ${styles.desk}`}>
@@ -192,7 +196,7 @@ export default function AuditLogKit() {
             ))}
           </div>
           <div className={styles.pager}>
-            <span className={ck.muted}>{from}–{to} of {data?.total} change{data?.total === 1 ? '' : 's'}</span>
+            <span className={ck.muted}>{from}–{to} of {data?.total} entr{data?.total === 1 ? 'y' : 'ies'}</span>
             <span className={styles.pagerButtons}>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => setPage(p => p - 1)} disabled={page <= 1 || status === 'loading'}>
                 <ChevronLeft size={14} aria-hidden /> Newer
