@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import { cache } from 'react';
 import { formatStoredDate } from './timezone';
 import {
-  LEGAL_DOCUMENTS, isPublishedVersion, publishedFilePath, versionSpan, type LegalDocKey,
+  isDoorDocument, isPublishedVersion, pageVersionInForce, publishedFilePath, versionSpan, type LegalPageKey,
 } from './legal-documents';
 import { readDraftForPreview } from './legal-draft-preview';
 import { legalPagePath } from './legal-paths';
@@ -23,6 +23,9 @@ import { marketingMetadata } from './marketing-metadata';
  *                                 earlier-version line (4b)
  *   · anything else             → null
  *
+ * The Data Terms and the list (Board Ready 0a-5) have no preview, and "current" is `pageVersionInForce`: null until their first
+ * text publishes, so both answer "not found" until then. A date newer than the one in force is not served.
+ *
  * `draft` is true ONLY when the text came from the draft file, so the banner cannot show on production.
  */
 export interface LegalPageData {
@@ -38,20 +41,20 @@ export interface LegalPageData {
 
 const longDate = (ymd: string) => formatStoredDate(ymd, { longMonth: true });
 
-export function loadLegalPage(doc: LegalDocKey, version?: string, env: Record<string, string | undefined> = process.env): LegalPageData | null {
+export function loadLegalPage(doc: LegalPageKey, version?: string, env: Record<string, string | undefined> = process.env): LegalPageData | null {
   const mode = legalPagesMode(env);
   if (mode === 'off') return null;
 
   if (mode === 'preview') {
-    if (version) return null; // a version's own address exists only once it is published
+    if (version || !isDoorDocument(doc)) return null; // a version's own address exists only once it is published
     const markdown = readDraftForPreview(doc, env);
     return markdown === null ? null : { markdown, draft: true, effectiveText: null, earlier: null, noindex: true };
   }
 
-  const current = LEGAL_DOCUMENTS[doc].current;
+  const current = pageVersionInForce(doc);
   if (!current) return null;
   const v = version ?? current;
-  if (!isPublishedVersion(doc, v)) return null;
+  if (!isPublishedVersion(doc, v) || v > current) return null;
   const markdown = readFileSync(path.join(process.cwd(), publishedFilePath(doc, v)), 'utf8');
   if (v === current) return { markdown, draft: false, effectiveText: longDate(v), earlier: null, noindex: false };
   const span = versionSpan(doc, v);
@@ -66,11 +69,15 @@ export function loadLegalPage(doc: LegalDocKey, version?: string, env: Record<st
  * `loadLegalPage` once per request: the route's `generateMetadata` and its body both ask, and each ask reads the file (and, in the
  * preview, filters the draft). `cache` dedupes within one render, so the switch is still read at request time.
  */
-export const loadLegalPageOnce = cache((doc: LegalDocKey, version?: string) => loadLegalPage(doc, version));
+export const loadLegalPageOnce = cache((doc: LegalPageKey, version?: string) => loadLegalPage(doc, version));
 
-/** Title and address through the marketing helper; the preview and earlier versions are `noindex`. */
-export function legalPageMetadata(doc: LegalDocKey, version?: string): Metadata {
+/**
+ * Title and address through the marketing helper; the preview and earlier versions are `noindex`. A "not found" answer carries no
+ * title, description or address at all (Board Ready 0a-5): a page that is dark must not name itself in the tab or a link preview.
+ */
+export function legalPageMetadata(doc: LegalPageKey, version?: string): Metadata {
   const data = loadLegalPageOnce(doc, version);
+  if (data === null) return { robots: { index: false, follow: false } };
   return marketingMetadata({
     title: LEGAL_TITLES[doc],
     path: legalPagePath(doc, version),

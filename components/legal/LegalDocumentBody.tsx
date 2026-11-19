@@ -64,8 +64,8 @@ function remarkHeadingIds() {
   };
 }
 
-export default function LegalDocumentBody({ markdown, sections, otherTitle }: { markdown: string; sections: LegalSection[]; otherTitle?: string }) {
-  const source = linkSectionReferences(markdown, sections, otherTitle);
+export default function LegalDocumentBody({ markdown, sections, otherTitles }: { markdown: string; sections: LegalSection[]; otherTitles?: readonly (string | RegExp)[] }) {
+  const source = linkSectionReferences(markdown, sections, otherTitles);
   return (
     <Markdown
       remarkPlugins={[remarkGfm, remarkCellLabels, remarkHeadingIds]}

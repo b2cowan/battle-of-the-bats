@@ -164,7 +164,8 @@
 }
 
 /* The two legal links (GST/HST Stage 6 step 6.2) share the bottom row with the copyright: apart on a wide screen, stacked on a phone
-   with a 44px row each. Rendered only while the legal pages are on. */
+   with a 44px row each. Rendered only while the legal pages are on. Up to four links once the Data Terms and the list publish
+   (Board Ready 0a-5), so the group wraps rather than overflow between the phone and wide layouts. */
 .baselineRow {
   display: flex;
   justify-content: space-between;
@@ -172,7 +173,7 @@
   flex-wrap: wrap;
   gap: 0.5rem 1.5rem;
 }
-.legal { display: flex; gap: 1.25rem; }
+.legal { display: flex; flex-wrap: wrap; gap: 0 1.25rem; }
 .legalLink {
   font-size: var(--type-support);
   color: var(--home-ink-soft);

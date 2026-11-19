@@ -1,9 +1,9 @@
 import kit from '@/components/marketing/MarketingKit.module.css';
-import { legalSections, sectionAnchor } from '@/lib/legal-sections';
-import type { LegalDocKey } from '@/lib/legal-documents';
+import { LEGAL_OTHER_TITLES, legalSections, sectionAnchor } from '@/lib/legal-sections';
+import type { LegalPageKey } from '@/lib/legal-documents';
 import { cn } from '@/lib/utils';
 import {
-  LEGAL_CONTENTS_LABEL, LEGAL_DRAFT_BANNER_BODY, LEGAL_DRAFT_BANNER_TITLE, LEGAL_READ_CURRENT, LEGAL_TITLES, PRIVACY_TITLE, TERMS_TITLE,
+  LEGAL_CONTENTS_LABEL, LEGAL_DRAFT_BANNER_BODY, LEGAL_DRAFT_BANNER_TITLE, LEGAL_READ_CURRENT, LEGAL_TITLES,
 } from '@/lib/legal-words';
 import LegalDocumentBody from './LegalDocumentBody';
 import styles from './LegalPage.module.css';
@@ -17,7 +17,7 @@ import styles from './LegalPage.module.css';
 export default function LegalPage({
   doc, markdown, dateLine, earlier, draft,
 }: {
-  doc: LegalDocKey;
+  doc: LegalPageKey;
   markdown: string;
   /** (4a) "Effective {date}", or the preview's blank-date line. Replaced by `earlier` on a version no longer current. */
   dateLine: React.ReactNode;
@@ -26,7 +26,6 @@ export default function LegalPage({
   draft: boolean;
 }) {
   const sections = legalSections(markdown);
-  const otherTitle = doc === 'terms' ? PRIVACY_TITLE : TERMS_TITLE;
   return (
     <div className={cn(kit.page, styles.wrap)}>
       <div className={cn('container', styles.layout)}>
@@ -49,7 +48,7 @@ export default function LegalPage({
             )}
           </header>
           <div className={styles.text}>
-            <LegalDocumentBody markdown={markdown} sections={sections} otherTitle={otherTitle} />
+            <LegalDocumentBody markdown={markdown} sections={sections} otherTitles={LEGAL_OTHER_TITLES[doc]} />
           </div>
         </article>
         {sections.length > 0 && (

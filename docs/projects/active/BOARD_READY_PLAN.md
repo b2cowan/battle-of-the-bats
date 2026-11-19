@@ -505,9 +505,36 @@ points here, so they aren't tracked twice)
     fallback above; (2) the addresses `/legal/data-terms` and `/legal/subprocessors` ("sub-processors" is the word a
     board's checklist uses; the page title stays in plain words); (3) the footer only, not the sign-in doors.
   - **Words for `/marketing`** (one pass in the build session): the two footer link words and the list page's title line.
-  - [ ] Build session (the shape): routes, registry entries, the guards above, footer links. `/docs` writes the help line
-    that names the pages for the publishing day, not before (help must not point at a "not found" page).
+  - [x] Build session (the shape): routes, registry entries, the guards above, footer links. `/docs` writes the help line
+    that names the pages for the publishing day, not before (help must not point at a "not found" page). **Built
+    2026-11-19.** Both pages answer "not found" with no
+    title, and the footer shows neither link. Three things differ from the fit above, on purpose:
+    - *The list is frozen dated copies, not one living file* (`lib/legal-documents/subprocessors/<date>.md`, the Terms'
+      own mechanism). One file plus its hash could not prove a new change row was added: an editor could update the hash
+      and skip the row. Now each change is a new copy that adds exactly one row dated that day and leaves every earlier
+      row as it was. The newest copy is the page; older copies are the record of what the list said, not pages.
+    - *Neither page is a `LegalDocKey`.* That key is the doors' acceptance contract (`current` / `oldestAccepted`, and a
+      test requires both once published), so adding the Data Terms there WOULD have widened it. They have their own
+      registry entries, and a guard pins the doors to Terms and Privacy.
+    - *Added by the review:* the words `data-terms` and `subprocessors` are reserved org addresses; a "§N" after "Data
+      Terms" or "Payments Terms" on the Terms page no longer links to the Terms' own section (the held Terms draft has
+      both); no text in force may link a page with no published text (so the same-day fallback is enforced), and the
+      Data Terms in force must be linked from the Terms in force.
+    - Words (`/marketing`): footer links "Data Terms" and "Companies that handle your information"; the list's title "The
+      companies that handle your information"; under it "Last changed {date}" (`/legal`: a list changes on the notice
+      day, before the company starts, so "Effective" would misstate it).
+    - Advisory for whoever builds the Terms' `upcoming` version: a page refuses a version newer than the one in force.
   - [ ] Publishing commit (the Payments Terms day): the version files, T1–T4 in the Terms, the Data Terms §6 address filled.
+    The build checks each file as it lands (`tests/unit/legal-data-terms-and-list.test.ts`):
+    - each file starts at its first section: no `#` title, and no heading repeating the page title (the list draft's
+      "## The companies that handle your information" is not copied);
+    - the Data Terms file is named for the Terms version date, and that Terms text links `[Data Terms for
+      organizations](/data-terms)`;
+    - the list's first copy is named for the day it publishes, and its one change row is dated that day in words
+      ("November 19, 2026");
+    - every company in the list's table is in bold and named in the Privacy Policy in force, so the privacy version that
+      names ImprovMX publishes the same day;
+    - each change row names the day a new company STARTS (`/legal`), since the copy publishes on the notice day.
 - [ ] **0a-6 · Refunding unused plan time** (`/accounting` 2026-11-18, `docs/agents/accounting/REFUND_UNUSED_PLAN_TIME.md`;
   it serves the Data Terms §6 objection refund and the Terms §8 "we end your plan" refund). Workable by hand today:
   platform admin "End now" on the day the club picks, then "Refund this charge" → Part of it, which issues a credit note

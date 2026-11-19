@@ -71,6 +71,19 @@ describe('the other surfaces follow the switch', () => {
     assert.match(code, /'legal',/); // the footer's marketing surface
   });
 
+  it('the footer shows the Data Terms and the list only once each has a published text (Board Ready 0a-5)', () => {
+    const code = readCode('components/Footer.tsx');
+    assert.match(code, /\{legal\.dataTermsHref && </);
+    assert.match(code, /\{legal\.subprocessorsHref && </);
+    assert.match(readCode('lib/legal-links.ts'), /legalPageLive\(page, env\) \? legalPageHref\(page\) : null/);
+  });
+
+  it('the sign-in doors keep the two links a person accepts there — never the Data Terms or the list (ruling 2026-11-19)', () => {
+    for (const f of ['components/legal/LegalFootLinks.tsx', ...FOOT_DOORS.map(([file]) => file)]) {
+      assert.equal(/dataTermsHref|subprocessorsHref|DATA_TERMS_|SUBPROCESSORS_/.test(readCode(f)), false, f);
+    }
+  });
+
   it('the account menu carries no legal link — the account page has them (owner 2026-11-09)', () => {
     const code = readCode('components/shared/AccountMenu.tsx');
     assert.equal(/useLegalLinks|legal-words|legalLine|legalHref|termsHref|privacyHref/.test(code), false);
@@ -97,21 +110,31 @@ describe('the other surfaces follow the switch', () => {
   });
 
   it('the legal routes answer "not found" while the switch is off', () => {
-    for (const [f, doc] of [['app/terms/page.tsx', 'terms'], ['app/privacy/page.tsx', 'privacy'], ['app/legal/page.tsx', 'terms']]) {
+    for (const [f, doc] of [
+      ['app/terms/page.tsx', 'terms'], ['app/privacy/page.tsx', 'privacy'], ['app/legal/page.tsx', 'terms'],
+      ['app/data-terms/page.tsx', 'data-terms'], ['app/subprocessors/page.tsx', 'subprocessors'],
+    ]) {
       assert.match(readCode(f), new RegExp(`redirectToLegalDoc\\('${doc}'\\)`), f);
     }
+    for (const [f, doc] of [
+      ['app/legal/data-terms/page.tsx', 'data-terms'], ['app/legal/data-terms/[version]/page.tsx', 'data-terms'],
+      ['app/legal/subprocessors/page.tsx', 'subprocessors'],
+    ]) {
+      assert.match(readCode(f), new RegExp(`<LegalDocRoute doc="${doc}"`), f);
+    }
     const route = readCode('components/legal/LegalDocRoute.tsx');
-    assert.match(route, /if \(!legalPagesOn\(\)\) notFound\(\)/);
+    // Off — or, for the Data Terms and the list, before their first text — a short address is "not found".
+    assert.match(route, /if \(!legalPageLive\(doc\)\) notFound\(\)/);
     assert.match(route, /redirect\(legalPagePath\(/);
     assert.match(route, /if \(!data\) notFound\(\)/);
   });
 
   it('the redirects are page-level — next.config.ts announces no legal address', () => {
-    assert.equal(/\/(legal|terms|privacy)\b/.test(readCode('next.config.ts')), false);
+    assert.equal(/\/(legal|terms|privacy|data-terms|subprocessors)\b/.test(readCode('next.config.ts')), false);
   });
 
   it('the legal pages are in no sitemap', () => {
-    assert.equal(/legal|\/terms|\/privacy/.test(readCode('app/sitemap.ts')), false);
+    assert.equal(/legal|\/terms|\/privacy|data-terms|subprocessors/.test(readCode('app/sitemap.ts')), false);
   });
 });
 

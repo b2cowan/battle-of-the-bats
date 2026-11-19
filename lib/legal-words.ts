@@ -9,16 +9,32 @@
  * document people print and quote, and the full month cannot be misread.
  */
 
-import type { LegalDocKey } from './legal-documents';
+import type { LegalPageKey } from './legal-documents';
 
 export const TERMS_TITLE = 'Terms of Service';
 export const PRIVACY_TITLE = 'Privacy Policy';
+/** Board Ready 0a-5 (2026-11-19): the Data Terms' own name, as Terms §4 (T1) writes it. */
+export const DATA_TERMS_TITLE = 'Data Terms for organizations';
+/** Board Ready 0a-5: the list's title line (`/marketing` 2026-11-19; the address keeps the board's word, "subprocessors"). */
+export const SUBPROCESSORS_TITLE = 'The companies that handle your information';
 
-export const LEGAL_TITLES: Record<LegalDocKey, string> = { terms: TERMS_TITLE, privacy: PRIVACY_TITLE };
+export const LEGAL_TITLES: Record<LegalPageKey, string> = {
+  terms: TERMS_TITLE, privacy: PRIVACY_TITLE, 'data-terms': DATA_TERMS_TITLE, subprocessors: SUBPROCESSORS_TITLE,
+};
+
+/**
+ * Board Ready 0a-5: the marketing footer's two extra links (`/marketing` 2026-11-19). The sign-in doors never show them. Each is its
+ * page's title, shortened, so the link and the page read as one thing; "information", never "data" — the list, its title and the
+ * Terms all say "handle your information".
+ */
+export const DATA_TERMS_LINK = 'Data Terms';
+export const SUBPROCESSORS_LINK = 'Companies that handle your information';
 
 /** (4a) Under the page title on a current version. `dateText` is the long-month date. */
 export const LEGAL_EFFECTIVE_PREFIX = 'Effective';
 export const legalEffectiveLine = (dateText: string): string => `${LEGAL_EFFECTIVE_PREFIX} ${dateText}`;
+/** Board Ready 0a-5: under the list's title in place of (4a) — a living page has no effective date, it has a last change. */
+export const legalListChangedLine = (dateText: string): string => `Last changed ${dateText}`;
 
 /** (4b) Under the page title on a version that is no longer current (replaces 4a). The last words are the link to the current page. */
 export const legalEarlierVersionLine = (fromText: string, toText: string): string =>

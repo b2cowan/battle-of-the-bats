@@ -8,7 +8,7 @@ import GetAppQr from './shared/GetAppQr';
 import styles from './Footer.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
 import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
-import { PRIVACY_TITLE, TERMS_TITLE } from '@/lib/legal-words';
+import { DATA_TERMS_LINK, PRIVACY_TITLE, SUBPROCESSORS_LINK, TERMS_TITLE } from '@/lib/legal-words';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
@@ -206,11 +206,14 @@ export default function Footer() {
           <div className={styles.copyright}>
             &copy; {new Date().getFullYear()} FieldLogicHQ. All rights reserved.
           </div>
-          {/* Rendered only while the legal pages are on (the provider hands null otherwise). */}
+          {/* Rendered only while the legal pages are on (the provider hands null otherwise). The Data Terms and the list
+              (Board Ready 0a-5) each appear only once their page has a published text; the sign-in doors never show them. */}
           {legal && (
             <div className={styles.legal}>
               <a href={legal.termsHref} className={styles.legalLink}>{TERMS_TITLE}</a>
               <a href={legal.privacyHref} className={styles.legalLink}>{PRIVACY_TITLE}</a>
+              {legal.dataTermsHref && <a href={legal.dataTermsHref} className={styles.legalLink}>{DATA_TERMS_LINK}</a>}
+              {legal.subprocessorsHref && <a href={legal.subprocessorsHref} className={styles.legalLink}>{SUBPROCESSORS_LINK}</a>}
             </div>
           )}
         </div>

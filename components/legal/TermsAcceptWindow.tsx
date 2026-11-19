@@ -37,7 +37,11 @@ export function TermsAcceptWindow(props: { stop: TermsStop; onDone: (agreed: boo
   // exists for (their app was open when the Terms went live). The refusal proved the pages are on, so the window brings its own
   // links (platform-relative: every page that can open it is on the platform's own address) rather than rendering an empty box.
   const known = useLegalLinks();
-  const links = known ?? { termsHref: legalPagePath('terms'), privacyHref: legalPagePath('privacy'), termsVersion: props.stop.termsVersion };
+  // A door: the two things accepted here, never the Data Terms or the list (Board Ready 0a-5).
+  const links = known ?? {
+    termsHref: legalPagePath('terms'), privacyHref: legalPagePath('privacy'), termsVersion: props.stop.termsVersion,
+    dataTermsHref: null, subprocessorsHref: null,
+  };
   return <LegalLinksProvider links={links}><TermsAcceptWindowBody {...props} /></LegalLinksProvider>;
 }
 

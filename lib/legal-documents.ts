@@ -26,6 +26,7 @@
  *   · A significant change needs 30 days' notice (Terms §18), so the new version must be readable BEFORE it is current: an
  *     `upcoming` field, added at the first significant change — not now.
  *   · The payments terms (backlog L3) will add a third key, `'payments'`. No entry until it is written.
+ *   · The Data Terms and the list of companies are NOT keys here — see `LegalPageKey` below.
  *
  * No `server-only` import so the unit tests can load it; it reads no file itself.
  */
@@ -75,11 +76,40 @@ export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
   },
 };
 
+/*
+ * ── The two pages a person READS but never accepts (Board Ready 0a-5, built 2026-11-19) ──────────────────────────────────────
+ *   Kept OUT of `LegalDocKey` on purpose: that key is the doors' acceptance contract (each entry carries `current` and
+ *   `oldestAccepted`, and the registry test requires both once the pages are published). Neither page is ticked anywhere, and the
+ *   acceptance record keeps exactly two versions (`tests/unit/legal-data-terms-and-list.test.ts` asserts it).
+ *
+ *   · DATA TERMS for organizations (`docs/agents/legal/DATA_TERMS_ACCEPTANCE_NOTE.md`): PART OF the Terms, so a version exists
+ *     only at a Terms version date, and that Terms file must name and link it (T1). One frozen file per carrying Terms version,
+ *     `lib/legal-documents/data-terms/<terms-date>.md`; the page in force is the newest one at or before the Terms `current`
+ *     (a Terms version that leaves the Data Terms alone writes no new file).
+ *   · THE LIST of the companies that handle your information: a LIVING page that changes without a Terms version. Each change is
+ *     a new frozen copy, `lib/legal-documents/subprocessors/<date>.md`, that adds exactly one row, dated that day ("November 19,
+ *     2026"), to its "Changes to this list" table and changes no earlier row. The newest copy is the page; the older copies are
+ *     the record of what the list said on each date (no route serves them). A copy whose companies the Privacy Policy in force
+ *     does not name fails the build.
+ *   · Both lists are EMPTY until the Payments Terms day: both pages answer "not found" and no link to them renders.
+ *   · A frozen text starts at its first section: the page draws the title, so the file carries no title heading of its own.
+ */
+export type LegalPageKey = LegalDocKey | 'data-terms' | 'subprocessors';
+
+export const DATA_TERMS_VERSIONS: PublishedVersion[] = [];
+export const SUBPROCESSOR_LIST_VERSIONS: PublishedVersion[] = [];
+
+/** Is this one of the two documents a door records (rather than a page that is only read)? */
+export const isDoorDocument = (page: LegalPageKey): page is LegalDocKey => (LEGAL_DOC_KEYS as readonly string[]).includes(page);
+
+const versionsOf = (page: LegalPageKey): PublishedVersion[] =>
+  page === 'data-terms' ? DATA_TERMS_VERSIONS : page === 'subprocessors' ? SUBPROCESSOR_LIST_VERSIONS : LEGAL_DOCUMENTS[page].published;
+
 const VERSION_RE = /^\d{4}-\d{2}-\d{2}$/;
 export const isVersionDate = (v: string): boolean => VERSION_RE.test(v);
 
 /** Where a published version's frozen text lives (repo-relative). */
-export const publishedFilePath = (doc: LegalDocKey, version: string): string => `lib/legal-documents/${doc}/${version}.md`;
+export const publishedFilePath = (doc: LegalPageKey, version: string): string => `lib/legal-documents/${doc}/${version}.md`;
 
 type Env = Record<string, string | undefined>;
 
@@ -99,12 +129,35 @@ export function oldestAcceptedVersion(doc: LegalDocKey, env: Env = process.env):
   return null;
 }
 
-export const isPublishedVersion = (doc: LegalDocKey, version: string): boolean =>
-  LEGAL_DOCUMENTS[doc].published.some(p => p.version === version);
+export const isPublishedVersion = (doc: LegalPageKey, version: string): boolean =>
+  versionsOf(doc).some(p => p.version === version);
 
 /** Published versions, newest first. */
-export const publishedVersions = (doc: LegalDocKey): string[] =>
-  LEGAL_DOCUMENTS[doc].published.map(p => p.version).sort().reverse();
+export const publishedVersions = (doc: LegalPageKey): string[] =>
+  versionsOf(doc).map(p => p.version).sort().reverse();
+
+/**
+ * The version a page shows at its plain address, or null when it has no text yet. A door document: its `current`. The Data Terms:
+ * the newest version at or before the Terms' `current`. The list: its newest copy.
+ */
+export function pageVersionInForce(page: LegalPageKey): string | null {
+  if (isDoorDocument(page)) return LEGAL_DOCUMENTS[page].current;
+  const newestFirst = publishedVersions(page);
+  if (page === 'subprocessors') return newestFirst[0] ?? null;
+  const termsCurrent = LEGAL_DOCUMENTS.terms.current;
+  return termsCurrent === null ? null : newestFirst.find(v => v <= termsCurrent) ?? null;
+}
+
+/**
+ * Does this page answer at its address (and may a link to it render)? The door documents follow the switch alone (the dev preview
+ * shows their drafts); the two read-only pages also need a published text, and have no preview.
+ */
+export function legalPageLive(page: LegalPageKey, env: Env = process.env): boolean {
+  const mode = legalPagesMode(env);
+  if (mode === 'off') return false;
+  if (isDoorDocument(page)) return true;
+  return mode === 'published' && pageVersionInForce(page) !== null;
+}
 
 function dayBefore(ymd: string): string {
   const [y, m, d] = ymd.split('-').map(Number);
@@ -115,7 +168,7 @@ function dayBefore(ymd: string): string {
  * The span a version was in force, for the earlier-version line. `from` is its effective date; `to` is the LAST DAY it applied
  * (the day before the next version's effective date, so no day shows two versions) — null for the newest version.
  */
-export function versionSpan(doc: LegalDocKey, version: string): { from: string; to: string | null } | null {
+export function versionSpan(doc: LegalPageKey, version: string): { from: string; to: string | null } | null {
   const all = publishedVersions(doc); // newest first
   const i = all.indexOf(version);
   if (i < 0) return null;
