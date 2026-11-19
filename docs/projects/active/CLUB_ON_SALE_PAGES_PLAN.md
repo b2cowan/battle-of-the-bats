@@ -225,8 +225,8 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
 - **Screens:** `/start`, `/start/club`, `/start/league`, the account step, the name step, the plan step (new variant),
   the billing address screen, the payment return, Home's waiting card.
 - **Reviews:** `/review` high-risk tier (money, accounts, terms acceptance); `/legal` on the plan step's promises.
-- **Built 2026-11-19** (prompt `CLUB_ON_SALE_S2_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S2_WALK.html`, Owner QA Ledger §545). Not yet
-  committed (the owner's yes). What the build found and decided, against the plan above:
+- **Built 2026-11-19** (prompt `CLUB_ON_SALE_S2_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S2_WALK.html`, Owner QA Ledger §545). Committed
+  `d21eade14` 2026-11-19, with the simplify + docs pass below (walk §545 owed). What the build found and decided, against the plan above:
   - **`startup_tasks` does not exist** on either database (mig 026 was never applied; the code ignores the missing column, which
     is also why a cancelled checkout opened New tournament). The intended plan lives in a new column instead,
     **`organizations.start_plan`** (mig 508, owner ruling 2026-11-19 "New field on the organization"), written by
