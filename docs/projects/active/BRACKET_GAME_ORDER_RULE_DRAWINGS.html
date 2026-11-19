@@ -1,0 +1,711 @@
+<title>Game Order Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;600;650;700;750&display=swap">
+<style>
+/* Layout: the house drawings page. Sticky numbered tabs, a View row, one section at a time. Product specimens are the
+   Warm admin as shipped, drawn at true size (69 px an hour on the timeline, the game window 640 px, the message window
+   416 px, a phone 390 px) and fixed to that one theme; the document around them follows the reader's theme. */
+:root{
+  --doc-bg:#E9ECEE; --doc-panel:#FFFFFF; --doc-ink:#1C2126; --doc-soft:#4A535C; --doc-dim:#5F6870; --doc-line:#D3D8DD;
+  --doc-accent:#2F5D50; --doc-flag:#8A5300; --doc-flag-bg:#FFF3DC; --doc-good:#2C6A2A; --doc-good-bg:#E6F0E2;
+  --doc-bad:#9E3030; --doc-bad-bg:#F6E3E3;
+  --f-title:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --f-text:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+  /* The product's Warm admin, fixed. */
+  --w-paper:#F8F4ED; --w-card:#FFFFFF; --w-ink:#241E15; --w-soft:#4A4235; --w-dim:#615A54;
+  --w-line:rgba(70,55,30,.12); --w-strong:rgba(70,55,30,.20); --w-olive:#57651E; --w-olsoft:rgba(87,101,30,.10);
+  --w-lime:#D9F99D; --w-win:#34662A; --w-live:#B03A22; --w-amber:#835006; --w-input:#F8F4ED;
+  --w-shadow:0 1px 2px rgba(70,55,30,.05),0 6px 18px rgba(70,55,30,.07); --w-scrim:rgba(36,30,21,.34);
+  --w-good-ink:#2A5222; --w-warn-ink:#6B4105; --w-warn-bg:rgba(131,80,6,.08); --w-warn-bd:rgba(131,80,6,.3);
+  --w-bad-ink:#B03A22; --w-bad-bg:rgba(176,58,34,.08); --w-bad-bd:rgba(176,58,34,.3);
+  --div:hsl(14,60%,50%);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --doc-bg:#14181B; --doc-panel:#1D2226; --doc-ink:#E8ECEF; --doc-soft:#B9C1C8; --doc-dim:#9AA3AB; --doc-line:#323A40;
+  --doc-accent:#7FC2AE; --doc-flag:#F2B35C; --doc-flag-bg:#3A2C14; --doc-good:#8FD08A; --doc-good-bg:#1D3320;
+  --doc-bad:#EC8F8F; --doc-bad-bg:#3B2424; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doc-bg:#14181B; --doc-panel:#1D2226; --doc-ink:#E8ECEF; --doc-soft:#B9C1C8; --doc-dim:#9AA3AB; --doc-line:#323A40;
+  --doc-accent:#7FC2AE; --doc-flag:#F2B35C; --doc-flag-bg:#3A2C14; --doc-good:#8FD08A; --doc-good-bg:#1D3320;
+  --doc-bad:#EC8F8F; --doc-bad-bg:#3B2424; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--doc-bg);color:var(--doc-ink);font:15px/1.6 var(--f-text);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--doc-bg)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1400px;margin:0 auto}
+header.top{padding-block:20px 0}
+header.top h1{font:700 30px/1.1 var(--f-title);margin:0;text-wrap:balance}
+header.top p{margin:4px 0 0;color:var(--doc-dim);font-size:13px;max-width:96ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--doc-bg);border-bottom:1px solid var(--doc-line);margin-top:14px}
+nav.tabs .in{display:flex;overflow-x:auto;gap:2px}
+nav.tabs a{flex:none;padding:12px 12px 10px;color:var(--doc-soft);text-decoration:none;font-weight:600;font-size:14px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--doc-ink);border-bottom-color:var(--doc-accent)}
+nav.tabs a:focus-visible,button:focus-visible,label:focus-within{outline:2px solid var(--doc-accent);outline-offset:-2px}
+.viewrow{display:flex;align-items:center;gap:10px 16px;padding-block:10px;flex-wrap:wrap;font-size:13px;color:var(--doc-dim);min-height:44px}
+.vs{display:inline-flex;background:#FFFFFF;border:1px solid #D6D0C4;border-radius:999px;padding:3px}
+.vs button{font:600 13px/1 var(--f-text);border:0;background:none;color:#4E473D;border-radius:999px;padding:8px 14px;min-height:40px;cursor:pointer}
+.vs button[aria-pressed="true"]{background:#E8EDDC;color:#2F3A12}
+main{padding-block:8px 64px}
+h2{font:700 26px/1.15 var(--f-title);margin:0 0 6px;text-wrap:balance}
+h3{font:700 19px/1.2 var(--f-title);margin:26px 0 6px}
+.lede{max-width:84ch;color:var(--doc-soft);margin:0 0 16px}
+.lede b{color:var(--doc-ink)}
+.row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.spec{min-width:0;max-width:100%}
+.cap{font:600 12px/1.3 var(--f-text);color:var(--doc-dim);letter-spacing:.03em;text-transform:uppercase;margin:0 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.side{max-width:400px;min-width:0;font-size:13.5px;color:var(--doc-soft)}
+.side p{margin:0 0 10px}.side b{color:var(--doc-ink)}
+.tag{display:inline-block;font:700 11px/1 var(--f-text);letter-spacing:.05em;padding:4px 7px;border-radius:4px;text-transform:uppercase;cursor:pointer;border:0}
+.tag.new{background:var(--doc-good-bg);color:var(--doc-good)}.tag.re{background:var(--doc-flag-bg);color:var(--doc-flag)}.tag.un{background:var(--doc-line);color:var(--doc-soft)}.tag.td{background:var(--doc-bad-bg);color:var(--doc-bad)}
+.panel{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 18px;margin:0 0 16px;max-width:96ch}
+.panel ul{margin:6px 0 0;padding-left:20px}.panel li{margin:0 0 4px}
+.scroll{overflow-x:auto;max-width:100%;border:1px solid var(--doc-line);border-radius:10px}
+.mk{font:700 12px/1 var(--f-text);background:#D9480F;color:#FFFFFF;border:2px solid #FFFFFF;border-radius:999px;padding:6px 9px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35);white-space:nowrap;vertical-align:middle}
+.mk:hover{background:#B33A0A}
+.pmk{position:absolute;z-index:8}
+body.differs .today{display:none}
+body.differs .same{opacity:.25}
+dialog.note{max-width:min(520px,calc(100vw - 32px));border:1px solid var(--doc-line);border-radius:10px;background:var(--doc-panel);color:var(--doc-ink);padding:18px 20px}
+dialog.note::backdrop{background:rgba(0,0,0,.4)}
+dialog.note h4{margin:0 0 6px;font:700 18px/1.2 var(--f-title)}
+dialog.note p{margin:0 0 12px;font-size:14px;color:var(--doc-soft)}
+dialog.note button{font:600 14px/1 var(--f-text);min-height:44px;padding:0 16px;border-radius:6px;border:1px solid var(--doc-line);background:var(--doc-bg);color:var(--doc-ink);cursor:pointer}
+
+/* ── Product: the Warm admin as shipped ── */
+.k{font:400 14px/1.4 var(--f-text);color:var(--w-ink);position:relative;color-scheme:light}
+.k *{box-sizing:border-box}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.desk{width:1280px;background:var(--w-paper);display:flex;position:relative}
+.sbar{width:232px;flex:none;background:#EFE9DD;border-right:1px solid var(--w-line);display:flex;align-items:center;justify-content:center;color:var(--w-dim);font:500 12px/1.3 var(--f-text);writing-mode:vertical-rl;letter-spacing:.06em}
+.dmain{flex:1;min-width:0}
+.strip{height:48px;background:var(--w-card);border-bottom:1px solid var(--w-line);display:flex;align-items:center;padding:0 32px;gap:12px}
+.strip h1{font:700 16px/1 var(--f-text);margin:0;flex:1}
+.strip .dates{font:500 12px/1 var(--f-text);color:var(--w-dim);padding-left:12px;border-left:1px solid var(--w-line)}
+.body{padding:16px 32px 24px}
+.hdr{display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;gap:7px;font:650 14px/1.25 var(--f-text);border-radius:6px;min-height:34px;padding:.45rem .9rem;border:1px solid var(--w-strong);background:var(--w-card);color:var(--w-soft);white-space:nowrap}
+.btn.lime{background:var(--w-lime);border-color:transparent;color:var(--w-ink)}
+.btn.lime[aria-disabled="true"]{opacity:.5}
+.btn .sc{font:750 16px/1 var(--f-text);font-variant-numeric:tabular-nums;color:var(--w-olive)}
+.btn .sc.warn{color:var(--w-amber)}
+.cnt{font:700 10px/1 var(--f-data);color:var(--w-amber);background:rgba(131,80,6,.11);border:1px solid rgba(131,80,6,.32);border-radius:999px;min-width:1.15rem;height:1.15rem;display:inline-grid;place-items:center;padding:0 5px}
+.tbar{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.vpill{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:999px;border:1px solid color-mix(in srgb,var(--w-olive) 45%,transparent);background:var(--w-olsoft);color:var(--w-olive);font:700 12px/1 var(--f-text)}
+.scope{display:flex;align-items:center;gap:6px}
+.sarr{width:34px;height:34px;border:1px solid var(--w-strong);border-radius:8px;background:var(--w-card);display:grid;place-items:center;color:var(--w-soft)}
+.slab{min-width:13.75rem;text-align:center;font:700 14px/1 var(--f-text)}
+.spacer{flex:1}
+.srch{width:16rem;height:34px;border-radius:999px;background:var(--w-card);box-shadow:inset 0 0 0 1px var(--w-strong);display:flex;align-items:center;gap:8px;padding:0 .85rem;color:var(--w-dim);font-size:14px}
+.tool{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 .7rem;border-radius:8px;border:1px solid var(--w-strong);background:var(--w-card);color:var(--w-soft);font:650 14px/1 var(--f-text)}
+.fmenu{position:absolute;right:120px;top:154px;z-index:9;width:250px;background:var(--w-card);border:1px solid var(--w-line);border-radius:8px;box-shadow:var(--w-shadow);padding:6px 0;font-size:14px}
+.fmenu .gh{font:700 11px/1.3 var(--f-data);letter-spacing:.09em;text-transform:uppercase;color:var(--w-dim);padding:6px 12px 4px}
+.fmenu .fi{display:flex;align-items:center;gap:8px;padding:6px 12px;min-height:34px;color:var(--w-ink)}
+.fmenu .fi i{width:14px;height:14px;border:1.5px solid var(--w-strong);border-radius:3px;flex:none}
+.fmenu .fi small{margin-left:auto;font:700 10px/1 var(--f-data);color:var(--w-dim)}
+.fmenu .fi.new{background:var(--w-olsoft)}
+.npill{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:.4rem .5rem .4rem .8rem;border-radius:999px;border:1px solid var(--w-live);background:var(--w-card);box-shadow:var(--w-shadow);font:600 12px/1.35 var(--f-text);color:var(--w-live);max-width:560px}
+.npill .ic{width:14px;height:14px}
+.npill .x{width:28px;height:28px;display:grid;place-items:center;color:var(--w-dim);flex:none}
+.kdf .fs{flex:1;display:flex;gap:7px;align-items:flex-start;font-size:12px;line-height:1.45;color:var(--w-live);margin-right:8px}
+.kdf .fs .ic{width:15px;height:15px;margin-top:1px}
+/* the timeline */
+.tl{display:flex;width:max-content;background:var(--w-card);border:1px solid var(--w-line);border-radius:4px}
+.gut{width:62px;flex:none;border-right:1px solid var(--w-line)}
+.gutHead,.colHead{height:40px;border-bottom:1px solid var(--w-line);background:var(--w-card)}
+.gutBody,.colBody{position:relative}
+.hour{position:absolute;right:.4rem;transform:translateY(-50%);font:400 12px/1 var(--f-data);color:var(--w-dim);white-space:nowrap}
+.col{width:255px;flex:none;border-right:1px solid var(--w-line)}
+.colHead{display:flex;flex-direction:column;justify-content:center;padding:0 .6rem}
+.colVenue{font-size:12px;font-weight:650;color:var(--w-soft)}
+.gl{position:absolute;left:0;right:0;height:1px;background:var(--w-line)}
+.addCol{width:104px;flex:none;padding:8px 10px}
+.addBtn{display:flex;align-items:center;justify-content:center;height:34px;border:1px dashed var(--w-olive);border-radius:4px;font-size:11px;font-weight:700;color:var(--w-olive)}
+.nb{position:absolute;left:4px;right:4px;overflow:hidden;padding:6px 8px;border-radius:3px;border-left:3px solid var(--div);background:color-mix(in srgb,var(--div) 16%,#fff);box-shadow:var(--w-shadow);display:flex;flex-direction:column;gap:3px;z-index:2}
+.nb[data-done]{background:var(--w-card)}
+.nb[data-order]{outline:1.5px solid var(--w-live);background:color-mix(in srgb,var(--w-live) 14%,#fff)}
+.nb[data-ghost]{opacity:.35;box-shadow:none}
+.nb[data-drag]{box-shadow:0 8px 22px rgba(36,30,21,.28);z-index:5}
+.nTop{display:flex;align-items:center;gap:6px;min-height:18px}
+.nTime{font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nLbl{font-size:12px;color:var(--w-soft);line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nSides{display:flex;flex-direction:column;gap:1px;margin-top:2px}
+.nSide{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;line-height:18px}
+.nName{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nSide[data-slot] .nName{font-weight:400;font-style:italic;color:var(--w-soft)}
+.nScore{font-size:14px;font-weight:750;font-variant-numeric:tabular-nums}
+.nSide[data-won] .nScore{color:var(--w-win)}
+.chip{margin-left:auto;flex:none;font:700 10px/1.4 var(--f-data);letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:999px;border:1px solid var(--w-strong);color:var(--w-soft);background:var(--w-olsoft);white-space:nowrap}
+.chip.bad{color:var(--w-bad-ink);background:var(--w-bad-bg);border-color:var(--w-bad-bd)}
+.band{position:absolute;left:4px;right:4px;border:1.5px dashed var(--w-live);background:rgba(176,58,34,.14);border-radius:3px;z-index:1}
+.bandchip{position:absolute;left:8px;right:8px;z-index:6;background:var(--w-card);color:var(--w-bad-ink);font:650 12px/1.35 var(--f-text);padding:5px 8px;border-radius:4px;box-shadow:var(--w-shadow)}
+/* windows */
+.scrim{background:var(--w-scrim);padding:28px;display:grid;place-items:center}
+.kd{background:var(--w-card);border:1px solid rgba(87,101,30,.3);border-radius:12px;width:640px;position:relative;text-align:left}
+.kd.q{width:416px}.kd.wide{width:800px}
+.kdh{padding:1.1rem 1.5rem .75rem;border-bottom:1px solid var(--w-line);display:flex;gap:10px;align-items:flex-start}
+.kd.q .kdh{border-bottom:0;padding-bottom:.4rem}
+.kdh .tt{flex:1;min-width:0}
+.kdh .ey{font:700 11px/1.3 var(--f-data);letter-spacing:.09em;text-transform:uppercase;color:var(--w-dim);margin-bottom:3px}
+.kdh b{display:block;font:700 16px/1.3 var(--f-text)}
+.kdh small{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--w-dim);margin-top:2px}
+.hbtn{width:32px;height:32px;border-radius:7px;display:grid;place-items:center;color:var(--w-dim)}
+.hbtn.on{color:var(--w-olive)}
+.kdb{padding:.9rem 1.5rem 1rem;color:var(--w-soft);font-size:14px;line-height:1.5}
+.kd.q .kdb{padding:.6rem 1.5rem 1rem}
+.kd.q .kdb p{margin:0}
+.kdf{padding:.85rem 1.5rem;border-top:1px solid var(--w-line);display:flex;justify-content:flex-end;gap:8px}
+.callout{display:flex;gap:10px;background:var(--w-card);border:1px solid var(--w-line);border-left:3px solid var(--w-olive);border-radius:8px;padding:.8rem 1rem;margin:0 0 .9rem;color:var(--w-ink);font-size:14px;line-height:1.45}
+.callout .ic{margin-top:2px;color:var(--w-olive)}
+.callout.bad{border-left-color:var(--w-live)}.callout.bad .ic{color:var(--w-live)}
+.fl{display:block;font:650 12px/1.3 var(--f-text);color:var(--w-soft);margin-bottom:.3rem}
+.fld{margin-bottom:.9rem}
+.inp{height:36px;border:1px solid var(--w-strong);border-radius:6px;background:var(--w-input);padding:0 .65rem;display:flex;align-items:center;font-size:14px;color:var(--w-ink);gap:6px}
+.inp .ic{margin-left:auto;color:var(--w-dim)}
+.inp.ph{color:var(--w-dim)}
+.inp.err{border-color:var(--w-live)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.g3{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+.refuse{display:flex;gap:7px;margin:-6px 0 .9rem;font-size:12px;line-height:1.45;color:var(--w-live)}
+.refuse .ic{width:15px;height:15px;margin-top:1px}
+.refuse b{font-weight:650}
+.refuse.grey{color:var(--w-dim)}
+.pill{position:absolute;right:1.25rem;bottom:.75rem;min-height:36px;display:inline-flex;align-items:center;gap:6px;padding:.4rem .8rem;border-radius:999px;border:1px solid var(--w-line);background:var(--w-card);box-shadow:var(--w-shadow);font:600 12px/1.3 var(--f-text);color:var(--w-dim)}
+.pill.bad{border-color:var(--w-live);color:var(--w-live)}
+.pill u{font-weight:700}
+.sec{padding:.9rem 0;border-top:1px solid var(--w-line)}
+.sec:first-child{border-top:0;padding-top:0}
+.sec h5{margin:0 0 .5rem;font:700 16px/1.3 var(--f-text);color:var(--w-ink)}
+.fact{display:grid;grid-template-columns:110px 1fr;padding:.35rem 0;font-size:14px}
+.fact span{font-size:12px;color:var(--w-dim)}
+.fact b{font-weight:600;color:var(--w-ink)}
+.door{color:var(--w-olive);font-weight:650}
+.issue{display:flex;gap:6px;align-items:flex-start;padding:.34rem .5rem;border-radius:4px;font-size:12px;line-height:1.35;color:var(--w-bad-ink);background:rgba(176,58,34,.08);border:1px solid rgba(176,58,34,.3);margin-bottom:6px}
+.issue .ic{width:14px;height:14px;margin-top:1px}
+.issue b{color:var(--w-ink)}
+.issue .door{margin-left:auto;white-space:nowrap}
+.issue.ok{color:var(--w-good-ink);background:rgba(52,102,42,.08);border-color:rgba(52,102,42,.28)}
+.hscore{display:flex;align-items:baseline;gap:6px;margin-bottom:10px}
+.hscore b{font:750 28px/1 var(--f-text);color:var(--w-amber)}
+.hscore b.ok{color:var(--w-olive)}
+.hscore span{font:600 14px/1 var(--f-text);color:var(--w-dim)}
+.hscore em{font-style:normal;font-size:12px;color:var(--w-dim);margin-left:8px}
+/* bracket editor */
+.bbar{display:flex;align-items:center;gap:10px;background:var(--w-card);border-bottom:1px solid var(--w-line);padding:.85rem 1.25rem}
+.bbar b{font:700 16px/1 var(--f-text)}.bbar b span{font-weight:650;color:var(--w-soft)}
+.bbar .oi{display:inline-flex;align-items:center;gap:5px;font:700 12px/1 var(--f-text);color:var(--w-bad-ink)}
+.bbar .oi .ic{width:12px;height:12px}
+.bbanner{background:rgba(176,58,34,.05);border:1px solid rgba(176,58,34,.35);border-radius:8px;padding:.7rem .9rem;margin:1rem 1.25rem}
+.bbanner h6{display:flex;align-items:center;gap:6px;margin:0 0 4px;font:700 13px/1.3 var(--f-text);color:var(--w-bad-ink)}
+.bbanner h6 .ic{width:14px;height:14px}
+.bbanner ul{margin:0;padding-left:1.1rem;font-size:12.5px;line-height:1.5;color:var(--w-dim)}
+.bbanner ul+h6{margin-top:10px}
+.bbanner.quiet{background:var(--w-card);border-color:var(--w-strong)}
+.bbanner.quiet h6{color:var(--w-soft)}
+/* phone */
+.phone{width:390px;background:var(--w-paper);border:1px solid var(--doc-line);border-radius:22px;overflow:hidden;position:relative}
+.phstrip{height:52px;background:var(--w-card);border-bottom:1px solid var(--w-line);display:flex;align-items:center;padding:0 8px 0 16px;gap:8px}
+.phstrip h1{flex:1;margin:0;font:700 16px/1 var(--f-text)}
+.sq{width:44px;height:44px;display:grid;place-items:center;color:var(--w-soft);position:relative;flex:none}
+.sq .badge{position:absolute;top:6px;right:5px;font:700 10px/1 var(--f-data);background:var(--w-amber);color:#fff;border-radius:999px;padding:2px 5px}
+.phbody{padding:12px 16px 16px}
+.phtb{display:flex;align-items:center;gap:4px;margin-bottom:10px}
+.phtb .vpill{height:44px;font-size:14px}
+.prow{background:var(--w-card);border:1px solid var(--w-line);border-radius:8px;overflow:hidden}
+.prow>div{padding:.65rem .85rem;border-top:1px solid var(--w-line);display:flex;flex-direction:column;gap:2px}
+.prow>div:first-child{border-top:0}
+.prow small{font-size:12px;color:var(--w-dim)}
+.prow .ln{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.prow .ln i{font-style:italic;font-weight:400;color:var(--w-soft)}
+.prow .ln .chip{margin-left:auto}
+.prow>div{position:relative;padding-right:2.2rem!important}
+.prow>div::after{content:"";position:absolute;right:14px;top:50%;width:8px;height:8px;border:solid var(--w-dim);border-width:2px 2px 0 0;transform:translateY(-50%) rotate(45deg)}
+.sheet{background:var(--w-card);border-radius:18px 18px 0 0;border:1px solid var(--w-line);border-bottom:0;box-shadow:var(--w-shadow)}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--w-strong);margin:8px auto 0}
+.shh{display:flex;align-items:flex-start;padding:.5rem .375rem .75rem 1.25rem;border-bottom:1px solid var(--w-line)}
+.shh div{flex:1;min-width:0}.shh b{display:block;font:700 16px/1.3 var(--f-text)}.shh small{font-size:12px;color:var(--w-dim)}
+.shb{padding:.75rem 1.25rem}
+.shb .inp{height:44px}
+.shf{display:flex;gap:8px;padding:.75rem 1.25rem 1rem;border-top:1px solid var(--w-line)}
+.shf .btn{min-height:44px;justify-content:center}
+.shf .btn.lime{flex:1}
+.words{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--doc-panel)}
+.words th,.words td{border-bottom:1px solid var(--doc-line);padding:9px 12px;text-align:left;vertical-align:top}
+.words th{font:700 13px/1.2 var(--f-title);text-transform:uppercase;letter-spacing:.05em;color:var(--doc-dim)}
+.words td:first-child{width:22%;color:var(--doc-soft)}
+.words td:nth-child(2){width:18%;color:var(--doc-dim)}
+.words b{color:var(--doc-ink)}
+/* asks */
+.ask{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 18px;margin:0 0 14px;max-width:96ch}
+.ask.hl{outline:3px solid #D9480F}
+.ask h3{margin:0 0 4px}
+.ask .why{margin:0 0 10px;color:var(--doc-soft);font-size:14px}
+.ask label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:6px;cursor:pointer;min-height:44px;font-size:14px}
+.ask label:hover{background:var(--doc-bg)}
+.ask input[type=radio]{margin-top:4px;flex:none}
+.ask .rec{font-weight:700;color:var(--doc-good)}
+.ask textarea{width:100%;margin-top:8px;min-height:44px;font:14px/1.4 var(--f-text);padding:8px 10px;border:1px solid var(--doc-line);border-radius:6px;background:var(--doc-bg);color:var(--doc-ink)}
+.copybar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:6px 0 10px}
+.copybtn{font:700 14px/1 var(--f-text);min-height:44px;padding:0 18px;border-radius:6px;border:0;background:var(--doc-accent);color:var(--doc-panel);cursor:pointer}
+#paste{white-space:pre-wrap;background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:8px;padding:12px;font-size:13px;max-width:96ch}
+#paste:empty{display:none}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-act" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/><path d="M12 15v7"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-rain" viewBox="0 0 24 24"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M16 14v6M8 14v6M12 16v6"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Game order rule · drawings</h1>
+    <p>Public tournament pages, Stage 9. A playoff game can’t be saved to start before a game it waits for. Ruled 2026-10-29: <b>block, not warn</b>, on the server, from every door. Drawn 2026-11-18 on an example: U13 Boys playoffs, Sunday, Nov 22, 90-minute games, in the shipped Warm admin. Round 1, after the design review. <b>Ruled 2026-11-18: all twelve asks as recommended.</b> Nothing is built; the investigation is in the plan’s Findings.</p>
+  </header>
+  <nav class="tabs" aria-label="Sections"><div class="in">
+    <a href="#open">1 · On open</a>
+    <a href="#move">2 · Moving a game</a>
+    <a href="#window">3 · The game window</a>
+    <a href="#bracket">4 · Bracket editor</a>
+    <a href="#rain">5 · Rain delay</a>
+    <a href="#words">6 · Every refusal, in words</a>
+    <a href="#asks">7 · Asks</a>
+  </div></nav>
+  <div class="viewrow">
+    <span id="vlab">View</span>
+    <span class="vs" id="vsw" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></span>
+  </div>
+
+  <main>
+    <!-- 1 -->
+    <section id="open" data-tab data-view="1" hidden>
+      <h2>1 · A schedule that is already out of order, when it opens</h2>
+      <p class="lede">This is the case that started it. Semifinal 2 moved to 3:00 p.m. and the Final stayed at 2:15 p.m., so the Final starts while Semifinal 2 is still playing. <b>Today nothing on this screen says so.</b> The health score counts field clashes only, and the problem shows up only inside the bracket editor. In the drawing, the pair is drawn the way a double-booked pair already is: <b>both games</b> get the red outline and wear a red <b>Out of order</b> chip in the chip’s one place <button class="mk" data-ask="A5">A5</button>. The chip’s words tell it apart from a field clash, so there is no new fill and no legend to learn. The health button counts it, its window names both games, and the Filter’s Conflicts group gains an <b>Out of order</b> row. Nothing is locked: the organizer fixes it by moving either game <button class="mk" data-ask="A2">A2</button>.</p>
+      <div class="row today"><div class="spec"><p class="cap">Today · desk 1280 <button class="tag un" data-note="un">Unchanged</button></p><div class="scroll"><div class="k" id="d-today"></div></div></div></div>
+      <div class="row" style="margin-top:22px"><div class="spec"><p class="cap">Drawn · desk 1280, the Filter open <button class="tag new" data-note="chip">New</button> the chip on both games <button class="tag new" data-note="filter">New</button> the Filter row <button class="tag re" data-note="health">Restyled</button> the health count</p><div class="scroll"><div class="k" id="d-drawn"></div></div></div></div>
+      <h3>The health window, opened from the button</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · the health window <button class="tag new" data-note="healthrow">New</button> issue row</p><div class="scroll" style="border-radius:12px"><div class="k scrim" id="d-health"></div></div></div>
+        <div class="side"><p><b>One new kind of issue,</b> drawn like the field-clash row: the shield, the bold title, then one plain sentence naming both games and both times. <b>Show them ›</b> closes the window and filters the schedule to the two games, as it already does for a clash.</p><p><b>It costs the score points,</b> like a double-booking. The exact deduction is a build detail. It should weigh as much as an overlap, because both are impossible on the day.</p><p>The window’s four figure tiles are unchanged and not drawn.</p></div>
+      </div>
+      <h3>On a phone</h3>
+      <div class="row">
+        <div class="spec today"><p class="cap">Today · phone 390, the day list</p><div class="k phone" id="p-today"></div></div>
+        <div class="spec"><p class="cap">Drawn · phone 390 <button class="tag new" data-note="chip">New</button> the chip</p><div class="k phone" id="p-drawn"></div></div>
+        <div class="side"><p><b>The day list carries the same chip on both games,</b> beside the title and next to the corner chevron, the place a Double-booked chip takes. The health symbol counts it and takes the score’s amber. Tapping a row opens the game window, which says what is wrong from that game’s side (tab 3).</p></div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="move" data-tab data-view="1" hidden>
+      <h2>2 · Moving a game on the timeline</h2>
+      <p class="lede">The semifinals are at 11:30 a.m. and end at 1:00 p.m. The Final is at 3:00 p.m. <b>Today,</b> the check runs only after the drop, it compares start times only, and it lives only in the browser. A Final dropped at 12:30 p.m. is <b>saved</b>, even though both semifinals are still playing. A drop at 11:00 a.m. lands, then snaps back with a message window. <b>In the drawing,</b> a refused spot turns red while the organizer is still dragging, the way a taken field already does, so nothing lands and nothing snaps back <button class="mk" data-ask="A4">A4</button>. “Before” means before the earlier game <b>ends</b> <button class="mk" data-ask="A1">A1</button>.</p>
+      <div class="row">
+        <div class="spec today"><p class="cap">Today · a Final dropped at 11:00 a.m., after the drop</p><div class="scroll" style="border-radius:12px"><div class="k" id="m-today" style="background:var(--w-paper)"></div></div></div>
+        <div class="spec"><p class="cap">Drawn · dragging the Final to 12:30 p.m. <button class="tag new" data-note="band">New</button> the order reason</p><div class="scroll"><div class="k" id="m-drawn1" style="background:var(--w-paper);padding:12px"></div></div></div>
+      </div>
+      <h3>Moving a Semifinal later than the Final allows</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · dragging Semifinal 1 to 2:00 p.m. <button class="tag new" data-note="band">New</button></p><div class="scroll"><div class="k" id="m-drawn2" style="background:var(--w-paper);padding:12px"></div></div></div>
+        <div class="side"><p><b>Ruled: block.</b> Semifinal 1 at 2:00 p.m. would still be playing at 3:00 p.m. when the Final starts. The spot says so and names the Final.</p><p><b>“Also move the Final”</b> is a convenience to price separately (plan). It is not drawn and not in this stage. The rain delay already moves a whole day together.</p><p><b>A drop that slips past the screen</b> (a second admin moved a game a moment ago, or the screen is stale) is refused by the server. The game snaps back, and a notice that stays until it is closed says why (tab 6). It replaces today’s message window, which the One Window ruling retires.</p></div>
+      </div>
+      <h3>The phone’s move sheet</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · phone 390, the move sheet <button class="tag new" data-note="line">New</button> the red line</p><div class="k phone" id="m-sheet" style="background:var(--w-scrim);padding-top:150px"></div></div>
+        <div class="side"><p><b>The red line sits under Day and Start,</b> because the time is what is wrong. It has the field-clash line’s look: the ban symbol, the bold lead, then the way out. <b>Move</b> stays faded until the time works.</p><p><b>Today</b> the sheet says nothing. Tapping Move saves a 12:30 p.m. Final without a word, and an 11:00 a.m. one comes back as a message window.</p></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="window" data-tab data-view="1" hidden>
+      <h2>3 · The game window: edit, add, and read</h2>
+      <p class="lede">The window keeps the red line it already uses when a field is taken: <b>Ban</b> symbol, bold lead, the way out, under the field that is wrong. For an order problem, that is the time fields, or the length on the earlier game. <b>✓ holds the change</b> and the save pill says why, as it does for a taken field. <b>Today</b> the order refusal arrives only on save, as an error in the save pill with Retry, and Add game shows it in small grey type at the foot.</p>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · editing the Final’s start <button class="tag new" data-note="line">New</button> the line <button class="tag re" data-note="pill">Restyled</button> the pill’s words</p><div class="scroll" style="border-radius:12px"><div class="k scrim" id="w-edit"></div></div></div>
+        <div class="spec today"><p class="cap">Today · the same save</p><div class="scroll" style="border-radius:12px"><div class="k scrim" id="w-edit-today"></div></div></div>
+      </div>
+      <h3>The earlier game’s length</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · Semifinal 2 made 120 minutes <button class="tag new" data-note="line">New</button></p><div class="scroll" style="border-radius:12px"><div class="k scrim" id="w-length"></div></div></div>
+        <div class="side"><p><b>A different moment of the same day:</b> here Semifinal 2 starts at 1:30 p.m. and the Final at 3:00 p.m.</p><p><b>A longer Semifinal can push its end past the Final’s start.</b> The line goes under Length and names the Final. It needs <button class="mk" data-ask="A1">A1</button> option a. If “after” only means a later start, length never matters and this case doesn’t exist.</p><p><b>The division’s default length</b> can do the same to every game that uses it. That is the division’s own window, so its refusal is the line beside its Save (tab 6) <button class="mk" data-ask="A8">A8</button>.</p></div>
+      </div>
+      <h3>Adding a playoff game</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · Add game, a 3rd Place game at 12:30 p.m. <button class="tag re" data-note="add">Restyled</button> the grey foot line becomes the red line</p><div class="scroll" style="border-radius:12px"><div class="k scrim" id="w-add"></div></div></div>
+        <div class="side"><p><b>The game waits on a <i>loser</i></b> here, and the rule treats it the same way. The pickers already list “Semifinal 1 loser”.</p><p><b>Drawn as if U13 Boys had Gold and Silver tiers.</b> A division with several brackets (tiers, or one bracket per pool) has a Semifinal 1 in each. Today the picker lists “Semifinal 1 winner” once, and the new game belongs to no bracket. In the drawing the picker names the bracket, “Gold · Semifinal 1 winner”, and the new game joins it <button class="mk" data-ask="A9">A9</button>.</p></div>
+      </div>
+      <h3>Reading a game that is already out of order</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · the Final, opened from tab 1 <button class="tag new" data-note="read">New</button> the line in the read view</p><div class="scroll" style="border-radius:12px"><div class="k scrim" id="w-read"></div></div></div>
+        <div class="side"><p><b>The window that opens from the red block says what is wrong</b> before the organizer edits anything. The same line, under When. Semifinal 2’s window says it from its own side: “The Final starts at 2:15 p.m., before this game ends” (tab 6). Under the recommended <button class="mk" data-ask="A2">A2</button>, a save that leaves it wrong but no worse (a note, a field change, a time that is still too early) goes through. Only a save that creates a new problem is refused.</p></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="bracket" data-tab data-view="1" hidden>
+      <h2>4 · The bracket editor</h2>
+      <p class="lede">The editor already shows a red banner and refuses Save. Two things change. Its list uses the round names and times instead of the internal codes (“SF1 must start after QF2…”). And under the recommended <button class="mk" data-ask="A3">A3</button>, it follows the same rule as everywhere else: a problem this edit makes stops the save, while one already saved this way is listed but doesn’t. <b>Today</b> an old problem in the Silver tier blocks saving a fix to the Gold tier.</p>
+      <div class="row">
+        <div class="spec today"><p class="cap">Today · the bar and banner</p><div class="scroll" style="border-radius:12px;width:760px"><div class="k" id="b-today" style="background:var(--w-paper);padding-bottom:6px"></div></div></div>
+        <div class="spec"><p class="cap">Drawn <button class="tag re" data-note="bwords">Restyled</button> the words <button class="tag new" data-note="bsplit">New</button> “Already saved this way”</p><div class="scroll" style="border-radius:12px;width:760px"><div class="k" id="b-drawn" style="background:var(--w-paper);padding-bottom:6px"></div></div></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="rain" data-tab data-view="1" hidden>
+      <h2>5 · Rain delay</h2>
+      <p class="lede">The rain delay is the one door that already refuses on the server. Two things change. Its message names the games instead of “a playoff game … its feeders”. And it judges games in their own division and bracket. <b>Today</b> it compares every division at once by code, so a U11 Semifinal 1 can be read as the U13 one. It already refuses only problems the delay itself makes.</p>
+      <div class="row">
+        <div class="spec today"><p class="cap">Today · the callout</p><div class="k" id="r-today" style="width:640px;background:var(--w-card);padding:16px 24px;border:1px solid var(--doc-line);border-radius:10px"></div></div>
+        <div class="spec"><p class="cap">Drawn <button class="tag re" data-note="rain">Restyled</button> the words</p><div class="k" id="r-drawn" style="width:640px;background:var(--w-card);padding:16px 24px;border:1px solid var(--doc-line);border-radius:10px"></div></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="words" data-tab hidden>
+      <h2>6 · Every refusal, in words</h2>
+      <p class="lede">One rule, the same sentence at every door. Each sentence names both games, gives the time that matters, and offers the way out. Times are written the house way (3:00 p.m.). The game names are the admin’s round names (Final, Semifinal 2, 3rd Place). A window with no field to put the line under puts it beside its button, as the One Window ruling has every window do. A refusal outside any window becomes a notice that stays until it is closed. Both are drawn below the table <button class="mk" data-ask="A10">A10</button>.</p>
+      <div class="scroll" style="border:0"><table class="words" id="wordtable"></table></div>
+      <h3>Beside the button, in a window with no field for it</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · the division’s game length changed to 120 min <button class="tag new" data-note="msg">New</button> the line beside Save</p><div class="scroll" style="border-radius:12px"><div class="k scrim" id="msg"></div></div></div>
+        <div class="side"><p><b>The window’s foot holds the sentence at its left and the buttons at its right,</b> the slot every window has. Save fades until the change works. The same shape serves the playoff generator’s stale draft and putting a cancelled game back.</p><p><b>Nothing is told to families when a save is refused.</b> The refusal comes before anything is written, so no change notice goes out. A Final whose teams are still “Semifinal 1 winner” has nobody to tell anyway.</p></div>
+      </div>
+      <h3>A notice that stays, for a refusal outside any window</h3>
+      <div class="row">
+        <div class="spec"><p class="cap">Drawn · a drop a second admin’s change made impossible <button class="tag new" data-note="npill">New</button> the notice’s error face</p><div class="k" id="npill" style="background:var(--w-paper);padding:20px;border:1px solid var(--doc-line);border-radius:10px"></div></div>
+        <div class="side"><p><b>The game snaps back</b> and the move notice, the pill that usually says “Moved to 5:30 p.m.” with Undo, says why instead. It is red and has a close button. It stays until closed, because an error stays until read. The server writes the sentence, so it reads the same as the screen’s own.</p></div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="asks" data-tab hidden>
+      <h2>7 · Asks</h2>
+      <div class="panel">
+        <b>Settled, not asks</b> (owner ruling 2026-10-29, and what the investigation found):
+        <ul>
+          <li><b>Block, not warn,</b> and on the server, so a second admin or a stale screen is refused too. Every door in the plan’s table goes through the one check.</li>
+          <li>The refusal names both games and the time that matters, the same sentence at every door (tab 6).</li>
+          <li>Moving a Semifinal later is blocked. “Also move the Final” is a separate, separately priced convenience, not in this stage.</li>
+          <li>A game and the game it waits for can’t start at the same time. Every existing check already refuses that, and option a of A1 keeps it.</li>
+          <li>The playoff generator already drafts in order, so a fresh draft is never refused. Only a draft made before someone else changed the schedule can be.</li>
+          <li>Round-robin-only tournaments see no change.</li>
+          <li>Two defects the investigation found are fixed by building this: the rain delay comparing across divisions, and the game window comparing across tiers (tab 5).</li>
+        </ul>
+      </div>
+      <p class="lede">The plan’s five open questions are A1 (equal times and minimum gap together), A2 (existing bad data), A4 (refusing as you drag), A7 (pool play) and the settled list above (moving a Semifinal, auto-scheduling, published schedules). The drawing added the rest. The first option of each is the recommendation. Pick one, add a note if you like, then copy your answers back into the chat.</p>
+      <div id="asklist"></div>
+      <div class="copybar"><button type="button" class="copybtn" id="copybtn">Copy my answers</button><span id="copied" role="status"></span></div>
+      <pre id="paste"></pre>
+    </section>
+  </main>
+</div>
+
+<dialog class="note" id="notedlg"><h4 id="nt"></h4><p id="nb"></p><button type="button" id="nclose">Close</button></dialog>
+
+<script>
+(function(){
+  var I=function(n,c){return '<svg class="ic'+(c?' '+c:'')+'" aria-hidden="true"><use href="#i-'+n+'"/></svg>';};
+  var MK=function(a){return '<button class="mk" type="button" data-ask="'+a+'">'+a+'</button>';};
+  var PX=1.15; // px a minute, as shipped (69 px an hour)
+
+  // ── the timeline ──
+  function side(name,score,flag){return '<div class="nSide"'+(flag?' data-'+flag:'')+'><span class="nName">'+name+'</span><span class="nScore">'+(score||'')+'</span></div>';}
+  function block(g,start){
+    var top=(g.at-start)*PX, h=(g.len||90)*PX;
+    var attrs=(g.done?' data-done':'')+(g.order?' data-order':'')+(g.ghost?' data-ghost':'')+(g.drag?' data-drag':'');
+    return '<div class="nb'+(g.order?'':' same')+'"'+attrs+' style="top:'+top+'px;height:'+h+'px"><div class="nTop"><span class="nTime">'+g.t+'</span>'
+      +(g.chip?'<span class="chip '+(g.chipc||'')+'">'+g.chip+'</span>':'')+'</div><div class="nLbl">U13 Boys · '+g.r+'</div><div class="nSides">'+g.s.map(function(x){return side(x[0],x[1],x[2]);}).join('')+'</div></div>';
+  }
+  function fmtHour(h){return (h>12?h-12:h)+(h>=12?' p.m.':' a.m.');}
+  function timeline(o){
+    var start=o.from*60, mins=(o.to-o.from)*60, H=mins*PX, h='<div class="tl">';
+    h+='<div class="gut"><div class="gutHead"></div><div class="gutBody" style="height:'+H+'px">';
+    for(var x=o.from;x<o.to;x++){var t=(x-o.from)*69;h+='<span class="hour" style="top:'+(t===0?8:t)+'px">'+fmtHour(x)+'</span>';}
+    h+='</div></div>';
+    o.cols.forEach(function(c){
+      h+='<div class="col"><div class="colHead"><span class="colVenue">'+c.name+'</span></div><div class="colBody" style="height:'+H+'px">';
+      for(var y=1;y<(o.to-o.from);y++)h+='<div class="gl" style="top:'+(y*69)+'px"></div>';
+      (c.bands||[]).forEach(function(b){var tp=(b.at-start)*PX;h+='<div class="band" style="top:'+tp+'px;height:'+(90*PX)+'px"></div><div class="bandchip" style="top:'+(tp+(90*PX)+6)+'px">'+b.words+'</div>';});
+      (c.games||[]).forEach(function(g){h+=block(g,start);});
+      (c.marks||[]).forEach(function(m){h+='<span class="pmk" style="top:'+((m.at-start)*PX+m.dy)+'px;right:'+m.right+'px">'+MK(m.a)+'</span>';});
+      h+='</div></div>';
+    });
+    if(o.add)h+='<div class="addCol"><div class="addBtn">+ Field</div></div>';
+    return h+'</div>';
+  }
+  var M=function(h,m){return h*60+(m||0);};
+  var W1=['Semifinal 1 winner','','slot'], W2=['Semifinal 2 winner','','slot'];
+  function dayCols(drawn){
+    return [
+      {name:'Lions Diamond',games:[
+        {at:M(9),t:'9:00 a.m.',r:'Quarterfinal 1',done:1,s:[['Aces U13 Boys','6','won'],['Storm U13 Boys','3']]},
+        {at:M(11,30),t:'11:30 a.m.',r:'Semifinal 1',s:[['Aces U13 Boys'],['Quarterfinal 2 winner','','slot']]},
+        {at:M(14,15),t:'2:15 p.m.',r:'Final',order:drawn,chip:drawn?'Out of order':'',chipc:'bad',s:[W1,W2]}
+      ],marks:drawn?[{at:M(14,15),dy:-14,right:6,a:'A5'}]:[]},
+      {name:'Maple Field 1',games:[
+        {at:M(9),t:'9:00 a.m.',r:'Quarterfinal 2',done:1,s:[['Falcons U13 Boys','4','won'],['Freeze U13 Boys','2']]},
+        {at:M(15),t:'3:00 p.m.',r:'Semifinal 2',order:drawn,chip:drawn?'Out of order':'',chipc:'bad',s:[['Quarterfinal 3 winner','','slot'],['Quarterfinal 4 winner','','slot']]}
+      ]},
+      {name:'Maple Field 2',games:[
+        {at:M(9),t:'9:00 a.m.',r:'Quarterfinal 3',chip:'Needs a score',s:[['Comets U13 Boys'],['Ravens U13 Boys']]},
+        {at:M(10,40),t:'10:40 a.m.',r:'Quarterfinal 4',s:[['Cyclones U13 Boys'],['North Stars U13 Boys']]}
+      ]}
+    ];
+  }
+  function deskFrame(drawn,extra){
+    var score=drawn?'<span class="sc warn">84</span>':'<span class="sc">92</span>';
+    var h='<div class="desk"><div class="sbar same">Admin sidebar · unchanged</div><div class="dmain">'
+      +'<div class="strip same"><h1>Schedule</h1><span class="dates">Nov 21–23 · Live</span></div><div class="body">'
+      +'<div class="hdr"><span class="btn">'+score+'Schedule health'+(drawn?'<span class="cnt">1</span>':'')+'</span>'+(drawn?MK('A5'):'')
+      +'<span class="btn same">'+I('dl')+'Export</span><span class="btn lime same">'+I('plus')+'Add game</span></div>'
+      +'<div class="tbar same"><span class="vpill">'+I('clock')+'Timeline'+I('down')+'</span><span class="scope"><span class="sarr">'+I('left')+'</span><span class="slab">Sun, Nov 22</span><span class="sarr">'+I('right')+'</span></span><span class="spacer"></span>'
+      +'<span class="srch">'+I('search')+'Search teams…</span><span class="tool">'+I('sliders')+'Filter'+I('down')+'</span><span class="tool">Tools'+I('down')+'</span></div>';
+    h+=timeline({from:9,to:17,cols:dayCols(drawn),add:true});
+    h+='</div></div>';
+    if(drawn)h+='<div class="fmenu"><div class="gh">Conflicts</div><div class="fi"><i></i>Tight turnover</div><div class="fi"><i></i>Double-booked</div><div class="fi new"><i></i>Out of order<small>2</small></div><div class="gh same">Division</div><div class="fi same"><i></i>U11 Girls</div><div class="fi same"><i></i>U13 Boys</div></div>';
+    return h+(extra||'')+'</div>';
+  }
+  document.getElementById('d-today').innerHTML=deskFrame(false);
+  document.getElementById('d-drawn').innerHTML=deskFrame(true);
+
+  document.getElementById('d-health').innerHTML='<div class="kd wide"><div class="kdh"><div class="tt"><div class="ey">Riverdale Fall Classic 2026</div><b>Schedule health</b></div><span class="hbtn">'+I('x')+'</span></div>'
+    +'<div class="kdb"><div class="hscore"><b>84</b><span>/100</span><em>Review · 1 issue · U13 Boys</em></div>'
+    +'<div class="issue">'+I('shield')+'<span><b>Playoff games out of order</b> The Final starts at 2:15 p.m., before Semifinal 2 ends at 4:30 p.m.</span><span class="door">Show them ›</span></div></div></div>';
+
+  function phone(drawn){
+    var row=function(cap,a,b,chip,ord){return '<div'+(ord?' data-order':'')+'><small>'+cap+'</small><span class="ln">'+a+' <span style="font-weight:400;color:#615A54">vs</span> '+b+(chip?'<span class="chip bad">'+chip+'</span>':'')+'</span></div>';};
+    return '<div class="phstrip same"><h1>Schedule</h1><span class="sq" style="color:'+(drawn?'#835006':'#57651E')+'">'+I('act')+(drawn?'<span class="badge">1</span>':'')+'</span><span class="sq">'+I('plus')+'</span></div>'
+      +'<div class="phbody"><div class="phtb same"><span class="vpill">'+I('clock')+'Day'+I('down')+'</span><span class="spacer"></span><span class="sq">'+I('search')+'</span><span class="sq">'+I('sliders')+'</span><span class="sq">'+I('more')+'</span></div>'
+      +'<div class="prow">'
+      +'<div class="same"><small>11:30 a.m. · Lions Diamond · U13 Boys · Semifinal</small><span class="ln">Aces U13 Boys <span style="font-weight:400;color:#615A54">vs</span> <i>Quarterfinal 2 winner</i></span></div>'
+      +row('2:15 p.m. · Lions Diamond · U13 Boys · Final','<i>Semifinal 1 winner</i>','<i>Semifinal 2 winner</i>',drawn?'Out of order':'',drawn)
+      +row('3:00 p.m. · Maple Field 1 · U13 Boys · Semifinal','<i>Quarterfinal 3 winner</i>','<i>Quarterfinal 4 winner</i>',drawn?'Out of order':'',drawn)
+      +'</div></div>';
+  }
+  document.getElementById('p-today').innerHTML=phone(false);
+  document.getElementById('p-drawn').innerHTML=phone(true);
+
+  // ── tab 2 ──
+  var moveCols=function(which){
+    var sf1={at:M(11,30),t:'11:30 a.m.',r:'Semifinal 1',s:[['Aces U13 Boys'],['Falcons U13 Boys']]};
+    var sf2={at:M(11,30),t:'11:30 a.m.',r:'Semifinal 2',s:[['Quarterfinal 3 winner','','slot'],['Quarterfinal 4 winner','','slot']]};
+    var fin={at:M(15),t:'3:00 p.m.',r:'Final',s:[W1,W2]};
+    if(which===1){
+      return [{name:'Lions Diamond',games:[sf1,Object.assign({},fin,{ghost:1})]},{name:'Maple Field 1',games:[sf2]},
+        {name:'Maple Field 2',bands:[{at:M(12,30),words:'The semifinals run until 1:00 p.m., so the Final can’t go here'}],games:[Object.assign({},fin,{at:M(12,30),t:'12:30 p.m.',drag:1})],marks:[{at:M(12,30),dy:-14,right:6,a:'A1'}]}];
+    }
+    return [{name:'Lions Diamond',games:[Object.assign({},sf1,{ghost:1}),fin]},{name:'Maple Field 1',games:[sf2]},
+      {name:'Maple Field 2',bands:[{at:M(14),words:'The Final starts at 3:00 p.m., so Semifinal 1 can’t go here'}],games:[Object.assign({},sf1,{at:M(14),t:'2:00 p.m.',drag:1})]}];
+  };
+  document.getElementById('m-drawn1').innerHTML=timeline({from:11,to:17,cols:moveCols(1)});
+  document.getElementById('m-drawn2').innerHTML=timeline({from:11,to:17,cols:moveCols(2)});
+  document.getElementById('m-today').innerHTML='<div style="position:relative">'+timeline({from:11,to:15,cols:[{name:'Lions Diamond',games:[{at:M(11,30),t:'11:30 a.m.',r:'Semifinal 1',s:[['Aces U13 Boys'],['Falcons U13 Boys']]}]},{name:'Maple Field 1',games:[{at:M(11,30),t:'11:30 a.m.',r:'Semifinal 2',s:[['Quarterfinal 3 winner','','slot'],['Quarterfinal 4 winner','','slot']]}]}]})
+    +'<div class="scrim" style="position:absolute;inset:0"><div class="kd q"><div class="kdh"><div class="tt"><b>Could not save game</b></div></div><div class="kdb"><p>Final must start after Semifinal 1 on the same day — set a later time, or move it to a later day.</p></div><div class="kdf"><span class="btn">Close</span></div></div></div></div>';
+
+  document.getElementById('m-sheet').innerHTML='<div class="sheet"><div class="grab"></div><div class="shh"><div><b>Semifinal 1 winner vs Semifinal 2 winner</b><small>U13 Boys · Final · now 3:00 p.m. · Lions Diamond</small></div><span class="sq">'+I('x')+'</span></div>'
+    +'<div class="shb"><div class="g2"><div class="fld"><span class="fl">Day</span><span class="inp">Sun, Nov 22</span></div><div class="fld"><span class="fl">Start</span><span class="inp err">12:30 p.m.</span></div></div>'
+    +'<p class="refuse">'+I('ban')+'<span><b>The semifinals end at 1:00 p.m.</b> The Final waits for both winners: start it at 1:00 p.m. or later.</span></p>'
+    +'<div class="g3 same"><div class="fld"><span class="fl">Venue</span><span class="inp">Maple Park</span></div><div class="fld"><span class="fl">Diamond</span><span class="inp">Maple Field 2'+I('down')+'</span></div></div></div>'
+    +'<div class="shf"><span class="btn">Cancel</span><span class="btn lime" aria-disabled="true">Move</span></div></div>';
+
+  // ── tab 3 ──
+  function gw(o){
+    return '<div class="kd" style="padding-bottom:'+(o.pill?'56px':'0')+'"><div class="kdh"><div class="tt"><b>'+o.title+'</b><small>'+o.id+'</small></div>'
+      +(o.read?'<span class="hbtn">'+I('pencil')+'</span>':'<span class="hbtn on">'+I('check')+'</span>')+'<span class="hbtn">'+I('x')+'</span></div><div class="kdb">'+o.body+'</div>'+(o.foot||'')+(o.pill||'')+'</div>';
+  }
+  var PUB='<div class="callout same">'+I('info')+'<span>U13 Boys is published. Change when or where, and ✓ asks before it tells both teams.</span></div>';
+  var finEdit=function(line,startCls,pill){return gw({title:'Semifinal 1 winner vs Semifinal 2 winner',id:'U13 Boys · Final · editing',
+    body:PUB+'<div class="g2"><div class="fld"><span class="fl">Day</span><span class="inp">Sun, Nov 22</span></div><div class="fld"><span class="fl">Start</span><span class="inp '+startCls+'">2:15 p.m.</span></div></div>'+line
+      +'<div class="fld same"><span class="fl">Length</span><span class="inp ph">U13’s 90 min</span></div>'
+      +'<div class="g2 same"><div class="fld"><span class="fl">Away</span><span class="inp">Semifinal 1 winner'+I('down')+'</span></div><div class="fld"><span class="fl">Home</span><span class="inp">Semifinal 2 winner'+I('down')+'</span></div></div>'
+      +'<div class="g3 same"><div class="fld"><span class="fl">Venue</span><span class="inp">Lions Park</span></div><div class="fld"><span class="fl">Diamond</span><span class="inp">Lions Diamond'+I('down')+'</span></div></div>',pill:pill});};
+  document.getElementById('w-edit').innerHTML=finEdit('<p class="refuse">'+I('ban')+'<span><b>Semifinal 2 ends at 4:30 p.m.</b> The Final waits for its winner: start it at 4:30 p.m. or later, or move Semifinal 2 earlier.</span></p>','err',
+    '<span class="pill bad">Not saved: Semifinal 2 isn’t over by then</span>');
+  document.getElementById('w-edit-today').innerHTML=finEdit('','',
+    '<span class="pill bad">Final must start after Semifinal 2 on the same day — set a later time, or move it to a later day. · <u>Retry</u></span>');
+
+  document.getElementById('w-length').innerHTML=gw({title:'Quarterfinal 4 winner vs Quarterfinal 3 winner',id:'U13 Boys · Semifinal 2 · editing',
+    body:'<div class="g2 same"><div class="fld"><span class="fl">Day</span><span class="inp">Sun, Nov 22</span></div><div class="fld"><span class="fl">Start</span><span class="inp">1:30 p.m.</span></div></div>'
+      +'<div class="fld"><span class="fl">Length</span><span class="inp err">120</span></div>'
+      +'<p class="refuse">'+I('ban')+'<span><b>The Final starts at 3:00 p.m.</b> At 120 min, Semifinal 2 would end at 3:30 p.m. Keep it to 90 min, or move the Final later.</span></p>',
+    pill:'<span class="pill bad">Not saved: the Final starts before then</span>'});
+
+  document.getElementById('w-add').innerHTML='<div class="kd" style="padding-bottom:0"><div class="kdh"><div class="tt"><b>Add game</b></div><span class="hbtn">'+I('x')+'</span></div><div class="kdb">'
+    +'<div class="g2 same"><div class="fld"><span class="fl">Division</span><span class="inp">U13 Boys'+I('down')+'</span></div><div class="fld"><span class="fl">Stage</span><span class="inp">Playoffs'+I('down')+'</span></div></div>'
+    +'<div class="g2"><div class="fld"><span class="fl">Day</span><span class="inp">Sun, Nov 22</span></div><div class="fld"><span class="fl">Start</span><span class="inp err">12:30 p.m.</span></div></div>'
+    +'<p class="refuse">'+I('ban')+'<span><b>Semifinal 1 ends at 1:00 p.m.</b> The 3rd Place game waits for its loser: start it at 1:00 p.m. or later.</span></p>'
+    +'<div class="g2"><div class="fld"><span class="fl">Away</span><span class="inp">Gold · Semifinal 1 loser'+I('down')+'</span></div><div class="fld"><span class="fl">Home</span><span class="inp">Gold · Semifinal 2 loser'+I('down')+'</span></div></div>'
+    +'<span class="pmk" style="right:20px;top:282px">'+MK('A9')+'</span>'
+    +'</div><div class="kdf"><span class="btn">Cancel</span><span class="btn lime" aria-disabled="true">Add game</span></div></div>';
+
+  document.getElementById('w-read').innerHTML=gw({read:1,title:'Semifinal 1 winner vs Semifinal 2 winner',id:'U13 Boys · Final <span class="chip bad" style="margin-left:4px">Out of order</span>',
+    body:'<div class="sec"><h5>When and where</h5><div class="fact"><span>When</span><b>Sun, Nov 22 · 2:15 p.m.</b></div>'
+      +'<p class="refuse" style="margin:2px 0 4px">'+I('ban')+'<span><b>Out of order.</b> Semifinal 2 ends at 4:30 p.m., after this game starts. Move this game to 4:30 p.m. or later, or move Semifinal 2 earlier.</span></p>'
+      +'<div class="fact same"><span>Length</span><b>90 min</b></div><div class="fact same"><span>Where</span><b>Lions Diamond</b></div></div>'
+      +'<div class="sec same"><h5>In the bracket</h5><div class="fact" style="grid-template-columns:150px 1fr"><span>Semifinal 1 winner</span><b>Not decided yet</b></div><div class="fact" style="grid-template-columns:150px 1fr"><span>Semifinal 2 winner</span><b>Not decided yet</b></div><span class="door">Edit the bracket ›</span></div>'});
+
+  // ── tab 4 ──
+  var bbar=function(n,mk){return '<div class="bbar">'+I('trophy')+'<b>Editing bracket <span>· U13 Boys</span></b><span class="oi">'+I('warn')+n+'</span><span class="spacer"></span><span class="btn same" style="border-color:transparent;background:none">Cancel</span><span class="btn same" style="color:#B03A22;background:rgba(176,58,34,.15);border-color:rgba(176,58,34,.3)">Clear bracket</span><span class="btn lime"'+(mk?' aria-disabled="true"':'')+'>'+I('check')+'Save bracket</span>'+(mk?MK('A3'):'')+'</div>';};
+  document.getElementById('b-today').innerHTML=bbar('2 order issues')
+    +'<div class="bbanner"><h6>'+I('warn')+'A game is scheduled before the game that feeds it</h6><ul><li>FIN must start after SF2 (same day) — set a later time, or move it to a later day.</li><li>SF1 is on an earlier day than QF2, which feeds it.</li></ul></div>'
+    +'<p style="margin:0 1.25rem 8px;font-size:12px;color:#615A54">Save bracket answers “Fix the bracket order first” while either line is here. The second line is in the Silver tier, which this edit didn’t touch.</p>';
+  document.getElementById('b-drawn').innerHTML=bbar('1 to fix',true)
+    +'<div class="bbanner"><h6>'+I('ban')+'Fix this to save</h6><ul><li>Gold · the Final starts at 2:15 p.m., before Semifinal 2 ends at 4:30 p.m.</li></ul>'
+    +'<h6 style="color:#4A4235">'+I('warn')+'Already saved this way · you can still save</h6><ul><li>Silver · Semifinal 1 is on Saturday, before Quarterfinal 2 (Sunday, 9:00 a.m.).</li></ul></div>'
+    +'<p style="margin:0 1.25rem 8px;font-size:12px;color:#615A54">Drawn with one new problem, so Save is faded. With only the Silver line left, Save works and the line stays on the schedule (tab 1).</p>';
+
+  // ── tab 5 ──
+  document.getElementById('r-today').innerHTML='<div class="callout bad">'+I('warn')+'<span>This would put a playoff game before the game that feeds it. Push fewer games, or a different amount, so every playoff game stays after its feeders.</span></div>';
+  document.getElementById('r-drawn').innerHTML='<div class="callout bad">'+I('warn')+'<span><b>Semifinal 2 would end at 5:00 p.m., after the Final starts (4:30 p.m.).</b> Push the Final as well, or push the games by less.</span></div>';
+
+  // ── tab 6 ──
+  var ROWS=[
+    ['Game window · editing the time','under Day and Start','<b>Semifinal 2 ends at 4:30 p.m.</b> The Final waits for its winner: start it at 4:30 p.m. or later, or move Semifinal 2 earlier.'],
+    ['… the earlier game is on a later day','under Day and Start','<b>Semifinal 2 is on Sun, Nov 22 at 3:00 p.m.</b> The Final waits for its winner: move it to that day, 4:30 p.m. or later.'],
+    ['… two games feed it','under Day and Start','<b>The semifinals end at 1:00 p.m.</b> The Final waits for both winners: start it at 1:00 p.m. or later.'],
+    ['… a game that waits on a loser','under Day and Start','<b>Semifinal 1 ends at 1:00 p.m.</b> The 3rd Place game waits for its loser: start it at 1:00 p.m. or later.'],
+    ['… moving the earlier game later','under Day and Start','<b>The Final starts at 3:00 p.m.</b> It waits for Semifinal 1’s winner: start Semifinal 1 by 1:30 p.m., or move the Final later.'],
+    ['… the earlier game’s length','under Length','<b>The Final starts at 3:00 p.m.</b> At 120 min, Semifinal 2 would end at 3:30 p.m. Keep it to 90 min, or move the Final later.'],
+    ['… changing who plays (Away / Home)','under Away and Home','<b>Semifinal 2 ends at 4:30 p.m.</b> This game starts at 2:15 p.m., before Semifinal 2’s winner is known. Pick another game, or change the time.'],
+    ['Save pill, while a line stands','the pill','Not saved: Semifinal 2 isn’t over by then'],
+    ['Timeline, while dragging','the red spot’s reason','Semifinal 2 runs until 4:30 p.m., so the Final can’t go here'],
+    ['Phone move sheet','under Day and Start','Same as the game window.'],
+    ['Add game','under Day and Start','Same as the game window, naming the new game by its round.'],
+    ['Bracket editor','the banner','Gold · the Final starts at 2:15 p.m., before Semifinal 2 ends at 4:30 p.m.'],
+    ['Rain delay','the callout','<b>Semifinal 2 would end at 5:00 p.m., after the Final starts (4:30 p.m.).</b> Push the Final as well, or push the games by less.'],
+    ['Putting a cancelled game back','the game window, beside the button','Semifinal 2 is at 3:00 p.m. and would end after the Final starts (2:15 p.m.). Move the Final later first, then put Semifinal 2 back.'],
+    ['Playoff generator, a draft gone stale','the generator, beside its save','The schedule changed while you were choosing: this draft starts the Final before Semifinal 2 ends. Make the drafts again.'],
+    ['Division or event default length (A8)','the division’s window, beside Save','The U13 Boys Final starts at 3:00 p.m. At 120 min, the semifinals would end at 3:30 p.m. Move the Final first, or keep 90 min.'],
+    ['A drop or move that slips past the screen','the move notice, red, stays until closed','The same sentence as the door’s own, written by the server. The game snaps back.'],
+    ['Pool play, if A7 is a: a playoff game too early','under Day and Start','<b>U13 Boys pool play ends at 5:15 p.m.</b> (Storm vs Aces). Quarterfinal 1 waits for the standings: start it at 5:15 p.m. or later.'],
+    ['Pool play, if A7 is a: a pool game too late','under Day and Start','<b>Quarterfinal 1 starts at 9:00 a.m. Sunday.</b> It waits for U13 Boys pool play, so this game has to end by then.'],
+    ['Pool play, if A7 is a: round-robin generator or import','beside its save button','This draft ends U13 Boys pool play at 6:00 p.m., after Quarterfinal 1 starts (5:00 p.m.). Move the playoffs later first, or end pool play earlier.'],
+    ['Health window, already out of order','the issue row','<b>Playoff games out of order</b> The Final starts at 2:15 p.m., before Semifinal 2 ends at 4:30 p.m.'],
+    ['Game window read view, already out of order: the game that waits','under When','<b>Out of order.</b> Semifinal 2 ends at 4:30 p.m., after this game starts. Move this game to 4:30 p.m. or later, or move Semifinal 2 earlier.'],
+    ['… the earlier game','under When','<b>Out of order.</b> The Final starts at 2:15 p.m., before this game ends. Move this game earlier, or move the Final to 4:30 p.m. or later.']
+  ];
+  document.getElementById('wordtable').innerHTML='<thead><tr><th>Door</th><th>Where it shows</th><th>The words</th></tr></thead><tbody>'+ROWS.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>';}).join('')+'</tbody>';
+  document.getElementById('msg').innerHTML='<div class="kd"><div class="kdh"><div class="tt"><div class="ey">U13 Boys</div><b>Game length</b></div><span class="hbtn">'+I('x')+'</span></div><div class="kdb">'
+    +'<div class="fld" style="max-width:260px"><span class="fl">Game length (min)</span><span class="inp err">120</span></div>'
+    +'<p style="margin:0;font-size:12px;color:#615A54">Every U13 Boys game without its own length takes this one.</p></div>'
+    +'<div class="kdf" style="align-items:center"><span class="fs">'+I('ban')+'<span><b>The U13 Boys Final starts at 3:00 p.m.</b> At 120 min, the semifinals would end at 3:30 p.m. Move the Final first, or keep 90 min.</span></span><span class="btn">Cancel</span><span class="btn lime" aria-disabled="true">Save</span></div></div>';
+  document.getElementById('npill').innerHTML='<span class="npill">'+I('ban')+'<span>Not moved: Semifinal 2 runs until 4:30 p.m., so the Final can’t start at 2:15 p.m.</span><span class="x" role="img" aria-label="Close">'+I('x')+'</span></span>';
+
+  // ── tag notes ──
+  var NOTES={
+    un:['Unchanged','This part is what ships today, drawn for context.'],
+    chip:['New · the out-of-order chip','Today a game saved before a game it waits for looks like any other game. The drawing draws the pair the way a double-booked pair is drawn (ruled 2026-10-12: a conflict is a chip, and both games of a pair wear it): the red outline and tint, and a red “Out of order” chip in the chip’s one place. The chip’s words are what tell it from a field clash. There is no new fill and no legend, because the owner ruled out “a legend to learn”. On a phone the day list rows carry the chip.'],
+    filter:['New · the Filter row','The Filter’s Conflicts group (first in the menu, shown only while a conflict exists) already lists Tight turnover and Double-booked. It gains Out of order, so the organizer can find every such pair in any view.'],
+    npill:['New · the notice’s error face','The move notice today is a white pill with a green check, the message and Undo. For a move the server refuses, it takes the save pill’s error colours, drops Undo (there is nothing to undo) and gets a close button. It stays until closed, because the One Window ruling says an error stays until read.'],
+    health:['Restyled · the health count','The button already shows its score and an amber count of issues. An order problem now counts, and lowers the score like a double-booking.'],
+    healthrow:['New · the issue row','A new kind of issue in the health window, drawn like the field-clash row. “Show them ›” filters the schedule to the two games.'],
+    band:['New · the reason on a refused spot','Today a spot turns red while dragging only for a taken field (“Diamond 2 has the U11 final until 5:15 p.m. — can’t drop here”). The drawing gives an order problem the same red spot, with its own reason. The server refuses the same thing, so a stale screen can’t save it either.'],
+    line:['New · the red line for order','The field-clash line, unchanged in look (ban symbol, bold lead, the way out), placed under the field that is wrong: Day and Start, Length, or Away and Home.'],
+    pill:['Restyled · the save pill’s words','Today the pill shows the browser’s sentence with Retry, which can’t help because the same save fails again. The drawing uses the held state a taken field already uses: red words saying why, no Retry, until the time is fixed.'],
+    add:['Restyled · Add game’s refusal','Today Add game shows its refusal at the foot in small grey type. The drawing moves it to the red line under the time, and fades Add game until it works, as for a taken field.'],
+    read:['New · the line in the read view','Today the read view says nothing about order. The drawing shows the same red line under When, so the window that opens from a red block says what is wrong.'],
+    bwords:['Restyled · the banner’s words','Today the list uses internal codes (FIN, SF2, QF2). The drawing uses the round names and the times, with the tier where there are several.'],
+    bsplit:['New · “Already saved this way”','Under recommended A3 a problem that was already saved is listed but doesn’t stop the save. Only a problem this edit makes does.'],
+    rain:['Restyled · the rain delay’s words','Today’s callout says “a playoff game before the game that feeds it”. The drawing names both games and the times, and offers the way out.'],
+    msg:['New · the line beside Save','Every window has a sentence slot at the foot’s left and a refusal line beside its button (One Window ruling, 2026-10-18). The order refusal uses that slot. Save fades by the one global disabled face until the change works.']
+  };
+  var dlg=document.getElementById('notedlg');
+  document.getElementById('nclose').onclick=function(){dlg.close();};
+
+  // ── tabs ──
+  var tabs=[].slice.call(document.querySelectorAll('nav.tabs a')), secs=[].slice.call(document.querySelectorAll('section[data-tab]'));
+  var vsw=document.getElementById('vsw'), vlab=document.getElementById('vlab');
+  function show(id){
+    var t=document.getElementById(id); if(!t||!t.hasAttribute('data-tab'))id='open'; t=document.getElementById(id);
+    secs.forEach(function(s){s.hidden=s.id!==id;});
+    tabs.forEach(function(a){a.getAttribute('href')==='#'+id?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');});
+    var v=t.hasAttribute('data-view'); vsw.hidden=!v; vlab.hidden=!v; if(!v)view(false);
+  }
+  var vAll=document.getElementById('v-all'), vDiff=document.getElementById('v-diff');
+  function view(d){document.body.classList.toggle('differs',d);vAll.setAttribute('aria-pressed',String(!d));vDiff.setAttribute('aria-pressed',String(d));}
+  vAll.onclick=function(){view(false);}; vDiff.onclick=function(){view(true);};
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1));});
+  show(location.hash.slice(1));
+
+  // ── asks ──
+  var ASKS=[
+    {id:'A1',t:'How late is “after”',why:'Today’s checks disagree. The block asks only for a later start, so a Final can start ten minutes into its Semifinal. The bracket health panel calls that impossible, because it measures from when the earlier game ends. The generator adds the rest time on top. The ruling says impossible in real life.',
+      o:['After the earlier game ends: its start plus its length (the game’s own length, else the division’s, else the event’s). Equal starts are refused as a result. A start inside the rest time stays the health panel’s warning, not a block.','Any later start, as the block works today. Length never matters.','After the earlier game ends plus the division’s rest time between games.']},
+    {id:'A2',t:'Schedules already out of order',why:'Real tournaments may already be saved this way. The organizer must see it and must never be locked out of fixing it. Today the game window refuses any time change to a game in a broken pair unless that change fixes every pair it is in, so fixing two tangled pairs has to happen in the right order.',
+      o:['Shown on open (tab 1). A save is refused only when it creates a new problem; a save that fixes one, or leaves it as it was, always goes through.','Shown on open. Any time change to a game in a problem must fix it (today’s game window rule).']},
+    {id:'A3',t:'The bracket editor’s save',why:'Today the bracket editor refuses to save while any problem is on screen, old or new, so an untouched Silver tier can block a Gold fix.',
+      o:['The same rule as everywhere: only a problem this edit makes stops the save. Old ones are listed under “Already saved this way”.','Keep “fix every problem before saving” in the bracket editor only.']},
+    {id:'A4',t:'Refusing a drag',why:'Today the timeline refuses a taken field while you drag (the spot turns red), but an order problem only after the drop, when the game lands and snaps back.',
+      o:['While dragging, like a taken field: the spot turns red with the reason, and nothing lands.','After the drop, as today: it snaps back with the message window.']},
+    {id:'A5',t:'Which games wear the chip',why:'An out-of-order pair is two games, and either one can be moved to fix it. For a double-booked pair you ruled that both games wear the chip and each window names the other game from its own side (2026-10-12).',
+      o:['Both games, as for a double-booked pair. Each game’s window says what is wrong from its own side.','Only the game that waits (the Final). Semifinal 2 looks normal; the Final’s window names it.','Neither: the health window only.']},
+    {id:'A6',t:'The chip’s words',why:'The chip shows in the data face’s capitals, in the place Double-booked and Tight turnover use. The word is stored in sentence case, as every status word is.',
+      o:['Out of order','Too early','Waiting game']},
+    {id:'A12',t:'A game with two problems',why:'A game can be double-booked and out of order at once, and a row’s chip has one place.',
+      o:['The chip says Double-booked; the game’s window shows both red lines. The field clash usually needs fixing first, and the Filter finds the game under both rows.','The chip says Out of order.']},
+    {id:'A7',t:'Pool play into the playoffs',why:'A playoff game depends on the pool results too. Seeding already waits for every pool game in the division, and the playoff generator already offers no time before pool play ends, but nothing stops an organizer saving a Quarterfinal while pool play is still going. The plan’s Findings §3 has the costs.',
+      o:['Include it, division-wide: no playoff game starts before the division’s last pool game ends. Five more doors refuse it (the round-robin generator, Add pool game, import, the rain delay, a pool game’s time). Words in tab 6.','Game-to-game only for now. Pool play goes on the plan as its own later item.','Per pool: a “1st Pool A” seed waits only for Pool A. This costs the most, and it disagrees with how standings are counted (across the whole division).']},
+    {id:'A8',t:'Changing a default game length',why:'Changing a division’s or the event’s game length changes when every game without its own length ends. That can put a Semifinal’s end after its Final’s start without touching either game.',
+      o:['Refused like any other door, naming the pair, on the line beside the window’s Save (tab 6).','Saved. The problem shows on the schedule and in the health window (tab 1).']},
+    {id:'A9',t:'A division with several brackets',why:'Gold and Silver tiers, or one bracket per pool, each have a Semifinal 1. A game added by hand there belongs to no bracket today, so its “Semifinal 1 winner” could mean either. That is a wrong-team risk for advancement too, not only for ordering.',
+      o:['The pickers name the bracket (“Gold · Semifinal 1 winner”) and the new game joins it. Until a game has a bracket, the rule treats it as waiting for every game it could mean.','Only the safe reading: the rule treats it as waiting for every game it could mean, and the picker stays as it is.']},
+    {id:'A10',t:'The words',why:'Tab 6 has every sentence. Each names both games, the time that matters and the way out, in the admin’s round names.',
+      o:['As drawn: the fact that blocks it, then the way out. Notes welcome.','The plan’s first shape: one sentence naming both games, the time in brackets (“The Final can’t start before Semifinal 2 ends (4:30 p.m.).”), with no way out.']},
+    {id:'A11',t:'Scripts and the demo’s own refresh',why:'The rule lives on the server, in front of every door an organizer has. The demo’s automatic refresh and our own maintenance scripts write games directly, so they are not held by it. Holding them too means a database-level rule, a second copy of the logic written in the database.',
+      o:['Accept that. A build check fails if a new screen or route writes game times without the rule.','A database-level rule as well (a larger build, two copies of the rule to keep in step).']}
+  ];
+  var KEY='game-order-rule-asks-v1', saved={};
+  try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){saved={};}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  var list=document.getElementById('asklist');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask';d.id='ask-'+a.id;
+    var h='<h3>'+a.id+' · '+a.t+'</h3><p class="why">'+a.why+'</p>';
+    a.o.forEach(function(txt,i){
+      var oid='o-'+a.id+'-'+i, ch=(saved[a.id]&&saved[a.id].pick===i);
+      h+='<label for="'+oid+'"><input type="radio" id="'+oid+'" name="'+a.id+'" value="'+i+'"'+(ch?' checked':'')+'><span>'+(i===0?'<span class="rec">Recommended · </span>':'')+txt+'</span></label>';
+    });
+    h+='<textarea id="n-'+a.id+'" placeholder="Notes (optional)">'+((saved[a.id]&&saved[a.id].note)||'').replace(/</g,'&lt;')+'</textarea>';
+    d.innerHTML=h;list.appendChild(d);
+    d.addEventListener('change',function(e){if(e.target.name===a.id){saved[a.id]=saved[a.id]||{};saved[a.id].pick=Number(e.target.value);save();}});
+    d.querySelector('textarea').addEventListener('input',function(e){saved[a.id]=saved[a.id]||{};saved[a.id].note=e.target.value;save();});
+  });
+  document.getElementById('copybtn').onclick=function(){
+    var lines=['Game order rule drawing, round 1: my answers'];
+    ASKS.forEach(function(a){
+      var s=saved[a.id]||{}, p=(typeof s.pick==='number')?s.pick:null;
+      lines.push(a.id+' · '+a.t+': '+(p===null?'(no pick)':String.fromCharCode(97+p)+(p===0?' (recommended)':'')+' — '+a.o[p])+(s.note?'\n   Note: '+s.note:''));
+    });
+    var txt=lines.join('\n'), out=document.getElementById('paste'), msg=document.getElementById('copied');
+    out.textContent=txt;
+    try{navigator.clipboard.writeText(txt).then(function(){msg.textContent='Copied.';},function(){msg.textContent='Select the text below and copy it.';});}
+    catch(e){msg.textContent='Select the text below and copy it.';}
+  };
+
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('[data-note]');
+    if(t){var n=NOTES[t.getAttribute('data-note')]; if(n){document.getElementById('nt').textContent=n[0];document.getElementById('nb').textContent=n[1];dlg.showModal();} return;}
+    var b=e.target.closest&&e.target.closest('.mk'); if(!b)return;
+    var id=b.getAttribute('data-ask'); location.hash='asks'; show('asks');
+    var el=document.getElementById('ask-'+id);
+    [].forEach.call(document.querySelectorAll('.ask.hl'),function(x){x.classList.remove('hl');});
+    if(el){el.classList.add('hl');el.scrollIntoView({block:'center'});}
+  });
+})();
+</script>
