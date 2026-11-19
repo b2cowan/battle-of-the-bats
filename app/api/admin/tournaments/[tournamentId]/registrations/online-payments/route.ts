@@ -8,6 +8,7 @@ import { DisputeOpenError, keepOverpayment, recordRefundAnotherWay, refundOnline
 import { clearSettled } from '@/lib/needs-attention';
 import { OVER_WORDS } from '@/lib/online-payment-words';
 import { replaceTeamPayLink, sendTeamPayLink } from '@/lib/online-payment-receipt';
+import { writeOrgAudit } from '@/lib/org-audit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,9 @@ export const dynamic = 'force-dynamic';
  *   POST { action: 'replace_pay_link', teamId, mode?, despiteLostDispute? }        "Send a new link" (mig 467): stops every link already
  *                                                                                  sent to the team, then emails the new one;
  *                                                                                  mode 'stop' ("Stop the pay link") sends nothing
+ *                                                                                  Each pay-link action writes the club's activity
+ *                                                                                  record (`pay_link_emailed|replaced|stopped`,
+ *                                                                                  Board Ready leftover 8): who, what, when
  *   POST { action: 'clear_decision', onlinePaymentId, choice, feeBack, reason }    12c Part 6: a team ended while its bank debit
  *                                                                                  clears — send it back or keep it, when it clears
  *   POST { action: 'keep_over', onlinePaymentId, reason }                          12d-1: the club keeps what a team paid past
@@ -57,6 +61,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     // Ruling 5: after a lost card dispute, one send asks first and goes on `despiteLostDispute`.
     const sent = await sendTeamPayLink(body.teamId, { askIfLost: body.despiteLostDispute !== true });
     if ('error' in sent) return json({ error: sent.error, ...(sent.disputeLost === 'ask' ? { code: 'dispute_lost_ask' } : {}) }, 409);
+    // Board Ready leftover 8: who emailed it, and when. Never the address it went to.
+    await writeOrgAudit(ctx.org.id, ctx.user.id, null, 'pay_link_emailed', { tournamentId, teamId: body.teamId, linkWorks: !sent.overtaken });
     return json(sent);
   }
 
@@ -69,7 +75,16 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     // stop changes no result; the send half refuses a completed event by itself.
     const mode = body.mode === 'stop' ? 'stop' as const : 'send' as const;
     const out = await replaceTeamPayLink(body.teamId, { mode, askIfLost: body.despiteLostDispute !== true });
-    if (!out.stopped) return json({ error: out.error, ...(out.disputeLost === 'ask' ? { code: 'dispute_lost_ask' } : {}) }, 409);
+    if (!out.stopped) {
+      const code = out.disputeLost === 'ask' ? 'dispute_lost_ask' : out.changedMeanwhile ? 'changed_meanwhile' : null;
+      return json({ error: out.error, ...(code ? { code } : {}) }, 409);
+    }
+    // Board Ready leftover 8: who stopped or replaced it, and when. A send that didn't go is recorded as what it was:
+    // the old link stopped, no new one sent. Never the team's address.
+    const newLinkSent = 'sentTo' in out;
+    await writeOrgAudit(ctx.org.id, ctx.user.id, null, newLinkSent ? 'pay_link_replaced' : 'pay_link_stopped', {
+      tournamentId, teamId: body.teamId, ...(newLinkSent ? { linkWorks: !out.overtaken } : { asked: mode }),
+    });
     // The old links are stopped whatever the send did; `notSent` and its `cause` say why the new one did not go (the
     // record picks its own sentence from the cause, never the pay page's).
     return json(out);

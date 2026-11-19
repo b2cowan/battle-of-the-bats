@@ -4,7 +4,7 @@ import { createHmac } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { readTeamPayToken, signTeamPayToken, teamPayUrl } from '../../lib/team-pay-link.ts';
 import { readLeaguePayToken, signLeaguePayToken } from '../../lib/league-pay-link.ts';
-import { payLinkCause, payLinkLineState } from '../../lib/team-pay-refusal.ts';
+import { payLinkCause, payLinkLineState, payLinkStopped } from '../../lib/team-pay-refusal.ts';
 
 /**
  * A tournament team's pay link can be replaced (Board Ready W2 fix D, item 2; mig 467). The house-league family link has had a
@@ -136,7 +136,7 @@ describe('the doors: one reader, every minter asks for the version', () => {
 
   it('the facts carry the version from the team row', () => {
     const facts = read('lib/team-pay-facts.ts');
-    assert.match(facts, /entry_lowered, link_version'/);
+    assert.match(facts, /entry_lowered, pay_link_sent_at, link_replaced_at, link_version'/);
     assert.match(facts, /linkVersion: Number\(team\.link_version \?\? 0\)/);
   });
 });
@@ -190,15 +190,57 @@ describe('"Send a new link", the server half (the club’s button is a /design s
 
   it('bumps the version with a conditional update, so two presses cannot claim the same number', () => {
     assert.ok(start > 0);
-    assert.match(body, /link_version: current \+ 1, link_replaced_at:/);
+    assert.match(body, /const next = current \+ 1;/);
+    assert.match(body, /link_version: next, link_replaced_at:/);
     assert.match(body, /\.eq\('link_version', current\)/);
+  });
+
+  it('Board Ready leftover 5: ONE try — the press that loses the same moment is refused and sends nothing', () => {
+    assert.ok(!/for \(let attempt/.test(body), 'no retry loop (it bumped the NEXT version, so both presses sent)');
+    const lost = body.indexOf('if (!moved)');
+    assert.ok(lost > 0 && lost < body.indexOf('await sendTeamPayLink('), 'refused before any send');
+    assert.match(body.slice(lost, lost + 160), /stopped: false, error: .*changedMeanwhile: true/);
+    // The send goes only at the version this press made, and says when its stamp didn't land.
+    assert.match(body, /expectVersion: next/);
+    const send = src.slice(src.indexOf('export async function sendTeamPayLink'), start);
+    assert.match(send, /facts\.linkVersion !== opts\.expectVersion/);
+    assert.match(send, /\.eq\('link_version', facts\.linkVersion\)\.select\('id'\)/);
+    assert.match(send, /overtaken: true/);
+  });
+
+  it('Board Ready leftover 6: a stopped link is left out of every automatic email, by the line’s own rule', () => {
+    assert.equal(payLinkStopped('2026-11-12T15:00:00.000Z', '2026-11-18T15:00:00.000Z'), true);
+    assert.equal(payLinkStopped('2026-11-18T15:00:00.000Z', '2026-11-18T15:00:00.000Z'), false, 'replaced is not stopped');
+    assert.equal(payLinkStopped('2026-11-20T15:00:00.000Z', '2026-11-18T15:00:00.000Z'), false, 'a send after the stop ends it');
+    assert.equal(payLinkStopped(null, null), false);
+    const nowLink = src.slice(src.indexOf('export async function teamPayNowLink'));
+    assert.match(nowLink, /if \(facts\.linkStopped\) return \{ url: null, [^}]*stopped: true \}/);
+    // …and the reminder never says the club takes no payments online when the link is only stopped.
+    assert.match(read('app/api/admin/tournaments/[tournamentId]/registrations/payment-reminders/route.ts'), /payStopped: pay\?\.stopped === true/);
+    assert.match(read('lib/email.ts'), /\$\{p\.payUrl \|\| p\.payStopped\s*\n?\s*\? 'Paid by another way already\?/);
+    assert.match(src, /const payLink = facts\.linkStopped \? null : teamPayUrl/, 'the receipt');
+    assert.match(read('lib/bank-debit-email.ts'), /canPayAgain: !facts\.refusal && !facts\.linkStopped/, 'a team’s bank-debit emails');
+    // Every automatic sender of the team's link stamps "Pay link sent" when its email carried it.
+    for (const f of ['app/api/admin/teams/route.ts', 'app/api/admin/tournaments/[tournamentId]/registrations/bulk/route.ts', 'app/api/admin/tournaments/[tournamentId]/registrations/payment-reminders/route.ts']) {
+      // Only on a real send (not 'skipped'), and only when the email had a link.
+      assert.match(read(f), /if \(pay\?\.url && \w+\.status === 'sent'\) await stampTeamPayLinkSent\((current|team)\.id, pay\.version\)/, f);
+    }
+  });
+
+  it('Board Ready leftover 8: every pay-link action writes the activity record, never an address', () => {
+    const route = read('app/api/admin/tournaments/[tournamentId]/registrations/online-payments/route.ts');
+    assert.match(route, /writeOrgAudit\(ctx\.org\.id, ctx\.user\.id, null, 'pay_link_emailed', \{ tournamentId, teamId: body\.teamId, linkWorks/);
+    assert.match(route, /newLinkSent \? 'pay_link_replaced' : 'pay_link_stopped'/);
+    const calls = [...route.matchAll(/await writeOrgAudit\([\s\S]*?\}\);/g)].map(m => m[0]).filter(c => c.includes('pay_link_'));
+    assert.equal(calls.length, 2);
+    for (const c of calls) assert.ok(!/sentTo|teamEmail|payer|email:/i.test(c.replace(/pay_link_emailed/, '')), 'no address in a row');
   });
 
   it('stops the old links whatever the send does, and sends the new one with the existing "Email the pay link" words', () => {
     assert.match(body, /await sendTeamPayLink\(teamId/);
     assert.match(body, /stopped: true, notSent/);
     // The send is attempted AFTER the bump, so the new email carries the new version (the facts are re-read inside the send).
-    assert.ok(body.indexOf('link_version: current + 1') < body.indexOf('sendTeamPayLink('));
+    assert.ok(body.indexOf('link_version: next') < body.indexOf('sendTeamPayLink('));
   });
 
   it('is reachable by an admin only through the route that already checks the club, the event and the refund power', () => {
@@ -212,16 +254,16 @@ describe('"Send a new link", the server half (the club’s button is a /design s
   it('call 12 ask 6: a send after a lost card dispute is refused BEFORE the version moves (the old link keeps working)', () => {
     const ask = body.indexOf('await teamLostDispute(teamId)');
     assert.ok(ask > 0, 'the dispute is read inside the replace');
-    assert.ok(ask < body.indexOf('link_version: current + 1'), 'and before the bump');
+    assert.ok(ask < body.indexOf('link_version: next'), 'and before the bump');
     assert.match(body.slice(ask - 80, ask + 160), /mode === 'send' && opts\.askIfLost/);
     assert.match(body, /stopped: false, error: DISPUTE_WORDS\.sendAnywayBody\(true\), disputeLost: 'ask'/);
     // The send never asks a second time (it was asked above, or answered yes).
-    assert.match(body, /await sendTeamPayLink\(teamId, \{ stampAt: stamp \}\)/);
+    assert.match(body, /await sendTeamPayLink\(teamId, \{ stampAt: stamp, expectVersion: next \}\)/);
   });
 
   it('call 12 asks 3 and 6: "Stop the pay link" / "Only stop the link" stops and sends nothing', () => {
     const stop = body.indexOf("if (mode === 'stop')");
-    assert.ok(stop > body.indexOf('link_version: current + 1'), 'after the bump');
+    assert.ok(stop > body.indexOf('link_version: next'), 'after the bump');
     assert.ok(stop < body.indexOf('await sendTeamPayLink('), 'and before any send');
     assert.match(body.slice(stop, stop + 260), /stopped: true, stoppedOnly: true, cause:/);
   });

@@ -689,6 +689,9 @@ export function paymentReminderHtml(p: {
   payUrl?: string | null;
   /** Something is already paid: the button says "Pay the balance", else "Pay now". */
   paidSome?: boolean;
+  /** Board Ready leftover 6: the club takes cards but has this team's link stopped. No button, and the foot never says
+   *  "does not process tournament payments online" (untrue here): it keeps the online foot's sentence. */
+  payStopped?: boolean;
 }) {
   const instructions = escapeEmailHtml(p.paymentInstructions)
     .split('\n')
@@ -710,7 +713,7 @@ export function paymentReminderHtml(p: {
     </div>
     ${p.payUrl ? warmEmailButton(p.paidSome ? 'Pay the balance' : 'Pay now', p.payUrl) : ''}
     <div style="color:${WARM_EMAIL.ink};">${instructions}</div>
-    <p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;">${p.payUrl
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;">${p.payUrl || p.payStopped
       ? 'Paid by another way already? Tell the organizer and they’ll update your record.'
       : 'FieldLogicHQ records payment status for the organizer but does not process tournament payments online.'}</p>
     ${coachPortalFooter({ registrationId: p.registrationId })}

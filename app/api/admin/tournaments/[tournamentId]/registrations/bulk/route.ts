@@ -1,5 +1,5 @@
 import { closeTeamPayPages } from '@/lib/online-pay-pages';
-import { teamPayNowLink } from '@/lib/online-payment-receipt';
+import { stampTeamPayLinkSent, teamPayNowLink } from '@/lib/online-payment-receipt';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   acceptanceHtml,
@@ -163,16 +163,18 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
         tournament: { depositAmount: tournament.deposit_amount, depositDueDate: tournament.deposit_due_date, totalFeeAmount: tournament.total_fee_amount, totalFeeDueDate: tournament.total_fee_due_date },
         division: div ? { depositAmount: div.deposit_amount, depositDueDate: div.deposit_due_date, totalFeeAmount: div.total_fee_amount, totalFeeDueDate: div.total_fee_due_date } : null,
       });
-      await sendTransactionalEmail({
+      // Club Tier Stage 12a: Pay now while the club takes payments online (absent → today's email).
+      const pay = feeLine ? await teamPayNowLink(team.id) : null;
+      const accepted = await sendTransactionalEmail({
         key: 'tournament_registration_accepted',
         to: recipient,
         vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName, profileUrl: coachPortalUrl({ registrationId: payload.teamId }) },
         defaultSubject: `Your Team Has Been Accepted - ${team.name}`,
-        // Club Tier Stage 12a: Pay now while the club takes payments online (absent → today's email).
-        defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine, paymentsTracked,
-          payUrl: feeLine ? (await teamPayNowLink(team.id))?.url ?? null : null }),
+        defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine, paymentsTracked, payUrl: pay?.url ?? null }),
         orgId,
       });
+      // Board Ready leftover 6: an email that carried the link stamps "Pay link sent" on the record's line.
+      if (pay?.url && accepted.status === 'sent') await stampTeamPayLinkSent(team.id, pay.version);
     }
     if (action === 'reject' && team.status !== 'rejected') {
       if (!coachEmailBlock(coachSettings, 'rejection', team)) {

@@ -42,6 +42,16 @@ export function payLinkLineState(sentAt: string | null, replacedAt: string | nul
   return null;
 }
 
+/**
+ * Board Ready leftover 6 (owner ruling 2026-11-19): the club stopped the team's pay link and nobody has sent one since —
+ * the line's own "stopped", so the line and the emails can never disagree. While it holds, no automatic email (the
+ * acceptance, the balance reminder, the receipt, a bank debit's) carries a Pay button: a link minted at the current
+ * version would quietly undo the stop. "Email the pay link" or "Send a new link" ends it (each stamps a send).
+ */
+export function payLinkStopped(sentAt: string | null, replacedAt: string | null): boolean {
+  return payLinkLineState(sentAt, replacedAt)?.kind === 'stopped';
+}
+
 export function refusalMessage(f: RefusalFacts): string | null {
   switch (f.refusal) {
     case null: return null;

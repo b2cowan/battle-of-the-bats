@@ -1,5 +1,5 @@
 import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
-import { teamPayNowLink } from '@/lib/online-payment-receipt';
+import { stampTeamPayLinkSent, teamPayNowLink } from '@/lib/online-payment-receipt';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, manualTeamRegistrationHtml, teamInvitationHtml,
@@ -695,7 +695,9 @@ export const POST = withObservability(async (req: Request) => {
           });
           // Club Tier Stage 12a: Pay now while the club takes payments online (the team is accepted by now; absent → today's email).
           const pay = paymentsTracked && !willBePaid ? await teamPayNowLink(current.id) : null;
-          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine, paymentsTracked, payUrl: pay?.url ?? null }), { kind: 'tournament_registration_accepted', orgId: ctx.org.id, askedBy: ctx.user.id });
+          const accepted = await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine, paymentsTracked, payUrl: pay?.url ?? null }), { kind: 'tournament_registration_accepted', orgId: ctx.org.id, askedBy: ctx.user.id });
+          // Board Ready leftover 6: an email that carried the link stamps "Pay link sent" on the record's line.
+          if (pay?.url && accepted.status === 'sent') await stampTeamPayLinkSent(current.id, pay.version);
         }
         // Notify other org admins of the status change (fire-and-forget)
         notify({

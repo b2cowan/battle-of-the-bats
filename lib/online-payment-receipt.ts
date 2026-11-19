@@ -122,7 +122,10 @@ async function sendReceipt(op: OnlineForEmail): Promise<void> {
     themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
   });
   const receiptNo = receiptLabel(op.receipt_no ?? '');
-  const payLink = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId: facts.teamId, version: facts.linkVersion });
+  // Board Ready leftover 6: no button at all while the club has the link stopped (a payment begun before the stop still
+  // lands, and its receipt must not hand back a live link). The receipt itself is in the email.
+  const payLink = facts.linkStopped ? null : teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId: facts.teamId, version: facts.linkVersion });
+  let carriesLink = false;
   const test = !op.livemode;
   const lines = [
     warmEmailHeading(escapeHtml(E.receiptNumber(receiptNo))),
@@ -135,15 +138,17 @@ async function sendReceipt(op: OnlineForEmail): Promise<void> {
   const balance = tournamentTracksPayments(facts.tournament.settings) ? facts.options?.choices.find(c => c.scope === 'balance') : undefined;
   if (balance) {
     lines.push(warmEmailParagraph(escapeHtml(E.receiptBalance(money(balance.fee.baseCents / 100), balance.dueDate ? formatStoredDate(balance.dueDate) : null))));
-    if (payLink && !facts.refusal) lines.push(warmEmailButton(E.payBalance, payLink));
+    if (payLink && !facts.refusal) { lines.push(warmEmailButton(E.payBalance, payLink)); carriesLink = true; }
   } else if (payLink) {
     lines.push(warmEmailButton(E.viewReceipt, payLink));
+    carriesLink = true;
   }
   lines.push(warmEmailSmall(escapeHtml(E.questions(facts.org.name, face?.contact ?? null))));
   if (test) lines.push(warmEmailSmall(escapeHtml(E.testNote)));
   const subject = `${test ? E.testPrefix : ''}${E.receiptSubject(receiptNo, facts.org.name)}`;
   const result = await sendEmail(op.payer_email!, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'team_payment_receipt', orgId: facts.org.id });
   if (result.status === 'provider_error') throw new Error('send failed');
+  if (carriesLink && result.status === 'sent') await stampTeamPayLinkSent(facts.teamId, facts.linkVersion);
 }
 
 /**
@@ -215,10 +220,18 @@ export async function sendRefundEmail(refundId: string, extra?: { lead?: string;
  */
 export async function sendTeamPayLink(
   teamId: string,
-  opts: { askIfLost?: boolean; stampAt?: string } = {},
-): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: 'ask'; cause?: PayLinkCause | 'send_failed' }> {
+  opts: { askIfLost?: boolean; stampAt?: string; expectVersion?: number } = {},
+): Promise<
+  | { sentTo: string; sentAt: string; overtaken?: true }
+  | { error: string; disputeLost?: 'ask'; cause?: PayLinkCause | 'send_failed' | 'changed_meanwhile' }
+> {
   const facts = await loadTeamPayFacts(teamId);
   if (!facts) return { error: 'That team couldn’t be found.' };
+  // Board Ready leftover 5: "Send a new link" sends only the version ITS OWN bump made. Someone who stopped or replaced
+  // the link in between moved it on, and a send now would hand the team a live link the line calls stopped.
+  if (opts.expectVersion !== undefined && facts.linkVersion !== opts.expectVersion) {
+    return { error: 'Someone else changed the link at the same moment.', cause: 'changed_meanwhile' };
+  }
   const refusal = refusalMessage(facts);
   if (refusal) return { error: refusal, cause: facts.refusal ?? undefined };
   if (!facts.teamEmail) return { error: 'This team has no email address.', cause: 'no_email' };
@@ -245,9 +258,33 @@ export async function sendTeamPayLink(
   // Stamped only while the link this email carried is still the team's current one (/review, call 12): a stop or a
   // second replace that landed while it was sending made it a dead link, and a "sent" (or a slower replace's older
   // stamp) must not overwrite what the record should say about the link that IS current.
+  // Leftover 5: the stamp is CHECKED. No row means the version moved while the email was going: it carried a dead link,
+  // and the answer says so rather than "sent".
   const sentAt = opts.stampAt ?? new Date().toISOString();
-  await supabaseAdmin.from('teams').update({ pay_link_sent_at: sentAt }).eq('id', teamId).eq('link_version', facts.linkVersion);
+  const stampSend = () => supabaseAdmin.from('teams').update({ pay_link_sent_at: sentAt })
+    .eq('id', teamId).eq('link_version', facts.linkVersion).select('id');
+  // One retry on a database error (/review): an unstamped send leaves the line reading "stopped" over a live link.
+  let { data: stamped, error: stampError } = await stampSend();
+  if (stampError) ({ data: stamped, error: stampError } = await stampSend());
+  if (stampError) console.error('[online-payment-receipt] the pay link was sent but not stamped:', stampError.message);
+  if (!stampError && !(stamped ?? []).length) return { sentTo: facts.teamEmail, sentAt, overtaken: true };
   return { sentTo: facts.teamEmail, sentAt };
+}
+
+/**
+ * Board Ready leftover 6 (pay-link ask 7): an automatic email that DID carry the team's link stamps the send, so the
+ * record's line reads "Pay link sent {date}". Only while the link it carried is still current (a stop or a replace that
+ * landed meanwhile made it a dead link, and its stamp would misreport the line). Never throws: an email never fails
+ * over its stamp.
+ */
+export async function stampTeamPayLinkSent(teamId: string, version: number): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin.from('teams').update({ pay_link_sent_at: new Date().toISOString() })
+      .eq('id', teamId).eq('link_version', version);
+    if (error) console.error('[online-payment-receipt] an automatic pay-link send was not stamped:', error.message);
+  } catch (e) {
+    console.error('[online-payment-receipt] an automatic pay-link send was not stamped:', e instanceof Error ? e.message : String(e));
+  }
 }
 
 /**
@@ -270,44 +307,40 @@ export async function replaceTeamPayLink(
   teamId: string,
   opts: { mode?: 'send' | 'stop'; askIfLost?: boolean } = {},
 ): Promise<
-  | { stopped: true; sentTo: string; sentAt: string }
-  | { stopped: true; notSent: string; cause: PayLinkCause | 'send_failed' | null }
+  | { stopped: true; sentTo: string; sentAt: string; overtaken?: true }
+  | { stopped: true; notSent: string; cause: PayLinkCause | 'send_failed' | 'changed_meanwhile' | null }
   | { stopped: true; stoppedOnly: true; cause: PayLinkCause | null }
-  | { stopped: false; error: string; disputeLost?: 'ask' }
+  | { stopped: false; error: string; disputeLost?: 'ask'; changedMeanwhile?: true }
 > {
   const mode = opts.mode ?? 'send';
   if (!payLinkSecret()) return { stopped: false, error: 'Pay links aren’t set up on this server.' };
   if (mode === 'send' && opts.askIfLost && await teamLostDispute(teamId)) {
     return { stopped: false, error: DISPUTE_WORDS.sendAnywayBody(true), disputeLost: 'ask' };
   }
-  // The next version is one past the team's current one. A conditional update, so two presses at once cannot both claim the
-  // same number (the second sees a changed version and tries again).
-  let replaced = false;
-  let stamp = '';
-  for (let attempt = 0; attempt < 3 && !replaced; attempt++) {
-    const { data: team, error } = await supabaseAdmin.from('teams').select('link_version').eq('id', teamId).maybeSingle();
-    if (error) throw error;
-    if (!team) return { stopped: false, error: 'That team couldn’t be found.' };
-    const current = Number(team.link_version ?? 0);
-    // Taken per attempt, so a press that lost the race to another never writes an OLDER moment over the winner's.
-    stamp = new Date().toISOString();
-    const { data: moved, error: upError } = await supabaseAdmin.from('teams')
-      .update({ link_version: current + 1, link_replaced_at: stamp })
-      .eq('id', teamId).eq('link_version', current).select('id').maybeSingle();
-    if (upError) throw upError;
-    replaced = !!moved;
-  }
-  if (!replaced) return { stopped: false, error: 'Couldn’t replace the link. Try again.' };
+  // The next version is one past the team's current one, by a conditional update. ONE try (Board Ready leftover 5,
+  // owner ruling 2026-11-19): a press that loses to another landing in the same moment is refused and sends nothing.
+  // Trying again bumped the NEXT version, so both presses succeeded and the team got two emails, the first already dead.
+  const { data: team, error } = await supabaseAdmin.from('teams').select('link_version').eq('id', teamId).maybeSingle();
+  if (error) throw error;
+  if (!team) return { stopped: false, error: 'That team couldn’t be found.' };
+  const current = Number(team.link_version ?? 0);
+  const next = current + 1;
+  const stamp = new Date().toISOString();
+  const { data: moved, error: upError } = await supabaseAdmin.from('teams')
+    .update({ link_version: next, link_replaced_at: stamp })
+    .eq('id', teamId).eq('link_version', current).select('id').maybeSingle();
+  if (upError) throw upError;
+  if (!moved) return { stopped: false, error: 'Someone else just changed this pay link.', changedMeanwhile: true };
   if (mode === 'stop') {
     const facts = await loadTeamPayFacts(teamId).catch(() => null);
     return { stopped: true, stoppedOnly: true, cause: facts ? payLinkCause(facts) : null };
   }
-  // Asked above (or answered yes): the send never asks a second time, and carries the stop's moment as its own stamp.
-  const sent: Awaited<ReturnType<typeof sendTeamPayLink>> = await sendTeamPayLink(teamId, { stampAt: stamp })
+  // Asked above (or answered yes): the send never asks a second time, carries the stop's moment as its own stamp, and
+  // goes only at the version this press made (`expectVersion`).
+  const sent: Awaited<ReturnType<typeof sendTeamPayLink>> = await sendTeamPayLink(teamId, { stampAt: stamp, expectVersion: next })
     .catch(() => ({ error: 'Couldn’t send the pay link. Try again.', cause: 'send_failed' as const }));
-  return 'error' in sent
-    ? { stopped: true, notSent: sent.error, cause: sent.cause ?? null }
-    : { stopped: true, sentTo: sent.sentTo, sentAt: sent.sentAt };
+  if ('error' in sent) return { stopped: true, notSent: sent.error, cause: sent.cause ?? null };
+  return { stopped: true, sentTo: sent.sentTo, sentAt: sent.sentAt, ...(sent.overtaken ? { overtaken: true as const } : {}) };
 }
 
 /**
@@ -396,14 +429,22 @@ async function anyLostDispute(registrationIds: readonly string[]): Promise<boole
 
 /**
  * The team's pay link for an email that offers Pay now (the acceptance email, the balance reminder): only while the
- * team can pay online at this moment, else null and the email is exactly today's (A6).
+ * team can pay online at this moment, else null and the email is exactly today's (A6). Board Ready leftover 6: also null
+ * while the club has the link STOPPED (`linkStopped`) — the email goes without its Pay button until someone sends a new
+ * link. A caller whose email went with the link calls `stampTeamPayLinkSent(teamId, version)`.
  */
-export async function teamPayNowLink(teamId: string): Promise<{ url: string; paidSome: boolean } | null> {
+export async function teamPayNowLink(teamId: string): Promise<
+  | { url: string; paidSome: boolean; version: number; stopped?: false }
+  | { url: null; paidSome: boolean; version: number; stopped: true }
+  | null
+> {
   try {
     const facts = await loadTeamPayFacts(teamId);
     if (!facts || facts.refusal) return null;
+    // Stopped: no link, but said, so an email doesn't claim the club takes no payments online (/review).
+    if (facts.linkStopped) return { url: null, paidSome: facts.totalPaid > 0, version: facts.linkVersion, stopped: true };
     const url = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId, version: facts.linkVersion });
-    return url ? { url, paidSome: facts.totalPaid > 0 } : null;
+    return url ? { url, paidSome: facts.totalPaid > 0, version: facts.linkVersion } : null;
   } catch {
     return null; // an email never fails over its Pay button
   }

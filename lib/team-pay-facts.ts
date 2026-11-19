@@ -8,7 +8,7 @@ import { registrationFee, type DueDivision, type DueTeam, type DueTournament, ty
 import { payOptions, type PayOptions } from './team-pay-options';
 import { isOurTournamentTeam } from './club-own-tournament-team';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
-import type { PayRefusal } from './team-pay-refusal';
+import { payLinkStopped, type PayRefusal } from './team-pay-refusal';
 import type { Organization } from './types';
 import { isOrgBillingSuspended } from './org-billing-access';
 
@@ -23,6 +23,9 @@ export interface TeamPayFacts {
   teamStatus: string;
   /** The team's pay link version (mig 467): every link minted for this team signs it, and a replacement bumps it. */
   linkVersion: number;
+  /** Board Ready leftover 6: the club stopped the link and nobody has sent one since (`payLinkStopped`, the line's own
+   *  rule). An automatic email then carries no Pay button. Not a refusal: the pay page and the pay route ignore it. */
+  linkStopped: boolean;
   divisionName: string | null;
   tournament: { id: string; name: string; slug: string; status: string | null; settings: unknown };
   org: Organization;
@@ -65,7 +68,7 @@ export interface TeamDebit {
 export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | null> {
   const { data: team } = await supabaseAdmin
     .from('teams')
-    .select('id, name, email, coach_email, status, division_id, tournament_id, total_paid, deposit_paid, entry_lowered, link_version')
+    .select('id, name, email, coach_email, status, division_id, tournament_id, total_paid, deposit_paid, entry_lowered, pay_link_sent_at, link_replaced_at, link_version')
     .eq('id', teamId)
     .maybeSingle();
   if (!team) return null;
@@ -126,6 +129,7 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
     teamEmail: (team.coach_email as string | null) || (team.email as string | null) || null,
     teamStatus: team.status as string,
     linkVersion: Number(team.link_version ?? 0),
+    linkStopped: payLinkStopped((team.pay_link_sent_at as string | null) ?? null, (team.link_replaced_at as string | null) ?? null),
     divisionName: (div?.name as string | undefined) ?? null,
     tournament: { id: t.id as string, name: t.name as string, slug: t.slug as string, status: (t.status as string | null) ?? null, settings: t.settings },
     org,

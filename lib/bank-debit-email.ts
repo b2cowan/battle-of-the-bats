@@ -12,6 +12,7 @@ import { SIGNUP_LINK_WORDS as SW, childList } from './league-pay-words';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { emailFactsPanel } from './online-refund-block';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
+import { stampTeamPayLinkSent } from './online-payment-receipt';
 import { BANK_DEBIT_EMAIL_WORDS as D, BANK_DEBIT_WORDS as B, DEBIT_NOTICE_WORDS as DW, ONLINE_EMAIL_WORDS as E, PAY_WORDS as P, money, reasonFull } from './online-payment-words';
 import { possessive } from './utils';
 import type { Organization } from './types';
@@ -40,6 +41,9 @@ type DebitContext = {
    *  family's one "Your sign-up" (Signed-in family accounts Stage 1, ask 2), drawn only while money is owed (ask 3:
    *  `canPayAgain` = owing — the page opens whether or not the club takes cards). The two differ on purpose. */
   payLink: string | null; payLabel: string; canPayAgain: boolean; howToPay: string | null;
+  /** A team's link, to stamp "Pay link sent" when the email carried it (Board Ready leftover 6). A family's link has no
+   *  stop and no such line, so it is null there. */
+  teamLink: { teamId: string; version: number } | null;
 };
 
 async function debitContext(onlinePaymentId: string): Promise<DebitContext | null> {
@@ -56,7 +60,9 @@ async function debitContext(onlinePaymentId: string): Promise<DebitContext | nul
       held: B.holdTeam(possessive(facts.teamName)), stillHeld: D.returnedHeldTeam(possessive(facts.teamName)),
       payLink: teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId: facts.teamId, version: facts.linkVersion }),
       payLabel: D.payNow,
-      canPayAgain: !facts.refusal,
+      // Board Ready leftover 6: no Pay now while the club has the team's link stopped (a link minted here would undo it).
+      canPayAgain: !facts.refusal && !facts.linkStopped,
+      teamLink: { teamId: facts.teamId, version: facts.linkVersion },
       howToPay: tournamentTracksPayments(facts.tournament.settings) ? String((facts.tournament.settings as { payment_instructions?: string } | null)?.payment_instructions ?? '').trim() || null : null,
     };
   }
@@ -76,11 +82,21 @@ async function debitContext(onlinePaymentId: string): Promise<DebitContext | nul
     payLabel: SW.mail.button,
     canPayAgain: facts.owingCents > 0,
     howToPay: facts.season.howToPay?.trim() || null,
+    // A family's sign-up link has no "Stop the pay link" (only Send a new link), so it has no stop rule to keep here.
+    teamLink: null,
   };
 }
 
+/** The Pay button, drawn only when there is a link and the payer can pay with it: ONE answer for the button and the stamp. */
+const payButton = (c: DebitContext): string => (c.payLink && c.canPayAgain ? warmEmailButton(c.payLabel, c.payLink) : '');
+
+/** Leftover 6 (pay-link ask 7): a team email that went with Pay now stamps the send, so the record's line reads "sent". */
+async function stampIfCarried(c: DebitContext, status: string): Promise<void> {
+  if (c.teamLink && payButton(c) && status === 'sent') await stampTeamPayLinkSent(c.teamLink.teamId, c.teamLink.version);
+}
+
 /** The body lines, then the closing line (the started email's "Wrong account, or a question?", else the receipt's questions). */
-async function send(c: DebitContext, kind: 'league_bank_debit_started' | 'league_bank_debit_returned' | 'league_bank_debit_reversed', subject: string, lines: string[], closing: 'contact' | 'questions', preheader?: string): Promise<void> {
+async function send(c: DebitContext, kind: 'league_bank_debit_started' | 'league_bank_debit_returned' | 'league_bank_debit_reversed', subject: string, lines: string[], closing: 'contact' | 'questions', preheader?: string): Promise<string> {
   const face = await systemMailFace({
     id: c.org.id, name: c.org.name, logoUrl: c.org.logoUrl ?? null,
     themePreset: c.org.themePreset ?? null, themePrimary: c.org.themePrimary ?? null, themeAccent: c.org.themeAccent ?? null,
@@ -96,6 +112,7 @@ async function send(c: DebitContext, kind: 'league_bank_debit_started' | 'league
   ].filter(Boolean).join('\n'), face?.club ?? null);
   const result = await sendEmail(c.op.payer_email!, `${test ? E.testPrefix : ''}${subject}`, html, { ...face?.sendOpts, kind });
   if (result.status === 'provider_error') throw new Error('send failed');
+  return result.status;
 }
 
 /** "Your bank debit has started" — once, when the debit is first recorded clearing. A failed send is logged, never thrown. */
@@ -127,13 +144,14 @@ export async function sendDebitReturnedEmail(onlinePaymentId: string): Promise<v
     const c = await debitContext(onlinePaymentId);
     if (!c) return;
     const total = money(Number(c.op.total_amount));
-    await send(c, 'league_bank_debit_returned', D.returnedSubject, [
+    const status = await send(c, 'league_bank_debit_returned', D.returnedSubject, [
       warmEmailParagraph(escapeHtml(D.returnedLead(total, c.who, formatStoredDate(c.op.returned_at), reasonFull(c.op.return_reason)))),
       warmEmailParagraph(escapeHtml(D.returnedNothing)),
       warmEmailParagraph(escapeHtml(c.stillHeld)),
-      c.payLink && c.canPayAgain ? warmEmailButton(c.payLabel, c.payLink) : '',
+      payButton(c),
       c.howToPay ? warmEmailParagraph(escapeHtml(P.otherWays(c.howToPay))) : '',
     ], 'questions');
+    await stampIfCarried(c, status);
   } catch (err) {
     console.error('[bank-debit-email] the debit-returned email was not sent:', err instanceof Error ? err.message : String(err));
   }
@@ -149,12 +167,13 @@ export async function sendDebitReversedEmail(onlinePaymentId: string): Promise<v
     if (!c) return;
     const total = money(Number(c.op.total_amount));
     const why = reasonFull(c.op.return_reason);
-    await send(c, 'league_bank_debit_reversed', D.reversedSubject(c.org.name), [
+    const status = await send(c, 'league_bank_debit_reversed', D.reversedSubject(c.org.name), [
       warmEmailParagraph(escapeHtml(D.reversedLead(total, c.org.name, formatStoredDate(c.op.reversed_at)))),
       why ? warmEmailParagraph(escapeHtml(D.reversedReason(why))) : '',
       warmEmailParagraph(escapeHtml(D.reversedOwes(String(c.op.receipt_no ?? ''), DW.owingAgain(money(Number(c.op.base_amount)))))),
-      c.payLink && c.canPayAgain ? warmEmailButton(c.payLabel, c.payLink) : '',
+      payButton(c),
     ], 'questions');
+    await stampIfCarried(c, status);
   } catch (err) {
     console.error('[bank-debit-email] the debit-reversed email was not sent:', err instanceof Error ? err.message : String(err));
   }

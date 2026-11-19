@@ -286,8 +286,9 @@ export default function TeamPayments(props: Props) {
     const { error, data } = await onlineSend({ action: 'email_pay_link', teamId, ...(despiteLostDispute ? { despiteLostDispute } : {}) })
       .finally(() => setLinkSending(false));
     if (error && data.code === 'dispute_lost_ask') { setLinkAnyway(true); return; }
-    setFlash(error ? OW.linkFailedToast : OW.linkSentToast(String(data.sentTo ?? '')));
-    if (!error) setOnline(o => (o ? { ...o, payLinkSentAt: String(data.sentAt ?? new Date().toISOString()) } : o));
+    // Board Ready leftover 5: the email went, but someone stopped or replaced the link while it was sending.
+    setFlash(error ? OW.linkFailedToast : data.overtaken ? OW.linkOvertakenToast(String(data.sentTo ?? '')) : OW.linkSentToast(String(data.sentTo ?? '')));
+    if (!error && !data.overtaken) setOnline(o => (o ? { ...o, payLinkSentAt: String(data.sentAt ?? new Date().toISOString()) } : o));
     if (!error) await load();
   }
 
@@ -302,10 +303,13 @@ export default function TeamPayments(props: Props) {
     const { error, data } = await onlineSend({ action: 'replace_pay_link', teamId, mode, ...(replacing === 'dispute' ? { despiteLostDispute: true } : {}) });
     if (error && data.code === 'dispute_lost_ask') { setReplacing('dispute'); return; }
     setReplacing(null);
+    // Board Ready leftover 5: someone else's press landed in the same moment; this one did nothing. The line re-reads.
+    if (error && data.code === 'changed_meanwhile') { setFlash(PL.changedMeanwhile); await load(); return; }
     if (error) { setFlash(mode === 'stop' ? PL.failedStop : PL.failed); return; }
+    if (data.cause === 'changed_meanwhile') { setFlash(PL.notSentChanged); await load(); return; }
     const cause = (data.cause ?? null) as PayLinkCause | 'send_failed' | null;
     const because = payLinkCauseSentence(cause, teamStatus);
-    if (typeof data.sentTo === 'string') setFlash(PL.doneSent(data.sentTo));
+    if (typeof data.sentTo === 'string') setFlash(data.overtaken ? PL.doneOvertaken(data.sentTo) : PL.doneSent(data.sentTo));
     else if (data.stoppedOnly) setFlash(PL.doneStopped(because ? because.charAt(0).toLowerCase() + because.slice(1) : null));
     else setFlash(PL.notSent(cause === 'no_email' ? PL.notSentNoEmail : because ? `${because}.` : PL.notSentRetry));
     await load();

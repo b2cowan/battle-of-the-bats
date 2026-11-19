@@ -1,4 +1,4 @@
-import { teamPayNowLink } from '@/lib/online-payment-receipt';
+import { stampTeamPayLinkSent, teamPayNowLink } from '@/lib/online-payment-receipt';
 import { NextRequest, NextResponse } from 'next/server';
 import { paymentReminderHtml, sendEmail, resolveCoachRecipient } from '@/lib/email';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
@@ -217,7 +217,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     const divisionName = divisions.get(team.division_id)?.name ?? 'Division';
     // Club Tier Stage 12a: Pay the balance (or Pay now) while the club takes payments online; absent → today's email.
     const pay = await teamPayNowLink(team.id);
-    await sendEmail(
+    const reminded = await sendEmail(
       recipient,
       `Payment Reminder - ${tournament.name}`,
       paymentReminderHtml({
@@ -233,9 +233,12 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
         coachEmail: team.email ?? undefined,
         payUrl: pay?.url ?? null,
         paidSome: pay?.paidSome ?? false,
+        payStopped: pay?.stopped === true,
       }),
       { kind: 'tournament_payment_reminder', orgId: ctx.org.id, askedBy: ctx.user.id },
     );
+    // Board Ready leftover 6: an email that carried the link stamps "Pay link sent" on the record's line.
+    if (pay?.url && reminded.status === 'sent') await stampTeamPayLinkSent(team.id, pay.version);
     emailsSent++;
     bellDue.set(
       team.id,

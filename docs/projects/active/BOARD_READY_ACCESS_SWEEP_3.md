@@ -106,8 +106,31 @@
 >   title guard, a source-guard test); /docs (Organization help: permits' Word lines, "Invited by more than one club?");
 >   /legal (no blocker, no policy change; wording "…until they run out" applied; LEGAL_INDEX row 59 line); /accounting none.
 >   Typecheck: clean apart from `tests/unit/layout-run-journal.test.ts` (another session's, committed 202c23ece).
-> - **Left for the next P8b chat: 5, 6, 8** (the pay link's two presses, the stop rule for automatic emails, the activity
->   record), all in `lib/online-payment-receipt.ts` and its callers; the P8b block's premises for them stand.
+> - **5, 6, 8 (the pay-link trio)** built by the third P8b chat 2026-11-19, ONE commit "Board Ready leftover fixes 5, 6 and 8…"
+>   (they share `lib/online-payment-receipt.ts`; no schema change, nothing to order on production). Premises held as P8b
+>   worded them. **5:** one conditional bump, no retry; the same-moment loser is refused ("Someone else just changed this pay
+>   link") and sends nothing; the inner send goes only at its own bump's version; the send's stamp is checked (one retry on
+>   a database error) and an unlanded stamp answers "went, but stopped or replaced meanwhile". **6:** "stopped" = the line's
+>   own rule (`payLinkStopped`, carried as `TeamPayFacts.linkStopped`); while it holds, the acceptance email (both doors),
+>   the balance reminder, the team's receipt (its ":125 link") and a team's bank-debit emails go with no Pay button; an
+>   automatic email that did carry the link stamps "Pay link sent" (on a real send only). The reminder without its button
+>   keeps "Paid by another way already?…" instead of "does not process tournament payments online" (untrue here). The
+>   league family link has NO stop (only Send a new link): left as is. The stop window's sentence and the Tournaments
+>   help ("every pay-link email after a stop… carries the new link", now false) were corrected. **8:** `pay_link_emailed |
+>   replaced | stopped` rows in `org_audit_log` (admin id, time, tournament + team ids, a flag; target null; never an
+>   address), written only after the action succeeds; who reads the record and the screen unchanged (shown nowhere yet).
+>   Proof `.probe/pay-link-trio-prove.mjs` 23/23 on dev (two presses collided 6/6 rounds; a stop caught mid-send); unit
+>   `team-pay-link-version` 34/34. Agents: /simplify (2 tidy-ups applied: one button answer in the bank-debit emails, the
+>   screen's branch order); /review (no High; applied: stamp retry, stamp only on a real send, the reminder's sentence, no
+>   "sent" flash for a dead link); /docs (Tournaments help, "Sending a new pay link, or stopping it"); /legal (no conflict,
+>   no CASL angle; LEGAL_INDEX row note; no help may say the club can check these rows until a screen shows them);
+>   /accounting none. Also fixed in passing: the stop window's "{team}'s" now uses `possessive()` (the possessive guard).
+>   **Owner calls:** (a) show the pay-link rows on the owner's activity screen, and should admins read the record? (/legal:
+>   admins reading colleagues' actions is a need-to-know choice); (b) the coach portal's own Pay now still works while the
+>   club has the link stopped (a signed-in team coach; not an email, so outside ruling 6) — stop it there too (one
+>   condition)? Not fixed, recorded: an operator-customised acceptance template drops the Pay button yet the stamp says
+>   "sent" (bulk door); the team receipt's "View receipt" (nothing owed) also stamps "sent"; the legacy unscoped audit view
+>   would show the raw action names.
 >
 > **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**
 > - **Fix (small, one commit each, awaiting the owner's go to build):** 1 refuse the demo account at all three create doors + a

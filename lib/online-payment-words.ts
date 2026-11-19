@@ -780,13 +780,14 @@ export const PAY_LINK_LINE_WORDS = {
   menuStopHint: 'No new link goes out right now',
   newTitle: 'Send a new link?',
   stopTitle: 'Stop the pay link?',
-  stopsNow: (team: string) => `${team}’s current pay link stops working straight away, including any copy that was forwarded.`,
+  stopsNow: (team: string) => `${possessive(team)} current pay link stops working straight away, including any copy that was forwarded.`,
   /** "The new one goes to {email}." — the address bold, between the two parts. */
   goesToLead: 'The new one goes to',
   wrongAddress: 'If that address is wrong, change the email first.',
   underWay: 'A payment already on the card page still goes through. Anyone who has the old page open but hasn’t pressed Pay yet will need the new email.',
   underWayStop: 'A payment already on the card page still goes through.',
-  stopWhy: (cause: string) => `${cause}, so no new link goes out. Any pay-link email sent from now on carries the new link.`,
+  // Board Ready leftover 6 (2026-11-19): a stopped link stays stopped in the automatic emails too.
+  stopWhy: (cause: string) => `${cause}, so no new link goes out. Until someone sends the team a link again, its emails carry no Pay button.`,
   goNew: 'Send a new link',
   goStop: 'Stop the link',
   goOnlyStop: 'Only stop the link',
@@ -812,6 +813,12 @@ export const PAY_LINK_LINE_WORDS = {
   notSentRetry: 'Use Email the pay link to try again.',
   failed: 'Couldn’t replace the link. Try again. The old link still works.',
   failedStop: 'Couldn’t stop the link. Try again. The old link still works.',
+  // Board Ready leftover 5 (owner ruling 2026-11-19): two people at the same moment. The second press does nothing.
+  changedMeanwhile: 'Someone else just changed this pay link, so nothing was done here. The line shows what they did.',
+  /** The bump landed, then someone stopped or replaced the link before the new one went: nothing was sent. */
+  notSentChanged: 'The old link has stopped. Someone else changed the link at the same moment, so the new one wasn’t sent.',
+  /** The new link went, but someone stopped or replaced it while it was sending: the team holds a link that doesn’t work. */
+  doneOvertaken: (email: string) => `A new link went to ${email}, but someone else stopped or replaced it at the same moment, so it doesn’t work. The line shows what they did.`,
 } as const;
 
 /** The team's record: an online row, its ⋯, the view and the refund windows (copy §15–§16). */
@@ -837,6 +844,8 @@ export const TEAM_ROW_WORDS = {
   linkSent: (date: string) => `Pay link sent ${date}`,
   linkSentToast: (email: string) => `Pay link sent to ${email}.`,
   linkFailedToast: 'Couldn’t send the pay link. Try again.',
+  /** Board Ready leftover 5: the email went, but someone stopped or replaced the link while it was sending. */
+  linkOvertakenToast: (email: string) => `The pay link went to ${email}, but someone else stopped or replaced it at the same moment, so it doesn’t work.`,
   // 12c Part 6, words §3.7: a bank debit on the team's record.
   methodBank: (receiptNo: string) => `Online, bank debit · receipt ${receiptNo}`,
   methodBankClearing: 'Online, bank debit',
