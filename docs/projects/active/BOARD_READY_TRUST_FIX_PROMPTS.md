@@ -26,7 +26,8 @@ Nothing below was built when this was written.
 | 8 | P8 Build the leftover fixes | leftover calls 1–6, 8–14 (fix parts) + the two chores, ruled 2026-11-19 | build (one small migration, call 3) | DONE 2026-11-19 (whole scope, with row 8b), first half: 329fb446f (1+2), 0598f4ee9 (10), c9a40bc46 (3, mig 506: production either side of the promote), 2feb3cf16 (13), bc7173346 (14), ee5a16daa (chore: backfill script deleted) + the records commit; the fix B probes' cause traced (two-step redirect) and the probes corrected (local). Proofs 29/29, 8/8, 18/18, 8/8. The second half is row 8b |
 | 8b | P8b Build the leftover fixes, second half | leftover calls 4, 5, 6, 8, 9, 11, 12 + the owner's Word-file question | build (no migration expected) | DONE 2026-11-19: Word files on permits 150947d52 (owner yes; mig 507, production BEFORE the code), 9 750957c34, 11 707f7b0d2, 4 7d05bc66a, 12 24daf5d95 + records c1b328ceb; then 5, 6 and 8 (the pay-link trio) in ONE commit "Board Ready leftover fixes 5, 6 and 8…" (no schema change; proof 23/23, `.probe/pay-link-trio-prove.mjs`; /simplify, /review, /docs, /legal done). Owner questions recorded in the sweep report: the coach portal's Pay now while stopped RULED and built the same day (commit "Board Ready leftover 6, the coach portal…"); the pay-link rows on the activity screen RULED "owner only" the same day, its build is row 8c. Next: P8c |
 | 8c | P8c Show the pay-link actions on the owner's activity screen | the P8b owner call (a), ruled 2026-11-19 "Owner only, as recommended" | build (small, no migration expected) | not started (prompt written 2026-11-19 by the P8b chat) |
-| 9 | P9 Look into the walk edits that didn't save | leftover call 7, ruled 2026-11-19 | investigation (report-only) | not started (prompt written 2026-11-19) |
+| 9 | P9 Look into the walk edits that didn't save | leftover call 7, ruled 2026-11-19 | investigation (report-only) | DONE 2026-11-19, the commit "Board Ready trust-fix queue P9: the walk edits that didn't save…" (records only, nothing built). All three NOT REPRODUCED on dev, each driven through the real screens (Playwright) as well as the routes: the Rules put-back 3 runs (slow, fast, pressing on with a save still in flight), the Members window put-back 2 runs plus a sign-in swap test, §540 W2's second invitation and Cancel 2 runs; every save landed with its activity line, and none of these screens can say saved without the server's yes. The day's record shows the missing requests never reached the server (no activity line, nothing in the issue feed, every landed line the owner's own). All three sit on compound put-back steps (several presses in one tick); nothing more is provable. Probes `.probe/rules-put-back-ui.mjs`, `memberdbg-ui.mjs`, `memberdbg-swap.mjs`, `p2-w2-screens.cjs`, `p2-w2-repro.mjs`, `p9-actor-check.mjs`; fixtures cleaned. One new finding, put to the owner as leftover call 17 (a failed activity-record line reaches only the server log) and RULED 2026-11-19 "fix it": row 9b. Considered and dismissed: a Rules Delete reads any "not found" as already gone (only a dev recompile gives a foreign one). Call 22 answered under the P9 block |
+| 9b | P9b A failed activity-record line opens an issue | leftover call 17 (found by P9), ruled 2026-11-19 "fix it" | build (small, no migration) | not started (prompt written 2026-11-19 by the P9 chat) |
 
 **END OF QUEUE checklist RUN 2026-11-18** (its own chat, records only, nothing built). Row 7 was added on 2026-11-19 for
 the leftovers it found, so the queue runs again; rows 8 and 9 were added by the P7 chat on 2026-11-19 after the owner's
@@ -771,3 +772,39 @@ first). (3) Neither P8 nor P9 records a new finding left without a ruling: a bui
 back to the owner first. With the 2026-11-19 rulings, every other leftover is resolved: fixed by P8, or accepted with
 its reason on record. The roadmap line is then "a full access review of who can see what, every finding resolved". The
 owner's browser walks of rows 3b, 3c, 4 and 6 and the queue's production order are separate from the wording.
+
+**P9's answer to call 22 (2026-11-19).** The three conditions, checked. (1) **Not yet:** P8's and P8b's fixes are built on
+dev, not promoted; migrations 505 and 506 go either side of the promote and 507 before the code. (2) **Met:** each of the
+three is not reproduced, and the record shows the requests never reached the server; they leave no finding. (3) **Not
+yet:** P9 found one (leftover call 17, ruled "fix it" 2026-11-19), so P9b must be live too. So the roadmap line can read
+"a full access review of who can see what, every finding resolved" once P8, P8b and P9b are live on production with 505,
+506 and 507. P8c (the pay-link rows on the owner's activity screen) is a ruled follow-on, not a finding, and doesn't hold
+the wording. The owner's browser walks and the production order stay separate from it, as above.
+
+## P9b — A failed activity-record line opens an issue (leftover call 17, ruled 2026-11-19; written 2026-11-19 by the P9 chat)
+
+```
+Board Ready — leftover call 17 (build, small). Owner ruled 2026-11-19: "Fix it (Recommended)".
+
+THE FINDING (P9, 2026-11-19): writeOrgAudit (lib/org-audit.ts) swallows a failed insert with console.error only, by
+design (a log row must never turn a successful change into an error for the person who made it). On production that
+line reaches no one, so a missing line in a club's activity record would go unnoticed.
+
+THE FIX
+- Keep the swallow: the change and the person's answer are unchanged. Also report the failure to the platform's issue
+  feed with the existing helper (captureError in lib/observability/capture.ts), with the action name and org id only,
+  NEVER the payload (it holds emails and access maps; the file's own comment says so) and never a thrown error's body.
+- Check captureError can't throw or hang the route; if it can, bound it.
+- Census first (a helper agent): any other audit or activity writer that swallows a failed insert the same way (inserts
+  into org_audit_log outside writeOrgAudit, and the other audit tables' writers). Fix the same-shape ones in the same
+  change; report the rest as a list.
+- A unit guard: a failed insert reaches the capture, with no payload.
+
+RULES: no schema change; no screen change, so no /docs; /review on the change; /legal only if the issue could carry
+anything about a person (it must not). Proof on dev: force one failed insert through a probe (e.g. a made-up org id),
+see the issue open in platform admin, then close it. Close-out: PROGRESS row 9b, the sweep report's call 17 line, the
+Board Ready board line. No commit without my yes.
+
+DONE LOOKS LIKE
+A failed activity-record line opens one issue naming the action and the club, and nothing else changes.
+```

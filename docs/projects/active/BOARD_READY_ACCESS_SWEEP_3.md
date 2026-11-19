@@ -137,6 +137,16 @@
 >   "sent" (bulk door); the team receipt's "View receipt" (nothing owed) also stamps "sent"; the legacy unscoped audit view
 >   would show the raw action names.
 >
+> **Status, 7 (P9, 2026-11-19, dev, report-only, nothing built):** the three walk gaps are NOT REPRODUCED. §539's Rules
+>   put-back and Members window put-back and §540 W2's second invitation and Cancel were each re-run through the real
+>   screens (Playwright) and the routes; every save landed with its activity line, and none of these screens can say
+>   saved without the server's yes. The day's record shows the missing requests never reached the server: no activity
+>   line, nothing in the issue feed, and every line that did land is the owner's own. All three sit on compound put-back
+>   steps (several presses in one tick). No defect; the ledger's "route to /debug if it recurs" stands. **One new finding,
+>   leftover call 17:** a failed activity-record line is swallowed by design and reaches only the server log, so a missing
+>   line would go unnoticed. **RULED 2026-11-19 (owner): fix it** (report it to the issue feed, no payload): queue row 9b.
+>   Dismissed with reason: a Rules Delete reads any "not found" as already gone (only a dev recompile gives a foreign one).
+>
 > **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**
 > - **Fix (small, one commit each, awaiting the owner's go to build):** 1 refuse the demo account at all three create doors + a
 >   build check · 2 permits and venue library read only by people who schedule, run tournaments or handle money · 3 "same
