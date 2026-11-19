@@ -7,10 +7,11 @@
  * Audit log under "Records opened".
  *
  * Kept 90 days by PRUNING ON WRITE (no scheduled job). A record re-rendered after an edit is not a second opening: a
- * repeat by the same person within ten minutes writes nothing. Best effort and silent — a trail that fails to write never
- * stops a record from opening.
+ * repeat by the same person within ten minutes writes nothing. Best effort — a trail that fails to write never stops a
+ * record from opening — but not silent: a line that didn't save opens an issue (leftover call 18 (a)).
  */
 import { supabaseAdmin } from './supabase-admin';
+import { reportUnwritten, writeOrReport } from './observability/report-unwritten';
 
 export const RECORD_OPENS_KEEP_DAYS = 90;
 const REPEAT_WINDOW_MS = 10 * 60_000;
@@ -24,31 +25,39 @@ export async function recordOpened(opts: {
   recordId: string;
   viaFind: boolean;
 }): Promise<void> {
+  // The trail is a record of reading, never a gate on it: nothing here throws. A line that fails to save opens an issue
+  // (leftover call 18 (a), owner 2026-11-19): never the row (it names staff and a record), only the action and a code.
+  const since = new Date(Date.now() - REPEAT_WINDOW_MS).toISOString(); // utc-intentional: an instant comparison
+  let recent: unknown[] | null;
   try {
-    const actorEmail = (opts.actorEmail ?? 'platform-admin').toLowerCase();
-    const since = new Date(Date.now() - REPEAT_WINDOW_MS).toISOString(); // utc-intentional: an instant comparison
-    const { data: recent } = await supabaseAdmin
+    ({ data: recent } = await supabaseAdmin
       .from('platform_record_opens')
       .select('id')
       .eq('actor_user_id', opts.actorUserId)
       .eq('record_kind', opts.kind)
       .eq('record_id', opts.recordId)
       .gte('opened_at', since)
-      .limit(1);
-    if (recent && recent.length > 0) return;
+      .limit(1));
+  } catch (e) {
+    await reportUnwritten('platform_record_opens', 'record_opened', null, e);
+    return;
+  }
+  if (recent && recent.length > 0) return;
 
-    await supabaseAdmin.from('platform_record_opens').insert({
-      actor_user_id: opts.actorUserId,
-      actor_email: actorEmail,
-      record_kind: opts.kind,
-      record_id: opts.recordId,
-      via_find: opts.viaFind,
-    });
+  const saved = await writeOrReport('platform_record_opens', 'record_opened', null, () => supabaseAdmin.from('platform_record_opens').insert({
+    actor_user_id: opts.actorUserId,
+    actor_email: (opts.actorEmail ?? 'platform-admin').toLowerCase(),
+    record_kind: opts.kind,
+    record_id: opts.recordId,
+    via_find: opts.viaFind,
+  }));
+  if (!saved) return;
 
-    const cutoff = new Date(Date.now() - RECORD_OPENS_KEEP_DAYS * 86_400_000).toISOString(); // utc-intentional: retention instant
+  const cutoff = new Date(Date.now() - RECORD_OPENS_KEEP_DAYS * 86_400_000).toISOString(); // utc-intentional: retention instant
+  try {
     await supabaseAdmin.from('platform_record_opens').delete().lt('opened_at', cutoff);
   } catch {
-    // The trail is a record of reading, never a gate on it.
+    // A failed prune after a saved line is not a lost line; the next opening prunes.
   }
 }
 

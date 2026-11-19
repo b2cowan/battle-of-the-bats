@@ -1,6 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
 import { HttpError } from './http-error';
-import { reportUnwritten } from './observability/report-unwritten';
+import { writeOrReport } from './observability/report-unwritten';
 
 /**
  * Why a staff member made the change, in the audit log's own column (R4; owner Q6 2026-10-26). Required on every staff
@@ -25,7 +25,7 @@ function auditRow(actorEmail: string, orgId: string | null, action: string, fiel
 }
 
 /** The console's audit write. Best-effort: a failed write never blocks the change it records; it opens an issue
- *  (`reportUnwritten`: the action, never the row, which carries old and new values). */
+ *  (`writeOrReport`: the action, never the row, which carries old and new values). */
 export async function writePlatformAuditLog(
   actorEmail: string,
   orgId: string | null,
@@ -35,14 +35,8 @@ export async function writePlatformAuditLog(
   newValue?: unknown,
   opts?: AuditOptions,
 ) {
-  let failure: unknown = null;
-  try {
-    const { error } = await supabaseAdmin.from('platform_audit_log').insert(auditRow(actorEmail, orgId, action, field, oldValue, newValue, opts));
-    failure = error;
-  } catch (e) {
-    failure = e;
-  }
-  if (failure) await reportUnwritten('platform_audit_log', action, orgId, failure);
+  await writeOrReport('platform_audit_log', action, orgId,
+    () => supabaseAdmin.from('platform_audit_log').insert(auditRow(actorEmail, orgId, action, field, oldValue, newValue, opts)));
 }
 
 /** The same write, but it throws: for a money write whose record must exist (a refund, Stage 3 threat T10). */

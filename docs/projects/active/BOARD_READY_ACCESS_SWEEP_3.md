@@ -165,6 +165,20 @@
 >   context carries the club; shared observability work, no finding against access). **RULED 2026-11-19 (owner): fix
 >   (a)–(c), accept (d), as recommended** (d's reason on record: the context carries the club, and an unknown club is
 >   not an access finding). The build is queue row 9c. Call 22's wording now waits on 9c being live.
+>   **BUILT 2026-11-19 (P9c; commit hash on the queue's row 9c; no schema change):** (a) the records-opened trail and
+>   (c) the Stripe Connect event log (both webhooks, now through one writer `lib/connect-event-log.ts`) read every
+>   write's answer, and a failed line opens one issue (record, action, the club where known, a code; never the row);
+>   a failed log line never changes the answer to Stripe (the log is not what makes handling correct; the first line
+>   is written ON CONFLICT DO NOTHING, so two deliveries at once are not a failure). (b) The Sent emails search count
+>   fails CLOSED both ways: a count that can't be written refuses the search with the existing "try again" sentence and
+>   opens an issue; one that can't be read (or comes back blank) refuses too, where it used to say the daily limit was
+>   reached. The five record writers now share one step (`writeOrReport`). Proved on dev 42/42
+>   (`.probe/p9c-unwritten-prove.ts`); unit guards in `tests/unit/org-audit-failure-reported.test.ts` (the one-writer
+>   census now covers updates and the three tables). /simplify and /review (4 lenses each) applied; accepted with
+>   reason: a failed READ of the log or the repeat check isn't reported (a safe re-run or a duplicate trail line), the
+>   daily cap can be overrun slightly by simultaneous searches (count and check are two steps), a failing trail write
+>   can hold a staff record page up to 2 s once a minute. /docs none (no new words), /legal none (nothing about a
+>   person leaves), /accounting none.
 >   Dismissed with reason: a Rules Delete reads any "not found" as already gone (only a dev recompile gives a foreign one).
 >
 > **RULED 2026-11-18 (owner, trust close-out paste-back: "Access calls 1A–22A, all as recommended"; no sign-off needed).**

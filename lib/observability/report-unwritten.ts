@@ -1,7 +1,7 @@
 /**
  * A RECORD LINE THAT FAILED TO SAVE OPENS AN ISSUE (Board Ready leftover call 17, owner 2026-11-19).
  *
- * The record writers (a club's activity record, the platform's audit log, the platform's event log) swallow a failed
+ * The record writers (the writers of the tables in RECORDS below) swallow a failed
  * write by design: the change they record has already happened, and a log line must never turn it into an error for the
  * person who made it. On production their console line reaches no one, so a missing line went unnoticed. They call
  * this instead, which logs the line AND opens (or counts against) one issue in the platform's feed.
@@ -37,6 +37,11 @@ const RECORDS = {
   org_audit_log: 'Activity record line',
   platform_audit_log: 'Platform audit line',
   platform_events: 'Platform event',
+  // Leftover call 18 (owner 2026-11-19, "fix a–c"): staff's who-opened-which-record trail, the Sent emails search
+  // counter, and the Stripe Connect event ledger.
+  platform_record_opens: 'Records-opened line',
+  platform_sent_email_searches: 'Sent emails search count',
+  stripe_connect_events: 'Stripe Connect event log line',
 } as const;
 
 export type UnwrittenRecord = keyof typeof RECORDS;
@@ -46,6 +51,28 @@ function causeOf(failure: unknown): string {
   // Only the SHAPE of a code (a SQLSTATE, a Node errno): a library's `.code` can be free text.
   if (failure && typeof failure === 'object' && 'code' in failure && typeof failure.code === 'string' && /^[A-Z0-9_]{1,20}$/.test(failure.code)) return failure.code;
   return failure instanceof Error ? 'thrown' : 'unknown';
+}
+
+/**
+ * One record write, its answer read, a failure reported: true when the line saved. Never throws. `run` returns the
+ * database's answer (a Supabase write); a returned error and a thrown one are both a failure. Every writer of a table in
+ * RECORDS writes through here or through `reportUnwritten` (`tests/unit/org-audit-failure-reported.test.ts`).
+ */
+export async function writeOrReport(
+  record: UnwrittenRecord,
+  action: string,
+  orgId: string | null,
+  run: () => PromiseLike<{ error: unknown }>,
+): Promise<boolean> {
+  let failure: unknown = null;
+  try {
+    ({ error: failure } = await run());
+  } catch (e) {
+    failure = e;
+  }
+  if (!failure) return true;
+  await reportUnwritten(record, action, orgId, failure);
+  return false;
 }
 
 /** `failure` is the database's returned error or what was thrown. Only its code leaves the server log. */

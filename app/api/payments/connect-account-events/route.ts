@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { markConnectEventFailed, markConnectEventProcessed, openConnectEvent, stampConnectEventOrg } from '@/lib/connect-event-log';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { withObservability, captureError } from '@/lib/observability';
 import { stripeKeyIsLive } from '@/lib/stripe-mode';
@@ -25,7 +26,8 @@ export const dynamic = 'force-dynamic';
  * ⚠ Like the payments webhook, deliberately NOT behind the launch switch (`tests/unit/online-payments-guard.test.ts`):
  * an account Stripe closed must stop taking payments even if the switch is off. Passes `proxy.ts` without a session.
  *
- * Each event is logged once (`stripe_connect_events`); a redelivery of a processed event is acknowledged and skipped.
+ * Each event is logged once (`stripe_connect_events`, through its one writer `lib/connect-event-log.ts`); a redelivery of a
+ * processed event is acknowledged and skipped. A log line that fails to save opens an issue and never changes the answer.
  */
 const ACCOUNT_EVENTS = new Set([
   'v2.core.account[requirements].updated',
@@ -53,10 +55,7 @@ export const POST = withObservability(async (req: Request) => {
   const liveKey = stripeKeyIsLive();
   if (event.livemode !== liveKey) return NextResponse.json({ received: true });
 
-  const { data: seen } = await supabaseAdmin.from('stripe_connect_events').select('processed_at, attempts').eq('id', event.id).maybeSingle();
-  if (seen?.processed_at) return NextResponse.json({ received: true, duplicate: true });
-  if (seen) await supabaseAdmin.from('stripe_connect_events').update({ attempts: (seen.attempts as number) + 1 }).eq('id', event.id);
-  else await supabaseAdmin.from('stripe_connect_events').insert({ id: event.id, type: event.type, account, livemode: event.livemode });
+  if ((await openConnectEvent(event, account)) === 'processed') return NextResponse.json({ received: true, duplicate: true });
 
   try {
     let row;
@@ -83,12 +82,11 @@ export const POST = withObservability(async (req: Request) => {
     } else {
       row = await syncPayoutsAccount(account);
     }
-    if (row) await supabaseAdmin.from('stripe_connect_events').update({ org_id: row.org_id }).eq('id', event.id);
+    if (row) await stampConnectEventOrg(event.id, row.org_id);
   } catch (err) {
-    await supabaseAdmin.from('stripe_connect_events').update({ error: err instanceof Error ? err.message.slice(0, 500) : 'failed' }).eq('id', event.id);
-    await captureError(err, { route: '/api/payments/connect-account-events', method: 'POST' });
+    await Promise.all([markConnectEventFailed(event.id, err), captureError(err, { route: '/api/payments/connect-account-events', method: 'POST' })]);
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 }); // Stripe retries
   }
-  await supabaseAdmin.from('stripe_connect_events').update({ processed_at: new Date().toISOString(), error: null }).eq('id', event.id);
+  await markConnectEventProcessed(event.id);
   return NextResponse.json({ received: true });
 }, { route: '/api/payments/connect-account-events' });

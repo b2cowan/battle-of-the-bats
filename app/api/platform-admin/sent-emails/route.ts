@@ -16,7 +16,8 @@ import { isSentState, looksLikeEmailAddress, SENT_LOG_FAILED, SENT_SEARCH_LIMIT 
  *   • the address rides in the BODY, never the address bar — the error catcher keeps a request's path with anything after a
  *     question mark. This handler never reads the URL, never logs and never audits the words (T14);
  *   • a search (an address was given) is counted against the staff member's daily limit in the database BEFORE anything is
- *     read (T17). Browsing the newest emails is not a search and is not counted;
+ *     read (T17). Browsing the newest emails is not a search and is not counted. A count that can't be read or written
+ *     refuses the search (leftover call 18 (b)): the brake never opens when it breaks;
  *   • an address is exact and whole: the list answers one inbox, never a partial walk of everyone's;
  *   • every failure becomes one fixed sentence before anything records it; every answer is `no-store`.
  */
@@ -34,7 +35,13 @@ export const POST = withObservability(async (req: Request) => {
     const state = isSentState(body.state) ? body.state : null;
     const offset = typeof body.offset === 'number' && Number.isFinite(body.offset) && body.offset > 0 ? Math.floor(body.offset) : 0;
 
-    if (typed && !(await takeSentEmailSearch(auth.user.id))) return json({ error: SENT_SEARCH_LIMIT }, 429);
+    if (typed) {
+      const search = await takeSentEmailSearch(auth.user.id);
+      if (search === 'limit') return json({ error: SENT_SEARCH_LIMIT }, 429);
+      // The count could not be written: refused (the brake fails closed), with the one "try again" sentence. The
+      // unwritten count has already opened its own issue, so this answer records nothing more.
+      if (search === 'unwritten') return json({ error: SENT_LOG_FAILED }, 503);
+    }
 
     return json(await listSentLogRows(auth.role, { to: typed || null, state, offset }));
   } catch {

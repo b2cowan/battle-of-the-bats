@@ -120,26 +120,27 @@ describe('a failed activity-record line opens an issue (leftover call 17)', () =
   });
 });
 
-describe('every product writer of the record tables reports a failed line (leftover call 17 census, 2026-11-19)', () => {
-  // A new direct insert would read its own answer, or (as four did) none at all. Write through the table's writer.
-  const WRITERS: Record<string, string[]> = {
-    org_audit_log: ['lib/org-audit.ts'],
-    platform_audit_log: ['lib/platform-audit.ts'],
-    platform_events: ['lib/platform-events.ts'],
+describe('every product writer of the record tables reports a failed line (leftover calls 17 and 18 census, 2026-11-19)', () => {
+  // A new direct write would read its own answer, or (as seven did) none at all. Write through the table's writer.
+  const WRITERS: Record<string, string> = {
+    org_audit_log: 'lib/org-audit.ts',
+    platform_audit_log: 'lib/platform-audit.ts',
+    platform_events: 'lib/platform-events.ts',
+    // Leftover call 18 (a)–(c).
+    platform_record_opens: 'lib/platform-record-opens.ts',
+    platform_sent_email_searches: 'lib/sent-log.ts',
+    stripe_connect_events: 'lib/connect-event-log.ts',
   };
 
-  function sources(dir: string): string[] {
-    return readdirSync(join(REPO, dir), { withFileTypes: true, recursive: true })
-      .filter(e => e.isFile() && /\.tsx?$/.test(e.name) && !/\.test\.tsx?$/.test(e.name))
-      .map(e => relative(REPO, join(e.parentPath, e.name)).replace(/\\/g, '/'));
-  }
-  const files = [...sources('app'), ...sources('lib')];
+  const sources = (dir: string) => readdirSync(join(REPO, dir), { withFileTypes: true, recursive: true })
+    .filter(e => e.isFile() && /\.tsx?$/.test(e.name) && !/\.test\.tsx?$/.test(e.name))
+    .map(e => relative(REPO, join(e.parentPath, e.name)).replace(/\\/g, '/'));
+  const texts = [...sources('app'), ...sources('lib')].map(f => ({ f, text: readFileSync(join(REPO, f), 'utf8') }));
 
-  for (const [table, allowed] of Object.entries(WRITERS)) {
-    it(`${table} is inserted only by its writer`, () => {
-      const insert = new RegExp(`from\\(\\s*['"]${table}['"]\\s*\\)\\s*\\.(insert|upsert)\\(`);
-      const found = files.filter(f => insert.test(readFileSync(join(REPO, f), 'utf8')));
-      assert.deepEqual(found.sort(), [...allowed].sort());
+  for (const [table, writer] of Object.entries(WRITERS)) {
+    it(`${table} is inserted, upserted or updated only by ${writer}`, () => {
+      const write = new RegExp(`from\\(\\s*['"]${table}['"]\\s*\\)\\s*\\.(insert|upsert|update)\\(`);
+      assert.deepEqual(texts.filter(t => write.test(t.text)).map(t => t.f), [writer]);
     });
   }
 
@@ -163,5 +164,167 @@ describe('every product writer of the record tables reports a failed line (lefto
     assert.deepEqual(captured.map(c => (c.opts.requestContext as { record: string }).record), ['platform_audit_log', 'platform_events']);
     for (const c of captured) assertNothingFromTheRow(c);
     assert.doesNotMatch(JSON.stringify(captured.map(c => c.opts)), /staff@example\.com/);
+  });
+});
+
+/**
+ * Leftover call 18 (owner 2026-11-19, "fix (a)–(c), accept (d)"): three more writers never read their write's answer.
+ * (a) staff's records-opened trail, (b) the Sent emails search count (whose failure let a search through uncounted, the
+ * daily brake failing OPEN), (c) the Stripe Connect event log, written by both Connect webhooks.
+ */
+describe('the other records report a failed line too (leftover call 18)', () => {
+  type Answer = { error: { message: string; code?: string } | null; count?: number; data?: unknown };
+  type Db = ReturnType<typeof fakeDb>;
+
+  /** A fake database: every call answers from `answer(op)`, and every call (with its arguments) is noted. */
+  function fakeDb(answer: (op: string) => Answer | 'throw') {
+    const calls: string[] = [];
+    const args: Record<string, unknown[]> = {};
+    const chain = (op: string): unknown => {
+      const settle = () => {
+        const a = answer(op);
+        return a === 'throw' ? Promise.reject(new Error(THROWN_MESSAGE)) : Promise.resolve(a);
+      };
+      const link: Record<string, unknown> = {};
+      for (const m of ['eq', 'gte', 'lt', 'limit']) link[m] = () => link;
+      link.maybeSingle = () => settle();
+      link.then = (ok: (v: unknown) => unknown, bad: (e: unknown) => unknown) => settle().then(ok, bad);
+      return link;
+    };
+    const op = (table: string, name: string) => (...a: unknown[]) => { calls.push(`${table}.${name}`); args[name] = a; return chain(name); };
+    const supabaseAdmin = {
+      from: (table: string) => Object.fromEntries(['select', 'insert', 'upsert', 'update', 'delete'].map(n => [n, op(table, n)])),
+    };
+    return { supabaseAdmin, calls, args };
+  }
+
+  function loaderWith(db: Db, captured: Captured[]) {
+    return billingTestLoader({
+      './supabase-admin': { supabaseAdmin: db.supabaseAdmin },
+      './capture': { captureError: async (err: Error, opts: Record<string, unknown>) => { captured.push({ err, opts }); } },
+      './platform-auth': { getBootstrapAdminEmails: () => [] },
+    });
+  }
+
+  const ok: Answer = { error: null, data: [] };
+  const refused: Answer = { error: { message: DB_MESSAGE, code: '23503' } };
+  const ctx = (c: Captured) => c.opts.requestContext as { record: string; action: string; orgId: unknown; cause: string };
+
+  describe('(a) the records-opened trail', () => {
+    type Opened = (o: { actorUserId: string; actorEmail: string | null; kind: 'club' | 'person' | 'email'; recordId: string; viaFind: boolean }) => Promise<void>;
+    const open = (db: Db, captured: Captured[]) => (loaderWith(db, captured)('lib/platform-record-opens.ts') as { recordOpened: Opened }).recordOpened;
+    const args = { actorUserId: 'staff-1', actorEmail: 'staff@example.com', kind: 'person' as const, recordId: 'person-1', viaFind: true };
+
+    it('a refused line opens one issue with nothing from the row, and the record still opens', async () => {
+      const captured: Captured[] = [];
+      await quiet(() => open(fakeDb(o => (o === 'insert' ? refused : ok)), captured)(args));
+      assert.equal(captured.length, 1);
+      assert.equal(captured[0].opts.title, 'Records-opened line not written: record_opened');
+      assert.deepEqual(ctx(captured[0]), { record: 'platform_record_opens', action: 'record_opened', orgId: null, cause: '23503' });
+      assertNothingFromTheRow(captured[0]);
+      assert.doesNotMatch(JSON.stringify(captured[0].opts), /staff@example\.com|person-1/);
+    });
+
+    it('a thrown line is reported too; a failed prune after a saved line is not a lost line', async () => {
+      const thrown: Captured[] = [];
+      await quiet(() => open(fakeDb(o => (o === 'insert' ? 'throw' : ok)), thrown)(args));
+      assert.equal(thrown.length, 1);
+      assert.equal(ctx(thrown[0]).cause, 'thrown');
+      const pruned: Captured[] = [];
+      await quiet(() => open(fakeDb(o => (o === 'delete' ? 'throw' : ok)), pruned)(args));
+      assert.equal(pruned.length, 0);
+    });
+  });
+
+  describe('(b) the Sent emails search count fails CLOSED', () => {
+    type Take = (actor: string) => Promise<'taken' | 'limit' | 'unwritten'>;
+    const take = (db: Db, captured: Captured[]) => (loaderWith(db, captured)('lib/sent-log.ts') as { takeSentEmailSearch: Take }).takeSentEmailSearch;
+    const counted = (n: number): Answer => ({ error: null, count: n });
+
+    it('a count that cannot be written refuses the search and opens an issue', async () => {
+      const captured: Captured[] = [];
+      assert.equal(await quiet(() => take(fakeDb(o => (o === 'select' ? counted(3) : o === 'insert' ? refused : ok)), captured)('staff-1')), 'unwritten');
+      assert.equal(captured.length, 1);
+      assert.equal(captured[0].opts.title, 'Sent emails search count not written: sent_email_search');
+      assertNothingFromTheRow(captured[0]);
+      const thrown: Captured[] = [];
+      assert.equal(await quiet(() => take(fakeDb(o => (o === 'select' ? counted(3) : o === 'insert' ? 'throw' : ok)), thrown)('staff-1')), 'unwritten');
+      assert.equal(thrown.length, 1);
+    });
+
+    it('a count that cannot be read refuses the search (it throws to the route’s one sentence), never the limit line', async () => {
+      const db = fakeDb(o => (o === 'select' ? refused : ok));
+      await assert.rejects(take(db, [])('staff-1'));
+      assert.ok(!db.calls.includes('platform_sent_email_searches.insert'), 'nothing counted');
+      // A blank count with no error is unreadable too, never zero.
+      const blank = fakeDb(o => (o === 'select' ? { error: null } : ok));
+      await assert.rejects(take(blank, [])('staff-1'));
+      assert.ok(!blank.calls.includes('platform_sent_email_searches.insert'));
+    });
+
+    it('a failed prune after a counted search never refuses it', async () => {
+      assert.equal(await take(fakeDb(o => (o === 'select' ? counted(3) : o === 'delete' ? 'throw' : ok)), [])('staff-1'), 'taken');
+    });
+
+    it('under the limit is taken and counted; at the limit is refused without a count', async () => {
+      const under = fakeDb(o => (o === 'select' ? counted(199) : ok));
+      assert.equal(await take(under, [])('staff-1'), 'taken');
+      assert.ok(under.calls.includes('platform_sent_email_searches.insert'));
+      const at = fakeDb(o => (o === 'select' ? counted(200) : ok));
+      assert.equal(await take(at, [])('staff-1'), 'limit');
+      assert.ok(!at.calls.includes('platform_sent_email_searches.insert'));
+    });
+  });
+
+  describe('(c) the Stripe Connect event log', () => {
+    type Log = {
+      openConnectEvent: (e: { id: string; type: string; livemode: boolean }, account: string) => Promise<'processed' | 'open'>;
+      markConnectEventProcessed: (id: string) => Promise<void>;
+      markConnectEventFailed: (id: string, err: unknown) => Promise<void>;
+      stampConnectEventOrg: (id: string, orgId: string) => Promise<void>;
+    };
+    const log = (db: Db, captured: Captured[]) => loaderWith(db, captured)('lib/connect-event-log.ts') as Log;
+    const EVENT = { id: 'evt_made_up', type: 'checkout.session.completed', livemode: false };
+    const unseen: Answer = { error: null, data: null };
+
+    it('a refused first line is reported and the event still runs (the log is not what makes handling correct)', async () => {
+      const captured: Captured[] = [];
+      assert.equal(await quiet(() => log(fakeDb(o => (o === 'select' ? unseen : refused)), captured).openConnectEvent(EVENT, 'acct_1')), 'open');
+      assert.equal(captured.length, 1);
+      assert.equal(captured[0].opts.title, 'Stripe Connect event log line not written: event_open');
+      assertNothingFromTheRow(captured[0]);
+      assert.doesNotMatch(JSON.stringify(captured[0].opts), /evt_made_up|acct_1/);
+    });
+
+    it('the first line is written ON CONFLICT DO NOTHING: a concurrent delivery writing it is not a failure', async () => {
+      const db = fakeDb(o => (o === 'select' ? unseen : ok));
+      assert.equal(await log(db, []).openConnectEvent(EVENT, 'acct_1'), 'open');
+      assert.deepEqual(db.calls, ['stripe_connect_events.select', 'stripe_connect_events.upsert']);
+      assert.deepEqual(db.args.upsert[1], { onConflict: 'id', ignoreDuplicates: true });
+    });
+
+    it('an already-processed event is skipped; every stamp that fails is reported, with the club where known', async () => {
+      const seen = fakeDb(() => ({ error: null, data: { processed_at: '2026-11-19T00:00:00Z', attempts: 1 } }));
+      assert.equal(await log(seen, []).openConnectEvent(EVENT, 'acct_1'), 'processed');
+      assert.deepEqual(seen.calls, ['stripe_connect_events.select']);
+
+      const captured: Captured[] = [];
+      const l = log(fakeDb(o => (o === 'select' ? { error: null, data: { processed_at: null, attempts: 1 } } : refused)), captured);
+      await quiet(async () => {
+        await l.openConnectEvent(EVENT, 'acct_1');
+        await l.markConnectEventFailed(EVENT.id, new Error(THROWN_MESSAGE));
+        await l.stampConnectEventOrg(EVENT.id, 'org-9');
+        await l.markConnectEventProcessed(EVENT.id);
+      });
+      assert.deepEqual(captured.map(c => ctx(c).action), ['event_attempt', 'event_failed', 'event_org', 'event_processed']);
+      assert.deepEqual(captured.map(c => ctx(c).orgId), [null, null, 'org-9', null]);
+      for (const c of captured) assertNothingFromTheRow(c);
+    });
+
+    it('no write throws: a thrown write is reported, and the webhook’s answer stays its own', async () => {
+      const captured: Captured[] = [];
+      await quiet(() => log(fakeDb(() => 'throw'), captured).markConnectEventProcessed(EVENT.id));
+      assert.equal(captured.length, 1);
+    });
   });
 });

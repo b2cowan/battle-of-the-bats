@@ -9,6 +9,7 @@
  * the address, the club, times and the mail service's word.
  */
 import { supabaseAdmin } from './supabase-admin';
+import { writeOrReport } from './observability/report-unwritten';
 import { getBootstrapAdminEmails, type PlatformRole } from './platform-auth';
 import { STORY_EMAIL_KINDS, emailKindLabel } from './email-kinds';
 import { SENT_LOG_KEEP_DAYS } from './email-log';
@@ -160,20 +161,32 @@ export async function recordingStartedAt(): Promise<string | null> {
 }
 
 /**
- * One Sent emails search, counted for the daily limit (T17). False when this staff member is past the limit. Never the
- * words typed (A3): the row is who and when.
+ * One Sent emails search, counted for the daily limit (T17): 'taken', 'limit' (this staff member is past it) or
+ * 'unwritten' (the count could not be written, so the search is refused and an issue opens). Never the words typed (A3):
+ * the row is who and when.
+ *
+ * ⚠ THE BRAKE FAILS CLOSED BOTH WAYS (leftover call 18 (b), owner 2026-11-19). A count that cannot be READ throws (the
+ * route's one fixed "try again" sentence and its issue, as every read here); a count that cannot be WRITTEN refuses the
+ * search too, because a search let through uncounted is the brake failing open. Before call 18 the insert's answer was
+ * never read, and an unreadable count answered with the over-the-limit sentence, which was not true.
  */
-export async function takeSentEmailSearch(actorUserId: string): Promise<boolean> {
+export async function takeSentEmailSearch(actorUserId: string): Promise<'taken' | 'limit' | 'unwritten'> {
   const since = new Date(Date.now() - 86_400_000).toISOString(); // utc-intentional: an instant comparison
   const { count, error } = await supabaseAdmin
     .from('platform_sent_email_searches')
     .select('id', { count: 'exact', head: true })
     .eq('actor_user_id', actorUserId)
     .gte('searched_at', since);
-  // A count that cannot be read fails CLOSED: a lookup tool's brake does not open when it breaks.
-  if (error) return false;
-  if ((count ?? 0) >= SENT_SEARCHES_PER_DAY) return false;
-  await supabaseAdmin.from('platform_sent_email_searches').insert({ actor_user_id: actorUserId });
-  await supabaseAdmin.from('platform_sent_email_searches').delete().lt('searched_at', new Date(Date.now() - SEARCH_KEEP_MS).toISOString()); // utc-intentional: retention instant
-  return true;
+  // A missing count is an unreadable one, never zero: the brake does not open on a blank answer.
+  if (error || count == null) throw readFailed();
+  if (count >= SENT_SEARCHES_PER_DAY) return 'limit';
+  const counted = await writeOrReport('platform_sent_email_searches', 'sent_email_search', null,
+    () => supabaseAdmin.from('platform_sent_email_searches').insert({ actor_user_id: actorUserId }));
+  if (!counted) return 'unwritten';
+  try {
+    await supabaseAdmin.from('platform_sent_email_searches').delete().lt('searched_at', new Date(Date.now() - SEARCH_KEEP_MS).toISOString()); // utc-intentional: retention instant
+  } catch {
+    // A failed prune never refuses a search already counted; the next search prunes.
+  }
+  return 'taken';
 }

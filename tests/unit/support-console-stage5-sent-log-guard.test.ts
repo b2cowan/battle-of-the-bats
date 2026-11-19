@@ -207,8 +207,10 @@ describe('3 · each route checks the sent-log power first and reads nothing befo
     const take = code.indexOf('takeSentEmailSearch(auth.user.id)');
     assert.ok(take > 0);
     assert.ok(take < code.indexOf('listSentLogRows('), 'the search is counted before the list is read');
-    assert.match(code, /if \(typed && !\(await takeSentEmailSearch\(auth\.user\.id\)\)\) return json\(\{ error: SENT_SEARCH_LIMIT \}, 429\);/,
+    assert.match(code, /if \(typed\) \{\s*const search = await takeSentEmailSearch\(auth\.user\.id\);\s*if \(search === 'limit'\) return json\(\{ error: SENT_SEARCH_LIMIT \}, 429\);/,
       'only an address is a search; browsing the newest is not counted');
+    // Leftover call 18 (b): a count that could not be written refuses the search (fails closed) with the "try again" line.
+    assert.match(code, /if \(search === 'unwritten'\) return json\(\{ error: SENT_LOG_FAILED \}, 503\);/);
     assert.match(code, /looksLikeEmailAddress\(typed\)/, 'a whole address only');
   });
 
