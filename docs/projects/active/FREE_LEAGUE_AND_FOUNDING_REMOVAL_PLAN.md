@@ -37,10 +37,13 @@
 
 ## 2. Sequence (by dependency and rework risk)
 
-**Blocked until On-sale pages S2 commits.** Its uncommitted files are most of this plan's surface (start pages,
-`StartDoorForm`, onboarding page + plan step, `plan-gating-server`, `start-menu`, `plan-config`, the pricing page,
-`PricingSection`, the consumer home route, `on-sale-doors-s2.test.ts`, the help modules). Building on top of them
-would make two units of work inseparable. The S2 session (`tournament-website-eb`) was told 2026-11-19.
+**Unblocked:** On-sale pages S2 committed `d21eade14` 2026-11-19 (its files were most of this plan's surface).
+
+**⚖ All three stages go BEFORE On-sale pages S3 (owner 2026-11-19)**, recorded in `CLUB_ON_SALE_PAGES_PLAN.md`
+"Sequencing against other builds": S3 rebuilds the pages Founding sits on, and S4's free-floor and Founding-comped items
+were struck there as handled here. Kept as a separate project (its own board line), not merged into On-sale pages.
+**What S2 added that Stage 1 must cut:** `isLeagueDoorOpen()` in `plan-gating-server` (flag half `LEAGUE_STARTER_BETA`)
+now feeds the Get started menu and Home's waiting-workspace card; keep the League Plus half only.
 
 - **Stage 1 — the free League** (no customer affected). First, because Stage 2's league-create comp grant disappears
   with it, and because it is smaller.

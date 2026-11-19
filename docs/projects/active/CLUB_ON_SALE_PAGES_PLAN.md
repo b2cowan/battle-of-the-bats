@@ -355,18 +355,20 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
   abandoned-checkout resume.
 - The plan panel drawer passes monthly only (`PlanPanelDrawer` ~:105): add the monthly / yearly choice.
 - The moves ruled in Ask 12 (recommended at launch: paying Tournament Plus → League Plus, one `MOVES` entry; League
-  Plus → Club after launch — nobody holds League Plus at launch). A Founding-comped Tournament Plus org → Club already
-  falls back to checkout (`PlanMoveDialog` :325, :434); it gets the trial line and a sentence that its free Tournament
-  Plus period ends (comp revoked by the webhook, D6).
-- The house-league cap prompt reads the live gate and, when open, opens Plan & billing's League Plus panel
-  (`?plan=league`); closed, the same contact link as Plan & billing. Who reaches it on production: only orgs with a
-  `free_floor` (flag off on production — presumably none; a count settles it).
-- **Clear `free_floor` when a paid League Plus or Club plan applies** (`/billing` Q4): nothing clears it today, so a
-  floor org that buys League Plus would keep the 1-season / 1-division / 8-team caps (`lib/free-floor.ts:44, 59-70`).
+  Plus → Club after launch — nobody holds League Plus at launch). ~~A Founding-comped Tournament Plus org → Club…~~
+  **STRUCK 2026-11-19:** the Founding Season is removed before S4 (`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md` Stage 2);
+  its three holders are then ordinary free-time accounts, so S4 handles them as a free-time org moving to Club (check
+  that move's words then; do not build a Founding-specific sentence).
+- ~~The house-league cap prompt reads the live gate and, when open, opens Plan & billing's League Plus panel
+  (`?plan=league`)…~~ **STRUCK 2026-11-19: handled by the free League removal** (`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md`
+  Stage 1 deletes the free floor, its caps and the cap prompt; the count settled it: 0 production orgs ever held it).
+- ~~**Clear `free_floor` when a paid League Plus or Club plan applies** (`/billing` Q4)…~~ **STRUCK 2026-11-19: handled by
+  the same Stage 1** (the column and the caps are removed, so nothing is left to clear).
 - A closed plan's row in Plan & billing keeps its contact link (an existing customer writes to us; the interest form is
   for prospects — `/billing` Q7). It already reads the live gate (`BillingBody.tsx:185, 486-487`); the rows must exist.
-- **Screens:** Plan & billing (free Tournament, Tournament Plus, League Plus, Founding-comped), the plan move window,
-  the house-league cap prompt, the onboarding change-plan window.
+- **Screens:** Plan & billing (free Tournament, Tournament Plus, League Plus, a free-time org), the plan move window,
+  the onboarding change-plan window. (The house-league cap prompt and the Founding-comped state are gone with the
+  removal, 2026-11-19.)
 - **Reviews:** `/review` high-risk; `/accounting` (what we charge on a move).
 
 ### After the build (runbook, not this plan)
@@ -376,6 +378,13 @@ production shows today's pages; Step 4 the flip; Step 4.3 the three code values 
 (`/billing`, its own commit, on the owner's word — it is a database check, AGENCY_RULES).
 
 ## Sequencing against other builds
+
+- **⚖ The free League + Founding removal goes BEFORE S3 (owner 2026-11-19).** Separate project
+  (`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md`), sequenced here: removal Stage 1 (free League) → Stage 2a (Founding
+  holders to free time) → Stage 2b (Founding code) → **then S3, S3b, S4**. Reason: S3 rebuilds the very pages Founding
+  still sits on (`/pricing` FAQ, home, `/for-tournament-organizers`, `/for-coaches`), and S4 carried three items that
+  exist only because of the free floor and Founding (struck above). Built in the other order, S3/S4 would build and walk
+  states that are then deleted. The flip does not move: it waits on live Stripe and the test purchase either way.
 
 - **Touches the same screens as:** Plan & billing (the billing body, the plan move window — `plan-billing` project);
   the first look (start doors, plan step); the GST/HST tax line (`BILLING_TAX_WORDS`). S4 must not overlap a Plan &
