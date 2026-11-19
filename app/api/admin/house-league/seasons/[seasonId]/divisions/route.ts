@@ -3,8 +3,6 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasonById, getDivisionsForSeason } from '@/lib/db';
-import { houseLeagueDivisionCap, leagueCapHit } from '@/lib/free-floor';
-import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 import { bornColumns, checkBornBody } from '@/lib/born-years';
 import { earlyPriceRefusal, priceFromBody } from '@/lib/league-price';
@@ -107,20 +105,6 @@ export const POST = withObservability(async (req: Request,
       return NextResponse.json({ error: `Another division in this season is named ${d.name}.` }, { status: 409 });
     }
     taken.add(d.name.toLowerCase());
-  }
-
-  // Free-floor (League Starter) cap: one division per season. Paid plans are uncapped (this branch
-  // is only reachable for a free-floor org, since the cap is Infinity otherwise).
-  if (existing.length + adds.length > houseLeagueDivisionCap(ctx!.org)) {
-    await writePlatformEvent({
-      eventType: 'scope_wall_hit',
-      source: 'app',
-      orgId: ctx!.org.id,
-      actorUserId: ctx!.user?.id ?? null,
-      actorEmail: ctx!.user?.email ?? null,
-      metadata: { freeFloor: 'league_starter', capHit: 'league_division', seasonId },
-    });
-    return NextResponse.json(leagueCapHit('league_division'), { status: 403 });
   }
 
   const { data, error } = await supabaseAdmin

@@ -5,11 +5,7 @@ import { CalendarDays } from 'lucide-react';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
-import { getAuthDestination } from '@/lib/auth-destination';
 import { startStepViewer } from '@/lib/start-door-server';
-import { hasLiveInvitation } from '@/lib/invite-reconciliation';
-import StartLeagueForm from './StartLeagueForm';
 import StartPaidDoorForm from '../StartPaidDoorForm';
 import { paidDoorPick, parseStartPricing, readStartDoor } from '@/lib/start-door';
 import { isPaidDoorOpen, paidDoorRedirect } from '@/lib/start-plan-server';
@@ -25,15 +21,12 @@ export const metadata: Metadata = {
  *  - LEAGUE PLUS ON SALE (On-sale pages S2) → the League Plus start (StartPaidDoorForm): account, the league's name,
  *    then the one-card League Plus plan step, billing address and Stripe. Signed-in gates as Start a club
  *    (`paidDoorRedirect`), without the coach one: a coach's league is a separate organization, and no team moves.
- *  - else LEAGUE_STARTER_BETA on → the Free League Starter (StartLeagueForm) → the house-league onboarding wizard. The
- *    free floor caps at 1 season / 1 division / 8 teams. The flag governs only this free floor.
- *  - else → the express-interest page (W54).
+ *  - else → the express-interest page (W54). There is no free League (owner ruling 2026-11-19, BUSINESS_DECISIONS.md):
+ *    the free League starter, its flag and its 1 season / 1 division / 8 teams caps are gone.
  */
-export default async function StartLeaguePage({ searchParams }: { searchParams: Promise<{ league?: string | string[]; confirmed?: string | string[]; plan?: string | string[]; billing?: string | string[] }> }) {
-  // Back from the verification link: the flag, and — on a link sent before account-first (2026-10-18), for one
-  // release — the league name typed before it.
+export default async function StartLeaguePage({ searchParams }: { searchParams: Promise<{ confirmed?: string | string[]; plan?: string | string[]; billing?: string | string[] }> }) {
+  // Back from the verification link: the flag.
   const sp = await searchParams;
-  const initialName = (Array.isArray(sp.league) ? sp.league[0] : sp.league ?? '').slice(0, 120);
   const confirmed = (Array.isArray(sp.confirmed) ? sp.confirmed[0] : sp.confirmed) === '1';
   const user = await getAuthUserCached();
   if (user?.email && (await isPlatformAdminEmail(user.email))) {
@@ -51,25 +44,6 @@ export default async function StartLeaguePage({ searchParams }: { searchParams: 
     return <StartPaidDoorForm door="league_plus" viewer={await startStepViewer(user)} confirmed={confirmed} pricing={pricing} />;
   }
 
-  if (process.env.LEAGUE_STARTER_BETA === 'true') {
-    // Single-org by default: a signed-in user who already belongs to a REAL org can't self-serve a
-    // second via the league path. A user's own Coaches Portal doesn't count (exemption-aware helper),
-    // so a portal-owning coach can still create their first league. Mirrors /start/tournament.
-    if (user?.id && (await userBelongsToOtherRealOrg(user.id))) {
-      redirect(await getAuthDestination());
-    }
-
-    // A pending invite means they already have somewhere to go — send them to Home's pending-invite
-    // card instead of creating a stray league that would then block the accept. Mirrors
-    // /start/tournament; the API enforces the same rule for anyone who bypasses this page.
-    // Only a live invitation sends them Home (P2c): a run-out one is not on Home's card.
-    if (user?.id && (await hasLiveInvitation(user.id))) {
-      redirect('/discover');
-    }
-
-    return <StartLeagueForm viewer={await startStepViewer(user)} initialName={initialName} confirmed={confirmed} />;
-  }
-
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -78,7 +52,7 @@ export default async function StartLeaguePage({ searchParams }: { searchParams: 
             <CalendarDays size={21} strokeWidth={1.8} aria-hidden />
           </div>
           <h1 className={styles.title}>Start a league season</h1>
-          {/* W54 closed (ruled 2026-11-18): this page sells League Plus, so it says "League Plus", never the free floor's
+          {/* W54 closed (ruled 2026-11-18): this page sells League Plus, so it says "League Plus", never a bare
               "League", with the canon sentence and the interest line. */}
           <p className={styles.sub}>League Plus — {gatedPlanTag('league').toLowerCase()}</p>
         </header>

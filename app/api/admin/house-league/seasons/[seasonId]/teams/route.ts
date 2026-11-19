@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, createLeagueTeam, getTeamsForSeason, getTeamsForDivision } from '@/lib/db';
-import { houseLeagueTeamCap, leagueCapHit } from '@/lib/free-floor';
-import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
@@ -77,24 +75,6 @@ export const POST = withObservability(async (req: Request,
 
   if (!defs.length || !defs[0]?.name?.trim()) {
     return NextResponse.json({ error: 'At least one team name required' }, { status: 400 });
-  }
-
-  // Free-floor (League Starter) cap: up to 8 teams per season. Counts existing teams + the
-  // incoming batch so a bulk { teams: [...] } insert can't slip past. Paid plans are uncapped.
-  const teamCap = houseLeagueTeamCap(ctx!.org);
-  if (teamCap < Infinity) {
-    const existingTeams = await getTeamsForSeason(seasonId);
-    if (existingTeams.length + defs.length > teamCap) {
-      await writePlatformEvent({
-        eventType: 'scope_wall_hit',
-        source: 'app',
-        orgId: ctx!.org.id,
-        actorUserId: ctx!.user?.id ?? null,
-        actorEmail: ctx!.user?.email ?? null,
-        metadata: { freeFloor: 'league_starter', capHit: 'league_team', seasonId, attempted: existingTeams.length + defs.length },
-      });
-      return NextResponse.json(leagueCapHit('league_team'), { status: 403 });
-    }
   }
 
   const created = await Promise.all(

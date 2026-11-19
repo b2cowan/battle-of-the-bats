@@ -12,7 +12,6 @@ import { DEMO_ORGS } from '../../lib/demo-org.ts';
 
 const CREATE_DOORS: Record<string, string> = {
   'app/api/org/create/route.ts': 'creates a club (and grants the Founding Season comp)',
-  'app/api/league/create/route.ts': 'creates a league',
   'app/api/coaches/teams/route.ts': 'creates a coach team',
   'app/api/coaches/basic-teams/route.ts': 'claims a tournament entry, and can create a coach team for it',
   'app/api/register/route.ts': 'a signed-in sign-up files the entry under a coach team, and can create one',

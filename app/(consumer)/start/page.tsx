@@ -123,19 +123,6 @@ function coachOption(checkoutOpen: boolean): StartOption {
     : { ...base, tag: { text: gatedPlanTag('team') } };
 }
 
-// S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — no League or
-// Club cards until each is actually ready. League auto-returns the day its beta flag
-// turns on; Club returns via its own decision. Their /start sub-pages stay reachable
-// by direct URL (harmless express-interest pages), just not promoted here.
-const LEAGUE_OPTION: StartOption = {
-  href: '/start/league',
-  icon: CalendarDays,
-  accent: 'free',
-  label: 'League admin',
-  title: 'Start a league season',
-  body: 'Run a house-league season — registration, draft, scheduling, standings, and parent comms.',
-};
-
 export default async function StartPage() {
   // Staff use /platform-admin — keep them out of the operator on-ramp (defense-in-depth;
   // the create child routes also guard).
@@ -145,23 +132,20 @@ export default async function StartPage() {
     redirect('/platform-admin');
   }
 
-  // League Starter is an unlisted capped beta: the card only exists while the flag is
-  // on (S1-1 rider — nothing not-yet-live is promoted on this surface).
-  const leagueStarterLive = process.env.LEAGUE_STARTER_BETA === 'true';
   const [checkoutOpen, clubOpen, leaguePlusOpen] = await Promise.all([
     isCoachesPortalPurchasable(), isPaidDoorOpen('club'), isPaidDoorOpen('league'),
   ]);
   // The Tournament Plus promo drives the organizer card; the coach card reads the checkout gate alone.
   const tournamentPromo = isFoundingSeasonPromoActive('tournament_plus');
   const coach = coachOption(checkoutOpen);
-  // /start/league sells League Plus while it is on sale; the free League starter card shows only while it is not (the
-  // flag governs only the free floor, On-sale pages S2).
-  const leagueCard = leaguePlusOpen ? LEAGUE_PLUS_OPTION : leagueStarterLive ? LEAGUE_OPTION : null;
+  // S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — the Club and League Plus cards only while each
+  // is on sale; their /start sub-pages stay reachable by direct URL (express-interest pages). There is no free League
+  // card (owner ruling 2026-11-19).
   const options: StartOption[] = [
     tournamentOption(tournamentPromo),
     coach,
     ...(clubOpen ? [CLUB_OPTION] : []),
-    ...(leagueCard ? [leagueCard] : []),
+    ...(leaguePlusOpen ? [LEAGUE_PLUS_OPTION] : []),
   ];
 
   return (

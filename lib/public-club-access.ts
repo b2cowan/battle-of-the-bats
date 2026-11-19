@@ -38,7 +38,7 @@ const PAGE_MODULE: Record<PublicClubPage, Capability | null> = {
 };
 
 export type PublicClubAccessOrg = Pick<Organization,
-  'isPublic' | 'subscriptionStatus' | 'planId' | 'enabledAddons' | 'freeFloor' | 'accountKind'>;
+  'isPublic' | 'subscriptionStatus' | 'planId' | 'enabledAddons' | 'accountKind'>;
 
 /**
  * Is the club's public site open at all: the owner's switch on, and the club not cancelled. `past_due` stays open (the

@@ -243,7 +243,7 @@ export default function ClubHubKit() {
   const canCreateTournaments = hasCapability(userRole, userCapabilities, 'create_tournaments');
   // ⚖ J10-016 + Ask 7 = A (Club Tier Stage 13a): an ADMIN keeps the owner's areas as locked rows that name the owner; for
   // anyone else they go, and the section with them when it would hold nothing but locks (F-NAV-10).
-  // A tournament-plan org (the free League Starter) has no /admin/org pages at all, so there is nothing to lock.
+  // A tournament-plan org has no /admin/org pages at all, so there is nothing to lock.
   const showsLockedRows = userRole === 'admin' && currentOrg.planId !== 'tournament';
 
   // The setup list a coach sees after becoming a club: the board and public-site steps reuse the checklist's own destinations.
@@ -547,7 +547,7 @@ export default function ClubHubKit() {
       )}
 
       {/* ── Today's "Coming soon" teaser, restyled: an owner on a plan without the club programs
-            (League Plus, a League Starter). It never shows on a Club (specimen 1's note). ────── */}
+            (League Plus). It never shows on a Club (specimen 1's note). ────── */}
       {isOwner && !club && !canOpen('module_accounting') && !canOpen('module_rep_teams') && (
         <section className={ck.section} aria-labelledby="hub-soon">
           <div className={ck.sectionHead}><span id="hub-soon" className={kit.eye}>In League Plus and Club</span></div>

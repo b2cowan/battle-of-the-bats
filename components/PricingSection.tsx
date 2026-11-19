@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
 import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, showsFoundingZero, FOUNDING_SEASON_END_LABEL, gatedPlanTag, GATED_PLAN_INTEREST_LINE, interestButtonLabel } from '@/lib/plan-config';
-import { clubTrialLine } from '@/lib/plan-trial-line';
+import { clubTrialLine, planTrialLine } from '@/lib/plan-trial-line';
 import { parseStartPricing, withStartPricing } from '@/lib/start-door';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
@@ -116,8 +116,10 @@ const PLANS: Plan[] = [
     annualSavings: `${formatAnnualSavings('league')}`,
     currency: 'CAD',
     period: '/mo',
-    freeNote: 'No credit card required',
-    trialNote: 'No credit card required',
+    // League Plus says its trial in the one sentence, with its own length (BUSINESS_DECISIONS 2026-11-18, Ask 7). Checkout
+    // takes a payment method, so the old "No credit card required" line contradicted it (the free League that earned it is gone).
+    freeNote: planTrialLine(PLAN_CONFIG.league.trialDays),
+    trialNote: planTrialLine(PLAN_CONFIG.league.trialDays),
     features: [
       'Everything in Tournament Plus',
       'Public organization page',
@@ -125,7 +127,7 @@ const PLANS: Plan[] = [
       'League-scoped communications',
       'Advanced member roles and permissions',
     ],
-    cta: 'Start free',
+    cta: 'Start your League Plus trial',
     // Its own door (On-sale pages S2, G6 — `START_PATH_FOR_PLAN`): rendered as a link only while League Plus is on sale.
     ctaHref: '/start/league',
     initialPlanInterest: ['league'],

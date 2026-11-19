@@ -95,12 +95,3 @@ export async function isCoachesPortalPurchasable(): Promise<boolean> {
 export async function isPaidDoorOpen(door: PaidDoor): Promise<boolean> {
   return paidDoorOpen(await getPlanGatingMap(), door);
 }
-
-/**
- * Does /start/league open at all? While League Plus is on sale, or while the free League starter's flag is on (the flag
- * governs only the free floor). The Get started menu and Home's waiting card ask this one question; the page itself
- * also needs to know WHICH start it shows, so it asks the two halves.
- */
-export async function isLeagueDoorOpen(): Promise<boolean> {
-  return process.env.LEAGUE_STARTER_BETA === 'true' || (await isPaidDoorOpen('league'));
-}

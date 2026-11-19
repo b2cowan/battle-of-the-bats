@@ -24,7 +24,7 @@ import type { OrgPlan, OrgRole } from '../../lib/types.ts';
 
 const PLANS = Object.keys(PLAN_CONFIG) as OrgPlan[];
 const org = (planId: OrgPlan, extra: Partial<EntitlementOrg> = {}): EntitlementOrg => ({
-  planId, subscriptionStatus: 'active', enabledAddons: [], freeFloor: null, ...extra,
+  planId, subscriptionStatus: 'active', enabledAddons: [], ...extra,
 });
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -128,9 +128,8 @@ describe('D8 — "tournament-only" is decided from the plan', () => {
     }
   });
 
-  it('an add-on or the League Starter floor makes a tournament tier more than tournaments', () => {
+  it('an add-on makes a tournament tier more than tournaments', () => {
     assert.equal(isTournamentOnlyWorkspace(org('tournament_plus', { enabledAddons: ['module_rep_teams'] })), false);
-    assert.equal(isTournamentOnlyWorkspace(org('tournament', { freeFloor: 'league_starter' })), false);
   });
 
   it('a CANCELLED club is still a club (the shape question ignores suspension)', () => {

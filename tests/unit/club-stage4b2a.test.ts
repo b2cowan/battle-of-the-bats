@@ -186,7 +186,7 @@ describe('the tab row: Home · Teams · House league · Tournaments (Ask 9A; Tou
 
 describe('what /{club}/teams is', () => {
   const org = (over: Partial<PublicClubAccessOrg> = {}): PublicClubAccessOrg =>
-    ({ isPublic: true, subscriptionStatus: 'active', planId: 'club', enabledAddons: [], freeFloor: null, accountKind: 'organization', ...over }) as PublicClubAccessOrg;
+    ({ isPublic: true, subscriptionStatus: 'active', planId: 'club', enabledAddons: [], accountKind: 'organization', ...over }) as PublicClubAccessOrg;
 
   it('a club whose plan carries rep teams and a public site: the Teams page', () => {
     assert.equal(clubTeamsAddress(org()), 'teams-page');

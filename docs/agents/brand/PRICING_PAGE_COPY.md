@@ -43,7 +43,7 @@
 | FAQ ("How does the team limit on Club work?") and the for-clubs page | **The limit counts the teams you give a Premium Coaches Portal, whatever you call them: rep, select, all-star, travel. House league teams are unlimited. Archived teams and teams entered in your tournaments aren't counted.** |
 | Start door (Start a club) | **…Choose Club or Club · Association by how many teams will have a Premium Coaches Portal. House league teams are unlimited.** |
 
-**⚠ "Unlimited" is a promise.** Revisit before any house league size-based price, player meter or fair-use cap, and before the free League floor's future is ruled (it caps at 8 teams per season). **Do not** write "unlimited" about tournament teams or anything else: only house league was verified.
+**⚠ "Unlimited" is a promise.** Revisit before any house league size-based price, player meter or fair-use cap. (The free League floor, which capped at 8 teams per season, was retired 2026-11-19, so house league is unlimited on every plan that carries it.) **Do not** write "unlimited" about tournament teams or anything else: only house league was verified.
 
 ---
 
@@ -113,7 +113,13 @@ does not:** a free price, a "Free through …" / "Normally $X" price beside it (
 gated plan (League Plus "Not open yet", Club "Coming soon") — a price that cannot be bought yet is not yet a charge. Buttons keep
 their short price. When League Plus or Club goes on sale, its block takes the line in the same unit of work.
 
-### 🆕 The free League plan runs one season at a time — the refusal words — APPROVED 2026-11-04 (owner: *"go with your recommendations"*; `/marketing`, House League 9f words pass, per `BUSINESS_DECISIONS.md` 2026-11-04 "House League 9f·5"). No prices. **Not built** — 9f-1 (`HOUSE_LEAGUE_STAGE9F1_BUILD_PROMPT.md`); the floor is parked (flag off), so no customer reads these yet.
+### ⚰ RETIRED 2026-11-19 — The free League plan runs one season at a time — the refusal words (history)
+
+**Retired with the free League** (owner ruling 2026-11-19, `BUSINESS_DECISIONS.md` top entry; removal plan
+`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md` Stage 1): no plan caps house league, so none of these words appears anywhere in
+the product. Kept below as the record of what was approved; do not reuse them.
+
+Approved 2026-11-04 (owner: *"go with your recommendations"*; `/marketing`, House League 9f words pass, per `BUSINESS_DECISIONS.md` 2026-11-04 "House League 9f·5"). No prices. Built in 9f-1; no customer ever read them (the floor was never on production).
 
 Source of record with placements: `docs/projects/active/HOUSE_LEAGUE_STAGE9F_COPY.md` §6 and §14. The rule: a getting-ready,
 registration-open/closed or running season holds the one season; a finished one holds nothing. Retires "Your free League plan
@@ -275,8 +281,7 @@ between them:
 
 - "a note" is deliberate: the line under a booking form is quiet and never blocks a save — don't strengthen it to "a
   warning" or "flags".
-- Not on the Tournament plans, the free League floor or the standalone Premium Coaches Portal (none carries the Venue
-  library). The pricing comparison table it once named was removed 2026-09-13.
+- Not on the Tournament plans or the standalone Premium Coaches Portal (neither carries the Venue library). The pricing comparison table it once named was removed 2026-09-13.
 - **Apply at the Club release** (the release runbook), not before: League Plus is parked and Club isn't on sale.
 - The homepage's closing "field bookings" stays as written — ruled pain-framing (it lists the customer's own work),
   `/marketing` 2026-10-11.
@@ -454,13 +459,14 @@ The sections below document all copy changes applied to the live pages after the
 > ### ⛔ SUPERSEDED — all "Free Trial" copy in this document (added 2026-06-08)
 > Every "14-Day Free Trial" / "Start Free Trial" badge, CTA, FAQ answer, and trial-length row in the body sections below (Section 4 cards, Section 9 FAQ, the Comparison/Availability tables, etc.) is **superseded and must not be used.** Two changes overrode the original trial model:
 > 1. ⛔ *(Offer closed 2026-10-26; history.)* **Founding Season comp** — paid tiers are **free through Dec 31, 2026, no credit card** (no clock, no card-at-signup). Use "Free through Dec 31, 2026 · no credit card required" framing.
-> 2. **Free-floor model** — each operator type starts on a **free-forever scoped floor** (Free Tournament / Free League Starter / Free Basic Coaches Portal), not a time-limited trial. Conversion is driven by scope/scale walls, not a trial expiry. See `docs/projects/archive/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
+> 2. **Free-floor model** — each operator type starts on a **free-forever scoped floor** (Free Tournament / Free Basic Coaches Portal; the Free League Starter floor was retired 2026-11-19), not a time-limited trial. Conversion is driven by scope/scale walls, not a trial expiry. See `docs/projects/archive/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
 >
 > Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
 >
 > **⚠ One exception, 2026-09-25 (widened 2026-11-18): the trial sentence.** Club, **Club · Association, League Plus and Tournament Plus** each have a trial that takes a payment method at checkout (none has a free floor or a Founding offer on the door that sells it), so a trial is named on purpose, in **one sentence** ("The Club trial sentence" in this document, now the family's), with the plan's own length passed in, never typed. Where it may stand: the places listed under that sentence, and the "How the trial works" section (Ask 27, `/for-clubs` and `/for-leagues`; its steps type no length). Nowhere else, in any other wording. The rule above still holds for every other place and plan (Tournament and the Premium Coaches Portal have no trial). Owner rulings 2026-11-18, on-sale pages Asks 7, 27 and 31; the old line that Tournament Plus "advertises no trial" is retired by Ask 31.
 
 > ### 🔁 RENAME — "League Starter"/"League" → "League"/"League Plus" (applied 2026-06-13)
+> ⚰ **2026-11-19: the free "League" floor described here is retired** (owner ruling, `BUSINESS_DECISIONS.md` top entry). There is no free League; **League Plus** is the only League plan. The paragraph below is the 2026-06-13 record.
 > The $89 paid tier is now **"League Plus"** on the live pages (was "League"). A new **free "League"** house-league floor (1 season / 1 division / 8 teams; internal `free_floor='league_starter'`, capped beta) sits below it, mirroring Tournament (free) / Tournament Plus (paid). **Read every "League" in the body sections below as "League Plus"** unless it clearly means the free floor or the **"House League"** module. Internal keys are unchanged (`plan_id='league'`, Stripe). The free "League" **public pricing card** is held for the Free-Tier Phase-9 launch — until then the live pricing page shows "League Plus" as the $89 tier and does not advertise the free "League". Never write "League Starter"/"Starter" in customer copy. Full inventory + rules: `docs/projects/archive/LEAGUE_REBRAND_PLAN.md`.
 
 > ### 🏷️ NAMING CANON — the coach product (reaffirmed 2026-06-17)

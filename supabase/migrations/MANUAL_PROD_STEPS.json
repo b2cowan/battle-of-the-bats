@@ -854,6 +854,10 @@
     "507_a_permit_file_can_be_a_word_file.sql": {
       "prod": "pending",
       "note": "Owner yes 2026-11-19 (Board Ready trust-fix queue P8b, 'allow Word files on permits?'). Two halves: UPDATE storage.buckets SET allowed_mime_types (PDF, JPEG, PNG + the Word .docx type) WHERE id = 'org-permit-documents' (INVISIBLE to check:migrations), and org_permits_document_type_check re-made with the same four types (visible). ORDER: BEFORE the code (code first answers a Word upload with 'couldn't be saved just now'). Idempotent. Applied to DEV 2026-11-19; proved 11/11 (.probe/permit-upload-prove.mjs: a Word file uploads, is stored and served as Word; a spreadsheet named .docx and a web page named .png are refused). Verify on prod: select allowed_mime_types from storage.buckets where id = 'org-permit-documents' -> 4 types incl. application/vnd.openxmlformats-officedocument.wordprocessingml.document; select pg_get_constraintdef(oid) from pg_constraint where conname = 'org_permits_document_type_check' -> the same four."
+    },
+    "509_the_free_league_is_gone.sql": {
+      "prod": "pending",
+      "note": "Free League retired, Stage 1 (owner ruling 2026-11-19, BUSINESS_DECISIONS.md top entry; plan docs/projects/active/FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md §3). DROPS organizations.free_floor and its CHECK organizations_free_floor_check — a dropped column, INVISIBLE to check:migrations. ORDER: AFTER the promote that removes every reader is serving (code first: the old code selects free_floor by name on several org loaders and would fail without it). Counts before, 2026-11-19: prod 0 orgs with free_floor set, 0 platform_events rows of the seven free-League event types; no view, policy or function reads it. Idempotent. Owner-run at release. Verify on prod: select count(*) from information_schema.columns where table_schema='public' and table_name='organizations' and column_name='free_floor' -> 0; select count(*) from pg_constraint where conname='organizations_free_floor_check' -> 0."
     }
   }
 }

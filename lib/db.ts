@@ -1692,7 +1692,6 @@ export async function createOrganization(
     accountKind?: Organization['accountKind'];
     teamWorkspaceStatus?: Organization['teamWorkspaceStatus'] | null;
     isDiscoverable?: boolean;
-    freeFloor?: Organization['freeFloor'];
   } = {},
 ): Promise<Organization> {
   const limit = PLAN_CONFIG[planId]?.tournamentLimit ?? 1;
@@ -1706,7 +1705,6 @@ export async function createOrganization(
       account_kind: options.accountKind ?? 'organization',
       team_workspace_status: options.teamWorkspaceStatus ?? null,
       is_discoverable: options.isDiscoverable ?? true,
-      free_floor: options.freeFloor ?? null,
     })
     .select()
     .single();
@@ -1763,7 +1761,6 @@ function mapOrg(r: any): Organization {
     accountKind:           r.account_kind ?? 'organization',
     teamWorkspaceStatus:   r.team_workspace_status ?? null,
     isDiscoverable:        r.is_discoverable ?? true,
-    freeFloor:             r.free_floor ?? null,
     privacyPolicyUrl:      r.privacy_policy_url ?? null,
     // Club Shared Book (mig 227). Absent column / null → FALSE, never "on": the gate must
     // fail closed while the migration is unapplied, not open a cross-team read by accident.

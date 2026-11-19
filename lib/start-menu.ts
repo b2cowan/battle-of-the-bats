@@ -1,6 +1,6 @@
 import 'server-only';
 import { cache } from 'react';
-import { isCoachesPortalPurchasable, isLeagueDoorOpen } from './plan-gating-server';
+import { isCoachesPortalPurchasable, isPaidDoorOpen } from './plan-gating-server';
 import { START_DOOR_PATH } from './start-door';
 
 /**
@@ -41,7 +41,7 @@ export async function getCoachStartHref(): Promise<string> {
  * mirrors the /start chooser's gating exactly — it must never promote a door the chooser itself would hide
  * (S1-1 rider: nothing not-yet-live is promoted):
  *   • coachHref — the one coach rule above;
- *   • showLeague — while League Plus is on sale, or while the League Starter beta's flag is on.
+ *   • showLeague — while League Plus is on sale (there is no free League, owner 2026-11-19).
  *
  * Resolve this ONLY in mounts that are already dynamic (the consumer layout, the coach journey chrome) —
  * `getPlanGatingMap` reads cookies + DB, so calling it from the root layout would force every route dynamic.
@@ -53,6 +53,6 @@ export type StartMenuConfig = { coachHref: string; showLeague: boolean };
 /** Request-memoized: the /coaches layout and a nested journey layout both ask, and each ask reads plan gating. */
 export const getStartMenuConfig = cache(async (): Promise<StartMenuConfig> => {
   // A Club row joins the menu with S3's nav order, not here.
-  const [coachHref, showLeague] = await Promise.all([getCoachStartHref(), isLeagueDoorOpen()]);
+  const [coachHref, showLeague] = await Promise.all([getCoachStartHref(), isPaidDoorOpen('league')]);
   return { coachHref, showLeague };
 });

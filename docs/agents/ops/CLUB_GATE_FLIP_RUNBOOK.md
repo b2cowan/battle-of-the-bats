@@ -171,13 +171,13 @@ For `/strategy` (canon) and `/marketing` (words). No price disagrees anywhere; t
 
 | Where | Says | Disagrees with |
 |---|---|---|
-| `README.md:47` | "a Free League Starter" | Naming canon: never "Starter" |
+| ~~`README.md:47`~~ | ~~"a Free League Starter"~~ | ✓ Fixed 2026-11-19: the free League is removed and the README no longer names it (`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md` Stage 1) |
 | `lib/plan-billing-profile.ts` (Club's Included list, shown on /for-clubs) | "Everything in League (tournaments, house league, public org page)"; leaves out Families | Canon says League Plus; Families is a Club inclusion |
 | Home page `app/page.tsx` | "League Plus and Club are in active development"; tag "· In development" | Canon tags: League Plus "built but not open", Club "Coming soon" |
 | `/pricing` header | "Tournament and Tournament Plus are live — start free, no credit card required" | Minor: reads as if Tournament Plus needs no card; its trial checkout collects one ("start free" is true only of the free Tournament plan) |
 | `/for-leagues` | Coaches Portal cross-sell always "Express interest in the Coaches Portal" | Premium has been on sale since 2026-07-24 |
 | Interest form | "Early access", "Join early access"; "Coach portal" | Canon: never "early access"; "Coaches Portal" |
-| `PRICING_PAGE_COPY.md` | Club $179 card and comparison tables, "Free League Starter", "League is opening soon", "automated parent notifications", officials counted toward seats, announcements not free, "no credit card required until you're ready" | Facts doc (Club $219, naming canon, officials exempt, announcements free) — the canon doc is behind its source |
+| `PRICING_PAGE_COPY.md` | Club $179 card and comparison tables, "Free League Starter" (✓ 2026-11-19: marked retired with the free League), "League is opening soon", "automated parent notifications", officials counted toward seats, announcements not free, "no credit card required until you're ready" | Facts doc (Club $219, naming canon, officials exempt, announcements free) — the canon doc is behind its source |
 | `PLAN_PRICING_FACTS.md` itself | Still lists the Club card's "No credit card required" as drift (now fixed in the cards); still says bank reconciliation is "not built" (the bank check passed 2026-11-07) | The product — `/strategy` to true on its next reconcile |
 | `.claude/commands/marketing.md` | Plan list "Tournament, Tournament Plus, League, Club" | Naming canon (not edited: shared agent file) |
 | Readiness plan, "Marketing truth" checklist line (~1469) | "homepage 'field bookings' removed" | Facts doc 2026-10-11: ruled pain-framing and kept |

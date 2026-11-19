@@ -19,8 +19,7 @@ import { PLAN_CONFIG, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END_LABEL, FOU
 import { useHoldsFoundingComp } from '@/lib/use-founding-season-lock';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
-import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
-import type { FreeFloor, OrgPlan } from '@/lib/types';
+import type { OrgPlan } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
 import { PAID_DOOR_STEPS, parseStartBilling, parseStartPricing, type StartPlanOffer } from '@/lib/start-door';
@@ -183,12 +182,9 @@ function normalizePlanId(planId: string): OrgPlan {
   return PLAN_ORDER.includes(planId as OrgPlan) ? planId as OrgPlan : 'tournament';
 }
 
-function hasNonTournamentWorkspace(planId: string, enabledAddons: string[] = [], freeFloor?: FreeFloor) {
+function hasNonTournamentWorkspace(planId: string, enabledAddons: string[] = []) {
   const entitledModules = new Set([
     ...PLAN_CONFIG[normalizePlanId(planId)].moduleEntitlements,
-    // A League Starter free-floor org keeps plan_id='tournament' but DOES run house-league —
-    // union the free-floor modules so it lands on /admin, not the tournament dashboard.
-    ...freeFloorModules(freeFloor),
     ...enabledAddons,
   ]);
   return (
@@ -200,12 +196,10 @@ function hasNonTournamentWorkspace(planId: string, enabledAddons: string[] = [],
 }
 
 function getPostOnboardingHref(
-  org: { slug: string; planId: string; enabledAddons?: string[]; freeFloor?: FreeFloor },
+  org: { slug: string; planId: string; enabledAddons?: string[] },
   options: { hasTournament?: boolean } = {},
 ) {
-  // Free League Starter floor → land on the league dashboard (their job), not the generic hub.
-  if (org.freeFloor === 'league_starter') return `/${org.slug}/admin/house-league`;
-  if (hasNonTournamentWorkspace(org.planId, org.enabledAddons, org.freeFloor)) return `/${org.slug}/admin`;
+  if (hasNonTournamentWorkspace(org.planId, org.enabledAddons)) return `/${org.slug}/admin`;
   if (options.hasTournament === false) return `/${org.slug}/admin/tournaments`;
   return `/${org.slug}/admin/tournaments/dashboard`;
 }
@@ -398,8 +392,7 @@ function OnboardingPageLegacy() {
 
     const entitlements = PLAN_CONFIG[activePlan].moduleEntitlements;
 
-    // House-league can be unlocked by the paid plan OR the League Starter free-floor profile —
-    // use the effective entitlement, not the plan config alone, so free-floor orgs run the wizard.
+    // House-league can be unlocked by the plan OR an add-on — use the effective entitlement, not the plan config alone.
     const onboardOrgQuery = currentOrg.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
     const seasonsRequest = hasModuleEntitlement(currentOrg, 'module_house_league')
       ? fetch(`/api/admin/house-league/seasons${onboardOrgQuery}`)
@@ -496,8 +489,7 @@ function OnboardingPageLegacy() {
       return;
     }
 
-    // Trigger the house-league setup wizard whenever the org has the module — via the paid
-    // League/Club plan OR the League Starter free-floor profile (plan_id stays 'tournament').
+    // Trigger the house-league setup wizard whenever the org has the module.
     if (!hasModuleEntitlement(currentOrg, 'module_house_league')) return;
     // …but never for a CLUB. A club's plan carries house league without the club running one, and a
     // rep club opening its setup was dropped straight into "create your first season" (A11). Since
@@ -507,15 +499,6 @@ function OnboardingPageLegacy() {
 
     void showWizardStep('league-season');
   }, [loading, currentOrg, userRole, planChoiceRequired, seasonsDone, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
-
-  // League Starter free-floor caps at one division — trim the multi-division preset default so the
-  // wizard can't author (and then self-trip the server cap on) a second division mid-flow.
-  useEffect(() => {
-    if (currentOrg && isFreeFloorLeague(currentOrg)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLeagueDivisionRows(prev => (prev.length > 1 ? prev.slice(0, 1) : prev));
-    }
-  }, [currentOrg]);
 
   async function complete() {
     if (!currentOrg || completing) return;
@@ -766,8 +749,6 @@ function OnboardingPageLegacy() {
   function addLeagueDivisionRow() {
     const name = leagueCustomDivisionName.trim();
     if (!name) return;
-    // Free-floor (League Starter) caps at one division — don't let the UI exceed it.
-    if (currentOrg && leagueDivisionRows.length >= houseLeagueDivisionCap(currentOrg)) return;
     setLeagueDivisionRows(prev => [
       ...prev,
       {
@@ -844,13 +825,6 @@ function OnboardingPageLegacy() {
       .filter(row => row.name);
 
     if (rows.length === 0) throw new Error('Add at least one division, or skip this step.');
-
-    // Free-floor (League Starter) division cap — authoritative client guard so a multi-division
-    // draft can't reach the API and 403 mid-flow. Mirrors the server cap.
-    const divisionCap = currentOrg ? houseLeagueDivisionCap(currentOrg) : Infinity;
-    if (rows.length > divisionCap) {
-      throw new Error('Your free League plan includes one division. Multiple divisions are part of League Plus — upgrade to add more.');
-    }
 
     const duplicateDivision = rows.find((row, index) =>
       rows.findIndex(other => other.name.toLowerCase() === row.name.toLowerCase()) !== index
@@ -1240,47 +1214,40 @@ function OnboardingPageLegacy() {
     }
 
     if (activeModal === 'league-divisions') {
-      const leagueDivisionLimited = Boolean(currentOrg && isFreeFloorLeague(currentOrg));
       return renderModalFrame(
         'Set up divisions',
-        leagueDivisionLimited
-          ? 'Free League includes one division and up to 8 teams (you add teams after setup). Add more divisions by upgrading to League Plus.'
-          : 'Create the registration groups parents will choose from, and give each one its number of spots.',
+        'Create the registration groups parents will choose from, and give each one its number of spots.',
         (
           <div className={styles.inlineList}>
             <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: 0, lineHeight: 1.5 }}>
               <strong style={{ color: 'var(--white-55)' }}>Max players</strong> caps how many players can register in a division — it&apos;s
-              not the number of teams{leagueDivisionLimited ? ' (your free plan includes up to 8 teams, added after setup)' : ''}.
+              not the number of teams.
             </p>
-            {!leagueDivisionLimited && (
-              <>
-                <div className={styles.divisionPresetGrid}>
-                  {(['youth', 'adult', 'custom'] as LeagueDivisionPreset[]).map(preset => (
-                    <button
-                      key={preset}
-                      type="button"
-                      className={`${styles.presetCard} ${leagueDivisionPreset === preset ? styles.presetCardActive : ''}`}
-                      onClick={() => applyLeagueDivisionPreset(preset)}
-                    >
-                      <strong>{preset === 'youth' ? 'Youth starter' : preset === 'adult' ? 'Adult starter' : 'Custom'}</strong>
-                      <span>{preset === 'custom' ? 'Start with a blank list.' : `Adds ${LEAGUE_DIVISION_PRESETS[preset].join(', ')}.`}</span>
-                    </button>
-                  ))}
-                </div>
+            <div className={styles.divisionPresetGrid}>
+              {(['youth', 'adult', 'custom'] as LeagueDivisionPreset[]).map(preset => (
+                <button
+                  key={preset}
+                  type="button"
+                  className={`${styles.presetCard} ${leagueDivisionPreset === preset ? styles.presetCardActive : ''}`}
+                  onClick={() => applyLeagueDivisionPreset(preset)}
+                >
+                  <strong>{preset === 'youth' ? 'Youth starter' : preset === 'adult' ? 'Adult starter' : 'Custom'}</strong>
+                  <span>{preset === 'custom' ? 'Start with a blank list.' : `Adds ${LEAGUE_DIVISION_PRESETS[preset].join(', ')}.`}</span>
+                </button>
+              ))}
+            </div>
 
-                <div className={styles.inlineActions}>
-                  <input
-                    className="form-input"
-                    value={leagueCustomDivisionName}
-                    onChange={e => setLeagueCustomDivisionName(e.target.value)}
-                    placeholder="Add division name"
-                  />
-                  <button type="button" className="btn btn-outline btn-sm" onClick={addLeagueDivisionRow}>
-                    <Plus size={14} /> Add
-                  </button>
-                </div>
-              </>
-            )}
+            <div className={styles.inlineActions}>
+              <input
+                className="form-input"
+                value={leagueCustomDivisionName}
+                onChange={e => setLeagueCustomDivisionName(e.target.value)}
+                placeholder="Add division name"
+              />
+              <button type="button" className="btn btn-outline btn-sm" onClick={addLeagueDivisionRow}>
+                <Plus size={14} /> Add
+              </button>
+            </div>
 
             <div className={styles.divisionList}>
               {leagueDivisionRows.map(row => (
@@ -1300,11 +1267,9 @@ function OnboardingPageLegacy() {
                     placeholder="Max players"
                     aria-label={`${row.name || 'Division'} max players`}
                   />
-                  {!leagueDivisionLimited && (
-                    <button type="button" className={styles.iconOnlyButton} onClick={() => setLeagueDivisionRows(prev => prev.filter(item => item.id !== row.id))} aria-label={`Remove ${row.name || 'division'}`}>
-                      <Trash2 size={14} />
-                    </button>
-                  )}
+                  <button type="button" className={styles.iconOnlyButton} onClick={() => setLeagueDivisionRows(prev => prev.filter(item => item.id !== row.id))} aria-label={`Remove ${row.name || 'division'}`}>
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               ))}
               {leagueDivisionRows.length === 0 && (

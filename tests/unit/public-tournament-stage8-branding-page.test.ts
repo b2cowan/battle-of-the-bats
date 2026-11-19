@@ -29,7 +29,7 @@ const page = readCode(PAGE);
 const route = readCode(ROUTE);
 
 const club = {
-  planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null,
+  planId: 'club', subscriptionStatus: 'active', enabledAddons: [],
   themePreset: 'forest', themePrimary: undefined, themeAccent: undefined, themeFont: 'dm-serif',
   logoUrl: 'https://x/club.png', tournamentLookPolicy: 'club_default',
 } as unknown as LookOrg;

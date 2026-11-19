@@ -72,7 +72,7 @@ export interface SchedulerCtx {
   canMoney: boolean;
   /** Something to hand time to: rep teams this member can open, or house league (Stage 11b). */
   canSchedule: boolean;
-  /** The club runs house league (its plan, a free floor or a section, and a season not finished): House league is offered
+  /** The club runs house league (its plan or a section, and a season not finished): House league is offered
    *  as a holder (Stage 11b). */
   houseLeague: boolean;
   /** This member opens Rep Teams: the rep teams are offered, and a schedule that hands them time is theirs to change

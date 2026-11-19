@@ -33,7 +33,6 @@ const SHARED_PIECES = [
   'components/PricingSection.tsx',
   'components/EarlyAccessModalTrigger.tsx',
   'components/EarlyAccessForm.tsx',
-  'components/admin/LeagueCapUpgrade.tsx',
 ];
 
 /** The plan tags and button words only the helpers may type (case-sensitive: these are the tag and button forms). */
@@ -94,10 +93,7 @@ describe('the on-sale switch reaches every public plan page', () => {
     }
   });
 
-  it('the two in-product readers ask the live gate, never the code’s copy', () => {
-    const cap = readCode('components/admin/LeagueCapUpgrade.tsx');
-    assert.match(cap, /usePlanGating\(\)/);
-    assert.doesNotMatch(cap, /isEffectivelyGated|gatingStatus/);
+  it('the in-product reader asks the live gate, never the code’s copy', () => {
     const onboarding = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
     assert.match(onboarding, /const gatingMap = usePlanGating\(\);/);
     assert.doesNotMatch(onboarding, /gatingStatus/, 'the first paint no longer seeds from the code');

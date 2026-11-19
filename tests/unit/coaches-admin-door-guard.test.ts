@@ -20,8 +20,8 @@ import { volunteerHome } from '../../lib/volunteer-jobs.ts';
 
 const SLUG = 'riverdale';
 // A club plan that carries both programs, so the treasurer's and the league roles' homes exist.
-const club = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null, accountKind: 'organization' } as never;
-const workspace = { planId: 'team', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null, accountKind: 'team_workspace' } as never;
+const club = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], accountKind: 'organization' } as never;
+const workspace = { planId: 'team', subscriptionStatus: 'active', enabledAddons: [], accountKind: 'team_workspace' } as never;
 
 describe('1+2. the door follows the admin’s admission, and lands on the person’s own home', () => {
   const cases: Array<[string, string | null, string | null]> = [

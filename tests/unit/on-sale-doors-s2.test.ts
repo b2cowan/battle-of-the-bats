@@ -275,32 +275,20 @@ describe('the start pages, rendered in both gate states', () => {
     assert.ok(!page.includes('Express interest'));
   });
 
-  it('/start/league: League Plus open is its start; closed with the beta off is the interest page', async () => {
-    const before = process.env.LEAGUE_STARTER_BETA;
-    process.env.LEAGUE_STARTER_BETA = 'false';
-    try {
-      const open = await renderPage('app/(consumer)/start/league/page.tsx', true);
-      assert.ok(open.includes('Create your account, name your league, then start League Plus.'));
-      assert.ok(open.includes(AVAILABILITY) && !open.includes('up to 8 teams'));
-      const closed = await renderPage('app/(consumer)/start/league/page.tsx', false);
-      assert.ok(closed.includes(`${gatedPlanSentence('league')} ${GATED_PLAN_INTEREST_LINE}`));
-    } finally {
-      if (before === undefined) delete process.env.LEAGUE_STARTER_BETA; else process.env.LEAGUE_STARTER_BETA = before;
-    }
+  it('/start/league: League Plus open is its start; closed is the interest page', async () => {
+    const open = await renderPage('app/(consumer)/start/league/page.tsx', true);
+    assert.ok(open.includes('Create your account, name your league, then start League Plus.'));
+    assert.ok(open.includes(AVAILABILITY) && !open.includes('up to 8 teams'));
+    const closed = await renderPage('app/(consumer)/start/league/page.tsx', false);
+    assert.ok(closed.includes(`${gatedPlanSentence('league')} ${GATED_PLAN_INTEREST_LINE}`));
   });
 
   it('/start shows Start a club and the League Plus card only while their plan is on sale', async () => {
-    const before = process.env.LEAGUE_STARTER_BETA;
-    process.env.LEAGUE_STARTER_BETA = 'false';
-    try {
-      const open = await renderPage('app/(consumer)/start/page.tsx', true);
-      assert.ok(open.includes('Start a club') && open.includes('Start a league season'));
-      // No Free / Paid pill on any door (owner 2026-11-19): the price talk lives in the card's sentence.
-      assert.ok(!open.includes('Paid plan') && !open.includes('Free plan'));
-      const closed = await renderPage('app/(consumer)/start/page.tsx', false);
-      assert.ok(!closed.includes('Start a club') && !closed.includes('Start a league season') && !closed.includes('Paid plan'));
-    } finally {
-      if (before === undefined) delete process.env.LEAGUE_STARTER_BETA; else process.env.LEAGUE_STARTER_BETA = before;
-    }
+    const open = await renderPage('app/(consumer)/start/page.tsx', true);
+    assert.ok(open.includes('Start a club') && open.includes('Start a league season'));
+    // No Free / Paid pill on any door (owner 2026-11-19): the price talk lives in the card's sentence.
+    assert.ok(!open.includes('Paid plan') && !open.includes('Free plan'));
+    const closed = await renderPage('app/(consumer)/start/page.tsx', false);
+    assert.ok(!closed.includes('Start a club') && !closed.includes('Start a league season') && !closed.includes('Paid plan'));
   });
 });

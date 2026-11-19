@@ -30,7 +30,7 @@ import { readCode } from './_source-code.ts';
  */
 
 const club: LookOrg = {
-  planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null,
+  planId: 'club', subscriptionStatus: 'active', enabledAddons: [],
   themePreset: 'forest', themePrimary: undefined, themeAccent: undefined, themeFont: 'dm-serif',
   logoUrl: 'https://x/club.png', tournamentLookPolicy: 'club_default',
 } as LookOrg;

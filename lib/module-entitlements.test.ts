@@ -20,7 +20,6 @@ const tournamentOrg: OrgHomeDestinationOrg = {
   planId: 'tournament',
   subscriptionStatus: 'active',
   enabledAddons: [],
-  freeFloor: null,
 };
 
 /** A League org — carries `module_public_site`, so its home always renders. */
@@ -29,7 +28,6 @@ const leagueOrg: OrgHomeDestinationOrg = {
   planId: 'league',
   subscriptionStatus: 'active',
   enabledAddons: [],
-  freeFloor: null,
 };
 
 test('the public-site module makes the org home real regardless of event count', () => {

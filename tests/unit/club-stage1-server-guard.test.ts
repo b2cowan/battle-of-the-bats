@@ -113,7 +113,7 @@ describe('Members — the board endpoints (A02, A13, S1-03, J10-006, J10-022)', 
 describe('B05 — the coaches portal checks the club\'s plan', () => {
   it('orgPlanCarriesCoachesPortal is the plan question, true only where Rep Teams is carried', async () => {
     const { orgPlanCarriesCoachesPortal } = await import('../../lib/coach-portal-plan.ts');
-    const org = (planId: OrgPlan, extra = {}) => ({ planId, subscriptionStatus: 'active' as const, enabledAddons: [] as string[], freeFloor: null, accountKind: 'organization' as const, ...extra });
+    const org = (planId: OrgPlan, extra = {}) => ({ planId, subscriptionStatus: 'active' as const, enabledAddons: [] as string[], accountKind: 'organization' as const, ...extra });
     for (const plan of PLANS) {
       const carries = PLAN_CONFIG[plan].moduleEntitlements.includes('module_rep_teams') || plan === 'team';
       assert.equal(orgPlanCarriesCoachesPortal(org(plan)), carries, plan);

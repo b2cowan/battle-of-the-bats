@@ -164,7 +164,7 @@ describe('"Ask for time" (A3, A6)', () => {
   it('only a league admin asks: an owner or an admin gives time, and the season must run (one gate field)', () => {
     const route = readCode('app/api/admin/house-league/seasons/[seasonId]/time-ask/route.ts');
     assert.match(route, /houseLeagueRefusal\(ctx, 'askForTime', season\)/);
-    const org = (planId: string) => ({ id: 'o', planId, freeFloor: null, moduleEntitlements: null }) as never;
+    const org = (planId: string) => ({ id: 'o', planId, moduleEntitlements: null }) as never;
     const who = (role: string) => ({ role, capabilities: null, repGroupIds: null }) as never;
     const live = { status: 'registration_open' }, draft = { status: 'draft' }, done = { status: 'completed' };
     assert.equal(houseLeagueAccess(who('league_admin'), org('club'), live).askForTime, true);

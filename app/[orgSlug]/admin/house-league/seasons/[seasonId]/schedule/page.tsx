@@ -5,7 +5,6 @@ import { CalendarClock, CalendarDays, CalendarRange, Clock, CloudRain, List, Mor
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
-import { isFreeFloorLeague } from '@/lib/free-floor';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { fieldNounFor } from '@/lib/sports';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
@@ -58,7 +57,7 @@ import type { Through } from '@/lib/league-game-generator';
 import { useLeagueLine } from '@/components/admin/kit/club/league/schedule/useLeagueLine';
 import cal from '@/components/admin/kit/club/ClubCalendar.module.css';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import HouseLeagueTimeWindow from '@/components/admin/kit/club/league/time/HouseLeagueTimeWindow';
 import HouseLeagueTimeLine, { showTimeLine, useBuildsSchedules } from '@/components/admin/kit/club/league/time/HouseLeagueTimeLine';
@@ -693,7 +692,7 @@ export default function SchedulePage() {
   /** The day the last health door took the admin to: the List opens that week even if it was folded away. */
   const [revealDay, setRevealDay] = useState<string | null>(null);
 
-  /** The free League plan's generator (when and where asked once, 9d2a·B). */
+  /** The generator of a plan without the club's schedule (when and where asked once, 9d2a·B). */
   const [showGenerate, setShowGenerate] = useState(false);
   /** Generate games into the club's time (step 5, c1–c4): the division and choice it opens on. A door to House league's
    *  time closes it, and it opens again on the same choice when that window closes (`backToGenerate`). */
@@ -1233,9 +1232,8 @@ export default function SchedulePage() {
   if (!hasAccess) return <NotYours page="houseLeague" />;
 
   const divName = selectedDiv?.name ?? '';
-  const freeFloor = !!currentOrg && isFreeFloorLeague(currentOrg);
-  // ⚖ GENERATE GAMES (step 5): a club with the club's schedule generates into the time it gave house league; the free
-  // League plan keeps its own generator exactly as it was (9d2a·B). The route draws the same line.
+  // ⚖ GENERATE GAMES (step 5): a club with the club's schedule generates into the time it gave house league; a plan
+  // without the club's schedule keeps its own generator exactly as it was (9d2a·B). The route draws the same line.
   const clubTime = !!currentOrg && clubSchedulerOn(currentOrg.planId);
   /** Generate's divisions (9d2·11, "has any games" until 9d-2b publishes): two teams or more and no games yet. */
   const generable = clubTime && canManage && scheduleRead === 'ok'
@@ -1274,10 +1272,9 @@ export default function SchedulePage() {
   const ViewGlyph = VIEW_GLYPH[shownView];
   const dateNav = shownView === 'list' ? null : <ScheduleDateNav view={shownView} cursor={cursor} onStep={step} />;
 
-  // ⚖ ONE Export (C11): Excel first, then CSV and the calendar file — the division's games. The free League plan reads why
-  // it can't, in Tools, as it did (exports are a paid-League capability; 100% client-side today — a server export route
-  // added later MUST guard isFreeFloorLeague(org) → 403).
-  const exportMenu = freeFloor ? null : (
+  // ⚖ ONE Export (C11): Excel first, then CSV and the calendar file — the division's games. Every plan that runs a house
+  // league exports (the free League plan that could not is gone, owner 2026-11-19).
+  const exportMenu = (
     <ExportMenu formats={['xlsx', 'csv', 'ics']} disabled={divGames.length === 0}
       holds={{ title: `${divName ? `${divName} · ` : ''}${pluralize(divGames.length, 'game')}` }}
       onExportXLSX={handleExportXLSX} onExportCSV={handleExportCSV} onExportICS={handleExportICS} />
@@ -1294,8 +1291,7 @@ export default function SchedulePage() {
       <CoachToolbarMenuItem icon={<PracticeIcon size={15} style={{ color: EVENT_COLORS.practice }} />} label={EVENT_LABELS.practice} onSelect={() => setShowPracticeModal(true)} />
     </CoachToolbarMenu>
   ) : null;
-  // Tools ⋯ (Stage 11b Part 3; ruled 9d-2, card 7): House league's time, Practice time, Generate games — and the free plan's
-  // locked export.
+  // Tools ⋯ (Stage 11b Part 3; ruled 9d-2, card 7): House league's time, Practice time, Generate games.
   const toolsMenu = (
     <CoachToolbarMenu label={LEAGUE_TIME_WORDS.tools} icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
       collapseOnPhone bareOnPhone drawerOnPhone drawerTitle={LEAGUE_TIME_WORDS.tools} triggerClassName={tb.tool}>
@@ -1305,11 +1301,6 @@ export default function SchedulePage() {
         <CoachToolbarMenuItem icon={<CalendarClock size={15} aria-hidden />} label={PRACTICE_TIME_WORDS.title} onSelect={() => setPracticeTimeOpen(true)} />
       )}
       {canGenerate && <CoachToolbarMenuItem icon={<Wand2 size={15} aria-hidden />} label={W.generate} onSelect={openGenerate} />}
-      {freeFloor && <>
-        <CoachToolbarMenuSeparator />
-        <CoachToolbarMenuHeading>{LEAGUE_TIME_WORDS.exportHeading}</CoachToolbarMenuHeading>
-        <CoachToolbarMenuItem disabled label={LEAGUE_TIME_WORDS.exportsLocked} hint={LEAGUE_TIME_WORDS.exportsLockedHint} onSelect={() => {}} />
-      </>}
     </CoachToolbarMenu>
   );
 

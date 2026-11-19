@@ -229,13 +229,13 @@ describe('the words, verbatim (§14.1)', () => {
   });
 });
 
-describe('the route: this club’s season only, never the free League plan, all or nothing', async () => {
+describe('the route: this club’s season only, all or nothing', async () => {
   const { readCode } = await import('./_source-code.ts');
   const route = readCode('app/api/admin/house-league/seasons/route.ts');
   const server = readCode('lib/house-league-start-from-server.ts');
-  test('the cap check runs before Start from, and the free League plan is refused', () => {
-    assert.ok(route.indexOf('houseLeagueSeasonCap(') < route.indexOf('readStartFromBody('), 'the free plan’s one season is checked first');
-    assert.match(route, /if \(startFrom\) \{\s*if \(isFreeFloorLeague\(ctx!\.org\)\) return forbidden\(\);/);
+  test('Start from has no free-League branch: no cap check, no refusal for a plan (the free League is gone, 2026-11-19)', () => {
+    assert.doesNotMatch(route, /isFreeFloor\w*|houseLeagueSeasonCap|capHit/);
+    assert.match(route, /if \(startFrom\) \{\s*const source = await loadStartSource\(/);
   });
   test('the source is read with this club’s id: a direct request cannot copy another club’s season', () => {
     assert.match(server, /from\('league_seasons'\)\.select\(SEASON_COLS\)\s*\.eq\('id', seasonId\)\.eq\('org_id', orgId\)/);

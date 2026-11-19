@@ -39,7 +39,7 @@ async function readEveryOrganization(): Promise<{ data: Array<Record<string, unk
   try {
     const data = await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin
       .from('organizations')
-      .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, free_floor, account_kind')
+      .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, account_kind')
       .order('created_at', { ascending: false })
       .order('id')
       .range(from, to));
@@ -185,7 +185,6 @@ async function getOrgs() {
       // A stored-cancelled portal whose free-time read failed: neither a customer nor a known free-time portal.
       freeTimeUnread:     (freeTimePortals === null || runningFreeTimePortals === null)
         && r.account_kind === 'team_workspace' && status === 'canceled',
-      isFreeFloor:        (r.free_floor as string | null) === 'league_starter',
       missingOwner:       !ownerOrgIds.has(id),
       ownerInactive:      ownerIds.length > 0 && (!mostRecentOwnerSignIn || mostRecentOwnerSignIn < inactiveOwnerCutoff),
       expiringSoonOverride: expiringSoonOverrideOrgIds.has(id),

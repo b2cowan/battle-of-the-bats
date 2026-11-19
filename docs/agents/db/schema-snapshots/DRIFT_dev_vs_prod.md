@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 290 divergence(s)** across dev/prod.
+**⚠️ 292 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 8 | 2 | — |
-| Columns | 100 | 37 | 2 |
+| Columns | 100 | 38 | 2 |
 | Indexes | 36 | 12 | 0 |
 | Constraints | 30 | 7 | — |
-| RLS / CHECK | 39 | 16 | 0 (RLS state) |
+| RLS / CHECK | 39 | 17 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (8)
@@ -130,7 +130,8 @@
 - `payments_terms_agreements.user_email`
 - `payments_terms_agreements.user_id`
 
-### Only in PROD (37)
+### Only in PROD (38)
+- `organizations.free_floor`
 - `platform_fee_invoices.amount_due`
 - `platform_fee_invoices.created_at`
 - `platform_fee_invoices.due_at`
@@ -316,7 +317,8 @@ _none_
 - `payments_terms_agreements.payments_terms_agreements_text_shape`
 - `payments_terms_agreements.payments_terms_agreements_version_shape`
 
-### CHECK only in PROD (16)
+### CHECK only in PROD (17)
+- `organizations.organizations_free_floor_check`
 - `platform_fee_invoices.platform_fee_invoices_final_chk`
 - `platform_fee_invoices.platform_fee_invoices_paid_chk`
 - `platform_fee_invoices.platform_fee_invoices_period_start_check`

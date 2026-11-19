@@ -66,7 +66,7 @@ export interface HouseLeagueAccess {
   /**
    * Put a game on any date, time and place (9d2b·B). On a plan with the club's schedule, a league admin places a game
    * only on its division's game time — the time the club gave it; the owner and admin who give that time place anywhere.
-   * With no club's schedule (the free League plan) there is no time to keep to, and whoever runs the season places anywhere.
+   * With no club's schedule (house league from an add-on, not the plan) there is no time to keep to, and whoever runs the season places anywhere.
    */
   placeAnywhere: boolean;
   /**

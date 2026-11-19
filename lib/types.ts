@@ -228,14 +228,6 @@ export interface DivisionSettings {
   buffer_minutes?: number;
 }
 
-/**
- * Free-floor entitlement profile on an org (NULL = none). A free floor contributes extra module
- * entitlements + server-side caps on top of the paid `planId` — it is NOT a new OrgPlan key.
- * `league_starter` = the capped free house-league floor (Free Tier Phase 6, migration 125).
- * Forward-compatible with a future `'tournament_free'`. See lib/free-floor.ts.
- */
-export type FreeFloor = 'league_starter' | null;
-
 export interface Organization {
   id: string;
   name: string;
@@ -279,8 +271,6 @@ export interface Organization {
   accountKind: OrgAccountKind;
   teamWorkspaceStatus?: TeamWorkspaceStatus | null;
   isDiscoverable: boolean;
-  /** Free-floor entitlement profile (NULL/undefined = none). See FreeFloor + lib/free-floor.ts. */
-  freeFloor?: FreeFloor;
   /** Optional external privacy-policy URL. The consent gate links to it when set (see
    *  lib/privacy-policy.ts getOrgPrivacyPolicyHref). NULL/undefined = no policy → no link. */
   privacyPolicyUrl?: string | null;

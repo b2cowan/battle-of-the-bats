@@ -73,7 +73,6 @@ function handlerBody(file: string, method: string): string {
 /** route → why it is gated. Every one: `requireAcceptance(` at the top, before any branch (C1). */
 const GATED: Record<string, string> = {
   'app/api/org/create/route.ts': 'creates a tournament organization and its Founding Season comp',
-  'app/api/league/create/route.ts': 'a league is an organization',
   'app/api/coaches/teams/route.ts': 'the free Basic coach team — no organization row, but a workspace a person owns and starts',
   'app/api/billing/create-checkout/route.ts': 'checkout, the dev mock and the Founding Season upgrade (the last two write a plan without Stripe)',
   'app/api/billing/create-team-checkout/route.ts': 'the Coaches Portal checkout, its comp and dev-mock provisioning',
@@ -147,7 +146,6 @@ describe('the gate (C1): every gated handler asks the Terms first; cancelling ne
 const ORG_MAKERS: Record<string, { definedIn: string; callers: Record<string, string> }> = {
   createOrganization: { definedIn: 'lib/db.ts', callers: {
     'app/api/org/create/route.ts': 'gated',
-    'app/api/league/create/route.ts': 'gated',
     'lib/team-workspace-provisioning.ts': 'provisionStandaloneTeamWorkspace, followed below',
   } },
   provisionStandaloneTeamWorkspace: { definedIn: 'lib/team-workspace-provisioning.ts', callers: {
@@ -193,7 +191,7 @@ describe('the organization census (C4): every maker is reached only from a gated
       ['app/api/billing/webhook/route.ts', 'lib/billing-event-replay-run.ts']);
     assert.deepEqual(filesMatching(/billing-event-replay-run'/), ['app/api/platform-admin/watching-stripe/replay/route.ts']);
   });
-  it('the scan is not blind', () => assert.ok(callersOf('createOrganization', 'lib/db.ts').length >= 3));
+  it('the scan is not blind', () => assert.ok(callersOf('createOrganization', 'lib/db.ts').length >= 2));
 });
 
 // ════════════════════════════════════════════════════════════════ 3. the plan census
@@ -235,12 +233,11 @@ describe('the plan census (C4): every Stripe plan call is named, with its reason
 
 // ════════════════════════════════════════════════════════════════ 4. the callers and their shells
 
-const GATED_URLS = ['/api/org/create', '/api/league/create', '/api/coaches/teams', '/api/billing/create-checkout',
+const GATED_URLS = ['/api/org/create', '/api/coaches/teams', '/api/billing/create-checkout',
   '/api/billing/create-team-checkout', '/api/billing/move', '/api/billing/choose-next-season', '/api/billing/setup-payment-method'];
 /** Every client file that posts to a gated route, and how its request reaches the gate. */
 const CALLERS: Record<string, string> = {
   'app/(consumer)/start/tournament/StartTournamentForm.tsx': 'the start step’s send',
-  'app/(consumer)/start/league/StartLeagueForm.tsx': 'the start step’s send',
   'app/(consumer)/start/team/StartTeamForm.tsx': 'the start step’s send',
   // the paid doors (On-sale pages S2): one create step on the same shared form, through the same start step's send
   'app/(consumer)/start/StartPaidDoorForm.tsx': 'the start step’s send',
@@ -253,7 +250,6 @@ const CALLERS: Record<string, string> = {
 /** The component that hosts each caller's gate (the window mounts there). */
 const HOSTS: Record<string, string> = {
   'app/(consumer)/start/tournament/StartTournamentForm.tsx': 'app/(consumer)/start/StartDoorForm.tsx',
-  'app/(consumer)/start/league/StartLeagueForm.tsx': 'app/(consumer)/start/StartDoorForm.tsx',
   'app/(consumer)/start/team/StartTeamForm.tsx': 'app/(consumer)/start/StartDoorForm.tsx',
   'app/(consumer)/start/StartPaidDoorForm.tsx': 'app/(consumer)/start/StartDoorForm.tsx',
   'app/team/TeamSignupClient.tsx': 'app/team/TeamSignupClient.tsx',

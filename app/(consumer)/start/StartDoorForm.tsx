@@ -20,7 +20,7 @@ import {
  * The doors this form serves (Coach Premium keeps its own card, with the same account-first steps — Part 3). `club` and
  * `league_plus` are the paid doors (On-sale pages S2): League Plus's account is the `league` door's, carrying its pick.
  */
-type FormDoor = 'team' | 'league' | 'organization' | 'club' | 'league_plus';
+type FormDoor = 'team' | 'organization' | 'club' | 'league_plus';
 
 /** Ask 15 (ruled 2026-11-18, `BUSINESS_DECISIONS.md`): said on step 1 of the paid doors, before anything is made, so a
  *  Québec or US organization learns it here rather than at its billing address. */
@@ -60,23 +60,6 @@ const DOOR_COPY: Record<FormDoor, {
     empty: 'Enter a team name.',
     failed: 'Could not create your team.',
   },
-  league: {
-    account: 'league',
-    signup: '/api/auth/coach-signup',
-    title: 'Start a league season',
-    sub: 'Run a house-league season — registration, draft, scheduling, standings, and parent comms.',
-    steps: ['Account', 'League'],
-    nextStep: 'naming your league',
-    accountSmallPrint: 'Free — one season, one division, up to 8 teams. No credit card.',
-    // The free floor's limits, said again where the email link lands (often another device, so step 1 was never seen).
-    nameSmallPrint: 'Free — one season, one division, up to 8 teams. No credit card.',
-    label: 'League or organization name',
-    placeholder: 'e.g. Milton Minor Softball',
-    autoComplete: 'organization',
-    submit: 'Start your season',
-    empty: 'Enter a league name.',
-    failed: 'Could not create your league.',
-  },
   organization: {
     account: 'organization',
     signup: '/api/auth/signup',
@@ -113,7 +96,7 @@ const DOOR_COPY: Record<FormDoor, {
     empty: 'Enter a club name.',
     failed: 'Could not create your club.',
   },
-  // W51–W52 (ruled 2026-11-18; drawing tab 7): the free floor's small print is gone; the placeholder is the league door's own.
+  // W51–W52 (ruled 2026-11-18; drawing tab 7). The free League door is gone (owner 2026-11-19); this is the only league door.
   league_plus: {
     account: 'league',
     signup: '/api/auth/coach-signup',

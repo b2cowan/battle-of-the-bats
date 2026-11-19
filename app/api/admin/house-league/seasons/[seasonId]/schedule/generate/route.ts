@@ -3,8 +3,6 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, getTeamsForDivision } from '@/lib/db';
 import { resolveLeagueVenueSelection, checkLeagueBookings } from '@/lib/league-venue';
-import { isFreeFloorLeague } from '@/lib/free-floor';
-import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
@@ -130,8 +128,8 @@ export const POST = withObservability(async (req: Request,
   if (refused) return refused;
 
   const body = await req.json();
-  // ⚖ A club with the club's schedule generates into its own time (9d-2a step 5, below). What follows is the free League
-  // plan's generator (no club's schedule: when and where asked once), kept exactly as it was — 9d2·14 is parked (9d2a·B).
+  // ⚖ A club with the club's schedule generates into its own time (9d-2a step 5, below). What follows is the generator
+  // of a plan without the club's schedule (house league from an add-on: when and where asked once), kept exactly as it was — 9d2·14 is parked (9d2a·B).
   if (clubSchedulerOn(ctx!.org.planId)) return fromClubTime(ctx!.org.id, season, body);
 
   const { divisionId, startDate, gamesPerWeek = 1, gameTime = '18:00', save = false } = body;
@@ -233,19 +231,6 @@ export const POST = withObservability(async (req: Request,
     .select();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Instrumentation (§13): League Starter first-value signal (a generated schedule). Only on a real
-  // save, gated to the free floor so the metric tracks free-tier activation. Fire-and-forget.
-  if (isFreeFloorLeague(ctx!.org)) {
-    await writePlatformEvent({
-      eventType: 'league_schedule_generated',
-      source: 'app',
-      orgId: ctx!.org.id,
-      actorUserId: ctx!.user?.id ?? null,
-      actorEmail: ctx!.user?.email ?? null,
-      metadata: { freeFloor: 'league_starter', seasonId, divisionId, gameCount: (data ?? []).length },
-    });
-  }
 
   const games = (data ?? []).map((row: any) => ({
     id:          row.id,

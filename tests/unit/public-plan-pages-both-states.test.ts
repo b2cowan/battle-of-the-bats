@@ -209,16 +209,3 @@ describe('the gate reader: dev’s "show as closed", never touching the rows', (
   });
 });
 
-describe('the house-league cap prompt reads the live gate (W57)', () => {
-  function label(gating: Gating | null): string {
-    const { LeagueUpgradeCta } = billingTestLoader({ '@/lib/use-plan-gating': { usePlanGating: () => gating } })(
-      'components/admin/LeagueCapUpgrade.tsx',
-    ) as { LeagueUpgradeCta: (p: object) => ReactElement };
-    return text(renderToStaticMarkup(createElement(LeagueUpgradeCta, {})));
-  }
-  it('closed, or not yet known → the interest door; open → the upgrade words', () => {
-    assert.ok(label(PRODUCTION).includes('Express interest in League Plus →'));
-    assert.ok(label(null).includes('Express interest in League Plus →'));
-    assert.ok(label(ALL_OPEN).includes('Upgrade to League Plus →'));
-  });
-});

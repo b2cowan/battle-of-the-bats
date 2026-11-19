@@ -20,8 +20,9 @@ while that plan's switch is closed, and a real way to buy the moment it opens �
   surface (`clubTrialLine()`, Facts :191, canon `PRICING_PAGE_COPY.md` :275-298).
 - "No 'we set up Club with you' or 'talk to us' framing survives the flip" (`BUSINESS_DECISIONS.md` :49-50).
 - The retired campaign emails are never revived (runbook §Step 0 last paragraph).
-- League Plus's free floor (the `LEAGUE_STARTER_BETA` start) is not this build's question — it stays as it is (off on
-  production); whether the free league floor exists at all is `/strategy`'s open item (`BUSINESS_DECISIONS.md` :322).
+- ~~League Plus's free floor (the `LEAGUE_STARTER_BETA` start) is not this build's question — it stays as it is (off on
+  production); whether the free league floor exists at all is `/strategy`'s open item (`BUSINESS_DECISIONS.md` :322).~~
+  Ruled 2026-11-19 (retired) and built: **⚰ 2026-11-19: the free League is removed** (`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md` Stage 1) — there is no `LEAGUE_STARTER_BETA` start any more; `/start/league` is League Plus while it is on sale, else the interest form.
 
 ## What the code does today (2026-11-18) — and where the runbook under-states it
 
@@ -195,8 +196,8 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
   stays three labels with Plan current; drawn on tabs 6 and 7 since 2026-11-18, after the owner noticed the first
   drawings only named it) and Stripe's payment page via the existing checkout; back into the club setup kit (`onboarding/page.tsx:253`). Closed: today's page
   with canon words.
-- `/start/league`, when League Plus is open: the same, one card. The free League starter path (flag) is untouched;
-  with the flag off and League Plus closed it stays the interest form.
+- `/start/league`, when League Plus is open: the same, one card. With League Plus closed it is the interest form.
+  **⚰ 2026-11-19: the free League is removed** (`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md` Stage 1) — there is no `LEAGUE_STARTER_BETA` start any more; `/start/league` is League Plus while it is on sale, else the interest form.
 - A new start door (`club`, `league_plus` — names in the build) in `lib/start-door.ts`: the pick rides on the account
   like G4's; the door creates the org on `tournament` with **no Founding comp** (Ask 14); the waiting-workspace card on
   Home ("Name your club").
@@ -220,7 +221,7 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
   door would otherwise make a second org and strand the team).
 - Doors: reuse the existing `league` door for League Plus and add one `club` door (no fourth). The `LEAGUE_STARTER_BETA`
   readers that would hide them (`lib/start-menu.ts:58`, `start/page.tsx:133`, `app/api/consumer/home/route.ts:136`)
-  read the plan gate for the League Plus start; the flag keeps governing only the free floor.
+  read the plan gate for the League Plus start; the flag keeps governing only the free floor. **⚰ 2026-11-19: the free League is removed** (`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md` Stage 1) — there is no `LEAGUE_STARTER_BETA` start any more; `/start/league` is League Plus while it is on sale, else the interest form.
 - `/start` chooser: Club and League cards appear when their plan is open.
 - Pricing cards' buttons go to these doors (open) — the G6 guard test (`first-look-stage3.test.ts:25-36`) is rewritten
   to "every open org plan's card points at a door that sells it", reading the live gate, not the code value.
@@ -243,7 +244,7 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
     while the legal pages are off (`legal_pages_unpublished`); the census tests list the new routes; a guard fails the build if the
     switch is off while the doors exist; the flip runbook's new Step 3b.
   - **League door:** `/start/league` sells League Plus while it is on sale; the free League starter shows only while League Plus
-    is closed and `LEAGUE_STARTER_BETA` is on (so on dev it is reached with "show as closed").
+    is closed and `LEAGUE_STARTER_BETA` is on (so on dev it is reached with "show as closed"). **⚰ 2026-11-19: the free League is removed** (`FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md` Stage 1) — there is no `LEAGUE_STARTER_BETA` start any more; `/start/league` is League Plus while it is on sale, else the interest form.
   - **Trap D:** an owner of a real organization goes to that organization's own plan step if a paid door made it and it is still
     free, else to its Plan & billing; a member who is not an owner goes to their usual landing; a Premium coach (Start a club only)
     to their portal's Plan & billing. `/api/org/create` enforces the organization and portal halves itself.

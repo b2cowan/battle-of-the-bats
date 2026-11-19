@@ -35,7 +35,7 @@ const RESERVED_MODULES: Capability[] = ['module_rep_teams', 'module_house_league
 async function resolveOrgModules(orgId: string): Promise<string[]> {
   const { data } = await supabaseAdmin
     .from('organizations')
-    .select(`${DOOR_COLUMNS}, free_floor`)
+    .select(DOOR_COLUMNS)
     .eq('id', orgId)
     .maybeSingle();
   if (!data) return [];
@@ -46,7 +46,6 @@ async function resolveOrgModules(orgId: string): Promise<string[]> {
     subscriptionStatus: facts.subscriptionStatus,
     planId:             facts.planId,
     enabledAddons:      facts.enabledAddons,
-    freeFloor:          (data as { free_floor?: Organization['freeFloor'] }).free_floor ?? undefined,
   } as Organization;
   return RESERVED_MODULES.filter(cap => hasModuleEntitlement(orgLike, cap));
 }

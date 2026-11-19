@@ -173,7 +173,7 @@ describe('the new frame\'s ticker, as ruled 2026-10-28 (F\'s behaviour in D\'s l
 
 describe('the band\'s colour, for four kinds of organizer (hub "Four organizers, one frame")', () => {
   // A club org (Stage 1a: only an org with the site module lends its look to its tournaments — lib/tournament-look.ts).
-  const plus = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null, themePreset: 'platform', themePrimary: undefined, themeAccent: undefined } as unknown as LookOrg;
+  const plus = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], themePreset: 'platform', themePrimary: undefined, themeAccent: undefined } as unknown as LookOrg;
   const none = { themePreset: undefined, themePrimary: undefined, themeAccent: undefined } as const;
 
   it('a free event: a neutral near-black band with white text and no mark', () => {

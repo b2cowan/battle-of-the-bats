@@ -16,7 +16,7 @@ import type { EntitlementOrg } from '../../lib/module-entitlements.ts';
 
 export const CLUB_BASE = '/demo-club/admin';
 /** The Club plan the people are drawn on (every program carried). */
-const CLUB_ORG = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null } as unknown as EntitlementOrg;
+const CLUB_ORG = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [] } as unknown as EntitlementOrg;
 
 export const CLUB_PEOPLE: readonly (readonly [name: string, role: OrgRole])[] = [
   ['owner', 'owner'], ['admin', 'admin'], ['league admin', 'league_admin'], ['registrar', 'league_registrar'], ['treasurer', 'treasurer'],

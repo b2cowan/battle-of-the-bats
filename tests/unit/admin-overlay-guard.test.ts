@@ -59,7 +59,6 @@ const LAYERS: Record<string, { file: string; selector?: string; inline?: true }>
   houseLeague: { file: 'app/[orgSlug]/admin/house-league/house-league.module.css', selector: '.modalOverlay' },
   globalModal: { file: 'app/globals.css', selector: '.modal-overlay' },
   bottomSheet: { file: 'components/admin/BottomSheet.module.css', selector: '.backdrop' },
-  leagueCap: { file: 'components/admin/LeagueCapUpgrade.tsx', inline: true },
   newRoom: { file: 'components/chat/NewRoomDialog.module.css', selector: '.backdrop' },
   // The shared windows the admin shell renders (the census, 2026-10-18).
   chatManage: { file: 'components/chat/ChatManagePanel.module.css', selector: '.backdrop' },
@@ -84,7 +83,6 @@ const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
   'app/[orgSlug]/admin/tournaments/schedule/components/ResolveFacilitiesModal.tsx': { layers: ['globalModal'] },
   'app/[orgSlug]/admin/tournaments/schedule/components/ResolveLocationsModal.tsx': { layers: ['globalModal'] },
   'components/admin/BottomSheet.tsx': { layers: ['bottomSheet'] },
-  'components/admin/LeagueCapUpgrade.tsx': { layers: ['leagueCap'] },
   'components/shared/KitDialog.tsx': { layers: ['kitForm'] },
   'components/admin/kit/club/money/AllocationWindow.tsx': { notAForm: 'reads its KitDialog (`closest(\'[role="dialog"]\')`); draws none' },
   'components/admin/kit/club/CreateLeagueSeasonDialog.tsx': { notAForm: 'Start from’s phone drawer (House League 9f-2, s14) is a MENU: the club’s seasons, a pick closes it; a SheetFrame `overWindow` above its own KitDialog, which is the form' },

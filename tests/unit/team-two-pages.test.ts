@@ -13,7 +13,7 @@ const CLUB = 'club-1';
 const OTHER = 'club-2';
 const club = (over: Partial<PublicClubAccessOrg> = {}) => ({
   id: CLUB, name: 'Lakeshore Lightning',
-  isPublic: true, subscriptionStatus: 'active', planId: 'club', enabledAddons: [], freeFloor: null, accountKind: 'organization',
+  isPublic: true, subscriptionStatus: 'active', planId: 'club', enabledAddons: [], accountKind: 'organization',
   ...over,
 }) as PublicClubAccessOrg & { id: string; name: string };
 const ours: RegistrationLinkFacts = { orgId: CLUB, repTeam: { orgId: CLUB, slug: '15u-aaa', name: '15U AAA' } };

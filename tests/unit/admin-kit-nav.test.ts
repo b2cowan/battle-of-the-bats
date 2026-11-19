@@ -416,7 +416,7 @@ describe('13i · the club sidebar lists places only', () => {
   });
 
   it('Permits: those who schedule, run tournaments or handle money (trust close-out 2, owner 2026-11-18; replaces 13c staff = A)', () => {
-    const club = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null } as unknown as Parameters<typeof canReadVenueLibrary>[1];
+    const club = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [] } as unknown as Parameters<typeof canReadVenueLibrary>[1];
     const permitsFor = (role: OrgRole, o: Partial<Parameters<typeof kitPermitsLink>[0]> = {}, caps: Record<string, boolean> | null = null) =>
       kitPermitsLink({ base: '/o/admin', readsLibrary: canReadVenueLibrary({ role, capabilities: caps }, club), isCanceled: false, tournamentTier: false, hasVenueLibrary: true, ...o });
     for (const role of ['owner', 'admin', 'league_admin', 'treasurer'] as OrgRole[]) {

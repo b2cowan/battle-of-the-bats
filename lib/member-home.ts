@@ -1,4 +1,3 @@
-import { isFreeFloorLeague } from './free-floor';
 import { planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import { NOT_YOURS_PAGES, type NotYoursPage } from './not-yours-words';
 import { canOpenModule } from './member-access';
@@ -10,10 +9,8 @@ import { volunteerHome } from './volunteer-jobs';
  * WHERE A CLUB MEMBER'S HOME IS — the one rule (Club Tier Stage 13a, A1). Sign-in lands a person here
  * (`getDestinationForMembership`, lib/user-contexts.ts) and the "not yours" screen's door goes back here, so the two can
  * never disagree: "Back to Accounting" for the treasurer, "Back to House league" for the league admin and the registrar.
- * ⚠ Two known gaps: sign-in keeps its own copy of the free League Starter branch (lib/user-contexts.ts, and the onboarding
- * page), which also sends the OWNER to the league while this door sends the owner to the Overview; and the door skips a
- * home that is the very page just refused (a treasurer whose Accounting was switched off goes to the Overview, not to a
- * button that opens the same refusal). Recorded for the owner.
+ * ⚠ One known gap: the door skips a home that is the very page just refused (a treasurer whose Accounting was switched
+ * off goes to the Overview, not to a button that opens the same refusal). Recorded for the owner.
  *
  * Client-safe. The sign-in resolver keeps its own branches BEFORE this one (a volunteer's job, a team workspace, a
  * tournament-only workspace, the owner's setup checklist); a person reading the club's admin screens is past all of them.
@@ -45,10 +42,7 @@ export function programHomePath(slug: string, role: OrgRole | string | null, org
  * every member can open.
  */
 export function memberHome(slug: string, role: OrgRole | string | null, org: EntitlementOrg, refused?: NotYoursPage): Home {
-  // The free League Starter floor sends its house-league operator to the league, as sign-in does.
-  const home: ProgramHome | null = isFreeFloorLeague(org) && role !== 'owner'
-    ? { href: `/${slug}/admin/house-league`, label: NOT_YOURS_PAGES.houseLeague.title, page: 'houseLeague' }
-    : programHome(slug, role, org);
+  const home: ProgramHome | null = programHome(slug, role, org);
   if (!home || home.page === refused) return { href: `/${slug}/admin`, label: 'Overview' };
   return { href: home.href, label: home.label };
 }

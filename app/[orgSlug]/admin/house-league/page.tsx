@@ -13,7 +13,6 @@ import { kitCountText } from '@/lib/admin-kit-nav';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Plus, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import { ClubRow, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -23,7 +22,6 @@ import CreateLeagueSeasonDialog from '@/components/admin/kit/club/CreateLeagueSe
 import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { orderSeasons, seasonFactsLine, seasonGroup, seasonNoteLine, toReviewLabel } from '@/lib/house-league-season';
 import { sportLabel } from '@/lib/sports';
-import type { LeagueCapKind, SeasonSlotHolder } from '@/lib/free-floor';
 import type { LeagueSeasonSummary } from '@/lib/types';
 import styles from '@/components/admin/kit/club/HouseLeagueHome.module.css';
 import { NotYours } from '@/components/admin/kit/club/NotYours';
@@ -42,7 +40,6 @@ export default function HouseLeagueHome() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [capHit, setCapHit] = useState<{ kind: LeagueCapKind; holder?: SeasonSlotHolder } | null>(null);
   const [pastOpen, setPastOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -179,7 +176,6 @@ export default function HouseLeagueHome() {
           orgSlug={orgSlug}
           knownSeasons={summaries}
           onClose={() => setCreating(false)}
-          onCapHit={(kind, holder) => { setCreating(false); setCapHit({ kind, holder }); }}
           onCreated={season => {
             announceSeasonsChanged();
             // A new season's next step is its own page (the checklist, 9a·4). ⚠ Navigate with the window STILL OPEN:
@@ -190,7 +186,6 @@ export default function HouseLeagueHome() {
           }}
         />
       )}
-      {capHit && <LeagueCapUpgradeModal capHit={capHit.kind} holder={capHit.holder} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
     </div>
   );
 }

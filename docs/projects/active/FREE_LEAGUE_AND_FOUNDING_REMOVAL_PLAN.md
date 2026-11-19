@@ -98,6 +98,33 @@ Census (2026-11-19, file:line as found; re-grep `free_floor|freeFloor|league_sta
 **Done when:** a grep for the census terms returns only history; `/start/league` with League Plus closed shows the
 interest page; a League Plus org can create a 9th house league team, a 2nd division and a 2nd live season.
 
+**Build record (2026-11-19).** Counts re-taken first (counts only): `free_floor` set — prod 0, dev 1 (`test-minor-softball`,
+kept as a plain Tournament org; its one house-league season stays in the database, unreachable); `platform_events` rows of
+the seven free-League types — 0 on both, so the types were removed outright. Deleted: `lib/free-floor.ts`,
+`lib/league-season-slot.ts` (nothing else read it), `LeagueCapUpgrade.tsx`, `/api/league/create` (with its Founding grant),
+`StartLeagueForm.tsx`, `/api/events/league` + `lib/league-events-client.ts`, the free `league` entry in `StartDoorForm`'s
+door copy. `isLeagueDoorOpen()` is gone; its two readers ask `isPaidDoorOpen('league')`. The Reopen refusal plumbing
+(`blockedBy`, `MoveWords.refused`, the window's refused branch) went with the cap. Migration 509 drops the column + CHECK,
+applied to dev 2026-11-19; production is an owner-run release step AFTER the code is serving (`MANUAL_PROD_STEPS.json`).
+`LEAGUE_STARTER_BETA` removed from `.env.local`. **Found on the way (not changed):** League Plus and Club both carry
+`club_scheduler`, so the house-league schedule's older generator (the "no club's schedule" path in
+`schedule/generate/route.ts` and the schedule page) is now reached only by an org given house league as an add-on —
+a candidate for removal, recorded here rather than done (out of Stage 1's scope).
+
+**Checks and review (2026-11-19).** Unit tests: 30 failed of 17,854, none from Stage 1 (29 fail identically on a clean copy of the
+last commit; one is another session's public division filter). Typecheck clean apart from one committed test file Stage 1 never
+touched; the generated route types for the two deleted routes needed `npx next typegen` and removing their stale folders.
+Migration check, dictionary and spelling pass. Review at the high-risk tier (sign-in/onboarding, entitlement, the five house-league
+create routes, the migration, start pages and menu, platform admin): no defects; League Plus, Club and Club · Association house league
+unchanged. Fixed in the same commit: the League Plus pricing card still said "No credit card required" with "Start free" and now says
+the ruled trial sentence (30 days) with "Start your League Plus trial" (`BUSINESS_DECISIONS.md` 2026-11-18, Ask 7). **Release order, the
+one real hazard:** drop `organizations.free_floor` on production ONLY after the new build is serving — the previous build reads the
+column by name in the membership read, ignores the error, and every signed-in member would silently see no workspaces (and creating an
+organization would fail). After the drop: refresh the schema snapshots and delete the dictionary entry. Left as is: stale comments naming
+the deleted routes (`app/api/auth/signup/route.ts:19`, `lib/demo-guard.ts:154,170`, `components/EarlyAccessModalTrigger.module.css:2`);
+an account that signed up on the old free League door will meet the paid plan step when League Plus opens (its Home card names no price);
+`LEAGUE_STARTER_BETA` may still be set in a hosted environment.
+
 ## 4. Stage 2a — the holders' move to free time
 
 - Read the free-time model first (`lib/free-time*.ts`, `lib/entitlement-grants.ts`, `lib/portal-free-time*.ts`; the

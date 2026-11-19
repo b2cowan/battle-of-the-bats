@@ -17,8 +17,6 @@ import { withObservability } from '@/lib/observability';
 import { cutoffFor } from '@/lib/born-years';
 import { newerSeasons, openRegistrationRefusal } from '@/lib/house-league-season';
 import { isFinishedLeagueSeason } from '@/lib/house-league-access';
-import { houseLeagueSeasonCap, REOPEN_CAP_ERROR } from '@/lib/free-floor';
-import { needsFreeSlot, readSlotHolders, slotBlocker } from '@/lib/league-season-slot';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { registrationOwes, seasonCharges } from '@/lib/league-price';
 import { isCalendarDate } from '@/lib/timezone';
@@ -47,21 +45,13 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 };
 
 /**
- * What the Reopen window needs to know (9f·5, 9f·7), for a finished season only: the club's seasons newer than this one,
- * and the season that would block it on the free League plan (the one count, lib/league-season-slot.ts). A failed read
- * takes nothing down: the newer list reads empty and the block is left to the PATCH, which reads it again and refuses.
+ * What the Reopen window needs to know (9f·7), for a finished season only: the club's seasons newer than this one. A
+ * failed read takes nothing down: the newer list reads empty. (No plan limits how many seasons run at once: the free
+ * League's one-live-season cap went with it, owner 2026-11-19.)
  */
-async function reopenFacts(season: LeagueSeason, org: Pick<Organization, 'id' | 'freeFloor'>) {
-  const cap = houseLeagueSeasonCap(org);
-  const [all, holders] = await Promise.all([
-    getLeagueSeasons(org.id).catch(() => [] as LeagueSeason[]),
-    cap < Infinity ? readSlotHolders(supabaseAdmin, org.id, season.id).catch(() => []) : Promise.resolve([]),
-  ]);
-  const blocker = slotBlocker(holders, cap);
-  return {
-    newer: newerSeasons(season, all).map(s => s.name),
-    blockedBy: blocker ? { name: blocker.name, status: blocker.status } : null,
-  };
+async function reopenFacts(season: LeagueSeason, org: Pick<Organization, 'id'>) {
+  const all = await getLeagueSeasons(org.id).catch(() => [] as LeagueSeason[]);
+  return { newer: newerSeasons(season, all).map(s => s.name) };
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -269,15 +259,6 @@ export const PATCH = withObservability(async (req: Request,
         { error: `Cannot transition from '${season.status}' to '${newStatus}'` },
         { status: 422 },
       );
-    }
-
-    // The free League plan runs one live season at a time (9f·5): a Reopen that would make two is refused, with the same
-    // count the Reopen window read (lib/league-season-slot.ts), so a request that skips the window is refused too.
-    const cap = houseLeagueSeasonCap(ctx!.org);
-    if (cap < Infinity && needsFreeSlot(season.status, newStatus)) {
-      if ((await readSlotHolders(supabaseAdmin, ctx!.org.id, seasonId)).length >= cap) {
-        return NextResponse.json({ error: REOPEN_CAP_ERROR }, { status: 422 });
-      }
     }
 
     if (season.status === 'registration_open' && newStatus === 'active' && registrationState(season) !== 'closedByDate') {

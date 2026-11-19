@@ -34,7 +34,6 @@ type OrganizationRow = {
   account_kind: Organization['accountKind'] | null;
   team_workspace_status: Organization['teamWorkspaceStatus'] | null;
   is_discoverable: boolean | null;
-  free_floor: Organization['freeFloor'] | null;
   /** Club Shared Book (mig 227). Optional so an unapplied migration reads false, not throws. */
   club_book_sharing_enabled?: boolean | null;
   /** When birthdays count from (mig 349); the select is `*`. */
@@ -72,7 +71,6 @@ function mapOrganization(row: OrganizationRow): Organization {
     accountKind: row.account_kind ?? 'organization',
     teamWorkspaceStatus: row.team_workspace_status ?? null,
     isDiscoverable: row.is_discoverable ?? true,
-    freeFloor: row.free_floor ?? null,
     clubBookSharingEnabled: row.club_book_sharing_enabled === true,
     // When birthdays count from (mig 349) — read through cutoffFor(); absent = January 1.
     birthdayCutoffs: storedCutoffs(row.birthday_cutoffs),

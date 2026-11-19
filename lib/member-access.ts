@@ -9,7 +9,7 @@ import type { OrgRole } from './types';
  *
  * Two questions decide whether a person can open a program, and every gate in the product asks
  * both: does the PERSON hold it (their role's default, or a per-member override — `hasCapability`)
- * and does the ORG carry it (the plan, a free floor or an add-on, and not cancelled —
+ * and does the ORG carry it (the plan or an add-on, and not cancelled —
  * `hasModuleEntitlement`). `canOpenModule` is that pair, named once. The Members screen's
  * "What they can open" rows are computed from `canOpenModule` too, so a screen and the server can
  * never disagree about the same person (tests/unit/member-access.test.ts proves it across every

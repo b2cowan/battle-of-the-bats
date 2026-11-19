@@ -32,9 +32,9 @@ const OVERRIDE_SHAPES: (Record<string, boolean> | null)[] = [
 
 function orgs(plan: OrgPlan): EntitlementOrg[] {
   return [
-    { planId: plan, subscriptionStatus: 'active', enabledAddons: [], freeFloor: null },
-    { planId: plan, subscriptionStatus: 'canceled', enabledAddons: [], freeFloor: null },
-    { planId: plan, subscriptionStatus: 'active', enabledAddons: ['module_rep_teams'], freeFloor: null },
+    { planId: plan, subscriptionStatus: 'active', enabledAddons: [] },
+    { planId: plan, subscriptionStatus: 'canceled', enabledAddons: [] },
+    { planId: plan, subscriptionStatus: 'active', enabledAddons: ['module_rep_teams'] },
   ];
 }
 

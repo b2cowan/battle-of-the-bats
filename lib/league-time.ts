@@ -637,14 +637,9 @@ export const LEAGUE_TIME_WORDS = {
   },
   /** Tools on the house-league Schedule page (ruled card 7). */
   tools: 'Tools',
-  exportHeading: 'Export',
   excel: 'Excel',
   csv: 'CSV',
   calendar: 'Calendar file',
-  /** The free League floor's Export row: exports are League Plus's (PLAN_PRICING_FACTS.md; the shipped words named
-   *  "League", the free plan itself — /marketing 2026-10-27). */
-  exportsLocked: 'Exports · League Plus',
-  exportsLockedHint: 'Exports are part of League Plus. Upgrade to export your schedule, standings, and registrations.',
 } as const;
 
 /** A part as the piece's level says it: "6:00–7:30 p.m. · Diamond 1" under its weekday's line ("Tuesdays"). */

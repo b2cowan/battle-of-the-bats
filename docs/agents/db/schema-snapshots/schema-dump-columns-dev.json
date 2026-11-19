@@ -16066,15 +16066,6 @@
   },
   {
     "table_name": "organizations",
-    "column_name": "free_floor",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 33
-  },
-  {
-    "table_name": "organizations",
     "column_name": "team_limit",
     "data_type": "integer",
     "udt_name": "int4",

@@ -24,7 +24,6 @@ import { Check, ExternalLink, Minus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { friendRequestsOn } from '@/lib/league-friends';
-import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import { ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import { NotYours } from '@/components/admin/kit/club/NotYours';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -35,9 +34,7 @@ import AddAgeGroupsWindow from '@/components/admin/kit/club/league/AddAgeGroupsW
 import { RegistrationBlock, SeasonBlock } from '@/components/admin/kit/club/league/SeasonRecordBlocks';
 import s from '@/components/admin/kit/club/league/LeagueSeason.module.css';
 import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
-import { isFreeFloorLeague, type LeagueCapKind } from '@/lib/free-floor';
 import LeagueMorning from '@/components/admin/kit/club/league/LeagueMorning';
-import { fireLeagueEvent } from '@/lib/league-events-client';
 import { checklistFoot, checklistLeft, isPastItsEnd, seasonChecklist, seasonDates } from '@/lib/house-league-season';
 import { registrationState } from '@/lib/league-registration-state';
 import { seasonCharges } from '@/lib/league-price';
@@ -45,7 +42,6 @@ import { DELETE_DOOR, START_DOOR, movesFrom, rareDoor, type StatusMove } from '@
 import { START_FROM_WORDS as SF, markedLines, readStartedFrom, startedLine } from '@/lib/house-league-start-from';
 import { isFinishedLeagueSeason } from '@/lib/house-league-access';
 import CreateLeagueSeasonDialog from '@/components/admin/kit/club/CreateLeagueSeasonDialog';
-import type { SeasonSlotHolder } from '@/lib/free-floor';
 import { JAN_1, type Cutoff } from '@/lib/born-years';
 import { sportLabel } from '@/lib/sports';
 import { pluralize } from '@/lib/utils';
@@ -60,7 +56,7 @@ interface SeasonDetail {
   /** A shell the season may still be deleted from: not yet open, nothing real attached (decided by the server). */
   deletable?: boolean;
   /** A finished season's Reopen facts (9f-1): the newer seasons it leaves alone, and the free plan's holder that blocks it. */
-  reopen?: { newer: string[]; blockedBy: { name: string; status: string } | null };
+  reopen?: { newer: string[] };
   birthdayCutoff?: Cutoff;
   divisions: SeasonDivision[];
   summary: {
@@ -92,7 +88,6 @@ export default function SeasonOverviewPage() {
   const [deleting, setDeleting] = useState(false);
   const [adding, setAdding] = useState(false);
   const [openRegistration, setOpenRegistration] = useState(0);
-  const [capHit, setCapHit] = useState<{ kind: LeagueCapKind; holder?: SeasonSlotHolder } | null>(null);
   const [startingNext, setStartingNext] = useState(false);
 
   const access = useHouseLeagueAccess(detail?.season ?? null);
@@ -129,12 +124,6 @@ export default function SeasonOverviewPage() {
           rel="noopener noreferrer"
           className={`btn btn-outline ${ck.iconOnlyPhone}`}
           aria-label="View season page"
-          onClick={() => {
-            // §13 League Starter first-value signal (share), the free floor only. Fire-and-forget.
-            if (currentOrg && isFreeFloorLeague(currentOrg)) {
-              fireLeagueEvent('league_public_page_shared', { orgId: currentOrg.id, metadata: { seasonId: season.id } });
-            }
-          }}
         >
           <ExternalLink size={14} aria-hidden /><span className={ck.btnWord}>View season page</span>
         </a>
@@ -199,9 +188,9 @@ export default function SeasonOverviewPage() {
   const pastItsEnd = canMove && moves.includes('complete') && isPastItsEnd(season);
   // Once Complete has its own Next step card above, the door at the end of the page would only repeat it.
   const rare = canMove ? (['complete', 'reopen'] as const).filter(m => moves.includes(m) && !(m === 'complete' && pastItsEnd)) : [];
-  // Start next season (9f-2, 9f·8): every season but a getting-ready one, for whoever moves a season; never on the free League
-  // plan, whose window has no Start from. It sits after Complete and before Reopen (copy §12).
-  const startDoor = canMove && season.status !== 'draft' && !!currentOrg && !isFreeFloorLeague(currentOrg);
+  // Start next season (9f-2, 9f·8): every season but a getting-ready one, for whoever moves a season. It sits after Complete
+  // and before Reopen (copy §12).
+  const startDoor = canMove && season.status !== 'draft' && !!currentOrg;
   // A season started from another (mig 432): its line and marks while it is getting ready, for the people who run it.
   const startedFrom = season.status === 'draft' && canRun ? readStartedFrom(season.startedFrom) : null;
   const marks = startedFrom ? markedLines(startedFrom, season, divisions) : new Set<string>();
@@ -441,7 +430,6 @@ export default function SeasonOverviewPage() {
           defaultPrice={season.registrationFee ?? (divisions.length ? divisions[divisions.length - 1].price : null)}
           onClose={() => setAdding(false)}
           onAdded={() => { setAdding(false); changed(); }}
-          onCapHit={kind => { setAdding(false); setCapHit({ kind }); }}
         />
       )}
       {startingNext && (
@@ -449,12 +437,10 @@ export default function SeasonOverviewPage() {
           orgSlug={orgSlug}
           startFromId={season.id}
           onClose={() => setStartingNext(false)}
-          onCapHit={(kind, holder) => { setStartingNext(false); setCapHit({ kind, holder }); }}
           // ⚠ Navigate with the window STILL OPEN (the house-league home's reason): the page unmounts and takes it along.
           onCreated={made => { announceSeasonsChanged(); router.push(`/${orgSlug}/admin/house-league/seasons/${made.id}`); }}
         />
       )}
-      {capHit && <LeagueCapUpgradeModal capHit={capHit.kind} holder={capHit.holder} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
     </div>
   );
 }

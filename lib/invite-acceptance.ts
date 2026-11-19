@@ -14,7 +14,7 @@ export async function destinationAfterAccept(userId: string, orgSlug: string | n
   if (!orgSlug) return '/discover';
   const { data } = await supabaseAdmin
     .from('organization_members')
-    .select('id, organization_id, role, capabilities, organizations!inner(id, slug, name, plan_id, enabled_addons, account_kind, team_workspace_status, subscription_status, onboarding_completed_at, free_floor)')
+    .select('id, organization_id, role, capabilities, organizations!inner(id, slug, name, plan_id, enabled_addons, account_kind, team_workspace_status, subscription_status, onboarding_completed_at)')
     .eq('user_id', userId)
     .eq('status', 'active')
     .eq('organizations.slug', orgSlug)

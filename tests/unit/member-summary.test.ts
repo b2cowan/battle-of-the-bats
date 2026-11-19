@@ -18,8 +18,8 @@ import type { OrgRole } from '../../lib/types.ts';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-const club = { planId: 'club' as const, subscriptionStatus: 'active' as const, enabledAddons: [], freeFloor: undefined };
-const tournamentPlan = { planId: 'tournament' as const, subscriptionStatus: 'active' as const, enabledAddons: [], freeFloor: undefined };
+const club = { planId: 'club' as const, subscriptionStatus: 'active' as const, enabledAddons: [] };
+const tournamentPlan = { planId: 'tournament' as const, subscriptionStatus: 'active' as const, enabledAddons: [] };
 const access = (role: OrgRole, capabilities: Record<string, boolean> | null = null, org: Parameters<typeof whatTheyCanOpen>[1] = club) =>
   whatTheyCanOpen({ role, capabilities }, org);
 

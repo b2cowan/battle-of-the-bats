@@ -422,7 +422,7 @@ export async function getOrgSitemapEntries(): Promise<{ href: string }[]> {
   const { data: orgRows, error } = await scopeFollowableOrgs(
     supabaseAdmin
       .from('organizations')
-      .select('id, slug, is_public, plan_id, subscription_status, enabled_addons, free_floor'),
+      .select('id, slug, is_public, plan_id, subscription_status, enabled_addons'),
   ).limit(SCAN_CEILING);
   if (error) throw error;
   const orgs = orgRows ?? [];
@@ -445,7 +445,6 @@ export async function getOrgSitemapEntries(): Promise<{ href: string }[]> {
       planId: f.planId,
       subscriptionStatus: f.subscriptionStatus,
       enabledAddons: f.enabledAddons,
-      freeFloor: o.free_floor ?? null,
     };
   };
 
@@ -504,7 +503,7 @@ export async function getClubPageSitemapEntries(): Promise<{ href: string }[]> {
   const { data: orgRows, error } = await scopeFollowableOrgs(
     supabaseAdmin
       .from('organizations')
-      .select('id, slug, is_public, plan_id, subscription_status, enabled_addons, free_floor, account_kind'),
+      .select('id, slug, is_public, plan_id, subscription_status, enabled_addons, account_kind'),
   ).limit(SCAN_CEILING);
   if (error) throw error;
   const factsById = await effectiveOrgFacts((orgRows ?? []) as DoorRow[]);
@@ -516,7 +515,6 @@ export async function getClubPageSitemapEntries(): Promise<{ href: string }[]> {
         planId: f.planId,
         subscriptionStatus: f.subscriptionStatus,
         enabledAddons: f.enabledAddons,
-        freeFloor: o.free_floor ?? null,
         accountKind: o.account_kind,
       } as Parameters<typeof clubTeamsAddress>[0]) === 'teams-page';
     } catch {

@@ -16,7 +16,7 @@ import type { OrgRole } from '../../lib/types.ts';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-const CLUB: EntitlementOrg = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null };
+const CLUB: EntitlementOrg = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [] };
 const LIVE = { status: 'active' };
 const DONE = { status: 'completed' };
 const access = (role: OrgRole, season?: { status: string }) => houseLeagueAccess({ role, capabilities: null }, CLUB, season);

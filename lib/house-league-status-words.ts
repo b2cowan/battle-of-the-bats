@@ -1,7 +1,6 @@
 import { formatStoredDate, tournamentToday } from './timezone';
 import { publicSeasonState, registrationDay } from './house-league-season';
 import { clubDay, type RegState } from './league-registration-state';
-import { reopenRefusal } from './free-floor';
 import type { LeagueSeasonStatus } from './types';
 
 /**
@@ -60,11 +59,9 @@ export type MoveFacts = {
   waitlistCount: number;
   unpaidFeeCount: number;
   /**
-   * Reopen only (9f·5, 9f·7; the season GET's `reopen` block): the club's seasons that started after this one, newest first,
-   * and the season holding the free League plan's one slot when reopening this one would make two live seasons (null on a
-   * paid plan, or when the slot is free).
+   * Reopen only (9f·7; the season GET's `reopen` block): the club's seasons that started after this one, newest first.
    */
-  reopen?: { newer: string[]; blockedBy: { name: string; status: string } | null };
+  reopen?: { newer: string[] };
   /** The season takes friend requests (Board Ready Stage 1 Part 2, A12): the finish deletes them, and says so. */
   friendRequests?: boolean;
 };
@@ -78,11 +75,6 @@ export type MoveWords = {
   foot: string;
   button: string;
   busy: string;
-  /**
-   * The move is refused before the tap (the free League plan's Reopen, copy 9f §6.2): the window shows these sentences in
-   * place of "What changes", its primary button is absent (absent beats disabled, 9a·4) and its only button is Close.
-   */
-  refused?: string[];
 };
 
 const NOT_EMAILED = 'Families are not emailed.';
@@ -207,9 +199,6 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
         foot: 'You can complete it again at any time.',
         button: 'Reopen season', busy: 'Reopening…',
       };
-      // The free League plan's one season (9f·5): refused in words on the window, before the tap.
-      const holder = f.reopen?.blockedBy;
-      if (holder) return { ...base, lead: '', changes: [], looseEnds: [], refused: reopenRefusal(holder) };
       // What the public site will call it once it is running again, read from the site's own tag (9f·3) so the window
       // can never promise a different word or date: "Ended Aug 28" (with the year for another year, as the site writes
       // it) once its last day has passed, "Starts {date}" before its first, else Playing now.
@@ -278,7 +267,7 @@ export const DELETE_DOOR = { sentence: 'Made this by mistake?', link: 'Delete th
 
 /**
  * START NEXT SEASON's rare door (9f-2, 9f·8; copy §12 `door.start`): every season but a getting-ready one, for the people
- * who move a season (the league runners), and never on the free League plan (its window has no Start from). It opens the
+ * who move a season (the league runners). It opens the
  * Create season window with Start from preset to this season. On a finished season it comes before Reopen.
  */
 export const START_DOOR = { sentence: 'Running it again?', link: 'Start next season from this one…' } as const;

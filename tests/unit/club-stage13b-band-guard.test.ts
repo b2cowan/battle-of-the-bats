@@ -101,7 +101,7 @@ describe('each part is read only for the gate of the page it opens', () => {
     assert.match(read, /canHouseLeague\(ctx, org, 'read'\)/);
   });
 
-  const club: EntitlementOrg = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null };
+  const club: EntitlementOrg = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [] };
   const person = (role: OrgRole, capabilities: Record<string, boolean> | null = null, repGroupIds: string[] | null = null) =>
     ({ role, capabilities, repGroupIds });
   const gates = (m: ReturnType<typeof person>) => ({

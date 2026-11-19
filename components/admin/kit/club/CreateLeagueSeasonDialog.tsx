@@ -13,7 +13,6 @@ import SheetFrame from '@/components/coaches/SheetFrame';
 import { repKit } from './RepKit';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { isFreeFloorLeague, type LeagueCapKind, type SeasonSlotHolder } from '@/lib/free-floor';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import { newestFirstSeasons, seasonState } from '@/lib/house-league-season';
 import { formatLeagueMoney } from '@/lib/league-money';
@@ -30,7 +29,7 @@ import type { LeagueSeasonSummary } from '@/lib/types';
  * page. Its web address is made from the name on the server (a name another season already uses is refused there).
  *
  * START FROM (House League 9f-2; 9f·8–9f·13; drawings s13/s14, words HOUSE_LEAGUE_STAGE9F_COPY.md Part B): the first field,
- * for a club with a season to start from (never the free League plan, §15.16). It opens on the most recent season, or on
+ * for a club with a season to start from. It opens on the most recent season, or on
  * `startFromId` (a season's rare door). Picking one says first that the source is left exactly as it was, moves the name
  * and the dates, and lists what comes across; "A blank season" is exactly the window above. The decisions are
  * lib/house-league-start-from.ts; the copy itself is the create route's.
@@ -66,7 +65,7 @@ const formFromSeason = (summary: LeagueSeasonSummary): Form => {
   };
 };
 
-export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, knownSeasons, onClose, onCreated, onCapHit }: {
+export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, knownSeasons, onClose, onCreated }: {
   orgSlug: string;
   /** Open with Start from on this season (the Overview's "Start next season from this one…"). */
   startFromId?: string;
@@ -77,12 +76,11 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, knownSe
   knownSeasons?: LeagueSeasonSummary[];
   onClose: () => void;
   onCreated: (season: { id: string; name: string }) => void;
-  /** The free League plan refused it; the season holding the slot comes with the refusal so the window can name it (9f·5). */
-  onCapHit: (kind: LeagueCapKind, holder?: SeasonSlotHolder) => void;
 }) {
   const { currentOrg } = useOrg();
   const phone = useIsPhone();
-  const offered = !!currentOrg && !isFreeFloorLeague(currentOrg);
+  // Start from waits for the org (the free League plan that was never offered it is gone, owner 2026-11-19).
+  const offered = !!currentOrg;
   const fieldId = useId();
 
   // Seeded from the page's own list: the first frame is already the Start from window (no small window that then grows).
@@ -237,7 +235,6 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, knownSe
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setBusy(false);
-        if (data.capHit) { onCapHit(data.capHit, data.holder); return; }
         setError(data.error ?? 'We couldn’t create the season. Try again.');
         return;
       }

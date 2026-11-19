@@ -14,7 +14,6 @@ type OrgMetricRow = {
   subscription_status: string | null;
   current_period_end: string | null;
   created_at: string;
-  free_floor: string | null;
   stripe_subscription_id: string | null;
 };
 
@@ -167,7 +166,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .from('organizations')
       // No `slug`: the sandbox filter below keys on row id, so fetching the slug would be a column
       // pulled on every platform-admin dashboard load and read by nobody.
-      .select('id, name, plan_id, subscription_status, current_period_end, created_at, free_floor, stripe_subscription_id')
+      .select('id, name, plan_id, subscription_status, current_period_end, created_at, stripe_subscription_id')
       .order('created_at', { ascending: false })
       .limit(5000),
     ownersRead,
@@ -210,9 +209,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .in('event_type', [
         'subscription_canceled', 'plan_downgraded', 'subscription_past_due', 'subscription_recovered',
         'subscription_started', 'plan_upgraded',
-        // Free League Starter (§13) — activation + cap-wall funnel surfaced in the growth tab.
-        'free_floor_created', 'existing_user_floor_added', 'league_season_created',
-        'league_schedule_generated', 'league_public_page_shared', 'scope_wall_hit', 'upgrade_intent_clicked',
       ])
       .gte('occurred_at', eventWindowStart)
       // Newest first: if the high-volume funnel events ever pass the cap, the oldest of the 90 days drop,
@@ -270,12 +266,10 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   let newOrgs7 = 0;
   let newOrgs30 = 0;
   let newOrgs90 = 0;
-  let freeFloorLeagueOrgs = 0;
 
   for (const org of orgs) {
     const plan = (org.plan_id ?? 'tournament') as OrgPlan;
     const status = org.subscription_status ?? 'active';
-    if (org.free_floor === 'league_starter') freeFloorLeagueOrgs += 1;
 
     byPlan[plan] = (byPlan[plan] ?? 0) + 1;
     byStatus[status] = (byStatus[status] ?? 0) + 1;
@@ -347,22 +341,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       newOrgs30,
       newOrgs90,
       newOrgsByPlan,
-    },
-    // Free League Starter (§13) — current free-floor org count + the activation/cap funnel over the
-    // event window. Beta is flag-gated, so these stay 0 until the flag is enabled for real users.
-    leagueStarter: {
-      orgs: freeFloorLeagueOrgs,
-      created: {
-        days7: countEvents('free_floor_created', sevenDaysAgo),
-        days30: countEvents('free_floor_created', thirtyDaysAgo),
-        days90: countEvents('free_floor_created', ninetyDaysAgo),
-      },
-      existingUserAdded30: countEvents('existing_user_floor_added', thirtyDaysAgo),
-      seasonsCreated30: countEvents('league_season_created', thirtyDaysAgo),
-      schedulesGenerated30: countEvents('league_schedule_generated', thirtyDaysAgo),
-      publicShared30: countEvents('league_public_page_shared', thirtyDaysAgo),
-      scopeWallHits30: countEvents('scope_wall_hit', thirtyDaysAgo),
-      upgradeIntents30: countEvents('upgrade_intent_clicked', thirtyDaysAgo),
     },
     usage: {
       tournamentsNonArchived,

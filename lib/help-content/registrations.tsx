@@ -179,7 +179,7 @@ const registrationsHelp: HelpPageContent = {
             <li>Check the count of families in the window&apos;s foot before sending. If it looks off, change Who.</li>
             <li>For exports, use the <strong>Export</strong> action on the table. The standard Excel/CSV omits contact details for privacy; a separate &quot;with contact details&quot; option is there when you need them.</li>
           </ol>
-          <p><strong>Email families is open to the owner, club admin, league admin and league registrar</strong>, and stays open on a finished season. <strong>Exports are part of League Plus</strong>; on the free League plan the export menu is replaced with an upgrade badge. Registration exports contain family contact information, so store them carefully.</p>
+          <p><strong>Email families is open to the owner, club admin, league admin and league registrar</strong>, and stays open on a finished season. <strong>Export</strong> takes the registrations to Excel, CSV or PDF. Registration exports contain family contact information, so store them carefully.</p>
         </>
       ),
     },

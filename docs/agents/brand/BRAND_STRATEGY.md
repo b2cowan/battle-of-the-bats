@@ -120,13 +120,12 @@ Always use the full plan name. Never abbreviate or invent a shorthand. **Canonic
 |---|---|
 | Tournament *(free)* | "the free plan", "free tier", "starter" |
 | Tournament Plus | "Plus", "Pro", "the paid plan" |
-| League *(free floor)* | "League Starter", "Starter" |
-| League Plus *($89 paid tier)* | "League" (that's the free floor now), "the league plan" |
+| League Plus *($89 paid tier)* | "League" (there is no free League plan), "League Starter", "Starter", "the league plan" |
 | Club | "the club plan", "enterprise", "top tier" |
 | Club · Association *(larger Club band)* | "Club Large", "enterprise" |
 | Premium Coaches Portal | "Coach Portal", "Team plan", "Coaches Portal Premium" |
 
-**League naming (ratified 2026-06-22):** mirrors Tournament — **League (free floor) → League Plus (paid $89)**. The 2026-06-13 rebrand stands; this supersedes any older "League = $89" framing in this doc.
+**League naming (ratified 2026-06-22; free floor retired 2026-11-19):** there is **no free League** — house league is sold on **League Plus**, Club and Club · Association (owner ruling 2026-11-19, `BUSINESS_DECISIONS.md` top entry). The name "League Plus" stands. *(Until 2026-11-19 this read "mirrors Tournament — League (free floor) → League Plus (paid $89)".)*
 
 ---
 
@@ -240,7 +239,6 @@ On Coach-facing copy:
 |---|---|---|
 | Tournament *(free)* | Free | An invite-only event: you add the teams |
 | Tournament Plus | $39 | Events teams register for, with fees, check-in and volunteers; more than one event at a time; the schedule generators |
-| League *(free floor)* | Free | A first house-league season (held for launch) |
 | League Plus | $89 | Running a full house league program |
 | Club ⭐ | $219 *(up to 15 teams)* | Running a full club — rep teams, house league, tournaments, accounting; whole coaching staff included |
 | Club · Association | $379 *(15–30 teams; custom > 30)* | A larger club / association |

@@ -169,11 +169,11 @@ describe('6. Members and the creation doors', () => {
     assert.match(route, /const invitedAt = waiting \? m\.pending_invited_at : m\.invited_at;/);
     assert.match(route, /const lapsed = status === 'invited' && invitationHasLapsed\(invitedAt, asOf\);/);
   });
-  it('a run-out invitation never blocks starting a club or a league: one question, asked by all four doors', () => {
+  it('a run-out invitation never blocks starting a club or a league: one question, asked by every door', () => {
     const rec = readCode('lib/invite-reconciliation.ts');
     const has = between(rec, 'export async function hasLiveInvitation(', 'export type PendingInviteForEmail');
     assert.match(has, /\.eq\('status', 'invited'\)\s*\.gte\('invited_at', invitationLapseCutoff\(\)\)/);
-    for (const file of ['app/api/org/create/route.ts', 'app/api/league/create/route.ts', 'app/(consumer)/start/tournament/page.tsx', 'app/(consumer)/start/league/page.tsx']) {
+    for (const file of ['app/api/org/create/route.ts', 'app/(consumer)/start/tournament/page.tsx', 'lib/start-plan-server.ts']) {
       const code = readCode(file);
       assert.match(code, /hasLiveInvitation\(user\.id\)/, file);
       assert.doesNotMatch(code, /\.eq\('status', 'invited'\)/, `${file}: its own pending read, without the clock`);

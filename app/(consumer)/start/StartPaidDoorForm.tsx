@@ -5,8 +5,7 @@ import StartDoorForm, { type StartCreate } from './StartDoorForm';
 
 /**
  * THE PAID DOORS' CREATE STEP (On-sale pages S2): Start a club (drawing tab 6, words W46–W47) and Start a league season
- * while League Plus is on sale (drawing tab 7, words W51–W53; the free League starter, `StartLeagueForm`, shows only while
- * League Plus is closed and its own beta flag is on). Step 1 the account, with the pricing page's pick riding on it; step 2
+ * while League Plus is on sale (drawing tab 7, words W51–W53; there is no free League start, owner 2026-11-19). Step 1 the account, with the pricing page's pick riding on it; step 2
  * names the organization, and one tap makes it on the free Tournament plan with no Founding comp (Ask 14), remembering
  * the plan it came to buy (`startPlan`); step 3 is the door's plan step.
  *

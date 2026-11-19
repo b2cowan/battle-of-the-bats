@@ -31,7 +31,6 @@ export type OrgRelation = {
   team_workspace_status?: string | null;
   subscription_status?: string | null;
   onboarding_completed_at?: string | null;
-  free_floor?: string | null;
 } | null;
 
 export type MemberRow = {
@@ -155,7 +154,6 @@ function planPausesPortal(org: NonNullable<OrgRelation>): boolean {
     planId: org.plan_id ?? 'tournament',
     subscriptionStatus: org.subscription_status as EntitlementOrg['subscriptionStatus'],
     enabledAddons: org.enabled_addons ?? [],
-    freeFloor: org.free_floor as EntitlementOrg['freeFloor'],
     accountKind: org.account_kind ?? 'organization',
   });
 }
@@ -226,7 +224,7 @@ async function hasExplicitPlanChoice(orgId: string, planId: OrgPlan): Promise<bo
 const getActiveMembershipRows = cache(async (userId: string): Promise<ActiveMemberRow[]> => {
   const { data } = await supabaseAdmin
     .from('organization_members')
-    .select('id, organization_id, role, capabilities, organizations(id, slug, name, plan_id, subscription_status, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at, free_floor)')
+    .select('id, organization_id, role, capabilities, organizations(id, slug, name, plan_id, subscription_status, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at)')
     .eq('user_id', userId)
     .eq('status', 'active');
 
@@ -309,9 +307,7 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
     kind: 'organization',
     title: org?.name ?? slug,
     subtitle: 'Organization access',
-    // A free League Starter floor sits on a tournament plan — label the /home card as the floor it
-    // actually is, not "Tournament subscription".
-    detail: org?.free_floor === 'league_starter' ? 'Free League' : `${formatPlan(planId)} subscription`,
+    detail: `${formatPlan(planId)} subscription`,
     badgeLabel: roleLabel,
     destination: '',
     sortOrder: 10,
@@ -476,15 +472,7 @@ export async function getDestinationForMembership(member: MemberRow, userId: str
       id: orgId, slug, accountKind, planId: planId ?? 'tournament',
       subscriptionStatus: org?.subscription_status as EntitlementOrg['subscriptionStatus'],
       enabledAddons: org?.enabled_addons ?? [],
-      freeFloor: org?.free_floor as EntitlementOrg['freeFloor'],
     }, userId, role as OrgRole, member.capabilities ?? null);
-  }
-
-  // Free League Starter floor: a house-league operator who happens to sit on a tournament plan
-  // (free_floor grants module_house_league on top). Send them to their league dashboard — NOT the
-  // tournament dashboard (plan_id='tournament' would otherwise route there) or the generic /admin hub.
-  if (org?.free_floor === 'league_starter') {
-    return `/${slug}/admin/house-league`;
   }
 
   const onboardingCompletedAt = org?.onboarding_completed_at ?? null;
@@ -493,7 +481,6 @@ export async function getDestinationForMembership(member: MemberRow, userId: str
     planId: (planId ?? 'tournament') as OrgPlan,
     subscriptionStatus: 'active' as const,
     enabledAddons: org?.enabled_addons ?? [],
-    freeFloor: (org?.free_floor ?? null) as EntitlementOrg['freeFloor'],
   };
   // Onboarding is the OWNER's (its page sends everyone else straight back to /admin). Routing a
   // non-owner there was one half of the J10-014 loop: /admin → onboarding → /admin → …

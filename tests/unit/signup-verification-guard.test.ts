@@ -106,7 +106,6 @@ describe('the screens', () => {
     assert.match(step, /onChangeEmail=\{\(\) => \{ setVerifyEmail\(null\); setChangingEmail\(true\); \}\}/);
     for (const [f, door] of [
       ['app/(consumer)/start/team/StartTeamForm.tsx', 'team'],
-      ['app/(consumer)/start/league/StartLeagueForm.tsx', 'league'],
     ] as const) {
       assert.match(readCode(f), new RegExp(`<StartDoorForm door="${door}"`));
     }

@@ -29,7 +29,7 @@ import type { User } from '@supabase/supabase-js';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-const ORG = (planId: string): EntitlementOrg => ({ planId, subscriptionStatus: 'active', enabledAddons: [], freeFloor: null } as unknown as EntitlementOrg);
+const ORG = (planId: string): EntitlementOrg => ({ planId, subscriptionStatus: 'active', enabledAddons: [] } as unknown as EntitlementOrg);
 const CLUB = ORG('club');
 const SLUG = 'harbourtown';
 const BASE = `/${SLUG}/admin`;

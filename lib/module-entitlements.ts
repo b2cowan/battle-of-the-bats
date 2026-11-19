@@ -1,5 +1,4 @@
 import { PLAN_CONFIG } from './plan-config';
-import { freeFloorModules } from './free-floor';
 import { isOrgBillingSuspended } from './org-billing-access';
 import type { Capability } from './roles';
 import type { Organization } from './types';
@@ -21,7 +20,7 @@ import type { Organization } from './types';
  */
 export type EntitlementOrg = Pick<
   Organization,
-  'planId' | 'subscriptionStatus' | 'enabledAddons' | 'freeFloor'
+  'planId' | 'subscriptionStatus' | 'enabledAddons'
 >;
 
 export function hasModuleEntitlement(org: EntitlementOrg, cap: Capability): boolean {
@@ -35,7 +34,7 @@ export function hasModuleEntitlement(org: EntitlementOrg, cap: Capability): bool
 }
 
 /**
- * Does the org's plan CARRY this program — its tier, a free-floor profile, or a purchased add-on —
+ * Does the org's plan CARRY this program — its tier or a purchased add-on —
  * regardless of whether the account is currently suspended?
  *
  * The access question is `hasModuleEntitlement` (above), which also closes everything while the
@@ -47,9 +46,6 @@ export function hasModuleEntitlement(org: EntitlementOrg, cap: Capability): bool
 export function planCarriesModule(org: EntitlementOrg, cap: Capability): boolean {
   const plan = PLAN_CONFIG[org.planId];
   if (plan?.moduleEntitlements.includes(cap)) return true;
-  // Free-floor profile (e.g. League Starter) grants module_house_league on top of the paid plan —
-  // never module_public_site (the full org site stays a paid-League differentiator).
-  if (freeFloorModules(org.freeFloor).includes(cap)) return true;
   return org.enabledAddons.includes(cap);
 }
 

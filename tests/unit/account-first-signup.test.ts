@@ -146,7 +146,6 @@ describe('the Founding Season offer at a creation', () => {
     assert.match(lib, /return isFoundingSeasonOpenFor\(user\?\.created_at, lockedStartDoorOf\(user\?\.app_metadata\) === creates\);/);
     // the paid doors (Start a club, Start a league season) NEVER take the comp (Ask 14): a startPlan skips it
     assert.match(readCode('app/api/org/create/route.ts'), /if \(!startPlan && foundingSeasonOfferFor\(user, 'organization'\)\) \{/);
-    assert.match(readCode('app/api/league/create/route.ts'), /if \(foundingSeasonOfferFor\(user, 'league'\)\) \{/);
     // edge (b): Coach Premium on the same rule (Part 3)
     // (Keep Premium, Support console 4b, is a purchase for a staff-given portal and never takes the comp path.)
     assert.match(readCode('app/api/billing/create-team-checkout/route.ts'), /if \(!keepPortal && \(foundingSeasonOfferFor\(user, 'premium'\) \|\| await reactivationHoldsFoundingComp\(checkoutRequest\.reactivateOrgSlug\)\)\) \{/);
@@ -155,7 +154,7 @@ describe('the Founding Season offer at a creation', () => {
     const back = lib.slice(lib.indexOf('export async function reactivationHoldsFoundingComp('));
     assert.match(back, /if \(!reactivateOrgSlug \|\| !isFoundingSeasonActive\(\)\) return false;/);
     assert.match(back, /if \(workspaceError \|\| workspace\?\.billing_mode !== 'platform_override'\) return false;\s*return workspaceHoldsFoundingComp\(org\.id\);/);
-    for (const f of ['app/api/org/create/route.ts', 'app/api/league/create/route.ts', 'app/api/billing/create-checkout/route.ts', 'app/api/auth/signup/route.ts', 'app/api/billing/create-team-checkout/route.ts']) {
+    for (const f of ['app/api/org/create/route.ts', 'app/api/billing/create-checkout/route.ts', 'app/api/auth/signup/route.ts', 'app/api/billing/create-team-checkout/route.ts']) {
       assert.doesNotMatch(readCode(f), /isFoundingSeasonSignupOpen\(\)/, `${f} reads the one rule, not the bare window`);
     }
   });
@@ -361,7 +360,6 @@ describe('the start forms', () => {
   });
   for (const [f, door] of [
     ['app/(consumer)/start/team/StartTeamForm.tsx', 'team'],
-    ['app/(consumer)/start/league/StartLeagueForm.tsx', 'league'],
     ['app/(consumer)/start/tournament/StartTournamentForm.tsx', 'organization'],
   ] as const) {
     it(`${door} is the shared form, with only its create call`, () => {
@@ -395,9 +393,8 @@ describe('the start forms', () => {
  * round, because the card shows only while the thing "truly is" still owed.
  */
 describe('a creation clears the door it fulfils', () => {
-  it('the free team, the free league and the organization', () => {
+  it('the free team and the organization', () => {
     assert.match(readCode('app/api/coaches/teams/route.ts'), /await Promise\.all\(\[welcome, clearStartDoor\(user\.id, \['team'\]\)\]\);\s*return json\(\{ ok: true, id \}\);/);
-    assert.match(readCode('app/api/league/create/route.ts'), /await clearStartDoor\(user\.id, \['league'\]\);\s*return NextResponse\.json\(\{ ok: true, orgSlug: org\.slug \}\);/);
     // the one add-organization route serves Run a tournament AND the paid doors (S2): each clears only the door it fulfils,
     // so a club made on the club door never leaves "Your club" waiting, and a tournament never clears a waiting club
     assert.match(readCode('app/api/org/create/route.ts'), /await clearStartDoor\(user\.id, paidDoor \? \[paidDoor\] : \['organization'\]\);\s*return NextResponse\.json\(\{ ok: true, orgSlug: org\.slug \}\);/);
@@ -435,15 +432,15 @@ describe('Home’s waiting workspace (A4 revised 2026-10-19)', () => {
   it('never leads to a step that would not open: the league and organization doors carry their pages’ gates', () => {
     // an account already in a real organization is turned away by both pages and both create routes (/review)
     assert.match(route, /const makesAnOrganization = start\?\.door === 'league' \|\| start\?\.door === 'organization' \|\| start\?\.door === 'club';/);
-    // /start/league opens on the free beta flag OR while League Plus is on sale; /start/club only while a Club band is on sale (S2)
-    assert.match(route, /const leagueClosed = start\?\.door === 'league' && !\(await isLeagueDoorOpen\(\)\);/);
-    assert.match(readCode('lib/plan-gating-server.ts'), /return process\.env\.LEAGUE_STARTER_BETA === 'true' \|\| \(await isPaidDoorOpen\('league'\)\);/, 'the one league-door rule');
+    // /start/league opens only while League Plus is on sale; /start/club only while a Club band is on sale (S2)
+    assert.match(route, /const leagueClosed = start\?\.door === 'league' && !\(await isPaidDoorOpen\('league'\)\);/);
+    assert.doesNotMatch(readCode('lib/plan-gating-server.ts'), /isLeague\w*Open|LEAGUE_STARTER\w*/, 'the free league door is gone: the league door is the paid door');
     assert.match(route, /const clubClosed = start\?\.door === 'club' && !\(await isPaidDoorOpen\('club'\)\);/);
     // Coach Premium's step turns away a closed checkout (an interest form) and an account that owns a live portal (Part 3)
     // a failed read hides the card (a way in, never the gate)
     assert.match(route, /const premiumOpens = start\?\.door !== 'premium' \|\| await Promise\.all\(\[getPlanGatingMap\(\), getActiveOwnedTeamWorkspace\(user\.id\)\]\)\s*\.then\(\(\[gating, portal\]\) => !gating\.team && !portal, \(\) => false\);/);
     assert.match(route, /const stepOpens = premiumOpens && \(!makesAnOrganization \|\| \(\s*!leagueClosed && !clubClosed && pendingInvites\.length === 0 && !\(await userBelongsToOtherRealOrg\(user\.id\)\)\s*\)\);/);
-    assert.match(readCode('app/(consumer)/start/league/page.tsx'), /if \(user\?\.id && \(await userBelongsToOtherRealOrg\(user\.id\)\)\) \{/, 'the page gate this mirrors');
+    // the page gate this mirrors lives in paidDoorRedirect (the League Plus start has no separate free-league gate)
     // the paid doors' pages (Start a club, and the League Plus start) run one signed-in gate: a real organization, a live invitation
     const gate = readCode('lib/start-plan-server.ts');
     assert.match(gate, /userBelongsToOtherRealOrg\(user\.id\),\s*hasLiveInvitation\(user\.id\),/);

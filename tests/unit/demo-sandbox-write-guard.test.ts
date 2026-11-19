@@ -248,32 +248,9 @@ describe('the body-identified guard (public writes the proxy cannot see)', () =>
     });
   }
 
-  /**
-   * The same decision point, for routes that cannot be guarded by ORG at all.
-   *
-   * `/api/events/league` takes its org from the body AND falls back to attributing the row to the
-   * ACTOR alone — so there is no org for `assertNotDemoOrg` to refuse. The honest invariant there is
-   * about the actor: the demo organizer's session must never write anything, anywhere, whatever it
-   * names in a body. Found by the 2026-08-03 adversarial review, which reached it with a demo
-   * session and wrote a real platform_events row.
-   *
-   * Adding a route here means the same deliberate decision as the list above.
-   */
-  const ACTOR_IDENTIFIED_WRITES = [
-    'app/api/events/league/route.ts',
-    // The billing writes are a family of their own, swept route by route below ("every billing write refuses the demo organizer").
-  ] as const;
-
-  for (const routeFile of ACTOR_IDENTIFIED_WRITES) {
-    test(`${routeFile} refuses the demo organizer as an actor`, async () => {
-      const { readFile } = await import('node:fs/promises');
-      const source = await readFile(new URL(`../../${routeFile}`, import.meta.url), 'utf8');
-      assert.ok(
-        source.includes('isDemoOrganizerEmail'),
-        `${routeFile} writes on behalf of the ACTOR, so it must refuse the demo organizer — no org exists for the proxy or assertNotDemoOrg to match on`,
-      );
-    });
-  }
+  // (Routes that write on behalf of the ACTOR alone, with no org to match, were once pinned here — the free League's event route.
+  //  That route left with the free League 2026-11-19; the billing writes are a family of their own, swept route by route
+  //  below ("every billing write refuses the demo organizer"). A new actor-only write is a deliberate decision to add back.)
 
   /**
    * The same decision point, for TOKEN-identified writes.

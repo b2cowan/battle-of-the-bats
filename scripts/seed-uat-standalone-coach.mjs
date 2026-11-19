@@ -257,8 +257,8 @@ out.push(`create temp table clone_report (k text, v text) on commit drop;`);
 // then createOrganizationMember(owner). The dev seed route's billing shape: platform_admin source,
 // platform_override billing + entitlement, no Stripe.
 const orgName = `${args.teamName} Coaches Portal`;
-out.push(`insert into organizations (id, name, slug, plan_id, tournament_limit, account_kind, team_workspace_status, is_discoverable, free_floor, subscription_status)
-  values (${S.newOrg}, ${lit(orgName)}, ${lit(args.slug)}, 'team', 1, 'team_workspace', 'active', false, null, 'active');`);
+out.push(`insert into organizations (id, name, slug, plan_id, tournament_limit, account_kind, team_workspace_status, is_discoverable, subscription_status)
+  values (${S.newOrg}, ${lit(orgName)}, ${lit(args.slug)}, 'team', 1, 'team_workspace', 'active', false, 'active');`);
 out.push(`insert into organization_members (organization_id, user_id, role, accepted_at) values (${S.newOrg}, ${S.owner}, 'owner', now());`);
 
 // Seeds.

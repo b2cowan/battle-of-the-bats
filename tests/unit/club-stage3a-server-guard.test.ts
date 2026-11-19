@@ -85,7 +85,7 @@ const R = {
 // ── 2. One rule ─────────────────────────────────────────────────────────────────────────────────
 
 const org = (planId: string, status = 'active') =>
-  ({ planId, subscriptionStatus: status, enabledAddons: [] as string[], freeFloor: null }) as never;
+  ({ planId, subscriptionStatus: status, enabledAddons: [] as string[] }) as never;
 
 describe('ONE rule for who may move club money (Ask 1, C08)', () => {
   const club = org('club');

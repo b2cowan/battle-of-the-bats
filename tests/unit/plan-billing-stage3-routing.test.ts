@@ -69,7 +69,7 @@ function fixture(sample: Scenario) {
     organizations: {
       id: org.id, slug: org.slug, name: org.name, plan_id: org.planId, account_kind: org.accountKind,
       subscription_status: org.subscriptionStatus, enabled_addons: org.enabledAddons,
-      onboarding_completed_at: '2026-10-01', free_floor: org.freeFloor ?? null,
+      onboarding_completed_at: '2026-10-01',
     },
   };
   const assignmentReads: Array<{ kind: string; orgId: string; user: string; standalone?: boolean }> = [];
@@ -248,7 +248,7 @@ describe('a Club owner lands on the setup checklist only until setup is finished
     id: 'membership-club', organization_id: club.id, role, capabilities: null,
     organizations: {
       id: club.id, slug: club.slug, name: club.name, plan_id: club.planId, account_kind: club.accountKind,
-      subscription_status: club.subscriptionStatus, enabled_addons: [], onboarding_completed_at: mark, free_floor: null,
+      subscription_status: club.subscriptionStatus, enabled_addons: [], onboarding_completed_at: mark,
     },
   }) as unknown as MemberRow;
   const destination = async (role: OrgRole, mark: string | null) => {

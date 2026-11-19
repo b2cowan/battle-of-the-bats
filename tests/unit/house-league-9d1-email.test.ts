@@ -130,7 +130,7 @@ describe('9d-1 · a season’s audiences (pure)', () => {
 });
 
 describe('9d-1 · who may email a season (9d1·2)', () => {
-  const CLUB: EntitlementOrg = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null };
+  const CLUB: EntitlementOrg = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [] };
   it('the registrar emails a season without the Families grant, on every status', () => {
     for (const status of ['draft', 'registration_open', 'active', 'completed', 'archived']) {
       assert.equal(houseLeagueAccess({ role: 'league_registrar', capabilities: { module_families: false } }, CLUB, { status }).email, true, status);

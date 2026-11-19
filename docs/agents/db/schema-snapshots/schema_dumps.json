@@ -16068,15 +16068,6 @@
       },
       {
         "table_name": "organizations",
-        "pos": 33,
-        "column_name": "free_floor",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "organizations",
         "pos": 34,
         "column_name": "team_limit",
         "data_type": "integer",
@@ -47469,12 +47460,6 @@
         "table_name": "organizations",
         "detail": "organizations_fiscal_first_month_check",
         "check_clause": "((fiscal_first_month >= 1) AND (fiscal_first_month <= 12))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "organizations",
-        "detail": "organizations_free_floor_check",
-        "check_clause": "((free_floor IS NULL) OR (free_floor = 'league_starter'::text))"
       },
       {
         "kind": "CHECK",

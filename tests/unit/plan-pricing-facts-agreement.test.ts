@@ -39,9 +39,8 @@ const FACTS_ROW_TO_PLAN: Record<string, OrgPlan> = {
 
 /** Rows in the table that are deliberately not a plan key. Each needs its reason. */
 const NOT_A_PLAN: Record<string, string> = {
-  // The free League floor is a setting on an organization (`free_floor = 'league_starter'`), not an OrgPlan;
-  // it is parked and has no row in PLAN_CONFIG.
-  'League': 'the free League floor, a free_floor setting rather than a plan',
+  // None today. (The free League floor's row, a setting rather than a plan, left the table with the free League,
+  // owner 2026-11-19.)
 };
 
 const BELIEVE = 'The Facts doc is canonical: change lib/plan-config.ts to match, or log the change through /strategy first.';

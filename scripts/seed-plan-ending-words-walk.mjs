@@ -252,7 +252,7 @@ for (const a of ACCOUNTS.filter(x => x.kind === 'portal')) {
   const year = new Date().getFullYear();
   const org = await one(`org ${a.name}`, db.from('organizations').insert({
     name: a.name, slug: a.slug, plan_id: 'team', tournament_limit: 1, account_kind: 'team_workspace', team_workspace_status: 'active',
-    is_discoverable: false, free_floor: null, internal_notes: MARKER,
+    is_discoverable: false, internal_notes: MARKER,
     // The webhook's own sync (syncTeamWorkspaceSubscription) writes these onto the shadow org of a paid portal.
     subscription_status: st, stripe_customer_id: a.customerId, stripe_subscription_id: a.subId, subscription_period: 'monthly',
     current_period_end: a.periodEnd, subscription_amount_cents: a.amount, subscription_currency: a.currency,

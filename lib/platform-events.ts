@@ -51,16 +51,8 @@ export type PlatformEventType =
   | 'team_org_ownership_transfer_completed'
   // Club Tier Stage 2: the asking side took its team-move request back (free text, no CHECK).
   | 'team_org_ownership_withdrawn'
-  // Free Tier Phase 6 — Free League Starter (§13 instrumentation). Reuse this store; no new
-  // analytics pipeline. `platform_events.event_type` is free text (no CHECK), so no migration.
-  // First five are server-fired (route handlers); last two are client-fired via /api/events/league.
-  | 'free_floor_created'
-  | 'existing_user_floor_added'
-  | 'league_season_created'
-  | 'league_schedule_generated'
-  | 'scope_wall_hit'
-  | 'upgrade_intent_clicked'
-  | 'league_public_page_shared'
+  // (The seven Free League Starter event types are gone with the free League, owner 2026-11-19; neither database ever
+  // held a row of them.)
   // Unified Home Phase 5 — consumer front-door success metrics (§6). Same free-text store, no
   // migration. `home_*` are CLIENT-fired via /api/events/consumer (allowlisted so they can't be
   // forged); the rest are SERVER-fired from the route the interaction already hits.
@@ -89,7 +81,7 @@ export type PlatformEventInput = {
 
 // Throw-proof by contract: identical discipline to captureError/notify. Callers may `await` it on
 // Lambda (so the insert flushes before the handler returns and the event isn't dropped) WITHOUT risk
-// of the write affecting the request path — e.g. /api/league/create awaits this inside a try/catch
+// of the write affecting the request path — e.g. a create route awaits this inside a try/catch
 // that rolls back the org on error, so a rejection here must never escape.
 export async function writePlatformEvent(input: PlatformEventInput): Promise<void> {
   try {

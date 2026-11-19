@@ -19,7 +19,7 @@ import type { OrgRole } from './types';
  *   · Treasurer — when the plan carries Accounting (a treasurer on a plan with no books would be
  *     given a role that opens nothing).
  *   · League admin / League registrar — ⚖ Ask 2 (2026-09-25): only when the club RUNS a house
- *     league. League Plus and the League Starter floor are house leagues by definition; a Club runs
+ *     league. League Plus is a house league by definition; a Club runs
  *     one once it has created a season. A rep club's registrar is a Stage 2 question (S1-01).
  *   · Never Owner (not assignable), never Coach (coaching staff are added on a team's staff page —
  *     the Coach row joins with Stage 2's "Invite a coach" door, ruling D10).
@@ -55,7 +55,7 @@ const HINT: Partial<Record<OrgRole, string>> = {
  */
 export async function orgRunsHouseLeague(org: AssignableRolesOrg): Promise<boolean> {
   if (!planCarriesModule(org, 'module_house_league')) return false;
-  if (org.planId === 'league' || org.freeFloor === 'league_starter') return true;
+  if (org.planId === 'league') return true;
   const { count, error } = await supabaseAdmin
     .from('league_seasons')
     .select('id', { count: 'exact', head: true })

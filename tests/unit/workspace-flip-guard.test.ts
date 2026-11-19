@@ -143,7 +143,7 @@ describe('1 · the RPC (mig 414)', () => {
     assert.match(set.name, /v_name/);
     assert.equal(set.billing_suspended_at, 'null');
     assert.equal(set.billing_suspension_reason, 'null');
-    for (const kept of ['slug', 'team_limit', 'free_floor', 'is_discoverable', 'is_public', 'stripe_customer_id', 'stripe_subscription_id', 'subscription_status', 'subscription_period', 'current_period_end']) {
+    for (const kept of ['slug', 'team_limit', 'is_discoverable', 'is_public', 'stripe_customer_id', 'stripe_subscription_id', 'subscription_status', 'subscription_period', 'current_period_end']) {
       assert.ok(!(kept in set), `the flip must not write organizations.${kept}`);
     }
   });
@@ -183,7 +183,7 @@ describe('1 · the RPC (mig 414)', () => {
 
 type OrgRow = {
   id: string; slug: string; name: string; account_kind: string; team_workspace_status: string | null; plan_id: string;
-  tournament_limit: number; team_limit: number | null; free_floor: string | null; is_discoverable: boolean; is_public: boolean;
+  tournament_limit: number; team_limit: number | null; is_discoverable: boolean; is_public: boolean;
   subscription_status: string; stripe_subscription_id: string | null; billing_suspended_at: string | null;
 };
 type WorkspaceRow = {
@@ -194,7 +194,7 @@ type WorkspaceRow = {
 function workspaceOrg(over: Partial<OrgRow> = {}): OrgRow {
   return {
     id: 'org-1', slug: 'hawks', name: 'Hawks Coaches Portal', account_kind: 'team_workspace', team_workspace_status: 'active', plan_id: 'team',
-    tournament_limit: 1, team_limit: null, free_floor: null, is_discoverable: false, is_public: true,
+    tournament_limit: 1, team_limit: null, is_discoverable: false, is_public: true,
     subscription_status: 'active', stripe_subscription_id: 'sub_old', billing_suspended_at: null, ...over,
   };
 }
@@ -256,9 +256,8 @@ describe('2 · a flipped workspace is a club everywhere a portal test is asked',
       // The name the coach typed (trimmed); the address does not move.
       assert.equal(after.org.name, 'Hawks Hockey Club');
       assert.equal(after.org.slug, 'hawks');
-      // Not written: the limits, the floor, the discoverable switch.
+      // Not written: the limits, the discoverable switch.
       assert.equal(after.org.team_limit, null);
-      assert.equal(after.org.free_floor, null);
       assert.equal(after.org.is_discoverable, false, 'stays hidden until the coach opts in (owner, 2026-10-30)');
       assert.equal(after.org.tournament_limit, PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG].tournamentLimit);
       assert.equal(after.org.team_workspace_status, null);

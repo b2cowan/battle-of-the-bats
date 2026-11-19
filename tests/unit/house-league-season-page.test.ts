@@ -88,7 +88,7 @@ describe('1b · finished, honestly (House League 9f-1; words HOUSE_LEAGUE_STAGE9
   });
   it('Reopen says ratings do not come back, and names the newer seasons as not changed (9f·7)', () => {
     assert.ok(reopen().changes.includes('Player ratings were erased when it finished. They don’t come back.'));
-    const newer = (names: string[]) => reopen({ reopen: { newer: names, blockedBy: null } }).changes;
+    const newer = (names: string[]) => reopen({ reopen: { newer: names } }).changes;
     assert.ok(!newer([]).some(l => /not changed/.test(l)));
     assert.ok(newer(['Draft Test 2028']).includes('Draft Test 2028 is not changed.'));
     assert.ok(newer(['Draft Test 2028', 'Fall Ball 2028']).includes('Draft Test 2028 and Fall Ball 2028 are not changed.'));
@@ -96,19 +96,10 @@ describe('1b · finished, honestly (House League 9f-1; words HOUSE_LEAGUE_STAGE9
     const c = newer(['Draft Test 2028']);
     assert.equal(c[c.length - 1], 'Families are not emailed.', '"not emailed" stays last');
   });
-  it('Reopen on the free League plan is refused before the tap: the holder named, no Reopen button (9f·5, §6.2)', () => {
-    const w = reopen({ reopen: { newer: [], blockedBy: { name: 'Fall Ball 2027', status: 'active' } } });
-    assert.deepEqual(w.refused, [
-      'Your free League plan runs one season at a time, and Fall Ball 2027 isn’t finished. Complete it first, then you can reopen this one.',
-      'League Plus runs several seasons and age groups side by side.',
-    ]);
-    assert.deepEqual(w.changes, []);
-    const draft = reopen({ reopen: { newer: [], blockedBy: { name: 'Draft Test 2028', status: 'draft' } } });
-    assert.equal(draft.refused?.[0], 'Your free League plan runs one season at a time, and Draft Test 2028 is still getting ready.');
-    assert.equal(reopen().refused, undefined);
-    const win = readCode('components/admin/kit/club/league/SeasonStatusWindow.tsx');
-    // The refused window's only button is Close (never Cancel, nothing is asked), and it never draws the primary.
-    assert.match(win, /if \(w\.refused\) \{[\s\S]*?footer=\{<button type="button" className="btn btn-outline" onClick=\{onClose\}>Close<\/button>\}/);
+  it('Reopen is never refused: the free League plan’s one-season refusal is gone (owner 2026-11-19)', () => {
+    assert.equal((reopen() as { refused?: unknown }).refused, undefined);
+    assert.doesNotMatch(readCode('components/admin/kit/club/league/SeasonStatusWindow.tsx'), /w\.refused/);
+    assert.doesNotMatch(readCode('lib/house-league-status-words.ts'), /refused|blockedBy/);
   });
   it('Archive is retired: no move, no door, no window word (9f·4)', () => {
     assert.ok(!('archive' in MOVE_TO));
@@ -174,12 +165,12 @@ describe('3 · the season’s page', () => {
   });
   it('Complete and Reopen are rare doors ending the body; Close / Reopen registration sit on the Registration block', () => {
     assert.match(page, /\(\['complete', 'reopen'\] as const\)\.filter\(m => moves\.includes\(m\)/);
-    assert.match(page, /reopen: detail\.reopen,/, 'the Reopen window gets the newer seasons and the free plan’s holder');
+    assert.match(page, /reopen: detail\.reopen,/, 'the Reopen window gets the newer seasons');
     assert.match(page, /<RegistrationBlock[^>]*door=\{regDoor\}/);
   });
   it('Start next season is a rare door on every season but a getting-ready one, after Complete and before Reopen (9f-2)', () => {
-    assert.match(page, /const startDoor = canMove && season\.status !== 'draft' && !!currentOrg && !isFreeFloorLeague\(currentOrg\);/,
-      'the runners who move a season; never a getting-ready one; never the free League plan (its window has no Start from)');
+    assert.match(page, /const startDoor = canMove && season\.status !== 'draft' && !!currentOrg;/,
+      'the runners who move a season; never a getting-ready one');
     const order = /rare\.includes\('complete'\)[\s\S]*?startDoor \? \[\{ key: 'start', \.\.\.START_DOOR[\s\S]*?rare\.includes\('reopen'\)/;
     assert.match(page, order, 'Complete, then Start next season, then Reopen');
     assert.match(page, /<CreateLeagueSeasonDialog[\s\S]*?startFromId=\{season\.id\}/, 'the door opens the Create season window preset to this season');

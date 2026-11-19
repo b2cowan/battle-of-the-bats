@@ -27,7 +27,6 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { isFreeFloorLeague } from '@/lib/free-floor';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { announceSeasonsChanged, useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import KitDialog, { DialogCancel, type KitStep } from '../../KitDialog';
@@ -676,7 +675,6 @@ export default function RegistrationsScreen() {
       ...(friendsOn ? { friends: { requests: t?.asked ?? 0, honoured: honouredText(t) } } : {}),
     };
   });
-  const freeFloor = !!currentOrg && isFreeFloorLeague(currentOrg);
 
   // ── The header ─────────────────────────────────────────────────────────────────────────────────
   // ⚖ None of its own (Club Tier Stage 13i, A4): Registrations is a tab of its season, whose frame draws the one header
@@ -745,7 +743,6 @@ export default function RegistrationsScreen() {
           seasonId={seasonId}
           orgSlug={orgSlug}
           planId={currentOrg?.planId}
-          freeFloor={freeFloor}
           onChanged={() => load({ season: false, teams: false })}
           // The child's record, on the child's own view (opened here, not through the one-time ?reg= link, which opens a
           // child once per visit: /review 2026-11-11).
@@ -840,30 +837,24 @@ export default function RegistrationsScreen() {
         {groups.length > 0 && (
           <FilterMenu groups={groups} label={REGS_WORDS.filter} onLabel={REGS_WORDS.filterOn} resetLabel={REGS_WORDS.filterClear} onReset={resetFilter} align="end" />
         )}
-        {/* Exports are a paid-League capability. The free League Starter floor hides the menu. NOTE: exports are 100%
-            client-side (no server route). If a server export route is ever added for house-league it MUST guard
-            isFreeFloorLeague(org) → 403. */}
-        {freeFloor ? (
-          <span className="badge badge-neutral" title="Exports are part of League Plus. Upgrade to export your registrations.">Exports · League Plus</span>
-        ) : (
-          <ExportMenu
-            formats={['xlsx', 'csv', 'pdf']}
-            onExportXLSX={() => exportXlsx(exportRows, currentOrg?.slug, tab, false)}
-            onExportCSV={() => exportCsv(exportRows, currentOrg?.slug, tab)}
-            onExportPDF={() => exportPdf({
-              rows: exportRows, divisionOrder: divisions.map(d => ({ id: d.id, name: d.name })), orgSlug: currentOrg?.slug, orgName: currentOrg?.name,
-              orgQuery, seasonName: season.name, tab, query,
-            })}
-            /* ⚠ THE SURFACE'S OWN GATE, NOT THE GENERIC ONE: a module granted by an add-on can put an org above the
-               generic PDF bar without ever reaching League. */
-            pdfFeatureKey="league_exports"
-            hasSensitiveOption
-            sensitiveOptionLabel="Excel with contact details"
-            onExportXLSXWithSensitive={() => exportXlsx(exportRows, currentOrg?.slug, tab, true)}
-            planId={currentOrg?.planId}
-            disabled={tabRegs.length === 0}
-          />
-        )}
+        {/* Every plan that runs a house league exports (the free League plan that could not is gone, owner 2026-11-19). */}
+        <ExportMenu
+          formats={['xlsx', 'csv', 'pdf']}
+          onExportXLSX={() => exportXlsx(exportRows, currentOrg?.slug, tab, false)}
+          onExportCSV={() => exportCsv(exportRows, currentOrg?.slug, tab)}
+          onExportPDF={() => exportPdf({
+            rows: exportRows, divisionOrder: divisions.map(d => ({ id: d.id, name: d.name })), orgSlug: currentOrg?.slug, orgName: currentOrg?.name,
+            orgQuery, seasonName: season.name, tab, query,
+          })}
+          /* ⚠ THE SURFACE'S OWN GATE, NOT THE GENERIC ONE: a module granted by an add-on can put an org above the
+             generic PDF bar without ever reaching League. */
+          pdfFeatureKey="league_exports"
+          hasSensitiveOption
+          sensitiveOptionLabel="Excel with contact details"
+          onExportXLSXWithSensitive={() => exportXlsx(exportRows, currentOrg?.slug, tab, true)}
+          planId={currentOrg?.planId}
+          disabled={tabRegs.length === 0}
+        />
         {access?.register && (
           <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-label={REGS_WORDS.add} onClick={() => setAct({ kind: 'add' })}>
             <Plus size={14} aria-hidden /><span className={ck.btnWord}>{REGS_WORDS.add}</span>

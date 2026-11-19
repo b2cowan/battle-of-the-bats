@@ -27,7 +27,7 @@ function world(w: World) {
     id: 'm-1', organization_id: ORG, role: w.role ?? 'coach', capabilities: null,
     organizations: {
       id: ORG, slug: 'falcons-club', name: 'Falcons Club', plan_id: w.plan, account_kind: 'organization',
-      subscription_status: w.status ?? 'active', enabled_addons: [], onboarding_completed_at: '2026-10-01', free_floor: null,
+      subscription_status: w.status ?? 'active', enabled_addons: [], onboarding_completed_at: '2026-10-01',
     },
   };
   const chain = (data: unknown) => {

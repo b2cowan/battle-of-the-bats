@@ -133,9 +133,9 @@ export function ClubBriefProvider({ children, seedShape }: { children: ReactNode
   }, [asksOutside, orgSlug, briefAnswer, permitsLeft]);
   const outsideNow = asksOutside && outside.orgSlug === orgSlug ? outside.value : null;
   const initialShape = useMemo<ClubShape>(() => seedShape ?? ({
-    runsHouseLeague: currentOrg?.planId === 'league' || currentOrg?.freeFloor === 'league_starter',
+    runsHouseLeague: currentOrg?.planId === 'league',
     hostsTournaments: tournaments.some(t => t.status !== 'archived'),
-  }), [seedShape, currentOrg?.planId, currentOrg?.freeFloor, tournaments]);
+  }), [seedShape, currentOrg?.planId, tournaments]);
 
   const value = useMemo<ClubBriefValue>(() => ({
     status: current.status,

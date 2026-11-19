@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
-import { forbidden, getAuthContextWithRole } from '@/lib/api-auth';
+import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasons, getLeagueSeasonSummary } from '@/lib/db';
-import { houseLeagueSeasonCap, isFreeFloorLeague, leagueCapHit } from '@/lib/free-floor';
-import { readSlotHolders, slotBlocker } from '@/lib/league-season-slot';
-import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 import { DEFAULT_SPORT } from '@/lib/sports';
 import { seasonSlugFrom, seasonSlugRefusal } from '@/lib/house-league-season';
@@ -42,25 +39,6 @@ export const POST = withObservability(async (req: Request) => {
   const slugRefused = seasonSlugRefusal(slug);
   if (slugRefused) return NextResponse.json({ error: slugRefused }, { status: 400 });
 
-  // Free-floor (League Starter) cap (9f·5): one LIVE season at a time — getting ready, registration open or closed, or
-  // running; a finished season holds nothing, so completing one frees the slot. The count is lib/league-season-slot.ts,
-  // the same one Reopen reads. Server-enforced because house-league is module-gated, not cap-gated. Paid plans are uncapped.
-  const seasonCap = houseLeagueSeasonCap(ctx!.org);
-  if (seasonCap < Infinity) {
-    const holders = await readSlotHolders(supabaseAdmin, ctx!.org.id);
-    if (holders.length >= seasonCap) {
-      await writePlatformEvent({
-        eventType: 'scope_wall_hit',
-        source: 'app',
-        orgId: ctx!.org.id,
-        actorUserId: ctx!.user?.id ?? null,
-        actorEmail: ctx!.user?.email ?? null,
-        metadata: { freeFloor: 'league_starter', capHit: 'league_season' },
-      });
-      return NextResponse.json(leagueCapHit('league_season', slotBlocker(holders, seasonCap)), { status: 403 });
-    }
-  }
-
   // A date range runs forward, here as on the season page (owner, 2026-10-25): the forms check it, and so does a direct request.
   const seasonStart = typeof body.seasonStartDate === 'string' ? body.seasonStartDate : '';
   const seasonEnd = typeof body.seasonEndDate === 'string' ? body.seasonEndDate : '';
@@ -73,13 +51,11 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Registration can’t close before it opens.' }, { status: 400 });
   }
 
-  // Start next season (9f-2, 9f·8–9f·13): "Start from" names a season of THIS club to copy from. The free League plan is not
-  // offered it (its window has no field, §15.16), and a direct request is refused too, so the server is not the only thing
-  // holding its one-age-group and eight-team limits. The source is only read; see lib/house-league-start-from-server.ts.
+  // Start next season (9f-2, 9f·8–9f·13): "Start from" names a season of THIS club to copy from. The source is only read;
+  // see lib/house-league-start-from-server.ts.
   const startFrom = readStartFromBody(body.startFrom);
   if (startFrom === 'bad') return NextResponse.json({ error: 'Season not found' }, { status: 400 });
   if (startFrom) {
-    if (isFreeFloorLeague(ctx!.org)) return forbidden();
     const source = await loadStartSource(ctx!.org.id, startFrom.seasonId);
     if (!source) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
     try {
@@ -127,19 +103,6 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: NAME_TAKEN }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  // Instrumentation (§13): League Starter activation signal. Gated to the free floor so the metric
-  // tracks free-tier first-value, not paid League/Club season creation. Fire-and-forget.
-  if (isFreeFloorLeague(ctx!.org)) {
-    void writePlatformEvent({
-      eventType: 'league_season_created',
-      source: 'app',
-      orgId: ctx!.org.id,
-      actorUserId: ctx!.user?.id ?? null,
-      actorEmail: ctx!.user?.email ?? null,
-      metadata: { freeFloor: 'league_starter', seasonId: data.id },
-    });
   }
 
   return NextResponse.json(data, { status: 201 });

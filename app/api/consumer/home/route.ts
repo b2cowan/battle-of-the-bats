@@ -24,7 +24,7 @@ import { reconcilePendingInvitesForUser, listPendingInvitesForUser, withInvitati
 import { listPendingClubCoachInvitesForEmail } from '@/lib/assistant-invites';
 import { readStartDoor } from '@/lib/start-door';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
-import { getPlanGatingMap, isLeagueDoorOpen, isPaidDoorOpen } from '@/lib/plan-gating-server';
+import { getPlanGatingMap, isPaidDoorOpen } from '@/lib/plan-gating-server';
 import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
 import { getSignedInUser } from '@/lib/two-step-session';
 
@@ -127,15 +127,14 @@ export const GET = withObservability(async () => {
 
   // Account-First Sign-up (A4, revised 2026-10-19): an account that came from a start sign-up keeps a workspace waiting
   // for its name until that team, league or organization is made — beside any other workspace (owner: "otherwise they
-  // lose that team"), with no Not now. Never one whose step would not open: /start/league shows a waitlist while the
-  // League Starter beta is off, and /start/league and /start/tournament both turn away a pending invite and an account
-  // already in a real organization (the pages' and /api/league/create's and /api/org/create's own gates). The finish
-  // card's no-workspace rule used to hide those last two.
+  // lose that team"), with no Not now. Never one whose step would not open: /start/league shows a waitlist while League
+  // Plus is off sale, and the start doors turn away a pending invite and an account already in a real organization (the
+  // pages' and /api/org/create's own gates). The finish card's no-workspace rule used to hide those last two.
   const start = readStartDoor(user.user_metadata);
   const makesAnOrganization = start?.door === 'league' || start?.door === 'organization' || start?.door === 'club';
-  // /start/league opens while League Plus is on sale or the free League starter's flag is on; /start/club only while a Club
-  // band is on sale (On-sale pages S2). A closed door's card would lead to an interest page, so it hides.
-  const leagueClosed = start?.door === 'league' && !(await isLeagueDoorOpen());
+  // /start/league opens only while League Plus is on sale (there is no free League, owner 2026-11-19); /start/club only
+  // while a Club band is on sale (On-sale pages S2). A closed door's card would lead to an interest page, so it hides.
+  const leagueClosed = start?.door === 'league' && !(await isPaidDoorOpen('league'));
   const clubClosed = start?.door === 'club' && !(await isPaidDoorOpen('club'));
   // Coach Premium (Part 3): /coaches/start shows an interest form while the Premium checkout is closed, and its checkout
   // turns away an account that already owns a live Premium portal — the card would lead to neither.

@@ -6,7 +6,6 @@ import ck from '../ClubKit.module.css';
 import { repKit } from '../RepKit';
 import { BornYearsBoxes } from '../BornYears';
 import { checkBornYears, cutoffWords, isJan1, type BornYears, type Cutoff } from '@/lib/born-years';
-import type { LeagueCapKind } from '@/lib/free-floor';
 import {
   EVEN_AGES, ODD_AGES, ageGroupsFoot, ageGroupsWarnings, ageLabel, detectNameStyle, isOddAge, nextGroupName, parseAgeName, restyleName,
   type AgeGroupRow, type NameStyle,
@@ -36,7 +35,7 @@ const readStyle = (): NameStyle | null => {
  *  · A division is ONE line at a desk (column names once, pinned above the list); a phone keeps its labels and two lines.
  * Gaps and overlaps are said, never blocking. Full screen on a phone (KitDialog's form).
  */
-export default function AddAgeGroupsWindow({ orgSlug, seasonId, seasonName, sport, cutoff, existing, defaultSize, defaultPrice, hasEarlyDate, onClose, onAdded, onCapHit }: {
+export default function AddAgeGroupsWindow({ orgSlug, seasonId, seasonName, sport, cutoff, existing, defaultSize, defaultPrice, hasEarlyDate, onClose, onAdded }: {
   orgSlug: string;
   seasonId: string;
   seasonName: string;
@@ -50,7 +49,6 @@ export default function AddAgeGroupsWindow({ orgSlug, seasonId, seasonName, spor
   defaultPrice: number | null;
   onClose: () => void;
   onAdded: () => void;
-  onCapHit: (kind: LeagueCapKind) => void;
 }) {
   const [rows, setRows] = useState<AgeGroupRow[]>([]);
   const [typing, setTyping] = useState<string | null>(null);
@@ -135,7 +133,6 @@ export default function AddAgeGroupsWindow({ orgSlug, seasonId, seasonName, spor
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setBusy(false);
-        if (data.capHit) { onCapHit(data.capHit); return; }
         setError(data.error ?? 'We couldn’t add the divisions. Try again.');
         return;
       }

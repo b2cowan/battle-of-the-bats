@@ -28,7 +28,7 @@ import AskForTime from '../time/AskForTime';
  *   2 · MATCH-UPS: once or twice through (c2); the counts and the hints are the server's plan for each choice.
  *   · THE CHECK (c3): passing, warning (save anyway) or blocking (nothing is saved). A Save goes into the division's draft
  *     (9d-2b): nobody sees the games until Publish schedule.
- * Only divisions with no games are offered (9d2·11). The free League plan never opens this window (9d2a·B).
+ * Only divisions with no games are offered (9d2·11). A plan without the club's schedule never opens this window (9d2a·B).
  */
 type Level = 'time' | 'matchups' | 'check';
 

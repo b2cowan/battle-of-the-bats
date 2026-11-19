@@ -115,8 +115,8 @@ describe('2b · the registration PATCH asks each branch its own action', () => {
 
 // ── 3 · the matrix ────────────────────────────────────────────────────────────────────────────
 
-const CLUB: EntitlementOrg = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null };
-const LEAGUE: EntitlementOrg = { planId: 'league', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null };
+const CLUB: EntitlementOrg = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [] };
+const LEAGUE: EntitlementOrg = { planId: 'league', subscriptionStatus: 'active', enabledAddons: [] };
 const CANCELLED: EntitlementOrg = { ...CLUB, subscriptionStatus: 'canceled' };
 const LIVE = { status: 'active' };
 const DONE = { status: 'completed' };

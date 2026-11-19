@@ -59,7 +59,7 @@ type Act =
 
 export default function FriendRequestsView({
   viewSwitch, rows, divisions, scope, onScope, regs, placement, divisionName, teamName, today, canDecide, isPhone,
-  orgQuery, seasonId, orgSlug, planId, freeFloor, onChanged, onOpenRegistration, say,
+  orgQuery, seasonId, orgSlug, planId, onChanged, onOpenRegistration, say,
 }: {
   /** The Registrations view switch, drawn first in this view's toolbar. */
   viewSwitch: ReactNode;
@@ -80,7 +80,6 @@ export default function FriendRequestsView({
   seasonId: string;
   orgSlug: string;
   planId: OrgPlan | undefined;
-  freeFloor: boolean;
   onChanged: () => Promise<void> | void;
   onOpenRegistration: (id: string) => void;
   say: (text: string) => void;
@@ -525,15 +524,13 @@ export default function FriendRequestsView({
         <div className={tb.deskFilters}>{searchField.field}</div>
         {searchField.toggle}
         <FilterMenu groups={groups} label={REGS_WORDS.filter} onLabel={REGS_WORDS.filterOn} resetLabel={REGS_WORDS.filterClear} onReset={resetFilter} align="end" />
-        {freeFloor ? null : (
-          <ExportMenu
-            formats={['xlsx', 'csv']}
-            onExportXLSX={() => exportFriendsXlsx(exportArgs)}
-            onExportCSV={() => exportFriendsCsv(exportArgs)}
-            planId={planId}
-            disabled={listed.length === 0}
-          />
-        )}
+        <ExportMenu
+          formats={['xlsx', 'csv']}
+          onExportXLSX={() => exportFriendsXlsx(exportArgs)}
+          onExportCSV={() => exportFriendsCsv(exportArgs)}
+          planId={planId}
+          disabled={listed.length === 0}
+        />
       </div>
       {searchField.row}
       <FilterLine picks={pickedLabels(groups)} label={REGS_WORDS.filter} />

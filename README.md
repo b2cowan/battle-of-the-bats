@@ -44,7 +44,7 @@ live in exactly one place: [docs/agents/strategy/PLAN_PRICING_FACTS.md](docs/age
 that used to sit here drifted to a Club price and a League module list the facts doc had already
 replaced (found 2026-09-25, Club Tier Readiness evaluation).
 
-**Free floors layer over the paid tiers.** Each operator type can start free in their natural unit — a Free Tournament (org on the `tournament` plan), a Free League Starter (capped house-league entitlement profile), and a Free Basic Coaches Portal (`basic_coach_teams`, no org, no subscription). Free is delivered as scoped per-operator floors unified under one login via `/home`, not as one mega-subscription. See `docs/projects/active/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
+**Free floors layer over the paid tiers.** Each operator type can start free in their natural unit — a Free Tournament (org on the `tournament` plan) and a Free Basic Coaches Portal (`basic_coach_teams`, no org, no subscription). Free is delivered as scoped per-operator floors unified under one login via `/home`, not as one mega-subscription. See `docs/projects/active/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
 
 ---
 
