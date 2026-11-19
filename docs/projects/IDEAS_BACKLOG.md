@@ -167,3 +167,7 @@ The owner agreed these go to the backlog rather than the board. Each has a plan 
 - **📥 Coach Budget Import** · [COACH_BUDGET_IMPORT_VOCABULARY_PLAN.md](docs/projects/active/COACH_BUDGET_IMPORT_VOCABULARY_PLAN.md)
 - **Dependency Update Process** · [DEPENDENCY_UPDATE_PROCESS_PLAN.md](docs/projects/active/DEPENDENCY_UPDATE_PROCESS_PLAN.md)
 - **The Flip — role⇄public navigation** · [PROGRAM_PLATFORM_SURFACES.md](docs/projects/active/PROGRAM_PLATFORM_SURFACES.md)
+
+## From the Stage 9 walk (2026-11-19)
+
+- **Event settings Save: all or nothing.** One Save on a tournament's settings page sends three writes together (name and dates, scoring, default game length). When the game length is refused by the game-order rule, the other two have already been saved, so the page shows a refusal beside changes that landed. Owner ruled 2026-11-19 (Stage 9 walk call C3) to make it all-or-nothing as its own item.

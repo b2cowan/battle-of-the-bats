@@ -331,6 +331,32 @@ describe('game order: the words (tab 6)', () => {
       'The Final starts at 2:15 p.m., before Semifinal 2 ends at 2:30 p.m. Move the Final to 2:30 p.m. or later, or move Semifinal 2 earlier.');
   });
 
+  it('two games that would read the same carry their bracket code (walk §544 C1)', () => {
+    // Double elimination: round 1 and round 2 of the winners bracket both read "Winners Bracket, Game 1".
+    const before = [g('wb2-1', { time: '09:00' }), g('wb3-1', { time: '11:00', awayPlaceholder: 'Winner WB2-1' })];
+    const after = [before[0], { ...before[1], time: '09:30' }];
+    assert.equal(words(after, before, { door: 'pair' }),
+      'Winners Bracket, Game 1 (WB2-1) starts at 9:30 a.m., before Winners Bracket, Game 1 (WB1-1) ends at 10:30 a.m. Move Winners Bracket, Game 1 (WB2-1) to 10:30 a.m. or later, or move Winners Bracket, Game 1 (WB1-1) earlier.');
+    const [p] = findOrderProblems(after);
+    assert.equal(orderPillWords(p, byId(after), 'wb3-1'), 'Not saved: Winners Bracket, Game 1 (WB1-1) isn’t over by then');
+    // Different names stay as they were; a game named beside itself or a non-playoff game is untouched.
+    assert.equal(orderGameName(g('sf1'), { other: g('sf2') }), 'Semifinal 1');
+    assert.equal(orderGameName(g('wb2-1'), { other: g('wb2-1') }), 'Winners Bracket, Game 1');
+    assert.equal(orderGameName(g('wb2-1'), { other: pool('p1') }), 'Winners Bracket, Game 1');
+  });
+
+  it('a way out on another day says the day (walk §544 C2)', () => {
+    const before = [g('sf2', { date: D2, time: '09:00' }), fin('11:00', { awayPlaceholder: null, date: D2 })];
+    const after = [before[0], { ...before[1], date: D, time: '16:00' }];
+    assert.equal(words(after, before, { door: 'pair' }),
+      'The Final starts on Sat, Nov 21 at 4:00 p.m., before Semifinal 2 ends on Sun, Nov 22 at 10:30 a.m. Move the Final to Sun, Nov 22 at 10:30 a.m. or later, or move Semifinal 2 earlier.');
+    const [p] = findOrderProblems(after);
+    const dep = orderReadWords(p, byId(after), 'fin');
+    assert.equal(dep.lead + dep.rest, 'Out of order. Semifinal 2 ends on Sun, Nov 22 at 10:30 a.m., after this game starts. Move this game to Sun, Nov 22 at 10:30 a.m. or later, or move Semifinal 2 earlier.');
+    const src = orderReadWords(p, byId(after), 'sf2');
+    assert.equal(src.lead + src.rest, 'Out of order. The Final starts on Sat, Nov 21 at 4:00 p.m., before this game ends. Move this game earlier, or move the Final to Sun, Nov 22 at 10:30 a.m. or later.');
+  });
+
   it('the screens\' sentences: the issue, the read view from both sides, the drag, the pill', () => {
     const games = [g('sf2', { time: '15:00' }), fin('14:15', { awayPlaceholder: null })];
     const [p] = findOrderProblems(games);

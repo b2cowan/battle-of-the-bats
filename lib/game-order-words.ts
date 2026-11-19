@@ -7,7 +7,7 @@
  * Games are named by round (`bracketGameLabel`: "the Final", "Semifinal 2", "the 3rd Place game"); pool play by its
  * division ("U13 Boys pool play"); times the house way (`formatTime`: "3:00 p.m."); a day only when it differs.
  */
-import { bracketGameLabel, bracketRoundLabel } from './playoff-bracket.ts';
+import { bracketGameLabel, bracketRoundLabel, displayBracketRefs } from './playoff-bracket.ts';
 import { formatTime, possessive } from './utils.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
 import { teamOrSlotWords } from './schedule-words.ts';
@@ -42,10 +42,26 @@ const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 /** One period at the end, never two ("4:30 p.m." already ends a sentence). */
 const fin = (s: string) => (s.endsWith('.') ? s : `${s}.`);
 
-/** A game's name in a sentence: "the Final", "Semifinal 2", "the 3rd Place game"; a pool game by its matchup. */
-export function orderGameName(g: OrderWordsGame | undefined, opts: { division?: boolean } = {}): string {
+/**
+ * A game's name in a sentence: "the Final", "Semifinal 2", "the 3rd Place game"; a pool game by its matchup.
+ * `other` is the game this one is named beside: when the two would read the SAME ("Winners Bracket, Game 1" for a game
+ * in round 1 and one in round 2 of a double-elimination bracket), this one carries its bracket code in brackets, the
+ * code the bracket editor's cards show ("Winners Bracket, Game 1 (SR-1)"). Different games never share a name.
+ */
+export function orderGameName(
+  g: OrderWordsGame | undefined, opts: { division?: boolean; other?: OrderWordsGame } = {},
+): string {
+  const name = baseGameName(g, opts.division);
+  const o = opts.other;
+  if (!g || !o || !g.isPlayoff || !o.isPlayoff || !g.bracketCode?.trim() || !o.bracketCode?.trim()) return name;
+  const code = g.bracketCode.trim().toUpperCase();
+  if (code === o.bracketCode.trim().toUpperCase() || name !== baseGameName(o, opts.division)) return name;
+  return `${name} (${displayBracketRefs(code)})`;
+}
+
+function baseGameName(g: OrderWordsGame | undefined, division?: boolean): string {
   if (!g) return 'the other game';
-  const div = opts.division && g.divisionName ? `${g.divisionName} ` : '';
+  const div = division && g.divisionName ? `${g.divisionName} ` : '';
   if (!g.isPlayoff) return g.matchup?.trim() || 'a pool game';
   if (!g.bracketCode?.trim()) return `the ${div}playoff game`;
   const label = bracketGameLabel(g.bracketCode);
@@ -59,6 +75,9 @@ const dayOf = (minutes: number) => dateTimeAt(minutes).date;
 /** "4:30 p.m.", or "on Sun, Nov 22 at 4:30 p.m." when it falls on another day than `from`. */
 const at = (minutes: number, from: number) =>
   dayOf(minutes) === dayOf(from) ? `at ${clock(minutes)}` : `on ${formatShortWeekdayDate(dayOf(minutes))} at ${clock(minutes)}`;
+/** "4:30 p.m. or later" — and when that time falls on another day than `from`, the day too ("Sun, Nov 22 at 4:30 p.m. or later"). */
+const orLater = (minutes: number, from: number) =>
+  dayOf(minutes) === dayOf(from) ? `${clock(minutes)} or later` : `${formatShortWeekdayDate(dayOf(minutes))} at ${clock(minutes)} or later`;
 const poolPlay = (g: OrderWordsGame | undefined) => `${g?.divisionName?.trim() || 'the division’s'} pool play`;
 
 /** The round shared by several sources, in the plural ("the semifinals"), or "its earlier games". */
@@ -106,8 +125,8 @@ export function orderRefusalWords(input: OrderRefusalInput): OrderWords & { game
   const src = games.get(p.sourceId);
   const dep = games.get(p.dependentId);
   const pool = p.kind === 'pool';
-  const srcName = pool ? poolPlay(dep) : orderGameName(src);
-  const depName = orderGameName(dep);
+  const srcName = pool ? poolPlay(dep) : orderGameName(src, { other: dep });
+  const depName = orderGameName(dep, { other: src });
   const end = p.sourceEnd;
   const start = p.dependentStart;
   const editedIsSource = !!input.editedId && input.editedId === p.sourceId && input.editedId !== p.dependentId;
@@ -121,15 +140,15 @@ export function orderRefusalWords(input: OrderRefusalInput): OrderWords & { game
 
   switch (door) {
     case 'rain-delay':
-      return say(`${cap(srcName)} would end at ${clock(end)}, after ${depName} starts (${clock(start)})`,
+      return say(`${cap(srcName)} would end ${at(end, start)}, after ${depName} starts (${clock(start)})`,
         `Push ${depName} as well, or push the games by less`);
     case 'reinstate':
       if (editedIsSource) {
-        const who = pool ? orderGameName(src) : srcName;
+        const who = pool ? orderGameName(src, { other: dep }) : srcName;
         return say(`${cap(who)} is ${at(p.sourceStart, start)} and would end after ${depName} starts (${clock(start)})`,
           `Move ${depName} later first, then put ${pool ? 'this game' : srcName} back`);
       }
-      return say(`${cap(srcName)} ends ${at(end, start)}`, `Move ${depName} to ${clock(end)} or later first, then put it back`);
+      return say(`${cap(srcName)} ends ${at(end, start)}`, `Move ${depName} to ${orLater(end, start)} first, then put it back`);
     case 'playoff-draft':
       return say(`The schedule changed while you were choosing: this draft starts ${depName} before ${srcName} ends`,
         'Make the drafts again');
@@ -193,9 +212,9 @@ export function orderRefusalWords(input: OrderRefusalInput): OrderWords & { game
   }
 
   // A door with no one edited game ('pair', and any door's fallback): name the pair.
-  return say(`${cap(depName)} starts ${at(start, p.sourceStart)}, before ${srcName} ends at ${clock(end)}`,
-    pool ? `Move ${depName} to ${clock(end)} or later, or end pool play earlier`
-      : `Move ${depName} to ${clock(end)} or later, or move ${srcName} earlier`);
+  return say(`${cap(depName)} starts ${at(start, p.sourceStart)}, before ${srcName} ends ${at(end, start)}`,
+    pool ? `Move ${depName} to ${orLater(end, start)}, or end pool play earlier`
+      : `Move ${depName} to ${orLater(end, start)}, or move ${srcName} earlier`);
 }
 
 // ── The screens' half: the same judgement the server makes, on the games the page holds ────────────────────────────
@@ -328,26 +347,26 @@ export const ORDER_ISSUE_TITLE = 'Playoff games out of order';
 
 export function orderIssueWords(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>): string {
   const dep = games.get(p.dependentId);
-  const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId));
+  const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId), { other: dep });
   // A day only when the two differ ("… starts on Sat, Nov 21 at 9:00 a.m., before Quarterfinal 2 ends on Sun, Nov 22 …").
-  return fin(`${cap(orderGameName(dep))} starts ${at(p.dependentStart, p.sourceEnd)}, before ${srcName} ends ${at(p.sourceEnd, p.dependentStart)}`);
+  return fin(`${cap(orderGameName(dep, { other: games.get(p.sourceId) }))} starts ${at(p.dependentStart, p.sourceEnd)}, before ${srcName} ends ${at(p.sourceEnd, p.dependentStart)}`);
 }
 
 /** The game window's read view, under When, from this game's own side (A5). */
 export function orderReadWords(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>, gameId: string): OrderWords {
   const dep = games.get(p.dependentId);
   const pool = p.kind === 'pool';
-  const srcName = pool ? poolPlay(dep) : orderGameName(games.get(p.sourceId));
-  const depName = orderGameName(dep);
+  const srcName = pool ? poolPlay(dep) : orderGameName(games.get(p.sourceId), { other: dep });
+  const depName = orderGameName(dep, { other: games.get(p.sourceId) });
   if (gameId === p.dependentId) {
     return {
       lead: 'Out of order.',
-      rest: ` ${cap(srcName)} ends at ${clock(p.sourceEnd)}, after this game starts. Move this game to ${clock(p.sourceEnd)} or later, or ${pool ? 'end pool play earlier' : `move ${srcName} earlier`}.`,
+      rest: ` ${cap(srcName)} ends ${at(p.sourceEnd, p.dependentStart)}, after this game starts. Move this game to ${orLater(p.sourceEnd, p.dependentStart)}, or ${pool ? 'end pool play earlier' : `move ${srcName} earlier`}.`,
     };
   }
   return {
     lead: 'Out of order.',
-    rest: ` ${cap(depName)} starts at ${clock(p.dependentStart)}, before this game ends. Move this game earlier, or move ${depName} to ${clock(p.sourceEnd)} or later.`,
+    rest: ` ${cap(depName)} starts ${at(p.dependentStart, p.sourceEnd)}, before this game ends. Move this game earlier, or move ${depName} to ${orLater(p.sourceEnd, p.dependentStart)}.`,
   };
 }
 
@@ -359,23 +378,23 @@ export function orderDragReason(
 ): string {
   const p = pickOrderProblem(list, draggedId);
   const dep = games.get(p.dependentId);
-  const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId));
+  const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId), { other: dep });
   // "The semifinals run until 1:00 p.m.": the dragged game waits for several (tab 2).
   const mine = list.filter(q => q.dependentId === draggedId && q.kind !== 'pool');
   if (draggedId === p.dependentId && p.kind !== 'pool' && mine.length > 1) {
     const latest = Math.max(...mine.map(q => q.sourceEnd));
     return `${cap(sourcesPlural(mine.map(q => games.get(q.sourceId))))} run until ${clock(latest)}, so ${orderGameName(dep)} can’t go here`;
   }
-  if (draggedId === p.dependentId) return `${cap(srcName)} runs until ${clock(p.sourceEnd)}, so ${orderGameName(dep)} can’t go here`;
+  if (draggedId === p.dependentId) return `${cap(srcName)} runs until ${clock(p.sourceEnd)}, so ${orderGameName(dep, { other: games.get(p.sourceId) })} can’t go here`;
   const who = p.kind === 'pool' ? 'this game' : srcName;
-  return `${cap(orderGameName(dep))} starts at ${clock(p.dependentStart)}, so ${who} can’t go here`;
+  return `${cap(orderGameName(dep, { other: games.get(p.sourceId) }))} starts at ${clock(p.dependentStart)}, so ${who} can’t go here`;
 }
 
 /** The game window's save pill while an order line stands: "Not saved: Semifinal 2 isn't over by then". */
 export function orderPillWords(p: OrderProblem, games: ReadonlyMap<string, OrderWordsGame>, gameId: string): string {
   const dep = games.get(p.dependentId);
   if (gameId === p.dependentId) {
-    return `Not saved: ${p.kind === 'pool' ? 'pool play' : orderGameName(games.get(p.sourceId))} isn’t over by then`;
+    return `Not saved: ${p.kind === 'pool' ? 'pool play' : orderGameName(games.get(p.sourceId), { other: dep })} isn’t over by then`;
   }
-  return `Not saved: ${orderGameName(dep)} starts before this ends`;
+  return `Not saved: ${orderGameName(dep, { other: games.get(p.sourceId) })} starts before this ends`;
 }
