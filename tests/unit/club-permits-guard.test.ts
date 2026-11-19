@@ -102,7 +102,23 @@ describe('who reads a permit, and who reads its money (owner, 10a build)', () =>
     const lib = readCode('lib/venue-library.ts');
     assert.match(lib, /if \(!member\.role \|\| member\.role === 'coach'\) return false;\s*return canOpenPermitDocument\(/);
     // And the window sends no name or size to anyone who cannot open it, whatever the read rule becomes.
-    assert.match(readCode('lib/permit-server.ts'), /canOpenPermitDocument\(opts\.canSave, opts\.canMoney\)\s*\? \{ name: p\.document\.name[^}]*\}\s*: \{ name: null, size: null/);
+    assert.match(readCode('lib/permit-server.ts'), /canOpenPermitDocument\(opts\.canSave, opts\.canMoney\) && !fileShut\s*\? \{ name: p\.document\.name[^}]*\}\s*: \{ name: null, size: null/);
+  });
+  it('a member limited to some team groups (leftover calls 1 + 2, owner 2026-11-19)', () => {
+    const scope = readCode('lib/permit-group-scope.ts');
+    // Changing: a permit held for no team (the whole club, the rep program, the league) is outside every limit.
+    assert.match(functionBody(scope, 'permitChangeOutsideGroups'), /if \(heldForTeamIds\.some\(t => !t\)\) return true;/);
+    // Opening: the whole club's permits open; only a team outside the groups shuts the file.
+    assert.match(functionBody(scope, 'permitFileOutsideGroups'), /if \(!ctx\.repGroupIds \|\| !heldForTeamId\) return false;/);
+    const route = readCode('app/api/admin/org/permits/route.ts');
+    // Every changing door asks it: add, edit (stored + draft), renew, delete.
+    assert.match(route, /teamOutsideGroups\(read\.draft\.heldForTeamId\)/);
+    assert.match(route, /teamOutsideGroups\(permit\.heldForTeamId, read\.draft\.heldForTeamId\)/);
+    assert.equal((route.match(/await teamOutsideGroups\(permit\.heldForTeamId\);/g) ?? []).length, 2, 'renew and delete both ask');
+    assert.match(route, /readPermitWindow\(orgId, id, \{ setting, canSave, canMoney, fileOutsideGroups \}\)/);
+    const doc = readCode('app/api/admin/org/permits/document/route.ts');
+    assert.match(doc.slice(doc.indexOf('export const GET'), doc.indexOf('export const POST')), /permitFileOutsideGroups\(g\.ctx, g\.ctx\.org\.id, g\.permit\.held_for_team_id\)\) return forbidden\(\);/);
+    assert.match(doc, /permitChangeOutsideGroups\(g\.ctx, g\.ctx\.org\.id, \[g\.permit\.held_for_team_id\]\)/);
   });
   it('the money is stripped on the server for a reader without Accounting', () => {
     const server = readCode('lib/permit-server.ts');

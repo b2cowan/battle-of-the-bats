@@ -275,6 +275,10 @@ function PermitFields({ idPrefix, q, permitId = null, draft, onChange, venues, m
   const multiVenue = new Set(draft.blocks.map(x => x.venueId)).size > 1;
   const lines = useBudgetLines(q, draft.startsOn, money);
   const teams = useTeams(q, draft.heldFor === 'team');
+  // ⚖ Leftover call 1 (owner 2026-11-19): a member limited to some team groups holds a permit only for one of their teams;
+  // the club, rep and league choices aren't offered (the server refuses them). A stored value still reads as itself.
+  const { limitedToTeamGroups } = useOrg();
+  const heldForOptions = limitedToTeamGroups ? HELD_FOR_OPTIONS.filter(o => o.id === 'team' || o.id === draft.heldFor) : HELD_FOR_OPTIONS;
 
   // What the time comes to: "2 blocks · 8 weeks · 80 h held" — the rule's own count, read as the form changes. And what
   // an hour of each field comes to, from the cost as typed (owner 2026-10-11: "75" beside "A share" read as dollars or a
@@ -346,7 +350,7 @@ function PermitFields({ idPrefix, q, permitId = null, draft, onChange, venues, m
           <span className={ck.label}>{W.heldFor}</span>
           <select id={`${idPrefix}-for`} className={ck.select} value={draft.heldFor}
             onChange={e => set({ heldFor: e.target.value as PermitHeldFor, heldForTeamId: e.target.value === 'team' ? draft.heldForTeamId : null })}>
-            {HELD_FOR_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+            {heldForOptions.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
           </select>
         </label>
         {draft.heldFor === 'team' ? (
@@ -1082,8 +1086,11 @@ export function AddPermitWindow({ q, venues, money, startVenueId, onAdded, onClo
   onAdded: (id: string, name: string, startsOn: string, note?: string) => void;
   onClose: () => void;
 }) {
+  // A member limited to some team groups holds a permit only for one of their teams (leftover call 1): the form starts there.
+  const { limitedToTeamGroups } = useOrg();
   const [draft, setDraft] = useState<PermitDraft>(() => ({
     ...EMPTY_PERMIT_DRAFT(),
+    ...(limitedToTeamGroups ? { heldFor: 'team' as const } : {}),
     blocks: [{ key: newKey('blk'), id: null, venueId: startVenueId ?? '', facilityIds: [], weekdays: [], startTime: '', endTime: '' }],
   }));
   const [file, setFile] = useState<File | null>(null);

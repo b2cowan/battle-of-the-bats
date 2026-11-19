@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, getAuthContextWithScope, unauthorized, forbidden, repGroupScopeGuard, GROUP_UNSCOPED_ROLES } from '@/lib/api-auth';
+import { getAuthContextWithRole, getAuthContextWithScope, unauthorized, forbidden, GROUP_UNSCOPED_ROLES } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
@@ -12,6 +12,7 @@ import { isClosedYearError, loadFiscalSetting, refuseIfClosed } from '@/lib/club
 import { moveRefused } from '@/lib/club-money-route';
 import { readClubPlaces, readPermitTimes } from '@/lib/permit-lookup';
 import { readLinePermits, readPermitWindow, readPermitsYear, schedulesHandingOut } from '@/lib/permit-server';
+import { permitChangeOutsideGroups, permitFileOutsideGroups, PERMIT_OUTSIDE_GROUPS_WORDS } from '@/lib/permit-group-scope';
 import { blockFilled, permitPayload, readBlockDrafts, readPermitBody, toBlock, type PermitDraft } from '@/lib/permit-form';
 import { describeDatesOffTaken, readDatesOffTaken, readDayTaken, takenTotals } from '@/lib/permit-dates-off';
 import { clubTaken } from '@/lib/permit-dates-off-view';
@@ -75,6 +76,11 @@ export const GET = withObservability(async (req: Request) => {
   const canSave = canSaveVenueLibrary(ctx.role, ctx.capabilities);
   const canMoney = canMoveClubMoney(ctx, ctx.org);
   const today = tournamentToday();
+  /** The reader's team-group limit (the scoped read above carries none): asked only for a role it can narrow; null = the
+   *  member read failed. */
+  const limitedCtx = async () => GROUP_UNSCOPED_ROLES.includes(ctx.role)
+    ? { repGroupIds: null }
+    : await getAuthContextWithRole({ orgSlug: params.get('orgSlug') ?? undefined, requireOrgSlug: true });
 
   try {
     const lineId = params.get('line');
@@ -85,7 +91,7 @@ export const GET = withObservability(async (req: Request) => {
     }
     if (params.get('teams') === '1') {
       // A member limited to some team groups reads only those groups' teams (the rep-teams routes' rule).
-      const limit = GROUP_UNSCOPED_ROLES.includes(ctx.role) ? null : (await getAuthContextWithRole({ orgSlug: params.get('orgSlug') ?? undefined, requireOrgSlug: true }))?.repGroupIds ?? null;
+      const limit = (await limitedCtx())?.repGroupIds ?? null;
       let teamsQ = supabaseAdmin.from('rep_teams').select('id, name').eq('org_id', orgId).eq('is_archived', false);
       if (limit) teamsQ = teamsQ.in('group_id', limit);
       const { data, error } = await teamsQ.order('name');
@@ -129,7 +135,13 @@ export const GET = withObservability(async (req: Request) => {
     }
     const id = params.get('id');
     if (id) {
-      const read = isUuid(id) ? await readPermitWindow(orgId, id, { setting, canSave, canMoney }) : null;
+      // A member limited to some team groups opens the file only of their groups' teams' and the whole club's permits
+      // (leftover call 2): asked only once a file is there to shut; a failed member read shuts it.
+      const fileOutsideGroups = async (teamId: string | null) => {
+        const scoped = await limitedCtx();
+        return !scoped || await permitFileOutsideGroups(scoped, orgId, teamId);
+      };
+      const read = isUuid(id) ? await readPermitWindow(orgId, id, { setting, canSave, canMoney, fileOutsideGroups }) : null;
       if (!read) return refusal(404, 'permit_not_found', 'That permit isn’t in the Venue library any more. Reload the page.');
       return NextResponse.json(read);
     }
@@ -215,19 +227,13 @@ export const POST = withObservability(async (req: Request) => {
     const facilities = async () => (await readClubPlaces(orgId)).byVenue;
 
     /**
-     * ⚖ Board Ready trust close-out 10 (owner 2026-11-18): a member limited to some team groups holds a permit only for a team
-     * in them — the `?teams=1` list's rule, now asked on save. Checked on the team being saved AND, on an edit or a renewal,
-     * the team the stored permit is held for (a save replaces it: the rep-team link's rule). A team that isn't the club's is
-     * the database floor's to refuse (`permit_team`), in its own words.
+     * ⚖ Board Ready trust close-out 10 (owner 2026-11-18) + leftover call 1 (owner 2026-11-19): a member limited to some team
+     * groups changes a permit only when it is held for a team in them. Checked on the team being saved AND, on an edit, a
+     * renewal or a delete, the stored permit's; a permit held for the whole club (no team) is OUTSIDE their groups, so a
+     * switch to the whole club is refused too. One rule in `lib/permit-group-scope.ts`, which the document route shares.
      */
-    const teamOutsideGroups = async (...teamIds: (string | null | undefined)[]): Promise<Response | null> => {
-      const ids = [...new Set(teamIds.filter((t): t is string => !!t && isUuid(t)))];
-      if (!ctx.repGroupIds || !ids.length) return null;
-      const { data, error } = await supabaseAdmin.from('rep_teams').select('id, group_id').eq('org_id', orgId).in('id', ids);
-      if (error) throw error;
-      const outside = (data ?? []).some(t => repGroupScopeGuard(ctx, (t as { group_id: string | null }).group_id));
-      return outside ? refusal(403, 'permit_team_group', 'That team isn’t in your team groups. Ask your club’s owner or an admin to hold a permit for it.') : null;
-    };
+    const teamOutsideGroups = async (...teamIds: (string | null | undefined)[]): Promise<Response | null> =>
+      (await permitChangeOutsideGroups(ctx, orgId, teamIds)) ? refusal(403, 'permit_team_group', PERMIT_OUTSIDE_GROUPS_WORDS) : null;
 
     // -- add-permit: Add permit (create asks) ---------------------------------
     if (action === 'add-permit') {
@@ -324,6 +330,8 @@ export const POST = withObservability(async (req: Request) => {
 
     // -- delete-permit ------------------------------------------------------------
     if (action === 'delete-permit') {
+      const outside = await teamOutsideGroups(permit.heldForTeamId);
+      if (outside) return outside;
       // ⚖ Offered while nothing hands its time out (specimen 2) — a club schedule started from it or billed at its prices
       // (Club Tier Stage 11a) holds it; delete that schedule's link first. Its document goes with it.
       const handing = await schedulesHandingOut(orgId, permit.id);

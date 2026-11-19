@@ -7,6 +7,7 @@ import { canSaveVenueLibrary, canOpenPermitDocument, canReadVenueLibrary } from 
 import { canMoveClubMoney } from '@/lib/member-access';
 import { PERMIT_WORDS as W } from '@/lib/permit-words';
 import { isUuid } from '@/lib/utils';
+import { permitChangeOutsideGroups, permitFileOutsideGroups, PERMIT_OUTSIDE_GROUPS_WORDS } from '@/lib/permit-group-scope';
 
 // ---------------------------------------------------------------------------
 // A PERMIT'S DOCUMENT — the issuer's copy, kept with the permit (Club Tier Stage 10a; hub specimen 2: "Document — its name
@@ -21,6 +22,8 @@ import { isUuid } from '@/lib/utils';
 // `${org.id}/permits/${permitId}/${uuid}-${name}`.
 // WHO: the Venue library's savers and the seats that hold the club's money open it (a coach never does, and nor does a
 // scorekeeper or a tournament-staff reader of the library: the file may state the fee their screens hide); its savers replace it.
+// A member limited to some team groups opens their groups' teams' and the whole club's permits' files, and replaces only
+// their groups' teams' (leftover calls 1 + 2, owner 2026-11-19; `lib/permit-group-scope.ts`).
 // ---------------------------------------------------------------------------
 
 const BUCKET = 'org-permit-documents';
@@ -31,7 +34,8 @@ const refusal = (status: number, code: string, error: string) => NextResponse.js
 
 type Gate =
   | { error: Response }
-  | { ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>; permit: { id: string; org_id: string; document_path: string | null } };
+  | { ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>; permit: Permit };
+type Permit = { id: string; org_id: string; document_path: string | null; held_for_team_id: string | null };
 
 async function gate(req: Request): Promise<Gate> {
   const params = new URL(req.url).searchParams;
@@ -45,10 +49,10 @@ async function gate(req: Request): Promise<Gate> {
   if (!isUuid(id)) return { error: refusal(404, 'permit_not_found', 'That permit isn’t in the Venue library any more. Reload the page.') };
   // The tenant wall (supabaseAdmin bypasses row security).
   const { data: permit, error } = await supabaseAdmin.from('org_permits')
-    .select('id, org_id, document_path').eq('id', id).maybeSingle();
+    .select('id, org_id, document_path, held_for_team_id').eq('id', id).maybeSingle();
   if (error) throw error;
   if (!permit || permit.org_id !== ctx.org.id) return { error: refusal(404, 'permit_not_found', 'That permit isn’t in the Venue library any more. Reload the page.') };
-  return { ctx, permit: permit as { id: string; org_id: string; document_path: string | null } };
+  return { ctx, permit: permit as Permit };
 }
 
 export const GET = withObservability(async (req: Request) => {
@@ -56,6 +60,8 @@ export const GET = withObservability(async (req: Request) => {
     const g = await gate(req);
     if ('error' in g) return g.error;
     if (!canOpenPermitDocument(canSaveVenueLibrary(g.ctx.role, g.ctx.capabilities), canMoveClubMoney(g.ctx, g.ctx.org))) return forbidden();
+    // A member limited to some team groups opens only their groups' teams' and the whole club's permits (leftover call 2).
+    if (await permitFileOutsideGroups(g.ctx, g.ctx.org.id, g.permit.held_for_team_id)) return forbidden();
     if (!g.permit.document_path) return refusal(404, 'no_document', 'This permit has no document.');
     const { data, error } = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(g.permit.document_path, 3600);
     if (error || !data?.signedUrl) return refusal(502, 'document_unavailable', 'The document couldn’t be opened just now. Try again.');
@@ -71,6 +77,10 @@ export const POST = withObservability(async (req: Request) => {
     if ('error' in g) return g.error;
     if (!canSaveVenueLibrary(g.ctx.role, g.ctx.capabilities)) {
       return refusal(403, 'no_venue_permission', 'Your role can’t change the club’s permits. Ask your club’s owner or an admin.');
+    }
+    // Replacing the file changes the permit: the save's team-group rule (leftover call 1; the whole club's is outside a limit).
+    if (await permitChangeOutsideGroups(g.ctx, g.ctx.org.id, [g.permit.held_for_team_id])) {
+      return refusal(403, 'permit_team_group', PERMIT_OUTSIDE_GROUPS_WORDS);
     }
     // Refused before the body is read: an upload past the limit (with the form's own few bytes) never fills the server.
     if (Number(req.headers.get('content-length') ?? 0) > MAX_SIZE + 64 * 1024) {

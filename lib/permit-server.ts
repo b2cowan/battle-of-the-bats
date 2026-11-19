@@ -249,6 +249,8 @@ export async function schedulesHandingOut(orgId: string, permitId: string): Prom
 
 export async function readPermitWindow(orgId: string, permitId: string, opts: {
   setting: FiscalSetting; canSave: boolean; canMoney: boolean;
+  /** A member limited to some team groups, reading a permit held for a team outside them (leftover call 2): the file stays shut. */
+  fileOutsideGroups?: (heldForTeamId: string | null) => Promise<boolean>;
 }): Promise<PermitWindowRead | null> {
   const t = await readPermitTimes(orgId, { ids: [permitId] });
   const p = t.permits[0];
@@ -269,6 +271,7 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
       : Promise.resolve(null),
     schedulesHandingOut(orgId, p.id),
   ]);
+  const fileShut = p.document && opts.fileOutsideGroups ? await opts.fileOutsideGroups(p.heldForTeamId) : false;
   const u = use.get(p.id)!;
   const held = heldTime(p, t.venueFacilities);
   const shares = new Map(Object.entries(p.shares));
@@ -318,9 +321,10 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
     id: p.id, name: p.name, issuerName: issuerOf(p, issuers), issuerPayeeId: p.issuerPayeeId, reference: p.reference,
     heldFor: p.heldFor, heldForTeam: team, startsOn: p.startsOn, endsOn: p.endsOn, notes: p.notes, updatedAt: p.updatedAt,
     // ⚖ Trust close-out 9 (owner 2026-11-18): a reader who cannot open the file is told only that one is attached — a name
-    // (or a size) can give the fee away. Today every reader can open it (the two rules are one set); this keeps it true.
+    // (or a size) can give the fee away. Every role that reads the library can open it, so what shuts it today is a team-group
+    // limit (leftover call 2, owner 2026-11-19): a permit held for a team outside the reader's groups.
     document: !p.document ? null
-      : canOpenPermitDocument(opts.canSave, opts.canMoney)
+      : canOpenPermitDocument(opts.canSave, opts.canMoney) && !fileShut
         ? { name: p.document.name, size: p.document.size, addedAt: p.document.addedAt, type: p.document.type }
         : { name: null, size: null, addedAt: p.document.addedAt, type: null },
     year: { key: year.key, name: year.name, locked: year.locked },
