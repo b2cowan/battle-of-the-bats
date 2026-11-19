@@ -251,6 +251,7 @@ ONE block so they cannot drift apart again (`LookControls.module.css`). Blast ra
   `admin-t-branding-look` only because that screen was added after the baseline. Baselining it there would record one more
   reasonless copy of a known defect; the honest fix is one rule (44 × 44) in shared chrome, which changes the phone bar on every
   admin screen and clears ~160 baseline entries. **Owner's call; recommend its own small change, not part of Stage 8.**
+  (Settled 2026-11-19: already fixed by `23198459f`, 2026-11-16; see the Handed-on note below.)
 - **Found, not mine, not baselined:** the club editor (`admin-public-site-look`) has an unlabelled `<input>` 18 px tall at
   361/390/768. Present on the committed code too (measured with this part's CSS reverted). Not in the Look controls. Handed on.
 - After the fixes: `admin-t-branding-look-club` clean at every width; `admin-t-branding` and `admin-t-branding-look` carry only the
@@ -326,6 +327,9 @@ layout as (c).
 
 **Handed on:**
 - **Owner's call:** the admin context strip's 34 px "Dismiss" (shared chrome, every admin screen; recommend its own small change).
+  **SETTLED 2026-11-19 (owner: "yes", closing the board step):** the recommended small change was already made by the
+  2026-11-16 whole-product layout sweep, committed `23198459f` (the close is a full 44 px target at touch widths, ≤ 768 px;
+  desktop keeps 34 px). Nothing left to rule; later walks stop listing it as a known small tap target.
 - **Club editor:** the unlabelled 18 px input on `admin-public-site-look` (pre-existing; identify and fix with the club editor's next
   touch).
 - **Stage 1a's window and the admin window guard:** name `PhoneWindow.tsx` in `admin-overlay-guard`'s `WINDOWS` (it is an inert
