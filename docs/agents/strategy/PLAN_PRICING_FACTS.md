@@ -47,6 +47,9 @@ price is decided** (revenue plan D03/D04 open).
 
 ## Promotions (live)
 
+> **⚠ 2026-11-19 (`BUSINESS_DECISIONS.md`): the Founding Season is being REMOVED from the product**; its three holders
+> move to ordinary free time through September 30, 2027. Everything below is history once that build lands (change log).
+
 - **⚠ THE FOUNDING SEASON OFFER IS CLOSED (Decided 2026-10-26, `BUSINESS_DECISIONS.md`).** The sign-up window closed at the **end of October 25, 2026** (was December 31, 2026). No new organization or Premium Coaches Portal gets the comp; both pay list price through Stripe, and **there is no Premium trial**. Every account already holding the comp keeps it **through September 30, 2027, exactly as sold**, with the card window, the 2028 plan choice and the send book. A holder on the free plan keeps its sold deadline: Tournament Plus at $0 on any upgrade **until the end of December 31, 2026** (`FOUNDING_SEASON_HOLDER_UPGRADE_BY`). A cancelled comped Premium portal reactivates on its comp. The account-first eligibility rule below still applies, read against the new close. The bullets below are history for those accounts, not an open offer.
 - **⚠ FOUNDING SEASON 2027 (Decided 2026-09-07, `BUSINESS_DECISIONS.md`; committed `2f02a949` on dev 2026-09-07, migration 279 on prod 2026-09-08 (job 262)).** Both Founding Season bullets below are **superseded on the dates**: the free period for **Tournament Plus AND the Premium Coaches Portal now runs through September 30, 2027**, for **everyone who signs up by December 31, 2026**, and there is **no second promotion** after the window. The two dates are separate for the first time — runtime `FOUNDING_SEASON_SIGNUP_CLOSE` (offer surfaces + comp granting, via `isFoundingSeasonSignupOpen()` / `isFoundingSeasonPromoActive()`) and `FOUNDING_SEASON_END` (billing state, via `isFoundingSeasonActive()`), both env-overridable, both pinned to the end of the named day in Eastern time; the customer labels ("December 31, 2026", "September 30, 2027", "October 1, 2027") are DERIVED from the instants and pinned by `tests/unit/founding-season-dates.test.ts`. The card ask opens June 1, 2027 (`FOUNDING_SEASON_CARD_WINDOW_OPEN`); the end-of-season ask is a **2028 plan choice, annual first**. Still a **promo, not a repricing** — every list price below stands and is the "normally $X/month" anchor on every surface. Customer framing: `docs/projects/active/FOUNDING_SEASON_2027_OFFER_COPY.md` (the copy canon, approved on mockup sheet `61a78f09`).
   - **Eligibility is the account's sign-up date (Decided 2026-10-18, `BUSINESS_DECISIONS.md`).** With account-first
@@ -176,6 +179,12 @@ composer before Send — the limit line, the day's emails used (the email box of
 ---
 
 ## Decided-but-not-yet-built change log (close these to keep app == this table)
+
+- [ ] **Free League retired + Founding Season removed** — Decided 2026-11-19 (`BUSINESS_DECISIONS.md`), **not built**;
+  plan `docs/projects/active/FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md`. When built: delete the **League** (free floor) row
+  from "Plans at a glance" and every "only the free League floor caps…" clause (house league is then simply unlimited on
+  every plan that carries it); collapse **Promotions** to "none" (the three Founding holders sit on ordinary free time
+  through September 30, 2027, recorded in the free-time record, not here). No price, plan or Stripe object moves.
 
 - [x] **Club Repackaging** — **LIVE ON PROD 2026-06-24** (full dev→master promote, commit `2cef34c`). Repriced Club $179→$219/$2,190; added **Club · Association** (`club_large`, $379/$3,790, 15–30 teams, custom >30 via per-org `organizations.team_limit`); retired the $19/team meter (charge path, takeover flow, nudge all removed); whole-staff portals included; 15/30 caps enforced at rep-team create. Both bands stay early-access. Migs 144/145/146 applied to **prod** + both bands' live Stripe prices wired (monthly+annual); post-launch verification + cap-back-door follow-up fixes shipped in subsequent promotes. (`docs/projects/archive/CLUB_REPACKAGING_PLAN.md`; `memory/project_club_repackaging.md`)
 - [x] **Officials seat exemption** — BUILT dev 2026-06-22 (free-tier `officialsFreeSeats` on; both seat-count + invite paths already honor it; the score-entry "official" role *is* the scorekeeper role). ✅ Long since shipped (verified in config 2026-08-10). ⚠ The `team` plan was missed by this flip — extended by the 2026-08-10 ruling (see the new item below).

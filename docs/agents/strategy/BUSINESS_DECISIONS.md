@@ -8,6 +8,46 @@
 
 ---
 
+### 2026-11-19 — The free League plan is RETIRED for good, and the Founding Season is REMOVED from the product; its three holders keep their promise as ordinary free time (Decided)
+**Status:** **Decided** (owner, 2026-11-19: *"we need to remove the free league plan as an option, we are not offering it…
+also remove anything related to the founding season"*; on the holders: **"Keep promise as free time"**).
+**Decision:**
+1. **The free League plan does not exist.** No free house-league floor, no "League (free)", no 1 season / 1 division / 8
+   teams caps, no free start form. House league is sold only on **League Plus, Club and Club · Association**. This
+   answers the 2026-11-06 open question ("whether the free League floor should exist at all"): it should not. Measured
+   2026-11-19 (counts only): **0** production organizations ever held the free floor; it was switched off in production
+   and on in local dev only. Nothing in Stripe and nothing on a marketing page sells it.
+2. **The Founding Season is removed from the product entirely:** its pages, banners, FAQ answers, lock lines, emails,
+   the 2027 card window and next-season plan choice, the comp hand-out (which could still grant a comp to an account
+   that began signing up before the close) and its platform-admin desk.
+3. **The promise to the accounts already holding it is KEPT, on the ordinary staff-given free time** (the kept feature):
+   each holder gets free time on its plan **through September 30, 2027**, the date it was sold. The holder still on the
+   free Tournament plan (it was promised Tournament Plus at $0 on upgrade until December 31, 2026) gets **Tournament
+   Plus free time through September 30, 2027**. Measured 2026-11-19 (counts only): **3** production holders (one
+   Tournament Plus club, one free Tournament club, one Premium coach); no production account pays through Stripe; one
+   Founding welcome email was sent.
+4. **Not decided here:** renaming League Plus now that there is no free League beneath it. That is a separate
+   `/strategy` call (it touches Stripe product names and every page); **Proposed** only, owner to rule.
+**Rationale:** the free League was never going to be offered and its remains confused this very session (it wrongly
+made "unlimited house league teams" untrue for an account that began on it and later paid). The Founding offer closed
+2026-10-26; keeping its machinery alive for three accounts costs every billing, pricing and email change a branch, when
+the kept free-time feature can carry the same promise.
+**Affects:** start pages, sign-in routing, onboarding, house league caps and refusals, the billing page, lock lines,
+pricing / home / for-coaches / for-tournament-organizers pages, sign-up, emails, platform admin (clubs list, free time,
+renewals, email dashboard, business numbers), help content, the `organizations.free_floor` column, tests, the Facts doc
+(League row, Promotions), `PRICING_PAGE_COPY.md` Founding canon. **No price, no plan, no Stripe object.**
+**Handoff:** HANDOFF → `/plan`: `docs/projects/active/FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md` (+ PM brief), built after
+On-sale pages S2 commits (its uncommitted files overlap). HANDOFF → `/legal`: review the holders' move to free time
+and every customer-facing removal before handoff. HANDOFF → `/marketing`: none new (removal only); the Founding canon
+in `PRICING_PAGE_COPY.md` is marked history. HANDOFF → `/billing`: the holders' conversion and the end of the comp
+paths. HANDOFF → `/docs`: the free League help article and every Founding help line.
+**Supersedes:** 2026-11-06 "League Plus goes on sale…" — **only** its open free-floor clause; 2026-10-26 "The Founding
+Season offer closes early" — its clause that each holder keeps the season **through the Founding machinery** (the
+date and the promise stand, carried by free time); 2026-07-28 "League is parked" — **only** for the free floor (League
+Plus's evaluation stands).
+
+---
+
 ### 2026-11-19 — The Club team limit counts teams that get a Premium Coaches Portal, whatever the club calls them; house league teams are UNLIMITED (Decided)
 **Status:** **Decided** (owner, 2026-11-19, accepting the `/marketing` recommendation: "I agree with your recommendations").
 **Decision:**
@@ -397,6 +437,7 @@ HANDOFF → /strategy (owner): each team's tournament list — does ruling 3's i
 ---
 
 ### 2026-11-06 — League Plus goes on sale at the same time as the Club release; whether the free League floor should exist at all is OPEN, leaning remove
+**⚠ Free-floor clause SUPERSEDED by 2026-11-19 "The free League plan is RETIRED for good…"** (the timing ruling stands).
 **Status:** **Decided** for the timing (owner, 2026-11-06, in the Stripe set-up session: "league plus will go on sale at the same time as the club release since all of its functionality will be available"). **Proposed / open** for the free floor (owner: "we will need to talk about the need for the free league, i am thinking we don't need it and just keep the paid offering"): not ruled; no change is made to the floor.
 **Decision:** League Plus ($89 / $890, unchanged) is purchasable from the Club release, not before and not separately from it. The free League floor (1 season / 1 division / 8 teams, internal key `league_starter`) stays as it is until its own conversation; the owner's lean is to drop it and keep the paid offering only.
 **Rationale:** The "parked pending a full capability evaluation" status of 2026-07-28 rested on League not yet being complete; the owner's view is that its functionality will all be available at the Club release, so it ships with Club.
@@ -1290,6 +1331,8 @@ failed debit's fee.
 ---
 
 ### 2026-10-26 — The Founding Season offer closes early (end of October 25, 2026); every account already in keeps its free season through September 30, 2027 exactly as sold; a new Premium coach pays at sign-up
+**⚠ SUPERSEDED IN PART by 2026-11-19 "…the Founding Season is REMOVED from the product":** the holders keep the date
+and the promise, carried by ordinary free time; the Founding machinery (card window, 2028 choice, send book) goes.
 **Status:** **Decided** (owner, 2026-10-26 — *"given we are almost at November and no coach has signed on, I think we can go
 ahead and remove all founding season marketing and functionality"*; then, on the three choices put to him, **"Close the
 offer, honour existing"** and **"No trial, pay at signup"**). **Built on dev 2026-10-26, same session**; deployment state
@@ -3515,6 +3558,7 @@ HANDOFF → `/billing` — none.
 ---
 
 ### 2026-07-28 — League & Club: the managed early-access cohort is WITHDRAWN; League is parked pending a full capability evaluation
+**⚠ For the FREE League floor only: SUPERSEDED by 2026-11-19 "The free League plan is RETIRED for good…"** (it is not parked; it is gone).
 **Status:** Decided (ratified by owner 2026-07-28 in conversation — "league is just overall not ready for production, you can remove this item and I will later start a project to do a full evaluation of the league capabilities once I finalize the coach portal work")
 **Decision:** Four parts.
 1. **The ~August 2026 managed early-access cohort is WITHDRAWN** (5–10 Club, 10–15 League under the Founding-Season comp). Not re-dated — removed from the roadmap. The 2026-06-22 entry that ratified it is superseded.
