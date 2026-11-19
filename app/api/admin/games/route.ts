@@ -1515,6 +1515,13 @@ export const PATCH = withObservability(async (req: Request) => {
     else if (action === 'revert-score') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
       if (finalLocked) return finalResultLockedResponse();
+      // On a cancelled game this is a reinstatement by another name (it comes back as scheduled), so it is judged like
+      // `revert-to-scheduled` (Stage 9, review): a cancelled source can be moved freely, and putting it back must not
+      // slip past the rule. A game that was scored keeps its place, so nothing is judged for it.
+      if (gameRow.status === 'cancelled') {
+        const refused = await overlapRefused(gameRow.tournamentId, [{ id, status: 'scheduled' }], undefined, 'reinstate');
+        if (refused) return refused;
+      }
       await revertTournamentScore(id);
     }
 

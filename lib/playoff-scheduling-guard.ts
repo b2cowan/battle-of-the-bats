@@ -6,17 +6,19 @@ export interface ScheduledStart {
 }
 
 export function getRoundRobinCompletion(
-  games: Pick<Game, 'date' | 'time' | 'isPlayoff' | 'status'>[],
+  games: (Pick<Game, 'date' | 'time' | 'isPlayoff' | 'status'> & { durationMinutes?: number | null })[],
   gameDurationMinutes: number,
 ): Date | null {
-  const durationMs = Math.max(0, gameDurationMinutes) * 60_000;
+  // A game's own length first, then the default (the game-order rule's chain): the generator drafts after pool play
+  // ENDS by the same clock the server refuses by.
   let latest: Date | null = null;
 
   for (const game of games) {
     if (game.isPlayoff || game.status === 'cancelled' || !game.date || !game.time) continue;
     const start = scheduledStartDate(game);
     if (!start) continue;
-    const end = new Date(start.getTime() + durationMs);
+    const ownMinutes = typeof game.durationMinutes === 'number' && game.durationMinutes > 0 ? game.durationMinutes : gameDurationMinutes;
+    const end = new Date(start.getTime() + Math.max(0, ownMinutes) * 60_000);
     if (!latest || end > latest) latest = end;
   }
 

@@ -26,6 +26,8 @@ interface Props {
   orgSlug?: string;
   /** The division's existing playoff games (from the page). Empty → build mode. */
   existingGames: Game[];
+  /** The division's pool-play games: playoff games wait for them to end (A7), so the order check reads them too. */
+  poolGames?: Game[];
   /** Whether the org can auto-generate (Plus) — shown as an upsell only. */
   canAutoGenerate?: boolean;
   onUseAutoGenerator?: () => void;
@@ -66,7 +68,9 @@ function serializeRows(rows: PreviewRow[]): string {
  * starter; edit mode loads the saved bracket into the canvas. Save persists a
  * DIFF via the service-role `save-bracket` action (preserves played-game scores).
  */
-export default function BracketEditor({ division, tournamentId, tournament = null, orgSlug, existingGames, canAutoGenerate, onUseAutoGenerator, focusGameId, minRestMinutes = 60, onDone, onClear }: Props) {
+const NO_GAMES: Game[] = [];
+
+export default function BracketEditor({ division, tournamentId, tournament = null, orgSlug, existingGames, poolGames = NO_GAMES, canAutoGenerate, onUseAutoGenerator, focusGameId, minRestMinutes = 60, onDone, onClear }: Props) {
   const kx = useKitStyle();
   // Row-invariant kit patches — computed once per render, not once per row/map() call.
   const panelStyle = kx({ border: '1px solid var(--border)', borderRadius: '2px', background: 'var(--surface)', margin: '0 0 1rem' }, KIT_SURFACE.card);
@@ -207,28 +211,43 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
   // The game-order rule (Stage 9, `lib/game-order.ts`): the server's own judgement, a game before its feeder ENDS.
   // Scoped PER TIER — codes repeat across tiers, so each tier is its own bracket here (a row's tier is its bracket).
   const rowsForOrder = useCallback((rows: PreviewRow[]) => {
-    const ownLength = new Map(existingGames.map(g => [g.id, g.durationMinutes ?? null]));
-    return new Map(rows.map((p, i): [string, OrderWordsGame] => {
+    const stored = new Map(existingGames.map(g => [g.id, g]));
+    // A NEW game is saved with the event's length as its own (what Save sends), and the server judges it so.
+    const newLength = tournament?.settings?.game_duration_minutes ?? null;
+    const out = new Map(rows.map((p, i): [string, OrderWordsGame] => {
       const id = p.sourceGameId || `row:${i}`;
+      const was = p.sourceGameId ? stored.get(p.sourceGameId) : undefined;
       return [id, {
         id, divisionId: division.id, divisionName: division.name, bracketId: `tier:${p.pool || ''}`, bracketCode: p.code,
-        isPlayoff: true, status: 'scheduled', date: p.date || null, time: p.time || null,
-        durationMinutes: p.sourceGameId ? ownLength.get(p.sourceGameId) ?? null : null,
+        // A cancelled game is neither a source nor a dependent (the server's reading), so a stored one stays cancelled.
+        isPlayoff: true, status: was?.status === 'cancelled' ? 'cancelled' : 'scheduled', date: p.date || null, time: p.time || null,
+        durationMinutes: p.sourceGameId ? was?.durationMinutes ?? null : newLength,
         homePlaceholder: p.home, awayPlaceholder: p.away,
       }];
     }));
-  }, [existingGames, division.id, division.name]);
+    // Pool play is fixed here: no playoff game starts before the division's last pool game ends (A7).
+    for (const g of poolGames) {
+      out.set(g.id, {
+        id: g.id, divisionId: division.id, divisionName: division.name, bracketId: null, bracketCode: null, isPlayoff: false,
+        status: g.status ?? 'scheduled', date: g.date || null, time: g.time ? g.time.slice(0, 5) : null,
+        durationMinutes: g.durationMinutes ?? null, homePlaceholder: null, awayPlaceholder: null,
+      });
+    }
+    return out;
+  }, [existingGames, poolGames, division.id, division.name, tournament?.settings?.game_duration_minutes]);
   const orderRows = useMemo(() => rowsForOrder(preview), [rowsForOrder, preview]);
   // A3: only a problem THIS edit makes stops Save ("Fix this to save"); one the bracket was already saved with lists
   // under "Already saved this way" and Save still works (the schedule's chip keeps saying it, tab 1).
-  const { toFix, alreadySaved } = useMemo(() => {
-    const lengths = orderLengthsOf([division], tournament);
-    // "Already saved" is the bracket as stored, never a starter the organizer just seeded.
+  const orderLengths = useMemo(() => orderLengthsOf([division], tournament), [division, tournament]);
+  // "Already saved" is the bracket as stored, never a starter the organizer just seeded; it never changes while editing.
+  const savedPairKeys = useMemo(() => {
     const stored = isEditMode ? gamesToBracketPreview(existingGames) : [];
-    const loaded = new Set(findOrderProblems([...rowsForOrder(stored).values()], lengths).map(orderPairKey));
-    const now = findOrderProblems([...orderRows.values()], lengths);
-    return { toFix: now.filter(p => !loaded.has(orderPairKey(p))), alreadySaved: now.filter(p => loaded.has(orderPairKey(p))) };
-  }, [orderRows, rowsForOrder, isEditMode, existingGames, division, tournament]);
+    return new Set(findOrderProblems([...rowsForOrder(stored).values()], orderLengths).map(orderPairKey));
+  }, [rowsForOrder, isEditMode, existingGames, orderLengths]);
+  const { toFix, alreadySaved } = useMemo(() => {
+    const now = findOrderProblems([...orderRows.values()], orderLengths);
+    return { toFix: now.filter(p => !savedPairKeys.has(orderPairKey(p))), alreadySaved: now.filter(p => savedPairKeys.has(orderPairKey(p))) };
+  }, [orderRows, orderLengths, savedPairKeys]);
 
   // Live bracket health — same structural read-out as the Plus auto-generator
   // (tightest turnaround, worst-case games/day, longest run), recomputed as the

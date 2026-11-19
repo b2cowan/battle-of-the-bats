@@ -20,9 +20,6 @@
 .scoreTeams { margin: 0.2rem 0 0.4rem; }
 .audit { margin: 0 0 0.4rem; font-size: var(--type-support); color: var(--text-tertiary); }
 
-/* The field the game-order line speaks of (Stage 9, tab 3): the refusal's red on its border. */
-.form [aria-invalid='true'] { border-color: var(--danger-strong, var(--danger)); }
-
 /* A door is olive text with its chevron (1 October: a door is olive text; an action is the white button). */
 .door {
   display: inline-flex;

@@ -18,6 +18,15 @@ describe('playoff scheduling guard', () => {
     assert.equal(completion?.toISOString(), new Date('2026-07-17T13:30').toISOString());
   });
 
+  it('ends each pool game by its own length first, so the draft waits as long as the server does (Stage 9, A7)', () => {
+    const completion = getRoundRobinCompletion([
+      { date: '2026-07-17', time: '12:00', status: 'scheduled', isPlayoff: false, durationMinutes: 90 },
+      { date: '2026-07-17', time: '09:00', status: 'scheduled', isPlayoff: false, durationMinutes: null },
+    ], 60);
+
+    assert.equal(completion?.toISOString(), new Date('2026-07-17T13:30').toISOString());
+  });
+
   it('flags playoff starts before round robin completion', () => {
     const completion = new Date('2026-07-17T13:30');
 

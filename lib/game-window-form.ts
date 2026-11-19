@@ -94,12 +94,13 @@ export function changesOf(
   }
   if (opts.length !== false && f.durationMinutes !== s.durationMinutes) out.durationMinutes = lengthOfBox(f.durationMinutes);
   if (f.notes !== s.notes) out.notes = f.notes.trim() || null;
-  if (opts.playoff && opts.sources === false) {
-    // Held: the red line under Away and Home says why.
-  } else if (opts.playoff) {
-    // A playoff side is a team OR its slot (a seed, a winner, a loser): both keys go together.
-    if (f.homeTeamId !== s.homeTeamId || f.homePlaceholder !== s.homePlaceholder) { out.homeTeamId = f.homeTeamId || null; out.homePlaceholder = f.homePlaceholder || null; }
-    if (f.awayTeamId !== s.awayTeamId || f.awayPlaceholder !== s.awayPlaceholder) { out.awayTeamId = f.awayTeamId || null; out.awayPlaceholder = f.awayPlaceholder || null; }
+  if (opts.playoff) {
+    // A playoff side is a team OR its slot (a seed, a winner, a loser): both keys go together. Held while the
+    // game-order rule refuses a side (`sources: false`): the red line under Away and Home says why.
+    if (opts.sources !== false) {
+      if (f.homeTeamId !== s.homeTeamId || f.homePlaceholder !== s.homePlaceholder) { out.homeTeamId = f.homeTeamId || null; out.homePlaceholder = f.homePlaceholder || null; }
+      if (f.awayTeamId !== s.awayTeamId || f.awayPlaceholder !== s.awayPlaceholder) { out.awayTeamId = f.awayTeamId || null; out.awayPlaceholder = f.awayPlaceholder || null; }
+    }
   } else {
     // A round-robin game never sends its placeholders: a slot game keeps its slot's name there.
     if (f.homeTeamId !== s.homeTeamId) out.homeTeamId = f.homeTeamId || null;

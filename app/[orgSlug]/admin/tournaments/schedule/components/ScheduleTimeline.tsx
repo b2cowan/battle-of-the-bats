@@ -319,7 +319,7 @@ export default function ScheduleTimeline({
   /** The page's clash map (walk §294: one map for every view's chip, Filter and colour). */
   conflictMap: Map<string, ConflictInfo>;
   /** The page's one conflict per game, the game-order rule's included (Stage 9); absent, the clash map's kind. */
-  conflictOf?: (g: Game) => ScheduleConflict | null;
+  conflictOf: (g: Game) => ScheduleConflict | null;
   /** The game-order rule for a drag (Stage 9, A4): the red spot's reason when this move would put a game before one it
    *  waits for (or a game it feeds before it ends), else null. Checked after a taken field (an overlap wins, A12). */
   orderDropReason?: (g: Game, to: { date: string; time: string }) => string | null;
@@ -512,7 +512,7 @@ export default function ScheduleTimeline({
       : '';
     // A grey block is a game the page's Search or Filter leaves out (the page never narrows by division here).
     const title = `${div?.name ?? ''}${pool ? ` · ${pool.name}` : ''} · ${formatTime(g.time || '')}${ghost ? ' (outside the filter)' : ''}${conflictNote}`;
-    const conflict = ghost ? null : conflictOf ? conflictOf(g) : info?.kind ?? null;
+    const conflict = ghost ? null : conflictOf(g);
     return { top, height, accent, division: div?.name ?? '', round, time: formatTime(g.time || ''), away, home, info, title, state, conflict };
   };
 

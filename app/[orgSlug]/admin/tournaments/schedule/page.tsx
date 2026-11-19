@@ -962,10 +962,12 @@ export default function AdminSchedulePage() {
   // play like a clash. Nothing is locked (A2): the chip says it, the organizer moves either game.
   const orderGames = useMemo(() => scheduled.map(g => orderWordsGameOf(g, divisions, teams)), [scheduled, divisions, teams]);
   const orderLengths = useMemo(() => orderLengthsOf(divisions, currentTournament), [divisions, currentTournament]);
-  const orderById = useMemo(() => {
-    const all = orderProblemsById(findOrderProblems(orderGames, orderLengths));
-    return new Map([...all].filter(([id]) => toPlayConflict(stateById.get(id) ?? 'scheduled', 'order')));
-  }, [orderGames, orderLengths, stateById]);
+  // The rule runs on the games alone; the minute-by-minute `stateById` only decides which pairs still count.
+  const orderAll = useMemo(() => orderProblemsById(findOrderProblems(orderGames, orderLengths)), [orderGames, orderLengths]);
+  const orderById = useMemo(
+    () => new Map([...orderAll].filter(([id]) => toPlayConflict(stateById.get(id) ?? 'scheduled', 'order'))),
+    [orderAll, stateById],
+  );
   const orderGameMap = useMemo(() => new Map(orderGames.map(g => [g.id, g])), [orderGames]);
   /** Every conflict a game has (the Filter finds it under each, A12) and the one its chip says (`shownConflict`). */
   const conflictsOf = useCallback((g: Game): ScheduleConflict[] => {
@@ -1151,6 +1153,9 @@ export default function AdminSchedulePage() {
   // The division the manual bracket builder targets (selected division, else the first without a bracket).
   const playoffBuilderDivisionId = playoffDefaultDivisionId;
   const playoffBuilderDivision = divisions.find(d => d.id === playoffBuilderDivisionId) ?? null;
+  // The bracket editor's games (stable between renders, so its order memos hold): the division's playoff games, and its pool play.
+  const bracketEditorGames = useMemo(() => games.filter(g => g.isPlayoff && g.divisionId === playoffBuilderDivisionId), [games, playoffBuilderDivisionId]);
+  const bracketEditorPoolGames = useMemo(() => games.filter(g => !g.isPlayoff && g.divisionId === playoffBuilderDivisionId), [games, playoffBuilderDivisionId]);
 
   const { handleExportXLSX, handleExportCSV, handleExportPDF, handleExportBracketPDF } = useScheduleExport({
     currentOrg, currentTournament, orgSlug, layout: shownView === 'bracket' ? 'bracket' : 'list', filtered: exportGames,
@@ -1581,7 +1586,8 @@ export default function AdminSchedulePage() {
           tournamentId={currentTournament.id}
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
-          existingGames={games.filter(g => g.isPlayoff && g.divisionId === playoffBuilderDivision.id)}
+          existingGames={bracketEditorGames}
+          poolGames={bracketEditorPoolGames}
           canAutoGenerate={canAutoBracket}
           focusGameId={bracketFocusGameId}
           minRestMinutes={healthRules.minRestMinutes}

@@ -231,6 +231,11 @@ button.row:hover, a.row:hover { background: var(--home-olive-soft); }
 .input:focus,
 .select:focus,
 .textarea:focus { outline: none; border-color: var(--home-olive); }
+/* A field a refusal names (a game that can't start there, a length that would put a game out of order): the red line
+   under it says why, the border says where. One rule for every window that sets `aria-invalid`. */
+.input[aria-invalid='true'],
+.select[aria-invalid='true'],
+.textarea[aria-invalid='true'] { border-color: var(--danger-strong, var(--danger)); }
 .select option,
 .select optgroup { background: var(--home-card); color: var(--text-primary); }
 .hint { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }

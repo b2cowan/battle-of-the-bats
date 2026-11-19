@@ -587,22 +587,22 @@ export default function TournamentEventSettingsPage() {
         ]);
         if (flush) return;
 
+        setLengthRefusal(null);
         if (!tournamentRes.ok) {
           const d = await tournamentRes.json();
-          // A8 (Stage 9): the default length would run a game past one that waits for it. The line under the field
-          // says why; the save word says it did not save.
-          const order = orderLineOfReply(d);
-          setLengthRefusal(order);
-          throw new Error(order ? 'Couldn’t save' : d.error ?? 'Failed to save tournament settings');
+          throw new Error(d.error ?? 'Failed to save tournament settings');
         }
-        setLengthRefusal(null);
         if (!brandingRes.ok) {
           const d = await brandingRes.json();
           throw new Error(d.error ?? 'Failed to save scoring settings');
         }
         if (!schedulingRes.ok) {
           const d = await schedulingRes.json();
-          throw new Error(d.error ?? 'Failed to save scheduling settings');
+          // A8 (Stage 9): the default length (it travels with the scheduling settings) would run a game past one that
+          // waits for it. The line under the field says why; the save word says it did not save.
+          const order = orderLineOfReply(d);
+          setLengthRefusal(order);
+          throw new Error(order ? 'Couldn’t save' : d.error ?? 'Failed to save scheduling settings');
         }
 
         setSaved(prev => ({
@@ -1567,7 +1567,7 @@ export default function TournamentEventSettingsPage() {
                     type="number"
                     min="1" max="600" step="5"
                     value={gameDurationMinutes}
-                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) setGameDurationMinutes(n); }}
+                    onChange={e => { setLengthRefusal(null); const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) setGameDurationMinutes(n); }}
                     aria-invalid={lengthRefusal ? true : undefined}
                   />
                 </label>

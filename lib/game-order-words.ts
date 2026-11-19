@@ -10,7 +10,7 @@
 import { bracketGameLabel, bracketRoundLabel } from './playoff-bracket.ts';
 import { formatTime, possessive } from './utils.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
-import { SCHEDULE_DAY_WORDS, teamOrSlotWords } from './schedule-words.ts';
+import { teamOrSlotWords } from './schedule-words.ts';
 import {
   dateTimeAt, newOrderProblems, orderGameLength, orderLengthsOf, type OrderGame, type OrderLengths, type OrderProblem,
 } from './game-order.ts';
@@ -253,7 +253,7 @@ export interface OrderChangeInput {
 }
 
 /** The pairs a one-game change creates, with the picture after it (null when it creates none). */
-export function orderChangeCheck(input: OrderChangeInput): {
+function orderChangeCheck(input: OrderChangeInput): {
   id: string; problems: OrderProblem[]; games: Map<string, OrderWordsGame>; lengths: OrderLengths;
 } | null {
   const before = input.games.map(g => orderWordsGameOf(g, input.divisions, input.teams));
@@ -321,9 +321,7 @@ export function orderLineOfReply(body: unknown): OrderWords | null {
 
 // ── The screens' words (Part 2 reads these; written here so the rule's sentences have one home) ──────────────────
 
-/** The chip on both games of a pair (A6; stored sentence case, the shared chip renders capitals). The schedule's
- *  Conflicts words hold it, so the chip and the Filter row are one string. */
-export const OUT_OF_ORDER_CHIP = SCHEDULE_DAY_WORDS.conflicts.order;
+// The chip on both games of a pair (A6) is `SCHEDULE_DAY_WORDS.conflicts.order`: the chip and the Filter row are one string.
 
 /** The health window's issue row ("Playoff games out of order") and its detail for one pair. */
 export const ORDER_ISSUE_TITLE = 'Playoff games out of order';
@@ -355,11 +353,10 @@ export function orderReadWords(p: OrderProblem, games: ReadonlyMap<string, Order
 
 /** The timeline's red spot while dragging (A4): "Semifinal 2 runs until 4:30 p.m., so the Final can't go here". */
 export function orderDragReason(
-  problems: OrderProblem | readonly OrderProblem[],
+  list: readonly OrderProblem[],
   games: ReadonlyMap<string, OrderWordsGame>,
   draggedId: string,
 ): string {
-  const list = Array.isArray(problems) ? problems : [problems as OrderProblem];
   const p = pickOrderProblem(list, draggedId);
   const dep = games.get(p.dependentId);
   const srcName = p.kind === 'pool' ? poolPlay(dep) : orderGameName(games.get(p.sourceId));

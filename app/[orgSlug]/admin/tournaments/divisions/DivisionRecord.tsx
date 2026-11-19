@@ -513,7 +513,7 @@ export default function DivisionRecord({
           {(scopes.timing === 'per_division' || form.ownTiming) && (
             <div className={screenParts.recordFields}>
               <label className={ck.field}><span className={ck.label}>{W.gameMinutes}</span>
-                <input className={ck.input} type="number" min="1" max="600" step="5" inputMode="numeric" placeholder={String(eventMinutes)} value={form.gameMinutes} onChange={e => set({ gameMinutes: e.target.value })} aria-invalid={lengthRefusal ? true : undefined} /></label>
+                <input className={ck.input} type="number" min="1" max="600" step="5" inputMode="numeric" placeholder={String(eventMinutes)} value={form.gameMinutes} onChange={e => { setLengthRefusal(null); set({ gameMinutes: e.target.value }); }} aria-invalid={lengthRefusal ? true : undefined} /></label>
               <label className={ck.field}><span className={ck.label}>{W.bufferMinutes}</span>
                 <input className={ck.input} type="number" min="0" max="120" step="5" inputMode="numeric" placeholder={String(eventBuffer)} value={form.bufferMinutes} onChange={e => set({ bufferMinutes: e.target.value })} /></label>
             </div>

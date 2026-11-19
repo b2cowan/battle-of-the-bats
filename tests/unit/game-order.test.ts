@@ -340,7 +340,7 @@ describe('game order: the words (tab 6)', () => {
     assert.equal(dep.lead + dep.rest, 'Out of order. Semifinal 2 ends at 4:30 p.m., after this game starts. Move this game to 4:30 p.m. or later, or move Semifinal 2 earlier.');
     const src = orderReadWords(p, m, 'sf2');
     assert.equal(src.lead + src.rest, 'Out of order. The Final starts at 2:15 p.m., before this game ends. Move this game earlier, or move the Final to 4:30 p.m. or later.');
-    assert.equal(orderDragReason(p, m, 'fin'), 'Semifinal 2 runs until 4:30 p.m., so the Final can’t go here');
+    assert.equal(orderDragReason([p], m, 'fin'), 'Semifinal 2 runs until 4:30 p.m., so the Final can’t go here');
     assert.equal(orderPillWords(p, m, 'fin'), 'Not saved: Semifinal 2 isn’t over by then');
   });
 

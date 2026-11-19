@@ -325,7 +325,18 @@ async function openScheduleAddPlayoffGame(page) {
 async function openScheduleMoveOutOfOrder(page) {
   await pickTournamentScheduleView(page, 'Timeline');
   await filterTournamentScheduleStage(page, 'Playoffs');
-  await page.locator('[data-fit]:visible').last().click();
+  // A game that can be moved: still scheduled, and not a grey "outside the filter" block. A phone shows one field at a
+  // time, so step through the fields until one has such a game.
+  const movable = page.locator('[data-fit][data-state="scheduled"]:not([class*="ghost"]):visible');
+  for (let i = 0; i < 8 && await movable.count() === 0; i++) {
+    const next = page.getByRole('button', { name: 'Next field' });
+    if (await next.count() === 0 || await next.isDisabled()) break;
+    await next.click();
+    await page.waitForTimeout(300);
+  }
+  if (await movable.count() === 0) throw new Error('No playoff game still to play on this day to move');
+  // The fixture's seeded double-booking lays another game over this one, which would take a pointer click: tap it directly.
+  await movable.last().dispatchEvent('click');
   const dialog = page.locator('[role="dialog"]').first();
   await dialog.waitFor({ state: 'attached', timeout: 15_000 });
   const start = dialog.locator('input[type="time"]');
@@ -1869,6 +1880,9 @@ export const SCREENS = [
     ['admin-t-schedule-move-order', openScheduleMoveOutOfOrder, '[role="dialog"]'],
   ].map(([id, interact, scope]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1', interact,
     ...(scope ? { scope } : {}),
+    // The fixture's game day is in the past: pin the page's clock to the morning of it, so its games are still to play
+    // (a played game has no move sheet), as the rain delay's entry does.
+    ...(id === 'admin-t-schedule-move-order' ? { clock: (c) => `${c.tournamentGameDay}T07:00:00-04:00` } : {}),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/schedule?tournamentId=${c.tournamentId}` })),
   { id: 'admin-t-schedule-rain-delay', area: 'tournaments', session: 'orgOwner', ready: 'h1', scope: '[role="dialog"]',
     clock: (c) => `${c.tournamentGameDay}T07:00:00-04:00`,
