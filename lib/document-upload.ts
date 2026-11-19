@@ -1,5 +1,5 @@
 /**
- * PLAYER DOCUMENTS AND DOCUMENT TEMPLATES — what an uploaded file is called and what it really is
+ * PLAYER DOCUMENTS, DOCUMENT TEMPLATES AND A PERMIT'S FILE — what an uploaded file is called and what it really is
  * (Board Ready trust close-out 6, owner 2026-11-18; the third access sweep's "Upload paths" small finding).
  *
  * The three upload routes into the `rep-team-documents` bucket (a coach's player documents, the club's player documents,
@@ -68,13 +68,15 @@ export const DOCUMENT_TYPE_REFUSAL = 'File type not allowed. Use PDF, JPG, PNG, 
 
 /**
  * The whole check, as the three upload routes ask it: what the file really is, the type it is stored and served with, the
- * cleaned name for its key and the name the screens show — or null when the bytes are none of the four types.
+ * cleaned name for its key and the name the screens show — or null when the bytes are none of the four types. `allowed`
+ * narrows the four for a door that takes fewer (a permit's file: PDF, JPEG, PNG — leftover call 10, owner 2026-11-19); that
+ * door refuses in its own words, since `DOCUMENT_TYPE_REFUSAL` names DOCX.
  */
 export function checkDocumentUpload(
-  bytes: ArrayBuffer | Uint8Array, name: string,
+  bytes: ArrayBuffer | Uint8Array, name: string, allowed?: readonly DocumentUploadKind[],
 ): { contentType: string; storedName: string; displayName: string } | null {
   const kind = sniffDocumentUpload(bytes);
-  if (!kind) return null;
+  if (!kind || (allowed && !allowed.includes(kind))) return null;
   return { contentType: documentUploadMime(kind), storedName: documentStoredName(name, kind), displayName: documentDisplayName(name, kind) };
 }
 

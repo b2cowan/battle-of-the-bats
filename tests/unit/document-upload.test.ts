@@ -65,6 +65,23 @@ describe('checkDocumentUpload — the routes’ one call', () => {
     assert.equal(checkDocumentUpload(ascii('<html>'), 'form.pdf'), null);
     assert.equal(checkDocumentUpload(bytes([0x50, 0x4b, 0x03, 0x04], new Uint8Array(2_000_000).fill(0x77)), 'big.docx'), null);
   });
+  test('a door that takes fewer types refuses the rest (a permit: no Word file, leftover call 10)', () => {
+    const docx = bytes([0x50, 0x4b, 0x03, 0x04], ascii('....word/document.xml'));
+    assert.ok(checkDocumentUpload(docx, 'form.docx'), 'the four-type doors still take it');
+    assert.equal(checkDocumentUpload(docx, 'form.pdf', ['pdf', 'jpeg', 'png']), null);
+    assert.equal(checkDocumentUpload(ascii('%PDF-1.7'), 'x.pdf', ['pdf', 'jpeg', 'png'])?.contentType, 'application/pdf');
+  });
+});
+
+describe('guard — a permit’s file checks the bytes too (leftover call 10, owner 2026-11-19)', () => {
+  test('app/api/admin/org/permits/document/route.ts', () => {
+    const src = readFileSync('app/api/admin/org/permits/document/route.ts', 'utf8');
+    assert.match(src, /const checked = checkDocumentUpload\(bytes, file\.name, PERMIT_FILE_KINDS\);\s*if \(!checked\)/);
+    assert.match(src, /contentType: checked\.contentType/);
+    assert.match(src, /-\$\{checked\.storedName\}`/);
+    assert.match(src, /document_name: checked\.displayName/);
+    assert.doesNotMatch(src, /file\.type/, 'never trusts the browser’s claim');
+  });
 });
 
 describe('guard — every rep-team-documents upload checks the bytes', () => {

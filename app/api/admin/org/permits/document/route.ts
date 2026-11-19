@@ -7,6 +7,7 @@ import { canSaveVenueLibrary, canOpenPermitDocument, canReadVenueLibrary } from 
 import { canMoveClubMoney } from '@/lib/member-access';
 import { PERMIT_WORDS as W } from '@/lib/permit-words';
 import { isUuid } from '@/lib/utils';
+import { checkDocumentUpload } from '@/lib/document-upload';
 import { permitChangeOutsideGroups, permitFileOutsideGroups, PERMIT_OUTSIDE_GROUPS_WORDS } from '@/lib/permit-group-scope';
 
 // ---------------------------------------------------------------------------
@@ -27,7 +28,7 @@ import { permitChangeOutsideGroups, permitFileOutsideGroups, PERMIT_OUTSIDE_GROU
 // ---------------------------------------------------------------------------
 
 const BUCKET = 'org-permit-documents';
-const TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+const PERMIT_FILE_KINDS = ['pdf', 'jpeg', 'png'] as const;
 const MAX_SIZE = 10 * 1024 * 1024;
 
 const refusal = (status: number, code: string, error: string) => NextResponse.json({ error, code }, { status });
@@ -90,16 +91,20 @@ export const POST = withObservability(async (req: Request) => {
     try { form = await req.formData(); } catch { return refusal(400, 'bad_upload', 'That upload didn’t arrive whole. Try again.'); }
     const file = form.get('file');
     if (!(file instanceof File)) return refusal(400, 'no_file', 'Choose the permit’s file to upload.');
-    if (!TYPES.includes(file.type)) return refusal(400, 'file_type', 'Upload a PDF, JPG or PNG.');
     if (file.size > MAX_SIZE) return refusal(400, 'file_size', 'The file is over 10 MB. Upload a smaller copy.');
+    // ⚖ Leftover call 10 (owner 2026-11-19; trust call 6's checker): the type is read from the file's own bytes, never the
+    // browser's claim, and is the type it is stored and served with; the key and the shown name are cleaned. A permit takes
+    // PDF, JPEG or PNG only, so a Word file is refused in the permit's words (the shared refusal names DOCX).
+    const bytes = await file.arrayBuffer();
+    const checked = checkDocumentUpload(bytes, file.name, PERMIT_FILE_KINDS);
+    if (!checked) return refusal(400, 'file_type', 'Upload a PDF, JPG or PNG.');
 
-    const name = file.name.replace(/[^\w.\- ()]+/g, '_').slice(-120) || 'permit';
-    const path = `${g.ctx.org.id}/permits/${g.permit.id}/${crypto.randomUUID()}-${name}`;
-    const { error: upErr } = await supabaseAdmin.storage.from(BUCKET).upload(path, await file.arrayBuffer(), { contentType: file.type });
+    const path = `${g.ctx.org.id}/permits/${g.permit.id}/${crypto.randomUUID()}-${checked.storedName}`;
+    const { error: upErr } = await supabaseAdmin.storage.from(BUCKET).upload(path, bytes, { contentType: checked.contentType });
     if (upErr) return refusal(502, 'upload_failed', 'The document couldn’t be saved just now. Try again.');
     const addedAt = new Date().toISOString();
     const { data: took, error } = await supabaseAdmin.from('org_permits').update({
-      document_path: path, document_name: file.name.slice(0, 200), document_size: file.size, document_type: file.type,
+      document_path: path, document_name: checked.displayName, document_size: file.size, document_type: checked.contentType,
       document_added_at: addedAt, updated_at: addedAt, updated_by: g.ctx.user.id,
     }).eq('id', g.permit.id).eq('org_id', g.ctx.org.id).select('id');
     if (error || !took?.length) {
@@ -112,7 +117,7 @@ export const POST = withObservability(async (req: Request) => {
       const { error: rmErr } = await supabaseAdmin.storage.from(BUCKET).remove([g.permit.document_path]);
       if (rmErr) console.error('[permits] the replaced document stayed behind:', rmErr);
     }
-    return NextResponse.json({ success: true, document: { name: file.name.slice(0, 200), size: file.size, addedAt, type: file.type } });
+    return NextResponse.json({ success: true, document: { name: checked.displayName, size: file.size, addedAt, type: checked.contentType } });
   } catch (err) {
     return captureAndJson(err, { error: 'The document couldn’t be saved just now. Try again.', code: 'document_failed' }, 500);
   }

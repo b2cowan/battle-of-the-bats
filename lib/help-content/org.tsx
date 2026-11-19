@@ -1087,14 +1087,14 @@ const orgHelp: HelpPageContent = {
       keywords: [
         'permits', 'permit', 'permits place', 'where did permits go', 'permits moved', 'venue library permits', 'rental', 'contract', 'dome', 'town permit', 'field permit',
         'add permit', 'renew permit', 'delete permit', 'permit use', 'unused hours', 'a week', 'used', 'in use now', 'starts later', 'ended',
-        'field price', 'half field', 'full field', 'budget line', 'pays for', 'payee', 'issuer', 'permit document',
+        'field price', 'half field', 'full field', 'budget line', 'pays for', 'payee', 'issuer', 'permit document', 'limited to some team groups', 'team groups', 'cannot change permit', 'file attached', 'cannot open permit file', 'pdf jpg png', 'word file', 'upload refused',
         'date off', 'dates off', 'holiday', 'city event', 'bookings outside this permit', 'outside this permit', 'still booked', 'stay booked', 'booked that day',
         'fix the practices', 'fiscal year', 'closed fiscal year', 'outside the permit', 'hand out this time', 'schedule from a permit',
         'date off one park', 'date off applies to', 'date off names a park', 'date off at one venue', 'all venues', 'park closed',
         // Telling people away from the permit (Club Tier 13c Session B, 2026-11-08).
         'this morning', 'overview card', 'count on permits', 'permits count', 'schedule health', 'counted once',
       ],
-      searchText: 'a permit’s date off covers its own parks when it is copied into a schedule that uses more than one park and closes only those parks applies to all venues permits permit place sidebar under calendar above schedules phone more sheet first row where did permits go venue library permits switch moved old link lands here rental booking contract town field permit diamond permit dome winter contract fiscal year pill in use now starts later ended a week used hours held booked unused cost an hour held full field half field share a percent of a full field price an hour what each field costs budget line pays for issuer manage payees add a payee reference document upload renew for next year delete permit dates off date off why optional a city event closed fiscal year locked export the permit export the use excel for the town 2 dates off 8 bookings on them bookings are outside this permit now they stay booked until someone moves them doors fix the practices in the schedule open the schedule see the day on the calendar only what this permit’s own dates off took the list goes when nothing is left on those days booked that day practices and house-league games nothing booked that day warns never blocks hands this time out so the permit stays who sees permits owner admin league admin run tournaments accounting treasurer never staff scorekeeper registrar coach team groups limited to some team groups a team outside your groups',
+      searchText: 'a permit’s date off covers its own parks when it is copied into a schedule that uses more than one park and closes only those parks applies to all venues permits permit place sidebar under calendar above schedules phone more sheet first row where did permits go venue library permits switch moved old link lands here rental booking contract town field permit diamond permit dome winter contract fiscal year pill in use now starts later ended a week used hours held booked unused cost an hour held full field half field share a percent of a full field price an hour what each field costs budget line pays for issuer manage payees add a payee reference document upload renew for next year delete permit dates off date off why optional a city event closed fiscal year locked export the permit export the use excel for the town 2 dates off 8 bookings on them bookings are outside this permit now they stay booked until someone moves them doors fix the practices in the schedule open the schedule see the day on the calendar only what this permit’s own dates off took the list goes when nothing is left on those days booked that day practices and house-league games nothing booked that day warns never blocks hands this time out so the permit stays who sees permits owner admin league admin run tournaments accounting treasurer never staff scorekeeper registrar coach team groups limited to some team groups a team outside your groups held for the whole club rep program league read-only file attached open the file replace the file upload a pdf jpg or png word file refused file type isn’t held for a team in your team groups ask your club’s owner or an admin to change it one team',
       content: (
         <p><strong>Permits</strong> is the club&rsquo;s own list of the time it holds at its venues: a town&rsquo;s field permit, a dome&rsquo;s winter contract. It sits in the menu directly under <strong>Calendar</strong> (on a phone, it is a row in the <strong>More</strong> sheet) and comes with League Plus and Club. It used to be a switch at the top of the Venue library; an old link to that switch lands here.</p>
       ),
@@ -1105,7 +1105,7 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p>Permits are for the people who schedule, run tournaments or handle the money: the owner, admins, league admins, anyone given <strong>Run tournaments</strong>, and anyone who holds the club&rsquo;s Accounting (a treasurer). They see Permits and read every permit&rsquo;s time, use and file. Staff, scorekeepers, registrars and coaches don&rsquo;t: Permits isn&rsquo;t in their menu.</p>
-              <p>Saving (<strong>Add permit</strong>, the pencil) is for the owner, admins, league admins and anyone given Run tournaments; someone who only holds Accounting reads, with no button and no pencil. A member limited to some team groups adds, edits or renews a permit only for a team in their groups. A permit&rsquo;s cost, its price an hour and its budget line show only to people who hold the club&rsquo;s Accounting. If a save is refused, the window says why.</p>
+              <p>Saving (<strong>Add permit</strong>, the pencil) is for the owner, admins, league admins and anyone given Run tournaments; someone who only holds Accounting reads, with no button and no pencil. A member limited to some team groups adds, edits, renews or deletes a permit, or replaces its file, only when the permit is held for a team in their groups; the form offers them <strong>One team</strong> only. A permit held for the whole club, the rep program or the league is outside their groups, so it is read-only for them: the window says <em>That permit isn&rsquo;t held for a team in your team groups. Ask your club&rsquo;s owner or an admin to change it.</em> The owner, admins and treasurers are never limited this way. A permit&rsquo;s cost, its price an hour and its budget line show only to people who hold the club&rsquo;s Accounting. If a save is refused, the window says why.</p>
             </>
           ),
         },
@@ -1137,6 +1137,7 @@ const orgHelp: HelpPageContent = {
                 <li>If you hold the club&rsquo;s Accounting, add the cost, the budget line that pays for it, and what each field costs.</li>
                 <li>Upload the issuer&rsquo;s copy (PDF, JPG or PNG, up to 10 MB) and press <strong>Add permit</strong>.</li>
               </ol>
+              <p>The file must really be a PDF, JPG or PNG: FieldLogicHQ checks the file itself, not just its name, and refuses anything else (a Word file, say) with <em>Upload a PDF, JPG or PNG.</em> The file&rsquo;s name shows without any folder part.</p>
               <p>A line under the blocks counts what you&rsquo;ve entered: &ldquo;2 blocks &middot; 8 weeks &middot; 80 h held&rdquo;. Under each date off, a line says what is booked that day; see <a href="#permits-t-dates-off">When a date off has bookings on it</a>.</p>
             </>
           ),
@@ -1178,7 +1179,7 @@ const orgHelp: HelpPageContent = {
           title: 'Reading a permit: its time, cost and use',
           content: (
             <>
-              <p>Open a permit to read it: the issuer, reference and dates (its document opens from its name), its time (&ldquo;80 h held&rdquo;, and its dates off), its cost, and how much of it the club uses. The pencil edits the whole permit, and every change saves as you go.</p>
+              <p>Open a permit to read it: the issuer, reference and dates (its document opens from its name; for a member limited to some team groups, only on a permit held for one of their teams or for the whole club, and on a permit held for a team outside their groups the window says only <em>File attached</em>), its time (&ldquo;80 h held&rdquo;, and its dates off), its cost, and how much of it the club uses. The pencil edits the whole permit, and every change saves as you go.</p>
               <HelpDefs>
                 <HelpDef term="An hour held">The cost divided by the hours held. When the fields are priced differently, the band shows a full field&rsquo;s hour, and a row for each price below it gives the fields at that price and their hour (&ldquo;Fields 1&ndash;4 &middot; Full field &middot; $72.00 an hour&rdquo;).</HelpDef>
                 <HelpDef term="On the budget">The line under the cost: the budget line that pays for it. <strong>Open the line</strong> shows the line; &times; comes back.</HelpDef>
@@ -1211,6 +1212,24 @@ const orgHelp: HelpPageContent = {
           ),
           answerText: 'A permit’s cost, its price an hour and its budget line show only to people who hold the club’s Accounting: the owner, the treasurer, and an admin with Accounting. Everyone else reads the permit’s time and use.',
           keywords: ['permit cost', 'cannot see cost', 'accounting', 'permit', 'rental', 'contract'],
+        },
+        {
+          id: 'faq-permits-team-groups',
+          question: 'I’m limited to some team groups. Why can’t I change this permit or open its file?',
+          answer: (
+            <p>You can add, edit, renew or delete a permit, or replace its file, only when it is held for a team in your team groups. A permit held for the whole club, the rep program or the league is outside your groups, so it is read-only for you: ask the club&rsquo;s owner or an admin to change it. You still see every permit in the list. You can open the file of a permit held for one of your teams or for the whole club; on a permit held for a team outside your groups the window says only <em>File attached</em>, and the file doesn&rsquo;t open.</p>
+          ),
+          answerText: 'You can add, edit, renew or delete a permit, or replace its file, only when it is held for a team in your team groups. A permit held for the whole club, the rep program or the league is outside your groups, so it is read-only for you: ask the club’s owner or an admin to change it. You still see every permit in the list. You can open the file of a permit held for one of your teams or for the whole club; on a permit held for a team outside your groups the window says only File attached, and the file does not open.',
+          keywords: ['limited to some team groups', 'team groups', 'cannot change permit', 'cannot open permit file', 'file attached', 'permit', 'read-only', 'ask an admin'],
+        },
+        {
+          id: 'faq-permits-file-type',
+          question: 'Why was my permit file refused?',
+          answer: (
+            <p>A permit&rsquo;s file must really be a PDF, JPG or PNG, up to 10 MB. FieldLogicHQ checks the file itself, not just its name, so a Word file or anything else is refused with <em>Upload a PDF, JPG or PNG.</em> Save or export the issuer&rsquo;s copy as one of those and upload it again.</p>
+          ),
+          answerText: 'A permit’s file must really be a PDF, JPG or PNG, up to 10 MB. FieldLogicHQ checks the file itself, not just its name, so a Word file or anything else is refused with Upload a PDF, JPG or PNG. Save or export the issuer’s copy as one of those and upload it again.',
+          keywords: ['permit file', 'upload refused', 'pdf jpg png', 'word file', 'file type', 'permit document', 'upload a pdf jpg or png'],
         },
         {
           id: 'faq-permits-blocks',
