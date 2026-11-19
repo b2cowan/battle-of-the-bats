@@ -1,0 +1,549 @@
+<title>Team Pay Link Button</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → one framed true-size specimen with its explanation beside it; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --blue-line: rgba(87,101,30,0.30);
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --amber: #F59E0B;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 72ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 78ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; align-items: start; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.diffs .same-part { opacity: 0.22; }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); padding: 20px; border-radius: 8px; color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.desk { width: 680px; }
+.phone { width: 390px; padding: 0; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.win { width: 640px; background: var(--home-card); border: 1px solid var(--blue-line); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.q { width: 416px; }
+.wclose { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 16px; flex: 0 0 auto; }
+.pen { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.stepBtn { font: inherit; font-size: 12px; line-height: 1.25; text-align: left; border: 1px solid var(--home-line-strong); border-radius: 9px; padding: 6px 10px; background: var(--home-card); color: var(--home-ink); display: grid; }
+.stepBtn small { font-size: 11px; color: var(--home-dim); }
+.stepBtn.r { text-align: right; }
+.footAbove { flex: 1 1 100%; margin: 0; padding: 9px 13px; border: 1px solid rgba(245,158,11,0.32); border-left: 3px solid var(--amber); border-radius: 9px; background: rgba(245,158,11,0.08); font-size: 14px; line-height: 1.4; color: var(--home-ink); }
+.btnDanger { font: inherit; font-size: 14px; font-weight: 600; background: var(--danger-bg); color: var(--danger-ink); border: 1px solid var(--danger-line); border-radius: 8px; padding: 7px 14px; cursor: default; }
+.whead { display: flex; gap: 10px; align-items: flex-start; padding: 17px 24px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.04em; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.wbody { padding: 10px 24px 16px; font-size: 14px; color: var(--home-ink-soft); line-height: 1.5; }
+.wbody p { margin: 0 0 12px; } .wbody p:last-child { margin: 0; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 24px; border-top: 1px solid var(--home-line); flex-wrap: wrap; }
+.wfoot .pos { margin-right: auto; font-size: 12px; color: var(--home-dim); }
+.sec { padding: 14px 0 4px; border-top: 1px solid var(--home-line); }
+.sec:first-child { border-top: 0; padding-top: 2px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0 0 8px; display: flex; gap: 8px; align-items: center; }
+.sumRow { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; color: var(--home-ink); }
+.paySub { margin: 16px 0 5px; font-size: 12px; font-weight: 650; color: var(--home-ink-soft); }
+.rows { display: flex; flex-direction: column; }
+.row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto 44px; gap: 8px; align-items: center; min-height: 44px; font-size: 14px; color: var(--home-ink); }
+.row + .row { border-top: 1px solid var(--home-line); }
+.row.due { grid-template-columns: minmax(0, 1fr) auto auto; gap: 14px; padding: 4px 0; }
+.how { font-size: 12px; color: var(--home-dim); }
+.amt { font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.acts { display: inline-flex; align-items: center; gap: 4px; }
+.plain { font: inherit; font-size: 14px; padding: 5px 11px; border: 1px solid var(--home-line-strong); background: var(--home-card); color: var(--home-ink); border-radius: 8px; cursor: default; }
+.glyph { width: 44px; height: 44px; display: inline-grid; place-items: center; border-radius: 8px; border: 0; background: none; color: var(--home-ink-soft); font-size: 18px; line-height: 1; cursor: default; position: relative; }
+.glyph.open { background: var(--home-olive-soft); color: var(--home-olive); }
+.small { font-size: 12px; color: var(--home-dim); margin: 4px 0 0; }
+.olink { font-size: 12px; font-weight: 650; color: var(--home-olive); margin-top: 6px; display: inline-block; }
+.status { font-size: 12px; color: var(--home-dim); margin: 6px 0 0; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; cursor: default; }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; cursor: default; }
+.dl { display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px; font-size: 14px; margin: 0; }
+.dl dt { color: var(--home-dim); } .dl dd { margin: 0; color: var(--home-ink); }
+.collapsed { font-size: 13px; color: var(--home-dim); padding: 10px 0; border-top: 1px solid var(--home-line); }
+/* the new pay-link line */
+.linkLine { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-top: 4px; min-height: 44px; }
+.linkLine .t { font-size: 12px; color: var(--home-dim); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 46px; width: 300px; background: var(--home-card); border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 5px; z-index: 2; }
+.mi { padding: 8px 10px; border-radius: 7px; display: grid; gap: 1px; }
+.mi .l { font-size: 14px; color: var(--home-ink); font-weight: 650; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.spacer { height: 112px; }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); }
+.pbar .back { font-size: 20px; color: var(--home-ink-soft); width: 44px; height: 44px; display: grid; place-items: center; margin-left: -10px; }
+.pbody { background: var(--home-card); padding: 12px 20px 20px; min-height: 640px; position: relative; }
+.phone .row { grid-template-columns: 48px minmax(0, 1fr) auto 44px; }
+.phone .row.due { grid-template-columns: minmax(0, 1fr) auto; }
+.phone .menu { width: 300px; }
+.sheetDim { position: absolute; inset: 0; background: rgba(36,30,21,0.28); }
+.qPhone { position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); width: auto; }
+.qPhone .wfoot button { min-height: 44px; }
+/* family page */
+.famPage { width: 520px; background: #FFFFFF; border-radius: 12px; padding: 28px; border: 1px solid var(--home-line); }
+.famTitle { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+.famMeta { font-size: 13px; color: var(--home-dim); margin: 0 0 18px; }
+.errCard { border: 1px solid rgba(176,58,34,0.25); background: rgba(176,58,34,0.06); border-radius: 10px; padding: 14px 16px; font-size: 14px; color: var(--home-ink); }
+.contact { font-size: 13px; color: var(--home-ink-soft); margin-top: 12px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 80ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(560px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+.notes h3 { margin: 0; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · trust call 12 · drawings written Nov 18, 2026</span>
+    <h1>“Send a new link” for a team’s pay link</h1>
+    <p class="lead">Where a tournament organizer stops a team’s pay link and sends the team a new one. Every specimen is drawn at true size from the parts that ship today (the team record window, its ⋯ menu, the question window). Click any number or tag to read what it refers to. The last tab holds your asks; the first answer on each is my recommendation and is already selected.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · Where it lives</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · The window</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · After</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · Phone</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · The old link</button>
+    <button role="tab" id="t6" aria-selected="false" data-pane="p6">6 · Asks</button>
+  </nav>
+
+  <!-- 1 · WHERE IT LIVES -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p1"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>One pay-link line under the payments, there whether or not the team owes anything</h2>
+    <p>Today the only pay-link control is the ⋯ on the last “Still due” row, and it holds one item, “Email the pay link”. A team that has paid in full has no “Still due” row, so it has no control at all. That team is the one the finding is about: a forwarded link shows its receipts. The proposal moves the pay link to a line of its own under the payments, with one ⋯ that holds both items.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Before</b><span class="chrome">Tournament admin · team record · desktop</span><button class="tag same" type="button" data-note="This is the record as it ships today: the KitDialog form window opened from Registrations › Teams. Nothing on it is proposed in this column.">TODAY</button></div>
+        <div class="scroll"><div class="frame desk">
+          <div class="win">
+            <div class="whead"><div style="flex:1"><p class="wtitle">Riverdale Rays U13</p><div class="wmeta"><span class="chip">ACCEPTED</span>Slot 4 · Pool B · U13 Girls</div></div><span class="pen" title="Edit this team">✎</span><span class="wclose">✕</span></div>
+            <div class="wbody">
+              <div class="sec same-part"><p class="secH">Payment</p><div class="sumRow"><span>$250 of $650 paid</span><span class="plain">Mark paid · $400</span></div></div>
+              <div class="same-part"><p class="paySub">Received</p>
+                <div class="rows"><div class="row"><span class="how">Nov 2</span><span>Deposit <span class="how">· Card ··4242</span></span><span class="amt">$250.00</span><span class="glyph">⋯</span></div></div>
+              </div>
+              <p class="paySub same-part">Still due</p>
+              <div class="rows"><div class="row due"><span>Balance <span class="amt">$400.00</span></span><span class="how">due Dec 1</span><span class="acts"><span class="plain">Record</span><span class="menuWrap"><span class="glyph open">⋯</span>
+                <div class="menu"><div class="mi"><span class="l">Email the pay link</span></div></div></span></span></div></div>
+              <p class="small">Pay link sent Nov 12</p>
+              <span class="olink same-part">+ Record a different amount</span>
+              <div class="spacer"></div>
+              <div class="sec same-part"><p class="secH">Team</p><dl class="dl"><dt>Coach</dt><dd>Dana Okafor</dd><dt>Email</dt><dd>rays.u13@example.ca</dd></dl><p class="small"><span class="plain">Resend the access link</span></p></div>
+              <div class="collapsed same-part">Placement · Admin notes · Registration answers · Registration</div>
+            </div>
+            <div class="wfoot same-part" style="justify-content:space-between"><span class="stepBtn">‹ Previous<small>Oakville Owls U13</small></span><span class="how">4 of 18</span><span class="stepBtn r">Next ›<small>Burlington Blaze U13</small></span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>After</b><span class="chrome">same record, a team that still owes</span><button class="mark" type="button" data-ask="1">1</button><button class="mark" type="button" data-ask="2">2</button></div>
+        <div class="scroll"><div class="frame desk">
+          <div class="win">
+            <div class="whead"><div style="flex:1"><p class="wtitle">Riverdale Rays U13</p><div class="wmeta"><span class="chip">ACCEPTED</span>Slot 4 · Pool B · U13 Girls</div></div><span class="pen" title="Edit this team">✎</span><span class="wclose">✕</span></div>
+            <div class="wbody">
+              <div class="sec same-part"><p class="secH">Payment</p><div class="sumRow"><span>$250 of $650 paid</span><span class="plain">Mark paid · $400</span></div></div>
+              <div class="same-part"><p class="paySub">Received</p>
+                <div class="rows"><div class="row"><span class="how">Nov 2</span><span>Deposit <span class="how">· Card ··4242</span></span><span class="amt">$250.00</span><span class="glyph">⋯</span></div></div>
+              </div>
+              <p class="paySub same-part">Still due</p>
+              <div class="rows"><div class="row due"><span>Balance <span class="amt">$400.00</span></span><span class="how">due Dec 1</span><span class="acts"><span class="plain">Record</span> <button class="tag re" type="button" data-note="RESTYLED. The ⋯ that held only “Email the pay link” leaves this row. The row keeps its Record button. The item moves to the pay-link line below, so the pay link has one home on every team, owing or not.">RESTYLED</button></span></div></div>
+              <span class="olink same-part">+ Record a different amount</span>
+              <div class="linkLine"><span class="t">Pay link sent Nov 12 <button class="tag new" type="button" data-note="NEW. The pay-link line. It takes the place of today’s “Pay link sent Nov 12” foot line and gains a 44px ⋯. Its ⋯ is the shipped toolbar menu the payment rows use, widened to fit the hint line. It shows to the people who can Email the pay link today (ask 2).">NEW</button></span>
+                <span class="menuWrap"><span class="glyph open">⋯</span>
+                  <div class="menu"><div class="mi"><span class="l">Email the pay link</span></div><div class="mi"><span class="l">Send a new link</span><span class="h">Stops the link they have now</span></div></div></span></div>
+              <div class="spacer"></div>
+              <div class="sec same-part"><p class="secH">Team</p><dl class="dl"><dt>Coach</dt><dd>Dana Okafor</dd><dt>Email</dt><dd>rays.u13@example.ca</dd></dl><p class="small"><span class="plain">Resend the access link</span></p></div>
+              <div class="collapsed same-part">Placement · Admin notes · Registration answers · Registration</div>
+            </div>
+            <div class="wfoot same-part" style="justify-content:space-between"><span class="stepBtn">‹ Previous<small>Oakville Owls U13</small></span><span class="how">4 of 18</span><span class="stepBtn r">Next ›<small>Burlington Blaze U13</small></span></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>After · a team that has paid in full</b><button class="mark" type="button" data-ask="3">3</button><button class="tag new" type="button" data-note="NEW. Today this team’s record has no pay-link control at all, because there is no Still due row. Its link still opens a page showing the team’s receipts (card brand and last 4).">NEW</button></div>
+        <div class="scroll"><div class="frame desk">
+          <div class="win">
+            <div class="whead"><div style="flex:1"><p class="wtitle">Milton Bats U13</p><div class="wmeta"><span class="chip">ACCEPTED</span>Slot 7 · Pool A · U13 Girls</div></div><span class="pen" title="Edit this team">✎</span><span class="wclose">✕</span></div>
+            <div class="wbody">
+              <div class="sec same-part"><p class="secH">Payment</p><div class="sumRow"><span>Paid in full · $650</span></div></div>
+              <div class="same-part"><p class="paySub">Received</p>
+                <div class="rows"><div class="row"><span class="how">Nov 2</span><span>Deposit <span class="how">· Card ··1881</span></span><span class="amt">$250.00</span><span class="glyph">⋯</span></div><div class="row"><span class="how">Nov 14</span><span>Balance <span class="how">· Card ··1881</span></span><span class="amt">$400.00</span><span class="glyph">⋯</span></div></div>
+              </div>
+              <div class="linkLine"><span class="t">Pay link <button class="tag new" type="button" data-note="No date here on purpose. Only a press of Email the pay link records a send date. The link also went out with the acceptance email and the receipts, which record none. So most paid teams show the bare label, and Stop still works.">NO DATE</button></span>
+                <span class="menuWrap"><span class="glyph open">⋯</span>
+                  <div class="menu"><div class="mi"><span class="l">Stop the pay link</span><span class="h">No new link goes out right now</span></div></div></span></div>
+              <div class="spacer" style="height:70px"></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain notes">
+        <h3>Who sees the line, and when</h3>
+        <ul>
+          <li><b>Who:</b> the club owner, admins and anyone given “Run tournaments”, the same people the server already lets email a pay link. The treasurer’s Accounting seat, scorekeepers, check-in volunteers and coaches don’t see it (ask 2).</li>
+          <li><b>When:</b> on every accepted team while the tournament takes card payments, and on any team that ever paid by card, even one later declined, because its link still shows receipts.</li>
+          <li><b>The menu holds:</b> “Email the pay link” only while the team can pay now, which is today’s rule. “Send a new link” when it can pay now and has an email. Otherwise “Stop the pay link” (ask 3).</li>
+          <li><b>Pressing it twice:</b> the item stays in the menu after a stop. Pressing again stops whatever link is current, including the one behind the coach’s own Pay button.</li>
+          <li><b>Not here:</b> the coach portal. A coach’s own Pay button always opens the current link, so it keeps working after a replacement with nothing to do.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · THE WINDOW -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p2"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>One question window, worded for what will actually happen</h2>
+    <p>Drawn from the shipped question window (the one “Email the pay link anyway?” uses), 416px wide as it ships. The words are adapted from the house league’s “Send a new link?” window, with a sentence added for forwarded copies and one for a payment already under way. Stop answers are drawn red-tinted, as the One Window rulings ask of a destructive answer (ask 9).</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The team still owes, and has an email</b><button class="tag new" type="button" data-note="NEW window. The kit’s question window: a title, a body, Cancel and one lime button. Its words are the house league’s newLink words with “family” changed to the team.">NEW</button></div>
+        <div class="scroll"><div class="frame" style="width:520px">
+          <div class="win q">
+            <div class="whead"><p class="wtitle" style="flex:1">Send a new link?</p><span class="wclose">✕</span></div>
+            <div class="wbody">
+              <p class="same-part">Riverdale Rays U13’s current pay link stops working straight away, including any copy that was forwarded.</p>
+              <p>The new one goes to <b>rays.u13@example.ca</b>. If that address is wrong, change the email first.</p>
+              <p class="same-part">A payment already on the card page still goes through. Anyone who has the old page open but hasn’t pressed Pay yet will need the new email.</p>
+            </div>
+            <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Send a new link</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>A team that can’t be sent one now</b><button class="mark" type="button" data-ask="3">3</button><button class="tag new" type="button" data-note="NEW window. The second paragraph names the real reason, one sentence per cause: “Nothing is owed”, “The tournament is over”, “The team was declined”, “This team has no email address”, and so on. Build note: today the server hands back only its refusal sentence, and some of those read wrongly here. For a completed event it says the team “is no longer in” the tournament. So the build needs the cause as a code, and the record picks its own sentence.">NEW</button></div>
+        <div class="scroll"><div class="frame" style="width:520px">
+          <div class="win q">
+            <div class="whead"><p class="wtitle" style="flex:1">Stop the pay link?</p><span class="wclose">✕</span></div>
+            <div class="wbody">
+              <p class="same-part">Milton Bats U13’s current pay link stops working straight away, including any copy that was forwarded.</p>
+              <p>Nothing is owed, so no new link goes out. Any pay-link email sent from now on carries the new link.</p>
+              <p class="same-part">A payment already on the card page still goes through.</p>
+            </div>
+            <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnDanger">Stop the link</span> <button class="mark" type="button" data-ask="9">9</button></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The team lost a card dispute</b><button class="mark" type="button" data-ask="6">6</button></div>
+        <div class="scroll"><div class="frame" style="width:520px">
+          <div class="win q">
+            <div class="whead"><p class="wtitle" style="flex:1">Send a new link?</p><span class="wclose">✕</span></div>
+            <div class="wbody">
+              <p>Riverdale Rays U13’s current pay link stops working straight away, including any copy that was forwarded.</p>
+              <p>The new one goes to <b>rays.u13@example.ca</b>.</p>
+            </div>
+            <div class="wfoot"><p class="footAbove">The bank took this team’s card payment back, and the club lost the dispute. Payment reminders leave the team out so someone can talk to them first. You can still send the pay link.</p><span class="btnOut">Cancel</span><span class="btnDanger">Only stop the link</span><span class="btnLime">Send a new link</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>Why “Only stop the link” is on the dispute window</h3>
+        <p>The amber note is the shipped dispute words, in the window’s own note above the buttons. The three buttons wrap to a second row at this width, as drawn. An organizer who opens this for a team that lost a dispute probably wants the old link dead and no new card payment invited. Today the server stops the link first and asks about the dispute afterwards, in a second window. The proposal asks first, in this one window, and offers both answers (ask 6).</p>
+        <p>Build size if ruled: the record already reads each payment’s dispute, so it knows before the window opens. The server needs a “stop only” answer and has to check the dispute before it stops, about a day’s work with its tests.</p>
+        <p>Pressing “Send a new link” here stops the old link and sends the new one in one step. It never opens a second window.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · AFTER -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>The answer shows in the record, on the pay-link line</h2>
+    <p>Today’s “Email the pay link” answers with a quiet status line in the record, not a toast. Send a new link does the same, so the organizer’s eye stays where they clicked. The line itself then says the link was replaced (ask 7).</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Sent</b><button class="mark" type="button" data-ask="7">7</button></div>
+        <div class="scroll"><div class="frame" style="width:620px"><div class="win" style="width:580px"><div class="wbody">
+          <div class="linkLine" style="margin-top:0"><span class="t">Pay link replaced Nov 18</span><span class="glyph">⋯</span></div>
+          <p class="status" role="status">New link sent to rays.u13@example.ca. The old one has stopped.</p>
+        </div></div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Stopped, nothing sent (nothing owed)</b></div>
+        <div class="scroll"><div class="frame" style="width:620px"><div class="win" style="width:580px"><div class="wbody">
+          <div class="linkLine" style="margin-top:0"><span class="t">Pay link stopped Nov 18</span><span class="glyph">⋯</span></div>
+          <p class="status" role="status">The old link has stopped. No new link was sent, because nothing is owed.</p>
+        </div></div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Stopped, the email didn’t go</b><button class="tag new" type="button" data-note="NEW error state. The server already stops the old link before it sends, and answers plainly when the send fails (no address, or the mail service refused). The record must say both halves: the old link is gone, the new one isn’t out yet.">NEW</button></div>
+        <div class="scroll"><div class="frame" style="width:620px"><div class="win" style="width:580px"><div class="wbody">
+          <div class="linkLine" style="margin-top:0"><span class="t">Pay link stopped Nov 18</span><span class="glyph">⋯</span></div>
+          <p class="status" role="status">The old link has stopped, but the new one didn’t send. This team has no email address. Add one with Edit this team, then use Email the pay link.</p>
+        </div></div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Nothing changed (the stop itself failed)</b></div>
+        <div class="scroll"><div class="frame" style="width:620px"><div class="win" style="width:580px"><div class="wbody">
+          <div class="linkLine" style="margin-top:0"><span class="t">Pay link sent Nov 12</span><span class="glyph">⋯</span></div>
+          <p class="status" role="status">Couldn’t replace the link. Try again. The old link still works.</p>
+        </div></div></div></div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>No copy button (ask 4)</h3>
+      <p>The new link goes by email only, as it does on the house-league side. A copy button would invite the organizer to paste it into a group chat, which is how a link ends up in the wrong hands in the first place. Neither side has a copy control today.</p>
+    </div>
+  </section>
+
+  <!-- 4 · PHONE -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <h2>On a phone: the same line, the same menu, the same window</h2>
+    <p>On a phone the team record fills the screen with ← at the top left; that ships today. The ⋯ is a 44px target at every width. The pay-link line sits under the payments like any other row. The question window stays a centred card with Cancel and the answer side by side, as it ships.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The menu, open</b><span class="chrome">390px · true size</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span class="back">←</span><b style="font-size:16px">Riverdale Rays U13</b></div>
+          <div class="pbody">
+            <p class="secH">Payment</p><div class="sumRow"><span>$250 of $650 paid</span></div>
+            <p class="paySub">Received</p>
+            <div class="rows"><div class="row"><span class="how">Nov 2</span><span>Deposit</span><span class="amt">$250.00</span><span class="glyph">⋯</span></div></div>
+            <p class="paySub">Still due</p>
+            <div class="rows"><div class="row due"><span>Balance <span class="amt">$400.00</span><br><span class="how">due Dec 1</span></span><span class="plain" style="min-height:44px;display:inline-grid;place-items:center">Record</span></div></div>
+            <div class="linkLine"><span class="t">Pay link sent Nov 12</span><span class="menuWrap"><span class="glyph open">⋯</span>
+              <div class="menu"><div class="mi"><span class="l">Email the pay link</span></div><div class="mi"><span class="l">Send a new link</span><span class="h">Stops the link they have now</span></div></div></span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>The window</b><span class="chrome">390px · true size</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span class="back">←</span><b style="font-size:16px">Riverdale Rays U13</b></div>
+          <div class="pbody">
+            <div class="sheetDim"></div>
+            <div class="win q qPhone">
+              <div class="whead"><p class="wtitle" style="flex:1">Send a new link?</p><span class="wclose">✕</span></div>
+              <div class="wbody"><p>Riverdale Rays U13’s current pay link stops working straight away, including any copy that was forwarded.</p><p>The new one goes to <b>rays.u13@example.ca</b>. If that address is wrong, change the email first.</p></div>
+              <div class="wfoot"><button class="btnOut" type="button">Cancel</button><button class="btnLime" type="button">Send a new link</button></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="explain"><h3>Open this page on your phone</h3><p>The phone frames are drawn at 390px. On a laptop they read smaller than they will in the hand, so check the tap sizes on the phone itself. The ⋯ opens the same small menu it opens on a desk. The payment rows’ ⋯ does the same today.</p></div>
+  </section>
+
+  <!-- 5 · THE OLD LINK -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <h2>What someone holding the old link sees</h2>
+    <p>The page already exists and the words don’t need to change (ask 5). They are the same words for a replaced link and for a link that was never real, so the page gives nothing away about why it stopped. They tell the reader the one thing to do.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The team pay page, old link</b><span class="chrome">public · the tournament’s own theme</span><button class="tag same" type="button" data-note="UNCHANGED. The page as it ships: an error card with the line below and the club’s contact line. No heading, no team name, no receipts, no amount.">UNCHANGED</button><button class="mark" type="button" data-ask="5">5</button></div>
+        <div class="scroll"><div class="frame" style="width:580px">
+          <div class="famPage">
+            <p class="famTitle">Fall Classic 2026</p><p class="famMeta">Riverdale Minor Ball</p>
+            <div class="errCard">This payment link doesn’t work. Ask the organizer to email you a new one.</div>
+            <p class="contact">Questions? Contact the tournament at tournaments@example.ca.</p>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>What keeps working</h3>
+        <ul>
+          <li><b>A payment already on the card page.</b> It goes through and the team lands on the new link’s receipt. The server does this already.</li>
+          <li><b>Not covered:</b> someone who had the old pay page open but hadn’t pressed Pay. Their press is refused with the line on the left, and they need the new email. The build can leave this gap. Closing it would mean letting an old link pay for a moment longer, which works against the point of the button.</li>
+          <li><b>The coach portal.</b> A coach’s own Pay button builds the current link every time.</li>
+          <li><b>Every pay-link email from now on,</b> while the team can pay: acceptance, reminders, receipts and bank-debit emails all carry the current link.</li>
+          <li><b>What stops:</b> every copy of the old link, in any inbox, forwarded or not.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · ASKS -->
+  <section class="pane" id="p6" role="tabpanel" aria-labelledby="t6" hidden>
+    <h2>Your asks</h2>
+    <p>The first answer on each is my recommendation and is already selected. Change only the ones you disagree with, add a note if you want, then press Build the summary and paste it into the chat. Nothing is built from this page; the button’s build is a later session.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc" id="noteGo" type="button" hidden>Go to the ask</button><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var ASKS = [
+  {n:1, t:"Where the pay link lives", why:"Today the only pay-link control is the ⋯ on the last “Still due” row, so a paid team has none.", o:[
+    "One “Pay link” line under the payments on every team, its ⋯ holding both items; the due row keeps only Record",
+    "Keep “Email the pay link” on the due row and add “Send a new link” beside it; show a pay-link line only on a team with nothing due",
+    "Put “Send a new pay link” in the Team section, beside “Resend the access link”"]},
+  {n:2, t:"Who can use it", why:"The server already lets the people who run tournaments do this; the treasurer cannot email a pay link today.", o:[
+    "The same people as “Email the pay link” today: owner, admins and anyone given Run tournaments",
+    "Those people and the treasurer’s Accounting seat too"]},
+  {n:3, t:"A team that owes nothing, or has no email", why:"The server stops the link either way, but cannot email a new one when nothing is owed or there is no address.", o:[
+    "The item reads “Stop the pay link”, and its window says no new link goes out",
+    "Always “Send a new link”; the line afterwards says the new one couldn’t be sent"]},
+  {n:4, t:"Copying the new link", why:"Neither the tournament nor the house-league side has a copy control today.", o:[
+    "No copy button; the new link goes by email only",
+    "Add “Copy the new link” to the answer line"]},
+  {n:5, t:"What the old link says", why:"Today: “This payment link doesn’t work. Ask the organizer to email you a new one.” The same words cover a forged link.", o:[
+    "Keep today’s words unchanged",
+    "Change to “This payment link has been replaced. Ask the organizer to email you a new one.”"]},
+  {n:6, t:"A team that lost a card dispute", why:"Today the server stops the link first, then asks about the dispute in a second window.", o:[
+    "Ask in the same window, before anything stops, with “Only stop the link” as a second answer",
+    "Keep the second window after the stop, as “Email the pay link” does"]},
+  {n:7, t:"What the record says afterwards", why:"Today the line reads “Pay link sent Nov 12” after an email. The server records when a link was replaced, but the record isn’t told yet; the build adds that.", o:[
+    "The line reads “Pay link replaced Nov 18” (or “stopped Nov 18”) until the next send",
+    "Only the status line right after; the pay-link line keeps showing the last send"]},
+  {n:8, t:"A completed tournament", why:"A completed event locks its rules, files and links (call 14). The payment menus don’t lock with it today. Stopping a pay link changes no result; it only shuts a door that still shows receipts, so this would be a deliberate exception to the lock.", o:[
+    "Stopping still works after the event is completed (the item reads “Stop the pay link”)",
+    "It locks with the event, like the rest of the record"]},
+  {n:9, t:"The colour of a Stop answer", why:"The One Window rulings draw a destructive answer red-tinted. A stopped link can’t be brought back, but “Send a new link” is lime on the house-league side.", o:[
+    "“Stop the link” and “Only stop the link” red-tinted; “Send a new link” stays lime, as on the house-league side",
+    "All of them lime, as the house league’s Send a new link is today"]}
+];
+var NOTES = {
+  1:"Ask 1 · Where it lives. Recommended: one pay-link line under the payments, there on every team. It takes the place of today’s “Pay link sent” foot line, and it is the only design that gives a paid team a control.",
+  2:"Ask 2 · Who. The server’s rule is “whoever runs tournaments”, the same rule that guards refunds. Recommended: keep it, so whoever can email a link can also replace one.",
+  3:"Ask 3 · Honest words. When nothing is owed the server stops the link but won’t send one. Recommended: say so up front. The item and its window read “Stop the pay link”, so nobody expects an email that never comes.",
+  5:"Ask 5 · The old link’s page. Recommended: no change. The words already tell the holder what to do and say nothing about why.",
+  6:"Ask 6 · Lost dispute. Recommended: ask before anything stops, in one window. This needs a small server change for the build: check the dispute before the stop, not after.",
+  7:"Ask 7 · The line afterwards. Recommended: “Pay link replaced Nov 18”. The server already records when a link was replaced; the record only has to read it."
+};
+var KEY = "br-paylink-button-v1";
+var S = { pick:{}, note:{}, tab:"p1", seg:{} };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var host = document.getElementById("asks");
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + a.t + "</h3><p class=\"why\">" + a.why + "</p>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + o + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note (optional)</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var pick = S.pick[a.n] != null ? S.pick[a.n] : 0;
+  var r = document.getElementById("a" + a.n + "o" + pick); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+
+function build(){
+  var L = ["Pay link button (drawings Nov 18, 2026)", ""];
+  ASKS.forEach(function(a){
+    var p = S.pick[a.n] != null ? S.pick[a.n] : 0;
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  L.push(""); L.push("Short form: " + ASKS.map(function(a){ return a.n + String.fromCharCode(65 + (S.pick[a.n] != null ? S.pick[a.n] : 0)); }).join(" · "));
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var txt = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(txt).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+
+Array.prototype.forEach.call(document.querySelectorAll(".seg"), function(seg){
+  var pane = document.getElementById(seg.getAttribute("data-seg"));
+  function set(v){ Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-v") === v ? "true" : "false"); }); pane.classList.toggle("diffs", v === "diff"); S.seg[seg.getAttribute("data-seg")] = v; save(); }
+  seg.addEventListener("click", function(ev){ var b = ev.target.closest("button"); if (b) set(b.getAttribute("data-v")); });
+  set(S.seg[seg.getAttribute("data-seg")] || "all");
+});
+
+var dlg = document.getElementById("note"), goBtn = document.getElementById("noteGo"), goTo = null;
+function open(title, body, ask){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = ""; var p = document.createElement("p"); p.textContent = body; b.appendChild(p);
+  goTo = ask || null; goBtn.hidden = !ask;
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+goBtn.addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); show("p6"); var el = document.getElementById("ask" + goTo); if (el) el.scrollIntoView({ block: "start" }); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); var a = ASKS.filter(function(x){ return x.n === n; })[0]; open("Ask " + n + " · " + a.t, NOTES[n] || a.why, n); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { open(t.textContent.trim(), t.getAttribute("data-note"), null); }
+});
+})();
+</script>
