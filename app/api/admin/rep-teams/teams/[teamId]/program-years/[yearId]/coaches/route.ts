@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYear, getRepTeamCoaches } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { peopleSignInFacts } from '@/lib/two-step-club-status';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -54,17 +55,23 @@ export const GET = withObservability(async (_req: Request,
         .in('user_id', userIds)).data ?? []
     : [];
 
-  const { data: usersData } = userIds.length > 0
-    ? await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
-    : { data: { users: [] } };
+  // ⚖ Leftover call 9 (owner 2026-11-19): the emails come from the Members screen's reader, ONE read of just these people
+  // (people_sign_in_facts), never the platform-wide account list, which stopped at 1,000 accounts and whose failed read
+  // was ignored (every email then read blank). A failed read refuses; it never answers with blanks.
+  let people: Awaited<ReturnType<typeof peopleSignInFacts>>;
+  try {
+    people = await peopleSignInFacts(userIds);
+  } catch (e) {
+    console.error('[program-year coaches] the sign-in facts read failed:', e);
+    return NextResponse.json({ error: 'We couldn’t read this season’s coaches just now. Try again.' }, { status: 503 });
+  }
 
   const memberMap = new Map(memberRows.map(m => [m.user_id, m.display_name]));
-  const emailMap = new Map((usersData?.users ?? []).map(u => [u.id, u.email ?? '']));
 
   const enriched = coaches.map(c => ({
     ...c,
     displayName: memberMap.get(c.userId) ?? null,
-    email: emailMap.get(c.userId) ?? '',
+    email: people.get(c.userId)?.email ?? '',
   }));
 
   return NextResponse.json({ coaches: enriched });

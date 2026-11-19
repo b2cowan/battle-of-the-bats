@@ -99,6 +99,8 @@ export default function PastYearDetailPage({
         eventsRes.json(),
         coachesRes.json(),
       ]);
+      // A coaches read that failed says so, never "no coaches" (leftover call 9: the route now answers 503 rather than blanks).
+      if (!coachesRes.ok) throw new Error(coachesData.error ?? 'We couldn’t read this season’s coaches just now. Try again.');
 
       setTeam(pyData.team);
       setProgramYear(pyData.programYear);
