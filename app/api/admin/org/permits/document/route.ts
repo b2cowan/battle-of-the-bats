@@ -15,7 +15,7 @@ import { permitChangeOutsideGroups, permitFileOutsideGroups, PERMIT_OUTSIDE_GROU
 // and size, opened by the signed link, replaced by a new upload").
 //
 // GET  ?orgSlug=&id=<permit>        — { url }: a ONE-HOUR signed link to read it. The storage path is never sent.
-// POST ?orgSlug=&id=<permit>        — multipart `file`: PDF, JPEG or PNG, 10 MB at most. Replaces the one there (the old
+// POST ?orgSlug=&id=<permit>        — multipart `file`: PDF, JPEG, PNG or Word .docx, 10 MB at most. Replaces the one there (the old
 //                                     file is removed once the new one is recorded).
 //
 // The private `org-permit-documents` bucket was made by mig 322 (never in the dashboard), with NO storage policies: this
@@ -28,7 +28,7 @@ import { permitChangeOutsideGroups, permitFileOutsideGroups, PERMIT_OUTSIDE_GROU
 // ---------------------------------------------------------------------------
 
 const BUCKET = 'org-permit-documents';
-const PERMIT_FILE_KINDS = ['pdf', 'jpeg', 'png'] as const;
+const PERMIT_FILE_TYPE_REFUSAL = 'Upload a PDF, JPG, PNG or Word file.';
 const MAX_SIZE = 10 * 1024 * 1024;
 
 const refusal = (status: number, code: string, error: string) => NextResponse.json({ error, code }, { status });
@@ -94,10 +94,11 @@ export const POST = withObservability(async (req: Request) => {
     if (file.size > MAX_SIZE) return refusal(400, 'file_size', 'The file is over 10 MB. Upload a smaller copy.');
     // ⚖ Leftover call 10 (owner 2026-11-19; trust call 6's checker): the type is read from the file's own bytes, never the
     // browser's claim, and is the type it is stored and served with; the key and the shown name are cleaned. A permit takes
-    // PDF, JPEG or PNG only, so a Word file is refused in the permit's words (the shared refusal names DOCX).
+    // the checker's four types: PDF, JPEG, PNG and, since the owner's yes 2026-11-19 (P8b; mig 507 lets the bucket hold
+    // it), a Word .docx, which the window's Open downloads rather than shows.
     const bytes = await file.arrayBuffer();
-    const checked = checkDocumentUpload(bytes, file.name, PERMIT_FILE_KINDS);
-    if (!checked) return refusal(400, 'file_type', 'Upload a PDF, JPG or PNG.');
+    const checked = checkDocumentUpload(bytes, file.name);
+    if (!checked) return refusal(400, 'file_type', PERMIT_FILE_TYPE_REFUSAL);
 
     const path = `${g.ctx.org.id}/permits/${g.permit.id}/${crypto.randomUUID()}-${checked.storedName}`;
     const { error: upErr } = await supabaseAdmin.storage.from(BUCKET).upload(path, bytes, { contentType: checked.contentType });

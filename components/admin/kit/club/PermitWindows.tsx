@@ -824,7 +824,7 @@ export function PermitWindow({
                 <span className={ck.label}>{W.document}</span>
                 <label className={own.addDoor} style={{ cursor: uploading ? 'wait' : 'pointer' }}>
                   <Upload size={14} aria-hidden />{uploading ? 'Uploading…' : view.document ? W.replaceDocument : W.uploadDocument}
-                  <input type="file" accept="application/pdf,image/jpeg,image/png" hidden disabled={uploading}
+                  <input type="file" accept="application/pdf,image/jpeg,image/png,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden disabled={uploading}
                     onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
                 </label>
                 {view.document && <p className={ck.hint}>{view.document.name ?? W.documentAttached}{view.document.size !== null ? ` · ${fileSizeWords(view.document.size)}` : ''}</p>}
@@ -1065,7 +1065,7 @@ function DatesOffNoticeBlock({ q, permitId, onGo }: {
   );
 }
 
-/** Sends the issuer's document for a saved permit (PDF, JPG or PNG; the route holds the rules). */
+/** Sends the issuer's document for a saved permit (PDF, JPG, PNG or Word; the route holds the rules). */
 async function postPermitDocument(q: string, permitId: string, file: File): Promise<{ ok: boolean; data: unknown }> {
   const body = new FormData();
   body.append('file', file);
@@ -1148,7 +1148,7 @@ export function AddPermitWindow({ q, venues, money, startVenueId, onAdded, onClo
             <span className={ck.label}>{W.document}</span>
             <label className={own.addDoor}>
               <Upload size={14} aria-hidden />{file ? file.name : W.uploadDocument}
-              <input type="file" accept="application/pdf,image/jpeg,image/png" hidden onChange={e => setFile(e.target.files?.[0] ?? null)} />
+              <input type="file" accept="application/pdf,image/jpeg,image/png,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={e => setFile(e.target.files?.[0] ?? null)} />
             </label>
             <p className={ck.hint}>{file ? fileSizeWords(file.size) : W.documentHint}</p>
           </div>

@@ -16220,6 +16220,15 @@
         "column_default": null
       },
       {
+        "table_name": "organizations",
+        "pos": 56,
+        "column_name": "start_plan",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "payments_terms_agreements",
         "pos": 1,
         "column_name": "id",
@@ -47129,7 +47138,7 @@
         "kind": "CHECK",
         "table_name": "org_permits",
         "detail": "org_permits_document_type_check",
-        "check_clause": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text])))"
+        "check_clause": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'::text])))"
       },
       {
         "kind": "CHECK",
@@ -47466,6 +47475,12 @@
         "table_name": "organizations",
         "detail": "organizations_free_floor_check",
         "check_clause": "((free_floor IS NULL) OR (free_floor = 'league_starter'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
+        "detail": "organizations_start_plan_check",
+        "check_clause": "((start_plan IS NULL) OR (start_plan = ANY (ARRAY['league'::text, 'club'::text, 'club_large'::text])))"
       },
       {
         "kind": "CHECK",

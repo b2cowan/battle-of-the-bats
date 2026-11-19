@@ -1135,9 +1135,9 @@ const orgHelp: HelpPageContent = {
                 <li>Enter its name, who issued it, the reference, who it&rsquo;s for, and its first and last day. The issuer is one of the club&rsquo;s payees, the same list the Ledger uses: type a new name to save it as a payee, or choose <strong>Manage payees&hellip;</strong> at the foot of the list to add, rename or merge them without leaving the permit.</li>
                 <li>Add its time as blocks: a venue, its facilities (none ticked means every facility there), the days, and from and until. <strong>Add a block</strong> for another night or another park; <strong>Add a date off</strong> for a holiday.</li>
                 <li>If you hold the club&rsquo;s Accounting, add the cost, the budget line that pays for it, and what each field costs.</li>
-                <li>Upload the issuer&rsquo;s copy (PDF, JPG or PNG, up to 10 MB) and press <strong>Add permit</strong>.</li>
+                <li>Upload the issuer&rsquo;s copy (PDF, JPG, PNG or Word, up to 10 MB) and press <strong>Add permit</strong>.</li>
               </ol>
-              <p>The file must really be a PDF, JPG or PNG: FieldLogicHQ checks the file itself, not just its name, and refuses anything else (a Word file, say) with <em>Upload a PDF, JPG or PNG.</em> The file&rsquo;s name shows without any folder part.</p>
+              <p>The file must really be a PDF, JPG, PNG or Word file: FieldLogicHQ checks the file itself, not just its name, and refuses anything else with <em>Upload a PDF, JPG, PNG or Word file.</em> A PDF or a picture opens in a new tab; a Word file downloads. The file&rsquo;s name shows without any folder part.</p>
               <p>A line under the blocks counts what you&rsquo;ve entered: &ldquo;2 blocks &middot; 8 weeks &middot; 80 h held&rdquo;. Under each date off, a line says what is booked that day; see <a href="#permits-t-dates-off">When a date off has bookings on it</a>.</p>
             </>
           ),
@@ -1226,10 +1226,10 @@ const orgHelp: HelpPageContent = {
           id: 'faq-permits-file-type',
           question: 'Why was my permit file refused?',
           answer: (
-            <p>A permit&rsquo;s file must really be a PDF, JPG or PNG, up to 10 MB. FieldLogicHQ checks the file itself, not just its name, so a Word file or anything else is refused with <em>Upload a PDF, JPG or PNG.</em> Save or export the issuer&rsquo;s copy as one of those and upload it again.</p>
+            <p>A permit&rsquo;s file must really be a PDF, JPG, PNG or Word (.docx) file, up to 10 MB. FieldLogicHQ checks the file itself, not just its name, so anything else (an older .doc, a spreadsheet, a file renamed to look like a PDF) is refused with <em>Upload a PDF, JPG, PNG or Word file.</em> Save or export the issuer&rsquo;s copy as one of those and upload it again.</p>
           ),
-          answerText: 'A permit’s file must really be a PDF, JPG or PNG, up to 10 MB. FieldLogicHQ checks the file itself, not just its name, so a Word file or anything else is refused with Upload a PDF, JPG or PNG. Save or export the issuer’s copy as one of those and upload it again.',
-          keywords: ['permit file', 'upload refused', 'pdf jpg png', 'word file', 'file type', 'permit document', 'upload a pdf jpg or png'],
+          answerText: 'A permit’s file must really be a PDF, JPG, PNG or Word (.docx) file, up to 10 MB. FieldLogicHQ checks the file itself, not just its name, so anything else (an older .doc, a spreadsheet, a file renamed to look like a PDF) is refused with Upload a PDF, JPG, PNG or Word file. Save or export the issuer’s copy as one of those and upload it again.',
+          keywords: ['permit file', 'upload refused', 'pdf jpg png', 'word file', 'docx', 'file type', 'permit document', 'upload a pdf jpg png or word file'],
         },
         {
           id: 'faq-permits-blocks',

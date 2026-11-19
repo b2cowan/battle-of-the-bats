@@ -1762,7 +1762,7 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_permits.document_size -->
 <!-- dict:col:org_permits.document_type -->
 <!-- dict:col:org_permits.document_added_at -->
-**`document_path`** / **`document_name`** (≤ 200) / **`document_size`** (bytes, ≤ 10 MB) / **`document_type`** (`application/pdf|image/jpeg|image/png`) / **`document_added_at`** — the issuer's copy (gotcha 6), all set together or none (CHECK `org_permits_document_whole`; `document_type` may stay null on a row written before a type was known). Path `${org_id}/permits/${permit_id}/${uuid}-${name}`, never sent to a browser. A new upload replaces it (the old file removed); Delete removes it; Renew never carries it.
+**`document_path`** / **`document_name`** (≤ 200) / **`document_size`** (bytes, ≤ 10 MB) / **`document_type`** (`application/pdf|image/jpeg|image/png|application/vnd.openxmlformats-officedocument.wordprocessingml.document`; the Word .docx type since mig 507, owner 2026-11-19, which widened this CHECK and the bucket's `allowed_mime_types` together; the route reads the type from the file's bytes, `lib/document-upload.ts`) / **`document_added_at`** — the issuer's copy (gotcha 6), all set together or none (CHECK `org_permits_document_whole`; `document_type` may stay null on a row written before a type was known). Path `${org_id}/permits/${permit_id}/${uuid}-${name}`, never sent to a browser. A new upload replaces it (the old file removed); Delete removes it; Renew never carries it.
 
 <!-- dict:col:org_permits.notes -->
 **`notes`** (text ≤ 2,000, nullable) — the club's own words about the permit. Renew doesn't carry them.

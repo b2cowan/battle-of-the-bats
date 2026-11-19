@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 287 divergence(s)** across dev/prod.
+**⚠️ 290 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 8 | 2 | — |
-| Columns | 99 | 37 | 2 |
+| Columns | 100 | 37 | 2 |
 | Indexes | 36 | 12 | 0 |
 | Constraints | 30 | 7 | — |
-| RLS / CHECK | 38 | 16 | 0 (RLS state) |
+| RLS / CHECK | 39 | 16 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (8)
@@ -28,7 +28,7 @@
 - `platform_stripe_fees`
 
 ## Columns
-### Only in DEV (99)
+### Only in DEV (100)
 - `club_group_email_bodies.body`
 - `club_group_email_bodies.created_at`
 - `club_group_email_bodies.org_id`
@@ -119,6 +119,7 @@
 - `organization_members.pending_capabilities`
 - `organization_members.pending_invited_at`
 - `organization_members.pending_role`
+- `organizations.start_plan`
 - `payments_terms_agreements.action`
 - `payments_terms_agreements.agreed_at`
 - `payments_terms_agreements.box_text`
@@ -274,7 +275,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (38)
+### CHECK only in DEV (39)
 - `club_group_email_bodies.club_group_email_bodies_body_check`
 - `club_group_email_bodies.club_group_email_bodies_subject_check`
 - `club_group_email_recipients.club_group_email_recipients_basis_check`
@@ -310,6 +311,7 @@ _none_
 - `online_payments.online_payments_stripe_fee_chk`
 - `org_payment_accounts.org_payment_accounts_fees_collector_chk`
 - `organization_members.organization_members_pending_role_check`
+- `organizations.organizations_start_plan_check`
 - `payments_terms_agreements.payments_terms_agreements_action_check`
 - `payments_terms_agreements.payments_terms_agreements_text_shape`
 - `payments_terms_agreements.payments_terms_agreements_version_shape`

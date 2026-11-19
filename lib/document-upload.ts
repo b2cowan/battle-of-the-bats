@@ -69,8 +69,8 @@ export const DOCUMENT_TYPE_REFUSAL = 'File type not allowed. Use PDF, JPG, PNG, 
 /**
  * The whole check, as the three upload routes ask it: what the file really is, the type it is stored and served with, the
  * cleaned name for its key and the name the screens show — or null when the bytes are none of the four types. `allowed`
- * narrows the four for a door that takes fewer (a permit's file: PDF, JPEG, PNG — leftover call 10, owner 2026-11-19); that
- * door refuses in its own words, since `DOCUMENT_TYPE_REFUSAL` names DOCX.
+ * narrows the four for a door that takes fewer (none today: a permit's file took PDF, JPEG, PNG under leftover call 10,
+ * and all four since the owner's yes 2026-11-19, P8b); such a door refuses in its own words.
  */
 export function checkDocumentUpload(
   bytes: ArrayBuffer | Uint8Array, name: string, allowed?: readonly DocumentUploadKind[],

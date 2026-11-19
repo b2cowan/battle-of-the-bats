@@ -1,14 +1,18 @@
 {
   "generated": "2026-11-19",
-  "total": 287,
+  "total": 290,
   "counts": {
     "tables": 10,
-    "columns": 138,
+    "columns": 139,
     "indexes": 48,
     "constraints": 37,
-    "rls": 54
+    "rls": 56
   },
   "items": [
+    {
+      "key": "check:changed:org_permits.org_permits_document_type_check",
+      "sig": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'::text]))) :: ((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text])))"
+    },
     {
       "key": "check:only-dev:club_group_email_bodies.club_group_email_bodies_body_check",
       "sig": ""
@@ -147,6 +151,10 @@
     },
     {
       "key": "check:only-dev:organization_members.organization_members_pending_role_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organizations.organizations_start_plan_check",
       "sig": ""
     },
     {
@@ -591,6 +599,10 @@
     },
     {
       "key": "column:only-dev:organization_members.pending_role",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.start_plan",
       "sig": ""
     },
     {
