@@ -142,7 +142,13 @@ describe('the routes keep the rules (source guards)', () => {
   it('the list is still the working season’s door, and reads the child’s papers on this team', () => {
     assert.match(list, /player\.programYearId !== workingYear\.id/, 'a past season’s entry still answers 404');
     assert.match(list, /readChildTeamDocuments\(player\)/);
-    assert.match(list, /t\.isActive && t\.documentType === documentType/, 'a row’s template id is checked, never trusted');
+    // The check moved to one shared rule both upload doors call (leftover call 11, owner 2026-11-19, P8b).
+    assert.match(list, /answeredTemplateId\(player\.orgId, teamId, templateId, documentType\)/, 'a row’s template id is checked, never trusted');
+    const rule = read('lib/player-document-template.ts');
+    assert.match(rule, /t && t\.isActive && t\.documentType === documentType \? t\.id : null/);
+    const club = read('app/api/admin/rep-teams/teams/[teamId]/players/[playerId]/documents/route.ts');
+    assert.match(club, /templateId: answersTemplateId,/, 'the club door files only the checked id');
+    assert.doesNotMatch(club, /templateId: templateId \|\| null/);
   });
   it('a history copy downloads; only this season’s copy deletes', () => {
     assert.match(one, /documentIsTheChilds\(doc, player\)/);

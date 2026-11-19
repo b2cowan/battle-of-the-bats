@@ -18,6 +18,7 @@ import type { RepDocumentType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 import { checkDocumentUpload, DOCUMENT_TYPE_REFUSAL } from '@/lib/document-upload';
+import { answeredTemplateId } from '@/lib/player-document-template';
 
 const MAX_SIZE = 10 * 1024 * 1024;
 
@@ -122,14 +123,9 @@ export const POST = withObservability(async (req: Request,
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: 'File exceeds 10 MB limit' }, { status: 400 });
   }
-  // A row's Upload names the template it answers. Kept only when it is an active template that applies to this team and
-  // is of the chosen type — never a form-supplied id taken on trust (it was unvalidated before Stage 14 S4).
-  let answersTemplateId: string | null = null;
-  if (templateId) {
-    const applies = await getRepDocumentTemplates(player.orgId, teamId);
-    const t = applies.find(x => x.id === templateId);
-    if (t && t.isActive && t.documentType === documentType) answersTemplateId = t.id;
-  }
+  // A row's Upload names the template it answers: kept only when it is an active template that applies to this team and is
+  // of the chosen type (one rule, shared with the club's upload door: lib/player-document-template.ts).
+  const answersTemplateId = await answeredTemplateId(player.orgId, teamId, templateId, documentType);
 
   // Trust close-out 6: the type is what the bytes are, never the browser's claim; the key carries a cleaned name.
   const bytes = await file.arrayBuffer();

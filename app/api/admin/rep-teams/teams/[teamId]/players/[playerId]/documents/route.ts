@@ -12,6 +12,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { checkDocumentUpload, DOCUMENT_TYPE_REFUSAL } from '@/lib/document-upload';
+import { answeredTemplateId } from '@/lib/player-document-template';
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const VALID_DOC_TYPES: RepDocumentType[] = ['waiver', 'medical_consent', 'code_of_conduct', 'other'];
@@ -88,6 +89,9 @@ export const POST = withObservability(async (req: Request,
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: 'File exceeds 10 MB limit' }, { status: 400 });
   }
+  // ⚖ Leftover call 11 (owner 2026-11-19): the template the upload answers is kept only by the coach door's rule (an active
+  // template that applies to this team and is of the chosen type), never the form's id on trust.
+  const answersTemplateId = await answeredTemplateId(player.orgId, teamId, templateId, documentType);
 
   // Trust close-out 6: the type is what the bytes are, never the browser's claim; the key carries a cleaned name.
   const bytes = await file.arrayBuffer();
@@ -113,7 +117,7 @@ export const POST = withObservability(async (req: Request,
     storagePath,
     fileName: upload.displayName,
     fileSize: file.size,
-    templateId: templateId || null,
+    templateId: answersTemplateId,
     uploadedBy: ctx.user.id,
   });
 
