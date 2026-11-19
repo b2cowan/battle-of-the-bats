@@ -114,7 +114,9 @@ export const POST = withObservability(async (req: Request) => {
       heard_from: heardFrom,
       ref_tag: refTag,
       user_agent: userAgent,
-      release_notifications_consent: consentSent !== false,
+      // Only a tick is consent (CASL; on-sale pages S1 /legal review, 2026-11-18). A form with no box (the coach start's
+      // interest form) sends nothing and used to be stored as a yes, so runbook Step 6 would have emailed it.
+      release_notifications_consent: consentSent === true,
     });
     if (!error) return NextResponse.json({ ok: true });
     // Two forms for one new address at the same moment (a double click, two tabs): the loser is a known address, so it

@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { HEARD_FROM_CHOICES } from '@/lib/lead-form-answers';
 import { readRefTag } from '@/lib/ref-tag-client';
+import { interestButtonLabel } from '@/lib/plan-config';
 import styles from './EarlyAccessForm.module.css';
 
 const PLAN_OPTIONS = [
@@ -16,7 +17,7 @@ const FEATURE_OPTIONS = [
   { value: 'public_site', label: 'Public site' },
   { value: 'accounting', label: 'Accounting' },
   { value: 'rep_teams', label: 'Rep teams' },
-  { value: 'coach_portal', label: 'Coach portal' },
+  { value: 'coach_portal', label: 'Coaches Portal' },
   { value: 'communications', label: 'Communications' },
 ] as const;
 
@@ -41,7 +42,9 @@ export default function EarlyAccessForm({
   const [error, setError] = useState('');
   const [planInterest, setPlanInterest] = useState<string[]>(initialPlanInterest);
   const [featuresInterested, setFeaturesInterested] = useState<string[]>(initialFeaturesInterested);
-  const [releaseNotificationsConsent, setReleaseNotificationsConsent] = useState(true);
+  // Opens UNTICKED (Ask 6, ruled 2026-11-18, /legal): a box ticked for the visitor is not their consent to email, so
+  // a pre-ticked box made the "consenting" list doubtful under CASL. The box's wording is unchanged (a /legal change).
+  const [releaseNotificationsConsent, setReleaseNotificationsConsent] = useState(false);
 
   function toggleValue(value: string, values: string[], setter: (next: string[]) => void) {
     setter(values.includes(value) ? values.filter(v => v !== value) : [...values, value]);
@@ -170,7 +173,7 @@ export default function EarlyAccessForm({
       {error && <p className={styles.error}>{error}</p>}
 
       <button className={styles.submit} type="submit" disabled={status === 'submitting' || status === 'success'}>
-        {status === 'submitting' ? 'Saving...' : 'Join early access'}
+        {status === 'submitting' ? 'Saving...' : interestButtonLabel()}
       </button>
     </form>
   );

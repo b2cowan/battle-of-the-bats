@@ -44,11 +44,23 @@ const FOOTER_GROUPS = [
       ['What’s new', '/changelog'],
     ],
   },
+  // W63 (ruled 2026-11-18, Ask 25): the four persona pages. Before this nothing in the footer reached the Leagues or
+  // Clubs pages. Same in both states; the nav ORDER changes at the flip (S3), not here.
+  {
+    heading: 'Built for',
+    links: [
+      ['Tournament organizers', '/for-tournament-organizers'],
+      ['House leagues', '/for-leagues'],
+      ['Clubs', '/for-clubs'],
+      ['Coaches', '/for-coaches'],
+    ],
+  },
   {
     heading: 'Get started',
     links: [
       ['Start free', '/start/tournament'],
-      ['Coaches', '/coaches/start'],
+      // "Coaches Portal", not "Coaches": "Built for" now holds a "Coaches" link to a different page.
+      ['Coaches Portal', '/coaches/start'],
       ['Sign in', '/auth/login'],
     ],
   },

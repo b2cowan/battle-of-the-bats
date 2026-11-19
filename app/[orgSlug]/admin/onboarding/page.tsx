@@ -17,6 +17,7 @@ import { useTournament } from '@/lib/tournament-context';
 import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
 import { PLAN_CONFIG, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
 import { useHoldsFoundingComp } from '@/lib/use-founding-season-lock';
+import { usePlanGating } from '@/lib/use-plan-gating';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
 import type { FreeFloor, OrgPlan } from '@/lib/types';
@@ -276,14 +277,9 @@ function OnboardingPageLegacy() {
   const [workflowRedirecting, setWorkflowRedirecting] = useState(false);
   const [stepSaving, setStepSaving] = useState(false);
   const [stepError, setStepError] = useState('');
-  const [gatingMap, setGatingMap] = useState<Record<OrgPlan, boolean>>(() => ({
-    tournament: PLAN_CONFIG.tournament.gatingStatus === 'early_access',
-    team: PLAN_CONFIG.team.gatingStatus === 'early_access',
-    tournament_plus: PLAN_CONFIG.tournament_plus.gatingStatus === 'early_access',
-    league: PLAN_CONFIG.league.gatingStatus === 'early_access',
-    club: PLAN_CONFIG.club.gatingStatus === 'early_access',
-    club_large: PLAN_CONFIG.club_large.gatingStatus === 'early_access',
-  }));
+  // The LIVE gate, never the code's copy (on-sale pages S1): the chooser's first paint used to show the code's fixed
+  // values and then swap. `null` until the gate arrives; the chooser renders its plans only once it has.
+  const gatingMap = usePlanGating();
   const [planLoading, setPlanLoading] = useState<OrgPlan | null>(null);
   const [planError, setPlanError] = useState('');
   // GST/HST Stage 1: a paid plan choice with no billing address on file opens the Billing address window, then goes on.
@@ -404,13 +400,6 @@ function OnboardingPageLegacy() {
     if (loading || !currentOrg || !userRole || userRole === 'owner') return;
     router.replace(`/${currentOrg.slug}/admin`);
   }, [loading, currentOrg, userRole, router]);
-
-  useEffect(() => {
-    fetch('/api/plan-gating')
-      .then(r => r.json())
-      .then(setGatingMap)
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (loading || !currentOrg || !startupProgress) return;
@@ -1043,7 +1032,7 @@ function OnboardingPageLegacy() {
           </button>
         </div>
 
-        <PricingSection
+        {gatingMap && <PricingSection
           gatingMap={gatingMap}
           onChoosePlan={choosePlan}
           currentPlan={activePlanId}
@@ -1055,7 +1044,7 @@ function OnboardingPageLegacy() {
           foundingOfferHeld={foundingOfferHeld}
           plusTax
           ctaLabel={(planKey) => planKey === 'tournament' && planKey !== activePlanId ? 'Continue free' : undefined}
-        />
+        />}
 
         {planError && <div className={styles.planError}>{planError}</div>}
       </div>

@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import EarlyAccessForm, { type EarlyAccessSaved } from './EarlyAccessForm';
+import { interestButtonLabel } from '@/lib/plan-config';
 import styles from './EarlyAccessModalTrigger.module.css';
 
 type EarlyAccessModalTriggerProps = {
@@ -16,7 +17,8 @@ type EarlyAccessModalTriggerProps = {
 };
 
 export default function EarlyAccessModalTrigger({
-  children = 'Join early access',
+  // W56 (ruled 2026-11-18): the early-access programme was withdrawn 2026-07-28, so a customer never reads "early access".
+  children = interestButtonLabel(),
   className,
   initialPlanInterest,
   initialFeaturesInterested,
@@ -72,17 +74,17 @@ export default function EarlyAccessModalTrigger({
           >
             <div className={styles.header}>
               <div>
-                <p className={styles.kicker}>Early access</p>
+                <p className={styles.kicker}>{interestButtonLabel()}</p>
                 <h2 id={titleId} ref={titleRef} tabIndex={-1} className={styles.title}>
                   {saved ? 'You’re on the list' : 'Tell us what you want to see next'}
                 </h2>
                 <p className={styles.copy} aria-live="polite">
-                  {!saved && 'Share a few details and we’ll use them for release updates and early access planning.'}
-                  {saved?.wantsUpdates && <>We&apos;ve saved your request and we&apos;ll write to <strong>{saved.email}</strong> as the areas you picked become ready.</>}
-                  {saved && !saved.wantsUpdates && <>We&apos;ve saved your request for early access planning. You won&apos;t get release emails, as you asked.</>}
+                  {!saved && 'Share a few details and we’ll let you know when your plan opens.'}
+                  {saved?.wantsUpdates && <>We&apos;ve saved your request. When the plans you picked open, we&apos;ll write to <strong>{saved.email}</strong>.</>}
+                  {saved && !saved.wantsUpdates && <>We&apos;ve saved your request. You won&apos;t get an email when it opens, as you asked.</>}
                 </p>
               </div>
-              <button type="button" className={styles.close} onClick={close} aria-label={saved ? 'Close' : 'Close early access form'}>
+              <button type="button" className={styles.close} onClick={close} aria-label={saved ? 'Close' : 'Close the form'}>
                 ×
               </button>
             </div>

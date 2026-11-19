@@ -8,6 +8,7 @@ import {
   PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive,
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, FOUNDING_SEASON_YEAR_LABEL,
   FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
+  isPlanOpen, interestButtonLabel, gatedPlanTag, gatedPlanSentence, GATED_PLAN_INTEREST_LINE,
 } from '@/lib/plan-config';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
@@ -16,7 +17,7 @@ import { SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-doo
 export const metadata = marketingMetadata({
   title: 'For coaches',
   description:
-    'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed, and if your organization moves to Club, it can bring your team in.',
+    'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed, and if your organization moves to Club, you won\'t be charged for the portal again.',
   path: '/for-coaches',
 });
 
@@ -28,7 +29,8 @@ export default async function ForCoachesPage() {
   // it's a live "Start free" front door into /coaches/start with the promo framing; when gated, it
   // stays the express-interest explainer. This keeps /for-coaches coordinated with the launch on
   // each environment. This is a copy/CTA flip only.
-  const checkoutOpen = !(await getPlanGatingMap()).team;
+  // The live gate, per request (on-sale pages S1).
+  const checkoutOpen = isPlanOpen(await getPlanGatingMap(), 'team');
   const promoActive = isFoundingSeasonPromoActive('team');
   const startHref = '/coaches/start?source=for_coaches';
   // The demo door (owner-ratified 2026-08-10) — same arrangement /for-tournament-organizers
@@ -57,14 +59,15 @@ export default async function ForCoachesPage() {
               schedule, and documents for the whole season.{' '}
               <span className={fp.noteStrong}>It&apos;s free for your whole {FOUNDING_SEASON_YEAR_LABEL} season</span>
               {' '}when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month.
-              No organization account needed, and if your organization moves to Club, it can bring your team in with everything you&apos;ve built.
+              {/* W22 / Ask 13: the bring-in promise returns once the coach-into-Club move is proved on production. */}
+              No organization account needed, and if your organization moves to Club, you won&apos;t be charged for the portal again.
             </p>
           ) : (
             <p className={kit.lead}>
               Every coach on FieldLogicHQ starts with the free Coaches Portal — a companion for the
               tournaments you enter. The Premium Coaches Portal turns it into your team&apos;s
               operations HQ: roster, lineups, budget, schedule, and documents for the whole season.
-              No org account needed, and if your organization moves to Club, it can bring your team in with everything you&apos;ve built.
+              No org account needed, and if your organization moves to Club, you won&apos;t be charged for the portal again.
             </p>
           )}
           <div className={`${kit.row} ${fp.heroRow}`}>
@@ -78,7 +81,7 @@ export default async function ForCoachesPage() {
                 initialPlanInterest={['coaches_portal']}
                 initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
               >
-                Express interest
+                {interestButtonLabel()}
               </EarlyAccessModalTrigger>
             )}
             {showSandboxDoor && (
@@ -107,8 +110,8 @@ export default async function ForCoachesPage() {
                 )
               ) : (
                 <>
-                  <span className={fp.noteStrong}>Coming soon</span>
-                  {' '}— The Coaches Portal is in development. Express interest to be notified when it opens.
+                  <span className={fp.noteStrong}>{gatedPlanTag('team')}</span>
+                  {' '}— it isn&apos;t open for sign-up yet. {GATED_PLAN_INTEREST_LINE}
                 </>
               )}
             </p>
@@ -213,11 +216,9 @@ export default async function ForCoachesPage() {
                   </>
                 )}
               </div>
-              <p>
-                {checkoutOpen
-                  ? <span className={kit.tag}>Free right now</span>
-                  : <span className={kit.tag}>Coming soon</span>}
-              </p>
+              {/* W73 (ruled 2026-11-18): no "Free right now" over a paid plan with no trial; the price line and "Start
+                  now" already say it. Closed, the plan's own tag. */}
+              {!checkoutOpen && <p><span className={kit.tag}>{gatedPlanTag('team')}</span></p>}
               <p className={kit.body}>
                 The operations HQ for one rep team — roster, lineups, budget, documents,
                 and schedule — whether or not your organization is on FieldLogicHQ.
@@ -241,7 +242,7 @@ export default async function ForCoachesPage() {
                     initialPlanInterest={['coaches_portal']}
                     initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
                   >
-                    Express interest
+                    {interestButtonLabel()}
                   </EarlyAccessModalTrigger>
                 )}
               </div>
@@ -336,7 +337,7 @@ export default async function ForCoachesPage() {
               ? (promoActive
                 ? `Start your Premium Coaches Portal free — free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}, normally ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month. No credit card.`
                 : 'Start your Coaches Portal — no credit card required.')
-              : 'Express interest in the Coaches Portal to be notified when it opens. No commitment required.'}
+              : `${gatedPlanSentence('team')} ${GATED_PLAN_INTEREST_LINE}`}
           </p>
           <div className={kit.row}>
             {checkoutOpen ? (
@@ -349,7 +350,7 @@ export default async function ForCoachesPage() {
                 initialPlanInterest={['coaches_portal']}
                 initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
               >
-                Express interest
+                {interestButtonLabel()}
               </EarlyAccessModalTrigger>
             )}
             {showSandboxDoor && (

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useSyncExternalStore } from 'react';
 import {
   Building2, Users, Trophy, CalendarDays, UserCheck, Shield,
   Lock, RefreshCw, Trash2, CheckCircle, AlertCircle, Loader, Zap,
@@ -897,11 +897,23 @@ const CARD_SECTIONS: { label: string; sublabel?: string; keys: string[] }[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function readPlanGatesCookie(): 'live' | 'enforced' {
+// 'closed' = "show as closed" (on-sale pages S1): League Plus, Club and Club · Association read closed as on production,
+// without touching dev's rows (all live, owner 2026-10-30). Read by getPlanGatingMap().
+type PlanGatesMode = 'live' | 'enforced' | 'closed';
+
+const noSubscribe = () => () => {};
+
+function readPlanGatesCookie(): PlanGatesMode {
   if (typeof document === 'undefined') return 'enforced';
   const match = document.cookie.match(/dev_plan_gates=([^;]+)/);
-  return (match?.[1] === 'live') ? 'live' : 'enforced';
+  return match?.[1] === 'live' || match?.[1] === 'closed' ? match[1] : 'enforced';
 }
+
+const PLAN_GATES_MODES: Array<{ mode: PlanGatesMode; label: string; desc: string }> = [
+  { mode: 'enforced', label: 'Dev’s rows', desc: 'Following dev’s plan gating rows (every plan on sale on dev).' },
+  { mode: 'closed', label: 'Show as closed', desc: 'League Plus, Club and Club · Association read closed, as on production before the flip. Dev’s rows are untouched.' },
+  { mode: 'live', label: 'All live', desc: 'All plans treated as live, whatever the rows say.' },
+];
 
 // ─── Main dashboard ───────────────────────────────────────────────────────────
 
@@ -921,7 +933,11 @@ export default function DevDashboard() {
   const [orgWipeResults, setOrgWipeResults] = useState<Record<string, SeedResult>>({});
 
   // Plan gates toggle (local only)
-  const [planGatesMode, setPlanGatesMode] = useState<'live' | 'enforced'>(() => readPlanGatesCookie());
+  // The cookie as the browser holds it; the server (which cannot see document.cookie) renders 'enforced', so the first
+  // paint matches and the cookie's value follows without a mismatch. A press records its own choice over it.
+  const cookieGatesMode = useSyncExternalStore(noSubscribe, readPlanGatesCookie, () => 'enforced' as PlanGatesMode);
+  const [chosenGatesMode, setPlanGatesMode] = useState<PlanGatesMode | null>(null);
+  const planGatesMode = chosenGatesMode ?? cookieGatesMode;
   const [planGatesBusy, setPlanGatesBusy] = useState(false);
 
   // Readiness + mock billing
@@ -1079,8 +1095,7 @@ export default function DevDashboard() {
 
   // ── Plan gates toggle ───────────────────────────────────────────────────────
 
-  async function togglePlanGates() {
-    const next = planGatesMode === 'live' ? 'enforced' : 'live';
+  async function setPlanGates(next: PlanGatesMode) {
     setPlanGatesBusy(true);
     try {
       await fetch('/api/dev/set-plan-gates', {
@@ -1327,20 +1342,20 @@ export default function DevDashboard() {
               Plan gates
             </div>
             <div className={styles.gatesDesc}>
-              {planGatesMode === 'live'
-                ? 'All plans treated as live — checkout CTAs visible on pricing page.'
-                : 'Gates enforced — League Plus and Club show early-access CTAs.'}
+              {PLAN_GATES_MODES.find(m => m.mode === planGatesMode)?.desc}
             </div>
           </div>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={togglePlanGates}
-            disabled={planGatesBusy}
-          >
-            {planGatesBusy
-              ? <Loader size={13} className={kit.spin} />
-              : planGatesMode === 'live' ? 'Enforce gates' : 'All live'}
-          </button>
+          {planGatesBusy && <Loader size={13} className={kit.spin} />}
+          {PLAN_GATES_MODES.filter(m => m.mode !== planGatesMode).map(m => (
+            <button
+              key={m.mode}
+              className="btn btn-secondary btn-sm"
+              onClick={() => setPlanGates(m.mode)}
+              disabled={planGatesBusy}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
       )}
 

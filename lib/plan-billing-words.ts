@@ -7,8 +7,9 @@ import {
   formatPriceAmount, formatAnnualSavings, gatedPlanTag, gatedPlanNote,
   FOUNDING_SEASON_END_LABEL as END, FOUNDING_SEASON_FIRST_CHARGE_LABEL as FIRST,
   FOUNDING_SEASON_DECISION_MONTH_LABEL as DECISION, FOUNDING_SEASON_NEXT_YEAR_LABEL as NEXT,
-  PLAN_CONFIG, clubTrialLine, type BillingCycle,
+  PLAN_CONFIG, type BillingCycle,
 } from './plan-config';
+import { clubTrialLine } from './plan-trial-line';
 import { possessive, pluralize, joinWithAnd } from './utils';
 import { formatStoredDate } from './timezone';
 import { subscriptionStatusLabel, NO_LIMIT } from './platform-labels';

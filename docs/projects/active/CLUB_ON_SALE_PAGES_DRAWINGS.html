@@ -1,0 +1,1052 @@
+<title>Club on-sale pages</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a document on a cool slate ground (so the warm product specimens read as specimens, not as page);
+   sticky numbered tabs, one section at a time; a View row under them; each specimen framed at true size with a
+   numbered note rail. Specimen colours are FieldLogicHQ's own warm tokens (app/globals.css). */
+:root{
+  --doc-bg:#EDEFF2; --doc-card:#FFFFFF; --doc-ink:#1D2229; --doc-dim:#5A6270; --doc-line:#D5DAE1;
+  --doc-accent:#3E5BA9; --doc-accent-soft:#E3E9F7;
+  --k-false:#B03A22; --k-new:#57651E; --k-fix:#835006; --k-same:#6B7280;
+  /* product (warm) tokens — fixed: the public site is drawn in Warm */
+  --p-paper:#F8F4ED; --p-card:#FFFFFF; --p-ink:#241E15; --p-soft:#4A4235; --p-dim:#615A54;
+  --p-line:rgba(70,55,30,.14); --p-olive:#57651E; --p-lime:#D9F99D; --p-fill:rgba(70,55,30,.07);
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --doc-bg:#14171C; --doc-card:#1D2229; --doc-ink:#E7EAEE; --doc-dim:#9AA3AF; --doc-line:#30363F;
+  --doc-accent:#8FA8EC; --doc-accent-soft:#25304A; --k-false:#F08A73; --k-new:#B5C46A; --k-fix:#E2A84F; --k-same:#9AA3AF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doc-bg:#14171C; --doc-card:#1D2229; --doc-ink:#E7EAEE; --doc-dim:#9AA3AF; --doc-line:#30363F;
+  --doc-accent:#8FA8EC; --doc-accent-soft:#25304A; --k-false:#F08A73; --k-new:#B5C46A; --k-fix:#E2A84F; --k-same:#9AA3AF; color-scheme:dark}
+body{background:var(--doc-bg);color:var(--doc-ink);font:14px/1.5 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--doc-card)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--doc-card);border-bottom:1px solid var(--doc-line)}
+header.top .wrap{padding-block:18px 14px;max-width:1240px;margin:0 auto}
+h1{font:700 30px/1.1 var(--f-disp);letter-spacing:.2px;margin:0 0 4px;text-wrap:balance}
+.lede{color:var(--doc-dim);margin:0;max-width:78ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--doc-card);border-bottom:1px solid var(--doc-line)}
+.tabs .wrap{max-width:1440px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding-block:6px;scrollbar-width:thin}
+@media (max-width:1100px){.tabs .wrap{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent)}}
+.tab{flex:none;border:0;background:none;color:var(--doc-dim);font:600 13px var(--f-body);padding:8px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--doc-accent-soft);color:var(--doc-ink)}
+.tab:focus-visible,.seg button:focus-visible,.substep:focus-visible{outline:2px solid var(--doc-accent);outline-offset:2px}
+.viewrow{max-width:1840px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding-block:12px}
+.viewrow[hidden]{display:none!important}
+.vlabel{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.8px;color:var(--doc-dim);margin-right:6px}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--doc-line);border-radius:999px;padding:3px;gap:2px}
+:root[data-theme="dark"] .seg{background:var(--doc-card)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg{background:var(--doc-card)}}
+.seg button{border:0;background:none;color:var(--doc-dim);font:600 12.5px var(--f-body);padding:6px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:rgba(87,101,30,.14);color:var(--doc-ink)}
+main .wrap{max-width:1840px;margin:0 auto;padding-block:8px 60px}
+section.panel[hidden]{display:none!important}
+.explain{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin:6px 0 16px}
+.explain p{margin:0;max-width:86ch}
+h2{font:700 24px/1.15 var(--f-disp);margin:12px 0 4px;text-wrap:balance}
+h3{font:600 15px/1.3 var(--f-body);margin:18px 0 6px}
+.tag{display:inline-block;font:500 10.5px var(--f-mono);letter-spacing:.7px;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid currentColor;vertical-align:1px}
+.t-new{color:var(--k-new)} .t-false{color:var(--k-false)} .t-fix{color:var(--k-fix)} .t-same{color:var(--k-same)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;font-size:12.5px;color:var(--doc-dim)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.dot{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font:700 11px var(--f-body);color:#fff}
+.d-false{background:var(--k-false)} .d-new{background:var(--k-new)} .d-fix{background:var(--k-fix)}
+.note{background:var(--doc-card);border:1px solid var(--doc-line);border-radius:10px;padding:12px 14px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+/* specimen */
+.specwrap{overflow-x:auto;border:1px solid var(--doc-line);border-radius:12px;background:var(--doc-card);padding:12px}
+.speclabel{font:500 11px var(--f-mono);letter-spacing:.8px;text-transform:uppercase;color:var(--doc-dim);margin:0 0 8px}
+.spec{display:flex;gap:16px;align-items:flex-start;width:max-content}
+.frame{position:relative;background:var(--p-paper);box-shadow:0 0 0 1px var(--doc-line);flex:none;font-family:var(--f-body);color:var(--p-ink)}
+.slice{background-repeat:no-repeat;position:relative}
+.seam{height:0;border-top:2px dashed rgba(62,91,169,.55);position:relative}
+.seam::after{content:"cut";position:absolute;right:6px;top:-9px;font:500 10px var(--f-mono);color:#3E5BA9;background:var(--p-paper);padding:0 4px}
+.removed{background:repeating-linear-gradient(135deg,rgba(176,58,34,.06) 0 10px,transparent 10px 20px);border-block:1px dashed rgba(176,58,34,.45);display:grid;place-items:center;text-align:center;color:#7a2a18;font:500 12px var(--f-mono);padding:16px}
+.drawn{position:relative;outline:2px solid rgba(87,101,30,.55);outline-offset:-2px}
+.drawn::before{content:attr(data-tag);position:absolute;top:0;left:50%;transform:translate(-50%,-50%);font:500 10px var(--f-mono);letter-spacing:.6px;color:#fff;background:var(--k-new);padding:2px 6px;border-radius:3px;z-index:4;white-space:nowrap}
+.drawn.t-words{outline-color:rgba(131,80,6,.55)}
+.drawn.t-words::before{background:var(--k-fix)}
+.drawn.t-same{outline:1px dashed rgba(107,114,128,.5)}
+.drawn.t-same::before{background:var(--k-same)}
+.differs .drawn.t-same{opacity:.22;filter:grayscale(1)}
+/* page kit: drawn marketing sections, on the shipped marketing kit's ladder (heading 32, card title 20, card 14px corners / 24px padding, section 72px) */
+.pk{--p-shadow:0 1px 2px rgba(70,55,30,.05),0 6px 18px rgba(70,55,30,.07)}
+.frame .pk .h2{font-size:32px}
+.frame .pk .cn{font-size:20px;line-height:1.3}
+.frame .pk .card{border-radius:14px;padding:24px;box-shadow:var(--p-shadow)}
+.frame .pk .btn{font-size:16px}
+.pgnav{height:64px;border-bottom:1px solid var(--p-line);background:#fff;display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--p-ink)}
+.pgnav .lg{font:700 18px var(--f-body);letter-spacing:-.2px}
+.pgnav .lg i{font-style:normal;color:var(--p-olive)}
+.pgnav nav{display:flex;gap:26px;font-weight:600;color:var(--p-soft)}
+.pgnav nav .on{color:var(--p-ink);box-shadow:0 2px 0 var(--p-olive);padding-bottom:4px}
+.pgnav .rt{display:flex;gap:16px;align-items:center;font-weight:600}
+.pgnav .si{min-height:44px;display:inline-flex;align-items:center}
+.pgnav .gs{border:1px solid var(--p-line);border-radius:10px;padding:0 16px;min-height:44px;display:inline-flex;align-items:center;font-weight:700;background:#fff}
+.pk.sec{border-top:1px solid var(--p-line)}
+.pk .h1{font:700 64px/1.02 var(--f-disp);margin:8px 0 14px;color:var(--p-ink)}
+.pk .h1 em{font-style:normal;color:var(--p-olive)}
+.pk .lead{font-size:16px;line-height:1.55;color:var(--p-soft);max-width:58ch;margin:0}
+.pk .acts{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:center;margin-top:22px}
+.pk .acts .btn{margin:0;padding:0 22px}
+.pk .tlink{color:var(--p-olive);font-weight:700;font-size:15px;min-height:44px;display:inline-flex;align-items:center}
+.pk .hnote{font-size:13px;line-height:1.5;color:var(--p-soft);margin:16px 0 0;max-width:72ch}
+.pk .facts{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;color:var(--p-soft);margin-top:12px}
+.pk .facts span{display:inline-flex;align-items:center;gap:8px}
+.pk .facts span::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--p-olive);flex:none}
+.pk .gx{display:grid;gap:16px;margin-top:22px}
+.pk .pc{position:relative;background:#fff;border:1px solid var(--p-line);border-radius:14px;padding:24px;box-shadow:var(--p-shadow);display:flex;flex-direction:column;min-width:0}
+.pk .pc h4{font:700 20px/1.3 var(--f-body);margin:0 0 6px;color:var(--p-ink)}
+.pk .pc p{font-size:14px;line-height:1.5;color:var(--p-soft);margin:0}
+.pk .pc .lb{font:600 12px var(--f-body);letter-spacing:1px;text-transform:uppercase;color:var(--p-olive);margin:0 0 6px}
+.pk .pc .lk{display:flex;align-items:center;min-height:44px;margin-top:4px;color:var(--p-olive);font-weight:700;font-size:14px}
+.pk .pc p + .lk{margin-top:10px}
+.pk .pc ul{margin-top:12px;padding-top:12px}
+.pk .badge{display:inline-block;font:600 12px var(--f-body);background:var(--p-fill);color:var(--p-soft);border-radius:999px;padding:3px 9px}
+.pk .cardtop{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.pk .chip{font:500 10px var(--f-mono);letter-spacing:.6px;text-transform:uppercase;padding:1px 6px;border-radius:4px;border:1px solid currentColor;white-space:nowrap}
+.pk .chip.NEW{color:#57651E}.pk .chip.WORDS{color:#835006}.pk .chip.UNCHANGED{color:#6B7280}
+.pk .shot{aspect-ratio:16/10;border:1px dashed rgba(70,55,30,.4);border-radius:8px;background:repeating-linear-gradient(135deg,rgba(70,55,30,.05) 0 12px,transparent 12px 24px);display:grid;place-items:center;text-align:center;padding:12px;margin-bottom:14px;font:500 12px/1.4 var(--f-mono);color:var(--p-soft)}
+.pk .shot b{display:block;font:600 13px var(--f-body);color:var(--p-ink);margin-bottom:2px}
+.pk .bandhead{margin:36px 0 14px;padding-top:24px;border-top:1px solid var(--p-line)}
+.pk .bandhead h3{font:700 20px/1.3 var(--f-body);margin:0 0 4px;color:var(--p-ink)}
+.pk .bandhead p{font-size:14px;line-height:1.5;color:var(--p-soft);margin:0;max-width:72ch}
+.pk .over{font:600 12px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--p-dim);margin:0 0 8px;min-height:17px}
+.pk .wc{display:flex;flex-direction:column;min-width:0}
+.pk .wc .card{flex:1}
+.pk .coach{background:#fff;border:1px solid var(--p-line);border-radius:14px;box-shadow:var(--p-shadow)}
+.pk .cstrip{position:relative;display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;padding:20px 24px;border-bottom:1px solid var(--p-line)}
+.pk .cstrip .cn{margin:0 0 4px}
+.pk .cfree{flex:none}
+.pk .cprem{position:relative;padding:24px}
+.pk .coach .incl{border-top:1px solid var(--p-line);padding:14px 24px;font-size:14px;color:var(--p-soft)}
+.pk .coach .incl b{color:var(--p-ink)}
+.pk .prow{display:grid;gap:6px 24px;align-items:center;padding:14px 0;border-top:1px solid var(--p-line)}
+.pk .prow b{font:700 17px var(--f-body);color:var(--p-ink)}
+.pk .prow span{font-size:15px;line-height:1.5;color:var(--p-soft)}
+.pk .trow{display:grid;gap:24px;margin-top:26px}
+.pk .tstep{padding-top:16px;border-top:1px solid var(--p-line);min-width:0}
+.pk .tstep .n{font:700 32px/1 var(--f-disp);color:var(--p-olive)}
+.pk .tstep b{display:block;font:700 16px/1.3 var(--f-body);margin:8px 0 4px;color:var(--p-ink)}
+.pk .tstep p{font-size:14px;line-height:1.5;color:var(--p-soft);margin:0}
+.pk .faql{background:#fff;border:1px solid var(--p-line);border-radius:14px;overflow:hidden;margin-top:10px}
+.pk .fq{padding:18px 22px;border-top:1px solid var(--p-line)}
+.pk .fq:first-child{border-top:0}
+.pk .fq .q{display:flex;gap:12px;align-items:center;justify-content:space-between;font:700 16px/1.35 var(--f-body);color:var(--p-ink)}
+.pk .fq .q .r{display:flex;gap:10px;align-items:center;flex:none}
+.pk .fq .pm{font:400 22px/1 var(--f-body);color:var(--p-olive);width:16px;text-align:center}
+.pk .fq p{font-size:15px;line-height:1.7;color:var(--p-soft);margin:10px 0 0;max-width:72ch}
+.pk .fqg{font:600 12px var(--f-body);letter-spacing:1px;text-transform:uppercase;color:var(--p-olive);margin:28px 0 0}
+.pk .demo{border:1px solid var(--p-line);border-left:3px solid var(--p-olive);border-radius:14px;background:#fff;padding:24px;box-shadow:var(--p-shadow)}
+.pk .cta{text-align:center}
+.pk .cta .acts{justify-content:center}
+.pgfoot{border-top:1px solid var(--p-line);background:var(--p-paper);font-size:14px;color:var(--p-soft)}
+.pgfoot .fgrid{display:grid;gap:28px 24px}
+.pgfoot .fmark{display:flex;align-items:center;gap:8px;font:700 17px var(--f-body);color:var(--p-ink);margin-bottom:10px}
+.pgfoot .fmark i{font-style:normal;color:var(--p-olive);margin-left:-8px}
+.pgfoot .fm{width:20px;height:20px;border-radius:4px;background:var(--p-olive);color:#fff;display:grid;place-items:center;font:700 13px var(--f-disp)}
+.pgfoot p{margin:0;line-height:1.5}
+.pgfoot h5{font:600 12px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--p-dim);margin:0 0 6px}
+.pgfoot a{display:flex;align-items:center;min-height:32px;color:var(--p-soft)}
+.pgfoot .nu{position:relative;box-shadow:0 0 0 2px rgba(87,101,30,.4);border-radius:8px;padding:10px;margin:-10px}
+.pgfoot .dtag{position:absolute;top:-10px;right:8px;font:500 10px var(--f-mono);letter-spacing:.6px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:#fff;border:1px solid currentColor}
+.pgfoot .dtag.NEW{color:#57651E}.pgfoot .dtag.WORDS{color:#835006}
+.pgfoot .qr{display:flex;gap:12px;align-items:flex-start}
+.pgfoot .qrbox{width:64px;height:64px;flex:none;border-radius:6px;border:1px solid var(--p-line);background:repeating-conic-gradient(var(--p-ink) 0 25%,#fff 0 50%) 0 0/16px 16px}
+.pgfoot .fbase{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:32px;padding-top:16px;border-top:1px solid var(--p-line);font-size:13px;color:var(--p-dim)}
+.bnav{display:grid;grid-template-columns:repeat(5,1fr);height:48px;align-items:center;text-align:center;background:#fff;border-top:1px solid var(--p-line);font:600 12px var(--f-body);color:var(--p-soft)}
+.bnote{margin:0;padding:8px 20px 12px;background:#fff;font:500 11px/1.4 var(--f-mono);color:var(--p-dim)}
+.serp{background:#fff;border:1px solid rgba(70,55,30,.2);border-radius:10px;padding:14px 16px;margin-top:12px;max-width:640px}
+.serp .u{font-size:12.5px;color:var(--p-soft)}
+.serp .t{font-size:18px;color:#1a3fa8;margin:2px 0}
+.serp .d{font-size:13.5px;color:var(--p-soft);line-height:1.45}
+.serp .was{margin-top:8px;padding-top:8px;border-top:1px dashed var(--p-line);font-size:12px;color:var(--p-dim)}
+.ev{display:grid;gap:12px;margin-top:14px}
+.ev .note h3{margin:0 0 6px;font-size:15px}
+.ev .note li{font-size:13.5px;line-height:1.5;margin:0 0 6px;max-width:100ch}
+.ev ol,.ev ul{margin:6px 0 0;padding-left:20px}
+table.asks.ideas td:first-child{font:600 13.5px var(--f-body);white-space:normal}
+details.fold{margin-top:12px;background:var(--doc-card);border:1px solid var(--doc-line);border-radius:10px}
+details.fold>summary{cursor:pointer;padding:12px 14px;font:600 15px var(--f-body)}
+details.fold>summary:focus-visible{outline:2px solid var(--doc-accent);outline-offset:2px}
+details.fold .tblwrap{padding:0 12px 12px}
+.mk{position:absolute;right:-12px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 11.5px var(--f-body);color:#fff;z-index:3;transform:translateY(-12px);box-shadow:0 0 0 2px var(--p-paper)}
+.mk::before{content:"";position:absolute;right:24px;top:11px;width:40px;border-top:2px solid currentColor;opacity:.0}
+.mk.k-false{background:var(--k-false)}.mk.k-new{background:var(--k-new)}.mk.k-fix{background:var(--k-fix)}
+.hl{position:absolute;left:0;width:10px;height:28px;transform:translateY(-8px);border-radius:0 4px 4px 0;pointer-events:none}
+.hl.k-false{background:#B03A22}
+.hl.k-new{background:#57651E}
+.hl.k-fix{background:#835006}
+.frame.drawn::before{display:none}
+.pk .card{position:relative}
+.pk .dtag{position:absolute;top:-10px;right:14px;font:500 10px var(--f-mono);letter-spacing:.6px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:#fff;border:1px solid currentColor}
+.pk .dtag.NEW{color:#57651E}.pk .dtag.WORDS{color:#835006}.pk .dtag.UNCHANGED{color:#6B7280}
+.pk .loadline{height:3px;width:120px;margin:0 auto 16px;border-radius:2px;background:linear-gradient(90deg,var(--p-olive) 0 30%,var(--p-fill) 30%)}
+.rail{position:relative;width:320px;flex:none}
+.rn{position:absolute;left:0;right:0;background:var(--doc-card);border:1px solid var(--doc-line);border-left:4px solid var(--k-same);border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;cursor:pointer}
+.rn.k-false{border-left-color:var(--k-false)}.rn.k-new{border-left-color:var(--k-new)}.rn.k-fix{border-left-color:var(--k-fix)}
+.rn b.n{font:700 11px var(--f-mono);margin-right:6px}
+.rn.on,.mk.on{outline:3px solid var(--doc-accent);outline-offset:2px}
+.rn q{quotes:"“" "”";font-style:normal;font-weight:600}
+.differs .slice{opacity:.22;filter:grayscale(1)}
+.differs .rn.k-same{display:none}
+/* product kit (drawn) */
+.pk{font-family:var(--f-body);color:var(--p-ink)}
+.pk .eyebrow{font:600 12px var(--f-body);letter-spacing:1.1px;text-transform:uppercase;color:var(--p-olive)}
+.pk .h2{font:700 40px/1.05 var(--f-disp);margin:6px 0 10px;color:var(--p-ink)}
+.pk .sub{color:var(--p-soft);font-size:15px;max-width:60ch;margin:0}
+.pk .tgl{display:inline-flex;border:1px solid var(--p-line);background:#fff;border-radius:999px;padding:4px;gap:2px;margin:26px auto 0}
+.pk .tgl button{border:0;background:none;font:600 13px var(--f-body);padding:7px 14px;border-radius:999px;color:var(--p-ink);cursor:pointer}
+.pk .tgl button[aria-pressed="true"]{background:var(--p-ink);color:#fff}
+.pk .tgl small{color:var(--p-olive);font-weight:600;margin-left:4px}
+.pk .rowlab{font:600 11px var(--f-body);letter-spacing:1px;text-transform:uppercase;color:var(--p-dim);margin:28px 0 10px}
+.pk .grid{display:grid;gap:22px}
+.pk .card{background:#fff;border:1px solid var(--p-line);border-radius:12px;padding:26px 22px 22px;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(70,55,30,.05),0 6px 18px rgba(70,55,30,.06)}
+.pk .card.hi{border:2px solid var(--p-olive)}
+.pk .card.nu{box-shadow:0 0 0 3px rgba(87,101,30,.35)}
+.pk .cn{font:700 19px/1.2 var(--f-body);margin:0 0 6px}
+.pk .ct{font-size:12.5px;color:var(--p-soft);margin:0;min-height:52px}
+.pk .pr{margin-top:20px;display:flex;align-items:baseline;gap:6px}
+.pk .pr b{font:700 32px/1 var(--f-disp)} .pk .pr span{font-size:12px;color:var(--p-dim)}
+.pk .nt{font-size:12px;color:var(--p-dim);margin:6px 0 0;line-height:1.45}
+.pk .nt.trial{color:var(--p-soft)}
+.pk ul{list-style:none;padding:16px 0 0;margin:16px 0 0;border-top:1px solid var(--p-line);display:grid;gap:9px;font-size:13px;color:var(--p-soft)}
+.pk li{padding-left:20px;position:relative}
+.pk li::before{content:"✓";position:absolute;left:0;color:var(--p-olive);font-weight:700}
+.pk .btn{margin-top:auto;display:flex;align-items:center;justify-content:center;min-height:48px;text-align:center;font:700 15px var(--f-body);padding:0 14px;border-radius:10px;border:1px solid var(--p-line);background:#fff;color:var(--p-ink)}
+.pk .btn.lime{background:var(--p-lime);border-color:var(--p-lime)}
+.pk .btnspace{height:22px}
+.pk .quiet{font-size:12px;color:var(--p-dim);text-align:center;margin:10px 0 0}
+.pk .quiet a,.pk a.lnk{color:var(--p-olive);font-weight:600;text-decoration:none}
+.pk .avail{font-size:13px;color:var(--p-soft);text-align:center;margin:26px 0 0}
+/* start column */
+.sbar{height:56px;border-bottom:1px solid var(--p-line);background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:13px}
+.sbar .lg{font:700 17px var(--f-body);letter-spacing:-.2px}
+.sbar .lg i{font-style:normal;color:var(--p-olive)}
+.sbar nav{display:flex;gap:18px;align-items:center;color:var(--p-soft)}
+.sbar .si{border:1px solid var(--p-line);border-radius:999px;padding:5px 12px;font-weight:600;color:var(--p-ink)}
+.scol{margin:0 auto;padding:34px 0 40px}
+.scol .sh{font:700 32px/1.1 var(--f-disp);text-align:center;margin:0}
+.scol .ss{text-align:center;color:var(--p-dim);font-size:16px;margin:8px 0 0}
+.steps{display:flex;justify-content:center;align-items:center;gap:10px;margin:16px 0 18px;font:600 12px var(--f-body);letter-spacing:1px;text-transform:uppercase}
+.steps .s{display:flex;gap:6px;align-items:center;color:var(--p-dim)}
+.steps .s i{font-style:normal;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--p-line);font-size:10.5px}
+.steps .s.on{color:var(--p-ink)} .steps .s.on i{background:var(--p-ink);color:#fff;border-color:var(--p-ink)}
+.steps .bar{width:26px;border-top:1px solid var(--p-line)}
+.fld{display:grid;gap:6px;margin-top:14px} .fld label{font-weight:600;font-size:14px}
+.fld .in{height:48px;border:1px solid var(--p-line);border-radius:10px;background:#fff;padding:0 12px;display:flex;align-items:center;color:#9a9188;font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chk{display:flex;gap:10px;font-size:13px;margin-top:14px;color:var(--p-soft)} .chk i{width:16px;height:16px;border:1px solid #9a9188;border-radius:3px;flex:none;margin-top:2px}
+.availbox{margin-top:14px;font-size:12.5px;color:var(--p-soft);background:var(--p-fill);border-radius:8px;padding:9px 12px}
+.foot{border-top:1px solid var(--p-line);margin-top:20px;padding-top:14px;text-align:center;font-size:13px;color:var(--p-soft)}
+.choose{display:grid;gap:10px}
+.ch{border:1px solid var(--p-line);background:#fff;border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:40px 1fr 24px;gap:12px;align-items:center}
+.ch .ic{width:36px;height:36px;border-radius:8px;background:var(--p-fill);display:grid;place-items:center;font-size:17px}
+.ch .lb{font:600 10.5px var(--f-mono);letter-spacing:1px;text-transform:uppercase;color:var(--p-soft)}
+.ch .pill{font:600 10px var(--f-mono);letter-spacing:.6px;background:rgba(87,101,30,.10);color:var(--p-olive);border-radius:4px;padding:2px 6px;margin-left:8px;text-transform:uppercase}
+.ch .tt{font-weight:700;font-size:15px;margin-top:2px} .ch .bd{font-size:12.5px;color:var(--p-soft)} .ch .ar{color:var(--p-olive);font-weight:700}
+.ch.nu{box-shadow:0 0 0 3px rgba(87,101,30,.35)}
+.wait{background:#fff;border:1px solid var(--p-line);border-radius:12px;padding:26px;text-align:center}
+.wait .spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--p-fill);border-top-color:var(--p-olive);margin:0 auto 14px;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.wait .spin{animation:none}}
+.substeps{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.substep{border:1px solid var(--doc-line);background:var(--doc-card);color:var(--doc-ink);font:600 12.5px var(--f-body);padding:6px 11px;border-radius:7px;cursor:pointer}
+.substep[aria-pressed="true"]{background:var(--doc-ink);color:var(--doc-bg)}
+table.asks{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--doc-card);border:1px solid var(--doc-line);border-radius:10px;overflow:hidden}
+.asks th,.asks td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--doc-line)}
+.asks th{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.7px;color:var(--doc-dim);background:var(--doc-bg)}
+.asks td:first-child{font:700 13px var(--f-mono);white-space:nowrap}
+.asks .grp td{background:var(--doc-accent-soft);font:600 12px var(--f-body);text-transform:uppercase;letter-spacing:.7px}
+.tblwrap{overflow-x:auto}
+.rec{font-weight:600}
+.copy{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.copy button{border:1px solid var(--doc-line);background:var(--doc-card);color:var(--doc-ink);font:600 13px var(--f-body);padding:8px 14px;border-radius:8px;cursor:pointer}
+textarea#pickout{width:100%;min-height:90px;font:12.5px var(--f-mono);border:1px solid var(--doc-line);border-radius:8px;background:var(--doc-card);color:var(--doc-ink);padding:8px}
+.pick select{font:13px var(--f-body);padding:4px 6px;border-radius:6px;border:1px solid var(--doc-line);background:var(--doc-card);color:var(--doc-ink);max-width:100%}
+.mini{font-size:12.5px;color:var(--doc-dim)}
+@media (max-width:640px){h1{font-size:25px}.rail{width:260px}}
+</style>
+
+<header class="top"><div class="wrap">
+  <h1>Club on-sale pages</h1>
+  <p class="lede">What a visitor sees for Club, Club · Association and League Plus while the plans are closed, what they would see if the switch were flipped today with no build, and what the build proposes. The audience review (18 Nov) then asked whether each page sells to its buyer, and added to the same drawings: it starts on tab 1. Drawn 2026-11-18 from production (closed) and dev (every plan on, by design) captures. Plan of record: <b>CLUB_ON_SALE_PAGES_PLAN.md</b>; words: <b>CLUB_ON_SALE_COPY.md</b>.</p>
+  <div class="legend">
+    <span><i class="dot d-false">1</i> false the moment the switch opens</span>
+    <span><i class="dot d-new">1</i> new or changed in the open state</span>
+    <span><span class="tag t-new">new</span> <span class="tag t-fix">changed words</span> <span class="tag t-same">unchanged</span> on each drawn section and card</span>
+    <span><i class="dot d-fix">1</i> closed words fixed now (wrong today)</span>
+    <span><span class="tag t-same">unchanged</span> everything not marked</span>
+  </div>
+</div></header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist" id="tabs"></div></nav>
+<div class="wrap"><div class="viewrow" id="viewrow">
+  <span><span class="vlabel">State</span><span class="seg" data-k="state"><button data-v="closed">Closed today</button><button data-v="asis">Flipped as-is</button><button data-v="open">Open · proposed</button></span></span>
+  <span><span class="vlabel">Device</span><span class="seg" data-k="dev"><button data-v="desk">Desk 1440</button><button data-v="phone">Phone 390</button></span></span>
+  <span><span class="vlabel">Size</span><span class="seg" data-k="size"><button data-v="true">True size</button><button data-v="fit">Fit to width</button></span></span>
+  <span><span class="vlabel">View</span><span class="seg" data-k="view"><button data-v="all">Everything</button><button data-v="diff">Show only what differs</button></span></span>
+</div></div>
+
+<main><div class="wrap" id="panels">
+
+<section class="panel" data-tab="start">
+  <h2>1 · Start here</h2>
+  <div class="explain">
+    <p><b>The problem.</b> Club, Club · Association and League Plus go on sale together. Today about 45 lines on eight pages are typed in and never look at the on-sale switch. Flip it as-is and a visitor reads "Express interest", "Coming soon" and "We set up Club with you directly"; the Club and League Plus buttons make a <i>tournament</i> organization; there is no Club · Association card; League Plus says "No credit card required" over a trial that takes a payment method. The <b>Flipped as-is</b> state on each tab shows exactly that, from dev, where every plan is on.</p>
+    <p><b>What the build does.</b> Every page reads the switch on every visit: closed looks like today (with the few closed words that are wrong today fixed), open is a real way to buy. That needs more than words: there is no way to create a Club or League Plus organization today, so the build adds a Club start and a League Plus start, and a way to buy from inside the product.</p>
+    <p><b>How to read a tab.</b> Pick the state, the device and the size above. <b>True size</b> draws the page at its real width (scroll sideways inside the frame); open this page on a phone for the phone frames. Numbered dots on the page match the notes on the right; click either to highlight both. <b>Show only what differs</b> greys out everything that is unchanged. On the open state every section with a change is now <b>drawn with its real words</b> and tagged New, Changed words or Unchanged. Only a section with nothing changed is still today's capture.</p>
+  </div>
+  <div class="cols">
+    <div class="note"><b>Already ruled (not re-opened)</b><br><span class="mini">Open launch, no club demo (18 Nov) · three plans flip together · both band prices on /pricing and /for-clubs · one trial sentence everywhere · no "we set up Club with you" or "talk to us" after the flip · the retired campaign emails stay retired · no price on the home page's audience cards (7 Aug) · no comparison table (7 Sep).</span></div>
+    <div class="note"><b>Reviews run on these drawings</b><br><span class="mini">/marketing wrote the words (W1–W75) · /billing the buying paths · /accounting the tax line · /legal the promises · /strategy the grouping against the decisions log · /design the drawing itself (its changes are listed on the Your calls tab).</span></div>
+    <div class="note"><b>Prices on the drawn cards</b><br><span class="mini">Shown as the page reads them from the plan settings on 18 Nov. The Facts doc is their only home; nothing here sets a price.</span></div>
+  </div>
+
+  <h2 style="margin-top:28px">The audience review (added 18 Nov)</h2>
+  <div class="explain">
+    <p>The first drawings switched the words over. This review asked a different question: walking each page as a tournament organizer, a league or club board, and a coach, <b>would this page make me start?</b> It reads every public page and checks each promise against what the product does today. What it adds sits on top of the first drawings, in the same plan, as part of S3 and a new S3b.</p>
+  </div>
+  <div class="ev">
+    <div class="note"><h3>The five changes that matter most</h3>
+      <ol>
+        <li><b>Let a league or club buyer see the product before they add a payment method.</b> A tournament organizer and a coach each get a live demo. The two plans going on sale have no demo and no picture on any page. The fix inside your "no club demo at launch" ruling: the product's own screens on both pages (tabs 4 and 5), and four plain steps on what happens to the payment method during the trial.</li>
+        <li><b>Sell Club to the whole board.</b> The buyer we aim at first runs house league and rep teams together. Today's Clubs page speaks only about coaches: all four "old way" cards, and the heading. The treasurer and the registrar read it too, and one of them has to say yes to the money. New: the club's books in the first sentence, two new "old way" cards, and "What each person at your club gets".</li>
+        <li><b>Answer the board's questions on the page.</b> Can we switch mid-season, what happens when the treasurer changes, what do you do with our families' information, what if we stop. No page answers any of them today. New: "Questions a board asks" on both pages and in the pricing FAQ, each answer checked against the product and the published policies.</li>
+        <li><b>Group by buyer, as you asked, with two refinements.</b> Three bands on /pricing, three doors in the picker and on the home page, and the home page sends people to their page instead of carrying six plan cards. The refinements are under "Where I disagree".</li>
+        <li><b>Stop saying what is not true today.</b> Three pricing answers describe customers we do not have. The Premium card says "Free right now" over a $29 plan. "Start Tournament Plus free" opens a checkout that takes a payment method. These are live on production now and change while closed.</li>
+      </ol>
+    </div>
+    <div class="note"><h3>Where I disagree with the planning session's proposal</h3>
+      <ul>
+        <li><b>Not a ladder.</b> The proposal called League Plus, Club and Club · Association "a clean three-step ladder". Your brand rule says League Plus and Club are peers for different clubs, and a house league must not be told Club is its next step. The band keeps all three side by side but labels each by what a club runs. Club's label says it includes house league, so a club with both does not buy the smaller plan by mistake.</li>
+        <li><b>No price on the home page doors, and never $29 on the coach door.</b> Your 7 Aug ruling keeps prices off those cards, and its reason still holds for coaches: every coach starts free, so "$29" overstates the cost. Prices move to three short rows lower on the home page (Ask 24 has the one exception worth arguing).</li>
+        <li><b>Three audiences for buying, four for landing.</b> A house league board and a club board buy from one band, but they search for different things and need different first sentences. The two pages and the two nav entries stay. Only the order changes.</li>
+        <li><b>Your 17 Nov ruling says marketing comes after the launch.</b> So the additions are split. What S3 rebuilds anyway is built once in its final shape (the bands, the doors, the nav, the trial steps). The selling sections are a separate S3b that does not hold the flip (Ask 30).</li>
+      </ul>
+    </div>
+  </div>
+  <details class="fold"><summary>Each buyer, walked from landing to starting</summary>
+  <div class="tblwrap"><table class="asks ideas">
+    <tr><th>Buyer</th><th>What works today</th><th>What is missing</th><th>What would most improve the chance of a start</th></tr>
+    <tr><td>Tournament organizer</td><td>The strongest path: a free plan, a live demo, a walkthrough, a page that names the pain.</td><td>Nothing tells an organizer already here that League Plus or Club starts from the same account. "Start Tournament Plus free" is not free of a payment method.</td><td>One line on the cross-sells: your events, teams and staff stay where they are (W71).</td></tr>
+    <tr><td>House league board</td><td>The page names four real pains and the season in four steps.</td><td>No picture, no demo. The trial is one sentence. No answer on switching, families' information or stopping. Its search title is "For house league administrators".</td><td>The real screens in the four steps, and what happens to the payment method (W67, W68).</td></tr>
+    <tr><td>Club board</td><td>The price is plain, both sizes are shown, every coach is included.</td><td>The page is about coaches. The treasurer and registrar are missing. Nothing helps the president take it to a board meeting. No picture.</td><td>"What each person at your club gets", with the board report and the roles (W69).</td></tr>
+    <tr><td>Coach</td><td>A free start, a live demo, a clear page.</td><td>The free portal has no place on the pricing page. "Free right now" sits on the $29 card. A coach has no way to pass the Clubs page to their club.</td><td>The coaches band on /pricing, and "Copy a link for your club" (W58, W71).</td></tr>
+  </table></div></details>
+  <details class="fold"><summary>The twelve ideas, and what each relies on in the product</summary>
+  <div class="tblwrap"><table class="asks ideas">
+    <tr><th>Idea</th><th>For</th><th>Where</th><th>Relies on (found in the product)</th><th>Size</th><th>Stage</th></tr>
+    <tr><td>Three audience bands</td><td>All</td><td>/pricing (tab 3)</td><td>The six plans as configured; the free Basic Coaches Portal</td><td>A section rebuilt</td><td>S3</td></tr>
+    <tr><td>Three-door picker</td><td>All</td><td>/pricing (tab 2)</td><td>The bands</td><td>Words only</td><td>S3</td></tr>
+    <tr><td>Three doors and three price rows</td><td>All</td><td>Home (tab 5)</td><td>The four audience pages; prices from the plan settings</td><td>Two sections rebuilt</td><td>S3</td></tr>
+    <tr><td>Nav order, footer column, menu entry</td><td>All</td><td>Every page (tab 10)</td><td>The pages exist; the footer reaches neither Leagues nor Clubs today</td><td>Words only</td><td>S3</td></tr>
+    <tr><td>Search titles</td><td>League and club boards</td><td>Three pages (tab 10)</td><td>None</td><td>Words only</td><td>S3</td></tr>
+    <tr><td>How the trial works</td><td>League and club boards</td><td>/for-leagues, /for-clubs</td><td>Checkout takes a payment method; an email goes out before a trial ends; cancelling in Plan &amp; billing</td><td>A new section</td><td>S3</td></tr>
+    <tr><td>The product's own screens</td><td>League and club boards</td><td>/for-leagues, /for-clubs</td><td>Eight real screens, shot from a fictional club</td><td>A new section and eight pictures</td><td>S3b</td></tr>
+    <tr><td>What each person at your club gets</td><td>Club board</td><td>/for-clubs</td><td>Board roles; the board report export; public registration, the waitlist, Email families; every coach's portal</td><td>A new section</td><td>S3b</td></tr>
+    <tr><td>Questions a board asks</td><td>League and club boards</td><td>/for-leagues, /for-clubs, /pricing FAQ</td><td>Invite and remove a board member; "Start from" last season; exports on each list; the published Terms and Privacy Policy</td><td>A new section</td><td>S3b</td></tr>
+    <tr><td>The "old way" and the hero, rebalanced</td><td>Club board</td><td>/for-clubs</td><td>None (pain, no promise)</td><td>Words only</td><td>S3b</td></tr>
+    <tr><td>Paths between audiences</td><td>Organizers, coaches</td><td>Three pages (tab 10)</td><td>Buying from inside the product (S4)</td><td>Words only</td><td>S3b</td></tr>
+    <tr><td>Truth fixes</td><td>All</td><td>/pricing, /for-coaches, /for-leagues</td><td>None</td><td>Words only</td><td>S1</td></tr>
+  </table></div></details>
+  <div class="cols" style="margin-top:14px">
+    <div class="note"><b>Judged and not adopted</b><br><span class="mini">A side-by-side comparison table (you removed it on 7 Sep, and its rows were plumbing; inside a band the cards are the comparison) · a "which plan am I?" quiz (three doors and the band labels do it in one click) · a "Most popular" badge (it is a statement about customers) · "your data is yours", "export everything" and "stored in Canada" (none is true or approved: information is stored in the United States, and the page says so) · a link to the board pack (not ready to show).</span></div>
+    <div class="note"><b>Needs product work, so not in this build</b><br><span class="mini">A house league or club demo · bringing an existing house league season in from a spreadsheet · a demo link that opens on a chosen screen · changing a club's owner without writing to us · one download of everything a club holds. Each goes to the ideas list with a pointer from the plan.</span></div>
+    <div class="note"><b>Found on the way, outside this build</b><br><span class="mini">The Facts doc says the bank balance check, a club's own web address and the whole-staff portals are "not built"; all three are in the product. Only five clubs can connect their own web address until a request to our host is approved. Details in the plan.</span></div>
+  </div>
+</section>
+
+<section class="panel" data-tab="pricing"><h2>2 · /pricing</h2>
+  <p class="explain">The page with the most to change, now drawn top to bottom. Open: a three-door picker, the plan grid in three audience bands (tab 3), the League Plus and Club bridge cards and the "Not open yet" section gone, a longer FAQ in three groups, and a bottom button that no longer opens the interest form.</p>
+  <div class="spec-host"></div></section>
+
+<section class="panel" data-tab="cards"><h2>3 · The plan bands (on /pricing only)</h2>
+  <p class="explain">Six plans in three bands, grouped by who buys them: running a tournament, running a league or a club, coaching one team. Club · Association is a full card beside Club. Every paid price carries "plus applicable taxes"; every trial carries the one trial sentence, with the tax in it (Ask 8). Switch Monthly / Annual on the drawing: the sentence stays in the annual view. The home page no longer carries these cards (tab 5).</p>
+  <div class="spec-host"></div></section>
+
+<section class="panel" data-tab="clubs"><h2>4 · /for-clubs</h2>
+  <p class="explain">Drawn top to bottom. Open: the hero starts a Club trial and names the club's books; the "old way" speaks to the treasurer and registrar as well as the coaches; each module shows a real screen; a new section says what each person at the club gets; Club and Club · Association sit side by side with the trial explained under them; and a board's questions are answered before the last button.</p>
+  <div class="spec-host"></div></section>
+
+<section class="panel" data-tab="leagues"><h2>5 · /for-leagues and the home page</h2>
+  <div class="substeps" data-sub="leagues"><button class="substep" data-v="leagues" aria-pressed="true">/for-leagues</button><button class="substep" data-v="home" aria-pressed="false">Home</button></div>
+  <p class="explain">/for-leagues, drawn top to bottom: the hero and the plan card start a League Plus trial, the four steps show real screens, the trial is explained, and a board's questions are answered. Home: three audience doors replace two cards and a roadmap row, all four roles are full cards, and three price rows replace the six plan cards.</p>
+  <div class="spec-host"></div></section>
+
+<section class="panel" data-tab="clubstart"><h2>6 · A real Club start</h2>
+  <div class="substeps" data-sub="clubstart"></div>
+  <p class="explain" id="clubstart-ex"></p>
+  <div class="spec-host"></div></section>
+
+<section class="panel" data-tab="leaguestart"><h2>7 · A League Plus start</h2>
+  <div class="substeps" data-sub="leaguestart"></div>
+  <p class="explain" id="leaguestart-ex"></p>
+  <div class="spec-host"></div></section>
+
+<section class="panel" data-tab="product"><h2>8 · Buying from inside the product</h2>
+  <div class="explain">
+    <p>Not drawn here on purpose: these are Plan & billing screens, and the house rule is to draw a control from its shipped screen. S4 gets its own drawing round on today's captures before it is built. What it covers, as recommended by /billing:</p>
+  </div>
+  <div class="tblwrap"><table class="asks">
+    <tr><th>Who</th><th>Today</th><th>Open · proposed</th><th>When</th></tr>
+    <tr><td>Free Tournament org</td><td>Plan & billing offers Tournament Plus only; League Plus and Club are "find out more" cards</td><td>Start Club, Club · Association or League Plus (the same trial, the same sentence). This is also where an abandoned Club start comes back.</td><td>Launch</td></tr>
+    <tr><td>Paying Tournament Plus</td><td>Moves to Club or Club · Association; nothing to League Plus</td><td>Add the move to League Plus (no second trial)</td><td>Launch</td></tr>
+    <tr><td>Founding Season Tournament Plus (free)</td><td>The move is refused, then falls back to checkout</td><td>Checkout with the trial sentence, and one line that the free Tournament Plus period ends when Club starts</td><td>Launch</td></tr>
+    <tr><td>Premium coach</td><td>"Start your club" in place (built, walked)</td><td>Unchanged</td><td>—</td></tr>
+    <tr><td>League Plus org</td><td>Can change nothing</td><td>Move up to Club or Club · Association</td><td>After launch (nobody holds League Plus yet)</td></tr>
+    <tr><td>House league at its free cap</td><td>"Upgrade to League Plus →" opens the interest form</td><td>Opens Plan & billing's League Plus start; buying clears the free caps (today nothing clears them)</td><td>Launch</td></tr>
+    <tr><td>A closed plan's row</td><td>A "contact us" email link</td><td>Unchanged: a customer writes to us; the interest form is for visitors</td><td>—</td></tr>
+  </table></div>
+  <p class="mini" style="margin-top:10px">Also: the plan drawer only offers monthly today (a yearly Club buyer cannot choose it there) — add the Monthly / Yearly choice.</p>
+</section>
+
+<section class="panel" data-tab="form"><h2>9 · The interest form</h2>
+  <p class="explain">Closed: today's form with its "early access" words fixed (the programme was withdrawn in July). Open: the form is offered only for a plan that is still closed; with all three open it appears on no public page. The people already on the list stay in platform admin for one last email after the flip (Ask 5).</p>
+  <div class="spec-host"></div></section>
+
+<section class="panel" data-tab="other"><h2>10 · The nav, search titles and the other pages</h2>
+  <div class="substeps" data-sub="other"></div>
+  <p class="explain" id="other-ex"></p>
+  <div class="spec-host"></div></section>
+
+<section class="panel" data-tab="asks"><h2>11 · Your calls</h2>
+  <div class="note" style="margin:6px 0 14px;border-left:4px solid var(--k-new)"><b>Ruled 18 Nov: every call as recommended.</b> Your words: “I agree with all 33 recommendations” (34 numbers; Ask 4 was replaced by Ask 21). Where a call had options, the recommended one stands: tax inside the trial sentence (Ask 8, b) · no price on the home page doors (Ask 24, A) · the data terms published with the release (Ask 29) · the untrue lines fixed at the next promote and Tournament Plus’s trial said on the page (Ask 31) · Club leads the pricing page (Ask 32, B) · the three drawing calls as drawn (Ask 34).</div>
+  <p class="explain">Each row below is kept as it was asked. To change a ruling, pick on its row, add a note, then Copy my answers and paste them back into the chat.</p>
+  <div class="tblwrap"><table class="asks" id="asktable"></table></div>
+  <div class="copy"><button id="copyBtn" type="button">Copy my answers</button><span class="mini" id="copyMsg"></span></div>
+  <textarea id="pickout" readonly aria-label="Your answers" hidden></textarea>
+  <h3>What /design changed on this page</h3>
+  <ul id="designlog" class="mini"></ul>
+</section>
+
+</div></main>
+
+<script>
+(function(){
+const IMG = n => 'club-on-sale/' + n + '.jpg';
+const W = {desk:1440, phone:390};
+const S = {tab:'start', state:'open', dev:'desk', size:(window.innerWidth<1820?'fit':'true'), view:'all', sub:{leagues:'leagues', clubstart:'chooser', leaguestart:'s1', other:'nav'}};
+try{ const h=location.hash.slice(1); if(h) S.tab=h; }catch(e){}
+
+/* ---------- product pieces ---------- */
+const PR = {
+  tournament:{n:'Tournament',t:'An invite-only event: you add the teams, build the schedule, and post live scores and results — free, with no time limit.',m:'Free',a:'Free',notes:['No credit card required'],f:['You add every team — each coach claims it from an email invitation','Manual tournament scheduling','Score entry and results','Standings','A public event site with live scores families can follow','Venue management','Public news posts','Basic team/contact email','Default FieldLogicHQ styling','3 staff / admin seats','1 tournament at a time'],b:'Get started free'},
+  tplus:{n:'Tournament Plus',t:'For events teams register for — public registration, payment tracking, check-in, and volunteers — plus automation, branding, reporting, and repeat-event tools.',m:'$39',a:'$390',tax:1,notes:['No long-term contract — cancel any time'],f:['Everything in Tournament','Public registration — teams register on your site, and you approve, waitlist, or decline','Fees and payment tracking — you record what each team has paid','Check-in on game day','Unlimited tournament slots','Round-robin and playoff generators','Custom registration fields, file uploads, and waitlist promotion','Registration exports — Excel, CSV, and PDF','Post-tournament reporting','Full branding control','Permanent sealed archives, tournament cloning, and targeted announcements','Unlimited staff / admin seats · unlimited volunteers'],b:'Start now',after:'Not ready? <a>See a live tournament first</a>'},
+  league:{n:'League Plus',t:'House league seasons, registration, and a public site for your league.',m:'$89',a:'$890',tax:1,trial:30,lead:'Running a tournament too? It’s in your plan.',f:['Everything in Tournament Plus','Public organization page','House league — registration, divisions, seasons, and standings','League-scoped communications','Advanced member roles and permissions'],b:'Start your League Plus trial',chg:1},
+  club:{n:'Club',t:'The complete operating system for established clubs — tournaments, house league, rep teams, accounting, and coaching staff, all in one place.',m:'$219',a:'$2,190',tax:1,trial:90,f:['Everything in League Plus','Accounting — club ledger, budget vs. actual, and costs split across teams, with coach reminders','Bank reconciliation — check each statement against your books and find what’s missing','Rep teams — tryouts, rosters, player documents, and season history','Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee','Up to 15 teams'],b:'Start your Club trial',chg:1,hi:1,lime:1},
+  assoc:{n:'Club · Association',nu:1,t:'The full Club platform for organizations with 16 to 30 teams.',m:'$379',a:'$3,790',tax:1,trial:90,f:['Everything in Club','16 to 30 teams, every team type counted the same','Start here, or move up from Club when you pass 15 teams'],b:'Start your Club · Association trial',after:'More than 30 teams? Email <a>support@fieldlogichq.ca</a> for a custom quote.'},
+  team:{n:'Premium Coaches Portal',t:'The operations HQ for one competitive team — standalone, no organization account needed. Included in Club when your organization joins.',m:'$29',a:'$290',tax:1,notes:['or $290/season — save two months'],f:['Full roster management with positions and season history','Lineup builder with game-by-game history — exportable to PDF','Schedule, attendance, and availability tracking','Team budget, player dues, and payment tracking','Document management — consent forms, medical notes, eligibility','Host one tournament at a time — you invite the teams','Works standalone — no organization account required'],b:'Start now',after:'Not ready? <a>See a coach’s season first</a>'}
+};
+const TRIAL = d => `${d}-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.`;
+let cycle='monthly';
+function card(k, opts={}){
+  const p=PR[k]; const ann=cycle==='annual';
+  const price = p.m==='Free' ? '<b>Free</b>' : `<b>${ann?p.a:p.m}</b><span>CAD ${ann?'/yr':'/mo'}</span>`;
+  let notes='';
+  if(p.tax) notes+=`<p class="nt">plus applicable taxes</p>`;
+  if(p.trial) notes+=`<p class="nt trial">${TRIAL(p.trial)}</p>`;
+  (p.notes||[]).forEach(n=>notes+=`<p class="nt">${n}</p>`);
+  const fl = opts.short ? p.f.slice(0,opts.short) : p.f;
+  const dt = p.nu ? 'NEW' : p.chg ? 'WORDS' : 'UNCHANGED';
+  return `<div class="card${p.hi?' hi':''}"><span class="dtag ${dt}">${dt==='WORDS'?'changed words':dt.toLowerCase()}</span><p class="cn">${p.n}</p><p class="ct">${p.t}</p>${p.lead?`<p class="nt" style="color:var(--p-olive);font-weight:600;margin-top:8px">${p.lead}</p>`:''}<div class="pr">${price}</div>${notes}<ul>${fl.map(x=>`<li>${x}</li>`).join('')}</ul><div class="btnspace"></div><a class="btn${p.lime?' lime':''}">${p.b}</a>${p.after?`<p class="quiet">${p.after}</p>`:''}</div>`;
+}
+function planSection(dev, which){
+  const pad = dev==='desk' ? 'padding:56px 144px 50px' : 'padding:40px 20px 40px';
+  const cols = dev==='desk' ? 'grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)' : 'grid-template-columns:1fr';
+  if(which==='clubs'){
+    return `<div class="pk" style="${pad}"><div class="eyebrow">The plan</div><div class="h2" style="${dev==='phone'?'font-size:32px':''}">Club — the complete operating system.</div><p class="sub">Pick the Club plan that fits your team count: up to 15 teams, or up to 30 on Club · Association.</p>
+    <div class="grid" style="${cols};margin-top:26px;align-items:start">${clubBig('club')}${clubBig('assoc')}</div>
+    <p class="avail"><a class="lnk">See every plan and price</a></p><p class="avail" style="margin-top:8px">Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars.</p></div>`;
+  }
+  return `<div class="pk" style="${pad}"><div class="eyebrow">The plan</div><div class="h2" style="${dev==='phone'?'font-size:32px':''}">League Plus — built for the full season.</div><p class="sub">League Plus is open for sign-up. It is its own plan: you don't need a tournament plan first.</p>
+    <div class="grid" style="${cols};margin-top:26px;align-items:start">${leagueBig()}<div class="card"><div class="eyebrow" style="color:var(--p-soft)">Already included</div><p class="cn" style="margin-top:8px">Running a tournament too? It is in your plan.</p><p class="ct" style="min-height:0">League Plus includes everything in Tournament Plus — public registration, check-in, schedule generators and your own branding — so one plan covers your season and your events.</p><div class="btnspace"></div><a class="btn">See what Tournament Plus includes</a></div></div>
+    <p class="avail"><a class="lnk">See every plan and price</a></p><p class="avail" style="margin-top:8px">Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars.</p></div>`;
+}
+function clubBig(k){
+  const p=PR[k];
+  const inc = k==='club' ? ['Everything in League Plus (tournaments, house league, public org page)','Families — one record for each household','Unlimited staff / admin seats','Accounting module — org ledger and expense tracking','Club costs split across teams, with reminders and payment tracking','Rep teams module — tryout registration and roster management','Player documents and season history','Club Shared Book — your teams share opponent scouting notes across the club','Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee','Up to 15 teams'] : ['Everything in Club','16 to 30 teams, every team type counted the same','Start here, or move up from Club when you pass 15 teams'];
+  const ann = k==='club' ? '$2,190/year — save two months · up to 15 teams' : '$3,790/year — save two months · up to 30 teams';
+  return `<div class="card${k==='club'?' hi':''}"><span class="dtag ${k==='club'?'WORDS':'NEW'}">${k==='club'?'changed words':'new'}</span><p class="cn">${p.n}</p><div class="pr" style="margin-top:6px"><b>${p.m}</b><span>/month</span></div><p class="nt">plus applicable taxes</p><p class="nt">${ann}</p><p class="nt trial">${TRIAL(90)}</p><p class="ct" style="min-height:0;margin-top:12px">${k==='club'?'The complete operating system for established clubs — tournaments, house league, rep teams, accounting, and coaching staff, all in one place.':p.t}</p><div class="eyebrow" style="margin-top:14px;color:var(--p-soft)">Included</div><ul style="border:0;margin-top:4px;padding-top:6px">${inc.map(x=>`<li>${x}</li>`).join('')}</ul><div class="btnspace"></div><a class="btn${k==='club'?' lime':''}">${p.b}</a>${k==='assoc'?`<p class="quiet">${p.after}</p>`:''}</div>`;
+}
+function leagueBig(){
+  const inc=['Player registration per season — with waitlist management','Season and division setup','Draft tools and team building','Auto-generated round-robin schedules, editable game by game','Live standings — update automatically as scores are entered','Season-wide parent messaging — one screen, every registered family','Public organization page','League-scoped communications','Advanced member roles — league admin, registrar','Registration and standings exports (Excel, CSV)','Unlimited tournaments included','Unlimited staff seats · Unlimited officials'];
+  return `<div class="card hi"><p class="cn">League Plus</p><div class="pr" style="margin-top:6px"><b>$89</b><span>/month</span></div><p class="nt">plus applicable taxes</p><p class="nt">$890/year — save two months</p><p class="nt trial">${TRIAL(30)}</p><p class="ct" style="min-height:0;margin-top:12px">The complete house league platform — registration, draft, scheduling, standings, and parent communications in one place.</p><div class="eyebrow" style="margin-top:14px;color:var(--p-soft)">Included</div><ul style="border:0;margin-top:4px;padding-top:6px">${inc.map(x=>`<li>${x}</li>`).join('')}</ul><div class="btnspace"></div><a class="btn lime">Start your League Plus trial</a></div>`;
+}
+
+/* ---------- page kit: drawn marketing sections (audience review, 2026-11-18; /design pass applied) ---------- */
+const PAD = d => d==='desk' ? 'padding:72px 144px' : 'padding:44px 20px';
+const COLS = (d,n) => d==='desk' ? `grid-template-columns:repeat(${n},minmax(0,1fr))` : 'grid-template-columns:1fr';
+const TAGW = {NEW:'new',WORDS:'changed words',UNCHANGED:'unchanged'};
+const dt = k => k ? `<span class="dtag ${k}">${TAGW[k]}</span>` : '';
+const chip = k => `<span class="chip ${k}">${TAGW[k]}</span>`;
+const SUPPORT = 'support@fieldlogichq.ca';
+const AVAILLINE = 'Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars.';
+const NAVLINKS = ['Tournaments','Leagues','Clubs','Coaches','Pricing'];
+function sec(d, inner, first){ return `<div class="pk${first?'':' sec'}" style="${PAD(d)}">${inner}</div>`; }
+function head(d, eye, h, s){ return `<div class="eyebrow">${eye}</div><div class="h2">${h}</div>${s?`<p class="sub">${s}</p>`:''}`; }
+function nav(d, on){
+  if(d==='phone') return `<div class="pgnav" style="padding:0 16px"><span class="lg">FieldLogic<i>HQ</i></span><span class="rt"><span class="si">Sign in</span><span class="gs">Get started</span></span></div>`;
+  return `<div class="pgnav" style="padding:0 144px"><span class="lg">FieldLogic<i>HQ</i></span><nav>${NAVLINKS.map(l=>`<span class="${l===on?'on':''}">${l}</span>`).join('')}</nav><span class="rt"><span class="si">Sign in</span><span class="gs">Get started</span></span></div>`;
+}
+function hero(d, o){
+  const h1 = `<div class="h1" style="${d==='phone'?'font-size:42px':''}${o.center?';text-align:center':''}">${o.h1}</div>`;
+  const acts = `<div class="acts" style="${o.center?'justify-content:center':''}"><a class="btn lime">${o.btn}</a>${o.alt?`<a class="tlink">${o.alt}</a>`:''}</div>`;
+  return nav(d,o.on) + `<div class="pk" style="${d==='desk'?'padding:64px 144px 56px':'padding:40px 20px 36px'}">${o.eye?`<div class="eyebrow">${o.eye}</div>`:''}${h1}<p class="lead" style="${o.center?'margin:0 auto;text-align:center':''}">${o.lead}</p>${acts}${o.note?`<p class="hnote">${o.note}</p>`:''}${o.facts?`<div class="facts">${o.facts.map(f=>`<span>${f}</span>`).join('')}</div>`:''}</div>`;
+}
+function pcards(d, n, items){
+  return `<div class="gx" style="${COLS(d,n)}">${items.map(c=>`<div class="pc">${dt(c.k)}${c.shot?`<div class="shot"><span><b>Picture</b>${c.shot}</span></div>`:''}${c.lb?`<p class="lb">${c.lb}</p>`:''}<h4>${c.t}</h4><p>${c.b}</p>${(c.links||[]).map(l=>`<a class="lk">${l}</a>`).join('')}</div>`).join('')}</div>`;
+}
+function footer(d){
+  const desk = d==='desk';
+  const span = n => desk ? `grid-column:span ${n}` : '';
+  return `<div class="pgfoot" style="${desk?'padding:56px 144px 28px':'padding:36px 20px 20px'}"><div class="fgrid" style="${desk?'grid-template-columns:repeat(12,minmax(0,1fr))':'grid-template-columns:1fr 1fr'}">
+  <div style="${desk?span(3):'grid-column:1/-1'}"><div class="fmark"><span class="fm">F</span>FieldLogic<i>HQ</i></div><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <div style="${span(2)}"><h5>Product</h5><a>Discover</a><a>Pricing</a><a>Live demos</a><a>What’s new</a></div>
+  <div class="nu" style="${span(2)}">${dt('NEW')}<h5>Built for</h5><a>Tournament organizers</a><a>House leagues</a><a>Clubs</a><a>Coaches</a></div>
+  <div class="nu" style="${span(2)}">${dt('WORDS')}<h5>Get started</h5><a>Start free</a><a>Coaches Portal</a><a>Sign in</a></div>
+  <div style="${desk?span(3):'grid-column:1/-1'}"><h5>Also on your phone</h5><div class="qr"><span class="qrbox"></span><p>Scan to open FieldLogicHQ on your phone and add it to your home screen.</p></div></div>
+  </div><div class="fbase"><span>© 2026 FieldLogicHQ</span><span>Terms · Privacy</span></div></div>` +
+  (desk ? '' : `<div class="bnav">${NAVLINKS.map(l=>`<span>${l}</span>`).join('')}</div><p class="bnote">The bottom bar is fixed to the screen’s bottom on a phone. Its order follows the bands (W63).</p>`);
+}
+function ctaBand(d, h, lead, b1, b2, small){
+  return `<div class="pk sec" style="${PAD(d)};background:#fff"><div class="cta"><div class="h2">${h}</div><p class="lead" style="margin:0 auto">${lead}</p><div class="acts"><a class="btn lime">${b1}</a>${b2?`<a class="btn">${b2}</a>`:''}</div>${small?`<p class="quiet" style="margin-top:16px">${small}</p>`:''}</div></div>`;
+}
+
+/* the plan grid in three audience bands (W58) */
+function over(t){ return `<p class="over">${t}</p>`; }
+function bands(d){
+  const pad = d==='desk' ? 'padding:56px 144px 72px' : 'padding:40px 20px 48px';
+  const pm = PR.team; const ann = cycle==='annual';
+  return `<div class="pk" style="${pad}"><div class="eyebrow">Plans</div><div class="h2">Available now</div><p class="sub">Plans for tournaments, house leagues and clubs, and the Coaches Portal for one team.</p>
+  <div style="text-align:center"><span class="tgl" data-cycle><button aria-pressed="${cycle==='monthly'}" data-c="monthly">Monthly</button><button aria-pressed="${cycle==='annual'}" data-c="annual">Annual<small>2 months free</small></button></span></div>
+  <div class="bandhead" data-a="b1"><h3>Running a tournament</h3><p>One event or a full calendar. Tournament is free; Tournament Plus adds public registration.</p></div>
+  <div class="grid" style="${COLS(d,2)};max-width:1000px">${card('tournament')}${card('tplus')}</div>
+  <div class="bandhead" data-a="b2"><h3>Running a league or a club</h3><p>League Plus is for a house league. Club is for a club that also runs rep teams, and it includes house league. Pick by what your board runs; you don’t need one before the other.</p></div>
+  <div class="grid" style="${COLS(d,3)}"><div class="wc">${over('A house league')}${card('league')}</div><div class="wc">${over('A club with rep teams · up to 15 teams')}${card('club')}</div><div class="wc">${over('A club with 16 to 30 teams')}${card('assoc')}</div></div>
+  <div class="bandhead" data-a="b3"><h3>Coaching one team</h3><p>Every coach starts free. Premium is for the head coach running a competitive team’s whole season.</p></div>
+  <div class="coach">
+    <div class="cstrip">${dt('NEW')}<div style="min-width:0;flex:1 1 320px"><p class="cn">Basic Coaches Portal</p><p class="ct" style="min-height:0">Every coach starts with a free Basic Coaches Portal. It follows every tournament your team enters.</p></div><div class="cfree"><div class="pr" style="margin:0"><b>Free</b></div><p class="nt" style="margin:0">No credit card required</p></div><a class="btn" style="margin:0;padding:0 22px">Start free</a></div>
+    <div class="cprem">${dt('UNCHANGED')}<p class="cn">${pm.n}</p><p class="ct" style="min-height:0">${pm.t}</p><div class="pr"><b>${ann?pm.a:pm.m}</b><span>CAD ${ann?'/yr':'/mo'}</span></div><p class="nt">plus applicable taxes</p><p class="nt">or $290/season — save two months</p><ul style="${d==='desk'?'grid-template-columns:1fr 1fr;column-gap:24px':''}">${pm.f.map(x=>`<li>${x}</li>`).join('')}</ul><div class="acts" style="margin-top:20px"><a class="btn" style="padding:0 28px">${pm.b}</a><span class="quiet" style="margin:0">${pm.after}</span></div></div>
+    <div class="incl">If your club is on Club or Club · Association, <b>every coach’s Premium Coaches Portal is included.</b> <a class="lnk">See what Club includes</a></div>
+  </div>
+  <p class="avail" data-a="avail">${AVAILLINE}</p></div>`;
+}
+/* /pricing sections */
+function pricingHero(d){
+  return nav(d,'Pricing') + `<div class="pk" style="${d==='desk'?'padding:64px 144px 48px':'padding:40px 20px 32px'}"><div class="eyebrow">Pricing</div><div class="h1" style="${d==='phone'?'font-size:40px':''}">Plans built around how you actually operate.</div><p class="lead">Every plan is available now. Tournament is free, with no credit card required. ${AVAILLINE}</p><div class="facts"><span>Billed in CAD — no conversion surprises</span><span>No long-term contract — cancel any time</span><span>Tournament is free — no credit card required</span><span>Upgrade or downgrade at any time</span></div></div>`;
+}
+function picker(d){
+  return sec(d, head(d,'Find your plan','What does your role look like?','Pick the role that fits — you’ll land in the right place.') + pcards(d,3,[
+    {lb:'Tournament organizer',t:'I run tournaments.',k:'UNCHANGED',b:'From your team list to final standings — free to start, no spreadsheets required.',links:['See tournament plans']},
+    {lb:'League or club board',t:'I run a league or a club.',k:'NEW',b:'House league seasons, rep teams and the club’s books, run by a volunteer board.',links:['See league and club plans']},
+    {lb:'Coach or team manager',t:'I coach one team.',k:'WORDS',b:'Your free Coaches Portal follows every tournament you enter. Premium is the operations HQ for one competitive team: roster, lineups, budget, and schedule.',links:['See the Coaches Portal']}
+  ]));
+}
+function pricingBridge(d){
+  return sec(d, `<div class="pc" style="max-width:${d==='desk'?'760px':'none'}">${dt('WORDS')}<p class="lb">Tournament → Tournament Plus</p><h4>Opening your event to registration?</h4><p>Tournament Plus opens your event to registration: teams register on your public site, and you approve, waitlist, or decline each one and record who has paid. It adds check-in and unlimited volunteers for game day, and the tools that make repeat events sustainable: unlimited tournaments, the round-robin and playoff generators, custom registration fields, file uploads, the full export suite, payment reminders, and post-event archives. Unlimited staff seats included.</p><div class="acts" style="margin-top:16px"><a class="btn">Start Tournament Plus</a></div></div>`);
+}
+/* the FAQ: the shipped accordion card. Changed and new answers are drawn open; unchanged ones closed. */
+const FQ = (q,a,k) => `<div class="fq"><div class="q"><span>${q}</span><span class="r">${chip(k||'UNCHANGED')}<span class="pm">${a?'−':'+'}</span></span></div>${a?`<p>${a}</p>`:''}</div>`;
+const FQL = rows => `<div class="faql">${rows.join('')}</div>`;
+const Q_SWITCH = (club) => FQ('Can we switch in the middle of a season?', `The easiest time is your next registration: families register on your new page, so there is no list to move. A tournament can start any day.${club?' Coaches can paste or upload a roster.':''} There is no import for a house league season that is already under way.`, 'NEW');
+const Q_HANDOVER = FQ('What happens when our treasurer or registrar changes?', `Invite the new person, give them the role and remove the old one. Everything stays with the club: the books, the families and last season’s setup, which next season can start from. To change the club’s owner, email ${SUPPORT} from the current owner’s address.`, 'NEW');
+const Q_PRIVACY = FQ('What do you do with our families’ information?', `We never sell your club’s information or use it to advertise. FieldLogicHQ never shows a player’s name, birth date or roster on a public page. Your club’s information is stored in the United States (Ohio), with our database host, Supabase, on Amazon Web Services. <a class="lnk">Read the Privacy Policy</a>`, 'NEW');
+const Q_STOP = FQ('What if we decide to stop?', 'Cancel any time in Plan &amp; billing; an owner of the club does it. Your plan runs to the end of the period you have paid for, and we don’t refund the unused part. We keep your information for 90 days after a plan ends, so you can come back. You can download your lists as Excel, CSV or PDF, or ask us for a full copy.', 'NEW');
+const Q_TRAIN = FQ('Do our volunteers need training?', `No. It runs in a browser and can be added to a phone’s home screen, with no app store. Help articles are built into the admin, and you can write to ${SUPPORT}.`, 'NEW');
+function pricingFaq(d){
+  return sec(d, head(d,'FAQ','Common questions — answered plainly.') +
+   `<p class="fqg" data-a="g1">Plans and billing</p>` + FQL([
+   FQ('Is the platform only for tournaments?','No. Tournament, Tournament Plus, League Plus, Club, Club · Association, and the Premium Coaches Portal are all available now: tournaments, house league seasons, rep teams, accounting, and a workspace for one competitive team.','WORDS'),
+   FQ('How do I buy League Plus, Club, or Club · Association?',`Choose the plan above, create your account, name your club or league, and check out. League Plus: ${TRIAL(30)} Club and Club · Association: ${TRIAL(90)}`,'WORDS'),
+   FQ('Which Club plan do I need?',`Club covers up to 15 teams and Club · Association up to 30. Count every team — rep, select and development teams all count the same. You don’t need League Plus first: a club with rep teams starts on Club. Start on the one that fits today; you can move up at any time and you see the prorated charge before you confirm. More than 30 teams? Email ${SUPPORT} for a custom quote.`,'NEW'),
+   FQ('How does billing work?',`Every paid plan is billed monthly or annually in Canadian dollars. Prices are plus applicable taxes. Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12. Cancel any time; your plan runs to the end of the year you’ve paid for. League Plus: ${TRIAL(30)} Club and Club · Association: ${TRIAL(90)}`,'WORDS'),
+   FQ('Can I change plans later?','Yes, at any time. If you upgrade mid-month, the new features are available immediately and billing adjusts pro-rata. If you downgrade, the change takes effect at your next billing date. Moving from one paid plan to another doesn’t start a second trial. Moving from Club · Association down to Club waits for your next renewal, and needs 15 teams or fewer. There’s no lock-in.','WORDS'),
+   FQ('Do I need a credit card to get started?',`No. Tournament is free — no credit card, no time limit. The Basic Coaches Portal is free with no time limit too. Paid plans use secure Stripe Checkout. League Plus: ${TRIAL(30)} Club and Club · Association: ${TRIAL(90)}`,'WORDS'),
+   FQ('Is there a limit on how many staff accounts I can have?',''),
+   FQ('Is there a setup fee or onboarding cost?','No. There are no setup fees, implementation costs, or onboarding charges. You sign up, create your organization, and start using your plan’s tools. Help articles cover every setup step.','WORDS')]) +
+   `<p class="fqg" data-a="g2">Switching, your board and your families’ information</p>` + FQL([Q_SWITCH(true), Q_HANDOVER, Q_PRIVACY, Q_STOP]) +
+   `<p class="fqg" data-a="g3">Getting started</p>` + FQL([
+   FQ('Is this too complex for a volunteer-run organization?','No. FieldLogicHQ is built for associations where the “tech person” is whoever stepped up at the last AGM. It follows the jobs your board already does: scheduling, registration, score entry and emails, without the spreadsheets and email chains. You don’t need to configure anything complicated to get started.','WORDS'),
+   FQ('What if I only manage one competitive team?','Use the Coaches Portal. It’s a standalone workspace for one rep team — roster, schedule, budget, documents, attendance, and lineups. No org account needed. If your organization moves to Club later, you won’t be charged for the portal again.','WORDS'),
+   FQ('What if we get stuck?','Every workflow is documented in plain language — written for the person who stepped up to run the org, not a developer. If something’s unclear, documentation is the first stop. If that doesn’t cover it, you can reach us directly.','WORDS'),
+   FQ('Can I use FieldLogicHQ for multiple sports?','Yes. The platform is not tied to one sport: venue names, team structures, scoring and season setup work for softball, baseball, hockey and soccer. If you run more than one club or association, each one is set up separately.','WORDS')]));
+}
+/* trial steps (W68): a numbered row, no boxes; rows on a phone */
+function trialStrip(d, plan){
+  const club = plan==='club'; const what = club?'club':'league';
+  const steps = [
+    ['Start today.',`Create your account, name your ${what} and add a payment method at checkout. The trial is for your ${what}’s first paid plan.`],
+    ['Use all of it.',`Your whole plan is on from the first day. Set up your season, open registration and ${club?'bring in your coaches':'build your teams'}.`],
+    ['We email you before it ends.','The owners get an email a few days before the trial ends. It names the date. To stop, cancel in Plan &amp; billing before that date.'],
+    ['Or carry on.','Do nothing and your payment method is charged on that date, plus applicable taxes, monthly or yearly as you chose, and the plan renews until you cancel.']];
+  return sec(d, head(d,'The trial','How the trial works', TRIAL(club?90:30)) + `<div class="trow" style="${COLS(d,4)}">${steps.map((s,i)=>`<div class="tstep" style="${d==='phone'?'display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:8px':''}"><span class="n">${i+1}</span><div><b>${s[0]}</b><p>${s[1]}</p></div></div>`).join('')}</div>`);
+}
+function boardSection(d){
+  return sec(d, head(d,'Your board','What each person at your club gets') + pcards(d,4,[
+    {lb:'President',t:'One place for the whole club.',b:'House league, rep teams, tournaments and the books under one sign-in. Give each board member their role, and take it back when someone steps down.'},
+    {lb:'Treasurer',t:'Books the next treasurer can read.',b:'One ledger, a budget checked against what was actually spent, and club costs split across teams. Export the board report for the meeting as a PDF or an Excel file.'},
+    {lb:'Registrar',t:'Registration without the inbox.',b:'Families register on your club’s page. You accept players, manage the waitlist and email every family from one screen.'},
+    {lb:'Coaches',t:'A Premium Coaches Portal for every coach.',b:'Roster, lineups, schedule and team budget for every team, included in your plan with no per-team fee.'}
+  ]) + `<p class="hnote" style="margin-top:20px">Taking this to a board meeting? The plans, the prices and the trial are on one page. <a class="lnk">See every plan and price</a></p>`);
+}
+function questions(d, plan){
+  const club = plan==='club';
+  const cost = club
+    ? FQ('What does a year cost?','Club is $2,190 a year or $219 a month, plus applicable taxes, for up to 15 teams. That covers the whole club: every coach’s Premium Coaches Portal is included, with no per-team fee.','NEW')
+    : FQ('What does a year cost?','League Plus is $890 a year or $89 a month, plus applicable taxes. That covers your seasons and your tournaments.','NEW');
+  return sec(d, head(d,'Before you decide','Questions a board asks') + FQL([Q_SWITCH(club), Q_HANDOVER, Q_PRIVACY, Q_STOP, Q_TRAIN, cost]));
+}
+/* /for-clubs */
+const FACTS3 = ['No long-term contract — cancel any time','Billed in CAD','Upgrade or downgrade at any time'];
+function clubsHero(d){ return hero(d,{on:'Clubs',eye:'For club executives',h1:'Coaches run their team.<br><em>You run the club.</em>',lead:'One place for house league, rep teams, tournaments and the club’s books. Coaches run their own teams, and the board keeps the registrations, rosters and money in the same place.',btn:'Start your Club trial',alt:'Running a tournament? See tournament plans',note:TRIAL(90),facts:FACTS3}); }
+function clubsDemo(d){ return sec(d, `<div class="demo"><div class="eyebrow">A coach’s season inside a club</div><p class="lead" style="margin-top:8px">Every coach on your staff works in the Premium Coaches Portal that comes with Club. This is one coach’s season in a fictional club: roster, lineups, schedule and budget. No sign-up.</p><div class="acts" style="margin-top:14px"><a class="tlink">● See a coach’s season</a></div></div>`); }
+function clubsPains(d){ return sec(d, head(d,'The old way','If this is how your club operates, we know the drill.') + pcards(d,2,[
+  {t:'The treasurer rebuilds the books every spring.',k:'NEW',b:'Team dues in one spreadsheet, club fees in another, the bank statement in a third. The board asks where the money went and gets a best guess.'},
+  {t:'House league registration is a form and an inbox.',k:'NEW',b:'Confirmations by hand, a spreadsheet to cross-check, and a registrar answering the same email all month.'},
+  {t:'Your coaching staff runs on WhatsApp.',k:'UNCHANGED',b:'Rosters live in personal phones. Lineups are in notes apps. You find out about tryout results when a coach mentions it at an AGM.'},
+  {t:'When a volunteer leaves, the knowledge leaves too.',k:'WORDS',b:'The contact list is in a personal Google Drive. The roster is someone’s spreadsheet. Next year’s board starts from nothing.'}
+])); }
+function clubsModules(d){ return sec(d, head(d,'What’s included','Four modules. One platform.','Club is the complete operating system for established clubs — every module, every role, one login.') + pcards(d,2,[
+  {shot:'a public event page with live scores',lb:'01 · Tournaments',t:'Run events year-round.',b:'Registration, scheduling, brackets, and live scores — same tools your tournament organizers already use. Unlimited tournaments included.'},
+  {shot:'the registrations list for a house league season',lb:'02 · House league',t:'Full season management — included.',b:'Player registration, draft, schedules, standings, and season-wide parent messaging. Club includes the full house league module — no separate plan required.'},
+  {shot:'a coach’s roster in the Coaches Portal',lb:'03 · Rep teams and Coaches Portal',t:'Coaches run their team. You run the club.',b:'Coaches get a dedicated portal to manage roster, lineups, documents, and team finances independently. You get org-wide visibility without owning the day-to-day.',links:['● See a coach’s season']},
+  {shot:'Budget vs. Actual for the club’s fiscal year',lb:'04 · Accounting',t:'Finances in one place — not three spreadsheets.',b:'One ledger for the club’s money, a budget checked against what was actually spent, and club costs split across teams, with a reminder to each head coach and a tick when the payment arrives. Type in a bank statement’s balance and see whether your books agree; when they don’t, it helps you find the difference.'}
+]) + `<p class="hnote">These are the product’s own screens, shown with a fictional club.</p>`); }
+function clubsCross(d){ return sec(d, head(d,'More from FieldLogicHQ','Your coaches are covered.') + pcards(d,1,[
+  {lb:'Coaches Portal',t:'Do your coaches need their own portal?',b:'Every coach on your staff gets the Premium Coaches Portal with Club — every team included, no per-team fee. A coach who already has a standalone portal won’t be charged for it again.',links:['See the Coaches Portal']}
+])); }
+/* /for-leagues */
+function leaguesHero(d){ return hero(d,{on:'Leagues',eye:'For house league administrators',h1:'One dashboard.<br><em>The full season arc.</em>',lead:'Player registration, draft tools, scheduling, standings, and season-wide parent messaging — everything your house league season needs, in one dashboard. No spreadsheets, no reply-all emails.',btn:'Start your League Plus trial',alt:'Running a tournament? See tournament plans',note:TRIAL(30),facts:FACTS3}); }
+function leaguesPains(d){ return sec(d, head(d,'The old way','If this is your season setup, we know the drill.') + pcards(d,2,[
+  {t:'Registration is a Google Form.',b:'You’re emailing confirmations manually, cross-referencing a spreadsheet, and trying to remember who has and hasn’t paid.'},
+  {t:'The draft takes all night.',b:'Someone reads names off a printed list while coaches debate balance. You still end up adjusting teams by text message for a week.'},
+  {t:'Standings update when you remember to.',b:'It’s Tuesday. Two games happened Saturday. Three parents have already emailed asking why the standings haven’t moved.'},
+  {t:'The schedule conflict shows up on game day.',k:'WORDS',b:'Two teams, one field, no one noticed until someone called you at 8:00 a.m. on a Saturday.'}
+])); }
+function leaguesSteps(d){ return sec(d, head(d,'How it works','Registration to final standings — four steps.','From the moment registration opens to the final game night — everything runs in one place.') + pcards(d,2,[
+  {shot:'the registrations list for a season',lb:'01 · Registration',t:'Players register online.',b:'Your season page collects player info and contact details. You review applications, accept players, and manage the waitlist — no Google Form, no inbox.'},
+  {shot:'the draft board',lb:'02 · Draft',t:'Draft your teams before the first game.',b:'Assign players to divisions and teams from your registered pool — by pick order or a random draw. The draft happens in the dashboard — no printed lists, no floor-level sorting.'},
+  {shot:'the season schedule beside the standings',lb:'03 · Schedule and standings',t:'Games generate. Standings update automatically.',b:'Auto-generate a round-robin schedule, then adjust any game individually. Standings update the moment scores are entered — parents see results without asking.'},
+  {shot:'the Email families window',lb:'04 · Notifications',t:'Tell every parent in one message.',b:'Send a season-wide update — a schedule change, a postponement, a standings recap — to every registered family from one screen. No reply-all, no personal inbox, no copy-pasted address list.'}
+]) + `<p class="hnote">These are the product’s own screens, shown with a fictional house league.</p>`); }
+function leaguesCross(d){ return sec(d, head(d,'More from FieldLogicHQ','Running more than a house league?') + pcards(d,2,[
+  {lb:'Club',t:'Also running rep teams?',b:'Club combines everything in League Plus with rep teams, accounting, org-wide financials, and a Premium Coaches Portal for your whole coaching staff — every team, no per-team fee — for clubs that do it all.',links:['See what Club includes']},
+  {lb:'Coaches Portal',t:'Do your coaches need their own workspace?',b:'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. And if your organization moves to Club, a coach won’t be charged for their portal again.',links:['See the Coaches Portal']}
+])); }
+/* home */
+function homeHero(d){ return hero(d,{center:1,h1:'Less admin. <em>More sport.</em>',lead:'Purpose-built for the people running community sports organizations on evenings and weekends — from your first tournament to a full club program.',btn:'Get started',alt:'See plans and prices'}); }
+function homeDoors(d){
+  const door=(eye,badge,t,b,links,k)=>`<div class="pc">${dt(k)}<div class="cardtop"><span class="lb" style="margin:0">${eye}</span><span class="badge">${badge}</span></div><h4>${t}</h4><p>${b}</p>${links.map(l=>`<a class="lk">${l}</a>`).join('')}</div>`;
+  return `<div class="pk sec" style="${d==='desk'?'padding:28px 144px 64px':'padding:28px 20px 40px'}"><div class="gx" style="${COLS(d,3)};margin-top:0">${door('Tournament','Free to start · no credit card','Running a tournament?','From your team list to final standings — brackets, schedule, live scores, all in one place.',['I’m a tournament organizer','● See it live — no sign-up'],'UNCHANGED')}${door('Leagues and clubs','Available now','Running a league or a club?','House league seasons, rep teams and the club’s books in one place, built for a volunteer board.',['I run a house league','I run a club with rep teams'],'NEW')}${door('Coaches Portal','Free to start · no credit card','Coaching a single team?','Roster, lineups, budget, and documents — a complete team workspace, whether or not your organization is on FieldLogicHQ.',['I’m a coach','● See it live — no sign-up'],'UNCHANGED')}</div></div>`;
+}
+function homeModules(d){
+  const mc=(badge,name,tag,f,k)=>`<div class="pc">${dt(k)}<div><span class="badge">${badge}</span></div><h4 style="margin-top:10px">${name}</h4><p>${tag}</p><ul>${f.map(x=>`<li>${x}</li>`).join('')}</ul><a class="lk">This is me</a></div>`;
+  return sec(d, head(d,'What’s included','One platform. Every role.','Tournament organizers, coaches, house leagues and clubs can start today. Tournament is free — no credit card required.') + `<div class="gx" style="${COLS(d,2)}">${
+    mc('Tournament · Free to start','Tournament organizer','From your team list to final standings — without the spreadsheets.',['Pools and a schedule you build game by game, across your fields','Single and double-elimination brackets','Live score entry — standings update the moment you save','A public event site with live scores families can follow','Announcements to every team in one send'],'UNCHANGED')}${
+    mc('League Plus · Available now','House league admin','From first registration to final standings, in one dashboard.',['Player registration and waitlist management','Draft tools and team building','Auto-generated schedules and standings','Season-wide parent messaging — one screen, every registered family','One dashboard from opening day to final standings'],'WORDS')}${
+    mc('Club · Available now','Club executive','Your executive team gets visibility. Coaches run their own teams.',['Tournaments, house league, and rep teams under one roof','Coaches manage their own roster, lineups, and team budget','Organization-wide visibility into rosters, documents, and finances','Tryout registration and program year management','Club ledger, budget vs. actual, and costs split across teams'],'WORDS')}${
+    mc('Coaches Portal · Free to start','Head coach','Manage your team. Not your inbox.',['Full roster management with positions and season history','Lineup builder with game-by-game history — exportable to PDF','Team budget, player dues, and payment tracking','Document management — consent forms, medical notes, eligibility','Works standalone — no organization account required'],'UNCHANGED')}</div>`);
+}
+function homeSteps(d){ return sec(d, head(d,'How it works','Up and running in a day') + pcards(d,3,[
+  {lb:'1',t:'Set up your organization',k:'WORDS',b:'Create your organization and set up the tools you need, from tournaments to house league and rep teams.'},
+  {lb:'2',t:'Open your programs',k:'UNCHANGED',b:'Publish tournament pages, manage teams and contacts, and keep registration work organized without extra spreadsheets.'},
+  {lb:'3',t:'Run your whole season',k:'UNCHANGED',b:'Enter scores from the field, publish results, and keep your tournament history on record — every event your org has run, in one place.'}
+])); }
+function homePrices(d){
+  const row=(h,s,l)=>`<div class="prow" style="${d==='desk'?'grid-template-columns:260px minmax(0,1fr) auto':'grid-template-columns:1fr'}"><b>${h}</b><span>${s}</span><a class="tlink">${l}</a></div>`;
+  return sec(d, head(d,'Pricing','Plans built for how you operate.','Tournament, Tournament Plus, League Plus, Club, Club · Association, and the Premium Coaches Portal are available now.') + `<div style="margin-top:22px;border-bottom:1px solid var(--p-line)">${row('Running a tournament','Tournament is free. Tournament Plus is $39/mo.','See tournament plans')}${row('Running a league or a club','League Plus is $89/mo. Club is $219/mo for up to 15 teams, and Club · Association is $379/mo for up to 30.','See league and club plans')}${row('Coaching one team','The Coaches Portal is free. Premium is $29/mo.','See the Coaches Portal')}<p class="hnote" style="margin:14px 0 16px">Prices are in Canadian dollars, plus applicable taxes. Available to organizations in Canada, outside Québec for now.</p></div><p class="hnote"><a class="lnk">See every plan and price</a></p>`);
+}
+/* tab 10: nav, footer, search titles, the other pages */
+function serp(url, t, dsc, wasT, wasD){ return `<div class="serp"><div class="u">fieldlogichq.ca › ${url}</div><div class="t">${t}</div><div class="d">${dsc}</div><div class="was"><b>Today:</b> ${wasT} — ${wasD}</div></div>`; }
+function plainPage(d, inner){ return `<div class="pk" style="${d==='desk'?'padding:36px 144px 44px':'padding:24px 20px 30px'}">${inner}</div>`; }
+/* start screens */
+const BAR = `<div class="sbar"><span class="lg">FieldLogic<i>HQ</i></span><nav><span>Pricing</span><span>Get started ▾</span><span class="si">Sign in</span></nav></div>`;
+function steps(labels,cur){return `<div class="steps">${labels.map((l,i)=>`${i?'<span class="bar"></span>':''}<span class="s${i+1===cur?' on':''}"><i>${i+1}</i>${l}</span>`).join('')}</div>`}
+function col(dev,inner,wide){ const w = wide ? (dev==='desk'?760:350) : (dev==='desk'?420:350); return `<div class="pk">${BAR}<div class="scol" style="width:${w}px">${inner}</div></div>` }
+const AVAIL = `<div class="availbox">Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars.</div>`;
+function acctForm(){return `<div class="two"><div class="fld"><label>First name</label><div class="in">Jordan</div></div><div class="fld"><label>Last name</label><div class="in">Lee</div></div></div><div class="fld"><label>Email</label><div class="in">you@example.com</div></div><div class="fld"><label>Password</label><div class="in"></div></div><p class="nt" style="font-size:13px;color:var(--p-dim);margin:6px 0 0">At least 8 characters.</p><div class="chk"><i></i><span>I’m 18 or older (or the age of majority where I live). I agree to the <u>Terms of Service</u> and have read the <u>Privacy Policy</u>.</span></div><a class="btn lime" style="margin-top:16px">Create account</a>`}
+function planStepCard(k){
+  const p=PR[k]; const pts = k==='club'?['Tournaments, house league, rep teams and accounting','Premium Coaches Portal for every coach, no per-team fee','Up to 15 teams']:k==='assoc'?['Everything in Club','16 to 30 teams','Move up from Club at any time']:['Registration, divisions, seasons and standings','A public site for your league','Everything in Tournament Plus'];
+  const first = (k==='club'||k==='league');
+  return `<div class="card${first?' hi':''}" style="padding:20px"><p class="cn">${p.n}</p><div class="pr" style="margin-top:4px"><b>${p.m}</b><span>CAD /mo</span></div><p class="nt">plus applicable taxes</p><p class="nt trial">${TRIAL(p.trial)}</p><ul style="margin-top:12px;padding-top:12px">${pts.map(x=>`<li>${x}</li>`).join('')}</ul><div style="margin-top:14px;font:600 12px var(--f-body)">Billing</div><div class="tgl" style="margin:6px 0 0;display:flex"><button aria-pressed="true" style="flex:1">${p.m} / month</button><button style="flex:1">${p.a} / year</button></div><p class="nt" style="margin-top:12px;font-size:11.5px">If your plan starts with a trial, it ends on the date shown at checkout, and your payment method is charged then unless you cancel. Your plan renews automatically until you cancel. <u>Terms</u></p><a class="btn ${first?'lime':''}" style="margin-top:12px">${p.b}</a></div>`;
+}
+const CLUB_STEPS=['Account','Club','Plan'], LEAGUE_STEPS=['Account','League','Plan'];
+/* The billing address screen: the SHIPPED first-time-setup screen (AddressStep, ruled 2026-11-04), reused as it is. */
+function addrStep(dev, kind){
+  const club = kind==='club';
+  const sub = club ? 'Milton Minor Baseball Association · Club, $219/month plus applicable taxes' : 'Riverside House League · League Plus, $89/month plus applicable taxes';
+  const fld=(l,v,req,sel,ink)=>`<div class="fld"><label>${l}${req?' *':''}</label><div class="in" style="${sel?'justify-content:space-between;':''}${ink?'color:var(--p-ink)':''}"><span>${v}</span>${sel?'<span>▾</span>':''}</div></div>`;
+  return col(dev, `<p class="sh">Billing address</p><p class="ss">${sub}</p>${steps(club?CLUB_STEPS:LEAGUE_STEPS,3)}<div style="border-top:1px solid var(--p-line);padding-top:4px"><p class="nt" style="font-size:13px;color:var(--p-dim);margin:12px 0 0">Where your club is billed. We use it to work out the sales tax on what we bill your club, and it prints on your invoices.</p>${fld('Country','Canada',1,1,1)}${fld('Province or territory','Choose…',1,1)}${fld('Street address','',1)}${fld('Apartment, suite or unit','')}${fld('City','',1)}${fld('Postal code','',1)}<p class="nt" style="margin-top:14px;font-size:11.5px">If your plan starts with a trial, it ends on the date shown at checkout, and your payment method is charged then unless you cancel. Your plan renews automatically until you cancel. <u>Terms</u></p><a class="btn lime" style="margin-top:12px">Continue to checkout</a></div><p class="foot"><a class="lnk">Back</a></p>`);
+}
+const START = {
+ club:{
+  chooser:{label:'/start · the chooser', ex:'Open: two new cards join Run a tournament and Coach a team. Each says "Paid plan" up front (the League card today says "Free", which would be false). Closed: the cards are not shown, as today.', html:dev=>col(dev,`<div class="eyebrow" style="text-align:center;font-family:var(--f-mono);letter-spacing:2px;color:var(--p-soft)">Get started</div><p class="sh" style="margin-top:6px">What do you want to do?</p><p class="ss">Pick where you’re starting</p><div class="choose" style="margin-top:22px">
+   <div class="ch"><span class="ic">🏆</span><span><span class="lb">Organizer</span><div class="tt">Run a tournament</div><div class="bd">Create a tournament free — your teams, schedule, brackets, and a public site. Tournament Plus, with public registration.</div></span><span class="ar">→</span></div>
+   <div class="ch"><span class="ic">👥</span><span><span class="lb">Premium Coaches Portal</span><div class="tt">Coach a team</div><div class="bd">Your team’s operations HQ — roster, lineups, budget, schedule, and documents.</div></span><span class="ar">→</span></div>
+   <div class="ch nu"><span class="ic">🏟</span><span><span class="lb">Club executive</span><span class="pill">Paid plan</span><div class="tt">Start a club</div><div class="bd">Tournaments, house league, rep teams and accounting in one place. Choose Club or Club · Association by how many teams you run.</div></span><span class="ar">→</span></div>
+   <div class="ch nu"><span class="ic">📋</span><span><span class="lb">League admin</span><span class="pill">Paid plan</span><div class="tt">Start a league season</div><div class="bd">Run a house league season — registration, draft, scheduling, standings, and parent messaging.</div></span><span class="ar">→</span></div>
+  </div><p class="foot" style="border:0">Joining a club or team you were invited to? <a class="lnk">Accept an invitation →</a></p>`,true)},
+  s1:{label:'Step 1 · account', ex:'The Run a tournament form, word for word, with its own heading. The availability line sits here, before anything is made (a Québec or US address is otherwise refused only after the club exists).', html:dev=>col(dev,`<p class="sh">Start a club</p><p class="ss">Create your account, name your club, then choose Club or Club · Association.</p>${steps(CLUB_STEPS,1)}<div style="border-top:1px solid var(--p-line);padding-top:4px">${acctForm()}${AVAIL}</div><p class="foot">Already have an account? <a class="lnk">Sign in</a></p>`)},
+  s2:{label:'Step 2 · the club’s name', ex:'After the email link. One field. Signed in already with an organization? The Club button never lands here: it opens that organization’s Plan & billing, and a Premium coach gets the in-place “Start your club” (Ask 15).', html:dev=>col(dev,`<p class="sh">Start a club</p><p class="ss">Name your club, then choose Club or Club · Association.</p>${steps(CLUB_STEPS,2)}<div class="fld"><label>Club or association name</label><div class="in">e.g. Milton Minor Baseball Association</div></div><p class="nt" style="font-size:12.5px;color:var(--p-dim);margin-top:6px">Your public address: fieldlogichq.ca/<b>milton-minor-baseball</b> — you can change it later.</p><a class="btn lime" style="margin-top:18px">Create club</a>`)},
+  s3:{label:'Step 3 · the plan', ex:'The plan step, with the two bands side by side and the pricing card’s pick first. No team-count check: the bands are named and a move up later is prorated. The trial line shown is the server’s answer (a returning customer gets no second trial and is told so here, before checkout). Next: the billing address screen (the next step along here), then Stripe’s payment page.', html:dev=>col(dev,`<p class="sh">How many teams does your club run?</p><p class="ss">You picked <b>Club, billed monthly</b> on the pricing page. You can change it here, or any time in Plan &amp; billing.</p>${steps(CLUB_STEPS,3)}<div class="grid" style="display:grid;gap:16px;grid-template-columns:${dev==='desk'?'1fr 1fr':'1fr'}">${planStepCard('club')}${planStepCard('assoc')}</div><p class="foot">More than 30 teams? Email <a class="lnk">support@fieldlogichq.ca</a> for a custom quote. · <a class="lnk">Compare every plan ↗</a></p>`,true)},
+  addr:{label:'Step 3, continued · billing address', shipped:1, ex:'The billing address screen that already ships for a paid tournament sign-up, reused as it is. The first drawings named it in a note and did not draw it. It is the second half of step 3, so the step line keeps three labels with Plan current (your 4 Nov ruling: three labels already fill a phone). This is where a Québec or United States address is caught: Québec shows “We’re not selling in Québec yet.” under the province and the purchase is refused; a United States address shows its line under Country and no button. That is why the availability line sits on step 1, before the club exists. Next: Stripe’s own payment page (theirs, so not drawn). It shows the plan, the date the trial ends and the tax for this address, and takes the payment method.', html:dev=>addrStep(dev,'club')},
+  wait:{label:'Back from payment', ex:'New. Stripe returns before its notice lands, and today the page would open the New tournament window for a club (the plan still reads Tournament for a few seconds). The start waits here, in the shipped “Setting up your club” set, then opens the club setup kit.', html:dev=>col(dev,`<div class="wait"><div class="loadline" aria-hidden="true"></div><p class="cn" style="font-size:20px">Setting up your club</p><p class="ct" style="min-height:0">Payment received. This takes a few seconds.</p></div><div class="mini" style="margin-top:14px;color:var(--p-dim);font-size:13px">No button while it waits (the shipped checkout-complete card, 2026-10-20). After about 50 seconds: <b>Still setting up your club</b> with <u>Check again</u>. If Stripe has no record: <b>We can’t find that payment</b>, in the quiet well, shown at once. When the plan lands it opens the club setup kit (unchanged), with no redirect screen.</div>`)},
+  closed:{label:'/start/club while closed', ex:'Closed (today’s page, its struck words removed now): no “We set up Club with you directly”, no “Talk to us”. The interest form, with the canon “coming soon” sentence.', html:dev=>col(dev,`<p class="sh">Explore Club</p><p class="ss">Club — coming soon</p><p style="font-size:15px;color:var(--p-soft);margin:22px 0 0">Club brings everything together for multi-team organizations — house league, rep teams, accounting, and a Premium Coaches Portal for your whole coaching staff. Club is coming soon — it isn’t open for sign-up yet. Tell us you’re interested and we’ll let you know when it opens.</p><a class="btn lime" style="margin-top:20px">Express interest in Club</a><a class="btn" style="margin-top:10px">See what Club includes →</a><p class="foot" style="border:0"><a class="lnk">← Back to all options</a></p>`)}
+ },
+ league:{
+  s1:{label:'Step 1 · account', ex:'The free League starter’s form stays as it is behind its own switch (off on production). With League Plus open, /start/league is the League Plus start. No “Free — one season, one division” small print: that belongs to the free floor.', html:dev=>col(dev,`<p class="sh">Start a league season</p><p class="ss">Create your account, name your league, then start League Plus.</p>${steps(LEAGUE_STEPS,1)}<div style="border-top:1px solid var(--p-line);padding-top:4px">${acctForm()}${AVAIL}</div><p class="foot">Already have an account? <a class="lnk">Sign in</a></p>`)},
+  s2:{label:'Step 2 · the league’s name', ex:'One field, the free starter’s words.', html:dev=>col(dev,`<p class="sh">Start a league season</p><p class="ss">Name your league, then start League Plus.</p>${steps(LEAGUE_STEPS,2)}<div class="fld"><label>League or organization name</label><div class="in">e.g. Riverside House League</div></div><p class="nt" style="font-size:12.5px;color:var(--p-dim);margin-top:6px">Your public address: fieldlogichq.ca/<b>riverside-house-league</b> — you can change it later.</p><a class="btn lime" style="margin-top:18px">Create league</a>`)},
+  s3:{label:'Step 3 · League Plus', ex:'One card. The new League Plus trial sentence, the same shape as Club’s with its own length. Next: billing address, payment, “Setting up your league”, then the league season setup (unchanged).', html:dev=>col(dev,`<p class="sh">Start League Plus</p><p class="ss">Riverside House League starts on League Plus. You manage it in Plan &amp; billing.</p>${steps(LEAGUE_STEPS,3)}<div style="max-width:380px;margin:0 auto">${planStepCard('league')}</div><p class="foot"><a class="lnk">Compare every plan ↗</a></p>`)},
+  addr:{label:'Step 3, continued · billing address', shipped:1, ex:'The same shipped billing address screen as the Club start, with the league’s name and League Plus’s price under the heading. Its sentence says “your club” on every door today; a league reads it too (a small wording call for the build). Next: Stripe’s own payment page, then “Setting up your league”.', html:dev=>addrStep(dev,'league')},
+  closed:{label:'/start/league while closed', ex:'Closed, with the free starter’s switch off: today’s page names “League”, the free floor; it sells League Plus, so it says League Plus.', html:dev=>col(dev,`<p class="sh">Start a league season</p><p class="ss">League Plus — not open yet</p><p style="font-size:15px;color:var(--p-soft);margin:22px 0 0">League Plus runs your full house league season — registration, draft, scheduling, standings, and parent communications in one dashboard. League Plus is built, but not open for sign-up. Tell us you’re interested and we’ll let you know when it opens.</p><a class="btn lime" style="margin-top:20px">Express interest in League Plus</a><a class="btn" style="margin-top:10px">See how League Plus works →</a><a class="btn" style="margin-top:10px">Start free with Tournament</a>`)}
+ }
+};
+
+/* ---------- capture specimens ---------- */
+// block: {img, from, to, m:[[y,kind,text]]} | {html:fn} | {removed:text}
+const SP = {
+ pricing:{
+  desk:{
+   closed:[{img:'prod-pricing-desk',from:0,to:5835,m:[[250,'fix','Hero: <q>…are live — start free, no credit card required. League Plus and Club are open for interest while we finish those workflows.</q> → <q>…are available now. Tournament is free, with no credit card required.</q> + the closed-plans sentence (W8). The old line read as if Tournament Plus needs no card.'],[2720,'fix','Strip tag: Club wears <q>Not open yet</q>; canon says Club is <q>Coming soon</q>. Each plan carries its own status (W6). Closing line → <q>Tell us you’re interested and we’ll let you know when it opens.</q>'],[1324,'same','The Founding Season banner and $0 prices: production still offers the season you closed on 26 Oct — outside this build, see Ask 19.']]}],
+   asis:[{img:'dev-pricing-desk',from:0,to:6753,m:[[250,'false','Hero still says League Plus and Club are <q>open for interest while we finish those workflows</q>.'],[919,'false','Role picker: <q>Express interest in League Plus</q> on a plan you can buy.'],[1190,'false','<q>League Plus and Club are open for early interest below.</q>'],[1500,'false','No Club · Association card. Club says <q>or up to 30 on Club · Association</q> with no price.'],[2560,'false','League Plus: <q>No credit card required</q> over a 30-day trial that takes a payment method.'],[2708,'false','<q>Start free</q> and <q>Start your Club trial</q> go to the tournament sign-up — they would make a tournament organization.'],[4441,'false','Bridge cards: <q>Express interest in League Plus</q>, <q>Express interest in Club</q>, <q>Coming soon</q>.'],[4800,'false','The whole <q>Not open yet · what they cover</q> section, with its <q>Express interest</q> button.'],[5560,'false','FAQ: <q>Can I buy League Plus, Club…today? Not through self-serve checkout yet.</q> Billing and credit-card answers say nothing of the Club or League Plus trial.'],[6230,'false','Bottom: a second always-shown <q>Express interest in League Plus or Club</q> button.']]}],
+   open:[]
+  },
+  phone:{
+   closed:[{img:'prod-pricing-phone',from:0,to:11132,m:[[230,'fix','Hero line (W8), as on desk.']]}],
+   asis:[{img:'dev-pricing-phone',from:0,to:11583,m:[[230,'false','Hero: <q>open for interest while we finish those workflows</q>.'],[4560,'false','League Plus: <q>No credit card required</q> · <q>Start free</q> → tournament sign-up.'],[5495,'false','<q>Start your Club trial</q> → tournament sign-up. No Club · Association card.'],[7348,'false','Bridges: <q>Express interest in League Plus</q> / <q>in Club</q>.'],[8300,'false','<q>Not open yet</q> section.'],[10502,'false','Bottom: <q>Express interest in League Plus or Club</q>.']]}],
+   open:[]
+  }
+ },
+ cards:{
+  desk:{closed:[{img:'prod-pricing-desk',from:1100,to:3000,m:[[1500,'same','Closed (today): the Founding Season cards and the “Not open yet” strip. Unchanged by this build except the strip tag (W6).']]}],
+        asis:[{img:'dev-pricing-desk',from:1100,to:3998,m:[[1500,'false','Four cards plus Premium alone below; no Club · Association; League Plus “No credit card required”; both new plans’ buttons → tournament sign-up.']]}],
+        open:[]},
+  phone:{closed:[{img:'prod-pricing-phone',from:1850,to:6600,m:[[2000,'same','Closed (today).']]}],
+        asis:[{img:'dev-pricing-phone',from:1850,to:6488,m:[[4560,'false','League Plus and Club as typed today.']]}],
+        open:[]}
+ },
+ clubs:{
+  desk:{
+   closed:[{img:'prod-for-clubs-desk',from:0,to:4700,m:[[483,'fix','<q>Coming soon — Club is in development.</q> → <q>Coming soon — it isn’t open for sign-up yet.</q> (W23).'],[2640,'fix','<q>Club is finishing its final workflows before self-serve checkout opens.</q> → the canon closed sentence (W25).'],[3620,'fix','Coaches Portal cross-sell: <q>bring each coach’s team in with everything they’ve built</q> → <q>you won’t be charged for the portal again</q> until the move reaches production (W22, Ask 13).']]}],
+   asis:[{img:'dev-for-clubs-desk',from:0,to:4700,m:[[413,'false','Hero: <q>Express interest in Club</q> · <q>Coming soon — Club is in development.</q>'],[760,'false','Demo block: <q>Both halves are live today … express interest for the day they’re one product.</q>'],[2640,'false','<q>finishing its final workflows before self-serve checkout opens</q>.'],[2820,'false','Club card: <q>Coming soon</q> tag, no tax line, no trial sentence, Club · Association named with no price; button <q>Express interest</q>.'],[2900,'false','<q>Start now: Running a tournament this year?</q> — <q>when Club opens</q>.'],[3620,'false','Cross-sells: <q>before Club opens?</q> twice.'],[4100,'false','Bottom: <q>Express interest in Club to be notified when self-serve checkout opens.</q>']]}],
+   open:[]
+  },
+  phone:{
+   closed:[{img:'prod-for-clubs-phone',from:0,to:8003,m:[[400,'fix','Hero note (W23).']]}],
+   asis:[{img:'dev-for-clubs-phone',from:0,to:8147,m:[[394,'false','Hero: <q>Express interest in Club</q>.'],[950,'false','Demo block: <q>Both halves are live today</q>.'],[5260,'false','Club card: <q>Express interest</q>.'],[5991,'false','<q>before Club opens?</q>'],[6966,'false','Bottom: <q>Express interest in Club</q>.']]}],
+   open:[]
+  }
+ },
+ leagues:{
+  desk:{
+   closed:[{img:'prod-for-leagues-desk',from:0,to:4160,m:[[3100,'fix','Coaches Portal cross-sell: <q>Express interest in the Coaches Portal</q> → <q>See the Coaches Portal</q> — Premium has been on sale since July.']]}],
+   asis:[{img:'dev-for-leagues-desk',from:0,to:4160,m:[[413,'false','Hero: <q>Express interest in League Plus</q> · <q>Not open yet</q>.'],[2000,'false','<q>League Plus is built but not currently open for sign-up.</q>'],[2280,'false','Card: <q>Not open yet</q> tag, no tax line, no trial sentence; <q>Express interest</q>.'],[2600,'false','<q>Start now … when League Plus opens</q>.'],[3062,'false','Club cross-sell: <q>Express interest in Club</q>.'],[3608,'false','Bottom: <q>Express interest in League Plus to be notified when self-serve checkout opens.</q>']]}],
+   open:[]
+  },
+  phone:{
+   closed:[{img:'prod-for-leagues-phone',from:0,to:7258,m:[[4600,'fix','Coaches Portal cross-sell (as desk).']]}],
+   asis:[{img:'dev-for-leagues-phone',from:0,to:7402,m:[[379,'false','Hero: <q>Express interest in League Plus</q>.'],[4465,'false','Card: <q>Express interest</q>.'],[6220,'false','Bottom: <q>Express interest in League Plus</q>.']]}],
+   open:[]
+  }
+ },
+ home:{
+  desk:{
+   closed:[{img:'prod-home-desk',from:0,to:5536,m:[[4600,'fix','<q>League Plus and Club are in active development.</q> · <q>· In development</q> → the canon status tags.']]}],
+   asis:[{img:'dev-home-desk',from:0,to:6482,m:[[717,'false','Role cards: League Plus and Club stay <q>coming soon</q> — a typed launch switch the gate never reaches.'],[1544,'false','Module cards stay on the roadmap row.'],[2290,'false','<q>League Plus and Club modules can be added as they open.</q>'],[3744,'false','The shared cards: tournament sign-up buttons, no Club · Association.']]}],
+   open:[]
+  },
+  phone:{
+   closed:[{img:'prod-home-phone',from:0,to:10414,m:[[8000,'fix','“In development” lines (as desk).']]}],
+   asis:[{img:'dev-home-phone',from:0,to:10986,m:[[1700,'false','Role cards stay coming soon.'],[2738,'false','Module cards on the roadmap row.'],[7480,'false','Club → tournament sign-up.']]}],
+   open:[]
+  }
+ },
+ form:{
+  desk:{
+   closed:[{img:'prod-interest-form-desk',from:0,to:900,m:[[220,'fix','Kicker <q>Early access</q> → <q>Express interest</q>; intro → <q>…we’ll let you know when your plan opens.</q>'],[520,'fix','Option <q>Coach portal</q> → <q>Coaches Portal</q>. The consent box is ticked when the form opens — /legal: make it unticked (Ask 6).'],[760,'fix','<q>Join early access</q> → <q>Express interest</q>. The saved line: <q>When the plans you picked open, we’ll write to {email}.</q>']]}],
+   asis:[{img:'prod-interest-form-desk',from:0,to:900,m:[[450,'false','Flipped as-is the form still opens from every Club and League Plus button and offers both plans; no Club · Association.']]}],
+   open:[{removed:'Open: the form is not on any public page. Each plan’s door is its start (tabs 6–7). While one plan is still closed, the form offers only that plan. The list of people who asked stays in platform admin for one last email (Ask 5).'}]
+  },
+  phone:{
+   closed:[{img:'prod-interest-form-phone',from:0,to:844,m:[[200,'fix','Same word fixes as desk.']]}],
+   asis:[{img:'prod-interest-form-phone',from:0,to:844,m:[[400,'false','As desk.']]}],
+   open:[{removed:'Open: not shown (as desk).'}]
+  }
+ }
+};
+
+/* ---------- the open pages, drawn section by section (audience review, 2026-11-18) ---------- */
+// Every section with a change is drawn with its real words. tag: new | words (changed words) | same (unchanged, redrawn).
+const OPEN = {
+ pricing:[
+  {html:pricingHero, tag:'words', m:[[32,'new',`The bar follows the bands’ order: Tournaments · Leagues · Clubs · Coaches · Pricing (W63, Ask 25). Today Coaches is second.`],[190,'new',`Hero (W8): <q>Every plan is available now. Tournament is free, with no credit card required.</q> with the availability line.`]]},
+  {html:picker, tag:'new', m:[[70,'new',`Role picker (W59): <b>three doors</b>, the same three as the bands below, each jumping to its band. Today there are four, ordered “live products first”; that reason ends when all six plans are on sale.`],[110,'new',`The coach door says <q>See the Coaches Portal</q>. The free portal is named first, so the door no longer reads as a paid one.`]]},
+  {html:bands, tag:'new', m:[['[data-a="b1"]','new',`The plan grid in <b>three audience bands</b> (W58, Ask 21). This replaces the two rows first drawn for Ask 4.`],['[data-a="b2"]','new',`Band 2 puts League Plus, Club and Club · Association side by side: the same buyer, a volunteer board. The label over each card says what a club runs, and Club’s says it includes house league, so a club with both does not under-buy.`],['[data-a="b3"]','new',`Band 3 is one band: the free Basic Coaches Portal as a strip above Premium, and <q>If your club is on Club or Club · Association, every coach’s Premium Coaches Portal is included.</q>`],['.wc:nth-child(2)','new',`Club leads the page (Ask 32, ruled 18 Nov): the one lime button and the olive edge move from Tournament Plus to Club at the flip. Never the words “Most popular”.`]]},
+  {html:pricingBridge, tag:'words', m:[[60,'fix',`The Tournament Plus bridge stays. Its button drops the word “free” (W73): this checkout takes a payment method and starts a trial.`]]},
+  {removed:'The League Plus and Club bridge cards — removed when both plans are open (W75). Their band now carries the heading, the line and the cards; “you don’t need one before the other” moves into the band’s line and the FAQ.'},
+  {removed:'“Not open yet · League Plus and Club — what they cover” — removed while both plans are open (W13, Ask 11). With one still closed it shows for that plan alone.'},
+  {html:pricingFaq, tag:'words', m:[['[data-a="g1"]','new',`The FAQ in three groups, drawn as the live accordion: changed and new answers open, unchanged ones closed. Each row carries its tag (W14 to W20).`],['[data-a="g2"]','new',`Four new questions a board asks before it spends club money (W70): switching, a change of treasurer, families’ information, and stopping.`],['[data-a="g3"]','fix',`Three answers today claim customers we do not have (<q>is used by associations…</q>, <q>Most organizations are running their first tournament within an afternoon</q>, <q>used by softball associations…</q>). Rewritten (W72). These are wrong today, so they change while closed too.`]]},
+  {html:d=>ctaBand(d,'Less admin. More sport.','Start free with Tournament, or pick the plan that matches what you run.','Get started free','Browse all the ways to start','All plans are billed in CAD. No long-term contract. No setup fees.'), tag:'words', m:[[60,'new',`Bottom (W21): the second button no longer opens the interest form.`]]},
+  {html:footer, tag:'words', m:[[40,'new',`Footer (W63): a new “Built for” column. Today nothing in the footer reaches the Leagues or Clubs pages.`]]}
+ ],
+ cards:[
+  {html:bands, tag:'new', m:[['[data-a="b1"]','new',`Three bands, in this order: tournaments, leagues and clubs, coaches (Ask 21).`],['[data-a="b2"]','new',`League Plus: tax line, the trial sentence (W1), <q>Running a tournament too? It’s in your plan.</q>, button to the League Plus start (W2).`],['.wc:nth-child(2)','new',`Club: <q>Up to 15 teams</q> (W3). Club · Association is a full card (W4) with the over-30 line (W5).`],['[data-a="b3"]','new',`Coaches: the free Basic Coaches Portal has a place on the pricing page for the first time. Today only Premium has a card.`],['[data-a="avail"]','new',`Availability line (/accounting, /legal): Canada outside Québec, Canadian dollars.`]]}
+ ],
+ clubs:[
+  {html:clubsHero, tag:'words', m:[[150,'new',`Hero (W23): <q>Start your Club trial</q>, with the trial sentence as the note.`],[190,'new',`Heading and sub-line (W65): “org” becomes “club”, and the club’s books are in the first sentence. Today the treasurer is not on this page until the fourth module.`]]},
+  {html:clubsDemo, tag:'words', m:[[50,'new',`Demo block (W24): one coach’s season in a fictional club. One link, no club-demo promise.`]]},
+  {html:clubsPains, tag:'words', m:[[60,'new',`The old way (W66): rebalanced toward the board. Today all four cards are about coaches. Two new cards speak to the treasurer and the registrar; the tryouts card leaves the four.`]]},
+  {html:clubsModules, tag:'new', m:[[60,'new',`Pictures (W67, Ask 26): each module shows the product’s own screen from a fictional club. Today no marketing page has a single picture, and Club has no demo. The dashed boxes are picture slots; the words under them are today’s.`]]},
+  {html:boardSection, tag:'new', m:[[60,'new',`New section (W69): what the president, treasurer, registrar and coaches each get. Every line is something the product does today.`]]},
+  {html:d=>planSection(d,'clubs'), tag:'new', m:[[70,'new',`Plan section: Club and Club · Association side by side (W25 to W27); the “Start now: tournament” card leaves (W28).`]]},
+  {html:d=>trialStrip(d,'club'), tag:'new', m:[[60,'new',`How the trial works (W68, Ask 27): four steps. No trial length is typed; the one sentence above carries it.`]]},
+  {html:d=>questions(d,'club'), tag:'new', m:[[60,'new',`Questions a board asks (W70, Ask 29). The storage answer says the United States plainly.`]]},
+  {html:clubsCross, tag:'words', m:[[60,'new',`Cross-sell (W29): <q>Do your coaches need their own portal?</q> The tournament card is gone: Club includes tournaments.`]]},
+  {html:d=>ctaBand(d,'The whole club, one platform.','Pick the Club plan that fits your team count and start today.','Start your Club trial',null,'<a>See every plan and price</a>'), tag:'words', m:[[60,'new',`Bottom (W30): one button. <q>Start free with Tournament</q> leaves once Club is open: Club includes tournaments, and a free exit beside the trial button competes with it. The quiet link in the hero stays for a visitor on the wrong page.`]]},
+  {html:footer, tag:'words', m:[[40,'new',`Footer (W63).`]]}
+ ],
+ leagues:[
+  {html:leaguesHero, tag:'words', m:[[150,'new',`Hero (W31): <q>Start your League Plus trial</q>, with the trial sentence as the note. This is the line the first drawings left as “Express interest in League Plus”.`]]},
+  {html:leaguesPains, tag:'words', m:[[60,'fix',`The old way: unchanged, apart from one clock, <q>8am</q> to <q>8:00 a.m.</q> (W74).`]]},
+  {html:leaguesSteps, tag:'new', m:[[60,'new',`Pictures (W67): each of the four steps shows the real screen from a fictional house league. The words are today’s.`]]},
+  {html:d=>planSection(d,'leagues'), tag:'new', m:[[70,'new',`League Plus card (W33) and <q>Running a tournament too? It is in your plan.</q> (W34).`]]},
+  {html:d=>trialStrip(d,'league'), tag:'new', m:[[60,'new',`How the trial works (W68).`]]},
+  {html:d=>questions(d,'league'), tag:'new', m:[[60,'new',`Questions a board asks (W70).`]]},
+  {html:leaguesCross, tag:'words', m:[[60,'new',`Cross-sells (W35): both are links to their pages now. Neither opens the interest form.`]]},
+  {html:d=>ctaBand(d,'Your season deserves a real platform.','Start League Plus today.','Start your League Plus trial',null,'<a>See every plan and price</a>'), tag:'words', m:[[60,'new',`Bottom (W36): one button. <q>Start free with Tournament</q> leaves once League Plus is open: the plan includes everything in Tournament Plus.`]]},
+  {html:footer, tag:'words', m:[[40,'new',`Footer (W63).`]]}
+ ],
+ home:[
+  {html:homeHero, tag:'words', m:[[32,'new',`The bar follows the bands’ order (W63, Ask 25).`],[190,'new',`Hero buttons (W62): <q>Get started</q> and <q>See plans and prices</q>. Today both buttons go to the same place, and “Start free” stops being true of every door once two paid ones join.`]]},
+  {html:homeDoors, tag:'new', m:[[30,'new',`Three audience doors (W60, Ask 23). The middle door has two links, because a house league board and a club board need different first sentences.`],[70,'new',`No price on any door (your 7 Aug ruling stands). The coach door must not say $29: every coach starts free.`]]},
+  {html:homeModules, tag:'words', m:[[60,'new',`All four roles are full cards (W39, W40): <q>League Plus · Available now</q>, <q>Club · Available now</q>. Order follows the bands.`]]},
+  {html:homeSteps, tag:'words', m:[[60,'new',`Step 1 (W38).`]]},
+  {html:homePrices, tag:'new', m:[[60,'new',`Three price rows replace the six-card grid on the home page (W61, Ask 23). Six cards are about 5,000 px on a phone in the middle of this page. The full cards live on /pricing.`]]}
+ ]
+};
+SP.pricing.desk.open = SP.pricing.phone.open = OPEN.pricing;
+SP.cards.desk.open = SP.cards.phone.open = OPEN.cards;
+SP.clubs.desk.open = SP.clubs.phone.open = OPEN.clubs;
+SP.leagues.desk.open = SP.leagues.phone.open = OPEN.leagues;
+SP.home.desk.open = [...OPEN.home, {img:'dev-home-desk',from:5150,to:6482,m:[[5300,'same','Platform highlights and the bottom band: unchanged (today’s capture). The footer gains the “Built for” column (tab 10).']]}];
+SP.home.phone.open = [...OPEN.home, {img:'dev-home-phone',from:8550,to:10986,m:[[8700,'same','Unchanged (today’s capture), apart from the footer (tab 10).']]}];
+
+/* tab 10: the nav, the footer, search titles, and lines on the other pages */
+START.other = {
+ nav:{label:'Nav, footer, Get started menu', ex:'The nav follows the bands’ order; Leagues and Clubs stay two entries, because they are two pages a visitor searches for (Ask 25). The footer gains a column that reaches all four audience pages; today it reaches none of the Leagues or Clubs pages. The Get started menu gains “Start a club”.', html:d=>
+   nav(d,'') + plainPage(d, `<p class="hnote" style="margin:0 0 10px"><b>The bar.</b> Today: Tournaments · Coaches · Leagues · Clubs · Pricing. Proposed: the bands’ order.</p>` +
+    (d==='phone' ? `<div style="display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--p-line);border-radius:12px;background:#fff;text-align:center;font-size:11.5px;font-weight:600;padding:10px 0">${['Tournaments','Leagues','Clubs','Coaches','Pricing'].map(x=>`<span>${x}</span>`).join('')}</div><p class="hnote">The phone’s bottom bar, in the same order.</p>` : '') +
+    `<p class="hnote" style="margin:26px 0 10px"><b>The Get started menu</b> (the bar on the start pages).</p><div class="pc" style="max-width:300px"><a class="lk" style="margin-top:0;color:var(--p-ink)">Run a tournament</a><a class="lk" style="color:var(--p-ink)">Start a league season</a><a class="lk" style="color:var(--p-ink)">Start a club ${chip('NEW')}</a><a class="lk" style="color:var(--p-ink)">Coach a team</a><a class="lk" style="color:var(--p-ink)">Join a team</a></div>`) + footer(d)},
+ titles:{label:'Search titles and descriptions', ex:'What each page is called in a search result (W64). Today the Leagues and Clubs pages are titled by who we think the reader is (“For club executives”). The proposal titles them by what that person types. The site adds “| FieldLogicHQ” to each title.', html:d=>
+   plainPage(d, serp('for-leagues','House league registration and scheduling | FieldLogicHQ','Run your house league season in one place: online registration, the draft, the schedule, standings and emails to every family. Built for volunteer boards.','For house league administrators | FieldLogicHQ','Run your full house league season in one dashboard — … No spreadsheets, no reply-all emails.') +
+    serp('for-clubs','Club management: house league, rep teams | FieldLogicHQ','One place for a volunteer board: house league, rep teams, tournaments and the club’s accounting, with a Premium Coaches Portal for every coach.','For club executives | FieldLogicHQ','One platform for tournaments, house league, rep teams, and org finances. …') +
+    serp('pricing','Plans and prices | FieldLogicHQ','Prices for tournaments, house leagues, clubs and coaches, in CAD. Tournament is free.','Pricing | FieldLogicHQ','Simple, honest pricing for every role in your organization — …'))},
+ bridges:{label:'Lines on the other pages', ex:'The paths between audiences (W71) and two labels that say “free” over a paid plan today (W73). Small, but each is a place a buyer moves from one plan to the next, or reads something that is not true.', html:d=>
+   plainPage(d, `<p class="hnote" style="margin:0"><b>/for-tournament-organizers</b> · “More from FieldLogicHQ”</p>` + pcards(d,2,[
+     {lb:'League Plus',t:'Also running a house league season?',k:'WORDS',b:'Player registration, draft tools, schedules, standings, and season-wide parent messaging — all in one dashboard. Already running tournaments here? Start League Plus or Club from Plan &amp; billing. Your events, teams and staff stay where they are.',links:['See what League Plus includes']},
+     {lb:'Tournament Plus · the plan card',t:'Start Tournament Plus',k:'WORDS',b:'The button today says “Start Tournament Plus free”. This checkout takes a payment method and starts a 14-day trial, so “free” goes (W73). Whether the page then names that trial, or the trial is switched off, is Ask 31.'}]) +
+    `<p class="hnote" style="margin-top:28px"><b>/for-coaches</b></p>` + pcards(d,2,[
+     {lb:'The bridge card',t:'Is your club considering Club?',k:'WORDS',b:'If your club moves to Club, you won’t be charged for your own portal again.',links:['See what Club includes','Copy a link for your club']},
+     {lb:'The Premium card’s tag',t:'“Free right now” is removed',k:'WORDS',b:'The tag shows whenever Premium is on sale. Premium is $29/mo with no trial since the Founding Season closed. The price line and “Start now” already say what is true.'}]) +
+    `<p class="hnote" style="margin-top:28px"><b>/demos</b> · the coaches card</p>` + pcards(d,1,[
+     {lb:'Riverdale Ridge Baseball',t:'Open the coaches demo',k:'WORDS',b:'One new line under the card’s description: “Running a club? This is what each of your coaches gets with Club.”'}]))}
+};
+
+
+/* ---------- render ---------- */
+const host = () => document.querySelector(`section.panel[data-tab="${S.tab}"] .spec-host`);
+function renderSpec(key){
+  const h = host(); if(!h) return;
+  const set = SP[key][S.dev][S.state];
+  const w = W[S.dev];
+  const frame = document.createElement('div'); frame.className='frame'; frame.style.width=w+'px';
+  const marks=[]; let y=0;
+  set.forEach((b,bi)=>{
+    if(bi>0 && (b.img || set[bi-1].img)) { const s=document.createElement('div'); s.className='seam'; frame.appendChild(s); }
+    let el;
+    if(b.img){
+      el=document.createElement('div'); el.className='slice';
+      el.style.cssText=`width:${w}px;height:${b.to-b.from}px;background-image:url(${IMG(b.img)});background-size:${w}px auto;background-position:0 -${b.from}px`;
+      (b.m||[]).forEach(m=>marks.push({y:y+(m[0]-b.from),k:m[1],t:m[2]}));
+      y+=b.to-b.from;
+    } else if(b.html){
+      el=document.createElement('div'); const tg=b.tag||'new'; el.className='drawn t-'+tg; el.dataset.tag=({new:'NEW',words:'CHANGED WORDS',same:'UNCHANGED · redrawn'})[tg]; el.innerHTML=b.html(S.dev);
+      el._marks=b.m||[]; el._y0=y;
+    } else {
+      el=document.createElement('div'); el.className='removed'; el.textContent=b.removed; el.style.minHeight='70px';
+    }
+    frame.appendChild(el);
+    if(!b.img){ el._pending=true; }
+  });
+  const spec=document.createElement('div'); spec.className='spec';
+  const rail=document.createElement('div'); rail.className='rail';
+  spec.appendChild(frame); spec.appendChild(rail);
+  const wrap=document.createElement('div'); wrap.className='specwrap'+(S.view==='diff'?' differs':'');
+  const lab=document.createElement('p'); lab.className='speclabel';
+  lab.textContent=`${key==='form'?'Interest form':key} · ${S.dev==='desk'?'desk 1440':'phone 390'} · ${({closed:'closed — production today',asis:'flipped as-is — dev today',open:'open — proposed'})[S.state]}`;
+  wrap.appendChild(lab); wrap.appendChild(spec);
+  h.innerHTML=''; h.appendChild(wrap);
+  // positions need layout: recompute y for every block from the DOM
+  requestAnimationFrame(()=>{
+    const all=[]; let n=0;
+    [...frame.children].forEach(el=>{
+      if(el.className==='slice'){ /* marks already placed relative to slices list */ }
+    });
+    // rebuild marks from DOM offsets
+    let idx=0;
+    set.forEach(b=>{
+      while(frame.children[idx] && frame.children[idx].className==='seam') idx++;
+      const el=frame.children[idx++]; if(!el) return;
+      const top=el.offsetTop;
+      (b.m||[]).forEach(m=>{ let yy; if(b.img) yy=top+(m[0]-b.from); else if(typeof m[0]==='string'){ const q=el.querySelector(m[0]); yy = q ? top + (q.getBoundingClientRect().top - el.getBoundingClientRect().top) + 14 : top+40; } else yy=top+m[0]; all.push({y:yy,k:m[1],t:m[2]}); });
+    });
+    all.sort((a,b)=>a.y-b.y);
+    let last=-1e9;
+    rail.style.height=frame.offsetHeight+'px';
+    all.forEach(m=>{
+      n++;
+      const hl=document.createElement('div'); hl.className='hl k-'+m.k; hl.style.top=m.y+'px';
+      const mk=document.createElement('div'); mk.className='mk k-'+m.k; mk.style.top=m.y+'px'; mk.textContent=n;
+      if(m.k!=='same'){ frame.appendChild(hl); frame.appendChild(mk); }
+      const rn=document.createElement('div'); rn.className='rn k-'+m.k; rn.innerHTML=`<b class="n">${n}</b>${m.t}`;
+      rail.appendChild(rn);
+      const top=Math.max(m.y-14,last+8); rn.style.top=top+'px'; last=top+rn.offsetHeight;
+      const on=()=>{document.querySelectorAll('.rn.on,.mk.on').forEach(x=>x.classList.remove('on'));rn.classList.add('on');mk.classList.add('on');};
+      rn.addEventListener('click',()=>{on();mk.scrollIntoView({block:'center',behavior:'smooth'});});
+      mk.addEventListener('click',on);
+    });
+    if(last>frame.offsetHeight) rail.style.height=last+'px';
+    applyFit(wrap,spec);
+    wireCycle(key);
+  });
+}
+function applyFit(wrap,spec){
+  spec.style.zoom='';
+  if(S.size==='fit'){ const avail=wrap.clientWidth-26; const need=spec.scrollWidth; if(need>avail) spec.style.zoom=(avail/need).toFixed(3); }
+}
+function wireCycle(key){
+  document.querySelectorAll('[data-cycle] button').forEach(b=>b.addEventListener('click',()=>{cycle=b.dataset.c;render();}));
+}
+function renderStart(kind){
+  const h=host(); const subs=document.querySelector(`.substeps[data-sub="${S.tab}"]`);
+  const set=START[kind]; const key=S.sub[S.tab];
+  subs.innerHTML=Object.entries(set).map(([k,v])=>`<button class="substep" data-v="${k}" aria-pressed="${k===key}">${v.label}</button>`).join('');
+  subs.querySelectorAll('.substep').forEach(b=>b.addEventListener('click',()=>{S.sub[S.tab]=b.dataset.v;render();}));
+  document.getElementById(S.tab+'-ex').innerHTML=set[key].ex;
+  const w=W[S.dev];
+  const wrap=document.createElement('div'); wrap.className='specwrap';
+  const isNew = key!=='closed';
+  wrap.innerHTML=`<p class="speclabel">${set[key].label} · ${S.dev==='desk'?'desk 1440':'phone 390'} · ${set[key].shipped?'<span class="tag t-same">shipped screen, reused</span> open — proposed':isNew?'<span class="tag t-new">new</span> open — proposed':'<span class="tag t-fix">closed words fixed</span>'}</p><div class="spec"><div class="frame${isNew?' drawn':''}" style="width:${w}px;min-height:${S.dev==='desk'?'760':'844'}px">${set[key].html(S.dev)}</div></div>`;
+  h.innerHTML=''; h.appendChild(wrap);
+  applyFit(wrap,wrap.querySelector('.spec'));
+}
+function render(){
+  document.querySelectorAll('section.panel').forEach(p=>p.hidden = p.dataset.tab!==S.tab);
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.tab===S.tab));
+  const vr=document.getElementById('viewrow');
+  const comparing=['pricing','cards','clubs','leagues','form'].includes(S.tab);
+  const starting=['clubstart','leaguestart','other'].includes(S.tab);
+  vr.hidden=!(comparing||starting);
+  vr.querySelector('[data-k="state"]').parentElement.hidden=!comparing;
+  vr.querySelector('[data-k="view"]').parentElement.hidden=!comparing;
+  vr.querySelectorAll('.seg').forEach(seg=>{const k=seg.dataset.k;seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',S[k]===b.dataset.v));});
+  if(S.tab==='leagues'){ document.querySelectorAll('.substeps[data-sub="leagues"] .substep').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.sub.leagues)); renderSpec(S.sub.leagues); }
+  else if(comparing) renderSpec(S.tab);
+  else if(S.tab==='clubstart') renderStart('club');
+  else if(S.tab==='leaguestart') renderStart('league');
+  else if(S.tab==='other') renderStart('other');
+  try{ history.replaceState(null,'','#'+S.tab); }catch(e){}
+}
+const TABS=[['start','1 · Start here'],['pricing','2 · /pricing'],['cards','3 · Plan bands'],['clubs','4 · /for-clubs'],['leagues','5 · Leagues & home'],['clubstart','6 · Club start'],['leaguestart','7 · League start'],['product','8 · In product'],['form','9 · Interest form'],['other','10 · Nav & other'],['asks','11 · Your calls']];
+const tabs=document.getElementById('tabs');
+tabs.innerHTML=TABS.map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}">${l}</button>`).join('');
+tabs.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{S.tab=t.dataset.tab;render();window.scrollTo({top:0});}));
+document.querySelectorAll('#viewrow .seg').forEach(seg=>seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{S[seg.dataset.k]=b.dataset.v;render();})));
+document.querySelectorAll('.substeps[data-sub="leagues"] .substep').forEach(b=>b.addEventListener('click',()=>{S.sub.leagues=b.dataset.v;render();}));
+if(!TABS.some(t=>t[0]===S.tab)) S.tab='start';
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1); if(TABS.some(t=>t[0]===h)&&h!==S.tab){S.tab=h;render();}});
+window.addEventListener('resize',()=>{const w=document.querySelector('section.panel:not([hidden]) .specwrap'); if(w&&S.size==='fit') applyFit(w,w.querySelector('.spec'));});
+
+/* ---------- asks ---------- */
+const ASKS=[
+ ['The shape of the build'],
+ [1,'How a new club starts','Account → club name → choose Club or Club · Association → billing address → payment → “Setting up your club” → the club setup kit. The organization is made before payment (/billing: a club needs its name and address first).','Yes, as drawn (tab 6)'],
+ [2,'A club start abandoned at payment','The club is left on free Tournament. It remembers it came for Club: its plan step and Plan & billing offer Club again.','Yes'],
+ [3,'Club or Club · Association at the start','Both side by side under “How many teams does your club run?”; no team-count check; moving up later is prorated.','Yes'],
+ [4,'The plan grid (replaced by Ask 21)','Was: six cards in two rows, “Tournaments and leagues” / “Clubs and coaches”. Replaced on 18 Nov: those rows grouped by price, and a league board and a club board are the same buyer. The two rows are no longer drawn.','See Ask 21'],
+ ['Words and promises'],
+ [5,'The interest form and its list','The form follows the switch (only for a closed plan; on no public page once all three open). One last email from support@ after the flip, only to people who ticked the box in the last six months, never to anyone who unticked it (/legal). Needs a mailing address first.','Yes'],
+ [6,'The consent box on the interest form','It is ticked when the form opens, so the “consenting” list is doubtful. Make it unticked (a small change in S1).','Yes'],
+ [7,'League Plus trial sentence','Club’s sentence, word for word, with League Plus’s own length; the copy rule naming Club as the only plan that states a trial length names League Plus and Club · Association too. The Facts doc records League Plus’s trial (via /strategy).','Yes'],
+ [8,'Tax inside the trial sentence','(b) “…and you’re first charged, plus applicable taxes, when the trial ends.” for all three plans, with the tax line still under each price. /accounting and /legal both recommend (b); /marketing drafted (a), leaving the sentence as ruled. Also add the price and tax to the trial-ending email.','(b)'],
+ [9,'Availability line','“Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars.” Under the plan grids, on step 1 of both starts and in the FAQ; it also qualifies “Every plan is available now”.','Yes'],
+ [10,'More than 30 teams','“More than 30 teams? Email support@fieldlogichq.ca for a custom quote.” A quiet line, never “talk to us”.','Yes'],
+ [11,'/pricing “what they cover” section','Removed while both plans are open.','Yes'],
+ [12,'/for-clubs demo block and second card','The demo block becomes “A coach’s season inside a club” (one link, no club-demo promise). The “Start now: Running a tournament” card makes way for Club · Association.','Yes'],
+ [13,'“Bring your team in with everything you’ve built”','Live today on five pages, and not yet true on production (/legal: a misrepresentation risk). Change it now to “you won’t be charged for the portal again”; restore it once the coach-into-Club move is on production and proved.','Yes, at the next promote'],
+ [14,'The rest of the copy doc’s asks','“Paid plan” tag on the chooser · “Available now” on the home cards · per-plan strip tags · the long button labels (fallback “Start your trial”) · bridge cards name the trial.','All as recommended'],
+ ['Who can buy what'],
+ [15,'Signed-in people pressing a Club button','An owner of any organization goes to its Plan & billing; a Premium coach gets the in-place “Start your club”. The new door never makes a second organization.','Yes'],
+ [16,'Buying from inside the product (tab 8)','At launch: free Tournament → the three plans; paying Tournament Plus → League Plus (new move); Founding Season Tournament Plus → Club by checkout. After launch: League Plus → Club. Buying League Plus clears the free league caps. S4 gets its own drawings first.','Yes'],
+ [17,'No Founding Season on the new doors','A club or league made through these doors never receives the free Tournament Plus season, even on an account made before 26 Oct.','Yes'],
+ ['The switch'],
+ [18,'Premium Coaches Portal’s two switches','Make the code’s copy say “live” in S1 (no visible change; today Premium would read closed only if the switch could not be read). The check that production and code agree reads production, so it is shared automation: for now a hand read in the release steps; making it automatic is your call, in its own change.','Fix in S1; hand read for now'],
+ [19,'Outside this build: production still sells the Founding Season','Production’s /pricing and /start still say “2027 season free … through September 30, 2027”, though you closed the offer on 26 Oct and the closing code is on production. /start is built per visit, so it is not a stale page: most likely a production setting still holds the old close date. Route to /release to check (a check, not a fix).','Yes, check now'],
+ [20,'Before the flip (runbook, not this build)','Hard prerequisites added: the Terms and Privacy live on production with an acceptance recorded on the first test purchase (/legal: with them off, checkout takes no tick); the ~$1 live purchase with an Ontario address and a printed invoice (/accounting).','Yes'],
+ ['The audience review (added 18 Nov) — grouping'],
+ [21,'Three audience bands on /pricing (replaces Ask 4)','Running a tournament · Running a league or a club · Coaching one team. League Plus, Club and Club · Association sit together, each labelled by what a club runs (“A house league” · “A club with rep teams · up to 15 teams” · “A club with 16 to 30 teams”), not as steps: your brand rule says League Plus and Club are peers. The coaches band shows the free Basic Coaches Portal beside Premium. The League Plus and Club bridge cards under the grid go (their band says it).','Yes, as drawn (tab 3)'],
+ [22,'The role picker has three doors','The same three as the bands, each jumping to its band. The four-door picker stays while League Plus and Club are closed.','Yes'],
+ [23,'The home page sends people to their page','Three audience doors (the middle one links to both the Leagues and the Clubs page), all four roles as full cards, and three short price rows in place of the six plan cards. The full cards live on /pricing only.','Yes, as drawn (tab 5, Home)'],
+ [24,'A price on the home page doors (your 7 Aug ruling)','A: the ruling stays, no price on any door; prices sit in the three rows lower down. B: “from $89/mo” on the league and club door only. Never a price on the coach door: every coach starts free, so $29 there overstates the cost. /marketing and /strategy both prefer A: the club we aim at first pays $219, and an $89 anchor pulls it toward the smaller plan.','A'],
+ [25,'The nav and the footer','Leagues and Clubs stay two entries (two pages people search for, two first sentences). The order follows the bands: Tournaments · Leagues · Clubs · Coaches · Pricing. The footer gains a “Built for” column reaching all four pages; today it reaches neither Leagues nor Clubs. Wording calls inside: “Built for” as the heading; “House leagues” in the footer while the bar keeps “Leagues”; the door links keep “I run a house league” / “I run a club with rep teams”.','Yes'],
+ ['The audience review — making the pages sell'],
+ [26,'The product’s own screens on the Leagues and Clubs pages','Eight pictures of real screens, shot from a fictional club built for the purpose (never the live demo clubs, never real names), re-shot each release cycle with the demos pass. This is not a demo, and your “no club demo at launch” ruling stands. Today no marketing page has a picture, and these two plans are the only ones a buyer cannot see before adding a payment method.','Yes'],
+ [27,'“How the trial works” on both pages','Four steps under the plan cards: start, use all of it, the email before it ends, what is charged and when. The copy rule says a trial’s length appears in one sentence and nowhere else; the steps type no length, but the rule needs to name this section. /strategy reads it as a disclosure, so it rides S3, not S3b. It promises an email a few days before the trial ends: confirm production is set up to send it.','Yes'],
+ [28,'The Clubs page speaks to the whole board','Heading “Coaches run their team. You run the club.” (“org” is our word). Sub-line names the club’s books. The four “old way” cards: two new ones for the treasurer and the registrar, the tryouts card leaves the four. A new section, “What each person at your club gets”: president, treasurer, registrar, coaches.','Yes'],
+ [29,'“Questions a board asks”','Six answers on the Leagues and Clubs pages, four of them also in the pricing FAQ: switching mid-season, a change of treasurer, families’ information, stopping, training, a year’s cost. The storage answer says the United States (Ohio) plainly; /legal says leaving it out is the worse position. The “ask us for a full copy” line needs either the data terms published with this release or your word that we will do it by hand.','Yes; publish the data terms with the release'],
+ [30,'What rides S3 and what waits in S3b','Your 17 Nov ruling puts marketing after the launch. S3 carries what it rebuilds anyway, once, in its final shape: the bands, the picker, the home page, the nav and footer, the search titles, the trial steps. S3b carries the selling sections (pictures, the board section, the questions, the rebalanced Clubs page, the paths between audiences). S3b does not hold the flip; it can ship before it or after it.','Yes'],
+ [31,'Lines that are not true today (the next promote, with S1)','Three pricing answers describe customers we do not have (“is used by associations…”, “Most organizations are running their first tournament within an afternoon”, “used by softball associations…”). The Premium card says “Free right now” over a $29 plan with no trial. “Start Tournament Plus free” opens a checkout that takes a payment method and starts a 14-day trial. Fix the words now. For Tournament Plus, also choose: say the 14-day trial on the page as Club does, or switch that trial off.','Fix now; say the trial'],
+ [32,'Which card leads the pricing page once Club is on sale','Today the page’s one lime button and olive edge are on Tournament Plus (“the top-revenue plan you can buy”, May). Your brand rule says Club leads. Never the words “Most popular”: that is a statement about customers. A: Tournament Plus keeps it. B: Club takes it at the flip.','B'],
+ [34,'Three drawing calls from /design','(1) The band headings (“Running a tournament”…) are drawn at the card-title size, so “Available now” stays the page’s one display heading; the alternative is the 32px display face. (2) One lime per view is read per screenful: the Leagues and Clubs pages carry the same lime action in the hero, on the plan card and in the bottom band, as they do live today. (3) The free Basic Coaches Portal is a strip above Premium, not a half-width column.','As drawn on all three'],
+ [33,'The paths between audiences','On the tournament page’s League Plus and Club cards: “Already running tournaments here? Start League Plus or Club from Plan & billing. Your events, teams and staff stay where they are.” (true once S4 ships). On the coaches page: “Copy a link for your club”. On the demos page, under the coach demo: “Running a club? This is what each of your coaches gets with Club.” Added 18 Nov at your question: once its plan is open, the last band of the Clubs page and of the Leagues page has one button. “Start free with Tournament” leaves it (both plans include tournaments, and a free exit beside the trial button competes with it); the quiet tournament link in each hero stays.','Yes']
+];
+const t=document.getElementById('asktable');
+t.innerHTML='<tr><th>#</th><th>Call</th><th>What it means</th><th>Recommendation</th><th>Your pick</th></tr>'+ASKS.map(a=>a.length===1?`<tr class="grp"><td colspan="5">${a[0]}</td></tr>`:`<tr><td>${a[0]}</td><td><b>${a[1]}</b></td><td>${a[2]}</td><td class="rec">${a[3]}</td><td class="pick"><select id="ask${a[0]}" aria-label="Ask ${a[0]}"><option value="">—</option><option selected>As recommended</option><option>No</option><option>Other (see note)</option></select><br><input id="note${a[0]}" aria-label="Note for ask ${a[0]}" placeholder="note" style="margin-top:6px;width:150px;font:12px var(--f-body);padding:4px 6px;border:1px solid var(--doc-line);border-radius:6px;background:var(--doc-card);color:var(--doc-ink)"></td></tr>`).join('');
+document.getElementById('copyBtn').addEventListener('click',()=>{
+  const lines=ASKS.filter(a=>a.length>1).map(a=>{const v=document.getElementById('ask'+a[0]).value||'(no pick)';const n=document.getElementById('note'+a[0]).value;return `Ask ${a[0]} (${a[1]}): ${v}${n?' — '+n:''}`;});
+  const txt='Club on-sale pages — my calls\n'+lines.join('\n');
+  const out=document.getElementById('pickout'); out.value=txt; out.hidden=false;
+  const msg=document.getElementById('copyMsg');
+  const fall=()=>{out.focus();out.select();msg.textContent='Selected below — copy it with Ctrl+C / ⌘C.';};
+  try{ navigator.clipboard.writeText(txt).then(()=>msg.textContent='Copied. Paste it into the chat.',fall); }catch(e){ fall(); }
+});
+const DLOG=[
+ 'Start column narrowed to the ruled 420px; heading 32px display; sub 16px dim; fields and buttons 48px with 10px corners; step line 12px (first-run rules 1–2, 2026-10-20). The plan step and chooser keep the two-up width (two up from 900px).',
+ 'One lime per view: /for-clubs’ Club · Association button is the white secondary beside Club’s lime (2026-10-23). The pricing grid keeps its one lime on Tournament Plus.',
+ 'The wait screen follows the shipped checkout-complete card: “Payment received. This takes a few seconds.”, a loading line, no button; “Still setting up” with Check again after about 50 seconds (2026-10-20).',
+ 'The chooser’s “Paid plan” pill takes the olive tint the Free pills use, not lime (lime is the offer pill, 2026-07-20 / 09-07).',
+ 'Eyebrows at the ruled 12px.',
+ 'Each drawn card carries a NEW / CHANGED WORDS / UNCHANGED tag; the olive glow on Club · Association (it read as a product highlight) is gone.',
+ 'The View switch is one white track with the chosen option in soft olive (the shipped ViewSwitch).',
+ 'Note markers are an edge tab, not a full-width band across other cards; the document widens to fit a 1440 page and its notes on a large screen, and opens in Fit to width on smaller ones (True size is one click away).',
+ 'The NEW label no longer covers the logo on start screens (the frame caption says NEW).',
+ 'Audience review, 18 Nov: the footer is drawn as the shipped footer (paper ground, twelve columns, the “Also on your phone” column kept beside the new “Built for” column, the copyright row).',
+ 'Section headings are 32px and card titles 20px, as the product’s ladder has them; cards have 14px corners, the shipped shadow and 24px padding; sections have 72px above and below (44px on a phone).',
+ 'The pricing FAQ and “Questions a board asks” are drawn as the shipped accordion card: changed and new answers open, unchanged ones closed.',
+ '“How the trial works” is a numbered row without card boxes, and a list of rows on a phone.',
+ 'Band labels and badges are 12px; the bottom band is white; nav links are 600 weight; Get started and Sign in meet the 44px floor; buttons are 16px.',
+ 'Phone pages show the fixed bottom bar; links in cards and in the price rows are 44px rows.',
+ 'One tag system: NEW / CHANGED WORDS / UNCHANGED sits on the top-right edge of each card and at the right of each FAQ row; the section tag straddles the block’s top edge.',
+ 'Rail notes on the plan bands and the FAQ point at the band or group they describe; the tab labels are shorter and the row fades where it scrolls; the two long tables on “Start here” are folded.',
+ 'Not changed, and an ask instead (Ask 34): the band heading size, one lime per screenful, the free Coaches Portal as a strip. The nav order is a proposal (Ask 25), noted on the bar.'
+];
+document.getElementById('designlog').innerHTML = DLOG.length ? DLOG.map(x=>`<li>${x}</li>`).join('') : '<li>(filled after the /design pass)</li>';
+
+render();
+})();
+</script>

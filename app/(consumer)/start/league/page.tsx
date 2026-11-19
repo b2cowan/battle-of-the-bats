@@ -11,6 +11,7 @@ import { startStepViewer } from '@/lib/start-door-server';
 import { hasLiveInvitation } from '@/lib/invite-reconciliation';
 import StartLeagueForm from './StartLeagueForm';
 import styles from '../start.module.css';
+import { gatedPlanTag, gatedPlanSentence, interestButtonLabel, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
 
 export const metadata: Metadata = {
   title: 'Start a league season — FieldLogicHQ',
@@ -62,13 +63,14 @@ export default async function StartLeaguePage({ searchParams }: { searchParams: 
             <CalendarDays size={21} strokeWidth={1.8} aria-hidden />
           </div>
           <h1 className={styles.title}>Start a league season</h1>
-          <p className={styles.sub}>League — not open yet</p>
+          {/* W54 closed (ruled 2026-11-18): this page sells League Plus, so it says "League Plus", never the free floor's
+              "League", with the canon sentence and the interest line. */}
+          <p className={styles.sub}>League Plus — {gatedPlanTag('league').toLowerCase()}</p>
         </header>
 
         <p className={styles.lead}>
-          League runs your full house-league season — registration, draft, scheduling, standings,
-          and parent communications in one dashboard. It&apos;s built, but not open for sign-up. Tell us
-          you&apos;re interested and we&apos;ll let you know when it opens.
+          League Plus runs your full house league season — registration, draft, scheduling, standings,
+          and parent communications in one dashboard. {gatedPlanSentence('league')} {GATED_PLAN_INTEREST_LINE}
         </p>
 
         <div className={styles.actions}>
@@ -77,10 +79,10 @@ export default async function StartLeaguePage({ searchParams }: { searchParams: 
             initialPlanInterest={['league']}
             initialFeaturesInterested={['house_league', 'registration', 'public_site']}
           >
-            Express interest in League
+            {interestButtonLabel(['league'])}
           </EarlyAccessModalTrigger>
           <Link href="/for-leagues" className={styles.ctaSecondary}>
-            See how League works →
+            See how League Plus works →
           </Link>
         </div>
 

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
-import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, showsFoundingZero, FOUNDING_SEASON_END_LABEL, clubTrialLine, gatedPlanTag, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, showsFoundingZero, FOUNDING_SEASON_END_LABEL, gatedPlanTag, GATED_PLAN_INTEREST_LINE, interestButtonLabel } from '@/lib/plan-config';
+import { clubTrialLine } from '@/lib/plan-trial-line';
 import { parseStartPricing, withStartPricing } from '@/lib/start-door';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
@@ -321,8 +322,8 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
   // The strip's button names the plans it covers ("Express interest in League Plus or Club"), never a bare "Express interest"
   // beside a card that is also one (label list row 4).
   const stripLabel = stripPlans.length > 0 && stripPlans.every(p => p.key === 'league' || p.key === 'club')
-    ? `Express interest in ${stripPlans.map(p => p.name).join(' or ')}`
-    : 'Express interest';
+    ? interestButtonLabel(stripPlans.map(p => p.key))
+    : interestButtonLabel();
   // Promo wording only while the promo is actually running — afterwards the card falls back to its permanent note and a
   // truthful "Start now" CTA on its own, with no runbook. For the viewer's OWN current plan the offer state is a per-account
   // fact (is this account's comp still running?), not the signup window — supplied by the caller when it knows; the window is
@@ -468,7 +469,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
                   initialPlanInterest={plan.initialPlanInterest}
                   initialFeaturesInterested={plan.initialFeaturesInterested}
                 >
-                  Express interest
+                  {interestButtonLabel()}
                 </EarlyAccessModalTrigger>
               ) : onChoosePlan ? (
                 <button
@@ -522,16 +523,18 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           capturing interest, but never peers of what's actually on sale. */}
       {marketingLayout && stripPlans.length > 0 && (
         <div className={`${kit.card} ${kit.cardFlat} ${styles.comingSoonStrip}`}>
-          <span className={kit.tag}>Not open yet</span>
+          {/* W6 (Ask 3, ruled 2026-11-18): one plan in the strip wears its own tag, so Club never wears "Not open yet";
+              two keep the group tag and each name carries its own status. */}
+          <span className={kit.tag}>{stripPlans.length === 1 ? gatedPlanTag(stripPlans[0].key) : gatedPlanTag('league')}</span>
           <p className={`${kit.small} ${styles.comingSoonStripBody}`}>
             {stripPlans.map((p, i) => (
               <span key={p.key}>
                 {i > 0 && ' · '}
                 <strong className={styles.comingSoonStripName}>{p.name}</strong>
-                {' '}({p.monthlyPrice}/mo) — {GATED_STRIP_LINES[p.key] ?? p.tagline}
+                {' '}({stripPlans.length > 1 ? `${gatedPlanTag(p.key)}, ` : ''}{p.monthlyPrice}/mo) — {GATED_STRIP_LINES[p.key] ?? p.tagline}
               </span>
             ))}
-            {'. '}Express interest to be notified when self-serve checkout opens.
+            {'. '}{GATED_PLAN_INTEREST_LINE}
           </p>
           <EarlyAccessModalTrigger
             className={`${kit.btn} ${kit.btnSecondary}`}

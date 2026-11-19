@@ -23,9 +23,12 @@ export interface PlanConfig {
   // Modules unlocked by this plan. All modules listed here are available without
   // a separate enabledAddons entry — entitlement is derived from plan tier alone.
   moduleEntitlements: Capability[];
-  // 'early_access': plan is not open for self-serve checkout; shows early-access CTA.
+  // 'early_access': plan is not open for self-serve checkout (pages show its closed words and the interest door).
   // 'live': plan is available for checkout.
-  // To activate a plan, change this to 'live' — no other changes required.
+  // ⚠ This is only the FALLBACK. The live answer is the `plan_gating` row (platform admin), read per request by
+  // `getPlanGatingMap()`; this value is used only when that read fails. Opening a plan is the runbook's flip of the
+  // row (docs/agents/ops/CLUB_GATE_FLIP_RUNBOOK.md); this value is brought into agreement afterwards so a failed read
+  // never closes a plan that is on sale (on-sale pages S1, Ask 18).
   gatingStatus: 'live' | 'early_access';
 }
 
@@ -65,7 +68,8 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     // Team gets free-tier tournament tooling. Rep-team access is intentionally
     // team-scoped through team_entitlements, not org-wide module_rep_teams.
     moduleEntitlements: CORE_MODULES,
-    gatingStatus: 'early_access',
+    // Live on production since 2026-07-24 (the plan_gating row); this fallback now agrees (Ask 18, 2026-11-18).
+    gatingStatus: 'live',
   },
   tournament_plus: {
     label: 'Tournament Plus',
@@ -145,21 +149,9 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
   },
 };
 
-/**
- * The Club trial sentence — ONE sentence, verbatim, on the Club pricing card, the billing page and
- * checkout (BUSINESS_DECISIONS.md 2026-09-25, "The 90-day Club trial collects a card at checkout";
- * canon in PRICING_PAGE_COPY.md). It says "a payment method", not "a card" (T1, owner: checkout collects a payment method
- * and is not changed to force cards; Plan & billing Stage 5 Part B, 2026-11-16). Never reword it per surface: the defect it replaced was a pricing
- * card promising "No credit card required" while checkout asked for one.
- *
- * Pass the trial length checkout will actually use where you have it (`getPlanConfigOverride()`
- * — a platform admin can override `trial_days`); the default is the code value the public pricing
- * card reads. Show it only where a trial applies: a paying org moving to Club gets no second trial.
- * No "free" in it — Club carries no "free until" framing (2026-09-25, Club has no Founding offer).
- */
-export function clubTrialLine(trialDays: number = PLAN_CONFIG.club.trialDays): string {
-  return `${trialDays}-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.`;
-}
+// The trial sentence (clubTrialLine / planTrialLine) lives in lib/plan-trial-line.ts: it needs the tax words, and this
+// file stays import-free because the demo seed scripts load it with plain Node (on-sale pages S1, 2026-11-18).
+
 
 /**
  * What a customer reads about a plan that is NOT open for sign-up — one tag and one sentence per plan,
@@ -177,7 +169,7 @@ export function gatedPlanTag(planKey: OrgPlan): string {
 export function gatedPlanSentence(planKey: OrgPlan): string {
   return planKey === 'league'
     ? 'League Plus is built, but not open for sign-up.'
-    : `${PLAN_CONFIG[planKey].label} is coming soon — it isn't open for sign-up yet.`;
+    : `${planKey === 'team' ? 'The ' : ''}${PLAN_CONFIG[planKey].label} is coming soon — it isn't open for sign-up yet.`;
 }
 
 /** The short line under a closed plan card's button. */
@@ -199,6 +191,62 @@ export function closedProgramPlansSentence(gating: Partial<Record<OrgPlan, boole
     gating.league && 'League Plus is built but not open for sign-up',
   ].filter(Boolean) as string[];
   return parts.length ? `${parts.join(', and ')}.` : null;
+}
+
+// ─── The one answer to "is this plan open?", and the availability words (on-sale pages S1, 2026-11-18) ──────────
+// Every public plan page (/pricing, /for-*, home, /start/*) reads availability through these, from the LIVE gate it
+// got per request (`getPlanGatingMap()`), and types none of these words itself. Guarded by
+// tests/unit/public-plan-availability-guard.test.ts: a page that re-spells the gate or types "Express interest",
+// "Coming soon", "Not open yet" or "Available now" fails the build. A page re-spelling them is how /pricing, the
+// Clubs page and home came to say different things about the same plan.
+
+/**
+ * "Is this plan open for sign-up right now?" — ⚠ the gating map's `true` means GATED. A plan missing from the map
+ * reads as closed: a door that does not open is the worse failure than a door shown late.
+ */
+export function isPlanOpen(gating: Partial<Record<OrgPlan, boolean>>, plan: OrgPlan): boolean {
+  return gating[plan] === false;
+}
+
+/** The heading/label a public page puts over the plans that are on sale. */
+export const PLAN_AVAILABLE_NOW = 'Available now';
+
+const INTEREST_NAMES: Partial<Record<OrgPlan, string>> = {
+  league: 'League Plus', club: 'Club', club_large: 'Club · Association', team: 'the Coaches Portal',
+};
+
+/** The interest door's button: "Express interest", or "Express interest in League Plus or Club". Closed plans only. */
+export function interestButtonLabel(plans: OrgPlan[] = []): string {
+  const names = plans.map(p => INTEREST_NAMES[p] ?? PLAN_CONFIG[p].label);
+  return names.length ? `Express interest in ${names.join(' or ')}` : 'Express interest';
+}
+
+/**
+ * The tag over a group of closed programme plans (the /pricing strip and its "what they cover" section; W6, Ask 3):
+ * one plan closed → that plan's own tag, so Club never wears "Not open yet"; both closed → the canon's group heading
+ * "Not open yet", and each plan's name carries its own status; none closed → null (the group does not render).
+ */
+export function closedPlansGroupTag(gating: Partial<Record<OrgPlan, boolean>>): string | null {
+  const closed = (['league', 'club'] as OrgPlan[]).filter(p => gating[p]);
+  if (closed.length === 0) return null;
+  return closed.length === 1 ? gatedPlanTag(closed[0]) : gatedPlanTag('league');
+}
+
+const AVAILABLE_NAMES: Partial<Record<OrgPlan, string>> = {
+  tournament: 'Tournament', tournament_plus: 'Tournament Plus', team: 'the Premium Coaches Portal',
+};
+
+/**
+ * "Tournament, Tournament Plus, and the Premium Coaches Portal are available now." — built from the gate over the plans
+ * a sentence names (each appears only while open), or null when none of them is. The caller names the plans; S1 keeps
+ * the three that sell today, and the open state (S3) widens the list rather than typing a new sentence.
+ */
+export function availableNowSentence(gating: Partial<Record<OrgPlan, boolean>>, plans: OrgPlan[]): string | null {
+  const names = plans.filter(p => isPlanOpen(gating, p)).map(p => AVAILABLE_NAMES[p] ?? PLAN_CONFIG[p].label);
+  if (names.length === 0) return null;
+  const list = names.length <= 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+  const sentence = `${list} ${names.length === 1 ? 'is' : 'are'} available now.`;
+  return sentence.charAt(0).toUpperCase() + sentence.slice(1);
 }
 
 /**

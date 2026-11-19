@@ -6,7 +6,10 @@ import { marketingMetadata } from '@/lib/marketing-metadata';
 import PricingSection from '@/components/PricingSection';
 import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
 import type { OrgPlan } from '@/lib/types';
-import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, gatedPlanTag, closedProgramPlansSentence } from '@/lib/plan-config';
+import {
+  isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, gatedPlanTag, closedProgramPlansSentence,
+  isPlanOpen, gatedPlanSentence, availableNowSentence,
+} from '@/lib/plan-config';
 import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
@@ -257,7 +260,7 @@ const PERSONAS: Persona[] = [
  */
 function resolvePersonas(gating: PlanGatingMap) {
   return PERSONAS.map(p => {
-    const isLive = !gating[p.planKey] && p.liveBadge !== null;
+    const isLive = isPlanOpen(gating, p.planKey) && p.liveBadge !== null;
     return { ...p, isLive, badge: isLive ? p.liveBadge : gatedBadge(p.planKey) };
   });
 }
@@ -297,15 +300,16 @@ export default async function HomePage({
   const personas = resolvePersonas(gatingMap);
   const livePersonas = personas.filter(p => p.isLive);
   const roadmapPersonas = personas.filter(p => !p.isLive);
-  const teamOpen = !gatingMap.team;
+  const teamOpen = isPlanOpen(gatingMap, 'team');
+  const closedPlansLine = closedProgramPlansSentence(gatingMap);
   // The Founding Season surfaces are promo artifacts, not permanent chrome (/review 2026-08-08):
   // the hero badge row and the callout card render ONLY while the Tournament Plus promo runs, and
   // name BOTH products only while both promos run and the coach checkout is open. When the promo
   // ends they disappear on their own instead of asserting an expired date.
   const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
   const bothPromosLive = teamOpen && tpPromoActive && isFoundingSeasonPromoActive('team');
-  const liveModules = MODULE_CARDS.filter(m => !gatingMap[m.planKey] && m.liveBadge !== null);
-  const roadmapModules = MODULE_CARDS.filter(m => gatingMap[m.planKey] || m.liveBadge === null);
+  const liveModules = MODULE_CARDS.filter(m => isPlanOpen(gatingMap, m.planKey) && m.liveBadge !== null);
+  const roadmapModules = MODULE_CARDS.filter(m => !isPlanOpen(gatingMap, m.planKey) || m.liveBadge === null);
   return (
     <div className={kit.page}>
       {/* ── Hero ──────────────────────────────────────────────────────── */}
@@ -415,9 +419,14 @@ export default async function HomePage({
             <p className={kit.eyebrow}>What&apos;s included</p>
             <h2 className={kit.heading}>One platform. Every role.</h2>
             <p className={`${kit.body} ${styles.sub}`}>
-              {teamOpen
-                ? 'Tournament organizers and coaches can start today — free, no credit card required. League Plus and Club are in active development.'
-                : 'Tournament organizers can start today — free, no credit card required. League Plus, Club, and Coaches Portal are in active development.'}
+              {/* W39 closed (ruled 2026-11-18): "in active development" was imminence; each closed plan says its one
+                  canon sentence, from the gate. */}
+              {[
+                teamOpen
+                  ? 'Tournament organizers and coaches can start today — free, no credit card required.'
+                  : `Tournament organizers can start today — free, no credit card required. ${gatedPlanSentence('team')}`,
+                closedPlansLine,
+              ].filter(Boolean).join(' ')}
             </p>
           </div>
           {/* Live roles: the full deep-dive. */}
@@ -450,7 +459,8 @@ export default async function HomePage({
                 <div key={mod.id} className={`${kit.card} ${kit.cardFlat}`}>
                   <div className={styles.nameRow}>
                     <h3 className={`${kit.subhead} ${styles.flush}`}>{mod.name}</h3>
-                    <span className={kit.tag}>{mod.planLabel} · In development</span>
+                    {/* W40 closed: the plan's own canon tag, never "In development". */}
+                    <span className={kit.tag}>{mod.planLabel} · {gatedPlanTag(mod.planKey)}</span>
                   </div>
                   <p className={kit.small}>{mod.stripLine}</p>
                   <Link href={mod.href} className={`${kit.link} ${kit.linkBlock}`}>
@@ -493,10 +503,8 @@ export default async function HomePage({
             <h2 className={kit.heading}>Plans built for how you operate.</h2>
             <p className={`${kit.body} ${styles.sub}`}>
               {[
-                teamOpen
-                  ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are available now.'
-                  : 'Tournament and Tournament Plus are available now.',
-                closedProgramPlansSentence(gatingMap),
+                availableNowSentence(gatingMap, ['tournament', 'tournament_plus', 'team']),
+                closedPlansLine,
               ].filter(Boolean).join(' ')}
             </p>
           </div>

@@ -4,15 +4,18 @@ import kit from '@/components/marketing/MarketingKit.module.css';
 import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import {
+  PLAN_CONFIG, formatPriceAmount, isPlanOpen, interestButtonLabel, gatedPlanTag, gatedPlanSentence, GATED_PLAN_INTEREST_LINE,
+} from '@/lib/plan-config';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
 export const metadata = marketingMetadata({
-  title: 'For club executives',
+  // W64 (ruled 2026-11-18): the words a club board would search.
+  title: 'Club management: house league, rep teams',
   description:
-    'One platform for tournaments, house league, rep teams, and org finances. Coaches run their teams independently — you keep full visibility without owning every task.',
+    'One place for a volunteer board: house league, rep teams, tournaments and the club\'s accounting, with a Premium Coaches Portal for every coach.',
   path: '/for-clubs',
 });
 
@@ -31,11 +34,13 @@ const CROSS_SELLS: Array<{
   {
     label: 'Coaches Portal',
     q: 'Do coaches need access before Club opens?',
-    body: "The Coaches Portal is also available standalone — coaches can start on their own today. When you move to Club, you can bring each coach’s team in with everything they’ve built, and it’s included in your plan from then on.",
+    // W29 closed / Ask 13: "bring each coach's team in with everything they've built" returns only once the
+    // coach-into-Club move is on production and proved.
+    body: "The Coaches Portal is also available standalone — coaches can start on their own today. When you move to Club, a coach with a standalone portal won’t be charged for it again, and the portal is included in your plan from then on.",
     // Flips to a live "See the Coaches Portal" link with the coach checkout gate below — this card
     // held an express-interest trigger for a live product until 2026-08-10 (the same stale trap as
     // the /for-tournament-organizers cross-sell, found in the door-placement build).
-    cta: 'Express interest in the Coaches Portal',
+    cta: interestButtonLabel(['team']),
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
   },
@@ -49,7 +54,8 @@ const CROSS_SELLS: Array<{
 ];
 
 export default async function ForClubsPage() {
-  const teamCheckoutOpen = !(await getPlanGatingMap()).team;
+  // The live gate, per request (on-sale pages S1). Club's open state is S3; this page shows Club's closed words.
+  const teamCheckoutOpen = isPlanOpen(await getPlanGatingMap(), 'team');
   const showSandboxDoor = sandboxDoorsVisible();
   const crossSells = CROSS_SELLS.map(cs =>
     cs.label === 'Coaches Portal' && teamCheckoutOpen
@@ -77,15 +83,16 @@ export default async function ForClubsPage() {
               initialPlanInterest={['club']}
               initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
             >
-              Express interest in Club
+              {interestButtonLabel(['club'])}
             </EarlyAccessModalTrigger>
             <Link href="/for-tournament-organizers" className={`${kit.link} ${kit.linkBlock}`}>
               Running a tournament? See tournament plans
             </Link>
           </div>
           <p className={kit.small}>
-            <span className={fp.noteStrong}>Coming soon</span>
-            {' '}— Club is in development.{' '}
+            {/* W23 closed: "Club is in development" was not the canon sentence. */}
+            <span className={fp.noteStrong}>{gatedPlanTag('club')}</span>
+            {' '}— it isn&apos;t open for sign-up yet.{' '}
             {teamCheckoutOpen
               ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are live today.'
               : 'Tournament and Tournament Plus are live today.'}
@@ -177,8 +184,8 @@ export default async function ForClubsPage() {
           <p className={kit.eyebrow}>The plan</p>
           <h2 className={kit.heading}>Club — the complete operating system.</h2>
           <p className={`${kit.body} ${fp.measure}`}>
-            Club is finishing its final workflows before self-serve checkout opens.
-            Express interest to be notified when it&apos;s ready for your organization.
+            {/* W25 closed: "finishing its final workflows" was the retired imminence framing. */}
+            {gatedPlanSentence('club')} {GATED_PLAN_INTEREST_LINE}
           </p>
           <div className={`${fp.planGrid} ${fp.gridTop}`}>
 
@@ -192,7 +199,7 @@ export default async function ForClubsPage() {
                 </div>
                 <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.club.annualPrice)}/year — save two months · priced by club size (up to 15 teams · up to 30 on Club · Association)</p>
               </div>
-              <p><span className={kit.tag}>Coming soon</span></p>
+              <p><span className={kit.tag}>{gatedPlanTag('club')}</span></p>
               <p className={kit.body}>
                 The complete operating system for established clubs — tournaments, house league,
                 rep teams, accounting, and coaching staff, all in one place.
@@ -211,7 +218,7 @@ export default async function ForClubsPage() {
                   initialPlanInterest={['club']}
                   initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
                 >
-                  Express interest
+                  {interestButtonLabel()}
                 </EarlyAccessModalTrigger>
               </div>
             </div>
@@ -290,8 +297,8 @@ export default async function ForClubsPage() {
             <span className={kit.accent}>one platform.</span>
           </h2>
           <p className={kit.lead}>
-            Express interest in Club to be notified when self-serve checkout opens.
-            Running a tournament now? Start free today.
+            {/* W30 closed: the canon interest line. */}
+            {GATED_PLAN_INTEREST_LINE} Running a tournament now? Start free today.
           </p>
           <div className={kit.row}>
             <EarlyAccessModalTrigger
@@ -299,7 +306,7 @@ export default async function ForClubsPage() {
               initialPlanInterest={['club']}
               initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
             >
-              Express interest in Club
+              {interestButtonLabel(['club'])}
             </EarlyAccessModalTrigger>
             <Link href="/start/tournament" className={`${kit.btn} ${kit.btnSecondary}`}>
               Start free with Tournament

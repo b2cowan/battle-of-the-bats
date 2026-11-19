@@ -190,7 +190,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       },
       {
         title: 'The schedule conflict shows up on game day.',
-        body: 'Two teams, one field, no one noticed until someone called you at 8am on a Saturday.',
+        body: 'Two teams, one field, no one noticed until someone called you at 8:00 a.m. on a Saturday.',
       },
     ],
     stepsHeadline: 'Registration to final standings — four steps.',

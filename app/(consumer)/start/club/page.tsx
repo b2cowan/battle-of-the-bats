@@ -7,15 +7,16 @@ import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import styles from '../start.module.css';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { gatedPlanTag, gatedPlanSentence, interestButtonLabel, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
 
 export const metadata: Metadata = {
   title: 'Explore Club — FieldLogicHQ',
 };
 
 /**
- * /start/club — consultative only. Club has no self-serve free path in this rollout;
- * we capture interest and route to a guided conversation. Thin wrapper over the
- * existing Club express-interest capture.
+ * /start/club while Club is closed (W50, ruled 2026-11-18): the canon closed sentence and the interest door. The
+ * consultative "we set up Club with you" page is gone — the 2026-11-18 open-launch ruling struck exactly that line.
+ * The real Club start (account → club name → plan) replaces this page when Club is open: S2 of the on-sale pages.
  */
 export default async function StartClubPage() {
   const supabase = await createClient();
@@ -32,13 +33,13 @@ export default async function StartClubPage() {
             <Building2 size={21} strokeWidth={1.8} aria-hidden />
           </div>
           <h1 className={styles.title}>Explore Club</h1>
-          <p className={styles.sub}>Club — let&apos;s talk</p>
+          <p className={styles.sub}>Club — {gatedPlanTag('club').toLowerCase()}</p>
         </header>
 
         <p className={styles.lead}>
           Club brings everything together for multi-team organizations — house league, rep teams,
-          accounting, org-wide financials, and Coaches Portal accounts. We set up Club with you
-          directly. Tell us about your organization and we&apos;ll reach out to plan a guided setup.
+          accounting, and a Premium Coaches Portal for your whole coaching staff.{' '}
+          {gatedPlanSentence('club')} {GATED_PLAN_INTEREST_LINE}
         </p>
 
         <div className={styles.actions}>
@@ -47,7 +48,7 @@ export default async function StartClubPage() {
             initialPlanInterest={['club']}
             initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
           >
-            Talk to us about Club
+            {interestButtonLabel(['club'])}
           </EarlyAccessModalTrigger>
           <Link href="/for-clubs" className={styles.ctaSecondary}>
             See what Club includes →

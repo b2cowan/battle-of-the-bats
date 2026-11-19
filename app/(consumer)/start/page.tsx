@@ -12,13 +12,14 @@ import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { isCoachesPortalPurchasable } from '@/lib/plan-gating-server';
 import { COACH_DOOR_HREF, coachStartDoor } from '@/lib/start-menu';
-import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_YEAR_LABEL } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_YEAR_LABEL, gatedPlanTag } from '@/lib/plan-config';
 import styles from './start.module.css';
 import { getSignedInUser } from '@/lib/two-step-session';
 
 export const metadata: Metadata = {
   title: 'Get started — FieldLogicHQ',
-  description: 'Tell us your job and start free — run a tournament, coach a team, start a league season, or explore Club.',
+  // W43 closed (ruled 2026-11-18): no "start free" over paid doors, and no doors the chooser does not show while closed.
+  description: 'Tell us your job and get started — run a tournament or coach a team.',
 };
 
 type StartOption = {
@@ -102,7 +103,7 @@ function coachOption(checkoutOpen: boolean, promoActive: boolean): StartOption {
   }
   return door === 'free'
     ? { ...base, accent: 'free', label: 'Coach', body: FREE_TEAM_BODY, tag: { text: 'Free', tone: 'free' } }
-    : { ...base, label: 'Coach', body: FREE_TEAM_BODY, tag: { text: 'Coming soon', tone: 'soon' } };
+    : { ...base, label: 'Coach', body: FREE_TEAM_BODY, tag: { text: gatedPlanTag('team'), tone: 'soon' } };
 }
 
 // S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — no League or

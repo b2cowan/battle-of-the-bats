@@ -4,7 +4,9 @@ import kit from '@/components/marketing/MarketingKit.module.css';
 import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, formatPriceAmount, gatedPlanTag, gatedPlanSentence } from '@/lib/plan-config';
+import {
+  PLAN_CONFIG, formatPriceAmount, gatedPlanTag, gatedPlanSentence, isPlanOpen, interestButtonLabel, GATED_PLAN_INTEREST_LINE,
+} from '@/lib/plan-config';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 // ⚠ 2026-08-20: this was the ONE persona page not reading the live gate, and it is the one whose
 // availability copy drifted furthest ('in final refinement', 'opening soon' — for a parked plan).
@@ -12,36 +14,54 @@ import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 
 export const metadata = marketingMetadata({
-  title: 'For house league administrators',
+  // W64 (ruled 2026-11-18): the words a league board would search.
+  title: 'House league registration and scheduling',
   description:
-    'Run your full house league season in one dashboard — registration, draft, scheduling, standings, and season-wide parent messaging. No spreadsheets, no reply-all emails.',
+    'Run your house league season in one place: online registration, the draft, the schedule, standings and emails to every family. Built for volunteer boards.',
   path: '/for-leagues',
 });
 
 const { painItems: PAIN_ITEMS, steps: STEPS, features: LEAGUE_FEATURES } =
   PLAN_ARTICLE_CONTENT.league;
 
-const CROSS_SELLS = [
+const CROSS_SELLS: Array<{
+  label: string;
+  q: string;
+  body: string;
+  cta: string;
+  href?: string;
+  initialPlanInterest?: string[];
+  initialFeaturesInterested?: string[];
+}> = [
   {
     label: 'Club',
     q: 'Also running rep teams?',
     body: 'Club combines everything in League Plus with rep teams, accounting, org-wide financials, and a Premium Coaches Portal for your whole coaching staff — every team, no per-team fee — for clubs that do it all.',
-    cta: 'Express interest in Club',
+    cta: interestButtonLabel(['club']),
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
   },
   {
     label: 'Coaches Portal',
     q: 'Do your coaches need their own workspace?',
-    body: 'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. And if your organization moves to Club, it can bring each coach’s team in with everything they’ve built.',
-    cta: 'Express interest in the Coaches Portal',
+    // W35 closed / Ask 13: the bring-in promise waits for the coach-into-Club move to be proved on production.
+    body: 'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. And if your organization moves to Club, a coach with a standalone portal won’t be charged for it again.',
+    cta: interestButtonLabel(['team']),
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
   },
 ];
 
 export default async function ForLeaguesPage() {
-  const teamCheckoutOpen = !(await getPlanGatingMap()).team;
+  // The live gate, per request (on-sale pages S1). League Plus's open state is S3; this page shows its closed words.
+  const teamCheckoutOpen = isPlanOpen(await getPlanGatingMap(), 'team');
+  // W35 closed: the Coaches Portal cross-sell reads the Premium gate, as /for-clubs' already does (it said "Express
+  // interest" for a product on sale since 2026-07-24).
+  const crossSells = CROSS_SELLS.map(cs =>
+    cs.label === 'Coaches Portal' && teamCheckoutOpen
+      ? { ...cs, href: '/for-coaches', cta: 'See the Coaches Portal' }
+      : cs,
+  );
   return (
     <main className={kit.page}>
 
@@ -64,7 +84,7 @@ export default async function ForLeaguesPage() {
               initialPlanInterest={['league']}
               initialFeaturesInterested={['house_league', 'registration', 'public_site']}
             >
-              Express interest in League Plus
+              {interestButtonLabel(['league'])}
             </EarlyAccessModalTrigger>
             <Link href="/for-tournament-organizers" className={`${kit.link} ${kit.linkBlock}`}>
               Running a tournament? See tournament plans
@@ -163,7 +183,7 @@ export default async function ForLeaguesPage() {
                   initialPlanInterest={['league']}
                   initialFeaturesInterested={['house_league', 'registration', 'public_site']}
                 >
-                  Express interest
+                  {interestButtonLabel()}
                 </EarlyAccessModalTrigger>
               </div>
             </div>
@@ -208,19 +228,28 @@ export default async function ForLeaguesPage() {
         <div className="container">
           <p className={kit.eyebrow}>More from FieldLogicHQ</p>
           <div className={`${kit.grid2} ${fp.gridTop}`}>
-            {CROSS_SELLS.map(cs => (
-              <EarlyAccessModalTrigger
-                key={cs.label}
-                className={`${kit.card} ${fp.crossCard}`}
-                initialPlanInterest={cs.initialPlanInterest}
-                initialFeaturesInterested={cs.initialFeaturesInterested}
-              >
-                <span className={kit.eyebrow}>{cs.label}</span>
-                <span className={kit.title}>{cs.q}</span>
-                <span className={kit.body}>{cs.body}</span>
-                <span className={fp.crossCta}>{cs.cta}</span>
-              </EarlyAccessModalTrigger>
-            ))}
+            {crossSells.map(cs =>
+              cs.href ? (
+                <Link key={cs.label} href={cs.href} className={`${kit.card} ${fp.crossCard}`}>
+                  <span className={kit.eyebrow}>{cs.label}</span>
+                  <span className={kit.title}>{cs.q}</span>
+                  <span className={kit.body}>{cs.body}</span>
+                  <span className={fp.crossCta}>{cs.cta}</span>
+                </Link>
+              ) : (
+                <EarlyAccessModalTrigger
+                  key={cs.label}
+                  className={`${kit.card} ${fp.crossCard}`}
+                  initialPlanInterest={cs.initialPlanInterest}
+                  initialFeaturesInterested={cs.initialFeaturesInterested}
+                >
+                  <span className={kit.eyebrow}>{cs.label}</span>
+                  <span className={kit.title}>{cs.q}</span>
+                  <span className={kit.body}>{cs.body}</span>
+                  <span className={fp.crossCta}>{cs.cta}</span>
+                </EarlyAccessModalTrigger>
+              ),
+            )}
           </div>
         </div>
       </section>
@@ -233,8 +262,8 @@ export default async function ForLeaguesPage() {
             <span className={kit.accent}>a real platform.</span>
           </h2>
           <p className={kit.lead}>
-            Express interest in League Plus to be notified when self-serve checkout opens.
-            Running a tournament now? Start free today.
+            {/* W36 closed: the canon interest line. */}
+            {GATED_PLAN_INTEREST_LINE} Running a tournament now? Start free today.
           </p>
           <div className={kit.row}>
             <EarlyAccessModalTrigger
@@ -242,7 +271,7 @@ export default async function ForLeaguesPage() {
               initialPlanInterest={['league']}
               initialFeaturesInterested={['house_league', 'registration', 'public_site']}
             >
-              Express interest in League Plus
+              {interestButtonLabel(['league'])}
             </EarlyAccessModalTrigger>
             <Link href="/start/tournament" className={`${kit.btn} ${kit.btnSecondary}`}>
               Start free with Tournament

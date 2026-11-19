@@ -15,6 +15,60 @@
 
 ---
 
+### 🆕 The on-sale pages, Part 0 (the S1 words) — RULED 2026-11-18 (owner: *"I agree with all 33 recommendations"*; `/marketing` main session; source of record `docs/projects/active/CLUB_ON_SALE_COPY.md`, plan `CLUB_ON_SALE_PAGES_PLAN.md`, build `CLUB_ON_SALE_S1_BUILD_PROMPT.md`). No prices, no trial lengths: every number is read from `PLAN_CONFIG` / checkout. **Not built** until S1.
+
+This section carries what S1 ships: the words that are **wrong today while a plan is closed** (the copy doc's "Closed words that change" table), the three Facts-true fixes (W72, W73, W74), and the trial sentence family. The **open-state** words (the Club · Association card, the bands, the starts, "How the trial works"…) stay in `CLUB_ON_SALE_COPY.md` until S2 and S3 write them here. Placeholders: `{closedPlansLine}` = `closedProgramPlansSentence(gating)`; `{interestLine}` = `GATED_PLAN_INTEREST_LINE`; `{plusTax}` = `BILLING_TAX_WORDS.plusTax`. Each plan reads its **own** live switch; a page naming two plans shows a plan's closed words only while that plan is closed.
+
+**1. The trial sentence is one family, four plans (Asks 7, 8, 31).** The sentence under "The Club trial sentence" below is now League Plus's, Club · Association's and **Tournament Plus's** as well as Club's, each with its own length passed to the one function (`clubTrialLine(trialDays)`; `/billing` gives it a plan-neutral name), never typed. It carries the tax clause for all four. The canon rule "no trial-length language" names the sentence as its one exception (see the SUPERSEDED block in the Amendments).
+
+> **Tournament Plus — the sentence (new, 2026-11-18, Ask 31 "say the trial"):** the same words as the family's, with Tournament Plus's length: **{N}-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.**
+> **Button: `Start Tournament Plus`** (W73; replaces `Start Tournament Plus free` and `Start Free — No Credit Card`). No "free", no fine print under it. Under the price: `{plusTax}` (already there).
+> **Where:** the Tournament → Tournament Plus bridge card on `/pricing` (the sentence is the card's last line, above the button) and the Tournament Plus plan card on `/for-tournament-organizers` (under the price and tax line, above the button). In both views of the billing toggle (the annual "save two months" line does not replace it). Only where a trial applies: a returning customer gets none (checkout decides). The free Tournament card keeps `Start free` and "No credit card required"; they are about Tournament only.
+> **Why the tax clause is in:** it is one function. A Tournament Plus-only variant would be a second sentence, which the canon forbids, and the reason for the clause (the tax first appears on the first charge) is true of every plan whose checkout runs Stripe Tax. The owner's Ask 8 names "all three plans"; Tournament Plus is the fourth through the same function, and is flagged for his confirmation, not re-opened.
+> **Why the button does not say "trial":** W73 ruled `Start Tournament Plus`; the terms live in the sentence beside it (the 2026-08-07 precedent), which is present in both views. The other three buttons say "Start your {Plan} trial". If the owner wants one family, `Start your Tournament Plus trial` is a one-word swap and fits a full-width card.
+> **Flagged (a consequence, not ruled):** the FAQ answers that list the trial sentence per plan ("How does billing work?", "Do I need a credit card to get started?", "How do I buy…", W15/W16/W18) name League Plus, Club and Club · Association. Tournament Plus takes a payment method too, so those answers read false for it unless it joins them: **"Tournament Plus: {the sentence}"**. Confirm with the owner before S3 builds those answers.
+
+**2. Closed-state words S1 changes (each plan's own switch).**
+
+| Surface (W-id) | Closed words (today's words that break the canon or Facts are replaced) |
+|---|---|
+| The strip of plans not open (W6) | Tag: with one plan in the strip, that plan's own tag (Club **Coming soon**, League Plus **Not open yet**); with both, one group tag and **each plan's name carries its own status after it**. Closing line `{interestLine}` (was "Express interest to be notified when self-serve checkout opens."). Button label unchanged. |
+| `/pricing` hero (W8) | **Tournament, Tournament Plus, and the Premium Coaches Portal are available now. Tournament is free, with no credit card required. {closedPlansLine}** (same shape without the Coaches Portal when Premium is closed). Retires "start free, no credit card required" over Tournament Plus and "while we finish those workflows". |
+| `/pricing` "Available now" intro (W10) | **Organization plans for tournaments and operations, plus the standalone Premium Coaches Portal for coaches. {closedPlansLine}** (retires "early interest"). |
+| `/pricing` League Plus bridge, last sentence (W11) | **League Plus is built, but not open for sign-up. {interestLine}** Button label stays. |
+| `/pricing` Club bridge, last sentence (W12) | **Club is coming soon — it isn't open for sign-up yet. {interestLine}** Button label stays. |
+| `/pricing` "what they cover" section (W13) | Body: **League Plus and Club are shown here so you can see what they cover.** Last paragraph: **If you want either plan, start on a live tournament plan now, or tell us you're interested and we'll let you know when it opens.** Third card: **Share your details and which plans you want. We'll let you know when they open — no commitment.** Middle card keeps `{closedPlansLine}`; eyebrow follows W6. |
+| FAQ "Is the platform only for tournaments?" (W14) | Replace "…are the next parts of the platform. They're shown here so your organization can plan ahead." with **League Plus and Club — covering house league seasons, rep team management, and accounting — are shown here so your organization can plan ahead. {closedPlansLine}** |
+| FAQ "Can I buy League Plus, Club, or the Coaches Portal today?" (W15) | Last clause becomes **{closedPlansLine} {interestLine}** (retires "plan ahead and express interest"). |
+| `/pricing` bottom call to action (W21) | Lead ends **{closedPlansLine} {interestLine}** (was "…Express interest to be notified."). Buttons and the small line stay. |
+| The "bring your team in" promise (W22; `/pricing` coach FAQs, `/for-coaches`, `/for-clubs` W29, `/for-leagues` W35) | **If your organization moves to Club later, you won't be charged for the portal again.** (Ask 13; the full "…bring your team in with everything you've built" returns only when the coach-into-Club move is on production and proved.) `/for-clubs` coaches cross-sell, closed: "…When you move to Club, a coach with a standalone portal won't be charged for it again, and the portal is included in your plan from then on." |
+| `/for-clubs` hero note (W23) | **Coming soon — it isn't open for sign-up yet. Tournament, Tournament Plus, and the Premium Coaches Portal are live today.** (retires "Club is in development"). |
+| `/for-clubs` plan section intro (W25) | **Club is coming soon — it isn't open for sign-up yet. {interestLine}** (retires "finishing its final workflows"). |
+| `/for-clubs` and `/for-leagues` bottom bands (W30, W36) | Lead **{interestLine} Running a tournament now? Start free today.** Buttons unchanged. |
+| `/for-leagues` Coaches Portal cross-sell (W35) | The link is **See the Coaches Portal** (to `/for-coaches`) whenever Premium is open; bring-in sentence per W22's closed words. |
+| Home "What's included" lead (W39) | **Tournament organizers and coaches can start today — free, no credit card required. {closedPlansLine}** (Premium closed: "The Coaches Portal is coming soon. {closedPlansLine}"). |
+| Home module cards' tag (W40) | **Club · Coming soon** and **League Plus · Not open yet** (retires "In development"). |
+| `/start` page description (W43) | **Tell us your job and get started — run a tournament or coach a team.** |
+| `/start/club` while Club is closed (W50) | Heading **Explore Club**; sub **Club — coming soon**; body **Club brings everything together for multi-team organizations — house league, rep teams, accounting, and a Premium Coaches Portal for your whole coaching staff. Club is coming soon — it isn't open for sign-up yet. {interestLine}** Button **Express interest in Club**; link "See what Club includes →" unchanged. The "We set up Club with you / Talk to us about Club" page is gone (2026-11-18 ruling). |
+| `/start/league` while League Plus is closed and the free-floor flag is off (W54) | Sub **League Plus — not open yet**; body **League Plus runs your full house league season — registration, draft, scheduling, standings, and parent communications in one dashboard. League Plus is built, but not open for sign-up. {interestLine}** Button **Express interest in League Plus**; link **See how League Plus works →**. |
+| The interest form (W56; never "early access" where a customer reads it) | Window kicker **Express interest** · intro **Share a few details and we'll let you know when your plan opens.** · saved, with updates **We've saved your request. When the plans you picked open, we'll write to {email}.** · saved, no updates **We've saved your request. You won't get an email when it opens, as you asked.** · close label **Close the form** · submit and trigger **Express interest** · option **Coaches Portal** (was "Coach portal"). Unchanged on purpose: the heading and the consent checkbox's words (a CASL consent: changing them is `/legal`'s). The consent box opens **unticked** (Ask 6, `/legal`). |
+| The footer (W63, both states) | A new column **Built for**: **Tournament organizers**, **House leagues**, **Clubs**, **Coaches** (the four persona pages). The "Get started" column's existing "Coaches" link becomes **Coaches Portal** (two "Coaches" links with two destinations would clash). |
+
+**3. Search titles and descriptions (W64; ≤ 45 characters each title, the site adds " | FieldLogicHQ"; true in both states, none names availability).**
+
+| Page | Title | Description |
+|---|---|---|
+| `/for-leagues` | **House league registration and scheduling** | **Run your house league season in one place: online registration, the draft, the schedule, standings and emails to every family. Built for volunteer boards.** |
+| `/for-clubs` | **Club management: house league, rep teams** | **One place for a volunteer board: house league, rep teams, tournaments and the club's accounting, with a Premium Coaches Portal for every coach.** |
+| `/pricing` | **Plans and prices** | **Prices for tournaments, house leagues, clubs and coaches, in CAD. Tournament is free.** |
+
+**4. Three lines that are not true today (W72, W73, W74; both states).**
+- **W72, `/pricing` FAQ, three answers that claim customers we do not have** (`/legal`: the most urgent S1 item, on the live page now; nothing has been sold). *"Is this too complex…"*: **No. FieldLogicHQ is built for associations where the 'tech person' is whoever stepped up at the last AGM. It follows the jobs your board already does: scheduling, registration, score entry and emails, without the spreadsheets and email chains. You don't need to configure anything complicated to get started.** *"What if we get stuck?"*: the "Most organizations are running their first tournament within an afternoon…" sentence is removed, the rest stays. *"Can I use FieldLogicHQ for multiple sports?"*: **Yes, for softball and baseball. You choose the sport for each tournament, season and team, and scoring and standings follow it. If you run more than one club or association, each one is set up separately.** ⚠ **Corrected from the ruled draft, which said "softball, baseball, hockey and soccer":** the product offers softball and baseball only (`lib/sports.ts` `OFFERED_SPORT_IDS`; multi-sport is paused, owner 2026-06-24, "so we never advertise a sport we don't support yet"). Hockey and soccer exist in the code as packs but no picker offers them. Never name a sport the pickers do not offer.
+- **W73, two "free" labels over a paid plan** (`/legal`: high risk, the buyer is often an individual). The `/for-coaches` Premium card's **"Free right now"** tag is removed (the price line and "Start now" already say it). **`Start Tournament Plus free`** becomes **`Start Tournament Plus`** on the `/pricing` bridge and the `/for-tournament-organizers` plan card, with the trial sentence beside it (section 1).
+- **W74, `/for-leagues`, one clock:** "…until someone called you at 8am on a Saturday." becomes **"…at 8:00 a.m. on a Saturday."** (the one-clock rule, `formatTime()`).
+
+---
+
 ### 🆕 "plus applicable taxes" on every public price — SETTLED 2026-11-05 (`/marketing`, GST/HST Stage 2 Part 4 follow-up; owner T4 "Prices are plus applicable taxes", 2026-10-31)
 
 One phrase, never typed: `BILLING_TAX_WORDS.plusTax` ("plus applicable taxes") beside a price, `pricesPlusTax` ("Prices are plus
@@ -261,7 +315,7 @@ them; never retype a status. Shown only when the **live** gate says the plan is 
   2026-08-20 `/for-leagues` ruling, extended to every surface. Club may say "Coming soon", never with a date.
 - **Where it applies (applied 2026-09-28):** the org billing page's shelf and its "See what's included"
   panel (also tournament Settings → Plan & subscription); `/pricing` (plan cards, the footnote strip
-  heading **"Not open yet"**, the League Plus and Club sections, the upgrade cards, the FAQ, the
+  heading **"Not open yet"** (**amended 2026-11-18, W6: each plan in the strip carries its own tag; one group tag only when both are closed**), the League Plus and Club sections, the upgrade cards, the FAQ, the
   closing line); the homepage (pricing intro, persona badges `<tag> · express interest`); `/for-leagues`;
   `/start/league`; `/platform/house-league`; the admin home's locked-programs note (heading **"In
   League Plus and Club"**).
@@ -274,29 +328,43 @@ them; never retype a status. Shown only when the **live** gate says the plan is 
 
 ### 🆕 The Club trial sentence — WRITTEN 2026-09-25 (`/marketing`, per `BUSINESS_DECISIONS.md` 2026-09-25 "The 90-day Club trial collects a card at checkout")
 
-**The sentence — one, verbatim, on every surface that offers the Club trial:**
-> **90-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.**
+**The sentence — one, verbatim, on every surface that offers a trial (Club, Club · Association, League Plus, Tournament Plus):**
+> **{N}-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.**
+
+> **AMENDED 2026-11-18 (owner, on-sale pages Asks 7, 8 and 31; `/marketing`; Part 0 above).** The sentence is now the whole
+> family's, not Club's: League Plus, Club · Association and Tournament Plus say it with their own length. The tax clause
+> ("plus applicable taxes", `BILLING_TAX_WORDS.plusTax`) joined it (Ask 8, option b) because the first charge is where the tax
+> first appears; the tax line under each price stays too. Original wording (2026-09-25) had no tax clause and a typed length.
 
 > **T1, 2026-11-16 (`/marketing`, owner ruling "Payment method" wording everywhere, Plan & billing plan T1):** "a card" became
 > "a payment method" — checkout collects a payment method and is not changed to force cards — and the apostrophe is curly.
 > Facts and order unchanged; the billing page's trial line now calls `clubTrialLine()` too.
 
-- **Where:** the Club pricing card's note (`/pricing`, homepage, onboarding chooser), the billing
-  page's Club trial line, and checkout (Stripe's message beside the button), and the `/for-clubs`
-  Club card when it goes live. Single-sourced in code as `clubTrialLine()` in `lib/plan-config.ts`
-  — call it; never retype it. The number is derived, not typed: pass the trial length checkout
-  will use (the platform-admin override when set), so the words cannot disagree with Stripe.
-- **Only where a trial applies.** A paying org moving to Club gets no second trial (2026-09-25,
-  paid→paid moves), so the billing page shows this line to a free org buying Club and never on the
-  move-up window. Same sentence for Club · Association (both bands run 90 days).
+- **Where (amended 2026-11-18):** the pricing card's note for **Club, Club · Association, League Plus and Tournament Plus**
+  (`/pricing`, homepage, onboarding chooser; the Tournament Plus bridge card on `/pricing` and its plan card on
+  `/for-tournament-organizers`), the `/for-clubs` and `/for-leagues` plan cards and heroes, each plan's start door, the billing
+  page's trial line, checkout (Stripe's message beside the button), the plan FAQ answers that name a trial, and (Ask 27) the
+  "How the trial works" section. Single-sourced in code as `clubTrialLine()` in `lib/plan-config.ts` (it takes the length as
+  an argument; a plan-neutral name is `/billing`'s) — call it; never retype it. The number is derived, not typed: pass the
+  trial length checkout will use (the platform-admin override when set), so the words cannot disagree with Stripe.
+- **Only where a trial applies.** A paying org moving to a paid plan gets no second trial (2026-09-25,
+  paid→paid moves; checkout withholds it from a returning customer), so the billing page shows this line to a free org buying
+  and never on the move window. Public pages cannot know the visitor, so they say it; checkout is the arbiter. Same sentence
+  for every plan that carries it; a variant for one plan is a second sentence and is not allowed.
 - **Why these words:** the payment method and the charge are both stated as facts, so the line cannot be
   read as "free". "Nothing is charged until the trial ends" was **rejected** — it is "free until"
   framing by another name, which Club may not carry (2026-09-25, no Founding offer for Club), and a
   skimmer stops at "nothing is charged". "At checkout" rather than "up front", which reads as
   "pay up front". No "free", no "no commitment". Cancelling is not in the sentence: the page's
   trust line ("No contracts — cancel anytime") already says it, and one sentence carries one fact.
+  **"…plus applicable taxes…" (2026-11-18, Ask 8 b):** `/accounting` and `/legal` both recommended it; the first charge is
+  the one a buyer meets after a trial, so the tax belongs there too. It is the same words as the line under the price, never
+  retyped.
 - **Club card button:** **`Start your Club trial`** (was `Start free — no credit card required`,
-  false on both counts). The terms live in the note, not the button — the 2026-08-07 precedent.
+  false on both counts). The terms live in the note, not the button — the 2026-08-07 precedent. **Same shape for the
+  family (2026-11-18):** `Start your League Plus trial`, `Start your Club · Association trial` (fallback `Start your trial`
+  if `/design` says the long one does not fit). **Tournament Plus's button is `Start Tournament Plus`** (W73), not a trial
+  button: the sentence sits beside it all the same, so the terms are never missing.
 - **Replaced:** "No credit card required" on the Club card (price note + button); the billing
   page's "Early-access trial details collected in Stripe" (Stage 1b applies it there).
 - ⚠ **Placement owed at Stage 1b (not copy):** on the pricing card's annual view the "save two
@@ -328,8 +396,11 @@ appears on a persona card; the $29/$39 anchors stay on the persona pages and thi
 - **Now:** **`Start free`** on both, and `Start free →` on both plan cards. One product should not
   read as two. The credit-card objection is answered by the hero sub-line and the trust list — it
   left the button, not the page.
-- Out of scope, unchanged: `/pricing`'s Tournament → Tournament Plus bridge still says
-  `Start Free — No Credit Card`; the footer's Title-Case `Start Free` is a nav link.
+- ~~Out of scope, unchanged: `/pricing`'s Tournament → Tournament Plus bridge still says
+  `Start Free — No Credit Card`~~ — **superseded 2026-11-18:** that bridge button, and the Tournament Plus plan card on
+  `/for-tournament-organizers`, say **`Start Tournament Plus`** (no "free"; the live code already moved to
+  `Start Tournament Plus free`, which was also untrue — checkout takes a payment method and starts a trial). The trial
+  sentence sits beside the button (Part 0 above). The footer's Title-Case `Start Free` is a nav link.
 
 **`/start` chooser — the invitation aside** (demoted from a card to a below-the-rule aside)
 > **Joining a club or team you were invited to?**
@@ -355,7 +426,7 @@ The sections below document all copy changes applied to the live pages after the
 >
 > Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
 >
-> **⚠ One exception, 2026-09-25: Club.** Club has no free floor and no Founding offer, and its 90-day trial takes a payment method at checkout, so it is named on purpose — in the one sentence at the top of this document ("The Club trial sentence"), and nowhere else in any other wording. The rule above still holds for every other plan.
+> **⚠ One exception, 2026-09-25 (widened 2026-11-18): the trial sentence.** Club, **Club · Association, League Plus and Tournament Plus** each have a trial that takes a payment method at checkout (none has a free floor or a Founding offer on the door that sells it), so a trial is named on purpose, in **one sentence** ("The Club trial sentence" in this document, now the family's), with the plan's own length passed in, never typed. Where it may stand: the places listed under that sentence, and the "How the trial works" section (Ask 27, `/for-clubs` and `/for-leagues`; its steps type no length). Nowhere else, in any other wording. The rule above still holds for every other place and plan (Tournament and the Premium Coaches Portal have no trial). Owner rulings 2026-11-18, on-sale pages Asks 7, 27 and 31; the old line that Tournament Plus "advertises no trial" is retired by Ask 31.
 
 > ### 🔁 RENAME — "League Starter"/"League" → "League"/"League Plus" (applied 2026-06-13)
 > The $89 paid tier is now **"League Plus"** on the live pages (was "League"). A new **free "League"** house-league floor (1 season / 1 division / 8 teams; internal `free_floor='league_starter'`, capped beta) sits below it, mirroring Tournament (free) / Tournament Plus (paid). **Read every "League" in the body sections below as "League Plus"** unless it clearly means the free floor or the **"House League"** module. Internal keys are unchanged (`plan_id='league'`, Stripe). The free "League" **public pricing card** is held for the Free-Tier Phase-9 launch — until then the live pricing page shows "League Plus" as the $89 tier and does not advertise the free "League". Never write "League Starter"/"Starter" in customer copy. Full inventory + rules: `docs/projects/archive/LEAGUE_REBRAND_PLAN.md`.
@@ -375,7 +446,7 @@ Owner-ratified from the 2026-06-22 pricing & product review. **Canonical numbers
 
 **Club → two capacity bands (per-team "$19/additional team" meter retired):**
 - **Club** — whole coaching staff included, up to 15 teams. **Club · Association** — 15–30 teams (custom above 30). Never write "Club Large" in customer copy.
-- Public framing while Club is still early-access: **"Club — from $219/mo."** Do **not** publish firm band prices until the early-access cohort opens (they recalibrate Q1 2027).
+- ~~Public framing while Club is still early-access: "Club — from $219/mo." Do not publish firm band prices until the early-access cohort opens (they recalibrate Q1 2027).~~ **Stale 2026-11-18 (owner: open launch, no early-access cohort; the programme was withdrawn 2026-07-28).** When a Club plan is open its band price is published from `PLAN_CONFIG` on its own card; while closed there is no price (a price that cannot be bought is not yet a charge, 2026-11-05). Prices are never typed here: `PLAN_PRICING_FACTS.md` is the record. The "$179" Club card and the "$179" rows in Sections 4 and the Appendix below are history, and the on-sale card words are Part 0 above.
 - Card 4 feature line — was "Coaches Portal — 3 team accounts included; additional accounts at $19/mo" → **"Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee."**
 - Comparison table — remove the per-team add-on row; add **"Premium Coaches Portal — whole coaching staff … Club ✓ (every team included)"** and **"Teams included … Up to 15 (Club) · up to 30 (Club · Association)."** No "$19/additional" anywhere.
 
@@ -1193,6 +1264,10 @@ Executes the `BUSINESS_DECISIONS.md` 2026-09-28 "coach bridge" handoff (Club rea
 session 2 — the move built and committed `b2b87429`, not released). **These words ship in the same
 release as the move** — before it, production still runs the old partial transfer, so no surface
 may promise more than the release delivers.
+
+> **Applied to the closed state 2026-11-18 (owner, on-sale pages Ask 13; Part 0 at the top):** until the coach-into-Club move is on
+> production and proved, every "bring your team in with everything you've built" sentence reads **"you won't be charged for the
+> portal again"** instead (the money rule below, which is the one fact Facts allows). The full sentence returns only with the move.
 
 **The rule for every bridge sentence:**
 - **Never "automatically", never "carries over".** A coach's team moves into a club when the club

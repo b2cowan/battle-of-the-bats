@@ -1,0 +1,476 @@
+# The on-sale pages — Club, Club · Association and League Plus follow the switch (plan)
+
+**Status:** on the board (Owner Morning Brief, project "Club release").
+**What this is:** the build the gate-flip runbook calls Step 0 (`docs/agents/ops/CLUB_GATE_FLIP_RUNBOOK.md` §Step 0),
+planned 2026-11-18 from the code that day. PM brief: `CLUB_ON_SALE_PAGES_PM_BRIEF.md`. Drawings:
+`CLUB_ON_SALE_PAGES_DRAWINGS.html` (published as a Claude Artifact; link in the brief). Words (draft for ruling):
+`CLUB_ON_SALE_COPY.md`. **The audience review of the same day is folded in here** (its own section below, stages S3 and
+S3b, Asks 21 to 34); it is not a separate project. Prices, names, bands, trial lengths and gates: `docs/agents/strategy/PLAN_PRICING_FACTS.md`
+only — this plan states none of them.
+
+**The rule the whole build serves:** a page about Club, Club · Association or League Plus shows what it shows today
+while that plan's switch is closed, and a real way to buy the moment it opens — with no redeploy and no second edit.
+
+## Already ruled (not re-opened here)
+
+- Open launch, not invite-only; no club demo at launch (owner 2026-11-18, `BUSINESS_DECISIONS.md` :35-71).
+- Three plans flip together, not one (runbook correction 1; `BUSINESS_DECISIONS.md` 2026-11-06 :322-337, 2026-09-25
+  :2323-2325 — Club · Association is self-serve, not contact-us).
+- Both band prices on `/pricing` and `/for-clubs` (Facts doc :188); the Club trial sentence is one sentence on every
+  surface (`clubTrialLine()`, Facts :191, canon `PRICING_PAGE_COPY.md` :275-298).
+- "No 'we set up Club with you' or 'talk to us' framing survives the flip" (`BUSINESS_DECISIONS.md` :49-50).
+- The retired campaign emails are never revived (runbook §Step 0 last paragraph).
+- League Plus's free floor (the `LEAGUE_STARTER_BETA` start) is not this build's question — it stays as it is (off on
+  production); whether the free league floor exists at all is `/strategy`'s open item (`BUSINESS_DECISIONS.md` :322).
+
+## What the code does today (2026-11-18) — and where the runbook under-states it
+
+Three helper censuses, the cited lines opened by the planning session.
+
+1. **There is no way to create a Club or League Plus organization.** Every self-serve start makes a free
+   `tournament` org (`app/api/org/create/route.ts:111`). The Run a tournament door drops a Club or League Plus pick by
+   design (`lib/start-door.ts:34-41`, first-look G6), and its plan step offers only the two tournament plans
+   (`app/[orgSlug]/admin/onboarding/PlanStep.tsx:30`). `/start/club` is a contact page; the `/start` chooser has no Club
+   card; `/start/league` is the free League starter (flag off on production) or the interest form. Checkout
+   (`app/api/billing/create-checkout/route.ts`) already accepts all three plans, reads the live gate (:120-126), refuses
+   a second subscription (:132-148) and starts the trial — but only for an org that already exists (:86-93).
+   ⇒ **Step 0 is a product build with new sign-up doors, not a copy pass.**
+2. **The flip would not reach most pages.** `/pricing`, `/for-clubs`, `/for-leagues`, `/for-coaches` and
+   `/for-tournament-organizers` use no request-time API; `getPlanGatingMap()` (`lib/plan-gating-server.ts:29-51`) reads
+   cookies only under the dev toggle, and a plain read on such a route runs once at `next build` (Next 16.3
+   `fetch.md:52`). The 2026-08-25 production build prerendered ~250 pages. Not yet proven per page — S1 proves it from a
+   build's route table before changing anything. Home and `/start/*` are dynamic (they read the visitor).
+   ⇒ Runbook Steps 3 and 4.2 ("the pages now follow the gate") are false until S1 ships.
+3. **Existing customers have nowhere to buy.** A free Tournament org's Plan & billing offers only Tournament Plus
+   (`lib/plan-upgrade.ts:28-30`; League Plus and Club are discovery cards, `lib/plan-billing-profile.ts:203`); Tournament
+   Plus moves only to the Club bands (`lib/plan-move-options.ts:6-12`); a League Plus org can change nothing (:230 of the
+   profile); a Founding-comped Tournament Plus org is refused a move (`lib/plan-move.ts:132-137`, no live subscription).
+4. **Two in-product readers use the code's copy of the gate:** the house-league cap prompt
+   (`components/admin/LeagueCapUpgrade.tsx:37-46` — and it opens the interest form even when "live") and the onboarding
+   page's first paint (`app/[orgSlug]/admin/onboarding/page.tsx:279-286`).
+5. **~45 typed lines across eight pages**, the runbook's list plus fourteen it missed — full table in
+   `CLUB_ON_SALE_COPY.md` (each line: today, closed, open). The ones it missed that matter: a second always-shown
+   "Express interest in League Plus or Club" button on `/pricing`; FAQs that say "not through self-serve checkout yet";
+   `/for-tournament-organizers`' League Plus cross-sell; `/for-leagues`' Club cross-sell; the home's "in active
+   development" (both branches); the plan grid sizes only 2 or 3 cards (`PricingSection.tsx:366`) and will have six.
+6. **Premium Coaches Portal:** `PLAN_CONFIG.team.gatingStatus` is `early_access` (`lib/plan-config.ts:68`) while the
+   production row has been `live` since 2026-07-24; the comment at :28 ("no other changes required") is wrong. Today the
+   code value only matters when the database read fails — then Premium reads as closed.
+
+## Audience review, 2026-11-18 — does each page sell to its buyer?
+
+The first pass above switched the words over. The owner then asked for the whole public surface to be judged by
+audience, "and add some more features and ideas to the existing mockup to make our release really sell". This section is
+that review. It is not a second project: its accepted parts are stages S3 and S3b below, its words are W58 to W75 in
+`CLUB_ON_SALE_COPY.md` (section M), its drawings are in the same artifact, and its asks are 21 to 34.
+
+**How it was done.** Three helper censuses (every public page; what the product does today, with proof; the standing
+rulings), the lines each recommendation turns on opened by the review session, then `/marketing`, `/legal`,
+`/accounting`, `/strategy` and `/design` on the result.
+
+### The five changes that matter most (ranked by effect on a sign-up)
+
+1. **A league or club buyer cannot see the product before adding a payment method.** A tournament organizer and a coach
+   each get a live demo. League Plus and Club have no demo (ruled, for launch) and no marketing page carries a single
+   picture. Inside the ruling: the product's own screens on /for-leagues and /for-clubs (W67), and four plain steps on
+   what happens to the payment method during the trial (W68).
+2. **The Clubs page speaks only to the president about coaches.** The acquisition focus is the club that runs house
+   league and rep teams together (`BUSINESS_DECISIONS.md` 2026-06-22). All four "old way" cards and the heading are
+   about coaches; the treasurer has one line and the registrar none. New: the club's books in the first sentence (W65),
+   two new "old way" cards (W66), and "What each person at your club gets" (W69).
+3. **No page answers what a board asks before it spends club money.** Switching mid-season, a change of treasurer,
+   families' information, stopping: the page census found none of them answered anywhere. New: "Questions a board asks"
+   on both pages and in the pricing FAQ (W70), each answer checked against the product and the published policies.
+4. **Group by buyer** (the owner's own point): three bands on /pricing, three doors in the picker and on the home page,
+   and the home page sends people on instead of carrying six plan cards (W58 to W62). Two refinements below.
+5. **Three live lines describe customers we do not have, and two say "free" over a paid plan** (W72, W73). They are on
+   production today and change at the next promote, whatever is decided about the rest.
+
+### Where the review disagrees with the planning session's proposal
+
+- **Not a ladder.** The proposal called League Plus → Club → Club · Association "a clean three-step ladder".
+  `BRAND_STRATEGY.md` §7 rules 1 to 3 say League Plus and Club are peers for different organizations, League Plus is not
+  a step toward Club, and Club includes house league. The band keeps all three side by side (the buyer is the same: a
+  volunteer board) but labels each by what a club runs. Club's label says it includes house league, because the first
+  draft's labels would have let the club we aim at first buy League Plus by mistake (`/marketing` and `/strategy` both
+  caught it).
+- **No price on the home page doors; never the Premium price on the coach door.** The 2026-08-07 ruling keeps prices off
+  persona cards, and one of its three reasons is untouched: every coach starts on a free Basic Coaches Portal, so a
+  price on that door overstates the cost. Prices sit in three rows in the home page's pricing section instead, which
+  that ruling and the 2026-08-08 one allow. Ask 24 offers the one exception worth arguing and recommends against it.
+- **Three audiences for buying, four for landing.** A house league board and a club board buy from one band but search
+  for different things and need different first sentences. /for-leagues and /for-clubs stay two pages and two nav
+  entries; only the order follows the bands.
+- **Marketing is after the launch by the owner's own ruling** (2026-11-17), and this build is in the launch. So the
+  additions are split by rework risk: what S3 rebuilds anyway is built once in its final shape; the selling sections are
+  S3b, which does not hold the flip (Ask 30). `/strategy` moved the trial steps into S3: they disclose, they do not
+  persuade.
+- **No comparison table, no "which plan am I?" quiz, no "Most popular" badge.** The table was removed on 2026-09-07 and
+  its fault (rows of plumbing) is unchanged; inside a band the cards are the comparison. Three doors and the band labels
+  do the quiz's job in one click. "Most popular" is a statement about customers.
+
+### Each buyer, from landing to starting
+
+| Buyer | Works today | Missing | Biggest lever |
+|---|---|---|---|
+| Tournament organizer | Free plan, live demo, walkthrough, a page that names the pain | Nothing says League Plus or Club starts from the same account; "Start Tournament Plus free" is not free of a payment method | One line on the cross-sells (W71) |
+| House league board | Four real pains, the season in four steps | No picture, no demo; the trial is one sentence; no answer on switching, information or stopping; titled "For house league administrators" | Real screens in the four steps, and the trial steps (W67, W68) |
+| Club board | Plain price, both sizes, every coach included | The page is about coaches; no treasurer, no registrar; nothing to take to a board meeting; no picture | "What each person at your club gets" (W69) |
+| Coach | Free start, live demo, clear page | The free portal has no place on /pricing; "Free right now" on the paid card; no way to pass the Clubs page on | The coaches band, and "Copy a link for your club" (W58, W71) |
+
+### The ideas, and the product fact each relies on (found 2026-11-18)
+
+| Idea (words) | For | Page | Relies on | Size | Stage |
+|---|---|---|---|---|---|
+| Three audience bands (W58, W75) | all | /pricing | the six plans in `lib/plan-config.ts`; the free Basic Coaches Portal | a section rebuilt | S3 |
+| Three-door picker (W59) | all | /pricing | the bands | words | S3 |
+| Three doors, three price rows (W60 to W62) | all | home | the four persona pages; prices from config | two sections rebuilt | S3 |
+| Nav order, footer column, menu entry (W63) | all | every page | `components/Navbar.tsx:17-23`, `components/Footer.tsx:34-52` (no Leagues or Clubs link today) | words | S3 (footer: S1) |
+| Search titles (W64) | league and club boards | three pages | `lib/marketing-metadata.ts:45` appends the site name | words | S1 |
+| How the trial works (W68) | league and club boards | /for-leagues, /for-clubs | checkout takes a payment method (`app/api/billing/create-checkout/route.ts:407-435`); the trial-ending email (`lib/billing-webhook-handler.ts:944-973`, `lib/email.ts:1669-1688`); cancelling ends the plan on the trial's last day (`lib/help-content/org.tsx:535`) | a new section | S3 |
+| The product's own screens (W67) | league and club boards | /for-leagues, /for-clubs | eight real screens; a fixture club with invented names | a new section + eight pictures | S3b |
+| What each person at your club gets (W69) | club board | /for-clubs | roles (`lib/board-roles.ts:72-84`), invite and remove (`app/api/admin/members/`), the board report export (`app/[orgSlug]/admin/accounting/page.tsx:189-284`), public registration, the waitlist and Email families, every coach's portal (`lib/coach-portal-plan.ts:24-29`) | a new section | S3b |
+| Questions a board asks (W70) | league and club boards | /for-leagues, /for-clubs, /pricing FAQ | the same, plus "Start from" a past season (`app/api/admin/house-league/seasons/route.ts:76-90`), per-list exports (`lib/export/catalog.ts`), the published Terms and Privacy Policy | a new section | S3b |
+| The Clubs page rebalanced (W65, W66) | club board | /for-clubs | none (pain, no promise) | words | S3b |
+| Paths between audiences (W71) | organizers, coaches | three pages | buying from inside the product (S4) | words | S3b |
+| Truth fixes (W72 to W74) | all | /pricing, /for-coaches, /for-leagues | none | words | S1 |
+
+**Promises the review refused to make**, because the product or the policies do not back them: families paying online
+(switched off, `lib/online-payments-switch.ts:21`); a president's summary (not built); bringing an existing house league
+season in (no import exists on the club side); "export everything" and "your data is yours" (`LEGAL_FACTS.md`; the
+approved line is "download from the lists that offer it, or ask us for a full copy"); information stored in Canada (it is
+stored in the United States, and W70 says so); a link to the board pack (not ready to show); any customer count, quote
+or logo (nothing has been sold).
+
+**Needs product work — not in this build** (each is in `docs/projects/IDEAS_BACKLOG.md`, section "From the on-sale
+pages audience review"): a house league or club demo; bringing an existing house league season in from a spreadsheet; a
+demo link that opens on a chosen screen; changing a club's owner without writing to us; one download of everything a
+club holds.
+
+## The build — five sessions, by dependency and rework risk
+
+Each session ships with the gates **closed** on production (runbook Step 3), so nothing a visitor sees changes until
+the flip. Dev has every plan on sale by design (owner 2026-10-30), so dev shows the open state; the closed state is
+walked with a dev-only "show as closed" switch (S1) and proved on production at Step 3.
+
+### S1 — The switch reaches every page (foundation; no visible change while closed)
+
+- Public plan pages read the live gate on every request: `/pricing`, `/for-clubs`, `/for-leagues`, `/for-coaches`,
+  `/for-tournament-organizers` (and home, already dynamic). First prove the static claim from a build route table.
+  One server helper answers "is this plan open?" for every public page (today each page re-spells
+  `!gating[plan]`; `isCoachesPortalPurchasable` is the precedent, `lib/plan-gating-server.ts:53-67`).
+- `LeagueCapUpgrade` and the onboarding first paint read the live gate.
+- Dev-only: the plan-gates toggle gains "show as closed" so a walk can see both states on dev without touching dev's
+  rows (dev's rows stay all-live, the owner's 10-30 ruling).
+- Premium's code value → `live`, comment at :28 corrected (Ask 6). No unit test asserts `team`'s value.
+- The closed-word canon fixes that sit on lines this build rewrites anyway (`CLUB_ON_SALE_COPY.md` W56 table), the
+  "bring your team in" closed wording on the five pages that carry it (W22, `/legal`), and the interest form's consent
+  box opening unticked (`/legal`).
+- **Added by the audience review (2026-11-18), all wrong or missing today, so they ride the same promote:** the three
+  pricing answers that describe customers we do not have (W72); "Free right now" off the Premium card and "Start
+  Tournament Plus" without "free" (W73, Ask 31 — what the page then says about Tournament Plus's trial waits on that
+  ask); "8:00 a.m." (W74); the footer's "Built for" column (W63); the search titles (W64).
+- **Screens:** `/pricing`, `/for-clubs`, `/for-leagues`, `/for-coaches`, `/for-tournament-organizers`, home,
+  onboarding plan step (first paint), house-league home + season page (cap prompt), the footer.
+- **Risk:** low (closed output unchanged apart from the listed word fixes). **Gate before S2:** the build route table shows the five pages dynamic.
+- **Built 2026-11-18** (prompt `CLUB_ON_SALE_S1_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S1_WALK.html`, Owner QA Ledger §
+  "On-sale pages S1"). The commit hash is recorded here when the owner commits. Proved before building: production
+  served all five pages with `x-nextjs-prerender: 1` and `s-maxage=31536000`, and a production-style build marked all
+  five `○` (home and `/start/*` `ƒ`). The fix is one line in the one reader: `getPlanGatingMap()` calls `connection()`,
+  so every route that reads the gate renders per request. Pages ask `isPlanOpen()`; dev's "show as closed" is the
+  `dev_plan_gates=closed` cookie. Part 0 records: `/strategy` (Decided entries + Facts trial lines and truth-up),
+  `/marketing` (canon S1 lines + Tournament Plus's sentence), `/billing` (production gives Tournament Plus 14 days, no
+  override rows). Choices the build made inside ruled lines: the copy doc's S1 table, "In code".
+
+### S2 — The doors: a real Club start and a League Plus start (highest risk: accounts + money)
+
+- `/start/club`, when Club or Club · Association is open: the Run a tournament pattern — step 1 account
+  (`StartDoorForm`), step 2 the club's name, step 3 a plan step offering **Club** and **Club · Association** side by
+  side (preselected from the pricing card's pick), then the billing address (the shipped first-time-setup **screen**,
+  `app/[orgSlug]/admin/onboarding/AddressStep.tsx`, the second half of step 3 by the 2026-11-04 ruling, so the step line
+  stays three labels with Plan current; drawn on tabs 6 and 7 since 2026-11-18, after the owner noticed the first
+  drawings only named it) and Stripe's payment page via the existing checkout; back into the club setup kit (`onboarding/page.tsx:253`). Closed: today's page
+  with canon words.
+- `/start/league`, when League Plus is open: the same, one card. The free League starter path (flag) is untouched;
+  with the flag off and League Plus closed it stays the interest form.
+- A new start door (`club`, `league_plus` — names in the build) in `lib/start-door.ts`: the pick rides on the account
+  like G4's; the door creates the org on `tournament` with **no Founding comp** (Ask 14); the waiting-workspace card on
+  Home ("Name your club").
+- **The return trip (`/billing` trap A, verified):** Stripe returns to `onboarding?success=1` before the webhook writes
+  `plan_id` (`lib/billing-webhook-handler.ts:585-600`); the page still reads `tournament`, so `planSelectionSucceeded`
+  opens the New tournament window (`onboarding/page.tsx:440-455`) and `ClubSetupKit` mounts only once the plan is a
+  club plan (:253). The doors return to a "Setting up your club / league" wait that polls the plan — the Premium-in-place
+  `ClubUpgradeSetup` + `/api/billing/club-upgrade-status` pattern, with a plain-org status read (it is keyed to a
+  workspace today).
+- **Abandoned checkout:** the org stays free Tournament, and today the club buyer never sees Club again (cancel →
+  onboarding → `choosePlan=1` → a Tournament-only plan step). The intended plan is kept on the org's onboarding state
+  (`startup_tasks`, not `user_metadata.start`, which steers screens only, `lib/start-door.ts:9-13`), so a resume shows
+  the Club / League Plus plan step; S4 also gives the free org a Club row on Plan & billing.
+- **The true trial before checkout (trap B):** one trial per Stripe customer (`hadSubscriptionBefore`,
+  create-checkout ~:412). A brand-new org has no customer, so a new door always gets the trial; the plan step still shows
+  the server's trial-or-not line (`previewClubCheckout`, `lib/workspace-upgrade-preview.ts:32`) rather than the code value.
+- **Québec and the US before the org is made (trap C):** the door says so on step 1 (Ask 15), because a held address
+  is otherwise refused only after the org exists.
+- **Who the doors refuse (trap D):** a signed-in owner of any real org goes to that org's Plan & billing; a signed-in
+  Coaches Portal coach goes to the in-place "Start your club" (`userBelongsToOtherRealOrg` exempts a portal, so the
+  door would otherwise make a second org and strand the team).
+- Doors: reuse the existing `league` door for League Plus and add one `club` door (no fourth). The `LEAGUE_STARTER_BETA`
+  readers that would hide them (`lib/start-menu.ts:58`, `start/page.tsx:133`, `app/api/consumer/home/route.ts:136`)
+  read the plan gate for the League Plus start; the flag keeps governing only the free floor.
+- `/start` chooser: Club and League cards appear when their plan is open.
+- Pricing cards' buttons go to these doors (open) — the G6 guard test (`first-look-stage3.test.ts:25-36`) is rewritten
+  to "every open org plan's card points at a door that sells it", reading the live gate, not the code value.
+- Signed in with an organization already: the button lands on that org's Plan & billing (`ViewerAwarePlans` already
+  does this for operators, `app/pricing/ViewerAwarePlans.tsx:91-103`) — the one-org guard holds.
+- **Screens:** `/start`, `/start/club`, `/start/league`, the account step, the name step, the plan step (new variant),
+  the billing address screen, the payment return, Home's waiting card.
+- **Reviews:** `/review` high-risk tier (money, accounts, terms acceptance); `/legal` on the plan step's promises.
+
+### S3 — The pages' open state (depends on S1 + S2 + the words ruled)
+
+- Plan cards (`PricingSection`): add `club_large` to `RENDERED_PLAN_KEYS` (and `new-plan-checklist.test.ts`); the
+  Club · Association card; League Plus trial-and-payment sentence; tax line on the three open prices; buttons to the
+  S2 doors; the trial sentence reads the length checkout will use (Ask 9 / billing Q6).
+- **The grid for six cards — ~~two rows of three, "Tournaments and leagues" / "Clubs and coaches" (Ask 4)~~ superseded
+  2026-11-18 by three audience bands (W58, Ask 21):** those rows grouped by price, and a league board and a club board
+  are the same buyer. Running a tournament (Tournament, Tournament Plus) · Running a league or a club (League Plus, Club,
+  Club · Association, each under a label that says what a club runs) · Coaching one team (the free Basic Coaches Portal
+  beside Premium, one full-width band). Each band reads the gate and shows only open plans; band 2 does not render until
+  one of its plans is open; a closed plan stays in the strip. With both open, the League Plus and Club bridge cards
+  under the grid are removed (W75). `/pricing` only: the home page stops rendering the grid when all three are open.
+- The role picker on `/pricing`: three doors when all three plans are open, each jumping to its band (W59); the
+  four-door picker while one is closed.
+- Home: three audience doors (W60), all four roles as full cards (W40), three price rows in place of the grid (W61),
+  the hero's two buttons with two destinations (W62). No price on a door (the 2026-08-07 ruling; Ask 24).
+- The public nav in the bands' order, and "Start a club" in the Get started menu (W63).
+- "How the trial works" under the plan cards on `/for-clubs` and `/for-leagues` (W68, Ask 27): a disclosure, so it is
+  here and not in S3b. No trial length is typed in it. Before it ships: confirm production receives Stripe's
+  "trial ending" signal (`docs/agents/ops/stripe-setup-guide.md:223`; `scripts/audit-stripe-billing.mjs:78`), because the
+  section promises that email.
+- `/pricing`, home, `/for-clubs` (incl. the demo block, Ask 11), `/for-leagues`, `/for-tournament-organizers`: every
+  line in `CLUB_ON_SALE_COPY.md` switches on the gate.
+- The interest form follows the gate (Ask 5): offered only for a closed plan; with all three open it appears on no
+  public page; its own closed-state words fixed.
+- **Screens:** `/pricing`, home, `/for-clubs`, `/for-leagues`, `/for-tournament-organizers`, `/for-coaches` (Club line
+  only), the interest form, the public nav and the Get started menu.
+
+### S3b — The selling sections (depends on S3 for the pages' shape; does NOT hold the flip)
+
+Added by the audience review. By the owner's 2026-11-17 ruling marketing is after the launch, so nothing here is a flip
+prerequisite: it can ship closed-safe before the flip, or after it. Every section is true in both states unless marked.
+
+- `/for-clubs`: the heading's "org" becomes "club" and the sub-line names the club's books (W65); the four "old way"
+  cards rebalanced toward the treasurer and registrar (W66); a new section "What each person at your club gets" after
+  the modules (W69).
+- `/for-leagues` and `/for-clubs`: one picture of the real screen in each of the four steps / four modules (W67). The
+  pictures are shot from a fixture club built for the purpose with invented names (never the live demo clubs, never a
+  production row), by a capture script kept with the build so `/demos` can re-shoot them each release cycle.
+- `/for-leagues`, `/for-clubs`: "Questions a board asks" before the bottom call to action (W70); its first four answers
+  also join the `/pricing` FAQ, which is grouped under three small headings. Answer 6 (a year's cost) shows only while
+  the plan is open. **Ships only with the Terms and Privacy Policy live on production** (the answer links to it), and
+  with the data terms published or the by-hand "full copy" procedure confirmed (Ask 29).
+- The paths between audiences (W71): one line on `/for-tournament-organizers`' two cross-sells (true once S4 ships, so
+  it ships with or after S4); "Copy a link for your club" on `/for-coaches`; one line under the coach demo on `/demos`.
+- **Screens:** `/for-clubs`, `/for-leagues`, `/pricing` (FAQ), `/for-tournament-organizers`, `/for-coaches`, `/demos`.
+- **Reviews:** `/legal` on W70 as built; `/design` on the pictures in place; `/docs` not needed (no product flow changes).
+
+### S4 — Buying from inside the product (depends on S1; after S3 because both touch the plan cards)
+
+- Plan & billing for a free Tournament org: start Club, Club · Association or League Plus (checkout) when open —
+  today `upgradePlansFor('tournament')` is Tournament Plus only (`lib/plan-upgrade.ts:28-30`), `PANEL_PLANS` lacks
+  `club_large`, and only Premium's discovery card has a button (`BillingBody.tsx:509`). This is also the
+  abandoned-checkout resume.
+- The plan panel drawer passes monthly only (`PlanPanelDrawer` ~:105): add the monthly / yearly choice.
+- The moves ruled in Ask 12 (recommended at launch: paying Tournament Plus → League Plus, one `MOVES` entry; League
+  Plus → Club after launch — nobody holds League Plus at launch). A Founding-comped Tournament Plus org → Club already
+  falls back to checkout (`PlanMoveDialog` :325, :434); it gets the trial line and a sentence that its free Tournament
+  Plus period ends (comp revoked by the webhook, D6).
+- The house-league cap prompt reads the live gate and, when open, opens Plan & billing's League Plus panel
+  (`?plan=league`); closed, the same contact link as Plan & billing. Who reaches it on production: only orgs with a
+  `free_floor` (flag off on production — presumably none; a count settles it).
+- **Clear `free_floor` when a paid League Plus or Club plan applies** (`/billing` Q4): nothing clears it today, so a
+  floor org that buys League Plus would keep the 1-season / 1-division / 8-team caps (`lib/free-floor.ts:44, 59-70`).
+- A closed plan's row in Plan & billing keeps its contact link (an existing customer writes to us; the interest form is
+  for prospects — `/billing` Q7). It already reads the live gate (`BillingBody.tsx:185, 486-487`); the rows must exist.
+- **Screens:** Plan & billing (free Tournament, Tournament Plus, League Plus, Founding-comped), the plan move window,
+  the house-league cap prompt, the onboarding change-plan window.
+- **Reviews:** `/review` high-risk; `/accounting` (what we charge on a move).
+
+### After the build (runbook, not this plan)
+
+Step 1 sandbox purchases with S1–S4 on staging; Step 2 live Stripe; Step 3 promote with gates closed and check
+production shows today's pages; Step 4 the flip; Step 4.3 the three code values → `live` and the agreement check
+(`/billing`, its own commit, on the owner's word — it is a database check, AGENCY_RULES).
+
+## Sequencing against other builds
+
+- **Touches the same screens as:** Plan & billing (the billing body, the plan move window — `plan-billing` project);
+  the first look (start doors, plan step); the GST/HST tax line (`BILLING_TAX_WORDS`). S4 must not overlap a Plan &
+  billing build session.
+- **Waits on nothing to start S1.** Tax at checkout is already on production (GST/HST Stage 2 closeout `e303868f4`,
+  tag `release/2026-11-15`; live Stripe holds one active Canada registration, exclusive — `/accounting` 2026-11-18), so
+  Facts :43-44 is met and the tax line can follow the gate. The *flip* (not this build) still waits on live Stripe
+  (runbook Step 2), the ~$1 live purchase with an Ontario address and a printed-invoice check (`/accounting`: a hard
+  prerequisite — no printed live invoice has been seen), and the Club test suite. ⚠ The board's `gst-hst` "next" line
+  still says tax ships with the next release — stale (for `/brief`).
+
+## Reviews run in the planning session
+
+- **`/billing` (2026-11-18):** the shape is sound; create the org first, not Premium-style (a club needs a name, slug
+  and owner before its setup kit; provisioning from webhook metadata after the charge adds a name collision and a
+  signed-out buyer). S4 is not optional. Traps A–D folded into S2 above; the free-floor trap into S4. Premium's code
+  value → `live` in S1 is a truth-up: the database wins everywhere, and the code value is read only when the gate read
+  fails or the gate has no rows (then Premium shows closed and its checkout 403s), and at first paint (`usePlanGating`,
+  `PlanPanelDrawer:97`, onboarding :279-285). The three new plans stay `early_access` in code until after the flip
+  (fail closed). The trial sentences should read the override (`getPlanConfigOverrides()` server-side; the public text
+  reads the code value at `PricingSection.tsx:144,519`, `BillingBody.tsx:352`, `PlanArticlePanel.tsx:181`,
+  `AddressStep:67`, `PlanStep:100`). Confirm `NEXT_PUBLIC_PLAN_GATES` is unset in the production build. Unit tests must
+  mock both gate states — dev cannot show the closed state. Sandbox matrix additions: Tournament Plus → League Plus,
+  comped Tournament Plus → Club by checkout, returning buyer (no trial), Québec refusal, the webhook-delay return.
+- **`/accounting` (2026-11-18):** "plus applicable taxes" beside each price is right; the trial sentence must carry the
+  tax too (tax is worked out on the address on file at the trial's end — Stage 2 test clock, `GST_HST_STAGE2_BUILD_PROMPT.md:323, :494`).
+  Tax is already on production (see Sequencing). Recommends one public line: available to organizations in Canada,
+  outside Québec for now, prices in Canadian dollars (Ask 15). $0 trial invoice: nothing to build. For a professional
+  (no gate): the pending CRA backdate; a club left at a Québec address renewing at GST only.
+- **`/marketing` (2026-11-18):** `CLUB_ON_SALE_COPY.md`, W1–W57, each line closed / open / "closed also changes";
+  eleven asks of its own (folded into Asks 7, 10–14 below). The League Plus trial sentence is Club's in shape with its
+  own length (`clubTrialLine(trialDays)` takes the length already; a plan-neutral name in the build). Handoffs:
+  `/strategy` records League Plus's trial in the Facts doc and the over-30 quote path; `/marketing` writes accepted
+  lines into `PRICING_PAGE_COPY.md` (and fixes its stale ~:378 and the $179 Club tables).
+- **`/legal` (2026-11-18):** trial sentence option (b) (tax in the sentence — Competition Act general impression; the
+  sentence also runs where no price sits beside it; matches Terms §7). **Hard prerequisite of the flip:** the Terms and
+  Privacy live on production — with them off, `requireAcceptance` passes (`lib/legal-acceptance.ts:184-185`, verified),
+  so production would take paid sign-ups with no tick and no record; the first test purchase must write an acceptance
+  row. The interest form's consent box opens ticked (`components/EarlyAccessForm.tsx:44`, verified) — doubtful express
+  consent: make it unticked (S1), and email only ticked leads from the last six months (implied consent, CASL
+  s.10(10)(e)), never unticked ones; the email needs a mailing address we do not yet have. "Bring your team in with
+  everything you've built" is a misrepresentation risk today (five pages) — fix the closed words at the next promote.
+  Add the price and tax to the trial-ending email (`lib/email.ts:1669-1688`). Verify before the words ship: "Premium
+  Coaches Portal for every coach, no per-team fee" (Facts :116 says decided, not built); the band move's proration
+  words (W17, W20); soften W19's "every setup step". Lawyer's eye (no gate): card-on-file trial wording, Québec
+  French-language rules, the pre-ticked box, Terms §7's "free trial".
+- **`/design` (2026-11-18, 527 decisions on record):** nine drawing changes, applied and republished (v2) — the 420px
+  start column, 32px headings, 48px fields and buttons with 10px corners (first-run rules 1–2, 2026-10-20); one lime
+  per view on /for-clubs; the wait screen as the shipped checkout-complete card (no button, "Payment received. This
+  takes a few seconds.", "Still setting up" + Check again after ~50 s); the "Paid plan" pill in the Free pills' olive
+  tint; 12px eyebrows; NEW / CHANGED WORDS / UNCHANGED tags on every drawn card; the View switch as one white track;
+  markers as edge tabs; Fit to width on screens narrower than a 1440 page plus its notes. Two `/design` source files
+  named by the command no longer exist (`memory/design_system.md`, `memory/design_principles.md`) — `/design`'s
+  command file is shared automation, flagged, not edited.
+
+### Reviews run on the audience review (2026-11-18, section M of the copy doc)
+
+- **`/marketing`:** corrected the band-2 line and labels (the first draft implied Club lacks house league, against
+  `BRAND_STRATEGY.md` rule 3, and used "organization", which is our word and not a volunteer's); "Basic Coaches Portal"
+  on the coaches band; "Built for" as the footer heading; titles cut to fit the site-name suffix; the Clubs sub-line
+  softened so it does not promise a president's summary; "with nothing charged" removed from the trial steps (too close
+  to the rejected "nothing is charged until the trial ends"); "What each person at your club gets" (coaches are not on a
+  board); "one tap" removed from the phone-install line. Agrees there is no price on any home door and recommends
+  against Ask 24's exception. Its canon handoffs are in the copy doc.
+- **`/legal`:** the privacy answer narrowed to "your club's information" and "FieldLogicHQ never shows a player's name,
+  birth date or roster on a public page" (checked page by page: club team pages, tournament pages and house league
+  schedule and standings pages carry no players; a club can still type a child's name into its own news post, which the
+  Terms make the club's responsibility); the United States storage sentence stays; the cancel answer gains the 90 days
+  and "no refund" from the published Terms; "ask us for a full copy" needs the data terms published or the by-hand
+  procedure confirmed; the trial steps gain "first paid plan" and "renews until you cancel", and their email promise
+  needs production confirmed; the owner change must come from the current owner's address; pictures only from a fixture
+  with invented names. Rates W72 the most urgent item and "Free right now" high risk. For a lawyer's eye (no gate): the
+  general impression of the trial steps and the "free" labels; whether a share-link button could count as helping send a
+  commercial message (read as no); "never shows" against club-typed text; quoting cross-border storage in marketing;
+  the "full copy" promise ahead of the published data terms; French-language rules for pages reachable from Québec.
+- **`/accounting`:** one tax line under the three home price rows is acceptable (the canon's block sentence), inside the
+  same container, built from the tax words, shown only when all three plans are open; W70's year-cost answer and W68's
+  step 4 are right. The trial sentence in code still lacks the tax words the drawings show (Ask 8 covers it).
+- **`/strategy` (Proposed, nothing logged):** the proposals mostly reverse the ordering half of the 2026-08-08 "live
+  products lead, everywhere" ruling (design log), whose reason ends when all six plans are on sale; its other half, that
+  no surface hand-writes availability, must stay, and the bands do read the gate. Consistent with "the plan cards are
+  the comparison" (2026-09-07) and the peer rule once Club's label says it includes house league. Pushed the trial steps
+  into S3 (a disclosure). No "Most popular" words. Raised Ask 32 (which card leads) and the Tournament Plus trial
+  (Ask 31). Drift found is in "Found outside this build".
+- **`/design` (fourteen findings, applied and republished as version 3):** the drawn sections were about a quarter too
+  large and off the shipped kit, so headings are 32px, card titles 20px, cards 14px corners with the shipped shadow and
+  24px padding, sections 72px; the footer is the shipped footer (paper ground, twelve columns, the "Also on your phone"
+  column kept beside the new "Built for" column, the copyright row); the FAQ and "Questions a board asks" are the
+  shipped accordion, changed answers open; the trial steps are a numbered row, not four boxes; one tag system; rail
+  notes anchored to what they describe; the phone pages show the fixed bottom bar; 44px tap rows. Left as owner calls
+  (Ask 34). Three of the command's source files do not exist (`memory/design_system.md`, `memory/design_principles.md`,
+  `memory/project_milton_bats_palette.md`): shared automation, flagged, not edited.
+
+## Found outside this build (flagged, not acted on)
+
+- **The Facts doc says three shipped things are "not built"** (audience review, 2026-11-18; `/strategy` drift check).
+  `PLAN_PRICING_FACTS.md` ~:137-139 and :185 (bank reconciliation), :182 (a club's own web address) and :116 (whole-staff
+  Premium portals; :176 of the same file says live since 2026-06-24) each say decided, not built. The product has all
+  three, and the Clubs page and the Club plan card already advertise the first and third. :117 (the coach-into-Club move
+  "not released") looks stale too. → `/strategy` truth-up before the open words ship; the board's `bank-check` line
+  ("one release carrying the balance check") → `/brief` to check against the 2026-11-15 release.
+- **Only five clubs can connect their own web address today.** The host's limit is 5 addresses per app with 2 used
+  (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` :1321-1322, :1357; a request for 500 filed 2026-10-23, still open when last
+  read). Under an open launch that is a limit a fourth club would hit. No page in this build promises the feature; it
+  is listed here because no document carries it as an owner item. → `/release` to check the request before the flip.
+- **Tournament Plus has a 14-day trial nobody ruled on.** The plan settings give it one, checkout applies it and takes a
+  payment method, the copy canon says Tournament Plus advertises no trial, and two live buttons say "free" (Ask 31).
+  → `/strategy` and `/billing`: say it or switch it off.
+- **Production still offers the Founding Season.** Signed out on 2026-11-18, production `/pricing` shows "through
+  September 30, 2027" twelve times and `/start` (dynamic) shows "2027 season free", though the offer closed 2026-10-26
+  and the closing commit `954508360` is on `origin/master`. `/start` is rendered per request, so it is not a stale
+  page; most likely a production `NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE` still holds the old date. → `/release`, a
+  check (not a fix).
+- The board's `gst-hst` "next" line still says tax ships with the next release (it shipped 2026-11-15) → `/brief`.
+
+## Owner asks
+
+**⚖ RULED 2026-11-18 (owner): every live ask as recommended.** His words: "I agree with all 33 recommendations" (34
+numbers below; Ask 4 was replaced by Ask 21, so 33 live asks). Nothing was added to a recommendation and nothing was
+changed. Where an ask offered options, the recommended one is the ruling:
+
+- **Ask 8:** (b), the tax inside the trial sentence, for all three plans, with the tax line still under each price; the
+  price and tax join the trial-ending email.
+- **Ask 13:** "bring your team in with everything you've built" changes at the next promote to "you won't be charged for
+  the portal again", and returns only once the coach-into-Club move is on production and proved.
+- **Ask 18:** Premium's code value becomes "live" in S1; the production-and-code agreement check stays a hand read in the
+  release steps (making it automatic was not ruled).
+- **Ask 19:** `/release` checks why production still shows the Founding Season offer (a check, not a fix).
+- **Ask 24:** A. No price on any home page door; prices sit in the three rows lower on the page.
+- **Ask 27:** "How the trial works" ships in S3; the copy rule on trial length names the section; production is confirmed
+  to send the trial-ending email before the section ships.
+- **Ask 29:** "Questions a board asks" as drawn, with the United States storage answer; **the data terms are published
+  with the release** (so "ask us for a full copy" rests on a published promise).
+- **Ask 30:** S3 carries what it rebuilds anyway; S3b does not hold the flip.
+- **Ask 31:** the untrue lines are fixed at the next promote (with S1), and **Tournament Plus's trial is said on the page**
+  as Club's is, not switched off. The words are `/marketing`'s, from the one trial sentence with Tournament Plus's own
+  length; `/strategy` records the trial in the Facts doc.
+- **Ask 32:** B. **Club leads the pricing page** from the flip: the one lime button and the olive edge move from
+  Tournament Plus to Club. Never the words "Most popular".
+- **Ask 34:** as drawn: band headings at the card-title size; one lime per view is read per screenful; the free Basic
+  Coaches Portal is a strip above Premium.
+
+Also settled on 2026-11-18 by the owner's questions, inside Ask 33: once its plan is open, the last band of /for-clubs
+and /for-leagues has one button ("Start free with Tournament" leaves; W30, W36). And noted, not changed: the billing
+address screen stays the second half of step 3 with a three-label step line (the 2026-11-04 ruling; the owner was told
+one of its two reasons does not apply to a paid-only door and did not ask for a fourth label).
+
+**What the rulings start (in order of dependency):** the records they change (`/strategy` log and Facts doc,
+`/marketing` canon), then S1. Build prompt: `CLUB_ON_SALE_S1_BUILD_PROMPT.md`. Agreement to the recommendations is not a
+go to build: each session starts on the owner's word.
+
+Thirty-four, numbered on the drawings' "Your calls" tab with a recommendation each (copy-back). Recorded here as ruled
+once ruled. 1 to 20 are the planning session's. **Ask 4 (the grid in two rows) is replaced by Ask 21.** 21 to 34 are the
+audience review's (2026-11-18). All ruled as recommended (above):
+
+| # | Call | Recommendation |
+|---|---|---|
+| 21 | Three audience bands on /pricing, labelled by what a club runs, not as a ladder; the coaches band shows the free Basic Coaches Portal beside Premium (replaces Ask 4) | Yes, as drawn |
+| 22 | The role picker has three doors, each jumping to its band | Yes |
+| 23 | The home page: three audience doors, all four roles as full cards, three price rows instead of the six plan cards | Yes, as drawn |
+| 24 | A price on the home page doors (a re-frame of the 2026-08-07 ruling): A no price on any door; B "from" the League Plus price on the league and club door only. Never a price on the coach door | A |
+| 25 | Nav: Leagues and Clubs stay two entries, in the bands' order; the footer gains a "Built for" column | Yes |
+| 26 | The product's own screens on /for-leagues and /for-clubs, shot from a fictional club, re-shot each release cycle. Not a demo; the no-club-demo ruling stands | Yes |
+| 27 | "How the trial works" on both pages, in S3. The trial-length copy rule names the section; production confirmed to send the trial-ending email | Yes |
+| 28 | The Clubs page speaks to the whole board: "You run the club", the club's books in the sub-line, rebalanced "old way" cards, "What each person at your club gets" | Yes |
+| 29 | "Questions a board asks", with the United States storage answer said plainly, and the data terms published with the release (or the by-hand full-copy procedure confirmed) | Yes; publish the data terms |
+| 30 | S3 carries what it rebuilds anyway; S3b carries the selling sections and does not hold the flip (the 2026-11-17 ruling: marketing after the launch) | Yes |
+| 31 | Lines not true today, fixed at the next promote: three answers that describe customers; "Free right now" on the Premium card; "Start Tournament Plus free". For Tournament Plus: say the 14-day trial, or switch it off | Fix now; say the trial |
+| 32 | Which card leads /pricing once Club is on sale: A Tournament Plus keeps the one lime button; B Club takes it. Never the words "Most popular" | B |
+| 33 | The paths between audiences: "your events, teams and staff stay where they are"; "Copy a link for your club"; one line under the coach demo. Added at the owner's question (2026-11-18): once its plan is open, the last band of /for-clubs and /for-leagues has one button; "Start free with Tournament" leaves it (W30, W36), and the hero's quiet tournament link stays | Yes |
+| 34 | Three drawing calls from `/design`: the band headings at the card-title size (so "Available now" stays the page's one display heading); one lime button per view read per screenful (the Leagues and Clubs pages repeat the same lime action in the hero, on the plan card and in the bottom band, as they do live today); the free Basic Coaches Portal as a strip above Premium | As drawn on all three |

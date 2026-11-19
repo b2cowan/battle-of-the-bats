@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On-Sale Pages S1 Walk</title>
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; margin: 0; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+q { quotes: "“" "”"; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · on-sale pages · session S1</span>
+    <h1>The switch reaches every page: the closed words</h1>
+    <p class="sub">Built 2026-11-18 on the dev server. One purpose: with dev set to “show as closed”, every public page reads as production does today, except for the word fixes you ruled on 18 Nov.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Production builds Pricing and the four “For …” pages once at deploy and serves that copy for a year, so flipping a plan on in platform admin would not reach them. After S1 they read the switch on every visit. Club, Club · Association and League Plus stay closed on production. Dev has every plan on sale (your 30 Oct ruling), so the plan-gates setting in Dev tools gains a third option, <strong>Show as closed</strong>, which shows production’s closed pages without touching dev’s data.</p>
+    <p><strong>It passes when</strong> every step below reads as written. Anything else on these pages should look the same as production today.</p>
+    <p><strong>Not in this walk:</strong> the open-state pages (S3), the new Club and League Plus starts (S2), and buying from inside the product (S4). The closed League Plus start page (<code>/start/league</code>) cannot be shown on dev: dev has the free league start switched on, so that address opens the free start instead. The build’s tests check its words.</p>
+  </section>
+
+  <section class="card">
+    <h2>Where and as whom</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server, restarted for this build. Use one normal browser window: the setting is a cookie in that browser.</dd>
+      <dt>Dev tools</dt><dd>Your platform admin sign-in at <code>/platform-admin/login</code>, then <code>/platform-admin/dev-tools</code>.</dd>
+      <dt>Public pages</dt><dd>No sign-in needed. Signed in as platform admin is fine too; the pages read the same.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'club-on-sale-s1-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'The dev switch: show as closed',
+      steps: [
+        { who: 'Platform admin', do: 'Open <code>/platform-admin/dev-tools</code> and find the Plan gates box.', see: 'It says it is following dev’s plan gating rows, with two buttons: <q>Show as closed</q> and <q>All live</q>.' },
+        { who: 'Platform admin', do: 'Press <q>Show as closed</q>.', see: 'The box now says League Plus, Club and Club · Association read closed, as on production before the flip, and dev’s rows are untouched. The buttons are now <q>Dev’s rows</q> and <q>All live</q>.' }
+      ] },
+    { id: 'B', title: 'Pricing, closed',
+      steps: [
+        { who: 'Anyone', do: 'Open <code>/pricing</code> and read the line under the big heading.', see: '<q>Tournament, Tournament Plus, and the Premium Coaches Portal are available now. Tournament is free, with no credit card required. Club is coming soon, and League Plus is built but not open for sign-up.</q>' },
+        { who: 'Anyone', do: 'Look at the browser tab’s title.', see: '<q>Plans and prices | FieldLogicHQ</q>.' },
+        { who: 'Anyone', do: 'Read the line under <q>Available now</q>.', see: 'It ends with the same closed-plans sentence. The words <q>early interest</q> are gone.' },
+        { who: 'Anyone', do: 'Read the strip under the plan cards.', see: 'The tag is <q>Not open yet</q>. League Plus is followed by <q>(Not open yet, …/mo)</q> and Club by <q>(Coming soon, …/mo)</q>. It ends <q>Tell us you’re interested and we’ll let you know when it opens.</q>' },
+        { who: 'Anyone', do: 'Read the Tournament Plus card in the row of three below.', see: 'It has the trial sentence: <q>14-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.</q> The button says <q>Start Tournament Plus</q>, with no <q>free</q>.' },
+        { who: 'Anyone', do: 'Read the end of the House league administrators card beside it.', see: '<q>League Plus is built, but not open for sign-up. Tell us you’re interested and we’ll let you know when it opens.</q>' },
+        { who: 'Anyone', do: 'Read the end of the Club executives card.', see: '<q>Club is coming soon — it isn’t open for sign-up yet. Tell us you’re interested and we’ll let you know when it opens.</q>' },
+        { who: 'Anyone', do: 'Read the <q>League Plus and Club — what they cover</q> section.', see: 'No <q>full platform direction</q>, <q>keeps the launch honest</q> or <q>roadmap</q>. Its last paragraph reads <q>…or tell us you’re interested and we’ll let you know when it opens.</q>' },
+        { who: 'Anyone', do: 'Open the question <q>Is this too complex for a volunteer-run organization?</q>', see: 'It starts <q>No. FieldLogicHQ is built for associations where…</q>, with no <q>used by</q> and no <q>Most organizations are running…</q>.' },
+        { who: 'Anyone', do: 'Open <q>Is the platform only for tournaments?</q>', see: 'No <q>next parts of the platform</q>. It ends with the closed-plans sentence.' },
+        { who: 'Anyone', do: 'Open <q>What if I only manage one competitive team?</q>', see: 'It ends <q>…you won’t be charged for the portal again.</q>, with no <q>bring your team in with everything you’ve built</q>.' },
+        { who: 'Anyone', do: 'Open <q>Can I buy League Plus, Club, or the Coaches Portal today?</q>', see: 'Premium’s price with <q>plus applicable taxes</q>, then the closed-plans sentence and <q>Tell us you’re interested…</q>. No <q>plan ahead and express interest</q>.' },
+        { who: 'Anyone', do: 'Open <q>What if we get stuck?</q>', see: 'No <q>Most organizations are running their first tournament…</q>.' },
+        { who: 'Anyone', do: 'Open <q>Can I use FieldLogicHQ for multiple sports?</q>', see: '<q>Yes, for softball and baseball.</q> No hockey or soccer.' },
+        { who: 'Anyone', do: 'Read the band at the bottom of the page.', see: 'The line ends <q>Tell us you’re interested and we’ll let you know when it opens.</q> The second button is <q>Express interest in League Plus or Club</q>.' }
+      ] },
+    { id: 'C', title: 'The interest form',
+      steps: [
+        { who: 'Anyone', do: 'On <code>/pricing</code>, press <q>Express interest in League Plus or Club</q> at the bottom.', see: 'The window’s small heading is <q>Express interest</q> and its line is <q>Share a few details and we’ll let you know when your plan opens.</q> No <q>early access</q> anywhere.' },
+        { who: 'Anyone', do: 'Look at the box <q>Send me feature and release updates…</q>.', see: 'It is <strong>not ticked</strong>.' },
+        { who: 'Anyone', do: 'Look at the list of features.', see: 'It says <q>Coaches Portal</q>, not <q>Coach portal</q>.' },
+        { who: 'Anyone', do: 'Fill in a test email you own, leave the box unticked, and press <q>Express interest</q>.', see: '<q>We’ve saved your request. You won’t get an email when it opens, as you asked.</q>' }
+      ] },
+    { id: 'D', title: 'Clubs page, closed',
+      steps: [
+        { who: 'Anyone', do: 'Open <code>/for-clubs</code> and read the note under the hero buttons.', see: '<q>Coming soon — it isn’t open for sign-up yet. Tournament, Tournament Plus, and the Premium Coaches Portal are live today.</q> No <q>in development</q>.' },
+        { who: 'Anyone', do: 'Look at the browser tab’s title.', see: '<q>Club management: house league, rep teams | FieldLogicHQ</q>.' },
+        { who: 'Anyone', do: 'Read the line under <q>Club — the complete operating system.</q>', see: '<q>Club is coming soon — it isn’t open for sign-up yet. Tell us you’re interested and we’ll let you know when it opens.</q> No <q>finishing its final workflows</q>.' },
+        { who: 'Anyone', do: 'Read the Coaches Portal card under <q>More from FieldLogicHQ</q>.', see: '<q>…a coach with a standalone portal won’t be charged for it again…</q>, and its link says <q>See the Coaches Portal</q>.' },
+        { who: 'Anyone', do: 'Read the band at the bottom of the page.', see: '<q>Tell us you’re interested and we’ll let you know when it opens. Running a tournament now? Start free today.</q>' }
+      ] },
+    { id: 'E', title: 'Leagues page, closed',
+      steps: [
+        { who: 'Anyone', do: 'Open <code>/for-leagues</code> and find the <q>old way</q> card about a double-booked field.', see: '<q>…someone called you at 8:00 a.m. on a Saturday.</q>' },
+        { who: 'Anyone', do: 'Look at the browser tab’s title.', see: '<q>House league registration and scheduling | FieldLogicHQ</q>.' },
+        { who: 'Anyone', do: 'Press the Coaches Portal card under <q>More from FieldLogicHQ</q>.', see: 'Before you press, it reads <q>…won’t be charged for it again.</q> and <q>See the Coaches Portal</q>. Pressing it opens <code>/for-coaches</code>, not the interest form.' },
+        { who: 'Anyone', do: 'Go back and read the band at the bottom of <code>/for-leagues</code>.', see: '<q>Tell us you’re interested and we’ll let you know when it opens. Running a tournament now? Start free today.</q>' }
+      ] },
+    { id: 'F', title: 'Coaches and tournament organizers',
+      steps: [
+        { who: 'Anyone', do: 'On <code>/for-coaches</code>, read the Premium Coaches Portal card in the plan section.', see: 'No tag above its description. <q>Free right now</q> is gone.' },
+        { who: 'Anyone', do: 'Read the hero paragraph on <code>/for-coaches</code>.', see: 'It ends <q>…if your organization moves to Club, you won’t be charged for the portal again.</q>' },
+        { who: 'Anyone', do: 'Open <code>/for-tournament-organizers</code> and read the Tournament Plus card.', see: 'The 14-day trial sentence with <q>plus applicable taxes</q> sits above the button, which says <q>Start Tournament Plus</q>.' }
+      ] },
+    { id: 'G', title: 'Home and the Club start page',
+      steps: [
+        { who: 'Anyone', do: 'Open <code>/</code> and read the line under <q>One platform. Every role.</q>', see: '<q>Tournament organizers and coaches can start today — free, no credit card required. Club is coming soon, and League Plus is built but not open for sign-up.</q> No <q>in active development</q>.' },
+        { who: 'Anyone', do: 'Read the tags on the two smaller cards under the module cards.', see: '<q>League Plus · Not open yet</q> and <q>Club · Coming soon</q>. No <q>In development</q>.' },
+        { who: 'Anyone', do: 'Open <code>/start/club</code>.', see: 'Under <q>Explore Club</q>: <q>Club — coming soon</q>. The text says it isn’t open for sign-up yet, with no <q>We set up Club with you</q>. The button is <q>Express interest in Club</q>.' }
+      ] },
+    { id: 'H', title: 'The footer',
+      steps: [
+        { who: 'Anyone', do: 'Scroll to the footer of any of these pages.', see: 'A <q>Built for</q> column: Tournament organizers, House leagues, Clubs, Coaches.' },
+        { who: 'Anyone', do: 'Press <q>House leagues</q> in it.', see: '<code>/for-leagues</code> opens.' },
+        { who: 'Anyone', do: 'Read the <q>Get started</q> column.', see: 'Start free, <q>Coaches Portal</q> (no longer <q>Coaches</q>), Sign in.' },
+        { who: 'Anyone', do: 'Narrow the window to phone width and look at the footer.', see: 'The columns sit two to a row, nothing runs off the side, and the page does not scroll sideways.' }
+      ] },
+    { id: 'I', title: 'Back to dev’s rows (the open state is unchanged)',
+      steps: [
+        { who: 'Platform admin', do: 'In Dev tools, press <q>Dev’s rows</q>.', see: 'The Plan gates box says it is following dev’s plan gating rows again.' },
+        { who: 'Anyone', do: 'Reload <code>/pricing</code>.', see: 'The strip is gone and League Plus and Club are cards again, as dev showed before this build.' },
+        { who: 'Anyone', do: 'Read the Club card’s note under its price.', see: 'The trial sentence now carries the tax: <q>…you’re first charged, plus applicable taxes, when the trial ends.</q> (your ruling, Ask 8)' }
+      ] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['On-sale pages S1 walk: the closed words (2026-11-18)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      var open = mine.filter(function (b) { return !b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (open.length ? ' (not ticked: ' + open.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
+</body>
+</html>

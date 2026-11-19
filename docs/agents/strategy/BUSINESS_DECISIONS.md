@@ -8,6 +8,94 @@
 
 ---
 
+### 2026-11-18 — On-sale pages: the plan grid and the home page sort by AUDIENCE, in three bands (Decided; Asks 21 to 23)
+**Status:** **Decided** (owner, 2026-11-18, on the drawings' "Your calls" paste-back: "I agree with all 33 recommendations").
+Plan of record: `CLUB_ON_SALE_PAGES_PLAN.md` "Owner asks"; drawings `CLUB_ON_SALE_PAGES_DRAWINGS.html` (`const ASKS=`).
+**Decision:**
+1. **/pricing groups the plans in three audience bands** (Ask 21): *Running a tournament* · *Running a league or a club* ·
+   *Coaching one team*. League Plus, Club and Club · Association sit together in the middle band, each labelled by what a
+   club runs ("A house league" · "A club with rep teams · up to 15 teams" · "A club with 16 to 30 teams"), **not as steps**
+   (League Plus and Club stay peers, `BRAND_STRATEGY.md` §7). The coaches band shows the free Basic Coaches Portal beside
+   Premium. The League Plus and Club bridge cards under the grid go (their band says it). Replaces the old Ask 4 (a grid in two rows).
+2. **The role picker has the same three doors**, each jumping to its band (Ask 22). The four-door picker stays while League
+   Plus and Club are closed.
+3. **The home page is a router, not a second price list** (Ask 23): three audience doors (the middle one links to both the
+   Leagues and the Clubs page), all four roles as full cards, and three short price rows in place of the six plan cards. The
+   full plan cards live on /pricing only.
+**Rationale:** the owner's own point that a league board and a club board are the same buyer (a volunteer board), and that
+the old two rows grouped plans by price. Full reasoning in the plan's "Audience review".
+**Supersedes (in part):** the 2026-08-08 "Marketing surfaces: LIVE PRODUCTS LEAD…" ruling in the design log
+(`memory/design_decisions.md`), **only** its rule-1 clauses on the pricing-grid layout (homepage and /pricing), the
+/pricing segment-picker order, and the home page's hero and modules as live-card-plus-strip. (The marketing-nav order clause
+is superseded by Ask 25, also ruled in the same paste-back and not logged as its own decision here.) **That ruling's rule 2
+STANDS: no marketing surface hand-writes whether a product is available; every availability statement reads the plan-gating
+map.** Unchanged: the 2026-08-07 "no price on a persona door" ruling (Ask 24 = A, not logged here).
+**Affects:** /pricing, home page, role picker; positioning; no price, plan name, band or gate.
+**Handoff:** HANDOFF → `/plan`: build in S3 (`CLUB_ON_SALE_PAGES_PLAN.md`). HANDOFF → `/marketing`: the band headings,
+labels and door copy (W58 to W62 of `CLUB_ON_SALE_COPY.md`). HANDOFF → `/design`: the 2026-08-08 design-log entry is
+`/design`'s file; a pointer to this entry is owed there (not edited by `/strategy`).
+
+---
+
+### 2026-11-18 — Club LEADS the pricing page from the gate flip: the one lime button and the olive edge move from Tournament Plus to Club; never "Most popular" (Decided; Ask 32 B)
+**Status:** **Decided** (owner, 2026-11-18, "I agree with all 33 recommendations"; option **B**).
+**Decision:** From the Club gate flip, Club takes /pricing's one lime button and olive edge from Tournament Plus. Until the
+flip, Tournament Plus keeps them. The badge words "Most popular" are never used (a statement about customers we do not yet have).
+**Rationale:** the brand rule that Club leads once it is on sale; Tournament Plus held it only as "the top-revenue plan you
+can buy" (May 2026).
+**Affects:** /pricing plan cards (gate-aware, no redeploy). No price, name or gate.
+**Handoff:** HANDOFF → `/plan`: part of S3 (the lead follows the gate). HANDOFF → `/design`: one lime per view is read per screenful (Ask 34, ruled).
+**Supersedes:** the May 2026 "Tournament Plus is the lead card" posture, from the flip only.
+
+---
+
+### 2026-11-18 — Trial words on the plan pages: League Plus says its trial like Club; the tax sits inside the sentence; Tournament Plus's trial is said, not switched off (Decided; Asks 7, 8, 31)
+**Status:** **Decided** (owner, 2026-11-18, "I agree with all 33 recommendations"; Ask 8 option **(b)**).
+**Decision:**
+1. **League Plus** states its trial in **Club's sentence, word for word, with League Plus's own length** (Ask 7). The copy
+   rule that names Club as the only plan stating a trial length now names League Plus and Club · Association too.
+2. **The tax goes inside the trial sentence** (Ask 8, option b): "…and you're first charged, plus applicable taxes, when the
+   trial ends." for all three plans (League Plus, Club, Club · Association), with the tax line **still** under each price.
+   **The price and the tax also join the trial-ending email.** (`/accounting` and `/legal` both recommended (b).)
+3. **Tournament Plus's trial is said on the page as Club's is, not switched off** (Ask 31, the trial half). Checkout already
+   gives it a trial and takes a payment method; two live "free" lines are fixed at the next promote (ruled in the same ask, not
+   re-logged here).
+**Noted, not ruled:** Ask 8 names three plans and Ask 31 says only "the one trial sentence with Tournament Plus's own
+length". `/marketing`'s canon of the same day (`PRICING_PAGE_COPY.md`, Part 0) carries the tax clause on all four plans; that
+is a reading of the one-sentence rule, not a separate owner word. It follows from "one sentence", so it stands unless the
+owner says otherwise.
+**Rationale:** a buyer who adds a payment method should read what is charged and when; one sentence everywhere keeps it true.
+**Affects:** pricing and persona copy, the trial-ending email, `lib/plan-config.ts`'s `clubTrialLine()` (today without the tax
+words), `PLAN_PRICING_FACTS.md` (trial lines recorded 2026-11-18). No price, band or trial length moves.
+**Handoff:** HANDOFF → `/marketing`: the sentence (from `clubTrialLine()`'s one source) with each plan's own length; canon in `PRICING_PAGE_COPY.md`.
+HANDOFF → `/billing`: the trial-ending email gains price and tax; confirm production sends it (Ask 27). HANDOFF → `/accounting`: placement review is done; no further.
+
+---
+
+### 2026-11-18 — The availability line and the over-30 quote line (Decided; Asks 9 and 10)
+**Status:** **Decided** (owner, 2026-11-18, "I agree with all 33 recommendations").
+**Decision:**
+1. **Availability (Ask 9):** "Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars."
+   It sits under the plan grids, on step 1 of both starts, and in the FAQ; it also qualifies "Every plan is available now".
+2. **More than 30 teams (Ask 10):** "More than 30 teams? Email {support email} for a custom quote." (the support address,
+   `support@fieldlogichq.ca`, read from `lib/fieldlogichq-contact.ts`.) **A quiet line, never "talk to us"**: recorded so it
+   is not read as the struck "talk to us / we set up Club with you" framing (the open-launch ruling, 2026-11-18, "no 'talk to us' framing survives the flip"); the over-30 custom quote
+   itself is the standing "custom > 30" fact in `PLAN_PRICING_FACTS.md`.
+**Affects:** /pricing, both start screens, the pricing FAQ. No price, band or gate.
+**Handoff:** HANDOFF → `/marketing`: place the two lines as drawn (W-numbers in `CLUB_ON_SALE_COPY.md`). HANDOFF → `/legal`: the availability line is the Québec/CAD statement `/legal` reviewed.
+
+---
+
+### 2026-11-18 — The selling sections (S3b) do not hold the gate flip (Decided; Ask 30)
+**Status:** **Decided** (owner, 2026-11-18, "I agree with all 33 recommendations").
+**Decision:** The on-sale build is split by rework risk: **S3** carries what it rebuilds anyway, once, in its final shape (the
+bands, the picker, the home page, nav and footer, search titles, the trial steps). **S3b** carries the selling sections
+(pictures, the board section, the questions, the rebalanced Clubs page, the paths between audiences). **S3b does not hold the
+flip; it can ship before it or after it**, in line with the owner's 2026-11-17 ruling that marketing comes after the launch.
+**Affects:** roadmap sequencing of the Club release. **Handoff:** HANDOFF → `/plan` (stage order in `CLUB_ON_SALE_PAGES_PLAN.md`).
+
+---
+
 ### 2026-11-18 — The public "Download rules" PDF is on EVERY plan, the free Tournament plan included; it is an attendee's copy, not an organizer's PDF export (Decided)
 **Status:** **Decided** (owner, 2026-11-18, Public tournament pages Stage 10 build session, G1: "Every plan", as recommended).
 **Decision:** The printable rules file a visitor downloads from a tournament's public Rules page (Stage 10) is offered on

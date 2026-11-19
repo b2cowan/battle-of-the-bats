@@ -8,9 +8,12 @@ import {
   PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, foundingSeasonOfferCore,
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, FOUNDING_SEASON_YEAR_LABEL,
   FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
+  isPlanOpen, interestButtonLabel,
 } from '@/lib/plan-config';
+import { planTrialLine } from '@/lib/plan-trial-line';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
 export const metadata = marketingMetadata({
@@ -56,7 +59,7 @@ const CROSS_SELLS: Array<{
     label: 'League Plus',
     q: 'Also running a house league season?',
     body: 'Player registration, draft tools, schedules, standings, and season-wide parent messaging — all in one dashboard.',
-    cta: 'Express interest in League Plus',
+    cta: interestButtonLabel(['league']),
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
   },
@@ -76,7 +79,7 @@ const CROSS_SELLS: Array<{
     label: 'Coaches Portal',
     q: 'Coaching a single competitive team?',
     body: 'A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed.',
-    cta: 'Express interest in the Coaches Portal',
+    cta: interestButtonLabel(['team']),
     // Live when the coach checkout gate is open — the card becomes a link to /for-coaches with a
     // live CTA instead of an express-interest trigger. Same flip /for-coaches itself performs;
     // this card held a hardcoded express-interest for a live product until 2026-08-08.
@@ -91,7 +94,12 @@ export default async function ForTournamentOrganizersPage() {
   // The sandbox door. Hidden in a production build until the owner turns it on deliberately —
   // see lib/sandbox-door.ts for why that release step is a decision and not a merge.
   const showSandboxDoor = sandboxDoorsVisible();
-  const teamCheckoutOpen = !(await getPlanGatingMap()).team;
+  // The live gate, per request (on-sale pages S1).
+  const teamCheckoutOpen = isPlanOpen(await getPlanGatingMap(), 'team');
+  // Tournament Plus's trial sentence with the length checkout will use (Ask 31, ruled 2026-11-18).
+  // No sentence for a trial of 0 days (a platform admin can switch the trial off): no "0-day trial".
+  const tpTrialDays = (await getPlanConfigOverride('tournament_plus')).trialDays;
+  const tpTrialLine = tpTrialDays > 0 ? planTrialLine(tpTrialDays) : null;
   // The Founding Season copy on this page used to be HAND-WRITTEN with no gate at all (it would
   // have kept advertising a closed offer forever). Every offer sentence now keys off the signup
   // window and falls back to the list-price words the day it closes.
@@ -278,11 +286,13 @@ export default async function ForTournamentOrganizersPage() {
                   ))}
                 </ul>
               </div>
-              {/* The label names the plan it opens ("Start Tournament Plus free", S4 label list row 10) —
-                  the free card beside it says "Start free", so the two no longer read as one. */}
+              {/* The label names the plan it opens (S4 label list row 10) — the free card beside it says "Start free", so the
+                  two no longer read as one. W73 / Ask 31 (ruled 2026-11-18): no "free" over a checkout that takes a payment
+                  method; Tournament Plus's trial sentence, with checkout's length, sits beside the button. */}
               <div className={kit.push}>
+                {!tpPromoActive && tpTrialLine && <p className={kit.small}>{tpTrialLine}</p>}
                 <Link href="/start/tournament?plan=tournament_plus&billing=monthly" className={`${kit.btn} ${kit.btnFull}`}>
-                  Start Tournament Plus free
+                  Start Tournament Plus
                 </Link>
               </div>
             </div>

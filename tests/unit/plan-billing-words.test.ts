@@ -51,7 +51,8 @@ describe('shared billing vocabulary', () => {
     assert.equal(W.plan.trial(false, 90), 'Payment details collected in Stripe');
     assert.equal(W.plan.trial(true, null), 'Payment details collected in Stripe');
     assert.equal(W.plan.trial(true, 0), 'Payment details collected in Stripe');
-    assert.equal(W.plan.trial(true, 14), "14-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.");
+    // The one trial sentence, with the tax inside it (Ask 8 (b), owner 2026-11-18; on-sale pages S1).
+    assert.equal(W.plan.trial(true, 14), "14-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.");
   });
 
   it('keeps coach/org cancellation meaning and retention values separate', () => {

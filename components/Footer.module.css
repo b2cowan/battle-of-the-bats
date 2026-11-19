@@ -79,11 +79,19 @@
 .linkCol  { grid-column: span 1; }
 .qrCol    { grid-column: span 2; }
 
+/* Three link columns since the "Built for" column (on-sale pages S1, W63). From 1024px: 3 + 2 + 2 + 2 + 3 = 12, as
+   drawn. Between 768 and 1024 a 3-track QR column left its copy ~64px wide (/review), so the brand and the QR take a
+   row each and the three link columns share the row between them. */
 @media (min-width: 768px) {
   .grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2rem; }
-  .brandCol { grid-column: span 4; }
+  .brandCol { grid-column: span 12; }
+  .linkCol  { grid-column: span 4; }
+  .qrCol    { grid-column: span 12; }
+}
+@media (min-width: 1024px) {
+  .brandCol { grid-column: span 3; }
   .linkCol  { grid-column: span 2; }
-  .qrCol    { grid-column: span 4; }
+  .qrCol    { grid-column: span 3; }
 }
 
 /* The one name (BrandLockup) draws itself; the footer only spaces it. */

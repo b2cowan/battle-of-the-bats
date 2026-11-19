@@ -1,7 +1,8 @@
 'use client';
 
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
-import { isEffectivelyGated } from '@/lib/plan-config';
+import { isPlanOpen, interestButtonLabel } from '@/lib/plan-config';
+import { usePlanGating } from '@/lib/use-plan-gating';
 import { fireLeagueEvent } from '@/lib/league-events-client';
 import { seasonCapBody, type LeagueCapKind, type SeasonSlotHolder } from '@/lib/free-floor';
 
@@ -20,8 +21,10 @@ const CAP_BODY: Record<Exclude<LeagueCapKind, 'league_season'>, string> = {
 /**
  * Upgrade CTA shown when a free League Starter org hits a cap. League is early-access (and an
  * adjacent product, not an in-org self-serve checkout per the billing-shelf rule), so this captures
- * express-interest rather than opening a checkout. Gated on isEffectivelyGated('league') so the
- * label can be revisited if League ever becomes self-serve live.
+ * express-interest rather than opening a checkout. The label reads the LIVE gate (`usePlanGating()`, on-sale pages S1),
+ * never the code's copy, and reads closed until the gate arrives. ⚠ Open, it still opens the interest form: where an
+ * open League Plus sends this button (Plan & billing's League Plus start) is S4 (CLUB_ON_SALE_PAGES_PLAN.md), which
+ * lands before the flip, so production never shows "Upgrade" over the form; dev, whose rows are all live, does.
  */
 export function LeagueUpgradeCta({
   className,
@@ -34,7 +37,8 @@ export function LeagueUpgradeCta({
   /** Which wall this CTA sits behind, for the event metadata. */
   capHit?: LeagueCapKind;
 }) {
-  const gated = isEffectivelyGated('league');
+  const gating = usePlanGating();
+  const gated = !gating || !isPlanOpen(gating, 'league');
   return (
     <EarlyAccessModalTrigger
       className={className}
@@ -42,7 +46,7 @@ export function LeagueUpgradeCta({
       initialFeaturesInterested={['house_league', 'registration', 'public_site']}
       onClick={() => fireLeagueEvent('upgrade_intent_clicked', { orgId, metadata: { capHit, surface: 'league_cap' } })}
     >
-      {gated ? 'Express interest in League Plus →' : 'Upgrade to League Plus →'}
+      {gated ? `${interestButtonLabel(['league'])} →` : 'Upgrade to League Plus →'}
     </EarlyAccessModalTrigger>
   );
 }
