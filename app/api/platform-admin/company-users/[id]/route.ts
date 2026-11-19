@@ -5,6 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { requireFreshCode } from '@/lib/two-step-fresh';
+import { findAuthUserIdByEmail } from '@/lib/auth-account-lookup';
+import { readAccountKeepFacts } from '@/lib/member-account-keep-server';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -73,21 +75,53 @@ export const DELETE = withObservability(async (_req: NextRequest, { params }: Pa
     return NextResponse.json({ error: 'Cannot remove the last platform user — configure a bootstrap admin first.' }, { status: 400 });
   }
 
-  // Delete auth user
-  const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers();
-  const authUser = authUsers?.users.find(u => u.email === target.email);
-  if (authUser) {
-    await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+  // ⚖ Leftover call 4 (owner 2026-11-19). Everything is READ before anything is removed, and a read that can't answer
+  // refuses with nothing removed (the old code read one unpaged, case-sensitive page of accounts and skipped silently, so
+  // a staff member past the first page lost their row but kept their sign-in, and the reverse was possible too).
+  //   · the sign-in is found by the platform's one paged, case-insensitive lookup (fails closed);
+  //   · staff access always ends (the platform_users row goes);
+  //   · the sign-in is deleted only when nothing else uses the account: the member removal's own keep test
+  //     (readAccountKeepFacts, with no club: any club seat, an active free Coaches Portal team or a live family link
+  //     keeps it). Not a second test.
+  let authUserId: string | null;
+  let keptReason: string | null = null;
+  try {
+    authUserId = await findAuthUserIdByEmail(target.email);
+    if (authUserId) keptReason = (await readAccountKeepFacts(authUserId, null)).reason;
+  } catch (e) {
+    console.error('[company-users] removal refused: the account lookup failed', e);
+    return NextResponse.json(
+      { error: 'We couldn’t check this person’s sign-in just now, so nothing was removed. Try again.', code: 'lookup_failed' },
+      { status: 503 },
+    );
+  }
+
+  // The sign-in goes FIRST (when nothing else uses it), so a failed delete refuses with the staff row still there and a
+  // retry still possible; the staff row goes after it. (A row delete that fails after a deleted sign-in throws; a retry
+  // then finds no sign-in and removes the row.)
+  let signIn: 'deleted' | 'kept' | 'none' = 'none';
+  if (authUserId && keptReason) signIn = 'kept';
+  else if (authUserId) {
+    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(authUserId);
+    if (delErr) {
+      console.error('[company-users] removal refused: the sign-in could not be deleted', delErr);
+      return NextResponse.json(
+        { error: 'We couldn’t remove this person’s sign-in just now, so nothing was removed. Try again.', code: 'delete_failed' },
+        { status: 503 },
+      );
+    }
+    signIn = 'deleted';
   }
 
   await deletePlatformUser(id);
+
   await writePlatformAuditLog(
     auth.user.email ?? 'platform-admin',
     null,
     'remove_platform_user',
     'platform_users',
     target,
-    null,
+    { signIn, keptReason },
   );
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, signIn, keptReason });
 }, { route: '/api/platform-admin/company-users/[id]' });

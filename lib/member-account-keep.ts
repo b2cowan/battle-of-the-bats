@@ -2,7 +2,8 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * IS A REMOVED MEMBER'S ACCOUNT KEPT? — the one decision behind Remove member (J4-036, J5-012; Stage 13 fix-now 2,
  * F-A5-10). Removing a member from a club deletes their sign-in ONLY when the account has no other use. Another use is:
- *   1. a membership in another organization;
+ *   1. a membership in another organization (for a FieldLogicHQ staff removal, which belongs to no club: in ANY
+ *      organization — leftover call 4, owner 2026-11-19);
  *   2. an active free (Basic) Coaches Portal team — org-less, so invisible to (1);
  *   3. a family connection — a parent's link to a child's team, anywhere (status not declined/revoked). A parent signs in
  *      to see their child; `family_links.user_id` is ON DELETE SET NULL, so deleting the account orphaned the link and
