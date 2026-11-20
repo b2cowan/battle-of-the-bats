@@ -1,0 +1,326 @@
+<title>Communications Walk B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, as the 13e walk). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Communications Stage 1 · Walk B · §547</span>
+    <h1>Writing to coaches and to the board, from the same window the families use</h1>
+    <p class="sub">Written 2026-11-20, after Session 3 (the windows, committed <code>cc99f58e9</code>). One purpose: <strong>writing to coaches and to the board</strong>. Walk A (the place, who sees what) passed 35 of 35 on 2026-11-20.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p><strong>New email</strong> is now one lime button with a choice inside: To families, To coaches, To the board. You write to coaches as the owner (all of them, the rep staff, the house-league coaches, or three you pick), see who the email reaches and how it will arrive, and watch a coach change hold the send. Jules Moreau, a league admin, can reach only the house-league coaches. You email the board; Avery Chen, the treasurer, has her own Communications with one button, Email the board. A board email picked for two people stays invisible to the board member who wasn’t picked. Then you send again from a record, finish two emails that stopped partway (only the right seat can), and look at it all on a phone.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1</strong> The menu offers each seat only what it may write to; a treasurer’s button names its one choice.</li>
+    <li><strong>2</strong> The coach window shows every group with a live count, the pick, who gets it and the email itself, with no address anywhere.</li>
+    <li><strong>3</strong> Where replies go is the same two rows and the same inbox tick in all three windows, and the board window opens on “Replies come to me” with no tick.</li>
+    <li><strong>4</strong> A league admin sees and names only house-league coaches.</li>
+    <li><strong>5–7</strong> The board email reaches its four board members; the treasurer writes to the board and sees only board emails she sent or received; a picked email stays private.</li>
+    <li><strong>8</strong> “Send again to these people” opens the window with the pick filled in and sends nothing.</li>
+    <li><strong>9</strong> A stopped email can be finished only by a seat that may write to that group.</li>
+    <li><strong>10</strong> A coach changing while you write holds the send and says who changed.</li>
+    <li><strong>11</strong> On a phone New email keeps its words and each window is a full-screen sheet.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk (not defects of this walk)</h2><ul>
+    <li><strong>Three things were drawn and are not built.</strong> “See who gets it” has no “Nobody on the staff” or “No coach entered yet” rows (the engine does not report them); the coach foot does not say “You are not counted.” (the board’s does); the reply rows and the inbox tick were built from the shipped Who rows, as no drawing shows them.</li>
+    <li><strong>The tournament pointer line</strong> shows for any tournament with an active status, here “Harbourtown Invitational 2026”, not only one on its game days.</li>
+    <li><strong>The family window now opens on “Replies go to {Club}”</strong> when the club has a contact address (it opened on the sender before). You switch it back with “Replies come to me”.</li>
+    <li><strong>The “?” on Communications</strong> still opens the old emailing article; the Close session rewrites it.</li>
+    <li><strong>Nothing leaves the machine.</strong> Every address in this copy, the club’s contact address included, ends in <code>.local</code>, which the product never sends to. The sends are real; the mail service is never asked.</li>
+    <li><strong>Part 10 changes the data</strong> (it removes a house-league coach from a team), so do it after parts 2 to 9. Parts 2 to 9 quote the coaches and board as they are before it.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd><strong>Restart it once</strong> (this session added new files and changed shared modules): stop it, then <code>npm run dev</code>, and wait for “Ready”. Then <code>http://localhost:3000</code>.</dd>
+    <dt>The club</dt><dd>The same Harbourtown Minor Ball copy as Walk A, <code>navj-club-comms</code>, readied again for this walk. Coaches: <strong>9</strong> in all (7 rep coaches, 6 of them head coaches; Pat Doucet and Robin Hale coach house league), 2 rep invitations not yet accepted. The board: <strong>5</strong> seats on Organization › The board with an account (Morgan the owner, Dana the admin, Jules, Riley, Avery) plus <strong>Quinn Alvarez</strong>, invited and not yet accepted. Two emails are stopped partway: “Coach clinic, Saturday” (owner, All coaches, 7 of 9 reached) and “Draft budget for review” (Avery, the board, 2 of 4).</dd>
+    <dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> for every account. A private window per person (or sign out between).</dd>
+    <dt>Accounts</dt><dd><code>navj-club-comms-owner@dev.local</code> (Morgan Ellis, owner) · <code>navj-club-comms-admin@dev.local</code> (Dana Kowalski, admin) · <code>navj-club-comms-registrar@dev.local</code> (Riley Okonkwo) · <code>navj-club-comms-leagueadmin@dev.local</code> (Jules Moreau) · <code>navj-club-comms-treasurer@dev.local</code> (Avery Chen). Quinn Alvarez (<code>navj-club-comms-pending@dev.local</code>) is the pending member; you never sign in as Quinn.</dd>
+    <dt>Widths</dt><dd>“Desk” = a full browser window. “Phone” = the browser’s device view at <strong>390 px</strong>.</dd>
+    <dt>Order</dt><dd>In order: part 6 reads the board email you send in part 5, part 7 builds on it, part 8 opens emails sent in parts 2 and 7, and part 10 comes last because it changes the coaches.</dd>
+    <dt>Keep private</dt><dd>Dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Tell Claude “Communications walk B done” with the build summary; it records the result and removes the copy and its accounts (Walk A’s clean-up is still owed, so it all goes together).</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-communications-walk-b-v1";
+  var TITLE = "Club Communications Walk B §547 · Writing to coaches and to the board (2026-11-20)";
+  var OWNER = "Owner · navj-club-comms-owner@dev.local";
+  var ADMIN = "Admin · navj-club-comms-admin@dev.local";
+  var REG = "Registrar · navj-club-comms-registrar@dev.local";
+  var LA = "League admin · navj-club-comms-leagueadmin@dev.local";
+  var TRE = "Treasurer · navj-club-comms-treasurer@dev.local";
+  var CLINIC = "<strong>Coach clinic, Saturday</strong>";
+  var DRAFT = "<strong>Draft budget for review</strong>";
+  var REMIND = "<strong>Clinic reminder</strong>";
+  var AUDIT = "<strong>Audit committee, private</strong>";
+  var PARTS = [
+ { id: "1", title: "New email offers each seat what it may write to (desk)", steps: [
+  { who: OWNER + " · desk", do: "Sign in, open <strong>Communications</strong> in the Club group, and press <strong>New email</strong>.",
+    see: "A lime button with a plus, the words New email and a small arrow. A menu of three choices, each with a second line: <strong>To families</strong> (Every family, rep teams, a season or a list) · <strong>To coaches</strong> (All coaches, or the ones you choose) · <strong>To the board</strong> (Everyone on the board, or the ones you choose)." },
+  { who: LA + " · desk", do: "Sign in as Jules, open <strong>Communications</strong>, and press <strong>New email</strong>.",
+    see: "<strong>To families</strong> with the season named under it (2026 Fall House League) · <strong>To coaches</strong> with the second line <strong>House-league coaches</strong> · <strong>To the board</strong>." }
+ ]},
+ { id: "2", title: "The owner emails coaches (desk)", steps: [
+  { who: OWNER + " · desk", do: "Press <strong>New email › To coaches</strong>.",
+    see: "The window <strong>Email coaches</strong>, eyebrow <strong>Communications</strong>. Who, each with its count: <strong>All coaches · 9</strong> (chosen), <strong>Rep coaches · 7</strong>, <strong>House-league coaches · 2</strong> (2026 Fall House League), <strong>Coaches you pick</strong>. Under the message box: “The club’s owner and admins can read this in Communications and see who it reached…” and “Keep it to the club’s own business. Don’t use this to sell or promote anything…”. A line that coaches of the teams in <strong>Harbourtown Invitational 2026</strong> are emailed from the tournament, and a Last sent line. The foot: “<strong>9 coaches get it.</strong> 2 invited coaches haven’t accepted yet and won’t.” and a lime <strong>Send to 9</strong>." },
+  { who: OWNER, do: "Choose <strong>Rep coaches</strong>.",
+    see: "Two rows appear: <strong>Everyone on the staff · 7</strong> and <strong>Head coaches only · 6</strong>. Choosing Head coaches only makes the Rep coaches count and the foot read 6." },
+  { who: OWNER, do: "Choose <strong>House-league coaches</strong>.",
+    see: "<strong>2</strong> coaches (the one season is named on the row; a division choice appears if the season has divisions). The foot reads “2 coaches get it.”" },
+  { who: OWNER, do: "Choose <strong>Coaches you pick</strong>, then tick <strong>Pat Doucet</strong>, <strong>Robin Hale</strong> and <strong>Priya Nair</strong>.",
+    see: "“For this email only. The pick isn’t saved.”; nine people, each by name with a team line; because there are more than eight, a <strong>Search the list</strong> box. After the third tick the foot reads “<strong>3 coaches get it.</strong>” and the lime <strong>Send to 3</strong>." },
+  { who: OWNER, do: "Press <strong>See who gets it</strong>.",
+    see: "“Who gets it · 3 coaches”: the three names with their team lines. <strong>No email address anywhere.</strong> A way back to the message." },
+  { who: OWNER, do: "Back at the message, type the subject <code>Clinic reminder</code> and a one-line message, then press <strong>See the email</strong>.",
+    see: "The email as it will arrive, with “Nothing has been sent.”, the club named as who sent it, a line saying why each coach gets it, and <strong>no unsubscribe, no link and no address</strong>. A way back." },
+  { who: OWNER, do: "Press <strong>Send to 3</strong>.",
+    see: "The window closes with “<strong>Sent. Reached 3 of 3 coaches.</strong>” The list’s top row is " + REMIND + " · To “3 coaches you picked” · By Morgan Ellis." }
+ ]},
+ { id: "3", title: "Where replies go, in all three windows (desk)", steps: [
+  { who: OWNER + " · desk", do: "Press <strong>New email › To coaches</strong>, and look under the message box.",
+    see: "A <strong>Replies</strong> pair: <strong>Replies go to Harbourtown Minor Ball</strong> (chosen; the club’s address <code>info@harbourtown.dev.local</code> under it) and <strong>Replies come to me</strong> (your address under it); then one tick row <strong>Send a copy to the club’s inbox</strong> with the line “One copy to the club, not counted as someone it reached.” The statement at the top says replies go to the club." },
+  { who: OWNER, do: "Choose <strong>Replies come to me</strong>.",
+    see: "The statement at the top now says “Replies come to you at navj-club-comms-owner@dev.local.”" },
+  { who: OWNER, do: "Choose <strong>Coaches you pick</strong>, tick only <strong>Pat Doucet</strong>, tick <strong>Send a copy to the club’s inbox</strong>, type the subject <code>Copy test</code> and a message, and press <strong>Send to 1</strong>.",
+    see: "“<strong>Sent. Reached 1 of 1 coach.</strong>” followed by a sentence about the club’s inbox (a copy went, or it was already on the list). Opening the email in the list says <strong>Replies went to Morgan Ellis</strong>." },
+  { who: OWNER, do: "Press <strong>New email › To the board</strong> and look under the message box.",
+    see: "The same Replies pair, but the window opens on <strong>Replies come to me</strong>, and there is <strong>no “Send a copy to the club’s inbox” tick</strong>. Close it." },
+  { who: OWNER, do: "Press <strong>New email › To families</strong>, look under the message box, then choose <strong>Replies come to me</strong>.",
+    see: "The same Replies pair and the inbox tick, opening on <strong>Replies go to Harbourtown Minor Ball</strong> (statement: “…from the club, with the club’s address to reply to…”). Choosing Replies come to me changes the statement to the one about your own address. Close the window <strong>without sending</strong>." }
+ ]},
+ { id: "4", title: "A league admin reaches only house-league coaches (desk)", steps: [
+  { who: LA + " · desk", do: "As Jules, press <strong>New email › To coaches</strong>.",
+    see: "Who has only <strong>House-league coaches · 2</strong> and <strong>Coaches you pick</strong>. No All coaches, no Rep coaches, no head-coach choice, and no tournament line." },
+  { who: LA, do: "Choose <strong>Coaches you pick</strong>.",
+    see: "Exactly two people: <strong>Pat Doucet</strong> and <strong>Robin Hale</strong>, with their house-league teams. No rep coach is listed, and no search box (two people). Close the window without sending." },
+  { who: LA, do: "Open the list’s <strong>Coaches meeting, Nov 26</strong>.",
+    see: "“Who it went to · 9”: <strong>Pat Doucet</strong> and <strong>Robin Hale</strong> by name with their house-league teams, then one line “<strong>7 rep coaches</strong> · Names are shown only to people who send to rep coaches”. No address." }
+ ]},
+ { id: "5", title: "The owner emails the board (desk)", steps: [
+  { who: OWNER + " · desk", do: "Press <strong>New email › To the board</strong>.",
+    see: "The window <strong>Email the board</strong>. Who: <strong>Everyone on the board · 4</strong> (chosen; “Everyone on Organization › The board: owner, admins, league admins, league registrars and treasurer. People with an account only.”) and <strong>Board members you pick</strong>. Under the message box: “Everyone you send this to, and the club’s owner and admins, can read it afterwards…” and the keep-it-to-the-club’s-business line. The foot: “<strong>4 board members get it. You aren’t counted.</strong> 1 invited member hasn’t accepted yet and won’t.”" },
+  { who: OWNER, do: "Press <strong>See who gets it</strong>.",
+    see: "“Who gets it · 4 board members”: <strong>Dana Kowalski</strong> (Admin), <strong>Jules Moreau</strong> (League admin), <strong>Riley Okonkwo</strong> (League registrar), <strong>Avery Chen</strong> (Treasurer), and last, dimmed, <strong>Quinn Alvarez</strong> with “Won’t get it: the invitation isn’t accepted yet”. No address." },
+  { who: OWNER, do: "Back at the message, type the subject <code>Board meeting Dec 3</code> and a one-line message, and press <strong>Send to 4</strong>.",
+    see: "“<strong>Sent. Reached 4 of 4 board members.</strong>” The list’s top row is <strong>Board meeting Dec 3</strong> · To The board · By Morgan Ellis." }
+ ]},
+ { id: "6", title: "The treasurer writes to the board (desk)", steps: [
+  { who: TRE + " · desk", do: "Sign in and look at the sidebar’s Club group.",
+    see: "Accounting · <strong>Communications</strong> · Organization." },
+  { who: TRE, do: "Open <strong>Communications</strong>.",
+    see: "The button reads <strong>Email the board</strong> (a lime button, no menu, no arrow). The list holds only board emails she sent or received: <strong>Board meeting Dec 3</strong> and " + DRAFT + " (hers, amber <strong>Stopped</strong>). No family or coach emails." },
+  { who: TRE, do: "Press <strong>Email the board</strong>.",
+    see: "The window with Everyone on the board · <strong>4</strong> (Morgan, Dana, Jules, Riley). The foot: “4 board members get it. You aren’t counted. 1 invited member hasn’t accepted yet and won’t.” (a count)." },
+  { who: TRE, do: "Press <strong>See who gets it</strong>.",
+    see: "The four names with their seats. <strong>Quinn Alvarez is not named</strong> (only an owner or an admin sees a pending member by name)." },
+  { who: TRE, do: "Back at the message, type the subject <code>Year-end statement</code> and a one-line message, and press <strong>Send to 4</strong>.",
+    see: "“Sent. Reached 4 of 4 board members.” The list now has three emails, all board emails." }
+ ]},
+ { id: "7", title: "A picked board email stays private (desk)", steps: [
+  { who: OWNER + " · desk", do: "Press <strong>New email › To the board</strong>, choose <strong>Board members you pick</strong>, tick <strong>Avery Chen</strong> and <strong>Jules Moreau</strong>, type the subject <code>Audit committee, private</code> and a message, and press <strong>Send to 2</strong>.",
+    see: "The pick lists the board by name and seat; after two ticks the foot reads “2 board members get it.” Then “<strong>Sent. Reached 2 of 2 board members.</strong>”" },
+  { who: REG + " · desk", do: "Sign in as Riley and open <strong>Communications</strong>.",
+    see: "She sees <strong>Board meeting Dec 3</strong>, <strong>Year-end statement</strong> and " + DRAFT + " (she was on each). She does <strong>not</strong> see " + AUDIT + "." },
+  { who: LA, do: "Sign in as Jules and open <strong>Communications</strong>.",
+    see: "Jules sees " + AUDIT + " (a recipient)." },
+  { who: ADMIN + " · desk", do: "Sign in as Dana and open <strong>Communications</strong>.",
+    see: "Dana, an admin, sees " + AUDIT + " too: the owner and the admins read every board email." }
+ ]},
+ { id: "8", title: "Send again to these people (desk)", steps: [
+  { who: OWNER + " · desk", do: "Open " + REMIND + " in the list.",
+    see: "The record names the three coaches, each Sent, with the line “Replies went to …”, and the link <strong>Send again to these people</strong>." },
+  { who: OWNER, do: "Press <strong>Send again to these people</strong>.",
+    see: "The record closes and <strong>Email coaches</strong> opens on <strong>Coaches you pick</strong> with Pat Doucet, Robin Hale and Priya Nair ticked, the subject <strong>Clinic reminder</strong> copied, and the message <strong>empty</strong>. The foot reads “3 coaches get it.” Nothing has been sent: the list’s count has not changed." },
+  { who: OWNER, do: "Close the window with its Cancel button, without typing.",
+    see: "It closes at once, with <strong>no “Close without sending?” question</strong>, because you typed nothing." },
+  { who: OWNER, do: "Open " + AUDIT + " and press <strong>Send again to these people</strong>.",
+    see: "<strong>Email the board</strong> opens on <strong>Board members you pick</strong> with Avery Chen and Jules Moreau ticked, the subject copied, the message empty, and the window on <strong>Replies come to me</strong>." },
+  { who: OWNER, do: "Type one letter in the message and press Cancel.",
+    see: "“<strong>Close without sending? What you typed won’t be kept.</strong>” Confirm, and the window closes. Nothing was sent." }
+ ]},
+ { id: "9", title: "A stopped email: only the right seat finishes it (desk)", steps: [
+  { who: OWNER + " · desk", do: "Look at the list, then open " + CLINIC + ".",
+    see: "Both " + CLINIC + " and " + DRAFT + " wear an amber <strong>Stopped</strong> chip before the figure. The record reads “Who it went to · 9” with seven Sent and two <strong>Not sent</strong>, the button <strong>Send to the 2 it missed</strong> and its one-line hint. Do not press it yet." },
+  { who: REG + " · desk", do: "As Riley, open " + CLINIC + ".",
+    see: "Her record names only the house-league coaches and counts the rest. <strong>No Send button.</strong> A line says <strong>Morgan Ellis or an admin can send it to the ones it missed.</strong>" },
+  { who: REG, do: "Open " + DRAFT + ".",
+    see: "No Send button. <strong>Avery Chen, the owner or an admin can send it to the ones it missed.</strong>" },
+  { who: TRE + " · desk", do: "As Avery, open " + DRAFT + " (her own) and press <strong>Send to the 2 it missed</strong>.",
+    see: "“<strong>Sent to the 2 it missed.</strong>” The Stopped chip leaves the row." },
+  { who: OWNER, do: "As Morgan, open " + CLINIC + " and press <strong>Send to the 2 it missed</strong>.",
+    see: "“<strong>Sent to the 2 it missed.</strong>” The Stopped chip leaves the row." }
+ ]},
+ { id: "10", title: "A coach changes while you write: the send is held (desk)", steps: [
+  { who: OWNER + " · desk", do: "Press <strong>New email › To coaches</strong>, choose <strong>House-league coaches</strong>, type the subject <code>Season kickoff</code> and a message. <strong>Do not send.</strong>",
+    see: "The foot reads “2 coaches get it.” and the lime <strong>Send to 2</strong>." },
+  { who: OWNER + " · second tab", do: "In a second tab open <strong>House league › 2026 Fall House League › Teams</strong>, open the <strong>Hawks</strong>, remove the coach <strong>Robin Hale</strong>, and save.",
+    see: "Robin Hale is no longer on the team." },
+  { who: OWNER + " · first tab", do: "Back in the first tab, press <strong>Send to 2</strong>.",
+    see: "<strong>Nothing is sent.</strong> The foot reads “<strong>Who this reaches changed while you were writing. It now goes to 1 coach: Robin Hale was taken off. Nothing was sent. Check it and send again.</strong>” The lime now reads <strong>Send to 1</strong>, and the list’s count has not changed." },
+  { who: OWNER, do: "Press <strong>See who gets it</strong>, go back, and press <strong>Send to 1</strong>.",
+    see: "The list shows only Pat Doucet. Then “<strong>Sent. Reached 1 of 1 coach.</strong>”" }
+ ]},
+ { id: "11", title: "The phone (390 px)", steps: [
+  { who: OWNER + " · phone", do: "At 390 px, open <strong>More</strong>, then <strong>Communications</strong>.",
+    see: "Communications is the Club group’s first row in the sheet; the bottom bar is unchanged. The button reads <strong>New email</strong> with a small arrow: it keeps its words." },
+  { who: OWNER + " · phone", do: "Press <strong>New email</strong>.",
+    see: "The three choices open as a <strong>sheet above the bottom bar</strong>, each with its second line, each tall enough to press (44 px)." },
+  { who: OWNER + " · phone", do: "Choose <strong>To coaches</strong>.",
+    see: "<strong>Email coaches</strong> fills the screen as a sheet. The statement is the short one (“Emails each coach you pick. Replies go to the club.”); the foot’s Cancel and lime Send are within reach and not hidden by the bottom bar. Close it without sending." },
+  { who: TRE + " · phone", do: "As Avery at 390 px, open <strong>More › Communications</strong> and press the button.",
+    see: "The button reads <strong>Email the board</strong> and opens the window directly (no sheet of choices), full screen." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
