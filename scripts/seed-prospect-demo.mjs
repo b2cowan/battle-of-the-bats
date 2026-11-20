@@ -14,8 +14,13 @@
  * content, its venues, its owner/League admin memberships. An open browser session survives a reset. A password is set
  * ONLY when an account is first created.
  *
- * ⚠ DEV ONLY. Refuses any database that is not the dev project, and any organization whose slug is not `milton-bats`
- * (or that this script did not create). Every delete below is scoped by the Milton organization id, or by ids it owns.
+ * ⚠ DEV ONLY. Refuses any database that is not the dev project, and any organization whose slug is not the chosen club's
+ * (`CLUBS` below: `milton-bats`, or `kestrel-bay` with --club=kestrel) or that this script did not create. Every delete
+ * below is scoped by that organization's id, or by ids it owns.
+ *
+ * --club=kestrel builds Kestrel Bay, the invented club the on-sale pages' pictures are shot from
+ * (scripts/on-sale-pictures.kestrel.config.mjs; then scripts/seed-on-sale-pictures-extras.mjs, then
+ * scripts/capture-on-sale-pictures.mjs). Same machinery, its own names, no medical notes, addresses on example.test.
  * ⚠ No email is sent here: the family-email rows a publish writes are marked sent (history); nothing calls the mailer.
  *
  * Run: node --env-file=.env.local scripts/seed-prospect-demo.mjs [--demo-day YYYY-MM-DD] [--dry-run]
@@ -28,7 +33,6 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { ensureFixtureUser, findUserByEmail } from './lib/fixture-user.mjs';
-import cfg from './prospect-demo.milton.config.mjs';
 import {
   addDays, saturdayAfter, onOrAfter, torontoInstant, minutesLater, mulberry32, buildWorld, snakeDraft, tally,
 } from './lib/prospect-demo-world.mjs';
@@ -36,15 +40,24 @@ import {
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DEV_REF = 'npgnrxaitgbtbtvvykto';
 const PROD_REF = 'qcttcboqysynwcdyghil';
-const SLUG = 'milton-bats';
 
 // ── arguments ───────────────────────────────────────────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2);
+// The clubs this machinery may build, each pinned to its slug: a config cannot name a different organization. `kestrel` is
+// the on-sale pages' pictures club (docs/projects/active/CLUB_ON_SALE_PAGES_PLAN.md S3b), photographed for public pages.
+const CLUBS = {
+  milton: { file: './prospect-demo.milton.config.mjs', slug: 'milton-bats' },
+  kestrel: { file: './on-sale-pictures.kestrel.config.mjs', slug: 'kestrel-bay' },
+};
+const clubArg = (argv.find(a => a.startsWith('--club=')) ?? '--club=milton').slice('--club='.length);
+if (!CLUBS[clubArg]) { console.error(`✗ Unknown --club=${clubArg}. Known: ${Object.keys(CLUBS).join(', ')}.`); process.exit(1); }
+const cfg = (await import(CLUBS[clubArg].file)).default;
+const SLUG = CLUBS[clubArg].slug;
 const DRY = argv.includes('--dry-run');
 const dayArg = argv.indexOf('--demo-day');
 const todayLocal = (() => { const t = new Date(); t.setMinutes(t.getMinutes() - t.getTimezoneOffset()); return t.toISOString().slice(0, 10); })();
 const DEMO_DAY = dayArg >= 0 ? argv[dayArg + 1] : todayLocal;
-for (const a of argv) if (!['--dry-run', '--reset', '--demo-day', DEMO_DAY].includes(a)) { console.error(`✗ Unknown argument: ${a}`); process.exit(1); }
+for (const a of argv) if (!['--dry-run', '--reset', '--demo-day', DEMO_DAY, `--club=${clubArg}`].includes(a)) { console.error(`✗ Unknown argument: ${a}`); process.exit(1); }
 if (!/^\d{4}-\d{2}-\d{2}$/.test(DEMO_DAY) || Number.isNaN(Date.parse(`${DEMO_DAY}T12:00:00Z`))) { console.error('✗ --demo-day must be YYYY-MM-DD.'); process.exit(1); }
 
 // The app judges "open", "early bird" and "the coming Saturday" by the REAL clock, so a demo day far from today builds a world
@@ -166,7 +179,7 @@ if (DRY) {
 // ── accounts: found, or made once (a password is set ONLY on creation) ───────────────────────────────────────────
 head('Accounts');
 async function account(email, name) {
-  if (!cfg.password && !(await findUserByEmail(db, email))) { console.error(`✗ ${email} has to be created, and MILTON_DEMO_PASSWORD is not set in .env.local. Set it, then run this again.`); process.exit(1); }
+  if (!cfg.password && !(await findUserByEmail(db, email))) { console.error(`✗ ${email} has to be created, and ${cfg.passwordEnv ?? 'MILTON_DEMO_PASSWORD'} is not set in .env.local. Set it, then run this again.`); process.exit(1); }
   const { user, created } = await ensureFixtureUser(db, { email, password: cfg.password, userMetadata: { full_name: name }, resetPassword: false });
   ok(`${email} — ${created ? 'created (password set)' : 'already there (password untouched)'}`);
   return user;
@@ -258,7 +271,7 @@ for (const spec of cfg.venues) {
 ok(`venues: ${cfg.venues.map(v => `${v.name} (${v.facilities.length})`).join(' · ')}`);
 
 // ══ RESET ════════════════════════════════════════════════════════════════════════════════════════════════════════
-head('Reset — only rows the Milton organization owns');
+head(`Reset — only rows ${cfg.name} owns`);
 const before = await ownedCounts();
 // 1. Money first: the seasons' books (their lines have no foreign key to a registration), then the seasons (which cascade
 //    divisions, teams, registrations, games, scores, notices, email rows, coaches, ratings, price changes, slot uses).
@@ -582,8 +595,9 @@ for (const d of prevDivs) {
     pairs.forEach(([a, b], g) => {
       const home = w % 2 ? b : a; const away = w % 2 ? a : b;
       const start = torontoInstant(day, d.code === 'U9' ? '09:00' : '10:45');
+      const pv = P.venue ?? 'Lions Park';
       pGames.push({ season_id: pSeason.id, org_id: ORG, division_id: PDIV[d.code], home_team_id: ts[home].id, away_team_id: ts[away].id, scheduled_at: start,
-        ends_at: minutesLater(start, 90), org_venue_id: venues['Lions Park'].id, org_venue_facility_id: venues['Lions Park'].fac['Diamond 1'], location: 'Lions Park · Diamond 1',
+        ends_at: minutesLater(start, 90), org_venue_id: venues[pv].id, org_venue_facility_id: venues[pv].fac['Diamond 1'], location: `${pv} · Diamond 1`,
         status: 'completed', home_score: 2 + Math.floor(prng() * 11), away_score: 2 + Math.floor(prng() * 11) });
       void g;
     });
@@ -622,6 +636,6 @@ const totals = sql(`SELECT (SELECT count(*) FROM league_registrations WHERE org_
     (SELECT count(*) FROM league_season_notices WHERE org_id = ${q(ORG)}) AS notices`)[0];
 console.log('  totals:', JSON.stringify(totals));
 console.log(`\n  Club:   http://localhost:3000/${SLUG}/admin    public: http://localhost:3000/${SLUG}   league: http://localhost:3000/${SLUG}/league`);
-console.log(`  Sign in: ${cfg.people.owner.email} (Owner) · ${cfg.people.admin.email} (League admin) · ${cfg.people.coach.email} (coach, ${TEAM.U11[0].name}) — the password is MILTON_DEMO_PASSWORD in .env.local`);
+console.log(`  Sign in: ${cfg.people.owner.email} (Owner) · ${cfg.people.admin.email} (League admin) · ${cfg.people.coach.email} (coach, ${TEAM.U11[0].name}) — the password is ${cfg.passwordEnv ?? 'MILTON_DEMO_PASSWORD'} in .env.local`);
 console.log(`  ${cfg.people.parent.email} is the guardian contact of Ella (U9) and Owen (U11) — no account is made; the family-app invitation creates it.`);
 console.log('  ⚠ Dev-only world. Reset any time: npm run demo:milton:reset');

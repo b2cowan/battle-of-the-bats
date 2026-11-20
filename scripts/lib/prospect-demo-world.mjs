@@ -101,6 +101,11 @@ export function buildWorld(cfg, demoDay) {
   const at = (day, h = rint(13, 23), m = rint(0, 59)) => `${day}T${pad2(h % 24)}:${pad2(m)}:00Z`;
   const phone = () => `${pickR(['905', '905', '289', '365'])}-555-01${pad2(rint(0, 99))}`;
   const byCode = Object.fromEntries(cfg.divisions.map(d => [d.code, d]));
+  // A club config may replace the free-text notes and the family address domain (the on-sale pictures' club carries no
+  // medical line, since its screens are photographed for public pages). Milton keeps the defaults.
+  const playerNotes = cfg.world?.playerNotes ?? NOTES;
+  const adminNotes = cfg.world?.adminNotes ?? ADMIN_NOTES;
+  const familyDomain = cfg.world?.familyDomain ?? 'miltonfamilies.local';
 
   // ── one pool of child slots per division, with the status each carries ──
   const pool = {};
@@ -128,7 +133,7 @@ export function buildWorld(cfg, demoDay) {
     const g = GROUPS[gi];
     const last = surnames[gi].shift() ?? `${pickR(g.last)}-${pickR(g.last)}`;
     const first = pickR(g.parents);
-    const email = `${ascii(first)}.${ascii(last)}`.toLowerCase().replace(/[^a-z.]/g, '') + '@miltonfamilies.local';
+    const email = `${ascii(first)}.${ascii(last)}`.toLowerCase().replace(/[^a-z.]/g, '') + `@${familyDomain}`;
     return { surname: last, group: g, guardian: { first, last, email, phone: phone() }, kids: [] };
   }
   function addKid(h, slot, { dob, first } = {}) {
@@ -176,7 +181,7 @@ export function buildWorld(cfg, demoDay) {
     const registeredAt = at(regDay);
     regs.push({
       key: `r${++n}`, div: k.div, status: k.status, first: k.first, last: k.last, dob: k.dob,
-      pos: pickR(POS), notes: rng() < 0.15 ? pickR(NOTES) : null, adminNotes: rng() < 0.05 ? pickR(ADMIN_NOTES) : null,
+      pos: pickR(POS), notes: rng() < 0.15 ? pickR(playerNotes) : null, adminNotes: rng() < 0.05 ? pickR(adminNotes) : null,
       source, registeredAt, acceptedAt: null,
       fee: source === 'public_form' ? d.early : d.price,
       guardian: h.guardian, household: h.guardian.email, pay: null, rating: null, special: null, waitPos: null,
