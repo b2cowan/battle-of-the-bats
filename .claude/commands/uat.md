@@ -16,6 +16,7 @@ explicitly approves specific fixes.
 /uat tournament-admin       # tournament admin scenarios only
 /uat platform-admin         # platform admin scenarios only
 /uat coaches                # coaches portal scenarios only
+/uat club                   # club admin scenarios only (the UAT Rep Club fixture)
 /uat fix                    # re-read UAT_FINDINGS.md and propose fixes without re-running tests
 /uat setup                  # print the UAT_SETUP.md onboarding guide
 ```
@@ -52,6 +53,13 @@ Determine which suite(s) to run from `$ARGUMENTS`:
 | tournament-admin  | `Tournament admin /`              | `tests/uat/scenarios/tournament-admin.spec.ts` |
 | platform-admin    | `Platform admin /`                | `tests/uat/scenarios/platform-admin.spec.ts`   |
 | coaches           | `Coaches portal /`                | `tests/uat/scenarios/coaches.spec.ts`     |
+| club              | `Club admin /`                    | `tests/uat/scenarios/club-admin.spec.ts`  |
+
+`/uat club` needs the club fixture (see Context). If every club test reports **skipped**, the
+`UAT_REP_CLUB_*` block or its session files are missing — that is set-up, not a pass. The suite is
+read-only and pins the seed's identities (names, the Okafor household's email), never counts the
+calendar or other walks move; a failure that reads like missing seed data means the fixture has
+drifted — report it and offer `--reset` (it wipes anything a walk added), never reset unasked.
 
 Run the auth setup project first, then the main suite:
 

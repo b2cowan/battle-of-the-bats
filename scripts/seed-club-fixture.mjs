@@ -6,8 +6,8 @@
  * money in one org — before it, `uat-club-org` held two people and nothing else (plan H01).
  *
  * ⚠ WHY A NEW ORG AND NOT `uat-club-org` (decided 2026-09-25, Stage 0):
- *   · `plan-gating.spec.ts` asserts that org's admin is REFUSED club screens — it codifies defect
- *     A01 until Stage 8 rewrites it. Granting that admin what this walk needs would break it.
+ *   · `plan-gating.spec.ts` pins that org's admin to the role DEFAULTS (ruling D8: every program the
+ *     plan carries, Families refused). Granting that admin what this walk needs would break it.
  *   · The Stripe billing spec can leave `uat-club-org` CANCELLED (plan-gating re-activates it before
  *     it runs). A walk fixture another spec cancels is a walk that dies halfway.
  *   · Its owner is the shared `uat-owner@` account, which owns three orgs — every walk would start
@@ -17,12 +17,12 @@
  *   · `uat-rep-club` — "UAT Rep Club", plan `club`, team limit 15, public site ON.
  *   · Four board sign-ins: owner · admin · treasurer · registrar (`league_registrar`).
  *       - The ADMIN holds explicit grants for every module the plan carries (rep teams, accounting,
- *         public site, house league, families). By default an admin holds none (defect A01) and
- *         would be walked straight into the tournaments area; ruling D8 fixes the default in
- *         Stage 1. Until then the fixture grants what the walk needs.
- *       - The TREASURER is left on the role's DEFAULTS, deliberately. The allocation wizard's empty
- *         team list and the Payment Requests wall are defect C03 — the walk RECORDS them. Granting
- *         Rep Teams here would hide the defect the walk exists to show.
+ *         public site, house league, families). Since ruling D8 (Stage 1) the role's defaults carry
+ *         all of them but Families; the explicit grants stay so Families opens for the walk.
+ *       - The TREASURER is left on the role's DEFAULTS, deliberately: Accounting, and the teams'
+ *         money inside it (allocations, payment requests, each team's account) — never the Rep
+ *         teams area (D8's "read of rep teams", owner 2026-11-20). Defect C03 (the empty team list
+ *         and the Payment Requests wall) is fixed; the club UAT suite pins the defaults as they are.
  *       - The REGISTRAR is on defaults too (house league only) — which is what the role is for.
  *   · Nine rep teams in two groups: Senior (15U AAA, 15U AA, 16U AA, 14U AA, 18U AA — archived) and Junior
  *     (13U AAA, 12U AA, 11U AA, 9U AA). Club Tier Stage 2 · session 3 added 12U AA (a live season with a
