@@ -1,7 +1,7 @@
 'use client';
 /**
- * Free time on the customer's Plan & billing page (Support console Stage 4, owner ruling Q8; drawings D1–D3): the band
- * Founding Season already wears — eyebrow, icon box, headline, one sentence — in three tones: olive while it runs, amber
+ * Free time on the customer's Plan & billing page (Support console Stage 4, owner ruling Q8; drawings D1–D3): the band —
+ * eyebrow, icon box, headline, one sentence — in three tones: olive while it runs, amber
  * in the last 14 days, plain for 30 days after it ends. Both billing pages (the tournament page and Club's) render it from
  * the same words (`lib/free-time-copy.ts`). The page is told only the plan, the last free day and the plan it goes back
  * to (`/api/admin/org/free-time`), never the reason or who gave it.
@@ -17,7 +17,6 @@ import styles from './FreeTimeBand.module.css';
 export type CustomerFreeTimeState = {
   freeTime: CustomerFreeTime | null;
   overLimitAfter: boolean;
-  foundingThrough: string | null;
   /** A Coaches Portal's free time from staff (Stage 4b): its state and last free day only. */
   portal: PortalCustomerFreeTime | null;
   /** This viewer is the portal's own owner, the one person Keep Premium can attach a purchase for. */
@@ -37,7 +36,6 @@ export function useCustomerFreeTime(orgSlug: string | null | undefined): Custome
           setState({
             freeTime: (data.freeTime ?? null) as CustomerFreeTime | null,
             overLimitAfter: data.overLimitAfter === true,
-            foundingThrough: typeof data.foundingThrough === 'string' ? data.foundingThrough : null,
             portal: (data.portal ?? null) as PortalCustomerFreeTime | null,
             canKeepPremium: data.canKeepPremium === true,
           });

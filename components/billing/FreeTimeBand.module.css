@@ -1,5 +1,4 @@
-/* Free time on Plan & billing (Support console Stage 4): the Founding Season band's own recipe
-   (app/[orgSlug]/admin/org/billing/billing.module.css .foundingSeasonBanner), so free time adds nothing new to the page's
+/* Free time on Plan & billing (Support console Stage 4): one band recipe, so free time adds nothing new to the page's
    kit. Olive while it runs; amber in the last 14 days; plain for 30 days after it ends. */
 .band {
   display: flex;

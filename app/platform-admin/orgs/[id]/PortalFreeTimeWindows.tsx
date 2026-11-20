@@ -20,7 +20,7 @@ import styles from '../../record.module.css';
 const counted = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** Where the line sits on the person's tab: under the Premium portals it is about, or under the free team. */
-export const PREMIUM_SECTION_BLOCKS = new Set<PortalGiveBlock['kind']>(['running', 'had_free_time', 'paying', 'founding', 'comped', 'cancelled', 'club']);
+export const PREMIUM_SECTION_BLOCKS = new Set<PortalGiveBlock['kind']>(['running', 'had_free_time', 'paying', 'comped', 'cancelled', 'club']);
 
 /** The one line where the door would be (drawing A, lines 1–9): red for the switch and your own, amber otherwise. */
 export function PortalBlockLine({ block }: { block: PortalGiveBlock }) {

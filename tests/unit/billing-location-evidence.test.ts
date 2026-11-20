@@ -10,7 +10,7 @@ import { REVIEW_CONSEQUENCE } from '../../lib/billing-location.ts';
  *   · the billing webhook keeps the card country current (newest card, read from Stripe's current list);
  *   · "needs review" is worked out when read: the one stored flag (a Canada↔US change after paying, which stays) or the card
  *     and payout evidence as it stands, so an evidence flag sets and clears with the facts and never goes stale (Ask 1);
- *   · a Founding next-season choice counts as paying for that flag, and only for it (Ask 3);
+ *   · any subscription that started counts as paying for that flag, and only for it (Ask 3; the Founding next-season choice it once also counted was removed, Stage 2b);
  *   · a "Start your club" address goes on Stripe BEFORE the move and comes off if it is refused (Stage 2 Ask 2, 2026-11-05);
  *   · platform admin reads it, read only, on the Money tab.
  */
@@ -207,7 +207,7 @@ describe('the save keeps the one stored flag (Part 3 Ask 1) and counts a promise
   const guelph = { country: 'CA', regionCode: 'ON', line1: '120 Elm Street', city: 'Guelph', postalCode: 'N1H 4H2' };
   const coach = { kind: 'user' as const, userId: 'coach-1' };
 
-  it('a Canada↔US change by a buyer who has paid, or promised to (a Founding next-season choice), is flagged', async () => {
+  it('a Canada↔US change by a buyer who has paid (any subscription that started) is flagged', async () => {
     paid = true;
     await server().saveBillingLocation(coach, guelph);
     assert.equal(coachRow().review_reason, 'country_changed_after_paying');

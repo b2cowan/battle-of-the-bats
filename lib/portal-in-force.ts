@@ -11,8 +11,6 @@
  * workspace's own `subscription_status` is now a Stripe mirror, read only by writers and reactivation:
  * `tests/unit/support-console-stage4b-inforce-guard.test.ts` fails the build on a new raw read of it.
  *
- * Written to take any end, so Founding's turn-off can ride it later. ⚠ 4b gives no Founding row an end.
- *
  * This file is pure (the rule); the reads are in `lib/portal-in-force-server.ts`.
  */
 

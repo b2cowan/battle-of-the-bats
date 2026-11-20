@@ -690,7 +690,7 @@ describe('7 · the doors', () => {
     assert.ok(updated.indexOf("if (state === 'withdrawn')") < updated.indexOf('recordStripeSignal('));
     assert.ok(updated.indexOf('stripe.subscriptions.retrieve(eventSub.id)') < updated.indexOf('recordStripeSignal('), 'the live subscription, never the event’s copy');
     const deleted = code.slice(code.indexOf("case 'customer.subscription.deleted'"), code.indexOf("case 'invoice.payment_succeeded'"));
-    assert.ok(deleted.indexOf('clearNextSeasonChoice(choiceOrgId)') < deleted.indexOf('endingForDeletedSubscription('));
+    assert.ok(deleted.indexOf('endingForDeletedSubscription(') > 0, 'the deletion arm still routes to THE ending');
     assert.doesNotMatch(deleted, /\.eq\('status', 'applied'\)/, 'the unbounded "latest applied" check is gone (S4)');
   });
 

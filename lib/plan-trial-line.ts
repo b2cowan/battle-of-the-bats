@@ -11,7 +11,7 @@ import { BILLING_TAX_WORDS } from './billing-tax';
  * Pass the trial length checkout will actually use where you have it (`getPlanConfigOverride()`
  * — a platform admin can override `trial_days`); the default is the code value the public pricing
  * card reads. Show it only where a trial applies: a paying org moving to Club gets no second trial.
- * No "free" in it — Club carries no "free until" framing (2026-09-25, Club has no Founding offer).
+ * No "free" in it — Club carries no "free until" framing (2026-09-25).
  */
 export function clubTrialLine(trialDays: number = PLAN_CONFIG.club.trialDays): string {
   return planTrialLine(trialDays);

@@ -6,8 +6,8 @@
  * ⚖ At least 30 days before a yearly plan's next charge (the Terms draft §8 "Yearly plans"), every owner is told the date and the
  *   amount with its tax AS STRIPE WOULD CHARGE IT THAT DAY: Stripe's preview of the next invoice, never the plan's list price and
  *   never `amount_due` (a credit balance distorts it). It writes no tax record and nothing to Bookkeeping.
- * ⚖ A renewal, a yearly trial ending, and a yearly next-season choice's first charge. Never a monthly plan, a waiting cancel or move
- *   to the free plan, a Founding comp (no subscription), a dev mock, an ended or failing subscription, or a trial whose purchase
+ * ⚖ A renewal and a yearly trial ending. Never a monthly plan, a waiting cancel or move
+ *   to the free plan, staff free time (no subscription), a dev mock, an ended or failing subscription, or a trial whose purchase
  *   email (which states the date) went out under 38 days before its first charge.
  * ⚖ ONCE per charge date: the account's `renewal_reminded_for` holds the date last told of, claimed before the send and given back
  *   only when the email definitely did not go. Under 30 days and still untold (the job was down), it goes anyway: `late`.
@@ -27,15 +27,15 @@ export const REMINDER_WINDOW = { latestDays: 37, onTimeDays: 30 } as const;
 /** A trial's purchase email this close to its first charge already gave the date: it is the notice (League's 30-day trial). */
 export const PURCHASE_NOTICE_DAYS = 38;
 
-/** A renewal of a yearly plan, a yearly free trial ending, or a yearly next-season choice's first charge. */
-export type ReminderKind = 'renewal' | 'trial' | 'next_season';
+/** A renewal of a yearly plan, or a yearly free trial ending. */
+export type ReminderKind = 'renewal' | 'trial';
 
 /** One account the stored rows say may be due (the server's pre-filter, before any Stripe read). */
 export type ReminderCandidate = {
   orgId: string;
   subscriptionId: string;
   kind: ReminderKind;
-  /** The charge date as the stored row has it (the subscription's period end, its trial end, or the next-season first charge). */
+  /** The charge date as the stored row has it (the subscription's period end, or its trial end). */
   chargeIso: string;
   /** The account's `renewal_reminded_for`: the charge date it was last told of. */
   remindedFor: string | null;
@@ -51,8 +51,7 @@ export function reminderTiming(chargeIso: string, now: Date): 'on_time' | 'late'
 export const sameInstant = (a: string | null, b: string) => a !== null && ms(a) === ms(b);
 
 /**
- * One reminder per account per run, decided the same way every day: when the rows show an account two dates (a live yearly plan
- * and a next-season choice, which should not both exist), the earlier one. Two would each claim the one stamp in turn and both
+ * One reminder per account per run, decided the same way every day: when the rows show an account two dates, the earlier one. Two would each claim the one stamp in turn and both
  * send again every day.
  */
 export function onePerAccount(candidates: ReadonlyArray<ReminderCandidate>): ReminderCandidate[] {
@@ -167,7 +166,6 @@ export const REMINDER_WORDS = {
     switch (k) {
       case 'renewal': return `${possessive(orgName)} yearly ${planLabel} plan renews on ${date}. We’ll charge the card on file ${price} ${PLUS_TAX}.`;
       case 'trial': return `${possessive(orgName)} free trial of yearly ${planLabel} ends on ${date}. We’ll then charge the card on file ${price} ${PLUS_TAX}.`;
-      case 'next_season': return `${possessive(orgName)} yearly ${planLabel} plan starts on ${date}. We’ll charge the card on file ${price} ${PLUS_TAX}.`;
     }
   },
   /** Dropped when the preview carries no tax (the email still goes; /accounting 1). */

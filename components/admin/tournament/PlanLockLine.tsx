@@ -15,18 +15,11 @@
  *
  * PlanLockedTool is the same lock inside a Tools menu (Stage 3, A44): the tool keeps its own name, the plan's chip
  * beside it, the row opening the plan's panel. The schedule's Tools and Teams' Tools wear it.
- *
- * THE FOUNDING SEASON LINE (R10, M9 — the free tournament tier, 2026-10-12): an organization still on the free plan
- * with a running Founding Season comp sees "Free for you through September 30, 2027" as a quiet second line under a
- * lock line, in the lock's own grey (the chip and the door do not change). In a Tools menu it is said ONCE, at the
- * menu's foot (`PlanLockMenuFoot`), never under each locked row. The rule is `foundingSeasonLockUntil`.
  */
 import Link from 'next/link';
 import { Lock } from 'lucide-react';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import { CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { useFoundingSeasonLock } from '@/lib/use-founding-season-lock';
-import { LOCK_WORDS } from '@/lib/invite-only-words';
 import { getBillingHref, type BillingUrlOrg } from '@/lib/billing-urls';
 import { useOrg } from '@/lib/org-context';
 import styles from './PlanLockLine.module.css';
@@ -65,23 +58,11 @@ export default function PlanLockLine({ href, plan = TOURNAMENT_PLUS, children }:
   /** What the plan adds here, in a few words ("Show under chosen divisions"). */
   children: string;
 }) {
-  const until = useFoundingSeasonLock();
-  const foundingLine = until ? LOCK_WORDS.foundingLine(until) : null;
   return (
-    <Link href={href} className={styles.line} aria-label={`${children} · ${plan}${foundingLine ? ` · ${foundingLine}` : ''}`}>
+    <Link href={href} className={styles.line} aria-label={`${children} · ${plan}`}>
       <Lock size={13} aria-hidden className={styles.icon} />
-      <span className={styles.words}>
-        {children}
-        {foundingLine && <span className={styles.until}>{foundingLine}</span>}
-      </span>
+      <span className={styles.words}>{children}</span>
       <span className={styles.plan}><RepChip>{plan}</RepChip></span>
     </Link>
   );
-}
-
-/** The Founding Season line, said once at the foot of a Tools menu that holds a locked row (M9). Absent otherwise. */
-export function PlanLockMenuFoot() {
-  const until = useFoundingSeasonLock();
-  if (!until) return null;
-  return <p className={styles.menuFoot} role="note">{LOCK_WORDS.foundingMenuFoot(until)}</p>;
 }

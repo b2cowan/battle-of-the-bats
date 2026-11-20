@@ -11,14 +11,6 @@ import { TC_MAIL } from './house-league-team-changes-words';
 import { INVITE_PANEL_SLOT, INVITE_WHO_SLOT, moneyBlock } from './family-invitation-panel';
 import { formatStoredDate } from './timezone';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
-import {
-  FOUNDING_SEASON_END_LABEL,
-  FOUNDING_SEASON_FIRST_CHARGE_LABEL,
-  FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
-  FOUNDING_SEASON_NEXT_YEAR_LABEL,
-  PLAN_CONFIG,
-  formatPriceAmount,
-} from '@/lib/plan-config';
 import { INVITATION_EMAIL_WORDS as INVITE } from '@/lib/invite-only-words';
 import {
   WARM_EMAIL, WARM_EMAIL_STYLE, warmPanelStyle,
@@ -271,7 +263,7 @@ export function coachPortalUrl(p: { registrationId?: string; registered?: boolea
 
 /**
  * A consistent, quiet footer CTA appended INSIDE coach-facing template content — NEVER in the
- * shared wrap() shell (which org/billing/founding/auth/league/rep emails also use, so a footer
+ * shared wrap() shell (which org/billing/auth/league/rep emails also use, so a footer
  * there would leak the coach CTA everywhere). Gives every coach email one tap back to the portal.
  */
 export function coachPortalFooter(p: { registrationId?: string }): string {
@@ -747,20 +739,13 @@ export function basicCoachTeamWelcomeHtml(p: {
  * Welcome email sent once when a coach's Premium Coaches Portal workspace is first provisioned.
  * Confirms the upgrade, names what's now unlocked, and links into the portal. Naming canon: the
  * product is the "Coaches Portal"; the paid tier is "Premium Coaches Portal".
- *
- * `comp: true` is the Founding Season variant — the workspace is comped (no Stripe subscription),
- * so the closing line must NOT say "manage or cancel your subscription" (there is none). It mirrors
- * the org `founding_welcome` "free through the season, no card required" reassurance instead.
  */
 export function teamWorkspaceWelcomeHtml(p: {
   teamName: string;
   coachName?: string | null;
   portalUrl: string;
-  comp?: boolean;
 }) {
-  const closingLine = p.comp
-    ? `<p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;margin-top:1.5rem;">Your Premium Coaches Portal is <strong>free through ${FOUNDING_SEASON_END_LABEL}</strong> — no credit card, and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. We'll email you during the summer so you can choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season.</p>`
-    : `<p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>`;
+  const closingLine = `<p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>`;
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Welcome to the Premium Coaches Portal 🎉</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
@@ -1969,116 +1954,6 @@ export function orgDeletionRequestHtml(p: {
     </div>
   `);
 }
-
-// ── Founding Season email templates ──────────────────────────────────────────
-
-/**
- * tournament_plus_welcome — fires ~1 day AFTER the user selects Tournament Plus on
- * the onboarding plan-select screen (not at signup). Transactional welcome — bypasses
- * the opt-out check, so the unsubscribe footer is NOT auto-injected; a courtesy
- * unsubscribe block is included inline.
- *
- * Intentionally has NO "set up your first tournament" CTA — the setup wizard already
- * runs immediately after the user picks the plan. The CTA points to the admin dashboard.
- */
-export function tournamentPlusWelcomeHtml(p: {
-  orgName: string;
-  firstName?: string;
-  dashboardUrl: string;
-  unsubscribeUrl?: string;
-}) {
-  const greeting = p.firstName ? `Hi ${p.firstName},` : 'Hi there,';
-  const unsubscribeBlock = p.unsubscribeUrl
-    ? `<div style="margin-top:2rem;padding-top:1.25rem;border-top:1px solid ${WARM_EMAIL.cardEdge};">
-        <p style="margin:0;color:${WARM_EMAIL.secondary};font-size:0.72rem;line-height:1.55;">
-          You're receiving this because you signed up for FieldLogicHQ.&nbsp;
-          <a href="${p.unsubscribeUrl}" style="color:${WARM_EMAIL.olive};text-decoration:underline;">Unsubscribe</a>
-          &nbsp;·&nbsp; FieldLogicHQ · Canada
-        </p>
-      </div>`
-    : '';
-
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.35rem;font-weight:700;margin:0 0 1.25rem;letter-spacing:-0.01em;">
-      You're on Tournament Plus.
-    </h2>
-    <p style="margin:0 0 1rem;">${greeting}</p>
-    <p style="margin:0 0 1.25rem;line-height:1.7;">
-      <strong>${p.orgName}</strong> is now running <strong>Tournament Plus</strong>, free as a
-      founding organization through <strong>${FOUNDING_SEASON_END_LABEL}</strong>. No credit card required,
-      and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.
-    </p>
-
-    <div style="${warmPanelStyle('olive')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">What's included now</p>
-      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:${WARM_EMAIL.ink};">
-        <li>Public registration, fees, and payment tracking</li>
-        <li>Check-in and unlimited volunteers</li>
-        <li>Unlimited tournaments and the round-robin generator</li>
-        <li>The playoff generator, for single and double elimination</li>
-        <li>Custom registration fields and exports</li>
-        <li>Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit</li>
-        <li>Sealed archives, cloning, and targeted announcements</li>
-      </ul>
-    </div>
-
-    ${warmEmailButton('Open your dashboard', p.dashboardUrl)}
-
-    <p style="margin:1.75rem 0 0;line-height:1.7;color:${WARM_EMAIL.secondary};">
-      If anything doesn't work the way you'd expect, reply to this email. We read everything.
-    </p>
-    <p style="margin:0.75rem 0 0;color:${WARM_EMAIL.secondary};">— The FieldLogicHQ team</p>
-    ${unsubscribeBlock}
-  `);
-}
-
-/**
- * tournament_plus_upsell — fires ~1 week AFTER the user chooses the free Tournament
- * plan during onboarding. Marketing email (respects opt-out); the unsubscribe footer
- * is auto-injected by email-sender.ts, so none is included inline here.
- *
- * Promotes that Tournament Plus is free through the Founding Season and lists what it adds, led by what left the
- * free plan with the invite-only build (registration, fees and payments, check-in, volunteers; R9). CTA → upgrade.
- */
-export function tournamentPlusUpsellHtml(p: {
-  orgName: string;
-  firstName?: string;
-  upgradeUrl: string;
-}) {
-  const greeting = p.firstName ? `Hi ${p.firstName},` : 'Hi there,';
-
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.35rem;font-weight:700;margin:0 0 1.25rem;letter-spacing:-0.01em;">
-      Tournament Plus is free this season.
-    </h2>
-    <p style="margin:0 0 1rem;">${greeting}</p>
-    <p style="margin:0 0 1.25rem;line-height:1.7;">
-      <strong>${p.orgName}</strong> is on the free Tournament plan — that's a great place to start.
-      But as a founding organization you can run <strong>Tournament Plus free through
-      ${FOUNDING_SEASON_END_LABEL}</strong> (normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month), and it adds the tools that save the most time.
-    </p>
-
-    <div style="${warmPanelStyle('olive')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">What Tournament Plus adds</p>
-      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:${WARM_EMAIL.ink};">
-        <li>Public registration — teams register on your site, and you approve, waitlist, or decline</li>
-        <li>Fees and payment tracking, with payment reminders</li>
-        <li>Check-in and unlimited volunteers on game day</li>
-        <li>Unlimited tournaments — the free plan runs one at a time</li>
-        <li>The round-robin and playoff generators</li>
-        <li>Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit</li>
-      </ul>
-    </div>
-
-    ${warmEmailButton('Switch to Tournament Plus — free', p.upgradeUrl)}
-
-    <p style="margin:1.75rem 0 0;line-height:1.7;color:${WARM_EMAIL.secondary};">
-      Staying on the free plan is totally fine too — the free season is yours if you upgrade by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}.
-    </p>
-    <p style="margin:0.75rem 0 0;color:${WARM_EMAIL.secondary};">— The FieldLogicHQ team</p>
-  `);
-}
-
 
 export function cancellationConfirmationHtml(p: {
   orgName: string;

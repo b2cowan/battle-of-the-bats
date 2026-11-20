@@ -178,12 +178,9 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
 
   retention:       { viewRoles: ['super_admin', 'billing', 'support'], powers: ['retention'] },
   bulk_operations: { viewRoles: ['super_admin', 'billing', 'product'], powers: ['bulk_plan_status', 'bulk_sections'] },
-  /* Free time (Support console Stage 4): everyone with free time running, in three views — Everyone, Founding Season
-     (the Founding desk, whole) and Given by staff. It replaced the Founding season desk's menu entry.
-     ⚠ NO WRITES, DELIBERATELY: nothing on the list acts (no bulk end, no bulk extend). The Founding desk was read-only on
-     purpose (owner-approved 2026-09-07) and a group-wide change to Founding Season is its turn-off decision, not a support
-     action. Free time is given, changed and ended on a club's record, by the plan-and-billing power (owner ruling Q2), so
-     that is the write side the eye reads. SUPPORT sees it because "when does my free time end" is a support question;
+  /* Free time (Support console Stage 4): everyone with staff-given free time running, in one list.
+     ⚠ NO WRITES, DELIBERATELY: nothing on the list acts (no bulk end, no bulk extend). Free time is given, changed and ended on a club's record, by the plan-and-billing
+     power (owner ruling Q2), so that is the write side the eye reads. SUPPORT sees it because "when does my free time end" is a support question;
      PRODUCT because "did they choose a plan?" is a roadmap question before it is a billing one. */
   free_time: { viewRoles: ['super_admin', 'billing', 'support', 'product'], powers: ['club_billing'] },
   /* Customers › Renewals (Plans & pricing Stage 2 Part 4; owner ruling 2, 2026-11-07): what renews or ends, and the unpaid

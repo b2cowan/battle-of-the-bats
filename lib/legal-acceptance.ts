@@ -173,7 +173,7 @@ export async function recordDoorAcceptance(
 }
 
 /**
- * The gated routes' check (Chunk C: organization create, checkout, plan move, next-season choice, card setup) — called at the
+ * The gated routes' check (Chunk C: organization create, checkout, plan move) — called at the
  * TOP of the handler, before any branch. `off`, `exempt` and `accepted` pass; `needed` is a 409 `terms_required` carrying the
  * version to show, which the client turns into the window and, once ticked, re-sends the same request.
  */

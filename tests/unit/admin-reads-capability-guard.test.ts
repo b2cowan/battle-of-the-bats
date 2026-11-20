@@ -55,9 +55,6 @@ const OPEN_TO_EVERY_MEMBER: Record<string, string> = {
   'app/api/admin/club-brief/route.ts':
     'the club hub’s brief: `shape` (what the club runs) is every reader’s; each program section is built only for a '
     + 'reader who can open it',
-  'app/api/admin/org/founding-season-status/route.ts':
-    'the comp status every member’s shell may show (the plan lock lines, the pricing page); the card and the next-season '
-    + 'choice ask for `billing`',
   'app/api/admin/org-settings/route.ts':
     'the club’s look (name, address, theme) — what the public site shows; an ACCEPTED member, never an invitee',
 };

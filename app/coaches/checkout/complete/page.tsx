@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CoachWelcomeCard, PremiumWelcome } from '@/components/consumer/CoachWelcomeCard';
 import accountForm from '@/components/auth/AccountForm.module.css';
-import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { parseTeamCheckoutMetadata } from '@/lib/team-checkout';
@@ -32,7 +31,7 @@ function getOrgSlug(row: WorkspaceLookup | null): string | null {
 type CheckoutState =
   | { kind: 'no_payment' }
   | { kind: 'setting_up' }
-  | { kind: 'ready'; orgSlug: string; team: string; foundingComp: boolean };
+  | { kind: 'ready'; orgSlug: string; team: string };
 
 /**
  * Where Stripe returns a paid Coach Premium checkout (`success_url` in create-team-checkout). The Stripe webhook
@@ -81,7 +80,7 @@ async function readCheckout(sessionId: string | undefined): Promise<CheckoutStat
     const row = data as WorkspaceLookup | null;
     const orgSlug = getOrgSlug(row);
     if (!row || !orgSlug) return { kind: 'setting_up' };
-    return { kind: 'ready', orgSlug, team: checkout.teamName, foundingComp: await workspaceHoldsFoundingComp(row.workspace_org_id) };
+    return { kind: 'ready', orgSlug, team: checkout.teamName };
   } catch (error) {
     console.error('[coaches checkout complete] workspace lookup error:', error);
     return { kind: 'setting_up' };
@@ -93,7 +92,7 @@ export default async function CoachesPortalCheckoutCompletePage({ searchParams }
   const state = await readCheckout(sessionId);
 
   if (state.kind === 'ready') {
-    return <PremiumWelcome team={state.team} href={`/${state.orgSlug}/coaches?success=1`} foundingComp={state.foundingComp} />;
+    return <PremiumWelcome team={state.team} href={`/${state.orgSlug}/coaches?success=1`} />;
   }
   if (state.kind === 'no_payment') {
     return (

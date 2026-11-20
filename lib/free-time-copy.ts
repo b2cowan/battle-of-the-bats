@@ -13,8 +13,6 @@ import type { OrgPlan } from './types';
 
 export type FreeTimeCopyInput = {
   freeTime: CustomerFreeTime;
-  /** The Founding Season's last free day ("September 30, 2027") when the club's own plan is a running Founding comp. */
-  foundingThrough: string | null;
   /** Whether the given plan is open for sign-up (the live gate): only then does the page offer to keep it. */
   givenOnSale: boolean;
   /** The club will hold more tournaments than its own plan allows when free time ends. */
@@ -37,15 +35,13 @@ export function freeTimeCopy(input: FreeTimeCopyInput): FreeTimeCopy {
   const own = ft.ownPlan;
   const through = formatLongDay(ft.lastDay);
   const backTo = own === 'tournament' ? 'the free Tournament plan' : label(own);
-  // Founding Season still runs after a shorter grant: say so; past its end, it would promise a free period that has ended.
-  const founding = input.foundingThrough && own !== 'tournament' ? `, still free through ${input.foundingThrough} as a founding organization` : '';
-  const nothingCharged = own === 'tournament' || founding
+  const nothingCharged = own === 'tournament'
     ? 'Nothing is charged, and nothing you made is deleted.'
     : 'Nothing is charged for this, and nothing you made is deleted.';
   const teamsKept = ft.plan === 'club' || ft.plan === 'club_large' ? ', including teams you added' : '';
 
   if (ft.state === 'ended') {
-    const where = own === 'tournament' ? "You're on the free Tournament plan again." : `You're back on ${label(own)}${founding}.`;
+    const where = own === 'tournament' ? "You're on the free Tournament plan again." : `You're back on ${label(own)}.`;
     const closed = input.givenOnSale
       ? `The tools that come only with ${given} are closed until you choose it.`
       : `The tools that come only with ${given} are closed. ${given} isn't open for sign-up yet.`;
@@ -57,7 +53,7 @@ export function freeTimeCopy(input: FreeTimeCopyInput): FreeTimeCopy {
   }
 
   const card = { price: `Free through ${through}`, from: `from FieldLogicHQ · then ${own === 'tournament' ? 'the free Tournament plan' : `${label(own)} again`}, automatically` };
-  const goesBack = `On ${dayAfterWords(ft.lastDay)} it goes back to ${backTo} automatically${founding}.`;
+  const goesBack = `On ${dayAfterWords(ft.lastDay)} it goes back to ${backTo} automatically.`;
 
   if (ft.state === 'running') {
     return {
@@ -88,7 +84,7 @@ export function freeTimeCopy(input: FreeTimeCopyInput): FreeTimeCopy {
       tone: 'amber',
       eyebrow,
       title: left === 0 ? 'Your free time ends today.' : `Your free time runs through ${through}.`,
-      text: `On ${dayAfterWords(ft.lastDay)} you go back to ${backTo} automatically${founding}. ${keep}${over}`,
+      text: `On ${dayAfterWords(ft.lastDay)} you go back to ${backTo} automatically. ${keep}${over}`,
     },
     billingCard: input.givenOnSale
       ? `Your free time runs through ${through}. To keep ${given}, contact us. Otherwise there is nothing to do.`

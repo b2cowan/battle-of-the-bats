@@ -5,12 +5,11 @@
  * Context (owner directive 2026-07-20, BUSINESS_DECISIONS.md D4): migration 065
  * seeded team='live' and it was never audited, leaving the $29/mo checkout
  * accidentally open on prod while all copy said "coming soon" (0 sales).
- * Phase 0 of FOUNDING_SEASON_COACHES_FREE_PLAN.md closes it to 'early_access';
- * Phase 3 (coaches launch, $0 Founding Season comp path) reopens it to 'live'.
+ * 'early_access' closes the checkout; 'live' reopens it.
  *
  * Usage:
- *   node scripts/set-team-plan-gating.mjs --prod --set early_access   # Phase 0 close
- *   node scripts/set-team-plan-gating.mjs --prod --set live           # Phase 3 reopen
+ *   node scripts/set-team-plan-gating.mjs --prod --set early_access   # close the checkout
+ *   node scripts/set-team-plan-gating.mjs --prod --set live           # reopen the checkout
  *   node scripts/set-team-plan-gating.mjs --dev  --set ...            # dev mirror
  *
  * Prints the row before and after; refuses unknown statuses; no-ops (exit 0)
@@ -72,8 +71,8 @@ if (!ALLOWED_STATUSES.includes(setStatus)) {
 }
 
 const NOTE = setStatus === 'early_access'
-  ? 'Owner directive 2026-07-20 (BUSINESS_DECISIONS D4): close accidentally-live team checkout (mig-065 seed drift, 0 sales); reopens as $0 Founding Season comp at FOUNDING_SEASON_COACHES_FREE_PLAN Phase 3 launch'
-  : 'FOUNDING_SEASON_COACHES_FREE_PLAN Phase 3 launch: reopen team as $0 Founding Season comp (BUSINESS_DECISIONS 2026-07-20 D1/D2)';
+  ? 'Owner directive 2026-07-20 (BUSINESS_DECISIONS D4): close accidentally-live team checkout (mig-065 seed drift, 0 sales)'
+  : 'Reopen the team (standalone Premium Coaches Portal) checkout';
 
 function query(sql) {
   const body = JSON.stringify({ query: sql });

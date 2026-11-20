@@ -6,8 +6,8 @@
  * Checkout's `customer_update.name: 'auto'` writes the CARDHOLDER's name onto the Stripe customer when no business name is typed,
  * and every later invoice would name that person. The webhook puts ours back (`buyerNameAfterCheckout`, unit-tested in
  * billing-tax.test.ts). What a unit test cannot see, and this file pins:
- *   · the call is in the subscription-mode arm, and BEFORE the next-season and standalone_team arms — both `break` early, so a
- *     call placed after them silently never runs for paths C and B;
+ *   · the call is in the subscription-mode arm, and BEFORE the org_team_addon and standalone_team arms — both `break` early, so a
+ *     call placed after them silently never runs for path B;
  *   · it never throws (a 500 re-sends the whole event), and a failure is told (nothing later repairs it);
  *   · every path stores OUR name on the customer before Checkout (without it the fix does nothing for that path);
  *   · R4: Stripe's page is unchanged — no `name_collection` anywhere.
@@ -23,14 +23,14 @@ const code = readCode(WEBHOOK);
 const arm = between(code, "case 'checkout.session.completed': {", '\n    case ', `${WEBHOOK} checkout.session.completed`);
 const CALL = "if (session.mode === 'subscription') await restoreBuyerName(session, customerId);";
 
-describe('the webhook puts our name back on every subscription Checkout (paths A, B, C)', () => {
+describe('the webhook puts our name back on every subscription Checkout (paths A and B)', () => {
   it('calls it once, in the subscription arm, after the setup arm and before both early-break arms', () => {
     assert.equal(code.split('await restoreBuyerName(').length - 1, 1, 'one call of restoreBuyerName, the one below');
     const at = arm.indexOf(CALL);
     assert.ok(at > 0, `the checkout.session.completed arm must say: ${CALL}`);
     const setupEnd = arm.indexOf('break;', arm.indexOf("if (session.mode === 'setup')"));
     assert.ok(setupEnd > 0 && at > setupEnd, 'after the setup arm (a card save has no name to put back)');
-    for (const early of ['NEXT_SEASON_CHOICE_KIND', "checkoutKind === 'org_team_addon'", "checkoutKind === 'standalone_team'"]) {
+    for (const early of ["checkoutKind === 'org_team_addon'", "checkoutKind === 'standalone_team'"]) {
       const e = arm.indexOf(early);
       assert.ok(e > 0, `the arm still reads ${early}`);
       assert.ok(at < e, `before the ${early} arm: it breaks early, so a call after it never runs`);
@@ -59,11 +59,9 @@ describe('the webhook puts our name back on every subscription Checkout (paths A
 });
 
 describe('every path stores OUR name on the customer before Checkout (without it the webhook has nothing to put back)', () => {
-  it('A club and C next-season: ensureStripeCustomer is given the name, and stores it as ours', () => {
+  it('A club: ensureStripeCustomer is given the name, and stores it as ours', () => {
     assert.match(readCode('app/api/billing/create-checkout/route.ts'),
       /ensureStripeCustomer\(auth\.org, auth\.user\.email, billingLocation, inPlaceClubName \?\? auth\.org\.name\)/);
-    assert.match(readCode('app/api/billing/choose-next-season/route.ts'),
-      /ensureStripeCustomer\(auth\.org, auth\.user\.email, located\.location, buyer\.kind === 'org' \? auth\.org\.name : coachName\)/);
     const ensure = functionBody(readCode('lib/billing-setup.ts'), 'ensureStripeCustomer');
     assert.match(ensure, /\[BUYER_NAME_META\]: name/, 'a new customer is created with our name stored');
     assert.match(ensure, /buyerNameUpdate\(await retrieveLiveCustomer\(customerId\), name\)/, 'an existing one is named through buyerNameUpdate');

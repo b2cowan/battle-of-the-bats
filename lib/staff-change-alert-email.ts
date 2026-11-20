@@ -40,7 +40,7 @@ export type BulkChangeAlert = Common & {
   /** `waiting`: a cancel or a move to the free plan waits for its date (Plans end at renewal, Stage 2 Part C). */
   skipped: { portals: number; billed: number; ownClubs: number; waiting?: number };
   /** A plan change's side effects, counted ("Also: 1 Club trial started · …"). */
-  also: { clubTrials: number; compsEnded: number; archived: number; archivedAccounts: number };
+  also: { clubTrials: number; archived: number; archivedAccounts: number };
 };
 
 export type PriceSwitchAlert = Common & {
@@ -67,10 +67,9 @@ const esc = (value: string) => value
 /** "Nov 2", the Eastern day. The email goes as the change runs, so its year is always this one. */
 const shortDay = (iso: string) => formatStoredDate(iso, { withYear: false });
 
-function alsoLine({ clubTrials, compsEnded, archived, archivedAccounts }: BulkChangeAlert['also']): string | null {
+function alsoLine({ clubTrials, archived, archivedAccounts }: BulkChangeAlert['also']): string | null {
   const parts = [
     clubTrials ? `${pluralize(clubTrials, 'Club trial')} started` : null,
-    compsEnded ? `${pluralize(compsEnded, 'Founding Season comp')} ended` : null,
     archived ? `${pluralize(archived, 'tournament')} over the new limit archived across ${pluralize(archivedAccounts, 'account')}` : null,
   ].filter(Boolean);
   return parts.length ? `Also: ${parts.join(' · ')}` : null;

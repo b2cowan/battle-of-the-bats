@@ -11,8 +11,7 @@ import { freeTimePortalOrgIds } from './portal-free-time-server';
  * "Ending in 14 days" filter shows (owner ruling Q7: one queue, 14 days, counting clubs). A club with a plan and a section
  * both running is one row, named by both, dated by the one that ends first.
  *
- * Founding Season is not in it: its access is the club's plan, not a grant, until its turn-off decision (owner ruling
- * Q4), and the Founding Season view counts its own days. The public demo clubs are left out, as every console count is.
+ * The public demo clubs are left out, as every console count is.
  */
 
 export type StaffFreeTimeClub = {

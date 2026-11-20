@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
-import { ensureFoundingSeasonCompPeriod, foundingSeasonOfferFor } from '@/lib/founding-season';
 import { clearStartDoor } from '@/lib/start-door-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
@@ -41,7 +39,7 @@ async function isSlugAvailable(slug: string) {
  * /api/auth/signup: that route creates the auth user (and rejects existing emails);
  * this one operates on the live session, so an existing user adds a second workspace
  * without re-signing-up. New org lands on the free `tournament` plan (migration-050
- * invariant: $0 / active / no Stripe sub) with the founding-season comp, exactly like
+ * invariant: $0 / active / no Stripe sub), exactly like
  * a first-time signup org.
  */
 export const POST = withObservability(async (req: Request) => {
@@ -61,8 +59,8 @@ export const POST = withObservability(async (req: Request) => {
     if (await isPlatformAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }
-    // Nobody starts an organization without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch,
-    // the Founding Season comp included. Live since step 6.7 (2026-11-17, `lib/legal-pages-switch.ts`).
+    // Nobody starts an organization without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch.
+    // Live since step 6.7 (2026-11-17, `lib/legal-pages-switch.ts`).
     const terms = await requireAcceptance(user);
     if (!terms.ok) return terms.response;
 
@@ -92,7 +90,7 @@ export const POST = withObservability(async (req: Request) => {
 
     const { orgName, orgSlug, startPlan: rawStartPlan } = await req.json().catch(() => ({}));
     // A paid door (On-sale pages S2): Start a club sends `club` or `club_large`, Start a league season `league`. The
-    // organization is still made on the free Tournament plan, with NO Founding comp (Ask 14), and remembers the plan
+    // organization is still made on the free Tournament plan and remembers the plan
     // (organizations.start_plan) for the plan step, an abandoned checkout and the wait after Stripe.
     const startPlan = rawStartPlan === undefined || rawStartPlan === null ? null : parseStartPaidPlan(rawStartPlan);
     if (rawStartPlan !== undefined && rawStartPlan !== null && !startPlan) {
@@ -160,18 +158,6 @@ export const POST = withObservability(async (req: Request) => {
         { error: 'Failed to link you to the new organization.' },
         500,
       );
-    }
-
-    // Founding Season: a new free org gets Tournament Plus comped through FOUNDING_SEASON_END while the sign-up window
-    // is open — and after it, when the ACCOUNT was made by the close and this is the organization its Run a tournament
-    // sign-up came for (A5 + edge (a), 2026-10-19; the one rule, lib/founding-season.ts). Non-fatal — creation
-    // succeeds even if this insert fails.
-    if (!startPlan && foundingSeasonOfferFor(user, 'organization')) {
-      try {
-        await ensureFoundingSeasonCompPeriod(org.id, 'system', `Founding Season — Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`);
-      } catch (compErr) {
-        console.error('[org/create] Founding season comp_period insert error:', compErr);
-      }
     }
 
     // Account-first (Part 2): the organization is made, so Home's waiting workspace has done its job.

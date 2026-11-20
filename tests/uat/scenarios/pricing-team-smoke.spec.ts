@@ -27,7 +27,7 @@ test.describe('public pricing Team segment', () => {
     await expect(anonPage.getByText(/^Premium Coaches Portal\. /)).toBeVisible();
     await expect(anonPage.getByRole('list', { name: 'Sign-up steps' })).toBeVisible();
     await expect(anonPage.getByRole('button', { name: 'Create account' })).toBeVisible();
-    await expect(anonPage.getByRole('group', { name: /After the Founding Season|Billing/ })).toHaveCount(0);
+    await expect(anonPage.getByRole('group', { name: /Billing/ })).toHaveCount(0);
     await expect(anonPage.getByText('Keep the team running after the tournament')).toHaveCount(0);
 
     await anonPage.goto('/coaches/start?billing=annual&source=registration_confirmation&orgSlug=demo-org&tournamentSlug=demo-tournament');

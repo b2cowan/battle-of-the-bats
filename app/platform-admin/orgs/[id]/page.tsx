@@ -12,7 +12,6 @@ import { holdsSlot } from '@/lib/tournament-slot';
 import { effectiveOrgFactsOf } from '@/lib/entitlement-grants';
 import { freeTimeDoorFacts } from '@/lib/free-time-writes';
 import { canGiveIndefinitely, capMonthsFor, earliestLastDay, grantablePlansAbove, isGrantRunning, isReopeningGrant, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
-import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { stripeStillBills } from '@/lib/stripe-billing-state';
 import { stripeDashboardBase } from '@/lib/stripe-mode';
 import { readPortalRecordFreeTime } from '@/lib/portal-free-time-tab';
@@ -64,7 +63,7 @@ type OverrideRow = {
 };
 
 /** Free time as the record reads it: running now, or when each ended (revoked, or ran out). The end is read as the last
- *  free day (owner ruling Q8); a comp period carrying Founding Season's end is Founding Season. */
+ *  free day (owner ruling Q8). */
 function overrideRows(rows: OverrideRow[], now = new Date()): ClubRecordProps['overrides'] {
   const nowMs = now.getTime();
   return rows.map(o => ({
@@ -75,7 +74,6 @@ function overrideRows(rows: OverrideRow[], now = new Date()): ClubRecordProps['o
     plan: o.target?.plan ?? null,
     expiresAt: o.expires_at,
     lastDay: o.expires_at ? lastDayOfInstant(o.expires_at) : null,
-    founding: o.type === 'comp_period' && !!o.expires_at && isFoundingSeasonCompExpiry(o.expires_at),
     reopenedEndedClub: isReopeningGrant(o),
     reason: o.reason,
     createdBy: o.created_by,
@@ -181,9 +179,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const runningGrant = portalFreeTime?.running
     ? overrides.find(o => o.id === portalFreeTime.running!.id)
     : overrides.find(o => o.running && o.type === 'plan_tier' && o.lastDay);
-  const runningFounding = overrides.find(o => o.running && o.founding && o.lastDay);
-  const freeRow = runningGrant ?? runningFounding;
-  const freeThrough = freeRow ? { lastDay: freeRow.lastDay!, what: runningGrant ? 'free time' : 'Founding Season' } : null;
+  const freeThrough = runningGrant?.lastDay ? { lastDay: runningGrant.lastDay, what: 'free time' } : null;
   const props: ClubRecordProps = {
     org: {
       id: org.id,

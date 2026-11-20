@@ -5,8 +5,6 @@ import { chunked } from './supabase-paging';
 import { stripeKeyIsLive } from './stripe-mode';
 import { notCustomerOrgIds } from './platform-metrics';
 import { getStaffFreeTime } from './free-time-list';
-import { foundingCompExpiryByOrg } from './founding-season-desk';
-import { listDemoOrgIdsQuietly } from './demo-org-server';
 import { UNPAID_RECORD_COLUMNS, type ComingInput, type RenewalOrg, type UnpaidInput, type UnpaidRecord } from './renewals';
 
 /**
@@ -35,21 +33,16 @@ const byId = (orgs: RenewalOrg[]) => new Map(orgs.map(o => [o.id, o]));
 /** Coming up's inputs, or null when any part could not be read. */
 export async function readComingUp(): Promise<ComingInput | null> {
   try {
-    const [{ all, excluded }, staffFreeTime, founding, demoIds, endings] = await Promise.all([
+    const [{ all, excluded }, staffFreeTime, endings] = await Promise.all([
       readOrgs(),
       getStaffFreeTime(),
-      foundingCompExpiryByOrg({ throwOnError: true }),
-      listDemoOrgIdsQuietly(),
       supabaseAdmin.from('billing_retention_intents').select('org_id').eq('status', 'pending'),
     ]);
     if (endings.error) throw endings.error;
-    const demo = new Set(demoIds);
-    for (const id of demo) founding.delete(id);
     return {
       orgs: all.filter(o => !excluded.has(o.id)),
       orgsById: byId(all),
       staffFreeTime,
-      foundingByOrg: founding,
       endingOrgIds: new Set(((endings.data ?? []) as Array<{ org_id: string }>).map(r => r.org_id)),
     };
   } catch (err) {

@@ -36,7 +36,7 @@ const team = (over: Partial<FreeTeamFacts> = {}): FreeTeamFacts => ({
 
 const portal = (over: Partial<CoachPortalFacts> = {}): CoachPortalFacts => ({
   workspaceId: 'ws-1', orgId: 'org-1', name: 'UAT Free Team Coaches Portal', billingMode: 'team_direct', movedIntoClub: false,
-  inForce: true, freeTimeGivenAt: null, foundingLastDay: null, runningGrant: null, endedLastDay: null, retention: null, ...over,
+  inForce: true, freeTimeGivenAt: null, runningGrant: null, endedLastDay: null, retention: null, ...over,
 });
 
 const facts = (over: Partial<PortalGiveFacts> = {}): PortalGiveFacts => ({
@@ -93,10 +93,9 @@ describe('Part 3 · the give refuses, each with one sentence and nothing written
     assert.equal(refused(give(facts(), { teamId: 'someone-elses-team' })), 'Choose one of their free teams.');
   });
 
-  it('a coach whose portal pays through Stripe, is comped, is Founding, is club-billed, or was cancelled (Q4)', () => {
+  it('a coach whose portal pays through Stripe, is comped, is club-billed, or was cancelled (Q4)', () => {
     assert.match(refused(give(facts({ portals: [portal()] }))) ?? '', /pays through Stripe/);
     assert.match(refused(give(facts({ portals: [portal({ billingMode: 'platform_override' })] }))) ?? '', /already free from FieldLogicHQ/);
-    assert.match(refused(give(facts({ portals: [portal({ billingMode: 'platform_override', foundingLastDay: '2027-09-30' })] }))) ?? '', /under Founding Season/);
     assert.match(refused(give(facts({ portals: [portal({ billingMode: 'club_included' })] }))) ?? '', /the club pays for it/);
     assert.match(refused(give(facts({ portals: [portal({ movedIntoClub: true, inForce: false })] }))) ?? '', /the club pays for it/);
     assert.match(refused(give(facts({ portals: [portal({ inForce: false })] }))) ?? '', /was cancelled/);

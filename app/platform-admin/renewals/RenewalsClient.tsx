@@ -25,7 +25,7 @@ import styles from './renewals.module.css';
 type Tone = 'ok' | 'warn' | 'info';
 const TONE: Record<Tone, string> = { ok: kit.chipOk, warn: kit.chipWarn, info: kit.chipInfo };
 const KIND_TONE: Record<ComingRow['kind'], Tone> = {
-  renews: 'ok', trial_ends: 'info', free_time_ends: 'info', founding_ends: 'info', plan_ends: 'info', stale_trial: 'warn',
+  renews: 'ok', trial_ends: 'info', free_time_ends: 'info', plan_ends: 'info', stale_trial: 'warn',
 };
 
 /** One open explanation at a time, keyed by row and chip. */
@@ -154,8 +154,8 @@ function ComingUp({ data, params, go, viewSwitch, planSelect, exportMenu }: View
           on={params.what === 'renews'} onClick={b ? () => pick('renews') : undefined} />
         <Tile label={RW.bandComing.trials} value={b ? b.trials : dash} note={RW.bandComing.trialsNote}
           on={params.what === 'trial_ends'} onClick={b ? () => pick('trial_ends') : undefined} />
-        <Tile label={RW.bandComing.freeTime} value={b ? b.freeTime : dash} note={RW.bandComing.freeTimeNote}
-          on={params.what === 'free_or_founding'} onClick={b ? () => pick('free_or_founding') : undefined} />
+        <Tile label={RW.bandComing.freeTime} value={b ? b.freeTime : dash}
+          on={params.what === 'free_time_ends'} onClick={b ? () => pick('free_time_ends') : undefined} />
         <Tile label={RW.bandComing.price} value={b ? priceTileValue(b) : dash} note={b ? priceTileNote(b) : undefined} />
         <Tile label={RW.bandComing.stale} value={b ? b.stale : dash} note={RW.bandComing.staleNote} warn={!!b && b.stale > 0}
           on={params.what === 'stale_trial'} onClick={b ? () => pick('stale_trial') : undefined} />

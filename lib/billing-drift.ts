@@ -21,10 +21,10 @@ import { formatStoredDate } from './timezone';
  *   · renewal   the period end, more than an hour apart
  *   · price     Stripe's price is no plan slot we have ever used (plan and cycle are then not compared)
  * and, across the account, a subscription Stripe is BILLING that nothing of ours follows (not a club, not a portal's
- * workspace row, not a club's next-season choice). Plan, cycle and renewal are not compared on a subscription that has
+ * workspace row). Plan, cycle and renewal are not compared on a subscription that has
  * ended: the status line says it.
  *
- * WHAT IS NOT: a portal the club pays for (its workspace record holds no subscription), staff free time and Founding comps
+ * WHAT IS NOT: a portal the club pays for (its workspace record holds no subscription), staff free time
  * (no subscription), test ids (`mock_`). Stripe is read in ONE paged pass (the default list: every subscription not
  * cancelled); a record whose subscription is not in it is retrieved by itself (a cancelled one, or one that is gone).
  * Any read that fails makes the whole day "could not compare", never a difference.
@@ -82,7 +82,7 @@ export type BillingDriftDeps = {
   /** One subscription by id; `null` = Stripe has no such subscription. Throws on any other failure. */
   retrieveSubscription(id: string): Promise<DriftSubscription | null>;
   loadRecords(): Promise<DriftRecord[]>;
-  /** Subscription ids something of ours follows that is not a `DriftRecord`: portal workspace rows, next-season choices. */
+  /** Subscription ids something of ours follows that is not a `DriftRecord`: portal workspace rows. */
   loadFollowedElsewhere(): Promise<Set<string>>;
   /** Part 5's recognition: `null` = no slot has ever used it. Throws on a failed lookup. */
   planOfPrice(priceId: string): Promise<PriceFacts>;

@@ -27,7 +27,6 @@ describe('checkout returns to an allowed destination in the same workspace', () 
       '@/lib/api-auth': { getAuthContext: async () => ({ org, user: { id: 'owner', email: 'owner@example.test' } }), requireCapability: async () => null },
       '@/lib/billing-retention': {}, '@/lib/billing-reactivation': {},
       '@/lib/billing-mock': { isBillingMockEnabled: () => false, isStripeConfigured: () => true },
-      '@/lib/founding-season': { foundingSeasonOfferOnPlanChoice: async () => false },
       '@/lib/plan-move': { hasLiveSubscription: () => false, hadSubscriptionBefore: async () => false },
       '@/lib/team-workspace-entitlements': { isTeamWorkspaceOrg },
       '@/lib/plan-config-db': { getPlanConfigOverride: async () => ({ ...PLAN_CONFIG.tournament_plus, trialDays: 0 }) },

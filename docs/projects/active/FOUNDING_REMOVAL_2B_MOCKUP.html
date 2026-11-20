@@ -1,0 +1,469 @@
+<title>Founding code removal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs -> View switch -> before/after specimens (wireframe, the product's own words) beside numbered notes. */
+:root {
+  --doc-bg: #eef0f4; --doc-fg: #1b2030; --doc-mute: #5b6375; --doc-line: #d5d9e2; --doc-accent: #1e3a8a;
+  --frame-bg: #f6f7fb; --card: #ffffff; --card-line: #dfe3ec; --ink: #121527; --ink-2: #4a5268; --ink-3: #7a8297;
+  --olive-bg: #f1f5e4; --olive-line: #c9d79a; --olive-ink: #4b5a1c;
+  --plain-bg: #f3f4f7; --plain-line: #d9dce4;
+  --chip-green: #e3f4e8; --chip-green-ink: #1f6b37;
+  --lime: #d9f99d; --lime-ink: #1a2a05;
+  --gone-bg: #fbecec; --gone: #a12828; --changed: #1e3a8a; --new: #1f6b37; --same: #7a8297;
+  --mark: #1e3a8a; --mark-ink: #ffffff;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #0d1017; --doc-fg: #e6e9f2; --doc-mute: #9aa2b6; --doc-line: #262c3a; --doc-accent: #9db4ff;
+  --frame-bg: #12161f; --card: #181d29; --card-line: #2a3142; --ink: #eef1f8; --ink-2: #b4bbcc; --ink-3: #8a92a6;
+  --olive-bg: #1d2412; --olive-line: #3f4d1f; --olive-ink: #cfe19a;
+  --plain-bg: #1b2030; --plain-line: #2d3446;
+  --chip-green: #143221; --chip-green-ink: #8fdcaa;
+  --lime: #d9f99d; --lime-ink: #1a2a05;
+  --gone-bg: #2c1515; --gone: #f19a9a; --changed: #9db4ff; --new: #8fdcaa; --same: #8a92a6;
+  --mark: #9db4ff; --mark-ink: #0d1017; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --doc-bg: #0d1017; --doc-fg: #e6e9f2; --doc-mute: #9aa2b6; --doc-line: #262c3a; --doc-accent: #9db4ff;
+  --frame-bg: #12161f; --card: #181d29; --card-line: #2a3142; --ink: #eef1f8; --ink-2: #b4bbcc; --ink-3: #8a92a6;
+  --olive-bg: #1d2412; --olive-line: #3f4d1f; --olive-ink: #cfe19a;
+  --plain-bg: #1b2030; --plain-line: #2d3446;
+  --chip-green: #143221; --chip-green-ink: #8fdcaa;
+  --lime: #d9f99d; --lime-ink: #1a2a05;
+  --gone-bg: #2c1515; --gone: #f19a9a; --changed: #9db4ff; --new: #8fdcaa; --same: #8a92a6;
+  --mark: #9db4ff; --mark-ink: #0d1017; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-fg); font-family: var(--font-ui); line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-bg); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+header.top h1 { font-family: var(--font-head); font-size: 1.5rem; margin: 0 0 4px; text-wrap: balance; }
+header.top p { margin: 0; color: var(--doc-mute); max-width: 80ch; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-bg); display: flex; flex-wrap: wrap; gap: 6px; padding-block: 12px 10px; border-bottom: 1px solid var(--doc-line); margin-top: 14px; }
+.tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tabs button { flex: none; font: 600 0.85rem var(--font-ui); color: var(--doc-mute); background: transparent; border: 1px solid var(--doc-line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.viewrow[hidden] { display: none; }
+.tag { cursor: pointer; }
+.tag:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.tabs button[aria-selected="true"] { color: var(--doc-fg); background: var(--card); border-color: var(--doc-accent); }
+.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; color: var(--doc-mute); font-size: 0.85rem; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--doc-line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 0.8rem var(--font-ui); border: 0; background: transparent; color: var(--doc-mute); padding: 5px 12px; border-radius: 999px; cursor: pointer; min-height: 34px; }
+@media (max-width: 768px) { .seg button { min-height: 44px; } }
+.seg button[aria-pressed="true"] { background: var(--olive-bg); color: var(--olive-ink); }
+section.panel { margin-top: 18px; }
+section.panel > h2 { font-family: var(--font-head); font-size: 1.2rem; margin: 0 0 4px; text-wrap: balance; }
+section.panel > p.lead { margin: 0 0 14px; color: var(--doc-mute); max-width: 85ch; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+@media (max-width: 960px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 760px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+.stack { display: grid; gap: 14px; min-width: 0; }
+.chrome { font: 600 0.7rem var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-mute); margin-bottom: 6px; }
+.frame { background: var(--frame-bg); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px; overflow-x: auto; }
+.page { min-width: 0; display: grid; gap: 12px; color: var(--ink); }
+.page h1 { font-family: var(--font-head); font-size: 1.3rem; margin: 0; }
+.card { background: var(--card); border: 1px solid var(--card-line); border-radius: 10px; padding: 14px; position: relative; min-width: 0; }
+.card h3 { font-family: var(--font-head); font-size: 1rem; margin: 2px 0; }
+.eyebrow { font: 600 0.68rem var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.hint { color: var(--ink-2); font-size: 0.86rem; margin: 4px 0 0; }
+.small { font-size: 0.78rem; color: var(--ink-3); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { font: 600 0.78rem var(--font-ui); border-radius: 6px; padding: 5px 10px; border: 1px solid var(--card-line); background: var(--card); color: var(--ink); white-space: nowrap; }
+.btn.lime { background: var(--lime); color: var(--lime-ink); border-color: transparent; }
+.chip { font: 600 0.66rem var(--font-data); padding: 2px 7px; border-radius: 4px; background: var(--chip-green); color: var(--chip-green-ink); }
+.chip.plain { background: var(--plain-bg); color: var(--ink-2); border: 1px solid var(--plain-line); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.tile { background: var(--card); border: 1px solid var(--card-line); border-radius: 8px; padding: 8px 10px; position: relative; }
+.tile b { display: block; font: 650 1.1rem var(--font-head); font-variant-numeric: tabular-nums; }
+.tile span { font-size: 0.72rem; color: var(--ink-3); }
+.ptabs { display: flex; gap: 4px; flex-wrap: wrap; position: relative; }
+.ptabs span { font-size: 0.8rem; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--card-line); background: var(--card); color: var(--ink-2); }
+.ptabs span.on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+table.t { width: 100%; border-collapse: collapse; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+table.t th { text-align: left; font: 600 0.64rem var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding: 5px 6px; border-bottom: 1px solid var(--card-line); }
+table.t td { padding: 6px; border-bottom: 1px solid var(--card-line); vertical-align: top; }
+.tw { overflow-x: auto; }
+.sel { display: grid; gap: 2px; font-size: 0.8rem; border: 1px solid var(--card-line); border-radius: 8px; padding: 6px; background: var(--card); position: relative; }
+.sel div { padding: 3px 6px; border-radius: 4px; }
+/* gone / changed pieces inside a specimen */
+.gone { background: var(--gone-bg); outline: 1px dashed var(--gone); outline-offset: 1px; border-radius: 6px; position: relative; }
+.strike { text-decoration: line-through; text-decoration-color: var(--gone); }
+.chg { outline: 1px solid var(--changed); outline-offset: 2px; border-radius: 6px; position: relative; }
+.tag { position: absolute; top: -9px; right: 10px; font: 700 0.6rem var(--font-data); letter-spacing: 0.08em; padding: 1px 6px; border-radius: 4px; background: var(--card); border: 1px solid currentColor; z-index: 1; }
+.tag.gone-t { color: var(--gone); } .tag.changed { color: var(--changed); } .tag.same { color: var(--same); } .tag.new { color: var(--new); }
+.mk { position: absolute; top: -10px; left: -10px; width: 22px; height: 22px; border-radius: 50%; background: var(--mark); color: var(--mark-ink); font: 700 0.72rem var(--font-ui); border: 0; cursor: pointer; display: grid; place-items: center; z-index: 2; }
+.notes { display: grid; gap: 10px; }
+.note { background: var(--card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; font-size: 0.88rem; scroll-margin-top: 90px; }
+.note.hl { border-color: var(--doc-accent); box-shadow: 0 0 0 2px var(--doc-accent); }
+.note b.n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--mark); color: var(--mark-ink); font-size: 0.7rem; margin-right: 6px; }
+.note p { margin: 4px 0 0; color: var(--doc-mute); }
+body.differs .same-blk { opacity: 0.25; }
+body.differs .same-blk .mk { display: none; }
+.who { width: 100%; border-collapse: collapse; font-size: 0.86rem; background: var(--card); border: 1px solid var(--doc-line); border-radius: 10px; }
+.who th, .who td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+.who th { font: 600 0.66rem var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-mute); }
+.ask { background: var(--card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; max-width: 92ch; }
+.ask h3 { font-family: var(--font-head); margin: 0 0 6px; font-size: 1.02rem; text-wrap: balance; }
+.ask p { margin: 6px 0 0; color: var(--doc-mute); }
+.ask .rec { color: var(--doc-fg); }
+.asks { display: grid; gap: 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.8rem; color: var(--doc-mute); margin-top: 10px; }
+.legend i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Founding code removal</h1>
+    <p>Stage 2b of the Free League and Founding removal: every screen that still carries a Founding piece, before and after. Words are the product's own (dev, 2026-11-19). <b>The main finding first:</b> every public Founding piece has been hidden since the offer closed on October 26, so visitors see no change. The visible changes are on staff pages, plus one narrow sign-up case that can still hand out a Founding season today.</p>
+    <div class="legend"><span><i style="background:var(--gone-bg);outline:1px dashed var(--gone)"></i>GOES</span><span><i style="outline:1px solid var(--changed)"></i>CHANGED</span><span><i style="background:var(--plain-bg)"></i>UNCHANGED (dims under "Show only what differs")</span></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t-who" aria-selected="true" data-p="who">1 · Who sees a change</button>
+    <button role="tab" id="t-pricing" aria-selected="false" data-p="pricing">2 · Pricing page</button>
+    <button role="tab" id="t-market" aria-selected="false" data-p="market">3 · Home and audience pages</button>
+    <button role="tab" id="t-signup" aria-selected="false" data-p="signup">4 · Sign-up and welcome</button>
+    <button role="tab" id="t-free" aria-selected="false" data-p="free">5 · Free time page</button>
+    <button role="tab" id="t-lists" aria-selected="false" data-p="lists">6 · Clubs list and Renewals</button>
+    <button role="tab" id="t-record" aria-selected="false" data-p="record">7 · Club record and Story</button>
+    <button role="tab" id="t-camp" aria-selected="false" data-p="camp">8 · Campaigns</button>
+    <button role="tab" id="t-asks" aria-selected="false" data-p="asks">9 · Asks</button>
+  </nav>
+
+  <div class="viewrow" id="viewrow">
+    <span>View</span>
+    <div class="seg" role="group" aria-label="View">
+      <button type="button" id="v-all" aria-pressed="true">Everything</button>
+      <button type="button" id="v-diff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+
+  <!-- 1 WHO -->
+  <section class="panel" id="p-who" role="tabpanel" aria-labelledby="t-who">
+    <h2>Who sees a change, and what replaces each removed piece</h2>
+    <p class="lead">What replaces a removed piece is almost always nothing: the page closes up. Two places need a decision instead (tabs 5 and 8), and the account history needs one wording call (tab 7).</p>
+    <div class="tw">
+    <table class="who">
+      <thead><tr><th>Audience</th><th>Sees today</th><th>After 2b</th></tr></thead>
+      <tbody>
+        <tr><td><b>A visitor</b> (pricing, home, the three audience pages)</td><td>No Founding piece. They all switched off on October 26.</td><td>The same page. One label to watch: the paid cards stay on "Start now" (tab 2, note 3).</td></tr>
+        <tr><td><b>Someone who began signing up before October 26 and never finished</b></td><td>On finishing, a coach is offered a free portal through September 30, 2027, and a new organization gets Tournament Plus free to that date.</td><td>They finish like anyone else: a coach goes to checkout, an organization starts on free Tournament. <b>Production has none of these accounts</b> (dev has two, both made after the close), so in practice nobody.</td></tr>
+        <tr><td><b>The three holders</b> (moved to free time by the 2a step)</td><td>Once the 2a step runs on production: the free-time band, as you approved in 2a.</td><td>Unchanged. Free time through September 30, 2027, then their own plan.</td></tr>
+        <tr><td><b>Any other customer</b></td><td>Nothing Founding.</td><td>Nothing changes. "Payment method & invoices" for a club with no card still opens the card-saving page, which is shared and stays.</td></tr>
+        <tr><td><b>Staff</b> (Support console)</td><td>A Founding tab on Free time; a Founding tile, filter, chip and export column on Clubs &amp; portals; two Founding choices on Renewals; Founding lines on the club record and Story; "comped clubs not counted" on Today and Business numbers; the Campaigns page.</td><td>Each one goes and the page closes up (tabs 5 to 8).</td></tr>
+        <tr><td><b>Emails</b></td><td>Five Founding campaigns are scheduled: a welcome, a check-in, then June, August and September 2027 notes. There are also two Tournament Plus emails and a free-portal welcome. None will send: no account qualifies.</td><td>All removed. Past sends stay in the send history.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- 2 PRICING -->
+  <section class="panel" id="p-pricing" role="tabpanel" aria-labelledby="t-pricing" hidden>
+    <h2>/pricing: the page a visitor sees today is the after</h2>
+    <p class="lead">The red pieces showed only while the offer was open, and none has shown since October 26. Removing them deletes code without moving anything on the page.</p>
+    <div class="split">
+      <div>
+        <div class="chrome">Pricing · desktop, signed out · MARKETING CHROME</div>
+        <div class="frame"><div class="page">
+          <div class="card same-blk"><span class="tag same">UNCHANGED</span><div class="eyebrow">Pricing</div><h3>Plans built around how you actually operate.</h3><p class="hint">Tournament is free, with no credit card required.</p></div>
+          <div class="card same-blk"><span class="tag same">UNCHANGED</span><div class="eyebrow">Find your plan</div><h3>What does your role look like?</h3><div class="row" style="margin-top:6px"><span class="btn">Organizer</span><span class="btn">Club</span><span class="btn">League</span><span class="btn">Coach · Start now</span></div></div>
+          <div class="card gone"><button class="mk" data-n="p1" aria-label="Note 1">1</button><span class="tag gone-t">GOES · HIDDEN SINCE OCT 26</span><div class="eyebrow">Founding Season</div><h3 class="strike">Your 2027 season, free.</h3><p class="hint strike">Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by October 25, 2026. No credit card.</p></div>
+          <div class="card"><div class="eyebrow">Plans</div><h3>Available now</h3>
+            <div class="pair" style="margin-top:8px">
+              <div class="card same-blk"><span class="tag same">UNCHANGED</span><b>Tournament</b><div class="small">Free · No credit card required</div><span class="btn">Get started free</span></div>
+              <div class="card"><span class="tag same">UNCHANGED · KEPT ON PURPOSE</span><button class="mk" data-n="p3" aria-label="Note 3">3</button><b>Tournament Plus</b><div class="small">$39 CAD /mo · plus applicable taxes</div><span class="btn lime">Start now</span></div>
+            </div>
+          </div>
+          <div class="card gone"><span class="tag gone-t">GOES · HIDDEN</span><p class="hint strike">In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.</p></div>
+          <div class="card same-blk"><span class="tag same">UNCHANGED</span><div class="eyebrow">Upgrade bridges</div><p class="hint">Tournament Plus card keeps its trial line (it was hidden only while the offer ran).</p></div>
+          <div class="card"><button class="mk" data-n="p2" aria-label="Note 2">2</button><div class="eyebrow">Common questions</div>
+            <ol class="hint" style="margin:6px 0 0;padding-left:20px;display:grid;gap:2px">
+              <li>Is this too complex for a volunteer-run organization?</li><li>Is the platform only for tournaments?</li><li>What if I only manage one competitive team?</li><li>Can I buy League Plus, Club, or the Coaches Portal today?</li><li>How does billing work?</li>
+              <li class="gone strike" style="padding:2px 4px">What happens after the Founding Season offer ends?</li>
+              <li>Can I change plans later?</li><li>Do I need a credit card to get started? <span class="small">(today's answer stays)</span></li><li>What if we get stuck? · and four more</li>
+            </ol>
+          </div>
+          <div class="card same-blk"><span class="tag same">UNCHANGED</span><h3>Less admin. More sport.</h3><p class="hint">Start free with Tournament. <span class="gone strike" style="padding:0 3px">Tournament Plus … free through September 30, 2027 when you sign up by October 25, 2026</span></p></div>
+        </div></div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-p1"><b class="n">1</b><b>The offer panel and its after-line.</b><p>Hidden since October 26. Nothing takes their place, and "Available now" sits straight under the hero today. The same goes for the "Founding Season" chip and the "$0 through September 30, 2027" price that the cards carried in the window.</p></div>
+        <div class="note" id="note-p2"><b class="n">2</b><b>The Founding FAQ.</b><p>Already filtered out today. The credit-card answer and the two coach answers keep the wording they show now. That makes twelve questions, as today.</p></div>
+        <div class="note" id="note-p3"><b class="n">3</b><b>One trap, kept the same.</b><p>The paid cards show "Start now" only because of a Founding switch. Taken out carelessly, the cards would fall back to "Start free" with "No credit card required" under two paid plans. The build sets "Start now" outright, so the page keeps what it says today.</p></div>
+        <div class="note"><b>Signed-in holder</b><p>A club whose Founding mark is still live sees "$0 through September 30, 2027" on its current-plan card. After the 2a step on production no club has a live mark, so nobody sees it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 MARKETING -->
+  <section class="panel" id="p-market" role="tabpanel" aria-labelledby="t-market" hidden>
+    <h2>Home, For tournament organizers, For coaches: also already closed up</h2>
+    <p class="lead">Each page has a Founding version of a few lines, all switched off since October 26. The "after" is the text visitors read now, so no drawing is needed for these.</p>
+    <div class="tw"><table class="who">
+      <thead><tr><th>Page · place</th><th>Founding version (hidden)</th><th>Stays (what shows today)</th></tr></thead>
+      <tbody>
+        <tr><td>Home · under the hero</td><td class="strike">"Your 2027 season, free." panel with the two products</td><td>Hero, then the persona cards</td></tr>
+        <tr><td>Home · Pricing section</td><td class="strike">"Founding Season: Tournament Plus and the Premium Coaches Portal are free through…"</td><td>Body line, the pricing cards, "Compare all plans in detail"</td></tr>
+        <tr><td>For tournament organizers · hero</td><td class="strike">"Tournament Plus is free for your whole 2027 season…" · facts "Free through September 30, 2027 · Normally $39/month"</td><td>"Free to start, no credit card required." · "Free plan — no time limit · No credit card required · Billed in CAD"</td></tr>
+        <tr><td>For tournament organizers · plan card</td><td class="strike">"$0 through September 30, 2027 · Founding Season · normally $39/month"</td><td>"$39 /month, plus applicable taxes, $390/year — save two months", trial line, "Start Tournament Plus"</td></tr>
+        <tr><td>For tournament organizers · own section</td><td class="strike">"Taking registrations, or running more than one event in 2027?" section</td><td>Nothing; "More from FieldLogicHQ" follows the plans</td></tr>
+        <tr><td>For tournament organizers · closing</td><td class="strike">"Tournament Plus is free through September 30, 2027…"</td><td>"Free to start. No credit card required."</td></tr>
+        <tr><td>For coaches · hero, facts, card, closing</td><td class="strike">"It's free for your whole 2027 season…" · "Free through September 30, 2027" · "Start free"</td><td>"$29 CAD / month plus applicable taxes · $290 / season — save two months" · "Start now"</td></tr>
+        <tr><td>Site-wide offer bar</td><td class="strike">"Founding Season · Your 2027 season, free…"</td><td>Already unmounted on October 23; its file goes</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 4 SIGNUP -->
+  <section class="panel" id="p-signup" role="tabpanel" aria-labelledby="t-signup" hidden>
+    <h2>Sign-up and welcome: the one customer change</h2>
+    <p class="lead">A signed-in account that started at the coach door or the organization door before October 26 can still claim Founding on finishing. Nothing else can, so this is the last way a new Founding season can be handed out. After 2b that account finishes like anyone else. Counted 2026-11-19: <b>no such account on production</b>. These drawings show a case that cannot happen there.</p>
+    <div class="split">
+      <div class="stack">
+        <div class="pair">
+          <div>
+            <div class="chrome">Coach sign-up · team step · BEFORE (pre-October-26 account)</div>
+            <div class="frame"><div class="page">
+              <div class="card"><span class="tag gone-t">GOES (sub line)</span><h3>Coach a team</h3><p class="hint gone" style="padding:2px 4px"><button class="mk" data-n="s1" aria-label="Note 1">1</button>Premium Coaches Portal. Free through September 30, 2027, then $29/month.</p><div class="small">Account · Team</div></div>
+              <div class="card same-blk"><div class="small">Team name · Sport</div></div>
+              <div class="card gone"><span class="tag gone-t">GOES</span><div class="eyebrow">After the Founding Season</div><div class="row" style="margin-top:4px"><span class="btn">$29/month</span><span class="btn">$290/year</span></div><p class="hint">Change it any time before then. No card today.</p></div>
+              <span class="btn lime gone" style="justify-self:start">Create team</span>
+            </div></div>
+          </div>
+          <div>
+            <div class="chrome">Coach sign-up · team step · AFTER (everyone)</div>
+            <div class="frame"><div class="page">
+              <div class="card chg"><span class="tag changed">CHANGED</span><h3>Coach a team</h3><p class="hint">Premium Coaches Portal. $29/month or $290/year plus applicable taxes.</p><div class="small">Account · Team <span class="small">(address on file; without one: · Address, and the button reads Next)</span></div></div>
+              <div class="card same-blk"><div class="small">Team name · Sport</div></div>
+              <div class="card chg"><div class="eyebrow">Billing</div><div class="row" style="margin-top:4px"><span class="btn">$29/month</span><span class="btn">$290/year</span></div><p class="hint">Billed to … Change · Terms line</p></div>
+              <span class="btn lime chg" style="justify-self:start">Continue to checkout</span>
+            </div></div>
+          </div>
+        </div>
+        <div class="pair">
+          <div>
+            <div class="chrome">Club onboarding · BEFORE (checklist banner, then the plan step)</div>
+            <div class="frame"><div class="page">
+              <div class="card same-blk"><h3>Welcome to FieldLogicHQ</h3><p class="hint">Let's get your club set up in a few quick steps.</p></div>
+              <div class="card gone"><span class="tag gone-t">GOES</span><button class="mk" data-n="s2" aria-label="Note 2">2</button><div class="eyebrow">Founding Season</div><h3>Welcome to your Founding Season.</h3><p class="hint">Your plan is free through September 30, 2027. No credit card. We'll remind you during the summer…</p></div>
+              <div class="small">Plan step:</div>
+              <div class="card"><div class="eyebrow gone" style="padding:0 4px">Founding Season</div><h3>Tournament Plus</h3><b class="gone" style="padding:0 4px">$0</b><div class="small gone">through September 30, 2027 · normally $39/month</div><div class="row"><span class="btn gone">Then $39/month</span><span class="btn gone">Then $390/year</span></div><span class="btn lime">Start with Tournament Plus</span></div>
+              <div class="card same-blk"><h3>Tournament</h3><b>$0</b> <span class="small">no time limit</span><span class="btn">Start free with Tournament</span></div>
+            </div></div>
+          </div>
+          <div>
+            <div class="chrome">Club onboarding · AFTER</div>
+            <div class="frame"><div class="page">
+              <div class="card same-blk"><h3>Welcome to FieldLogicHQ</h3><p class="hint">Let's get your club set up in a few quick steps.</p></div>
+              <div class="small">Plan step:</div>
+              <div class="card chg"><span class="tag changed">CHANGED</span><h3>Tournament Plus</h3><b>$39/month</b> <span class="small">plus applicable taxes</span><div class="row"><span class="btn">$39/month</span><span class="btn">$390/year</span></div><div class="small">Terms line · Annual adds "$390/year — save two months"</div><span class="btn lime">Start with Tournament Plus</span></div>
+              <div class="card same-blk"><h3>Tournament</h3><b>$0</b> <span class="small">no time limit</span><span class="btn">Start free with Tournament</span></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-s1"><b class="n">1</b><b>Coach.</b><p>A coach in this group now sees the paid offer, gives an address and goes to checkout, the same as a coach who signs up today. The page that welcomed a free portal ("Premium is on for your team. Free through September 30, 2027…") is only reached this way, so it goes. A paid coach's welcome keeps its title and "Open your team".</p></div>
+        <div class="note" id="note-s2"><b class="n">2</b><b>Organization.</b><p>A new organization from this group starts on free Tournament with no welcome banner. Its plan step shows Tournament Plus at its price, with the tax and Terms lines. The banner reaches almost nobody today: it shows only outside the tournament onboarding.</p></div>
+        <div class="note"><b>Lock lines inside the product</b><p>"Tournament Plus is free for you through …" under a locked tool, and the same line at the foot of the Tools, Export and Registrations menus, go. The lock line itself stays.</p></div>
+        <div class="note"><b>Coach upsells</b><p>"Upgrade to Premium — free →" on the scope shelf, the ceiling and Explore returns to "Upgrade to Premium →" with the price. That is what shows today.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 FREE TIME -->
+  <section class="panel" id="p-free" role="tabpanel" aria-labelledby="t-free" hidden>
+    <h2>Free time (Support console): three views become one list</h2>
+    <p class="lead">Without the Founding tab, the Everyone view and the Given by staff view would show exactly the same rows. Recommend one list with no tabs.</p>
+    <div class="split">
+      <div class="pair">
+        <div>
+          <div class="chrome">Free time · BEFORE</div>
+          <div class="frame"><div class="page">
+            <h1>Free time</h1>
+            <div class="ptabs gone"><span class="tag gone-t">GOES</span><button class="mk" data-n="f1" aria-label="Note 1">1</button><span class="on">Everyone · 5</span><span class="strike">Founding Season</span><span>Given by staff · 5</span></div>
+            <div class="card same-blk"><div class="eyebrow">Given by staff</div><div class="tw"><table class="t"><thead><tr><th>Club or portal</th><th>Free on</th><th>Free through</th><th>Left</th><th>Given by</th></tr></thead><tbody><tr><td>Club A</td><td>Tournament Plus</td><td>Sep 30, 2027</td><td>315 days</td><td>system</td></tr><tr><td>Coach B</td><td>Premium portal</td><td>Sep 30, 2027</td><td>315 days</td><td>system</td></tr></tbody></table></div></div>
+            <div class="card gone"><span class="tag gone-t">GOES</span><div class="eyebrow">Founding Season</div><table class="t"><thead><tr><th>Account</th><th>Free on</th><th>Free through</th></tr></thead></table><p class="hint">No founding accounts.</p><p class="small">The Founding Season tab keeps the desk: cards on file, the 2028 choice and who signed in last.</p></div>
+          </div></div>
+        </div>
+        <div>
+          <div class="chrome">Free time · AFTER (recommended)</div>
+          <div class="frame"><div class="page">
+            <h1>Free time</h1>
+            <div class="row chg" style="padding:4px"><span class="tag changed">CHANGED</span><span class="small">5 running, soonest end first</span><span class="btn">☐ Ending in 14 days</span></div>
+            <div class="card same-blk"><div class="tw"><table class="t"><thead><tr><th>Club or portal</th><th>Free on</th><th>Free through</th><th>Left</th><th>Given by</th></tr></thead><tbody><tr><td>Club A</td><td>Tournament Plus</td><td>Sep 30, 2027</td><td>315 days</td><td>system</td></tr><tr><td>Coach B</td><td>Premium portal</td><td>Sep 30, 2027</td><td>315 days</td><td>system</td></tr></tbody></table></div></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-f1"><b class="n">1</b><b>The tabs go with the Founding desk.</b><p>The desk itself went before this (its band, card-on-file and 2028-choice columns, the summer-ask callout). The page becomes the "Given by staff" list under the "Free time" title. Old links to the Founding view, and the old Founding Season address, land on this list. Ask A.</p></div>
+        <div class="note"><b>Holders</b><p>The three holders appear here as ordinary free time once the 2a step runs on production. On dev, the five rehearsal holders already do.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 LISTS -->
+  <section class="panel" id="p-lists" role="tabpanel" aria-labelledby="t-lists" hidden>
+    <h2>Clubs &amp; portals, and Renewals: the Founding tile, filter, chip and choices go</h2>
+    <p class="lead">Nothing new arrives on either page. The band gets one tile shorter, and Renewals has two fewer choices.</p>
+    <div class="split">
+      <div class="stack">
+        <div class="pair">
+          <div><div class="chrome">Clubs &amp; portals · BEFORE</div><div class="frame"><div class="page">
+            <div class="tiles"><div class="tile same-blk"><b>48</b><span>Total accounts</span></div><div class="tile same-blk"><b>1</b><span>Past due</span></div><div class="tile same-blk"><b>40</b><span>Active / trial</span></div><div class="tile gone"><span class="tag gone-t">GOES</span><button class="mk" data-n="l1" aria-label="Note 1">1</button><b>3</b><span>Founding season</span></div><div class="tile same-blk"><b>2</b><span>Empty orgs</span></div></div>
+            <div class="row small"><span class="btn same-blk">All plans</span><span class="btn same-blk">All statuses</span><span class="btn gone">☐ Founding season only</span><span class="btn same-blk">☐ Empty orgs only</span></div>
+            <div class="card"><table class="t"><thead><tr><th>Name</th><th>Plan</th><th>Cohort</th></tr></thead><tbody><tr><td>Club A</td><td>Tournament</td><td><span class="chip gone">Founding</span></td></tr><tr class="same-blk"><td>Club C</td><td>Tournament</td><td><span class="chip plain">Empty</span></td></tr></tbody></table></div>
+          </div></div></div>
+          <div><div class="chrome">Clubs &amp; portals · AFTER</div><div class="frame"><div class="page">
+            <div class="tiles chg"><span class="tag changed">CHANGED</span><div class="tile"><b>48</b><span>Total accounts</span></div><div class="tile"><b>1</b><span>Past due</span></div><div class="tile"><b>40</b><span>Active / trial</span></div><div class="tile"><b>2</b><span>Empty orgs</span></div></div>
+            <div class="row small"><span class="btn">All plans</span><span class="btn">All statuses</span><span class="btn">☐ Empty orgs only</span></div>
+            <div class="card same-blk"><table class="t"><thead><tr><th>Name</th><th>Plan</th><th>Cohort</th></tr></thead><tbody><tr><td>Club A</td><td>Tournament</td><td></td></tr><tr><td>Club C</td><td>Tournament</td><td><span class="chip plain">Empty</span></td></tr></tbody></table></div>
+          </div></div></div>
+        </div>
+        <div class="pair">
+          <div><div class="chrome">Renewals · "What happens" choices · BEFORE</div>
+            <div class="sel"><button class="mk" data-n="l2" aria-label="Note 2">2</button><div class="same-blk">All</div><div class="same-blk">Renews</div><div class="same-blk">Trial ends</div><div class="same-blk">Free time ends</div><div class="gone strike">Founding Season ends</div><div class="gone strike">Free time or Founding Season ends</div><div class="same-blk">Still marked trial</div></div>
+            <p class="small" style="margin-top:6px">"Free time ending" tile note: <span class="gone strike" style="padding:0 3px">free time and Founding Season</span></p>
+          </div>
+          <div><div class="chrome">Renewals · AFTER</div>
+            <div class="sel chg"><span class="tag changed">CHANGED</span><div>All</div><div>Renews</div><div>Trial ends</div><div>Free time ends</div><div>Still marked trial</div></div>
+            <p class="small" style="margin-top:6px">The "Free time ending" tile loses its note (it would only repeat the label) and opens "Free time ends".</p>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-l1"><b class="n">1</b><b>Clubs &amp; portals.</b><p>The "Founding season" tile, the "Founding season only" filter, the green "Founding" chip and the export's "Founding Season" column all go. The Cohort column stays because it still carries "Empty". Numbers are drawn, not real.</p></div>
+        <div class="note" id="note-l2"><b class="n">2</b><b>Renewals.</b><p>A deliberate copy change. The row explanation today reads "Free time a staff member gave (or a Founding Season comp)… falls back to its plan's free floor or pays." It becomes: "Free time a staff member gave. There is no subscription, so no price: when it ends the club goes back to its own plan or pays. The door goes to Free time." ("Free floor" left with the free League.) An old link that asked for the Founding choice opens on All.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 RECORD -->
+  <section class="panel" id="p-record" role="tabpanel" aria-labelledby="t-record" hidden>
+    <h2>Club record, Story, Today and Business numbers</h2>
+    <p class="lead">Each holder's record already shows its free time. The Founding words come off the band, the Access tab, the Money tab and the portal tab. The Story still carries two old lines per holder, and those need a wording call (Ask C).</p>
+    <div class="split">
+      <div class="stack">
+        <div class="stack">
+          <div><div class="chrome">A holder's Story · BEFORE (dev, after the 2a step) · columns What · Who · Why</div><div class="frame tw"><table class="t" style="background:var(--card)">
+            <thead><tr><th>What</th><th>Who</th><th>Why</th></tr></thead><tbody>
+            <tr class="same-blk"><td><b>Free time given: Tournament Plus through Sep 30, 2027</b><div class="small">Then back to Tournament by itself</div></td><td>system</td><td class="chg">Founding Season promise kept as free time through September 30, 2027 (owner ruling 2026-11-19)</td></tr>
+            <tr class="gone"><td><button class="mk" data-n="r1" aria-label="Note 1" style="position:static;display:inline-grid;margin-right:4px">1</button><b>Founding Season ended</b></td><td>system</td><td>Founding Season promise kept as free time…</td></tr>
+            <tr class="gone"><td><b>Founding Season: Tournament free through Sep 30, 2027</b><div class="small">Given at sign-up</div></td><td>The product</td><td></td></tr>
+            </tbody></table></div></div>
+          <div><div class="chrome">A holder's Story · AFTER (recommended) · moves from the Billing filter to Staff changes</div><div class="frame tw"><table class="t" style="background:var(--card)">
+            <thead><tr><th>What</th><th>Who</th><th>Why</th></tr></thead><tbody>
+            <tr class="same-blk"><td><b>Free time given: Tournament Plus through Sep 30, 2027</b><div class="small">Then back to Tournament by itself</div></td><td>system</td><td>Founding Season promise kept as free time through September 30, 2027 (owner ruling 2026-11-19)</td></tr>
+            <tr class="chg"><td><b>Override ended: Comp period</b></td><td>system</td><td>Founding Season promise kept as free time…</td></tr>
+            <tr class="chg"><td><b>Override applied: Comp period</b><div class="small">until Oct 1, 2027</div></td><td>Staff (the row names no giver)</td><td>Not recorded</td></tr>
+            </tbody></table></div></div>
+        </div>
+        <div class="pair">
+          <div><div class="chrome">Today · revenue line · BEFORE</div><div class="frame"><div class="page"><div class="card"><button class="mk" data-n="r2" aria-label="Note 2">2</button>about <b>$0</b> a month at list price, before tax <span class="small gone strike" style="padding:0 3px">· 3 comped clubs not counted</span></div></div></div></div>
+          <div><div class="chrome">Today · AFTER (Business numbers the same)</div><div class="frame"><div class="page"><div class="card chg"><span class="tag changed">CHANGED</span>about <b>$0</b> a month at list price, before tax</div></div></div></div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-r1"><b class="n">1</b><b>The Story's old lines.</b><p>Today the two old lines read "Founding Season: <i>Tournament</i> free through…". That plan is wrong: 2a lowered the stored plan so free time could lift it. The recommendation is to let these old marks read the way every other comp period in the Story reads. Two things come with that. <b>The Why column keeps the word.</b> The reason the 2a step recorded is "Founding Season promise kept as free time…", and it is the true reason these accounts have free time. <b>Two dates sit side by side:</b> the old mark reads "until Oct 1, 2027" and the free time "through Sep 30, 2027", for the same end. Ask C.</p></div>
+        <div class="note" id="note-r2"><b class="n">2</b><b>"Comped clubs not counted".</b><p>It counts clubs with any running comp-period override. Founding was the only thing creating those, so it is zero once the 2a step runs. Free time never enters monthly revenue, because the club's own plan is the $0 one, so a free-time version would also always say zero. Recommend removing it from Today and Business numbers; /accounting confirms. Ask D.</p></div>
+        <div class="note"><b>Also cut on the record</b><p>The band's "Founding Season, no Stripe subscription" note goes. So does the Access tab's "· Founding Season" title, along with "the club's own plan, ending with the Founding Season". The Money tab's "· Founding Season" goes, and so does the portal tab's "Founding Season, free through…". The "Give free time" window drops its clause "still free through September 30, 2027 under Founding Season".</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 CAMPAIGNS -->
+  <section class="panel" id="p-camp" role="tabpanel" aria-labelledby="t-camp" hidden>
+    <h2>Campaigns: every planned email on it is a Founding email</h2>
+    <p class="lead">The page counts only Founding accounts, and its schedule holds the five Founding emails. Every other campaign was retired in September and October. With them gone, nothing is left to send. Recommend keeping the page as a record of past sends and opt-outs.</p>
+    <div class="split">
+      <div class="pair">
+        <div><div class="chrome">Campaigns · BEFORE</div><div class="frame"><div class="page">
+          <h1>Campaigns</h1><p class="small">Planned marketing emails to customers we already have. Leads are never emailed from here.</p>
+          <div class="tiles gone"><span class="tag gone-t">GOES</span><button class="mk" data-n="c1" aria-label="Note 1">1</button><div class="tile"><b>3</b><span>Founding season orgs</span></div><div class="tile"><b>3</b><span>Active recipients</span></div><div class="tile"><b>0</b><span>Opted out</span></div></div>
+          <div class="card gone"><span class="tag gone-t">GOES</span><div class="eyebrow">Scheduled sends</div><p class="small">All 5 founding season emails…</p>
+            <div class="tw"><table class="t"><thead><tr><th>Email key</th><th>Send date</th></tr></thead><tbody><tr><td><code>founding_welcome</code></td><td>At signup</td></tr><tr><td><code>founding_checkin</code></td><td>~Day 60</td></tr><tr><td><code>founding_renewal</code></td><td>Jun 1, 2027</td></tr><tr><td><code>founding_nudge</code></td><td>Aug 1, 2027</td></tr><tr><td><code>founding_final</code></td><td>Sep 15, 2027</td></tr></tbody></table></div><p class="small">Wireframe: the shipped table also has Subject, Audience, Recipients, Status, Actions.</p></div>
+          <div class="card same-blk"><div class="eyebrow">Sent history</div><p class="small">Batch-level log — expand row for individual recipients</p></div>
+          <div class="card"><div class="eyebrow">Opt-outs</div><p class="small">0 orgs unsubscribed · counts Founding organizations only</p></div>
+        </div></div></div>
+        <div><div class="chrome">Campaigns · AFTER (recommended)</div><div class="frame"><div class="page">
+          <h1>Campaigns</h1><p class="small chg" style="padding:2px 4px"><span class="tag changed">CHANGED</span>No campaign is planned. Past sends and opt-outs are kept here. Leads are never emailed from here.</p>
+          <div class="card same-blk"><div class="eyebrow">Sent history</div><p class="small">Batch-level log — expand row for individual recipients</p></div>
+          <div class="card chg"><span class="tag changed">CHANGED</span><button class="mk" data-n="c2" aria-label="Note 2">2</button><div class="eyebrow">Opt-outs</div><p class="small">N orgs unsubscribed (every organization, not only Founding) · Org name · Owner email · Opted out · Action · empty: "No opt-outs yet."</p></div>
+        </div></div></div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-c1"><b class="n">1</b><b>What goes.</b><p>The audience band, the schedule, the "Past due" and "Upcoming" lists, and the send controls. Retired emails stay on Email templates as history, because past sends point at them.</p></div>
+        <div class="note" id="note-c2"><b class="n">2</b><b>Opt-outs widen.</b><p>Today the list shows only Founding organizations that unsubscribed. An organization outside that group that opted out is invisible here, though every send still honours it. After the change the list shows every organization that opted out. Ask B.</p></div>
+        <div class="note"><b>The alternative</b><p>Remove the page and its menu entry, and keep the data. The next campaign would then rebuild a page. Keeping it costs only a smaller page.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 ASKS -->
+  <section class="panel" id="p-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+    <h2>Asks</h2>
+    <p class="lead"><b>Ruled 2026-11-20:</b> all four recommendations accepted (A one list, B Campaigns as a record, C ordinary wording with the recorded reason kept as history, D the comped line removed). Built from the plan's build prompt in a fresh session.</p>
+    <div class="asks">
+      <div class="ask"><h3>A · Free time becomes one list with no tabs</h3><p>Without Founding, the Everyone and Given by staff views would show the same rows. Old links to the Founding view open the list.</p><p class="rec"><b>Recommend:</b> one list under the "Free time" title.</p></div>
+      <div class="ask"><h3>B · Campaigns stays as a record</h3><p>All five planned emails are Founding emails, so nothing is left to send.</p><p class="rec"><b>Recommend:</b> keep the page with Sent history and Opt-outs, and widen Opt-outs to every organization that unsubscribed. Remove the band, schedule and send controls. Alternative: remove the page and its menu entry.</p></div>
+      <div class="ask"><h3>C · The holders' old Story lines read as an ordinary comp period, and the recorded reason stays</h3><p>Today they say "Founding Season: Tournament free through…", and the plan in that line is wrong after 2a. Reading them as an ordinary comp period fixes the title. The reason the 2a step wrote, "Founding Season promise kept as free time through September 30, 2027", still shows in the Why column of two Story rows for each of the three holders. That is the only place staff would still read the word.</p><p class="rec"><b>Recommend:</b> ordinary comp-period lines, and keep the recorded reason as history. It is the true reason these accounts have free time, and a support person needs it. The alternative is rewording the stored reason with a new data step on dev and production, an extra production step for three accounts. Also accepted with this: the old mark reads "until Oct 1, 2027" beside the free time's "through Sep 30, 2027".</p></div>
+      <div class="ask"><h3>D · "Comped clubs not counted" comes off Today and Business numbers</h3><p>It is zero once the 2a step runs on production, and a free-time version would always be zero too.</p><p class="rec"><b>Recommend:</b> remove it, subject to /accounting.</p></div>
+      <div class="ask"><h3>For the record: no decision needed</h3><p>
+        • The last way to claim Founding (an unfinished sign-up from before October 26) closes. Production has no such account, so nobody is affected.<br>
+        • The five Founding emails are removed, along with the Tournament Plus welcome and upsell and the free-portal welcome. Past sends stay in the history.<br>
+        • The 2028 plan choice and the summer card ask go, with no subscriber on dev or production. The card-saving page a club without a card reaches from Plan &amp; billing stays: it is shared.<br>
+        • The record of when a card was saved keeps being written, but nothing reads it any more. Kept, as the plan says.<br>
+        • The four stored next-season fields are dropped from the database in a later step, after this code is serving.<br>
+        • Production order: the 2a holder move first, then this code together with the free-time item, then the field drop.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.tabs button');
+  var viewrow = document.getElementById('viewrow');
+  var compare = { pricing: 1, signup: 1, free: 1, lists: 1, record: 1, camp: 1 };
+  function show(p) {
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.p === p)); });
+    document.querySelectorAll('section.panel').forEach(function (s) { s.hidden = s.id !== 'p-' + p; });
+    viewrow.hidden = !compare[p];
+    try { localStorage.setItem('f2b-tab', p); } catch (e) {}
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.p); }); });
+  var start = 'who';
+  try { start = localStorage.getItem('f2b-tab') || 'who'; } catch (e) {}
+  if (!document.getElementById('p-' + start)) start = 'who';
+  show(start);
+  var all = document.getElementById('v-all'), diff = document.getElementById('v-diff');
+  function view(d) { document.body.classList.toggle('differs', d); all.setAttribute('aria-pressed', String(!d)); diff.setAttribute('aria-pressed', String(d)); }
+  all.addEventListener('click', function () { view(false); });
+  diff.addEventListener('click', function () { view(true); });
+  // Every tag opens an explanation: the first note of its own panel.
+  document.querySelectorAll('.tag').forEach(function (t) {
+    t.setAttribute('role', 'button'); t.setAttribute('tabindex', '0');
+    function go() {
+      var panel = t.closest('section.panel'); if (!panel) return;
+      var n = panel.querySelector('.note'); if (!n) return;
+      document.querySelectorAll('.note.hl').forEach(function (x) { x.classList.remove('hl'); });
+      n.classList.add('hl'); n.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    t.addEventListener('click', go);
+    t.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+  document.querySelectorAll('.mk').forEach(function (m) {
+    m.addEventListener('click', function () {
+      var n = document.getElementById('note-' + m.dataset.n);
+      if (!n) return;
+      document.querySelectorAll('.note.hl').forEach(function (x) { x.classList.remove('hl'); });
+      n.classList.add('hl');
+      n.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+})();
+</script>

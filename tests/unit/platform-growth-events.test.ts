@@ -10,7 +10,7 @@ const cases: Array<[string, PlanMoveInput, 'subscription_started' | 'plan_upgrad
   ['a trial start is a new subscription',
     { previousPlanId: 'tournament', previousStatus: 'active', previousSubscriptionId: null, planId: 'club', status: 'trialing' },
     'subscription_started'],
-  ['a Founding Season comp that starts paying is new, once',
+  ['free time (active, no subscription) that starts paying is new, once',
     { previousPlanId: 'tournament_plus', previousStatus: 'active', previousSubscriptionId: null, planId: 'tournament_plus', status: 'active' },
     'subscription_started'],
   ['a subscription that sat in incomplete is new when it first goes live',

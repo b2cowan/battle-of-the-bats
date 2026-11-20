@@ -285,8 +285,6 @@ export type CoachPortalFacts = {
   inForce: boolean;
   /** `team_workspaces.free_time_given_at` (mig 406): staff gave this portal free time. */
   freeTimeGivenAt: string | null;
-  /** The last day of a live Founding Season comp on it, or null. */
-  foundingLastDay: string | null;
   /** The billing-status grant holding it open right now, or null. */
   runningGrant: { overrideId: string; lastDay: string; expiresAt: string } | null;
   /** The last free day of its newest free time once ended, or null. */
@@ -333,7 +331,7 @@ export type PortalGiveFacts = {
 
 /** The door's one line where it is absent (drawing A, lines 1–9; the console knows before the click). */
 export type PortalGiveBlock = {
-  kind: 'switch' | 'own' | 'demo' | 'running' | 'paying' | 'founding' | 'comped' | 'cancelled' | 'club' | 'had_free_time' | 'no_team' | 'week';
+  kind: 'switch' | 'own' | 'demo' | 'running' | 'paying' | 'comped' | 'cancelled' | 'club' | 'had_free_time' | 'no_team' | 'week';
   tone: 'red' | 'quiet';
   line: string;
   /** The portal the line is about, when there is one (the tab links to its record). */
@@ -373,9 +371,6 @@ function portalBlockOf(p: CoachPortalFacts, role: string): PortalGiveBlock | nul
     const from = formatShortDay(todayEastern(new Date(p.freeTimeGivenAt)));
     const to = p.endedLastDay ? ` to ${formatShortDay(p.endedLastDay)}` : '';
     return { ...at, kind: 'had_free_time', line: `This coach had Premium free from ${from}${to}. A second time needs a Super admin.` };
-  }
-  if (p.foundingLastDay) {
-    return { ...at, kind: 'founding', line: `Their Premium portal is already free through ${formatShortDay(p.foundingLastDay)} under Founding Season. Its end stays as it is.` };
   }
   if (!p.inForce) {
     return { ...at, kind: 'cancelled', ...cancelledPortalLine(p.retention) };

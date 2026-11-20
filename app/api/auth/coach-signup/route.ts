@@ -11,7 +11,6 @@ import {
   sendSignupVerificationEmail, shouldRequireEmailVerification, takeCoachSignupBudget, verificationRedirect, verificationReturnPath,
 } from '@/lib/signup-verification';
 import { paidDoorPick, parseStartDoor, parseStartPricing } from '@/lib/start-door';
-import { lockStartDoorOrUndo } from '@/lib/founding-season';
 import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
 import { termsDoorFrom, type AcceptanceDoor } from '@/lib/legal-acceptance-rules';
 
@@ -141,10 +140,6 @@ export const POST = withObservability(async (req: NextRequest) => {
       });
       return json({ error: 'Account could not be created. Please try again.' }, 500);
     }
-    // The league door's Founding Season offer after the close reads a locked copy of the door (edge (a), 2026-10-19).
-    if (linkData.user && !(await lockStartDoorOrUndo(linkData.user.id, startDoor))) {
-      return json({ error: 'Account could not be created. Please try again.' }, 500);
-    }
     if (linkData.user) await recordDoorAcceptance({ id: linkData.user.id, email }, termsDoor, body);
     await sendSignupVerificationEmail({
       // Only the tournament registration form sends a team name (`continueName`): that is a registration.
@@ -189,9 +184,6 @@ export const POST = withObservability(async (req: NextRequest) => {
     return json({ error: 'Account could not be created. Please try again.' }, 500);
   }
 
-  if (created.user && !(await lockStartDoorOrUndo(created.user.id, startDoor))) {
-    return json({ error: 'Account could not be created. Please try again.' }, 500);
-  }
   if (created.user) await recordDoorAcceptance({ id: created.user.id, email }, termsDoor, body);
   return json({ ok: true, requiresEmailVerification: false });
 }, { route: '/api/auth/coach-signup' });

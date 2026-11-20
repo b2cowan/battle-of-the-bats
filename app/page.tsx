@@ -7,10 +7,9 @@ import PricingSection from '@/components/PricingSection';
 import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
 import type { OrgPlan } from '@/lib/types';
 import {
-  isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, gatedPlanTag, closedProgramPlansSentence,
+  gatedPlanTag, closedProgramPlansSentence,
   isPlanOpen, gatedPlanSentence, availableNowSentence, PLAN_AVAILABLE_NOW,
 } from '@/lib/plan-config';
-import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
@@ -209,8 +208,8 @@ const gatedBadge = (planKey: OrgPlan) => `${gatedPlanTag(planKey)} · express in
 
 /**
  * Badge copy is /marketing's (2026-08-07) and deliberately carries NO price and NO promo date — the
- * persona cards state availability and the absence of a payment barrier; the $29/$39 anchors and the
- * Founding Season end date live one click later where a promotion can be explained.
+ * persona cards state availability and the absence of a payment barrier; the $29/$39 anchors live one
+ * click later on the pricing page.
  * Ruling: BUSINESS_DECISIONS.md 2026-08-07.
  */
 const PERSONAS: Persona[] = [
@@ -306,12 +305,6 @@ export default async function HomePage({
   const roadmapPersonas = personas.filter(p => !p.isLive);
   const teamOpen = isPlanOpen(gatingMap, 'team');
   const closedPlansLine = closedProgramPlansSentence(gatingMap);
-  // The Founding Season surfaces are promo artifacts, not permanent chrome (/review 2026-08-08):
-  // the hero badge row and the callout card render ONLY while the Tournament Plus promo runs, and
-  // name BOTH products only while both promos run and the coach checkout is open. When the promo
-  // ends they disappear on their own instead of asserting an expired date.
-  const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
-  const bothPromosLive = teamOpen && tpPromoActive && isFoundingSeasonPromoActive('team');
   const liveModules = MODULE_CARDS.filter(m => isPlanOpen(gatingMap, m.planKey) && m.liveBadge !== null);
   const roadmapModules = MODULE_CARDS.filter(m => !isPlanOpen(gatingMap, m.planKey) || m.liveBadge === null);
   return (
@@ -319,9 +312,6 @@ export default async function HomePage({
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section className={`${kit.hero} ${kit.center}`}>
         <div className="container">
-          {/* The Founding Season eyebrow row that sat here (12px uppercase above the headline)
-              was removed 2026-09-07: the site-wide offer bar above the nav and the offer panel
-              below the lead carry the offer at the weight it deserves. */}
           <h1 className={kit.headline}>
             Less admin. <span className={kit.accent}>More sport.</span>
           </h1>
@@ -338,14 +328,6 @@ export default async function HomePage({
       </section>
 
       <div className={`container ${styles.doors}`}>
-        {/* The Founding Season offer panel (owner-approved 2026-09-07): the promise at headline
-            weight, the one offer sentence, the two prices being waived, and the after line —
-            BEFORE the visitor chooses a door. The persona cards below stay the doors and keep
-            their availability-only badges (BUSINESS_DECISIONS 2026-08-07): the panel carries the
-            calendar so they never have to. A promo artifact: gone the day the signup window
-            closes. */}
-        {tpPromoActive && <FoundingSeasonPanel showProducts product={bothPromosLive ? undefined : 'tournament_plus'} />}
-
         <div className={`${kit.grid2} ${styles.doorsGrid}`}>
           {livePersonas.map((p) => {
             const body = (
@@ -512,17 +494,6 @@ export default async function HomePage({
               ].filter(Boolean).join(' ')}
             </p>
           </div>
-
-          {/* Founding Season — one line, not a second box (owner-approved 2026-09-07): the hero
-              panel already made the pitch three screens up. Speaks for BOTH promos while both are
-              running (Tournament Plus-only otherwise); a promo artifact, gone when the signup
-              window closes. */}
-          {tpPromoActive && (
-            <p className={`${kit.small} ${styles.promoLine}`}>
-              <strong className={styles.promoName}>Founding Season:</strong>{' '}
-              {bothPromosLive ? 'Tournament Plus and the Premium Coaches Portal are' : 'Tournament Plus is'} free through {FOUNDING_SEASON_END_LABEL} when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}.
-            </p>
-          )}
 
           <PricingSection gatingMap={gatingMap} marketingLayout plusTax />
 

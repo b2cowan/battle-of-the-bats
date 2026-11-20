@@ -5,15 +5,12 @@ import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import {
-  PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive,
-  FOUNDING_SEASON_AFTER_LINE, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
-  FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL, closedProgramPlansSentence,
+  PLAN_CONFIG, formatPriceAmount, closedProgramPlansSentence,
   isPlanOpen, interestButtonLabel, gatedPlanSentence, gatedPlanTag, closedPlansGroupTag, availableNowSentence,
   GATED_PLAN_INTEREST_LINE, PLAN_AVAILABLE_NOW,
 } from '@/lib/plan-config';
 import { planTrialLine } from '@/lib/plan-trial-line';
 import { OFFERED_SPORT_OPTIONS } from '@/lib/sports';
-import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import kit from '@/components/marketing/MarketingKit.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import styles from './page.module.css';
@@ -155,16 +152,12 @@ const FAQS = [
     a: `Tournament Plus is billed monthly or annually in Canadian dollars. ${BILLING_TAX_WORDS.pricesPlusTax} Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12, which works out to roughly two months free. Cancel any time; your plan runs to the end of the year you've paid for.`,
   },
   {
-    q: 'What happens after the Founding Season offer ends?',
-    a: `Tournament Plus and the Premium Coaches Portal are free through ${FOUNDING_SEASON_END_LABEL} for everyone who signs up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card. We'll remind you during the summer, and in ${FOUNDING_SEASON_DECISION_MONTH_LABEL} you'll choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season: monthly or annual, at the standard rates (${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year for Tournament Plus; ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year for the Premium Coaches Portal). If you don't continue, an organization moves to the free Tournament plan and keeps everything it built.`,
-  },
-  {
     q: 'Can I change plans later?',
     a: 'Yes, at any time. If you upgrade mid-month, the new features are available immediately and billing adjusts pro-rata. If you downgrade, the change takes effect at your next billing date. There\'s no lock-in. Organizations often start on Tournament, try the platform, and upgrade as their needs grow — that\'s exactly how the plans are designed.',
   },
   {
     q: 'Do I need a credit card to get started?',
-    a: `No. Tournament is free — no credit card, no time limit. Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and Tournament Plus and the Premium Coaches Portal are free through ${FOUNDING_SEASON_END_LABEL} with no payment details either. When you choose a plan for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}, payment is by card through Stripe.`,
+    a: 'Not for Tournament: it is free, with no credit card and no time limit. Paid plans, the Premium Coaches Portal included, use secure Stripe Checkout.',
   },
   {
     q: 'What if we get stuck?',
@@ -205,12 +198,10 @@ export default async function PricingPage() {
   // No sentence for a trial of 0 days (a platform admin can switch the trial off): no "0-day trial".
   const tpTrialDays = (await getPlanConfigOverride('tournament_plus')).trialDays;
   const tpTrialLine = tpTrialDays > 0 ? planTrialLine(tpTrialDays) : null;
-  const teamPromoActive = isFoundingSeasonPromoActive('team');
-  const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
   const teamPrice = formatPriceAmount(PLAN_CONFIG.team.monthlyPrice);
 
   // The static segment/FAQ copy is written for the GATED state; when the team checkout is
-  // open (Founding Season launch), the coach-facing entries flip to live availability so the
+  // open (Coaches Portal launch), the coach-facing entries flip to live availability so the
   // page can't contradict PLAN_PRICING_FACTS.md (Premium Coaches Portal: live, self-serve).
   const segments = BUYER_SEGMENTS.map(segment =>
     segment.initialPlanInterest?.[0] === 'coaches_portal' && teamCheckoutOpen
@@ -218,7 +209,7 @@ export default async function PricingPage() {
           ...segment,
           earlyAccess: false,
           href: '/coaches/start?source=pricing',
-          cta: teamPromoActive ? 'Start free' : 'Start now',
+          cta: 'Start now',
         }
       : segment,
   );
@@ -239,34 +230,19 @@ export default async function PricingPage() {
         ...faq,
         // No "free portal" sentence (owner 2026-11-19): a coach gets the free portal by entering a tournament; the
         // pricing page sells only Premium to a coach.
-        a: `Use the Premium Coaches Portal, the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? `Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and it's free through ${FOUNDING_SEASON_END_LABEL} — normally ${teamPrice}/month.` : `It's ${teamPrice}/month, cancel any time.`} If your organization moves to Club later, you won't be charged for the portal again.`,
+        a: `Use the Premium Coaches Portal, the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. It's ${teamPrice}/month, cancel any time. If your organization moves to Club later, you won't be charged for the portal again.`,
       };
     }
     if (faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {
       return {
         ...faq,
         a: teamCheckoutOpen
-          ? `The Premium Coaches Portal is available now through self-serve checkout${teamPromoActive ? ` — free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}, normally ${teamPrice}/month` : ` at ${teamPrice}/month ${BILLING_TAX_WORDS.plusTax}`}.${closedTail}`
+          ? `The Premium Coaches Portal is available now through self-serve checkout at ${teamPrice}/month ${BILLING_TAX_WORDS.plusTax}.${closedTail}`
           : `${faq.a} ${liveLine ?? ''} ${gatedPlanSentence('team')}${closedTail}`.replace(/\s+/g, ' ').trim(),
       };
     }
     return faq;
   });
-
-  // Post-window state. The window closed early (owner 2026-10-26) and the offer's marketing comes off the site with it,
-  // so the Founding Season question leaves the FAQ rather than being answered: a visitor who never saw the offer has no
-  // reason to read about it. The three accounts already in read their own free season on their billing page.
-  const faqsForWindow = tpPromoActive
-    ? faqs
-    : faqs
-        .filter(faq => faq.q !== 'What happens after the Founding Season offer ends?')
-        .map(faq =>
-          faq.q === 'Do I need a credit card to get started?'
-            // Owner 2026-11-19: no "Basic Coaches Portal is free" sentence, and no bare "No" — the Premium portal
-            // takes a card at sign-up.
-            ? { ...faq, a: 'Not for Tournament: it is free, with no credit card and no time limit. Paid plans, the Premium Coaches Portal included, use secure Stripe Checkout.' }
-            : faq,
-        );
 
   return (
     <main className={kit.page}>
@@ -354,19 +330,7 @@ export default async function PricingPage() {
               marketingLayout (2026-08-08): live plans as full cards — including the Premium
               Coaches Portal, which replaced the old callout strip here — and gated plans
               compressed into the coming-soon strip below the grid. */}
-          {/* The Founding Season offer strip (owner-approved 2026-09-07) — where the site-wide bar
-              lands, so the page answers in the same words at the top instead of in a footnote. No
-              product lines: the cards beneath carry the prices. A promo artifact: gone the day the
-              signup window closes, rather than asserting an expired date (/review 2026-08-08). */}
-          {tpPromoActive && <FoundingSeasonPanel id="founding-season" product={teamCheckoutOpen && teamPromoActive ? undefined : 'tournament_plus'} />}
-
           <ViewerAwarePlans gatingMap={gatingMap} marketingLayout />
-
-          {tpPromoActive && (
-            <p className={`${kit.small} ${kit.center} ${styles.afterLine}`}>
-              {FOUNDING_SEASON_AFTER_LINE}
-            </p>
-          )}
         </div>
       </section>
 
@@ -381,8 +345,7 @@ export default async function PricingPage() {
                 </p>
                 <h3 className={`${kit.title} ${styles.plainHeading}`}>{b.headline}</h3>
                 <p className={kit.small}>{b.body}</p>
-                {/* Not while Tournament Plus's Founding Season offer runs: then it is free time, not a trial (/legal). */}
-                {'trialPlan' in b && !tpPromoActive && tpTrialLine && <p className={kit.small}>{tpTrialLine}</p>}
+                {'trialPlan' in b && tpTrialLine && <p className={kit.small}>{tpTrialLine}</p>}
                 <div className={kit.push}>
                   {b.earlyAccess ? (
                     <EarlyAccessModalTrigger
@@ -477,7 +440,7 @@ export default async function PricingPage() {
           </p>
 
           <div className={styles.faqList}>
-            {faqsForWindow.map(faq => (
+            {faqs.map(faq => (
               <details key={faq.q} className={`${styles.faqItem} ${faq.featured ? styles.faqFeatured : ''}`}>
                 <summary className={styles.faqQuestion}>
                   {faq.featured && <span className={kit.tag}>Volunteer orgs</span>}
@@ -499,9 +462,9 @@ export default async function PricingPage() {
           </h2>
           <p className={kit.lead}>
             {teamCheckoutOpen
-              ? <>Start free with Tournament.{tpPromoActive && teamPromoActive ? ` Tournament Plus and the Premium Coaches Portal are free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card.` : ''}
+              ? <>Start free with Tournament.
                 {closedPlansLine && <>{' '}{closedPlansLine} {GATED_PLAN_INTEREST_LINE}</>}</>
-              : <>Start free with Tournament.{tpPromoActive ? ` Tournament Plus is free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card.` : ''}
+              : <>Start free with Tournament.
                 {' '}{gatedPlanSentence('team')}{closedPlansLine && <> {closedPlansLine}</>} {GATED_PLAN_INTEREST_LINE}</>}
           </p>
           <div className={`${kit.row} ${styles.ctaActions}`}>

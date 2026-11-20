@@ -34,12 +34,12 @@ export function freeTimeSubject(o: FreeTimeRow, ownPlanLabel: string): string {
   return ownPlanLabel;
 }
 
-/** An Access row's title: "Club · the whole plan", "Accounting", "Billing status: Active", "Tournament Plus · Founding Season". */
-export function freeTimeTitle(o: FreeTimeRow, org: ClubRecordProps['org']): string {
+/** An Access row's title: "Club · the whole plan", "Accounting", "Billing status: Active", "Billing tag, gives nothing". */
+export function freeTimeTitle(o: FreeTimeRow): string {
   if (o.type === 'plan_tier') return `${planLabel(o.plan ?? '')} · the whole plan`;
   if (o.type === 'module_addon') return o.addons.map(sectionLabel).join(', ') || 'Sections';
   if (o.type === 'subscription_status') return `Billing status: ${subscriptionStatusLabel(o.value ?? 'active')}`;
-  return o.founding ? `${org.planLabel} · Founding Season` : 'Billing tag, gives nothing';
+  return 'Billing tag, gives nothing';
 }
 
 export function BlockLine({ block }: { block: GiveBlock }) {
@@ -75,7 +75,6 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
   const [indefinite, setIndefinite] = useState(false);
   const offered = CLUB_SECTIONS.filter(s => !org.planSections.includes(s.key));
   const planName = freeTime.plansAbove.find(p => p.id === plan)?.label ?? '';
-  const founding = rows.find(o => o.running && o.founding && o.lastDay) ?? null;
   const grantedRow = planBlock?.kind === 'granted' ? rows.find(o => o.id === planBlock.overrideId) ?? null : null;
   const b = (text: string) => <strong>{text}</strong>;
   const through = lastDay ? formatLongDay(lastDay) : null;
@@ -98,10 +97,8 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
     }
   } else if (kind && through) {
     if (kind === 'plan_tier') {
-      const stillFounding = founding && founding.lastDay! > lastDay
-        ? <>, still free through {formatLongDay(founding.lastDay!)} under Founding Season</> : null;
       sentence = <>{org.name} gets {b(`${planName} through ${through}`)}. On {dayAfterWords(lastDay)} it goes back to {b(org.planLabel)} by
-        itself{stillFounding}. Nothing is charged, nothing is deleted, and the owner is not emailed. Their Plan &amp; billing page
+        itself. Nothing is charged, nothing is deleted, and the owner is not emailed. Their Plan &amp; billing page
         says “Free through {through}”.</>;
     } else if (kind === 'module_addon') {
       const names = addons.map(sectionLabel).join(', ');

@@ -7,8 +7,7 @@ import { getStartMenuConfig } from '@/lib/start-menu';
 
 /**
  * Warm consumer chrome for the coach sign-up JOURNEY routes that live OUTSIDE the (consumer)
- * route group — /coaches/start and the post-provision success screen
- * (/coaches/welcome). It mounts the SAME warm ConsumerNav the four consumer tabs wear, so a
+ * route group — /coaches/start, /coaches/join and /coaches/checkout. It mounts the SAME warm ConsumerNav the four consumer tabs wear, so a
  * coach entering the sign-up flow from the app never loses the back-to-app anchor and the
  * journey reads as one app (design_decisions S1-2). Since Desktop Public UX Phase 1 (WI-5)
  * the nav is state-based platform-wide: anonymous = Home/Scores + Sign In, signed-in = the

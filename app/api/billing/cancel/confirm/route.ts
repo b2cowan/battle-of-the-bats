@@ -16,7 +16,7 @@ import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
  * Plans end at the renewal date (owner ruling 2026-10-31, Stage 1): a paying Stripe subscription is SCHEDULED to end on
  * its renewal date — Stripe first, then the waiting row — and nothing is archived, suspended, hidden or closed now. The
  * ending itself runs when Stripe deletes the subscription (the webhook, through lib/plan-ending.ts). An account with no
- * real subscription (comped, Founding Season, a dev mock) has no date to wait for and ends now, through the same ending.
+ * real subscription (comped, a dev mock) has no date to wait for and ends now, through the same ending.
  */
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is acting on (multi-org owners), NOT their home org — fail closed

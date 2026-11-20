@@ -13,13 +13,13 @@
 - **It does not apply to:**
   - a change in a tax rate (Terms §6: not a price change);
   - a price that only new buyers pay;
-  - free, comped and Founding Season accounts. Founding comps are honoured on the terms they were sold.
+  - free accounts and accounts on staff-given free time. Free time is honoured on the terms it was given (the three former Founding Season holders carry ordinary free time through September 30, 2027).
 
 ## The steps
 1. **Fix the first affected renewal date.** It must be **at least 35 days after the notice is sent**: 30 days is the
    promise, and 5 days covers a bounce and a re-send. Every renewal before that date keeps the old price.
 2. **List the people to tell:** every active owner of each affected paid organization, plus the coach for a Premium portal.
-   Leave out free, comped and Founding accounts, and the demo accounts.
+   Leave out free accounts, accounts on staff-given free time, and the demo accounts.
 3. **Send the notice.** It names:
    - the plan;
    - the old and the new price, each "plus applicable taxes";

@@ -1,51 +1,42 @@
 /**
  * lib/marketing-email-defaults.ts
  *
- * The CANONICAL registry for the founding-season marketing campaigns: their default copy, who
- * each one goes to, when it fires, and whether it is still live. This is the ONE place the
- * campaign set is declared — the send route, the audience map, the dashboard board and the
- * recipient-count map all derive from it.
+ * The registry of the platform's marketing-campaign emails: their default copy, who each one went
+ * to, when it fired, and whether it is still live.
  *
- * WHY IT LIVES IN CODE: the operator-editable copy lives in the DB (platform_email_templates),
- * but once an operator saves an override the original seed text is overwritten in that row.
- * To make "Reset to default" genuinely restore the original (not just clear a badge), the
- * default must be available at runtime — here. The DB row is the live/editable copy; this is
- * the immutable default. (Standard default+override model — no duplication of the SEND path,
- * which still reads the one DB row.)
+ * ⚠ EVERY CAMPAIGN HERE IS RETIRED (2026-11-20, owner ruling 2026-11-19: the Founding Season was
+ * removed). No campaign is planned, so the live set is empty: nothing can be sent from the console,
+ * and the Campaigns page is a record (sent history and opt-outs). The copy is kept — never deleted —
+ * so each template still reads as history on Email templates and "Reset to default" still restores
+ * it. A data-only DELETE is invisible to every drift gate we have, so it would strand on production
+ * unnoticed (see CLAUDE.md on migration 264).
  *
- * ⚠ WHY THE REGISTRY MOVED HERE (Founding Season 2027 Phase 1, 2026-09-07). The campaign SET
- * used to be declared five times — here, in the send route's key allowlist, in the audience map
- * in lib/email-sender.ts, in the per-key recipient counts in app/api/admin/email/route.ts, and
- * in the dashboard's own hardcoded board. Rewriting the campaigns for the summer-2027 calendar
- * found all five disagreeing: three campaigns pitched parked products, the "Confirm Send" dialog
- * quoted subject lines two rewrites out of date, and two campaigns showed "past due" for sends
- * that must never go out. Nothing could have caught that, because nothing compared the lists.
- * Now they are one list, and tests/unit/marketing-campaign-registry.test.ts fails the build if a
- * consumer ever grows its own copy again.
+ * WHY IT LIVES IN CODE: the operator-editable copy lives in the DB (platform_email_templates), but
+ * once an operator saves an override the original seed text is overwritten in that row. To make
+ * "Reset to default" genuinely restore the original, the default must be available at runtime — here.
  *
- * ⚠ NEVER HAND-TYPE A FOUNDING SEASON DATE OR A PLAN PRICE in this file. Every one is derived
- * from lib/plan-config.ts below. The world this project replaced had two dozen hand-typed
- * "January 1, 2027"s across the app and all ten campaigns, and moving one date broke every one
- * of them silently.
+ * The dates and words of the retired Founding Season copy are written out below as they were when the
+ * emails were last live, rather than derived from lib/plan-config.ts (the constants they came from
+ * are gone). Plan names and prices still derive from plan-config.
  *
- * KEEP IN SYNC: the DB seed is GENERATED from this data, never hand-copied —
- * `node scripts/generate-campaign-reseed-migration.mjs` writes the reseed migration (the
- * migration-198 pattern: data-only, and it touches a row only while it is NOT
- * operator-customised, so a saved override always wins). Content is the block-markup understood
- * by lib/email-markup.ts.
+ * Every campaign here is retired, so this copy is history: no reseed migration is generated from it any more (the
+ * generator was removed 2026-11-20 with the Founding Season). A revived campaign needs new copy, a seed migration and a
+ * live entry. Content is the block-markup understood by lib/email-markup.ts.
  */
 
-import {
-  PLAN_CONFIG,
-  formatPriceAmount,
-  FOUNDING_SEASON_END_LABEL,
-  FOUNDING_SEASON_FIRST_CHARGE_LABEL,
-  FOUNDING_SEASON_YEAR_LABEL,
-  FOUNDING_SEASON_NEXT_YEAR_LABEL,
-  FOUNDING_SEASON_DECISION_MONTH_LABEL,
-  FOUNDING_SEASON_AFTER_LINE,
-} from './plan-config';
+import { PLAN_CONFIG, formatPriceAmount } from './plan-config';
 import { BILLING_TAX_WORDS } from './billing-tax';
+
+// ── The retired copy's frozen dates ───────────────────────────────────────────
+// What the five lifecycle emails said when they were last live. Not derived from anything.
+
+const FROZEN_END_LABEL = 'September 30, 2027';
+const FROZEN_FIRST_CHARGE_LABEL = 'October 1, 2027';
+const FROZEN_YEAR_LABEL = '2027';
+const FROZEN_NEXT_YEAR_LABEL = '2028';
+const FROZEN_DECISION_MONTH_LABEL = 'September 2027';
+const FROZEN_AFTER_LINE =
+  `In ${FROZEN_DECISION_MONTH_LABEL} you'll choose a plan for your ${FROZEN_NEXT_YEAR_LABEL} season. Nothing is charged before then, and there is nothing to cancel.`;
 
 // ── Derived words: plan names, prices, dates ──────────────────────────────────
 // Every customer-visible number and date in the bodies below comes from one of these.
@@ -63,7 +54,7 @@ const PORTAL_MONTHLY = `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mont
 const PORTAL_ANNUAL = `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year`;
 
 /** "your 2028 season" — what the end-of-season ask is actually about (D3, annual first). */
-const NEXT_SEASON = `your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season`;
+const NEXT_SEASON = `your ${FROZEN_NEXT_YEAR_LABEL} season`;
 
 /**
  * The three audience segments a marketing campaign can target. Resolved to real recipients by
@@ -101,20 +92,23 @@ export type MarketingEmailDefault = {
 };
 
 export const MARKETING_EMAIL_DEFAULTS: Record<string, MarketingEmailDefault> = {
-  // ── The founding-season lifecycle ───────────────────────────────────────────
+  // ── The Founding Season lifecycle — RETIRED 2026-11-20 ───────────────────────
+  // The Founding Season was removed (owner 2026-11-19). All five leave the board and every send path
+  // is deleted; the copy stays as history, in the words it last went out with.
   "founding_welcome": {
     label: "Founding — Welcome",
-    description: `Sent to each new founding org owner at signup (transactional). Confirms free ${PLUS} through ${FOUNDING_SEASON_END_LABEL}.`,
-    subject: `Your Founding Season starts now — free through ${FOUNDING_SEASON_END_LABEL}`,
+    description: `Sent to each new founding org owner at signup (transactional). Confirms free ${PLUS} through ${FROZEN_END_LABEL}.`,
+    subject: `Your Founding Season starts now — free through ${FROZEN_END_LABEL}`,
     heading: "Your Founding Season starts now.",
     variables: ["firstName", "orgName", "setupUrl"],
     audience: 'founding',
     isTransactional: true,
     timing: { kind: 'trigger', when: 'At signup' },
     audienceLabel: 'Each new founding org owner (transactional)',
+    retired: { on: '2026-11-20', why: 'The Founding Season was removed' },
     body: `Hi {{firstName}},
 
-You're in. **{{orgName}}** is set up on FieldLogicHQ, and **${PLUS} is free through ${FOUNDING_SEASON_END_LABEL}** — your whole ${FOUNDING_SEASON_YEAR_LABEL} season. Normally ${PLUS_MONTHLY}. No credit card.
+You're in. **{{orgName}}** is set up on FieldLogicHQ, and **${PLUS} is free through ${FROZEN_END_LABEL}** — your whole ${FROZEN_YEAR_LABEL} season. Normally ${PLUS_MONTHLY}. No credit card.
 
 ::callout What ${PLUS} gives you
 - Auto-scheduling across any number of fields and time slots
@@ -126,7 +120,7 @@ You're in. **{{orgName}}** is set up on FieldLogicHQ, and **${PLUS} is free thro
 
 ::button Set up your first tournament → | {{setupUrl}}
 
-${FOUNDING_SEASON_AFTER_LINE}
+${FROZEN_AFTER_LINE}
 
 If anything doesn't work the way you'd expect, reply to this email. We read everything.
 
@@ -141,6 +135,7 @@ If anything doesn't work the way you'd expect, reply to this email. We read ever
     audience: 'founding',
     timing: { kind: 'trigger', when: '~Day 60 post-signup' },
     audienceLabel: 'Founding orgs, signed up 60+ days ago',
+    retired: { on: '2026-11-20', why: 'The Founding Season was removed' },
     body: `Hi {{firstName}},
 
 It's been **{{weeksPhrase}}** since **{{orgName}}** joined FieldLogicHQ.
@@ -152,7 +147,7 @@ That's {{gameCount}} schedule exports and score entries you didn't have to do in
 ::end
 ::button Set up another tournament → | {{setupUrl}}
 ::else
-You haven't run your first tournament yet — and you have your whole ${FOUNDING_SEASON_YEAR_LABEL} season on ${PLUS} to do it in.
+You haven't run your first tournament yet — and you have your whole ${FROZEN_YEAR_LABEL} season on ${PLUS} to do it in.
 
 If you have an event coming up, now's the time to set it up:
 ::button Set up a tournament → | {{setupUrl}}
@@ -160,27 +155,26 @@ If you have an event coming up, now's the time to set it up:
 
 We're also curious: what's working, and what isn't? Reply and tell us.
 
-${PLUS} is free for **{{orgName}}** through **${FOUNDING_SEASON_END_LABEL}**. ${FOUNDING_SEASON_AFTER_LINE}
+${PLUS} is free for **{{orgName}}** through **${FROZEN_END_LABEL}**. ${FROZEN_AFTER_LINE}
 
 — The FieldLogicHQ team`,
   },
 
-  // ── The summer sequence: choose a plan for the next season ──────────────────
-  // Three sends, from four months out to two weeks out, all keyed to the day the free season
-  // ends. The card ask opens with the first of them (FOUNDING_SEASON_CARD_WINDOW_OPEN) —
-  // nothing anywhere in the product asks for a card before it.
+  // ── The summer sequence: choose a plan for the next season (retired) ────────
+  // Three sends, from four months out to two weeks out, all keyed to the day the free season ended.
   "founding_renewal": {
     label: "Founding — Choose your plan",
-    description: `Sent when the card window opens. Explains what happens on ${FOUNDING_SEASON_FIRST_CHARGE_LABEL} and opens the ${FOUNDING_SEASON_NEXT_YEAR_LABEL} plan choice, annual first.`,
-    subject: `Your free season ends ${FOUNDING_SEASON_END_LABEL} — choose your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} plan`,
-    heading: `Your free season ends ${FOUNDING_SEASON_END_LABEL}.`,
+    description: `Sent when the card window opens. Explains what happens on ${FROZEN_FIRST_CHARGE_LABEL} and opens the ${FROZEN_NEXT_YEAR_LABEL} plan choice, annual first.`,
+    subject: `Your free season ends ${FROZEN_END_LABEL} — choose your ${FROZEN_NEXT_YEAR_LABEL} plan`,
+    heading: `Your free season ends ${FROZEN_END_LABEL}.`,
     variables: ["firstName", "orgName", "hasHistory", "hasActive", "activePhrase", "hasPast", "pastPhrase", "billingUrl", "planCompareUrl"],
     audience: 'founding',
     timing: { kind: 'date', plannedSendDate: '2027-06-01' },
     audienceLabel: 'All founding season org owners',
+    retired: { on: '2026-11-20', why: 'The Founding Season was removed' },
     body: `Hi {{firstName}},
 
-**{{orgName}}** has run on ${PLUS} at no cost since you joined. That free season ends on **${FOUNDING_SEASON_END_LABEL}** — and this is the early note, not the last one.
+**{{orgName}}** has run on ${PLUS} at no cost since you joined. That free season ends on **${FROZEN_END_LABEL}** — and this is the early note, not the last one.
 
 ::callout.blue What you're choosing
 A plan for ${NEXT_SEASON} — **annual or monthly**. ${PLUS} is **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}** ${PLUS_TAX}. Annual suits most seasons: a year of tournaments paid once, in the month you're already doing the budget.
@@ -197,11 +191,11 @@ Your **{{pastPhrase}}** stay in your archives on any plan, including the free on
 ::end
 ::end
 
-You can add a card now and choose the plan later. Nothing is charged before **${FOUNDING_SEASON_FIRST_CHARGE_LABEL}**.
+You can add a card now and choose the plan later. Nothing is charged before **${FROZEN_FIRST_CHARGE_LABEL}**.
 
 ::button Add a payment method — takes 2 minutes → | {{billingUrl}}
 
-**If ${PLUS} isn't right for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}, there is nothing to cancel.** On ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}, **{{orgName}}** moves to the free ${FREE_PLAN} plan and keeps everything it built.
+**If ${PLUS} isn't right for ${FROZEN_NEXT_YEAR_LABEL}, there is nothing to cancel.** On ${FROZEN_FIRST_CHARGE_LABEL}, **{{orgName}}** moves to the free ${FREE_PLAN} plan and keeps everything it built.
 
 ::link See the plans → | {{planCompareUrl}}
 
@@ -211,53 +205,55 @@ Questions? Reply to this email.
   },
   "founding_nudge": {
     label: "Founding — Plan reminder",
-    description: `Sent two months before the free season ends. A short reminder for anyone who has not chosen a ${FOUNDING_SEASON_NEXT_YEAR_LABEL} plan yet.`,
-    subject: `Still time to choose your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} plan`,
-    heading: `Still time to choose your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} plan.`,
+    description: `Sent two months before the free season ends. A short reminder for anyone who has not chosen a ${FROZEN_NEXT_YEAR_LABEL} plan yet.`,
+    subject: `Still time to choose your ${FROZEN_NEXT_YEAR_LABEL} plan`,
+    heading: `Still time to choose your ${FROZEN_NEXT_YEAR_LABEL} plan.`,
     variables: ["firstName", "orgName", "hasCard", "billingUrl"],
     audience: 'founding',
     timing: { kind: 'date', plannedSendDate: '2027-08-01' },
     audienceLabel: 'All founding season org owners',
+    retired: { on: '2026-11-20', why: 'The Founding Season was removed' },
     body: `Hi {{firstName}},
 
-A short follow-up: **{{orgName}}**'s free season on ${PLUS} ends on **${FOUNDING_SEASON_END_LABEL}**.
+A short follow-up: **{{orgName}}**'s free season on ${PLUS} ends on **${FROZEN_END_LABEL}**.
 
 ::if hasCard
-Your payment method is on file, so there is nothing to do today. In ${FOUNDING_SEASON_DECISION_MONTH_LABEL} you'll pick annual or monthly, and that is the whole decision.
+Your payment method is on file, so there is nothing to do today. In ${FROZEN_DECISION_MONTH_LABEL} you'll pick annual or monthly, and that is the whole decision.
 ::else
-Nothing has been charged, and nothing will be before **${FOUNDING_SEASON_FIRST_CHARGE_LABEL}**. If you already know you're continuing, adding a card now takes two minutes and takes it off your list:
+Nothing has been charged, and nothing will be before **${FROZEN_FIRST_CHARGE_LABEL}**. If you already know you're continuing, adding a card now takes two minutes and takes it off your list:
 ::button Add a payment method → | {{billingUrl}}
 ::end
 
-::callout What it costs from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}
+::callout What it costs from ${FROZEN_FIRST_CHARGE_LABEL}
 ${PLUS} is **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}** ${PLUS_TAX}. The year is one payment, in the month you're planning the season anyway.
 ::end
 
-If ${PLUS} isn't right for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}, there is nothing to cancel. **{{orgName}}** moves to the free ${FREE_PLAN} plan and keeps everything it built.
+If ${PLUS} isn't right for ${FROZEN_NEXT_YEAR_LABEL}, there is nothing to cancel. **{{orgName}}** moves to the free ${FREE_PLAN} plan and keeps everything it built.
 
 — The FieldLogicHQ team`,
   },
   "founding_final": {
     label: "Founding — Final notice",
-    description: `Sent about two weeks before the free season ends. The last note before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.`,
-    subject: `Last note before your free season ends ${FOUNDING_SEASON_END_LABEL}`,
-    heading: `Your free season ends ${FOUNDING_SEASON_END_LABEL}.`,
+    description: `Sent about two weeks before the free season ends. The last note before ${FROZEN_FIRST_CHARGE_LABEL}.`,
+    subject: `Last note before your free season ends ${FROZEN_END_LABEL}`,
+    heading: `Your free season ends ${FROZEN_END_LABEL}.`,
     variables: ["firstName", "orgName", "hasCard", "billingUrl"],
     audience: 'founding',
     timing: { kind: 'date', plannedSendDate: '2027-09-15' },
     audienceLabel: 'All founding season org owners',
+    retired: { on: '2026-11-20', why: 'The Founding Season was removed' },
     body: `Hi {{firstName}},
 
-This is the last note before **{{orgName}}**'s free season ends on **${FOUNDING_SEASON_END_LABEL}**.
+This is the last note before **{{orgName}}**'s free season ends on **${FROZEN_END_LABEL}**.
 
 ::if hasCard
-Your payment method is on file, so the only thing left is the choice itself: **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}** ${PLUS_TAX}, from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.
-::button Choose your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} plan → | {{billingUrl}}
+Your payment method is on file, so the only thing left is the choice itself: **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}** ${PLUS_TAX}, from ${FROZEN_FIRST_CHARGE_LABEL}.
+::button Choose your ${FROZEN_NEXT_YEAR_LABEL} plan → | {{billingUrl}}
 ::else
-To keep ${PLUS} from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}, choose a plan for ${NEXT_SEASON}:
-::button Choose your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} plan → | {{billingUrl}}
+To keep ${PLUS} from ${FROZEN_FIRST_CHARGE_LABEL}, choose a plan for ${NEXT_SEASON}:
+::button Choose your ${FROZEN_NEXT_YEAR_LABEL} plan → | {{billingUrl}}
 
-**If you'd rather not continue, you don't have to do anything.** On ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}, **{{orgName}}** moves to the free ${FREE_PLAN} plan — one active tournament, manual scheduling, no cost — and every team, score and archive you have built stays exactly where it is.
+**If you'd rather not continue, you don't have to do anything.** On ${FROZEN_FIRST_CHARGE_LABEL}, **{{orgName}}** moves to the free ${FREE_PLAN} plan — one active tournament, manual scheduling, no cost — and every team, score and archive you have built stays exactly where it is.
 ::end
 
 Thank you for running your season with us. You were one of the first.
@@ -267,13 +263,13 @@ Thank you for running your season with us. You were one of the first.
 
   // ── The acquisition push — RETIRED 2026-10-26 ─────────────────────────────────
   // The Founding Season offer closed early (owner 2026-10-26, BUSINESS_DECISIONS), and all three of these
-  // sell it. They leave the board and the send route refuses them. The offer sentence is written out
+  // sell it (the season itself was then removed, 2026-11-19). They leave the board and the send route refuses them. The offer sentence is written out
   // verbatim as the database row holds it (mig 284) rather than derived from the close date, so moving
   // the date did not rewrite copy that is never sent again — the same rule as the retired Club spotlights.
   "spotlight_coaches_org": {
     label: "Spotlight — Coaches Portal (to orgs)",
     description: `Sent to org owners during the signup window. Pitches the ${PORTAL} for the coaches on their teams.`,
-    subject: `For the coaches on your teams — free through ${FOUNDING_SEASON_END_LABEL}`,
+    subject: `For the coaches on your teams — free through ${FROZEN_END_LABEL}`,
     heading: "For the coaches on your teams — a workspace that's actually theirs.",
     variables: ["firstName", "coachShareUrl", "interestUrl"],
     audience: 'founding',
@@ -306,7 +302,7 @@ Want the details first?
   "spotlight_coaches_coach": {
     label: "Spotlight — Coaches Portal (to coaches)",
     description: `Sent to coach accounts during the signup window. Pitches the standalone ${PORTAL}.`,
-    subject: `Your team's season workspace — free through ${FOUNDING_SEASON_END_LABEL}`,
+    subject: `Your team's season workspace — free through ${FROZEN_END_LABEL}`,
     heading: "Your team's season workspace.",
     variables: ["firstName", "interestUrl"],
     audience: 'coaches',
@@ -328,7 +324,7 @@ No organization account required. Your team's workspace, on your timeline.
 
 The Premium Coaches Portal is free through September 30, 2027 when you sign up by December 31, 2026. No credit card. Normally ${PORTAL_MONTHLY} or ${PORTAL_ANNUAL}.
 
-${FOUNDING_SEASON_AFTER_LINE}
+${FROZEN_AFTER_LINE}
 
 ::button Start your ${PORTAL} → | {{interestUrl}}
 
@@ -367,7 +363,7 @@ You helped build this — by running real events on the platform and telling us 
 If you know another tournament organizer or coach who should be here, the Founding Season is open until **December 31, 2026**:
 ::link Share FieldLogicHQ → | {{shareUrl}}
 
-There is nothing to do about billing. ${FOUNDING_SEASON_AFTER_LINE}
+There is nothing to do about billing. ${FROZEN_AFTER_LINE}
 
 — The FieldLogicHQ team`,
   },

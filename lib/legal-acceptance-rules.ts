@@ -136,7 +136,7 @@ export function termsStopOf(status: number, data: unknown): TermsStop | null {
 
 /**
  * §20 (3): the line beside every button that starts, renews into or changes a paid plan — a line, not a second box (the account
- * already agreed at (1) or (2)). Only where a PRICE is shown (§20 note 3: a comped or Founding Season button carries none). `trial`
+ * already agreed at (1) or (2)). Only where a PRICE is shown (§20 note 3: a comped button carries none). `trial`
  * comes first, as one paragraph, where the screen already says a trial applies. `terms` is the link.
  */
 export const PLAN_LINE_WORDS = {
@@ -194,8 +194,7 @@ export function doorTermsVerdict(body: DoorTermsFields | null | undefined, curre
 }
 
 /**
- * The mirror of the accepted Terms version on the auth user's `app_metadata` (service role only — the Founding Season start-door
- * lock is the precedent). A cache that can only ever say "not yet": the table is the truth.
+ * The mirror of the accepted Terms version on the auth user's `app_metadata` (service role only). A cache that can only ever say "not yet": the table is the truth.
  */
 export const TERMS_ACCEPTED_KEY = 'legal_terms_accepted';
 

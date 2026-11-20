@@ -4,7 +4,7 @@
  *   1 · the window: 37 days sends, 38 doesn't, 29 sends as late;
  *   2 · once per charge date: a second run the same day sends nothing; a definite failure gives the stamp back, an unknown keeps it;
  *   3 · each exclusion sends nothing; a failed preview sends nothing;
- *   4 · the words (§6): renewal, trial, next-season, the move-down line, no tax → the estimate sentence drops;
+ *   4 · the words (§6): renewal, trial, the move-down line, no tax → the estimate sentence drops;
  *   5 · the wiring: the daily step, the stored pre-filter, Stripe's preview (never amount_due), every owner;
  *   6 · Québec: the rule, the words, the screens (the purchase doors themselves: billing-location-every-path-guard.test.ts).
  */
@@ -39,7 +39,7 @@ describe('1 · the window (37 days sends, 38 doesn’t, 29 sends as late)', () =
 
   it('one reminder per account, the earlier date, the same every day (two dates would trade the stamp and both send daily)', () => {
     const a: ReminderCandidate = { orgId: 'o1', subscriptionId: 'sub_a', kind: 'renewal', chargeIso: inDays(35), remindedFor: null };
-    const b: ReminderCandidate = { ...a, subscriptionId: 'sub_b', kind: 'next_season', chargeIso: inDays(33) };
+    const b: ReminderCandidate = { ...a, subscriptionId: 'sub_b', kind: 'trial', chargeIso: inDays(33) };
     const c: ReminderCandidate = { ...a, orgId: 'o2' };
     assert.deepEqual(onePerAccount([a, b, c]).map(x => x.subscriptionId).sort(), ['sub_a', 'sub_b']);
     assert.equal(onePerAccount([a, b]).length, 1);
@@ -217,14 +217,11 @@ describe('4 · the words (§6, copied exactly)', () => {
     assert.ok(e.html.includes('Your billing page'));
   });
 
-  it('a trial ending, and a next-season choice’s first charge', () => {
+  it('a trial ending', () => {
     const t = renewalReminderEmail(input({ kind: 'trial' }));
     assert.equal(t.subject, 'Your first yearly payment for Tournament Plus is on October 1, 2027');
     assert.equal(t.vars.headingLine, 'Your first yearly payment is on October 1, 2027');
     assert.match(t.vars.lead, /^Guelph Minor Ball’s free trial of yearly Tournament Plus ends on October 1, 2027\. We’ll then charge the card on file \$390\.00 plus applicable taxes\./);
-    const n = renewalReminderEmail(input({ kind: 'next_season' }));
-    assert.equal(n.subject, 'Your first yearly payment for Tournament Plus is on October 1, 2027');
-    assert.match(n.vars.lead, /^Guelph Minor Ball’s yearly Tournament Plus plan starts on October 1, 2027\. We’ll charge the card on file \$390\.00 plus applicable taxes\./);
   });
 
   it('a waiting move down names the plan it renews into, at that plan’s price', async () => {
@@ -272,7 +269,7 @@ describe('4 · the words (§6, copied exactly)', () => {
 const MIG_490 = 'supabase/migrations/490_the_yearly_reminder_keeps_its_date_and_amount.sql';
 describe('4c · the date, the amount, the cancel line and the button are the code’s, after the operator’s words', () => {
   const kinds = [
-    input(), input({ kind: 'trial' }), input({ kind: 'next_season' }), input({ planLabel: 'Club', nextPlanLabel: 'League' }), input({ taxLines: [], totalCents: 39000 }),
+    input(), input({ kind: 'trial' }), input({ planLabel: 'Club', nextPlanLabel: 'League' }), input({ taxLines: [], totalCents: 39000 }),
   ];
 
   it('the built-in email is byte-for-byte what it was before the fixed block (each kind, the move-down line, no tax)', () => {
@@ -381,8 +378,7 @@ describe('5 · the wiring', () => {
 
   it('the pre-filter reads the stored rows before any Stripe read: yearly, active or trialing, a subscription, at most 37 days out', () => {
     for (const s of [".eq('subscription_period', 'annual')", ".not('stripe_subscription_id', 'is', null)",
-      ".in('subscription_status', ['active', 'trialing'])", ".lte('current_period_end', at(REMINDER_WINDOW.latestDays))",
-      ".eq('next_season_billing_cycle', 'annual')"]) assert.ok(server.includes(s), s);
+      ".in('subscription_status', ['active', 'trialing'])", ".lte('current_period_end', at(REMINDER_WINDOW.latestDays))"]) assert.ok(server.includes(s), s);
   });
 
   it('a row with no cycle on record is read only while its charge is over 31 days away (never a monthly plan’s), so Stripe decides', () => {

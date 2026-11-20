@@ -15,7 +15,6 @@ import {
 } from '../../lib/purchase-details.ts';
 import { ownersSendOutcome } from '../../lib/owners-send-outcome.ts';
 import { BUYER_USER_META, COMEBACK_META } from '../../lib/plan-growth.ts';
-import { NEXT_SEASON_CHOICE_KIND, buildNextSeasonCheckoutParams } from '../../lib/next-season-choice.ts';
 import { zeroRatedLine, type StoredTaxLine } from '../../lib/charge-tax-record.ts';
 
 const read = (p: string) => readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
@@ -32,10 +31,9 @@ describe('1 · which paid invoice earns the email (§3.2)', () => {
     assert.equal(is({}), 'first');
     assert.equal(is({ meta: { [COMEBACK_META]: '1' } }), 'comeback');
   });
-  it('a $0 first invoice of a trialing subscription: a trial, or a next-season choice by its marker', () => {
+  it('a $0 first invoice of a trialing subscription: a trial', () => {
     assert.equal(is({ totalCents: 0, subscriptionStatus: 'trialing' }), 'trial');
-    assert.equal(is({ totalCents: 0, subscriptionStatus: 'trialing', meta: { choiceKind: NEXT_SEASON_CHOICE_KIND } }), 'next_season');
-    assert.equal(is({ totalCents: 0, subscriptionStatus: 'active' }), null, 'a $0 purchase that is not a trial is not one of the five');
+    assert.equal(is({ totalCents: 0, subscriptionStatus: 'active' }), null, 'a $0 purchase that is not a trial is not one of the four');
   });
   it('a move up\'s proration invoice, Premium → Club in place included (test mode 2026-11-13: both carry flhq_plan_move up)', () => {
     assert.equal(is({ billingReason: 'subscription_update', meta: { flhq_plan_move: 'up' } }), 'plan_change');
@@ -56,12 +54,9 @@ describe('1 · which paid invoice earns the email (§3.2)', () => {
     assert.equal(is({ ...trialUp, status: 'open' }), null);
     assert.equal(is({ ...trialUp, subscriptionId: 'mock_sub_1' }), null, 'the dev mock path writes no invoice');
     assert.equal(is({ ...trialUp, billingReason: 'subscription_create' }), 'trial', 'a trial\'s own first invoice stays the trial email');
-    // A next-season choice is trialing too, with no free trial: a guard (no move up reaches one today), so it sends nothing.
-    assert.equal(is({ ...trialUp, meta: { flhq_plan_move: 'up', choiceKind: NEXT_SEASON_CHOICE_KIND } }), null);
   });
-  it('a renewal is never one — a trial\'s or next-season choice\'s first real charge included', () => {
+  it('a renewal is never one — a trial\'s first real charge included', () => {
     assert.equal(is({ billingReason: 'subscription_cycle' }), null);
-    assert.equal(is({ billingReason: 'subscription_cycle', meta: { choiceKind: NEXT_SEASON_CHOICE_KIND } }), null);
   });
   it('a manual or threshold invoice, a club\'s retired Stripe-fee invoice (kind fee, still on old records): none', () => {
     assert.equal(is({ billingReason: 'manual' }), null);
@@ -210,14 +205,12 @@ const termsOf = (html: string) => html.split('\n').filter(l => /Terms of Service
 const withoutTerms = (html: string) => html.split('\n').filter(l => !/Terms of Service/.test(l)).join('\n');
 
 describe('3 · the words (§6)', () => {
-  it('the subject, heading and five openings are §6 as reviewed (the sixth, a move up during a trial, below)', () => {
+  it('the subject, heading and four openings are §6 as reviewed (the fifth, a move up during a trial, below)', () => {
     assert.equal(PURCHASE_WORDS.subject('League'), 'The details of your purchase: League');
     assert.equal(PURCHASE_WORDS.opening('first', 'League', 'Riverside Club'), 'Thanks for choosing League for Riverside Club. Here are the details of your purchase.');
     assert.equal(PURCHASE_WORDS.opening('comeback', 'League', 'Riverside Club'), 'Welcome back to League, Riverside Club. Here are the details of your purchase.');
     assert.equal(PURCHASE_WORDS.opening('plan_change', 'Club', 'Riverside Club'), 'Riverside Club is now on Club. Here are the details of the change.');
     assert.equal(PURCHASE_WORDS.opening('trial', 'League', 'Riverside Club'), 'Your free trial of League for Riverside Club has started. Nothing has been charged today.');
-    assert.equal(PURCHASE_WORDS.opening('next_season', 'Club', 'Riverside Club'), 'You chose Club for Riverside Club’s next season. Nothing has been charged today.');
-    assert.equal(PURCHASE_WORDS.opening('next_season', 'Club', 'The Hawks'), 'You chose Club for The Hawks’ next season. Nothing has been charged today.');
   });
   it('the Terms line, in the three switch states — and everything else is the same in each (ruled Q1)', () => {
     const off = purchaseDetailsEmail(input()).html;
@@ -335,13 +328,7 @@ describe('4 · the wiring', () => {
   it('every purchase door stamps the person who bought', () => {
     assert.match(read('app/api/billing/create-checkout/route.ts'), /\[BUYER_USER_META\]: auth\.user\.id/);
     assert.match(read('app/api/billing/create-team-checkout/route.ts'), /\[BUYER_USER_META\]: user\.id/);
-    assert.match(read('app/api/billing/choose-next-season/route.ts'), /buyerUserId: auth\.user\.id/);
     assert.match(read('app/api/billing/move/route.ts'), /buyerUserId: authorized\.user\.id/);
-    const params = buildNextSeasonCheckoutParams({
-      customerId: 'cus_1', priceId: 'price_1', orgId: 'org-1', planKey: 'club', billingCycle: 'annual',
-      successUrl: 'https://x/s', cancelUrl: 'https://x/c', buyerUserId: 'user-9', now: 0,
-    });
-    assert.equal((params.subscription_data?.metadata as Record<string, string>)[BUYER_USER_META], 'user-9');
     assert.match(read('lib/plan-move.ts'), /direction === 'up' && opts\.buyerUserId \? \{ \[BUYER_USER_META\]: opts\.buyerUserId \}/);
   });
   it('a checkout that comes back is stamped, so its one email opens "Welcome back"', () => {

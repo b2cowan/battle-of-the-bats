@@ -8,8 +8,7 @@
  * layout) and opens the same panel over the page instead. `planPanelFromHref` is the one reader of that address.
  *
  * `requestPlanUpgrade` is the upgrade request behind Plan & billing's cards, its panel, and the panel opened over any
- * other page. (The club's Billing kit and its plan-move window still ask on their own.) Founding Season (and the dev
- * mock) apply the plan at once; otherwise it returns Stripe's checkout address, which the caller leaves for.
+ * other page. (The club's Billing kit and its plan-move window still ask on their own.) The dev mock applies the plan at once; otherwise it returns Stripe's checkout address, which the caller leaves for.
  */
 import type { OrgPlan } from './types';
 import { PLAN_CONFIG } from './plan-config';
@@ -47,8 +46,8 @@ export function planPanelFromHref(href: string, base = 'http://localhost'): Pane
 
 type Retention = { restoredCount?: number; remainingRetainedCount?: number };
 export type PlanUpgradeResult =
-  /** The plan was applied at once (Founding Season, or the dev mock): nothing to leave for. */
-  | ({ applied: true; foundingSeason?: boolean; compUntil?: string } & Retention)
+  /** The plan was applied at once (the dev mock): nothing to leave for. */
+  | ({ applied: true } & Retention)
   /** Stripe's checkout — the caller leaves for it. */
   | { applied?: false; url: string }
   /** No billing address on file (GST/HST Stage 1): the caller opens the Billing address window, then asks again. */
@@ -73,8 +72,7 @@ export async function requestPlanUpgrade(input: {
     body: JSON.stringify(input),
   });
   if (!res) return { closed: true };
-  const data = await res.json().catch(() => ({})) as { applied?: boolean; url?: string; error?: string; code?: string } & Retention
-    & { foundingSeason?: boolean; compUntil?: string };
+  const data = await res.json().catch(() => ({})) as { applied?: boolean; url?: string; error?: string; code?: string } & Retention;
   if (!res.ok && data.code === BILLING_ADDRESS_REQUIRED) return { addressRequired: true };
   if (!res.ok) throw new Error(data.error ?? 'Checkout failed');
   if (data.applied) return { ...data, applied: true };

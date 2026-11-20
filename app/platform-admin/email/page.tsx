@@ -1,58 +1,32 @@
 import type { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
-import { getPlatformAdminContext, requirePlatformAreaView } from '@/lib/platform-auth';
-import { getMarketingAudienceCounts, MARKETING_EMAIL_AUDIENCE } from '@/lib/email-sender';
+import { requirePlatformAreaView } from '@/lib/platform-auth';
 import EmailDashboardClient from './EmailDashboardClient';
-import { tournamentToday } from '@/lib/timezone';
 
 export const metadata: Metadata = {
   title: 'Campaigns — Support console',
 };
 
-
-
 async function getInitialData() {
-  const [batchesResult, optOutsResult, overridesResult, scheduleResult] = await Promise.all([
+  const [batchesResult, optOutsResult] = await Promise.all([
     supabaseAdmin
       .from('email_batches')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(50),
 
+    // Every organization that unsubscribed from marketing email, whatever plan it is on. No limit: the
+    // count line above the list is this list's length, so a cut-off list would make it a wrong number.
     supabaseAdmin
       .from('organizations')
       .select('id, name, email_opt_out_at')
       .eq('email_marketing_opt_out', true)
-      .order('email_opt_out_at', { ascending: false })
-      .limit(100),
-
-    supabaseAdmin
-      .from('org_overrides')
-      .select('org_id')
-      .eq('type', 'comp_period')
-      .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
-      .is('revoked_at', null),
-
-    // Editable planned dates + current subject/custom status for each marketing campaign.
-    supabaseAdmin
-      .from('platform_email_templates')
-      .select('key, subject, planned_send_date, is_customised')
-      .eq('category', 'marketing'),
+      .order('email_opt_out_at', { ascending: false }),
   ]);
-
-  const foundingOrgIdSet = new Set((overridesResult.data ?? []).map(o => o.org_id as string));
-  const foundingCount = foundingOrgIdSet.size;
-
-  // Only count opt-outs that belong to founding season orgs
-  const foundingOptOutOrgs = (optOutsResult.data ?? []).filter(o => foundingOrgIdSet.has(o.id as string));
-  const optOutCount = foundingOptOutOrgs.length;
-  // Active recipients = founding orgs that haven't opted out
-  const recipientCount = foundingCount - optOutCount;
 
   // Enrich opt-out orgs with owner email
   const enrichedOptOuts = await Promise.all(
-    foundingOptOutOrgs.map(async (org) => {
+    (optOutsResult.data ?? []).map(async (org) => {
       const { data: member } = await supabaseAdmin
         .from('organization_members')
         .select('user_id')
@@ -77,39 +51,11 @@ async function getInitialData() {
     })
   );
 
-  // Per-audience recipient counts (founding / not-on-club / coaches), then flatten
-  // to a per-email-key map so the client shows each email's true audience size
-  // without importing the server-only audience logic.
-  const audienceCounts = await getMarketingAudienceCounts();
-  const recipientCounts: Record<string, number> = {};
-  for (const [emailKey, audience] of Object.entries(MARKETING_EMAIL_AUDIENCE)) {
-    recipientCounts[emailKey] = audienceCounts[audience];
-  }
-
-  // Build a per-campaign schedule map: editable planned date + current subject/custom flag.
-  const schedule: MarketingSchedule = {};
-  for (const row of scheduleResult.data ?? []) {
-    schedule[row.key as string] = {
-      plannedDate: (row.planned_send_date as string | null) ?? null,
-      subject: (row.subject as string) ?? '',
-      isCustomised: !!row.is_customised,
-    };
-  }
-
   return {
     batches: (batchesResult.data ?? []) as EmailBatch[],
     optOuts: enrichedOptOuts,
-    recipientCount,
-    optOutCount,
-    recipientCounts,
-    schedule,
-    // Today as a wall-clock date (server-stable) for upcoming/past-due classification.
-    todayISO: tournamentToday(),
   };
 }
-
-export type ScheduleInfo = { plannedDate: string | null; subject: string; isCustomised: boolean };
-export type MarketingSchedule = Record<string, ScheduleInfo>;
 
 // Types used by both server and client
 export type EmailBatch = {
@@ -136,19 +82,7 @@ export type OptOutOrg = {
 
 export default async function EmailDashboardPage() {
   await requirePlatformAreaView('email');
-  const auth = await getPlatformAdminContext();
-  const { batches, optOuts, recipientCount, optOutCount, recipientCounts, schedule, todayISO } = await getInitialData();
+  const { batches, optOuts } = await getInitialData();
 
-  return (
-    <EmailDashboardClient
-      initialBatches={batches}
-      initialOptOuts={optOuts}
-      recipientCount={recipientCount}
-      optOutCount={optOutCount}
-      recipientCounts={recipientCounts}
-      adminEmail={auth?.user.email ?? ''}
-      schedule={schedule}
-      todayISO={todayISO}
-    />
-  );
+  return <EmailDashboardClient initialBatches={batches} initialOptOuts={optOuts} />;
 }

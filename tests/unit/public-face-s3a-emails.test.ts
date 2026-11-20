@@ -22,13 +22,12 @@ import { transactionalFamilyFooterHtml } from '../../lib/family-mail-footer.ts';
 
 const REPO = path.join(import.meta.dirname, '..', '..');
 
-/** Every file that builds an email: lib/ files named like one (scripts/check-public-type.mjs's rule), plus the two routes that render one. */
+/** Every file that builds an email: lib/ files named like one (scripts/check-public-type.mjs's rule), plus the route that renders one. */
 const EMAIL_NAME = /(email|notify|announcement|reminder|mail)/;
 const EMAIL_SOURCES = [
   ...readdirSync(path.join(REPO, 'lib'), { withFileTypes: true })
     .filter((e) => e.isFile() && /\.tsx?$/.test(e.name) && EMAIL_NAME.test(e.name))
     .map((e) => `lib/${e.name}`),
-  'app/api/admin/email/preview/route.ts',
   'app/api/platform-admin/email-templates/[key]/test-send/route.ts',
 ];
 
@@ -109,7 +108,6 @@ describe('S3a — the footers', () => {
     const sender = readCode('lib/email-sender.ts');
     assert.match(sender, /return insertAtWarmCardEnd\(html, warmUnsubscribeFooterHtml\(unsubscribeUrl\)\);/);
     assert.match(sender, /\.replace\(\/<head\\b\[\\s\\S\]\*\?<\\\/head>\/i, ''\)/);
-    assert.match(readCode('app/api/admin/email/preview/route.ts'), /SAMPLE_FOOTER = warmUnsubscribeFooterHtml\('#'\)/, 'the preview shows the footer the email carries');
   });
   it('the family notice footer keeps its words, in the envelope’s fine print', () => {
     const html = transactionalFamilyFooterHtml({ orgName: 'Riverdale Minor Ball', teamName: 'Ridge 11U', noticeKind: 'Dues reminders', about: 'player dues' });
@@ -120,7 +118,7 @@ describe('S3a — the footers', () => {
   });
   it('every page that injects a whole email into itself strips the head first', () => {
     // a document’s <style> survives innerHTML: its colour-scheme request would reach the whole admin or coach screen
-    for (const f of ['app/platform-admin/email/EmailDashboardClient.tsx', 'components/coaches/DuesReminderPreviewModal.tsx']) {
+    for (const f of ['components/coaches/DuesReminderPreviewModal.tsx']) {
       assert.match(readCode(f), /__html: warmEmailForPreview\(/, f);
     }
   });

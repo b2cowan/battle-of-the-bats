@@ -3,7 +3,7 @@
  *
  * ⚖ WHY THIS EXISTS. The sign-in service's admin API lists accounts one page at a time with no filter, so every console
  * screen read "the first 1,000" (`listUsers({ page: 1, perPage: 1000 })`) and silently stopped there: Customer users, the
- * clubs list's owner sign-ins, Overview's owner-inactive count and the Founding Season desk. These four calls go through
+ * clubs list's owner sign-ins and Overview's owner-inactive count. These calls go through
  * read-only database functions instead, which search and page inside the database, with no cap.
  *
  * ⚠ SERVER ONLY. The functions are SECURITY DEFINER over `auth.users` and are callable by the service role alone (the

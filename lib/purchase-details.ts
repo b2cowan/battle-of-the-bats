@@ -14,13 +14,11 @@
 import { escText as escapeHtml, warmEmailDocument, warmEmailHeading, warmEmailParagraph, warmEmailSmall, WARM_EMAIL_STYLE } from './email-envelope-warm';
 import { formatStoredDate } from './timezone';
 import { BILLING_TAX_WORDS, taxLineLabel } from './billing-tax';
-import { possessive } from './utils';
-import { NEXT_SEASON_CHOICE_KIND } from './next-season-choice';
 import { COMEBACK_META, MOVE_METADATA_KEY } from './plan-growth';
 import { sendToOwners, type SendResultLike } from './owners-send-outcome';
 import type { StoredTaxLine } from './charge-tax-record';
 
-export type PurchaseCase = 'first' | 'comeback' | 'plan_change' | 'trial' | 'next_season' | 'trial_change';
+export type PurchaseCase = 'first' | 'comeback' | 'plan_change' | 'trial' | 'trial_change';
 
 /** What the classifier reads: the stored record, the invoice's own subscription metadata (as it stood when the invoice was
  *  made: `parent.subscription_details.metadata`) and the subscription's status now. */
@@ -38,7 +36,7 @@ export type PurchaseFacts = {
 
 /**
  * Which purchase a paid invoice is, or null for none (§3.2's table). A renewal (`subscription_cycle`) is never one, including a
- * trial's or next-season choice's first real charge: the purchase email and the yearly reminder already told them.
+ * trial's first real charge: the purchase email and the yearly reminder already told them.
  */
 export function classifyPurchase(f: PurchaseFacts): PurchaseCase | null {
   if (f.status !== 'paid' || !f.hasRecipient) return null;
@@ -47,7 +45,7 @@ export function classifyPurchase(f: PurchaseFacts): PurchaseCase | null {
   if (f.billingReason === 'subscription_create') {
     if (f.totalCents > 0) return f.meta[COMEBACK_META] === '1' ? 'comeback' : 'first';
     if (f.totalCents === 0 && f.subscriptionStatus === 'trialing') {
-      return f.meta.choiceKind === NEXT_SEASON_CHOICE_KIND ? 'next_season' : 'trial';
+      return 'trial';
     }
     return null;
   }
@@ -58,13 +56,8 @@ export function classifyPurchase(f: PurchaseFacts): PurchaseCase | null {
   // metadata (test mode 2026-11-16, .probe/66fix/trial-move-up-run1.txt), and the trial email in the inbox quotes the OLD plan's
   // first payment, so it earns the email (owner ruling 2, 2026-11-16). ⚠ The move metadata STAYS on the subscription after the
   // move, so the trialing guard is what keeps a later $0 dashboard update from sending one.
-  // ⚠ A next-season choice is `trialing` too (its first charge is the season start, not a free trial), and the move metadata
-  // merges onto its `choiceKind`: "Your free trial continues" would be untrue there, so it sends nothing (/review 2026-11-16).
-  // A GUARD, not a case: no move up reaches a pending choice today (the move acts on the organization's own subscription, and
-  // a pending choice's never becomes it, ruling D2); changing a choice checks out again and sends `next_season`. Owner
-  // 2026-11-16: no email of its own (dropped).
   if (f.billingReason === 'subscription_update' && f.totalCents === 0 && f.subscriptionStatus === 'trialing'
-    && f.meta[MOVE_METADATA_KEY] === 'up' && f.meta.choiceKind !== NEXT_SEASON_CHOICE_KIND) return 'trial_change';
+    && f.meta[MOVE_METADATA_KEY] === 'up') return 'trial_change';
   return null;
 }
 
@@ -114,8 +107,8 @@ export type PurchaseEmailInput = {
   terms: TermsLine;
 };
 
-/** A trial, a next-season choice, or a move up during a trial: nothing is charged today. */
-export const isFreePurchase = (c: PurchaseCase) => c === 'trial' || c === 'next_season' || c === 'trial_change';
+/** A trial, or a move up during a trial: nothing is charged today. */
+export const isFreePurchase = (c: PurchaseCase) => c === 'trial' || c === 'trial_change';
 const PLUS_TAX = BILLING_TAX_WORDS.plusTax;
 
 export const PURCHASE_WORDS = {
@@ -127,7 +120,6 @@ export const PURCHASE_WORDS = {
       case 'comeback': return `Welcome back to ${planLabel}, ${orgName}. Here are the details of your purchase.`;
       case 'plan_change': return `${orgName} is now on ${planLabel}. Here are the details of the change.`;
       case 'trial': return `Your free trial of ${planLabel} for ${orgName} has started. Nothing has been charged today.`;
-      case 'next_season': return `You chose ${planLabel} for ${possessive(orgName)} next season. Nothing has been charged today.`;
       case 'trial_change': return `${orgName} is now on ${planLabel}. Your free trial continues, and nothing has been charged today.`;
     }
   },

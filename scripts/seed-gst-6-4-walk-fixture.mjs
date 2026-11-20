@@ -22,8 +22,6 @@
  *   … run-daily [--base URL] runs the daily job on THIS dev site (default http://localhost:3000) and prints its two steps
  *   … trial-preview          reads the next-invoice preview of every trialing walk subscription (build prompt §6's question)
  *   … switch on|off          LEGAL_PAGES_PREVIEW in .env.local (restart the dev server after)
- *   … window on|off          the next-season card window (NEXT_PUBLIC_FOUNDING_SEASON_CARD_WINDOW_OPEN) in .env.local (restart)
- *   … nextseason-undo        Part I only: withdraws the next-season choice the walk made on uat-plus-org
  *   … teardown               removes the walk's organizations, sign-ins and Stripe objects
  * A --inbox ending in .local sends no mail (the address is not deliverable): that is how this script was tested.
  */
@@ -34,10 +32,9 @@ import { ensureUser, fireJob, refusal } from './lib/billing-walk-fixture.mjs';
 import { findUserByEmail } from './lib/fixture-user.mjs';
 
 const MARKER = 'gst-6-4-walk-fixture';
-const NEXT_SEASON_OWNER = 'uat-owner@uat-test-org.local'; // Part I's account (uat-plus-org); its mail is never delivered
 const PASSWORD = 'UATPassword2026!';
 const DAY = 86_400_000;
-const COMMANDS = ['setup', 'status', 'settle', 'run-daily', 'trial-preview', 'switch', 'window', 'nextseason-undo', 'teardown'];
+const COMMANDS = ['setup', 'status', 'settle', 'run-daily', 'trial-preview', 'switch', 'teardown'];
 const usage = `Usage: node --env-file=.env.local scripts/seed-gst-6-4-walk-fixture.mjs <${COMMANDS.join('|')}> [--inbox you@example.com] [on|off] [--base URL]`;
 
 const argv = process.argv.slice(2);
@@ -231,7 +228,7 @@ async function settle() {
   let n = 0;
   for await (const c of stripe.customers.list({ limit: 100 })) {
     const mine = c.metadata?.walk === MARKER;
-    if (!mine && !(c.email ?? '').includes('+w64') && (c.email ?? '').toLowerCase() !== NEXT_SEASON_OWNER) continue;
+    if (!mine && !(c.email ?? '').includes('+w64')) continue;
     for await (const inv of stripe.invoices.list({ customer: c.id, limit: 20 })) {
       if (!['subscription_create', 'subscription_update'].includes(inv.billing_reason ?? '')) continue;
       // Setup's own starting subscriptions are not purchases the walk is about: they are made seconds after their customer.
@@ -289,23 +286,6 @@ function envLine(name, value) {
   const re = new RegExp(`^${name}=.*$`, 'm');
   writeFileSync(file, re.test(text) ? text.replace(re, `${name}=${value}`) : `${text.replace(/\s*$/, '\n')}${name}=${value}\n`);
 }
-function removeEnvLine(name) {
-  const file = new URL('../.env.local', import.meta.url);
-  writeFileSync(file, readFileSync(file, 'utf8').replace(new RegExp(`^${name}=.*\\r?\\n?`, 'm'), ''));
-}
-
-// ── nextseason-undo ─────────────────────────────────────────────────────────────────────────────────────────────
-async function nextSeasonUndo() {
-  const org = await one('uat-plus-org', db.from('organizations').select('id, slug').eq('slug', 'uat-plus-org').maybeSingle());
-  if (!org) { console.error('No uat-plus-org here.'); process.exit(1); }
-  const f = await one('facts', db.from('organization_billing_facts').select('next_season_subscription_id').eq('org_id', org.id).maybeSingle());
-  head('Withdrawing the next-season choice on uat-plus-org');
-  // The choice is cleared FIRST, as lib/billing-setup.ts clearNextSeasonChoice says: a subscription ended while the choice is
-  // on file would be read as the account cancelling.
-  die('clear', (await db.from('organization_billing_facts').update({ next_season_plan_id: null, next_season_billing_cycle: null, next_season_chosen_at: null, next_season_subscription_id: null, updated_at: iso(Date.now()) }).eq('org_id', org.id)).error);
-  ok('choice cleared');
-  if (f?.next_season_subscription_id) { await stripe.subscriptions.cancel(f.next_season_subscription_id); ok(`${f.next_season_subscription_id} ended in Stripe`); } else ok('no choice subscription was on file');
-}
 
 // ── teardown ────────────────────────────────────────────────────────────────────────────────────────────────────
 async function teardown() {
@@ -355,9 +335,4 @@ else if (command === 'switch') {
   if (toggle !== 'on' && toggle !== 'off') { console.error(usage); process.exit(2); }
   envLine('LEGAL_PAGES_PREVIEW', toggle === 'on' ? 'true' : 'false');
   ok(`.env.local: LEGAL_PAGES_PREVIEW=${toggle === 'on' ? 'true' : 'false'} — now restart the dev server (stop it, then npm run dev)`);
-} else if (command === 'window') {
-  if (toggle !== 'on' && toggle !== 'off') { console.error(usage); process.exit(2); }
-  if (toggle === 'on') envLine('NEXT_PUBLIC_FOUNDING_SEASON_CARD_WINDOW_OPEN', '2026-01-01T05:00:00.000Z'); else removeEnvLine('NEXT_PUBLIC_FOUNDING_SEASON_CARD_WINDOW_OPEN');
-  ok(`.env.local: next-season card window ${toggle === 'on' ? 'opened (from 2026-01-01)' : 'back to its real date'} — now restart the dev server`);
-} else if (command === 'nextseason-undo') await nextSeasonUndo();
-else if (command === 'teardown') await teardown();
+} else if (command === 'teardown') await teardown();

@@ -83,13 +83,12 @@ describe('Plan & billing profiles', () => {
     assert.deepEqual(PLAN_BILLING_PROFILES.team.changes, [{ target: 'club', mechanism: 'move' }]);
   });
 
-  it('keeps the Premium seven, the downgrade losses, the Club team meters and the Founding Season display flag', () => {
+  it('keeps the Premium seven, the downgrade losses, and the Club team meters', () => {
     assert.deepEqual(PLAN_BILLING_PROFILES.team.included.billing, PLAN_ARTICLE_CONTENT.team.features.slice(0, 7), 'D1: seven drawn billing items');
     assert.equal(PLAN_BILLING_PROFILES.tournament_plus.downgradeLosses?.length, 8, 'D23: detailed feature-loss list');
     for (const p of Object.values(PLAN_BILLING_PROFILES)) {
       const club = p.key === 'club' || p.key === 'club_large';
       assert.deepEqual(p.usageMeters, club ? ['teams'] : ['tournament_slots', 'staff_seats']);
-      assert.equal(p.showFoundingSeason, !club, 'display of existing comps, never a comp grant');
     }
   });
 });

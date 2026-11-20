@@ -17,9 +17,7 @@ import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
 
 /** Deliberately bare, with the reason. Keep it short: a new entry is a decision, not a way past the guard. */
 const BARE_ON_PURPOSE: Record<string, string> = {
-  'coachUpsell.normally': 'rides a "Free through" price: nothing is charged yet, so there is nothing to tax',
-  'founding.priceHelp': 'under the "Free through" Founding price (a waived price, not a charge)',
-  'founding.body': 'names the waived price of a free Founding Season',
+  'coachUpsell.normally': 'a struck-through "normally" list price beside a free one; nothing renders it now (Stage 2b left it behind)',
   'move.chargeChanged': 'the amount due today as Stripe worked it out, tax already in it',
   'clubUpgrade.amount': 'a figure in a window that shows the tax rows and Due today beneath it',
   'clubUpgrade.renewal': 'a figure; the move window sets "plus applicable taxes" under it (Part 3)',
@@ -79,21 +77,19 @@ describe('every price a buyer is quoted says "plus applicable taxes" (T4)', () =
   });
 
   it('the guard finds a bare price and a stale exception (mutate-and-fail)', () => {
-    const bare = code.replace('`${formatPriceAmount(amount)} ${PLUS_TAX} will be charged', '`${formatPriceAmount(amount)} will be charged');
-    assert.notEqual(bare, code, 'the chosenBody sentence this check mutates has moved; point the check at it again');
-    assert.ok(priced(bare).some(([key, text]) => key === 'founding.chosenBody' && !CARRIES_THE_PHRASE.test(text)));
+    const bare = code.replace('and renews on ${day(iso)} at ${price} ${PLUS_TAX}.`', 'and renews on ${day(iso)} at ${price}.`');
+    assert.notEqual(bare, code, 'the keepRenews sentence this check mutates has moved; point the check at it again');
+    assert.ok(priced(bare).some(([key, text]) => key === 'cancel.keepRenews' && !CARRIES_THE_PHRASE.test(text)));
     // A word that builds a price from a helper is found however it is spelled.
     assert.ok(priced('export const PLAN_BILLING_WORDS = { a: { b: (n: number) => `${price(n, "monthly")}.` } } as const;').length === 1);
   });
 
   it('the sentences read as ruled (drawing tab 7)', () => {
-    assert.equal(W.founding.chosenBody(2190, 'Visa ending 4242').startsWith('$2,190 plus applicable taxes will be charged to Visa ending 4242 on '), true);
+    assert.equal('founding' in W, false, 'the Founding words are gone (Stage 2b)');
     assert.equal(W.change.pricesPlusTax, 'Prices are plus applicable taxes.');
-    assert.equal(W.founding.pricesPlusTax, 'Prices are plus applicable taxes.');
     assert.equal(W.plan.fromPrice(219), 'From $219 CAD / month plus applicable taxes');
     assert.equal(W.plan.fromPrice(0), 'Free');
-    assert.match(W.coachUpsell.shelf(false), /plus applicable taxes\.$/);
-    assert.doesNotMatch(W.coachUpsell.shelf(true), /applicable taxes/, 'a Free-through price has nothing to tax');
+    assert.match(W.coachUpsell.shelf(), /plus applicable taxes\.$/);
   });
 });
 

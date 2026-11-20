@@ -72,18 +72,16 @@ function handlerBody(file: string, method: string): string {
 
 /** route → why it is gated. Every one: `requireAcceptance(` at the top, before any branch (C1). */
 const GATED: Record<string, string> = {
-  'app/api/org/create/route.ts': 'creates a tournament organization and its Founding Season comp',
+  'app/api/org/create/route.ts': 'creates a tournament organization',
   'app/api/coaches/teams/route.ts': 'the free Basic coach team — no organization row, but a workspace a person owns and starts',
-  'app/api/billing/create-checkout/route.ts': 'checkout, the dev mock and the Founding Season upgrade (the last two write a plan without Stripe)',
-  'app/api/billing/create-team-checkout/route.ts': 'the Coaches Portal checkout, its comp and dev-mock provisioning',
+  'app/api/billing/create-checkout/route.ts': 'checkout and the dev mock (which writes a plan without Stripe)',
+  'app/api/billing/create-team-checkout/route.ts': 'the Coaches Portal checkout and its dev-mock provisioning',
   'app/api/billing/move/route.ts': 'a move between plans (POST only)',
-  'app/api/billing/choose-next-season/route.ts': 'next season’s subscription',
-  'app/api/billing/setup-payment-method/route.ts': 'the card next season charges',
 };
 /** Writes that must never come before the check. */
 const WRITES = [
   'createOrganization(', 'createBasicCoachTeam(', 'requireBillingLocation(', 'checkout.sessions.create', 'provision',
-  'recordNextSeasonChoice(', 'applyMove(', 'createCardSetupSession(', '.insert(', '.update(', 'Limiter', 'ensureFoundingSeasonCompPeriod(',
+  'applyMove(', 'createCardSetupSession(', '.insert(', '.update(', 'Limiter',
 ];
 /** A return before the check may only be a refusal: 401, 403, 400, the auth helpers' own refusals, or the demo sandbox's
  *  (`demoRefusal`, the shared billing refusal for the two fictional demo organizers; Board Ready W2 fix D). */
@@ -149,16 +147,13 @@ const ORG_MAKERS: Record<string, { definedIn: string; callers: Record<string, st
     'lib/team-workspace-provisioning.ts': 'provisionStandaloneTeamWorkspace, followed below',
   } },
   provisionStandaloneTeamWorkspace: { definedIn: 'lib/team-workspace-provisioning.ts', callers: {
-    'lib/team-checkout.ts': 'the two checkout provisioners, followed below',
+    'lib/team-checkout.ts': 'the checkout provisioner, followed below',
     'lib/portal-free-time-give.ts': 'givePortalFreeTime, followed below',
     'app/api/dev/seed/team-workspace/route.ts': 'exempt — dev seed',
   } },
   provisionTeamWorkspaceFromCheckoutMetadata: { definedIn: 'lib/team-checkout.ts', callers: {
     'app/api/billing/create-team-checkout/route.ts': 'gated (the dev-mock path)',
     'lib/billing-webhook-handler.ts': 'the Stripe webhook provisions what a GATED checkout sold — the buyer agreed before the session existed',
-  } },
-  provisionCompTeamWorkspaceFromCheckout: { definedIn: 'lib/team-checkout.ts', callers: {
-    'app/api/billing/create-team-checkout/route.ts': 'gated (the comp path)',
   } },
   givePortalFreeTime: { definedIn: 'lib/portal-free-time-give.ts', callers: {
     'app/api/platform-admin/people/[id]/portal-free-time/route.ts': 'exempt — staff',
@@ -200,10 +195,8 @@ const STRIPE_PLAN_CALL = /checkout\.sessions\.create|subscriptions\.update|subsc
 const PLAN_FILES: Record<string, string> = {
   'app/api/billing/create-checkout/route.ts': 'gated',
   'app/api/billing/create-team-checkout/route.ts': 'gated',
-  'app/api/billing/choose-next-season/route.ts': 'gated',
-  'app/api/billing/setup-payment-method/route.ts': 'gated (calls createCardSetupSession)',
   'app/api/billing/portal/route.ts': 'never gated — the billing portal, and its no-customer card setup',
-  'lib/billing-setup.ts': 'createCardSetupSession — callers pinned below (one gated, one never gated)',
+  'lib/billing-setup.ts': 'createCardSetupSession — its one caller (the never-gated portal) pinned below',
   'lib/plan-move.ts': 'applyMove — callers pinned below (the gated move, and the cancel flows’ reschedule)',
   'lib/plan-ending-server.ts': 'never gated — the cancel and downgrade flows (Stripe’s cancel-at-period-end, and their reschedule of a waiting move)',
   'lib/team-org-billing.ts': 'startOrgTeamAddonCheckout — NO callers (pinned below); a caller would be gated',
@@ -215,9 +208,9 @@ describe('the plan census (C4): every Stripe plan call is named, with its reason
     assert.deepEqual(filesMatching(STRIPE_PLAN_CALL), Object.keys(PLAN_FILES).sort(),
       'A file that calls Stripe for a plan is not on the list (or a listed one no longer does). Gate its route, or list it.');
   });
-  it('createCardSetupSession: the gated card setup, and the never-gated portal', () => {
+  it('createCardSetupSession: only the never-gated portal calls it', () => {
     assert.deepEqual(callersOf('createCardSetupSession', 'lib/billing-setup.ts'),
-      ['app/api/billing/portal/route.ts', 'app/api/billing/setup-payment-method/route.ts']);
+      ['app/api/billing/portal/route.ts']);
   });
   it('applyMove: the gated move, and the cancel flows (a dynamic import)', () => {
     assert.deepEqual(callersOf('applyMove', 'lib/plan-move.ts'), ['app/api/billing/move/route.ts', 'lib/plan-ending-server.ts']);
@@ -234,7 +227,7 @@ describe('the plan census (C4): every Stripe plan call is named, with its reason
 // ════════════════════════════════════════════════════════════════ 4. the callers and their shells
 
 const GATED_URLS = ['/api/org/create', '/api/coaches/teams', '/api/billing/create-checkout',
-  '/api/billing/create-team-checkout', '/api/billing/move', '/api/billing/choose-next-season', '/api/billing/setup-payment-method'];
+  '/api/billing/create-team-checkout', '/api/billing/move'];
 /** Every client file that posts to a gated route, and how its request reaches the gate. */
 const CALLERS: Record<string, string> = {
   'app/(consumer)/start/tournament/StartTournamentForm.tsx': 'the start step’s send',
@@ -489,11 +482,14 @@ describe('the line (C2, drawing tab 5): §20 (3), only while the pages are on', 
   it('a plan with trial days where checkout decides: the conditional sentence (/legal 2026-11-09)', () => {
     assert.match(render(LINKS, { trial: 5 }),/^<p[^>]*>If your plan starts with a trial, it ends on the date shown at checkout, and your payment method is charged then unless you cancel. <span>Your plan renews/);
   });
-  it('the line is placed only beside a priced button: never on a Founding Season "free" choice', () => {
-    assert.match(sourceOf.get('components/billing/PlanCycleDialog.tsx')!, /\{!free && \(monthlyPrice > 0 \|\| annualPrice > 0\) && <PlanTermsLine trial=/);
-    assert.match(sourceOf.get('components/billing/PlanArticlePanel.tsx')!, /\{!promoActive && config\.monthlyPrice > 0 && <PlanTermsLine trial=/);
-    assert.match(sourceOf.get('app/[orgSlug]/admin/onboarding/PlanStep.tsx')!, /\{!zero && <PlanTermsLine place="column" trial=/);
-    assert.match(sourceOf.get('components/billing/BillingBody.tsx')!, /free=\{freeChoice\(payFor\)\}/);
+  it('the line is placed only beside a priced button (no "free" choice remains to leave it off, Stage 2b)', () => {
+    assert.match(sourceOf.get('components/billing/PlanCycleDialog.tsx')!, /\{\(monthlyPrice > 0 \|\| annualPrice > 0\) && <PlanTermsLine trial=/);
+    assert.match(sourceOf.get('components/billing/PlanArticlePanel.tsx')!, /\{config\.monthlyPrice > 0 && <PlanTermsLine trial=/);
+    // the plan step's line sits in the Tournament Plus card, above its paid button — never in the free card
+    const plan = sourceOf.get('app/[orgSlug]/admin/onboarding/PlanStep.tsx')!;
+    assert.match(plan, /<PlanTermsLine place="column" trial=\{PLAN_CONFIG\.tournament_plus\.trialDays\} \/>\s*\{startButton\('tournament_plus', 'Start with Tournament Plus'\)\}/);
+    assert.equal(plan.split('<PlanTermsLine').length - 1, 1, 'one line, beside the one paid button');
+    assert.doesNotMatch(sourceOf.get('components/billing/BillingBody.tsx')!, /free=\{freeChoice\(payFor\)\}|freeChoice/);
   });
   it('every line beside a plan that may carry a trial says so — a line with no trial sentence is only for a plan without one', () => {
     // Where the plan can have trial days, the line reads the plan's own settings (never a hard-coded "no trial").
@@ -503,8 +499,7 @@ describe('the line (C2, drawing tab 5): §20 (3), only while the pages are on', 
       'app/team/TeamSignupClient.tsx']) {
       assert.ok(/<PlanTermsLine\b[^>]*trial=\{[^}]*trialDays/i.test(sourceOf.get(f)!),`${f}: the line must say "if your plan starts with a trial" where the plan has trial days`);
     }
-    // The two that carry none, on purpose: Reactivate (a returning buyer — checkout gives no trial) and the next-season choice
-    // (its route sets no trial). The move window knows from its quote.
+    // The one that carries none, on purpose: Reactivate (a returning buyer — checkout gives no trial). The move window knows from its quote.
     assert.match(sourceOf.get('components/billing/PlanMoveDialog.tsx')!, /trial=\{quote && quote\.trialDays > 0 \? 'known' : undefined\}/);
   });
   it('exactly these files render the line', () => {

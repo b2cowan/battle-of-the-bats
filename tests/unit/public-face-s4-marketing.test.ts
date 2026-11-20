@@ -30,8 +30,6 @@ const MARKETING_FILES = [
   'components/marketing/WalkthroughPresent.tsx',
   'components/EarlyAccessForm.tsx', 'components/EarlyAccessForm.module.css',
   'components/EarlyAccessModalTrigger.tsx', 'components/EarlyAccessModalTrigger.module.css',
-  'components/marketing/FoundingSeasonOfferBar.tsx', 'components/marketing/FoundingSeasonOfferBar.module.css',
-  'components/marketing/FoundingSeasonPanel.tsx', 'components/marketing/FoundingSeasonPanel.module.css',
   'components/marketing/WalkthroughPage.tsx', 'components/marketing/WalkthroughPage.module.css',
   'components/marketing/ProspectDeckPage.tsx',
   'components/PricingSection.tsx', 'components/PricingSection.module.css',
@@ -97,13 +95,12 @@ describe('S4 — the marketing set is warm, with no dark island', () => {
     assert.match(readCode('components/marketing/ProspectDeckPage.tsx'), /MarketingKit/);
   });
 
-  it('the bar and the strip are warm under every setting, and so are the phone bar and the page base', () => {
+  it('the bar is warm under every setting, and so are the phone bar and the page base', () => {
     const bar = marketingBarCode();
     assert.match(bar, /<CoachThemeColor fixed="warm" \/>/, 'the phone browser bar takes the paper on marketing pages');
     assert.match(bar, /data-warm-base="marketing"/, 'the marketing bar marks the page base');
     assert.match(readCode('components/Navbar.module.css'), /\.marketingNav\s*\{\s*composes:\s*warmVars from/);
     assert.match(readCode('components/Footer.module.css'), /\.footer\s*\{\s*composes:\s*warmVars from/);
-    assert.match(readCode('components/marketing/FoundingSeasonOfferBar.module.css'), /\.bar\s*\{\s*composes:\s*warmVars from/);
     assert.match(readCode('app/globals.css'), /html:has\(\[data-warm-base="marketing"\]\) body,/);
   });
 

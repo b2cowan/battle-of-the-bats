@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
-import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import OrgsClient from './OrgsClient';
 import { clubDomainStore } from '@/lib/club-domain-store';
 import { peopleByIds } from '@/lib/platform-people-lookup';
@@ -9,26 +8,6 @@ import { freeTimePortalOrgIds, runningFreeTimePortalOrgIds } from '@/lib/portal-
 import { readSalesTaxWaiting } from '@/lib/console-money-sales-tax-wait';
 import { isTrialEnding } from '@/lib/renewals';
 import { tournamentToday } from '@/lib/timezone';
-
-/**
- * ⚠ RECOGNITION IS THE SHARED RULE, NEVER A HAND-TYPED DATE (fixed 2026-09-07).
- *
- * This used to match `expires_at >= '2026-12-31'`, which is not what a Founding Season comp is —
- * it is what a comp expiring at ANY point after 2026 is. A support comp granted into 2028, or a
- * platform-admin extension, was badged "Founding" here and dropped into the Founding filter, while
- * every other surface in the product (the status endpoint, the email audiences, the desk) used
- * `FOUNDING_SEASON_COMP_EXPIRIES` and disagreed. Same rule everywhere now: the current instant OR
- * the legacy pre-2026-09-07 one, and never a revoked comp.
- */
-async function getFoundingSeasonOrgIds(): Promise<Set<string>> {
-  const { data } = await supabaseAdmin
-    .from('org_overrides')
-    .select('org_id')
-    .eq('type', 'comp_period')
-    .is('revoked_at', null)
-    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES]);
-  return new Set((data ?? []).map(r => r.org_id as string));
-}
 
 /**
  * Every organization, a page at a time through the shared paging rule (Support console Stage 2). The unbounded select
@@ -57,9 +36,8 @@ async function getOrgs() {
   const today = tournamentToday();
   const inactiveOwnerCutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-  const [orgsResult, foundingSeasonOrgIds, freeTimePortals, runningFreeTimePortals, ownersResult, overridesResult, ownAddressRows] = await Promise.all([
+  const [orgsResult, freeTimePortals, runningFreeTimePortals, ownersResult, overridesResult, ownAddressRows] = await Promise.all([
     readEveryOrganization(),
-    getFoundingSeasonOrgIds(),
     // Stage 4b (T35): a portal staff gave free time is stored cancelled; it is not a cancelled customer.
     // A failed read is SAID on the row ("Free time unread"), never read as "no portal is on free time": that would list
     // every free-time portal as a cancelled customer and count it in the Cancelled warning.
@@ -179,7 +157,6 @@ async function getOrgs() {
       internalNotes:      noteCount > 0
         ? `${noteCount} internal note${noteCount === 1 ? '' : 's'}`
         : ((r.internal_notes as string | null) ?? null),
-      isFoundingSeason:   foundingSeasonOrgIds.has(id),
       isFreeTimePortal:   freeTimePortals?.has(id) ?? false,
       freeTimeRunning:    runningFreeTimePortals?.has(id) ?? false,
       // A stored-cancelled portal whose free-time read failed: neither a customer nor a known free-time portal.

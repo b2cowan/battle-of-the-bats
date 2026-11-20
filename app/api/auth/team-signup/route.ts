@@ -8,7 +8,6 @@ import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect } from '@/lib/signup-verification';
 import { parseStartBilling, parseStartDoor, startDoorLinkPath } from '@/lib/start-door';
-import { lockStartDoorOrUndo } from '@/lib/founding-season';
 import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
 
 // The verification rule is shared by every sign-up (lib/signup-verification.ts, 2026-10-16).
@@ -16,8 +15,7 @@ import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance
 /**
  * Coach Premium's account step (Account-First Sign-up Part 3, owner A1–A7 2026-10-18): the account alone — the team,
  * the sport and the plan are asked on step 2, after the email link. The account remembers its door with the billing
- * picked on the pricing page and, from a claim link, the claim (lib/start-door.ts — screens only), and locks the door for
- * the Founding Season offer after the close (edge (b), 2026-10-19).
+ * picked on the pricing page and, from a claim link, the claim (lib/start-door.ts — screens only).
  *
  * Throttled as the coach sign-up is (`7bbfbebb`): per source, per address, and a global ceiling.
  */
@@ -146,12 +144,6 @@ export const POST = withObservability(async (req: Request) => {
       userId = authData.user.id;
     }
 
-    // The Founding Season offer after the close reads a locked copy of the door (lib/founding-season.ts, edge (b)
-    // 2026-10-19); a failed lock has already undone the account.
-    if (!(await lockStartDoorOrUndo(userId, premiumDoor))) {
-      userId = null;
-      return NextResponse.json({ error: 'Account could not be created. Please try again.' }, { status: 500 });
-    }
     // The tick, recorded now the account exists (never fails the sign-up: a tick that did not save meets the sign-in screen).
     await recordDoorAcceptance({ id: userId, email: normalizedEmail }, 'team_signup', body);
 

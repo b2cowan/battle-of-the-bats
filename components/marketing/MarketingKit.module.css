@@ -7,7 +7,7 @@
    --home-* token, and nothing here reads the dark set (--pitch-black, --fl-text, the blueprint blues) or a Tailwind
    colour utility. `tests/unit/public-face-s4-marketing.test.ts` holds that for every marketing page and the chrome.
 
-   Every page wears `.page` on its outermost element; the bar, the footer and the Founding Season strip compose the same
+   Every page wears `.page` on its outermost element; the bar and the footer compose the same
    tokens on their own roots (they mount outside the page). The pieces below are the drawing's vocabulary
    ("End state drawn", https://claude.ai/artifact/M1ehQVxvLzMiTZfJDMtcft), named for the job each does. A page's own
    module holds only its layout; a colour, a face, a button or a heading size written there is drift from this file. */

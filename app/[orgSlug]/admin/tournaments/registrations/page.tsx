@@ -74,7 +74,7 @@ import BottomSheet from '@/components/admin/BottomSheet';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import ImportSheet from '@/components/admin/tournament/ImportSheet';
-import { PlanLockedTool, PlanLockMenuFoot, useTournamentPlusHref } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockedTool, useTournamentPlusHref } from '@/components/admin/tournament/PlanLockLine';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { canManageRegistrations } from '@/lib/registration-access';
 import HealthButton from '@/components/admin/tournament/HealthButton';
@@ -2033,7 +2033,6 @@ export default function UnifiedTeamsPage() {
                     href={questionsHref} />
                 </>
               )}
-              {canImportTeams && !importOnPlan && <PlanLockMenuFoot />}
             </CoachToolbarMenu>
           )}
         </div>

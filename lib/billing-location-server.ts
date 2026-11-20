@@ -203,8 +203,7 @@ export async function saveBillingLocation(
     let countryChange: ReviewReason | null = null;
     if (existing && existing.country !== next.country) {
       // A Stripe problem here must not fail the save (owner Ask 3/4: never blocks). When we cannot tell, flag it: the flag's
-      // only effect is that Stage 2 taxes the buyer as Canadian until looked at, the same hold a known payer gets. A Founding
-      // next-season choice counts as paying here (Part 3 Ask 3), and only here.
+      // only effect is that Stage 2 taxes the buyer as Canadian until looked at, the same hold a known payer gets.
       let hasPaid: boolean;
       try {
         hasPaid = (await Promise.all(customers.map(paidOrPromisedToPay))).some(Boolean);

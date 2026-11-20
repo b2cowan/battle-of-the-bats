@@ -5,15 +5,12 @@
  */
 import {
   formatPriceAmount, formatAnnualSavings, gatedPlanTag, gatedPlanNote,
-  FOUNDING_SEASON_END_LABEL as END, FOUNDING_SEASON_FIRST_CHARGE_LABEL as FIRST,
-  FOUNDING_SEASON_DECISION_MONTH_LABEL as DECISION, FOUNDING_SEASON_NEXT_YEAR_LABEL as NEXT,
   PLAN_CONFIG, type BillingCycle,
 } from './plan-config';
 import { clubTrialLine } from './plan-trial-line';
 import { possessive, pluralize, joinWithAnd } from './utils';
 import { formatStoredDate } from './timezone';
 import { subscriptionStatusLabel, NO_LIMIT } from './platform-labels';
-import { formatCardOnFile } from './billing-format';
 import { freeTimeCopy } from './free-time-copy';
 import { portalFreeTimeCopy, KEEP_PREMIUM_LINE, PORTAL_FREE_TIME_HOSTING_LINE } from './portal-free-time';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
@@ -70,12 +67,8 @@ export const PLAN_BILLING_WORDS = {
   coachUpsell: {
     perTeam,
     normally: () => `normally ${coachMonthlyPrice()}`,
-    shelf: (founding: boolean) => founding
-      ? `Premium is free through ${END} — normally ${coachMonthlyPrice()}.`
-      : `Premium is ${coachMonthlyPrice()} ${PLUS_TAX}.`,
-    ceiling: (founding: boolean) => founding
-      ? `Free through ${END} — normally ${coachMonthlyPrice()}. No credit card required.`
-      : `${coachMonthlyPrice()} ${PLUS_TAX}, cancel any time.`,
+    shelf: () => `Premium is ${coachMonthlyPrice()} ${PLUS_TAX}.`,
+    ceiling: () => `${coachMonthlyPrice()} ${PLUS_TAX}, cancel any time.`,
   },
   page: {
     title: PLAN_BILLING_TITLE, eyebrow: 'Organization', loading: 'Loading plan & billing…',
@@ -271,37 +264,8 @@ export const PLAN_BILLING_WORDS = {
     action: (label: string) => `Reactivate ${label}`, premiumAction: 'Reactivate Premium', contact: 'Contact us to reactivate',
     pricesPlusTax: PRICES_PLUS_TAX,
   },
-  founding: {
-    price: `Free through ${END}`, eyebrow: 'Founding Season', endingEyebrow: `Founding Season · ends ${END}`,
-    priceHelp: (annualAmount: number) => `Normally ${formatPriceAmount(annualAmount)} a year.`,
-    title: (label: string) => `${label} is free through ${END}.`, endingTitle: `Your Founding Season ends ${END}.`,
-    body: (label: string, amount: number, audience: 'coach' | 'organization') => `You're running ${label} free through ${END} as a founding ${audience} — normally ${formatPriceAmount(amount)}/month. No credit card. In ${DECISION} you'll choose a plan for your ${NEXT} season.`,
-    endingBody: `Choose a plan for your ${NEXT} season below. Nothing is charged before ${FIRST}, and you can change your mind until then.`,
-    chooseTitle: `Choose your ${NEXT} plan`,
-    orgChoiceHelp: (label: string, freeLabel: string) => `You’re on ${label} today. Keep it for ${NEXT}, or move to the free ${freeLabel} plan when the season ends.`,
-    coachChoiceHelp: (label: string) => `You’re on ${label} today. Keep it for ${NEXT}, or let it end on ${END} and keep your free Basic team records.`,
-    choiceLabel: (label: string, billing: BillingCycle) => `${label} · ${cycle(billing)}`,
-    guarantee: `First charge ${FIRST} · nothing before then`,
-    pricesPlusTax: PRICES_PLUS_TAX,
-    choose: (label: string, billing: BillingCycle) => `Choose ${label} · ${cycle(billing)}`,
-    decideLater: 'Prefer to decide later?', saveOnly: 'Save a card without choosing', chosen: `Your ${NEXT} season is set`,
-    chosenTitle: (label: string, billing: BillingCycle) => `${label}, billed ${cycle(billing)} from ${FIRST}.`,
-    chosenBody: (amount: number, card: string | null) => `${formatPriceAmount(amount)} ${PLUS_TAX} will be charged${card ? ` to ${card}` : ''} on ${FIRST} — your first charge, and nothing before it. Your Founding Season runs free until then.`,
-    missingPrice: 'Your next-season choice is recorded. We couldn’t load its price. Try again.',
-    confirming: 'Confirming your next-season choice…',
-    changeUntil: `You can change this until ${END}.`, change: 'Change plan or card',
-    nothingTitle: 'If you choose nothing',
-    coachNothing: `Your Premium portal ends on ${END}. Your team's Basic tournament records stay available, and your season's work is kept.`,
-    orgNothing: (freeLabel: string) => `Your organization moves to the free ${freeLabel} plan on ${FIRST}. Your tournaments and records stay.`,
-    noAction: `No billing action needed — your Founding Season runs free through ${END}. We'll remind you during the summer when it's time to choose a plan for ${NEXT}.`,
-    card: (label: string | null) => `${label ? `${label} is on file.` : 'No payment method on file yet.'} Nothing is charged before ${FIRST}.`,
-    addCard: 'Add payment method', updateCard: 'Update payment method',
-    heldOffer: `No credit card — nothing is charged before ${FIRST}`, formatCard: formatCardOnFile,
-  },
   notice: {
     active: 'Your plan is active. Everything it includes is open now.', cardSaved: 'Your payment method is on file.',
-    foundingCardSaved: `Your payment method is on file. Nothing is charged before ${FIRST}. Your Founding Season stays free through ${END}.`,
-    nextSeason: `Your next season is set. Nothing is charged before ${FIRST}. Your Founding Season stays free through ${END}, and you can change your choice until then.`,
     updated: (label: string, restored = 0, remaining = 0) => `Your plan is now ${label}.${restored ? ` ${pluralize(restored, 'retained tournament')} restored.` : ''}${remaining ? ` ${pluralize(remaining, 'retained tournament')} ${remaining === 1 ? 'remains' : 'remain'} in retention because ${remaining === 1 ? 'it exceeds' : 'they exceed'} this plan's limit.` : ''}`,
     downgraded: (label: string, count: number, days: number) => `Your plan is now ${label}.${count ? ` ${pluralize(count, 'tournament')} moved to retention for ${days} days.` : ''}`,
     cancelled: (org: string, days: number) => `${org} is cancelled. Your data is kept for ${days} days.`,
@@ -310,11 +274,10 @@ export const PLAN_BILLING_WORDS = {
   },
   errors: {
     retry: 'Try again', retrying: 'Trying again…', refresh: 'We couldn’t refresh your organization. Try again.',
-    nextSeasonRead: 'We couldn’t confirm your next-season choice yet. Try again.',
-    portal: 'The payment portal didn’t open. Try again.', card: 'Card setup didn’t open. Try again.',
+    portal: 'The payment portal didn’t open. Try again.',
     checkout: 'Checkout didn’t open. Try again.', keep: 'Keeping your current plan didn’t go through. Try again.',
     cancelReview: 'The cancellation review didn’t load. Try again.', cancel: 'The cancellation didn’t go through. Try again.',
-    nextSeason: 'Your next-season choice didn’t go through. Try again.', downgradeReview: 'The plan-change review didn’t load. Try again.',
+    downgradeReview: 'The plan-change review didn’t load. Try again.',
     downgrade: 'The plan change didn’t go through. Try again.', generic: 'Something went wrong. Try again.',
     read: (section: string) => `We couldn’t load ${section}. Try again.`,
     movePreview: 'The move couldn’t be checked. Try again.', movePreviewNetwork: 'The move couldn’t be checked. Check your connection and try again.',

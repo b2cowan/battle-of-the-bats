@@ -7,7 +7,7 @@
  * row with status 'pending' and effective_at = the end date records it. Nothing is archived, suspended, hidden or closed
  * at the click. On the end date Stripe deletes the subscription and the ONE ending below (`applyEnding`) runs. Keep {Plan}
  * withdraws the row ('canceled'). A platform admin's End now and an account with no real Stripe subscription (comped,
- * Founding Season, a dev `mock_…` id) end at once — through the same ending.
+ * a dev `mock_…` id) end at once — through the same ending.
  *
  * This module is the logic only. Every database, Stripe and email step is a dependency (`EndingDeps`), so the rules are
  * tested with an in-memory store (tests/unit/plan-ending.test.ts); lib/plan-ending-server.ts wires the real ones.
@@ -1056,7 +1056,7 @@ export type DowngradeResult = {
  * The owner's move to the free plan (Stage 2). A paying Stripe subscription: the waiting row FIRST — so the `updated`
  * events our own Stripe calls fire find a waiting MOVE and never record "a cancel in the portal" — then Stripe (release a
  * cheaper move's schedule, which is carried; set `cancel_at_period_end`). If Stripe refuses, the row is withdrawn and the
- * carried move put back: nothing changed. With no live paid period (comped, Founding Season, no subscription, a dev
+ * carried move put back: nothing changed. With no live paid period (comped, no subscription, a dev
  * `mock_…` id — ruling 3) there is no date to wait for: the move happens now, through the same `applyDowngrade`.
  */
 export async function scheduleDowngrade(

@@ -13,7 +13,7 @@ import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { isCoachesPortalPurchasable } from '@/lib/plan-gating-server';
 import { COACH_DOOR_HREF, coachStartDoor } from '@/lib/start-menu';
-import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, gatedPlanTag } from '@/lib/plan-config';
+import { gatedPlanTag } from '@/lib/plan-config';
 import styles from './start.module.css';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { isPaidDoorOpen } from '@/lib/start-plan-server';
@@ -62,21 +62,14 @@ const LEAGUE_PLUS_OPTION: StartOption = {
   body: 'Run a house league season — registration, draft, scheduling, standings, and parent messaging.',
 };
 
-// Founding Season 2027 (owner-approved 2026-09-07): while the signup window is open the pill on
-// the two offer doors says WHICH free this is, and the body names the season. The day the window
-// closes, today's "Free" card returns on its own.
-function tournamentOption(promoActive: boolean): StartOption {
-  return {
-    href: '/start/tournament',
-    icon: Trophy,
-    accent: 'free',
-    label: 'Organizer',
-    title: 'Run a tournament',
-    body: promoActive
-      ? `Create a tournament free — your teams, schedule, brackets, and a public site. Tournament Plus, with public registration, is free through ${FOUNDING_SEASON_END_LABEL}. No credit card.`
-      : 'Create a tournament free — your teams, schedule, brackets, and a public site. No credit card.',
-  };
-}
+const TOURNAMENT_OPTION: StartOption = {
+  href: '/start/tournament',
+  icon: Trophy,
+  accent: 'free',
+  label: 'Organizer',
+  title: 'Run a tournament',
+  body: 'Create a tournament free — your teams, schedule, brackets, and a public site. No credit card.',
+};
 
 /**
  * The invitation aside — NOT a card (owner-directed 2026-08-07).
@@ -104,9 +97,8 @@ const INVITE_ASIDE = {
   cta: 'Accept an invitation',
 };
 
-// Coaches Portal launch (BUSINESS_DECISIONS 2026-07-20 D2 + FOUNDING_SEASON_COACHES_FREE_PLAN
-// Phase 3): the "Coach a team" door flips WITH the team checkout gate, so the whole coaches launch
-// (door + $0 Premium comp path + copy) turns on together per environment when the gate reopens —
+// Coaches Portal launch (BUSINESS_DECISIONS 2026-07-20 D2): the "Coach a team" door flips WITH the team checkout gate, so the whole coaches launch
+// (door + copy) turns on together per environment when the gate reopens —
 // never a door landing on a gated dead end. Open → the Premium sign-up; gated → the express-interest explainer.
 // Owner ruling 2026-11-19: the card no longer offers a free team home (it did once the promo closed) and says
 // nothing "free" — the Premium portal is paid at sign-up with no trial. The free Basic portal is the one a coach
@@ -135,14 +127,12 @@ export default async function StartPage() {
   const [checkoutOpen, clubOpen, leaguePlusOpen] = await Promise.all([
     isCoachesPortalPurchasable(), isPaidDoorOpen('club'), isPaidDoorOpen('league'),
   ]);
-  // The Tournament Plus promo drives the organizer card; the coach card reads the checkout gate alone.
-  const tournamentPromo = isFoundingSeasonPromoActive('tournament_plus');
   const coach = coachOption(checkoutOpen);
   // S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — the Club and League Plus cards only while each
   // is on sale; their /start sub-pages stay reachable by direct URL (express-interest pages). There is no free League
   // card (owner ruling 2026-11-19).
   const options: StartOption[] = [
-    tournamentOption(tournamentPromo),
+    TOURNAMENT_OPTION,
     coach,
     ...(clubOpen ? [CLUB_OPTION] : []),
     ...(leaguePlusOpen ? [LEAGUE_PLUS_OPTION] : []),

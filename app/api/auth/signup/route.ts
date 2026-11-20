@@ -9,7 +9,6 @@ import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect } from '@/lib/signup-verification';
 import { paidDoorPick, parseStartDoor, parseStartPricing, startDoorLinkPath } from '@/lib/start-door';
-import { lockStartDoorOrUndo } from '@/lib/founding-season';
 import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
 import { termsDoorFrom } from '@/lib/legal-acceptance-rules';
 
@@ -42,7 +41,7 @@ async function rollbackAuthUser(id: string) {
  * A1–A7 2026-10-18; tests/unit/account-first-signup.test.ts holds every signed-out sign-up to it):
  *  - **Run a tournament** (the organization door, `startDoor: 'organization'`): the account remembers its door and the
  *    pricing page's plan, and the email link lands on step 2 (/start/tournament), where the organization, its address,
- *    the owner seat and the Founding Season comp are made on one tap (/api/org/create). Before this the organization was
+ *    and the owner seat are made on one tap (/api/org/create). Before this the organization was
  *    built here, before anyone opened the email (F01): an abandoned sign-up left a live organization, and an address
  *    typed by someone who did not own it took a club's name and URL.
  *  - **Account only** (no door: fans, the follow nudge, "I was invited"): the person verifies and lands where they were
@@ -51,9 +50,8 @@ async function rollbackAuthUser(id: string) {
  * asked again on step 2.
  *
  * **Start a club** (`startDoor: 'club'`, On-sale pages S2) is the organization door's twin: the same account, invite
- * guard and link, landing on /start/club, with only a Club or Club · Association pick remembered. It locks no door (no
- * Founding comp on a paid door, Ask 14). Whether Club is on sale is asked where the club is made, not here: an account
- * is never refused for it.
+ * guard and link, landing on /start/club, with only a Club or Club · Association pick remembered.
+ * Whether Club is on sale is asked where the club is made, not here: an account is never refused for it.
  */
 export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
@@ -207,20 +205,11 @@ export const POST = withObservability(async (req: Request) => {
       userId = authData.user.id;
     }
 
-    // The Founding Season offer after the close reads a locked copy of the door (lib/founding-season.ts, edge (a)
-    // 2026-10-19); a failed lock has already undone the account.
-    if (orgDoor === 'organization' && !(await lockStartDoorOrUndo(userId, 'organization'))) {
-      userId = null;
-      return NextResponse.json({ error: 'Account could not be created. Please try again.' }, { status: 500 });
-    }
-
     // The tick, recorded now the account exists (never fails the sign-up: a tick that did not save meets the sign-in screen).
     await recordDoorAcceptance({ id: userId, email: normalizedEmail }, termsDoor, body);
 
     if (actionLink) {
       // No name yet (it is asked on step 2), so the email reads "finish creating your account".
-      // Note: the founding-season welcome email is NOT sent here — it fires ~1 day after the user
-      // actually selects Tournament Plus on the plan step (app/api/billing/create-checkout).
       await sendSignupVerificationEmail({
         to: normalizedEmail, origin, actionLink, next: returnPath, door: orgDoor,
         firstName: normalizedFirstName,

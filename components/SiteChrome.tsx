@@ -36,8 +36,5 @@ export default function SiteChrome() {
     // top bar + bottom nav — the marketing Navbar would double up.
     isConsumerShellPath(pathname)
   ) return null;
-  // The Founding Season strip above the bar is no longer mounted (owner, 2026-10-23: "a little
-  // excessive"). The offer still lives on the pricing page; the bar and page padding that offset
-  // by --offer-bar-h resolve to 0 when nothing publishes it.
   return <Navbar />;
 }

@@ -264,11 +264,10 @@ export async function staleSentence(orgId: string, overrideId: string, createdBy
 export async function endFreeTimeNow(input: { orgId: string; overrideId: string; reason: unknown; actor: Actor; extra?: Record<string, unknown> }): Promise<Refusal | { ok: true; warnings: string[] }> {
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!reason) return { ok: false, status: 400, error: "Say why you're ending it early." };
-  // A comp period is a billing tag (Founding Season's cohort mark): it gives nothing to end, and Founding's access moves
-  // only at its turn-off decision (owner ruling Q4).
+  // A comp period is an old billing tag (rows from before Founding Season was removed may still exist): it gives nothing to end.
   const { data: row } = await supabaseAdmin.from('org_overrides').select('type, starts_at, expires_at, revoked_at').eq('id', input.overrideId).eq('org_id', input.orgId).maybeSingle();
   if (!row) return { ok: false, status: 404, error: 'That free time was not found.' };
-  if (row.type === 'comp_period') return { ok: false, status: 409, error: "A comp period gives nothing to end. Founding Season's ends with its own turn-off." };
+  if (row.type === 'comp_period') return { ok: false, status: 409, error: 'A comp period gives nothing to end.' };
   // One that ran out by itself is not "ended early": leave it as it is.
   if (!isGrantRunning(row)) return { ok: false, status: 409, error: 'That free time has already ended. Nothing was changed.' };
   const result = await endClubOverride({ orgId: input.orgId, overrideId: input.overrideId, reason, actorEmail: input.actor.email, extra: input.extra });

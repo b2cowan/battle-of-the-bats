@@ -2,8 +2,10 @@
 
 **Created:** 2026-05-26  
 **Status:** Active — all sections open for execution  
-**Context:** Pre-revenue founding season. Tournament and Tournament Plus are the active acquisition tiers. League, Club, and Coaches Portal are marketed but not yet open for purchase.  
+**Context:** Pre-revenue. Tournament and Tournament Plus are the active acquisition tiers; no promotion runs (the Founding Season offer closed 2026-10-26 and was removed from the product 2026-11-20 — `BUSINESS_DECISIONS.md` 2026-11-19; the three accounts that held it carry ordinary free time through September 30, 2027). League, Club, and Coaches Portal are marketed but not yet open for purchase.  
 **Depends on:** `docs/agents/brand/BRAND_STRATEGY.md` (positioning, voice, vocabulary, tier rules — canonical reference; do not duplicate here)
+
+> **⚠ History — Founding Season closed 2026-10-26 and removed from the product 2026-11-20; not live copy or a live offer.** Every "Founding Season", "founding year" or "founding cohort" passage below is the 2026 go-to-market record, kept as history; the 0→50 plan, its outreach calendar and its email sequences are marked where they sit. Prices and plan facts live in `docs/agents/strategy/PLAN_PRICING_FACTS.md`, never here.
 
 ---
 
@@ -22,13 +24,11 @@ The line is not a headline — it's a mission. Resist the urge to use it as a ho
 
 ### Elevator Pitch (3 sentences)
 
-> FieldLogicHQ is an operating platform for volunteer-run sports organizations — from single tournaments to full club programs. Tournament brackets, house league seasons, rep team management, and coaching tools all live in one place, so an org president isn't stitching together five different apps just to run a season. We're in our founding year — Tournament Plus is free through September 30, 2027 when you sign up by December 31, 2026.
-
-**Usage context:** Pitch deck, About page, press kit, partnership outreach, founding season email signature or cold outreach opener. The third sentence is founding-season-specific — retire it after December 31, 2026.
-
-**Variation — without founding season offer (use after Dec 31, 2026):**
-
 > FieldLogicHQ is an operating platform for volunteer-run sports organizations — from single tournaments to full club programs. Tournament brackets, house league seasons, rep team management, and coaching tools all live in one place, so an org president isn't stitching together five different apps just to run a season. It's built for the people running leagues on evenings and weekends — for the kids, not a salary.
+
+**Usage context:** Pitch deck, About page, press kit, partnership outreach, email signature or cold outreach opener.
+
+> *History:* the pitch's third sentence used to read "We're in our founding year — Tournament Plus is free through September 30, 2027 when you sign up by December 31, 2026." That offer closed 2026-10-26 and was removed 2026-11-20; do not use it.
 
 ---
 
@@ -57,17 +57,17 @@ Acquisition strategy must start with where they actually are — not where it wo
 
 ### Channel Stack (Priority Order)
 
-**Phase 1 — Founding Season (May–December 2026, 0→50 Tournament Plus orgs)**
+**Phase 1 — Founding Season (May–December 2026, 0→50 Tournament Plus orgs)** *(history — offer closed 2026-10-26, removed 2026-11-20)*
 
 | Priority | Channel | Why | Who |
 |---|---|---|---|
-| 1 | Targeted cold outreach | Highest conversion potential; direct-to-decision-maker; founding season offer reduces friction to near zero | Tournament directors, league presidents |
+| 1 | Targeted cold outreach | Highest conversion potential; direct-to-decision-maker; the free-to-start plan keeps friction low *(the 2026 founding offer once did this too — closed)* | Tournament directors, league presidents |
 | 2 | SEO — problem-aware queries | Passive inbound; works on zero budget; tournament organizers google this problem exactly | Tournament organizers, coaches |
 | 3 | Facebook community engagement | Authentic presence in groups where the audience already is; not broadcast — participation | All four segments |
 | 4 | Post-tournament coach outreach (active program) | Coaches who've touched the tournament UI are warm contacts; highest conversion to org intro | Individual coaches → org introduction |
 | 5 | Word of mouth / referral | Every org using the platform knows other orgs; the founding cohort becomes the referral network | Tournament organizers |
 
-**Phase 2 — Post-Founding Season (2027+, 50→500)**
+**Phase 2 — Post-Founding Season (2027+, 50→500)** *(the current phase; no founding offer to lean on)*
 
 | Priority | Channel | Why |
 |---|---|---|
@@ -90,13 +90,13 @@ Acquisition strategy must start with where they actually are — not where it wo
 2. Self-identifies with persona card; clicks through
 3. Signs up free — no credit card, no friction
 4. Runs first tournament (the platform has to earn this; onboarding must be fast)
-5. Founding Season offer surfaces during onboarding or at tournament wrap
-6. Converts to Tournament Plus (free through Dec 31)
+5. The Tournament Plus upgrade surfaces during onboarding or at tournament wrap *(the 2026 Founding Season offer that used to surface here is closed and removed)*
+6. Converts to Tournament Plus at list price (see `PLAN_PRICING_FACTS.md`)
 7. Post-tournament email: "Your tournament's wrapped. Your history is here. Here's what else your org could run from FieldLogicHQ."
 8. Upsell path: becomes a League or Club prospect if they're also a league/club operator
 
 **Cold outreach targeting:**  
-Identify tournament directors via: provincial sport association event calendars (publicly listed tournaments), Facebook event listings (youth sports tournaments), association websites with director contact info, and sport-specific registration platforms that list events publicly. Reach out by email only; keep it 3 sentences or less; reference the specific tournament or sport. The founding season offer is the hook — make it specific to their current problem, not a generic pitch.
+Identify tournament directors via: provincial sport association event calendars (publicly listed tournaments), Facebook event listings (youth sports tournaments), association websites with director contact info, and sport-specific registration platforms that list events publicly. Reach out by email only; keep it 3 sentences or less; reference the specific tournament or sport. The hook is their current problem, said specifically — not a generic pitch. *(The 2026 founding offer used to be the hook; it is closed.)*
 
 **Cold outreach template (NOT public-facing copy; internal use only):**
 
@@ -104,7 +104,9 @@ Identify tournament directors via: provincial sport association event calendars 
 >
 > Hi [Name] — I saw your [league/association] is running [Tournament Name] in [month]. FieldLogicHQ handles tournament registration, scheduling, brackets, and live scores in one place — free to start, with registration on Tournament Plus.
 >
-> We're in our founding year and offering Tournament Plus free through the end of 2026. Happy to show you around if it's useful timing. [Link to /for-tournament-organizers]
+> Happy to show you around if it's useful timing. [Link to /for-tournament-organizers]
+>
+> *(History: this template used to add "We're in our founding year and offering Tournament Plus free through the end of 2026." — closed 2026-10-26, removed 2026-11-20; do not send it.)*
 
 Personalization requirement: Always reference the specific sport, the specific tournament or org, and send before the event (not after).
 
@@ -166,6 +168,8 @@ Personalization requirement: Always reference the specific sport, the specific t
 
 ### Milestone Definition
 
+> **⚠ History — Founding Season closed 2026-10-26 and removed from the product 2026-11-20; not live copy or a live offer.** This milestone, the 0 → 50 plan and its four phases below record the 2026 founding-season plan; nothing here is a current offer, date or target.
+
 **Founding season goal: 50 organizations on Tournament Plus by December 31, 2026.**
 
 Tournament Plus is free through founding season. The conversion to paid (currently $39/month) happens January 1, 2027 for orgs that signed up under the founding offer. These become the first paying customer cohort. The 50-org target is not just a usage milestone — it's the founding customer cohort that proves willingness to pay when billing goes live.
@@ -179,7 +183,7 @@ Tournament Plus is free through founding season. The conversion to paid (current
 
 ---
 
-### 0 → 50 Plan (Founding Season: May–December 2026)
+### 0 → 50 Plan (Founding Season: May–December 2026) *(history)*
 
 **Outreach ownership:** Founder-led. Single-person operation. 10–15 targeted, personalized emails per week is the sustainable rate alongside active product development. At that pace with a realistic 20% response rate and 30% conversion, outreach alone generates 2–4 new orgs per month — sufficient to hit 50 by November without sacrificing product quality.
 
@@ -227,7 +231,7 @@ Tournament Plus is free through founding season. The conversion to paid (current
 
 ---
 
-**Phase 4 — Close founding cohort (October–December 2026)**
+**Phase 4 — Close founding cohort (October–December 2026)** *(history — the offer closed early on 2026-10-26; the closing email sequence and the January 2027 billing notice below are retired and the offer emails are removed)*
 - [ ] Final push to hit 50 before Dec 31
 - [ ] Founding Season closing email sequence: November 1 and December 1 sends (see Email Sequences)
 - [ ] Begin building the League/Club interest list (founding Tournament Plus orgs are the first warm leads for when those tiers open)
@@ -255,7 +259,7 @@ Provincial and national sport body partnerships unlock entire directories of org
 ### Partnership Strategy (Provincial and National Sport Bodies)
 
 **Why this is a 50→500 lever, not a 0→50 lever:**  
-Sport body partnerships require trust, demonstrated platform stability, and usually a reference base ("tell us who's using it"). Starting partnership conversations in the final month of founding season (October–December 2026) is appropriate — these conversations take 3–6 months to progress. Results land in early-to-mid 2027.
+Sport body partnerships require trust, demonstrated platform stability, and usually a reference base ("tell us who's using it"). Starting partnership conversations in the last months of 2026 was appropriate — these conversations take 3–6 months to progress. Results land in early-to-mid 2027.
 
 **Target body types:**  
 1. **Provincial sport associations** (e.g., Ontario Soccer, Hockey Manitoba, Baseball BC) — they run sanctioned tournaments and have directories of affiliated clubs and leagues. A partnership means the association recommends or lists FieldLogicHQ as a preferred tournament management tool for sanctioned events.
@@ -273,7 +277,7 @@ Sport body partnerships require trust, demonstrated platform stability, and usua
 
 **Outreach approach:**  
 - Start with the sport body's event coordinator or development director (not the CEO)
-- Reference a tournament or affiliated club already using the platform (requires founding cohort first)
+- Reference a tournament or affiliated club already using the platform (requires an early customer cohort first)
 - The ask is low-stakes: "Would you be willing to mention us in your next tournament organizer communication?"
 
 ---
@@ -522,7 +526,7 @@ CTA (bottom of page):
 | `/guides` section (SEO) | Evergreen how-to articles | Tournament organizers first; house league admins second | Captures problem-aware searchers at the exact moment of need; zero ongoing cost once published |
 | Facebook community participation | Comments, occasional posts | All four segments (different groups per segment) | This is where volunteer org admins actually are; authentic participation builds trust and brand recognition without a budget |
 | Email (lifecycle and post-tournament) | Triggered sequences | Current users and express interest list | Highest-intent audience; post-tournament email is the single most valuable send in the stack |
-| Cold outreach email | Personalized 3-sentence emails | Tournament directors | Direct path to founding season goal; no intermediary |
+| Cold outreach email | Personalized 3-sentence emails | Tournament directors | Direct path to the 0→50 goal (history: the 2026 founding goal); no intermediary |
 
 #### Channels to defer
 
@@ -531,12 +535,12 @@ CTA (bottom of page):
 | Twitter/X | Not where volunteer org administrators are |
 | LinkedIn | Secondary audience at best; tournament directors aren't shopping for software on LinkedIn |
 | YouTube | High production cost; hard to build meaningful SEO early; defer until content baseline is established |
-| Paid social / Google Ads | No confirmed budget; founding season offer means CAC needs to be near zero; revisit when there are paying customers |
+| Paid social / Google Ads | No confirmed budget; CAC needs to be near zero while the product is pre-revenue; revisit when there are paying customers |
 | Podcast | Too much ongoing production commitment for a small team; audience isn't consuming sports administration podcasts |
 
 ---
 
-### Guides Content Priorities (Founding Season)
+### Guides Content Priorities (Founding Season — 2026 plan, history)
 
 Target: 5 guides published by September 2026, each at `/guides/[slug]`, each targeting a specific high-intent query.
 
@@ -589,19 +593,21 @@ This is not broadcast advertising. It's authentic participation in communities w
 
 ---
 
-### Email Sequences (Founding Season)
+### Email Sequences (Founding Season — 2026 plan, history)
+
+> **⚠ History — Founding Season closed 2026-10-26 and removed from the product 2026-11-20; not live copy or a live offer.** The Founding Season emails (`founding_*`) were removed from the product 2026-11-20. Sequences 1, 2, 4 and 5 stand as the lifecycle map; Sequence 3 is dead.
 
 These are the highest-ROI communication assets at current stage.
 
 **Sequence 1: Post-signup onboarding**  
-Already partially built (see `memory/project_founding_season_email.md`). Goal: get the org to run their first tournament within 7 days of signup.
+Already partially built. Goal: get the org to run their first tournament within 7 days of signup.
 
 **Sequence 2: Post-tournament wrap**  
 Trigger: tournament marked as complete. One email, sent 24–48 hours after the tournament ends.
 
-Core message: "Your tournament ran. Your history is here. Here's what else your org could handle from FieldLogicHQ this season." Includes module discovery (House League if applicable, Coaches Portal for any coaches from the event). Includes Founding Season reminder if still active.
+Core message: "Your tournament ran. Your history is here. Here's what else your org could handle from FieldLogicHQ this season." Includes module discovery (House League if applicable, Coaches Portal for any coaches from the event).
 
-**Sequence 3: Founding Season close (November–December 2026)**  
+**Sequence 3: Founding Season close (November–December 2026)** *(history — retired with the offer; removed 2026-11-20)*  
 Trigger: [specific date, likely November 1 and December 1]. Sent to everyone who signed up but hasn't yet activated Tournament Plus.
 
 Core message: "Tournament Plus is free through December 31. After that, it's $39/month. Orgs that get started before year-end keep the free benefit for the rest of 2026."
@@ -616,7 +622,7 @@ Trigger: express interest form submission. Low-frequency, high-value sends only.
 
 ---
 
-### Founding Season Outreach Calendar Summary
+### Founding Season Outreach Calendar Summary *(history)*
 
 | Phase | Timing | Focus | Outreach volume |
 |---|---|---|---|
@@ -635,7 +641,7 @@ These items are not blocking for the strategy document but require answers befor
 - [x] **Guides section URL** — `/guides/[slug]`. Not a blog. Evergreen, undated reference articles. No feed, no author bios, no publication cadence.
 - [x] **Active coach program start** — August 2026, when the first wave of tournament wrap events creates a meaningful pool of coach contacts to reach out to.
 - [x] **Who owns outreach execution?** Founder-led. 10–15 personalized emails per week is the sustainable rate alongside active product work. Prospect list built from public sources (provincial sport association event calendars, Facebook events). Do not start outreach until Stripe Phase G is complete and the full tournament flow is stable (see Phase 1 gate in Section 3).
-- [ ] **Post-founding season billing communication** — orgs on the founding offer need proactive communication about what happens January 1, 2027 (first charge, graceful downgrade if they don't pay, annual vs. monthly choice). Mechanics depend on Stripe Phase G. Plan the communication timeline and copy before December. First notice email should go out no later than November 1, 2026.
+- [x] **Post-founding season billing communication** — *(Retired 2026-11-20: the offer was removed and its three holders carry ordinary free time through September 30, 2027, ended by the free-time reminders, not a founding-offer notice.)* Orgs on the founding offer needed proactive communication about what happens January 1, 2027 (first charge, graceful downgrade if they don't pay, annual vs. monthly choice). Mechanics depend on Stripe Phase G. Plan the communication timeline and copy before December. First notice email should go out no later than November 1, 2026.
 
 ---
 

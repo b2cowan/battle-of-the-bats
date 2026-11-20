@@ -386,7 +386,7 @@ export default function BulkOperationsClient({
                   </p>
                   <p>
                     Each org gets exactly what its own plan change would do: moving onto Club starts its Club
-                    trial (unless it is already paying or has had one) and ends a Founding Season comp; a custom
+                    trial (unless it is already paying or has had one); a custom
                     team limit set for the old plan is cleared; a cancelled org brought back is restored; and
                     tournaments over the new limit are archived. Each org&rsquo;s result line says which of
                     these happened.

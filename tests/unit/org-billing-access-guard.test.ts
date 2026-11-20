@@ -38,7 +38,6 @@ const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
   // ── The comeback path. Without these a cancelled org can never pay us again. ──────────────
   'app/api/billing/cancel/confirm/route.ts': 'billing — comeback path',
   'app/api/billing/cancel/preflight/route.ts': 'billing — comeback path',
-  'app/api/billing/choose-next-season/route.ts': 'billing — the summer plan choice IS a comeback path (it commits the customer to paying us for next season); the route separately refuses any account that is not on a live Founding Season comp',
   'app/api/billing/create-checkout/route.ts': 'billing — THE resubscribe call',
   'app/api/billing/location/route.ts': 'billing — comeback path: a cancelled club reactivating saves its billing address before the resubscribe call accepts it (GST/HST Stage 1); the billing capability only, the address alone, no program access',
   'app/api/billing/club-upgrade-status/route.ts': 'billing — the read behind "Setting up your club" (Stage 4b): a lapsed Premium coach who just bought Club is still suspended until the flip clears it, and is exactly who asks; owner-only, two yes/no facts, no program data',
@@ -46,9 +45,7 @@ const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
   'app/api/billing/downgrade/preflight/route.ts': 'billing — comeback path',
   'app/api/billing/mock-apply/route.ts': 'billing — dev/mock checkout parity',
   'app/api/billing/portal/route.ts': 'billing — Stripe portal door',
-  'app/api/billing/setup-payment-method/route.ts': 'billing — card re-entry',
   'app/api/admin/members/count/route.ts': 'read the billing PAGE itself makes',
-  'app/api/admin/org/founding-season-status/route.ts': 'read the billing PAGE itself makes',
   'app/api/admin/org/free-time/route.ts': 'read the billing PAGE itself makes (its free-time band, Support console Stage 4)',
 
   // ── Identity / nav. The app shell cannot render at all without these, including the shell

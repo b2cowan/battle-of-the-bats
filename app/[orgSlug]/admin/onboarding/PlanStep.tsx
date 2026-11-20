@@ -3,7 +3,7 @@ import { useState } from 'react';
 import StartSteps from '@/components/auth/StartSteps';
 import { StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
 import ChoicePair from '@/components/shared/ChoicePair';
-import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, formatPlanPeriodPrice, pickedPlanLabel, showsFoundingZero, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, formatPlanPeriodPrice, pickedPlanLabel } from '@/lib/plan-config';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { RUN_A_TOURNAMENT_STEPS, runATournamentPick, type StartBilling, type StartPricing } from '@/lib/start-door';
 import type { OrgPlan } from '@/lib/types';
@@ -18,8 +18,7 @@ import { ComparePlansLink, PlanStartButton } from './PlanStepParts';
  * (F08: this door cannot sell them; the guard in tests/unit/first-look-stage3.test.ts keeps their buttons off it).
  *
  * The pricing page's pick comes first, preselected (the olive edge) and holds the one lime; the other is the white
- * secondary. With no pick Tournament Plus comes first. A pick is only a preselection, never a price: the $0 is the one
- * shared rule (`showsFoundingZero`, the checkout's), and every figure comes from plan-config.
+ * secondary. With no pick Tournament Plus comes first. A pick is only a preselection, never a price: every figure comes from plan-config.
  *
  * Its own small component rather than the marketing cards (`PricingSection`), so nothing on the pricing page or the
  * home can change by accident; the change-plan window keeps the full cards. It sits in the admin's bare first-run frame
@@ -37,14 +36,12 @@ const FREE_POINTS = [
   `${FREE.tournamentLimit} tournament at a time · ${FREE.seatLimit} staff seats`,
 ];
 
-export default function PlanStep({ orgName, pricing, initialBilling, foundingOfferHeld, loading, error, onChoose }: {
+export default function PlanStep({ orgName, pricing, initialBilling, loading, error, onChoose }: {
   orgName: string;
   /** The pricing page's pick (A6, G4). A pick this step does not offer reads as none. */
   pricing: StartPricing | null;
   /** Coming Back from the billing address screen: the monthly or yearly choice already made there wins over the pricing pick. */
   initialBilling?: StartBilling | null;
-  /** The server's answer for the offer after the sign-up window closes (`foundingSeasonOfferOnPlanChoice`). */
-  foundingOfferHeld: boolean;
   /** The plan whose start is under way (the page's own plan-loading state). */
   loading: OrgPlan | null;
   error: string;
@@ -55,18 +52,14 @@ export default function PlanStep({ orgName, pricing, initialBilling, foundingOff
   const [billing, setBilling] = useState<StartBilling>(initialBilling ?? pick?.billing ?? 'monthly');
   const busy = loading !== null;
 
-  const zero = showsFoundingZero('tournament_plus', foundingOfferHeld);
   const monthly = formatPlanPeriodPrice('tournament_plus', 'monthly');
   const annual = formatPlanPeriodPrice('tournament_plus', 'annual');
-  // G5: with the offer the price is $0 and the choice says what follows ("Then …"); without it the price follows the
-  // choice, and annual carries the pricing page's own savings line.
-  const plusPrice = zero ? '$0' : billing === 'annual' ? annual : monthly;
-  const plusNote = zero
-    ? `through ${FOUNDING_SEASON_END_LABEL} · normally ${monthly}`
-    : billing === 'annual' ? formatAnnualSavings('tournament_plus') : null;
+  // G5: the price follows the choice, and annual carries the pricing page's own savings line.
+  const plusPrice = billing === 'annual' ? annual : monthly;
+  const plusNote = billing === 'annual' ? formatAnnualSavings('tournament_plus') : null;
   const billingOptions = [
-    { value: 'monthly', label: zero ? `Then ${monthly}` : monthly },
-    { value: 'annual', label: zero ? `Then ${annual}` : annual },
+    { value: 'monthly', label: monthly },
+    { value: 'annual', label: annual },
   ] as const;
 
   function startButton(plan: PlanStepChoice, label: string) {
@@ -79,19 +72,18 @@ export default function PlanStep({ orgName, pricing, initialBilling, foundingOff
 
   const plusCard = (
     <section className={first === 'tournament_plus' ? styles.cardOn : styles.card} aria-labelledby="plan-step-plus">
-      {zero && <p className={styles.tag}>Founding Season</p>}
       <div className={styles.cardHead}>
         <h2 id="plan-step-plus" className={styles.name}>Tournament Plus</h2>
         <span className={styles.price}>{plusPrice}</span>
       </div>
-      {/* GST/HST Stage 2 Part 4 (T4): a price the buyer will be charged says so; the $0 Founding price has nothing to tax. */}
-      {!zero && <p className={styles.note}>{BILLING_TAX_WORDS.plusTax}</p>}
+      {/* GST/HST Stage 2 Part 4 (T4): a price the buyer will be charged says so. */}
+      <p className={styles.note}>{BILLING_TAX_WORDS.plusTax}</p>
       {plusNote && <p className={styles.note}>{plusNote}</p>}
       <ul className={styles.points}>{PLUS_POINTS.map(p => <li key={p}>{p}</li>)}</ul>
       <span className={`${accountForm.label} ${styles.billingLabel}`} id="plan-step-billing">Billing</span>
       <ChoicePair labelledBy="plan-step-billing" value={billing} options={billingOptions} onChange={setBilling} disabled={busy} />
-      {/* §20 (3) above the paid button; the $0 Founding Season choice carries none (§20 note 3; step 6.3, drawing tab 5). */}
-      {!zero && <PlanTermsLine place="column" trial={PLAN_CONFIG.tournament_plus.trialDays} />}
+      {/* §20 (3) above the paid button (step 6.3, drawing tab 5). */}
+      <PlanTermsLine place="column" trial={PLAN_CONFIG.tournament_plus.trialDays} />
       {startButton('tournament_plus', 'Start with Tournament Plus')}
     </section>
   );

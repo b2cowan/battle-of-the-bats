@@ -71,19 +71,11 @@ async function loadRecords(): Promise<DriftRecord[]> {
   }));
 }
 
-/** A club-paid portal keeps the club's subscription on its workspace row; a next-season choice waits on its own row. */
+/** A club-paid portal keeps the club's subscription on its workspace row. */
 async function loadFollowedElsewhere(): Promise<Set<string>> {
-  const [workspaces, nextSeason] = await Promise.all([
-    allRows<{ stripe_subscription_id: string }>((from, to) => supabaseAdmin.from('team_workspaces')
-      .select('stripe_subscription_id').not('stripe_subscription_id', 'is', null).order('id').range(from, to), 'the Coaches Portals'),
-    allRows<{ next_season_subscription_id: string }>((from, to) => supabaseAdmin.from('organization_billing_facts')
-      .select('next_season_subscription_id').not('next_season_subscription_id', 'is', null).order('org_id').range(from, to),
-    'the next-season choices'),
-  ]);
-  return new Set([
-    ...workspaces.map(w => w.stripe_subscription_id),
-    ...nextSeason.map(n => n.next_season_subscription_id),
-  ]);
+  const workspaces = await allRows<{ stripe_subscription_id: string }>((from, to) => supabaseAdmin.from('team_workspaces')
+    .select('stripe_subscription_id').not('stripe_subscription_id', 'is', null).order('id').range(from, to), 'the Coaches Portals');
+  return new Set(workspaces.map(w => w.stripe_subscription_id));
 }
 
 async function saveCheck(check: DriftCheck): Promise<void> {

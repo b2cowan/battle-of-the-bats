@@ -117,7 +117,7 @@ describe('Stage 7 · pays now (owner Q2)', () => {
   const base = { ownPlanId: 'league', status: 'active', subscriptionId: 'sub_123', onFreeTime: false };
   it('a club on its own subscription, billing active, pays', () => assert.equal(paysNow(base), true));
   it('a trial is not paying', () => assert.equal(paysNow({ ...base, status: 'trialing' }), false));
-  it('a Founding Season comp (active, no subscription) is not paying', () => assert.equal(paysNow({ ...base, subscriptionId: null }), false));
+  it('free time (active, no subscription) is not paying', () => assert.equal(paysNow({ ...base, subscriptionId: null }), false));
   it('free time is not paying', () => assert.equal(paysNow({ ...base, onFreeTime: true }), false));
   it('the Tournament plan, a past-due club and a test subscription are not paying', () => {
     assert.equal(paysNow({ ...base, ownPlanId: 'tournament' }), false);

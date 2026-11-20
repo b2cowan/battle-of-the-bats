@@ -13,7 +13,7 @@ import { readCode } from './_source-code.ts';
 const load = billingTestLoader();
 const { BillingBodyView, billingReturnState } = load('components/billing/BillingBody.tsx') as {
   BillingBodyView: ComponentType<BillingBodyViewProps>;
-  billingReturnState: (search: string, billingBase: string, showFounding: boolean) => { justChose: boolean; detail: string | null; notice: { text: string } | null; consumed: boolean; destination: string };
+  billingReturnState: (search: string, billingBase: string) => { detail: string | null; notice: { text: string } | null; consumed: boolean; destination: string };
 };
 const ready = <T>(data: T): BillingRead<T> => ({ status: 'ready', data });
 function fixture(key: keyof typeof PLAN_CONFIG): BillingBodyViewProps {
@@ -22,13 +22,12 @@ function fixture(key: keyof typeof PLAN_CONFIG): BillingBodyViewProps {
   const snapshot: BillingSnapshot = {
     org: { id: 'org-a', slug: 'club-a', name: 'Falcons', planId: key, ownPlanId: key, enabledAddons: ['module_public_site'], subscriptionStatus: 'active', subscriptionPeriod: 'monthly', currentPeriodEnd: '2027-03-01', teamLimit: 15, tournamentLimit: 1 } as BillingSnapshot['org'],
     canManageBilling: true, usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 2, limit: profile.config.seatLimit }, officials: 4 }),
-    freeTime: ready({ freeTime: null, portal: null, foundingThrough: null, overLimitAfter: false }),
-    founding: ready({ isFoundingSeason: false, compUntil: null }),
+    freeTime: ready({ freeTime: null, portal: null, overLimitAfter: false }),
     gating: ready({ tournament: false, tournament_plus: false, team: false, league: true, club: true, club_large: true }),
     cancellation: ready({ currentPlan: key, ...impact, activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }),
     move: ready({ live: false, scheduledMove: null }),
   };
-  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
+  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, retry() {} } };
 }
 const html = (props: BillingBodyViewProps) => renderToStaticMarkup(createElement(BillingBodyView, props)).replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 const body = readCode('components/billing/BillingBody.tsx');
@@ -67,7 +66,7 @@ describe('billing state distinctions in the rendered body', () => {
   for (const state of ['running', 'ending'] as const) it(`${state}: staff-given Premium free time retains the identical Club door and sale gate`, () => {
     const props = fixture('team');
     props.snapshot.org.subscriptionStatus = 'canceled';
-    props.snapshot.freeTime = ready({ freeTime: null, portal: { state, lastDay: '2026-12-31', daysLeft: 10 }, foundingThrough: null, overLimitAfter: false });
+    props.snapshot.freeTime = ready({ freeTime: null, portal: { state, lastDay: '2026-12-31', daysLeft: 10 }, overLimitAfter: false });
     props.snapshot.gating = ready({ club: false });
     assert.ok(html(props).includes(W.clubUpgrade.start));
     assert.ok(html(props).includes(W.change.details(PLAN_CONFIG.club.label)));
@@ -80,7 +79,7 @@ describe('billing state distinctions in the rendered body', () => {
   });
   it('staff free time hides upgrade purchases even when the underlying own plan is free', () => {
     const props = fixture('tournament');
-    props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, foundingThrough: null, overLimitAfter: false });
+    props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, overLimitAfter: false });
     const rendered = html(props);
     assert.doesNotMatch(rendered, /Upgrade to|billing-manage-btn|billing-cancel-btn|<select|Move to/);
   });
@@ -101,25 +100,23 @@ describe('billing state distinctions in the rendered body', () => {
       assert.doesNotMatch(rendered, /Loading|Renews|Cancelled|Canceled|Reactivate|Keep Premium|data is kept|CAD|billing-manage-btn|billing-cancel-btn|toneGood/);
     });
   }
-  it('a Founding read failure cannot suppress cancellation recovery or ended-portal Keep Premium', () => {
+  it('a cancelled workspace still offers reactivation, and an ended coach portal still offers Keep Premium', () => {
     for (const key of ['team', 'tournament_plus'] as const) {
       const props = fixture(key);
       props.snapshot.org.subscriptionStatus = 'canceled';
-      props.snapshot.founding = { status: 'error', error: '503' };
       assert.match(html(props), /billing-reactivate-btn/);
       assert.doesNotMatch(html(props), /Renews|Loading/);
       if (key === 'team') {
-        props.snapshot.freeTime = ready({ freeTime: null, portal: { state: 'ended', lastDay: '2027-03-31' }, foundingThrough: null, overLimitAfter: false });
+        props.snapshot.freeTime = ready({ freeTime: null, portal: { state: 'ended', lastDay: '2027-03-31' }, overLimitAfter: false });
         assert.match(html(props), /billing-keep-premium/);
         assert.doesNotMatch(html(props), /billing-reactivate-btn|data is kept/);
       }
     }
   });
-  it('a known running staff grant stored cancelled stays free time, including when Founding fails', () => {
+  it('a known running staff grant stored cancelled stays free time', () => {
     const props = fixture('club');
     props.snapshot.org.subscriptionStatus = 'canceled';
-    props.snapshot.founding = { status: 'error', error: '503' };
-    props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, foundingThrough: null, overLimitAfter: false });
+    props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, overLimitAfter: false });
     assert.match(html(props), /Free through March 31, 2027/);
     assert.doesNotMatch(html(props), /billing-reactivate-btn|data is kept|Renews|Canceled|Cancelled/);
   });
@@ -144,7 +141,7 @@ describe('billing state distinctions in the rendered body', () => {
     const largest = fixture('club_large');
     largest.snapshot.usage = ready({ teams: { count: 9, limit: PLAN_CONFIG.club_large.teamLimit }, tournament_slots: { count: 0, limit: 1 }, staff_seats: { count: 1, limit: 1 }, officials: 0 });
     assert.ok(html(largest).includes(W.usage.largestTeams(PLAN_CONFIG.club_large.label, PLAN_CONFIG.club_large.teamLimit)));
-    props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, foundingThrough: null, overLimitAfter: false });
+    props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, overLimitAfter: false });
     assert.ok(html(props).includes(W.usage.freeTeams(PLAN_CONFIG.club.label)));
   });
   it('the Holds column describes capacity rather than repeating a usage count', () => {
@@ -153,21 +150,20 @@ describe('billing state distinctions in the rendered body', () => {
     assert.doesNotMatch(rendered, /data-label="Holds">1 of 1/);
   });
   it('Stripe return flags consume once, preserve the drawer and use either host return base', () => {
-    assert.equal(billingReturnState('success=1&inPlace=club', '/billing', false).destination, '/billing?inPlace=club');
+    assert.equal(billingReturnState('success=1&inPlace=club', '/billing').destination, '/billing?inPlace=club');
     for (const host of ['/club-a/admin/org/billing', '/future-host/billing']) {
-      for (const flag of ['success', 'card_saved', 'next_season']) {
-        const result = billingReturnState(`${flag}=1&plan=club_large&other=kept`, host, true);
+      for (const flag of ['success', 'card_saved']) {
+        const result = billingReturnState(`${flag}=1&plan=club_large&other=kept`, host);
         assert.equal(result.destination, `${host}?plan=club_large&other=kept`); assert.equal(result.detail, 'club_large'); assert.ok(result.notice);
-        assert.equal(result.justChose, flag === 'next_season');
-        const second = billingReturnState(result.destination.split('?')[1], host, true); assert.equal(second.consumed, false); assert.equal(second.notice, null);
+        const second = billingReturnState(result.destination.split('?')[1], host); assert.equal(second.consumed, false); assert.equal(second.notice, null);
       }
     }
-    for (const key of ['constructor', '__proto__', 'unknown']) assert.equal(billingReturnState(`plan=${key}`, '/billing', true).detail, null);
-    assert.doesNotMatch(billingReturnState('next_season=1', '/billing', false).notice!.text, /Founding/);
+    for (const key of ['constructor', '__proto__', 'unknown']) assert.equal(billingReturnState(`plan=${key}`, '/billing').detail, null);
+    assert.equal(billingReturnState('next_season=1', '/billing').notice, null, 'the old next-season return flag is no longer read');
   });
   it('the actual existing details drawer uses the Association profile price/name and article variant', () => {
     const { default: Panel } = load('components/billing/PlanArticlePanel.tsx') as { default: ComponentType<Record<string, unknown>> };
-    const rendered = renderToStaticMarkup(createElement(Panel, { planKey: null, profile: PLAN_BILLING_PROFILES.club_large, billingCycle: 'monthly', onClose() {}, onUpgrade() {}, upgradeLoading: null, isComingSoon: true, canUpgrade: false, foundingOfferHeld: false }));
+    const rendered = renderToStaticMarkup(createElement(Panel, { planKey: null, profile: PLAN_BILLING_PROFILES.club_large, billingCycle: 'monthly', onClose() {}, onUpgrade() {}, upgradeLoading: null, isComingSoon: true, canUpgrade: false }));
     assert.match(rendered, /Club · Association/); assert.match(rendered, /379 CAD \/ month/); assert.doesNotMatch(rendered, /219 CAD \/ month/);
     assert.ok(rendered.includes(PLAN_BILLING_PROFILES.club_large.included.article[0]));
   });
@@ -179,8 +175,7 @@ describe('billing state distinctions in the rendered body', () => {
   });
   for (const state of ['running', 'ending', 'ended'] as const) it(`organization free time ${state}: controls and contact door match the state`, () => {
     const props = fixture('club');
-    props.snapshot.freeTime = ready({ freeTime: state === 'ended' ? { state, plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31' } : { state, plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31', daysLeft: state === 'running' ? 40 : 9 }, portal: null, foundingThrough: 'September 30, 2027', overLimitAfter: false });
-    props.snapshot.founding = ready({ isFoundingSeason: true, compUntil: '2027-09-30' });
+    props.snapshot.freeTime = ready({ freeTime: state === 'ended' ? { state, plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31' } : { state, plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31', daysLeft: state === 'running' ? 40 : 9 }, portal: null, overLimitAfter: false });
     const rendered = html(props); assert.doesNotMatch(rendered, /[Ff]ounding/);
     if (state !== 'ended') assert.doesNotMatch(rendered, /billing-manage-btn|billing-cancel-btn|Move to/);
     else assert.match(rendered, /billing-manage-btn/);
@@ -192,7 +187,7 @@ describe('billing state distinctions in the rendered body', () => {
   for (const state of ['running', 'ending', 'ended'] as const) it(`coach free time ${state}: Keep Premium stays attached to the same portal, with no retention`, () => {
     const props = fixture('team');
     const portal: NonNullable<BillingFreeTime['portal']> = state === 'ended' ? { state, lastDay: '2027-03-31' } : { state, lastDay: '2027-03-31', daysLeft: state === 'running' ? 40 : 9 };
-    props.snapshot.freeTime = ready({ freeTime: null, portal, foundingThrough: null, overLimitAfter: false }); props.snapshot.org.subscriptionStatus = state === 'ended' ? 'canceled' : 'active';
+    props.snapshot.freeTime = ready({ freeTime: null, portal, overLimitAfter: false }); props.snapshot.org.subscriptionStatus = state === 'ended' ? 'canceled' : 'active';
     const rendered = html(props);
     assert.match(rendered, /billing-keep-premium/); assert.match(rendered, /reactivateOrgSlug=club-a/); assert.match(rendered, /keep=1/);
     assert.match(rendered, /btn btn-outline[^>]*>Join a club/);
@@ -214,11 +209,6 @@ describe('billing state distinctions in the rendered body', () => {
       else assert.match(rendered, /remain in retention/);
     }
   });
-  it('legitimate comp uses annual config helper, and the checkout return suppresses a stale chooser', () => {
-    const props = fixture('tournament_plus'); props.snapshot.founding = ready({ isFoundingSeason: true, compUntil: '2027-09-30' }); props.foundingActive = true; props.cardWindowOpen = true;
-    assert.match(html(props), /Normally \$390 a year\./); assert.match(html(props), /Choose your/);
-    props.justChose = true; assert.doesNotMatch(html(props), /Choose your|If you choose nothing/);
-  });
   it('the scheduled move keeps its Keep action and actual target', () => {
     const props = fixture('club_large'); props.snapshot.move = ready({ live: true, scheduledMove: { toPlan: 'club', effectiveAt: '2027-03-01' } });
     assert.match(html(props), /Moves to Club on March 1, 2027/); assert.match(html(props), /Keep Club · Association/);
@@ -226,13 +216,6 @@ describe('billing state distinctions in the rendered body', () => {
   it('past due and actual trial dates render without an invented trial promise', () => {
     const props = fixture('club'); props.snapshot.org.subscriptionStatus = 'past_due'; assert.match(html(props), /last payment didn’t go through/);
     props.snapshot.org.subscriptionStatus = 'trialing'; assert.match(html(props), /Trial ends March 1, 2027/); assert.doesNotMatch(html(props), /0-day trial|add a card at checkout/);
-  });
-  it('no card on file and a chosen next season retain honest card/price display', () => {
-    const props = fixture('team'); props.cardWindowOpen = true; props.foundingActive = true;
-    props.snapshot.founding = ready({ isFoundingSeason: true, compUntil: '2027-09-30', card: null });
-    assert.match(html(props), /No payment method on file yet/);
-    props.snapshot.founding = ready({ isFoundingSeason: true, compUntil: '2027-09-30', card: { savedAt: '2026-10-28', brand: 'visa', last4: '4242' }, nextSeason: { planKey: 'team', billingCycle: 'annual', chosenAt: '2026-10-28' } });
-    const rendered = html(props); assert.match(rendered, /4242/); assert.match(rendered, /290/); assert.doesNotMatch(rendered, /Choose your/);
   });
   it('short cancellation programs come from preflight, including its real team count and add-ons', () => {
     const props = fixture('club'); assert.match(html(props), /Rep teams and every team’s coach portal \(9 teams\)/);
@@ -242,8 +225,7 @@ describe('billing state distinctions in the rendered body', () => {
     assert.doesNotMatch(body, /AdminPageHeader|ClubKit\.module|\bck\.|useTournament\(|useClubBrief\(|FeedbackModal|router\.push|\/admin\/org\/billing|\/admin\/rep-teams/);
     assert.match(body, /ownProfile\.changes/); assert.match(body, /change\.mechanism === 'move'/); assert.match(body, /change\.mechanism === 'downgrade'/);
     assert.match(body, /returnTo: billingBase/); assert.match(body, /returnTo=\{billingBase\}/);
-    assert.match(body, /query\.delete\(flag\)/); assert.match(body, /query\.size/); assert.match(body, /setJustChose\(true\)/);
-    assert.match(body, /key=\{currentOrg\.id\}/); assert.match(body, /read\?\.identity === identity/); assert.match(body, /abort\.signal\.aborted/);
+    assert.match(body, /query\.delete\(flag\)/); assert.match(body, /query\.size/);    assert.match(body, /key=\{currentOrg\.id\}/); assert.match(body, /read\?\.identity === identity/); assert.match(body, /abort\.signal\.aborted/);
     const window = readCode('components/billing/PlanMoveDialog.tsx'); assert.doesNotMatch(window, /\/admin\//); assert.match(window, /returnTo,/);
   });
 });

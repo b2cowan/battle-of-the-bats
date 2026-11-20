@@ -5,15 +5,12 @@ import { StartColumn } from '@/components/auth/AccountForm';
 // The stylesheet itself, not AccountForm's `accountForm` re-export: that file is a client module, and a server
 // component reading a non-component export from one gets undefined, so every class here rendered bare.
 import accountForm from '@/components/auth/AccountForm.module.css';
-import {
-  FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_NAME, FOUNDING_SEASON_NEXT_YEAR_LABEL,
-} from '@/lib/plan-config';
 import styles from './CoachWelcomeCard.module.css';
 
 /**
  * THE COACH WELCOME CARD (The first look, Stage 3b — Ask 5b, F06, F17; gate G1–G2 ruled 2026-10-20, drawn at
  * https://claude.ai/artifact/CtzAZMhmvnJZQxMTtn5xjj). One card, built once, for every moment between paying for Coach
- * Premium and the portal: the welcome (`/coaches/welcome`, the Founding Season path) and checkout complete
+ * Premium and the portal: checkout complete
  * (`/coaches/checkout/complete`: setting up, still setting up, can't find that payment, and ready — which IS the
  * welcome). The start column on the warm paper, in the app's own frame (rule 1): a round well, the display heading, one
  * sub line, one lime. Never a card frame around it.
@@ -55,19 +52,15 @@ export function WaitLine({ children }: { children: ReactNode }) {
 }
 
 /**
- * "Premium is on for {team}" (G1). The dates sentence shows ONLY when the workspace holds the Founding comp, read from
- * its record by the caller (`workspaceHoldsFoundingComp`); a paid coach gets no second sentence: the receipt and the
- * welcome email carry the price, and this card is the doorway, not the bill. "Open your team" (no arrow) goes to the
- * portal, which forwards its `?success=1` to the team landing.
+ * "Premium is on for {team}" (G1). No second sentence: the receipt and the welcome email carry the price, and this card
+ * is the doorway, not the bill. "Open your team" (no arrow) goes to the portal, which forwards its `?success=1` to the
+ * team landing.
  */
-export function PremiumWelcome({ team, href, foundingComp }: { team: string; href: string; foundingComp: boolean }) {
+export function PremiumWelcome({ team, href }: { team: string; href: string }) {
   return (
     <CoachWelcomeCard
       icon="check"
       title={`Premium is on${team ? ` for ${team}` : ''}`}
-      sub={foundingComp
-        ? `Free through ${FOUNDING_SEASON_END_LABEL}. Nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}; in ${FOUNDING_SEASON_DECISION_MONTH_NAME} you'll choose a plan for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}.`
-        : undefined}
     >
       <Link href={href} className={accountForm.primary}>Open your team</Link>
     </CoachWelcomeCard>

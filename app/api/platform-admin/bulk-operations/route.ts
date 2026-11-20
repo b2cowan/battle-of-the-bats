@@ -120,7 +120,7 @@ export const POST = withObservability(async (req: Request) => {
   const lastDay = cleanString(body.last_day, 10);
 
   // Comp period is no longer given (Support console Stage 4, owner ruling Q5): it never gave a club anything, and offering
-  // it beside things that do is how a club ends up "comped" and charged. Founding Season's own rows are written at sign-up.
+  // it beside things that do is how a club ends up "comped" and charged.
   if ((actionType as string) === 'comp_period') {
     return NextResponse.json({ error: 'Comp period is no longer given from the console. It never gave a club anything.' }, { status: 400 });
   }
@@ -229,7 +229,7 @@ export const POST = withObservability(async (req: Request) => {
     ? await clubsStaffBelongsTo(orgs.map(o => o.id), { id: auth.user.id, email: auth.user.email ?? '' })
     : new Set<string>();
   // A plan change's side effects, counted for the owner's email ("Also: 1 Club trial started · …").
-  const sideEffects = { clubTrials: 0, compsEnded: 0, archived: 0, archivedAccounts: 0 };
+  const sideEffects = { clubTrials: 0, archived: 0, archivedAccounts: 0 };
 
   for (const org of (orgs as OrgRow[])) {
     // Every bulk action skips a Coaches Portal (Stage 4b, owner ruling Q9, T8/T33): a portal's plan, billing status and
@@ -272,7 +272,7 @@ export const POST = withObservability(async (req: Request) => {
 
       if (actionType === 'plan_change') {
         // The SAME rule as one org's Plan and Limits save (lib/operator-plan-change.ts): the Club trial,
-        // the Founding comp revoke, the stale team-limit clear, the reactivation restore and the over-cap
+        // the stale team-limit clear, the reactivation restore and the over-cap
         // archive all run per org. This path once kept its own copy and skipped all but the archive.
         // A failure after the plan lands is reported in this org's result row, never as a failed batch.
         const planId = targetPlan as OrgPlan;
@@ -287,14 +287,12 @@ export const POST = withObservability(async (req: Request) => {
         });
         const notes: string[] = [];
         if (change.clubTrialDays > 0) notes.push(`${change.clubTrialDays}-day Club trial started`);
-        if (change.revokedComps > 0) notes.push('Founding Season comp ended');
         // Name the old value, so a deliberate custom deal can be put back from this line.
         if (change.clearedTeamLimit) notes.push(`custom team limit of ${change.current?.team_limit ?? '?'} cleared`);
         if (change.reactivated) notes.push('restored from cancellation');
         const archived = change.archivedTournaments.length;
         if (archived > 0) notes.push(`${archived} over-cap tournament${archived === 1 ? '' : 's'} archived`);
         if (change.clubTrialDays > 0) sideEffects.clubTrials += 1;
-        if (change.revokedComps > 0) sideEffects.compsEnded += 1;
         if (archived > 0) { sideEffects.archived += archived; sideEffects.archivedAccounts += 1; }
         if (change.archiveWarning) notes.push('⚠ over-cap tournaments could NOT be archived; this org is over its limit');
         for (const warning of change.warnings) notes.push(`⚠ ${warning}`);

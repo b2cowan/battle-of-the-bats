@@ -25,8 +25,7 @@ function page(key: OrgPlan, ending: BillingEnding | null, canManageBilling = tru
   const snapshot: BillingSnapshot = {
     org: { id: 'org-a', slug: 'club-a', name: 'Falcons', planId: key, ownPlanId: key, enabledAddons: [], subscriptionStatus: 'active', subscriptionPeriod: 'monthly', currentPeriodEnd: ENDS, teamLimit: 15, tournamentLimit: 1 } as unknown as BillingSnapshot['org'],
     canManageBilling, usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 3 }, staff_seats: { count: 2, limit: 10 }, officials: 0 }),
-    freeTime: ready({ freeTime: null, portal: null, foundingThrough: null, overLimitAfter: false }),
-    founding: ready({ isFoundingSeason: false, compUntil: null }),
+    freeTime: ready({ freeTime: null, portal: null, overLimitAfter: false }),
     gating: ready({ tournament: false, tournament_plus: false, team: false, league: false, club: false, club_large: false }),
     cancellation: ready({ currentPlan: key, ...planCancellationImpact(profile, [], 9), activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null, ending }),
     move: ready({ live: true, scheduledMove: null }),

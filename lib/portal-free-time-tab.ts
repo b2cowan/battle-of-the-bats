@@ -75,7 +75,6 @@ function portalState(p: CoachPortalFacts): string {
     if (p.runningGrant) return `Free time through ${formatShortDay(p.runningGrant.lastDay)}`;
     if (p.endedLastDay) return `Free time ran through ${formatShortDay(p.endedLastDay)} · back on the free Coaches Portal`;
   }
-  if (p.foundingLastDay) return `Founding Season, free through ${formatShortDay(p.foundingLastDay)}`;
   if (!p.inForce) return 'Cancelled';
   if (p.billingMode === 'platform_override') return 'Free from FieldLogicHQ';
   return 'Pays through Stripe';

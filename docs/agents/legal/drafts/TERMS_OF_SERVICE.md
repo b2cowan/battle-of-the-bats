@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | next after 2026-11-17, draft 0.2 (a minor change under §18: no one is asked to accept again) |
+| **Version** | next after 2026-11-17, draft 0.3 (a minor change under §18: no one is asked to accept again) |
 | **Status** | draft — for the owner's approval; held to publish on the same day as the Payments Terms (0.2's T1–T4 carry the owner-approved Data Terms) |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
 | **Last reviewed** | 2026-11-18 |
@@ -20,6 +20,10 @@
   Data Terms. Links: /data-terms and /subprocessors (the short links of /legal/data-terms and /legal/subprocessors). Still
   a minor change under §18: the Data Terms add duties to us and none to an organization. See the publishing note's
   same-day fallback (Before this can be published, item 5).
+- **Draft 0.3 (2026-11-20, Free League and Founding removal Stage 2b)** — §8 "Yearly plans" drops the example "or for a
+  next season you choose close to its start": the next-season plan choice was removed from the product (it only ever existed
+  for the Founding Season; 0 were ever made). Only an example of when the confirmation email is the notice goes; the promise
+  is unchanged. Still a minor change under §18.
 
 **How to read this draft.** Customer text is everything after the first `---` line, up to "Before this can be
 published". Owner notes are in blockquotes that start `> NOTE`.
@@ -154,7 +158,7 @@ period, at the then-current price, and the payment method on file is charged —
 
 **Yearly plans.** For a yearly plan, we will email the account owner **at least 30 days before** it renews, with the
 renewal date and the amount, plus applicable taxes. If a yearly plan's first payment is due less than 38 days after you
-choose it (at the end of a short free trial, or for a next season you choose close to its start), the email confirming your
+choose it (at the end of a short free trial), the email confirming your
 choice is that notice: it gives the date and the amount.
 
 **Price changes.** If the price of your plan is going up, we will email the account owner **at least 30 days before**

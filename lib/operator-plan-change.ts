@@ -16,7 +16,7 @@ import { findPending } from './plan-ending-store';
  * An operator's plan change — the ONE rule both platform-admin paths run: the single-org Plan and
  * Limits save and every org in a Bulk Operations plan change. Before 2026-10-24 the bulk path kept its
  * own copy, which wrote the plan and archived over-cap tournaments but skipped the Club trial, the
- * Founding comp revoke, the stale team-limit clear and the reactivation restore — so moving clubs onto
+ * stale team-limit clear and the reactivation restore — so moving clubs onto
  * Club in bulk started no trials. A route calls this; it never repeats any step of it.
  *
  * Order: the Club trial decision (H02) → the plan write → the database half every plan change runs
@@ -68,7 +68,6 @@ export type OperatorPlanChangeResult = {
   normalizedTeamLimit: number | null;
   clubTrialDays: number;
   clearedTeamLimit: boolean;
-  revokedComps: number;
   reactivated: boolean;
   archivedTournaments: { id: string; name: string }[];
   archiveWarning?: string;
@@ -258,8 +257,8 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
 
   // The database half of any plan change — the same one a Stripe move and the webhook run: a custom team
   // limit set for the OLD plan is cleared (it would read as the new band's cap) unless this change sets
-  // one, and ⚖ D6 a move onto Club revokes the Founding Season comp.
-  let sideEffects = { clearedTeamLimit: false, revokedComps: 0 };
+  // one.
+  let sideEffects = { clearedTeamLimit: false };
   try {
     sideEffects = await applyPlanChangeSideEffects({
       orgId,
@@ -270,7 +269,7 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
     });
   } catch (sideEffectErr) {
     console.error('[platform-admin] plan-change side effects failed:', sideEffectErr);
-    warnings.push('Plan saved, but clearing the old custom team limit or ending the Founding Season offer failed — check both by hand.');
+    warnings.push('Plan saved, but clearing the old custom team limit failed — check it by hand.');
   }
   // A07: an operator bringing a CANCELLED organization back restores what the cancellation took.
   const reactivated = current?.subscription_status === 'canceled'
@@ -326,10 +325,6 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
     await writePlatformAuditLog(actor, orgId, 'update_plan', 'club_trial',
       null, { days: clubTrialDays, endsAt: updatePayload.current_period_end, ...extra }, { reason });
   }
-  if (sideEffects.revokedComps > 0) {
-    await writePlatformAuditLog(actor, orgId, 'update_plan', 'founding_comp_revoked',
-      null, { rows: sideEffects.revokedComps, ...extra }, { reason });
-  }
   if (teamLimitProvided && (current?.team_limit ?? null) !== normalizedTeamLimit) {
     await writePlatformAuditLog(actor, orgId, 'update_plan', 'team_limit',
       current?.team_limit ?? null, normalizedTeamLimit, { reason });
@@ -360,7 +355,6 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
     normalizedTeamLimit,
     clubTrialDays,
     clearedTeamLimit: sideEffects.clearedTeamLimit,
-    revokedComps: sideEffects.revokedComps,
     reactivated,
     archivedTournaments,
     ...(archiveWarning ? { archiveWarning } : {}),

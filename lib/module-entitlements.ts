@@ -69,7 +69,7 @@ export function isTournamentOnlyWorkspace(org: EntitlementOrg): boolean {
 
 /**
  * Is this plan one of the Club bands? Asked where Club differs by ruling rather than by what the
- * plan carries: no Founding Season offer (D6), the owner's first stop is the club checklist, and
+ * plan carries: the owner's first stop is the club checklist, and
  * a club's setup never opens the house-league wizard. One definition, so a third band is one edit.
  */
 export function isClubPlan(planId: string | null | undefined): boolean {

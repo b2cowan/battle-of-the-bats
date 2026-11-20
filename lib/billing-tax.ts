@@ -141,7 +141,7 @@ export const BILLING_TAX_WORDS = {
   /** T4: beside every quoted price. One spelling everywhere. */
   plusTax: 'plus applicable taxes',
   /** GST/HST Stage 2 Part 4 (drawing tab 7): the ONE new sentence, under a block of prices whose buttons keep their short
-   *  price (the Founding choice buttons, the Change plan table, a sign-up's billing choice). */
+   *  price (the Change plan table, a sign-up's billing choice). */
   pricesPlusTax: 'Prices are plus applicable taxes.',
 } as const;
 

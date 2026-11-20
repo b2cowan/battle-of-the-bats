@@ -97,10 +97,6 @@ export default function Navbar() {
   );
   return (
     <>
-      {/* `top` lives in the module (.marketingNav), not in a `top-0` utility: the Founding Season
-          offer bar publishes --offer-bar-h while it is mounted and this bar must sit beneath it
-          (the rendered layout check caught every nav link hidden under the bar when the utility
-          pinned it to 0 — /review 2026-09-07). */}
       {/* ⚖ ALWAYS WARM (The public face, warm: S4, owner Ask 5 B, 2026-10-23): the marketing set has no
           Dark version, so the phone's browser bar takes the paper too, whatever the setting, and
           `data-warm-base` paints <body> the paper under it (the bounce past either end of a page,

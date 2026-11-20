@@ -23,8 +23,6 @@ export type PlanBillingDefinition<Key extends string = OrgPlan> = {
   usageMeters: readonly BillingUsageMeter[];
   changes: readonly BillingPlanChange<Key>[];
   downgradeLosses?: readonly string[];
-  /** Existing-comp DISPLAY only; this flag never grants or renews a Founding offer. */
-  showFoundingSeason: boolean;
   cancellationKind: CancellationKind;
   /** Presentation choices belong to the profile, so a new profile needs no screen branch. */
   joinClub?: boolean;
@@ -198,7 +196,6 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     included: { billing: TOURNAMENT_BILLING, article: TOURNAMENT_BILLING },
     usageMeters: ['tournament_slots', 'staff_seats'],
     changes: checkoutAndMoves('tournament'),
-    showFoundingSeason: true,
     cancellationKind: 'organization',
     discoveryPlans: ['team', 'league', 'club'],
   },
@@ -207,7 +204,6 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     usageMeters: ['tournament_slots', 'staff_seats'],
     // The larger Club band remains reachable after becoming a club; the Premium door offers Club only.
     changes: checkoutAndMoves('team').filter(change => change.target === 'club'),
-    showFoundingSeason: true,
     cancellationKind: 'premium',
     joinClub: true,
     freeTimeOmittedBillingItems: [6],
@@ -216,7 +212,6 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     included: { billing: TOURNAMENT_PLUS_BILLING, article: TOURNAMENT_PLUS_ARTICLE },
     usageMeters: ['tournament_slots', 'staff_seats'],
     changes: [...checkoutAndMoves('tournament_plus'), { target: 'tournament', mechanism: 'downgrade' }],
-    showFoundingSeason: true,
     cancellationKind: 'organization',
     discoveryPlans: ['team', 'league', 'club'],
     downgradeLosses: [
@@ -228,21 +223,18 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     included: { billing: LEAGUE_BILLING, article: LEAGUE_ARTICLE },
     usageMeters: ['tournament_slots', 'staff_seats'],
     changes: checkoutAndMoves('league'),
-    showFoundingSeason: true,
     cancellationKind: 'organization',
   },
   club: {
     included: { billing: CLUB_BILLING, article: CLUB_ARTICLE },
     usageMeters: ['teams'],
     changes: checkoutAndMoves('club'),
-    showFoundingSeason: false,
     cancellationKind: 'organization',
   },
   club_large: {
     included: { billing: CLUB_BILLING, article: CLUB_ARTICLE },
     usageMeters: ['teams'],
     changes: checkoutAndMoves('club_large'),
-    showFoundingSeason: false,
     cancellationKind: 'organization',
   },
 };

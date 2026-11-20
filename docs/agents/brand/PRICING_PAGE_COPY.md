@@ -5,13 +5,14 @@
 **Last updated:** 2026-05-27  
 **Supersedes:** Previous three-tier + module add-on strategy (initial draft, no longer on disk)
 
+> ### ⚠ History — Founding Season closed 2026-10-26 and removed from the product 2026-11-20; not live copy
 > ### ⛔ THE FOUNDING SEASON OFFER IS CLOSED 2026-10-26 (`BUSINESS_DECISIONS.md` 2026-10-26, "The Founding Season offer closes early")
 > The sign-up window ended at the **end of October 25, 2026**. Every Founding Season line in this document is **history**.
 > Do not put any of it on a surface again: no "free through", no "$0", no "sign up by", no "2027 season free". New
 > sign-ups see list prices, and Premium has **no trial**. The live site already shows its closed state (walked in §150).
-> The `/pricing` FAQ dropped the Founding question rather than answering it. **Still live, for accounts already on the
-> comp only** (they run to September 30, 2027): the billing page's free-season words, the lock lines' `Free for you
-> through {date}`, and the `founding_*` emails. Those are served from the Founding canon and stay as they are.
+> The `/pricing` FAQ dropped the Founding question rather than answering it. **Removed 2026-11-20** (`BUSINESS_DECISIONS.md` 2026-11-19, owner; plan `FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md`): the billing page's free-season words, the lock lines' `Free for you
+> through {date}` and the `founding_*` emails are gone with the code. The three accounts that held the comp now carry ordinary
+> staff-given free time through September 30, 2027, and read as any free-time account does (the free-time words, not the Founding canon).
 
 > ### ⚠ AMENDMENT 2026-11-19 — "free" comes off the coach MARKETING doors (`BUSINESS_DECISIONS.md` 2026-11-19, "'Coach a team' opens the PAID Premium Coaches Portal sign-up…", owner, Decided)
 > "Coach a team" opens the **paid Premium** sign-up (chooser card, Get started menu, coach demo button), and a coach gets the
@@ -177,7 +178,7 @@ post live scores."** Short form under a free badge: **"From your team list to fi
 walkthrough and pitch slides (no plan named, 2026-08-21; three slides now show Tournament Plus tools — a `/demos` call if
 ever); the tournament demo's "start your own tournament — it's free" (true; noted for `/demos`). **Closed the same day**
 (owner: "update those 2 open items to your recommendations"): `BRAND_FOUNDATIONS.md`'s elevator pitch now carries the
-Founding Season offer line ("…Tournament Plus is free through September 30, 2027 when you sign up by December 31, 2026.",
+Founding Season offer line *(history — closed 2026-10-26, removed from `BRAND_FOUNDATIONS.md` as live copy 2026-11-20)* ("…Tournament Plus is free through September 30, 2027 when you sign up by December 31, 2026.",
 was "through the end of 2026"); every "carries over (automatically)" bridge line in both brand docs (six) now follows "The
 coach bridge, said truthfully"; `/for-coaches`' Tournament card ends "Your club doesn't need to be on FieldLogicHQ." (was
 "No org account required" — a Tournament sign-up creates an organization).
@@ -199,7 +200,7 @@ only where the limit is the point). Paid events keep today's words everywhere a 
 1. **Lock lines:** Export the team list · Excel and CSV · Reuse a past tournament’s setup · Email the teams when you publish the schedule ·
    Email every team a game-day reminder · Email every team the final results · ~~Your logo, theme, banner and fonts on this site~~ → **Your logo, colours and type on this site** (record fix 2026-11-04, `/strategy` Stage 8 Part 5d drift check: the old line went with the Branding page's old cards, Part 4b; the current words are `LOCK_WORDS.brandingLook`, approved in Public tournament pages Stage 1a) ·
    Choose which teams get it · Reopen registration · Record payments.
-2. **Founding Season:** second line under a lock line, quiet grey, no full stop: `Free for you through {date}`. Tools-menu foot (once):
+2. ~~**Founding Season:**~~ *(history — removed 2026-11-20; no lock line carries a free-time second line any more)* second line under a lock line, quiet grey, no full stop: `Free for you through {date}`. Tools-menu foot (once):
    `Tournament Plus is free for you through {date}.` ({date} = "September 30, 2027", from the plan-config constant.)
 3. **Event settings:** ~~Coach emails summary on free: `No auto emails` (three lock lines)~~ — retired 2026-10-16: the owner removed the Coach emails card on free during the walk (nothing in it applies; the schedule email keeps its lock in the Publish window). Contact summary: `Contact public` / `Contact hidden`.
 4. **Composer:** `To each team’s coach` · `On your plan: up to 100 people a send and 10 emails a day for this event.` ·
@@ -236,7 +237,7 @@ Describes **today's** product, ahead of the invite-only build. Checked against t
 | Home page, Tournament card (under "Tournament · Free to start") | Custom team registration with waitlist management · The round-robin generator, across your fields and time slots · Single and double-elimination brackets · Live score entry — standings update the moment you save · Tournament archives — every past event preserved | **Pools and a schedule you build game by game, across your fields** · Single and double-elimination brackets · Live score entry — standings update the moment you save · **A public event site with live scores families can follow** · **Announcements to every team in one send** |
 | `/pricing` Tournament Plus card (full list) | Full branding control — no FieldLogicHQ badge | **Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit** (the Tournament Plus article's 2026-08-20 words, one wording on both) |
 | Billing page, Premium Coaches Portal card | 3 staff / coach seats | **Unlimited coaching staff · 3 staff / admin seats on your tournament** |
-| Founding Season welcome email, "What's included now" | Full branding control — no FieldLogicHQ badge | the `/pricing` card's line above |
+| *(History — the Founding Season emails were removed 2026-11-20.)* Founding Season welcome email, "What's included now" | Full branding control — no FieldLogicHQ badge | the `/pricing` card's line above |
 | Tournament Plus upsell email (a week after choosing free), "What you're missing on the free plan" | Unlimited tournaments (free plan is limited to one) · Custom registration fields, exports, and payment tracking · Full branding control — no FieldLogicHQ badge · "it unlocks the tools" | **Unlimited tournaments — the free plan runs one at a time** · **Custom registration fields, the registration export, and payment reminders** · the `/pricing` card's branding line · **"it adds the tools"** |
 | `/pricing`, "Available now" (both variants) | Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting. | Tournament Plus adds registration control, **the round-robin and playoff generators, sealed archives**, branding, and reporting. ("Bracket" is the free tool's word, 2026-10-09.) |
 
@@ -313,6 +314,8 @@ No plan, price, gate or inclusion moved: the names only. Outcome lines that desc
 ---
 
 ### 🆕 FOUNDING SEASON 2027 — offer copy APPROVED 2026-09-07 (owner, on mockup sheet `61a78f09`; built on `dev` 2026-09-07)
+
+> ⚠ **History — Founding Season closed 2026-10-26 and removed from the product 2026-11-20; not live copy.** Kept as the record of what was said, never to be reused.
 
 > ⛔ **CLOSED 2026-10-26 (`BUSINESS_DECISIONS.md` 2026-10-26, "The Founding Season offer closes early").** History, not live copy. See the notice at the top of this document.
 

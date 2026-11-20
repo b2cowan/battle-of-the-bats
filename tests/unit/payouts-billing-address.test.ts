@@ -91,7 +91,6 @@ function route() {
     '@/lib/online-payment-landing': { syncPayoutsAccount: async () => null },
     '@/lib/online-payment-profile': { stripeProfileFor: async () => null },
     '@/lib/entitlement-grants': { effectiveOrgFactsForId: async () => null },
-    '@/lib/founding-season': { workspaceHoldsFoundingComp: async () => false },
     '@/lib/module-entitlements': { hasModuleEntitlement: () => false },
     '@/lib/online-payment-endings': { endingNotice: () => null, readOutstanding: async () => null, upcomingEnding: async () => null },
     '@/lib/online-pay-pages': { closeClubPayPages: async () => 0 },

@@ -9,7 +9,7 @@
  * public page, the budget. Families is present — a Club inclusion — but is not a step that can be
  * "done". House league and tournaments are one line each, never steps, for a club that runs neither.
  *
- * ⚖ D6: no Founding Season banner, and no tournament plan chooser at the top (A06/A08). v8: the
+ * ⚖ D6: no tournament plan chooser at the top (A06/A08). v8: the
  * "come back from Overview" sentence sits BESIDE its button, not under the title.
  *
  * ⚖ THE CHECKLIST LETS GO (Stage 13 fix-now 1, F-O1-10): the landing resolver sends a Club owner here at every sign-in

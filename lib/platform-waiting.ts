@@ -4,7 +4,7 @@
  *
  * ⚖ EVERY QUEUE IS REAL (A5). Eleven are the counts Overview's Action queue already computed (owner inactive, missing
  * owner, retention, past due — "N since your last visit" is its reason, not a row — trials ending, overrides ending, new
- * leads, campaigns past due and due soon, the approval queue); two are new but read data we keep: error groups first
+ * leads, the approval queue); two are new but read data we keep: error groups first
  * seen since the last visit, and feedback marked new. Nothing invented. Support console Stage 4 replaced "Overrides
  * ending" with **Free time ending** (owner ruling Q7): every timed grant, 14 days, counting CLUBS, from the same list
  * the Free time page's "Ending in 14 days" filter shows (`lib/free-time-list.ts`), so the two numbers cannot differ.
@@ -19,10 +19,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { canViewPlatformArea, hasPlatformPower, type PlatformArea, type PlatformPower } from './platform-areas';
 import type { PlatformRole } from './platform-auth';
 import { getCommandCenterStats } from './platform-metrics';
-import { classifyCampaignSend, UPCOMING_WINDOW_DAYS } from './marketing-schedule';
 import { tournamentToday } from './timezone';
 import { freeTimeEndingCount, getStaffFreeTime } from './free-time-list';
-import { LIVE_MARKETING_EMAIL_KEYS } from './marketing-email-defaults';
 import { readLeadBook, readOffers } from './lead-book';
 import { followUpDue, needsYou } from './lead-numbers';
 import { readOnlinePaymentsHealth } from './platform-online-payments';
@@ -94,37 +92,12 @@ const QUEUES: QueueDef[] = [
   { key: 'new_leads', group: 'growth', label: 'New leads', why: 'A lead nobody has answered yet', clearLabel: 'new leads', href: '/platform-admin/early-access', entry: 'early_access' },
   { key: 'follow_ups_due', group: 'growth', label: 'Follow-ups due', why: 'A lead whose follow-up date has come', clearLabel: 'follow-ups due', href: '/platform-admin/early-access', entry: 'early_access' },
   { key: 'signup_to_confirm', group: 'growth', label: 'Sign-up to confirm', why: 'A club signed up with a lead’s email; is it theirs?', clearLabel: 'sign-ups to confirm', href: '/platform-admin/early-access', entry: 'early_access' },
-  { key: 'campaigns_past_due', group: 'growth', label: 'Campaigns past due', why: 'A planned campaign whose send date has passed', clearLabel: 'campaigns past due', href: '/platform-admin/email', entry: 'email' },
-  { key: 'campaigns_due_soon', group: 'growth', label: 'Campaigns due soon', why: `Due in the next ${UPCOMING_WINDOW_DAYS} days`, clearLabel: 'campaigns due soon', href: '/platform-admin/email', entry: 'email' },
   { key: 'approval_queue', group: 'product', label: 'Approval queue', why: 'A catalogue change waiting for review or to go live', clearLabel: 'the approval queue', href: '/platform-admin/change-requests', entry: 'change_requests' },
 ];
 
 /** The queues a role sees (whose list it can open), in order. Pure. */
 function queuesFor(role: PlatformRole): QueueDef[] {
   return QUEUES.filter(q => canViewPlatformArea(role, q.entry) && (!q.power || hasPlatformPower(role, q.power)));
-}
-
-async function campaignAlerts(): Promise<{ pastDue: number; dueSoon: number }> {
-  const todayISO = tournamentToday();
-  const [tmplRes, batchRes] = await Promise.all([
-    supabaseAdmin.from('platform_email_templates').select('key, planned_send_date').eq('category', 'marketing'),
-    supabaseAdmin.from('email_batches').select('email_key').eq('status', 'complete'),
-  ]);
-  const sentKeys = new Set((batchRes.data ?? []).map(b => b.email_key as string));
-  // Live campaigns only, the board's own list: a retired email is never "past due" (Stage 7, owner Q10).
-  const live = new Set(LIVE_MARKETING_EMAIL_KEYS);
-  let pastDue = 0;
-  let dueSoon = 0;
-  for (const row of (tmplRes.data ?? []).filter(r => live.has(r.key as string))) {
-    const status = classifyCampaignSend({
-      plannedDate: (row.planned_send_date as string | null) ?? null,
-      sent: sentKeys.has(row.key as string),
-      todayISO,
-    });
-    if (status === 'past_due') pastDue++;
-    else if (status === 'due_soon') dueSoon++;
-  }
-  return { pastDue, dueSoon };
 }
 
 async function headCount(q: PromiseLike<{ count: number | null }>): Promise<number> {
@@ -197,9 +170,8 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
   const onlinePaymentsRead = wants('online_payments') ? readOnlinePaymentsHealth().then(r => r.length).catch(() => null) : Promise.resolve(0);
   // GST/HST Stage 3 Part 3b: the sales that need a look, platform-wide (null = not read; shares one 30 s read with the Clubs list).
   const salesTaxRead = wants('sales_tax') ? readSalesTaxWaiting() : Promise.resolve({ sales: 0, orgIds: [] as string[] });
-  const [stats, campaigns, approvals, newErrors, newFeedback, freeTimeEnding, leads] = await Promise.all([
+  const [stats, approvals, newErrors, newFeedback, freeTimeEnding, leads] = await Promise.all([
     getCommandCenterStats({ since }),
-    wants('campaigns_past_due') || wants('campaigns_due_soon') ? campaignAlerts() : Promise.resolve({ pastDue: 0, dueSoon: 0 }),
     wants('approval_queue')
       ? headCount(supabaseAdmin.from('platform_catalog_change_requests').select('id', { count: 'exact', head: true }).in('status', ['needs_review', 'approved']))
       : Promise.resolve(0),
@@ -225,8 +197,6 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
     free_time_ending: freeTimeEnding,
     new_errors: newErrors,
     new_feedback: newFeedback,
-    campaigns_past_due: campaigns.pastDue,
-    campaigns_due_soon: campaigns.dueSoon,
     new_leads: leads?.newLeads ?? 0,
     follow_ups_due: leads?.followUpsDue ?? 0,
     signup_to_confirm: leads?.toConfirm ?? 0,

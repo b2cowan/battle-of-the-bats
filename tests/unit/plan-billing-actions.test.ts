@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import * as React from 'react';
 import { billingTestLoader } from './_billing-test-loader.ts';
 import type { BillingBodyViewProps } from '../../components/billing/BillingBody.tsx';
-import type { BillingCancellation, BillingDowngrade, BillingFounding } from '../../lib/plan-billing-data.ts';
+import type { BillingCancellation, BillingDowngrade } from '../../lib/plan-billing-data.ts';
 import type { Organization, OrgPlan } from '../../lib/types.ts';
 import * as planConfig from '../../lib/plan-config.ts';
 import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
@@ -157,8 +157,7 @@ function environment() {
     let data: unknown;
     if (endpoint.startsWith('/api/billing/cancel/preflight')) data = cancellation;
     else if (endpoint.startsWith('/api/billing/usage')) data = { teams: { count: 0, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 1, limit: 10 }, officials: 0 };
-    else if (endpoint.startsWith('/api/admin/org/free-time')) data = { freeTime: null, portal: null, foundingThrough: null, overLimitAfter: false };
-    else if (endpoint.startsWith('/api/admin/org/founding-season-status')) data = { isFoundingSeason: false, compUntil: null };
+    else if (endpoint.startsWith('/api/admin/org/free-time')) data = { freeTime: null, portal: null, overLimitAfter: false };
     else if (endpoint === '/api/plan-gating') data = { tournament: false, tournament_plus: false, club: false, club_large: false };
     else if (endpoint.startsWith('/api/billing/move?')) data = { live: true, scheduledMove: null };
     else data = {};
@@ -203,9 +202,8 @@ function assertRequest(request: Request | undefined, endpoint: string, method: s
   else assert.equal(request.init?.body, undefined);
 }
 
-async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?: () => Promise<void>; returnTo?: string; founding?: BillingFounding; foundingActive?: boolean; cancellation?: BillingCancellation } = {}) {
+async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?: () => Promise<void>; returnTo?: string; cancellation?: BillingCancellation } = {}) {
   const env = environment();
-  if (options.founding) env.answer('/api/admin/org/founding-season-status?orgSlug=falcons-club', options.founding);
   if (options.cancellation) env.answer('/api/billing/cancel/preflight?orgSlug=falcons-club', options.cancellation);
   const runner = hookRunner();
   const org = organization(options.plan);
@@ -216,7 +214,6 @@ async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?
   const refresh = options.refresh ?? (async () => {});
   const loader = billingTestLoader({
     react: runner.hooks,
-    '@/lib/plan-config': { ...planConfig, isFoundingSeasonActive: () => options.foundingActive ?? true, isFoundingSeasonCardWindowOpen: () => true },
     '@/lib/org-context': { useOrg: () => ({ currentOrg: org, userRole: 'owner', userCapabilities: null, loading: false, refresh }) },
     'next/navigation': { useRouter: () => ({ replace() {} }), useSearchParams: () => new URLSearchParams(options.search) },
   });
@@ -291,7 +288,7 @@ describe('real owner billing action request contracts', () => {
     } finally { h.dispose(); }
   });
 
-  for (const [action, endpoint] of [['portal', '/api/billing/portal'], ['card', '/api/billing/setup-payment-method']] as const) it(`${action} sends only its host return and explicit organization`, async () => {
+  for (const [action, endpoint] of [['portal', '/api/billing/portal']] as const) it(`${action} sends only its host return and explicit organization`, async () => {
     const h = await ownerHarness();
     try {
       h.answer(endpoint, { url: `https://stripe.test/${action}` }); h.view().actions[action](); await h.settle();
@@ -333,18 +330,6 @@ describe('real owner billing action request contracts', () => {
     } finally { h.dispose(); }
   });
 
-  it('next-season choice sends its own cycle, plan, return host and organization', async () => {
-    const h = await ownerHarness();
-    try {
-      h.answer('/api/billing/choose-next-season', { url: 'https://stripe.test/next-season' });
-      h.view().actions.choose('tournament_plus', 'annual'); await h.settle();
-      assertRequest(h.requests[0], '/api/billing/choose-next-season', 'POST', { planKey: 'tournament_plus', billingCycle: 'annual', returnTo: billingBase, orgSlug: h.org.slug });
-      assert.equal(h.view().justChose, true);
-      h.restorePage(); h.render(); assert.equal(h.view().justChose, false);
-      await h.settle(); h.render(); assert.equal(h.view().actions.busy, null, "the restore's re-read has finished");
-    } finally { h.dispose(); }
-  });
-
   it('a same-org retry retains ready data and an open cancellation review, while a changed org cannot reuse it', async () => {
     const h = await ownerHarness();
     try {
@@ -361,61 +346,10 @@ describe('real owner billing action request contracts', () => {
     } finally { h.dispose(); }
   });
 
-  it('a webhook-lagged next-season return rereads Founding status until the choice arrives', async () => {
-    const h = await ownerHarness({ search: 'next_season=1' });
-    try {
-      const endpoint = '/api/admin/org/founding-season-status?orgSlug=falcons-club';
-      const nextSeason = { planKey: 'tournament_plus', billingCycle: 'annual', chosenAt: '2026-10-28' };
-      assert.equal(h.view().justChose, true);
-      h.answer(endpoint, { isFoundingSeason: true, compUntil: '2027-09-30', nextSeason });
-      h.fireTimers(1500); await h.settle();
-      assert.ok(h.requests.some(request => request.endpoint === endpoint));
-      const read = h.view().snapshot.founding;
-      assert.equal(read.status, 'ready');
-      if (read.status === 'ready') assert.deepEqual(read.data.nextSeason, nextSeason);
-    } finally { h.dispose(); }
-  });
-
-  it('the chosen next-season Change plan or card button opens the portal instead of resubmitting the choice', async () => {
-    const h = await ownerHarness({ founding: {
-      isFoundingSeason: true, compUntil: '2027-09-30',
-      nextSeason: { planKey: 'tournament_plus', billingCycle: 'annual', chosenAt: '2026-10-28' },
-    } });
-    try {
-      h.answer('/api/billing/portal', { url: 'https://stripe.test/change-choice' });
-      click(find(h.renderedView(), element => element.type === 'button' && element.props.children === W.founding.change));
-      await h.settle();
-      assert.equal(h.requests.length, 1);
-      assertRequest(h.requests[0], '/api/billing/portal', 'POST', { returnTo: billingBase, orgSlug: h.org.slug });
-      assert.deepEqual(h.assigned, ['https://stripe.test/change-choice']);
-    } finally { h.dispose(); }
-  });
-
-  for (const [isFoundingSeason, foundingActive, expected] of [
-    [true, true, W.notice.foundingCardSaved],
-    [false, true, W.notice.cardSaved],
-    [true, false, W.notice.cardSaved],
-  ] as const) it(`card-saved return uses the resolved holder (${isFoundingSeason}) and active season (${foundingActive})`, async () => {
-    const h = await ownerHarness({ search: 'card_saved=1', foundingActive, founding: { isFoundingSeason, compUntil: isFoundingSeason ? '2027-09-30' : null } });
-    try { assert.deepEqual(h.view().notice, { tone: 'good', text: expected }); }
+  it('a card-saved return says the payment method is on file, in the one ordinary wording', async () => {
+    const h = await ownerHarness({ search: 'card_saved=1' });
+    try { assert.deepEqual(h.view().notice, { tone: 'good', text: W.notice.cardSaved }); }
     finally { h.dispose(); }
-  });
-
-  it('five webhook-lag retries without a choice reopen the chooser and leave a retry notice', async () => {
-    const founding = { isFoundingSeason: true, compUntil: '2027-09-30' };
-    const h = await ownerHarness({ search: 'next_season=1', founding });
-    try {
-      const endpoint = '/api/admin/org/founding-season-status?orgSlug=falcons-club';
-      for (let i = 0; i < 5; i++) { h.answer(endpoint, founding); h.fireTimers(1500); await h.settle(); }
-      assert.equal(h.requests.filter(request => request.endpoint === endpoint).length, 5);
-      assert.equal(h.view().justChose, false);
-      assert.ok(find(h.renderedView(), element => element.type === 'h3' && element.props.children === W.founding.chooseTitle));
-      assert.equal(h.view().notice?.tone, 'bad');
-      assert.equal(h.view().notice?.text, W.errors.nextSeasonRead);
-      assert.equal(h.view().notice?.action?.label, W.errors.retry);
-      h.view().notice!.action!.run(); await h.settle();
-      assert.equal(h.requests.filter(request => request.endpoint === endpoint).length, 6);
-    } finally { h.dispose(); }
   });
 });
 

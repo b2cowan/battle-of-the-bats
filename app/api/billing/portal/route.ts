@@ -43,10 +43,9 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   if (!auth.org.stripeCustomerId) {
-    // Not an error state: founding-season orgs upgraded via the $0 comp flip never
-    // created a Stripe customer. Answer with a card-on-file setup session instead of
-    // dead-ending (post-promo this was a hard 400 with no self-serve exit) — decided
-    // server-side so the client treats every portal response as a redirect URL.
+    // Not an error state: an org on free time (no subscription) has never created a Stripe customer. Answer with a
+    // card-on-file setup session instead of dead-ending — decided server-side so the client treats every portal
+    // response as a redirect URL.
     const url = await createCardSetupSession(auth.org, auth.user.email);
     return new Response(JSON.stringify({ url }), {
       status: 200,

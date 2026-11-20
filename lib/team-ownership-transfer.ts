@@ -522,7 +522,7 @@ function rpcRefusal(message: string, side: TeamMoveSide, clubName: string, cap: 
 }
 
 async function cancelCoachSubscription(subscriptionId: string | null): Promise<{ status: 'not_needed' | 'cancelled' | 'failed'; error?: string }> {
-  // A Founding Season coach (platform_override) has no subscription: nothing to cancel.
+  // A coach given free time (platform_override) has no subscription: nothing to cancel.
   if (!subscriptionId || !subscriptionId.startsWith('sub_')) return { status: 'not_needed' };
   if (!isStripeConfigured()) return { status: 'failed', error: 'Stripe is not configured; cancel the prior Team subscription by hand.' };
   // Plans end at renewal: the coach's own subscription ends now because the club takes the team over — a waiting cancel

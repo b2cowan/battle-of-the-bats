@@ -3,9 +3,8 @@
  * backfill-card-on-file.mjs — teach the app what Stripe already knows about existing accounts.
  *
  * Migration 283 gave every account a billing-facts row, but only the webhook writes it —
- * so every card saved BEFORE the webhook learned to record it is invisible to the Founding Season
- * desk and to the "no card yet" reminder audience. This script reads Stripe (never writes to it)
- * and stamps what it finds.
+ * so every card saved BEFORE the webhook learned to record it is missing from those facts (the
+ * card_on_file_* columns). This script reads Stripe (never writes to it) and stamps what it finds.
  *
  * ⚠⚠ DRY RUN IS THE DEFAULT AND THAT IS DELIBERATE. It prints exactly what it would write and
  * changes nothing. `--apply` is the only thing that writes, and against production it is run only

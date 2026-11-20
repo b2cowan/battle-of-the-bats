@@ -8,7 +8,7 @@
  *
  * "Paid" is what the organization HOLDS on Stripe — a live subscription (`hasLiveSubscription`'s rule: a paying status and a
  * real, not mock, subscription) — never the free-time door's plan: free time is not a plan anyone pays for, and has nothing
- * to cancel. A comped or Founding organization has no subscription and gets no door.
+ * to cancel. A comped organization has no subscription and gets no door.
  */
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';

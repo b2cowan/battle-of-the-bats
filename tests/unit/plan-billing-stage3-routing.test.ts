@@ -163,7 +163,7 @@ describe('old billing and email addresses temporarily retain payment return flag
     for (const planId of ['team', 'tournament', 'tournament_plus'] as const) for (const status of ['active', 'canceled'] as const) it(`${path}: standalone ${planId}/${status}`, async () => {
       const { load, authCalls, assignmentReads } = fixture({ name: status, role: 'owner', expected: portal, org: { ...workspace, planId, subscriptionStatus: status } });
       const page = (load(path) as { default: BillingEntry }).default;
-      const searchParams = { success: '1', card_saved: '1', next_season: 'kept', plan: 'team', tag: ['one', 'two'], ignored: undefined };
+      const searchParams = { success: '1', card_saved: '1', ref: 'kept', plan: 'team', tag: ['one', 'two'], ignored: undefined };
       let destination = '';
       await assert.rejects(page({ params: Promise.resolve({ orgSlug: 'falcons' }), searchParams: Promise.resolve(searchParams) }), error => {
         if (!(error instanceof Redirect) || error.status !== 307) return false;
@@ -174,7 +174,7 @@ describe('old billing and email addresses temporarily retain payment return flag
       assert.equal(url.pathname, '/falcons/coaches/billing');
       assert.equal(url.searchParams.get('success'), '1');
       assert.equal(url.searchParams.get('card_saved'), '1');
-      assert.equal(url.searchParams.get('next_season'), 'kept');
+      assert.equal(url.searchParams.get('ref'), 'kept');
       assert.equal(url.searchParams.get('plan'), 'team');
       assert.deepEqual(url.searchParams.getAll('tag'), ['one', 'two']);
       assert.equal(url.searchParams.has('ignored'), false);

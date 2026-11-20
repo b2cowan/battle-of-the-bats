@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
-import { PLAN_CONFIG, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL } from '../../lib/plan-config.ts';
+import { PLAN_CONFIG } from '../../lib/plan-config.ts';
 import { freeTimeCopy } from '../../lib/free-time-copy.ts';
 import { portalFreeTimeCopy } from '../../lib/portal-free-time.ts';
 import { subscriptionStatusLabel } from '../../lib/platform-labels.ts';
@@ -84,18 +84,13 @@ describe('shared billing vocabulary', () => {
     assert.equal(W.reactivate.title('Target'), 'Reactivate Target and restore your data');
   });
 
-  it('retains Founding promises from config dates rather than copied calendar literals', () => {
-    assert.equal(W.founding.price, `Free through ${FOUNDING_SEASON_END_LABEL}`);
-    assert.equal(W.founding.priceHelp(PLAN_CONFIG.team.annualPrice), 'Normally $290 a year.');
-    assert.match(W.notice.nextSeason, new RegExp(FOUNDING_SEASON_FIRST_CHARGE_LABEL));
-    assert.match(W.notice.foundingCardSaved, new RegExp(FOUNDING_SEASON_END_LABEL));
-    assert.match(W.founding.chosenBody(290, null), /290/);
-    assert.doesNotMatch(W.founding.chosenBody(290, null), / to null|undefined/);
-    assert.match(W.founding.chosenBody(290, 'Visa ••4242'), /to Visa ••4242/);
-    assert.equal(W.founding.choiceLabel('Target', 'annual'), 'Target · yearly');
-    assert.equal(W.founding.choose('Target', 'monthly'), 'Choose Target · monthly');
+  it('no Founding Season or next-season wording is left in the shared vocabulary; the coach upsell quotes the plain price', () => {
+    assert.equal('founding' in W, false);
+    for (const key of ['nextSeason', 'foundingCardSaved']) assert.equal(key in W.notice, false, key);
+    assert.equal('nextSeasonRead' in W.errors, false);
+    assert.doesNotMatch(JSON.stringify([W.coachUpsell.shelf(), W.coachUpsell.ceiling()]), /[Ff]ounding|free through/);
+    assert.match(W.coachUpsell.shelf(), /^Premium is \$\d+ CAD \/ month per team plus applicable taxes\.$/);
   });
-
   it('describes supported move/downgrade refusals with the applicable next step', () => {
     assert.equal(W.move.tooSmall('Target', 15, 'Riverdale', 16), 'Target holds 15 teams and Riverdale has 16 active. Archive 1 team first, then come back.');
     assert.match(W.move.down('Riverdale', 'Target', 15, null), /at your next renewal/);

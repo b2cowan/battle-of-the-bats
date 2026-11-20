@@ -216,10 +216,6 @@ const CHARGING_CALLS: Entry[] = [
   { file: 'app/api/billing/create-team-checkout/route.ts', call: 'checkout.sessions.create', count: 1,
     checked: 'path C, coach Premium: new, reactivate and Keep Premium (the buyer is the person)',
     tax: { taxed: 'a subscription checkout', ...TAXED_CHECKOUT_SPREAD } },
-  { file: 'app/api/billing/choose-next-season/route.ts', call: 'checkout.sessions.create', count: 1,
-    checked: 'path D, the Founding next-season choice',
-    tax: { taxed: 'a subscription checkout whose first charge is later: tax is set now, the rate follows the address at the charge',
-      ...TAXED_CHECKOUT_SPREAD, builtBy: { file: 'lib/next-season-choice.ts', fn: 'buildNextSeasonCheckoutParams', arg: 'params' } } },
   { file: 'lib/plan-move.ts', call: 'subscriptions.update', count: 1, helper: 'applyMove',
     checked: 'path E, a move UP on a live subscription (a prorated invoice): checked in each caller of applyMove, pinned below',
     tax: { taxed: 'a move up, which turns tax on for its prorated invoice and every renewal after', needs: ['automatic_tax: AUTOMATIC_TAX'] } },
@@ -580,14 +576,13 @@ describe('turning on online payments asks for the club’s billing address first
 /**
  * NO NEW CHARGE DECISION FROM A QUÉBEC BILLING ADDRESS — GST/HST 6.4 Part B (owner ruling Q6, 2026-11-13; build prompt §4.2). The
  * same census, a `purchase` column: every call of `requireBillingLocation` says whether its door is a purchase. A purchase door
- * (a new plan or trial, coach Premium, a move up and its preview, Premium → Club, a next-season choice) passes `{ purchase: true }`,
+ * (a new plan or trial, coach Premium, a move up and its preview, Premium → Club) passes `{ purchase: true }`,
  * which refuses Québec with `billing_region_closed`. A door that renews or charges nothing new (a move down, payouts connect)
  * must NOT: an account with Québec on file keeps those. A new call that is on neither list fails.
  */
 const GATE_DOORS: Record<string, { purchase: 'yes' | 'up_only' | 'no'; why: string }> = {
   'app/api/billing/create-checkout/route.ts': { purchase: 'yes', why: 'a new plan or trial, and Premium → Club through checkout' },
   'app/api/billing/create-team-checkout/route.ts': { purchase: 'yes', why: 'coach Premium: new, reactivate and Keep Premium' },
-  'app/api/billing/choose-next-season/route.ts': { purchase: 'yes', why: 'the Founding next-season choice' },
   'app/api/billing/move/preview/route.ts': { purchase: 'yes', why: 'the move-up quote (only a move up reaches the check)' },
   'app/api/billing/move/route.ts': { purchase: 'up_only', why: 'a move up is a purchase; a move down renews what was bought (it asks for an address for its tax only)' },
   // Not a purchase, so it passes no `purchase` — but it refuses Québec on its own (owner 2026-11-17, payments terms §14 over
@@ -673,7 +668,6 @@ const RECORD_NONE = {
 const TAX_RECORD: Record<string, { invoice: string } | { none: string }> = {
   'app/api/billing/create-checkout/route.ts checkout.sessions.create': { invoice: 'a subscription Checkout: every charge is a subscription invoice' },
   'app/api/billing/create-team-checkout/route.ts checkout.sessions.create': { invoice: 'Premium: a subscription invoice billed to the coach' },
-  'app/api/billing/choose-next-season/route.ts checkout.sessions.create': { invoice: 'the Founding next-season subscription: its first invoice comes later' },
   'lib/plan-move.ts subscriptions.update': { invoice: 'a move up: its prorated invoice' },
   'lib/plan-move.ts subscriptionSchedules.create': { invoice: 'a move down: the renewal invoice at the date' },
   'lib/plan-move.ts subscriptionSchedules.update': { invoice: 'a move down: the renewal invoice at the date' },

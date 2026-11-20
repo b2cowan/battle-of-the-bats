@@ -44,17 +44,12 @@ export type BillingDowngrade = {
   when?: { waits: boolean; movesOn: string | null } | null;
 };
 export type BillingFreeTime = {
-  freeTime: CustomerFreeTime | null; overLimitAfter: boolean; foundingThrough: string | null; portal: PortalCustomerFreeTime | null;
-};
-export type BillingFounding = {
-  isFoundingSeason: boolean; compUntil: string | null;
-  card?: { savedAt: string; brand: string | null; last4: string | null } | null;
-  nextSeason?: { planKey: string; billingCycle: string; chosenAt: string | null } | null;
+  freeTime: CustomerFreeTime | null; overLimitAfter: boolean; portal: PortalCustomerFreeTime | null;
 };
 export type BillingMove = { live: boolean; scheduledMove: { toPlan: OrgPlan; effectiveAt: string | null } | null };
 export type BillingSnapshot = {
   org: Organization; /** Owner-only (2026-10-29): the page renders the locked card for anyone else. */ canManageBilling: boolean;
   usage: BillingRead<BillingUsage>; freeTime: BillingRead<BillingFreeTime>;
-  founding: BillingRead<BillingFounding>; gating: BillingRead<Partial<Record<OrgPlan, boolean>>>;
+  gating: BillingRead<Partial<Record<OrgPlan, boolean>>>;
   cancellation: BillingRead<BillingCancellation>; move: BillingRead<BillingMove>;
 };

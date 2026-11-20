@@ -7,7 +7,7 @@ import { Check, ArrowUpRight, Loader2 } from 'lucide-react';
 import type { ActivatableFeature } from '@/lib/basic-coach-teams';
 import { activateCoachTeamFeature } from '@/lib/coach-feature-activation';
 import { COACH_TEAM_TOOLS, coachTeamToolPath } from '@/lib/coach-team-tools';
-import { isFoundingSeasonPromoActive, PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { PLAN_BILLING_PROFILES } from '@/lib/plan-billing-profile';
 import styles from './CoachExploreCatalog.module.css';
@@ -82,9 +82,8 @@ export default function CoachExploreCatalog({
   const premiumHref = checkoutOpen
     ? `/coaches/start?source=coach_explore&basicTeamId=${encodeURIComponent(basicTeamId)}`
     : '/for-coaches?source=coach_explore';
-  const promoActive = isFoundingSeasonPromoActive('team');
   const premiumCtaLabel = checkoutOpen
-    ? (promoActive ? 'Upgrade to Premium — free →' : 'Upgrade to Premium →')
+    ? 'Upgrade to Premium →'
     : 'See everything it includes →';
 
   return (
@@ -150,15 +149,9 @@ export default function CoachExploreCatalog({
         <div className={styles.premiumFooter}>
           <div className={styles.premiumMeta}>
             <span className={styles.premiumReassure}>Everything above stays free.</span>
-            {promoActive ? (
-              <span className={styles.premiumPrice}>
-                {W.founding.price}<span className={styles.premiumPriceUnit}> · {W.coachUpsell.normally()}</span>
-              </span>
-            ) : (
-              <span className={styles.premiumPrice}>
-                {W.plan.price(PLAN_CONFIG.team.monthlyPrice, 'monthly')}<span className={styles.premiumPriceUnit}> {W.coachUpsell.perTeam} {W.move.plusTax}</span>
-              </span>
-            )}
+            <span className={styles.premiumPrice}>
+              {W.plan.price(PLAN_CONFIG.team.monthlyPrice, 'monthly')}<span className={styles.premiumPriceUnit}> {W.coachUpsell.perTeam} {W.move.plusTax}</span>
+            </span>
           </div>
           <Link href={premiumHref} className={styles.premiumCta}>{premiumCtaLabel}</Link>
         </div>

@@ -7,7 +7,6 @@ import { isDemoOrganizerEmail } from './demo-org';
 import { grantsEnabled } from './entitlement-grants';
 import { endInstantForLastDay, isGrantRunning, lastDayOfInstant, todayEastern } from './free-time';
 import { endFreeTimeNow, staleSentence, type Actor } from './free-time-writes';
-import { isFoundingSeasonCompExpiry } from './plan-config';
 import { keysOf, portalsInForce } from './portal-in-force-server';
 import { normalizeSportId } from './sports';
 import { staffBelongsToClub } from './staff-own-club';
@@ -126,7 +125,6 @@ async function readCoachPortals(coachUserId: string): Promise<CoachPortalFacts[]
     const status = mine.filter(g => g.type === PORTAL_FREE_TIME_GRANT_TYPE);
     const running = status.find(g => g.expires_at && isGrantRunning(g));
     const clock = (clocks ?? []).find(c => c.org_id === r.workspace_org_id && c.retention_until);
-    const founding = mine.find(g => g.type === 'comp_period' && g.expires_at && isFoundingSeasonCompExpiry(g.expires_at) && isGrantRunning(g));
     return {
       workspaceId: r.id,
       orgId: r.workspace_org_id,
@@ -135,7 +133,6 @@ async function readCoachPortals(coachUserId: string): Promise<CoachPortalFacts[]
       movedIntoClub: r.workspace_state === 'org_owned',
       inForce: inForce.has(r.id),
       freeTimeGivenAt: r.free_time_given_at,
-      foundingLastDay: founding?.expires_at ? lastDayOfInstant(founding.expires_at) : null,
       runningGrant: running ? { overrideId: running.id, lastDay: lastDayOfInstant(running.expires_at!), expiresAt: running.expires_at! } : null,
       endedLastDay: status[0] ? endedLastDay(status[0]) : null,
       retention: clock

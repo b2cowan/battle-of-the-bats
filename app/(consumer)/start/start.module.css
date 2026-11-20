@@ -1,4 +1,4 @@
-/* Warm sign-up journey skin (Founding Season Coaches launch — design_decisions S1-1/S1-2).
+/* Warm sign-up journey skin (Coaches launch — design_decisions S1-1/S1-2).
    The /start family adopts the consumer-shell warm language (paper ground, white 14px cards,
    ink/olive, mono kickers) via the additive --home-* tokens. These classes are /start-only, so
    warming them here can't touch the dark auth pages that share auth.module.css. The tokens are

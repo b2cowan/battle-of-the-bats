@@ -7,8 +7,7 @@
  * land the person on that door's create step, wherever the link is opened. It is cleared when the creation completes.
  *
  * ⚠ `user_metadata` is editable by the signed-in user (`supabase.auth.updateUser({ data })`). This record steers
- * SCREENS only — which create step, whether Home shows a waiting workspace. It must never decide an entitlement, a price
- * or Founding Season eligibility; those read server-side facts (`auth.users.created_at`, the plan rules, checkout).
+ * SCREENS only — which create step, whether Home shows a waiting workspace. It must never decide an entitlement or a price; those read server-side facts (`auth.users.created_at`, the plan rules, checkout).
  *
  * Framework-free: the sign-up forms, the routes and Home all read it.
  */
@@ -49,8 +48,7 @@ export const RUN_A_TOURNAMENT_STEPS = ['Account', 'Organization', 'Plan'] as con
 
 /**
  * THE PAID DOORS (On-sale pages S2, 2026-11-19): Start a club sells Club and Club · Association, and Start a league
- * season sells League Plus while it is on sale. The organization is made on the free Tournament plan with no Founding
- * comp (Ask 14) and remembers the plan its owner came to buy (`organizations.start_plan`), so the plan step, an
+ * season sells League Plus while it is on sale. The organization is made on the free Tournament plan and remembers the plan its owner came to buy (`organizations.start_plan`), so the plan step, an
  * abandoned checkout and the wait after Stripe all know it. Nothing here decides a price: checkout does.
  */
 export const START_PAID_PLANS = ['league', 'club', 'club_large'] as const;

@@ -160,7 +160,7 @@ type Workspace = { workspace_org_id: string; billing_mode: string | null; billin
 
 /**
  * Which of these clubs pay today (`paysNow`). A Coaches Portal pays on its own subscription when it bills directly, and
- * counts with the club that pays for it otherwise — never as a second club. A Founding comp portal (`platform_override`)
+ * counts with the club that pays for it otherwise — never as a second club. A portal on free time (`platform_override`)
  * does not pay.
  */
 export async function readPaying(orgIds: string[], opts: { started?: boolean } = {}): Promise<PayRead> {

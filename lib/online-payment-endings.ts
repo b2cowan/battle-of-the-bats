@@ -207,8 +207,7 @@ export async function endingSection(orgId: string, opts: { targetPlan?: string; 
  * An ending the owner did NOT choose (words §4.2 `ending.*`; owner 2026-10-27): free time running out onto a plan
  * without online payments, warned seven days before its first day off; or a subscription payment that failed, warned
  * the day it failed (that suspension has no known date). `at` is the instant it is about (mig 401 `ending_warned_for`).
- * ⚠ The Founding comp is not read here: its turn-off is not built (its plan is stored, not granted), so warning a date
- * the product doesn't act on would be false. Null when nothing is coming.
+ * Null when nothing is coming.
  */
 export type UpcomingEnding =
   | { kind: 'comp'; at: string; firstDayOff: string; targetPlan: OrgPlan }

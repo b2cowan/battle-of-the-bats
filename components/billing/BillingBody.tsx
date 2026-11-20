@@ -8,14 +8,13 @@ import { ownPlanOf } from '@/lib/free-time';
 import { PLAN_BILLING_PROFILES, type PlanBillingProfile, type BillingPlanChange } from '@/lib/plan-billing-profile';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonActive, isFoundingSeasonCardWindowOpen } from '@/lib/plan-config';
-import { nextSeasonPlanOptions } from '@/lib/next-season-choice';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import { teamWorkspaceReactivatePath, COACHES_START_PATH, COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import type { Organization, OrgPlan } from '@/lib/types';
 import type { BillingCycle } from '@/lib/plan-config';
 import type { PanelPlanKey } from '@/lib/plan-upgrade';
 import { NO_LIMIT } from '@/lib/platform-labels';
-import type { BillingRead, BillingSnapshot, BillingUsage, BillingCancellation, BillingDowngrade, BillingFreeTime, BillingFounding, BillingMove } from '@/lib/plan-billing-data';
+import type { BillingRead, BillingSnapshot, BillingUsage, BillingCancellation, BillingDowngrade, BillingFreeTime, BillingMove } from '@/lib/plan-billing-data';
 import type { WaitingMoveView } from '@/lib/plan-ending';
 import { joinWithAnd } from '@/lib/utils';
 import { CoachCard, CoachEyebrow, CoachChip } from '@/components/coaches/kit';
@@ -43,38 +42,35 @@ const TERMS_CLOSED = Symbol('terms-closed');
 
 type Registry = Record<string, PlanBillingProfile<string>>;
 /** Consume return flags without discarding an explicitly requested drawer or another query parameter. */
-export function billingReturnState(search: string, billingBase: string, showFoundingSeason: boolean) {
+export function billingReturnState(search: string, billingBase: string) {
   const query = new URLSearchParams(search);
-  const justChose = query.get('next_season') === '1';
   const cardSaved = query.get('card_saved') === '1';
   const requestedPlan = query.get('plan');
   const detail = requestedPlan && Object.hasOwn(PLAN_BILLING_PROFILES, requestedPlan) ? requestedPlan : null;
-  const notice: Notice | null = justChose ? { tone: 'good', text: showFoundingSeason ? W.notice.nextSeason : W.notice.active }
-    : query.get('card_saved') === '1' ? { tone: 'good', text: W.notice.cardSaved }
-      : query.get('success') === '1' ? { tone: 'good', text: W.notice.active } : null;
+  const notice: Notice | null = query.get('card_saved') === '1' ? { tone: 'good', text: W.notice.cardSaved }
+    : query.get('success') === '1' ? { tone: 'good', text: W.notice.active } : null;
   // `keep_plan` opens the Keep {Plan} window once the waiting cancel has loaded (the plan-change window's door elsewhere).
   const keepPlan = query.get('keep_plan') === '1';
-  const consumed = ['success', 'card_saved', 'next_season', 'keep_plan'].some(flag => query.has(flag));
-  for (const flag of ['success', 'card_saved', 'next_season', 'keep_plan']) query.delete(flag);
-  return { justChose, cardSaved, keepPlan, detail, notice, consumed, destination: `${billingBase}${query.size ? `?${query}` : ''}` };
+  const consumed = ['success', 'card_saved', 'keep_plan'].some(flag => query.has(flag));
+  for (const flag of ['success', 'card_saved', 'keep_plan']) query.delete(flag);
+  return { cardSaved, keepPlan, detail, notice, consumed, destination: `${billingBase}${query.size ? `?${query}` : ''}` };
 }
 type Action = {
   busy: string | null; cycle: BillingCycle; setCycle: (value: BillingCycle) => void;
-  portal: () => void; card: () => void; reactivate: () => void; keep: () => void; cancel: () => void;
+  portal: () => void; reactivate: () => void; keep: () => void; cancel: () => void;
   /** Keep {Plan}: opens the question window that undoes a waiting cancel (Plans end at renewal, Stage 0 ruling 4). */
   keepPlan: () => void;
   /** Change which tournament you keep (Stage 2, G2): opens its form window while a move to the free plan waits. */
   changePick?: () => void;
   /** A checkout change asks how to pay first (the payment step) unless the cycle is already chosen, as in the details panel. */
   change: (change: BillingPlanChange<string>, cycle?: BillingCycle) => void; details: (key: string) => void;
-  choose: (key: string, cycle: BillingCycle) => void; retry: () => void;
+  retry: () => void;
 };
 export type BillingBodyViewProps = {
   snapshot: BillingSnapshot; profile: PlanBillingProfile<string>; ownProfile: PlanBillingProfile<string>;
-  profiles?: Registry; actions: Action; notice?: Notice | null; justChose?: boolean;
+  profiles?: Registry; actions: Action; notice?: Notice | null;
   /** A wait, not a failure (the white callout with an amber edge): a kept plan whose cheaper move couldn't come back. */
   waitNotice?: string | null;
-  cardWindowOpen?: boolean; foundingActive?: boolean;
   /** The plan whose details panel is open (`?plan=` or a Details link), and how it closes. */
   detail?: string | null; onCloseDetail?: () => void;
   /** GST/HST Stage 1 (drawing tab 6): the billing address on file, read on the plan card, and its Billing address button.
@@ -176,7 +172,7 @@ function PickWindow({ orgName, endsAt, since, pick, busy, onChange, onSave, onCl
 
 /** The actual billing presentation, also rendered by the isolated profile fixtures. No portal chrome or providers. */
 export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = PLAN_BILLING_PROFILES, actions: a,
-  notice, waitNotice = null, justChose = false, cardWindowOpen = false, foundingActive = false, detail = null, onCloseDetail = () => {},
+  notice, waitNotice = null, detail = null, onCloseDetail = () => {},
   billingAddress = null,
 }: BillingBodyViewProps) {
   const org = s.org;
@@ -184,10 +180,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
 
   const sale = (key: string) => s.gating.status === 'ready' && s.gating.data[key as OrgPlan] === false;
   const ft = s.freeTime.status === 'ready' ? s.freeTime.data : null;
-  const fd = s.founding.status === 'ready' ? s.founding.data : null;
   const portal = profile.cancellationKind === 'premium' ? ft?.portal ?? null : null;
   const freeCopy = ft?.freeTime ? W.freeTime({ freeTime: ft.freeTime,
-    foundingThrough: ownProfile.showFoundingSeason ? ft.foundingThrough : null,
     givenOnSale: sale(ft.freeTime.plan),
     overLimitAfter: ft.overLimitAfter,
   }) : null;
@@ -200,12 +194,10 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const ownBilling = !staffFree && !endedPortal;
   const showChanges = !endedPortal && (!staffFree || ownProfile.key === 'team');
   const cancelled = org.subscriptionStatus === 'canceled' && !portal && !staffFree;
-  const controlsReady = s.freeTime.status === 'ready' && (cancelled || endedPortal || !profile.showFoundingSeason || s.founding.status === 'ready');
-  const founding = profile.showFoundingSeason && !staffFree && Boolean(fd?.isFoundingSeason);
-  const comp = founding && foundingActive;
+  const controlsReady = s.freeTime.status === 'ready';
   const paid = ownProfile.config.monthlyPrice > 0;
   // The row that holds "Payment method & invoices"; the Keep button joins it, and stands alone only where this row is absent.
-  const actionsShown = controlsReady && paid && !staffFree && !endedPortal && !founding;
+  const actionsShown = controlsReady && paid && !staffFree && !endedPortal;
   const preflight = s.cancellation.status === 'ready' ? s.cancellation.data : null;
   // Plans end at the renewal date (Stage 0 rulings 1–3): a waiting cancel takes the plan card's waiting-change line, and
   // the change doors and Reduce or cancel are absent until it is kept.
@@ -231,11 +223,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // Plans & pricing Stage 0 (fix 1): what the customer's own subscription charges, when the webhook has recorded it (in
   // CAD, the only currency these words say); otherwise the price list, as before. The price, not the invoice total.
   const paidCents = profile.key === ownProfile.key && org.subscriptionCurrency === 'cad' ? org.subscriptionAmountCents ?? null : null;
-  const price = freeCard?.price ?? (comp ? W.founding.price : profile.config.monthlyPrice === 0 ? W.plan.free
+  const price = freeCard?.price ?? (profile.config.monthlyPrice === 0 ? W.plan.free
     : paidCents !== null ? W.plan.paidPrice(paidCents, org.subscriptionPeriod ?? 'monthly')
     : W.plan.price(org.subscriptionPeriod === 'annual' ? profile.config.annualPrice : profile.config.monthlyPrice, org.subscriptionPeriod ?? 'monthly'));
-  // GST/HST Stage 2 Part 3: a price that is charged says it is before tax; free time, a comp and a free plan have nothing to tax.
-  const taxedPrice = !freeCard && !comp && profile.config.monthlyPrice !== 0;
+  // GST/HST Stage 2 Part 3: a price that is charged says it is before tax; free time and a free plan have nothing to tax.
+  const taxedPrice = !freeCard && profile.config.monthlyPrice !== 0;
   const disabled = a.busy !== null;
   const premium = ownProfile.cancellationKind === 'premium';
   const keepPremium = portal ? <CoachCard className={styles.keepPremiumCard}>
@@ -257,7 +249,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     onBillingCycleChange={a.setCycle}
     onUpgrade={() => { onCloseDetail(); if (detailChange) a.change(detailChange, a.cycle); }} upgradeLoading={a.busy === 'checkout' ? detailPlan : null}
     isComingSoon={s.gating.status === 'ready' && s.gating.data[detailProfile.key as OrgPlan] !== false}
-    canUpgrade={Boolean(detailChange) && controlsReady && ownBilling && !cancelled && !pending && sale(detailProfile.key)} foundingOfferHeld={false} /> : null;
+    canUpgrade={Boolean(detailChange) && controlsReady && ownBilling && !cancelled && !pending && sale(detailProfile.key)} /> : null;
   // A failed grant read cannot distinguish an actual cancellation from staff free time.
   // Offer help without asserting cancellation, renewal, a price, or a retention clock.
   if (s.freeTime.status === 'error') return <><div className={styles.body}>
@@ -272,7 +264,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     </CoachCard>
   </div>{panel}</>;
 
-  const readRecovery = [s.usage, s.founding, s.gating, s.cancellation, s.move].some(read => read.status === 'error') ? retry : null;
+  const readRecovery = [s.usage, s.gating, s.cancellation, s.move].some(read => read.status === 'error') ? retry : null;
 
   // A stored-cancelled org lands on the reactivate card, never the ordinary plan page. Hold the page until the grant
   // read says which card it is (and, for the owner, until the cancellation record fills its date), so the plan page
@@ -350,11 +342,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // never does, and neither does the viewer's own row).
   const checkoutTrialDays = Math.max(0, ...paidChangeKeys.filter(key => changes.find(c => c.target === key)?.mechanism === 'checkout')
     .map(key => profiles[key].config.trialDays));
-  const choice = founding ? fd?.nextSeason ?? null : null;
-  const card = fd ? W.founding.formatCard(fd.card ?? null) : null;
-  const nextPlans = nextSeasonPlanOptions(ownProfile.key as OrgPlan);
-  const chosen = choice ? profiles[choice.planKey] : null;
-  const chosenCycle = choice?.billingCycle === 'annual' ? 'annual' : 'monthly';
   const endingContact = !portal && ft?.freeTime?.state === 'ending' && sale(ft.freeTime.plan);
   return <><div className={styles.body}>
     {notice && <PageNotice notice={notice} />}
@@ -372,8 +359,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
           <h2 className={styles.planName}>{profile.config.label}</h2>
           {s.freeTime.status === 'loading' ? <LoadingState inline label={W.page.loading} /> : <p className={styles.planPrice}>{price}{taxedPrice && <> <span className={styles.plusTax}>{W.move.plusTax}</span></>}</p>}
           {freeCard && <p className={styles.hint}>{freeCard.from}</p>}
-          {comp && <p className={styles.hint}>{W.founding.priceHelp(profile.config.annualPrice)}</p>}
-          {controlsReady && ownBilling && !cancelled && !comp && !pending && org.currentPeriodEnd && <p className={styles.hint}>{org.subscriptionStatus === 'trialing' ? W.plan.trialEnds(org.currentPeriodEnd) : W.plan.renews(org.currentPeriodEnd)}</p>}
+          {controlsReady && ownBilling && !cancelled && !pending && org.currentPeriodEnd && <p className={styles.hint}>{org.subscriptionStatus === 'trialing' ? W.plan.trialEnds(org.currentPeriodEnd) : W.plan.renews(org.currentPeriodEnd)}</p>}
           {pending && <>
             {keepLine}
             {pending.heldMovePlan && <p className={styles.hint}>{W.plan.renewsAs(PLAN_CONFIG[pending.heldMovePlan].label)}</p>}
@@ -429,34 +415,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     {band && <FreeTimeBand band={band} action={endingContact ? { label: W.change.contact, href: CONTACT_HREF } : undefined} />}
     {freeCopy?.billingCard && <p className={styles.hint}>{freeCopy.billingCard}{endingContact && <> <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a></>}</p>}
     {portalCopy?.billingCard && <p className={styles.hint}>{portalCopy.billingCard}</p>}
-    {founding && <CoachCard className={styles.section}>
-      <CoachEyebrow>{cardWindowOpen ? W.founding.endingEyebrow : W.founding.eyebrow}</CoachEyebrow>
-      <h2 className={styles.cardTitle}>{cardWindowOpen ? W.founding.endingTitle : W.founding.title(ownProfile.config.label)}</h2>
-      <p className={styles.hint}>{cardWindowOpen ? W.founding.endingBody : W.founding.body(ownProfile.config.label, ownProfile.config.monthlyPrice, premium ? 'coach' : 'organization')}</p>
-      <p className={styles.hint}>{W.founding.priceHelp(ownProfile.config.annualPrice)}</p>
-      {cardWindowOpen && choice && chosen ? <>
-        <h3 className={styles.sectionTitle}>{W.founding.chosen}</h3>
-        <p>{W.founding.chosenTitle(chosen.config.label, chosenCycle)}</p>
-        <p className={styles.hint}>{W.founding.chosenBody(chosenCycle === 'annual' ? chosen.config.annualPrice : chosen.config.monthlyPrice, card)}</p>
-        <p className={styles.hint}>{W.founding.changeUntil}</p>
-        <button type="button" className="btn btn-outline" onClick={a.portal} disabled={disabled}>{W.founding.change}</button>
-      </> : cardWindowOpen && !justChose && nextPlans.length > 0 ? <>
-        <h3 className={styles.sectionTitle}>{W.founding.chooseTitle}</h3>
-        <p className={styles.hint}>{premium ? W.founding.coachChoiceHelp(ownProfile.config.label) : W.founding.orgChoiceHelp(ownProfile.config.label, PLAN_CONFIG.tournament.label)}</p>
-        {nextPlans.map(key => <div key={key} className={styles.planActions}>{(['annual', 'monthly'] as const).map(cycle => <button key={cycle} type="button" className={`btn ${cycle === 'annual' ? 'btn-lime' : 'btn-outline'}`} onClick={() => a.choose(key, cycle)} disabled={disabled}>{W.founding.choose(profiles[key].config.label, cycle)} · {W.plan.price(cycle === 'annual' ? profiles[key].config.annualPrice : profiles[key].config.monthlyPrice, cycle)}</button>)}</div>)}
-        <p className={styles.hint}>{W.founding.pricesPlusTax}</p>
-        {/* §20 (3): choosing next season's plan starts a subscription that renews (step 6.3, drawing tab 5, pin 1's note). */}
-        <PlanTermsLine />
-        <p className={styles.hint}>{W.founding.guarantee}</p>
-      </> : null}
-      {cardWindowOpen && justChose && !choice && <p className={styles.hint}>{W.founding.confirming} {retry}</p>}
-      {cardWindowOpen ? <>
-        <p className={styles.hint}>{W.founding.card(card)}</p>
-        <button type="button" className="btn btn-outline" onClick={a.card} disabled={disabled}>{card ? W.founding.updateCard : W.founding.addCard}</button>
-        {!choice && !justChose && <p className={styles.hint}>{premium ? W.founding.coachNothing : W.founding.orgNothing(PLAN_CONFIG.tournament.label)}</p>}
-      </> : <p className={styles.hint}>{W.founding.noAction}</p>}
-    </CoachCard>}
-    <ReadFailure read={s.founding} section="Founding Season status" />
     {keepPremium}
     {(showChanges && changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
       {/* Part C (f): held until the cancel read lands — a waiting cancel makes these doors absent, so they never flash first. */}
@@ -480,8 +438,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
                 // ruling 3). A waiting move's own plan shows the "From {date}" chip, as a waiting paid move's does.
                 : pending ? key === moveTarget ? <CoachChip tone="warn">{W.plan.scheduledFrom(pending.endsAt)}</CoachChip> : null
                 : scheduled?.toPlan === key ? <CoachChip tone="warn">{W.plan.scheduledFrom(scheduled.effectiveAt)}</CoachChip>
-                  // A Founding Season comp has no subscription to reduce; the old page hid the downgrade with Cancel.
-                  : founding && change?.mechanism === 'downgrade' ? null
                   : !controlsReady ? null
                   : change && (change.mechanism === 'downgrade' || sale(key)) ? <button type="button" className="btn btn-outline" onClick={() => a.change(change)} disabled={disabled}>{ownProfile.key === 'team' ? W.clubUpgrade.start : change.mechanism === 'downgrade' ? W.change.downgrade(target.config.label) : change.mechanism === 'checkout' ? W.change.upgrade(target.config.label) : W.change.move(target.config.label)}</button>
                     : s.gating.status !== 'loading' && <a className={`btn btn-outline ${styles.moveDoor}`} href={CONTACT_HREF}>{W.change.contactMove}</a>}</td>
@@ -512,7 +468,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       </CoachCard>)}</div>
     </Section>}
     {/* A waiting cancel hides this; a waiting move keeps it — a cancel replaces the move (Stage 2 ruling 4). */}
-    {controlsReady && paid && ownBilling && !founding && !pendingCancel && <Section id="billing-cancel" title={W.page.sections.cancel}>
+    {controlsReady && paid && ownBilling && !pendingCancel && <Section id="billing-cancel" title={W.page.sections.cancel}>
       {/* A subscription that waits for a date it can't name: no door that would promise one, or wrongly say "now". */}
       {preflight?.ending?.waits && !preflight.ending.endsOn ? <><p role="alert" className={styles.hint}>{W.errors.read('the renewal date')}</p>{retry}</>
         : preflight ? <>
@@ -563,14 +519,13 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const params = useSearchParams();
   const profile = PLAN_BILLING_PROFILES[org.planId];
   const ownProfile = PLAN_BILLING_PROFILES[ownPlanOf(org)];
-  const [initialReturn] = useState(() => billingReturnState(params.toString(), billingBase, profile.showFoundingSeason));
+  const [initialReturn] = useState(() => billingReturnState(params.toString(), billingBase));
   const [revision, setRevision] = useState(0);
   const [cycle, setCycle] = useState<BillingCycle>(org.subscriptionPeriod ?? 'monthly');
   const [busy, setBusy] = useState<string | null>(null);
   const busyRef = useRef(false);
   const live = useRef(true);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
-  const [justChose, setJustChose] = useState(initialReturn.justChose);
   const [detail, setDetail] = useState<string | null>(initialReturn.detail);
   const [notice, setNotice] = useNotice(initialReturn.notice);
   const [moveTo, setMoveTo] = useState<OrgPlan | null>(null);
@@ -594,7 +549,6 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const version = `${org.planId}:${ownProfile.key}:${org.subscriptionStatus}:${revision}`;
   const usage = useBillingRead<BillingUsage>(`/api/billing/usage?${scope}`, version);
   const freeTime = useBillingRead<BillingFreeTime>(`/api/admin/org/free-time?${scope}&billing=1`, version);
-  const founding = useBillingRead<BillingFounding>(profile.showFoundingSeason ? `/api/admin/org/founding-season-status?${scope}` : null, version);
   const gating = useBillingRead<Partial<Record<OrgPlan, boolean>>>('/api/plan-gating', version);
   const cancellation = useBillingRead<BillingCancellation>(`/api/billing/cancel/preflight?${scope}`, version);
   const move = useBillingRead<BillingMove>(ownProfile.changes.some(c => c.mechanism === 'move') && org.subscriptionStatus !== 'canceled' ? `/api/billing/move?${scope}` : null, version);
@@ -653,38 +607,15 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   }, [initialReturn, router]);
   useEffect(() => {
     const restore = (event: PageTransitionEvent) => { if (event.persisted) {
-      leaving.current = false; busyRef.current = false; setBusy(null); setJustChose(false); retryReads();
+      leaving.current = false; busyRef.current = false; setBusy(null); retryReads();
     } };
     window.addEventListener('pageshow', restore);
     return () => window.removeEventListener('pageshow', restore);
   }, [retryReads]);
 
-  const cardReturnNoticed = useRef(false);
-  useEffect(() => {
-    if (!cardReturnNoticed.current && initialReturn.cardSaved && founding.status === 'ready' && founding.data.isFoundingSeason && isFoundingSeasonActive()) {
-      cardReturnNoticed.current = true;
-      setNotice({ tone: 'good', text: W.notice.foundingCardSaved });
-    }
-  }, [initialReturn.cardSaved, founding, setNotice]);
-
-  const choiceRetries = useRef(0);
-  useEffect(() => {
-    if (!justChose || founding.status !== 'ready' || founding.data.nextSeason) return;
-    if (choiceRetries.current >= 5) {
-      setJustChose(false);
-      setNotice({ tone: 'bad', text: W.errors.nextSeasonRead, action: { label: W.errors.retry, run: retryReads } });
-      return;
-    }
-    const timer = window.setTimeout(() => {
-      choiceRetries.current += 1;
-      setRevision(n => n + 1);
-    }, 1500);
-    return () => window.clearTimeout(timer);
-  }, [justChose, founding, retryReads, setNotice]);
-
   async function post(endpoint: string, input: Record<string, unknown> = {}, method = 'POST') {
     // Through the Terms gate (GST/HST Stage 6 step 6.3, C3): a paid route that stops on the Terms opens the window, and after the
-    // tick the same request goes again. Only checkout, the next-season choice and the card can stop; every other route here
+    // tick the same request goes again. Only checkout can stop; every other route here
     // never does (cancelling is never gated), so for them this is the plain fetch.
     const response = await terms.send(endpoint, { method, headers: { 'Content-Type': 'application/json' }, body: method === 'DELETE' ? undefined : JSON.stringify({ ...input, orgSlug: org.slug }) });
     if (!response) return TERMS_CLOSED;
@@ -733,15 +664,9 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       } catch (error) { if (live.current) setReview({ kind: 'downgrade', read: { status: 'error', error: error instanceof Error ? error.message : W.errors.downgradeReview } }); }
     });
   }
-  // A comped Founding plan choice charges nothing, so it is not asked for an address first. The server decides for certain:
-  // if it disagrees, the checkout's refusal opens the window anyway.
-  const freeChoice = (target: OrgPlan) => target === 'tournament_plus' && ownProfile.key === 'tournament'
-    && founding.status === 'ready' && founding.data.isFoundingSeason;
-  const askFirst = (target: OrgPlan, next: () => void) => { if (freeChoice(target)) next(); else address.ensure(next); };
   const actions: Action = {
     busy: busy ?? (retrying ? 'retry' : null), cycle, setCycle, retry: retryReads,
     portal: () => void run('portal', async () => { const result = await post('/api/billing/portal', { returnTo: billingBase }); if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.portal); }),
-    card: () => void run('card', async () => { const result = await post('/api/billing/setup-payment-method', { returnTo: billingBase }); if (result === TERMS_CLOSED) return; if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.card); }),
     // Every paid button asks for the billing address first when none is on file (GST/HST Stage 1): window → question → Stripe.
     reactivate: () => address.ensure(() => void checkout(ownProfile.key)),
     keep: () => void run('keep', async () => { await post(`/api/billing/move?${scope}`, {}, 'DELETE'); if (live.current) { setNotice({ tone: 'good', text: W.plan.kept(org.name, ownProfile.config.label) }); reloadAfterAction(); } }),
@@ -752,22 +677,11 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     change: (change, chosen) => {
       if (change.mechanism === 'move') setMoveTo(change.target as OrgPlan);
       else if (change.mechanism === 'downgrade') void openDowngrade(change.target as OrgPlan);
-      else if (chosen) askFirst(change.target as OrgPlan, () => { setCycle(chosen); void checkout(change.target as OrgPlan, chosen); });
-      else askFirst(change.target as OrgPlan, () => setPayFor(change.target as OrgPlan));
+      else if (chosen) address.ensure(() => { setCycle(chosen); void checkout(change.target as OrgPlan, chosen); });
+      else address.ensure(() => setPayFor(change.target as OrgPlan));
     },
     details: setDetail,
-    choose: (key, billingCycle) => address.ensure(() => void choose(key, billingCycle)),
   };
-  function choose(key: string, billingCycle: BillingCycle) {
-    return run('choose', async () => {
-      const result = await post('/api/billing/choose-next-season', { planKey: key, billingCycle, returnTo: billingBase });
-      if (!live.current || result === TERMS_CLOSED) return;
-      if (result === ADDRESS_REFUSED) { address.refused(() => void choose(key, billingCycle)); return; }
-      if (result.applied || result.url) { choiceRetries.current = 0; setJustChose(true); }
-      if (result.applied) { setNotice({ tone: 'good', text: W.notice.nextSeason }); reloadAfterAction(); }
-      else if (result.url) leave(result.url); else throw new Error(W.errors.nextSeason);
-    });
-  }
   const downgrade = review?.kind === 'downgrade' && review.read.status === 'ready' ? review.read.data : null;
   const cancel = review?.kind === 'cancel' ? review.data : null;
   const target = downgrade ? PLAN_BILLING_PROFILES[downgrade.targetPlan] : null;
@@ -837,9 +751,9 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     });
   }
   return <>
-    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()}      billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
+    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} detail={detail} onCloseDetail={() => setDetail(null)} billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
-      freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? (founding.status === 'ready' && founding.data.isFoundingSeason ? founding.data.compUntil : null) : null}
+      freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? null : null}
       // A waiting cancel refuses every move: the window's door is Keep {Plan}, here the same question window.
       onKeep={pendingEnding ? () => { setMoveTo(null); openKeep(); } : undefined}
       onClose={() => setMoveTo(null)} onMoved={text => { if (live.current) {
@@ -849,7 +763,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       } }} />}
     {payFor && <PlanCycleDialog key={`${org.id}:${payFor}`} label={PLAN_BILLING_PROFILES[payFor].config.label} monthlyPrice={PLAN_BILLING_PROFILES[payFor].config.monthlyPrice}
       annualPrice={PLAN_BILLING_PROFILES[payFor].config.annualPrice} trialDays={PLAN_BILLING_PROFILES[payFor].config.trialDays} savings={W.plan.savings(payFor)} initial={cycle} onClose={() => setPayFor(null)}
-      billedTo={address.location ? formatBilledTo(address.location) : null} free={freeChoice(payFor)}
+      billedTo={address.location ? formatBilledTo(address.location) : null}
       onChangeAddress={() => { const plan = payFor; setPayFor(null); address.edit(() => setPayFor(plan)); }}
       onContinue={chosen => { setPayFor(null); setCycle(chosen); void checkout(payFor, chosen); }} />}
     {address.dialog}
@@ -895,7 +809,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
         <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancelOn', dateLong: moveDateLong(endsOn), plan: premium ? 'Premium' : ownProfile.config.label }} />
       </>}
       {cancel && !endsOn && !premium && <>
-        {/* No paid period to wait for (comped, Founding Season, a dev mock): the cancel happens at the click, so the lead is the one red
+        {/* No paid period to wait for (comped, a dev mock): the cancel happens at the click, so the lead is the one red
             line, and says why it does not wait. */}
         <div className={`${styles.waitCallout} ${styles.calloutDanger} ${styles.calloutLines}`}>
           {ending && !ending.waits && <p>{W.cancel.noPeriod(org.name)}</p>}
@@ -908,7 +822,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       </>}
       {/* A Coaches Portal's Premium with no paid period keeps its own wording and layout (not part of the redraw). */}
       {cancel && !endsOn && premium && <>
-        {/* No paid period to wait for (comped, Founding Season, a dev mock): today's immediate cancel, and why. */}
+        {/* No paid period to wait for (comped, a dev mock): today's immediate cancel, and why. */}
         {ending && !ending.waits && <p className={styles.waitCallout}>{W.cancel.noPeriod('Premium')}</p>}
         <PageNotice notice={{ tone: 'bad', text: W.cancel.premiumWarning(cancel.retentionDays) }} />
         <p>{W.cancel.retained(cancel.retentionDays)}</p><p>{W.cancel.premiumRetained(cancel.retentionDays)}</p>

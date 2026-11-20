@@ -20,7 +20,6 @@ const ORGS_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Slug',            key: 'slug',               format: 'text' },
   { label: 'Plan',            key: 'planLabel',          format: 'text' },
   { label: 'Status',          key: 'subscriptionStatus', format: 'text' },
-  { label: 'Founding Season', key: 'isFoundingSeason',   format: 'text' },
   { label: 'Created',         key: 'createdAt',          format: 'text' },
 ];
 
@@ -35,7 +34,6 @@ interface OrgRow {
   createdAt: string;
   enabledAddons: string[];
   internalNotes: string | null;
-  isFoundingSeason: boolean;
   /** A Coaches Portal staff gave free time (Stage 4b): never a cancelled customer. */
   isFreeTimePortal: boolean;
   /** Its free time is running now; false once it has ended (the mark stays until Keep Premium). */
@@ -97,7 +95,6 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTa
   const [search,              setSearch]              = useState('');
   const [planFilter,          setPlanFilter]          = useState('');
   const [statusFilter,        setStatusFilter]        = useState(initialStatus);
-  const [foundingSeasonOnly,  setFoundingSeasonOnly]  = useState(false);
   const [emptyOrgOnly,        setEmptyOrgOnly]        = useState(initialFilter === 'empty_orgs');
   const [attentionFilter,     setAttentionFilter]     = useState(
     ATTENTION_LABELS[initialFilter] ? initialFilter : '',
@@ -128,7 +125,6 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTa
   const canceledCount = statusCounts.canceled ?? 0;
   const notesCount = orgs.filter(org => org.internalNotes).length;
   const activeOrTrialing = (statusCounts.active ?? 0) + (statusCounts.trialing ?? 0);
-  const foundingSeasonCount = orgs.filter(org => org.isFoundingSeason).length;
   const emptyOrgCount = orgs.filter(org => org.emptyOrg).length;
 
   const filteredOrgs = orgs.filter(o => {
@@ -139,7 +135,6 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTa
     if (planFilter         && o.planId             !== planFilter)   return false;
     if (statusFilter       && statusOf(o) !== statusFilter) return false;
     if (statusFilter === 'canceled' && !isCancelledCustomer(o)) return false;
-    if (foundingSeasonOnly && !o.isFoundingSeason)                   return false;
     if (emptyOrgOnly       && !o.emptyOrg)                           return false;
     if (attentionFilter    && !matchesAttentionFilter(o, attentionFilter)) return false;
     return true;
@@ -155,7 +150,6 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTa
       subscriptionStatus: o.isFreeTimePortal && o.subscriptionStatus === 'canceled'
         ? (o.freeTimeRunning ? 'Free time' : 'Free time ended')
         : o.subscriptionStatus,
-      isFoundingSeason:   o.isFoundingSeason ? 'Yes' : 'No',
       createdAt:          fmtDate(o.createdAt),
     }));
   }
@@ -194,10 +188,6 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTa
         <div className={kit.bandCell}>
           <span className={kit.bandLabel}>Active / trial</span>
           <strong className={kit.bandValue}>{activeOrTrialing}</strong>
-        </div>
-        <div className={`${kit.bandCell} ${foundingSeasonCount > 0 ? kit.bandGood : ''}`}>
-          <span className={kit.bandLabel}>Founding season</span>
-          <strong className={kit.bandValue}>{foundingSeasonCount}</strong>
         </div>
         <button
           type="button"
@@ -282,14 +272,6 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTa
             <label className={kit.check}>
               <input
                 type="checkbox"
-                checked={foundingSeasonOnly}
-                onChange={e => setFoundingSeasonOnly(e.target.checked)}
-              />
-              <span>Founding season only</span>
-            </label>
-            <label className={kit.check}>
-              <input
-                type="checkbox"
                 checked={emptyOrgOnly}
                 onChange={e => setEmptyOrgOnly(e.target.checked)}
               />
@@ -305,11 +287,11 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTa
                 {ATTENTION_LABELS[attentionFilter]} ✕
               </button>
             )}
-            {(search || planFilter || statusFilter || foundingSeasonOnly || emptyOrgOnly || attentionFilter) && (
+            {(search || planFilter || statusFilter || emptyOrgOnly || attentionFilter) && (
               <button
                 type="button"
                 className={kit.door}
-                onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setFoundingSeasonOnly(false); setEmptyOrgOnly(false); setAttentionFilter(''); }}
+                onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setEmptyOrgOnly(false); setAttentionFilter(''); }}
               >
                 Clear
               </button>
@@ -372,9 +354,6 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTa
                       )}
                     </td>
                     <td data-label="Cohort">
-                      {org.isFoundingSeason && (
-                        <span className={`${kit.chip} ${kit.chipOk}`}>Founding</span>
-                      )}{' '}
                       {org.emptyOrg && (
                         <span className={`${kit.chip} ${kit.chipWarn}`} title="No tournaments, leagues, rep teams, or members beyond the owner">
                           Empty

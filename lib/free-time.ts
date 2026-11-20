@@ -21,11 +21,11 @@ import type { Organization, OrgPlan, SubscriptionStatus } from './types';
  * the end with the moment of reading, on the server, every time (owner ruling Q1, 2026-10-25).
  *
  * The END is stored as an instant and always means "the first moment of the day after the last free day, in Eastern
- * time", the rule Founding Season's end already follows (`FOUNDING_SEASON_END`). Staff and customers only ever read the
+ * time". Staff and customers only ever read the
  * LAST FREE DAY ("Free through March 31, 2027", owner ruling Q8); the instant is never shown and never comes from a
  * browser.
  *
- * `comp_period` rows are not free time: they mark the Founding Season cohort and give no access.
+ * `comp_period` rows are not free time: an old billing tag that gives no access (rows from before Founding Season was removed may still exist).
  */
 
 /** The club's own plan: what it holds and is billed for. Billing actions read this, never `org.planId` (the door's). */
@@ -385,7 +385,7 @@ export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accou
   }
   if (isTeamWorkspaceOrg(club)) {
     // Stage 4b retired "can't be given free time yet": a portal's free time is its own kind, given from the coach.
-    return { tone: 'amber', kind: 'portal', lead: "A Coaches Portal's free time is given from its coach's record.", rest: ' Open the owner on People, then the Coaches Portal tab. Its Founding Season stays as it is.' };
+    return { tone: 'amber', kind: 'portal', lead: "A Coaches Portal's free time is given from its coach's record.", rest: ' Open the owner on People, then the Coaches Portal tab.' };
   }
   if (ctx.isDemo) {
     return { tone: 'amber', kind: 'demo', lead: `${club.name} is a public demo club`, rest: ", so it can't be given free time: everyone who opens the demo would see it." };

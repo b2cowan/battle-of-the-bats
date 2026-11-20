@@ -24,7 +24,7 @@ import type { Organization } from './types';
  *
  * Grants live in `org_overrides`: a whole plan (`plan_tier`), sections (`module_addon`), a billing status
  * (`subscription_status`). Each ends by itself: nothing is scheduled, the end is compared with the moment of reading.
- * `comp_period` (Founding Season's cohort mark) gives no access.
+ * `comp_period` (an old cohort mark; rows may still exist) gives no access.
  *
  * ⚠ Two things deliberately keep reading what the club HOLDS (its own plan), never this door's answer: every billing
  * action (checkout, move, downgrade, cancel, the next-season choice: `ownPlanOf(org)`), and revenue and customer counts

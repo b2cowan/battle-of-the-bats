@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { existsSync } from 'node:fs';
 import { readCode } from './_source-code.ts';
 import {
   BILLING_ADDRESS_FORM_WORDS as F, BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS as W, US_DECLARATION_VERSION,
@@ -10,7 +11,8 @@ import {
  * GST/HST Stage 1 Part 2 (build prompt docs/projects/active/GST_HST_STAGE1_PART2_BUILD_PROMPT.md): no paid path reaches
  * Stripe without the buyer's billing address on file. Each of Part 0's paths A–E calls the ONE shared check
  * (`requireBillingLocation`, lib/billing-location-server.ts) before its first Stripe call — and before its dev-mock branch,
- * which is a purchase too, so the dev walk meets the window. The comped Founding branches charge nothing and come before it.
+ * which is a purchase too, so the dev walk meets the window. (Path D, the Founding next-season choice, and the comped
+ * Founding branches were removed in Stage 2b: no path comes before the check any more.)
  *
  * (Part 4 adds the build-wide guard on any NEW `checkout.sessions.create`; this file pins the five known paths.)
  */
@@ -33,8 +35,9 @@ describe('every paid path checks the billing address before Stripe (paths A–E)
     assert.match(code, /requireBillingLocation\(buyer, inPlaceClubName \? billingAddressFromBody\(body\.billingAddress\)/, `${file}: the in-place club address is handed to the check, which saves it first`);
     // Stage 2 adds the buyer's name for its invoices (the club's) after the address.
     assert.match(code, /ensureStripeCustomer\(auth\.org, auth\.user\.email, billingLocation, inPlaceClubName \?\? auth\.org\.name\)/, `${file}: the customer carries the address`);
-    // The comped Founding choice charges nothing and is never asked.
-    assert.match(code, /if \(!isFoundingSeasonTournamentUpgrade\) \{[\s\S]*?requireBillingLocation\(/);
+    // No path comps anything now (Stage 2b): the check is asked unconditionally, never inside an `if` that lets a choice skip it.
+    assert.doesNotMatch(code, /if \(![A-Za-z]+\) \{[^}]*requireBillingLocation\(/);
+    assert.doesNotMatch(code, /Founding/);
   });
 
   it('C · coach Premium new, reactivate and Keep Premium (the buyer is the PERSON)', () => {
@@ -42,21 +45,15 @@ describe('every paid path checks the billing address before Stripe (paths A–E)
     const code = readCode(file);
     // GST/HST 6.4 (Q6): a purchase door, so it also refuses a Québec address (the census: billing-location-every-path-guard).
     const check = at(code, "requireBillingLocation({ kind: 'user', userId: user.id }, null, { purchase: true })", file);
-    assert.ok(at(code, 'provisionCompTeamWorkspaceFromCheckout(', file) < check, `${file}: the comped Founding path comes before the check`);
+    assert.doesNotMatch(code, /provisionCompTeamWorkspaceFromCheckout|Founding/, `${file}: no comped path comes before the check (Stage 2b)`);
     assert.ok(check < at(code, 'if (shouldApplyDirectly) {', file), `${file}: the check must come before the dev-mock purchase`);
     assert.ok(check < at(code, 'stripe.checkout.sessions.create(', file), `${file}: the check must come before the Stripe checkout`);
     assert.match(code, /address: toStripeAddress\(located\.location\)/, `${file}: a new customer is made with the address`);
     assert.match(code, /stampStripeCustomerAddress\(customerId, located\.location, buyerName\)/, `${file}: a found customer is given the address (and, Stage 2, the coach's name)`);
   });
 
-  it('D · the Founding next-season choice', () => {
-    const file = 'app/api/billing/choose-next-season/route.ts';
-    const code = readCode(file);
-    assert.match(code, /const buyer = billingBuyerOf\(auth\.org, auth\.user\);/);
-    const check = at(code, 'requireBillingLocation(buyer, null, { purchase: true })', file);
-    assert.ok(check < at(code, 'recordNextSeasonChoice(', file), `${file}: the check must come before the dev-mock choice`);
-    assert.ok(check < at(code, 'stripe.checkout.sessions.create(', file), `${file}: the check must come before the Stripe checkout`);
-    assert.match(code, /ensureStripeCustomer\(auth\.org, auth\.user\.email, located\.location, buyer\.kind === 'org' \? auth\.org\.name : coachName\)/);
+  it('D · the Founding next-season choice is gone (Stage 2b): no route remains to ask', () => {
+    assert.equal(existsSync(new URL('../../app/api/billing/choose-next-season/route.ts', import.meta.url)), false);
   });
 
   it('E · a move on a live subscription (up: the safety net; down: its taxed renewal), saving the club address on Premium → Club', () => {
@@ -100,7 +97,7 @@ describe('every caller of a paid route opens the window on the refusal, never an
 
   it('the monthly-or-yearly question opens only after the address step (window → question → Stripe)', () => {
     const code = readCode('components/billing/BillingBody.tsx');
-    assert.match(code, /askFirst\(change\.target as OrgPlan, \(\) => setPayFor\(change\.target as OrgPlan\)\)/);
+    assert.match(code, /else address\.ensure\(\(\) => setPayFor\(change\.target as OrgPlan\)\);/);
     assert.match(code, /billedTo=\{address\.location \? formatBilledTo\(address\.location\) : null\}/);
   });
 

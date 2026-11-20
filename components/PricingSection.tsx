@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
-import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, showsFoundingZero, FOUNDING_SEASON_END_LABEL, gatedPlanTag, GATED_PLAN_INTEREST_LINE, interestButtonLabel } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, gatedPlanTag, GATED_PLAN_INTEREST_LINE, interestButtonLabel } from '@/lib/plan-config';
 import { clubTrialLine, planTrialLine } from '@/lib/plan-trial-line';
 import { parseStartPricing, withStartPricing } from '@/lib/start-door';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
@@ -14,9 +14,6 @@ import styles from './PricingSection.module.css';
 import PlanTermsLine from '@/components/legal/PlanTermsLine';
 
 type Billing = 'monthly' | 'annual';
-
-/** The words "Start free — no credit card required" carried before the button said only what happens (P4). */
-const NO_CARD_LINE = 'No credit card required';
 
 interface Plan {
   key: OrgPlan;
@@ -30,10 +27,6 @@ interface Plan {
   period: string;
   freeNote: string;
   trialNote: string;
-  /** Shown under the price INSTEAD of freeNote while this plan's Founding Season promo is active
-   *  (and the card's CTA falls back from plan.cta to "Start now" once it isn't) — so promo wording
-   *  expires with the promo instead of waiting on a January runbook (/review 2026-08-08). */
-  promoNote?: string;
   features: string[];
   cta: string;
   ctaHref: string;
@@ -85,7 +78,6 @@ const PLANS: Plan[] = [
     period: '/mo',
     freeNote: 'No long-term contract — cancel any time',
     trialNote: 'No long-term contract — cancel any time',
-    promoNote: `Normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month · ${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year`,
     features: [
       'Everything in Tournament',
       'Public registration — teams register on your site, and you approve, waitlist, or decline',
@@ -103,7 +95,7 @@ const PLANS: Plan[] = [
       'Permanent sealed archives, tournament cloning, and targeted announcements',
       'Unlimited staff / admin seats · unlimited volunteers',
     ],
-    cta: 'Start free',
+    cta: 'Start now',
     ctaHref: '/start/tournament',
   },
   {
@@ -171,7 +163,6 @@ const PLANS: Plan[] = [
  *   • it is NOT in `RENDERED_PLAN_KEYS` — an org operator's `currentPlan` can never be `team`;
  *   • its CTA always goes to the coach start flow — the org-operator `ctaHrefFor`/`ctaLabel`
  *     overrides (billing deep-links) deliberately do not apply to it, in every viewer state.
- * Its promo wording lives in `promoNote`, so it expires with the promo automatically.
  */
 const TEAM_PLAN: Plan = {
   key: 'team',
@@ -185,7 +176,6 @@ const TEAM_PLAN: Plan = {
   period: '/mo',
   freeNote: `or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months`,
   trialNote: `or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months`,
-  promoNote: `Normally ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month · ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year`,
   features: [
     'Full roster management with positions and season history',
     'Lineup builder with game-by-game history — exportable to PDF',
@@ -196,7 +186,7 @@ const TEAM_PLAN: Plan = {
     'Host one tournament at a time — you invite the teams',
     'Works standalone — no organization account required',
   ],
-  cta: 'Start free',
+  cta: 'Start now',
   ctaHref: '/coaches/start?source=pricing',
   initialPlanInterest: ['coaches_portal'],
   initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
@@ -247,10 +237,6 @@ interface PricingSectionProps {
   gatingMap: Record<OrgPlan, boolean>;
   onChoosePlan?: (planKey: OrgPlan, billingCycle: Billing) => void;
   currentPlan?: OrgPlan;
-  /** Whether the viewer's current plan is a RUNNING Founding Season comp — a per-account fact the
-   *  caller may know (ViewerAwarePlans asks the billing status endpoint). `undefined` = unknown:
-   *  the card falls back to the signup window. Only consulted for the `currentPlan` card. */
-  currentPlanComped?: boolean;
   planLoading?: OrgPlan | null;
   disabledPlans?: OrgPlan[];
   ctaLabel?: (planKey: OrgPlan) => string | undefined;
@@ -266,13 +252,6 @@ interface PricingSectionProps {
   /** Optional plan key to visually feature (highlighted border). */
   featuredPlan?: OrgPlan;
   /**
-   * This organization still holds the Founding Season offer for the choice it is making, whatever the sign-up window
-   * says — the plan step after the close, for an organization given the comp when it was made (owner 2026-10-19). The
-   * caller asks the server (the same rule the checkout applies); the Tournament Plus card then reads as it does in the
-   * window. Tournament Plus only: that is the one plan the checkout applies it to.
-   */
-  foundingOfferHeld?: boolean;
-  /**
    * The "live products lead" layout (owner-ratified 2026-08-08), for the marketing surfaces only:
    * plans whose gate is CLOSED collapse from full cards into one compact coming-soon strip below
    * the grid, and the Premium Coaches Portal joins the grid as a real card while its checkout is
@@ -283,13 +262,13 @@ interface PricingSectionProps {
   marketingLayout?: boolean;
   /**
    * GST/HST Stage 2 Part 4 (T4): a quiet "plus applicable taxes" line under each price the buyer will be charged (not a
-   * free, gated or $0 Founding price). Every caller turns it on (onboarding, the home page, /pricing — /marketing ruled
+   * free or gated price). Every caller turns it on (onboarding, the home page, /pricing — /marketing ruled
    * the public copy 2026-11-05); the default stays off so a new caller opts in on purpose.
    */
   plusTax?: boolean;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, currentPlanComped, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', order, featuredPlan, foundingOfferHeld = false, marketingLayout = false, plusTax = false }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', order, featuredPlan, marketingLayout = false, plusTax = false }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
 
   const orderedPlans = order
@@ -328,18 +307,9 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
   const stripLabel = stripPlans.length > 0 && stripPlans.every(p => p.key === 'league' || p.key === 'club')
     ? interestButtonLabel(stripPlans.map(p => p.key))
     : interestButtonLabel();
-  // Promo wording only while the promo is actually running — afterwards the card falls back to its permanent note and a
-  // truthful "Start now" CTA on its own, with no runbook. For the viewer's OWN current plan the offer state is a per-account
-  // fact (is this account's comp still running?), not the signup window — supplied by the caller when it knows; the window is
-  // the fallback until it answers (/review 2026-09-07).
-  const promoActiveFor = (plan: (typeof cardPlans)[number]) => !!plan.promoNote && (
-    currentPlan === plan.key && currentPlanComped !== undefined
-      ? currentPlanComped
-      : showsFoundingZero(plan.key, foundingOfferHeld)
-  );
-  // §20 (3) under the cards: some card's own button starts a paid plan at a price shown (a $0 Founding Season card, the
-  // current plan and an included one carry none). Only the onboarding chooser posts; the marketing cards are links.
-  const paidChoices = !onChoosePlan ? [] : cardPlans.filter(plan => !(gatingMap[plan.key] ?? false) && !promoActiveFor(plan)
+  // §20 (3) under the cards: some card's own button starts a paid plan at a price shown (the current plan and an included
+  // one carry none). Only the onboarding chooser posts; the marketing cards are links.
+  const paidChoices = !onChoosePlan ? [] : cardPlans.filter(plan => !(gatingMap[plan.key] ?? false)
     && currentPlan !== plan.key && !(disabledPlans?.includes(plan.key) ?? false) && PLAN_CONFIG[plan.key].monthlyPrice > 0);
 
   return (
@@ -382,21 +352,10 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           const isFeatured = !isGated && leadPlan === plan.key;
           const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
           const displayPrice = isGated ? gatedPlanTag(plan.key) : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
-          const promoActive = promoActiveFor(plan);
           const displayNote = isGated
             ? GATED_PLAN_INTEREST_LINE
-            : promoActive
-              ? plan.promoNote!
-              : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : plan.freeNote);
-          const defaultCta = plan.promoNote && !promoActive ? 'Start now' : plan.cta;
-          // "Start free" no longer carries "no credit card required" in its own words (label list row 14; the drawing's
-          // split). Where the card's note under the price already says it, that stays the only copy; where the price block
-          // shows another note (the Founding Season "Normally …" line), the same words the button used to carry sit under
-          // it as fine print. No new words either way.
-          const overrideLabel = onChoosePlan || takesOverrides ? ctaLabel?.(plan.key) : undefined;
-          const finePrint = defaultCta === 'Start free' && !overrideLabel && !isGated && !isCurrent && !isIncluded && displayNote !== NO_CARD_LINE
-            ? NO_CARD_LINE
-            : null;
+            : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : plan.freeNote);
+          const defaultCta = plan.cta;
           // The one lime button: the lead plan's, unless the viewer is already on it (then it is a quiet door).
           const primary = isFeatured && !isCurrent && !isIncluded;
 
@@ -409,12 +368,6 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
                   {isGated && (
                     <span className={kit.tag}>{gatedPlanTag(plan.key)}</span>
                   )}
-                  {/* The Founding Season chip (owner-approved 2026-09-07): the offer moved INTO the
-                      price block below, so the header keeps only the program's name — the plan chip,
-                      never a second box above the tagline. */}
-                  {promoActive && !isCurrent && (
-                    <span className={kit.chip}>Founding Season</span>
-                  )}
                   {!isGated && isCurrent && (
                     <span className={kit.tag}>Current plan</span>
                   )}
@@ -423,34 +376,21 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
                 <p className={`${kit.small} ${styles.planTagline}`}>{plan.tagline}</p>
               </div>
 
-              {/* Band 2: price. While the signup window is open the two promo cards show "$0
-                  through <last free day>" with the list price kept beneath (every touchpoint
-                  names the price waived) — "$0", not "Free", because the free Tournament card
-                  beside them says "Free" with no end date and the permanent and the promotional
-                  must stay distinguishable at a glance. */}
+              {/* Band 2: price. */}
               <div className={styles.planPriceBlock}>
                 <div className={styles.planPrice}>
-                  {promoActive ? (
-                    <>
-                      <span className={kit.price}>$0</span>
-                      <span className={kit.small}>through {FOUNDING_SEASON_END_LABEL}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className={isGated ? kit.title : kit.price}>
-                        {displayPrice}
-                      </span>
-                      {!isGated && plan.currency && (
-                        <span className={kit.small}>{plan.currency}</span>
-                      )}
-                      {!isGated && (isAnnual || plan.period) && (
-                        <span className={kit.small}>{isAnnual ? '/year' : plan.period}</span>
-                      )}
-                    </>
+                  <span className={isGated ? kit.title : kit.price}>
+                    {displayPrice}
+                  </span>
+                  {!isGated && plan.currency && (
+                    <span className={kit.small}>{plan.currency}</span>
+                  )}
+                  {!isGated && (isAnnual || plan.period) && (
+                    <span className={kit.small}>{isAnnual ? '/year' : plan.period}</span>
                   )}
                 </div>
                 {/* One line on every card while it is on, so the cards' price blocks stay level. */}
-                {plusTax && <p className={`${kit.small} ${styles.planNote}`}>{!promoActive && !isGated && plan.currency ? BILLING_TAX_WORDS.plusTax : null}</p>}
+                {plusTax && <p className={`${kit.small} ${styles.planNote}`}>{!isGated && plan.currency ? BILLING_TAX_WORDS.plusTax : null}</p>}
                 <p className={`${kit.small} ${styles.planNote}`}>{displayNote}</p>
               </div>
 
@@ -501,9 +441,6 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
                 >
                   {(takesOverrides ? ctaLabel?.(plan.key) : undefined) ?? defaultCta}
                 </Link>
-              )}
-              {finePrint && (
-                <p className={`${kit.small} ${styles.planFinePrint}`}>{finePrint}</p>
               )}
               {demoDoorsOpen && !isGated && !onChoosePlan && DEMO_DOORS[plan.key] && (
                 <p className={`${kit.small} ${styles.planDemoLine}`}>

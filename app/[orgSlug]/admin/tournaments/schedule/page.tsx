@@ -75,7 +75,7 @@ import type { MoveTarget } from './components/MoveSheet';
 import HealthButton from '@/components/admin/tournament/HealthButton';
 import ScheduleHealthWindow from './components/ScheduleHealthWindow';
 import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
-import { PlanLockedTool, PlanLockMenuFoot, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockedTool, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import ScheduleToolbar, { ScopeNav, ViewPill, type ViewChoice } from './components/ScheduleToolbar';
@@ -1404,9 +1404,6 @@ export default function AdminSchedulePage() {
         ? <CoachToolbarMenuItem icon={<Upload size={16} aria-hidden />} label={IMPORT_WORDS.door('games')} hint={IMPORT_WORDS.doorHint}
             onSelect={() => setImportOpen(true)} />
         : lockedTool(IMPORT_WORDS.door('games')))}
-      {/* A Founding Season organization still on free: said once, at the foot of a menu that holds a lock (M9). */}
-      {((showGenerators && hasRoundRobinStage && !canAutoGenerateSchedule) || (showGenerators && hasPlayoffStage && !canAutoBracket)
-        || (showRainDelay && !canRainDelay) || (showImport && !canImport)) && <PlanLockMenuFoot />}
     </CoachToolbarMenu>
   ) : null;
 

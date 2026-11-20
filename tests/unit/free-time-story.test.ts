@@ -1,6 +1,6 @@
 /**
  * Free time on the Story (Support console Stage 4): the entries, and where Put it back may sit. Put it back is offered
- * only on the newest entry of a grant still running; never on Founding Season; never on a grant that ended (T10).
+ * only on the newest entry of a grant still running; never on an old comp-period row; never on a grant that ended (T10).
  * The change route is a compare-and-set (T11), asserted by scan below.
  */
 import assert from 'node:assert/strict';
@@ -70,14 +70,13 @@ describe('free time on the Story', () => {
     assert.ok(entries.every(e => !e.putBack));
   });
 
-  it('Founding Season: its own entry, the last free day, never Put it back', () => {
-    const [f] = story([grant({ id: 'f1', type: 'comp_period', value: 'granted', target: null, expires_at: '2027-10-01T04:00:00.000Z', created_by: 'system', reason: 'Founding' })]);
-    assert.equal(f.title, 'Founding Season: Tournament Plus free through Sep 30, 2027');
-    assert.equal(f.sub, 'Given at sign-up');
-    assert.equal(f.who, 'The product');
+  it('an old comp-period row reads the ordinary way: an override entry, never Put it back', () => {
+    const [f] = story([grant({ id: 'f1', type: 'comp_period', value: 'granted', target: null, expires_at: '2027-10-01T04:00:00.000Z', created_by: 'system', reason: 'Granted at sign-up' })]);
+    assert.equal(f.title, 'Override applied: Comp period: Granted');
+    assert.equal(f.who, 'system');
+    assert.equal(f.why, 'Granted at sign-up');
     assert.equal(f.putBack, undefined);
   });
-
   it('a section grant and a billing-status grant read the same way', () => {
     const [s] = story([grant({ id: 's1', type: 'module_addon', target: { addons: ['module_accounting'] }, expires_at: '2026-10-01T04:00:00.000Z' })], [], new Date('2026-09-02T19:18:00.000Z'));
     assert.equal(s.title, 'Free time given: Accounting through Sep 30, 2026');

@@ -9,8 +9,8 @@ import styles from './PlanTermsLine.module.css';
  * THE LINE BESIDE A PAID BUTTON (GST/HST Stage 6 step 6.3, Chunk C; §20 (3), drawing tab 5, Ask 6A). "Your plan renews
  * automatically until you cancel…", with the trial sentence first where the screen already says a trial applies.
  *
- * The CALLER decides whether a price is shown: render this only beside a button that shows one (§20 note 3 — a comped or
- * Founding Season button carries no line). Renders NOTHING while the legal pages are off — dark means invisible.
+ * The CALLER decides whether a price is shown: render this only beside a button that shows one (§20 note 3 — a button that
+ * shows no price carries no line). Renders NOTHING while the legal pages are off — dark means invisible.
  *
  *   · `place="body"` (default) — a window's body end, or under a table straight after its tax line.
  *   · `place="column"` — an account column, above the main button, at the column's fine-print size.

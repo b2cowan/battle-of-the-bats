@@ -34,7 +34,7 @@ import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import type { OrgPlan } from '@/lib/types';
 import type { PlanFeature } from '@/lib/plan-features';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
-import { PlanLockMenuFoot, PlanLockName } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockName } from '@/components/admin/tournament/PlanLockLine';
 import styles from './ExportMenu.module.css';
 
 export type ExportFormat = 'xlsx' | 'csv' | 'ics' | 'pdf';
@@ -141,7 +141,6 @@ export interface ExportMenuProps {
    *   `all` — nothing here is on the plan: the whole menu is ONE locked row named `label` ("Export the team list");
    *   `spreadsheets` — Excel and CSV are ONE locked row named `label` ("Excel and CSV"); the PDF stays open;
    *   `pdf` — the PDF row (and a second PDF document) take the lock, each keeping its own name.
-   * A Founding Season organization still on the free plan reads the menu's foot line once (PlanLockMenuFoot).
    */
   planLock?: { href: string; rows: 'all' | 'spreadsheets' | 'pdf'; label?: string; plan?: string };
   /**
@@ -458,7 +457,6 @@ export default function ExportMenu({
               </span>
             </button>
           )}
-          {(lockAll || lockSheets || (pdfPlanLocked && includesPDF)) && <PlanLockMenuFoot />}
           </>}
         </div>
       )}

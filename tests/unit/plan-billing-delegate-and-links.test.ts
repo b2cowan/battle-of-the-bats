@@ -31,13 +31,12 @@ function fixture(key: OrgPlan): BillingBodyViewProps {
     org: { id: 'org-a', slug: 'club-a', name: 'Falcons', planId: key, ownPlanId: key, enabledAddons: ['module_public_site'], subscriptionStatus: 'active', subscriptionPeriod: 'monthly', currentPeriodEnd: '2027-03-01', teamLimit: 15, tournamentLimit: 1 } as BillingSnapshot['org'],
     canManageBilling: true,
     usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 2, limit: profile.config.seatLimit }, officials: 4 }),
-    freeTime: ready({ freeTime: null, portal: null, foundingThrough: null, overLimitAfter: false }),
-    founding: ready({ isFoundingSeason: false, compUntil: null }),
+    freeTime: ready({ freeTime: null, portal: null, overLimitAfter: false }),
     gating: ready({ tournament: false, tournament_plus: false, team: false, league: false, club: false, club_large: false }),
     cancellation: ready({ currentPlan: key, ...impact, activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }),
     move: ready({ live: false, scheduledMove: null }),
   };
-  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
+  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, retry() {} } };
 }
 const html = (props: BillingBodyViewProps) => renderToStaticMarkup(createElement(BillingBodyView, props)).replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 
@@ -117,7 +116,7 @@ describe('the plan panel offers Upgrade where the Change plan table does', () =>
     const held = withDetail('tournament', 'tournament_plus'); held.snapshot.gating = ready({ tournament: false, tournament_plus: true });
     assert.doesNotMatch(html(held), /Upgrade to Tournament Plus<\/button>|btn-lime btn-data/);
     const free = withDetail('tournament', 'tournament_plus');
-    free.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, foundingThrough: null, overLimitAfter: false });
+    free.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, overLimitAfter: false });
     assert.doesNotMatch(html(free), /btn-lime btn-data/);
     const gone = withDetail('tournament', 'tournament_plus'); gone.snapshot.org.subscriptionStatus = 'canceled';
     assert.doesNotMatch(html(gone), /Upgrade to Tournament Plus<\/button>/);
@@ -135,7 +134,7 @@ describe('the plan panel offers Upgrade where the Change plan table does', () =>
 });
 
 describe('small states', () => {
-  it('the Change plan cell renders nothing until the free-time and Founding reads are in (no "Contact us" flash)', () => {
+  it('the Change plan cell renders nothing until the free-time read is in (no "Contact us" flash)', () => {
     const props = fixture('tournament_plus'); props.snapshot.freeTime = { status: 'loading' };
     assert.doesNotMatch(html(props), /Contact us to move/);
   });

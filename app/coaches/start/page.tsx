@@ -3,7 +3,6 @@ import TeamSignupClient from '@/app/team/TeamSignupClient';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
-import { foundingSeasonOfferFor } from '@/lib/founding-season';
 import { readStartDoor } from '@/lib/start-door';
 import CoachStartInterest from '@/components/coaches/CoachStartInterest';
 
@@ -49,8 +48,7 @@ export default async function CoachesPortalStartPage({
     }
   }
 
-  // Account-first (Part 3): the offer is the server's answer, the same rule the checkout applies (edge (b), 2026-10-19);
-  // the billing picked on the pricing page rides on the account across the email (screens only).
+  // Account-first (Part 3): the billing picked on the pricing page rides on the account across the email (screens only).
   return (
     <Suspense fallback={null}>
       <TeamSignupClient
@@ -59,7 +57,6 @@ export default async function CoachesPortalStartPage({
         prefillSport={prefillSport}
         prefillBasicTeamId={prefillBasicTeamId}
         confirmed={sp?.confirmed === '1'}
-        foundingOffer={foundingSeasonOfferFor(user, 'premium')}
         rememberedBilling={readStartDoor(user?.user_metadata)?.billing ?? null}
         signedInEmail={user?.email ?? null}
       />

@@ -11,8 +11,7 @@
  *
  * No older event is grandfathered (B1, owner 2026-10-16: production held no event on the free plan, verified
  * read-only). What an invite-only event still shows is read from its OWN DATA (R2, M10): an event that took
- * registrations or set fees under a plan that had them (an organization that left Tournament Plus; the Founding Season
- * ends 2027-10-01) keeps those records readable — recorded payments read-only, a team still waiting acceptable or
+ * registrations or set fees under a plan that had them (an organization that left Tournament Plus) keeps those records readable — recorded payments read-only, a team still waiting acceptable or
  * declinable, and "Registration closed" where Teams used to say it was open.
  *
  * "Not tracked here" stays the one way the product says "no payments here" (`tournamentTracksPayments`): a new

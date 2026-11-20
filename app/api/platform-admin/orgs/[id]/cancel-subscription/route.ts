@@ -99,7 +99,7 @@ export const GET = withObservability(async (_req: NextRequest,
     planLabel: PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id,
     ...preflight,
     // Plans end at renewal: a real subscription waits for its renewal date (shown as a preview; Stripe's date is the one
-    // recorded); with none (comped, Founding Season, a dev mock) the cancel ends now and there is no date to promise.
+    // recorded); with none (comped, a dev mock) the cancel ends now and there is no date to promise.
     waitsForRenewal: !!account && hasRealSubscription(account),
     // A stored date already past (a missed invoice webhook) is no end date to promise: it reads as missing (Part C, a).
     renewsOn: account && hasRealSubscription(account) ? upcomingDate(orgRow.current_period_end, new Date()) : null,

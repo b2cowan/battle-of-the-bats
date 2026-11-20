@@ -241,12 +241,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const overridesExpiringSoon = overrides.filter(
     row => row.expires_at && row.expires_at >= now && row.expires_at <= trialWindowEnd,
   ).length;
-  // F1 (Plans & pricing Stage 2 Part 4, owner ruling 8): a comped club pays nothing, so the monthly figure leaves it out
-  // and says how many it left out. Comped = a running comp period (Founding Season, migration 279), the record the
-  // Founding desk reads. Its plan reads active with no subscription, so it added the list price nobody pays. A club that
-  // holds a comp AND has since subscribed through Stripe is paying, so it stays in the figure (a comp is not revoked on a
-  // League purchase); a Coaches Portal paid through a club add-on holds no comp, so it was never at risk.
-  const compedOrgIds = new Set(overrides.filter(row => row.type === 'comp_period' && row.expires_at && row.expires_at > now).map(row => row.org_id));
   // The owners' last sign-in, read by account id with no cap (it was the first 1,000 accounts, so an owner past the
   // first page always read as inactive). Started with the counts above, so it overlaps them.
   const authUserById = await ownerSignIns;
@@ -259,7 +253,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   ) as Record<string, Record<string, number>>;
 
   let estimatedMrr = 0;
-  let compedNotCounted = 0;
   let trialEndingSoon = 0;
   let orgsWithoutOwner = 0;
   let orgsWithInactiveOwner = 0;
@@ -275,10 +268,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     byStatus[status] = (byStatus[status] ?? 0) + 1;
     if (statusByPlan[plan]) statusByPlan[plan][status] = (statusByPlan[plan][status] ?? 0) + 1;
 
-    if (status === 'active') {
-      if (compedOrgIds.has(org.id) && !org.stripe_subscription_id) compedNotCounted += 1;
-      else estimatedMrr += PLAN_CONFIG[plan]?.monthlyPrice ?? 0;
-    }
+    if (status === 'active') estimatedMrr += PLAN_CONFIG[plan]?.monthlyPrice ?? 0;
 
     // F2: from today to 14 days out, in Ontario days (a trial whose date has passed is Renewals' amber row, not this).
     if (isTrialEnding(status, org.current_period_end, today)) {
@@ -327,8 +317,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       teams: teamsTotal,
       estimatedMrr,
       estimatedArr: estimatedMrr * 12,
-      /** Active clubs on a comp period, left out of estimatedMrr (F1). */
-      compedNotCounted,
     },
     subscription: {
       byPlan,

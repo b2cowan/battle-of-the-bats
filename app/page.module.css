@@ -100,8 +100,6 @@
 .stepTitle { margin-top: 0.5rem; }
 
 /* ── Pricing ────────────────────────────────────────────────────────────────────── */
-.promoLine { max-width: 62ch; margin-bottom: 1.5rem; }
-.promoName { color: var(--home-ink); font-weight: 700; }
 .after { margin: 1.5rem 0 0; }
 
 /* ── Bottom call to action ──────────────────────────────────────────────────────── */

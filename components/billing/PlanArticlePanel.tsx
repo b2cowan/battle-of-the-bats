@@ -13,8 +13,7 @@ import ViewSwitch from '@/components/coaches/kit/ViewSwitch';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
-import { PLAN_CONFIG, showsFoundingZero, gatedPlanSentence, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
-import { useFoundingOfferOnPlanChoice } from '@/lib/use-founding-season-lock';
+import { PLAN_CONFIG, gatedPlanSentence } from '@/lib/plan-config';
 import type { PanelPlanKey as PlanKey } from '@/lib/plan-upgrade';
 import type { PlanBillingProfile } from '@/lib/plan-billing-profile';
 import styles from './PlanArticlePanel.module.css';
@@ -30,9 +29,6 @@ interface Props {
   upgradeLoading: PlanKey | null;
   isComingSoon: boolean;
   canUpgrade?: boolean;
-  /** The checkout's own "$0 for this organization's choice" answer, when the host already read it (Plan & billing).
-   *  Left out, the panel asks for itself once it opens (the plan drawer a lock line opens). */
-  foundingOfferHeld?: boolean;
   /** Unpublished billing targets use their own facts and article variant without adding a public article key. */
   profile?: PlanBillingProfile<string>;
   /** Billing's details door is informational; other shipped callers retain their existing workspace/upgrade door. */
@@ -48,7 +44,6 @@ export default function PlanArticlePanel({
   upgradeLoading,
   isComingSoon,
   canUpgrade = true,
-  foundingOfferHeld,
   profile,
   readOnly = false,
 }: Props) {
@@ -62,24 +57,18 @@ export default function PlanArticlePanel({
 
   const panelRef = useRef<HTMLElement>(null);
   useDialogFloor(open, panelRef, { onClose, busy: planKey !== null && upgradeLoading === planKey });
-  const askedHere = useFoundingOfferOnPlanChoice(foundingOfferHeld === undefined && planKey !== null);
 
   if (!planKey && !profile) return null;
 
   const article = planKey ? PLAN_ARTICLE_CONTENT[planKey] : null;
   const config = profile?.config ?? PLAN_CONFIG[planKey!];
-  // The price shown is the price charged: the window for a newcomer, the checkout's answer for a comp holder.
-  const promoActive = (!profile || profile.showFoundingSeason) && planKey !== null && showsFoundingZero(planKey, foundingOfferHeld ?? askedHere);
   const price   =
-    promoActive
-      ? `Free through ${FOUNDING_SEASON_END_LABEL}`
-      : config.monthlyPrice === 0
-        ? 'Free'
-        : billingCycle === 'annual'
-          ? `$${config.annualPrice} CAD / year`
-          : `$${config.monthlyPrice} CAD / month`;
-  const loadingLabel = promoActive ? 'Applying…' : 'Redirecting…';
-  const picksCycle = Boolean(onBillingCycleChange) && !promoActive && !readOnly && canUpgrade && !isComingSoon && config.monthlyPrice > 0;
+    config.monthlyPrice === 0
+      ? 'Free'
+      : billingCycle === 'annual'
+        ? `$${config.annualPrice} CAD / year`
+        : `$${config.monthlyPrice} CAD / month`;
+  const picksCycle = Boolean(onBillingCycleChange) && !readOnly && canUpgrade && !isComingSoon && config.monthlyPrice > 0;
 
   return (
     <>
@@ -102,14 +91,10 @@ export default function PlanArticlePanel({
         {/* Price strip */}
         <div className={styles.priceStrip}>
           {/* GST/HST Stage 2 Part 4 (T4): a price the buyer will be charged says so, quietly; a free price has nothing to tax. */}
-          <span className={styles.priceAmount}>{price}{!promoActive && !isComingSoon && config.monthlyPrice > 0 && <> <span className={styles.plusTax}>{BILLING_TAX_WORDS.plusTax}</span></>}</span>
+          <span className={styles.priceAmount}>{price}{!isComingSoon && config.monthlyPrice > 0 && <> <span className={styles.plusTax}>{BILLING_TAX_WORDS.plusTax}</span></>}</span>
           {picksCycle && <ViewSwitch label="Billing" value={billingCycle} onChange={onBillingCycleChange!}
             views={[{ id: 'monthly', label: 'Monthly' }, { id: 'annual', label: 'Yearly' }]} />}
-          {promoActive ? (
-            <span className={styles.priceSavings}>
-              then ${config.monthlyPrice}/mo · no credit card required
-            </span>
-          ) : billingCycle === 'annual' && config.monthlyPrice > 0 ? (
+          {billingCycle === 'annual' && config.monthlyPrice > 0 ? (
             <span className={styles.priceSavings}>
               Save ${config.monthlyPrice * 12 - config.annualPrice} — 2 months free
             </span>
@@ -177,14 +162,14 @@ export default function PlanArticlePanel({
               Start your Coaches Portal
             </Link>
           ) : canUpgrade && planKey && !readOnly ? (<>
-            {/* §20 (3), read before the button — only when the button shows a price (a Founding "Get … free" carries none). */}
-            {!promoActive && config.monthlyPrice > 0 && <PlanTermsLine trial={config.trialDays} />}
+            {/* §20 (3), read before the button — only when the button shows a price. */}
+            {config.monthlyPrice > 0 && <PlanTermsLine trial={config.trialDays} />}
             <button
               className={`btn btn-lime btn-data ${styles.upgradeBtn}`}
               onClick={() => onUpgrade(planKey)}
               disabled={upgradeLoading === planKey}
             >
-              {upgradeLoading === planKey ? loadingLabel : promoActive ? `Get ${config.label} free` : `Upgrade to ${config.label}${picksCycle ? ` · ${billingCycle === 'annual' ? `$${config.annualPrice} / year` : `$${config.monthlyPrice} / month`}` : ''}`}
+              {upgradeLoading === planKey ? 'Redirecting…' : `Upgrade to ${config.label}${picksCycle ? ` · ${billingCycle === 'annual' ? `$${config.annualPrice} / year` : `$${config.monthlyPrice} / month`}` : ''}`}
             </button>
           </>) : null}
           <button className={`btn btn-ghost ${styles.cancelBtn}`} onClick={onClose}>

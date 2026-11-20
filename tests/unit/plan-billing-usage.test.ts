@@ -127,7 +127,7 @@ describe('billing free time never confuses an old ended grant or a read failure 
   }
   it('billing keeps the ended state beyond the informational 30-day band, without leaking team ids', async () => {
     const response = await freeTimeRoute(false)(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'));
-    assert.equal(response.status, 200); assert.deepEqual(await response.json(), { freeTime: null, overLimitAfter: false, foundingThrough: null, portal: { state: 'ended', lastDay: '2026-01-01' }, canKeepPremium: true });
+    assert.equal(response.status, 200); assert.deepEqual(await response.json(), { freeTime: null, overLimitAfter: false, portal: { state: 'ended', lastDay: '2026-01-01' }, canKeepPremium: true });
   });
   it('Keep Premium is offered to the portal’s owner alone', async () => {
     const response = await freeTimeRoute(false, 'owner', null, 'someone-else')(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'));

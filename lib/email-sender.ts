@@ -1,7 +1,7 @@
 /**
  * lib/email-sender.ts
  *
- * Resend wrapper for FieldLogicHQ founding season marketing emails.
+ * Resend wrapper for FieldLogicHQ marketing emails.
  *
  * Responsibilities:
  *  1. Opt-out check — skip sending if org has email_marketing_opt_out = true
@@ -20,8 +20,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { buildUnsubscribeUrl, buildUserUnsubscribeUrl, oneClickUnsubscribeHeaders } from '@/lib/unsubscribe-token';
-import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
-import { MARKETING_EMAIL_AUDIENCE, type MarketingAudience } from '@/lib/marketing-email-defaults';
 import { isDemoOrgId } from '@/lib/demo-org-server';
 import { insertAtWarmCardEnd, warmUnsubscribeFooterHtml } from '@/lib/email-envelope-warm';
 
@@ -288,7 +286,7 @@ async function incrementBatchCounter(
 
   // Increment the appropriate counter using a raw RPC or update+increment pattern.
   // Supabase doesn't have a built-in atomic increment via the JS client,
-  // so we do a read-then-write here. For a founding cohort of 30-50 orgs
+  // so we do a read-then-write here. For a batch of a few dozen orgs
   // this is fine; revisit with a Postgres function if send volume grows.
   const { data, error: fetchErr } = await supabaseAdmin
     .from('email_batches')
@@ -473,105 +471,4 @@ export async function cancelScheduledEmailForRecipient(
   } catch (err) {
     console.error('[email-sender] cancelScheduledEmailForRecipient error (non-fatal):', err);
   }
-}
-
-// ── Founding-season marketing audiences ───────────────────────────────────────
-// Per-email recipient counts for the platform-admin Email dashboard. These mirror
-// the org-level filters the send route (app/api/admin/email/send) applies when it
-// resolves each audience, so the displayed count tracks the actual send. Like the
-// dashboard's existing global count, these are qualifying counts that don't resolve
-// the recipient's email the way the send does: the founding/not-on-club counts
-// count orgs without verifying the owner has a resolvable email, and the coaches
-// count counts distinct coach users without verifying each has an auth email. The
-// send drops recipients with no resolvable email, so the real send can be slightly
-// LOWER than these counts — never higher. (An over-count is the safe direction:
-// the operator never under-estimates a blast.)
-
-
-
-// The audience segments and the per-campaign map both live in the campaign registry
-// (lib/marketing-email-defaults.ts) as of Founding Season 2027 Phase 1. They were declared
-// here AND in the send route AND on the dashboard, and the three had drifted apart. Imported
-// above for local use and re-exported here so every existing importer keeps working.
-export type { MarketingAudience } from '@/lib/marketing-email-defaults';
-export { MARKETING_EMAIL_AUDIENCE } from '@/lib/marketing-email-defaults';
-
-async function foundingOrgIds(): Promise<string[]> {
-  // Current OR legacy comp instant (see FOUNDING_SEASON_COMP_EXPIRIES), and never a revoked comp —
-  // a revoked organization is no longer in the Founding Season and must not be mailed as one.
-  const { data } = await supabaseAdmin
-    .from('org_overrides')
-    .select('org_id')
-    .eq('type', 'comp_period')
-    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
-    .is('revoked_at', null);
-  return (data ?? []).map(o => o.org_id as string);
-}
-
-/**
- * Recipient counts per audience segment for the founding-season marketing emails.
- * Returns one entry per `MarketingAudience`. Counts exclude opted-out orgs.
- */
-export async function getMarketingAudienceCounts(): Promise<Record<MarketingAudience, number>> {
-  const orgIds = await foundingOrgIds();
-  if (orgIds.length === 0) return { founding: 0, not_on_club: 0, coaches: 0 };
-
-  const [foundingRes, notOnClubRes, coachRes] = await Promise.all([
-    // founding: all founding ORGANIZATIONS that haven't opted out.
-    // ⚠ The shadow org behind a comped standalone Premium Coaches Portal carries the same
-    // founding-season comp_period override, so it lands in orgIds above and must be filtered out
-    // here — these campaigns are written for an organization and would be false to a coach. The
-    // send route applies the identical filter; if you change one, change both, or the count an
-    // operator reads before pressing Send stops describing who receives it. (/review 2026-09-07.)
-    supabaseAdmin
-      .from('organizations')
-      .select('id', { count: 'exact', head: true })
-      .in('id', orgIds)
-      .eq('email_marketing_opt_out', false)
-      .eq('account_kind', 'organization')
-      .neq('plan_id', 'team'),
-    // not_on_club: founding, not opted out, plan not on a League/Club tier (league, club, club_large)
-    supabaseAdmin
-      .from('organizations')
-      .select('id', { count: 'exact', head: true })
-      .in('id', orgIds)
-      .eq('email_marketing_opt_out', false)
-      .eq('account_kind', 'organization')
-      .not('plan_id', 'in', '(league,club,club_large,team)'),
-    // coaches: distinct coach members across non-opted-out founding organizations
-    supabaseAdmin
-      .from('organizations')
-      .select('id')
-      .in('id', orgIds)
-      .eq('email_marketing_opt_out', false)
-      .eq('account_kind', 'organization')
-      .neq('plan_id', 'team'),
-  ]);
-
-  let coaches = 0;
-  const activeOrgIds = (coachRes.data ?? []).map(o => o.id as string);
-  if (activeOrgIds.length > 0) {
-    const { data: coachRows } = await supabaseAdmin
-      .from('organization_members')
-      .select('user_id')
-      .in('organization_id', activeOrgIds)
-      .eq('role', 'coach');
-    // The send dedupes coaches by user_id (one email per person).
-    coaches = new Set((coachRows ?? []).map(r => r.user_id as string)).size;
-  }
-
-  return {
-    founding: foundingRes.count ?? 0,
-    not_on_club: notOnClubRes.count ?? 0,
-    coaches,
-  };
-}
-
-/** Recipient count keyed by email key, derived from each key's audience segment. */
-export function recipientCountForEmailKey(
-  emailKey: string,
-  counts: Record<MarketingAudience, number>,
-): number {
-  const audience = MARKETING_EMAIL_AUDIENCE[emailKey] ?? 'founding';
-  return counts[audience];
 }

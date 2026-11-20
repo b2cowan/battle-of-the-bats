@@ -27,7 +27,7 @@ type ConfirmBody = {
  * Plans end at the renewal date, Stage 2 (owner rulings 2026-11-03; lib/plan-ending.ts): a paying Stripe subscription's
  * move is SCHEDULED for its renewal date — the waiting row (target, the owner's pick) then Stripe's `cancel_at_period_end`
  * — and nothing is archived, limited, closed or emailed as done now; the paid plan stays fully live until the date, when
- * the webhook runs the move (`applyDowngrade`). With no live paid period (ruling 3: comped, Founding Season, no
+ * the webhook runs the move (`applyDowngrade`). With no live paid period (ruling 3: comped, no
  * subscription, a dev mock) there is no date: the move happens now, through the same `applyDowngrade` and its safe order
  * (restore records BEFORE the archive — G11; the old route archived first). Either way the "now on {plan}" email is the
  * move's own (Stage 2 Part C) — sent once by `applyDowngrade`, never by this route.

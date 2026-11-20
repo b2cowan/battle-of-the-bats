@@ -107,11 +107,8 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/lead-timeline.ts': ['stored', 'Stage 7: the plan named on the subscription-start fact a linked club’s billing records hold'],
   'app/platform-admin/early-access/[leadId]/page.tsx': ['stored', 'Stage 7: the linked club’s own plan and trial, in words ("on a League Plus trial until Nov 25"); whether it pays is `readPaying`'],
   'lib/needs-attention.ts': ['stored', '"card payment failed" is about a real card, so it reads the stored status'],
-  'lib/email-sender.ts': ['stored', 'the Founding email audience targets purchase intent (stored plan)'],
-  'app/api/admin/email/send/route.ts': ['stored', 'the Founding email audience (stored plan)'],
   'lib/platform-story.ts': ['stored', "the club's Story: what was bought and changed"],
   'lib/platform-people-lookup.ts': ['stored', 'the console shows the stored plan'],
-  'lib/founding-season-desk.ts': ['stored', 'the Founding desk reads the stored plan'],
   'app/api/platform-admin/find/route.ts': ['stored', 'Find shows the stored plan'],
   'app/platform-admin/orgs/page.tsx': ['stored', 'the clubs list shows the stored plan'],
   'app/platform-admin/orgs/OrgsClient.tsx': ['stored', 'the clubs list shows the stored plan'],
@@ -138,7 +135,6 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/billing-location-server.ts': ['identity', "plan_id 'team' = the portal stub (isTeamWorkspaceOrg): a portal's billing address is its coach's own person row (GST/HST Stage 1 Part 3)"],
   'lib/org-membership-policy.ts': ['identity', "plan_id 'team' = the portal stub"],
   'lib/team-org-links.ts': ['identity', "plan_id 'team' = the portal stub"],
-  'app/coaches/welcome/page.tsx': ['identity', "plan_id 'team' = the portal stub"],
   'app/coaches/tournaments/[teamId]/page.tsx': ['identity', "plan_id 'team' = the portal stub"],
   // ── another table ──
   'lib/plan-config-db.ts': ['other', 'plan_config_overrides.plan_id'],
@@ -212,20 +208,11 @@ with its class and a reason:\n  ${unlisted.join('\n  ')}`);
       'app/api/billing/downgrade/confirm/route.ts',
       'app/api/billing/cancel/preflight/route.ts',
       'app/api/billing/cancel/confirm/route.ts',
-      'app/api/billing/choose-next-season/route.ts',
       'app/api/billing/mock-apply/route.ts',
-      'app/api/admin/org/founding-season-status/route.ts',
       'app/api/admin/org/request-deletion/route.ts',
     ];
     const offenders = ACTIONS.filter(f => {
-      let code = stripComments(read(f));
-      if (f === 'app/api/billing/choose-next-season/route.ts') {
-        // A return must follow the layout's effective tier boundary. This one resolver call
-        // chooses only the destination; eligibility, target and price still read the OWN plan.
-        const destination = "getBillingHref(auth.org, { purpose: 'return' })";
-        assert.equal(code.split(destination).length - 1, 1, 'exactly one plan-aware return resolver');
-        code = code.replace(destination, 'billingDestination');
-      }
+      const code = stripComments(read(f));
       return /\b(?:auth|ctx)\.org\.planId\b|(?<![.\w])org\.planId\b/.test(code);
     });
     assert.deepEqual(offenders, [], `Billing actions must read ownPlanOf(org), not org.planId:\n  ${offenders.join('\n  ')}`);

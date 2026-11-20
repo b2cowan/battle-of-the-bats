@@ -1,37 +1,7 @@
-/* The email dashboard's own parts. The page column, band, sections, cards, tables, chips and buttons are the console's
-   shared recipes (`../console.module.css`) and the product's global kit; the windows are the global `.modal` family. */
+/* The Campaigns record's own parts (sent history and opt-outs). The page column, sections, cards, tables, chips and
+   buttons are the console's shared recipes (`../console.module.css`) and the product's global kit. */
 
-.help { cursor: help; }
-
-/* ── Needs sending (past due + upcoming): a heading above its card, one row per campaign ── */
-.needsTitle { display: flex; align-items: center; gap: 0.4rem; }
-.needsCard { padding: 0.25rem 1rem; }
-/* two classes, so the coloured edge beats the card's own one-pixel border whatever order the modules load in */
-.needsCard.needsBad { border-left: 3px solid var(--danger); }
-.needsCard.needsWarn { border-left: 3px solid var(--warning); }
-.needsItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  padding: 0.55rem 0;
-  border-top: 1px solid var(--home-line);
-}
-.needsItem:first-child { border-top: none; }
-.needsItemMain { display: flex; align-items: baseline; gap: 0.25rem 0.75rem; min-width: 0; flex-wrap: wrap; }
-.needsDate { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); white-space: nowrap; }
-.needsSubject {
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 46ch;
-}
-.needsDays { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
-
-/* ── Scheduled sends / history table cells ── */
+/* ── Sent history table cells ── */
 /* inline-block so max-width + text-overflow apply (they are ignored on an inline span, which let a full subject blow the
    table width past the viewport). */
 .subject {
@@ -43,54 +13,14 @@
   white-space: nowrap;
   color: var(--text-primary);
 }
-.actions { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; }
-.dateEditBtn {
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  font-family: inherit;
-  font-size: inherit;
-  background: none;
-  border: 0;
-  padding: 0;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-.dateEditBtn:hover { color: var(--home-olive); }
 .expandCell { width: 2.5rem; }
 .okNum { color: var(--success); }
 .warnNum { color: var(--warning); }
 .badNum { color: var(--danger); }
+.iconBtn { padding: 0.45rem 0.6rem; }
 
 /* ── The expanded batch's own recipients table ── */
 .expandedRow td { background: var(--home-olive-soft); padding: 0; }
 .subTable { width: 100%; }
 .subNote { padding: 1rem; text-align: center; color: var(--text-tertiary); font-size: var(--type-body); }
 .subError { color: var(--danger); }
-
-/* ── Windows (the global .modal family supplies the frame) ── */
-.modalClose {
-  background: none;
-  border: 0;
-  color: var(--text-tertiary);
-  width: 2rem;
-  height: 2rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.modalClose:hover { color: var(--text-primary); }
-.modalSubject { font-size: var(--type-body); font-weight: 600; color: var(--text-secondary); margin-top: 0.2rem; }
-.modalBody { max-height: 60vh; overflow-y: auto; }
-.previewFrame { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--card-bg); }
-.previewNotice { padding: 2rem; text-align: center; color: var(--text-tertiary); font-size: var(--type-body); }
-.previewError { color: var(--danger); }
-.confirmTitle { font-size: var(--type-body); font-weight: 700; color: var(--danger); margin-bottom: 0.75rem; }
-.sendingNote { font-size: var(--type-support); color: var(--warning); }
-.dateInput { width: 100%; box-sizing: border-box; }
-.dateError { font-size: var(--type-support); color: var(--danger); margin-top: 0.5rem; }
-.audience { display: inline-block; vertical-align: top; max-width: 9rem; color: var(--text-tertiary); }
-.iconBtn { padding: 0.45rem 0.6rem; }
-.triggerDate { display: inline-block; vertical-align: top; max-width: 7.5rem; }

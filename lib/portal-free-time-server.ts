@@ -33,7 +33,7 @@ export type EndedPortalFreeTime = { lastDay: string; basicTeamId: string | null 
 /**
  * A portal staff gave free time that has since ended (by itself or early), or null. Only while the portal is still
  * billed by nobody (`platform_override`): after Keep Premium it is the coach's own subscription, and its later end is
- * an ordinary one. A Founding portal holds no billing-status grant, so it is never this. `basicTeamId` is the free
+ * an ordinary one. A portal with no billing-status grant is never this. `basicTeamId` is the free
  * team the coach goes back to.
  */
 export async function endedPortalFreeTime(orgId: string): Promise<EndedPortalFreeTime | null> {
@@ -117,7 +117,7 @@ export async function savedFreeTimePortalOfTeam(
  * Every Coaches Portal staff gave free time and nobody pays for: the give's own mark (`free_time_given_at`, mig 406)
  * on a workspace still billed `platform_override`. Not a customer (T35): Business numbers, the lead book's New accounts
  * and the Clubs list's Cancelled count leave them out, because the portal is stored cancelled for its whole life. ⚠ Not
- * the workspace's `source`: a Founding or comped portal is `platform_admin` too, and those ARE customers. Keep Premium
+ * the workspace's `source`: a comped portal is `platform_admin` too, and those ARE customers. Keep Premium
  * makes the portal `team_direct`, and from then on it counts like any paid portal.
  */
 export async function freeTimePortalOrgIds(): Promise<Set<string>> {

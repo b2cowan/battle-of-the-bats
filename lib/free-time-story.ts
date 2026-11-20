@@ -2,7 +2,6 @@ import { consoleDay } from './console-dates';
 import { overrideWhat, sectionLabel, subscriptionStatusLabel } from './platform-labels';
 import { possessive } from './utils';
 import { earliestLastDay, formatLongDay, formatShortDay, isGrantRunning, isReopeningGrant, lastDayOfInstant } from './free-time';
-import { isFoundingSeasonCompExpiry } from './plan-config';
 import { obj, planName, putBackOf, str, whyFields, type AuditRow, type PutBack, type StoryEntry } from './platform-story-view';
 
 /**
@@ -10,10 +9,9 @@ import { obj, planName, putBackOf, str, whyFields, type AuditRow, type PutBack, 
  * builder (`lib/platform-story.ts`) reads the rows and hands them here.
  *
  * Given, changed (from what to what), ended early, ended by itself (The product, worked out from the date, nothing
- * stored). Founding Season reads as its own entry and never carries Put it back (its access is the club's plan, not a
- * grant, until its turn-off decision: owner ruling Q4). Put it back sits ONLY on the newest entry of a grant still
- * running: on "given" it ends it now; on "changed" it restores the earlier last day, or ends it now when that day has
- * passed (T10). A comp period that is not Founding Season reads as it always has (owner ruling Q5).
+ * stored). Put it back sits ONLY on the newest entry of a grant still running: on "given" it ends it now; on "changed"
+ * it restores the earlier last day, or ends it now when that day has passed (T10). An old comp period row (a billing
+ * tag, it gives nothing) reads the ordinary way: applied, ended, ran out (owner ruling Q5).
  */
 
 const THE_PRODUCT = 'The product';
@@ -49,9 +47,8 @@ export function freeTimeStoryEntries(input: {
     else if (offer) entry.putBack = offer;
   };
   // Support console Stage 4: given, changed (from what to what), ended early, ended by itself (The product, worked out
-  // from the date, nothing stored). Founding Season reads as its own entry and never carries Put it back. Put it back
-  // sits only on the NEWEST entry of a grant still running: on "given" it ends it now; on "changed" it restores the
-  // earlier last day. A comp period that is not Founding Season reads as it always has (owner ruling Q5).
+  // from the date, nothing stored). Put it back sits only on the NEWEST entry of a grant still running: on "given" it
+  // ends it now; on "changed" it restores the earlier last day. A comp period reads as it always has (owner ruling Q5).
   const revokeRows = new Map<string, AuditRow>();
   for (const r of audit) if (r.action === 'revoke_override' && typeof r.old_value === 'string') revokeRows.set(r.old_value, r);
   const changesByGrant = new Map<string, AuditRow[]>();
@@ -68,20 +65,6 @@ export function freeTimeStoryEntries(input: {
   for (const o of input.overrides) {
     const running = isGrantRunning(o, now);
     const ranOut = !o.revoked_at && !!o.expires_at && Date.parse(o.expires_at) <= nowMs;
-
-    if (o.type === 'comp_period' && o.expires_at && isFoundingSeasonCompExpiry(o.expires_at)) {
-      entries.push({
-        key: `override:${o.id}`, at: o.created_at, kind: 'billing',
-        title: `Founding Season: ${ownPlan} free through ${short(o.expires_at)}`,
-        sub: org.plan_id === 'team' ? 'Given at checkout' : 'Given at sign-up', who: THE_PRODUCT, why: null,
-      });
-      if (o.revoked_at) {
-        entries.push({ key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'billing', title: 'Founding Season ended', who: o.revoked_by ?? 'Staff', ...whyFields(revokeRows.get(o.id), false) });
-      } else if (ranOut) {
-        entries.push({ key: `override-ran-out:${o.id}`, at: o.expires_at, kind: 'billing', title: 'Founding Season ended by itself', who: THE_PRODUCT, why: null });
-      }
-      continue;
-    }
 
     if (o.type === 'comp_period') {
       const what = overrideWhat(o.type, o.value, []);

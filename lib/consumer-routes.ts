@@ -29,15 +29,15 @@ export function isConsumerShellPath(pathname: string): boolean {
   return CONSUMER_SHELL_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
 }
 
-// Warm sign-up JOURNEY routes (Founding Season Coaches launch — design_decisions S1-1/S1-2):
+// Warm sign-up JOURNEY routes (Coaches launch — design_decisions S1-1/S1-2):
 // the coach get-started + Premium sign-up journey wears the warm ConsumerNav skin so it reads
 // as one app, but these are NOT consumer-shell tabs (they stay out of CONSUMER_SHELL_PREFIXES).
-// /start lives inside the (consumer) group so the nav already mounts; /coaches/start and the
-// post-provision success screen (/coaches/welcome) mount the same warm nav via their own layout.
+// /start lives inside the (consumer) group so the nav already mounts; /coaches/start mounts the same
+// warm nav via its own layout.
 // /coaches/join joined 2026-10-19 (The first look, Ask 5a): the organizer's coach email lands there, and it is a
 // first-run screen like the rest — the app's frame, never the marketing bar and footer. /coaches/checkout joined
-// 2026-10-20 (The first look, Stage 3b, F06): checkout complete is the welcome's other door, on the same card.
-export const WARM_JOURNEY_PREFIXES = ['/start', '/coaches/start', '/coaches/welcome', '/coaches/join', '/coaches/checkout'] as const;
+// 2026-10-20 (The first look, Stage 3b, F06): checkout complete is the welcome, on the same card.
+export const WARM_JOURNEY_PREFIXES = ['/start', '/coaches/start', '/coaches/join', '/coaches/checkout'] as const;
 
 export function isWarmJourneyPath(pathname: string): boolean {
   return WARM_JOURNEY_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));

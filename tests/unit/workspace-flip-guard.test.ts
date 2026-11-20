@@ -311,13 +311,14 @@ describe('2 · a flipped workspace is a club everywhere a portal test is asked',
     const deleted = webhook.slice(webhook.indexOf("case 'customer.subscription.deleted'"));
     assert.ok(deleted.indexOf('syncTeamWorkspaceSubscription') < deleted.indexOf('if (syncedTeamWorkspace)'));
     assert.ok(deleted.indexOf('if (syncedTeamWorkspace)') < deleted.indexOf('endingForDeletedSubscription('));
-    // The next-season choice writer cannot put an id back on a tombstone either.
+    // The one writer that could put an id back onto a workspace row (the next-season choice's) is gone: billing-setup holds no
+    // by-workspace-id write at all (its one workspace write mirrors the CUSTOMER id by the workspace's org, as before).
     const setup = readCode('lib/billing-setup.ts');
-    assert.match(setup, /\.eq\('id', params\.teamWorkspaceId\)\s*\.neq\('workspace_state', 'org_owned'\)/);
+    assert.doesNotMatch(setup, /teamWorkspaceId/);
   });
 
   it('the six hand-copied portal tests are now the one function, and agree for every fixture', () => {
-    for (const f of ['lib/api-auth.ts', 'lib/db.ts', 'lib/free-time.ts', 'lib/org-membership-policy.ts', 'lib/team-org-links.ts', 'lib/founding-season-desk.ts']) {
+    for (const f of ['lib/api-auth.ts', 'lib/db.ts', 'lib/free-time.ts', 'lib/org-membership-policy.ts', 'lib/team-org-links.ts']) {
       const code = readCode(f);
       assert.match(code, /isTeamWorkspaceOrg\b/, `${f} asks the one function`);
       assert.match(code, /from '(\.|@\/lib)\/team-workspace-kind'/, `${f} imports the pure module`);
@@ -343,7 +344,7 @@ describe('3 · every entry that can put a workspace on Club meets the one hook',
     const move = readCode('lib/plan-move.ts');
     const fn = move.slice(move.indexOf('export async function applyPlanChangeSideEffects'), move.indexOf('export type MoveResult'));
     assert.match(fn, /await flipWorkspaceIntoClub\(\{ orgId: p\.orgId, plan: p\.toPlan, actor: p\.actor, clubName: p\.clubName \}\)/);
-    assert.match(fn, /return \{ clearedTeamLimit, revokedComps, workspaceFlip \}/);
+    assert.match(fn, /return \{ clearedTeamLimit, workspaceFlip \}/);
     assert.doesNotMatch(fn.slice(0, fn.indexOf('flipWorkspaceIntoClub')), /fromPlan === 'team'/, 'a retried event arrives with the plan already written: never gate on the old plan');
   });
 
@@ -423,7 +424,6 @@ const SPECIAL: Record<string, [Klass, string]> = {
   // The census used to count a `team_workspaces` file only when it also named `stripe_subscription_id`. The flip keeps the row
   // (a tombstone whose workspace_org_id IS the club), so a lookup by org, team or owner finds it; these were invisible until now.
   'lib/workspace-flip.ts': ['definition', 'the flip\'s own wrapper: finds the workspace row first, so an ordinary club never reaches the RPC (block 3 pins it)'],
-  'app/api/billing/choose-next-season/route.ts': ['portal-only', 'refuses 403 before its workspace read for any plan the Founding comp does not apply to, and every Club plan is one (D6)'],
   'app/api/coaches/[orgSlug]/teams/[teamId]/seasons/route.ts': ['portal-only', 'its season rollover is behind orgManagesOwnSeasons (lib/season-doors.ts), which asks the one portal test; a club runs seasons from admin'],
   'lib/rep-season-rollover.ts': ['portal-only', 'writes active_program_year_id on the workspace id its portal-gated caller passes; the club admin route passes none'],
   'app/api/dev/seed/team-workspace/route.ts': ['dev', 'seed tooling'],
@@ -435,7 +435,6 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'lib/portal-free-time-reminders.ts': ['tombstone-aware', 'selects and claims only billing_mode platform_override, so no free-time reminder reaches a flipped club (free_time_given_at survives)'],
   'lib/portal-free-time-server.ts': ['tombstone-aware', 'every read requires billing_mode platform_override and an unrevoked grant; the flip revokes the grant'],
   'lib/portal-free-time-give.ts': ['tombstone-aware', 'reads org_owned as "moved into a club", which blocks a further portal give ("give the club free time instead")'],
-  'lib/founding-season.ts': ['tombstone-aware', 'the reactivation read needs billing_mode platform_override; a comp on the org is revoked by applyPlanChangeSideEffects before the flip runs'],
   'lib/portal-free-time-tab.ts': ['harmless-read', 'the staff console lists the tombstone as "in a club, and the club pays for it", which is true; its record read runs only for account_kind team_workspace'],
   'lib/basic-coach-teams.ts': ['harmless-read', 'resolveBasicCoachTeamIdForWorkspace takes a workspace its caller already holds and returns at once when the free-team shadow exists (a flipped portal keeps it); the history merge\'s own by-team lookup is getTeamWorkspaceForRepTeam, not these reads'],
   'lib/chat-resolvers.ts': ['harmless-read', 'uses the workspace id and rep team only to reach the team\'s staff and claimed tournaments'],
@@ -454,7 +453,6 @@ const SPECIAL: Record<string, [Klass, string]> = {
 
 /** Every other production file that reads the tag: the list the scan found on 2026-10-30, each opened or read by the census helper. */
 const LIVE_ROW_FILES: string[] = [
-  'app/api/admin/email/send/route.ts',
   'app/api/admin/org/free-time/route.ts',
   'app/api/admin/org/team-links/route.ts',
   'app/api/admin/teams/our-teams/route.ts',
@@ -476,7 +474,6 @@ const LIVE_ROW_FILES: string[] = [
   'app/api/platform-admin/bulk-operations/route.ts',
   'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts',
   'app/coaches/tournaments/[teamId]/page.tsx',
-  'app/coaches/welcome/page.tsx',
   'app/platform-admin/dev-tools/page.tsx',
   'app/platform-admin/orgs/page.tsx',
   'app/platform-admin/orgs/[id]/page.tsx',
@@ -520,10 +517,8 @@ const LIVE_ROW_FILES: string[] = [
   'lib/coach-team-read.ts',
   'lib/db.ts',
   'lib/directory.ts',
-  'lib/email-sender.ts',
   'lib/family-access.ts',
   'lib/family-invitation.ts',
-  'lib/founding-season-desk.ts',
   'lib/free-time.ts',
   // Plans & pricing Stage 2 Part 4: Renewals marks a row "Coaches Portal" from the org row it just read.
   'lib/renewals-read.ts',
@@ -610,10 +605,10 @@ Stripe ids NULL, entitlements cancelled), then add it to LIVE_ROW_FILES or SPECI
     }
   });
 
-  it('the only documented leftovers of the old identity test are cosmetic wording in the staff console', () => {
-    // plan_id === 'team' used as "this was a portal when the comp was given": history text that can read wrong once the portal
-    // became a club. Reported in the Part 1 hand-off; not behaviour.
-    assert.match(readCode('lib/free-time-story.ts'), /org\.plan_id === 'team' \? 'Given at checkout'/);
-    assert.match(readSource('app/platform-admin/orgs/[id]/ClubRecord.tsx'), /org\.planId === 'team' \? 'checkout' : 'sign-up'/);
+  it('the cosmetic leftovers of the old identity test went with the Founding wording that carried them (Stage 2b)', () => {
+    // plan_id === 'team' used as "this was a portal when the comp was given" read wrong once the portal became a club; the
+    // two staff-console lines that said it described the Founding Season and are gone.
+    assert.doesNotMatch(readCode('lib/free-time-story.ts'), /org\.plan_id === 'team' \? 'Given at checkout'/);
+    assert.doesNotMatch(readSource('app/platform-admin/orgs/[id]/ClubRecord.tsx'), /org\.planId === 'team' \? 'checkout' : 'sign-up'/);
   });
 });

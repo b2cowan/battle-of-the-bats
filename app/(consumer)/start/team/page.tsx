@@ -17,8 +17,7 @@ export const metadata: Metadata = {
  *  - Signed IN  → step 2, just name the team (no re-signup; existing emails can't error).
  * The team lands on its org-less home with roster, schedule, fees, announcements,
  * chat, and tournament history all live (verified 2026-07-20 — an earlier note here
- * calling these "Phases 3-4" was stale). The /start picker card flips to this route
- * at the FOUNDING_SEASON_COACHES_FREE_PLAN.md Phase 3 launch.
+ * calling these "Phases 3-4" was stale).
  */
 export default async function StartTeamPage({ searchParams }: { searchParams: Promise<{ team?: string | string[]; confirmed?: string | string[] }> }) {
   // Back from the verification link: the flag, and — on a link sent before account-first (2026-10-18), for one

@@ -168,8 +168,9 @@ describe('Stage 7 guard 9 · the Story', () => {
 });
 
 describe('Stage 7 guard 10 · Today', () => {
-  it('a retired campaign is never counted (headline 1)', () => {
-    assert.match(readCode('lib/platform-waiting.ts'), /\(tmplRes\.data \?\? \[\]\)\.filter\(r => live\.has\(r\.key as string\)\)/);
+  it('a retired campaign is never counted (headline 1): Today holds no campaign queue at all', () => {
+    const waiting = readCode('lib/platform-waiting.ts');
+    assert.doesNotMatch(waiting, /campaigns_past_due|campaigns_due_soon|campaignAlerts|LIVE_MARKETING_EMAIL_KEYS|classifyCampaignSend/);
   });
   it('the three lead rows follow the rulebook (the Leads entry) and the menu pill counts Needs you', () => {
     const code = readCode('lib/platform-waiting.ts');

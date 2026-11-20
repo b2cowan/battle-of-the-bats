@@ -3,8 +3,8 @@
  * FREE_TOURNAMENT_TIER_REVIEW_PLAN.md §12). The free Tournament plan and a Premium coach's hosted event run invite-only
  * events: the host adds every team, and whole areas an invite-only event never uses are absent. No older event is
  * grandfathered (B1); an event carries what it already holds (R2, M10). One helper answers it; these are its cases:
- * free new · free with registration-era records · coach new · coach with records · Tournament Plus · a Founding Season
- * comp still on free (the lock line's second line) — and the gate keys the helper reads.
+ * free new · free with registration-era records · coach new · coach with records · Tournament Plus — and the gate keys
+ * the helper reads.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +18,6 @@ import { INVITE_COMPOSER_WORDS, emailDayWhen } from '../../lib/invite-only-words
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FEATURE_MIN_PLAN, hasPlanFeature } from '../../lib/plan-features';
-import { FOUNDING_SEASON_END_LABEL, foundingSeasonLockUntil } from '../../lib/plan-config';
 import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
 
 const FREE_NEW = { fee_scope: 'free' };           // created invite-only: "Not tracked here"
@@ -254,18 +253,5 @@ describe('the composer’s email day (M11)', () => {
     for (const s of [INVITE_COMPOSER_WORDS.limit, INVITE_COMPOSER_WORDS.dayUsed('3:40 p.m.'), INVITE_COMPOSER_WORDS.tooMany(112)]) {
       assert.doesNotMatch(s, /free plan|free tier/i, s);
     }
-  });
-});
-
-describe('a Founding Season comp still on free (R10, M9)', () => {
-  it('its locks carry the date; nothing else does', () => {
-    assert.equal(foundingSeasonLockUntil('tournament', true), FOUNDING_SEASON_END_LABEL);
-    assert.equal(foundingSeasonLockUntil('tournament', false), null);
-    // A comped coach has no path to Tournament Plus; an org already on Plus has nothing locked.
-    assert.equal(foundingSeasonLockUntil('team', true), null);
-    assert.equal(foundingSeasonLockUntil('tournament_plus', true), null);
-  });
-  it('the date is the last free day as the customer reads it', () => {
-    assert.match(FOUNDING_SEASON_END_LABEL, /^[A-Z][a-z]+ \d{1,2}, \d{4}$/);
   });
 });

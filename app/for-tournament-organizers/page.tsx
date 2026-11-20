@@ -5,9 +5,7 @@ import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import {
-  PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, foundingSeasonOfferCore,
-  FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, FOUNDING_SEASON_YEAR_LABEL,
-  FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
+  PLAN_CONFIG, formatPriceAmount,
   isPlanOpen, interestButtonLabel,
 } from '@/lib/plan-config';
 import { planTrialLine } from '@/lib/plan-trial-line';
@@ -100,10 +98,6 @@ export default async function ForTournamentOrganizersPage() {
   // No sentence for a trial of 0 days (a platform admin can switch the trial off): no "0-day trial".
   const tpTrialDays = (await getPlanConfigOverride('tournament_plus')).trialDays;
   const tpTrialLine = tpTrialDays > 0 ? planTrialLine(tpTrialDays) : null;
-  // The Founding Season copy on this page used to be HAND-WRITTEN with no gate at all (it would
-  // have kept advertising a closed offer forever). Every offer sentence now keys off the signup
-  // window and falls back to the list-price words the day it closes.
-  const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
   return (
     <main className={kit.page}>
 
@@ -117,14 +111,7 @@ export default async function ForTournamentOrganizersPage() {
           </h1>
           <p className={kit.lead}>
             Add your teams or open registration, build your schedule, run the bracket, and post live scores — all in one place.{' '}
-            {tpPromoActive ? (
-              <>
-                <span className={fp.noteStrong}>Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season</span>
-                {' '}when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month.
-              </>
-            ) : (
-              <>Free to start, no credit card required.</>
-            )}
+            Free to start, no credit card required.
           </p>
           <div className={`${kit.row} ${fp.heroRow}`}>
             {/* "Start free", matching /for-coaches word for word (owner-directed 2026-08-07): the
@@ -153,10 +140,7 @@ export default async function ForTournamentOrganizersPage() {
           )}
           <div className={fp.afterNote}>
             <ul className={kit.facts}>
-              {(tpPromoActive
-                ? [`Free through ${FOUNDING_SEASON_END_LABEL}`, `Normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month`, 'No credit card required']
-                : ['Free plan — no time limit', 'No credit card required', 'Billed in CAD']
-              ).map(s => (
+              {['Free plan — no time limit', 'No credit card required', 'Billed in CAD'].map(s => (
                 <li key={s}>{s}</li>
               ))}
             </ul>
@@ -253,27 +237,12 @@ export default async function ForTournamentOrganizersPage() {
             <div className={`${kit.card} ${kit.cardFeatured} ${kit.stack}`}>
               <div>
                 <p className={kit.title}>Tournament Plus</p>
-                {tpPromoActive ? (
-                  <>
-                    {/* "$0 through …", not "Free": the free Tournament card beside it already says
-                        "Free" with no end date, and the permanent and the promotional must stay
-                        distinguishable at a glance (owner choice 3 of 3, 2026-09-07). */}
-                    <div className={fp.priceRow}>
-                      <span className={kit.price}>$0</span>
-                      <span className={kit.small}>through {FOUNDING_SEASON_END_LABEL}</span>
-                    </div>
-                    <p className={kit.small}>Founding Season · normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month or {formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year</p>
-                  </>
-                ) : (
-                  <>
-                    <div className={fp.priceRow}>
-                      <span className={kit.price}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}</span>
-                      <span className={kit.small}>/month</span>
-                    </div>
-                    <p className={kit.small}>{BILLING_TAX_WORDS.plusTax}</p>
-                    <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year — save two months</p>
-                  </>
-                )}
+                <div className={fp.priceRow}>
+                  <span className={kit.price}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}</span>
+                  <span className={kit.small}>/month</span>
+                </div>
+                <p className={kit.small}>{BILLING_TAX_WORDS.plusTax}</p>
+                <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year — save two months</p>
               </div>
               <p className={kit.body}>
                 For events teams register for — public registration, fees and payment tracking, check-in, and volunteers — and for organizers running more than one event a year.
@@ -290,7 +259,7 @@ export default async function ForTournamentOrganizersPage() {
                   two no longer read as one. W73 / Ask 31 (ruled 2026-11-18): no "free" over a checkout that takes a payment
                   method; Tournament Plus's trial sentence, with checkout's length, sits beside the button. */}
               <div className={kit.push}>
-                {!tpPromoActive && tpTrialLine && <p className={kit.small}>{tpTrialLine}</p>}
+                {tpTrialLine && <p className={kit.small}>{tpTrialLine}</p>}
                 <Link href="/start/tournament?plan=tournament_plus&billing=monthly" className={`${kit.btn} ${kit.btnFull}`}>
                   Start Tournament Plus
                 </Link>
@@ -306,40 +275,6 @@ export default async function ForTournamentOrganizersPage() {
           </p>
         </div>
       </section>
-
-      {/* ── Founding Season ──────────────────────────────────────────────── */}
-      {/* Re-aimed 2026-09-07: the eyebrow addressed first-timers, who are served by the free plan;
-          Tournament Plus is for organizations running two or more events. Widened 2026-10-16 (/marketing, the free
-          tournament tier's R9): it is also for any event teams register for, so registration leads. The consequence line is
-          the sentence that removes "what's the catch", and it is TRUE for this product — an
-          organization that stops moves to the free Tournament plan with everything it built. The
-          whole section is a promo artifact: gone the day the signup window closes. */}
-      {tpPromoActive && (
-        <section className={kit.section}>
-          <div className="container">
-            <div className={`${kit.card} ${kit.cardEdge}`}>
-              <p className={kit.eyebrow}>Taking registrations, or running more than one event in {FOUNDING_SEASON_YEAR_LABEL}?</p>
-              <h2 className={kit.heading}>
-                Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season.
-              </h2>
-              <p className={`${kit.body} ${fp.measure}`}>
-                Public registration and payment tracking, auto-scheduling, communications, and archives for every event you run
-                through {FOUNDING_SEASON_END_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month.
-                Sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}. No credit card.
-              </p>
-              <p className={`${kit.body} ${fp.measure}`}>
-                In {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season.
-                If you don&apos;t continue, your organization moves to the free Tournament plan and keeps everything it built.
-              </p>
-              <div className={fp.calloutTop}>
-                <Link href="/start/tournament" className={`${kit.btn} ${kit.btnSecondary}`}>
-                  Start free
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── Cross-sell ───────────────────────────────────────────────────── */}
       <section className={kit.section}>
@@ -389,9 +324,7 @@ export default async function ForTournamentOrganizersPage() {
             <span className={kit.accent}>starts here.</span>
           </h2>
           <p className={kit.lead}>
-            {tpPromoActive
-              ? `${foundingSeasonOfferCore('tournament_plus')} — normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card.`
-              : 'Free to start. No credit card required.'}
+            Free to start. No credit card required.
           </p>
           <div className={kit.row}>
             <Link href="/start/tournament" className={kit.btn}>

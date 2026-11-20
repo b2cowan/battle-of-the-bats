@@ -58,7 +58,7 @@ const TABS: Array<{ key: Tab; label: string }> = [
   // Club Tier 12d-2 (words §6.1 `pa.tab`): the fifth tab, only for a club that connected payouts at some time.
   { key: 'payments', label: PA_WORDS.tab },
 ];
-/** The old record's tab names, so a link written before Stage 2 (Retention's, the Founding desk's) opens the right tab. */
+/** The old record's tab names, so a link written before Stage 2 (Retention's) opens the right tab. */
 const OLD_TABS: Record<string, Tab> = { billing: 'money', entitlements: 'access', support: 'access', activity: 'story' };
 
 export type ClubRecordProps = {
@@ -86,8 +86,6 @@ export type ClubRecordProps = {
     id: string; type: string; value: string | null; addons: string[]; plan: string | null; expiresAt: string | null;
     /** The last free day (`YYYY-MM-DD`, Eastern) the end stands for. */
     lastDay: string | null;
-    /** A comp period carrying Founding Season's end: read-only, given at sign-up. */
-    founding: boolean;
     /** Billing-status free time that reopened the club after its plan ended: its end closes it again while unpaid. */
     reopenedEndedClub: boolean;
     reason: string | null; createdBy: string | null; createdAt: string; endedAt: string | null; running: boolean;
@@ -395,12 +393,11 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={kit.bandNote}>{org.nowTournamentLimit >= 9999 ? `no limit on ${org.nowPlanLabel}` : `the ${org.nowPlanLabel} limit`}</span>
     </div>
   );
-  // Free time: the staff grants running, and Founding Season. The title's chip names the staff grant that ends first.
-  const runningFree = props.overrides.filter(o => o.running && (o.type !== 'comp_period' || o.founding));
+  // Free time: the staff grants running. The title's chip names the grant that ends first.
   // A grant with no end date (lastDay null) sorts after every dated one, so the title's chip names a real end first.
-  const staffFree = runningFree.filter(o => o.type !== 'comp_period').sort((a, b) => (a.lastDay ?? '9999').localeCompare(b.lastDay ?? '9999'));
-  const foundingRow = runningFree.find(o => o.founding) ?? null;
-  const firstEnding = staffFree[0] ?? null;
+  const runningFree = props.overrides.filter(o => o.running && o.type !== 'comp_period')
+    .sort((a, b) => (a.lastDay ?? '9999').localeCompare(b.lastDay ?? '9999'));
+  const firstEnding = runningFree[0] ?? null;
   const freeTimeCell = (
     <div className={`${kit.bandCell}${runningFree.length ? ` ${kit.bandGood}` : ''}`}>
       <span className={kit.bandLabel}>Free time</span>
@@ -410,22 +407,16 @@ export default function ClubRecord(props: ClubRecordProps) {
           : firstEnding ? (firstEnding.lastDay
             ? `${freeTimeSubject(firstEnding, org.planLabel)} ends first, ${formatShortDay(firstEnding.lastDay)}`
             : `${freeTimeSubject(firstEnding, org.planLabel)}, no end date`)
-          : foundingRow ? 'Founding Season' : 'none running'}
+          : 'none running'}
       </span>
     </div>
   );
-  // When nothing renews, the last figure says what is true: free through Founding Season's last day, or the portal's.
+  // When nothing renews, the last figure says what is true: the portal's free time, or the plan ending.
   const renewsCell = portalFt ? (
     <div className={kit.bandCell}>
       <span className={kit.bandLabel}>Billing</span>
       <span className={`${kit.bandValueText} ${styles.quietValue}`}>{portalRunning ? freeThroughShort(portalRunning.lastDay) : 'Free time ended'}</span>
       <span className={kit.bandNote}>{portalRunning ? 'Given by staff, no Stripe subscription' : 'back on the free Coaches Portal, no Stripe subscription'}</span>
-    </div>
-  ) : foundingRow && !org.stripeSubscriptionId && foundingRow.lastDay ? (
-    <div className={kit.bandCell}>
-      <span className={kit.bandLabel}>Billing</span>
-      <span className={`${kit.bandValueText} ${styles.quietValue}`}>{freeThroughShort(foundingRow.lastDay)}</span>
-      <span className={kit.bandNote}>Founding Season, no Stripe subscription</span>
     </div>
   ) : props.ending?.overdue ? (
     // Part C (G3): past its date and Stripe never said it ended — what our record says, not a confirmed end.
@@ -884,9 +875,9 @@ function AccessTab(props: ClubRecordProps & {
   onRelease: () => void; onCancel: () => void; onDelete: () => void;
 }) {
   const { org, can } = props;
-  // Only a portal staff gave free time; any other portal (paying, Founding, comped) keeps Stage 4's list, door-less.
+  // Only a portal staff gave free time; any other portal (paying, comped) keeps Stage 4's list, door-less.
   const pft = props.portalFreeTime?.freeTime ? props.portalFreeTime : null;
-  // Running free time only: ended free time stays in the Story, not here. Founding first is not a rule; soonest end is.
+  // Running free time only: ended free time stays in the Story, not here. Soonest end first.
   const running = props.overrides.filter(o => o.running).sort((a, b) => (a.lastDay ?? '9999').localeCompare(b.lastDay ?? '9999'));
   const giver = can.billing && props.freeTime;
   const block = props.freeTime?.block ?? null;
@@ -944,16 +935,14 @@ function AccessTab(props: ClubRecordProps & {
               return (
                 <div key={o.id} className={styles.listRow}>
                   <span className={styles.listMain}>
-                    <strong>{freeTimeTitle(o, org)}</strong>
+                    <strong>{freeTimeTitle(o)}</strong>
                     <span className={styles.listSub}>
-                      {o.type === 'comp_period' && !o.founding
+                      {o.type === 'comp_period'
                         ? <>{o.lastDay ? `Until ${formatShortDay(o.lastDay)}` : 'No end date'} · {o.reason ?? 'No reason kept'}</>
                         : <>
                           {o.lastDay ? freeThroughShort(o.lastDay) : 'No end date'}
                           {leftText && <> · <span className={left != null && left < 14 ? styles.soon : undefined}>{leftText}</span></>}
-                          {o.founding
-                            ? <> · given at {org.planId === 'team' ? 'checkout' : 'sign-up'} · the club’s own plan, ending with the Founding Season</>
-                            : <> · {o.reason ?? 'No reason kept'} · by {o.createdBy ?? 'staff'}</>}
+                          <> · {o.reason ?? 'No reason kept'} · by {o.createdBy ?? 'staff'}</>
                         </>}
                     </span>
                   </span>

@@ -20,8 +20,8 @@ export default async function EmailTemplatesPage() {
       <AdminPageHeader title="Email templates" />
 
       <p className={kit.caption}>
-        View and customise the content of platform emails — the transactional/system emails and the
-        founding-season <strong>Marketing / Campaign</strong> emails. Editing a template overrides the
+        View and customise the content of platform emails — the transactional/system emails and
+        the <strong>Marketing / Campaign</strong> emails (retired ones stay here as history). Editing a template overrides the
         default; the FieldLogicHQ brand envelope (header, footer) is always applied automatically. Use
         &ldquo;Reset to default&rdquo; to go back to the built-in copy.
         {customisedCount > 0 && (

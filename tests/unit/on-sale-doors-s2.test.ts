@@ -237,10 +237,10 @@ describe('trap D — who the doors send elsewhere', () => {
   });
 });
 
-describe('no Founding comp on a paid door (Ask 14)', () => {
-  it('the comp is never granted to an organization a paid door makes, and the club door locks no offer', () => {
-    assert.match(readCode('app/api/org/create/route.ts'), /if \(!startPlan && foundingSeasonOfferFor\(user, 'organization'\)\) \{/);
-    assert.match(readCode('app/api/auth/signup/route.ts'), /if \(orgDoor === 'organization' && !\(await lockStartDoorOrUndo\(userId, 'organization'\)\)\) \{/);
+describe('no comp on a paid door (Ask 14; the Founding Season itself was removed, Stage 2b)', () => {
+  it('no organization a paid door makes is granted a comp, and no door locks an offer', () => {
+    assert.doesNotMatch(readCode('app/api/org/create/route.ts'), /Founding|foundingSeasonOfferFor|comp_period/);
+    assert.doesNotMatch(readCode('app/api/auth/signup/route.ts'), /Founding|lockStartDoorOrUndo/);
   });
 });
 

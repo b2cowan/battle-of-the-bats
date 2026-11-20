@@ -5,7 +5,7 @@ import { canViewPlatformArea, isPlatformAreaReadOnly, PLATFORM_POWERS } from '..
 import { visibleMenuGroups } from '../../app/platform-admin/console-menu.ts';
 import { EXPORT_CATALOG } from '../../lib/export/catalog.ts';
 import {
-  RW, buildComingView, buildUnpaidView, byCurrencyWords, comingBand, comingExportRows, compedNotCountedWords, isStaleTrial,
+  RW, buildComingView, buildUnpaidView, byCurrencyWords, comingBand, comingExportRows, isStaleTrial,
   isTrialEnding, paramsFrom, paramsQuery, priceCell, priceTileNote, priceTileValue, rangeFace, rangeFor, rangeWords, unpaidBand,
   unpaidExportRows, unpaidRows,
   type ComingInput, type RenewalOrg, type UnpaidInput, type UnpaidRecord,
@@ -24,7 +24,7 @@ const org = (over: Partial<RenewalOrg> = {}): RenewalOrg => ({
   subscription_currency: 'cad', stripe_subscription_id: 'sub_1', ...over,
 });
 const coming = (orgs: RenewalOrg[], over: Partial<ComingInput> = {}): ComingInput => ({
-  orgs, orgsById: new Map(orgs.map(o => [o.id, o])), staffFreeTime: [], foundingByOrg: new Map(), endingOrgIds: new Set(), ...over,
+  orgs, orgsById: new Map(orgs.map(o => [o.id, o])), staffFreeTime: [], endingOrgIds: new Set(), ...over,
 });
 const P = paramsFrom(() => null);
 const rec = (over: Partial<UnpaidRecord> = {}): UnpaidRecord => ({
@@ -96,20 +96,6 @@ describe('F2 · trial ending', () => {
   });
 });
 
-describe('F1 · comped clubs leave the monthly figure', () => {
-  it('a running comp period is not added, and the pages say how many were left out', () => {
-    const metrics = readCode('lib/platform-metrics.ts');
-    assert.match(metrics, /if \(compedOrgIds\.has\(org\.id\) && !org\.stripe_subscription_id\) compedNotCounted \+= 1;\s+else estimatedMrr \+=/);
-    assert.match(metrics, /row\.type === 'comp_period'/);
-    for (const f of ['app/platform-admin/business-numbers/page.tsx', 'app/platform-admin/page.tsx']) {
-      assert.match(readCode(f), /compedNotCountedWords\(stats\.totals\.compedNotCounted\)/, f);
-    }
-    assert.equal(compedNotCountedWords(0), '');
-    assert.equal(compedNotCountedWords(1), ' · 1 comped club not counted');
-    assert.equal(compedNotCountedWords(3), ' · 3 comped clubs not counted');
-  });
-});
-
 describe('dates', () => {
   it('forward only, Ontario days', () => {
     assert.deepEqual(rangeFor('this_month', TODAY), { from: '2026-11-07', to: '2026-11-30' });
@@ -154,7 +140,7 @@ describe('Coming up', () => {
     org({ id: 'o2', name: 'Maple Ridge Ball Association', plan_id: 'league', subscription_status: 'trialing', current_period_end: '2026-11-12T15:00:00Z', subscription_amount_cents: 8900 }),
     org({ id: 'o3', name: 'Fairview U11 Comets', plan_id: 'team', account_kind: 'team_workspace', subscription_status: 'trialing', current_period_end: '2026-10-29T15:00:00Z' }),
     org({ id: 'o4', name: 'No price yet', current_period_end: '2026-11-20T15:00:00Z', subscription_amount_cents: null, subscription_currency: null }),
-    org({ id: 'o5', name: 'Founding club', plan_id: 'tournament_plus', stripe_subscription_id: null, current_period_end: '2027-10-01T03:59:59Z' }),
+    org({ id: 'o5', name: 'Free time club', plan_id: 'tournament_plus', stripe_subscription_id: null, current_period_end: '2027-10-01T03:59:59Z' }),
     org({ id: 'o6', name: 'Past due club', subscription_status: 'past_due', current_period_end: '2026-11-10T15:00:00Z' }),
     org({ id: 'o7', name: 'Next year', current_period_end: '2027-02-01T15:00:00Z' }),
     org({ id: 'o8', name: 'Leaving', current_period_end: '2026-11-15T15:00:00Z' }),
@@ -178,7 +164,7 @@ describe('Coming up', () => {
       ['renews', 'Eastgate'],
     ]);
   });
-  it('a Founding comp never "renews"; a past-due club is on Unpaid bills; a canceled-at-end plan does not renew', () => {
+  it('a club with no subscription never "renews"; a past-due club is on Unpaid bills; a canceled-at-end plan does not renew', () => {
     assert.ok(!view.rows.some(r => r.orgId === 'o5' || r.orgId === 'o6'));
     assert.deepEqual(view.rows.find(r => r.orgId === 'o8')!.price, { kind: 'no_renewal' });
   });
@@ -186,7 +172,7 @@ describe('Coming up', () => {
     const fairview = view.rows.find(r => r.orgId === 'o3')!;
     assert.equal(fairview.isPortal, true);
     assert.equal(fairview.door.href, '/platform-admin/orgs/o3?tab=money');
-    assert.equal(view.rows.find(r => r.orgId === 'o10')!.door.href, '/platform-admin/free-time?view=staff');
+    assert.equal(view.rows.find(r => r.orgId === 'o10')!.door.href, '/platform-admin/free-time');
   });
   it('the band: counts, the price per currency (never added across), the missing prices apart', () => {
     const b = view.band!;
@@ -205,7 +191,7 @@ describe('Coming up', () => {
     const trials = buildComingView(input, { ...P, what: 'trial_ends' }, TODAY);
     assert.deepEqual(trials.rows.map(r => r.orgId), ['o2']);
     assert.equal(trials.band!.renewals, 4);
-    assert.deepEqual(buildComingView(input, { ...P, what: 'free_or_founding' }, TODAY).rows.map(r => r.orgId), ['o10']);
+    assert.deepEqual(buildComingView(input, { ...P, what: 'free_time_ends' }, TODAY).rows.map(r => r.orgId), ['o10']);
     assert.deepEqual(buildComingView(input, { ...P, plan: 'league' }, TODAY).rows.map(r => r.orgId), ['o2']);
   });
   it('a Plan pick the rows do not offer reads as All plans, not as an empty list', () => {

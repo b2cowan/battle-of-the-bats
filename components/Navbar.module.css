@@ -1,7 +1,3 @@
-/* The MARKETING bar's vertical pin. Its other geometry is Tailwind utilities in Navbar.tsx; `top`
-   alone lives here so it can ride --offer-bar-h, published by the Founding Season offer bar while
-   the signup window is open (components/marketing/FoundingSeasonOfferBar). Unset → 0px → today's
-   exact geometry. */
 /* ⚖ The marketing bar is WARM, ALWAYS (The public face, warm: S4, owner Ask 1 + Ask 5 B, 2026-10-23): a white bar with a
    hairline, on the first look's warm palette (`.warmVars`, which has no Dark gate). It composes the tokens rather than
    being nested in a warm wrapper because SiteChrome mounts it outside the page. Its button is the marketing kit's. */
@@ -11,7 +7,7 @@
   left: 0;
   right: 0;
   z-index: 50;
-  top: var(--offer-bar-h, 0px);
+  top: 0;
   background: var(--home-card);
   border-bottom: 1px solid var(--home-line);
   color: var(--home-ink);

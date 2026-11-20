@@ -50,8 +50,20 @@ now feeds the Get started menu and Home's waiting-workspace card; keep the Leagu
 - **Stage 2a — the holders' move to free time** (design + a dev rehearsal on the 5 dev holders; the production step is
   an owner-run release step). Before 2b, so that removing Founding code never leaves a holder on a stored plan with no
   end.
-- **Stage 2b — remove the Founding code.**
+- **Stage 2b — remove the Founding code.** Then, straight after, the free-time item (`FREE_TIME_SAME_RULES_PLAN.md`); **2b
+  reaches production only together with it** (owner 2026-11-19).
 - **Stage 3 — records, help, tests, `/legal`, `/review`.** Runs with each stage, closed at the end.
+
+**Order against the On-sale pages work (recorded 2026-11-19, after the S2 walk §545 passed; the owner's yes):**
+Stage 1 → 2a → 2b → **the team move's own small session** (On-sale plan call C1) **and the three small items** from walk
+§545 call C5 (two tabs making two organizations; sign-in from `/auth/login?next=/start/club` landing on Home; the doubled
+title) → S3 → S3b → S4. The first two of those come after this project because they edit code this project deletes:
+the team move and the plan-move and team-transfer code carry Founding branches (the comp revokes, the Founding-comped move
+refusal), and the create step that makes two organizations also carries the Founding grant and, in Stage 1, the free
+League's own create route. The title fix and the sign-in fix share no code with this project and may go at any time after
+Stage 1 (Stage 1 edits the same start pages). **Production:** the Stage 2a holder move is an owner-run release step and
+must reach production **before** the Stage 2b code does; the migration and Terms steps of the on-sale production order are
+separate and unchanged. Do not start any of the follow-on items while a build of this project is open in the shared copy.
 
 ## 3. Stage 1 — remove the free League
 
@@ -183,6 +195,9 @@ with no end date on BOTH clubs and coaches** (today only clubs), built as its ow
   plan for that one request (fails open toward the free plan). Cosmetic: the giver reads "system". Checks: dictionary, spelling, production-steps gate pass; `check:migrations` shows only other sessions' pending prod
   changes; `verify:changed` 30 of 17,894 tests fail, none from this stage (all in files committed before it; same count as Stage 1);
   typecheck 2 errors in one committed test file (`layout-run-journal.test.ts`, 2026-11-18), as Stage 1 recorded.
+- **Committed `d27742a97` 2026-11-19.** Owner after the commit (2026-11-19): looked at the free-plan dev holder's Plan & billing
+  page and **approved** it; and **agreed** with `/legal`'s condition — **Stage 2b reaches production only together with the
+  free-time item** (`FREE_TIME_SAME_RULES_PLAN.md`), built straight after 2b.
 
 ## 5. Stage 2b — remove the Founding code
 
@@ -236,6 +251,113 @@ Census (2026-11-19; re-grep `Founding|FOUNDING_SEASON|founding_|foundingSeason|s
 **Done when:** a grep for the census terms returns only history and the kept shared pieces; no screen, email or staff
 page says "Founding"; the three holders read as free time on their plan through September 30, 2027.
 
+### 5a. Stage 2b gate record (2026-11-19 → 2026-11-20) — gate PASSED, build not started
+
+- **Census re-grep** (two helpers, verdict per item) — corrections to the census above, argued from the code:
+  - **Shared, KEEP:** the card-saving session in `lib/billing-setup.ts` (`createCardSetupSession`) is also the fallback of
+    `app/api/billing/portal/route.ts` for an org with no Stripe customer, so it and the webhook's setup-mode arm stay. Only
+    its metadata `purpose: 'founding_season_card_on_file'` is renamed (the webhook does not read `purpose`). The card-on-file
+    columns become **write-only** — keep them, say so in the dictionary.
+  - **Two more readers of the next-season columns** (must stop reading before the drop): `lib/billing-drift-server.ts`
+    and `lib/renewal-reminder-server.ts` (+ `renewal-reminder.ts`, `purchase-details.ts`'s next-season case).
+  - **The start-door lock** is `app_metadata.start_door`, read only by Founding; it is **not** `user_metadata.start`
+    (`readStartDoor`, kept).
+  - **Trap:** `PricingSection.tsx` turns the paid CTA into "Start now" only through the Founding promo note. Removing the
+    note reverts two paid plans to "Start free" + "No credit card required" — set `'Start now'` outright.
+  - **Missed by the census:** the plan-lock menu foot in registrations + `RegistrationChip.tsx`; the "comped clubs not
+    counted" line on `app/platform-admin/page.tsx` and `business-numbers/page.tsx`; the portal free-time Founding block;
+    `email-templates/page.tsx`; `lead-numbers-view.ts`; the `/coaches/welcome` route (reached only via the comp path) and
+    its `WARM_JOURNEY_PREFIXES` entry; the dead `--offer-bar-h` CSS and Founding-only CSS classes;
+    `export/catalog.ts`'s entry for a missing file.
+  - **Env:** neither `.env.local` nor `.env.production.local` holds `NEXT_PUBLIC_FOUNDING_SEASON_*`; only the hosting
+    console might (owner step).
+  - **Campaigns** (`/platform-admin/email`) is entirely Founding: all five live campaigns are `founding_*` and its
+    audience band and opt-out list are built from Founding orgs only.
+  - Already closed up: every public Founding piece (pricing, home, for-* pages, start) has been hidden since 2026-10-26.
+    `ON_SALE_PAGES_S1_REVIEW.md` item 4 is already fixed in code — close it in the record.
+- **Counts** (dev / prod, counts only): next-season choices 0 / 0; orgs with a Stripe subscription 5 / 0; comp_period rows
+  9 / 3, unrevoked 0 / 3 (all 2027-10-01 04:00 UTC, the 3 holders until 510 runs); cards on comp orgs 0 / 0; start-door
+  locks 2 (both post-close) / 0; Founding `email_sends` none / `founding_welcome` = 1. Migration 510 on prod: pending.
+- **Mockups:** `FOUNDING_REMOVAL_2B_MOCKUP.html`, published https://claude.ai/artifact/VfLyZhTrSZbGkvySkHVYQ5, `/design`
+  run, all findings fixed. **PM UX summary presented 2026-11-19.**
+- **Owner rulings 2026-11-20 ("go with all four recommendations"):**
+  - **A.** The Free time page becomes **one list under the "Free time" title, no tabs.** Old links to the Founding view and
+    the old `/platform-admin/founding-season` address land on that list.
+  - **B.** **Campaigns stays as a record:** Sent history and Opt-outs only, with Opt-outs **widened to every organization
+    that unsubscribed** (today: Founding orgs only). The audience band, counts, schedule and send controls go, with the five
+    `founding_*` campaigns and their sending paths. `email_sends` history stays.
+  - **C.** The holders' old Story lines read through the **ordinary comp-period wording** (the Founding branch of
+    `free-time-story.ts` goes). The reason 2a recorded — "Founding Season promise kept as free time through September 30,
+    2027 (owner ruling 2026-11-19)" — **stays as history** in the Why column; it is the one place staff still read the
+    word, and it is exempt from "no staff page says Founding". The Oct 1 (stored instant) vs Sep 30 (last free day) pair
+    is accepted.
+  - **D.** "· N comped clubs not counted" **comes off Today and Business numbers**, with the dead figure in
+    `platform-metrics.ts` — `/accounting` confirms during the build.
+- **Build prompt:** §8c.
+
+### 5b. Stage 2b build record (2026-11-20)
+
+- **Re-verified first (counts only on production):** next-season choices 0 / 0 and next-season subscriptions 0 / 0 (dev / prod);
+  unrevoked comp marks 0 / 3 (the holders, until 510); migration 510 on production: pending. Census re-grepped (204 files).
+- **Removed.** The whole Founding block of `lib/plan-config.ts` (`showsFreeCredit` kept); `lib/founding-season.ts`,
+  `lib/founding-season-desk.ts`, `lib/use-founding-season-lock.ts`, `lib/next-season-choice.ts`; routes
+  `/api/admin/org/founding-season-status`, `/api/billing/choose-next-season`, `/api/billing/setup-payment-method` (only the
+  Founding card window posted to it), `/api/admin/email` (GET), `/email/send`, `/email/schedule`, `/email/preview`;
+  `/coaches/welcome` (+ its warm-journey and public-path entries); `FoundingSeasonPanel`, `FoundingSeasonOfferBar`,
+  `FoundingSeasonDesk` and their CSS; the start-door lock (`app_metadata.start_door`; `user_metadata.start` kept); the org-create
+  grant, the $0 Tournament Plus switch, the comp portal provisioning and reactivation; every Founding revoke and refusal in plan
+  moves, operator changes, bulk operations and the free-time give; the webhook's three next-season arms (every other arm
+  unchanged); the next-season reads in the drift check, renewal reminder and purchase-details email; the Founding-only emails
+  (Tournament Plus welcome and upsell, the comp portal welcome); the plan-lock "free for you through" lines; the onboarding banner;
+  Today's two campaign queues (always 0 once nothing is live); dead `--offer-bar-h` uses and Founding-only CSS. Scripts
+  `seed-founding-season-fixture.mjs` and `generate-campaign-reseed-migration.mjs` deleted (nothing live to reseed);
+  `seed-gst-6-4-walk-fixture.mjs` lost its next-season and card-window commands.
+- **Kept, as ruled:** `org_overrides` + the `comp_period` value (old rows, all revoked); the card-saving session (portal fallback;
+  metadata purpose renamed `card_on_file`) and the webhook's setup arm — card-on-file is now written and read by nothing;
+  `FreeTimeBand` without `foundingThrough`; the five `founding_*` templates **retired** (not deleted) in
+  `lib/marketing-email-defaults.ts` with frozen copy, so Email templates and Sent history still show past sends.
+- **The four rulings, built:** A — Free time is one list, no tabs; `/platform-admin/founding-season` redirects to it. B —
+  Campaigns shows Sent history + Opt-outs only; Opt-outs lists every organization with the opt-out set (it was filtered to
+  Founding orgs in code; the 100-row cap went so the count is honest). C — the Story reads old comp rows the ordinary way; the
+  stored reason stays. D — the comped line and its figure are gone from Today and Business numbers.
+- **Visitors:** no change. The paid pricing cards say "Start now" outright (the trap in §5a): Tournament Plus and the Premium
+  Coaches Portal; Tournament keeps "Get started free" + "No credit card required".
+- **Data:** migration 511 drops `organization_billing_facts`' four next-season columns, their two CHECKs and
+  `idx_org_billing_facts_no_next_season_choice`; applied to dev 2026-11-20 (6 card rows kept); production pending in
+  `MANUAL_PROD_STEPS.json` with the ORDER **510 → the 2b code together with the free-time item → 511 after that code serves**.
+  Dictionary updated (card-on-file write-only; two Stripe-bypass paths, not three; campaigns retired; `platform_events`
+  `source='founding_season'` no longer written — historic rows dev 6 / prod 1); snapshots refreshed (prod still lists the four
+  columns until 511 runs there — refresh again then).
+- **Help** (`org.tsx`, `platform-admin.tsx`, the staff help hub's Campaigns link): no Founding anywhere; Free time, Campaigns,
+  Renewals follow rulings A, B. `measure:help` unchanged set of long sections; spelling passes.
+- **Records:** Facts doc Promotions collapsed to "no promotion runs" (Last-reconciled entry 2026-11-20 — the `/strategy` drift
+  check runs against it; no price, name, band or gate moved; the agreement test passes); `PRICING_PAGE_COPY.md` and
+  `BRAND_FOUNDATIONS.md` mark Founding as history; `PRICE_CHANGE_NOTICE_PROCEDURE.md` lines 16, 22 say staff-given free time;
+  `ON_SALE_PAGES_S1_REVIEW.md` item 4 closed; in-repo memory updated.
+- **Reviews.** `/accounting` (`FOUNDING_REMOVAL_2B_REVIEW.md`): no must-fix; the monthly estimate would overstate two list prices
+  only if the 2b code served before 510 — the order prevents it. `/legal` (LEGAL_INDEX row 2026-11-20): no must-fix; the holders
+  keep every dated promise through the free-time band; the 2a condition (club reminders) is met by shipping 2b only with the
+  free-time item; CASL — sending only shrinks; the published Terms §8 "for a next season you choose" example can no longer arise
+  (harmless, no notice) and is removed from the held draft (`drafts/TERMS_OF_SERVICE.md` 0.3).
+- **`/review` (high tier, 5 lenses: correctness, security/tenancy, data/contract/webhook, regression, free-time rules):
+  no confirmed defect.** Refuted: "for-coaches visitors see different words" (every switch keeps the offer-closed branch;
+  the difference against HEAD is another session's uncommitted edit). Accepted as properties of the removal (0 such
+  subscriptions on dev and prod): a stray next-season subscription would now take the ordinary webhook path, count as a used
+  trial and get no reminder. Owner-visible, as ruled: an old Renewals link to a Founding choice opens on All; a holder's
+  Money-tab Billing cell reads like any free-time club's ("Renews · Not set · no Stripe subscription"; the Free through row is
+  right). Notes for later, not defects: the widened Opt-outs list reads each owner one at a time (fine at today's handful;
+  page it if it grows); Re-subscribe writes no audit row (pre-existing — owner call whether to log it); a cancelled former
+  comp portal that reactivates gets the org-billed error text (no such portal after 510). Checks: typecheck clean except the
+  2 committed errors in `layout-run-journal.test.ts`; unit tests 30 fail vs 42 on a clean copy of the last commit, the only 2
+  new from another session's `DivisionFilterBar`; spelling, dictionary, migrations-gate (only other sessions' prod drift +
+  511's expected only-prod columns), production-steps gate pass; the other verify gates' failures are other sessions' files
+  (tokens, admin type/old look, index coverage, org-slug callers, root files) or pre-date this change (unused CSS selectors).
+  Help was done as a dedicated help pass following the `/docs` rules (measure:help, spelling) rather than the `/docs` agent.
+- **Left as is (noted):** two dev accounts still carry the inert `app_metadata.start_door` key (prod 0; nothing reads it);
+  `coachUpsell.normally` in `plan-billing-words.ts` is unrendered; `lib/marketing-schedule.ts` now has no product caller (its
+  test stays); `createEmailBatch`/`finalizeBatch` have no caller; the paid Premium reactivation path does not clear the start
+  record (it never did — only the removed comp path did).
+
 ## 6. Checks per stage
 
 `npm run verify:changed`; `npm run typecheck` (needs `NODE_OPTIONS=--max-old-space-size=8192` on this machine while
@@ -257,3 +379,140 @@ changes (it should not); `/docs` for help.
 > if not, stop and say so. Re-grep the census terms in the stage's section rather than trusting its line numbers. Keep
 > every piece the plan marks as shared with free time. Present the PM UX summary before editing. Run the stage's
 > checks, `/review`, and `/legal` for Stage 2; do not commit without the owner's go; stage explicit pathspecs only.
+
+### 8b. Stage 2b build prompt (written 2026-11-19, after 2a `d27742a97`)
+
+```
+Stage 2b of docs/projects/active/FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md — remove the Founding Season code. Owner ruling
+2026-11-19 (top entry of docs/agents/strategy/BUSINESS_DECISIONS.md). Stage 1 (free League) and Stage 2a (holders moved to
+free time, migration 510, committed d27742a97) are done on dev; read the plan's §4 build record first. Do NOT build the
+free-time item (FREE_TIME_SAME_RULES_PLAN.md) in this session — it is the NEXT session, and 2b reaches production only
+together with it (owner 2026-11-19). Do not start the team move or the three small doors-walk fixes either.
+
+WHAT IS TRUE NOW (verify, counts only on production)
+- No account carries a live Founding mark: on dev 0 unrevoked comp_period rows at a Founding instant; production still has 3
+  until the owner runs migration 510 (MANUAL_PROD_STEPS.json, pending). The 2b code must not reach production before 510 is
+  applied there — say so in the production-steps record and in the release notes this session writes.
+- Production on 2026-11-19: 0 next-season choices, 0 cards on file for holders, 0 Stripe subscriptions on any org. Re-count
+  next-season subscriptions on dev and production BEFORE touching the webhook's next-season arms.
+
+SCOPE: the plan's §5 census (re-grep the census terms; the line numbers are from 2026-11-19 and have moved). Remove every
+Founding branch a customer or staff member can read, every path that can grant, extend or end a comp, the five Founding
+emails' sending paths (keep email_sends history), the 2027 card window and next-season plan choice, the Founding desk.
+KEEP (plan §1 rule 4): staff-given free time and what it shares — org_overrides, the comp_period CHECK value and
+free-time-story.ts's reading of OLD comp rows, billing_mode='platform_override' told apart by free_time_given_at, the
+"active with no subscription" ending paths, FreeTimeBand (cut only its Founding clause: free-time-copy's foundingThrough).
+Also from 2a's reviews: the platform-metrics "comped out" figure becomes dead (remove or rename it, /accounting);
+docs/agents/legal/PRICE_CHANGE_NOTICE_PROCEDURE.md lines 16 and 22 ("Founding comps" → free time, still excluded from
+notices); ON_SALE_PAGES_S1_REVIEW.md item 4 closes. Data: drop organization_billing_facts' next-season columns (mig 283) only
+if nothing else reads them (dictionary + snapshots + MANUAL_PROD_STEPS — a dropped column is invisible to check:migrations;
+ORDER: after the code that stops reading them is serving). Remove NEXT_PUBLIC_FOUNDING_SEASON_* from .env files and tell the
+owner to remove them from the hosted environment. Not "founding year" (unrelated).
+
+BLOCKING GATE, IN THIS ORDER (AGENCY_RULES + owner memory):
+1. Delegate the census re-grep to a helper; take back paths with line numbers and a verdict per item (remove / keep-shared /
+   history), not dumps. Argue from the code; if the census is wrong or misses something, say so first.
+2. Mockups, published as one Claude Artifact (HTML page, house layout: sticky numbered tabs, View switch Everything / Show
+   only what differs, numbered clickable notes, GOES / CHANGED / UNCHANGED tags), /design run on it before hand-off. Draw the
+   DECISIONS, a whole screen before/after each: (a) /pricing (the Founding banner, FAQ answer, trial note and closing lines —
+   what re-flows when they go); (b) the home page and for-tournament-organizers / for-coaches sections that carry Founding;
+   (c) the start / sign-up step and coaches welcome where a Founding line sits; (d) platform admin: the free-time page without
+   its Founding tab, the clubs list without the filter/chip, renewals. Say what replaces each removed piece (usually
+   nothing — then show the page closing up).
+3. A product-manager UX summary in plain language: what each audience sees differently, role differences, risks.
+Wait for the owner's go before editing code.
+
+CHECKS: verify:changed, typecheck (NODE_OPTIONS=--max-old-space-size=8192), check:migrations, check:dictionary,
+check:spelling, measure:help, npm test; report failures that are other sessions' with evidence (30 tests and 2 typecheck
+errors in committed files were failing before 2a), fix only what 2b broke. The plan-billing-profile article fingerprint will
+need re-baselining (say so in the commit). Then /legal (every customer-facing removal; what the holders were promised),
+/accounting (the metrics figure, renewals' free_or_founding bucket), /review at the high-risk tier (billing, webhook, signup,
+migrations), /docs for the help lines (lib/help-content org.tsx and platform-admin.tsx per §5). Apply what they find or record
+it as an owner question.
+
+RECORDS, SAME COMMIT AS THE WORK: the plan's §5 build record, the board line (OWNER_BRIEF_PROJECTS.json id
+"free-league-founding"), the Facts doc (docs/agents/strategy/PLAN_PRICING_FACTS.md) Promotions + Founding notes and
+PRICING_PAGE_COPY.md's Founding canon marked history (a pricing-facts change: /strategy drift check), BRAND_FOUNDATIONS.md,
+memory notes on Founding. Shared working copy, branch dev: stage explicit pathspecs; partial-commit shared files (HEAD + your
+exact edits, temp index, guarded commit); do not commit without the owner's go; review only your own hunks. Report in
+product-owner voice.
+
+DONE WHEN: a grep for the census terms returns only history and the kept shared pieces; no screen, email or staff page says
+"Founding"; the three holders still read as free time on their plan through September 30, 2027; the production-steps
+record says 510 before this code, and this code before the next-season column drop.
+```
+
+### 8c. Stage 2b build prompt — gate passed (written 2026-11-20; supersedes 8b)
+
+```
+Build Stage 2b of docs/projects/active/FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md — remove the Founding Season code (owner
+ruling 2026-11-19, top entry of docs/agents/strategy/BUSINESS_DECISIONS.md). THE GATE IS PASSED: census, mockups (/design
+run) and the PM UX summary were done in the previous session, and the owner ruled on its four asks on 2026-11-20. Pasting
+this prompt is the owner's go to build. Do not redraw or re-ask; open with a short task list (AGENCY_RULES "planning
+first") and start. Read first, in order: the plan's §4 (2a build record), §5 (census), §5a (gate record: census
+corrections, counts, the four rulings), then the mockup docs/projects/active/FOUNDING_REMOVAL_2B_MOCKUP.html — build to it.
+
+NOT IN THIS SESSION: the free-time item (FREE_TIME_SAME_RULES_PLAN.md) is the NEXT session, and 2b reaches production only
+together with it (owner 2026-11-19). Not the team move, not the three small doors-walk fixes.
+
+RE-VERIFY BEFORE EDITING (counts only on production, never rows that hold a person's information)
+- Re-count next-season subscriptions and choices on dev and prod BEFORE touching the webhook's next-season arms (§5a: 0/0).
+- Migration 510's prod status in MANUAL_PROD_STEPS.json (pending on 2026-11-20). The 2b code must not reach production
+  before 510 is applied there.
+- Re-grep the census terms (Founding|FOUNDING_SEASON|founding_|foundingSeason|showFoundingSeason|comp_period|next_season|
+  NEXT_SEASON_CHOICE|start_door) through a helper; line numbers have moved. Do the reading through helpers (CLAUDE.md),
+  open the cited lines yourself before editing them.
+
+SCOPE: §5 as corrected by §5a. Remove every Founding branch a customer or staff member can read, every path that can grant,
+extend or end a comp, the five founding_* campaigns and their sending paths, the 2027 card window and the next-season plan
+choice, the Founding desk, the start-door lock (app_metadata.start_door — NOT user_metadata.start, which stays), the
+/coaches/welcome route and its WARM_JOURNEY_PREFIXES entry, the Founding-only scripts, tests and CSS.
+KEEP (plan §1 rule 4 + §5a): org_overrides; the comp_period CHECK value; free-time-story.ts's ordinary reading of OLD comp
+rows; billing_mode='platform_override' told apart by free_time_given_at; the "active with no subscription" ending paths;
+FreeTimeBand (cut only free-time-copy's foundingThrough); the card-saving session and the webhook's setup-mode arm (shared
+with the billing portal fallback — rename only the metadata purpose; card-on-file columns become write-only, keep them and
+say so in the dictionary).
+THE FOUR RULINGS (§5a, build exactly these):
+ A. Free time = one list titled "Free time", no tabs; old Founding-view links and /platform-admin/founding-season land on it.
+ B. Campaigns stays as a record: Sent history + Opt-outs, Opt-outs widened to every organization that unsubscribed; the
+    band, counts, schedule and send controls go.
+ C. Story: remove the Founding branch; the holders' old rows read through the ordinary comp-period wording; the recorded
+    reason text stays as history (the ONE permitted "Founding" a staff member reads). Oct 1 / Sep 30 accepted.
+ D. Remove "· N comped clubs not counted" from Today and Business numbers and the dead figure in platform-metrics.ts.
+TRAP: PricingSection's paid CTA reads "Start now" only through the Founding promo note — set 'Start now' outright and keep
+it in every promoActive ternary (for-coaches, pricing), or two paid plans revert to "Start free" + "No credit card".
+Visitors must see no change on /pricing, home, for-tournament-organizers, for-coaches, start (all hidden since 2026-10-26).
+Also: docs/agents/legal/PRICE_CHANGE_NOTICE_PROCEDURE.md lines 16, 22 ("Founding comps" → free time, still excluded from
+notices); ON_SALE_PAGES_S1_REVIEW.md item 4 closes (already fixed in code).
+
+DATA: a new migration (next free number) drops organization_billing_facts' next-season columns (mig 283), their CHECKs and
+idx_org_billing_facts_no_next_season_choice — ONLY after billing-drift-server.ts, renewal-reminder-server.ts,
+renewal-reminder.ts and purchase-details.ts stop reading them. Apply to dev; record prod in MANUAL_PROD_STEPS.json with the
+ORDER: 510 → the 2b code (with the free-time item) → this drop, after that code is serving (a dropped column is invisible to
+check:migrations). DATA_DICTIONARY.md (Founding lines incl. the stale one, next-season columns gone, card-on-file
+write-only) + npm run refresh:snapshots. Say the same order in the release notes this session writes.
+ENV: no NEXT_PUBLIC_FOUNDING_SEASON_* in the local .env files (§5a); tell the owner to remove SIGNUP_CLOSE, END and
+CARD_WINDOW_OPEN (NEXT_PUBLIC_FOUNDING_SEASON_*) from the hosting console. Not "founding year" (unrelated, keep).
+
+CHECKS: verify:changed, typecheck (NODE_OPTIONS=--max-old-space-size=8192), check:migrations, check:dictionary,
+check:spelling, measure:help, npm test. Report other sessions' failures with evidence (30 tests + 2 typecheck errors in
+committed files were failing before 2a); fix only what 2b broke. Re-baseline the plan-billing-profile article fingerprint
+and say so in the commit. Then /legal (every customer-facing removal; what the holders were promised and are shown),
+/accounting (ruling D, renewals' free_or_founding bucket → free time), /review at the high-risk tier (billing, webhook,
+signup, migrations), /docs (lib/help-content org.tsx and platform-admin.tsx per §5; Campaigns and Free time help follow
+rulings A and B). Apply what they find or record it as an owner question. Restart the dev server before hand-off (files
+deleted, shared modules changed).
+
+RECORDS, SAME COMMIT AS THE WORK: plan §5 build record (+ §5a and this prompt, uncommitted from the gate session); the board
+line (OWNER_BRIEF_PROJECTS.json id "free-league-founding"); PLAN_PRICING_FACTS.md Promotions + Founding notes and
+PRICING_PAGE_COPY.md's Founding canon marked history (/strategy drift check); BRAND_FOUNDATIONS.md; memory notes on Founding
+(Claude memory project_free_league_founding_removal.md; in-repo memory/billing-plan-invariants.md, project_pricing_strategy.md,
+memory/MEMORY.md). The mockup file FOUNDING_REMOVAL_2B_MOCKUP.html commits with the work. Shared working copy, branch dev:
+explicit pathspecs; partial-commit shared files (HEAD + your exact edits, temp index, guarded commit); do not commit without
+the owner's go; review only your own hunks. Report in product-owner voice.
+
+DONE WHEN: a grep for the census terms returns only history and the kept shared pieces; no screen, email or staff page says
+"Founding" except ruling C's recorded reason; the three holders still read as free time on their plan through September
+30, 2027; visitors see no change; the production-steps record says 510 before this code, and this code before the
+next-season column drop.
+```

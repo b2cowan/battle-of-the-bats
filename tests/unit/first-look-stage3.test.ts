@@ -4,6 +4,8 @@
  * The rules are exercised directly where they are pure; the wiring is pinned by source scans.
  */
 import { describe, it } from 'node:test';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import assert from 'node:assert/strict';
 import { filesUnder, readCode } from './_source-code.ts';
 import { PLAN_CONFIG, formatPlanPeriodPrice, pickedPlanLabel } from '../../lib/plan-config.ts';
@@ -74,13 +76,13 @@ describe('3a — the plan step (Ask 4, F07, F08; G3–G6)', () => {
     assert.match(page, /return userRole === 'owner' && isClubPlan\(currentOrg\?\.planId\) \? <ClubSetupKit \/> : <OnboardingPageLegacy \/>;/);
   });
 
-  it('G5: every figure from plan-config; the price follows the choice without the offer', () => {
+  it('G5: every figure from plan-config; the price follows the choice', () => {
     assert.equal(formatPlanPeriodPrice('tournament_plus', 'monthly'), `$${PLAN_CONFIG.tournament_plus.monthlyPrice}/month`);
     assert.equal(formatPlanPeriodPrice('tournament_plus', 'annual'), `$${PLAN_CONFIG.tournament_plus.annualPrice}/year`);
     assert.match(step, /const monthly = formatPlanPeriodPrice\('tournament_plus', 'monthly'\);/);
-    assert.match(step, /const plusPrice = zero \? '\$0' : billing === 'annual' \? annual : monthly;/);
-    assert.match(step, /: billing === 'annual' \? formatAnnualSavings\('tournament_plus'\) : null;/);
-    assert.match(step, /label: zero \? `Then \$\{monthly\}` : monthly/);
+    assert.match(step, /const plusPrice = billing === 'annual' \? annual : monthly;/);
+    assert.match(step, /const plusNote = billing === 'annual' \? formatAnnualSavings\('tournament_plus'\) : null;/);
+    assert.match(step, /\{ value: 'monthly', label: monthly \},/);
     assert.doesNotMatch(step, /\$\d{2,}/, 'no typed price');
   });
 
@@ -95,29 +97,19 @@ describe('3a — the plan step (Ask 4, F07, F08; G3–G6)', () => {
 
 describe('3b — the welcome and checkout complete (Ask 5b, F06, F17; G1, G2)', () => {
   const card = readCode('components/consumer/CoachWelcomeCard.tsx');
-  const welcome = readCode('app/coaches/welcome/page.tsx');
   const complete = readCode('app/coaches/checkout/complete/page.tsx');
   const poll = readCode('app/coaches/checkout/complete/CheckoutProvisioning.tsx');
 
-  it('G1: the dates sentence only when the workspace holds the comp, read from its record; fails closed', () => {
-    const lib = readCode('lib/founding-season.ts');
-    const rule = lib.slice(lib.indexOf('export async function workspaceHoldsFoundingComp('));
-    assert.match(rule, /if \(!isFoundingSeasonActive\(\)\) return false;\s*const \{ data, error \} = await liveFoundingCompRow\(workspaceOrgId\);\s*return !error && !!data;/);
-    const row = lib.slice(lib.indexOf('function liveFoundingCompRow('));
-    assert.match(row, /\.eq\('type', 'comp_period'\)\s*\.in\('expires_at', \[\.\.\.FOUNDING_SEASON_COMP_EXPIRIES\]\)\s*\.is\('revoked_at', null\)/);
-    // the plan step's rule reads the same row
-    assert.match(lib, /const \[comp, tournaments, row\] = await Promise\.all\(\[\s*liveFoundingCompRow\(org\.id\),/);
-    // never the calendar, never a URL flag
-    assert.doesNotMatch(welcome, /isFoundingSeasonPromoActive|isFoundingSeasonSignupOpen|sp\.(founding|comp)/);
-    assert.match(welcome, /if \(error \|\| !org \|\| !isTeamWorkspaceOrgRow\(org\)\) return false;/);
-    assert.match(welcome, /foundingComp=\{await portalHoldsFoundingComp\(next\)\}/);
-    assert.match(complete, /foundingComp: await workspaceHoldsFoundingComp\(row\.workspace_org_id\)/);
+  it('G1: one welcome, with no dates sentence: the comped-coach welcome and its Founding rule are gone', () => {
+    // /coaches/welcome was reached only through the Founding comp path; it is deleted, and so is the rule behind it.
+    assert.equal(existsSync(join(process.cwd(), 'app/coaches/welcome/page.tsx')), false, 'the comped welcome page is gone');
+    assert.equal(existsSync(join(process.cwd(), 'lib/founding-season.ts')), false, 'the Founding rule is gone');
+    assert.doesNotMatch(card + complete, /[Ff]ounding|FOUNDING_SEASON/);
     // one welcome: the paid coach gets no second sentence; one lime, no arrow; the pill and the fine line are gone
-    assert.match(card, /sub=\{foundingComp\s*\? `Free through \$\{FOUNDING_SEASON_END_LABEL\}\. Nothing is charged before \$\{FOUNDING_SEASON_FIRST_CHARGE_LABEL\}; in \$\{FOUNDING_SEASON_DECISION_MONTH_NAME\} you'll choose a plan for \$\{FOUNDING_SEASON_NEXT_YEAR_LABEL\}\.`\s*: undefined\}/);
+    assert.doesNotMatch(card, /sub=\{foundingComp/);
     assert.match(card, /<Link href=\{href\} className=\{accountForm\.primary\}>Open your team<\/Link>/);
-    assert.doesNotMatch(card + welcome, /→|promoPill|Opens your portal/);
-    // the coach sign-up sends a comped coach to it on the server's word, not the window's
-    assert.match(readCode('app/team/TeamSignupClient.tsx'), /if \(isInternal && payload\.comped === true\) \{/);
+    assert.doesNotMatch(card, /→|promoPill|Opens your portal/);
+    assert.match(complete, /<PremiumWelcome team=\{state\.team\}/);
   });
 
   it('G2: no payment at once; paid and waiting polls; ready IS the paid welcome with the portal’s ?success=1', () => {

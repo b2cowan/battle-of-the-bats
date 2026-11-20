@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { hasLiveSubscription } from '../../lib/plan-move.ts';
 import { moveDirection } from '../../lib/plan-move-options.ts';
-import { foundingCompAppliesToPlan } from '../../lib/founding-season.ts';
 import { PLAN_CONFIG } from '../../lib/plan-config.ts';
 import type { OrgPlan } from '../../lib/types.ts';
 
@@ -148,20 +147,17 @@ describe('B05 — the coaches portal checks the club\'s plan', () => {
   });
 });
 
-describe('D6 / A08 — no Founding Season offer for Club', () => {
-  it('the comp applies to every plan except the two Club bands', () => {
-    for (const plan of PLANS) assert.equal(foundingCompAppliesToPlan(plan), plan !== 'club' && plan !== 'club_large', plan);
-  });
-
-  it('the status endpoint, the next-season choice and the operator\'s move all apply it', () => {
-    assert.match(read('app/api/admin/org/founding-season-status/route.ts'), /foundingCompAppliesToPlan\(ownPlanOf\(ctx\.org\)\)/);
-    assert.match(read('app/api/billing/choose-next-season/route.ts'), /foundingCompAppliesToPlan\(ownPlanOf\(auth\.org\)\)/);
+describe('D6 / A08 — no Founding Season offer for Club (the whole offer was removed, Stage 2b)', () => {
+  it('no comp rule, status endpoint or next-season choice remains to offer anything to a Club', () => {
+    for (const gone of ['lib/founding-season.ts', 'app/api/admin/org/founding-season-status/route.ts', 'app/api/billing/choose-next-season/route.ts']) {
+      assert.equal(existsSync(new URL(`../../${gone}`, import.meta.url)), false, `${gone} is gone`);
+    }
     // The operator's move runs the SAME database half of a plan change as a Stripe move and the
     // webhook — never its own copy (it had one, and it drifted from the shared rule).
     const operatorRule = read('lib/operator-plan-change.ts');
     assert.match(operatorRule, /applyPlanChangeSideEffects\(\{[\s\S]*?keepTeamLimit: teamLimitProvided/);
     assert.doesNotMatch(operatorRule, /revokeFoundingSeasonComp|update\(\{ team_limit: null/);
-    assert.match(read('lib/plan-move.ts'), /revokeFoundingSeasonComp\(p\.orgId, p\.actor\)/);
+    assert.doesNotMatch(read('lib/plan-move.ts'), /revokeFoundingSeasonComp|Founding/);
   });
 
   it('an operator plan change is ONE rule — the single-org save and Bulk Operations both call it, neither keeps a copy', () => {
@@ -246,7 +242,7 @@ describe('1b — the move between plans (Ask 4, D7) and the second-subscription 
 describe('Webhook + reactivation (A07, the band change)', () => {
   const webhook = read('lib/billing-webhook-handler.ts');
 
-  it('a plan change the webhook sees clears a stale team limit and revokes the Founding comp', () => {
+  it('a plan change the webhook sees clears a stale team limit', () => {
     assert.match(webhook, /applyPlanChangeSideEffects\(\{/);
   });
 

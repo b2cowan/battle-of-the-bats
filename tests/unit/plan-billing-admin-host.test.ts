@@ -8,7 +8,6 @@ import { getBillingHref, isTournamentTier } from '../../lib/billing-urls.ts';
 import { hasCapability } from '../../lib/roles.ts';
 import type { OrgPlan, OrgRole } from '../../lib/types.ts';
 import { readCode } from './_source-code.ts';
-import * as nextSeason from '../../lib/next-season-choice.ts';
 
 const plans = Object.keys(PLAN_CONFIG) as OrgPlan[];
 const roles: OrgRole[] = ['owner', 'admin', 'treasurer', 'staff', 'coach'];
@@ -74,7 +73,7 @@ const post = (body: unknown) => new Request('http://local/api/billing', { method
 const origin = process.env.NEXT_PUBLIC_APP_URL ?? '';
 
 describe('Stripe and mock returns keep every plan inside its billing tier boundary', () => {
-  for (const planId of plans) for (const mock of [true, false]) it(`${planId}/${mock ? 'mock' : 'Stripe'}: portal, card and no-customer fallback`, async () => {
+  for (const planId of plans) for (const mock of [true, false]) it(`${planId}/${mock ? 'mock' : 'Stripe'}: portal and no-customer fallback`, async () => {
     const authCalls: unknown[] = [], capabilityCalls: unknown[] = [], portalCalls: Array<{ return_url: string; configuration?: string }> = [], setups: unknown[] = [];
     const org = { id: 'org-b', slug: 'falcons', planId, stripeCustomerId: 'cus_b' as string | null, accountKind: 'organization' };
     const load = billingTestLoader({
@@ -91,19 +90,16 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
       '@/lib/stripe-portal-config': { ourPortalConfigurationId: async () => 'bpc_ours' },
     });
     const portal = (load('app/api/billing/portal/route.ts') as { POST: JsonPost }).POST;
-    const card = (load('app/api/billing/setup-payment-method/route.ts') as { POST: JsonPost }).POST;
     const base = getBillingHref(org, { purpose: 'return' });
     const portalResponse = await portal(post({ orgSlug: org.slug, returnTo: '//untrusted.test' }));
     assert.equal(portalResponse.status, 200);
     assert.equal((await portalResponse.json()).url, mock ? `${origin}${base}${planId === 'team' ? '' : '/mock-portal'}` : 'https://stripe.test/portal');
     if (!mock) assert.equal(portalCalls[0].return_url, `${origin}${base}`);
     if (!mock) assert.equal(portalCalls[0].configuration, 'bpc_ours');
-    const cardResponse = await card(post({ orgSlug: org.slug }));
-    assert.equal((await cardResponse.json()).url, mock ? `${origin}${base}?card_saved=1` : 'https://stripe.test/setup');
     org.stripeCustomerId = null;
     await portal(post({ orgSlug: org.slug }));
-    if (!mock) assert.deepEqual(setups, [org, org]);
-    assert.deepEqual(capabilityCalls, ['billing', 'billing', 'billing']);
+    if (!mock) assert.deepEqual(setups, [org]);
+    assert.deepEqual(capabilityCalls, ['billing', 'billing']);
     assert.ok(authCalls.every(input => JSON.stringify(input) === JSON.stringify({ orgSlug: 'falcons', allowSuspendedOrg: true })));
   });
 
@@ -125,34 +121,6 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
     assert.match(mock, /router\.push\(getBillingHref\(currentOrg, \{ purpose: 'return' \}\)\)/);
     assert.match(mock, /JSON\.stringify\(\{ orgSlug: currentOrg\?\.slug, plan, status \}\)/);
     assert.match(readCode('app/[orgSlug]/admin/tournaments/settings/subscription/mock-portal/page.tsx'), /export \{ default \} from/);
-  });
-
-  for (const planId of ['tournament_plus', 'team'] as const) for (const effectivePlan of [planId, 'league'] as const) for (const mock of [true, false]) it(`${planId}/${effectivePlan}/${mock ? 'mock' : 'Stripe'}: next-season buys the own plan and returns through the effective tier boundary`, async () => {
-    const checkout: Array<{ success_url: string; cancel_url: string }> = [];
-    const db = { from(table: string) {
-      const query = { select() { return query; }, eq() { return query; }, in() { return query; }, is() { return query; }, limit() { return query; },
-        maybeSingle: async () => ({ data: table === 'org_overrides' ? { id: 'comp-b' } : null }) };
-      return query;
-    } };
-    const load = billingTestLoader({
-      '@/lib/observability': { withObservability: (fn: unknown) => fn },
-      '@/lib/api-auth': { getAuthContext: async () => ({ org: { id: 'org-b', slug: 'falcons', planId: effectivePlan, ownPlanId: planId, accountKind: planId === 'team' ? 'team_workspace' : 'organization' }, user: { email: 'billing@example.test' } }), requireCapability: async () => null },
-      '@/lib/founding-season': { foundingCompAppliesToPlan: () => true },
-      '@/lib/entitlement-grants': { ownPlanOf: (org: { ownPlanId: string }) => org.ownPlanId },
-      '@/lib/supabase-admin': { supabaseAdmin: db },
-      '@/lib/billing-mock': { isBillingMockEnabled: () => mock, isStripeConfigured: () => true },
-      '@/lib/billing-setup': { ensureStripeCustomer: async () => 'cus_b', recordNextSeasonChoice: async () => {}, getOrgBillingFacts: async () => null },
-      '@/lib/plan-gating-server': { getPlanGatingMap: async () => ({ tournament_plus: false, team: false }) },
-      '@/lib/stripe-prices': { getStripePriceId: async () => 'price_b' },
-      '@/lib/next-season-choice': { ...nextSeason, isNextSeasonChoiceOpen: () => true },
-      '@/lib/stripe': { stripe: { checkout: { sessions: { create: async (params: typeof checkout[number]) => { checkout.push(params); return { url: 'https://stripe.test/next' }; } } } } },
-    });
-    const handler = (load('app/api/billing/choose-next-season/route.ts') as { POST: JsonPost }).POST;
-    const response = await handler(post({ orgSlug: 'falcons', planKey: planId, billingCycle: 'annual' }));
-    assert.equal(response.status, 200);
-    const base = `${origin}${getBillingHref({ slug: 'falcons', planId: effectivePlan, accountKind: planId === 'team' ? 'team_workspace' : 'organization' }, { purpose: 'return' })}`;
-    if (mock) assert.equal((await response.json()).url, `${base}?next_season=1`);
-    else { assert.equal(checkout[0].success_url, `${base}?next_season=1`); assert.equal(checkout[0].cancel_url, base); }
   });
 });
 

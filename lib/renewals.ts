@@ -18,7 +18,6 @@ import { addCalendarDays, addCalendarMonths, formatStoredDate, lastDayOfMonth, o
 import { pluralize } from './utils';
 import { formatCents } from './console-money';
 import { planLabel } from './platform-labels';
-import { lastDayOfInstant } from './free-time';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
 
 // ── F2 · the one rule for "trial ending" ────────────────────────────────────────────────────────
@@ -42,18 +41,6 @@ export function isStaleTrial(status: string | null | undefined, periodEnd: strin
   return status === 'trialing' && !!periodEnd && orgDayKey(periodEnd) < today;
 }
 
-// ── F1 · the comped clubs the monthly figure leaves out ──────────────────────────────────────────
-
-/**
- * " · 2 comped clubs not counted" after Business numbers' (and Today's) "about $X a month at list price, before tax" (F1,
- * owner ruling 8): a comped club (a running comp period, Founding Season) pays nothing, so the figure leaves it out and says
- * how many. Nothing when none were left out.
- */
-export function compedNotCountedWords(n: number | null | undefined): string {
-  if (!n) return '';
-  return ` · ${n} comped ${n === 1 ? 'club' : 'clubs'} not counted`;
-}
-
 // ── The words ───────────────────────────────────────────────────────────────────────────────────
 
 export const RW = {
@@ -72,7 +59,6 @@ export const RW = {
     renews: 'Renews',
     trial_ends: 'Trial ends',
     free_time_ends: 'Free time ends',
-    founding_ends: 'Founding Season ends',
     plan_ends: 'Plan ends',
     stale_trial: 'Trial ended, still marked trial',
   },
@@ -117,7 +103,7 @@ export const RW = {
   bandComing: {
     renewals: 'Renewals', renewalsNote: 'in these dates',
     trials: 'Trials ending', trialsNote: 'Stripe trials',
-    freeTime: 'Free time ending', freeTimeNote: 'free time and Founding Season',
+    freeTime: 'Free time ending',
     price: 'Price on file, before tax',
     stale: 'Still marked trial', staleNote: 'its end date has passed',
   },
@@ -133,8 +119,7 @@ export const RW = {
     stale_trial: 'The trial’s end date has passed and the club still reads as on trial. Shown here once, in amber, whatever dates are picked (it has no date ahead), and no longer counted in Trials ending. The club’s Money tab says what Stripe holds.',
     renews: 'The subscription on file renews on this date, from the club record.',
     trial_ends: 'Stripe’s trial, read from the club record. The price is what the plan will charge when the trial ends.',
-    free_time_ends: 'Free time a staff member gave (or a Founding Season comp). There is no subscription, so no price: when it ends the club falls back to its plan’s free floor or pays. The door goes to Free time.',
-    founding_ends: 'Free time a staff member gave (or a Founding Season comp). There is no subscription, so no price: when it ends the club falls back to its plan’s free floor or pays. The door goes to Free time.',
+    free_time_ends: 'Free time a staff member gave. There is no subscription, so no price: when it ends the club goes back to its own plan or pays. The door goes to Free time.',
     plan_ends: 'The club has asked for its plan to end on this date, so it does not renew. The club’s Money tab holds the waiting change.',
     cycle: 'Many Coaches Portal and older rows hold no billing cycle. The price shows; the word a month or a year shows only when the record holds it. Never guessed from the amount.',
     noPrice: 'The price on file fills in from Stripe’s next update for that subscription (no backfill was run). Until then the row says so and the band counts it apart. The list price is never shown in its place.',
@@ -260,15 +245,13 @@ export function priceWords(p: PriceCell): string {
 
 export type ComingKind = keyof typeof RW.kinds;
 
-/** The "What happens" pick. The two tiles with no single kind (free time and Founding together; the stale trials) are picks too. */
-export type WhatKey = 'all' | 'renews' | 'trial_ends' | 'free_time_ends' | 'founding_ends' | 'free_or_founding' | 'stale_trial';
+/** The "What happens" pick. The tile with no single kind (the stale trials) is a pick too. */
+export type WhatKey = 'all' | 'renews' | 'trial_ends' | 'free_time_ends' | 'stale_trial';
 export const WHAT_OPTIONS: ReadonlyArray<{ id: WhatKey; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'renews', label: RW.kinds.renews },
   { id: 'trial_ends', label: RW.kinds.trial_ends },
   { id: 'free_time_ends', label: RW.kinds.free_time_ends },
-  { id: 'founding_ends', label: RW.kinds.founding_ends },
-  { id: 'free_or_founding', label: 'Free time or Founding Season ends' },
   { id: 'stale_trial', label: 'Still marked trial' },
 ];
 export const isWhatKey = (v: unknown): v is WhatKey => WHAT_OPTIONS.some(o => o.id === v);
@@ -292,11 +275,9 @@ export type StaffFreeTimeInput = { orgId: string; name: string; kind: 'club' | '
 export type ComingInput = {
   /** Customer clubs and portals: sandbox demos and free-time Coaches Portals already left out. */
   orgs: RenewalOrg[];
-  /** Every org's name, kind and plan by id (free time and Founding name their club from it). */
+  /** Every org's name, kind and plan by id (free time names its club from it). */
   orgsById: Map<string, Pick<RenewalOrg, 'name' | 'plan_id' | 'account_kind'>>;
   staffFreeTime: StaffFreeTimeInput[];
-  /** A Founding Season comp's expiry instant, by org. */
-  foundingByOrg: Map<string, string>;
   /** Orgs with a waiting cancellation or a waiting move to the free plan (the paid plan does not renew on its date). */
   endingOrgIds: Set<string>;
 };
@@ -327,7 +308,7 @@ export function comingUpRows(input: ComingInput, range: DateRange, today: string
     if (status === 'trialing') {
       rows.push({ ...base, key: `trial:${org.id}`, kind: 'trial_ends', date: day, price: priceCell(org) });
     } else if (status === 'active' && org.stripe_subscription_id) {
-      // A Founding comp is active with no subscription: it ends through its comp (below), never "renews".
+      // Free time is active with no subscription: it ends through its grant (below), never "renews".
       const ending = input.endingOrgIds.has(org.id);
       rows.push({ ...base, key: `renew:${org.id}`, kind: ending ? 'plan_ends' : 'renews', date: day, price: ending ? { kind: 'no_renewal' } : priceCell(org) });
     }
@@ -340,19 +321,7 @@ export function comingUpRows(input: ComingInput, range: DateRange, today: string
     rows.push({
       key: `free:${ft.orgId}`, kind: 'free_time_ends', date: ft.lastDay, orgId: ft.orgId, name: ft.name, isPortal: ft.kind === 'portal',
       planId: o?.plan_id ?? null, plan: ft.freeOn, price: { kind: 'no_subscription' },
-      door: { label: RW.coming.freeTimeDoor, href: '/platform-admin/free-time?view=staff' },
-    });
-  }
-
-  for (const [orgId, expiresAt] of input.foundingByOrg) {
-    const o = input.orgsById.get(orgId);
-    if (!o) continue;
-    const day = lastDayOfInstant(expiresAt);
-    if (!inRange(day)) continue;
-    rows.push({
-      key: `founding:${orgId}`, kind: 'founding_ends', date: day, orgId, name: o.name, isPortal: isPortal(o),
-      planId: o.plan_id, plan: o.plan_id ? planLabel(o.plan_id) : RW.dash, price: { kind: 'no_subscription' },
-      door: { label: RW.coming.freeTimeDoor, href: '/platform-admin/free-time?view=founding' },
+      door: { label: RW.coming.freeTimeDoor, href: '/platform-admin/free-time' },
     });
   }
 
@@ -361,7 +330,6 @@ export function comingUpRows(input: ComingInput, range: DateRange, today: string
 
 export function matchesWhat(row: Pick<ComingRow, 'kind'>, what: WhatKey): boolean {
   if (what === 'all') return true;
-  if (what === 'free_or_founding') return row.kind === 'free_time_ends' || row.kind === 'founding_ends';
   if (what === 'renews') return row.kind === 'renews' || row.kind === 'plan_ends';
   return row.kind === what;
 }
@@ -385,7 +353,7 @@ export function comingBand(rows: ComingRow[]): ComingBand {
   for (const r of rows) {
     if (r.kind === 'renews' || r.kind === 'plan_ends') band.renewals += 1;
     else if (r.kind === 'trial_ends') band.trials += 1;
-    else if (r.kind === 'free_time_ends' || r.kind === 'founding_ends') band.freeTime += 1;
+    else if (r.kind === 'free_time_ends') band.freeTime += 1;
     else if (r.kind === 'stale_trial') band.stale += 1;
     if (r.kind === 'renews' || r.kind === 'trial_ends') {
       if (r.price.kind === 'price') {

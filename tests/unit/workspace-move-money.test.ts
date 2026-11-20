@@ -208,9 +208,9 @@ describe('Part 3 · before the owner confirms money', () => {
     assert.equal(stripeCalls.createPreview, 1);
     assert.equal(stripeCalls.update.length, 0);
   });
-  it('abandoned checkouts and next-season promises do not consume a trial', async () => {
+  it('abandoned checkouts do not consume a trial', async () => {
     stubDatabase(PRICES);
-    stubStripe({ sub: subscription(), history: [{ status: 'incomplete' }, { status: 'incomplete_expired' }, { status: 'trialing', metadata: { choiceKind: 'next_season' } }] });
+    stubStripe({ sub: subscription(), history: [{ status: 'incomplete' }, { status: 'incomplete_expired' }] });
     const result = await previewClubCheckout(premiumOrg({ stripeSubscriptionId: null }), 'club', 'monthly');
     assert.ok(!isRefusal(result));
     assert.equal(result.trialDays, PLAN_CONFIG.club.trialDays);
@@ -769,7 +769,7 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
     const merged = { checkoutKind: 'team', teamWorkspaceId: 'ws_1', ...stripeCalls.update[0].metadata } as Record<string, string>;
     assert.equal(merged.planKey, 'club', 'the move overwrote the plan key the Premium checkout wrote');
     assert.ok(isInAppUpMove(merged, 'club'), 'the growth event is not counted twice');
-    assert.ok(!('choiceKind' in merged), 'the move never makes it a next-season choice');
+    assert.ok(!('choiceKind' in merged), 'the move leaves no next-season marker on the subscription (that choice no longer exists)');
     const webhook = readCode('lib/billing-webhook-handler.ts');
     const arm = webhook.slice(webhook.indexOf("case 'customer.subscription.created':"), webhook.indexOf("case 'customer.subscription.deleted':"));
     assert.match(arm, /const matchedPlan = await getPlanFromPriceId\(priceId\);/);
@@ -778,9 +778,8 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
     assert.equal((arm.match(/provisionTeamWorkspaceFromCheckoutMetadata/g) ?? []).length, 1);
     const before = arm.slice(0, arm.indexOf("if (planKey === 'team')"));
     assert.doesNotMatch(before, /metadata\??\.checkoutKind/, 'nothing before the arm reads the Premium checkout key');
-    const choice = before.slice(before.indexOf('NEXT_SEASON_CHOICE_KIND &&'), before.indexOf('const matchedPlan'));
-    assert.equal((before.match(/metadata\??\.teamWorkspaceId/g) ?? []).length, (choice.match(/metadata\??\.teamWorkspaceId/g) ?? []).length,
-      'the only earlier read of the workspace key is the next-season choice, which needs choiceKind');
+    assert.equal((before.match(/metadata\??\.teamWorkspaceId/g) ?? []).length, 0,
+      'nothing earlier reads the workspace key (the next-season choice that once did is gone)');
   });
 
   it('the mock checkout skips reactivation for a workspace; the webhook runs it only when the stored status was cancelled', () => {

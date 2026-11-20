@@ -152,7 +152,7 @@ describe('the Facts doc and the plan config agree on every plan', () => {
       '|---|---|---|',
       '| **Club** | **$219** *(was $179)* | **$2,190** |',
       '| **Tournament** (free) | Free | Free |',
-      '| **Tournament Plus** | $39 *(Founding Season closed 2026-10-25; see Promotions)* | $390 |',
+      '| **Tournament Plus** | $39 *(see Promotions)* | $390 |',
       '',
       '| **Not this** | $1 | $2 |',
     ].join('\n'));

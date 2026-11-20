@@ -21,10 +21,6 @@ export const LOCK_WORDS = {
   // The composer's targeting lock is COMMS_LOCK.chooseTeams (lib/communication-words.ts), its one home.
   reopenRegistration: 'Reopen registration',
   recordPayments: 'Record payments',
-  /** The Founding Season line under a lock line: quiet grey, no full stop (M9). */
-  foundingLine: (date: string) => `Free for you through ${date}`,
-  /** The same, said ONCE at the foot of a Tools menu that holds a locked row (M9). */
-  foundingMenuFoot: (date: string) => `Tournament Plus is free for you through ${date}.`,
 } as const;
 
 /** Event settings on an invite-only event (no Coach emails card — nothing there applies; owner 2026-10-16, the walk). */

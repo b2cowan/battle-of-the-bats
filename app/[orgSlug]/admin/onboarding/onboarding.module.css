@@ -533,33 +533,6 @@
   }
 }
 
-/* ── Founding Season welcome (qualifying step modal) ─────────────────────── */
-
-/* ── Founding Season banner (league/club checklist page) ──────────────────── */
-.foundingSeasonBanner {
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.foundingSeasonBannerEyebrow {
-  font-family: var(--font-data); /* type-ok: eyebrow */
-  font-weight: 700;
-  text-transform: uppercase; /* type-ok: eyebrow */
-}
-
-.foundingSeasonBannerTitle {
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.foundingSeasonBannerCopy {
-  line-height: 1.55;
-  margin-top: 0.1rem;
-}
-
 /* ── Qualifying step ──────────────────────────────────────────────────────── */
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
@@ -614,29 +587,6 @@
   color: var(--text-tertiary);
   background: var(--card-bg);
   border-color: var(--home-line);
-}
-
-/* ── Founding Season → a kit card with the olive edge; its eyebrow is the kit's ── */
-.foundingSeasonBanner {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-left: 3px solid var(--home-olive);
-  border-radius: 8px;
-}
-.foundingSeasonBannerEyebrow {
-  font-size: var(--type-label);
-  letter-spacing: 0.09em;
-  color: var(--home-olive);
-}
-.foundingSeasonBannerTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-heading);
-  color: var(--text-primary);
-}
-.foundingSeasonBannerCopy {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-body);
-  color: var(--text-secondary);
 }
 
 /* ── The windows (plan chooser, setup steps) → the portal's window over its scrim ── */

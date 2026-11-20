@@ -34,8 +34,7 @@ export function baseMenuGroups(devTools: boolean): MenuGroup[] {
       items: [
         { href: '/platform-admin/orgs', label: 'Clubs & portals', icon: 'clubs', area: 'organizations' },
         { href: '/platform-admin/customer-users', label: 'People', icon: 'people', area: 'customer_users' },
-        // Everyone with free time running, Founding Season among them (Support console Stage 4; it replaced the Founding
-        // season desk's entry, in the same place).
+        // Everyone with staff-given free time running, in one list (Support console Stage 4).
         { href: '/platform-admin/free-time', label: 'Free time', icon: 'free_time', area: 'free_time' },
         // What renews or ends, and the unpaid bills, across clubs (Plans & pricing Stage 2 Part 4): read only.
         { href: '/platform-admin/renewals', label: 'Renewals', icon: 'renewals', area: 'renewals' },

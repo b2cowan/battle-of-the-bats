@@ -4,8 +4,7 @@
  * the door's step 2. The account remembers its door (lib/start-door.ts) so the link, every resend and Home's waiting
  * workspace (A4, revised 2026-10-19) all lead back there, wherever the link is opened.
  *
- * Part 1 (shared pieces + Start a team + Start a league) and Part 2 (Run a tournament, the pricing plan, the Founding
- * Season rule). The rules are exercised directly; the wiring is pinned by source scans, as
+ * Part 1 (shared pieces + Start a team + Start a league) and Part 2 (Run a tournament, the pricing plan). The rules are exercised directly; the wiring is pinned by source scans, as
  * signup-verification-guard.test.ts does for the verify-by-link rule this builds on.
  */
 import { describe, it } from 'node:test';
@@ -15,7 +14,6 @@ import { readCode } from './_source-code.ts';
 import {
   readStartDoor, parseStartDoor, parseStartPricing, planStepPath, startDoorLinkPath, START_DOOR_PATH, WAITING_WORKSPACE,
 } from '../../lib/start-door.ts';
-import { FOUNDING_SEASON_END, FOUNDING_SEASON_SIGNUP_CLOSE, isFoundingSeasonOpenFor } from '../../lib/plan-config.ts';
 import { hasSavedSetupWork } from '../../lib/first-run-plan.ts';
 
 describe('the remembered door', () => {
@@ -90,10 +88,10 @@ describe('the remembered door', () => {
     assert.deepEqual(WAITING_WORKSPACE.premium, { kind: 'coaches_premium', badge: 'Setup not finished', title: 'Your team', action: 'Continue setup' });
   });
 
-  it('steers screens only: no entitlement, price or Founding Season rule reads it', () => {
+  it('steers screens only: no entitlement or price rule reads it', () => {
     const lib = readCode('lib/start-door.ts');
     assert.deepEqual([...lib.matchAll(/from '([^']+)'/g)].map(m => m[1]), ['./coaches-portal-routes'], 'framework-free: route constants only');
-    for (const f of ['lib/plan-config.ts', 'lib/founding-season.ts', 'app/api/billing/create-team-checkout/route.ts']) {
+    for (const f of ['lib/plan-config.ts', 'app/api/billing/create-team-checkout/route.ts']) {
       assert.doesNotMatch(readCode(f), /start-door/, `${f} never reads the remembered door`);
     }
     // Checkout imports the paid doors' plan CONSTANTS and pure helpers (On-sale pages S2), never the remembered door:
@@ -104,17 +102,9 @@ describe('the remembered door', () => {
     assert.deepEqual([...fromStartDoor].sort(), ['PAID_DOOR_PLANS', 'StartPaidPlan', 'paidDoorOf', 'parseStartPaidPlan', 'trialDaysAfterHistory'].sort(), 'only constants and pure helpers');
     assert.doesNotMatch(checkout, /readStartDoor|parseStartDoor|start-door-server/, 'checkout never reads the remembered door');
     assert.doesNotMatch(checkout, /user_metadata\??\.start\b/, 'checkout never reads user_metadata.start');
-    // the offer reads the LOCKED copy on app_metadata, which only the service role can write — never user_metadata
-    assert.doesNotMatch(readCode('lib/founding-season.ts'), /user_metadata/);
   });
 });
 
-/**
- * THE FOUNDING SEASON OFFER AT A CREATION (A5 Decided 2026-10-18; edges (a) and (b) ratified by the owner 2026-10-19).
- * The account step and the creation now fall on different days, so "free … when you sign up by December 31" is read
- * against the account. After the close, only the start the account came for counts — and that is read from a locked
- * copy of the door, because the remembered door is the account holder's to edit.
- */
 describe('the first-run plan choice ends when setup starts', () => {
   it('saved setup work ends it; the plan task does not', () => {
     assert.equal(hasSavedSetupWork({ venues: { status: 'complete' } }), true);
@@ -124,78 +114,14 @@ describe('the first-run plan choice ends when setup starts', () => {
   });
 });
 
-describe('the Founding Season offer at a creation', () => {
-  const close = Date.parse(FOUNDING_SEASON_SIGNUP_CLOSE);
-  const end = Date.parse(FOUNDING_SEASON_END);
-  const day = 86_400_000;
-  const before = new Date(close - day).toISOString();
-  const after = new Date(close + day).toISOString();
-  it('while the window is open, every creation gets it, as before', () => {
-    assert.equal(isFoundingSeasonOpenFor(null, false, close - 1), true);
-  });
-  it('after the close: an account made by then, finishing the start it came for', () => {
-    assert.equal(isFoundingSeasonOpenFor(before, true, close + 2 * day), true, 'signed up on the 31st, named it on the 2nd');
-    assert.equal(isFoundingSeasonOpenFor(before, false, close + 2 * day), false, 'edge (a): any other creation follows the window');
-    assert.equal(isFoundingSeasonOpenFor(after, true, close + 2 * day), false, 'an account made after the close');
-    assert.equal(isFoundingSeasonOpenFor(null, true, close + 2 * day), false, 'no creation date is no offer');
-    assert.equal(isFoundingSeasonOpenFor(before, true, end), false, 'nothing once the season has ended');
-  });
-  it('one rule for every creation path, read off the signed-in account', () => {
-    const lib = readCode('lib/founding-season.ts');
-    // signed out (no account) is the window alone, so a screen and the checkout read the same answer
-    assert.match(lib, /return isFoundingSeasonOpenFor\(user\?\.created_at, lockedStartDoorOf\(user\?\.app_metadata\) === creates\);/);
-    // the paid doors (Start a club, Start a league season) NEVER take the comp (Ask 14): a startPlan skips it
-    assert.match(readCode('app/api/org/create/route.ts'), /if \(!startPlan && foundingSeasonOfferFor\(user, 'organization'\)\) \{/);
-    // edge (b): Coach Premium on the same rule (Part 3)
-    // (Keep Premium, Support console 4b, is a purchase for a staff-given portal and never takes the comp path.)
-    assert.match(readCode('app/api/billing/create-team-checkout/route.ts'), /if \(!keepPortal && \(foundingSeasonOfferFor\(user, 'premium'\) \|\| await reactivationHoldsFoundingComp\(checkoutRequest\.reactivateOrgSlug\)\)\) \{/);
-    // the early close (2026-10-26): a comp portal coming back after a cancel keeps its comp — a comp workspace with a live
-    // comp row only, and never after the comp ends (the paid path cannot restore a comp workspace)
-    const back = lib.slice(lib.indexOf('export async function reactivationHoldsFoundingComp('));
-    assert.match(back, /if \(!reactivateOrgSlug \|\| !isFoundingSeasonActive\(\)\) return false;/);
-    assert.match(back, /if \(workspaceError \|\| workspace\?\.billing_mode !== 'platform_override'\) return false;\s*return workspaceHoldsFoundingComp\(org\.id\);/);
-    for (const f of ['app/api/org/create/route.ts', 'app/api/billing/create-checkout/route.ts', 'app/api/auth/signup/route.ts', 'app/api/billing/create-team-checkout/route.ts']) {
-      assert.doesNotMatch(readCode(f), /isFoundingSeasonSignupOpen\(\)/, `${f} reads the one rule, not the bare window`);
+describe('no Founding Season rule remains at a creation (Stage 2b, owner 2026-11-19)', () => {
+  it('the lock, the offer and the first-run $0 rule are gone from every creation path', () => {
+    for (const f of ['lib/founding-season.ts', 'lib/founding-season-desk.ts', 'lib/use-founding-season-lock.ts', 'app/api/admin/org/founding-season-status/route.ts']) {
+      assert.equal(existsSync(new URL(`../../${f}`, import.meta.url)), false, `${f} is gone`);
     }
-  });
-  it('the start doors that carry an offer lock their door, and a failed lock undoes the account', () => {
-    assert.match(readCode('lib/founding-season.ts'), /const OFFER_DOORS = \['organization', 'league', 'premium'\] as const;/);
-    const signup = readCode('app/api/auth/signup/route.ts');
-    // one lock-or-undo for every sign-up route that makes a start door's account
-    assert.match(readCode('lib/founding-season.ts'), /if \(!failure\) return true;[\s\S]{0,300}?await supabaseAdmin\.auth\.admin\.deleteUser\(userId\);[\s\S]{0,300}?return false;/);
-    // only Run a tournament carries the offer: Start a club (On-sale pages S2) is a paid door, never comped, so it takes no lock
-    assert.match(signup, /if \(orgDoor === 'organization' && !\(await lockStartDoorOrUndo\(userId, 'organization'\)\)\) \{/);
-    const coach = readCode('app/api/auth/coach-signup/route.ts');
-    assert.match(coach, /if \(linkData\.user && !\(await lockStartDoorOrUndo\(linkData\.user\.id, startDoor\)\)\) \{/);
-    assert.match(coach, /if \(created\.user && !\(await lockStartDoorOrUndo\(created\.user\.id, startDoor\)\)\) \{/);
-    assert.match(readCode('app/api/auth/team-signup/route.ts'), /if \(!\(await lockStartDoorOrUndo\(userId, premiumDoor\)\)\) \{/, 'Coach Premium (Part 3)');
-  });
-  it('the plan step after the close: $0 Tournament Plus while an organization holding the comp makes its FIRST-RUN plan choice', () => {
-    const lib = readCode('lib/founding-season.ts');
-    const rule = lib.slice(lib.indexOf('export async function foundingSeasonOfferOnPlanChoice('));
-    assert.match(rule, /if \(!foundingCompAppliesToPlan\(org\.ownPlanId \?\? org\.planId\)\) return false;\s*if \(isFoundingSeasonSignupOpen\(\)\) return true;/, 'Club never (2026-09-25), even in the window');
-    assert.match(rule, /\.is\('revoked_at', null\)/);
-    assert.match(rule, /if \(comp\.error \|\| tournaments\.error \|\| row\.error \|\| !row\.data\) return false;/, 'fails closed: a read error is the list price');
-    // the early close (owner 2026-10-26): a HOLDER keeps $0 on any upgrade until the deadline it was sold, December 31
-    assert.match(rule, /if \(comp\.data && Date\.now\(\) < Date\.parse\(FOUNDING_SEASON_HOLDER_UPGRADE_BY\)\) return true;/);
-    assert.match(readCode('lib/plan-config.ts'), /export const FOUNDING_SEASON_HOLDER_UPGRADE_BY = '2027-01-01T05:00:00\.000Z';/);
-    // server facts only — the first run ends when setup starts, as the free-plan route's own lock reads it
-    assert.match(rule, /&& \(tournaments\.count \?\? 0\) === 0\s*&& !row\.data\.onboarding_completed_at\s*&& !hasSavedSetupWork\(row\.data\.startup_tasks\);/);
-    // ⚠ never the browser-written plan task: every first-run plan change wipes it, so an abandoned checkout reopened $0 (/review)
-    assert.doesNotMatch(rule, /\.plan\b|planTask/);
-    assert.match(readCode('app/api/admin/org/onboarding-plan/route.ts'), /hasSavedSetupWork\(startupRead\.data\?\.startup_tasks\)/, 'one rule for when the first run ends');
-    assert.match(readCode('app/api/billing/create-checkout/route.ts'), /ownPlanOf\(auth\.org\) === 'tournament' &&\s*\(await foundingSeasonOfferOnPlanChoice\(auth\.org\)\);/);
-    // the card shows what the checkout will charge
-    assert.match(readCode('app/api/admin/org/founding-season-status/route.ts'), /return NextResponse\.json\(\{ offerOnPlanChoice: await foundingSeasonOfferOnPlanChoice\(ctx\.org\) \}\);/);
-    // ONE $0 rule (The first look G5, 2026-10-20): the pricing cards and the plan step both ask it
-    assert.match(readCode('lib/plan-config.ts'), /export function showsFoundingZero\(planKey: string, foundingOfferHeld: boolean\): boolean \{\s*return \(foundingOfferHeld && planKey === 'tournament_plus'\) \|\| isFoundingSeasonPromoActive\(planKey\);/);
-    assert.match(readCode('components/PricingSection.tsx'), /: showsFoundingZero\(plan\.key, foundingOfferHeld\)/);
-    assert.match(readCode('app/[orgSlug]/admin/onboarding/PlanStep.tsx'), /const zero = showsFoundingZero\('tournament_plus', foundingOfferHeld\);/);
-    const onboarding = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
-    assert.match(onboarding, /foundingOfferHeld=\{foundingOfferHeld\}/);
-    // asked again each time the chooser appears, and shown only for the state it was asked in (/review)
-    assert.match(onboarding, /const offerKey = offerSlug \? \[offerSlug, planChoiceRequired, planChooserOpen, activeModal\]\.join\(':'\) : null;/);
-    assert.match(onboarding, /const foundingOfferHeld = !!offerKey && offerAnswer\?\.key === offerKey && offerAnswer\.held;/);
+    for (const f of ['app/api/org/create/route.ts', 'app/api/billing/create-checkout/route.ts', 'app/api/auth/signup/route.ts', 'app/api/auth/coach-signup/route.ts', 'app/api/auth/team-signup/route.ts', 'app/api/billing/create-team-checkout/route.ts']) {
+      assert.doesNotMatch(readCode(f), /Founding|lockStartDoorOrUndo|foundingSeasonOffer|isFoundingSeason/, `${f} reads no Founding rule`);
+    }
   });
 });
 
@@ -249,7 +175,7 @@ describe('Run a tournament: the organization sign-up makes the account alone (Pa
     assert.equal(existsSync(new URL('../../app/(consumer)/start/tournament/AddOrgForm.tsx', import.meta.url)), false, 'the old form is gone');
     // the plan step preselects the plan from the pricing page (A6; the free pick too, G4) — Tournament Plus with none
     const onboardingPage = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
-    assert.match(onboardingPage, /<PlanStep\s+orgName=\{currentOrg\.name\}\s+pricing=\{pricing\}\s+foundingOfferHeld=\{foundingOfferHeld\}/);
+    assert.match(onboardingPage, /<PlanStep\s+orgName=\{currentOrg\.name\}\s+pricing=\{pricing\}\s+initialBilling=\{lastCycle\}/);
     assert.match(readCode('app/[orgSlug]/admin/onboarding/PlanStep.tsx'), /const first: PlanStepChoice = pick\?\.plan === 'tournament' \? 'tournament' : 'tournament_plus';/);
     // the change-plan window keeps featuring it on the full cards, as before
     assert.match(onboardingPage, /featuredPlan=\{pricing\?\.plan \?\? 'tournament_plus'\}/);
@@ -407,15 +333,12 @@ describe('a creation clears the door it fulfils', () => {
     assert.match(lib, /status: 'active' \}\);[\s\S]{0,500}?await clearStartDoor\(params\.userId, \['team'\]\);\s*return \{ basicCoachTeamId: foreignLink, createdTeam: false \};/, 'adopting an orphaned team');
     assert.match(lib, /if \(createdTeam\) await clearStartDoor\(params\.userId, \['team'\]\);\s*return \{ basicCoachTeamId, createdTeam \};/, 'a team made for the claim');
   });
-  it('a Coach Premium portal brought back clears the door too, so no lock outlives it (/review, Part 3)', () => {
-    assert.match(readCode('lib/team-checkout.ts'), /await clearStartDoor\(parsed\.ownerUserId, \['team', 'premium'\]\);\s*return \{\s*provisioned: false,\s*reason: 'reactivated',/);
-  });
-  it('only a matching door clears, and the locked copy goes with it (edge (a): only the start’s own creation counts)', () => {
+  it('only a matching door clears (only the start’s own creation counts)', () => {
     const lib = readCode('lib/start-door-server.ts');
     assert.match(lib, /export async function clearStartDoor\(userId: string, fulfils: readonly StartDoor\[\]\)/);
-    assert.match(lib, /const clearDoor = !!start && fulfils\.includes\(start\.door\);/);
-    assert.match(lib, /const clearLock = !!locked && fulfils\.includes\(locked\);/);
-    assert.match(lib, /\.\.\.\(clearLock \? \{ app_metadata: \{ \[START_DOOR_LOCK_KEY\]: null \} \} : \{\}\),/);
+    assert.match(lib, /if \(!start \|\| !fulfils\.includes\(start\.door\)\) return;/);
+    assert.match(lib, /updateUserById\(userId, \{ user_metadata: \{ start: null \} \}\)/);
+    assert.doesNotMatch(lib, /app_metadata|START_DOOR_LOCK_KEY/, 'no locked copy remains (Stage 2b)');
   });
 });
 
@@ -520,19 +443,18 @@ describe('Coach Premium, account first (Part 3)', () => {
     assert.match(card, /<StartColumn>\s*<StartHead title=\{title\} sub=\{sub\} steps=\{steps\} \/>/);
     assert.doesNotMatch(card, /VALUE_POINTS|WORKFLOW_STEPS|heroActions|pricePanel|workspacePreview|authToggle|Get started|Compare pricing/, 'no sales hero, offer panel, checklist or Create / Sign in toggle');
     assert.match(card, /: isWarmUpgrade \? `Upgrade \$\{prefillTeamName\?\.trim\(\) \|\| 'your team'\} to Premium` : 'Coach a team';/, 'the /start card’s words; upgrade and reactivation keep their own (owner 2026-10-19)');
-    // the offer is read from the plan settings, never typed, so it changes by itself when the window closes
-    assert.match(card, /`Premium Coaches Portal\. Free through \$\{FOUNDING_SEASON_END_LABEL\}, then \$\{MONTHLY\}\.`/);
+    // the offer is read from the plan settings, never typed
+    assert.match(card, /const offer = `Premium Coaches Portal\. \$\{MONTHLY\} or \$\{ANNUAL\} \$\{BILLING_TAX_WORDS\.plusTax\}\.`;/);
     assert.match(card, /const MONTHLY = formatPlanPeriodPrice\('team', 'monthly'\);/);
     assert.doesNotMatch(card, /Seasonal/, '"Seasonal" becomes the annual price wording');
     assert.match(card, /<ChoicePair\b/, 'the shared choice pair (D-F3)');
-    assert.match(card, /founding \? 'Create team' : 'Continue to checkout'/, 'D-F6');
+    assert.match(card, /const submitLabel = 'Continue to checkout';/, 'D-F6');
     assert.equal(existsSync(new URL('../../app/team/page.module.css', import.meta.url)), false, 'the card carries no form styles of its own');
   });
-  it('the card shows the price the checkout will charge: the server’s answer, not the bare window', () => {
-    assert.match(card, /foundingOffer: foundingPromoActive,/);
-    assert.doesNotMatch(card, /isFoundingSeasonPromoActive/);
+  it('the card carries no Founding offer: the page hands it the signed-in email and remembered billing only', () => {
+    assert.doesNotMatch(card, /founding|Founding/);
     for (const f of ['app/coaches/start/page.tsx']) {
-      assert.match(readCode(f), /foundingOffer=\{foundingSeasonOfferFor\(user, 'premium'\)\}/, f);
+      assert.doesNotMatch(readCode(f), /foundingOffer|foundingSeasonOfferFor/, f);
       assert.match(readCode(f), /signedInEmail=\{user\?\.email \?\? null\}/, f);
       assert.match(readCode(f), /rememberedBilling=\{readStartDoor\(user\?\.user_metadata\)\?\.billing \?\? null\}/, f);
     }

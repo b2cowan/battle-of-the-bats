@@ -326,7 +326,7 @@ describe('9 · the menu by job', () => {
   it('the entries and their nine new names', () => {
     const labels = baseMenuGroups(true).map(g => `${g.label}: ${g.items.map(i => i.label).join(', ')}`);
     assert.deepEqual(labels, [
-      // Stage 4 renamed Founding season → Free time, in the same place (owner ruling Q4).
+      // Stage 4 renamed the old desk to Free time, in the same place (owner ruling Q4).
       // Plans & pricing Stage 2 Part 4 (owner 2026-11-07) added Renewals after Free time.
       'Customers: Clubs & portals, People, Free time, Renewals, Retention',
       // Stage 5 joined Status (first) and Sent emails to the group; it made no new group (drawing A).

@@ -72,7 +72,7 @@ async function readGatingRows(): Promise<PlanGatingMap> {
 }
 
 /**
- * "Can a coach buy (or, during Founding Season, claim) a Premium Coaches Portal right now?"
+ * "Can a coach buy a Premium Coaches Portal right now?"
  *
  * One named question with one answer, because three separate surfaces were each spelling out
  * `!(await getPlanGatingMap()).team` from scratch — the /start chooser, the persona menu config and

@@ -25,9 +25,6 @@
 .segmentCard:hover { border-color: var(--home-line-strong); }
 .segmentCard:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
 
-/* The Founding Season line under the plan cards. */
-p.afterLine { margin-top: 1rem; }
-
 /* ── Bridges ─────────────────────────────────────────────────────────────── */
 
 .bridgeLabel { margin: 0 0 0.75rem; }

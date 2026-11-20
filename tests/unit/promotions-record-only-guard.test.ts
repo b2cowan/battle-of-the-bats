@@ -4,7 +4,7 @@
  * A promotion is a row in `platform_catalog_campaigns`, written and read only by the staff Plans & pricing
  * screen. No checkout reads it: setting one to Active gives no customer a discount, and the screen says so.
  * The owner kept it that way on purpose. Enforcing promotions needs a stacking rule against operator free
- * time, Founding Season comps and the Club trial that nobody has ruled, then an `/accounting` review.
+ * time, old comp rows and the Club trial that nobody has ruled, then an `/accounting` review.
  *
  * This guard fails when that decision is crossed without being revisited:
  *   1. any source file other than the two below starts reading the table;

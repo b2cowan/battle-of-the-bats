@@ -65,8 +65,7 @@ type FooterLink = readonly [label: string, href: string];
  *
  * It used to carry "Start free" → the tournament sign-up and "Coaches Portal" → the Premium sign-up: the same words
  * as the homepage's button leading somewhere else, two of four products with nothing saying why those two, and a
- * coach link that skipped the one coach rule (`lib/start-menu.ts`) — so it would have gone on opening Premium after
- * the Founding Season window closed. The chooser (/start) already knows what is on sale and where each door leads;
+ * coach link that skipped the one coach rule (`lib/start-menu.ts`). The chooser (/start) already knows what is on sale and where each door leads;
  * this component is pathname-only and cannot. ⚠ Do not add a sign-up door here: a new product earns a card on the
  * chooser, and "Built for" beside this column already answers "is this for me?".
  *

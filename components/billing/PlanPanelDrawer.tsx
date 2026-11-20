@@ -3,8 +3,8 @@
  * The plan's panel opened over a page by a plan lock, and what its Upgrade came to — loaded only once a lock is clicked
  * (`PlanPanelHost` mounts it; nothing here ships with an admin page that never shows one).
  *
- * Its Upgrade is Plan & billing's (`requestPlanUpgrade`): Founding Season applies the plan at once — the org and its
- * tournaments re-read, the page under the drawer unlocks in place, "Plan updated" says so — and a paid upgrade leaves
+ * Its Upgrade is Plan & billing's (`requestPlanUpgrade`): a plan applied at once re-reads the org and its
+ * tournaments, the page under the drawer unlocks in place and "Plan updated" says so; a paid upgrade leaves
  * for Stripe's checkout, which comes back to Plan & billing. Who is offered the Upgrade (`upgradePlansFor`, the owner
  * only) and when the plan is still early-access follow Plan & billing's own panel, so the drawer offers here exactly what
  * it offers there.
@@ -63,7 +63,7 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
     // The Terms window was closed: the panel is as it was.
     if ('closed' in result) { setLoading(false); return; }
     // GST/HST Stage 1: no billing address on file → the Billing address window, then the same upgrade again. Asked by the
-    // server, not here: a comped Founding upgrade charges nothing and is never asked.
+    // server, not here.
     if ('addressRequired' in result) {
       setLoading(false);
       address.refused(() => void upgrade(key));

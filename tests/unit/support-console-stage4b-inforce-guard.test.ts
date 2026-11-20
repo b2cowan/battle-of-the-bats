@@ -205,7 +205,7 @@ describe('5 · a free-time portal is not a customer, so it is never churn (T35, 
     assert.match(readCode('lib/lead-book.ts'), /givenPortals\.has\(m\.organization_id\)/);
   });
 
-  it("the mark is the give's own (free_time_given_at, mig 406), never the workspace's source (Founding and comped portals are platform_admin too)", () => {
+  it("the mark is the give's own (free_time_given_at, mig 406), never the workspace's source (comped portals are platform_admin too)", () => {
     const server = readCode('lib/portal-free-time-server.ts');
     const fn = server.slice(server.indexOf('export async function freeTimePortalOrgIds'));
     assert.match(fn, /\.not\('free_time_given_at', 'is', null\)/);

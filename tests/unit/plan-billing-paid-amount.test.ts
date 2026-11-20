@@ -14,7 +14,7 @@ import { functionBody, readCode } from './_source-code.ts';
 /**
  * Plans & pricing Stage 0, Part 6 (fix 1): the customer's Plan & billing page shows what their own subscription charges
  * (recorded by the billing webhook, mig 418), and the price list only when nothing is recorded. Every other branch (free,
- * Founding Season, staff free time) is unchanged. Prompt: docs/projects/active/PLANS_PRICING_STAGE0_BUILD_PROMPT.md.
+ * staff free time) is unchanged. Prompt: docs/projects/active/PLANS_PRICING_STAGE0_BUILD_PROMPT.md.
  */
 
 const load = billingTestLoader();
@@ -27,13 +27,12 @@ function fixture(key: keyof typeof PLAN_CONFIG, org: Partial<BillingSnapshot['or
     org: { id: 'org-a', slug: 'club-a', name: 'Falcons', planId: key, ownPlanId: key, enabledAddons: [], subscriptionStatus: 'active',
       subscriptionPeriod: 'monthly', currentPeriodEnd: '2027-03-01', teamLimit: 15, tournamentLimit: 1, stripeSubscriptionId: 'sub_1', ...org } as BillingSnapshot['org'],
     canManageBilling: true, usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 2, limit: profile.config.seatLimit }, officials: 4 }),
-    freeTime: ready({ freeTime: null, portal: null, foundingThrough: null, overLimitAfter: false }),
-    founding: ready({ isFoundingSeason: false, compUntil: null }),
+    freeTime: ready({ freeTime: null, portal: null, overLimitAfter: false }),
     gating: ready({ tournament: false, tournament_plus: false, team: false, league: true, club: true, club_large: true }),
     cancellation: ready({ currentPlan: key, ...planCancellationImpact(profile, [], 9), activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }),
     move: ready({ live: false, scheduledMove: null }),
   };
-  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
+  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, retry() {} } };
 }
 const html = (props: BillingBodyViewProps) => renderToStaticMarkup(createElement(BillingBodyView, props)).replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 const listPrice = (key: keyof typeof PLAN_CONFIG, cycle: 'monthly' | 'annual') =>
@@ -56,15 +55,8 @@ describe('the price line', () => {
   it('an amount in another currency is not printed as CAD: the list price stands', () => {
     assert.ok(html(fixture('club', { subscriptionAmountCents: 4250, subscriptionCurrency: 'usd' })).includes(listPrice('club', 'monthly')));
   });
-  it('the free plan and a Founding Season comp are unchanged by a recorded amount', () => {
+  it('the free plan is unchanged by a recorded amount', () => {
     assert.ok(html(fixture('tournament', { subscriptionAmountCents: 4250, subscriptionCurrency: 'cad' })).includes(W.plan.free));
-    const comp = fixture('league', { subscriptionAmountCents: 4250, subscriptionCurrency: 'cad' });
-    assert.ok(comp.profile.showFoundingSeason, 'league shows the Founding Season');
-    comp.foundingActive = true;
-    comp.snapshot.founding = ready({ isFoundingSeason: true, compUntil: '2027-09-30' });
-    const rendered = html(comp);
-    assert.ok(rendered.includes(W.founding.price));
-    assert.doesNotMatch(rendered, /42\.50/);
   });
   it('words: whole dollars print as the list price does, cents with two places', () => {
     assert.equal(W.plan.paidPrice(2900, 'monthly'), W.plan.price(29, 'monthly'));

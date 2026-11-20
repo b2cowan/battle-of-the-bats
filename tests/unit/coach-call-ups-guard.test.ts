@@ -100,8 +100,8 @@ describe('call-ups — the exclusion lives in the shared read', () => {
    *   · the Families desk, whose predicate is "not declined, not withdrawn" rather than
    *     `=== 'active'`, so every call-up became a permanent "child with no family" the admin could
    *     not clear;
-   *   · the guardian-link writer, the one family audience the no-email CHECK cannot close;
-   *   · the platform ops desk's roster-size metric.
+   *   · the guardian-link writer, the one family audience the no-email CHECK cannot close
+   *     (a fifth, the platform desk roster-size metric, went with the Founding desk in Stage 2b).
    * Each is asserted BY NAME, because the failure is silent at every one of them.
    */
   const RAW_QUERY_SURFACES: { what: string; rel: string }[] = [
@@ -115,7 +115,6 @@ describe('call-ups — the exclusion lives in the shared read', () => {
     // Stage 4a: the invitation (the guardian-link writer) moved to lib/family-invitation.ts; the coach's guardians card reads stay.
     { what: 'the guardian-link writer', rel: 'lib/family-invitation.ts' },
     { what: 'the coach’s guardians card', rel: 'lib/family-guardian.ts' },
-    { what: 'the platform roster-size metric', rel: 'lib/founding-season-desk.ts' },
   ];
   for (const { what, rel } of RAW_QUERY_SURFACES) {
     it(`${what} excludes call-ups in its own raw query`, () => {

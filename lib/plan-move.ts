@@ -3,7 +3,6 @@ import { getStripe } from './stripe';
 import { supabaseAdmin } from './supabase-admin';
 import { PLAN_CONFIG, normalizeBillingCycle, type BillingCycle } from './plan-config';
 import { getStripePriceId } from './stripe-prices';
-import { foundingCompAppliesToPlan, revokeFoundingSeasonComp } from './founding-season';
 import { writeGrowthEvent } from './platform-events';
 import { BUYER_USER_META, MOVE_METADATA_KEY } from './plan-growth';
 import { futureMoveAnswer, stripeCancelSignal, waitingState } from './plan-ending';
@@ -328,7 +327,6 @@ export async function previewMove(org: MoveOrg, toPlan: OrgPlan, place: QuotePla
  *   · a CUSTOM team limit is cleared on a band change (it was set for the old band and would read as
  *     the new band's cap — the Club Repackaging fast-follow) — unless the same change sets the new
  *     band's cap (`keepTeamLimit`, an operator's custom deal), and
- *   · ⚖ D6: a move onto a Club band revokes the Founding Season comp, and
  *   · Stage 4b: a move onto a Club band turns a standalone Coaches Portal into the club, in place (`flipWorkspaceIntoClub`).
  * Idempotent: a second call with the same plans changes nothing. Call it AFTER the plan is written.
  */
@@ -340,7 +338,7 @@ export async function applyPlanChangeSideEffects(p: {
   keepTeamLimit?: boolean;
   /** The club name the coach typed, for a Coaches Portal becoming the club (Stage 4b Part 2). Absent keeps the organization's name. */
   clubName?: string | null;
-}): Promise<{ clearedTeamLimit: boolean; revokedComps: number; workspaceFlip: WorkspaceFlipResult }> {
+}): Promise<{ clearedTeamLimit: boolean; workspaceFlip: WorkspaceFlipResult }> {
   let clearedTeamLimit = false;
   if (p.fromPlan && p.fromPlan !== p.toPlan && !p.keepTeamLimit) {
     const { data, error } = await supabaseAdmin
@@ -352,11 +350,8 @@ export async function applyPlanChangeSideEffects(p: {
     if (error) throw error;
     clearedTeamLimit = (data?.length ?? 0) > 0;
   }
-  const revokedComps = foundingCompAppliesToPlan(p.toPlan)
-    ? 0
-    : await revokeFoundingSeasonComp(p.orgId, p.actor);
   // 12d-2 (ask 11): a move onto a plan without online payments closes the club's open pay pages on the move date (the
-  // webhook's flip for a scheduled down-move, the operator's change). After the comp revoke, so the plan read is final.
+  // webhook's flip for a scheduled down-move, the operator's change).
   // Loaded here, not at the top: the endings module is server-only, and this one is loaded by unit tests.
   // Never throws: a load that fails outside the app (a script, a test runner) must not undo a plan already written.
   if (p.fromPlan !== p.toPlan) {
@@ -378,7 +373,7 @@ export async function applyPlanChangeSideEffects(p: {
   if (workspaceFlip.status === 'flipped' || workspaceFlip.status === 'already_flipped') {
     await restoreCoachesPortalRetainedRecords(p.orgId, workspaceFlip.workspaceId);
   }
-  return { clearedTeamLimit, revokedComps, workspaceFlip };
+  return { clearedTeamLimit, workspaceFlip };
 }
 
 export type MoveResult =
@@ -579,18 +574,15 @@ const NEVER_STARTED = new Set(['incomplete', 'incomplete_expired']);
 /**
  * Has this Stripe customer ever HELD a subscription (a trial counts — it is what a second trial
  * would repeat)? The no-second-trial fact (Ask 4), asked by checkout and by the operator's Club
- * trial (H02) alike. Not counted: a subscription that never started, and a Founding Season
- * next-season choice (`choiceKind` — a promise to pay, not a subscription they used).
+ * trial (H02) alike. Not counted: a subscription that never started.
  */
 export async function hadSubscriptionBefore(customerId: string): Promise<boolean> {
-  return anySubscription(customerId, sub => !sub.metadata?.choiceKind);
+  return anySubscription(customerId, () => true);
 }
 
 /**
  * Has this customer paid, or promised to pay? The question behind GST/HST's "the country changed after paying" flag, and
- * ONLY that flag (owner Part 3 Ask 3, 2026-11-04): unlike the trial rule above, a Founding next-season choice COUNTS, because
- * it is a real subscription that will charge on its first renewal. Never use this for a trial: the Founding choice must not
- * cost anyone their trial.
+ * ONLY that flag (owner Part 3 Ask 3, 2026-11-04).
  */
 export async function paidOrPromisedToPay(customerId: string): Promise<boolean> {
   return anySubscription(customerId, () => true);

@@ -64,7 +64,6 @@ export const PATCH = withObservability(async (req: NextRequest,
     ...(change.archiveWarning ? { archiveWarning: change.archiveWarning } : {}),
     // Added 2026-09-25 (Club Tier Stage 1b), additively:
     clubTrialDays: change.clubTrialDays,
-    foundingCompRevoked: change.revokedComps > 0,
     teamLimitCleared: change.clearedTeamLimit,
     ...(planChangeWarnings.length > 0 ? { planChangeWarning: planChangeWarnings.join(' ') } : {}),
   });

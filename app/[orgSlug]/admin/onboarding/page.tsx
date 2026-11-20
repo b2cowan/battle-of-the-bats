@@ -15,8 +15,7 @@ import {
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
-import { PLAN_CONFIG, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
-import { useHoldsFoundingComp } from '@/lib/use-founding-season-lock';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import type { OrgPlan } from '@/lib/types';
@@ -255,9 +254,6 @@ export default function OnboardingPage() {
 
 function OnboardingPageLegacy() {
   const { currentOrg, userRole, loading, refresh: refreshOrgContext } = useOrg();
-  // The welcome speaks to a comp HOLDER as well as a newcomer: the window closed early (owner 2026-10-26), but an
-  // organization that joined in time is still in its Founding Season.
-  const holdsFoundingComp = useHoldsFoundingComp();
   const { refresh: refreshTournamentContext } = useTournament();
   const { openNew } = useSetupWizard();
   const router = useRouter();
@@ -314,26 +310,6 @@ function OnboardingPageLegacy() {
   // preselects and names (Account-First Sign-up A6, 2026-10-18; The first look G4, 2026-10-20 — the free pick too).
   // A preselection the person can change, never a price.
   const pricing = parseStartPricing(searchParams.get('plan'), searchParams.get('billing'));
-  // After the sign-up window closes, an organization that holds the Founding comp still picks Tournament Plus at $0 on
-  // its FIRST plan choice (owner 2026-10-19). The server answers, the same rule the checkout applies, so the card never
-  // shows a price the checkout won't charge. Before the close the window itself shows the offer.
-  // Only a free organization can be offered it, so no other plan asks. It is asked again each time the chooser appears
-  // (the answer ends once setup starts), and an answer is only ever shown for the state it was asked in (/review).
-  const offerSlug = currentOrg?.planId === 'tournament' && !isFoundingSeasonSignupOpen() ? currentOrg.slug : null;
-  const offerKey = offerSlug ? [offerSlug, planChoiceRequired, planChooserOpen, activeModal].join(':') : null;
-  const [offerAnswer, setOfferAnswer] = useState<{ key: string; held: boolean } | null>(null);
-  useEffect(() => {
-    if (!offerKey || !offerSlug) return;
-    let live = true;
-    fetch(`/api/admin/org/founding-season-status?orgSlug=${encodeURIComponent(offerSlug)}&planChoice=1`)
-      .then(res => (res.ok ? res.json() : null))
-      .then((data: { offerOnPlanChoice?: boolean } | null) => {
-        if (live) setOfferAnswer({ key: offerKey, held: data?.offerOnPlanChoice === true });
-      })
-      .catch(() => {});
-    return () => { live = false; };
-  }, [offerKey, offerSlug]);
-  const foundingOfferHeld = !!offerKey && offerAnswer?.key === offerKey && offerAnswer.held;
 
   // A PAID DOOR's organization (On-sale pages S2): the plan it came to buy, its on-sale plans and each one's true trial,
   // from the server (`organizations.start_plan`, trap B). Asked whenever the plan step or the wait shows, and only for a
@@ -1049,7 +1025,6 @@ function OnboardingPageLegacy() {
           initialBilling={parseStartBilling(searchParams.get('billing')) ?? undefined}
           order={['tournament_plus', 'tournament', 'league', 'club']}
           featuredPlan={pricing?.plan ?? 'tournament_plus'}
-          foundingOfferHeld={foundingOfferHeld}
           plusTax
           ctaLabel={(planKey) => planKey === 'tournament' && planKey !== activePlanId ? 'Continue free' : undefined}
         />}
@@ -1493,7 +1468,6 @@ function OnboardingPageLegacy() {
         <PlanStep
           orgName={currentOrg.name}
           pricing={pricing}
-          foundingOfferHeld={foundingOfferHeld}
           initialBilling={lastCycle}
           loading={planLoading}
           error={planError}
@@ -1529,17 +1503,6 @@ function OnboardingPageLegacy() {
         <h1 className={styles.title}>Welcome to FieldLogicHQ</h1>
         <p className={styles.sub}>Let&apos;s get {currentOrg.name} set up in a few quick steps.</p>
       </div>
-
-      {(isFoundingSeasonSignupOpen() || holdsFoundingComp) && (
-        <div className={styles.foundingSeasonBanner}>
-          <p className={styles.foundingSeasonBannerEyebrow}>Founding Season</p>
-          <p className={styles.foundingSeasonBannerTitle}>Welcome to your Founding Season.</p>
-          <p className={styles.foundingSeasonBannerCopy}>
-            Your plan is free through {FOUNDING_SEASON_END_LABEL}. No credit card.
-            We&apos;ll remind you during the summer, and in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season.
-          </p>
-        </div>
-      )}
 
       <div className={styles.steps}>
           <div className={`${styles.step} ${styles.stepDone}`}>

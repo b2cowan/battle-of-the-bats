@@ -114,7 +114,7 @@ describe('the door: a whole-plan grant', () => {
 
 describe('the last free day is a day in Eastern time', () => {
   it('ends at the first moment of the next day, Eastern (EDT and EST)', () => {
-    assert.equal(endInstantForLastDay('2027-09-30'), '2027-10-01T04:00:00.000Z'); // Founding's own end
+    assert.equal(endInstantForLastDay('2027-09-30'), '2027-10-01T04:00:00.000Z'); // a September 30 last day (EDT)
     assert.equal(endInstantForLastDay('2026-12-31'), '2027-01-01T05:00:00.000Z');
   });
 

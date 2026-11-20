@@ -11,7 +11,7 @@ import { demoActorRefusal, demoBillingRefusal } from '../../lib/demo-guard.ts';
 import { DEMO_ORGS } from '../../lib/demo-org.ts';
 
 const CREATE_DOORS: Record<string, string> = {
-  'app/api/org/create/route.ts': 'creates a club (and grants the Founding Season comp)',
+  'app/api/org/create/route.ts': 'creates a club',
   'app/api/coaches/teams/route.ts': 'creates a coach team',
   'app/api/coaches/basic-teams/route.ts': 'claims a tournament entry, and can create a coach team for it',
   'app/api/register/route.ts': 'a signed-in sign-up files the entry under a coach team, and can create one',
@@ -22,7 +22,7 @@ const CREATES = /\b(createOrganization|createBasicCoachTeam|linkTournamentRegist
 
 /** The source without its comments, so a mention in prose never counts. */
 const code = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\s\/\/ .*$/gm, '');
-const SIDE_EFFECT = /\b(supabaseAdmin|createOrganization|createOrganizationMember|createBasicCoachTeam\w*|linkTournamentRegistrationToBasicCoachTeam|sendEmail|clearStartDoor|ensureFoundingSeasonCompPeriod)\b|\.(?:insert|update|delete|upsert)\(/;
+const SIDE_EFFECT = /\b(supabaseAdmin|createOrganization|createOrganizationMember|createBasicCoachTeam\w*|linkTournamentRegistrationToBasicCoachTeam|sendEmail|clearStartDoor)\b|\.(?:insert|update|delete|upsert)\(/;
 
 describe('demo accounts at the create doors', () => {
   test('both demo accounts are refused as actors, anyone else is not', () => {

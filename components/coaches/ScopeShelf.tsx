@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { isFoundingSeasonPromoActive, PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import styles from './ScopeShelf.module.css';
 
@@ -79,12 +79,11 @@ export default async function ScopeShelf({
   // The gate lives in each environment's own DB and fails closed, so a prod deploy can never flip it.
   // Forward the originating free team so the signup can pre-fill it and (Phase 2+) carry its data over.
   const checkoutOpen = !(await getPlanGatingMap()).team;
-  const promoActive = isFoundingSeasonPromoActive('team');
   const href = checkoutOpen
     ? `/coaches/start?source=coach_footer_${section}&basicTeamId=${encodeURIComponent(basicTeamId)}`
     : `/for-coaches?source=coach_footer_${section}`;
   const linkLabel = checkoutOpen
-    ? (promoActive ? 'Upgrade to Premium — free →' : 'Upgrade to Premium →')
+    ? 'Upgrade to Premium →'
     : 'See everything it includes →';
   return (
     <footer className={styles.footer}>
@@ -105,7 +104,7 @@ export default async function ScopeShelf({
           <>On {SECTION_LABEL[section]}: {COPY[section].value} — {COPY[section].teaser}.</>
         )}
         {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
-        {' '}Your free tools stay free. {W.coachUpsell.shelf(promoActive)}
+        {' '}Your free tools stay free. {W.coachUpsell.shelf()}
       </p>
       {note && <p className={styles.footerBody}>{note}</p>}
       <Link href={href} className={styles.footerLink}>{linkLabel}</Link>

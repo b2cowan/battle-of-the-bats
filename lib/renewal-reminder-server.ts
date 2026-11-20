@@ -12,9 +12,8 @@ import { PLAN_CONFIG } from './plan-config';
 import { getBillingHref, billingUrlOrgFromRow } from './billing-urls';
 import { namedTaxLines } from './billing-tax';
 import { idOf } from './charge-tax-record';
-import { nextSeasonFirstChargeIso } from './next-season-choice';
 import {
-  DAY_MS, onePerAccount, planLineFigures, reminderTiming, runRenewalReminder, sameInstant, REMINDER_WINDOW,
+  DAY_MS, onePerAccount, planLineFigures, runRenewalReminder, sameInstant, REMINDER_WINDOW,
   type ReminderCandidate, type ReminderRunDeps, type ReminderStripeFacts,
 } from './renewal-reminder';
 
@@ -23,8 +22,7 @@ import {
  * job's `renewal_reminders` step (`sendRenewalReminders`).
  *
  *   · WHO, from the stored rows before any Stripe read: an account whose own subscription is yearly (`subscription_period =
- *     'annual'`), active or trialing, with its period end (a trial's: its trial end) at most 37 days away; and a yearly next-season
- *     choice (`organization_billing_facts.next_season_billing_cycle`), whose first charge is the next-season date. A coach's own
+ *     'annual'`), active or trialing, with its period end (a trial's: its trial end) at most 37 days away. A coach's own
  *     Premium is one of these: its workspace's account row carries the same columns (`syncTeamWorkspaceSubscription`), so the
  *     reminder reads and stamps that row (team_workspaces.renewal_reminded_for is not used).
  *   · THE AMOUNT, from Stripe's preview of the next invoice (`invoices.createPreview({ subscription })`): its amount before tax
@@ -53,37 +51,12 @@ async function readCandidates(now: Date): Promise<ReminderCandidate[]> {
     .gt('current_period_end', at(fromDays)).lte('current_period_end', at(REMINDER_WINDOW.latestDays))
     .order('current_period_end', { ascending: true }).limit(500);
 
-  // A yearly next-season choice: its first charge is one date for everyone, so the read is skipped outside the window.
-  const firstCharge = nextSeasonFirstChargeIso();
-  const readNextSeason = async (): Promise<ReminderCandidate[]> => {
-    if (!reminderTiming(firstCharge, now)) return [];
-    const { data: choices, error } = await supabaseAdmin.from('organization_billing_facts')
-      .select('org_id, next_season_subscription_id').eq('next_season_billing_cycle', 'annual').not('next_season_subscription_id', 'is', null)
-      .limit(500);
-    if (error) throw error;
-    const rows = (choices ?? []) as Array<{ org_id: string; next_season_subscription_id: string }>;
-    if (!rows.length) return [];
-    // The ids ride the request's URL: a hundred at a time keeps it far under any gateway's limit.
-    const ids = rows.map(r => r.org_id);
-    const chunks = Array.from({ length: Math.ceil(ids.length / 100) }, (_, i) => ids.slice(i * 100, i * 100 + 100));
-    const stampOf = new Map<string, string | null>();
-    for (const found of await Promise.all(chunks.map(chunk => supabaseAdmin.from(ORGS).select('id, renewal_reminded_for').in('id', chunk)))) {
-      if (found.error) throw found.error;
-      for (const s of (found.data ?? []) as Array<Pick<OrgRow, 'id' | 'renewal_reminded_for'>>) stampOf.set(s.id, s.renewal_reminded_for);
-    }
-    return rows.map(r => ({
-      orgId: r.org_id, subscriptionId: r.next_season_subscription_id, kind: 'next_season' as const, chargeIso: firstCharge,
-      remindedFor: stampOf.get(r.org_id) ?? null,
-    }));
-  };
-
-  const [annual, noCycle, nextSeason] = await Promise.all([
+  const [annual, noCycle] = await Promise.all([
     billing(0).eq('subscription_period', 'annual'),
     // A row with NO cycle on record (seen on dev 2026-11-13: a Coaches Portal whose first webhook arrived before its workspace
     // existed) must not miss a yearly reminder. Only past NO_CYCLE_MIN_DAYS, so a monthly plan costs no Stripe read; Stripe's
     // preview then decides whether the charge is yearly.
     billing(NO_CYCLE_MIN_DAYS).is('subscription_period', null),
-    readNextSeason(),
   ]);
   if (annual.error) throw annual.error;
   if (noCycle.error) throw noCycle.error;
@@ -94,7 +67,7 @@ async function readCandidates(now: Date): Promise<ReminderCandidate[]> {
   // The earlier date per account first (so the pick never flips), THEN the ones already told: they would otherwise cost a Stripe
   // read each, every day of the window, and use up the run's budget. (The reads' 500-row limit is applied before this: with over
   // 500 yearly accounts inside 37 days it would need a paged read; far from today's size.)
-  return onePerAccount([...own, ...nextSeason]).filter(c => !sameInstant(c.remindedFor, c.chargeIso));
+  return onePerAccount(own).filter(c => !sameInstant(c.remindedFor, c.chargeIso));
 }
 
 /** What Stripe says now: the subscription's status, cancel and charge date, and its preview of the next invoice. */

@@ -119,15 +119,15 @@ describe('Part 5 · Plan & billing on free time (drawing D)', () => {
     assert.match(body, /if \(userRole !== 'owner'\) return/);
     assert.match(body, /const endedPortal = portal\?\.state === 'ended'/);
     assert.match(body, /&& !portal && !staffFree/);
-    assert.match(body, /paid && !staffFree && !endedPortal && !founding/);
+    assert.match(body, /paid && !staffFree && !endedPortal/);
     assert.match(body, /profile\.freeTimeOmittedBillingItems\?\.includes\(index\)/);
     assert.match(body, /portal \? 'btn-outline' : 'btn-lime'/);
     assert.match(body, /teamWorkspaceReactivatePath\(org\)\}&keep=1/);
     assert.match(readCode('components/billing/Billing.module.css'), /\.keepPremiumButton, \.joinClubButton \{ width: 100%; \}/);
   });
   it('the price, the Stripe door, Cancel and the tournament slots are not rendered while it runs (Q10, Q11-7)', () => {
-    assert.match(page, /controlsReady && paid && !staffFree && !endedPortal && !founding/);
-    assert.match(page, /controlsReady && paid && ownBilling && !founding/);
+    assert.match(page, /controlsReady && paid && !staffFree && !endedPortal/);
+    assert.match(page, /controlsReady && paid && ownBilling && !pendingCancel/);
     assert.match(page, /profile\.usageMeters\.filter\(m => !portal \|\| m !== 'tournament_slots'\)/);
     assert.match(page, /const price = freeCard\?\.price/);
   });
@@ -173,10 +173,10 @@ describe('Part 6 · Keep Premium attaches to the same portal (Q11-2)', () => {
     assert.ok(keep < provision.indexOf('provisionStandaloneTeamWorkspace('), 'before a fresh provision');
     assert.match(provision.slice(keep, keep + 400), /stripeSubscriptionId: params\.stripeSubscriptionId/);
   });
-  it('the checkout route lets the coach\'s own free-time portal through, refuses any other live one, and skips Founding', () => {
+  it('the checkout route lets the coach\'s own free-time portal through, refuses any other live one', () => {
     const route = readCode('app/api/billing/create-team-checkout/route.ts');
     assert.match(route, /existingPortal && existingPortal\.workspaceOrgId !== keepPortal\?\.orgId/);
-    assert.match(route, /if \(!keepPortal && \(foundingSeasonOfferFor/);
+    assert.doesNotMatch(route, /[Ff]ounding/, 'no Founding offer is left in the checkout');
     assert.ok(route.indexOf('findKeepPremiumPortal(') < route.indexOf('getActiveOwnedTeamWorkspace(user.id)'));
   });
   const keep = readCode('lib/portal-keep-premium.ts');

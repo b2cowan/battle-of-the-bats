@@ -12,7 +12,7 @@
  */
 import { ChevronDown } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { PlanLockedTool, PlanLockMenuFoot } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockedTool } from '@/components/admin/tournament/PlanLockLine';
 import { REGISTRATION_CHIP_WORDS, TEAMS_WORDS } from '@/lib/registration-words';
 import styles from '../teams-admin.module.css';
 
@@ -58,7 +58,6 @@ export default function RegistrationChip({ divisionName, accepted, capacity, clo
           <>
             <p className={styles.regChipSentence} role="note">{ended.sentence}</p>
             <PlanLockedTool name={ended.lockWords} href={ended.lockHref} plan={ended.plan} />
-            <PlanLockMenuFoot />
           </>
         ) : (
           <>

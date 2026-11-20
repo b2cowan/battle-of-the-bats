@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCustomerFreeTime } from '@/lib/entitlement-grants';
-import { getEffectiveTournamentLimit, isFoundingSeasonCompExpiry } from '@/lib/plan-config';
-import { foundingCompAppliesToPlan } from '@/lib/founding-season';
-import { formatLongDay, isGrantRunning, lastDayOfInstant } from '@/lib/free-time';
+import { getEffectiveTournamentLimit } from '@/lib/plan-config';
 import { SLOT_STATUSES } from '@/lib/tournament-slot';
 import { withObservability } from '@/lib/observability';
 import { customerPortalFreeTime, endedPortalFreeTime } from '@/lib/portal-free-time-server';
@@ -46,10 +44,10 @@ export const GET = withObservability(async (req: Request) => {
         if (ownerError) throw ownerError;
         canKeepPremium = !!ws?.primary_owner_user_id && ws.primary_owner_user_id === ctx.user.id;
       }
-      return NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal, canKeepPremium });
+      return NextResponse.json({ freeTime: null, overLimitAfter: false, portal, canKeepPremium });
     } catch {
       return billingView ? NextResponse.json({ error: 'Free time could not be read. Try again.' }, { status: 503 })
-        : NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal: null });
+        : NextResponse.json({ freeTime: null, overLimitAfter: false, portal: null });
     }
   }
 
@@ -67,8 +65,6 @@ export const GET = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Free time could not be read. Try again.' }, { status: 503 });
   }
   let overLimitAfter = false;
-  // Founding Season still running after a shorter grant: its last free day, so the page can say the club stays free.
-  let foundingThrough: string | null = null;
   if (freeTime && freeTime.state !== 'ended') {
     const ownLimit = getEffectiveTournamentLimit(freeTime.ownPlan, row.tournament_limit);
     if (ownLimit < 9999) {
@@ -81,16 +77,5 @@ export const GET = withObservability(async (req: Request) => {
       overLimitAfter = (count ?? 0) > ownLimit;
     }
   }
-  if (freeTime && foundingCompAppliesToPlan(freeTime.ownPlan)) {
-    const { data: comps } = await supabaseAdmin
-      .from('org_overrides')
-      .select('starts_at, expires_at, revoked_at')
-      .eq('org_id', row.id)
-      .eq('type', 'comp_period')
-      .is('revoked_at', null);
-    const comp = (comps ?? []).find(c => c.expires_at && isFoundingSeasonCompExpiry(c.expires_at) && isGrantRunning(c));
-    const compLast = comp?.expires_at ? lastDayOfInstant(comp.expires_at) : null;
-    if (compLast && compLast > freeTime.lastDay) foundingThrough = formatLongDay(compLast);
-  }
-  return NextResponse.json({ freeTime, overLimitAfter, foundingThrough });
+  return NextResponse.json({ freeTime, overLimitAfter });
 }, { route: '/api/admin/org/free-time' });

@@ -7,7 +7,7 @@ import { OFFERED_SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
 import { signIn } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
-import { PLAN_CONFIG, formatPlanPeriodPrice, normalizeBillingCycle, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPlanPeriodPrice, normalizeBillingCycle } from '@/lib/plan-config';
 import { startDoorLinkPath } from '@/lib/start-door';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import StartSteps from '@/components/auth/StartSteps';
@@ -53,12 +53,6 @@ type TeamSignupClientProps = {
   confirmed?: boolean;
   /** Who is signed in, from the server — step 2 straight away, with no session check in the browser. */
   signedInEmail?: string | null;
-  /**
-   * Does this visitor get the Founding Season offer? The server answers (lib/founding-season.ts): the window while it
-   * is open; after it, only an account made by then that came through Coach Premium (edge (b), 2026-10-19) — the same
-   * rule the checkout applies, so the card never shows a price the checkout won't charge.
-   */
-  foundingOffer: boolean;
   /** The billing chosen on the pricing page, remembered on the account across the email (Account-First Part 3). */
   rememberedBilling?: BillingCycle | null;
 };
@@ -113,7 +107,6 @@ export default function TeamSignupClient({
   prefillBasicTeamId = null,
   confirmed = false,
   signedInEmail = null,
-  foundingOffer: foundingPromoActive,
   rememberedBilling = null,
 }: TeamSignupClientProps) {
   const router = useRouter();
@@ -167,14 +160,11 @@ export default function TeamSignupClient({
   // (the account remembers the door, so a resend from sign-in lands there too).
   const confirmedAt = (path: string) => `${path}${path.includes('?') ? '&' : '?'}confirmed=1`;
   const linkPath = isReactivation ? confirmedAt(returnPath) : startDoorLinkPath('premium');
-  const founding = foundingPromoActive && !isReactivation;
   const seasonName = cleanTeamName ? `${cleanTeamName} ${seasonYear}` : `Team ${seasonYear}`;
 
   // The heading names what the person came to do (rule 3); the offer is the one sub line, read from the plan settings so
-  // it changes by itself when the Founding Season window closes. The upgrade and the reactivation keep their own.
-  const offer = foundingPromoActive
-    ? `Premium Coaches Portal. Free through ${FOUNDING_SEASON_END_LABEL}, then ${MONTHLY}.`
-    : `Premium Coaches Portal. ${MONTHLY} or ${ANNUAL} ${BILLING_TAX_WORDS.plusTax}.`;
+  // the upgrade and the reactivation keep their own.
+  const offer = `Premium Coaches Portal. ${MONTHLY} or ${ANNUAL} ${BILLING_TAX_WORDS.plusTax}.`;
   const title = isKeepPremium
     ? 'Keep Premium'
     : isReactivation
@@ -185,17 +175,13 @@ export default function TeamSignupClient({
     : isReactivation
       ? 'Restore your team workspace instead of starting a new one.'
       : offer;
-  // Step 2 names what it makes (rule 3, D-F6): "Create team" while the Founding Season covers it, "Continue to checkout"
-  // once a card is needed. No arrows.
-  const submitLabel = isWarmUpgrade
-    ? (founding ? 'Upgrade to Premium' : 'Continue to checkout')
-    : founding ? 'Create team' : 'Continue to checkout';
+  // Step 2 names what it does (rule 3, D-F6): "Continue to checkout", as a card is needed. No arrows.
+  const submitLabel = 'Continue to checkout';
 
   // GST/HST Stage 1 (drawing tab 4): a coach buys Premium as themselves, so a paid checkout needs their home address first.
   // With none on file, a third step "Address" follows Team (whose button becomes Next); with one, a "Billed to … Change"
-  // line sits above Continue to checkout. The comped Founding path charges nothing and is never asked.
-  const paid = !founding;
-  const billingAddress = useBillingAddressGate(isAuthenticated && paid ? { scope: 'person' } : null);
+  // line sits above Continue to checkout.
+  const billingAddress = useBillingAddressGate(isAuthenticated ? { scope: 'person' } : null);
   const usSalesOpen = billingAddress.info?.usSalesOpen ?? false;
   const addressForm = useAddressDraft(null, usSalesOpen);
   const [addressStep, setAddressStep] = useState(false);
@@ -206,7 +192,7 @@ export default function TeamSignupClient({
     addressForm.reset(billingAddress.info.location);
   }
   const addressOnFileNow = billingAddress.location;
-  const needsAddressStep = paid && !addressOnFileNow;
+  const needsAddressStep = !addressOnFileNow;
   const addressFieldsShown = addressStep || changingAddress;
   // The main button (and the §20 (3) line above it) is withheld while the address fields say the country is closed.
   const buttonShown = !(addressFieldsShown && addressForm.usClosed);
@@ -349,26 +335,10 @@ export default function TeamSignupClient({
       throw new Error('Checkout did not return a destination URL.');
     }
 
-    // Founding-season comp path returns an INTERNAL portal URL (no Stripe). Route it through the
-    // warm success screen (design_decisions S1-2): it names the free period, then hands off into the
-    // operating portal. A real Stripe checkout returns an external URL and ends on checkout complete,
-    // which shows the same welcome when the portal is ready (The first look G2). Keyed on the server's
-    // `comped` (G1, 2026-10-20), not the sign-up window: a coach who keeps the comp after the window
-    // closes (edge (b)) gets the welcome too.
-    const dest = payload.url;
-    const isInternal = dest.startsWith('/') || dest.startsWith(window.location.origin);
-    if (isInternal && payload.comped === true) {
-      // dest may be an ABSOLUTE same-origin URL (create-team-checkout builds `${NEXT_PUBLIC_APP_URL}/…`);
-      // pass a RELATIVE path so the welcome screen's same-origin guard accepts it (and no origin leaks).
-      const nextPath = dest.startsWith('/') ? dest : dest.slice(window.location.origin.length);
-      const params = new URLSearchParams({ next: nextPath, team: cleanTeamName });
-      window.location.assign(`/coaches/welcome?${params.toString()}`);
-    } else {
-      window.location.assign(dest);
-    }
+    window.location.assign(payload.url);
   }
 
-  /** Step 2: one tap starts the checkout (never automatically, V1) — or, paid with no home address on file, goes to Address. */
+  /** Step 2: one tap starts the checkout (never automatically, V1) — or, with no home address on file, goes to Address. */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -380,7 +350,7 @@ export default function TeamSignupClient({
       return;
     }
 
-    if (paid && !changingAddress && !addressOnFile(await billingAddress.load())) {
+    if (!changingAddress && !addressOnFile(await billingAddress.load())) {
       setAddressStep(true);
       return;
     }
@@ -469,7 +439,6 @@ export default function TeamSignupClient({
               <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>
                 {busyLabel || (authMode === 'signup' ? 'Create account' : 'Sign in')}
               </button>
-              {authMode === 'signup' && founding && <p className={accountForm.fine}>No credit card.</p>}
             </form>
 
             {(authMode === 'signup' || !isReactivation) && (
@@ -541,36 +510,33 @@ export default function TeamSignupClient({
             )}
 
             <div className={accountForm.field}>
-              <span className={accountForm.label} id="premium-billing">{founding ? 'After the Founding Season' : 'Billing'}</span>
+              <span className={accountForm.label} id="premium-billing">Billing</span>
               <ChoicePair
                 labelledBy="premium-billing"
-                describedBy={founding ? 'premium-billing-hint' : undefined}
                 value={billingCycle}
                 options={BILLING_OPTIONS}
                 onChange={setBillingCycle}
                 disabled={busy}
               />
-              {founding && <p className={accountForm.hint} id="premium-billing-hint">Change it any time before then. No card today.</p>}
               {/* GST/HST Stage 2 Part 4: the choices keep their short price; where the sub line above names no price (Keep,
                   Reactivate) the one sentence says it once. The offer's own sub line already carries the phrase. */}
-              {!founding && sub !== offer && <p className={accountForm.hint}>{BILLING_TAX_WORDS.pricesPlusTax}</p>}
+              {sub !== offer && <p className={accountForm.hint}>{BILLING_TAX_WORDS.pricesPlusTax}</p>}
             </div>
 
-            {paid && addressOnFileNow && !changingAddress && (
+            {addressOnFileNow && !changingAddress && (
               <p className={addressStyles.billedToStart}>
                 <span>{BILLING_ADDRESS_FORM_WORDS.billedTo(formatBilledTo(addressOnFileNow))}</span>
                 <button type="button" className={addressStyles.changeStart} onClick={() => setChangingAddress(true)} disabled={busy}>{BILLING_ADDRESS_FORM_WORDS.change}</button>
               </p>
             )}
-            {paid && changingAddress && (
+            {changingAddress && (
               <BillingAddressFields form={addressForm} idPrefix="premium-address" subject={{ kind: 'person' }}
                 variant="start" disabled={busy} />
             )}
 
             {notices}
-            {/* §20 (3) above the button when it goes to checkout at a price (step 6.3, drawing tab 5, pin 4). Not on the Founding
-                Season start (no price), nor while the button is "Next" to the Address step (the line waits there). */}
-            {paid && !(needsAddressStep && !changingAddress) && buttonShown && <PlanTermsLine place="column" trial={PLAN_CONFIG.team.trialDays} />}
+            {/* §20 (3) above the button when it goes to checkout at a price (step 6.3, drawing tab 5, pin 4). Not while the button is "Next" to the Address step (the line waits there). */}
+            {!(needsAddressStep && !changingAddress) && buttonShown && <PlanTermsLine place="column" trial={PLAN_CONFIG.team.trialDays} />}
             {/* Tappable whenever it can work: a missing name or the wrong account says so beside it (validateTeam). */}
             {buttonShown && (
               <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>

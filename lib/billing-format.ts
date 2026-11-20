@@ -2,9 +2,9 @@
  * How billing facts READ — pure, client-safe, no Stripe and no database.
  *
  * It is its own module because the surfaces that show a saved card sit on opposite sides of the
- * server boundary: the Founding Season desk is a client component, and the writer that records the
+ * server boundary: the billing page is a client component, and the writer that records the
  * card is server-only (`lib/billing-setup.ts` imports Stripe and the admin client). Putting the
- * label there would make it unimportable from the desk; writing it twice is how the two surfaces
+ * label there would make it unimportable from the page; writing it twice is how the two surfaces
  * start describing one customer's card differently.
  */
 

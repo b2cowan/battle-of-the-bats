@@ -99,7 +99,7 @@ export default function PlatformAdminHelpPage() {
         { label: 'Triage feedback and find related error groups', href: '/platform-admin/help/platform-admin#feedback-triage' },
         { label: 'Review and action the approval queue', href: '/platform-admin/help/platform-admin#change-requests' },
         { label: 'Edit an email template safely', href: '/platform-admin/help/platform-admin#email-templates' },
-        { label: 'Send a batch marketing email', href: '/platform-admin/help/platform-admin#email-batch-send' },
+        { label: 'Read the Campaigns record', href: '/platform-admin/help/platform-admin#email-batch-send' },
         { label: 'Work with plans, pricing, and the feature matrix', href: '/platform-admin/help/platform-admin#plans-pricing' },
       ],
     },
@@ -107,7 +107,7 @@ export default function PlatformAdminHelpPage() {
       title: 'Growth Operator',
       steps: [
         { label: 'Manage the early-access lead pipeline', href: '/platform-admin/help/platform-admin#early-access-pipeline' },
-        { label: 'Send a batch marketing email', href: '/platform-admin/help/platform-admin#email-batch-send' },
+        { label: 'Read the Campaigns record', href: '/platform-admin/help/platform-admin#email-batch-send' },
         { label: 'Reorder and publish a pitch deck, or make a new one', href: '/platform-admin/help/platform-admin#pitch-decks' },
         { label: 'Review growth signals in Business numbers', href: '/platform-admin/business-numbers' },
       ],

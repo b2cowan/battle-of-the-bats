@@ -63,8 +63,8 @@ export type SearchParamsRecord = Record<string, string | string[] | undefined>;
  * Authenticated tournament coach-portal routes that render inside `CoachPortalShell`
  * (and therefore suppress the global marketing top nav + footer). The signup /
  * marketing surfaces — `/coaches/join`, `/coaches/start`,
- * `/coaches/checkout`, `/coaches/welcome` — are intentionally excluded so the shell passes
- * their children through untouched. NOTE: `/coaches/start`, `/coaches/welcome`, (since The first
+ * `/coaches/checkout` — are intentionally excluded so the shell passes
+ * their children through untouched. NOTE: `/coaches/start`, (since The first
  * look, 2026-10-19) `/coaches/join` and (since 2026-10-20) `/coaches/checkout` now wear the consumer WARM chrome via their own nested layout
  * (CoachJourneyChrome + isWarmJourneyPath), not the marketing chrome. `/coaches/help` IS included so the
  * marketing nav + footer are suppressed — but `CoachPortalShell` renders it as a FOCUSED

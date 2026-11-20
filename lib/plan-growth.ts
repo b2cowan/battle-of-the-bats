@@ -41,7 +41,7 @@ const PAYING_NOW_STATUSES = ['active', 'trialing'];
 const NEVER_PAID_STATUSES = ['incomplete', 'incomplete_expired'];
 
 /**
- * Was there a real subscription behind the org before this change? A free org, a Founding Season comp
+ * Was there a real subscription behind the org before this change? A free org, an org on free time
  * (active, but no subscription id) and a subscription that never got past `incomplete` all say no —
  * so the first real subscription is counted once, and only once.
  */
@@ -70,7 +70,7 @@ export type PaysNowInput = {
  * Does this club pay us today (Support console Stage 7, owner Q2 2026-10-27)? Its own plan is not the free Tournament
  * plan, its billing is ACTIVE, and a real subscription stands behind it. ⚠ Stricter than `PAYING_NOW_STATUSES` above, on
  * purpose: a subscription STARTS when its trial does (that rule's job), but a club in its trial does not pay yet. A
- * Founding Season comp is active with no subscription id; free time is a grant, not a payment; a `mock_` id is a test.
+ * comp is active with no subscription id; free time is a grant, not a payment; a `mock_` id is a test.
  */
 export function paysNow(input: PaysNowInput): boolean {
   if (!input.ownPlanId || input.ownPlanId === 'tournament') return false;

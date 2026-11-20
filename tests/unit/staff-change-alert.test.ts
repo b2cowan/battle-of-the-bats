@@ -11,7 +11,7 @@ const common = { actor: 'sam@fieldlogichq.ca', at: '2026-11-02T14:14:07Z', passw
 const bulk = (over: Partial<BulkChangeAlert>): BulkChangeAlert => ({
   ...common, kind: 'bulk', bulkOperationId: 'op-1', reason: 'Trial extended for the clinic.', accounts: 37,
   action: { type: 'subscription_status_override', status: 'Trial', lastDay: '2026-12-31' },
-  changed: 35, already: 0, failed: 0, skipped: { portals: 2, billed: 0, ownClubs: 0 }, also: { clubTrials: 0, compsEnded: 0, archived: 0, archivedAccounts: 0 }, ...over,
+  changed: 35, already: 0, failed: 0, skipped: { portals: 2, billed: 0, ownClubs: 0 }, also: { clubTrials: 0, archived: 0, archivedAccounts: 0 }, ...over,
 });
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
@@ -33,7 +33,7 @@ describe('the owner email', () => {
   it('a plan run says what else happened, and that Stripe was not touched', () => {
     const { subject, html } = staffChangeAlertEmail(bulk({
       accounts: 12, action: { type: 'plan_change', plan: 'Tournament Plus' }, changed: 10,
-      skipped: { portals: 0, billed: 2, ownClubs: 0 }, also: { clubTrials: 1, compsEnded: 0, archived: 3, archivedAccounts: 2 },
+      skipped: { portals: 0, billed: 2, ownClubs: 0 }, also: { clubTrials: 1, archived: 3, archivedAccounts: 2 },
     }));
     assert.equal(subject, 'Bulk change: 10 accounts moved to Tournament Plus');
     const body = text(html);

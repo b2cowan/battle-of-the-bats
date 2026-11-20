@@ -3,8 +3,7 @@ import { demoBillingRefusal } from '@/lib/demo-guard';
 import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
 import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
-import { normalizeBillingCycle, PLAN_CONFIG, FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
-import { ensureFoundingSeasonCompPeriod, foundingSeasonOfferOnPlanChoice } from '@/lib/founding-season';
+import { normalizeBillingCycle, PLAN_CONFIG } from '@/lib/plan-config';
 import { applyPlanChangeSideEffects, hadSubscriptionBefore, hasLiveSubscription } from '@/lib/plan-move';
 import { moveDirection } from '@/lib/plan-move-options';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
@@ -14,10 +13,9 @@ import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { isRecoveryTransition, writeGrowthEvent, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { welcomeBackHtml, tournamentPlusWelcomeHtml, SITE_URL } from '@/lib/email';
+import { welcomeBackHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
-import { sendMarketingEmail, cancelScheduledEmail } from '@/lib/email-sender';
-import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
+import { cancelScheduledEmail } from '@/lib/email-sender';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
@@ -35,9 +33,6 @@ import { PAID_DOOR_PLANS, paidDoorOf, parseStartPaidPlan, trialDaysAfterHistory,
 import { readStartPlan, startPlanCancelPath, startPlanSuccessPath } from '@/lib/start-plan-server';
 
 const isStartPaidPlan = (plan: unknown): plan is StartPaidPlan => parseStartPaidPlan(plan) !== null;
-
-/** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
-const PLUS_WELCOME_DELAY_DAYS = 1;
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
@@ -98,7 +93,7 @@ export const POST = withObservability(async (req: Request) => {
   const denied = await requireCapability(auth, 'billing');
   if (denied) return denied;
   // Nobody starts or changes a paid plan without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch:
-  // the address save, the dev mock and the Founding Season upgrade all write a plan or a record without Stripe.
+  // the address save and the dev mock both write a plan or a record without Stripe.
   const terms = await requireAcceptance(auth.user);
   if (!terms.ok) return terms.response;
 
@@ -209,29 +204,15 @@ export const POST = withObservability(async (req: Request) => {
   const isOnboardingPlanSelection = safeReturnTo.includes('/admin/onboarding');
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');
 
-  // Founding Season: Tournament plan owners get Tournament Plus without Stripe — while the SIGNUP
-  // window is open. After the close, only an organization that holds the Founding comp (given when it
-  // was made) and is making its FIRST plan choice (owner 2026-10-19, lib/founding-season.ts); a free
-  // org upgrading after that pays the list price through Stripe.
-  const isFoundingSeasonTournamentUpgrade =
-    !shouldApplyDirectly &&
-    planKey === 'tournament_plus' &&
-    ownPlanOf(auth.org) === 'tournament' &&
-    (await foundingSeasonOfferOnPlanChoice(auth.org));
-
-  // GST/HST Stage 1: a purchase needs the buyer's billing address on file (the comped Founding choice charges nothing, so it
-  // is never asked). A portal becoming the club in place sends the CLUB's address with its name; it is saved to the club's own
+  // GST/HST Stage 1: a purchase needs the buyer's billing address on file. A portal becoming the club in place sends the CLUB's address with its name; it is saved to the club's own
   // row here — the coach's home address stays theirs. The mock path is a purchase too, so the dev walk meets the window.
-  let billingLocation: BillingLocation | null = null;
-  if (!isFoundingSeasonTournamentUpgrade) {
-    const buyer: BillingBuyer = inPlaceClubName
-      ? { kind: 'org', orgId: auth.org.id, name: inPlaceClubName, stripeCustomerId: auth.org.stripeCustomerId ?? null }
-      : billingBuyerOf(auth.org, auth.user);
-    // A new plan or trial (and Premium → Club through checkout) is a purchase: a Québec address is refused (GST/HST 6.4, Q6).
-    const located = await requireBillingLocation(buyer, inPlaceClubName ? billingAddressFromBody(body.billingAddress) : null, { purchase: true });
-    if (!located.ok) return located.response;
-    billingLocation = located.location;
-  }
+  const buyer: BillingBuyer = inPlaceClubName
+    ? { kind: 'org', orgId: auth.org.id, name: inPlaceClubName, stripeCustomerId: auth.org.stripeCustomerId ?? null }
+    : billingBuyerOf(auth.org, auth.user);
+  // A new plan or trial (and Premium → Club through checkout) is a purchase: a Québec address is refused (GST/HST 6.4, Q6).
+  const located = await requireBillingLocation(buyer, inPlaceClubName ? billingAddressFromBody(body.billingAddress) : null, { purchase: true });
+  if (!located.ok) return located.response;
+  const billingLocation: BillingLocation | null = located.location;
 
   // ── Dev mock: no Stripe, write directly to DB ──────────────────────────────
   if (shouldApplyDirectly) {
@@ -325,86 +306,6 @@ export const POST = withObservability(async (req: Request) => {
     );
   }
 
-  if (isFoundingSeasonTournamentUpgrade) {
-    const { error: orgError } = await supabaseAdmin
-      .from('organizations')
-      .update({
-        plan_id: 'tournament_plus',
-        tournament_limit: mergedConfig.tournamentLimit,
-        subscription_status: 'active',
-        stripe_subscription_id: null,
-        subscription_period: null,
-        current_period_end: FOUNDING_SEASON_END,
-      })
-      .eq('id', auth.org.id);
-
-    if (orgError) {
-      return captureAndJson(orgError, { error: orgError.message }, 500);
-    }
-
-    await ensureFoundingSeasonCompPeriod(auth.org.id, auth.user.email);
-
-    const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, mergedConfig.tournamentLimit);
-    await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
-
-    // Upgraded off the free Tournament plan onto Plus — cancel any pending upsell email.
-    await cancelScheduledEmail(auth.org.id, 'tournament_plus_upsell');
-
-    // Schedule the Tournament Plus welcome email for ~1 day later — only when this
-    // founding-season upgrade happens during first-run onboarding plan selection.
-    // Non-fatal: never block the plan selection on an email failure.
-    if (isOnboardingPlanSelection && auth.user.email) {
-      try {
-        const scheduledAt = new Date(Date.now() + PLUS_WELCOME_DELAY_DAYS * 86_400_000).toISOString();
-        await sendMarketingEmail({
-          emailKey: 'tournament_plus_welcome',
-          orgId: auth.org.id,
-          toEmail: auth.user.email,
-          subject: `You're on Tournament Plus — free through ${FOUNDING_SEASON_END_LABEL}`,
-          html: tournamentPlusWelcomeHtml({
-            orgName: auth.org.name,
-            firstName: auth.user.user_metadata?.first_name as string | undefined,
-            dashboardUrl: `${SITE_URL}/${auth.org.slug}/admin`,
-            unsubscribeUrl: buildUnsubscribeUrl(auth.org.id) ?? undefined,
-          }),
-          skipOptOutCheck: true, // transactional welcome
-          scheduledAt,
-        });
-      } catch (err) {
-        console.error('[create-checkout] tournament_plus_welcome schedule failed (non-fatal):', err);
-      }
-    }
-
-    if (isRecoveryTransition(auth.org.subscriptionStatus, 'active')) {
-      await writePlatformEvent({
-        eventType: 'subscription_recovered',
-        source: 'founding_season',
-        orgId: auth.org.id,
-        actorUserId: auth.user.id,
-        actorEmail: auth.user.email,
-        previousPlanId: ownPlanOf(auth.org),
-        planId: 'tournament_plus',
-        previousSubscriptionStatus: auth.org.subscriptionStatus,
-        subscriptionStatus: 'active',
-        metadata: { billingCycle, restoredCount: restoreResult.restoredCount, foundingSeason: true },
-      });
-    }
-
-    return new Response(
-      JSON.stringify({
-        url: appendSuccess(`${appUrl}${safeReturnTo}`),
-        applied: true,
-        planKey: 'tournament_plus',
-        billingCycle,
-        foundingSeason: true,
-        compUntil: FOUNDING_SEASON_END,
-        restoredCount: restoreResult.restoredCount,
-        remainingRetainedCount: restoreResult.remainingRetainedCount,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
   // ── Production: real Stripe checkout ──────────────────────────────────────
   if (!isStripeConfigured()) {
     return new Response(JSON.stringify({ error: 'Stripe checkout is not configured.' }), {
@@ -433,8 +334,7 @@ export const POST = withObservability(async (req: Request) => {
 
   // NO SECOND TRIAL (Ask 4, 2026-09-25). An organization that has already had a paid subscription
   // — a cancelled club coming back is the common case — pays from day one; the trial is for a
-  // first purchase. A Founding Season next-season choice is a promise to pay, not a subscription
-  // they used, so it does not count. (Asked of Stripe only when there is a trial to withhold.)
+  // first purchase. (Asked of Stripe only when there is a trial to withhold.)
   // GST/HST 6.4: also the purchase email's "Welcome back" (a paid comeback's one email, ruling Q3), so it is always asked.
   const returning = await hadSubscriptionBefore(customerId);
   // The one rule the paid doors' plan step also shows before checkout (trap B, lib/start-plan-server.ts).
