@@ -28,24 +28,29 @@ describe('totalSpots: only when every division states one', () => {
 describe('the spots line follows the team list\'s visibility', () => {
   const base = { inviteOnly: false, divisionNames: ['U11', 'U13'] };
   it('public Teams + capacity: "11 of 16 team spots taken · U11 and U13"', () => {
-    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 11, capacity: 16 }), '11 of 16 team spots taken · U11 and U13');
+    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 11, taken: 11, capacity: 16 }), '11 of 16 team spots taken · U11 and U13');
   });
   it('public Teams, no capacity: the count alone, and nothing when none are in', () => {
-    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 1, capacity: null }), '1 team accepted · U11 and U13');
-    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 0, capacity: null }), null);
+    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 1, taken: 1, capacity: null }), '1 team accepted · U11 and U13');
+    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 0, taken: 0, capacity: null }), null);
   });
   it('hidden Teams: capacity is never private, the count is never printed', () => {
-    assert.equal(teamSpotsLine({ ...base, showTeamsPage: false, accepted: 11, capacity: 16 }), '16 team spots · U11 and U13');
-    assert.equal(teamSpotsLine({ ...base, showTeamsPage: false, accepted: 11, capacity: null }), null);
+    assert.equal(teamSpotsLine({ ...base, showTeamsPage: false, accepted: 11, taken: 11, capacity: 16 }), '16 team spots · U11 and U13');
+    assert.equal(teamSpotsLine({ ...base, showTeamsPage: false, accepted: 11, taken: 11, capacity: null }), null);
+  });
+  it('"taken" counts what fills a division (pending and waitlisted too), never past the total (call 4)', () => {
+    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 10, taken: 16, capacity: 16 }), '16 of 16 team spots taken · U11 and U13');
+    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 10, taken: 18, capacity: 16 }), '16 of 16 team spots taken · U11 and U13');
+    assert.equal(teamSpotsLine({ ...base, showTeamsPage: true, accepted: 3, taken: 5, capacity: null }), '3 teams accepted · U11 and U13');
   });
   it('an invite-only event has no spots', () => {
-    assert.equal(teamSpotsLine({ ...base, inviteOnly: true, showTeamsPage: true, accepted: 4, capacity: 16 }), null);
+    assert.equal(teamSpotsLine({ ...base, inviteOnly: true, showTeamsPage: true, accepted: 4, taken: 4, capacity: 16 }), null);
   });
 });
 
 describe('the Register card', () => {
   const open = { label: 'Registration is open', detail: 'Teams can register for available divisions now.', cta: 'register' as const };
-  const input = { startDate: '2026-11-17', firstPitchISO: '2026-11-17T09:00:00', spotsLine: '11 of 16 team spots taken · U11 and U13', registration: open, registerOn: true, registerHref: '/o/t/register', isPreview: false };
+  const input = { startDate: '2026-11-17', firstPitchISO: '2026-11-17T09:00:00', firstGameDate: '2026-11-17', spotsLine: '11 of 16 team spots taken · U11 and U13', registration: open, registerOn: true, registerHref: '/o/t/register', isPreview: false };
 
   it('open: starts, countdown target, spots, the button and the Coaches Portal line — together', () => {
     const v = registerCardView(input)!;
@@ -79,13 +84,18 @@ describe('the Register card', () => {
     assert.equal(v.button, null);
     assert.equal(v.portalNote, null);
   });
+  it('a first game on a later day says that day, as the countdown does (call 1)', () => {
+    const v = registerCardView({ ...input, firstPitchISO: '2026-11-19T09:00:00', firstGameDate: '2026-11-19' })!;
+    assert.equal(v.starts, 'First game Thu, Nov 19');
+    assert.equal(registerCardView({ ...input, firstGameDate: null })!.starts, 'Starts Tue, Nov 17', 'no timed game: the start day');
+  });
   it('no start date and no button: no card at all (absent beats empty)', () => {
     assert.equal(registerCardView({ ...input, startDate: null, firstPitchISO: null, registerOn: false }), null);
   });
 });
 
 describe('the facts list', () => {
-  const full = { divisionNames: ['U11', 'U13'], venue: { name: 'Riverdale Community Park', href: 'https://maps.example/x', others: 0 }, showSchedulePage: true, hasVisibleGames: false, scheduleHref: '/s', showRulesPage: true, rulesHref: '/r' };
+  const full = { divisionNames: ['U11', 'U13'], teams: null, venue: { name: 'Riverdale Community Park', href: 'https://maps.example/x', others: 0 }, showSchedulePage: true, hasVisibleGames: false, scheduleHref: '/s', showRulesPage: true, rulesHref: '/r' };
   it('in the drawing\'s order, with the schedule posted-before-the-event while there is nothing to show', () => {
     const rows = preEventFacts(full);
     assert.deepEqual(rows.map(r => r.key), ['divisions', 'where', 'schedule', 'rules']);
@@ -100,6 +110,13 @@ describe('the facts list', () => {
   it('a page that is off has no row; no venue, no divisions: no row', () => {
     const rows = preEventFacts({ ...full, showSchedulePage: false, showRulesPage: false, venue: null, divisionNames: [] });
     assert.deepEqual(rows, []);
+  });
+  it('an invite-only event says its team count, a door to Teams, after Divisions (call 2)', () => {
+    const rows = preEventFacts({ ...full, teams: { count: 6, href: '/t' } });
+    assert.deepEqual(rows.map(r => r.key), ['divisions', 'teams', 'where', 'schedule', 'rules']);
+    assert.deepEqual([rows[1].label, rows[1].text, rows[1].href], ['Teams', '6 teams', '/t']);
+    assert.equal(preEventFacts({ ...full, teams: { count: 1, href: '/t' } })[1].text, '1 team');
+    assert.equal(preEventFacts({ ...full, teams: { count: 0, href: '/t' } }).some(r => r.key === 'teams'), false);
   });
   it('several places say how many more', () => {
     assert.equal(preEventFacts({ ...full, venue: { name: 'Park', href: null, others: 2 } })[1].more, '+2 more');

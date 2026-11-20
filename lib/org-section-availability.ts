@@ -75,11 +75,13 @@ export async function countArchives(orgId: string): Promise<number> {
  * Does the club have a tournament of this kind, asked as a yes/no count (fails quiet and closed). A draft never counts;
  * an archived one counts only through its sealed record (countArchives).
  *   · listed — active or completed: every one is either current or finished on the Tournaments page;
- *   · current — running or coming: active, no champion crowned yet (a crowned event reads Finished), its last day (the end
- *     date, else the start date) today or later, or no dates yet. ⚠ The same rule as `clubTournamentParts`' current run (lib/club-site-home.ts), spelled as a filter: change
- *     one, change both.
+ *   · current — running or coming: active, no champion crowned yet (a crowned event reads Finished) or crowned with a
+ *     game still to play (Stage 2 call 3, 2026-11-19, `crownStands`), its last day (the end date, else the start date)
+ *     today or later, or no dates yet. ⚠ The same rule as `clubTournamentParts`' current run (lib/club-site-home.ts),
+ *     spelled as a filter: change one, change both.
  */
 async function anyTournament(orgId: string, kind: 'listed' | 'current', today: string): Promise<boolean> {
+  const inWindow = `end_date.gte.${today},and(end_date.is.null,start_date.gte.${today}),and(end_date.is.null,start_date.is.null)`;
   const query = supabaseAdmin
     .from('tournaments')
     .select('id', { count: 'exact', head: true })
@@ -88,12 +90,35 @@ async function anyTournament(orgId: string, kind: 'listed' | 'current', today: s
     ? await query.in('status', ['active', 'completed'])
     : await query.eq('status', 'active')
         .is('champions_crowned_at', null)
-        .or(`end_date.gte.${today},and(end_date.is.null,start_date.gte.${today}),and(end_date.is.null,start_date.is.null)`);
+        .or(inWindow);
   if (error) {
     console.error(`[org-sections] ${kind} tournament check failed`, error);
     return false;
   }
-  return (count ?? 0) > 0;
+  if ((count ?? 0) > 0 || kind === 'listed') return (count ?? 0) > 0;
+  // A crowned one is still current while a game is left to play.
+  const { data: crowned, error: crownedError } = await supabaseAdmin
+    .from('tournaments')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('status', 'active')
+    .not('champions_crowned_at', 'is', null)
+    .or(inWindow);
+  if (crownedError) {
+    console.error('[org-sections] crowned tournament check failed', crownedError);
+    return false;
+  }
+  if (!crowned?.length) return false;
+  const { count: left, error: leftError } = await supabaseAdmin
+    .from('games')
+    .select('id', { count: 'exact', head: true })
+    .in('tournament_id', crowned.map(t => t.id as string))
+    .eq('status', 'scheduled');
+  if (leftError) {
+    console.error('[org-sections] play-left check failed', leftError);
+    return false;
+  }
+  return (left ?? 0) > 0;
 }
 
 /**

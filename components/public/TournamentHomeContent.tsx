@@ -89,8 +89,9 @@ export default async function TournamentHomeContent({
     ? registerCardView({
         startDate: startDay,
         firstPitchISO: heroFirstPitchISO(firstGame?.time ? firstGame.date : startDay, firstGame?.time),
+        firstGameDate: firstGame?.time ? firstGame.date : null,
         spotsLine: teamSpotsLine({
-          inviteOnly, showTeamsPage, accepted: teams.length,
+          inviteOnly, showTeamsPage, accepted: teams.length, taken: activeRegistrations.length,
           capacity: totalSpots(divisions, inviteOnly), divisionNames,
         }),
         registration, registerOn, registerHref: `${base}/register`, isPreview,
@@ -99,6 +100,7 @@ export default async function TournamentHomeContent({
   const facts = moment.moment === 'before'
     ? preEventFacts({
         divisionNames,
+        teams: inviteOnly && showTeamsPage ? { count: teams.length, href: `${base}/teams` } : null,
         venue: venues[0] ? { name: venues[0].name, href: directionsHref(venues[0].address ?? null), others: venues.length - 1 } : null,
         showSchedulePage, hasVisibleGames: allGames.length > 0, scheduleHref,
         showRulesPage, rulesHref: `${base}/rules`,

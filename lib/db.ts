@@ -1588,7 +1588,30 @@ export async function getTournamentsByOrg(orgId: string, options: ReadOptions & 
     if (options.strict) throw error;
     return [];
   }
-  return (data || []).map(mapTournament);
+  return markPlayLeftAfterCrown((data || []).map(mapTournament));
+}
+
+/**
+ * A crowned tournament with a game still to play reads Live now, not Finished (Public tournament pages Stage 2 call 3,
+ * owner 2026-11-19: the band follows the Overview's body, whose "finished" waits for every game). The crown stamp is
+ * one-way (it guards the champions alert), so this is read, never written: one games read, asked only when a loaded
+ * tournament is crowned and still active. A failed read leaves the stamp to speak (today's behaviour).
+ */
+async function markPlayLeftAfterCrown(ts: Tournament[]): Promise<Tournament[]> {
+  const crowned = ts.filter(t => t.championsCrownedAt && t.status === 'active');
+  if (!crowned.length) return ts;
+  const { data, error } = await supabaseAdmin
+    .from('games')
+    .select('tournament_id')
+    .in('tournament_id', crowned.map(t => t.id))
+    .eq('status', 'scheduled');
+  if (error) {
+    console.error('[tournaments] play-left read failed', error);
+    return ts;
+  }
+  const left = new Set((data ?? []).map(r => r.tournament_id as string));
+  for (const t of crowned) if (left.has(t.id)) t.playLeftAfterCrown = true;
+  return ts;
 }
 
 export async function getActiveTournamentByOrg(orgId: string): Promise<Tournament | null> {
@@ -1623,7 +1646,7 @@ export async function getTournamentBySlug(orgId: string, slug: string): Promise<
     if (error) console.error('getTournamentBySlug error', error);
     return null;
   }
-  return mapTournament(data);
+  return (await markPlayLeftAfterCrown([mapTournament(data)]))[0];
 }
 
 export async function getPublicTournamentBySlug(orgId: string, slug: string): Promise<Tournament | null> {
@@ -1635,7 +1658,7 @@ export async function getPublicTournamentBySlug(orgId: string, slug: string): Pr
     .in('status', ['active', 'completed'])
     .maybeSingle();
   if (error || !data) return null;
-  return mapTournament(data);
+  return (await markPlayLeftAfterCrown([mapTournament(data)]))[0];
 }
 
 // Server-side only (uses service role key) ────────────────────────────────────

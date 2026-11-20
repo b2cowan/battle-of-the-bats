@@ -9,6 +9,7 @@ import { hasPlayoffPlan } from '@/lib/playoff-plan';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
 import { hasRoundRobin } from '@/lib/tournament-phase';
+import { crownStands } from '@/lib/club-site-home';
 import { isPublicBracketVisible } from '@/lib/public-pages';
 import { publicPosts } from '@/lib/public-tournament-shape';
 import { isDemoOrgSlug } from '@/lib/demo-org';
@@ -165,7 +166,7 @@ export default async function TournamentLayout({
   // tournament sub-page so the whole shell agrees the event is over.
   const effectivelyFinished =
     tournament.status === 'completed' ||
-    !!tournament.championsCrownedAt ||
+    crownStands(tournament) ||
     (!!tournament.endDate && todayISO > tournament.endDate);
   // NB: kept in step with lib/follow.isTournamentInProgress (date-window + active) — the
   // game-day dock self-gates to a followed team's live games, so it must NOT go dark the

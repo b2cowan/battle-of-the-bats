@@ -40,7 +40,9 @@ export const TOURNAMENT_STATUS_WORD: Record<TournamentHomeStatus, string> = {
  * What a tournament's row says. `today` is the club's today (`tournamentToday()`); `registrationOpen` is the
  * tournament's own sign-up rule (`getRegistrationState`), which the page asks only for an event that has not started.
  *   · Finished — the organizer completed it, its champion is crowned (every playoff game over, the moment families are
- *     told; ruled 2026-10-28, Public tournament pages Stage 2), or its last day is behind today.
+ *     told; ruled 2026-10-28, Public tournament pages Stage 2) with no game left to play (Stage 2 call 3, 2026-11-19: a
+ *     game scheduled after the final, or a pool game never scored, reads Live now like the Overview's body), or its last
+ *     day is behind today.
  *   · Live now — today falls inside its dates. Never otherwise.
  *   · This weekend — it starts on the coming Friday, Saturday or Sunday (a family's "this weekend", said from Monday on).
  *   · Registration open — before it starts, while its sign-up is open.
@@ -53,7 +55,7 @@ export function tournamentHomeStatus(
 ): TournamentHomeStatus | null {
   const start = t.startDate ?? null;
   const end = t.endDate ?? start;
-  if (t.status === 'completed' || t.status === 'archived' || t.championsCrownedAt || (end && today > end)) return 'finished';
+  if (t.status === 'completed' || t.status === 'archived' || crownStands(t) || (end && today > end)) return 'finished';
   if (start && today >= start) return 'live';
   if (start) {
     // This week's Friday to Sunday (days are YYYY-MM-DD in the club's zone; the week starts Monday).
@@ -81,8 +83,15 @@ export function clubHomeTournaments<T extends DatedTournament>(
   return [...coming, ...finished.filter(t => lastDay(t) >= cutoff)];
 }
 
-/** `championsCrownedAt` (mig 176) is stamped once, when the whole tournament's playoffs complete. */
-type DatedTournament = { status: string; startDate?: string | null; endDate?: string | null; championsCrownedAt?: string | null };
+/** `championsCrownedAt` (mig 176) is stamped once, when the whole tournament's playoffs complete; `playLeftAfterCrown`
+ *  is read by the tournament loaders (lib/db.ts). */
+type DatedTournament = {
+  status: string; startDate?: string | null; endDate?: string | null; championsCrownedAt?: string | null; playLeftAfterCrown?: boolean;
+};
+
+/** The crown makes an event Finished only while nothing is left to play (Stage 2 call 3, owner 2026-11-19). */
+export const crownStands = (t: Pick<DatedTournament, 'championsCrownedAt' | 'playLeftAfterCrown'>) =>
+  !!t.championsCrownedAt && !t.playLeftAfterCrown;
 
 const lastDay = (t: DatedTournament) => t.endDate ?? t.startDate ?? '';
 /** Public at all: a draft is not, and an archived tournament has no public site (its sealed record speaks for it). */
@@ -90,7 +99,7 @@ const isListedTournament = (t: DatedTournament) => t.status === 'active' || t.st
 /** Completed by the organizer, its champion crowned, or its last day is behind the club's today — the status word's own
  *  Finished, so a crowned event never sits under "Current and upcoming" wearing a Finished chip. */
 const isFinishedTournament = (t: DatedTournament, today: string) =>
-  t.status === 'completed' || !!t.championsCrownedAt || (!!lastDay(t) && lastDay(t) < today);
+  t.status === 'completed' || crownStands(t) || (!!lastDay(t) && lastDay(t) < today);
 /** The public tournaments in two runs: coming (running or not started), soonest first; finished, latest first. */
 function splitListed<T extends DatedTournament>(all: readonly T[], today: string): { coming: T[]; finished: T[] } {
   const coming: T[] = [];

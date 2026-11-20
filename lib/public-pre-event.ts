@@ -30,17 +30,22 @@ export function totalSpots(divisions: readonly { capacity?: number | null }[], i
 
 export interface SpotsInput {
   inviteOnly: boolean;
-  /** The Teams page is public: the only case an accepted-team COUNT may be printed. */
+  /** The Teams page is public: the only case a team COUNT may be printed. */
   showTeamsPage: boolean;
+  /** Accepted teams: the count said when no capacity is known ("6 teams accepted"). */
   accepted: number;
+  /** Every registration that is not rejected, the count that fills a division and turns the button into the waitlist
+   *  (`getRegistrationState`): what "taken" counts (Stage 2 call 4, owner 2026-11-19), so "16 of 16" sits above
+   *  "Join the waitlist" and never "10 of 16". */
+  taken: number;
   capacity: number | null;
   divisionNames: readonly string[];
 }
 
-export function teamSpotsLine({ inviteOnly, showTeamsPage, accepted, capacity, divisionNames }: SpotsInput): string | null {
+export function teamSpotsLine({ inviteOnly, showTeamsPage, accepted, taken, capacity, divisionNames }: SpotsInput): string | null {
   if (inviteOnly) return null;
   let spots: string | null = null;
-  if (showTeamsPage && capacity) spots = `${accepted} of ${capacity} team spots taken`;
+  if (showTeamsPage && capacity) spots = `${Math.min(taken, capacity)} of ${capacity} team spots taken`;
   else if (showTeamsPage && accepted > 0) spots = `${accepted} team${accepted === 1 ? '' : 's'} accepted`;
   else if (!showTeamsPage && capacity) spots = `${capacity} team spots`;
   if (!spots) return null;
@@ -48,7 +53,8 @@ export function teamSpotsLine({ inviteOnly, showTeamsPage, accepted, capacity, d
 }
 
 export interface RegisterCardView {
-  /** "Starts Tue, Nov 17"; null when the event has no start date yet. */
+  /** "Starts Tue, Nov 17", or "First game Thu, Nov 19" when the first game (the countdown's target) is on a later day
+   *  (Stage 2 call 1, owner 2026-11-19); null when the event has no start date yet. */
   starts: string | null;
   /** ISO instant the countdown counts to; null with no start date. */
   countdownTarget: string | null;
@@ -64,6 +70,8 @@ export interface RegisterCardView {
 export interface RegisterCardInput {
   startDate: string | null;
   firstPitchISO: string | null;
+  /** The day of the game the countdown counts to; null when it counts to the start day (no timed game yet). */
+  firstGameDate: string | null;
   spotsLine: string | null;
   /** `getRegistrationState`'s answer. */
   registration: { label: string; detail: string; cta: 'register' | 'waitlist' | null };
@@ -83,7 +91,9 @@ export function registerCardView(i: RegisterCardInput): RegisterCardView | null 
   const open = i.registerOn && !i.isPreview && i.registration.cta !== null;
   const waitlist = open && i.registration.cta === 'waitlist';
   const view: RegisterCardView = {
-    starts: i.startDate ? `Starts ${formatShortWeekdayDate(i.startDate)}` : null,
+    starts: !i.startDate ? null
+      : i.firstGameDate && i.firstGameDate !== i.startDate ? `First game ${formatShortWeekdayDate(i.firstGameDate)}`
+      : `Starts ${formatShortWeekdayDate(i.startDate)}`,
     countdownTarget: i.startDate ? i.firstPitchISO : null,
     spots: open ? i.spotsLine : i.registerOn ? i.registration.label : null,
     button: open ? { href: i.registerHref, label: waitlist ? 'Join the waitlist' : 'Register a team' } : null,
@@ -96,7 +106,7 @@ export function registerCardView(i: RegisterCardInput): RegisterCardView | null 
 }
 
 export interface FactRow {
-  key: 'divisions' | 'where' | 'schedule' | 'rules';
+  key: 'divisions' | 'teams' | 'where' | 'schedule' | 'rules';
   label: string;
   text: string;
   /** A door when set; plain (soft) text when not. */
@@ -107,6 +117,9 @@ export interface FactRow {
 
 export interface FactsInput {
   divisionNames: readonly string[];
+  /** An invite-only event's team count (it has no Register card to carry one; Stage 2 call 2, owner 2026-11-19): only
+   *  with the Teams page public and a team on it. Null otherwise. */
+  teams: { count: number; href: string } | null;
   venue: { name: string; href: string | null; others: number } | null;
   /** The Schedule page is on. */
   showSchedulePage: boolean;
@@ -121,6 +134,7 @@ export interface FactsInput {
 export function preEventFacts(i: FactsInput): FactRow[] {
   const rows: FactRow[] = [];
   if (i.divisionNames.length) rows.push({ key: 'divisions', label: 'Divisions', text: i.divisionNames.slice(0, 4).join(' · ') + (i.divisionNames.length > 4 ? ` +${i.divisionNames.length - 4} more` : '') });
+  if (i.teams && i.teams.count > 0) rows.push({ key: 'teams', label: 'Teams', text: `${i.teams.count} team${i.teams.count === 1 ? '' : 's'}`, href: i.teams.href });
   if (i.venue) rows.push({ key: 'where', label: 'Where', text: i.venue.name, href: i.venue.href ?? undefined, more: i.venue.others > 0 ? `+${i.venue.others} more` : undefined });
   if (i.showSchedulePage) {
     rows.push(i.hasVisibleGames

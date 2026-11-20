@@ -80,6 +80,12 @@ describe('a tournament says what is true (S4-03)', () => {
     assert.equal(tournamentHomeStatus(crowned, TUE, false), 'finished');
     assert.equal(tournamentHomeStatus({ ...crowned, championsCrownedAt: null }, TUE, false), 'live');
   });
+  it('Live now again while a game is left to play after the crown, Finished once its last day is behind (call 3, 2026-11-19)', () => {
+    const crowned = { ...t('2026-10-19', TUE), championsCrownedAt: '2026-10-20T21:00:00.000Z', playLeftAfterCrown: true };
+    assert.equal(tournamentHomeStatus(crowned, TUE, false), 'live');
+    assert.equal(tournamentHomeStatus(crowned, '2026-10-21', false), 'finished', 'past its last day');
+    assert.equal(tournamentHomeStatus({ ...crowned, status: 'completed' }, TUE, false), 'finished', 'the organizer completed it');
+  });
   it('This weekend when it starts on the coming Friday, Saturday or Sunday', () => {
     assert.equal(tournamentHomeStatus(t('2026-10-24', '2026-10-25'), TUE, false), 'thisWeekend');
     assert.equal(tournamentHomeStatus(t('2026-10-23', '2026-10-25'), TUE, true), 'thisWeekend');

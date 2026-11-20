@@ -91,8 +91,16 @@ describe('the moment helper is today\'s finished rule, exactly', () => {
 describe('the band says Finished once the champion is crowned (owner, 2026-10-28)', () => {
   it('one rule for the band, the club home and the club\'s Tournaments tab: the word and the sorting move together', () => {
     const rule = readCode('lib/club-site-home.ts');
-    assert.match(rule, /t\.status === 'completed' \|\| t\.status === 'archived' \|\| t\.championsCrownedAt \|\|/);
-    assert.match(rule, /const isFinishedTournament = [^;]*!!t\.championsCrownedAt/);
+    assert.match(rule, /t\.status === 'completed' \|\| t\.status === 'archived' \|\| crownStands\(t\) \|\|/);
+    assert.match(rule, /const isFinishedTournament = [^;]*crownStands\(t\)/);
+  });
+  it('the crown makes it Finished only while nothing is left to play, and every finished reader asks the same (call 3, 2026-11-19)', () => {
+    const rule = readCode('lib/club-site-home.ts');
+    assert.match(rule, /export const crownStands = [^;]*!!t\.championsCrownedAt && !t\.playLeftAfterCrown/);
+    const db = readCode('lib/db.ts');
+    assert.equal(db.split('markPlayLeftAfterCrown(').length - 1, 4, 'the helper plus the three tournament loaders the band and the club read');
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx'), /crownStands\(tournament\)/);
+    assert.match(readCode('lib/org-section-availability.ts'), /\.not\('champions_crowned_at', 'is', null\)[\s\S]*?\.from\('games'\)[\s\S]*?\.eq\('status', 'scheduled'\)/);
   });
 });
 

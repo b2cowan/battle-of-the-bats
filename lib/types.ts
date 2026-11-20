@@ -352,6 +352,10 @@ export interface Tournament {
    *  home Champions hero takeover + /champions recap page derive from live game state, not
    *  this timestamp. */
   championsCrownedAt?: string | null;
+  /** READ, not a column: crowned, yet a game is still to play (scheduled after the final, or a pool game never scored).
+   *  Such an event reads Live now, not Finished (Public tournament pages Stage 2 call 3, owner 2026-11-19: the band
+   *  follows the Overview's body). Set by the tournament loaders in lib/db.ts, only for a crowned active tournament. */
+  playLeftAfterCrown?: boolean;
   requireScoreFinalization?: boolean | null;
   notifyTeamsOnComplete?: boolean;
   resultsNotifiedAt?: string | null;
