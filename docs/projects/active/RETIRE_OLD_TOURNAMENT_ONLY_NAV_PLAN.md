@@ -22,7 +22,9 @@ instead of the tournament menu (Operations / Setup / Admin). Fixed 2026-10-30: a
    old path: the page's own header comment, the layout-sweep screen list, the old-look and public-token checks that
    list the page's folder, and the two tests that read the page file by path.
 2. **The account-level menu for a tournament-only workspace** (the `tournamentOnly` branch of the desktop rail and
-   its phone-bar counterpart). Retire it once nothing lands on it.
+   its phone-bar counterpart). Retire it once nothing lands on it. **Census 2026-11-20: a Tournament plan no longer
+   reaches it and the phone counterpart is already gone; it is now a one-team workspace's (Premium Coaches Portal) only
+   staff-and-settings menu — see the census.**
 
 ## First step when this is picked up — a census, not a build
 
@@ -30,6 +32,154 @@ Find every page that still renders under the account-level menu for a tournament
 workspace. Suspects (unverified): the Admin hub, `/admin/org` and its Staff & access, Audit log, Settings and PDF
 settings pages, and billing. Each needs a home inside the tournament menu (or the coaches portal) **before** the
 old menu can go. Do not delete the menu first: that would strand whichever of those pages turns out to depend on it.
+
+### Census (2026-11-20) — done; the four owner calls ruled the same day (below)
+
+Method: two read-only helpers (the menu's gate and every route into it; every inbound link, redirect, help article and demo
+anchor), the cited lines re-read in the main session, then the dev server's **server HTML** fetched as a signed-in owner
+(`.probe/retire-nav-census/html.mjs`, no browser): UAT Test Org (Tournament plan) and UAT Standalone (a paid one-team
+workspace, plan `team`). Nothing changed in code.
+
+#### ⚠ The note's premise is half wrong
+
+- **(a) A Tournament / Tournament Plus organization never sees the old menu any more.** Navigation Phase 2 Part B (E3,
+  2026-11-10/11) emptied its organization links (`useAdminKitNav.ts:44`: `isTournamentTier && !isTeamWorkspace ? []`), so
+  the Account group's condition (`AdminKitRail.tsx:298`, `tournamentOnly && orgLinks.length > 0`) is false for it, and its
+  `/admin/org/*` addresses all redirect to `/admin/tournaments` (`org/layout.tsx:35-36`). Server HTML confirms: its hub, list,
+  house-league and notifications pages draw the short sidebar *cell · Tournaments · Settings & access · Plan & billing*;
+  `settings/members` and `settings/pdf` draw the event's sidebar with Settings & access in the foot. **For this kind of
+  workspace the menu is already retired.**
+- **(b) It is now the Premium Coaches Portal's staff-and-settings menu, and it is live.** A one-team workspace (plan `team`)
+  carries only the tournament tools, so it is "tournament-only" (`module-entitlements.ts:63-65`, `plan-config.ts:28-41`), and
+  it is exempt from the emptying (`useAdminKitNav.ts:37-44`, "it keeps /admin/org (staff and access)"). Server HTML
+  confirms the sidebar *cell · Tournaments · **Account:** Staff & access · Audit log · Settings · PDF settings · Plan &
+  billing · Coaches Portal*. This was deliberate: the Plan & billing Stage 3 build prompt says **"Do not redirect
+  `/admin/org/tournaments`, `/admin/tournaments/**`, `/admin/org/members`, the audit log, org settings or PDF settings for a
+  team workspace: they are the hosted-tournament shell, now reached from the portal"**
+  (`PLAN_AND_BILLING_STAGE3_BUILD_PROMPT.md:94`), and the coaches' help tells owners to manage tournament staff from
+  "Staff & access, in the sidebar's list on the Tournaments page" (`lib/help-content/coaches.tsx:1119, 5941`).
+- **So "an old nav the product no longer navigates to" is not true; "a second menu shape nobody drew" is.** The team
+  workspace's organization pages have **no tab row** (`OrgFrame.tsx:29-32`: "a one-team workspace has none"), so the Account
+  group is the only way between them on a computer. Deleting it strands four pages. The work is not deletion; it is giving
+  the Premium coach's tournament side the shape E3 gave a Tournament plan.
+- **The phone needs nothing.** The Account group left the phone on 2026-11-06 (`403341b71`); the team workspace's More
+  sheet keeps a "Settings & access" row (`kit-tournament-groups.ts:51`) that reaches `/tournaments/settings` →
+  `/admin/org` → the first tab (`club-home.tsx` `openClubHome`, `org/page.tsx` TabsDoor).
+- **Who reaches it:** the Coaches Portal's **Tournaments you run** door (`lib/coach-billing-access.ts:38-41`,
+  `CoachHostedTournamentsSection.tsx:46`, `coaches/teams/[teamId]/tournaments/page.tsx:136`) → `/admin/tournaments/manage`,
+  which draws the Account group; and sign-in / the retired hub for a member with the tournament grant and no team
+  (`lib/coach-portal-request.ts:81-110`). Only for a **running** Premium portal: an ended one (`subscription_status =
+  canceled`, 4 of 6 on dev) gets the cancelled-account page and no sidebar (`AdminChrome.tsx`), and a free coach is a
+  `basic_coach_teams` row, not a workspace. Deep links that land a team workspace there: the Staff kit's invite button
+  (`staff-kit/page.tsx:109`, `getMembersHref`), Event settings' web address (`settings/event/page.tsx:917`,
+  `getWebAddressHref`), the Payouts status line and payout notices (`payoutsPath` → `/org/settings#payouts`).
+
+#### Pages under the old menu (a running one-team workspace; server HTML 2026-11-20)
+
+| Page | How it is reached | Proposed home | Why |
+|---|---|---|---|
+| Tournaments list `/admin/tournaments/manage` | Coaches Portal "Tournaments you run"; sign-in for a staff member with no team | Keeps its page; wears E3's short sidebar (*Tournaments · Settings & access*) | The list is the shell's front door; only its sidebar is wrong |
+| Duplicate list `/admin/org/tournaments` | Nothing links to it (typed or old bookmark) | **Redirect** to `/admin/tournaments/manage`, search kept | Debt 1 below |
+| Staff & access `/admin/org/members` | Account group; phone More → Settings & access; Staff kit invite | First tab of the workspace's **Settings & access** | Same job as a Tournament plan's Members tab |
+| Audit log `/admin/org/members/audit` | Account group (owner); a link on Staff & access | Reached from Staff & access, as on a Tournament plan (`MembersKit.tsx:169-171`) — not a tab | E3 drew it that way; one rule for both kinds |
+| Settings `/admin/org/settings` | Account group (owner, admin); web-address and payout links | A **Settings** tab of Settings & access, cards unchanged | It holds five cards — details, birthday cutoff, two-step requirement, payouts, delete — that the Tournament plan's tabs do not (see "Found on the way") |
+| PDF settings `/admin/org/settings/pdf` | Account group | A tab of Settings & access | Same as a Tournament plan |
+| `/admin/org` | Phone row; typed | Unchanged: the door to the first tab | Already does this |
+| The board `/admin/org/board` | Typed only (not a tab for a team workspace, `admin-kit-nav.ts:1120`) | **Retire it** for a team workspace (redirect to Staff & access) | A club's concept; its staff page is its own |
+| Venue library `/admin/org/venues` | Typed only (the plan has no library; the page still renders for the owner) | **Retire it** for a team workspace (redirect to Staff & access) | Not on the plan; no door |
+| House league, Calendar, Schedules, Public site (`/admin/house-league`, `/calendar`, `/schedules`, `/public-site`) | Typed only | **Retire it**: redirect a team workspace to the Coaches Portal (as `accounting`, `families`, `rep-teams` already do) and a Tournament plan to `/admin/tournaments` | They draw a refusal inside the menu; the same gap exists on a Tournament plan |
+| Notifications `/admin/notifications` | The phone's Notifications row | Unchanged; wears the short sidebar once the group goes | A real page; not stranded |
+| Plan & billing, hub, onboarding | — | No change | Already redirect to `/coaches/billing` and `/coaches` (`org/billing/page.tsx:16-19`, `admin/page.tsx:6`) |
+
+#### Debt 1, the duplicate address — every place that still names it
+
+Nothing in the product links, pushes or redirects to it (help, demo tours, UAT and the coach doors all use
+`/tournaments/manage`; the help content already links `../tournaments/manage`). It behaves three ways today: a club renders
+it inside the Organization frame; a Tournament plan is sent to `/admin/tournaments` by the org layout, **dropping
+`?create=1`**; a team workspace renders it under the old menu. Remaining names, all of which move with the page file:
+
+- `app/[orgSlug]/admin/tournaments/manage/page.tsx:1` (the re-export — becomes the real file);
+  `app/[orgSlug]/admin/org/tournaments/page.tsx:26-27` (header comment); `components/admin/TournamentCreationPreview.tsx:91` (comment)
+- `lib/admin-page-help.ts:195-196` (the "?" topic for the old address only) and its test `tests/unit/admin-page-help.test.ts:131,135`
+- `scripts/layout-screens.mjs:1649` (sweeps the old address); `scripts/check-public-tokens.mjs:618` (RESTYLED_DIRS);
+  `scripts/lib/admin-old-look.mjs:24` (OWNERS); baselines `scripts/.admin-restyled-baseline.json:106,111`,
+  `scripts/.css-selector-baseline.json:33`, `scripts/.tsx-token-baseline.json:50`
+- tests reading the file by path: `tournament-stage5-create.test.ts:146`, `tournament-one-at-a-time.test.ts:110`,
+  `admin-header-bar-guard.test.ts:295`; `admin-tab-title.test.ts:17` (tab title for that address)
+- `.claude/settings.json:111` (a permission allowlist line naming the folder's CSS — shared automation; leave it unless the
+  owner asks)
+- docs: `PLAN_AND_BILLING_STAGE3_BUILD_PROMPT.md:21,73,88,94,108`, `COACH_TOURNAMENT_DELEGATION_PLAN.md:26,97,249`,
+  `ADMIN_HEADER_BAR_PLAN.md:147`, `ADMIN_HEADER_BAR_PHASE3_BUILD_PROMPT.md:48,87` (historical; the Stage 3 line 94 gets an
+  amendment note, since its reason — the portal's door — now uses `/tournaments/manage`)
+
+**Is a redirect all it needs?** For behaviour, yes. The page reads `create` (`org/tournaments/page.tsx:57-60, 84-91`);
+`source` is typed but never read (the analytics source travels as `acquisitionSource`). A redirect in `proxy.ts` beside the
+existing legacy forwards (`:134-149`) keeps the whole search for free (`request.nextUrl.clone()`), covers client navigation
+(the 2026-11-10 note: a layout redirect misses it), and is not a watched automation path. To *finish* the debt it also
+needs the page code to live at `tournaments/manage`, the path-keyed lists, baselines and tests above moved with it, the
+old-address help branch deleted, and the build guard from "Done when". `proxy.ts` changing means a dev-server restart at
+hand-off.
+
+#### Found on the way (not this note's; recorded so they are not lost)
+
+1. **A Tournament-plan organization has no page to rename itself, require two-step sign-in, set the birthday cutoff, or
+   delete the organization.** Those cards live only on `/admin/org/settings` (`SettingsKit.tsx`), which its org layout
+   redirects away; the Settings & access tabs (Members · Payouts · PDF settings · Web address) carry none of them, and no
+   tournament page does (searched `app/[orgSlug]/admin/tournaments/settings/`). E3 was drawn with shipped rows only, so
+   this gap predates it. → owner call 4.
+2. **The "invitation declined" notice links to `/admin/org/members`** (`app/api/auth/invitations/[memberId]/route.ts:71`),
+   so on a Tournament plan it opens the Tournaments list, not Members. One-line fix with `getMembersHref`.
+3. **A UAT test visits an address that does not exist** (`tests/uat/scenarios/tournament-admin.spec.ts:130-133`,
+   `/tournaments/settings/organization`) and checks only that a page area shows, so it guards nothing.
+4. The coaches' help (`coaches.tsx:1119, 5941`) describes the Account list as the way to Staff & access; it changes with
+   step 2 (`/docs`).
+
+#### Build order (by dependency and rework risk)
+
+1. **The duplicate address** — no owner call needed (the note already rules it): page code home at `tournaments/manage`,
+   the `proxy.ts` redirect, the path-keyed references, the delete of the old help branch, a unit guard against a new link to
+   `/admin/org/tournaments`. Fold in found-on-the-way 2 and 3. Independent of everything else; smallest; do it first.
+2. **The team workspace's Settings & access** (after call 1, plus a drawing if call 2 says so): the sidebar row in place of
+   the Account group, a tab row on its organization pages (Staff & access · Settings · PDF settings; Audit log from Staff &
+   access), the branch at `AdminKitRail.tsx:298-308` and the team-workspace exemption at `useAdminKitNav.ts:37-44` reviewed
+   for deletion, the coaches' help rewritten, the unit tests, `check:layout --changed` on the touched screens. The
+   phone is untouched. Depends on step 1 only in that both touch the list page's sidebar — doing 1 first means 2's layout
+   check sees one address.
+3. **The typed-only pages** (after call 3): redirects for the board, venue library, house league, calendar, schedules and
+   public site. Independent of 2; after 2 so its redirects land on the finished shape.
+4. **The guard and the close**: a unit test that no non-event admin page draws an "Account" group; one walk (`/tasks`)
+   covering a Premium coach on a computer and a phone, and a Tournament-plan owner's list with `?create=1`.
+
+The Tournament plan's missing settings (call 4) is a separate item whatever is ruled; if it is built, it shares step 2's
+drawing so both kinds of workspace end on one Settings & access shape.
+
+#### Owner calls — ⚖ RULED 2026-11-20 (owner, in conversation: "1 yes, 2 yes, i am not asking you to change but I need to visualize what you are talking about here, 3 yes, 4 yes")
+
+- **1 · Yes** — a running Premium Coaches Portal gets the Tournament plan's Settings & access row and tab row, on its
+  existing `/admin/org/*` addresses.
+- **2 · Yes** — no new mockup session. The owner asked to **see** what step 2 means: a picture of today versus after,
+  published as an artifact to look at, not a drawing for approval.
+- **3 · Yes** — redirect the typed-only pages away, in this project (step 3).
+- **4 · Yes** — the Tournament plan's missing settings (rename, two-step requirement, birthday cutoff, delete) become
+  their own board item, drawn together with step 2, routed through `/plan`. The item is not opened yet.
+
+No build go was given with these rulings; the census was committed on the owner's word.
+
+The calls as they were put:
+
+1. **The premise.** For a Premium Coaches Portal owner, the "old menu" is their live staff-and-settings menu. Retire it
+   by giving them the **same Settings & access row and tab row a Tournament plan has**, on their existing addresses
+   (no redirect reversed, Stage 3's rule kept, Settings keeps all five cards)? *Recommended: yes.* Alternatives: move
+   them onto the Tournament plan's addresses and tab set (loses four of Settings' cards unless call 4 lands first); or
+   give these pages a home inside the Coaches Portal (a second settings home, against "one home per setting").
+2. **A drawing for step 2?** It reuses E3's shipped shape; only the tab row's three tabs are new. *Recommended: no new
+   mockup session — a `/design` check of the built screen against E3.*
+3. **The typed-only pages** (board, venue library, house league, calendar, schedules, public site) for workspaces that do
+   not have them: redirect them away (team workspace → Coaches Portal; Tournament plan → Tournaments list), the way
+   accounting, families and rep teams already do? *Recommended: yes, in this project, step 3.*
+4. **A Tournament-plan organization cannot rename itself, require two-step sign-in or delete itself anywhere.** Open it as
+   its own item — a **Settings** tab on its Settings & access, drawn together with step 2? *Recommended: yes, its own board
+   item; draw them together; route through `/plan`.*
 
 ## Rules until it is retired
 
