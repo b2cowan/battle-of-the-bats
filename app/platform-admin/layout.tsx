@@ -10,7 +10,7 @@ import { adminKitAttr } from '@/lib/admin-kit-marker';
 import PlatformShell from './PlatformShell';
 import PlatformVisitRecorder from './PlatformVisitRecorder';
 
-export const metadata: Metadata = { title: `${PLATFORM_PORTAL_LABEL} — FieldLogicHQ` };
+export const metadata: Metadata = { title: PLATFORM_PORTAL_LABEL };
 
 export default async function PlatformAdminLayout({
   children,

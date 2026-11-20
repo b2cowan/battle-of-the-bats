@@ -15,7 +15,7 @@ import StartPaidDoorForm from '../StartPaidDoorForm';
 
 /** The tab says what the page is for in each state (open: the door; closed: the interest page, as S1 left it). */
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await isPaidDoorOpen('club')) ? 'Start a club — FieldLogicHQ' : 'Explore Club — FieldLogicHQ' };
+  return { title: (await isPaidDoorOpen('club')) ? 'Start a club' : 'Explore Club' };
 }
 
 type Param = string | string[] | undefined;

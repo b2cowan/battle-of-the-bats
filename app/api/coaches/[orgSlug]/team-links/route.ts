@@ -13,6 +13,8 @@ import {
   withdrawTeamMove,
 } from '@/lib/team-ownership-transfer';
 import { REFUSAL } from '@/lib/team-move-words';
+import { ownPlanEndOf } from '@/lib/team-move-carve-out';
+import { hasRealSubscription, waitingDate } from '@/lib/plan-ending';
 import { getActiveTeamMembership } from '@/lib/coach-membership';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
@@ -69,7 +71,18 @@ export const GET = withObservability(async (_req: Request, { params }: RoutePara
   if (readDenied) return readDenied;
 
   const links = await listTeamOrgLinksForWorkspace(resolved.workspace.id);
-  return NextResponse.json({ links });
+  // What the coach is told at the yes about their OWN plan (ruling (a), 2026-11-19): read from the same fields the plan
+  // ending screens read, so the date is the one Plan & billing shows. A trial, free time and no subscription say nothing
+  // about a refund (nothing was paid). Words: lib/team-move-carve-out.ts.
+  const org = resolved.ctx.org;
+  const account = { subscriptionId: org.stripeSubscriptionId ?? null, subscriptionStatus: org.subscriptionStatus };
+  const waits = waitingDate(account, org.currentPeriodEnd, new Date());
+  const ownPlan = ownPlanEndOf({
+    realSubscription: hasRealSubscription(account),
+    status: org.subscriptionStatus,
+    waitsOn: waits.on,
+  });
+  return NextResponse.json({ links, ownPlan });
 }, { route: '/api/coaches/[orgSlug]/team-links' });
 
 /** Ask a club (by its web address or contact email) to bring the team in. */

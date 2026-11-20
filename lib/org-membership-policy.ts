@@ -1,5 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
+import type { RealSeat } from './org-create-claim';
 
 /**
  * Single-org-by-default policy helpers (decision 2026-06-19, see
@@ -59,6 +60,34 @@ export async function userBelongsToOtherRealOrg(userId: string, excludeOrgId?: s
     return false;
   }
   return (data ?? []).some(row => !isTeamWorkspaceRelation(row.organizations as OrgRel | OrgRel[] | null));
+}
+
+/**
+ * Every REAL organization this user holds an active seat in, with the seat's database timestamp — the read behind "claim,
+ * then verify" (`lib/org-create-claim.ts`). Same definition of "real" as `userBelongsToOtherRealOrg`. A read error returns
+ * nothing, which the claim reads as "keep": the person is never left without the organization they just made.
+ */
+export async function readRealSeats(userId: string): Promise<RealSeat[]> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('organization_id, invited_at, organizations(slug, account_kind, plan_id, created_at)')
+    .eq('user_id', userId)
+    .eq('status', 'active');
+  if (error) {
+    console.error('[org-membership-policy] readRealSeats failed:', error);
+    return [];
+  }
+  return (data ?? [])
+    .filter(row => !isTeamWorkspaceRelation(row.organizations as OrgRel | OrgRel[] | null))
+    .map(row => {
+      const org = firstRel(row.organizations as OrgRel | OrgRel[] | null) as (OrgRel & { created_at?: string | null }) | null;
+      return {
+        organizationId: row.organization_id as string,
+        seatAt: row.invited_at as string,
+        slug: org?.slug ?? null,
+        orgCreatedAt: org?.created_at ?? null,
+      };
+    });
 }
 
 export type CrossOrgJoinCheck =

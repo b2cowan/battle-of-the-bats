@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
         ? 'Tell us your job and get started — run a tournament, coach a team, or start a league season.'
         // Closed: no "start free" over paid doors, and no doors the chooser does not show.
         : 'Tell us your job and get started — run a tournament or coach a team.';
-  return { title: 'Get started — FieldLogicHQ', description };
+  return { title: 'Get started', description };
 }
 
 type StartOption = {

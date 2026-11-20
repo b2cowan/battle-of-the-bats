@@ -19,6 +19,8 @@ import type { LineupSettings } from '@/lib/types';
 import type { ScheduleVisibility } from '@/lib/family-access';
 import { ARRIVAL_PRESET_MINUTES, arrivalPresetLabel } from '@/lib/coach-arrival';
 import LoadingState from '@/components/shared/LoadingState';
+import { usePlanGating } from '@/lib/use-plan-gating';
+import { isPlanOpen } from '@/lib/plan-config';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { FamilyAnswersSettingRow, type FamilyAnswersSettingData } from '@/components/coaches/FamilyAnswersSettingRow';
 import ClubSiteOffNotice from '@/components/coaches/ClubSiteOffNotice';
@@ -94,6 +96,10 @@ export default function TeamSettingsPage({
 }) {
   const { orgSlug, teamId } = use(params);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  // The "Join a club" row promises everything comes with the team, so it shows only while Club is open for sale (owner
+  // ruling (c), 2026-11-19); not yet read counts as closed. A request that already exists still reaches the coach by
+  // the Overview banner and the bell.
+  const clubOpen = isPlanOpen(usePlanGating() ?? {}, 'club');
 
   const [data, setData] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1078,7 +1084,7 @@ export default function TeamSettingsPage({
             (the link page and its API both say so), so this door is not offered to an assistant
             who holds schedule editing — a door onto a wall (`/review`, 2026-09-10). Fails open
             while capabilities load, like `showTeamGroups`. */}
-        {showTeamGroups && scope.isStandalone && (!capabilities || capabilities.isHeadCoach) && (
+        {showTeamGroups && scope.isStandalone && (!capabilities || capabilities.isHeadCoach) && clubOpen && (
           <CoachCollapseSection
             sectionId="organization"
             title="Organization"

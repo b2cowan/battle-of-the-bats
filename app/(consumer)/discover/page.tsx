@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     'Discover youth and community sports tournaments across the FieldLogicHQ community — live scores, schedules, and standings, free to follow.',
   alternates: { canonical: `${SITE_URL}/discover` },
   openGraph: {
-    title: 'Browse Tournaments | FieldLogicHQ',
+    title: 'Browse Tournaments',
     description:
       'Discover tournaments across the FieldLogicHQ community — live scores, schedules, and standings.',
     url: `${SITE_URL}/discover`,

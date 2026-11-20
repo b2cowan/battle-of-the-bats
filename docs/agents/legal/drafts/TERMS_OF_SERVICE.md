@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | next after 2026-11-17, draft 0.3 (a minor change under §18: no one is asked to accept again) |
+| **Version** | next after 2026-11-17, draft 0.4 (0.4's T5 needs the owner's §18 call: see its note in §8; 0.1 to 0.3 are minor changes under §18) |
 | **Status** | draft — for the owner's approval; held to publish on the same day as the Payments Terms (0.2's T1–T4 carry the owner-approved Data Terms) |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
 | **Last reviewed** | 2026-11-18 |
@@ -24,6 +24,11 @@
   next season you choose close to its start": the next-season plan choice was removed from the product (it only ever existed
   for the Founding Season; 0 were ever made). Only an example of when the confirmation email is the notice goes; the promise
   is unchanged. Still a minor change under §18.
+- **Draft 0.4 (2026-11-20, team move words, owner ruling (b) of 2026-11-19)** — **T5**: §8 gains "If your team moves into a
+  club" after "Downgrading", so the Terms say what the product does when a coach agrees to move their team into a club:
+  their own plan ends that day and the unused part is not refunded. Text by `/legal` (`ON_SALE_PAGES_S2_REVIEW.md` §4); the
+  confirm screen says the same in its own words (`lib/team-move-carve-out.ts`) and ships in the same release. **Whether
+  T5 is a significant change under §18 is the owner's call** (see the note in §8).
 
 **How to read this draft.** Customer text is everything after the first `---` line, up to "Before this can be
 published". Owner notes are in blockquotes that start `> NOTE`.
@@ -181,6 +186,19 @@ taxes, shown before you confirm.
 current period. If the lower plan has smaller limits (for example, fewer tournaments), you choose what to keep when you
 downgrade.
 
+**If your team moves into a club.** If you agree to move your team into a club’s FieldLogicHQ space, your own plan ends on
+the day you agree, because the club’s plan then covers the team. We do not refund or credit the unused part of the period
+you paid for, and you will not be charged for your own plan again. Before you agree, we show you this and, where we have
+it, the date your plan would have run to. This is different from cancelling, where your plan runs to the end of the period.
+
+> NOTE — T5 (owner ruling (b), 2026-11-19; `/legal` text). It is a carve-out from the last paragraph of this section ("we
+> will refund the unused part") for one case, so against §18 it removes a refund a coach could claim. `/legal` recommends
+> publishing it **before any club can receive a team on production** (no club is on sale there, so nobody has yet had the
+> right to lose) and bundling it with this version, so it arrives as an ordinary new version and the accept-again question
+> is the one this version already answers. If a coach purchase exists and a move is possible first, treat it as a
+> significant change (30 days' email, then accept again). The confirm-screen sentence must not reach production before
+> this version does.
+
 **While a cancel or a move to a free plan is waiting,** your plan cannot be changed to another plan, higher or lower,
 until that date. To change it, keep your current plan first (from the billing page), then make the change. You can
 still cancel while a move to a free plan is waiting: the cancel takes the move's place.
@@ -318,8 +336,9 @@ you accepted and when, for at least six years after your account closes.
    a page that does not exist.
 2. **The 2026-11-17 version is on production first.** It ships with the next promote. If that promote renames 2026-11-17
    to the promote day, rebase this draft on the renamed file (the text does not change).
-3. **Minor change, no fresh acceptance** (§18: it names a further document that an organization accepts separately by its own
-   tick; nothing here reduces a right or raises a price). So `current` moves to the new date and `oldestAccepted` stays.
+3. **Minor change, no fresh acceptance, unless T5 is called significant** (T5: see the note in §8; §18: it names a further document that an organization accepts separately by its own
+   tick; nothing in T1 to T4 reduces a right or raises a price. **T5 is the one edit that arguably does**, which is why it
+   waits on the owner's §18 call above). So `current` moves to the new date and `oldestAccepted` stays.
 4. **Publishing steps:** freeze the customer text as `lib/legal-documents/terms/<date>.md` with its sha256, add it to
    `published`, move `current`; delete this draft.
    ⚠ Do not set `draftPath` to this file before then without bringing back the "§20 words" subsection the earlier draft

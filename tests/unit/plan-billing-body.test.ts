@@ -186,6 +186,7 @@ describe('billing state distinctions in the rendered body', () => {
   });
   for (const state of ['running', 'ending', 'ended'] as const) it(`coach free time ${state}: Keep Premium stays attached to the same portal, with no retention`, () => {
     const props = fixture('team');
+    props.snapshot.gating = ready({ team: false, club: false }); // "Join a club" shows only while Club is open (ruling (c), 2026-11-19)
     const portal: NonNullable<BillingFreeTime['portal']> = state === 'ended' ? { state, lastDay: '2027-03-31' } : { state, lastDay: '2027-03-31', daysLeft: state === 'running' ? 40 : 9 };
     props.snapshot.freeTime = ready({ freeTime: null, portal, overLimitAfter: false }); props.snapshot.org.subscriptionStatus = state === 'ended' ? 'canceled' : 'active';
     const rendered = html(props);
@@ -264,5 +265,26 @@ describe('the failed-payment line gains the shipped door', () => {
   });
   it('the body takes only its base and its teams door: no fee props, no fee read', () => {
     assert.doesNotMatch(body, /feeLine|\bfees\??:|useStripeFeesRead|StripeFeesList|FeeInvoiceLine/);
+  });
+});
+
+describe('the coach’s "Part of a club?" card follows the Club sale gate (owner ruling (c), 2026-11-19)', () => {
+  it('shows only while Club is open: closed, still loading, or unreadable all hide the promise', () => {
+    const open = fixture('team');
+    open.snapshot.gating = ready({ team: false, club: false });
+    assert.ok(html(open).includes(W.change.clubTitle), 'Club open: the card is shown');
+    assert.ok(html(open).includes(W.change.joinClub));
+
+    for (const gating of [
+      ready({ team: false, club: true }),
+      ready({ team: false }),
+      { status: 'loading' } as BillingRead<never>,
+      { status: 'error', error: '503' } as BillingRead<never>,
+    ]) {
+      const closed = fixture('team');
+      closed.snapshot.gating = gating as BillingBodyViewProps['snapshot']['gating'];
+      assert.ok(!html(closed).includes(W.change.clubTitle), JSON.stringify(gating));
+      assert.ok(!html(closed).includes(W.change.clubBody), JSON.stringify(gating));
+    }
   });
 });

@@ -9,6 +9,9 @@ import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
 import { formatStoredDate } from '@/lib/timezone';
+import { usePlanGating } from '@/lib/use-plan-gating';
+import { isPlanOpen } from '@/lib/plan-config';
+import { coachPlanEndsLine, type OwnPlanAtTheYes } from '@/lib/team-move-carve-out';
 import type { TeamOrgLinkSummary } from '@/lib/team-org-links';
 import {
   COACH_PLAN_LINE,
@@ -59,6 +62,13 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
   const isHeadCoach = [...assignments, ...closedAssignments].some(a => a.capabilities.isHeadCoach);
   const ownTeamName = [...assignments, ...closedAssignments][0]?.teamName ?? 'your team';
   const [links, setLinks] = useState<TeamOrgLinkSummary[]>([]);
+  // The coach's own plan as the server read it, for the sentence at the yes (null until the list loads).
+  const [ownPlan, setOwnPlan] = useState<OwnPlanAtTheYes | null>(null);
+  // "Everything comes with it" is a promise about a club that can receive a team, shown only while Club is open for sale
+  // (ruling (c), 2026-11-19). Not yet read counts as closed: no promise flashes in and out. A request already waiting
+  // keeps its own "What comes with the team" column whatever this says.
+  const gating = usePlanGating();
+  const clubOpen = isPlanOpen(gating ?? {}, 'club');
   const [target, setTarget] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -85,6 +95,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Could not load your requests.');
       setLinks(Array.isArray(data.links) ? data.links : []);
+      setOwnPlan(data.ownPlan ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load your requests.');
     } finally {
@@ -166,6 +177,12 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
     } finally {
       setWorkingId(null);
     }
+  }
+
+  /** The sentence at the yes (lib/team-move-carve-out.ts): one spelling, the date in the portal's own style. */
+  function endsLineFor(clubName: string, plan: OwnPlanAtTheYes): string {
+    const dateText = plan.kind === 'paid' && plan.endsOn ? formatStoredDate(plan.endsOn) : null;
+    return coachPlanEndsLine({ clubName, plan, dateText });
   }
 
   if (orgLoading || coachesLoading || loading) {
@@ -255,6 +272,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
                 <div className={own.factCol}>
                   <div>
                     <div className={own.eye}>What it costs you</div>
+                    {ownPlan && <p className={own.factText}>{endsLineFor(club, ownPlan)}</p>}
                     <p className={own.factText}>{COACH_PLAN_LINE}</p>
                   </div>
                   <div>
@@ -293,7 +311,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
 
       <section className={styles.detailSection}>
         <h2 className={styles.detailSectionTitle}>{COACH_REQUEST_FORM_TITLE}</h2>
-        <p className={own.lede}>{coachPageLede(ownTeamName)}</p>
+        <p className={own.lede}>{coachPageLede(ownTeamName, clubOpen)}</p>
         <form className={styles.linkForm} onSubmit={handleSubmit}>
           <label className={styles.field}>
             <span className={styles.label}>{COACH_REQUEST_FIELD}</span>
@@ -360,6 +378,10 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         </>}
       >
         <form id="join-club-confirm-form" onSubmit={e => { e.preventDefault(); void approve(); }}>
+          {/* The real yes: the coach reads, in the same words as on the card, what happens to their own plan. */}
+          {confirmingLive && ownPlan && (
+            <p className={own.confirmBody}>{endsLineFor(confirmingLive.linkedOrg?.name ?? 'the club', ownPlan)}</p>
+          )}
           <p className={own.confirmBody}>{CONFIRM_BODY_COACH}</p>
           <label className={styles.field}>
             <span className={styles.label}>{CONFIRM_FIELD}</span>

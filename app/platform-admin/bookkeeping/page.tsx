@@ -6,7 +6,7 @@ import { currentOwnerMovements } from '@/lib/bookkeeping-owner-movements';
 import { gstRegistrationDate, hasExpenseConversionColumns, hasExpenseDateColumns, hasExpenseTaxColumn, hasGstTaxSchema, hasOwnerMovementTable, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
 import BookkeepingClient from './BookkeepingClient';
 
-export const metadata = { title: 'Bookkeeping — FieldLogicHQ' };
+export const metadata = { title: 'Bookkeeping' };
 
 export default async function BookkeepingPage() {
   const auth = await getPlatformAdminContext();

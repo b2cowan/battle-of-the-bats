@@ -1,0 +1,275 @@
+<title>Team Move Words Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the S1 walk's shell). */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; margin: 0; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+q { quotes: "“" "”"; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.calls li { min-width: 0; }
+.call-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.call-row select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · on-sale pages · the team move’s words and three small fixes</span>
+    <h1>What a coach is told at the yes, and three small fixes</h1>
+    <p class="sub">Built 2026-11-20 on the dev server. One purpose: when a coach says yes to moving their own team into a club, they are told their own plan ends today and what happens to the unused part; the “everything comes with it” lines show only while Club is on sale; and three small defects from the doors walk are gone. Nothing anyone is charged changed.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>The move has always ended the coach’s own plan at once with no refund. The coach was never told, and the published Terms promise a cancelled plan runs to its end. Now the coach reads it at the yes, in <code>/legal</code>’s words (your wording call is below, not in the count). The same build hides the “everything comes with it” lines while Club is closed, makes two tabs naming a club one club, sends a signed-in newcomer from <code>/auth/login?next=/start/club</code> to the club door, and takes the doubled brand out of tab titles.</p>
+    <p><strong>It passes when</strong> every step reads as written. The Terms sentence is in the held next Terms draft and is not published: it is a call below.</p>
+    <p><strong>Not in this walk:</strong> the exact two-tab race (a live race cannot be set up by hand; it is proved by the unit tests, and a plain second submit is part G), the Terms version itself, and a refund (not built, your ruling).</p>
+  </section>
+
+  <section class="card">
+    <h2>Where and as whom</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server, restarted for this build.</dd>
+      <dt>Club admin</dt><dd>An owner of a Club (or Club · Association) organization on dev. Dev has every plan on sale, so a club from the doors walk will do.</dd>
+      <dt>Coach</dt><dd>A second account with its own Premium Coaches Portal bought in Stripe test mode (card <code>4242 4242 4242 4242</code>), monthly or yearly, with one team and no open tournament.</dd>
+      <dt>Free-time coach</dt><dd>A third coach whose Premium portal is staff-given free time (platform admin → the coach’s organization → give Premium free time).</dd>
+      <dt>Dev tools</dt><dd>Platform admin <code>/platform-admin/dev-tools</code>, the “show as closed” switch, for part E.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Your calls (not in the count)</h2>
+    <p class="sub">Each has a recommendation. Pick one; it is copied with the summary.</p>
+    <ol class="calls" id="calls"></ol>
+  </section>
+</main>
+
+<script>
+(function () {
+  var KEY = 'team-move-words-small-fixes-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'The coach reads it on the request (a paying coach)',
+      steps: [
+        { who: 'Club admin', do: 'Open <code>/{club}/admin/rep-teams/bring-in</code>, type the paying coach’s email and press the send button.', see: 'A request is sent and waits on the coach. Nothing moves.' },
+        { who: 'Coach', do: 'Sign in as the paying coach and open <q>Join a club</q> from the bell or the Overview banner.', see: 'A card titled <q>{club} wants to bring in {team}</q>.' },
+        { who: 'Coach', do: 'Read the first sentence under <q>What it costs you</q>.', see: '<q>Your own plan ends today, because {club} now covers this team. The unused part of what you paid, to {date}, is not refunded. You won’t be charged for your own plan again.</q>' },
+        { who: 'Coach', do: 'Open <q>Plan &amp; billing</q> in another tab and read the renewal date.', see: 'The date in the sentence is the date Plan &amp; billing shows as when the plan renews.' },
+        { who: 'Coach', do: 'Read the line under that sentence.', see: '<q>You won’t be charged for your own Coaches Portal again. Billing for it stops the moment the move completes.</q> Still there, beside the new sentence.' },
+        { who: 'Coach', do: 'Press <q>Approve and join {club}</q>.', see: 'The confirm window opens. Above <q>The move can’t be undone. Type your team’s name to confirm.</q> it says the same <q>Your own plan ends today…</q> sentence, word for word.' },
+        { who: 'Coach', do: 'Press Cancel in the window.', see: 'The window closes. Nothing moved: the team is still on the coach’s own portal.' },
+        { who: 'Coach', do: 'Approve again, type the team’s name and press <q>Join {club}</q>.', see: 'The coach lands on the team inside the club.' },
+        { who: 'Coach', do: 'In Stripe’s test dashboard, open the coach’s subscription.', see: 'It is cancelled the same minute, with no refund and no credit note.' }
+      ] },
+    { id: 'B', title: 'A coach with nothing paid is told nothing about a refund',
+      steps: [
+        { who: 'Club admin', do: 'Send a request to the free-time coach’s email, as in A1.', see: 'A request is sent.' },
+        { who: 'Free-time coach', do: 'Open <q>Join a club</q> and read under <q>What it costs you</q>.', see: '<q>Your own plan ends today, because {club} now covers this team. You won’t be charged for your own plan.</q> No refund sentence, no date, and no <q>again</q>.' },
+        { who: 'Free-time coach', do: 'Press <q>Approve and join {club}</q> and read the window.', see: 'The same two sentences above <q>The move can’t be undone.</q>' },
+        { who: 'Free-time coach', do: 'Press Cancel.', see: 'The window closes and nothing moves. (A coach in a trial, or one whose payment is past due, reads this same wording.)' }
+      ] },
+    { id: 'C', title: 'A coach already set to end at renewal',
+      steps: [
+        { who: 'Coach', do: 'On the paying coach’s <q>Plan &amp; billing</q>, cancel the plan so it ends at renewal (a new request is sent first if the old one moved).', see: 'The page says the plan ends on the renewal date.' },
+        { who: 'Coach', do: 'Open the club’s waiting request on <q>Join a club</q>.', see: 'The sentence names the same date: the day the plan was going to end anyway, now ending today.' }
+      ] },
+    { id: 'D', title: 'The club’s screen is unchanged',
+      steps: [
+        { who: 'Club admin', do: 'On the club’s <q>Bring in a coach’s team</q> page, look at a waiting request from a coach (the coach asks from their Join a club page).', see: '<q>{Coach} won’t be charged for their own Coaches Portal again. Billing for it stops the moment the move completes.</q> No refund words, no date.' },
+        { who: 'Club admin', do: 'Read the whole card.', see: 'Cost to the club, what changes, and what comes with the team, all as before.' }
+      ] },
+    { id: 'E', title: 'The “everything comes with it” lines follow the sale',
+      steps: [
+        { who: 'Staff', do: 'In dev tools, switch plan gating to <q>show as closed</q>.', see: 'Club, Club · Association and League Plus read as closed.' },
+        { who: 'Coach', do: 'Open the standalone coach’s team <q>Settings</q> (a coach with no waiting request).', see: 'There is no <q>Organization</q> section and no <q>Join a club</q> row.' },
+        { who: 'Coach', do: 'Open the coach’s <q>Plan &amp; billing</q>.', see: 'There is no <q>Part of a club?</q> card.' },
+        { who: 'Coach', do: 'Open <code>/{coach portal}/coaches/link-org</code> directly.', see: 'The page opens. The line under <q>Ask a club to bring in your team</q> says <q>…it can bring {team} in, and you keep coaching it as one of the club’s teams.</q> with no <q>Everything the team built comes with it</q>.' },
+        { who: 'Club admin', do: 'Open the club’s <q>Bring in a coach’s team</q> page.', see: 'The opening line has no <q>Everything the team built comes with it</q>.' },
+        { who: 'Coach', do: 'With a request waiting, open its card on the coach’s page.', see: 'The card still has its <q>What comes with the team</q> column: it is what the coach is agreeing to move.' },
+        { who: 'Staff', do: 'Switch plan gating back to live (or clear the switch).', see: 'Plans read as on sale again.' },
+        { who: 'Coach', do: 'Reload team Settings, Plan &amp; billing and the Join a club page.', see: 'The <q>Organization</q> row, the <q>Part of a club?</q> card and the full opening lines are back.' }
+      ] },
+    { id: 'F', title: 'Two tabs naming a club make one club',
+      steps: [
+        { who: 'Visitor', do: 'With a fresh signed-in account that has no organization, open <code>/start/club</code> in two tabs.', see: 'Both show the name step.' },
+        { who: 'Visitor', do: 'Name the club in tab 1 and press the create button once, then try pressing it twice quickly.', see: 'One request goes (the button reads <q>Creating…</q> and ignores the second press).' },
+        { who: 'Visitor', do: 'Name a club in tab 2 and press create after tab 1 has finished.', see: 'A plain sentence: <q>Your account already has a workspace. To join another organization, ask them to invite you.</q> No second club, no error page.' },
+        { who: 'Visitor', do: 'Open the club list on <q>Home</q>.', see: 'Exactly one club is there. No empty twin.' }
+      ] },
+    { id: 'G', title: 'Signing in lands on the door you asked for',
+      steps: [
+        { who: 'Visitor', do: 'In a private window, open <code>/auth/login?next=/start/club</code> and sign in as an account with no organization yet.', see: 'You land on <q>Start a club</q>, not on Home.' },
+        { who: 'Visitor', do: 'Sign out and try <code>/auth/login?next=/harbourtown/admin</code> (any club page) with the same account.', see: 'You land on Home, not on the club page: a person with no workspace is still never sent to a page they cannot open.' },
+        { who: 'Visitor', do: 'Sign in again with <code>?next=/start/league</code>.', see: 'You land on <q>Start a league season</q>.' }
+      ] },
+    { id: 'H', title: 'Tab titles carry the brand once',
+      steps: [
+        { who: 'Visitor', do: 'Read the browser tab on <code>/start</code>.', see: '<q>Get started | FieldLogicHQ</q>, the brand once.' },
+        { who: 'Visitor', do: 'Read the tabs on <code>/start/club</code>, <code>/start/league</code>, <code>/start/tournament</code> and <code>/start/team</code>.', see: '<q>Start a club | FieldLogicHQ</q>, <q>Start a league season | FieldLogicHQ</q>, <q>Run a tournament | FieldLogicHQ</q>, <q>Coach a team | FieldLogicHQ</q>. No title says FieldLogicHQ twice.' },
+        { who: 'Visitor', do: 'Read the tab on <code>/coaches/start</code>.', see: '<q>Coaches Portal | FieldLogicHQ</q>.' },
+        { who: 'Staff', do: 'Read the tab on <code>/platform-admin/bookkeeping</code>.', see: '<q>Bookkeeping | FieldLogicHQ</q>.' }
+      ] }
+  ];
+
+  var CALLS = [
+    { id: 'C1', q: 'Is the wording right? Paying coach: “Your own plan ends today, because {club} now covers this team. The unused part of what you paid, to {date}, is not refunded. You won’t be charged for your own plan again.” With nothing paid (a trial, free time, or a payment past due): “… covers this team. You won’t be charged for your own plan.” With no date on record: “The unused part of what you paid is not refunded.” The Terms paragraph (edit T5 in the held draft) says the same and promises the date “where we have it”.', options: ['Approve as written', 'Approve with changes (say which in the notes)', 'Send back to /legal'] },
+    { id: 'C2', q: 'Is the Terms sentence a significant change under Terms section 18 (30 days’ email, then accept again)? /legal’s first view: an ordinary new version, published before any club can receive a team on production. Its second look: do not rely on “no club is on sale” unless counts show no move is possible, because a staff-made or free-time club could receive a team. Recommendation: check by counts only (coach teams with a paid plan, and club-type organizations on production) before the release; if either is zero, an ordinary version.', options: ['Ordinary new version, check the counts first (recommended)', 'Significant: 30 days’ email and accept again', 'Block moves on production until the version is published'] },
+    { id: 'C3', q: 'If Stripe’s cancel fails after a move, the move still completes, platform admin is alerted, and the coach keeps being charged until staff cancel by hand, which makes “you won’t be charged” untrue for a while. A change to the move itself, so not done here. Make it an urgent same-day staff task and refund any charge after the move?', options: ['Yes, to /plan as a small item (recommended)', 'Leave as is', 'Discuss'] },
+    { id: 'C4', q: 'Two tabs at the exact same moment: the fix settles it by the earlier owner seat, which covers realistic double submits but not a stalled request on top. An exact fix is a database function with a per-person lock, which is a migration and a production step. Build it?', options: ['No, the current fix is enough for now (recommended)', 'Yes, as a small item with a migration'] }
+  ];
+
+
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var li = el('li');
+    li.appendChild(el('span', null, '<strong>' + c.id + '</strong> · ' + c.q));
+    var row = el('div', 'call-row');
+    var sel = document.createElement('select'); sel.id = 'call-' + c.id;
+    sel.appendChild(new Option('Choose…', ''));
+    c.options.forEach(function (o) { sel.appendChild(new Option(o, o)); });
+    sel.value = state.calls[c.id] || '';
+    sel.addEventListener('change', function () { state.calls[c.id] = sel.value; save(); });
+    row.appendChild(sel); li.appendChild(row); callHost.appendChild(li);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['Team move words and three small fixes walk (2026-11-20)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      var open = mine.filter(function (b) { return !b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (open.length ? ' (not ticked: ' + open.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    lines.push('Calls:');
+    CALLS.forEach(function (c) { lines.push('  ' + c.id + ': ' + (state.calls[c.id] || 'not chosen')); });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('call-' + c.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

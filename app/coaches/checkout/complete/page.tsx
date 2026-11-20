@@ -9,7 +9,7 @@ import CheckoutProvisioning from './CheckoutProvisioning';
 
 export const metadata: Metadata = {
   // One title for every state (setting up, ready, no payment): the card says which.
-  title: 'Premium Coaches Portal — FieldLogicHQ',
+  title: 'Premium Coaches Portal',
   robots: { index: false },
 };
 

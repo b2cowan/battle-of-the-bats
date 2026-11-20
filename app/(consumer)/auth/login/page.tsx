@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { forgetSandboxMarkerCookie } from '@/lib/sandbox-exit-rule';
 import { safeNextPath } from '@/lib/safe-redirect';
+import { chooseLoginDestination } from '@/lib/login-destination';
 import { SIGN_IN_REASON, signInErrorCopy } from '@/lib/auth-errors';
 import ResendLink from '@/components/auth/ResendLink';
 import { EmailField, PasswordField, StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
@@ -103,8 +104,9 @@ async function resolveLoginDestination(next: string | null): Promise<string> {
   } catch {
     destination = '/discover';
   }
-  const safeNext = safeNextPath(next, null);
-  return safeNext && hasWorkspace ? safeNext : destination;
+  // A workspace holder gets their own `next`; a person with none still gets a start door's (Start a club, a league…),
+  // by an explicit list — never an admin page they could not open (lib/login-destination.ts).
+  return chooseLoginDestination({ next, destination, hasWorkspace });
 }
 
 /** The one loading line while the page checks who is signed in (and while the URL is read). */

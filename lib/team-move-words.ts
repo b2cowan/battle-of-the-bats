@@ -10,6 +10,16 @@
  * `tests/unit/team-move-words.test.ts` holds that rule over this file and every screen that shows
  * the move. Polished by /marketing 2026-09-29 (page names ruled as drawn); canon: PRICING_PAGE_COPY.md.
  *
+ * ⚖ NARROWED 2026-11-19 (owner ruling (a), `CLUB_ON_SALE_PAGES_PLAN.md`): the rule above is superseded
+ * for ONE sentence at ONE place — where the coach says yes, they are told their own plan ends today and the
+ * unused part is not refunded. That sentence lives only in `lib/team-move-carve-out.ts`. Everywhere else,
+ * including this file, the rule stands, and the test fails if a refund word appears outside the carve-out.
+ *
+ * ⚖ "EVERYTHING COMES WITH IT" is a promise about a club that can receive a team, so the page ledes and the
+ * Settings and Plan & billing entries show it only while Club is open for sale (ruling (c)). A request that is
+ * already waiting keeps its "What comes with the team" column whatever the sale state: it is what the coach is
+ * about to agree to move.
+ *
  * ⚠ NEVER A PRONOUN FOR THE COACH. The drawing said "his own Coaches Portal"; the product does not
  * guess anyone's pronouns, so a sentence names the coach or says "their".
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -31,9 +41,12 @@ export const CANT_BE_UNDONE = 'The move can’t be undone.';
 
 // ── The club's page ───────────────────────────────────────────────────────────────────────────────
 
-export function clubPageLede(clubName: string): string {
-  return `A coach who already runs a team on their own FieldLogicHQ Coaches Portal can bring it into ${clubName}. ` +
-    'Everything the team built comes with it, and it becomes one of the club’s teams.';
+export function clubPageLede(clubName: string, promiseComesWithIt = true): string {
+  const first = `A coach who already runs a team on their own FieldLogicHQ Coaches Portal can bring it into ${clubName}.`;
+  // The promise is shown only while Club is open for sale (ruling (c), 2026-11-19).
+  return promiseComesWithIt
+    ? `${first} Everything the team built comes with it, and it becomes one of the club’s teams.`
+    : `${first} It becomes one of the club’s teams.`;
 }
 
 /** The pointer for the other case — a NEW coach for a team the club already has (J4-034). */
@@ -87,11 +100,12 @@ export function clubMovedNotice(p: { teamName: string; slugChangedTo?: string | 
 
 // ── The coach's page ──────────────────────────────────────────────────────────────────────────────
 
-export function coachPageLede(teamName: string): string {
-  return `If your club runs on FieldLogicHQ, it can bring ${teamName} in. Everything the team built comes with it, ` +
-    'and you keep coaching it as one of the club’s teams.';
+export function coachPageLede(teamName: string, promiseComesWithIt = true): string {
+  return promiseComesWithIt
+    ? `If your club runs on FieldLogicHQ, it can bring ${teamName} in. Everything the team built comes with it, ` +
+      'and you keep coaching it as one of the club’s teams.'
+    : `If your club runs on FieldLogicHQ, it can bring ${teamName} in, and you keep coaching it as one of the club’s teams.`;
 }
-
 export const COACH_REQUEST_FORM_TITLE = 'Ask a club to bring in your team';
 export const COACH_REQUEST_FIELD = 'The club’s web address or contact email';
 export const COACH_REQUEST_HINT = 'The club answers from its own admin. Nothing moves until you both say yes.';

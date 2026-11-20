@@ -7,7 +7,7 @@ import { readStartDoor } from '@/lib/start-door';
 import CoachStartInterest from '@/components/coaches/CoachStartInterest';
 
 export const metadata = {
-  title: 'Coaches Portal - FieldLogicHQ',
+  title: 'Coaches Portal',
   description: 'Activate Premium Coaches Portal for one competitive team, with coach-scoped roster, schedule, documents, dues, budget, and lineup tools.',
 };
 

@@ -10,7 +10,7 @@ import { hasLiveInvitation } from '@/lib/invite-reconciliation';
 import StartTournamentForm from './StartTournamentForm';
 
 export const metadata: Metadata = {
-  title: 'Run a tournament — FieldLogicHQ',
+  title: 'Run a tournament',
 };
 
 type Param = string | string[] | undefined;

@@ -7,7 +7,8 @@ import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } f
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { demoActorRefusal } from '@/lib/demo-guard';
-import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
+import { readRealSeats, userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
+import { isTheSameStart, isUniqueViolation, settleClaim } from '@/lib/org-create-claim';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { slugifyOrgName } from '@/lib/utils';
 import { requireAcceptance } from '@/lib/legal-acceptance';
@@ -138,7 +139,20 @@ export const POST = withObservability(async (req: Request) => {
       slug = await generateUniqueOrgSlug(normalizedOrgName);
     }
 
-    const org = await createOrganization(normalizedOrgName, slug, 'tournament');
+    // A generated address is check-then-insert: another request (the same name typed in two tabs) can take it between the
+    // check and the insert. That is a clash to try again past with the next free address, never a failure for the visitor.
+    // An address the person typed themselves is theirs to change: it is refused as taken below, as before.
+    const explicitSlug = typeof orgSlug === 'string' && orgSlug.trim() !== '';
+    let org = null as Awaited<ReturnType<typeof createOrganization>> | null;
+    for (let attempt = 0; attempt < 4 && !org; attempt++) {
+      try {
+        org = await createOrganization(normalizedOrgName, slug, 'tournament');
+      } catch (createError) {
+        if (!isUniqueViolation(createError)) throw createError;
+        if (explicitSlug) return NextResponse.json({ error: 'That public URL is already taken. Try a different one.' }, { status: 409 });
+        slug = await generateUniqueOrgSlug(normalizedOrgName);
+      }
+    }
     if (!org) {
       return NextResponse.json({ error: `Failed to create your ${nameWord}. The name or URL may already be taken.` }, { status: 400 });
     }
@@ -157,6 +171,23 @@ export const POST = withObservability(async (req: Request) => {
         new Error('createOrganizationMember returned null (owner link failed)'),
         { error: 'Failed to link you to the new organization.' },
         500,
+      );
+    }
+
+    // CLAIM, THEN VERIFY (lib/org-create-claim.ts): the guards above read and the writes happen after, so a second request
+    // from the same person (a second tab, a double submit) may have made an organization in between. The earliest seat
+    // keeps its organization; this one removes the one it just made and answers with the winner's address.
+    const claim = settleClaim(await readRealSeats(user.id), org.id);
+    if (!claim.keep) {
+      await supabaseAdmin.from('organization_members').delete().eq('organization_id', org.id).eq('user_id', user.id).then(() => {}, () => {});
+      await supabaseAdmin.from('organizations').delete().eq('id', org.id).then(() => {}, () => {});
+      orgId = null; // already removed: the catch below must not try again
+      if (claim.winner.slug && isTheSameStart(claim.winner, new Date())) {
+        return NextResponse.json({ ok: true, orgSlug: claim.winner.slug });
+      }
+      return NextResponse.json(
+        { error: 'Your account already has a workspace. To join another organization, ask them to invite you.' },
+        { status: 403 }
       );
     }
 

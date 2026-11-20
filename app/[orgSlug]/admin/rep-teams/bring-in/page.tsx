@@ -29,6 +29,8 @@ import type { TeamCapRefusal } from '@/components/admin/kit/club/TeamCapDialog';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { usePlanGating } from '@/lib/use-plan-gating';
+import { isPlanOpen } from '@/lib/plan-config';
 import { formatStoredDate } from '@/lib/timezone';
 import type { TeamOrgLinkSummary } from '@/lib/team-org-links';
 import {
@@ -86,6 +88,9 @@ export default function BringInACoachsTeamPage({ params }: { params: Promise<{ o
   const canAct = userRole === 'owner' || userRole === 'admin';
   const api = `/api/admin/org/team-links?orgSlug=${encodeURIComponent(orgSlug)}`;
   const clubName = currentOrg?.name ?? 'your club';
+  // "Everything comes with it" shows only while Club is open for sale (ruling (c), 2026-11-19); not yet read = closed.
+  // A request already waiting keeps its own "What comes with the team" column.
+  const clubOpen = isPlanOpen(usePlanGating() ?? {}, 'club');
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -243,7 +248,7 @@ export default function BringInACoachsTeamPage({ params }: { params: Promise<{ o
       <div className={styles.callout}>
         <Repeat size={16} aria-hidden />
         <div>
-          {clubPageLede(clubName)}
+          {clubPageLede(clubName, clubOpen)}
           <p className={styles.calloutSub}>
             {CLUB_NEW_COACH_POINTER_LEAD}{' '}
             <Link href={`/${orgSlug}/admin/rep-teams`} className={`${ck.link} ${styles.pointerLink}`}>{CLUB_NEW_COACH_POINTER_LINK}</Link>{' '}

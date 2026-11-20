@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode, readSource } from './_source-code.ts';
 import * as words from '../../lib/team-move-words.ts';
+import { coachPlanEndsLine, ownPlanEndOf } from '../../lib/team-move-carve-out.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -13,6 +14,11 @@ import * as words from '../../lib/team-move-words.ts';
  * club reads about the move — both pages, the bells, the refusals, the billing nudge, the Settings
  * door, the team page banner and the help — no word about a refund, a credit, proration or money
  * back. The positive half is pinned too: both approval screens carry the "won't be charged" line.
+ *
+ * ⚖ NARROWED 2026-11-19 (owner ruling (a), CLUB_ON_SALE_PAGES_PLAN.md): the rule is superseded for ONE
+ * sentence at ONE place — the coach is told at their yes that their own plan ends today and the unused part
+ * is not refunded. That sentence lives only in `lib/team-move-carve-out.ts`. Everywhere else the rule above
+ * still holds, and the last describe below fails if a refund word appears outside that module.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -129,6 +135,110 @@ describe('the team move never mentions money coming back', () => {
     assert.match(words.COACH_PLAN_LINE, /^You won’t be charged for your own Coaches Portal again\./);
     assert.match(readSource('app/[orgSlug]/admin/rep-teams/bring-in/page.tsx'), /coachPlanLineForClub\(coach\)/);
     assert.match(readSource('app/[orgSlug]/coaches/link-org/page.tsx'), /\{COACH_PLAN_LINE\}/);
+  });
+});
+
+describe('the one place a move says "not refunded" (ruling (a), 2026-11-19)', () => {
+  const club = 'Northfield Minor Ball';
+  const paidOn = { kind: 'paid', endsOn: '2027-03-01' } as const;
+
+  it('the sentence is /legal’s, word for word, with the date', () => {
+    assert.equal(
+      coachPlanEndsLine({ clubName: club, plan: paidOn, dateText: 'Mar 1, 2027' }),
+      'Your own plan ends today, because Northfield Minor Ball now covers this team. ' +
+      'The unused part of what you paid, to Mar 1, 2027, is not refunded. You won’t be charged for your own plan again.',
+    );
+  });
+
+  it('a paying coach with no usable date hears it without a date, never an invented one', () => {
+    const line = coachPlanEndsLine({ clubName: club, plan: { kind: 'paid', endsOn: null }, dateText: null });
+    assert.match(line, /The unused part of what you paid is not refunded\./);
+    assert.doesNotMatch(line, /, to /);
+  });
+
+  it('a trial, free time or no subscription says nothing about a refund: there is nothing paid', () => {
+    const line = coachPlanEndsLine({ clubName: club, plan: { kind: 'nothing_paid' }, dateText: null });
+    assert.equal(line, 'Your own plan ends today, because Northfield Minor Ball now covers this team. You won’t be charged for your own plan.');
+    assert.doesNotMatch(line, NO_MONEY_BACK);
+  });
+
+  it('classifies the coach’s plan: paid with the renewal date, paid without one, a trial, free time, no subscription', () => {
+    assert.deepEqual(ownPlanEndOf({ realSubscription: true, status: 'active', waitsOn: '2027-03-01' }), { kind: 'paid', endsOn: '2027-03-01' });
+    // Already set to end at renewal: the stored period end is the same date, so the same answer.
+    assert.deepEqual(ownPlanEndOf({ realSubscription: true, status: 'active', waitsOn: '2027-03-01' }), { kind: 'paid', endsOn: '2027-03-01' });
+    assert.deepEqual(ownPlanEndOf({ realSubscription: true, status: 'active', waitsOn: null }), { kind: 'paid', endsOn: null });
+    // Past due: the current period is unpaid, so there is no paid part to say is forfeited (/accounting, 2026-11-20).
+    assert.deepEqual(ownPlanEndOf({ realSubscription: true, status: 'past_due', waitsOn: '2027-03-01' }), { kind: 'nothing_paid' });
+    assert.deepEqual(ownPlanEndOf({ realSubscription: true, status: 'trialing', waitsOn: '2027-01-01' }), { kind: 'nothing_paid' });
+    assert.deepEqual(ownPlanEndOf({ realSubscription: false, status: 'active', waitsOn: null }), { kind: 'nothing_paid' });
+  });
+
+  it('the refund words exist ONLY in the carve-out module, in a screen’s own code, never beside the club’s or the bells’ words', () => {
+    assert.match(readCode('lib/team-move-carve-out.ts'), /is not refunded/);
+    for (const file of ['lib/team-move-words.ts', 'app/[orgSlug]/admin/rep-teams/bring-in/page.tsx', 'app/[orgSlug]/coaches/link-org/page.tsx',
+      'app/api/coaches/[orgSlug]/team-links/route.ts']) {
+      // (The Settings page and BillingBody talk about dues credits and billing elsewhere, so they are not scanned whole;
+      // the billing nudge and the help articles are pinned by their own blocks above.)
+      assert.doesNotMatch(readCode(file), NO_MONEY_BACK, file);
+    }
+  });
+
+  it('the coach’s page shows the sentence on the card AND in the confirm window, from the carve-out module only', () => {
+    const page = readCode('app/[orgSlug]/coaches/link-org/page.tsx');
+    assert.match(page, /from '@\/lib\/team-move-carve-out'/);
+    assert.equal((page.match(/endsLineFor\(/g) ?? []).length, 3, 'defined once, used on the card and in the confirm window');
+    assert.match(page, /\{COACH_PLAN_LINE\}/, 'the ruling-(c) sentence stays beside it');
+    // The club's screen is NOT changed by ruling (a).
+    assert.doesNotMatch(readCode('app/[orgSlug]/admin/rep-teams/bring-in/page.tsx'), /team-move-carve-out|coachPlanEndsLine/);
+  });
+
+  it('the route reads the coach’s plan from the fields Plan & billing reads, and tells the page', () => {
+    const route = readCode('app/api/coaches/[orgSlug]/team-links/route.ts');
+    assert.match(route, /waitingDate\(/);
+    assert.match(route, /hasRealSubscription\(/);
+    assert.match(route, /ownPlanEndOf\(/);
+    assert.match(route, /NextResponse\.json\(\{ links, ownPlan \}\)/);
+  });
+});
+
+describe('"everything comes with it" follows the Club sale gate (ruling (c), 2026-11-19)', () => {
+  const PROMISE = /Everything the team built comes with it/;
+
+  it('the club’s and the coach’s page ledes drop the promise while Club is closed, and keep it while open', () => {
+    assert.match(words.clubPageLede(C), PROMISE);
+    assert.match(words.clubPageLede(C, true), PROMISE);
+    assert.doesNotMatch(words.clubPageLede(C, false), PROMISE);
+    assert.match(words.coachPageLede(T), PROMISE);
+    assert.match(words.coachPageLede(T, true), PROMISE);
+    assert.doesNotMatch(words.coachPageLede(T, false), PROMISE);
+    for (const s of [words.clubPageLede(C, false), words.coachPageLede(T, false)]) assert.doesNotMatch(s, NO_MONEY_BACK);
+  });
+
+  it('every closed-state lede still names what happens (the team becomes one of the club’s)', () => {
+    assert.match(words.clubPageLede(C, false), /becomes one of the club’s teams/);
+    assert.match(words.coachPageLede(T, false), /you keep coaching it as one of the club’s teams/);
+  });
+
+  it('each reader reads the gate through isPlanOpen on a map that reads closed until it arrives', () => {
+    for (const file of ['app/[orgSlug]/admin/rep-teams/bring-in/page.tsx', 'app/[orgSlug]/coaches/link-org/page.tsx',
+      'app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx']) {
+      const code = readCode(file);
+      assert.match(code, /isPlanOpen\(usePlanGating\(\) \?\? \{\}, 'club'\)|isPlanOpen\(gating \?\? \{\}, 'club'\)/, file);
+    }
+    assert.match(readCode('app/[orgSlug]/admin/rep-teams/bring-in/page.tsx'), /clubPageLede\(clubName, clubOpen\)/);
+    assert.match(readCode('app/[orgSlug]/coaches/link-org/page.tsx'), /coachPageLede\(ownTeamName, clubOpen\)/);
+    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx'), /&& clubOpen && \(/);
+  });
+
+  it('a request that is already waiting keeps its "What comes with the team" column, whatever the sale state', () => {
+    for (const file of ['app/[orgSlug]/admin/rep-teams/bring-in/page.tsx', 'app/[orgSlug]/coaches/link-org/page.tsx']) {
+      assert.match(readCode(file), /\{WHAT_COMES_WITH_THE_TEAM\}/, file);
+    }
+  });
+
+  it('the shared plan gate file stays import-free of runtime code (the demo seed scripts load it with plain Node)', () => {
+    const imports = readSource('lib/plan-config.ts').split('\n').filter(l => /^\s*import\s/.test(l));
+    assert.ok(imports.every(l => /^\s*import type\s/.test(l)), imports.join('\n'));
   });
 });
 

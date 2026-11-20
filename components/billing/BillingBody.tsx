@@ -235,7 +235,10 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     <h2 className={styles.sectionTitle}>{W.change.keepPremium}</h2><p className={styles.hint}>{W.change.keepPremiumHelp}</p>
     <a href={`${teamWorkspaceReactivatePath(org)}&keep=1`} className={`btn btn-lime ${styles.keepPremiumButton}`} id="billing-keep-premium">{W.change.keepPremium}</a>
   </CoachCard> : null;
-  const joinClub = profile.joinClub ? <CoachCard className={styles.invitation}>
+  // "Part of a club?" promises that everything comes with the team, so it shows only while Club is open for sale (owner
+  // ruling (c), 2026-11-19). Still loading or failed to read counts as closed: the card never flashes in and out.
+  const showJoinClub = profile.joinClub && sale('club');
+  const joinClub = showJoinClub ? <CoachCard className={styles.invitation}>
     <h3 className={styles.sectionTitle}>{W.change.clubTitle}</h3><p className={styles.hint}>{W.change.clubBody}</p>
     <a href={`/${org.slug}/coaches/link-org`} className={`btn ${portal ? 'btn-outline' : 'btn-lime'} ${styles.joinClubButton}`}>{W.change.joinClub}</a>
   </CoachCard> : null;
@@ -417,7 +420,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     {freeCopy?.billingCard && <p className={styles.hint}>{freeCopy.billingCard}{endingContact && <> <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a></>}</p>}
     {portalCopy?.billingCard && <p className={styles.hint}>{portalCopy.billingCard}</p>}
     {keepPremium}
-    {(showChanges && changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
+    {(showChanges && changes.length > 0 || showJoinClub) && <Section id="billing-change" title={W.page.sections.change}>
       {/* Part C (f): held until the cancel read lands — a waiting cancel makes these doors absent, so they never flash first. */}
       {showChanges && changes.length > 0 && s.cancellation.status === 'loading' && <LoadingState inline label={W.page.loading} />}
       {showChanges && changes.length > 0 && s.cancellation.status !== 'loading' && <>

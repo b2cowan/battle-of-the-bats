@@ -13,7 +13,7 @@ import styles from '../start.module.css';
 import { gatedPlanTag, gatedPlanSentence, interestButtonLabel, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
 
 export const metadata: Metadata = {
-  title: 'Start a league season — FieldLogicHQ',
+  title: 'Start a league season',
 };
 
 /**

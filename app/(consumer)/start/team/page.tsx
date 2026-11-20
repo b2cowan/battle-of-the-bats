@@ -6,7 +6,7 @@ import { startStepViewer } from '@/lib/start-door-server';
 import StartTeamForm from './StartTeamForm';
 
 export const metadata: Metadata = {
-  title: 'Coach a team — FieldLogicHQ',
+  title: 'Coach a team',
 };
 
 /**

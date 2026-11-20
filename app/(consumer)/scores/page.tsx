@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     'Live scores for the teams and events you follow — plus tournaments live right now across the FieldLogicHQ community.',
   alternates: { canonical: `${SITE_URL}/scores` },
   openGraph: {
-    title: 'Live Scores | FieldLogicHQ',
+    title: 'Live Scores',
     description: 'Tournaments live right now across the FieldLogicHQ community.',
     url: `${SITE_URL}/scores`,
     type: 'website',

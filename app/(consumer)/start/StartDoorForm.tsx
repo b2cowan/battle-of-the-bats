@@ -1,5 +1,5 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Tag } from 'lucide-react';
@@ -409,24 +409,30 @@ function NameStep({ door, viewer, initialName, confirmed, create, help }: {
   const [name, setName] = useState(initialName);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // One create at a time, even for a double Enter that lands before the disabled button has rendered (a second tap in
+  // the same tab must never reach the server; two TABS are the server's to settle, in /api/org/create).
+  const creating = useRef(false);
   const nameId = `${door}-name`;
   const hint = help ? help(name) : copy.nameHint;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (creating.current) return;
     setError('');
     if (!name.trim()) {
       setError(copy.empty);
       return;
     }
+    creating.current = true;
     setLoading(true);
     try {
       const next = await create(name.trim(), terms.send);
-      if (next === null) { setLoading(false); return; }
+      if (next === null) { creating.current = false; setLoading(false); return; }
       router.push(next);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : copy.failed);
+      creating.current = false;
       setLoading(false);
     }
   }
