@@ -140,7 +140,7 @@ hand-off.
 Step 2 starts with its drawing, not a build prompt.
 
 **✅ Steps 1 and 3 BUILT 2026-11-20** (owner go "yes, build it", same day), reviewed (`/review`, four lenses, no
-Critical/High; the Low fixes applied), proved on the dev server from the server's response; committed 2026-11-20 on the owner's word ("commit"). What was
+Critical/High; the Low fixes applied), proved on the dev server from the server's response; committed `f9d1b4507` 2026-11-20 on the owner's word ("commit"). What was
 built and the gate's findings:
 - **Step 1.** The page lives at `admin/tournaments/manage/` (the old folder deleted); `proxy.ts` forwards
   `/{org}/admin/org/tournaments[/…]` → `/{org}/admin/tournaments/manage`, 307, search kept (measured: `?create=1&source=x`
