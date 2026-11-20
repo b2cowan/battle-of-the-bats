@@ -333,7 +333,7 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
   - **⚖ Owner, 2026-11-19: before any picture is built, show him BOTH options side by side and he chooses** — (A) real
     screenshots of the product, (B) drawn pictures of the same screens. His reason: our screenshots have historically
 - **Built 2026-11-20** (prompt `CLUB_ON_SALE_S3_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S3_WALK.html`,
-  https://claude.ai/artifact/9aVyHMby5sGfy4G5Hug8WS, Owner QA Ledger §550). On dev, for the owner's commit.
+  https://claude.ai/artifact/9aVyHMby5sGfy4G5Hug8WS, Owner QA Ledger §550). **Committed `1f3bdb41b` 2026-11-20** (owner's "commit"); walk §550 owed.
   - **Part 0:** `/marketing` wrote League Plus's closed words ("Coming soon"; "League Plus is coming soon — it isn't open for
     sign-up yet."; both closed: "Club and League Plus are coming soon."), now one tag for every closed plan, so the strip's
     per-plan status went (W6 simplified). `/strategy`: the Facts truth-up was already done in S1 (`4ded7e325`). `/billing`:
