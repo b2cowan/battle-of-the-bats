@@ -547,6 +547,12 @@ const LIVE_ROW_FILES: string[] = [
   'components/coaches/CoachesSidebar.tsx',
   'components/coaches/CoachStaffSheet.tsx',
   'components/help/HelpDrawer.tsx',
+  // Settings in both workspaces, Session 3: "a Premium portal has no Organization pages" asks the org row its caller holds; a
+  // flipped club's row says organization and Club, so it keeps its Organization. The declined-invitation notice reads the
+  // workspace row only while the plan carries nothing beyond the tournament tools, and skips a tombstone (org_owned), so a
+  // flipped club that later drops to a Tournament plan keeps Members.
+  'lib/premium-org-pages.ts',
+  'app/api/auth/invitations/[memberId]/route.ts',
 ];
 
 const ALLOWED: Record<string, [Klass, string]> = { ...Object.fromEntries(LIVE_ROW_FILES.map(f => [f, ['live-row', LIVE] as [Klass, string]])), ...SPECIAL };

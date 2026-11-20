@@ -43,8 +43,12 @@ describe('Part B · the event’s sidebar on a computer is the event’s pages o
   it('⚖ P2: a club’s phone More sheet has no Settings & access row (its settings live in the club portal); a Tournament plan keeps it', () => {
     assert.ok(!keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'club' })).includes('settings'));
     assert.ok(keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'tournament' })).includes('settings'));
-    // A one-team workspace keeps the phone's row: its staff page has no other door on a phone (the row's door opens it).
-    assert.ok(keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'tournament', accountKind: 'team_workspace' })).includes('settings'));
+    // ⚖ UPDATED IN THE OPEN (Settings in both workspaces, Session 3 — ruling 1R, 2026-11-20): a one-team workspace's row
+    // goes. Its people and settings live in the Coaches Portal now, so the row had nothing behind it.
+    for (const planId of ['team', 'tournament', 'club']) {
+      assert.ok(!keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId, accountKind: 'team_workspace' })).includes('settings'), planId);
+    }
+    assert.ok(keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'tournament_plus' })).includes('settings'));
   });
   it('the phone’s More sheet reaches the event’s mute page too — its only other door was the retired card page', () => {
     const phone = keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'club' }));

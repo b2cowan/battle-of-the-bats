@@ -17,7 +17,6 @@ import { TOUR_GROUPS, type TourGroup, type TourNavItem } from '../admin-nav-conf
 import { isNavKeyHiddenInSandbox } from '../../../lib/sandbox-curation.ts';
 import { eventAreas } from '../../../lib/invite-only-event.ts';
 import { orgSettingsOnTournamentSide } from '../../../lib/billing-urls.ts';
-import { isTeamWorkspaceOrg } from '../../../lib/team-workspace-kind.ts';
 import { isTournamentEventPath, litTournamentRow, tournamentOrgScreenName, type KitLink } from '../../../lib/admin-kit-nav.ts';
 
 const SUMMARY_ITEM: TourNavItem = { key: 'summary', icon: FileText, label: 'Summary' };
@@ -37,7 +36,7 @@ export function kitTournamentGroups({ status, isSandbox, role, planId, accountKi
   role: string | null | undefined;
   /** The organization's plan: it decides which areas an event has (`eventAreas`). */
   planId: string | null | undefined;
-  /** With the plan, where the organization's settings live (`orgSettingsOnTournamentSide`: a one-team workspace keeps its own). */
+  /** With the plan, where the organization's settings live (`orgSettingsOnTournamentSide`: never a one-team workspace's). */
   accountKind?: string | null;
 }): TourGroup[] {
   const areas = eventAreas(planId);
@@ -46,9 +45,10 @@ export function kitTournamentGroups({ status, isSandbox, role, planId, accountKi
     ...(areas.volunteers ? [] : ['staff-kit']),
     ...(areas.chat ? [] : ['chat']),
     // ⚖ ONE HOME PER SETTING (navigation Phase 2 Part B, P2, owner 2026-11-10): a club keeps Members, PDF settings, Payouts and
-    // Plan & billing in its Organization, so no tournament row points at them. A one-team workspace keeps the row on its phone:
-    // its staff page has no other door there (its More sheet carries no Organization rows), and the row opens that page.
-    ...(orgSettingsOnTournamentSide({ planId, accountKind }) || isTeamWorkspaceOrg({ planId, accountKind }) ? [] : ['settings']),
+    // Plan & billing in its Organization, so no tournament row points at them. ⚰ A one-team workspace kept the row on its
+    // phone (its staff page's one door there) until Settings in both workspaces, Session 3 (ruling 1R): its people and
+    // settings now live in the Coaches Portal, so the row has nothing behind it. Only the Tournament plans keep it.
+    ...(orgSettingsOnTournamentSide({ planId, accountKind }) ? [] : ['settings']),
   ]);
   const summary = isTournamentSummaryPhase(status) && areas.summaryPage;
   return TOUR_GROUPS

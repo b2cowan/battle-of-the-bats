@@ -252,6 +252,26 @@ read, never write.
 4. Confirm Tournament / Tournament Plus are untouched (they never had the group; their Settings & access keeps its tabs).
 5. PM UX summary + task list.
 
+**⚖ Session 3 gate — RULED 2026-11-20** (owner, "as recommended"). Dev counted first (counts only): no Admin, Staff or
+waiting board role in any Premium workspace, so no stop.
+- **The census** (helper, cited lines re-read): the rail's Account group and its four rows; `/admin/org` itself (with no
+  Organization tabs left a door to nothing — a fifth address the list above missed); the old tournament-side addresses,
+  which already forward a Premium workspace to the four pages (`club-home.tsx`), so they reach the homes through them; the
+  phone row; the declined-invitation notice; Event settings' web-address link; three coaches' help passages. Unreachable
+  for Premium and left: the Staff kit's invite link (no volunteers area), the payout links and emails (no online
+  payments), the club Overview, checklist and public-site links. No demo tour or UAT scenario reaches them for Premium.
+- **A closed Premium season → `/plan`, not built.** The portal's season gate sends a team with no live season to its
+  closed-season page, Team settings and Staff included, so after this session an owner who used *Close the season* has
+  nowhere to rename, change the address, birthday or print options, or move Run tournaments. Recorded in the plan.
+- **A · the scope:** while the plan carries nothing beyond the tournament tools (the board redirect's line); a Premium
+  workspace on free Club time keeps the club's Organization.
+- **B · no layout check:** no Premium-owner sign-in exists and re-signing the Tournament owner signs everyone out; the
+  change removes rows, and the one walk covers it.
+
+**Built 2026-11-20 (Session 3).** The record of what it built is in `RETIRE_OLD_TOURNAMENT_ONLY_NAV_PLAN.md` ("Step 2 (c,
+d) and step 4's guard BUILT"). Words for `/marketing`: Event settings' "Change it in Team settings." (`publicUrlPremium`).
+Help synced (`/docs`): coaches' "run your own tournament" answer and Run tournaments, tournaments' Members paragraph.
+
 ### What it builds
 - The group and the exemption deleted; the redirects (in the org layout or the pages' layouts, matching the typed-only
   pages' rule from steps 1 and 3 — `lib/typed-only-pages.ts`, `redirectWorkspaceWithoutProgram`); the deep links

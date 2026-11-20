@@ -48,6 +48,8 @@ import { EVENT_SETTINGS_WORDS as W } from '@/lib/event-settings-words';
 import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
 import { useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import { getWebAddressHref, isTournamentTier } from '@/lib/billing-urls';
+import { premiumPortalHome, premiumWithoutOrgPages } from '@/lib/premium-org-pages';
+import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { cleanSlugInput, isSlug } from '@/lib/slug';
 import { boardMoney } from '@/lib/tournament-board-words';
 import { hasFiniteSlots } from '@/lib/tournament-slot';
@@ -825,6 +827,11 @@ export default function TournamentEventSettingsPage() {
     sealed: false,
   });
 
+  // A Premium Coaches Portal's web address lives in its team's Team settings (Settings in both workspaces, Session 3): the
+  // coach's team, read before the early returns below (a hook). Only a Premium workspace asks.
+  const premiumOrg = premiumWithoutOrgPages(currentOrg);
+  const premiumTeamId = useCurrentOrgCoachAccess(currentOrg?.slug, premiumOrg).teamId;
+
   if (userRole !== 'owner' && userRole !== 'admin') {
     return (
       <div className={es.page}>
@@ -913,9 +920,15 @@ export default function TournamentEventSettingsPage() {
   // What the card holds ("No questions yet", "3 questions"), not what it is for (A74).
   const registrationQuestionsSummary = questions.summary;
 
-  // The web address lives where the plan keeps it (A75): the owner reads where, under Public URL.
-  const webAddressHref = getWebAddressHref(currentOrg?.slug ?? 'admin', currentOrg?.planId);
-  const webAddressLine = isTournamentTier(currentOrg?.planId) ? WA.publicUrlTournament : WA.publicUrlClub;
+  // The web address lives where the plan keeps it (A75): the owner reads where, under Public URL. A Premium Coaches Portal
+  // keeps it in Team settings › Organization (Settings in both workspaces, Session 3): its team's page, or the portal when
+  // the reader coaches no team there.
+  const orgSlugForLinks = currentOrg?.slug ?? 'admin';
+  const webAddressHref = !premiumOrg
+    ? getWebAddressHref(orgSlugForLinks, currentOrg?.planId)
+    : premiumTeamId ? premiumPortalHome('settings', orgSlugForLinks, premiumTeamId) : `/${orgSlugForLinks}/coaches`;
+  const webAddressLine = premiumOrg ? WA.publicUrlPremium
+    : isTournamentTier(currentOrg?.planId) ? WA.publicUrlTournament : WA.publicUrlClub;
 
   // The page's one floating pill says both saves: the settings' and the questions' order.
   const pillError = saveStatus === 'error' ? saveError || 'Couldn’t save' : questions.order.error;

@@ -173,7 +173,10 @@ describe('A2 · Organization lists the doors the person holds, as its tabs', () 
   });
 
   it('the door reads the shared list, sends the person to their first tab, and never lists a tile by hand', () => {
-    const door = readCode('app/[orgSlug]/admin/org/page.tsx');
+    // ⚖ UPDATED IN THE OPEN (Settings in both workspaces, Session 3): the address's page is a server door that sends a Premium
+    // Coaches Portal (no Organization tabs left) on first, then renders this same client door.
+    assert.match(readCode('app/[orgSlug]/admin/org/page.tsx'), /return <OrgDoor \/>;/);
+    const door = readCode('app/[orgSlug]/admin/org/OrgDoor.tsx');
     assert.match(door, /<TabsDoor tabs=\{useOrgTabs\(\)\.tabs\}/);
     // The door's rule, shared with a Tournament plan's Settings & access (navigation Phase 2 Part B): `TabsDoor`.
     const shared = readCode('components/admin/kit/club/TabsDoor.tsx');

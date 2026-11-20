@@ -161,6 +161,33 @@ built and the gate's findings:
 - `.claude/settings.json:111` still names the old folder's stylesheet in a permission line (shared automation — left as
   is; it now points at a file that no longer exists).
 
+**✅ Step 2 (c, d) and step 4's guard BUILT 2026-11-20** (Settings in both workspaces Session 3; owner gate "as
+recommended": build as written, the closed-season gap to `/plan`, the scope line, no layout check). (c) is Sessions 1–2
+(`b4384b9a0`, `528f7a264`). What (d) built:
+- **One rule, `lib/premium-org-pages.ts`:** a Premium Coaches Portal whose plan carries nothing beyond the tournament
+  tools (`premiumWithoutOrgPages`, the board redirect's line) lists no Organization pages (`adminListsOrgPages`, asked by
+  `useOrgLinks`), so the rail's flat **Account** group is deleted for every plan and the phone More sheet's Settings &
+  access row goes for a one-team workspace (`kit-tournament-groups.ts`). A Premium workspace on free Club time keeps the
+  club's Organization; a cancelled one is sent too.
+- **The redirects** (`redirectPremiumOffOrgPage`, `lib/coach-portal-request.ts`, server-side): `members/layout.tsx`
+  (Members and the Audit log → the team's Staff page); `settings/layout.tsx` (Settings → Team settings
+  `?section=organization`, PDF settings → `?section=documents`, told apart by the proxy's `x-pathname` — one layout, as
+  two nested ones would race); `/admin/org` itself (a server page in front of `OrgDoor.tsx`) → the sign-in landing.
+  Someone with no team there lands where sign-in sends them (`getStandaloneAdminHref`). The old tournament-side
+  addresses already forward a Premium workspace to these pages (`club-home.tsx`), so they reach the homes through them.
+  The two-step requirement switch went with Settings.
+- **Re-pointed:** Event settings' web-address line ("Change it in Team settings.", the coach's team from the admin
+  shell's coach-access read) and the declined-invitation notice (the workspace's team Staff page).
+- **Guard:** `tests/unit/premium-org-pages-retired.test.ts` — no organization the rail calls tournament-only lists
+  Organization pages (every plan × kind × status), no "Account" group heading in any admin component, each address's
+  redirect, and the Tournament plans' own pages untouched. Census and help: `workspace-flip-guard` lists the two new
+  readers; the coaches' and tournaments' help say people are on Staff and settings in Team settings (`/docs`).
+- **Owed to `/plan` (owner 2026-11-20): a closed Premium season's settings door.** The portal's season gate sends a team
+  with no live season to its closed-season page, Team settings and Staff included, so an owner who used *Close the
+  season* (not *Start next season*) can no longer rename the team, change its web address, birthday date or print options,
+  or move Run tournaments; the retired pages had covered that by accident. Reopen is offered on that page. A shelf there
+  needs its own drawing session (the standing rule); production's one Premium workspace has a live season.
+
 1. **The duplicate address** — no owner call needed (the note already rules it): page code home at `tournaments/manage`,
    the `proxy.ts` redirect, the path-keyed references, the delete of the old help branch, a unit guard against a new link to
    `/admin/org/tournaments`. Fold in found-on-the-way 2 and 3. Independent of everything else; smallest; do it first.
@@ -169,8 +196,9 @@ built and the gate's findings:
    [TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md](TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md) Stages 1–2, one drawing for both
    workspaces — (c) the portal's three settings built, (d) the old
    Account group, the tournament side's Staff & access / Audit log / Settings for a Premium workspace, and the two-step
-   switch retired, with redirects for their old addresses (the coaches' help rewritten with `/docs`). The text below is
-   the step as it stood under call 1, kept for the record.
+   switch retired, with redirects for their old addresses (the coaches' help rewritten with `/docs`). **✅ (a)–(d) done
+   2026-11-20** — (d) in "Step 2 (c, d) and step 4's guard BUILT" above. The text below is the step as it stood under
+   call 1, kept for the record.
    *(Superseded)* **The team workspace's Settings & access** (after call 1, plus a drawing if call 2 says so): the sidebar row in place of
    the Account group, a tab row on its organization pages (Staff & access · Settings · PDF settings; Audit log from Staff &
    access), the branch at `AdminKitRail.tsx:298-308` and the team-workspace exemption at `useAdminKitNav.ts:37-44` reviewed
@@ -180,7 +208,9 @@ built and the gate's findings:
 3. **The typed-only pages** (after call 3): redirects for the board, venue library, house league, calendar, schedules and
    public site. Independent of 2; after 2 so its redirects land on the finished shape.
 4. **The guard and the close**: a unit test that no non-event admin page draws an "Account" group; one walk (`/tasks`)
-   covering a Premium coach on a computer and a phone, and a Tournament-plan owner's list with `?create=1`.
+   covering a Premium coach on a computer and a phone, and a Tournament-plan owner's list with `?create=1`. **✅ The
+   guard built 2026-11-20** (`tests/unit/premium-org-pages-retired.test.ts`); **the one walk is next** (shared with the
+   sister plan — `SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md` "After the three sessions").
 
 The Tournament plan's missing settings (call 4) is a separate item whatever is ruled; if it is built, it shares step 2's
 drawing so both kinds of workspace end on one Settings & access shape. **Opened 2026-11-20:**

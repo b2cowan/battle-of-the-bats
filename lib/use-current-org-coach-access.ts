@@ -8,9 +8,12 @@ export interface OrgCoachAccess {
   hasRepAccess: boolean;
   /** Coaches a free (Basic) team anywhere — coach home is the global launchpad `/coaches`. */
   hasBasicCoachTeam: boolean;
+  /** The first team they coach in THIS org (a live season first, else a closed one) — a one-team workspace's one team, for
+   *  the links that open its portal pages from the admin shell (Settings in both workspaces, Session 3). */
+  teamId?: string | null;
 }
 
-const NONE: OrgCoachAccess = { hasRepAccess: false, hasBasicCoachTeam: false };
+const NONE: OrgCoachAccess = { hasRepAccess: false, hasBasicCoachTeam: false, teamId: null };
 
 /**
  * The admin shell's coach-view door for a given access result: whether to show it and where it
@@ -34,6 +37,11 @@ export function coachDoorFor(access: OrgCoachAccess, orgSlug: string | null | un
  * admin logout path is a client navigation, not a full reload, so a cache surviving the sign-out
  * boundary could replay one user's result to the next on a shared device (/review 2026-07-22).
  */
+function firstTeamId(list: unknown): string | null {
+  const id = Array.isArray(list) ? (list[0] as { teamId?: unknown } | undefined)?.teamId : null;
+  return typeof id === 'string' ? id : null;
+}
+
 export function useCurrentOrgCoachAccess(
   orgSlug: string | null | undefined,
   enabled: boolean,
@@ -62,6 +70,7 @@ export function useCurrentOrgCoachAccess(
                 (Array.isArray(data?.assignments) && data.assignments.length > 0)
                 || (Array.isArray(data?.closedAssignments) && data.closedAssignments.length > 0),
               hasBasicCoachTeam: Boolean(data?.hasBasicCoachTeam),
+              teamId: firstTeamId(data?.assignments) ?? firstTeamId(data?.closedAssignments),
             },
           });
         }

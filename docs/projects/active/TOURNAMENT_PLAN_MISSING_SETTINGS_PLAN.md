@@ -121,6 +121,10 @@ Shared with the sister plan's step 2b (`/legal` on the same request's new home i
 
 ### Stage 3 — Build
 
+**Session 3 of [SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md](SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md) built 2026-11-20**
+(owner gate "as recommended"); its record is in the sister plan ("Step 2 (c, d) and step 4's guard BUILT"). All three
+sessions are built; Stage 4's one walk is next.
+
 After Stages 1 and 2. No database change expected (both routes exist and need no plan gate); if `/legal` asks for a record
 of requests, that becomes a migration and this stage's **first** task, with `docs/agents/db/DATA_DICTIONARY.md` and
 `npm run refresh:snapshots` in the same unit of work.

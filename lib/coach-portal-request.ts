@@ -10,6 +10,7 @@ import { orgPlanCarriesCoachesPortal } from './coach-portal-plan';
 import { isOrgBillingSuspended } from './org-billing-access';
 import { getDemoOrgBySlug } from './demo-org';
 import { typedOnlyPageHome, type TypedOnlyPage } from './typed-only-pages';
+import { premiumPortalHome, premiumWithoutOrgPages, type RetiredOrgPage } from './premium-org-pages';
 import type { OrgRole } from './types';
 
 /**
@@ -122,6 +123,36 @@ export async function redirectWorkspaceWithoutProgram(orgSlug: string, page: Typ
   const home = typedOnlyPageHome(page, auth.org);
   if (home === 'tournaments') redirect(`/${auth.org.slug}/admin/tournaments`);
   if (home === 'portal') await redirectToStandaloneLanding(auth.org, auth.user.id);
+}
+
+/**
+ * A retired Organization page's layout for a Premium Coaches Portal (Settings in both workspaces, Session 3 —
+ * `lib/premium-org-pages.ts` holds the rule and its reasons): the coach goes to the setting's portal home on their team
+ * (Staff, or Team settings with its section open). Someone with no team there — a member who holds Run tournaments and
+ * coaches nothing — goes where sign-in sends them (their tournaments), never the portal's no-team wall. `'door'` is
+ * `/admin/org` itself: with no Organization pages left it is a door to nothing, so it goes to that same landing. Every
+ * other organization falls through to the page.
+ */
+export async function redirectPremiumOffOrgPage(orgSlug: string, page: RetiredOrgPage | 'door'): Promise<void> {
+  const auth = await getCoachPortalAuth(orgSlug);
+  if (!auth || !premiumWithoutOrgPages(auth.org)) return;
+  const teamId = page === 'door' ? null : await premiumTeamFor(auth.org.id, auth.user.id);
+  if (teamId && page !== 'door') redirect(premiumPortalHome(page, auth.org.slug, teamId));
+  await redirectToStandaloneLanding(auth.org, auth.user.id);
+}
+
+/** The one team this person coaches in a one-team workspace (a live season first, else a closed one), or null. */
+async function premiumTeamFor(orgId: string, userId: string): Promise<string | null> {
+  try {
+    const [live, closed] = await Promise.all([
+      getCoachPortalAssignments(orgId, userId, true),
+      getCoachPortalClosedAssignments(orgId, userId, true),
+    ]);
+    return live[0]?.teamId ?? closed[0]?.teamId ?? null;
+  } catch {
+    // A blip in these reads must not 500 the old address: the landing answers instead.
+    return null;
+  }
 }
 
 async function redirectToStandaloneLanding(org: CoachTournamentOrg & { id: string }, userId: string): Promise<never> {

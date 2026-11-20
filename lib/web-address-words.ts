@@ -42,6 +42,8 @@ export const WEB_ADDRESS_WORDS = {
   publicUrlTournament: 'Change it in Settings & access.',
   /** League and Club: the organization's Settings, where the address lives on those plans. */
   publicUrlClub: 'Change it in your organization’s Settings.',
+  /** A Premium Coaches Portal: Team settings › Organization, where its web address lives (Settings in both workspaces). */
+  publicUrlPremium: 'Change it in Team settings.',
   /**
    * While the club's own web address is handed out (Club Tier 4e, copy §9): Event settings' Public URL says the first part is
    * that address, and the place to change it is the Public site page. `address` has no protocol: `www.lakeshorelynx.ca`.

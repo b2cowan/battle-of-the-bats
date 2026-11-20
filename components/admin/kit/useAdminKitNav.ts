@@ -15,6 +15,7 @@ import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { canReadVenueLibrary } from '@/lib/venue-library';
 import { isTournamentTier, orgSettingsOnTournamentSide } from '@/lib/billing-urls';
+import { adminListsOrgPages } from '@/lib/premium-org-pages';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitCommunicationsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventShell, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
@@ -35,13 +36,14 @@ export function useOrgLinks() {
   const canSeeMembers = Boolean(userRole)
     && (userRole === 'owner' || hasCapability(userRole!, userCapabilities, 'module_members'))
     && canOpen('module_members');
-  // ⚠ A Tournament-plan organization has NO /admin/org at all (its layout redirects every page of
-  // it), so it gets no Organization rows — today's rail hides that section for it too. A one-team
-  // workspace on a tournament plan is the exception: it keeps /admin/org (staff and access).
+  // ⚠ A Tournament-plan organization has NO /admin/org at all (its layout redirects every page of it), and a Premium
+  // Coaches Portal has none left (Settings in both workspaces, Session 3: its settings live in the portal, the old
+  // addresses send it there) — so neither gets Organization rows, and no "Account" group can be drawn from them
+  // (`adminListsOrgPages`, the one rule; a Premium workspace on free Club time keeps the club's Organization).
   const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
   // `canReadVenueLibrary` for the signed-in person (trust close-out 2): the Venue library row here, the Permits row below.
   const readsLibrary = !!currentOrg && canReadVenueLibrary({ role: userRole, capabilities: userCapabilities }, currentOrg);
-  const orgLinks = isTournamentTier(currentOrg?.planId) && !isTeamWorkspace ? [] : kitOrgLinks({
+  const orgLinks = currentOrg && !adminListsOrgPages(currentOrg) ? [] : kitOrgLinks({
     base,
     role: userRole,
     isCanceled,

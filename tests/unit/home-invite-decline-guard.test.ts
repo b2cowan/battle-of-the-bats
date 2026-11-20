@@ -32,9 +32,11 @@ describe('Home invitation decline', () => {
 
   it('the declined notice opens Members where the plan keeps it (a Tournament plan’s is its tournament settings, 2026-11-20)', () => {
     const route = readCode('app/api/auth/invitations/[memberId]/route.ts');
-    assert.match(route, /const planId = \(await effectiveOrgFactsForId\(orgId\)\.catch\(\(\) => null\)\)\?\.planId \?\? null;/,
+    assert.match(route, /const facts = await effectiveOrgFactsForId\(orgId\)\.catch\(\(\) => null\);\s*const planId = facts\?\.planId \?\? null;/,
       'the plan right now, through the door — and a failed read never loses the notice');
-    assert.match(route, /link: slug \? getMembersHref\(slug, planId\) : undefined/);
+    // ⚖ UPDATED IN THE OPEN (Settings in both workspaces, Session 3): a Premium Coaches Portal has no Members page — the notice
+    // opens its team's Staff page; every other plan keeps Members where the plan keeps it.
+    assert.match(route, /link: premiumStaff \?\? \(slug \? getMembersHref\(slug, planId\) : undefined\),/);
     assert.doesNotMatch(route, /admin\/org\/members/);
   });
 });

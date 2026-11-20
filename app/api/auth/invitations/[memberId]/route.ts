@@ -17,6 +17,8 @@ import { invitationHasLapsed, invitationLapseCutoff, lapsedInvitationMessage } f
 import { orgFromRelation } from '@/lib/invite-reconciliation';
 import { getMembersHref } from '@/lib/billing-urls';
 import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
+import { getTeamWorkspaceForOrg } from '@/lib/team-workspace-entitlements';
+import { premiumPortalHome, premiumWithoutOrgPages } from '@/lib/premium-org-pages';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -67,7 +69,18 @@ async function tellClubMemberInviteDeclined(
     // send its owner to the Tournaments list — Retire the old tournament-only menu, found on the way 2). The plan right
     // now, through the door: a Tournament plan on free Club time has the Organization's Members. A failed read costs the
     // link's precision (the Organization's Members), never the notice.
-    const planId = (await effectiveOrgFactsForId(orgId).catch(() => null))?.planId ?? null;
+    const facts = await effectiveOrgFactsForId(orgId).catch(() => null);
+    const planId = facts?.planId ?? null;
+    // A Premium Coaches Portal has no Members page (Settings in both workspaces, Session 3): its people are on the team's
+    // Staff page, so the notice opens that. The facts carry no account kind: a workspace row is what makes it one, read only
+    // while the plan carries nothing beyond the tournament tools. A failed read falls back to the address above, whose page
+    // sends a Premium coach to Staff too.
+    const premiumStaff = facts && slug && premiumWithoutOrgPages({ ...facts, accountKind: 'team_workspace' })
+      ? await getTeamWorkspaceForOrg(orgId)
+        // A portal that became a club keeps its row as a tombstone (`org_owned`): that club's notice keeps Members.
+        .then(ws => (ws && ws.workspaceState !== 'org_owned' ? premiumPortalHome('members', slug, ws.repTeamId) : null))
+        .catch(() => null)
+      : null;
     await notify({
       orgId,
       eventType: 'member_invite_declined',
@@ -75,7 +88,7 @@ async function tellClubMemberInviteDeclined(
       body: `They won’t join as ${roleLabel(member.role)}.`,
       userIds: ids,
       excludeUserIds: [user.id],
-      link: slug ? getMembersHref(slug, planId) : undefined,
+      link: premiumStaff ?? (slug ? getMembersHref(slug, planId) : undefined),
     });
   } catch { /* the notice is best-effort */ }
 }

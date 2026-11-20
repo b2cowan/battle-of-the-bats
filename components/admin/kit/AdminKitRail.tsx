@@ -50,7 +50,7 @@ import { isSidebarStrip } from '@/lib/sidebar-strip';
 import SidebarLogoTile from '@/components/shared/SidebarLogoTile';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
-import { isKitLinkActive, isKitLinkActiveAmong, kitCountText, litTournamentRow, placeGroupHeading, SETTINGS_ACCESS_TITLE, type KitLink } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, kitCountText, litTournamentRow, placeGroupHeading, SETTINGS_ACCESS_TITLE, type KitLink } from '@/lib/admin-kit-nav';
 import { eventSwitchRows, eventTileSource } from '@/lib/admin-event-cell';
 import { useAdminKitNav, useTournamentSettingsTabs } from './useAdminKitNav';
 import EventSwitchMenu from './EventSwitchMenu';
@@ -65,10 +65,10 @@ function WaitingCount({ count, label, className = '', tone = 'amber' }: { count:
   return <span className={`${styles.count}${tone === 'red' ? ` ${styles.countRed}` : ''}${className ? ` ${className}` : ''}`} aria-label={label}>{kitCountText(count)}</span>;
 }
 
-/** One rail door — the coach rail's row, with the admin's worklist count and chat badge. `stripIcon` is an
- *  icon only the strip draws (a row the full sidebar lists by name alone). */
-function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, count = 0, countLabel, chatUnread }: {
-  href: string; label: string; active: boolean; icon?: ElementType; stripIcon?: ElementType;
+/** One rail door — the coach rail's row, with the admin's worklist count and chat badge. (Its strip-only icon went with
+ *  the retired Account group, its one caller — Settings in both workspaces, Session 3.) */
+function RailRow({ href, label, active, icon: Icon, count = 0, countLabel, chatUnread }: {
+  href: string; label: string; active: boolean; icon?: ElementType;
   count?: number; countLabel?: string; chatUnread?: number;
 }) {
   return (
@@ -78,7 +78,6 @@ function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, count 
       aria-current={active ? 'page' : undefined}
     >
       {Icon && <Icon size={14} aria-hidden />}
-      {StripIcon && <StripIcon size={14} aria-hidden className={strip.whenStrip} />}
       <span className={strip.rowLabel}>{label}</span>
       <WaitingCount count={count} label={countLabel ?? `${count} need attention`} className={strip.cornerCount} />
       {chatUnread !== undefined && <ChatUnreadBadge count={chatUnread} className={strip.cornerCount} />}
@@ -175,7 +174,7 @@ export default function AdminKitRail() {
   const pathname = usePathname();
   const nav = useAdminKitNav();
   const {
-    base, brief, orgLinks, placeGroups, litPlace, tournamentOnly, isCanceled,
+    base, brief, placeGroups, litPlace, tournamentOnly, isCanceled,
     // The computer's foot (Part B, T1) — named `portalDoors` here, as the phone's list is in the More sheet (its own list: navigation Phase 3 changed the phone's bar, not the sheet's rows).
     inEvent, deskPortalDoors: portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
@@ -295,17 +294,10 @@ export default function AdminKitRail() {
                 )}
               </>
             )}
-            {tournamentOnly && orgLinks.length > 0 && (
-              // The tournament-only organization's flat Account list (unchanged by 13i; a cancelled club has no Organization
-              // links): listed by name in the full sidebar; the strip draws the icon the phone's More menu gives each (an
-              // icon-less row would be an empty square).
-              <>
-                <div className={styles.label}>Account</div>
-                {orgLinks.map(link => (
-                  <RailRow key={link.key} href={link.href} label={link.label} active={isKitLinkActiveAmong(pathname, link, orgLinks)} stripIcon={link.icon} />
-                ))}
-              </>
-            )}
+            {/* ⚰ The tournament-only organization's flat "Account" list (Staff & access · Audit log · Settings · PDF
+                settings) retired with Settings in both workspaces, Session 3 (ruling 1R, 2026-11-20): only a Premium Coaches
+                Portal still drew it, and its settings now live in the portal. A tournament-only organization lists no
+                Organization pages on any plan (`adminListsOrgPages`); the unit guard fails the build if the heading returns. */}
           </>
         )}
 

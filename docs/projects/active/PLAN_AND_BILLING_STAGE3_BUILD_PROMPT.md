@@ -96,6 +96,11 @@ section on the team's Tournaments page **stays unchanged** (the live-season way 
   *(Amended 2026-11-20, Retire the old tournament-only menu step 1: `/admin/org/tournaments` now forwards to
   `/admin/tournaments/manage` for every workspace, search kept — the portal's door already used that address, so this
   line's reason holds. The rest of the line stands until that plan's step 2.)*
+  *(Superseded 2026-11-20 by ruling 1R — Retire the old tournament-only menu step 2d, built in Settings in both workspaces
+  Session 3: for a Premium Coaches Portal whose plan carries nothing beyond the tournament tools, `/admin/org/members`
+  and its audit log now redirect to the team's Staff page, org settings and PDF settings to Team settings with the
+  Organization or How your documents look section open, and `/admin/org` to the sign-in landing. `/admin/tournaments/**`
+  is unchanged. A Premium workspace on free Club time keeps the club's Organization pages.)*
 - **Old billing addresses → the coach page, permanently** (`permanentRedirect` or the Next 16 equivalent — read the docs): the
   org billing page (`admin/org/billing`, which just renders `BillingKit`) and the tournament-tier `settings/subscription`
   re-export, for a team workspace only. **Keep `allowSuspendedOrg: true`** on every layout in that path (`admin/layout.tsx`,

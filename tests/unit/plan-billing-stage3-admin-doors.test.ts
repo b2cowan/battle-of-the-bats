@@ -84,9 +84,13 @@ describe('the actual admin nav binds workspace identity and role to its doors', 
       assert.deepEqual(assignmentReads, [{ slug: 'falcons', enabled: true }]);
       assert.deepEqual(nav.coachDoor, { show: scenario.show, href: scenario.href });
       const standalone = scenario.org.accountKind === 'team_workspace';
+      // ⚖ Settings in both workspaces, Session 3 (ruling 1R): a Premium Coaches Portal whose plan carries nothing beyond the
+      // tournament tools lists no Organization pages — its people are on the team's Staff page. One on a club plan keeps them.
+      const premiumWithoutOrg = standalone && ['team', 'tournament', 'tournament_plus'].includes(scenario.org.planId);
       const members = nav.orgLinks.find(link => link.key === 'org/members');
-      assert.equal(members?.label, scenario.role === 'coach' ? undefined : standalone ? 'Staff & access' : 'Members');
-      assert.equal(members?.href, scenario.role === 'coach' ? undefined : '/falcons/admin/org/members');
+      const listed = scenario.role !== 'coach' && !premiumWithoutOrg;
+      assert.equal(members?.label, !listed ? undefined : standalone ? 'Staff & access' : 'Members');
+      assert.equal(members?.href, !listed ? undefined : '/falcons/admin/org/members');
       assert.equal(nav.billingLink?.href ?? null, scenario.role === 'owner'
         ? standalone ? '/falcons/coaches/billing' : '/falcons/admin/org/billing'
         : null);
