@@ -21,6 +21,11 @@ interface OrgNavValue {
   tournamentStatus: string | null;
   /** One object; `null` clears the tournament identity (what the sync component does on unmount). */
   setTournamentNav: (nav: TournamentNavState | null) => void;
+  /** True while the root 404 is on screen (NotFoundPageSync). The root-mounted tournament bar reads it: a made-up
+   *  `/{a}/{b}` address still carries a `tournamentSlug` route parameter in the browser, but there is no event behind it,
+   *  so the bar has no look to take and its doors lead nowhere (owner ruling 2026-11-19: the 404 takes no bottom bar). */
+  notFoundPage: boolean;
+  setNotFoundPage: (on: boolean) => void;
 }
 
 const OrgNavContext = createContext<OrgNavValue>({
@@ -29,10 +34,13 @@ const OrgNavContext = createContext<OrgNavValue>({
   tournamentEndDate: null,
   tournamentStatus: null,
   setTournamentNav: () => {},
+  notFoundPage: false,
+  setNotFoundPage: () => {},
 });
 
 export function OrgNavProvider({ children }: { children: React.ReactNode }) {
   const [tournament, setTournamentNav] = useState<TournamentNavState | null>(null);
+  const [notFoundPage, setNotFoundPage] = useState(false);
 
   return (
     <OrgNavContext.Provider value={{
@@ -41,6 +49,8 @@ export function OrgNavProvider({ children }: { children: React.ReactNode }) {
       tournamentEndDate: tournament?.endDate ?? null,
       tournamentStatus: tournament?.status ?? null,
       setTournamentNav,
+      notFoundPage,
+      setNotFoundPage,
     }}>
       {children}
     </OrgNavContext.Provider>

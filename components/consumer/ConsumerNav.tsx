@@ -40,6 +40,7 @@ import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
+import { useOrgNav } from '@/components/OrgNavContext';
 
 const ALL_TABS = [
   { href: '/discover', label: 'Home', icon: Home },
@@ -141,8 +142,11 @@ export default function ConsumerNav({
   // including the admin PREVIEW, whose route ALSO carries a [tournamentSlug] param, so
   // the param alone is not sufficient there — while the param additionally guards org
   // pages against a drifted section list (they lack the param). See lib/consumer-routes.
+  // And never on the root 404 (owner ruling 2026-11-19): a made-up `/x/y` address matches the route, so the browser
+  // carries the param, but the layout found no event — no look to take, and every door leads into nothing.
+  const { notFoundPage } = useOrgNav();
   const onTournamentRoute =
-    variant === 'tournament' && showsTournamentChrome(pathname) && !!params?.tournamentSlug;
+    variant === 'tournament' && showsTournamentChrome(pathname) && !!params?.tournamentSlug && !notFoundPage;
 
   // A CLUB's own public pages take NO platform bar at any width (Club Tier Stage 4b-1, Ask 8, ruled 2026-10-19 —
   // reversing D1's phone bar of 2026-08-01): the club's own bar carries Sign in, and a family on the club's site sees

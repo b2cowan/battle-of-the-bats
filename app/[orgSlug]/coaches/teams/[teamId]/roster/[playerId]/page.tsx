@@ -764,7 +764,9 @@ export default function PlayerDetailPage({
     },
     {
       key: 'family', label: 'Family', href: tabHref('family', 'guardian'), aria: 'Family — open Guardian contact',
-      figure: guardianName || 'No contact',
+      // Without the contact grant the details are hidden, not absent: "No contact" would tell this coach the family left no
+      // phone or email, which may be false (owner ruling 2026-11-19, ADMIN_NAV_EVALUATION_PLAN leftover call 5; words /marketing).
+      figure: pii ? (guardianName || 'No contact') : 'Not shared',
       foot: player.guardianEmail || player.guardianPhone || (pii ? 'Add a contact' : 'Kept to the head coach'),
       caption: player.guardianEmail || player.guardianPhone || (pii ? undefined : 'Kept to the head coach'),
       words: true,

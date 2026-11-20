@@ -1066,10 +1066,19 @@ It is the owner's call whether to open it.
   on a made-up address there is no event, so it has no look to take, and its doors lead into an event that does not
   exist. The 404 keeps its one next step, "Go to Home" (the system-screen family's rule, walk passed 2026-10-23).
   Painting it warm would hide the misfire rather than fix it.
-  - [ ] **Build (small, recorded not started):** the tournament bar does not render on a not-found page. First
-    reproduce it on a phone width: a server fetch of three made-up addresses (`/x`, `/x/y`, `/x/y/z`, 2026-11-19) carried
-    no bar markup, so it most likely mounts client-side on a two-segment address that matches the tournament route
-    (`params.tournamentSlug` set) before `notFound()`. Fix at the bar's own gate, not by styling the 404. Short walk.
+  - [x] **Built 2026-11-19 (dev), with item 5 below as one piece of work.** Reproduced from the page's own data, not a
+    browser: the server HTML of `/zzqx/yyqx` carries no app bar, but the route tree it hands the browser names
+    `["tournamentSlug","yyqx"]`, so the root-mounted bar's gate (`showsTournamentChrome` + `params.tournamentSlug`)
+    passes once the page is running. Fixed at the bar's own gate: the root 404 mounts `NotFoundPageSync`, which sets
+    `notFoundPage` in the shell context (`OrgNavContext`) in a layout effect (gone before the first paint), and
+    `ConsumerNav`'s `onTournamentRoute` requires `!notFoundPage`. The same holds for a real event's page that calls
+    `notFound()` (the root boundary replaces the event frame there too). No styling of the 404. The phone check goes in
+    the next walk (owner 2026-11-19: no walk of its own; the step is below, under item 5).
+    `/review` 2026-11-20: no defects. Two notes kept: a real event's page that is switched off (its `notFound()` reaches
+    the org 404, whose platform face is the root 404) also loses the bar, which the ruling covers; and the browser's
+    first draw of a made-up `/x/y` still wants the bar against server HTML without it (a hydration mismatch the bug
+    already had, not new; the layout effect removes the bar before paint). The rendered layout check could not measure
+    the player page that day: another session's half-built billing import made every dev page 500.
 
 ## The leftover calls, RULED 2026-11-19 (owner: "1. i agree … 5. i agree", each as recommended)
 
@@ -1088,6 +1097,16 @@ The five open calls carried through walk §524 (Phase 5's four, 5b's one), put t
    "this family left no phone or email", which is false: the screen tells the coach something untrue. The figure says the
    details are hidden instead (recommendation "Not shared", the caption "Kept to the head coach" kept); the exact words go
    through `/marketing` and `check:spelling` before the build.
-   - [ ] **Build (small, recorded not started):** the coach-without-the-contact-grant Family figure wording above, with
-     its help line if one quotes it, and a step in the next walk. Fold it into the same small piece of work as the 404
-     bar above (the owner's recommendation, 2026-11-19).
+   - [x] **Built 2026-11-19 (dev), with the 404 bar above.** Words through `/marketing` the same day: the figure reads
+     **"Not shared"**, the caption **"Kept to the head coach"** stays (reason: it describes this coach's view, not the
+     family's record, so it is true either way; "Hidden" was turned down because it is the staff sheet's word for a
+     switch that is off). Only the grant-less face changed: a coach with the grant and no guardian saved still reads
+     "No contact" / "Add a contact". `check:spelling` passes. No help line quoted the old words (grep of
+     `lib/help-content`, 2026-11-19), so no help change.
+   - [ ] **Owed to the next walk (owner 2026-11-19: add steps, do not write a new walk).** Whichever walk is published
+     next carries these two steps, each its own box:
+     1. *On a phone-width window, open a made-up two-part address such as `/no-such-club/no-such-event`.* Expect:
+        "We can’t find that page" and Go to Home, with **no bottom bar** (no Home · Scores · Account row). Not a demo
+        club's address: the demos hide that bar anyway, so the step would pass for the wrong reason.
+     2. *Signed in as an assistant coach without "Contacts & birthdates", open a player's page.* Expect: the Family
+        figure reads **Not shared** over **Kept to the head coach** (not "No contact").
