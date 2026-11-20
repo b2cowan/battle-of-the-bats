@@ -89,4 +89,8 @@ emailed where it is true.
 button reads "Open Plan & billing", the coach line "no end date set" (`docs/agents/legal/CASL_FREE_TIME_ENDING_REMINDERS.md`).
 `/review`: see the commit. Owner question left by `/legal`: should ending free time early email the coach or club?
 
+**Committed `8ebdee141` 2026-11-20** (owner "commit"). The dev schema snapshots that show the two new columns stay
+uncommitted for now, because the same refresh also captured another session's migration 513 while that work is still in
+progress. Commit them with whichever session commits 513.
+
 **Release:** with Stage 2b only; migration 512 on production first.
