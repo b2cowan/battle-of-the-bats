@@ -161,8 +161,8 @@ built and the gate's findings:
 - `.claude/settings.json:111` still names the old folder's stylesheet in a permission line (shared automation — left as
   is; it now points at a file that no longer exists).
 
-**✅ Step 2 (c, d) and step 4's guard BUILT 2026-11-20** (Settings in both workspaces Session 3; owner gate "as
-recommended": build as written, the closed-season gap to `/plan`, the scope line, no layout check). (c) is Sessions 1–2
+**✅ Step 2 (c, d) and step 4's guard BUILT 2026-11-20, committed `829cf0949` 2026-11-20** (Settings in both workspaces
+Session 3; owner gate "as recommended": build as written, the closed-season gap to `/plan`, the scope line, no layout check). (c) is Sessions 1–2
 (`b4384b9a0`, `528f7a264`). What (d) built:
 - **One rule, `lib/premium-org-pages.ts`:** a Premium Coaches Portal whose plan carries nothing beyond the tournament
   tools (`premiumWithoutOrgPages`, the board redirect's line) lists no Organization pages (`adminListsOrgPages`, asked by
