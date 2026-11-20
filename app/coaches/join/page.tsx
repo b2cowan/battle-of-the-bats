@@ -231,7 +231,7 @@ function JoinForm() {
       setError('Enter your first and last name.');
       return;
     }
-    // Ask 2A: the button stays on; without the tick the form says (5b) and sends nothing.
+    // The button is off until the tick (terms.blocked); this is the backstop — without the tick nothing is sent.
     if (terms.missing) {
       setError(terms.missing);
       return;
@@ -582,7 +582,7 @@ function JoinForm() {
 
             {error && <p className={accountForm.error} role="alert">{error}</p>}
 
-            <button type="submit" className={accountForm.primary} disabled={loading}>
+            <button type="submit" className={accountForm.primary} disabled={loading || terms.blocked}>
               {loading ? 'Creating…' : 'Create account'}
             </button>
           </form>

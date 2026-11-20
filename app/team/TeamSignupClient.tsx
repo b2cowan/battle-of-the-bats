@@ -235,7 +235,7 @@ export default function TeamSignupClient({
       setError(validationError);
       return;
     }
-    // Ask 2A: the button stays on; without the tick the form says (5b) and sends nothing.
+    // The button is off until the tick (terms.blocked); this is the backstop — without the tick nothing is sent.
     if (authMode === 'signup' && terms.missing) {
       setError(terms.missing);
       return;
@@ -436,7 +436,7 @@ export default function TeamSignupClient({
 
               {authMode === 'signup' && <TermsTickRow tick={terms} id="premium-terms" disabled={busy} />}
               {notices}
-              <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>
+              <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated || (authMode === 'signup' && terms.blocked)}>
                 {busyLabel || (authMode === 'signup' ? 'Create account' : 'Sign in')}
               </button>
             </form>

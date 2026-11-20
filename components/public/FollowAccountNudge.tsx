@@ -113,7 +113,7 @@ function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
     if (busy) return;
     setError(null);
     if (password.length < 8) { setError('Use a password of at least 8 characters.'); return; }
-    // Ask 2A: the button stays on; without the tick the sheet says (5b) and sends nothing.
+    // The button is off until the tick (terms.blocked); this is the backstop — without the tick nothing is sent.
     if (terms.missing) { setError(terms.missing); return; }
     setBusy(true);
     try {
@@ -211,7 +211,7 @@ function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
 
             {error && <p className={styles.error} role="alert">{error}</p>}
 
-            <button type="submit" className="btn btn-lime" disabled={busy}>
+            <button type="submit" className="btn btn-lime" disabled={busy || terms.blocked}>
               {busy ? 'Creating…' : 'Create free account'}
             </button>
             <div className={styles.or}>or</div>

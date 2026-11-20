@@ -53,7 +53,7 @@ function AccountOnlyForm() {
       setError('Password must be at least 8 characters.');
       return;
     }
-    // Ask 2A: the button stays on; without the tick the form says (5b) and sends nothing.
+    // The button is off until the tick (terms.blocked); this is the backstop — without the tick nothing is sent.
     if (terms.missing) {
       setError(terms.missing);
       return;
@@ -153,7 +153,7 @@ function AccountOnlyForm() {
 
             {error && <p className={accountForm.error} role="alert">{error}</p>}
 
-            <button type="submit" className={accountForm.primary} disabled={loading || accountExists} id="signup-submit">
+            <button type="submit" className={accountForm.primary} disabled={loading || accountExists || terms.blocked} id="signup-submit">
               {loading ? 'Creating…' : 'Create account'}
             </button>
 

@@ -186,7 +186,7 @@ export default function AcceptInviteForm({
       setErrorMsg('Password must be at least 8 characters.');
       return;
     }
-    // Ask 2A: the button stays on; without the tick the form says (5b), and neither the password nor the join is sent.
+    // The button is off until the tick (terms.blocked); this is the backstop — neither the password nor the join is sent.
     if (terms.missing) {
       setErrorMsg(terms.missing);
       return;
@@ -335,7 +335,7 @@ export default function AcceptInviteForm({
 
             {errorMsg && <p className={accountForm.error} role="alert">{errorMsg}</p>}
 
-            <button type="submit" className={accountForm.primary} disabled={pageState === 'submitting'}>
+            <button type="submit" className={accountForm.primary} disabled={pageState === 'submitting' || terms.blocked}>
               {pageState === 'submitting' ? 'Joining…' : 'Create account and join'}
             </button>
           </form>

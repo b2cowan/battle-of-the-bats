@@ -10,8 +10,8 @@ import styles from './TermsTickRow.module.css';
  * an account. The house checkbox in a 44px label row (18px box, 9.6px gap), the sentence at the host's body size, both links
  * underlined and opening in a new tab. Renders NOTHING while the legal pages are off — dark means invisible.
  *
- * `useTermsTick()` is the form's half: the tick, the fields to send, the check before sending (Ask 2A: the button stays on;
- * pressing without the tick shows (5b) and sends nothing), and the reading of the server's refusal (the box un-ticks when the
+ * `useTermsTick()` is the form's half: the tick, the fields to send, the check before sending (owner 2026-11-20: the main
+ * button is off until the box is ticked — `blocked` — and `missing` stays as the backstop that sends nothing), and the reading of the server's refusal (the box un-ticks when the
  * Terms moved, and the next tick sends the version now current).
  */
 
@@ -56,6 +56,9 @@ export interface TermsTick {
   fields: { acceptTerms?: boolean; termsVersion?: string };
   /** (5b) when the row is on and unticked — the form shows it and sends nothing; null otherwise. */
   missing: string | null;
+  /** The box is on and unticked: the form's main button stays off until it is ticked (owner 2026-11-20, replacing Ask 2A's
+   *  "button stays on"). `missing` stays as the backstop check inside each submit. */
+  blocked: boolean;
   /** The form's words for a server refusal of the box, or null when the refusal was about something else. */
   refusal: (data: unknown) => string | null;
 }
@@ -85,6 +88,7 @@ export function useTermsTick(initialVersion?: string): TermsTick {
     setTicked,
     fields: on ? { acceptTerms: ticked, termsVersion: shown! } : {},
     missing: on && !ticked ? ACCEPTANCE_WORDS.refuseUnticked : null,
+    blocked: on && !ticked,
     refusal,
   };
 }
@@ -106,8 +110,8 @@ export default function TermsTickRow({ tick, id, size = 'body', disabled = false
         checked={tick.ticked}
         onChange={e => tick.setTicked(e.target.checked)}
         disabled={disabled}
-        // aria-required, not `required`: the browser's own "tick this box" bubble would stop the submit before the form could
-        // show §20 (5b) in its error callout (Ask 2A).
+        // aria-required, not `required`: the form's main button is off until the box is ticked (`blocked`), and the browser's own
+        // "tick this box" bubble would stop a submit that gets past it (Enter in a field) before the form could say §20 (5b).
         aria-required="true"
       />
       <span><TermsSentence /></span>

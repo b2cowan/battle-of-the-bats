@@ -73,6 +73,16 @@ function fileFieldIdOf(err: unknown): string | null {
   const id = err && typeof err === 'object' ? (err as { fileFieldId?: unknown }).fileFieldId : null;
   return typeof id === 'string' ? id : null;
 }
+/** A check the form refused (owner 2026-11-20): it belongs under ONE question, named by that question's element id, and is
+ *  shown there in red with the page taken to it — never on the full-page "Registration Failed" card, which is for the
+ *  server's refusals. Carried through the check's `throw`, like the file questions' above. */
+function formFieldError(elementId: string, message: string): Error {
+  return Object.assign(new Error(message), { formFieldId: elementId });
+}
+function formFieldIdOf(err: unknown): string | null {
+  const id = err && typeof err === 'object' ? (err as { formFieldId?: unknown }).formFieldId : null;
+  return typeof id === 'string' ? id : null;
+}
 
 type RegistrationConfirmation = {
   id?: string;
@@ -314,6 +324,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const [customFiles, setCustomFiles] = useState<CustomFileState>({});
   /** F3: the words under a file question whose file was refused (by the picker's early check, or by the server's). */
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+  /** The form's refusal of one question (owner 2026-11-20): shown under that question until anything on the form is edited. */
+  const [fieldErrorRaw, setFieldErrorRaw] = useState<{ id: string; message: string; stamp: string } | null>(null);
   const [signedInCoachEmail, setSignedInCoachEmail] = useState<string | null>(null);
   // True once the coach-session check has settled. Nothing but the loading line renders before it:
   // Step 1 must not flash at a coach who is already signed in and starts at Step 2 (J6-037's
@@ -344,6 +356,17 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const terms = useTermsTick();
   // Bumped by "Not you?": a team load that started before the sign-out is dropped when it lands.
   const sessionGeneration = useRef(0);
+  // What the person has typed or chosen, as one string: a refusal shown under a question goes away the moment any of it
+  // changes (derived on render — no effect needed to clear it).
+  const editStamp = [form.teamName, form.firstName, form.lastName, form.divisionId, form.password, teamChoice, headCoachChoice,
+    String(terms.ticked), JSON.stringify(customAnswers)].join('\u0001');
+  const fieldError = fieldErrorRaw && fieldErrorRaw.stamp === editStamp ? fieldErrorRaw : null;
+  // An edit lets the refusal go for good: typing and then deleting back to the same words must not bring it back.
+  if (fieldErrorRaw && !fieldError) setFieldErrorRaw(null);
+  /** The red line under a question the form refused, or nothing. */
+  const fieldMessage = (id: string) => fieldError?.id === id
+    ? <p id={`${id}-error`} className={styles.inlineError} role="alert">{fieldError.message}</p>
+    : null;
 
   useEffect(() => {
     async function init() {
@@ -583,24 +606,23 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   function validateRegistrationDetails() {
     const selectedGroup = divisions.find(g => g.id === form.divisionId);
     if (!teamPicked || (teamChoice !== DIFFERENT_TEAM && !chosenTeam && signedIn)) {
-      throw new Error('Choose which team you’re registering.');
+      throw formFieldError('coach-team-picker', 'Choose which team you’re registering.');
     }
-    if (!selectedGroup) throw new Error('Select a division before reviewing your registration.');
+    if (!selectedGroup) throw formFieldError('reg-division', 'Select a division.');
     if (!form.teamName.trim()) {
-      throw new Error(chosenTeam ? 'Enter the name your team goes by in this tournament.' : 'Enter a team name.');
+      throw formFieldError('reg-team-name', chosenTeam ? 'Enter the name your team goes by in this tournament.' : 'Enter a team name.');
     }
     // C2: the same question the server asks at Submit, so Review never shows a pick it then refuses.
-    if (!headCoachPick.ok) throw new Error(headCoachPick.error);
+    if (!headCoachPick.ok) throw formFieldError('reg-head-coach', headCoachPick.error);
     // C3: only a new coach gives a name (it sets up their account); a signed-in person is their account.
-    if (!signedIn && (!form.firstName.trim() || !form.lastName.trim())) {
-      throw new Error('Enter your first and last name.');
-    }
+    if (!signedIn && !form.firstName.trim()) throw formFieldError('reg-first-name', 'Enter your first name.');
+    if (!signedIn && !form.lastName.trim()) throw formFieldError('reg-last-name', 'Enter your last name.');
     // A new coach creates their Coaches Portal account inline — a password is required.
     if (!signedIn && form.password.length < 8) {
-      throw new Error('Create a password (at least 8 characters) to set up your Coaches Portal.');
+      throw formFieldError('reg-password', 'Create a password (at least 8 characters) to set up your Coaches Portal.');
     }
-    // Ask 2A: the Review button stays on; without the tick the form says (5b) and nothing is sent.
-    if (!signedIn && terms.missing) throw new Error(terms.missing);
+    // The Review button is off until the tick (terms.blocked); this is the backstop, said under the box.
+    if (!signedIn && terms.missing) throw formFieldError('reg-terms', terms.missing);
 
     const count = stats[selectedGroup.id] || 0;
     const isWaitlist = Boolean(selectedGroup.capacity && count >= selectedGroup.capacity);
@@ -610,7 +632,11 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       if (field.fieldType === 'checkbox') return customAnswers[field.id] !== 'true';
       return !customAnswers[field.id]?.trim();
     });
-    if (missingField) throw new Error(`Please complete: ${missingField.label}`);
+    if (missingField) {
+      // Said under the organizer's own question (the file questions already keep their words in `fileErrors`).
+      if (missingField.fieldType === 'file') throw fileFieldError(missingField.id, 'Choose a file to upload.');
+      throw formFieldError(`reg-custom-${missingField.id}`, missingField.fieldType === 'checkbox' ? 'Tick this box to continue.' : 'Answer this question.');
+    }
     // F3: the files together under the proxy's limit — past it the form arrives cut and the server cannot say which.
     let fileBytes = 0;
     for (const field of registrationFields) {
@@ -634,6 +660,21 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       if (!el) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
       el.value = ''; // a picker that stayed mounted still names the refused file
 
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      el.focus({ preventScroll: true });
+    });
+  }
+
+  /** A refused question: its words go under it, and the person is back on the form at that question — scrolled to it, with
+   *  the cursor in it (a group of cards, which cannot take the cursor, is only scrolled to). */
+  function showFieldError(elementId: string, message: string) {
+    setFieldErrorRaw({ id: elementId, message, stamp: editStamp });
+    setErrorMsg('');
+    setStep('form');
+    requestAnimationFrame(() => {
+      const el = document.getElementById(elementId);
+      if (!el) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
       el.focus({ preventScroll: true });
@@ -671,6 +712,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     } catch (err: unknown) {
       const fileFieldId = fileFieldIdOf(err);
       if (fileFieldId) { showFileError(fileFieldId, (err as Error).message); return; }
+      const formFieldId = formFieldIdOf(err);
+      if (formFieldId) { showFieldError(formFieldId, (err as Error).message); return; }
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStep('error');
     }
@@ -951,6 +994,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     } catch (err: unknown) {
       const fileFieldId = fileFieldIdOf(err);
       if (fileFieldId) { showFileError(fileFieldId, (err as Error).message); return; }
+      const formFieldId = formFieldIdOf(err);
+      if (formFieldId) { showFieldError(formFieldId, (err as Error).message); return; }
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStep('error');
     }
@@ -1128,7 +1173,10 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
         required
         id="reg-team-name"
+        aria-invalid={fieldError?.id === 'reg-team-name' ? true : undefined}
+        aria-describedby={fieldError?.id === 'reg-team-name' ? 'reg-team-name-error' : undefined}
       />
+      {fieldMessage('reg-team-name')}
       {chosenTeam && (
         <p className={styles.fieldHint}>
           {chosenTeam.isPortalTeam
@@ -1163,13 +1211,15 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           value={chosenTeam.headCoaches.some(h => h.id === headCoachChoice) ? headCoachChoice : ''}
           onChange={e => setHeadCoachChoice(e.target.value)}
           required
-          aria-describedby="reg-head-coach-hint"
+          aria-invalid={fieldError?.id === 'reg-head-coach' ? true : undefined}
+          aria-describedby={fieldError?.id === 'reg-head-coach' ? 'reg-head-coach-error reg-head-coach-hint' : 'reg-head-coach-hint'}
         >
           <option value="" disabled>Choose the head coach</option>
           {chosenTeam.headCoaches.map(h => <option key={h.id} value={h.id}>{headCoachLabel(h)}</option>)}
         </select>
         <ChevronDown size={16} className="select-icon" />
       </div>
+      {fieldMessage('reg-head-coach')}
       <p className={styles.fieldHint} id="reg-head-coach-hint">
         Your team has {['two', 'three', 'four'][headCoachCount - 2] ?? headCoachCount} head coaches. The organizer sees the one you choose as your team’s coach, and sends their emails to them.
       </p>
@@ -1182,12 +1232,16 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       <div className="form-group">
         <label className="form-label" htmlFor="reg-first-name">First Name *</label>
         <input className="form-input" placeholder="First name" value={form.firstName}
-          onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} required autoComplete="given-name" id="reg-first-name" />
+          onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} required autoComplete="given-name" id="reg-first-name"
+          aria-invalid={fieldError?.id === 'reg-first-name' ? true : undefined} />
+        {fieldMessage('reg-first-name')}
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="reg-last-name">Last Name *</label>
         <input className="form-input" placeholder="Last name" value={form.lastName}
-          onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} required autoComplete="family-name" id="reg-last-name" />
+          onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} required autoComplete="family-name" id="reg-last-name"
+          aria-invalid={fieldError?.id === 'reg-last-name' ? true : undefined} />
+        {fieldMessage('reg-last-name')}
       </div>
     </div>
   );
@@ -1198,7 +1252,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       <div className="form-group" style={{ marginBottom: '1rem' }}>
         <label className="form-label" htmlFor="reg-division">Division *</label>
         <div className="select-wrapper">
-          <select id="reg-division" className="form-input" value={form.divisionId} onChange={e => setForm(f => ({ ...f, divisionId: e.target.value }))} required>
+          <select id="reg-division" className="form-input" value={form.divisionId} onChange={e => setForm(f => ({ ...f, divisionId: e.target.value }))} required
+            aria-invalid={fieldError?.id === 'reg-division' ? true : undefined}>
             <option value="" disabled>Select a division</option>
             {divisions.map(g => {
               const filled = stats[g.id] || 0;
@@ -1215,6 +1270,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           </select>
           <ChevronDown size={16} className="select-icon" />
         </div>
+        {fieldMessage('reg-division')}
       </div>
 
       {/* A new coach's account is created inline — registering sets up their free portal. Step 1
@@ -1232,6 +1288,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
             autoComplete="new-password"
             id="reg-password"
           />
+          {fieldMessage('reg-password')}
         </div>
       )}
 
@@ -1283,11 +1340,12 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
           {registrationFields.map(field => (
             <div key={field.id} className="form-group">
-              <label className="form-label">
+              <label className="form-label" htmlFor={field.fieldType === 'file' ? `reg-file-${field.id}` : `reg-custom-${field.id}`}>
                 {field.label}{field.required ? ' *' : ''}
               </label>
               {field.fieldType === 'short_text' && (
                 <input
+                  id={`reg-custom-${field.id}`}
                   className="form-input"
                   value={customAnswers[field.id] ?? ''}
                   onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
@@ -1296,6 +1354,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
               )}
               {field.fieldType === 'long_text' && (
                 <textarea
+                  id={`reg-custom-${field.id}`}
                   className="form-textarea"
                   rows={4}
                   value={customAnswers[field.id] ?? ''}
@@ -1306,6 +1365,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
               {field.fieldType === 'dropdown' && (
                 <div className="select-wrapper">
                   <select
+                    id={`reg-custom-${field.id}`}
                     className="form-input"
                     value={customAnswers[field.id] ?? ''}
                     onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
@@ -1322,6 +1382,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
               {field.fieldType === 'checkbox' && (
                 <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', color: 'var(--white-70)', fontSize: '0.9rem' }}>
                   <input
+                    id={`reg-custom-${field.id}`}
                     type="checkbox"
                     checked={customAnswers[field.id] === 'true'}
                     onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.checked ? 'true' : 'false' }))}
@@ -1330,6 +1391,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                   <span>I confirm</span>
                 </label>
               )}
+              {fieldMessage(`reg-custom-${field.id}`)}
               {field.fieldType === 'file' && (
                 <>
                   <input
@@ -1356,12 +1418,18 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       )}
 
       {/* The account's Terms box, after the last field and above the main button (1A) — only a new coach makes one here. */}
-      {!signedIn && terms.on && <div style={{ marginBottom: '1rem' }}><TermsTickRow tick={terms} id="reg-terms" /></div>}
+      {!signedIn && terms.on && (
+        <div style={{ marginBottom: '1rem' }}>
+          <TermsTickRow tick={terms} id="reg-terms" />
+          {fieldMessage('reg-terms')}
+        </div>
+      )}
 
+      {/* A new coach's Review stays off until the Terms box is ticked (owner 2026-11-20): the box is the line above it. */}
       <button
         type="submit"
         className="btn btn-primary"
-        disabled={isClosed || stepBusy}
+        disabled={isClosed || stepBusy || (!signedIn && terms.blocked)}
         style={{ width: '100%', padding: '0.875rem' }}
       >
         Review Registration
@@ -1810,6 +1878,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                           }))}
                           {teamCard({ value: DIFFERENT_TEAM, name: 'A different team', portalChip: false, blocked: null, sub: differentTeamSentence(portalTeams) })}
                         </div>
+                        {fieldMessage('coach-team-picker')}
                       </fieldset>
                     )}
 

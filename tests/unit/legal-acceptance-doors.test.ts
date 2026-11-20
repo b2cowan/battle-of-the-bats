@@ -176,7 +176,9 @@ describe('the forms (B1): the box and the server refusal land together', () => {
     it(`${form} checks the box before sending and sends its fields to ${door}`, () => {
       const src = sourceOf.get(form)!;
       assert.ok(src.includes('useTermsTick('), 'uses the shared tick');
-      assert.ok(src.includes('terms.missing'), 'checks the box before it sends (Ask 2A)');
+      assert.ok(src.includes('terms.missing'), 'checks the box before it sends (the backstop behind the off button)');
+      // Owner 2026-11-20 (replacing Ask 2A's "button stays on"): the main button is off until the box is ticked.
+      assert.ok(src.includes('terms.blocked') || /!terms\.ticked/.test(src), 'the main button is off until the box is ticked');
       assert.ok(/terms\.fields/.test(src) || /termsVersion/.test(src), 'sends the tick and the version it showed');
       assert.ok(src.includes('terms.refusal(') || src.includes('termsRefusal('), 'reads the server refusal');
       assert.ok(src.includes(door), `posts to ${door}`);
