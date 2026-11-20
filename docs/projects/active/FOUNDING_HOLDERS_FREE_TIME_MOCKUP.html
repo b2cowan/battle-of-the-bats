@@ -1,0 +1,412 @@
+<title>Founding holders on free time</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs → View switch → one framed billing-page specimen beside its numbered notes. */
+:root {
+  --doc-bg: #eef0f4; --doc-fg: #1b2030; --doc-mute: #5b6375; --doc-line: #d5d9e2; --doc-accent: #1e3a8a;
+  --frame-bg: #f6f7fb; --card: #ffffff; --card-line: #dfe3ec; --ink: #121527; --ink-2: #4a5268; --ink-3: #7a8297;
+  --olive-bg: #f1f5e4; --olive-line: #c9d79a; --olive-ink: #4b5a1c;
+  --amber-bg: #fdf3e2; --amber-line: #efc77d; --amber-ink: #7a4d07;
+  --plain-bg: #f3f4f7; --plain-line: #d9dce4;
+  --chip-green: #e3f4e8; --chip-green-ink: #1f6b37;
+  --lime: #d9f99d; --lime-ink: #1a2a05;
+  --new: #1f6b37; --changed: #1e3a8a; --gone: #a12828; --same: #7a8297;
+  --mark: #1e3a8a; --mark-ink: #ffffff;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #0d1017; --doc-fg: #e6e9f2; --doc-mute: #9aa2b6; --doc-line: #262c3a; --doc-accent: #9db4ff;
+  --frame-bg: #12161f; --card: #181d29; --card-line: #2a3142; --ink: #eef1f8; --ink-2: #b4bbcc; --ink-3: #8a92a6;
+  --olive-bg: #1d2412; --olive-line: #3f4d1f; --olive-ink: #cfe19a;
+  --amber-bg: #2a1f0c; --amber-line: #6a4b14; --amber-ink: #f3cd85;
+  --plain-bg: #1b2030; --plain-line: #2d3446;
+  --chip-green: #143221; --chip-green-ink: #8fdcaa;
+  --lime: #d9f99d; --lime-ink: #1a2a05;
+  --new: #8fdcaa; --changed: #9db4ff; --gone: #f19a9a; --same: #8a92a6;
+  --mark: #9db4ff; --mark-ink: #0d1017; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --doc-bg: #0d1017; --doc-fg: #e6e9f2; --doc-mute: #9aa2b6; --doc-line: #262c3a; --doc-accent: #9db4ff;
+  --frame-bg: #12161f; --card: #181d29; --card-line: #2a3142; --ink: #eef1f8; --ink-2: #b4bbcc; --ink-3: #8a92a6;
+  --olive-bg: #1d2412; --olive-line: #3f4d1f; --olive-ink: #cfe19a;
+  --amber-bg: #2a1f0c; --amber-line: #6a4b14; --amber-ink: #f3cd85;
+  --plain-bg: #1b2030; --plain-line: #2d3446;
+  --chip-green: #143221; --chip-green-ink: #8fdcaa;
+  --lime: #d9f99d; --lime-ink: #1a2a05;
+  --new: #8fdcaa; --changed: #9db4ff; --gone: #f19a9a; --same: #8a92a6;
+  --mark: #9db4ff; --mark-ink: #0d1017; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-fg); font-family: var(--font-ui); line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-bg); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+header.top h1 { font-family: var(--font-head); font-size: 1.5rem; margin: 0 0 4px; text-wrap: balance; }
+header.top p { margin: 0; color: var(--doc-mute); max-width: 75ch; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-bg); display: flex; flex-wrap: wrap; gap: 6px; padding-block: 12px 10px; border-bottom: 1px solid var(--doc-line); margin-top: 14px; }
+.tabs button { font: 600 0.85rem var(--font-ui); color: var(--doc-mute); background: transparent; border: 1px solid var(--doc-line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--doc-fg); background: var(--card); border-color: var(--doc-accent); }
+.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; color: var(--doc-mute); font-size: 0.85rem; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--doc-line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 0.8rem var(--font-ui); border: 0; background: transparent; color: var(--doc-mute); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--doc-accent); color: var(--doc-bg); }
+section.panel { margin-top: 18px; }
+section.panel > h2 { font-family: var(--font-head); font-size: 1.2rem; margin: 0 0 4px; }
+section.panel > p.lead { margin: 0 0 14px; color: var(--doc-mute); max-width: 80ch; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+@media (max-width: 960px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.chrome { font: 600 0.7rem var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-mute); margin-bottom: 6px; }
+.frame { background: var(--frame-bg); border: 1px solid var(--doc-line); border-radius: 10px; padding: 22px; overflow-x: auto; }
+.page { min-width: 0; display: grid; gap: 16px; color: var(--ink); }
+.page h1 { font-family: var(--font-head); font-size: 1.45rem; margin: 0; }
+.card { background: var(--card); border: 1px solid var(--card-line); border-radius: 12px; padding: 18px; position: relative; }
+.plan { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 640px) { .plan { grid-template-columns: minmax(0, 1fr); } }
+.eyebrow { font: 600 0.7rem var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); display: flex; gap: 8px; align-items: center; }
+.chip { font: 600 0.68rem var(--font-data); letter-spacing: 0.04em; padding: 2px 8px; border-radius: 4px; background: var(--chip-green); color: var(--chip-green-ink); text-transform: none; }
+.chip.olive { background: var(--olive-bg); color: var(--olive-ink); border: 1px solid var(--olive-line); }
+.card h2, .card h3 { font-family: var(--font-head); margin: 6px 0 2px; }
+.card h2 { font-size: 1.35rem; }
+.card h3 { font-size: 1.05rem; }
+.price { font-weight: 650; font-size: 1.02rem; }
+.hint { color: var(--ink-2); font-size: 0.88rem; margin: 4px 0 0; }
+.use { display: grid; gap: 10px; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.meter { height: 6px; border-radius: 3px; background: var(--plain-bg); border: 1px solid var(--plain-line); overflow: hidden; margin-top: 4px; }
+.meter i { display: block; height: 100%; background: var(--ink-2); }
+.band { border-radius: 12px; padding: 14px 16px 14px 56px; border: 1px solid; position: relative; }
+.band .ic { position: absolute; left: 16px; top: 16px; width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; background: var(--card); border: 1px solid currentColor; font-size: 0.85rem; }
+.band.olive .ic { color: var(--olive-ink); } .band.amber .ic { color: var(--amber-ink); } .band.plain .ic { color: var(--ink-2); }
+.band.olive { background: var(--olive-bg); border-color: var(--olive-line); }
+.band.olive .eyebrow, .band.olive h3 { color: var(--olive-ink); }
+.band.amber { background: var(--amber-bg); border-color: var(--amber-line); }
+.band.amber .eyebrow, .band.amber h3 { color: var(--amber-ink); }
+.band.plain { background: var(--plain-bg); border-color: var(--plain-line); }
+.band p { margin: 4px 0 0; font-size: 0.9rem; color: var(--ink-2); max-width: 72ch; }
+table.plans { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+table.plans th { text-align: left; font: 600 0.68rem var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding: 6px 8px; border-bottom: 1px solid var(--card-line); }
+table.plans td { padding: 9px 8px; border-bottom: 1px solid var(--card-line); vertical-align: middle; }
+.btn { font: 600 0.8rem var(--font-ui); border-radius: 6px; padding: 6px 10px; border: 1px solid var(--card-line); background: var(--card); color: var(--ink); white-space: nowrap; }
+.btn.lime { background: var(--lime); color: var(--lime-ink); border-color: transparent; }
+.link { color: var(--doc-accent); text-decoration: underline; font-size: 0.82rem; }
+ul.inc { margin: 6px 0 0; padding-left: 18px; font-size: 0.88rem; color: var(--ink-2); display: grid; gap: 2px; }
+.shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+@media (max-width: 640px) { .shelf { grid-template-columns: minmax(0, 1fr); } }
+.shelf div { border: 1px solid var(--card-line); border-radius: 8px; padding: 10px; font-size: 0.82rem; color: var(--ink-2); }
+.shelf b { display: block; color: var(--ink); }
+.small { font-size: 0.8rem; color: var(--ink-3); }
+.tag { position: absolute; top: -9px; right: 12px; font: 700 0.62rem var(--font-data); letter-spacing: 0.08em; padding: 2px 7px; border-radius: 4px; background: var(--card); border: 1px solid currentColor; }
+.tag.new { color: var(--new); } .tag.changed { color: var(--changed); } .tag.gone { color: var(--gone); } .tag.same { color: var(--same); }
+.mk { position: absolute; top: -10px; left: -10px; width: 22px; height: 22px; border-radius: 50%; background: var(--mark); color: var(--mark-ink); font: 700 0.72rem var(--font-ui); border: 0; cursor: pointer; display: grid; place-items: center; }
+.gonebox { border: 1px dashed var(--gone); border-radius: 12px; padding: 12px 14px; color: var(--doc-mute); font-size: 0.85rem; position: relative; }
+.notes { display: grid; gap: 10px; }
+.note { background: var(--card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; font-size: 0.9rem; scroll-margin-top: 80px; }
+.note.hl { border-color: var(--doc-accent); box-shadow: 0 0 0 2px var(--doc-accent); }
+.note b.n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--mark); color: var(--mark-ink); font-size: 0.7rem; margin-right: 6px; }
+.note p { margin: 4px 0 0; color: var(--doc-mute); }
+body.differs .same-blk { opacity: 0.28; }
+body.differs .same-blk .mk { display: none; }
+.rows { display: grid; gap: 14px; }
+.rows .card { color: var(--doc-fg); }
+.rows table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.rows th, .rows td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+.rows th { font: 600 0.68rem var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-mute); }
+.rows code { font-family: var(--font-data); font-size: 0.8rem; }
+.tablewrap { overflow-x: auto; }
+.ask { background: var(--card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; max-width: 90ch; }
+.ask h3 { font-family: var(--font-head); margin: 0 0 6px; font-size: 1.02rem; }
+.ask p { margin: 6px 0 0; color: var(--doc-mute); }
+.ask .rec { color: var(--doc-fg); }
+.asks { display: grid; gap: 12px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Founding holders on free time</h1>
+    <p>Stage 2a of the Free League and Founding removal. One holder drawn: the club on the <b>free Tournament plan</b>, whose page changes most. The Tournament Plus club's "after" is the same page; the coach's is the Coaches Portal billing page with the same free-time band. Words are the code's own (dev, 2026-11-19); the club name never appears on this page.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t-today" aria-selected="true" data-p="today">1 · Today</button>
+    <button role="tab" id="t-after" aria-selected="false" data-p="after">2 · After the move</button>
+    <button role="tab" id="t-end" aria-selected="false" data-p="end">3 · When it ends</button>
+    <button role="tab" id="t-rows" aria-selected="false" data-p="rows">4 · Rows per holder</button>
+    <button role="tab" id="t-asks" aria-selected="false" data-p="asks">5 · Asks</button>
+  </nav>
+
+  <div class="viewrow" id="viewrow">
+    <span>View</span>
+    <div class="seg" role="group" aria-label="View">
+      <button id="v-all" aria-pressed="true">Everything</button>
+      <button id="v-diff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+
+  <!-- 1 TODAY -->
+  <section class="panel" id="p-today" role="tabpanel" aria-labelledby="t-today">
+    <h2>Today: a Founding holder on the free Tournament plan</h2>
+    <p class="lead">What this club reads on Plan &amp; billing now. It holds the free plan; the Founding promise to it was "Tournament Plus at $0 if you upgrade before December 31, 2026", which the page never states.</p>
+    <div class="split">
+      <div>
+        <div class="chrome">Tournament · desktop — Plan &amp; billing · before</div>
+        <div class="frame"><div class="page">
+          <h1>Plan &amp; billing</h1>
+          <div class="card plan">
+            <button class="mk" data-n="t1" aria-label="Note 1">1</button>
+            <span class="tag changed">CHANGES</span>
+            <div>
+              <div class="eyebrow">Your plan <span class="chip">Active</span></div>
+              <h2>Tournament</h2>
+              <div class="price">Free through September 30, 2027</div>
+              <p class="hint">Normally Free a year.</p>
+            </div>
+            <div class="use">
+              <div class="eyebrow">What's in use</div>
+              <div>1 of 1 tournament slot<div class="meter"><i style="width:100%"></i></div></div>
+              <div>2 of 3 staff seats<div class="meter"><i style="width:66%"></i></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <button class="mk" data-n="t2" aria-label="Note 2">2</button>
+            <span class="tag gone">GOES</span>
+            <div class="eyebrow">Founding Season</div>
+            <h3>Tournament is free through September 30, 2027.</h3>
+            <p class="hint">You're running Tournament free through September 30, 2027 as a founding organization — normally Free/month. No credit card. In September 2027 you'll choose a plan for your 2028 season.</p>
+            <p class="hint">Normally Free a year.</p>
+            <p class="hint">No billing action needed — your Founding Season runs free through September 30, 2027. We'll remind you during the summer when it's time to choose a plan for 2028.</p>
+          </div>
+          <div class="card">
+            <button class="mk" data-n="t3" aria-label="Note 3">3</button>
+            <span class="tag gone">HIDDEN DURING FREE TIME</span>
+            <h3>Change plan</h3>
+            <div class="tablewrap"><table class="plans">
+              <thead><tr><th>Plan</th><th>Holds</th><th>Monthly</th><th>Yearly</th><th><span class="small">Your choice</span></th></tr></thead>
+              <tbody>
+                <tr><td>Tournament</td><td>1 tournament at a time</td><td>Free</td><td>Free</td><td><span class="chip">Your plan</span></td></tr>
+                <tr><td>Tournament Plus<br><span class="link">See what Tournament Plus includes</span></td><td>Unlimited</td><td>$39</td><td>$390</td><td><span class="btn lime">Upgrade to Tournament Plus</span></td></tr>
+              </tbody>
+            </table></div>
+            <p class="small">Prices are plus applicable taxes.</p>
+          </div>
+          <div class="card">
+            <button class="mk" data-n="t4" aria-label="Note 4">4</button>
+            <span class="tag changed">CHANGES</span>
+            <h3>What's included</h3>
+            <ul class="inc"><li>You add every team — each coach claims it from an email invitation</li><li>Manual tournament scheduling</li><li>Basic standings and score entry</li><li>A public event site with live scores families can follow</li><li class="small">… 4 more</li></ul>
+          </div>
+          <div class="card same-blk">
+            <span class="tag same">UNCHANGED</span>
+            <h3>Managing more than tournaments?</h3>
+            <div class="shelf"><div><b>Premium Coaches Portal</b>From $29 CAD / month</div><div><b>League Plus</b>From $89 CAD / month</div><div><b>Club</b>From $219 CAD / month</div></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-t1"><b class="n">1</b><b>The free Tournament plan, labelled "Free through September 30, 2027".</b><p>"Normally Free a year" is a wording defect in today's Founding text for a free-plan holder. It goes with the move.</p></div>
+        <div class="note" id="note-t2"><b class="n">2</b><b>The Founding card.</b><p>It promises "We'll remind you during the summer when it's time to choose a plan for 2028." After the move nothing on the page says that, and club free time sends no reminder. See Asks, item A.</p></div>
+        <div class="note" id="note-t3"><b class="n">3</b><b>Change plan, with a hidden $0.</b><p>Pressing Upgrade today gives Tournament Plus at $0 (until December 31, 2026), though the window still shows $39 / $390. The move gives it to them now, without the click.</p></div>
+        <div class="note" id="note-t4"><b class="n">4</b><b>What's included lists the free Tournament plan.</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 AFTER -->
+  <section class="panel" id="p-after" role="tabpanel" aria-labelledby="t-after" hidden>
+    <h2>After the move: the same club on Tournament Plus free time</h2>
+    <p class="lead">Exactly what any club given Tournament Plus free time by staff reads. Nothing says Founding. Shown more than 14 days before the end, which is the whole of the next ten months.</p>
+    <div class="split">
+      <div>
+        <div class="chrome">Tournament · desktop — Plan &amp; billing · after</div>
+        <div class="frame"><div class="page">
+          <h1>Plan &amp; billing</h1>
+          <div class="card plan">
+            <button class="mk" data-n="a1" aria-label="Note 1">1</button>
+            <span class="tag changed">CHANGED</span>
+            <div>
+              <div class="eyebrow">Your plan <span class="chip">Free time</span></div>
+              <h2>Tournament Plus</h2>
+              <div class="price">Free through September 30, 2027</div>
+              <p class="hint">from FieldLogicHQ · then the free Tournament plan, automatically</p>
+            </div>
+            <div class="use">
+              <div class="eyebrow">What's in use</div>
+              <div>1 tournament slot · unlimited</div>
+              <div>2 staff seats · unlimited</div>
+            </div>
+          </div>
+          <div class="band olive">
+            <button class="mk" data-n="a2" aria-label="Note 2">2</button>
+            <span class="tag new">NEW</span>
+            <span class="ic" aria-hidden="true">&#127873;&#xFE0E;</span>
+            <div class="eyebrow">Free time</div>
+            <h3>Tournament Plus is free through September 30, 2027.</h3>
+            <p>FieldLogicHQ gave your organization Tournament Plus for a while. On October 1 it goes back to the free Tournament plan automatically. Nothing is charged, and nothing you made is deleted.</p>
+          </div>
+          <p class="hint" style="margin:0">No billing action needed: your free time runs through September 30, 2027.</p>
+          <div class="gonebox">
+            <button class="mk" data-n="a3" aria-label="Note 3">3</button>
+            The Founding card and the Change plan table are not on this page while free time runs.
+          </div>
+          <div class="card">
+            <button class="mk" data-n="a4" aria-label="Note 4">4</button>
+            <span class="tag changed">CHANGED</span>
+            <h3>What's included</h3>
+            <ul class="inc"><li>Everything in Tournament</li><li>Public registration — the review queue, waitlist, questions, file uploads, and exports</li><li>Fees and payment tracking, and check-in</li><li>Unlimited tournament slots</li><li class="small">… 4 more</li></ul>
+          </div>
+          <div class="card same-blk">
+            <span class="tag same">UNCHANGED</span>
+            <h3>Managing more than tournaments?</h3>
+            <div class="shelf"><div><b>Premium Coaches Portal</b>From $29 CAD / month</div><div><b>League Plus</b>From $89 CAD / month</div><div><b>Club</b>From $219 CAD / month</div></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-a1"><b class="n">1</b><b>The plan card names Tournament Plus, with a "Free time" chip.</b><p>The end date and what follows it are on the card. No Payment method, Billing address or Cancel: a free-time account has nothing to manage.</p></div>
+        <div class="note" id="note-a2"><b class="n">2</b><b>The free-time band.</b><p>"For a while" is the shared free-time wording. For a ten-month promise it is accurate but casual; /legal reviews it before hand-off. "On October 1" drops the year because the title carries it.</p></div>
+        <div class="note" id="note-a3"><b class="n">3</b><b>No plan changes during free time.</b><p>Same as every free-time club today. In the last 14 days the band says "To keep Tournament Plus, contact us."</p></div>
+        <div class="note" id="note-a4"><b class="n">4</b><b>What's included now lists Tournament Plus.</b></div>
+        <div class="note"><b>The Tournament Plus holder</b><p>Reads this same page. Today it sees a Founding card ("Tournament Plus is free through September 30, 2027 … as a founding organization") and no Change plan.</p></div>
+        <div class="note"><b>The coach</b><p>Reads the Coaches Portal billing page: "Premium Coaches Portal", free through September 30, 2027, the same band. Unlike a club, the coach can still buy Premium during free time.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 END -->
+  <section class="panel" id="p-end" role="tabpanel" aria-labelledby="t-end" hidden>
+    <h2>When it ends: the last two weeks, and October 1, 2027</h2>
+    <p class="lead">Nothing runs on the night. The page reads the date, so on October 1 (Eastern) the club is on the free Tournament plan again. What it was told on the way: the page only. No email goes to a club. The coach gets two emails.</p>
+    <div class="split">
+      <div>
+        <div class="chrome">From September 17, 2027 — the band only</div>
+        <div class="frame"><div class="page">
+          <div class="band amber">
+            <button class="mk" data-n="e1" aria-label="Note 1">1</button>
+            <span class="ic" aria-hidden="true">&#9873;</span>
+            <div class="eyebrow">Free time · 13 days left</div>
+            <h3>Your free time runs through September 30, 2027.</h3>
+            <p>On October 1 you go back to the free Tournament plan automatically. To keep Tournament Plus, contact us.</p>
+          </div>
+        </div></div>
+        <div class="chrome" style="margin-top:16px">Tournament · desktop — Plan &amp; billing · October 1, 2027</div>
+        <div class="frame"><div class="page">
+          <h1>Plan &amp; billing</h1>
+          <div class="card plan">
+            <button class="mk" data-n="e2" aria-label="Note 2">2</button>
+            <div>
+              <div class="eyebrow">Your plan <span class="chip">Active</span></div>
+              <h2>Tournament</h2>
+              <div class="price">Free</div>
+            </div>
+            <div class="use">
+              <div class="eyebrow">What's in use</div>
+              <div>1 of 1 tournament slot<div class="meter"><i style="width:100%"></i></div></div>
+              <div>2 of 3 staff seats<div class="meter"><i style="width:66%"></i></div></div>
+            </div>
+          </div>
+          <div class="band plain">
+            <button class="mk" data-n="e3" aria-label="Note 3">3</button>
+            <span class="ic" aria-hidden="true">&#10003;</span>
+            <div class="eyebrow">Free time ended</div>
+            <h3>Your free time on Tournament Plus ran through September 30, 2027.</h3>
+            <p>You're on the free Tournament plan again. Everything you made is kept. The tools that come only with Tournament Plus are closed until you choose it.</p>
+          </div>
+          <div class="card">
+            <h3>Change plan</h3>
+            <div class="tablewrap"><table class="plans">
+              <thead><tr><th>Plan</th><th>Holds</th><th>Monthly</th><th>Yearly</th><th><span class="small">Your choice</span></th></tr></thead>
+              <tbody>
+                <tr><td>Tournament</td><td>1 tournament at a time</td><td>Free</td><td>Free</td><td><span class="chip">Your plan</span></td></tr>
+                <tr><td>Tournament Plus</td><td>Unlimited</td><td>$39</td><td>$390</td><td><span class="btn lime">Upgrade to Tournament Plus</span></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="notes">
+        <div class="note" id="note-e1"><b class="n">1</b><b>Amber for the last 14 days.</b><p>Seen only by someone who opens Plan &amp; billing. The coach's version also arrives as an email at 14 days and at 3 days.</p></div>
+        <div class="note" id="note-e2"><b class="n">2</b><b>Back on the free plan, priced as any club.</b><p>Upgrade is $39 / $390 again. A club with more tournaments than the free plan holds keeps them all; it cannot start another until it is back within the plan.</p></div>
+        <div class="note" id="note-e3"><b class="n">3</b><b>"Free time ended" shows for 30 days</b> (through October 30, 2027).</div>
+        <div class="note"><b>The coach on October 1</b><p>Sees the "Your free time has ended" screen in the Coaches Portal and is back on the free team. Nothing is deleted or archived.</p></div>
+        <div class="note"><b>The Tournament Plus club on October 1</b><p>Drops to the free Tournament plan too: its stored plan comes down to Tournament in the move, so the free time is what lifts it until then.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 ROWS -->
+  <section class="panel" id="p-rows" role="tabpanel" aria-labelledby="t-rows" hidden>
+    <h2>Rows per holder</h2>
+    <p class="lead">One migration, all or nothing, re-runnable. It picks holders by the Founding mark only (an unrevoked comp row at a Founding date), never by name. The end instant is the one free time already uses for "last day September 30": October 1, 2027 at midnight Eastern. That is the instant Founding stored, so the date does not move.</p>
+    <div class="rows">
+      <div class="card"><h3>Both club holders (Tournament Plus club, free Tournament club)</h3>
+        <div class="tablewrap"><table>
+          <tr><th>Where</th><th>Today</th><th>After</th></tr>
+          <tr><td>The club's own plan</td><td><code>plan_id</code> tournament_plus (or tournament), active, period end Oct 1 2027 (or none)</td><td><code>plan_id</code> tournament, tournament limit 1, active, no period end</td></tr>
+          <tr><td>Free-time grant (new)</td><td>none</td><td><code>org_overrides</code> plan_tier → Tournament Plus, from now to Oct 1 2027 04:00 UTC</td></tr>
+          <tr><td>Staff record (new)</td><td>none</td><td>audit row "gave free time", reason naming the 2026-11-19 ruling — the same row the staff screen writes</td></tr>
+          <tr><td>Founding mark</td><td>comp row, live</td><td>same row, revoked (not deleted), with an audit row so the Story says why</td></tr>
+        </table></div>
+      </div>
+      <div class="card"><h3>The coach holder</h3>
+        <div class="tablewrap"><table>
+          <tr><th>Where</th><th>Today</th><th>After</th></tr>
+          <tr><td>The portal account</td><td>status active, period end Jan 1 2027 on production (a leftover from before the date was extended)</td><td>status cancelled, no period end — free time holds it open, as for every free-time coach</td></tr>
+          <tr><td>Free-time grant (new)</td><td>none</td><td><code>org_overrides</code> billing status active, from now to Oct 1 2027 04:00 UTC</td></tr>
+          <tr><td>Workspace</td><td>staff-billed, active, not marked free time</td><td>staff-billed, cancelled, marked "free time given" today, reminder stamps empty</td></tr>
+          <tr><td>Team access</td><td>"team plan" source, no end (production) / staff source, no end (dev)</td><td>staff source, active, ends Oct 1 2027 04:00 UTC</td></tr>
+          <tr><td>Staff record + Founding mark</td><td>comp row, live</td><td>audit row "gave portal free time"; comp row revoked with its audit row</td></tr>
+        </table></div>
+      </div>
+      <div class="card"><h3>Counts the migration prints, and refuses on</h3>
+        <p class="hint" style="color:var(--doc-mute)">Before: holders by kind. After: holders left (must be 0), free-time grants added, comp rows revoked. It stops and changes nothing if a holder pays through Stripe, already has a running plan grant, is on a plan free time cannot carry (League), or is a coach who already has a free-time portal. Production today: 3 holders, none of those conditions. Dev: 5 holders, none either.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 ASKS -->
+  <section class="panel" id="p-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+    <h2>Asks</h2>
+    <div class="asks">
+      <div class="ask"><h3>A · The two clubs get no warning email before September 30, 2027</h3>
+        <p>Club free time ends on the page only. Today's Founding card promises "We'll remind you during the summer". Founding's own summer emails and card window go in Stage 2b, and nothing replaces them. The coach is covered: free time emails a coach at 14 and 3 days.</p>
+        <p class="rec"><b>Recommend:</b> give club free time the same 14-and-3-day reminder the coach already has, as its own small item on the board, built any time before September 2027. It helps every club given free time, not only these two. Not part of 2a: the move does not need it, and the date is ten months away.</p></div>
+      <div class="ask"><h3>B · Tell the holders?</h3>
+        <p>Nothing they hold shrinks and the date is the same; the free-plan club gains Tournament Plus today. Their page swaps the Founding card for the free-time band without notice.</p>
+        <p class="rec"><b>Recommend:</b> no email. /legal checks this before hand-off and I will bring back anything it finds.</p></div>
+      <div class="ask"><h3>C · The coach's free time cannot be extended from the staff screens later</h3>
+        <p>Coach free time limits count from the first give (6 months for a super admin), and the first give is the move's own date, so the end is already past that limit. Ending it early still works. Extending it later would take a script.</p>
+        <p class="rec"><b>Recommend:</b> accept. Note it on the plan.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.tabs button');
+  var viewrow = document.getElementById('viewrow');
+  function show(p) {
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.p === p)); });
+    document.querySelectorAll('section.panel').forEach(function (s) { s.hidden = s.id !== 'p-' + p; });
+    viewrow.hidden = !(p === 'today' || p === 'after' || p === 'end');
+    try { localStorage.setItem('fh-tab', p); } catch (e) {}
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.p); }); });
+  var start = 'today';
+  try { start = localStorage.getItem('fh-tab') || 'today'; } catch (e) {}
+  show(start);
+  var all = document.getElementById('v-all'), diff = document.getElementById('v-diff');
+  function view(d) { document.body.classList.toggle('differs', d); all.setAttribute('aria-pressed', String(!d)); diff.setAttribute('aria-pressed', String(d)); }
+  all.addEventListener('click', function () { view(false); });
+  diff.addEventListener('click', function () { view(true); });
+  document.querySelectorAll('.mk').forEach(function (m) {
+    m.addEventListener('click', function () {
+      var n = document.getElementById('note-' + m.dataset.n);
+      if (!n) return;
+      document.querySelectorAll('.note.hl').forEach(function (x) { x.classList.remove('hl'); });
+      n.classList.add('hl');
+      n.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+})();
+</script>

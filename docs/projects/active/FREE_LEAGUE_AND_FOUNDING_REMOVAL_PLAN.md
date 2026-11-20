@@ -139,6 +139,51 @@ an account that signed up on the old free League door will meet the paid plan st
   production as counts only).
 - Whether to mark the holders' comp rows revoked after the move: yes (revoked, not deleted), once free time carries them.
 
+**Build record (2026-11-19).** Mockup `FOUNDING_HOLDERS_FREE_TIME_MOCKUP.html` (Artifact `claude.ai/artifact/3qxEXPjuuqJrx1y9WLHJPZ`,
+`/design` reviewed). **Owner rulings this session:** go as planned; (A) club free time gets the coach's 14- and 3-day ending
+reminders, as its own board item; (B) no email to the holders; (C) the coach's free time cannot be extended from the staff
+screens (its limit counts from the move's date) — accepted, and overtaken by the next ruling; **a super admin can give free time
+with no end date on BOTH clubs and coaches** (today only clubs), built as its own small item. Both items: board line
+`free-time-same-rules`, plan `FREE_TIME_SAME_RULES_PLAN.md`.
+
+- **What the model needed (argued from the code).** A club's free time is a `plan_tier` grant folded over its OWN stored plan, and it
+  lifts only a plan above the own one — so a Tournament Plus holder's stored plan comes down to `tournament` and the grant lifts it,
+  which is also what makes it end. The staff give cannot do the coach (it refuses Founding portals, and no role reaches past
+  2027-05-19); the coach is rewritten into the shape `givePortalFreeTime` writes. The date needed no change: free time's end for
+  "last day September 30" is 2027-10-01 04:00 UTC, the instant Founding stored.
+- **Migration 510** (`510_founding_holders_move_to_free_time.sql`, data only): one DO block, holders chosen by the unrevoked comp
+  mark at a `FOUNDING_SEASON_COMP_EXPIRIES` instant, refusals before any write, audit rows matching the staff writes (the coach's
+  with mode `moved` so the Story does not say the portal was made from a free team), marks revoked with a `revoke_override` row.
+  Every holder gets September 30, 2027, whichever instant its mark carried (dev's one legacy-dated fixture included; production has none).
+- **Dev rehearsal:** 5 holders (three Tournament Plus clubs, one free Tournament club, one coach) → 0; 4 club grants, 1 coach
+  grant, 5 marks revoked; a second run returned the same counts and changed nothing. Rows read back: each club `tournament`/limit 1/
+  active/no period end + a running Tournament Plus grant; the coach stored cancelled, workspace marked free time, entitlement
+  `platform_override` ending 2027-10-01 04:00 UTC.
+- **End path proven** (`.probe/founding-move-endpath.mts`, the product's read rules over those rows at five clocks): until 11 p.m.
+  Eastern on September 30, 2027 the club reads Tournament Plus (unlimited) and the coach's portal is open; from the last 14 days the
+  band turns amber ("Free time · 10 days left"); at 12:30 a.m. Eastern on October 1 the club reads free Tournament (1 tournament,
+  "Free time ended" band) and the coach's portal is closed behind "Your free time has ended"; both bands are gone by November 5,
+  2027. The coach also gets the 14- and 3-day emails (the daily job selects `free_time_given_at` + `platform_override`); a club is
+  told on the page only until the reminder item is built. The coach holder has a free team to return to (production and dev: 1 of 1).
+- **Production:** owner-run, `MANUAL_PROD_STEPS.json` entry 510 (pending), with the counts to expect (3 holders → 0; 2 club
+  grants, 1 coach grant, 3 marks revoked) and three verify queries. Any time before the Stage 2b code reaches production; first
+  confirm `ENTITLEMENT_GRANTS_ENABLED=true` in Amplify. Found on the way: production's coach held `current_period_end`
+  2027-01-01 (left from before the date was extended); the move clears it.
+- **Reviews.** `/accounting`: no change — monthly revenue unchanged (the clubs' stored plan is the $0 Tournament plan; free time never
+  feeds it), "comped out" 3 → 0, the coach leaves the customer counts (the existing free-time portal rule), renewals 3 → 3 on the same
+  day, no book, invoice or GST/HST effect. `/legal` (row in `LEGAL_INDEX.md`): no must-fix; the promise is kept; no notice owed and none
+  sent; one condition — the "we'll remind you during the summer" lines lose their mechanism, so club reminders should be built before
+  or with 2b (owner call). Production counts for `/legal`: 0 holders with a card on file or a next-season choice. `/review` (high tier):
+  no confirmed defect — every gating reader goes through the free-time door (the plan-reader guard's list), the coach's portal stays
+  open through the folded status + the moved entitlement, no daily job acts on either shape, the audit rows match what the Story and
+  the free-time list read, every Founding reader skips a revoked mark. Taken: its hardening point — the migration now also refuses a
+  holder that is not active or is suspended, or a coach whose portal is not an independent staff-billed one free of Stripe ids
+  (production 0 in any of those states, counts only); proved on dev by re-running (no change) and by a rolled-back run that
+  un-revoked one mark and was refused. Accepted as a property of all free time: a failed read of the grants leaves a club on its own
+  plan for that one request (fails open toward the free plan). Cosmetic: the giver reads "system". Checks: dictionary, spelling, production-steps gate pass; `check:migrations` shows only other sessions' pending prod
+  changes; `verify:changed` 30 of 17,894 tests fail, none from this stage (all in files committed before it; same count as Stage 1);
+  typecheck 2 errors in one committed test file (`layout-run-journal.test.ts`, 2026-11-18), as Stage 1 recorded.
+
 ## 5. Stage 2b — remove the Founding code
 
 Census (2026-11-19; re-grep `Founding|FOUNDING_SEASON|founding_|foundingSeason|showFoundingSeason|comp_period|next_season|NEXT_SEASON_CHOICE|start_door`):
@@ -182,7 +227,11 @@ Census (2026-11-19; re-grep `Founding|FOUNDING_SEASON|founding_|foundingSeason|s
   `generate-campaign-reseed-migration.mjs`, `set-team-plan-gating.mjs`. The `plan-billing-profile` article fingerprint
   will need re-baselining (state it in the commit).
 - **Records:** Facts doc Promotions (collapse) and the Tournament Plus / Premium rows' Founding notes; `PRICING_PAGE_COPY.md`
-  banner + Founding canon (mark history); `BRAND_FOUNDATIONS.md` (35 mentions); memory notes on Founding.
+  banner + Founding canon (mark history); `BRAND_FOUNDATIONS.md` (35 mentions); memory notes on Founding;
+  `docs/agents/legal/PRICE_CHANGE_NOTICE_PROCEDURE.md` lines 16, 22 ("Founding comps" → free time, still excluded from notices);
+  `ON_SALE_PAGES_S1_REVIEW.md` item 4 closes; the stale "Founding Season" comment on the comped-out figure in `platform-metrics.ts`
+  (the figure itself is dead once no `comp_period` row is live — remove it or rename it, `/accounting` 2026-11-19).
+- **Already done by 2a (do not redo):** no holder carries a live comp mark, so every Founding read path finds nothing for them.
 
 **Done when:** a grep for the census terms returns only history and the kept shared pieces; no screen, email or staff
 page says "Founding"; the three holders read as free time on their plan through September 30, 2027.

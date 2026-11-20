@@ -17,6 +17,7 @@ This file is the **index** of open work: **one line per project**. **A project's
 - [ ] **Stripe clean-up, and Stripe from our admin** — status on the board · plan [STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md](docs/projects/active/STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md)
 - [ ] **Plan and billing** — status on the board · plan [PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md](docs/projects/active/PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md)
 - [ ] **Free League retired + Founding removed** — status on the board · plan [FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md](docs/projects/active/FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md)
+- [ ] **Free time: the same rules for clubs and coaches** — status on the board · plan [FREE_TIME_SAME_RULES_PLAN.md](docs/projects/active/FREE_TIME_SAME_RULES_PLAN.md)
 - [ ] **Club release** — status on the board · plan [CLUB_TIER_PRODUCTION_READINESS_PLAN.md](docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md)
 - [ ] **Club journeys (Stage 13)** — status on the board · plan [CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md](docs/projects/active/CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md)
 - [ ] **A schedule on several permits** — status on the board · plan [CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md](docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md)
