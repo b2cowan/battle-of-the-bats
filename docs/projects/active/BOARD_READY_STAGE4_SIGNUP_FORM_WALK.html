@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sign-up Form Walk §546</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column; a sticky progress bar; each part a card of one-action steps with its verdict and notes. */
+:root {
+  --bg: #f6f7f2; --card: #ffffff; --ink: #1d2318; --soft: #5b6352; --line: #dfe3d6; --olive: #56702c; --lime: #c9e265;
+  --good: #2f7a3b; --warn: #a1630a; --bad: #b3352a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif; --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141811; --card: #1c2118; --ink: #e8ecdf; --soft: #a5ad98; --line: #313a29; --olive: #a9c86a; --lime: #c9e265;
+  --good: #6fc27b; --warn: #e3a64a; --bad: #ef7d70; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141811; --card: #1c2118; --ink: #e8ecdf; --soft: #a5ad98; --line: #313a29; --olive: #a9c86a; --lime: #c9e265;
+  --good: #6fc27b; --warn: #e3a64a; --bad: #ef7d70; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 24px 64px; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-family: var(--display); font-size: 1.6rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.1rem; margin: 0; }
+.lede { color: var(--soft); margin: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.signin dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.signin dt { color: var(--soft); font-size: .85rem; }
+.signin dd { margin: 0; overflow-wrap: anywhere; }
+code { font-size: .85em; background: color-mix(in srgb, var(--olive) 12%, transparent); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.meter { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--olive); transition: width .2s; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.steps label { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; padding: 6px 4px; border-radius: 6px; cursor: pointer; }
+.steps label:hover { background: color-mix(in srgb, var(--olive) 7%, transparent); }
+.steps input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--olive); }
+.n { font-variant-numeric: tabular-nums; color: var(--soft); font-size: .8rem; margin-right: 4px; }
+.exp { display: block; color: var(--soft); font-size: .9rem; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: inherit; font-size: .85rem; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; min-height: 32px; }
+.verdict button[aria-pressed="true"][data-v="pass"] { border-color: var(--good); color: var(--good); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="issue"] { border-color: var(--bad); color: var(--bad); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="call"] { border-color: var(--warn); color: var(--warn); font-weight: 600; }
+textarea { font: inherit; width: 100%; box-sizing: border-box; min-height: 56px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: var(--bg); color: var(--ink); }
+.calls { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 8px; }
+.calls li { color: var(--ink); }
+.btn { font: inherit; font-weight: 600; background: var(--lime); color: #1d2318; border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; min-height: 44px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+#out { min-height: 160px; font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
+:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1>Sign-up form walk · §546</h1>
+    <p class="lede">Board Ready Stage 4, Part 1: a season's own questions, its documents to read, the waiver brought across, and copying the form to next season. The family side is still today's page apart from the waiver now coming from the form (Part 2 adds the questions). Tick a box when what it says is true; give each part a verdict, then build the summary and paste it back.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="si">
+    <h2 id="si">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000/login</code> (dev). Restart the dev server first if it was running before this build.</dd>
+      <dt>Club owner</dt><dd>Email <code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code> (UAT Rep Club's owner; Parts A to G).</dd>
+      <dt>Club</dt><dd><code>uat-rep-club</code> → House league → <strong>2026 Fall House League</strong> (registration open, about 60 sign-ups, no waiver yet).</dd>
+      <dt>Part H</dt><dd>Sign out, then sign in as the registrar: <code>uat-club-registrar@uat-rep-club.local</code> · password <code>UATPassword2026!</code>.</dd>
+      <dt>Family page</dt><dd><code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/register</code> (no login; use your own test name).</dd>
+      <dt>You'll need</dt><dd>One small PDF (under 8 MB) on the device.</dd>
+      <dt>Keep private</dt><dd>These are dev-only test accounts. The passwords live in <code>.env.local</code> as <code>UAT_REP_CLUB_OWNER_PASSWORD</code> and <code>UAT_REP_CLUB_REGISTRAR_PASSWORD</code>; if they are ever changed, this card is out of date.</dd>
+    </dl>
+  </section>
+
+  <div class="bar" role="status" aria-live="polite">
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <span class="count" id="count">0 of 0</span>
+  </div>
+
+  <main id="parts" style="display:flex;flex-direction:column;gap:16px"></main>
+
+  <section class="card" aria-labelledby="calls">
+    <h2 id="calls">Your calls (not in the count)</h2>
+    <ol class="calls">
+      <li><strong>The release order.</strong> /legal recommends Parts 1, 2 and 3 reach production together: Part 1 lets a club add a PDF that only Part 2 makes families open, and Part 2 lets a family answer a health question that only Part 3 lets the club read and keeps out of lists and exports. Together, or Parts 1 and 2 first?</li>
+      <li><strong>The checklist's "Waiver" line.</strong> Before you open registration, the optional step still reads "Waiver · On. Families agree on the form." A club can now have several documents. /marketing suggests "Documents · On. Families tick each one to sign up." / "Optional. Families sign up without any." Change it, or keep "Waiver"?</li>
+      <li><strong>Health answers kept while a family fills the form (for Part 2).</strong> /legal recommends typed answers survive a reload of the tab, but health answers and files never do (the family retypes them after a reload). Agree?</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="sum">
+    <h2 id="sum">Summary to paste back</h2>
+    <div class="row">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn ghost" id="copy" type="button">Copy</button>
+      <button class="btn ghost" id="reset" type="button">Clear my ticks</button>
+      <span id="copied" class="lede" role="status"></span>
+    </div>
+    <label for="out" class="lede">Select all and copy if the Copy button doesn't work here.</label>
+    <textarea id="out" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  { id: 'A', title: 'A · The door on the Overview', steps: [
+    ['Open the season’s Overview.', 'The Registration block shows a “Sign-up form” line: “No questions of your own · no documents”, with “The details every sign-up asks for.” under it. There is no Waiver line and no Email consent line.'],
+    ['Press the pencil on the Registration block.', 'The edit form has no “Waiver text” box. Press ✓ to close it.'],
+    ['Click “Open the sign-up form ›”.', 'A page titled “Sign-up form” opens; the bar reads “← Overview”.'],
+  ]},
+  { id: 'B', title: 'B · An empty form', steps: [
+    ['Look at the first card.', '“Every sign-up asks” with a LOCKED chip and “Can’t be removed”: three columns (each child, the parent or guardian, at the end), and the line “These place each child in a division…”.'],
+    ['Look at “Your questions”.', '“No questions yet.” with “+ Add a question”. (No copy button: this club has no earlier season.)'],
+    ['Look at “Documents to read”.', '“No documents yet.” with “+ Add a document” at the card’s head, outlined (not lime).'],
+  ]},
+  { id: 'C', title: 'C · Add a health question', steps: [
+    ['Click “+ Add a question”.', 'A window: Question *, Help text, Type, Asked (For each child), and three switches: Required, Health or medical, Show on the draft board.'],
+    ['Read the window’s foot.', 'It says how many sign-ups so far will read “Not asked”.'],
+    ['Type “Does your child have any allergies?” in Question.', 'A box asks “Does this ask about health?” with Turn on.'],
+    ['Click Turn on.', 'Health or medical is on; Show on the draft board is off and can’t be turned on; the box now says its answers stay out of list columns, the draft board and emails.'],
+    ['Change Type to File upload.', 'Required is off and can’t be turned on, saying a file question can’t be required; “Don’t ask for a health card number or a photo of one.” shows.'],
+    ['Set Type back to Long answer and click Add question.', 'The list shows a “For each child 1” band with the question and a HEALTH chip; the first card folds to “Every sign-up asks · 10 details · Show” (9 if this season takes no friend requests).'],
+  ]},
+  { id: 'D', title: 'D · A choice question, its window and its order', steps: [
+    ['Add “T-shirt size”: One choice, choices YS, YM, YL (one per line), Required on.', 'It joins the “For each child” band; its caption reads “One choice · 3 choices · required”.'],
+    ['Click the T-shirt row.', 'The window reads first: Type, Choices “YS · YM · YL”, Asked, Required “Yes…”, Draft board “Not shown”, Answers “None yet”, and Delete and Archive at the body’s end.'],
+    ['Press the pencil and change “YM” to “Youth medium”.', 'The head’s pill shows it saving, then saved.'],
+    ['Close and reopen T-shirt size.', 'Choices read “YS · Youth medium · YL”, with no “No longer offered” line.'],
+    ['Edit again: set Asked to “Once per sign-up”, then close.', 'T-shirt size moves under a “Once per sign-up” band.'],
+    ['Add “How did you hear about us?”, Short answer, Once per sign-up.', 'It joins the “Once per sign-up” band, after T-shirt size.'],
+    ['Tap its grip and choose Move up.', 'It moves above T-shirt size; reload the page and the order stays.'],
+    ['Open “How did you hear about us?” and click Delete this question, then Delete.', 'It is gone (nobody had answered it).'],
+  ]},
+  { id: 'E', title: 'E · Documents and their versions', steps: [
+    ['Click “+ Add a document”: Name “Waiver”, What families read “Text you type”, some text, The tick “I have read and agree to the waiver.”.', 'The Name hint shows the tick in full. Click Add document.'],
+    ['Read the new row.', 'A TEXT chip and “Waiver”; caption “Typed text · version 1 · “I have read and agree” · no ticks yet”; under the list, “Every document is required.”'],
+    ['Add a document “Code of conduct” with “A PDF you upload” and choose your PDF.', 'The window shows the file’s name and size, “Choose another file”, and the foot “Families must open a PDF before they can tick it.” Click Add document.'],
+    ['Open Code of conduct and click Open.', 'The PDF opens in a new tab.'],
+    ['Open Waiver and click “Replace with a new version”.', 'The window is titled “Replace the waiver”, “Version 1 → version 2”, with the text to edit and no tick question (nobody has ticked yet).'],
+    ['Change a word and click Replace.', 'Versions shows Version 2 CURRENT “Since {today} · no ticks yet · ticks on version 1 stand” and Version 1 below it.'],
+  ]},
+  { id: 'F', title: 'F · The family page (interim, until Part 2)', steps: [
+    ['Open the family sign-up page in a second tab.', '“Waiver and agreement” shows the waiver’s version 2 text with the tick “I have read and agree to the waiver.” The PDF code of conduct isn’t shown yet (Part 2 adds it with its open-first rule).'],
+    ['Fill in one test child and yourself, leave the waiver unticked, click Sign up.', '“Agree to the waiver to sign up.” shows under the waiver.'],
+    ['Tick the waiver and click Sign up.', 'The confirmation shows.'],
+    ['Back in the admin, reload the form page.', 'The Waiver row ends “1 tick”; its window shows Version 2 with “1 tick”.'],
+    ['Open Waiver, click Replace, change a word.', 'Now the window asks about “Families who ticked version 2”: “Their tick stands” or “They must tick again” (chosen), each naming 1 family.'],
+    ['With “They must tick again” chosen and What changed empty, click Replace.', 'It asks you to say what changed so families know why they tick again.'],
+    ['Fill What changed and click Replace.', 'Version 3 is current; Version 2’s row says its 1 tick; Version 3’s caption says ticks on version 2 don’t stand.'],
+    ['In the family tab (not reloaded since step F1), fill the form, tick, and click Sign up.', 'A message at the top says the club updated its documents while you were signing up and to reload the page. Nothing was signed up.'],
+  ]},
+  { id: 'G', title: 'G · Copying the form', steps: [
+    ['On the Overview, open Start next season.', '“Bring with it” has a ticked “Sign-up form” line: “2 questions and 2 documents. No answers are copied.” The settings line no longer mentions the waiver.'],
+    ['Start the new season.', 'It opens as a getting-ready season.'],
+    ['Open its sign-up form.', 'The allergy and T-shirt questions and both documents are there; each document reads version 1 with no ticks.'],
+    ['Delete the new season (its Overview’s Delete).', 'It goes; 2026 Fall House League is untouched.'],
+  ]},
+  { id: 'H', title: 'H · Who can change it', steps: [
+    ['Sign in as the registrar and open the same season’s sign-up form.', 'It reads: no Add buttons, no grips.'],
+    ['Click the T-shirt row.', 'The window reads with no pencil, no Archive and no Delete.'],
+    ['Click the page’s “?” help.', 'It opens “The sign-up form: your questions and documents”.'],
+  ]},
+];
+const KEY = 'stage4-part1-walk-546';
+let state = { ticks: {}, verdict: {}, notes: {} };
+try { const raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const total = PARTS.reduce((n, p) => n + p.steps.length, 0);
+const root = document.getElementById('parts');
+for (const p of PARTS) {
+  const sec = document.createElement('section'); sec.className = 'card'; sec.setAttribute('aria-labelledby', 'h-' + p.id);
+  const h = document.createElement('h2'); h.id = 'h-' + p.id; h.textContent = p.title; sec.appendChild(h);
+  const ol = document.createElement('ol'); ol.className = 'steps';
+  p.steps.forEach(([act, exp], i) => {
+    const id = p.id + (i + 1); const li = document.createElement('li'); const lab = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', () => { state.ticks[id] = cb.checked; save(); tally(); });
+    const sp = document.createElement('span');
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = id;
+    sp.appendChild(n); sp.appendChild(document.createTextNode(act));
+    const e = document.createElement('span'); e.className = 'exp'; e.textContent = exp; sp.appendChild(e);
+    lab.appendChild(cb); lab.appendChild(sp); li.appendChild(lab); ol.appendChild(li);
+  });
+  sec.appendChild(ol);
+  const v = document.createElement('div'); v.className = 'verdict'; v.setAttribute('role', 'group'); v.setAttribute('aria-label', p.title + ' verdict');
+  for (const [val, txt] of [['pass', 'Passed'], ['issue', 'Issue'], ['call', 'Needs a call']]) {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.v = val; b.textContent = txt;
+    b.setAttribute('aria-pressed', String(state.verdict[p.id] === val));
+    b.addEventListener('click', () => { state.verdict[p.id] = state.verdict[p.id] === val ? '' : val; save();
+      v.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(state.verdict[p.id] === x.dataset.v))); });
+    v.appendChild(b);
+  }
+  sec.appendChild(v);
+  const ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for ' + p.title.split(' · ')[0];
+  ta.setAttribute('aria-label', 'Notes for part ' + p.id); ta.value = state.notes[p.id] || '';
+  ta.addEventListener('input', () => { state.notes[p.id] = ta.value; save(); });
+  sec.appendChild(ta); root.appendChild(sec);
+}
+function tally() {
+  const done = Object.values(state.ticks).filter(Boolean).length;
+  document.getElementById('count').textContent = done + ' of ' + total;
+  document.getElementById('meter').style.width = (100 * done / total) + '%';
+}
+tally();
+const out = document.getElementById('out');
+document.getElementById('build').addEventListener('click', () => {
+  const done = PARTS.reduce((n, p) => n + p.steps.filter((_, i) => state.ticks[p.id + (i + 1)]).length, 0);
+  const lines = ['§546 Sign-up form walk (Board Ready Stage 4 Part 1): ' + done + ' of ' + total];
+  for (const p of PARTS) {
+    const got = p.steps.filter((_, i) => state.ticks[p.id + (i + 1)]).length;
+    const missed = p.steps.map((_, i) => p.id + (i + 1)).filter(id => !state.ticks[id]);
+    const vd = { pass: 'PASSED', issue: 'ISSUE', call: 'NEEDS A CALL' }[state.verdict[p.id]] || 'no verdict';
+    lines.push(p.title + ': ' + got + '/' + p.steps.length + ' · ' + vd + (missed.length ? ' · unticked ' + missed.join(', ') : ''));
+    if (state.notes[p.id]) lines.push('  notes: ' + state.notes[p.id].replace(/\s+/g, ' ').trim());
+  }
+  out.value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', () => {
+  const msg = document.getElementById('copied');
+  if (!out.value) document.getElementById('build').click();
+  navigator.clipboard.writeText(out.value).then(() => { msg.textContent = 'Copied.'; }, () => { out.select(); msg.textContent = 'Selected. Press Ctrl+C to copy.'; });
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = { ticks: {}, verdict: {}, notes: {} }; save(); location.reload();
+});
+</script>
+</body>
+</html>

@@ -865,7 +865,7 @@ counts only, shown to the owner before it runs), F7 (one deleted registration le
 F8 (the confirmation leaves out a child not signed up).
 
 **Part 1 built 2026-11-20** (the form, the documents and the waiver move; QA walk §546
-https://claude.ai/artifact/UVoT5NPhYxC8B1UzKgsVui). Migration 513 applied to dev 2026-11-20 after the counts (prod 0
+https://claude.ai/artifact/UVoT5NPhYxC8B1UzKgsVui, **walked 41 of 41 passed 2026-11-20**). Migration 513 applied to dev 2026-11-20 after the counts (prod 0
 seasons; dev 7 seasons with waiver text, 333 ticked; owner yes "go ahead"); the prod step is in `MANUAL_PROD_STEPS.json`.
 Reviews: `/legal` (`docs/agents/legal/BOARD_READY_STAGE4_PART1_BUILT_WORDS_REVIEW.md`), `/docs` (help `signup-form`),
 `/marketing`, `/simplify`, `/review`. Onboarding wizard: its waiver box stays and becomes the season's first document.

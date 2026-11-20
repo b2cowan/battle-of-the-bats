@@ -147,6 +147,17 @@ next season line + the empty form's button); the unreachable plan line.
   walk (an Artifact, `feedback_qa_walkthroughs_as_checkable_artifacts`).
 
 ## Part 2 — The family side
+**Start here (written 2026-11-20, after Part 1 committed `ee560e92a` and its walk §546 passed 41 of 41).** Part 1 is
+built, on dev only: migration 513 is applied to dev, the prod step waits in `MANUAL_PROD_STEPS.json`, and Parts 1–3 reach
+production together (call C1). Read plan §5 Stage 4 "Part 1 built" first: its **"Carried to Part 2"** list is part of
+this Part's scope. In short: (1) ticks are saved inside the placement's locked step, not just after it; (2) the PDF's
+open-first gate, and the consent-ledger text names a PDF's file and version; (3) the family page keeps typed answers
+across a form change, but **health answers and files are never kept across a reload** (call C3, ruled — no `/legal`
+question left to ask); (4) a question delete also clears its attached/removed file rows; (5) Start next season honours
+the questions plan gate when copying; (6) the readers that say "Waiver accepted" (child page, duplicates, families
+export) read the ticks or say "Documents ticked" before Part 2 promotes. The family page today is the interim one Part 1
+made (it ticks each typed document and refuses a page drawn before a document changed): Part 2 replaces it with the
+drawn one. Open the walk §546 source (`BOARD_READY_STAGE4_SIGNUP_FORM_WALK.html`, part F) to see what it does now.
 Drawing tabs 5 and the family half of 7. The notice; per-child questions under the division and friends (only for a
 spot or waitlist line; kept while hidden, never sent for a child not signed up); Questions from {club}; Documents and
 agreement (typed text in place; PDF gate with the reason; "Download it instead" + contact when a PDF won't open); file
