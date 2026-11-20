@@ -55,6 +55,7 @@ import {
 } from '@/lib/coach-register';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
+import SublinedChoice from '@/components/coaches/SublinedChoice';
 import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
 import {
@@ -5088,19 +5089,21 @@ function MoneyRecordsPanel({
             items: duesBook,
             loading: 'Loading the dues book…',
             empty: <>No dues schedules yet — set them up on <strong>Player dues</strong> first.</>,
+            forId: 'record-money-dues-player',
+            /* ⚖ THE PORTAL'S TWO-LINE LIST (owner 2026-11-20): the player's name, then what the family owes
+               beneath it — a native `<option>` could only run the two together on one line with a dash. */
             select: (
-              <select
-                className={styles.select}
-                value={conv.duesPlayerId}
-                onChange={e => setConv(c => ({ ...c, duesPlayerId: e.target.value }))}
-              >
-                <option value="">Choose…</option>
-                {(duesBook ?? []).map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} — {p.outstanding > 0.005 ? `owes ${fmt(p.outstanding)}` : 'paid up'}
-                  </option>
-                ))}
-              </select>
+              <SublinedChoice
+                id="record-money-dues-player"
+                label="Which player *"
+                options={(duesBook ?? []).map(p => ({
+                  value: p.id,
+                  name: p.name,
+                  sub: p.outstanding > 0.005 ? `Owes ${fmt(p.outstanding)}` : 'Paid up',
+                }))}
+                value={conv.duesPlayerId || null}
+                onChange={id => setConv(c => ({ ...c, duesPlayerId: id }))}
+              />
             ),
           })}
           {convAmountField('Amount *')}
@@ -5752,6 +5755,8 @@ function MoneyRecordsPanel({
     empty: ReactNode;
     select: ReactNode;
     after?: ReactNode;
+    /** The id of the control in `select`, so the label names it — set by a picker that is a button, not a `<select>`. */
+    forId?: string;
   }) {
     /* ⚠⚠ ONE RULE, EVERY BRANCH (owner ruling A, 2026-08-23). Under a lock the door already named
        the player / the drive / the installment / the family, and the stated band at the top of the
@@ -5766,7 +5771,7 @@ function MoneyRecordsPanel({
        key belongs beside the label it names. */
     return identityField(
       <div className={`${styles.field} ${styles.formGridFull}`}>
-        <label className={styles.label}>{opts.label}</label>
+        <label className={styles.label} htmlFor={opts.forId}>{opts.label}</label>
         {opts.error ? <p className={styles.errorText}>{opts.error}</p>
           : opts.items === null ? <p className={styles.formHint}>{opts.loading}</p>
           : opts.items.length === 0 ? <p className={styles.formHint}>{opts.empty}</p>
