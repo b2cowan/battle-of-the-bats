@@ -134,3 +134,35 @@ describe('Part 0 · 4 — every bulk action skips a Coaches Portal (Q9, T8/T33)'
     assert.equal(bulkPortalSkipLine(2), "Skipped 2 Coaches Portals: their plan and free time can only be changed on each portal's own record.");
   });
 });
+
+describe('Free time with no end date still refuses every cancel (owner ruling 2026-11-19)', () => {
+  // Missing it let the coach's own Cancel through on a portal given free time with no end date: the ending archives the
+  // portal and starts the 365-day retention clock (T15), the data-loss path the owner ruled out.
+  const server = readCode('lib/portal-free-time-server.ts');
+  const fn = server.slice(server.indexOf('export async function runningPortalFreeTime'), server.indexOf('export type EndedPortalFreeTime'));
+  it('an open-ended grant on a portal staff gave free time counts as running; a dated one counts on any portal, as before', () => {
+    assert.match(fn, /const marked = ws\?\.billing_mode === 'platform_override' && !!ws\.free_time_given_at;/);
+    assert.match(fn, /\(r\.expires_at \|\| marked\) && isGrantRunning\(r\)/);
+    assert.doesNotMatch(fn, /expires_at!/);
+  });
+  it('the refusals say "no end date", never a day', () => {
+    assert.equal(coachCancelRefusal(null), "There's nothing to cancel. Your Premium Coaches Portal is free from FieldLogicHQ, with no end date set.");
+    assert.equal(staffCancelRefusal('UAT Free Team Coaches Portal', null),
+      'UAT Free Team Coaches Portal has free time with no end date. End it now from its Access list instead of cancelling.');
+  });
+  it('the coach on free time with no end date is never shown a pay door (Keep Premium)', () => {
+    const body = readCode('components/billing/BillingBody.tsx');
+    assert.match(body, /const keepPremium = portal && portal\.state !== 'open' \? <CoachCard/);
+  });
+  it("the club's change window cannot move a portal's grant without its entitlement", () => {
+    const route = readCode('app/api/platform-admin/orgs/[id]/overrides/[oid]/route.ts');
+    const patch = handlers(route).find(h => h.verb === 'PATCH')!.body;
+    assert.ok(patch.indexOf('readFreeTimePortal(id)') > 0 && patch.indexOf('readFreeTimePortal(id)') < patch.indexOf('changeFreeTimeEnd('));
+  });
+  it('a team moved into a club ends the old portal\'s free time, including one with no end date', () => {
+    const move = readCode('lib/team-ownership-transfer.ts');
+    const fnMove = move.slice(move.indexOf('async function endFreeTimeOnMove'), move.indexOf('export async function approveTeamMove'));
+    assert.match(fnMove, /\.or\(`expires_at\.is\.null,expires_at\.gt\.\$\{now\}`\)/);
+    assert.match(move, /if \(moved\.alreadyMoved\) return \{ ok: true, moved, stripeCancellation: 'not_needed' \};\n\s*await endFreeTimeOnMove\(workspace\.workspace_org_id, input\.actorEmail\);/);
+  });
+});

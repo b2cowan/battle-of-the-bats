@@ -230,7 +230,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const taxedPrice = !freeCard && profile.config.monthlyPrice !== 0;
   const disabled = a.busy !== null;
   const premium = ownProfile.cancellationKind === 'premium';
-  const keepPremium = portal ? <CoachCard className={styles.keepPremiumCard}>
+  // Free time with no end date has nothing to keep it past (owner ruling 2026-11-19; /review 2026-11-20): no pay door.
+  const keepPremium = portal && portal.state !== 'open' ? <CoachCard className={styles.keepPremiumCard}>
     <h2 className={styles.sectionTitle}>{W.change.keepPremium}</h2><p className={styles.hint}>{W.change.keepPremiumHelp}</p>
     <a href={`${teamWorkspaceReactivatePath(org)}&keep=1`} className={`btn btn-lime ${styles.keepPremiumButton}`} id="billing-keep-premium">{W.change.keepPremium}</a>
   </CoachCard> : null;
@@ -753,7 +754,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   return <>
     <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} detail={detail} onCloseDetail={() => setDetail(null)} billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
-      freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? null : null}
+      freeThrough={freeTime.status === 'ready' ? (freeTime.data.portal && freeTime.data.portal.state !== 'open' ? freeTime.data.portal.lastDay : null) ?? freeTime.data.freeTime?.lastDay ?? null : null}
       // A waiting cancel refuses every move: the window's door is Keep {Plan}, here the same question window.
       onKeep={pendingEnding ? () => { setMoveTo(null); openKeep(); } : undefined}
       onClose={() => setMoveTo(null)} onMoved={text => { if (live.current) {

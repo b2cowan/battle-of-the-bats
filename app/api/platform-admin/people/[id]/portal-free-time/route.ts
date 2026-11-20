@@ -18,11 +18,12 @@ export const POST = withObservability(async (req: NextRequest,
   if (auth.response) return auth.response;
 
   const { id } = await params;
-  const body = (await req.json().catch(() => ({}))) as { team_id?: unknown; last_day?: unknown; reason?: unknown };
+  const body = (await req.json().catch(() => ({}))) as { team_id?: unknown; last_day?: unknown; indefinite?: unknown; reason?: unknown };
   const result = await givePortalFreeTime({
     coachUserId: id,
     teamId: body.team_id,
     lastDay: body.last_day,
+    indefinite: body.indefinite,
     reason: body.reason,
     actor: { id: auth.user.id, email: auth.user.email!, role: auth.role },
   });

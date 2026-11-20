@@ -433,6 +433,7 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'lib/team-workspace-owned.ts': ['tombstone-aware', 'finds the owner\'s workspaces, then keeps only those in force, so a flipped club owner does not "already own a portal"'],
   'lib/registrable-teams-server.ts': ['tombstone-aware', 'portalsInForce, and its standalone test excludes workspace_state org_owned'],
   'lib/portal-free-time-reminders.ts': ['tombstone-aware', 'selects and claims only billing_mode platform_override, so no free-time reminder reaches a flipped club (free_time_given_at survives)'],
+  'lib/club-free-time-reminders.ts': ['tombstone-aware', 'skips a Coaches Portal by its account_kind, which the flip resets to organization: a flipped club is a club, and its own club free time is reminded like any club\'s'],
   'lib/portal-free-time-server.ts': ['tombstone-aware', 'every read requires billing_mode platform_override and an unrevoked grant; the flip revokes the grant'],
   'lib/portal-free-time-give.ts': ['tombstone-aware', 'reads org_owned as "moved into a club", which blocks a further portal give ("give the club free time instead")'],
   'lib/portal-free-time-tab.ts': ['harmless-read', 'the staff console lists the tombstone as "in a club, and the club pays for it", which is true; its record read runs only for account_kind team_workspace'],

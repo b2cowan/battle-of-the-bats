@@ -143,7 +143,9 @@ describe('4 · the person record\'s Coaches Portal tab: read by every role, the 
   it('the server decides who gets the door, from the power', () => {
     assert.match(page, /const canGive = hasPlatformPower\(auth\.role, 'portal_free_time'\)/);
     assert.match(page, /readCoachPortalTab\(person\.id, \{ id: auth\.user\.id, email: auth\.user\.email \?\? '', role: auth\.role \}, canGive\)/);
-    assert.match(tab, /if \(canGive && portalCapWords\(viewer\.role\)\) \{/);
+    // From the power, never from a limit's words: a Super admin has no limit (owner ruling 2026-11-19) and keeps the door.
+    assert.match(tab, /if \(canGive && canGivePortalFreeTime\(viewer\.role\)\) \{/);
+    assert.doesNotMatch(tab, /canGive && portalCapWords\(/);
   });
   it('the tab and the server decide from one rule (portalGiveBlockOf on the give\'s own facts)', () => {
     assert.match(tab, /readPortalGiveFacts\(coach, viewer\)/);
@@ -156,10 +158,13 @@ describe('4 · the person record\'s Coaches Portal tab: read by every role, the 
   });
   it('the window sends the team, the day and why; the coach is the address, never the body (T23)', () => {
     const win = readCode('app/platform-admin/orgs/[id]/PortalFreeTimeWindows.tsx');
-    assert.match(win, /sendJson\(`\/api\/platform-admin\/people\/\$\{coachId\}\/portal-free-time`, 'POST', \{\s*team_id: give\.mode === 'first' \? teamId : undefined, last_day: lastDay, reason,\s*\}\)/);
+    assert.match(win, /sendJson\(`\/api\/platform-admin\/people\/\$\{coachId\}\/portal-free-time`, 'POST', \{\s*team_id: give\.mode === 'first' \? teamId : undefined,\s*last_day: indefinite \? undefined : lastDay, indefinite: indefinite \|\| undefined, reason,\s*\}\)/);
+    // The "No end date" tick is a Super admin's only (owner ruling 2026-11-19); the server refuses it for anyone else.
+    assert.match(win, /\{bounds\.superAdmin && \(/);
+    assert.match(win, /No end date: it stays until someone ends it/);
     assert.match(win, /Hosting a tournament is not part of free time\./);
     // The 14- and 3-day reminders email the coach (4e4876d36): the window must never tell staff the opposite.
-    assert.doesNotMatch(win, /is not emailed/);
+    assert.doesNotMatch(win, /is not emailed\.|not emailed<\/>/, 'only the no-end-date sentence says "not emailed about an end"');
     assert.match(win, /is emailed 14 days and 3 days before it runs out/);
   });
 });

@@ -72,6 +72,8 @@ export const EMAIL_KINDS = {
   purchase_details:                     { klass: 'account', label: 'Purchase details' },
   yearly_renewal_reminder:              { klass: 'account', label: 'Yearly renewal reminder' },
   portal_free_time_ending:              { klass: 'account', label: 'Free time ending' },
+  // Free time same rules (owner 2026-11-19): a club's free time ending, 14 and 3 days before, to every active owner.
+  club_free_time_ending:                { klass: 'account', label: 'Club free time ending' },
   plan_downgraded:                      { klass: 'account', label: 'Plan downgraded' },
   billing_retention_warning:            { klass: 'account', label: 'Records retention notice' },
   org_closed:                           { klass: 'account', label: 'Account closed' },

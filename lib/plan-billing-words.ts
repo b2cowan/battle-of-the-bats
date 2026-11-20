@@ -403,7 +403,8 @@ export const PLAN_BILLING_WORDS = {
     payingFoot: 'Charged to the payment method you already use.',
     checkoutFoot: 'Next, you add a payment method on our secure payment page.',
     freeTitle: () => `Your ${PLAN_CONFIG.team.label} free time ends when your club starts`,
-    freeWarning: (through: string | null) => `${through ? `Free through ${day(through)}. ` : ''}The days left don’t carry over. If you leave before finishing, nothing changes and your free time keeps running.`,
+    // No date = free time with no end date (owner ruling 2026-11-19): there are no "days left" to speak of.
+    freeWarning: (through: string | null) => `${through ? `Free through ${day(through)}. The days left don’t carry over. ` : ''}If you leave before finishing, nothing changes and your free time keeps running.`,
     trial: (days: number) => clubTrialLine(days),
     // "plus applicable taxes" (On-sale pages S2, `/accounting` 2026-11-19): the card beside it shows the pre-tax price.
     noTrial: `You’ve had a subscription before, so there’s no second trial. The full charge, ${BILLING_TAX_WORDS.plusTax}, is due today at checkout.`,

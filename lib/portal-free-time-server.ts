@@ -8,24 +8,40 @@ import { PORTAL_FREE_TIME_GRANT_TYPE, endedLastDay, portalCustomerFreeTime, type
  * `lib/portal-free-time.ts`.
  */
 
-export type RunningPortalFreeTime = { overrideId: string; lastDay: string; expiresAt: string };
+/** A null last day and end = given with no end date (owner ruling 2026-11-19). */
+export type RunningPortalFreeTime = { overrideId: string; lastDay: string | null; expiresAt: string | null };
 
 /**
  * The free time holding this portal open right now, or null. Reads the grant itself, not the switch: a cancel must be
  * refused while a grant exists even on a server where grants are switched off (it would start the retention clock on
  * a portal staff gave). Throws on a read error so a cancel fails closed.
+ *
+ * ⚠ A grant with NO END counts only on a portal carrying the give's mark (`free_time_given_at`, billed by nobody): that
+ * is how staff give it with no end date (owner ruling 2026-11-19), and missing it let the coach's own Cancel through,
+ * archiving the portal and starting the retention clock (T15). An open-ended billing-status row on any other portal is
+ * not free time, as before; a dated one still refuses on any portal, as before.
  */
 export async function runningPortalFreeTime(orgId: string): Promise<RunningPortalFreeTime | null> {
-  const { data, error } = await supabaseAdmin
-    .from('org_overrides')
-    .select('id, starts_at, expires_at, revoked_at')
-    .eq('org_id', orgId)
-    .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
-    .is('revoked_at', null)
-    .order('created_at', { ascending: false });
+  const [{ data, error }, { data: ws, error: wsError }] = await Promise.all([
+    supabaseAdmin
+      .from('org_overrides')
+      .select('id, starts_at, expires_at, revoked_at')
+      .eq('org_id', orgId)
+      .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
+      .is('revoked_at', null)
+      .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('team_workspaces')
+      .select('billing_mode, free_time_given_at')
+      .eq('workspace_org_id', orgId)
+      .maybeSingle<{ billing_mode: string | null; free_time_given_at: string | null }>(),
+  ]);
   if (error) throw error;
-  const row = (data ?? []).find(r => r.expires_at && isGrantRunning(r));
-  return row ? { overrideId: row.id, lastDay: lastDayOfInstant(row.expires_at!), expiresAt: row.expires_at! } : null;
+  if (wsError) throw wsError;
+  const marked = ws?.billing_mode === 'platform_override' && !!ws.free_time_given_at;
+  const row = (data ?? []).find(r => (r.expires_at || marked) && isGrantRunning(r));
+  if (!row) return null;
+  return { overrideId: row.id, lastDay: row.expires_at ? lastDayOfInstant(row.expires_at) : null, expiresAt: row.expires_at ?? null };
 }
 
 export type EndedPortalFreeTime = { lastDay: string; basicTeamId: string | null };
@@ -151,8 +167,7 @@ export async function freeTimePortalLabelsAmong(orgIds: string[]): Promise<Map<s
       .select('org_id, starts_at, expires_at, revoked_at')
       .in('org_id', orgIds)
       .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
-      .is('revoked_at', null)
-      .not('expires_at', 'is', null),
+      .is('revoked_at', null), // a grant with no end date is running too (owner ruling 2026-11-19)
   ]);
   if (wsError) throw wsError;
   if (grantError) throw grantError;
@@ -167,7 +182,8 @@ export async function freeTimePortalLabelsAmong(orgIds: string[]): Promise<Map<s
 /**
  * Of the portals `freeTimePortalOrgIds` names, the ones whose free time is running right now. The give's mark stays on
  * after the free time ends (Keep Premium leaves it too; the billing mode is what moves), so the Clubs list reads this to
- * tell "Free time" from "Free time ended".
+ * tell "Free time" from "Free time ended". A grant with no end date is running (owner ruling 2026-11-19); the caller
+ * reads only the marked portals, so a club's own billing-status grant here names nothing.
  */
 export async function runningFreeTimePortalOrgIds(): Promise<Set<string>> {
   const { data, error } = await supabaseAdmin
@@ -175,7 +191,6 @@ export async function runningFreeTimePortalOrgIds(): Promise<Set<string>> {
     .select('org_id, starts_at, expires_at, revoked_at')
     .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
     .is('revoked_at', null)
-    .not('expires_at', 'is', null)
     .limit(5000);
   if (error) throw error;
   return new Set((data ?? []).filter(r => isGrantRunning(r)).map(r => r.org_id as string));

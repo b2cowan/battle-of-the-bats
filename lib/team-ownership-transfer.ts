@@ -25,6 +25,8 @@ import { listActiveStaffUserIds } from './coach-membership';
 import { notify } from './notify';
 import { clearSettled } from './needs-attention';
 import { captureError } from './observability/capture';
+import { auditFirst } from './platform-audit';
+import { PORTAL_FREE_TIME_GRANT_TYPE } from './portal-free-time';
 import {
   REFUSAL,
   bellClubAsked,
@@ -538,6 +540,49 @@ async function cancelCoachSubscription(subscriptionId: string | null): Promise<{
 }
 
 /**
+ * A coach's free time ends when the club takes the team over: the club pays for it from the move. The move itself closes
+ * the team's entitlement; this revokes the billing-status grant that held the old portal open, with its own Story entry.
+ * A dated one would have run out by itself, but one given with no end date (owner ruling 2026-11-19) would keep the old
+ * portal reading active forever. After the commit, best-effort: a failure is reported for a person, never undoes the move.
+ */
+async function endFreeTimeOnMove(workspaceOrgId: string, actorEmail: string | null): Promise<void> {
+  const now = new Date().toISOString();
+  const actor = actorEmail || 'team-move';
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('org_overrides')
+      .select('id, expires_at')
+      .eq('org_id', workspaceOrgId)
+      .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
+      .is('revoked_at', null)
+      .or(`expires_at.is.null,expires_at.gt.${now}`);
+    if (error) throw error;
+    for (const g of data ?? []) {
+      // Stage 0 Part 9: the row first, or nothing is ended (and the failure below reaches a person).
+      const first = await auditFirst(actor, workspaceOrgId, 'revoke_override', 'id', g.id, {
+        portal: true, team_moved: true, was_expires_at: g.expires_at,
+      }, { reason: 'The team moved into a club, and the club pays for it now.' });
+      if (!first.ok) throw new Error(first.error);
+      const { data: ended, error: endError } = await supabaseAdmin
+        .from('org_overrides')
+        .update({ revoked_at: now, revoked_by: actor })
+        .eq('id', g.id)
+        .is('revoked_at', null)
+        .select('id');
+      if (endError) { await first.failed(endError); throw endError; }
+      if (!ended?.length) await first.failed('already ended by someone else');
+    }
+  } catch (error) {
+    console.error('[team-move] the old portal’s free time was not ended:', workspaceOrgId, error);
+    await captureError(error instanceof Error ? error : new Error(String(error)), {
+      route: 'lib/team-ownership-transfer#endFreeTimeOnMove',
+      severity: 'error',
+      title: 'Team moved into a club, but the old portal’s free time was not ended; end it from its Access list',
+    });
+  }
+}
+
+/**
  * THE SECOND YES. Checks the typed confirmation and the club's plan and team places, then asks
  * `move_team_into_club` to record this side's yes and move the whole team in one transaction.
  * After it commits: the coach's own subscription is cancelled, and both sides hear about it.
@@ -627,6 +672,7 @@ export async function approveTeamMove(input: {
     clubName: club.name,
   };
   if (moved.alreadyMoved) return { ok: true, moved, stripeCancellation: 'not_needed' };
+  await endFreeTimeOnMove(workspace.workspace_org_id, input.actorEmail);
 
   // ⚠ After the commit, never before: the move cleared the Stripe ids, so the webhook this cancel
   // triggers finds no workspace (and sends no "cancelled" email).

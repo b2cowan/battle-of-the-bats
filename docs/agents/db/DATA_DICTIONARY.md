@@ -397,6 +397,10 @@ A support reset of someone's two-step, waiting its 24 hours (drawings tab 7; bui
 <!-- dict:col:org_overrides.revoked_at -->
 **`starts_at`** (timestamptz, NOT NULL, default now()) / **`expires_at`** (timestamptz, nullable) / **`revoked_at`** (timestamptz, nullable) — the active window (gotcha 2). `starts_at` is never set explicitly (always now() — no future-dating); `revoked_at` is set on manual early termination (active-grant queries filter `.is('revoked_at', null)`). Founding Season `comp_period` marks carried `expires_at` `2027-10-01 04:00 UTC` (or the legacy `2027-01-01 00:00 UTC`); migration 510 revoked them all (`revoked_by` 'system').
 
+<!-- dict:col:org_overrides.ending_reminded_14_for -->
+<!-- dict:col:org_overrides.ending_reminded_3_for -->
+**`ending_reminded_14_for`** / **`ending_reminded_3_for`** (date, nullable; mig 512, Free time same rules, owner 2026-11-19) — the LAST FREE DAY (Eastern) the club's 14-day / 3-day "free time is ending" email was sent for, to every active owner. Claimed by the free-time daily job's step `club_free_time_reminders` (`lib/club-free-time-reminders.ts`) with a conditional update BEFORE it sends (only one run wins; the 3-day one stamps both), given back only when the email definitely did not go. Keyed on the day, not sent/unsent, so staff moving the end re-arms both. **Club grants only** (`plan_tier`, `module_addon`, `subscription_status` with an end date): a Coaches Portal's reminders keep their stamps on `team_workspaces.free_time_reminded_*_for` (mig 407). Null = never sent; a grant with no end date is never emailed.
+
 <!-- dict:col:org_overrides.suppress_billing -->
 **`suppress_billing`** (bool, NOT NULL, default false) — intended to suppress Stripe billing during a comp; **currently has no reader** (gotcha 5).
 

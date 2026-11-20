@@ -58,15 +58,16 @@ export async function findKeepPremiumPortal(input: {
   if (!ws) return null;
   const unconverted = ws.billing_mode === 'platform_override';
   if (!unconverted) {
-    // Converted already. Only a conversion by THIS subscription that did not finish is taken again: the entitlement's
-    // end is cleared LAST, so an end still on it means the rest is owed. A finished one is an ordinary paid portal, and
-    // its later Stripe events take the ordinary path.
+    // Converted already. Only a conversion by THIS subscription that did not finish is taken again: the entitlement is
+    // handed to the plan LAST, so one still staff-billed (`platform_override`) means the rest is owed. Not its end: free
+    // time given with no end date has none from birth (owner ruling 2026-11-19). A finished one is an ordinary paid
+    // portal, and its later Stripe events take the ordinary path.
     if (!input.stripeSubscriptionId || ws.stripe_subscription_id !== input.stripeSubscriptionId) return null;
     const { data: ent, error: entError } = await supabaseAdmin
       .from('team_entitlements')
       .select('id')
       .eq('team_workspace_id', ws.id)
-      .not('ends_at', 'is', null)
+      .eq('source', 'platform_override')
       .limit(1);
     if (entError) throw entError;
     if (!ent || ent.length === 0) return null;
@@ -180,14 +181,15 @@ export async function convertFreeTimePortal(params: {
   if (orgError) throw orgError;
 
   // A free time still running ends here, with its own entry; one that already ran out is left as it is (it ended by
-  // itself, and the Story says so).
+  // itself, and the Story says so). One with no end date is running: missed, it would keep the door forcing the portal
+  // active after the coach's own subscription later ends.
   const { data: grants, error: grantError } = await supabaseAdmin
     .from('org_overrides')
     .select('id, expires_at')
     .eq('org_id', portal.orgId)
     .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
     .is('revoked_at', null)
-    .gt('expires_at', now);
+    .or(`expires_at.is.null,expires_at.gt.${now}`);
   if (grantError) throw grantError;
   for (const g of grants ?? []) {
     const { data: ended, error } = await supabaseAdmin

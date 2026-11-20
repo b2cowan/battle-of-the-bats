@@ -5,7 +5,7 @@ import { auditFirst, writePlatformAuditLog } from './platform-audit';
 import { isPlatformAdminEmail } from './platform-auth';
 import { isDemoOrganizerEmail } from './demo-org';
 import { grantsEnabled } from './entitlement-grants';
-import { endInstantForLastDay, isGrantRunning, lastDayOfInstant, todayEastern } from './free-time';
+import { isGrantRunning, lastDayOfInstant, todayEastern } from './free-time';
 import { endFreeTimeNow, staleSentence, type Actor } from './free-time-writes';
 import { keysOf, portalsInForce } from './portal-in-force-server';
 import { normalizeSportId } from './sports';
@@ -14,13 +14,13 @@ import { provisionStandaloneTeamWorkspace, TeamWorkspaceProvisioningError } from
 import {
   PORTAL_FREE_TIME_GRANT_TYPE,
   PORTAL_GIVES_WINDOW_DAYS,
+  canGivePortalFreeTime,
   copyShortfallLine,
   decidePortalGive,
   firstNameOf,
   endedLastDay,
   firstGiveDayOf,
-  portalCapWords,
-  portalChangeRefusal,
+  portalChangeDecision,
   type CoachPortalFacts,
   type CopyOutcome,
   type FreeTeamFacts,
@@ -123,7 +123,8 @@ async function readCoachPortals(coachUserId: string): Promise<CoachPortalFacts[]
   return rows.map(r => {
     const mine = ((grants ?? []) as GrantRow[]).filter(g => g.org_id === r.workspace_org_id);
     const status = mine.filter(g => g.type === PORTAL_FREE_TIME_GRANT_TYPE);
-    const running = status.find(g => g.expires_at && isGrantRunning(g));
+    // A grant with no end date is free time only on a portal staff gave it to (the mark), as `runningPortalFreeTime` reads it.
+    const running = status.find(g => (g.expires_at || r.free_time_given_at) && isGrantRunning(g));
     const clock = (clocks ?? []).find(c => c.org_id === r.workspace_org_id && c.retention_until);
     return {
       workspaceId: r.id,
@@ -133,7 +134,9 @@ async function readCoachPortals(coachUserId: string): Promise<CoachPortalFacts[]
       movedIntoClub: r.workspace_state === 'org_owned',
       inForce: inForce.has(r.id),
       freeTimeGivenAt: r.free_time_given_at,
-      runningGrant: running ? { overrideId: running.id, lastDay: lastDayOfInstant(running.expires_at!), expiresAt: running.expires_at! } : null,
+      runningGrant: running
+        ? { overrideId: running.id, lastDay: running.expires_at ? lastDayOfInstant(running.expires_at) : null, expiresAt: running.expires_at }
+        : null,
       endedLastDay: status[0] ? endedLastDay(status[0]) : null,
       retention: clock
         ? { cancelledDay: clock.applied_at ? todayEastern(new Date(clock.applied_at as string)) : null, deleteDay: todayEastern(new Date(clock.retention_until as string)) }
@@ -197,7 +200,8 @@ export async function readPortalGiveFacts(coach: CoachIdentity, actor: Actor): P
   };
 }
 
-export type PortalGiveInput = { coachUserId: string; teamId: unknown; lastDay: unknown; reason: unknown; actor: Actor };
+/** `indefinite: true` gives it with no end date (a Super admin only, owner ruling 2026-11-19). */
+export type PortalGiveInput = { coachUserId: string; teamId: unknown; lastDay: unknown; indefinite?: unknown; reason: unknown; actor: Actor };
 export type PortalGiveResult = Refusal | { ok: true; orgId: string; mode: 'first' | 'again'; copyShort?: string | null };
 
 /** Give a free coach the Premium Coaches Portal for a set time, or give its one portal more time (Super admin). */
@@ -205,7 +209,9 @@ export async function givePortalFreeTime(input: PortalGiveInput): Promise<Portal
   const coach = await readCoach(input.coachUserId);
   if (!coach) return NOT_FOUND;
   const facts = await readPortalGiveFacts(coach, input.actor);
-  const decision = decidePortalGive({ teamId: input.teamId, lastDay: input.lastDay, reason: input.reason, role: input.actor.role }, facts);
+  const decision = decidePortalGive({
+    teamId: input.teamId, lastDay: input.lastDay, indefinite: input.indefinite, reason: input.reason, role: input.actor.role,
+  }, facts);
   if (!decision.ok) return decision;
 
   const { lastDay, expiresAt, reason } = decision;
@@ -277,7 +283,7 @@ export async function givePortalFreeTime(input: PortalGiveInput): Promise<Portal
 async function giveAgain(
   portal: CoachPortalFacts,
   row: Record<string, unknown>,
-  ctx: { lastDay: string; reason: string; actor: Actor; coach: CoachIdentity },
+  ctx: { lastDay: string | null; reason: string; actor: Actor; coach: CoachIdentity },
 ): Promise<PortalGiveResult> {
   // Stage 0 Part 9: the row first, or nothing is given. The grant's id is made here so the row can name it.
   const grantId = randomUUID();
@@ -304,7 +310,7 @@ async function giveAgain(
     // No entitlement row AT ALL is a portal an earlier give left half-made (the entitlement is the give's last write):
     // this give finishes it instead of failing for good. A row that merely has not ended is the lost race below.
     if (!entError && (opened ?? []).length === 0) {
-      const finished = await finishHalfMadePortal(portal, String(row.expires_at));
+      const finished = await finishHalfMadePortal(portal, (row.expires_at as string | null) ?? null);
       if (finished) {
         await writePlatformAuditLog(ctx.actor.email, portal.orgId, 'give_portal_free_time', 'finished_half_made', null, {
           override_id: grant.id, finished_half_made: true,
@@ -326,8 +332,9 @@ async function giveAgain(
 /**
  * Insert the entitlement a half-made portal never got, when it has none at all. True when this call made it. Born the way
  * the first give makes it (`platform_override`, active, bounded by the new end), so nothing is in force past the last day.
+ * A null end is free time given with no end date: the entitlement is born with none too.
  */
-async function finishHalfMadePortal(portal: CoachPortalFacts, endsAt: string): Promise<boolean> {
+async function finishHalfMadePortal(portal: CoachPortalFacts, endsAt: string | null): Promise<boolean> {
   const { data: ws, error } = await supabaseAdmin
     .from('team_workspaces').select('rep_team_id').eq('id', portal.workspaceId).maybeSingle<{ rep_team_id: string }>();
   if (error || !ws) return false;
@@ -365,15 +372,20 @@ async function portalWriteBlock(orgId: string, actor: Actor): Promise<Refusal | 
 }
 
 export type PortalChangeInput = {
-  orgId: string; overrideId: string; expectedExpiresAt: unknown; lastDay: unknown; reason: unknown; actor: Actor;
+  /** `expectedExpiresAt` null = the window opened on free time with no end date; `indefinite: true` changes it to none. */
+  orgId: string; overrideId: string; expectedExpiresAt: unknown; lastDay: unknown; indefinite?: unknown; reason: unknown; actor: Actor;
   /** Kept on the audit entry (a Put it back's `put_back_of`). */
   extra?: Record<string, unknown>;
 };
 
+/** The same end, either both none (no end date) or the same instant. */
+const sameEnd = (a: string | null, b: string | null) => (a === null || b === null ? a === b : new Date(a).getTime() === new Date(b).getTime());
+
 /**
  * Change the running end (Q5): compare-and-set on the end the window opened with (T11), the limits measured from the
- * first give. The grant first (it is the race check), then the entitlement; if the entitlement cannot follow, the
- * grant is put back as it was.
+ * first give, or to no end date and back (a Super admin, owner ruling 2026-11-19; the club's `changeFreeTimeEnd` shape).
+ * The grant first (it is the race check), then the entitlement; if the entitlement cannot follow, the grant is put back
+ * as it was. A null end is matched with `is null`, never `eq`, which matches nothing.
  */
 export async function changePortalFreeTimeEnd(input: PortalChangeInput): Promise<Refusal | { ok: true }> {
   const refuse = (status: number, error: string): Refusal => ({ ok: false, status, error });
@@ -381,12 +393,14 @@ export async function changePortalFreeTimeEnd(input: PortalChangeInput): Promise
   if (!portal) return refuse(404, 'That free time was not found.');
   const block = await portalWriteBlock(input.orgId, input.actor);
   if (block) return block;
-  const refusal = portalChangeRefusal({ lastDay: input.lastDay, reason: input.reason, role: input.actor.role }, portal.firstGiveDay);
-  if (refusal) return refuse(refusal.startsWith('Your role') ? 403 : 400, refusal);
-  const reason = (input.reason as string).trim();
-  const lastDay = input.lastDay as string;
-  const expiresAt = endInstantForLastDay(lastDay)!;
-  if (typeof input.expectedExpiresAt !== 'string') return refuse(400, 'Open the free time again and change it from there.');
+  const decision = portalChangeDecision(
+    { lastDay: input.lastDay, indefinite: input.indefinite, reason: input.reason, role: input.actor.role }, portal.firstGiveDay,
+  );
+  if ('refusal' in decision) return refuse(decision.status, decision.refusal);
+  const { reason, lastDay, expiresAt } = decision;
+  if (input.expectedExpiresAt !== null && typeof input.expectedExpiresAt !== 'string') {
+    return refuse(400, 'Open the free time again and change it from there.');
+  }
 
   const { data: row, error: readError } = await supabaseAdmin
     .from('org_overrides')
@@ -396,26 +410,28 @@ export async function changePortalFreeTimeEnd(input: PortalChangeInput): Promise
     .maybeSingle();
   if (readError) return refuse(500, 'Nothing was changed. The server could not read it.');
   if (!row || row.type !== PORTAL_FREE_TIME_GRANT_TYPE) return refuse(404, 'That free time was not found.');
-  if (!isGrantRunning(row) || !row.expires_at) return refuse(409, 'That free time has already ended. Nothing was changed.');
-  if (new Date(row.expires_at).getTime() !== new Date(input.expectedExpiresAt).getTime()) {
-    return refuse(409, await staleSentence(input.orgId, row.id, row.created_by, row.expires_at));
+  if (!isGrantRunning(row)) return refuse(409, 'That free time has already ended. Nothing was changed.');
+  const wasEnd = (row.expires_at as string | null) ?? null;
+  if (!sameEnd(wasEnd, input.expectedExpiresAt as string | null)) {
+    return refuse(409, await staleSentence(input.orgId, row.id, row.created_by, wasEnd));
   }
-  if (new Date(row.expires_at).getTime() === new Date(expiresAt).getTime()) return refuse(400, 'That is already its last free day.');
+  if (sameEnd(wasEnd, expiresAt)) return refuse(400, expiresAt ? 'That is already its last free day.' : 'It already has no end date.');
 
   // Stage 0 Part 9: the row first, or nothing is changed.
-  const first = await auditFirst(input.actor.email, input.orgId, 'change_override_end', 'expires_at', row.expires_at, {
-    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: lastDayOfInstant(row.expires_at!), portal: true, ...input.extra,
+  const first = await auditFirst(input.actor.email, input.orgId, 'change_override_end', 'expires_at', wasEnd, {
+    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: wasEnd ? lastDayOfInstant(wasEnd) : null, portal: true, ...input.extra,
   }, { reason });
   if (!first.ok) return first;
-  const { data: written, error } = await supabaseAdmin
+  let write = supabaseAdmin
     .from('org_overrides')
     .update({ expires_at: expiresAt })
     .eq('id', row.id)
     .eq('org_id', input.orgId)
-    .is('revoked_at', null)
-    .eq('expires_at', row.expires_at)
-    .gt('expires_at', new Date().toISOString()) // never revive a grant that ran out since it was read
-    .select('id');
+    .is('revoked_at', null);
+  write = wasEnd
+    ? write.eq('expires_at', wasEnd).gt('expires_at', new Date().toISOString()) // never revive a grant that ran out since it was read
+    : write.is('expires_at', null);
+  const { data: written, error } = await write.select('id');
   if (error) { await first.failed(error); return refuse(500, 'Nothing was changed. The server could not save it.'); }
   if (!written || written.length === 0) {
     // The failure row lands before "someone changed it" is read, which must not name this refused change as the last one.
@@ -423,18 +439,20 @@ export async function changePortalFreeTimeEnd(input: PortalChangeInput): Promise
       supabaseAdmin.from('org_overrides').select('expires_at, created_by').eq('id', row.id).maybeSingle(),
       first.failed('changed by someone else while the window was open'),
     ]);
-    return refuse(409, await staleSentence(input.orgId, row.id, now?.created_by ?? row.created_by, now?.expires_at ?? row.expires_at));
+    return refuse(409, await staleSentence(input.orgId, row.id, now?.created_by ?? row.created_by, now ? now.expires_at : wasEnd));
   }
 
-  const { data: ent, error: entError } = await supabaseAdmin
+  let follow = supabaseAdmin
     .from('team_entitlements')
     .update({ ends_at: expiresAt, updated_at: new Date().toISOString() })
     .eq('team_workspace_id', portal.workspaceId)
-    .eq('source', 'platform_override')
-    .eq('ends_at', row.expires_at)
-    .select('id');
+    .eq('source', 'platform_override');
+  follow = wasEnd ? follow.eq('ends_at', wasEnd) : follow.is('ends_at', null);
+  const { data: ent, error: entError } = await follow.select('id');
   if (entError || !ent || ent.length !== 1) {
-    const { error: backError } = await supabaseAdmin.from('org_overrides').update({ expires_at: row.expires_at }).eq('id', row.id).eq('expires_at', expiresAt);
+    let back = supabaseAdmin.from('org_overrides').update({ expires_at: wasEnd }).eq('id', row.id);
+    back = expiresAt ? back.eq('expires_at', expiresAt) : back.is('expires_at', null);
+    const { error: backError } = await back;
     // The grant not put back is a change that stands: its row stays as the record of it.
     if (backError) console.error('[portal-free-time-give] a refused change left the grant on its new end; set it back by hand:', row.id, backError.message);
     else await first.failed(entError ?? 'the entitlement did not follow; the grant was put back');
@@ -454,7 +472,7 @@ export async function endPortalFreeTimeNow(input: {
   if (!portal) return { ok: false, status: 404, error: 'That free time was not found.' };
   const block = await portalWriteBlock(input.orgId, input.actor);
   if (block) return block;
-  if (portalCapWords(input.actor.role) == null) return { ok: false, status: 403, error: "Your role can't end free time." };
+  if (!canGivePortalFreeTime(input.actor.role)) return { ok: false, status: 403, error: "Your role can't end free time." };
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!reason) return { ok: false, status: 400, error: "Say why you're ending it early." };
 
@@ -468,12 +486,14 @@ export async function endPortalFreeTimeNow(input: {
   if (!isGrantRunning(row)) return { ok: false, status: 409, error: 'That free time has already ended. Nothing was changed.' };
 
   const now = new Date().toISOString();
+  // An entitlement with no end (free time given with no end date) closes too: `gt` alone skips a null and would leave the
+  // team's Premium running behind a revoked grant, and every later give refused.
   const { error: entError } = await supabaseAdmin
     .from('team_entitlements')
     .update({ ends_at: now, updated_at: now })
     .eq('team_workspace_id', portal.workspaceId)
     .eq('source', 'platform_override')
-    .gt('ends_at', now);
+    .or(`ends_at.is.null,ends_at.gt.${now}`);
   if (entError) return { ok: false, status: 500, error: 'Nothing was ended. The server could not save it.' };
 
   return endFreeTimeNow({ orgId: input.orgId, overrideId: input.overrideId, reason, actor: input.actor, extra: { portal: true, ...input.extra } });

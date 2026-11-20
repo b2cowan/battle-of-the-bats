@@ -15,6 +15,11 @@ export const PATCH = withObservability(async (req: NextRequest,
   if (auth.response) return auth.response;
 
   const { id, oid } = await params;
+  // A Coaches Portal's free time changes on its own path, which moves the team's entitlement with the grant. Changed here
+  // the grant would move alone (to no end date, say) and the portal would still close on the old day.
+  if (await readFreeTimePortal(id)) {
+    return NextResponse.json({ error: "Change a Coaches Portal's free time from its own Access list." }, { status: 409 });
+  }
   const body = (await req.json().catch(() => ({}))) as { expected_expires_at?: unknown; last_day?: unknown; indefinite?: unknown; reason?: unknown };
   const result = await changeFreeTimeEnd({
     orgId: id,

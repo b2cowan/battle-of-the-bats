@@ -70,8 +70,9 @@ export type ProvisionStandaloneTeamWorkspaceInput = {
   freeTime?: {
     /** Runs right after the organization is made, before anything else: the grant that holds the portal open (T31). */
     onOrgCreated: (orgId: string) => Promise<void>;
-    /** The entitlement's end, written in its own insert (the grant's end, the first moment after the last free day). */
-    entitlementEndsAt: string;
+    /** The entitlement's end, written in its own insert (the grant's end, the first moment after the last free day). Null =
+     *  free time given with no end date (owner ruling 2026-11-19): the entitlement has no end either. */
+    entitlementEndsAt: string | null;
     /** The portal's mark and the day the limits are measured from (`team_workspaces.free_time_given_at`, mig 406). */
     givenAt: string;
   };

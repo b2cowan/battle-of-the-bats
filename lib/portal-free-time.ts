@@ -1,6 +1,6 @@
 import {
-  FREE_TIME_ENDED_SHOWN_DAYS, FREE_TIME_ENDING_DAYS, dayAfterWords, daysLeft, earliestLastDay, endInstantForLastDay, formatLongDay,
-  formatShortDay, isGrantRunning, lastDayOfInstant, todayEastern,
+  FREE_TIME_ENDED_SHOWN_DAYS, FREE_TIME_ENDING_DAYS, FREE_TIME_LAST_POSSIBLE_DAY, INDEFINITE_REFUSAL, canGiveIndefinitely, dayAfterWords,
+  daysLeft, earliestLastDay, endInstantForLastDay, formatLongDay, formatShortDay, isGrantRunning, lastDayOfInstant, todayEastern,
 } from './free-time';
 import { addCalendarDays, addCalendarMonths, isCalendarDate } from './timezone';
 import { pluralize, possessive } from './utils';
@@ -24,25 +24,36 @@ export const PORTAL_FREE_TIME_GRANT_TYPE = 'subscription_status';
 
 /**
  * How long each role may give, measured from the FIRST give, never from today (Q2/Q5, T11): a change of the end or a
- * later give can never chain past it. Product, Growth and Read only hold no power and are absent.
+ * later give can never chain past it. Product, Growth and Read only hold no power and are absent. A Super admin has no
+ * limit (null) and alone may give it with no end date: the club's rule (owner ruling 2026-11-19, "super admin should be
+ * able to put no end date on both"; it replaced Stage 4b's 6 months).
  */
-export const PORTAL_FREE_TIME_CAP: Record<'super_admin' | 'billing' | 'support', { days: number } | { months: number }> = {
-  super_admin: { months: 6 },
+export const PORTAL_FREE_TIME_CAP: Record<'super_admin' | 'billing' | 'support', { days: number } | { months: number } | null> = {
+  super_admin: null,
   billing: { days: 90 },
   support: { days: 90 },
 };
 
-/** "90 days" / "6 months". */
+/** Whether this role may give, change or end a portal's free time at all. */
+export function canGivePortalFreeTime(role: string): boolean {
+  return Object.prototype.hasOwnProperty.call(PORTAL_FREE_TIME_CAP, role);
+}
+
+/** "90 days", or null for a role with no limit (a Super admin) or no power (ask `canGivePortalFreeTime` to tell them apart). */
 export function portalCapWords(role: string): string | null {
   const cap = PORTAL_FREE_TIME_CAP[role as keyof typeof PORTAL_FREE_TIME_CAP];
   if (!cap) return null;
   return 'days' in cap ? `${cap.days} days` : `${cap.months} months`;
 }
 
-/** The latest last free day this role may give, from the day free time was first given (today for a first give). */
+/**
+ * The latest last free day this role may give, from the day free time was first given (today for a first give). A
+ * Super admin is bounded only by the calendar (`FREE_TIME_LAST_POSSIBLE_DAY`, as on a club).
+ */
 export function portalLatestLastDay(role: string, firstGiveDay: string): string | null {
+  if (!canGivePortalFreeTime(role)) return null;
   const cap = PORTAL_FREE_TIME_CAP[role as keyof typeof PORTAL_FREE_TIME_CAP];
-  if (!cap) return null;
+  if (!cap) return FREE_TIME_LAST_POSSIBLE_DAY;
   return 'days' in cap ? addCalendarDays(firstGiveDay, cap.days) : addCalendarMonths(firstGiveDay, cap.months);
 }
 
@@ -56,11 +67,33 @@ export function portalLastDayRefusal(lastDay: unknown, role: string, firstGiveDa
   if (latest == null) return "Your role can't give free time.";
   if (lastDay < earliestLastDay(now)) return 'The last free day must be after today.';
   if (lastDay > latest) {
+    if (portalCapWords(role) == null) {
+      return `The last free day can be no later than ${formatLongDay(latest)}. For longer, give it with no end date.`;
+    }
     const from = firstGiveDay ? ` from when free time was first given (${formatShortDay(firstGiveDay)})` : '';
-    const longer = role === 'super_admin' ? '' : ' Longer needs a Super admin.';
-    return `You can give up to ${portalCapWords(role)}${from}, through ${formatLongDay(latest)}.${longer}`;
+    return `You can give up to ${portalCapWords(role)}${from}, through ${formatLongDay(latest)}. Longer needs a Super admin.`;
   }
   return null;
+}
+
+/**
+ * The end a give or a change asks for: a last free day, or no end date (`indefinite: true`, a Super admin only, with the
+ * club's refusal). Checked before the day, so an open end is never read as a missing date. The refusal, or the last free
+ * day and the stored end instant (both null = no end date).
+ */
+export function portalEndOf(
+  req: { lastDay: unknown; indefinite?: unknown; role: string },
+  firstGiveDay: string | null,
+  now: Date = new Date(),
+): { refusal: string } | { lastDay: string | null; expiresAt: string | null } {
+  if (req.indefinite === true) {
+    if (!canGiveIndefinitely(req.role)) return { refusal: INDEFINITE_REFUSAL };
+    return { lastDay: null, expiresAt: null };
+  }
+  const refusal = portalLastDayRefusal(req.lastDay, req.role, firstGiveDay, now);
+  if (refusal) return { refusal };
+  const lastDay = req.lastDay as string;
+  return { lastDay, expiresAt: endInstantForLastDay(lastDay)! };
 }
 
 /** A giver's gives inside this many days before a Super admin is needed (T2, owner gate ruling (a) 2026-10-27). */
@@ -73,8 +106,12 @@ export function weekLimitRefusal(role: string, givesInWindow: number): string | 
   return `You have given free time to ${givesInWindow} Coaches Portals in the last ${PORTAL_GIVES_WINDOW_DAYS} days. A Super admin can give this one.`;
 }
 
-/** The coach's cancel, refused while free time runs (Q11-4; words reviewed by /billing and /marketing 2026-10-27). */
-export function coachCancelRefusal(lastDay: string): string {
+/**
+ * The coach's cancel, refused while free time runs (Q11-4; words reviewed by /billing and /marketing 2026-10-27). A null
+ * last day is free time given with no end date (owner ruling 2026-11-19).
+ */
+export function coachCancelRefusal(lastDay: string | null): string {
+  if (lastDay == null) return "There's nothing to cancel. Your Premium Coaches Portal is free from FieldLogicHQ, with no end date set.";
   return `There's nothing to cancel. Your Premium Coaches Portal is free through ${formatLongDay(lastDay)}, then goes back to the free Coaches Portal by itself.`;
 }
 
@@ -84,7 +121,8 @@ export function coachCancelEndedRefusal(lastDay: string): string {
 }
 
 /** The console's cancel, refused while free time runs: End it now is the way (Q11-4). */
-export function staffCancelRefusal(portalName: string, lastDay: string): string {
+export function staffCancelRefusal(portalName: string, lastDay: string | null): string {
+  if (lastDay == null) return `${portalName} has free time with no end date. End it now from its Access list instead of cancelling.`;
   return `${portalName} has free time through ${formatShortDay(lastDay)}. End it now from its Access list instead of cancelling.`;
 }
 
@@ -113,19 +151,22 @@ export function freeTimeEndedWallWords(lastDay: string): { title: string; text: 
 // ── What the coach is told (Part 5; Q7 said the product only, no email: owner 2026-10-28 added two reminders) ──────
 
 /**
- * The coach's free time as their own screens read it: running, the last 14 days, or ended (for 30 days after). The last
- * free day only: never the reason, who gave it, or the grant (T24). From the portal's newest billing-status grant.
+ * The coach's free time as their own screens read it: running, the last 14 days, ended (for 30 days after), or `open`:
+ * given with no end date (owner ruling 2026-11-19), which never counts down, never reminds and never ends by itself. The
+ * last free day only: never the reason, who gave it, or the grant (T24). From the portal's newest billing-status grant.
  */
 export type PortalCustomerFreeTime =
   | { state: 'running' | 'ending'; lastDay: string; daysLeft: number }
+  | { state: 'open' }
   | { state: 'ended'; lastDay: string };
 
 export function portalCustomerFreeTime(
   grant: { starts_at: string | null; expires_at: string | null; revoked_at: string | null } | null,
   now: Date = new Date(),
 ): PortalCustomerFreeTime | null {
-  if (!grant?.expires_at) return null;
+  if (!grant) return null;
   if (isGrantRunning(grant, now)) {
+    if (!grant.expires_at) return { state: 'open' };
     const lastDay = lastDayOfInstant(grant.expires_at);
     const left = daysLeft(lastDay, now);
     return { state: left < FREE_TIME_ENDING_DAYS ? 'ending' : 'running', lastDay, daysLeft: left };
@@ -133,6 +174,7 @@ export function portalCustomerFreeTime(
   const lastDay = endedLastDay(grant, now);
   if (!lastDay) return null;
   const endedAt = grant.revoked_at ?? grant.expires_at;
+  if (!endedAt) return null;
   if (now.getTime() - new Date(endedAt).getTime() > FREE_TIME_ENDED_SHOWN_DAYS * 86_400_000) return null;
   return { state: 'ended', lastDay };
 }
@@ -165,6 +207,19 @@ const goBackLine = (after: string) => `On ${after} you go back to the free Coach
  * running band's phone text, which drops its first sentence. Never a price or what Premium includes.
  */
 export function portalFreeTimeCopy(ft: PortalCustomerFreeTime): PortalFreeTimeCopy {
+  if (ft.state === 'open') {
+    // No end date (owner 2026-11-20, call 1): a line with no date, so the page never shows a price to a coach who pays nothing.
+    return {
+      card: { price: 'Free from FieldLogicHQ', from: 'no end date' },
+      band: {
+        tone: 'olive',
+        eyebrow: 'Free time',
+        title: 'Premium Coaches Portal is free from FieldLogicHQ.',
+        text: 'FieldLogicHQ gave you Premium, with no end date set. Nothing is charged.',
+      },
+      billingCard: 'No billing action needed: your Premium Coaches Portal is free from FieldLogicHQ.',
+    };
+  }
   const through = formatLongDay(ft.lastDay);
   if (ft.state === 'ended') {
     return {
@@ -285,8 +340,8 @@ export type CoachPortalFacts = {
   inForce: boolean;
   /** `team_workspaces.free_time_given_at` (mig 406): staff gave this portal free time. */
   freeTimeGivenAt: string | null;
-  /** The billing-status grant holding it open right now, or null. */
-  runningGrant: { overrideId: string; lastDay: string; expiresAt: string } | null;
+  /** The billing-status grant holding it open right now, or null. A null last day and end = given with no end date. */
+  runningGrant: { overrideId: string; lastDay: string | null; expiresAt: string | null } | null;
   /** The last free day of its newest free time once ended, or null. */
   endedLastDay: string | null;
   /** The retention clock a cancellation started (`billing_retention_intents`, status applied), Eastern days, or null. */
@@ -365,7 +420,8 @@ function portalBlockOf(p: CoachPortalFacts, role: string): PortalGiveBlock | nul
   }
   if (p.freeTimeGivenAt && p.billingMode === 'platform_override') {
     if (p.runningGrant) {
-      return { ...at, kind: 'running', line: `Their Premium Coaches Portal is free through ${formatLongDay(p.runningGrant.lastDay)}. Change its end from the portal's record.` };
+      const until = p.runningGrant.lastDay ? `through ${formatLongDay(p.runningGrant.lastDay)}` : 'with no end date';
+      return { ...at, kind: 'running', line: `Their Premium Coaches Portal is free ${until}. Change its end from the portal's record.` };
     }
     if (role === 'super_admin') return null; // a later give reuses this portal (Q5)
     const from = formatShortDay(todayEastern(new Date(p.freeTimeGivenAt)));
@@ -412,11 +468,13 @@ export function portalGiveBlockOf(facts: PortalGiveFacts, role: string): PortalG
   return null;
 }
 
-export type PortalGiveRequest = { teamId: unknown; lastDay: unknown; reason: unknown; role: string };
+/** `indefinite: true` gives it with no end date (a Super admin only); `lastDay` is then ignored. */
+export type PortalGiveRequest = { teamId: unknown; lastDay: unknown; indefinite?: unknown; reason: unknown; role: string };
 
+/** `lastDay` and `expiresAt` are null when given with no end date. */
 export type PortalGiveDecision =
-  | { ok: true; mode: 'first'; team: FreeTeamFacts; lastDay: string; expiresAt: string; reason: string }
-  | { ok: true; mode: 'again'; portal: CoachPortalFacts; lastDay: string; expiresAt: string; reason: string };
+  | { ok: true; mode: 'first'; team: FreeTeamFacts; lastDay: string | null; expiresAt: string | null; reason: string }
+  | { ok: true; mode: 'again'; portal: CoachPortalFacts; lastDay: string | null; expiresAt: string | null; reason: string };
 
 /** The day free time was first given to this portal, Eastern (the limits' anchor, Q5). */
 export function firstGiveDayOf(freeTimeGivenAt: string): string {
@@ -430,7 +488,7 @@ export function firstGiveDayOf(freeTimeGivenAt: string): string {
  */
 export function decidePortalGive(req: PortalGiveRequest, facts: PortalGiveFacts, now: Date = new Date()): Refusal | PortalGiveDecision {
   const refuse = (status: number, error: string): Refusal => ({ ok: false, status, error });
-  if (portalCapWords(req.role) == null) return refuse(403, "Your role can't give free time.");
+  if (!canGivePortalFreeTime(req.role)) return refuse(403, "Your role can't give free time.");
   const block = portalGiveBlockOf(facts, req.role);
   if (block) return refuse(block.kind === 'switch' ? 409 : 403, block.line);
 
@@ -438,10 +496,9 @@ export function decidePortalGive(req: PortalGiveRequest, facts: PortalGiveFacts,
   if (!reason) return refuse(400, "Say why you're giving it.");
 
   const again = freeTimePortalOf(facts);
-  const dayRefusal = portalLastDayRefusal(req.lastDay, req.role, again?.freeTimeGivenAt ? firstGiveDayOf(again.freeTimeGivenAt) : null, now);
-  if (dayRefusal) return refuse(400, dayRefusal);
-  const lastDay = req.lastDay as string;
-  const expiresAt = endInstantForLastDay(lastDay)!;
+  const end = portalEndOf(req, again?.freeTimeGivenAt ? firstGiveDayOf(again.freeTimeGivenAt) : null, now);
+  if ('refusal' in end) return refuse(end.refusal === INDEFINITE_REFUSAL ? 403 : 400, end.refusal);
+  const { lastDay, expiresAt } = end;
 
   if (again) return { ok: true, mode: 'again', portal: again, lastDay, expiresAt, reason };
   const team = offerableTeams(facts).find(t => t.id === req.teamId);
@@ -478,12 +535,18 @@ export function firstNameOf(name: string): string {
 }
 
 /**
- * Change the running end, or refuse (T11): the same limits, measured from the first give. The anchor comes from the
- * portal's mark, never the request.
+ * Change the running end, or refuse (T11): the same limits, measured from the first give, or no end date (a Super admin
+ * only). The anchor comes from the portal's mark, never the request.
  */
-export function portalChangeRefusal(req: { lastDay: unknown; reason: unknown; role: string }, firstGiveDay: string, now: Date = new Date()): string | null {
-  if (portalCapWords(req.role) == null) return "Your role can't change free time.";
+export function portalChangeDecision(
+  req: { lastDay: unknown; indefinite?: unknown; reason: unknown; role: string },
+  firstGiveDay: string,
+  now: Date = new Date(),
+): { refusal: string; status: number } | { lastDay: string | null; expiresAt: string | null; reason: string } {
+  if (!canGivePortalFreeTime(req.role)) return { refusal: "Your role can't change free time.", status: 403 };
   const reason = typeof req.reason === 'string' ? req.reason.trim() : '';
-  if (!reason) return "Say why you're changing it.";
-  return portalLastDayRefusal(req.lastDay, req.role, firstGiveDay, now);
+  if (!reason) return { refusal: "Say why you're changing it.", status: 400 };
+  const end = portalEndOf(req, firstGiveDay, now);
+  if ('refusal' in end) return { refusal: end.refusal, status: end.refusal === INDEFINITE_REFUSAL ? 403 : 400 };
+  return { ...end, reason };
 }

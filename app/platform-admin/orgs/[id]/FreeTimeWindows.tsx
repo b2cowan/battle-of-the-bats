@@ -21,6 +21,8 @@ type FreeTimeRow = ClubRecordProps['overrides'][number];
 
 /** What Billing-status free time brings back to an ended club (owner ruling 2026-11-18). /marketing signs the words off. */
 const REOPENS = 'its public site goes back on and its tournaments are restored, up to its plan’s limit';
+/** A dated free time whose end changes something: the daily job emails every owner (Free time same rules, owner 2026-11-19). */
+const EMAILED_BEFORE = 'The owner is emailed 14 days and 3 days before it runs out.';
 
 /** The server's warnings on a yes (a restore or a close-again that failed): shown on the record, never a refusal. */
 const warningsOf = (data: Record<string, unknown>) => (Array.isArray(data.warnings) ? (data.warnings as string[]) : []);
@@ -98,21 +100,21 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
   } else if (kind && through) {
     if (kind === 'plan_tier') {
       sentence = <>{org.name} gets {b(`${planName} through ${through}`)}. On {dayAfterWords(lastDay)} it goes back to {b(org.planLabel)} by
-        itself. Nothing is charged, nothing is deleted, and the owner is not emailed. Their Plan &amp; billing page
+        itself. Nothing is charged or deleted. {EMAILED_BEFORE} Their Plan &amp; billing page
         says “Free through {through}”.</>;
     } else if (kind === 'module_addon') {
       const names = addons.map(sectionLabel).join(', ');
       sentence = names
         ? <>{org.name} gets {b(`${names} through ${through}`)}, then {addons.length === 1 ? 'it turns' : 'they turn'} off by itself. Nothing
-          is charged or deleted, and the owner is not emailed.</>
+          is charged or deleted. {EMAILED_BEFORE}</>
         : 'Choose the sections to give.';
     } else if (ended) {
-      sentence = <>{possessive(org.name)} plan has ended. Free time lets it back in {b(`through ${through}`)}: {REOPENS}. On{' '}
+      sentence = <>{possessive(org.name)} plan has ended. Free time lets it back in {b(`through ${through}`)}: {REOPENS}. {EMAILED_BEFORE} On{' '}
         {dayAfterWords(lastDay)}, if it still hasn’t paid, it is closed again, its information is kept for 90 days from that day, and the
         owner is emailed the new date. Nothing is charged.</>;
     } else {
       sentence = <>{org.name} reads as {b(`active through ${through}`)} while unpaid, then goes back to its own billing status by itself.
-        Nothing is charged or deleted, and the owner is not emailed.</>;
+        Nothing is charged or deleted. {org.status === 'active' ? 'The owner is not emailed.' : EMAILED_BEFORE}</>;
     }
   }
   const ready = !!kind && (indefinite || !!lastDay) && (kind !== 'plan_tier' || !!plan) && (kind !== 'module_addon' || addons.length > 0);
@@ -264,7 +266,10 @@ export function ChangeEndWindow({ org, row, freeTime, onDone, onClose }: {
           ? <>{possessive(org.name)} <strong>{subject}</strong> free time now has <strong>no end date</strong>. It stays until staff end it
             from this record. The owner is not emailed.</>
           : <>{possessive(org.name)} <strong>{subject}</strong> free time now runs <strong>through {formatLongDay(lastDay)}</strong> instead
-            of {wasIndefinite ? 'having no end date' : monthDayOf(was)}. {afterwards} The owner is not emailed.</>}
+            of {wasIndefinite ? 'having no end date' : monthDayOf(was)}. {afterwards}{' '}
+            {row.type === 'subscription_status' && org.status === 'active'
+              ? 'The owner is not emailed.'
+              : 'The owner is emailed 14 days and 3 days before the new last day.'}</>}
       sentenceAfter
       footNote={wasIndefinite ? 'A new Story entry. Putting it back to no end date is not offered.' : `A new Story entry; Put it back restores ${wasWords}.`}
       confirmLabel="Change the end date"

@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import {
-  KEEP_PREMIUM_LINE, PORTAL_FREE_TIME_HOSTING_LINE, PREMIUM_WORK_SAVED_LINE, portalCustomerFreeTime, portalFreeTimeCopy,
+  KEEP_PREMIUM_LINE, PORTAL_FREE_TIME_HOSTING_LINE, PREMIUM_WORK_SAVED_LINE, portalCustomerFreeTime, portalEndingOverviewBand, portalFreeTimeCopy,
 } from '../../lib/portal-free-time';
 import { freeTimeStoryEntries, type FreeTimeStoryRow } from '../../lib/free-time-story';
 import type { AuditRow } from '../../lib/platform-story-view';
@@ -36,9 +36,23 @@ describe('Part 5 · the coach\'s state: running, the last 14 days, ended for 30 
   it('ended early: the day it was ended', () => {
     assert.deepEqual(portalCustomerFreeTime(grant({ revoked_at: '2026-11-10T19:00:00.000Z' }), at('2026-11-11T14:00:00.000Z')), { state: 'ended', lastDay: '2026-11-10' });
   });
-  it('no grant, or no end, says nothing', () => {
+  it('no grant says nothing', () => {
     assert.equal(portalCustomerFreeTime(null), null);
-    assert.equal(portalCustomerFreeTime(grant({ expires_at: null })), null);
+  });
+  it('no end date reads as open: never counts down, never ends by itself (owner ruling 2026-11-19)', () => {
+    assert.deepEqual(portalCustomerFreeTime(grant({ expires_at: null })), { state: 'open' });
+    // Ended early, it is an ordinary ended free time: the day it was ended.
+    assert.deepEqual(portalCustomerFreeTime(grant({ expires_at: null, revoked_at: '2026-11-10T19:00:00.000Z' }), at('2026-11-11T14:00:00.000Z')),
+      { state: 'ended', lastDay: '2026-11-10' });
+  });
+  it('the open page says it is free with no date, never a price or a countdown (owner 2026-11-20, call 1)', () => {
+    const c = portalFreeTimeCopy({ state: 'open' });
+    assert.equal(c.band.tone, 'olive');
+    assert.equal(c.band.title, 'Premium Coaches Portal is free from FieldLogicHQ.');
+    assert.match(c.band.text, /no end date/);
+    assert.equal(c.card?.price, 'Free from FieldLogicHQ');
+    assert.doesNotMatch(`${c.band.title} ${c.band.text} ${c.billingCard}`, /\$|through|left|ends|lose|cancel/i);
+    assert.equal(portalEndingOverviewBand({ state: 'open' }), null);
   });
 });
 
@@ -187,11 +201,15 @@ describe('Part 6 · Keep Premium attaches to the same portal (Q11-2)', () => {
     assert.match(find, /input\.basicCoachTeamId === ws\.basic_coach_team_id/);
     assert.match(find, /\.eq\('primary_owner_user_id', input\.ownerUserId\)/);
   });
-  it('idempotent: the billing mode moves by compare-and-set, and a repeat is taken again only while the end is still on the entitlement', () => {
+  it('idempotent: the billing mode moves by compare-and-set, and a repeat is taken again only while the entitlement is still staff-billed', () => {
     const convert = keep.slice(keep.indexOf('export async function convertFreeTimePortal'));
     assert.match(convert, /\.eq\('billing_mode', 'platform_override'\)\s*\.select\('id'\)/);
-    assert.match(keep, /\.not\('ends_at', 'is', null\)/);
-    // The entitlement's end is cleared LAST, so "an end still on it" means the rest is owed.
+    // Not "an end still on it": free time given with no end date has none from birth (owner ruling 2026-11-19).
+    assert.match(keep, /\.eq\('team_workspace_id', ws\.id\)\s*\.eq\('source', 'platform_override'\)/);
+    assert.doesNotMatch(keep, /\.not\('ends_at', 'is', null\)/);
+    // A running free time with no end date is revoked too, or the door would keep the portal active after Stripe ends.
+    assert.match(convert, /\.or\(`expires_at\.is\.null,expires_at\.gt\.\$\{now\}`\)/);
+    // The entitlement is handed to the plan LAST, so one still staff-billed means the rest is owed.
     const ent = convert.indexOf(".from('team_entitlements')");
     assert.ok(ent > convert.indexOf(".from('organizations')"));
     assert.ok(ent > convert.indexOf(".from('org_overrides')"));

@@ -47,7 +47,7 @@ export async function sendPortalFreeTimeReminders(now: Date = new Date()): Promi
     try {
       const ft = await customerPortalFreeTime(ws.workspace_org_id, now);
       // 'running' is read too: the page's "ending" window starts at 13 days left, and the first reminder is at 14.
-      if (!ft || ft.state === 'ended') continue;
+      if (!ft || ft.state === 'ended' || ft.state === 'open') continue; // no end date: nothing to remind of (owner ruling 2026-11-19)
       const wave = portalEndingReminderDue(ft.daysLeft, ft.lastDay, { at14: ws.free_time_reminded_14_for, at3: ws.free_time_reminded_3_for });
       if (!wave || !ws.primary_owner_user_id) continue;
 
@@ -60,11 +60,13 @@ export async function sendPortalFreeTimeReminders(now: Date = new Date()): Promi
       // The 3-day reminder also stamps the 14-day one: a job that was down never sends both on one day.
       const stampColumn = `free_time_reminded_${wave}_for` as const;
       const columns = wave === 3 ? ['free_time_reminded_3_for', 'free_time_reminded_14_for'] as const : ['free_time_reminded_14_for'] as const;
-      const { data: claimed } = await supabaseAdmin.from('team_workspaces')
+      const { data: claimed, error: claimError } = await supabaseAdmin.from('team_workspaces')
         .update(Object.fromEntries(columns.map(c => [c, ft.lastDay])))
         .eq('workspace_org_id', ws.workspace_org_id)
         .eq('billing_mode', 'platform_override') // a coach who chose Premium since the read is no longer "ending"
         .or(`${stampColumn}.is.null,${stampColumn}.neq.${ft.lastDay}`).select('workspace_org_id');
+      // A claim that failed is a failure, never "someone else claimed it" (/review 2026-11-20): skipped, it would never be sent.
+      if (claimError) throw claimError;
       if (!claimed?.length) continue;
 
       const words = portalEndingEmailWords(ft.lastDay, ft.daysLeft);

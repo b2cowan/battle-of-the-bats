@@ -8,6 +8,7 @@ import {
   firstGiveDayOf,
   freeTeamLabel,
   freeTimePortalOf,
+  canGivePortalFreeTime,
   offerableTeams,
   portalCapWords,
   portalGiveBlockOf,
@@ -42,7 +43,8 @@ export type CoachTabPortal = { orgId: string; name: string; state: string };
 export type PortalFreeTimeBounds = {
   earliest: string;
   latest: string;
-  capWords: string;
+  /** "90 days"; null for a Super admin, who has no limit and alone sees "No end date" (owner ruling 2026-11-19). */
+  capWords: string | null;
   superAdmin: boolean;
   /** The day free time was first given (the limits' anchor), or null for a first give. */
   firstGiveDay: string | null;
@@ -72,7 +74,7 @@ const CLUB_BILLED_MODES = new Set(['club_included', 'org_team_addon', 'club_extr
 function portalState(p: CoachPortalFacts): string {
   if (p.movedIntoClub || CLUB_BILLED_MODES.has(p.billingMode)) return 'In a club, and the club pays for it';
   if (p.freeTimeGivenAt && p.billingMode === 'platform_override') {
-    if (p.runningGrant) return `Free time through ${formatShortDay(p.runningGrant.lastDay)}`;
+    if (p.runningGrant) return p.runningGrant.lastDay ? `Free time through ${formatShortDay(p.runningGrant.lastDay)}` : 'Free time, no end date';
     if (p.endedLastDay) return `Free time ran through ${formatShortDay(p.endedLastDay)} · back on the free Coaches Portal`;
   }
   if (!p.inForce) return 'Cancelled';
@@ -128,7 +130,8 @@ export type PortalRecordFreeTime = {
   freeTime: boolean;
   coachName: string;
   ownerUserId: string | null;
-  running: { id: string; lastDay: string; expiresAt: string } | null;
+  /** Null last day and end = given with no end date. */
+  running: { id: string; lastDay: string | null; expiresAt: string | null } | null;
   changeBounds: PortalFreeTimeBounds | null;
   give: CoachPortalTab['give'];
   /** The line in place of the Access list's Give free time, for a giver. */
@@ -154,13 +157,13 @@ export async function readPortalRecordFreeTime(orgId: string, orgName: string, v
     ownerUserId: ws.primary_owner_user_id,
     running: running ? { id: running.overrideId, lastDay: running.lastDay, expiresAt: running.expiresAt } : null,
   };
-  if (!canGive || !portalCapWords(viewer.role)) return { ...base, changeBounds: null, give: null, giveLine: null };
+  if (!canGive || !canGivePortalFreeTime(viewer.role)) return { ...base, changeBounds: null, give: null, giveLine: null };
 
   const firstGiveDay = ws.free_time_given_at ? firstGiveDayOf(ws.free_time_given_at) : null;
   const changeBounds = freeTime && firstGiveDay ? {
     earliest: earliestLastDay(),
     latest: portalLatestLastDay(viewer.role, firstGiveDay)!,
-    capWords: portalCapWords(viewer.role)!,
+    capWords: portalCapWords(viewer.role),
     superAdmin: viewer.role === 'super_admin',
     firstGiveDay,
   } : null;
@@ -168,7 +171,9 @@ export async function readPortalRecordFreeTime(orgId: string, orgName: string, v
   if (running) {
     return {
       ...base, changeBounds, give: null,
-      giveLine: { kind: 'running', tone: 'quiet', line: `${orgName} already has Premium free through ${formatShortDay(running.lastDay)}. Give it more time from that entry instead.` },
+      giveLine: running.lastDay
+        ? { kind: 'running', tone: 'quiet', line: `${orgName} already has Premium free through ${formatShortDay(running.lastDay)}. Give it more time from that entry instead.` }
+        : { kind: 'running', tone: 'quiet', line: `${orgName} already has Premium free with no end date. Change it from that entry instead.` },
     };
   }
   const tab = owner ? await readCoachPortalTab(owner.id, viewer, true) : null;
@@ -211,13 +216,17 @@ export async function readCoachPortalTab(personId: string, viewer: Actor, canGiv
   const portals = facts.portals.map(p => ({ orgId: p.orgId, name: p.name, state: portalState(p) }));
   const live = facts.portals.find(p => p.inForce) ?? null;
   const band = live
-    ? { value: 'Premium', sub: live.runningGrant ? `free through ${formatShortDay(live.runningGrant.lastDay)}` : live.name, orgId: live.orgId }
+    ? {
+      value: 'Premium',
+      sub: !live.runningGrant ? live.name : live.runningGrant.lastDay ? `free through ${formatShortDay(live.runningGrant.lastDay)}` : 'free, no end date',
+      orgId: live.orgId,
+    }
     : teams.length
       ? { value: 'Free', sub: `${counted(teams.length, 'team', 'teams')}, ${facts.portals.length ? 'Premium not running' : 'no Premium portal'}`, orgId: null }
       : { value: '—', sub: 'no Coaches Portal team', orgId: null };
 
   let give: CoachPortalTab['give'] = null;
-  if (canGive && portalCapWords(viewer.role)) {
+  if (canGive && canGivePortalFreeTime(viewer.role)) {
     const again = freeTimePortalOf(facts);
     const firstGiveDay = again?.freeTimeGivenAt ? firstGiveDayOf(again.freeTimeGivenAt) : null;
     const offerIds = new Set(offerableTeams(facts).map(t => t.id));
@@ -229,7 +238,7 @@ export async function readCoachPortalTab(personId: string, viewer: Actor, canGiv
       bounds: {
         earliest: earliestLastDay(),
         latest: portalLatestLastDay(viewer.role, firstGiveDay ?? todayEastern())!,
-        capWords: portalCapWords(viewer.role)!,
+        capWords: portalCapWords(viewer.role),
         superAdmin: viewer.role === 'super_admin',
         firstGiveDay,
       },

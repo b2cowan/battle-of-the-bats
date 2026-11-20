@@ -18,7 +18,7 @@ import { readCode } from './_source-code.ts';
 import {
   cancelledPortalLine,
   decidePortalGive,
-  portalChangeRefusal,
+  portalChangeDecision,
   portalGiveBlockOf,
   portalLastDayRefusal,
   portalLatestLastDay,
@@ -44,7 +44,7 @@ const facts = (over: Partial<PortalGiveFacts> = {}): PortalGiveFacts => ({
   freeTeams: [team()], portals: [], givesInWindow: 0, ...over,
 });
 
-const give = (f: PortalGiveFacts, req: Partial<{ teamId: unknown; lastDay: unknown; reason: unknown; role: string }> = {}) =>
+const give = (f: PortalGiveFacts, req: Partial<{ teamId: unknown; lastDay: unknown; indefinite: unknown; reason: unknown; role: string }> = {}) =>
   decidePortalGive({ teamId: 'team-1', lastDay: '2026-12-26', reason: 'Wants to try Premium', role: 'support', ...req }, f, NOW);
 
 const refused = (r: ReturnType<typeof give>) => (r.ok ? null : r.error);
@@ -145,29 +145,64 @@ describe('Part 3 · the give refuses, each with one sentence and nothing written
 });
 
 describe('Part 3 · the limits, measured from the first give (Q2/Q5, T11)', () => {
-  it('Support and Billing 90 days, Super admin 6 months, for a first give', () => {
+  it('Support and Billing 90 days for a first give; a Super admin has no limit but the calendar (owner ruling 2026-11-19)', () => {
     assert.equal(portalLatestLastDay('support', '2026-10-27'), '2027-01-25');
     assert.equal(portalLatestLastDay('billing', '2026-10-27'), '2027-01-25');
-    assert.equal(portalLatestLastDay('super_admin', '2026-10-27'), '2027-04-27');
+    assert.equal(portalLatestLastDay('super_admin', '2026-10-27'), '2099-12-31');
+    assert.equal(portalLatestLastDay('growth', '2026-10-27'), null);
     assert.equal(refused(give(facts(), { lastDay: '2027-01-25' })), null);
     assert.equal(refused(give(facts(), { lastDay: '2027-01-26' })), 'You can give up to 90 days, through January 25, 2027. Longer needs a Super admin.');
-    assert.equal(refused(give(facts(), { lastDay: '2027-04-27', role: 'super_admin' })), null);
-    assert.equal(refused(give(facts(), { lastDay: '2027-04-28', role: 'super_admin' })), 'You can give up to 6 months, through April 27, 2027.');
+    assert.equal(refused(give(facts(), { lastDay: '2027-04-28', role: 'super_admin' })), null);
+    assert.equal(refused(give(facts(), { lastDay: '2031-06-30', role: 'super_admin' })), null);
+    assert.equal(refused(give(facts(), { lastDay: '2100-01-01', role: 'super_admin' })),
+      'The last free day can be no later than December 31, 2099. For longer, give it with no end date.');
   });
 
-  it('a later give is measured from the first give, not from today', () => {
+  it('a later give (a Super admin) is not held to the 6 months that used to count from the first give', () => {
     const f = facts({ portals: [endedFreeTimePortal], freeTeams: [] });
-    // First given Sep 1, 2026: a Super admin's 6 months run through Mar 1, 2027.
-    assert.equal(refused(give(f, { role: 'super_admin', lastDay: '2027-03-01' })), null);
-    assert.match(refused(give(f, { role: 'super_admin', lastDay: '2027-03-02' })) ?? '', /from when free time was first given \(Sep 1, 2026\), through March 1, 2027/);
+    assert.equal(refused(give(f, { role: 'super_admin', lastDay: '2027-03-02' })), null);
+    assert.equal(refused(give(f, { role: 'super_admin', lastDay: '2028-09-30' })), null);
   });
 
   it('changing the end cannot chain past the first-give limit', () => {
-    assert.equal(portalChangeRefusal({ lastDay: '2026-11-29', reason: 'more time', role: 'support' }, '2026-09-01', NOW), null);
-    assert.match(portalChangeRefusal({ lastDay: '2026-12-01', reason: 'more time', role: 'support' }, '2026-09-01', NOW) ?? '', /through November 30, 2026/);
-    assert.equal(portalChangeRefusal({ lastDay: '2026-11-29', reason: '', role: 'support' }, '2026-09-01', NOW), "Say why you're changing it.");
-    assert.equal(portalChangeRefusal({ lastDay: '2026-11-29', reason: 'x', role: 'growth' }, '2026-09-01', NOW), "Your role can't change free time.");
+    const ok = (d: ReturnType<typeof portalChangeDecision>) => ('refusal' in d ? d.refusal : null);
+    assert.equal(ok(portalChangeDecision({ lastDay: '2026-11-29', reason: 'more time', role: 'support' }, '2026-09-01', NOW)), null);
+    assert.match(ok(portalChangeDecision({ lastDay: '2026-12-01', reason: 'more time', role: 'support' }, '2026-09-01', NOW)) ?? '', /through November 30, 2026/);
+    assert.equal(ok(portalChangeDecision({ lastDay: '2026-11-29', reason: '', role: 'support' }, '2026-09-01', NOW)), "Say why you're changing it.");
+    assert.equal(ok(portalChangeDecision({ lastDay: '2026-11-29', reason: 'x', role: 'growth' }, '2026-09-01', NOW)), "Your role can't change free time.");
+    assert.equal(ok(portalChangeDecision({ lastDay: '2027-12-31', reason: 'x', role: 'super_admin' }, '2026-09-01', NOW)), null);
     assert.equal(portalLastDayRefusal('2026-11-29', 'support', '2026-09-01', NOW), null);
+  });
+});
+
+describe('No end date on a Coaches Portal (owner ruling 2026-11-19: "no end date on both")', () => {
+  it('a Super admin gives it with no end date: no day, no end instant', () => {
+    const r = give(facts(), { role: 'super_admin', indefinite: true, lastDay: undefined });
+    assert.ok(r.ok && r.mode === 'first');
+    assert.equal(r.lastDay, null);
+    assert.equal(r.expiresAt, null);
+    const again = give(facts({ portals: [endedFreeTimePortal], freeTeams: [] }), { role: 'super_admin', indefinite: true });
+    assert.ok(again.ok && again.mode === 'again' && again.expiresAt === null);
+  });
+  it("every other role is refused before the day is read, with the club's words", () => {
+    for (const role of ['support', 'billing']) {
+      const r = give(facts(), { role, indefinite: true, lastDay: '2026-12-01' });
+      assert.ok(!r.ok && r.status === 403);
+      assert.equal(refused(r), 'Only a super admin can give free time with no end date.');
+    }
+  });
+  it('only a literal true is "no end date" (a string or 1 is a missing day)', () => {
+    assert.equal(refused(give(facts(), { role: 'super_admin', indefinite: 'true', lastDay: undefined })), 'Choose the last free day.');
+  });
+  it('a change can move it to no end date (a Super admin) and is refused for anyone else', () => {
+    const d = portalChangeDecision({ lastDay: undefined, indefinite: true, reason: 'open it', role: 'super_admin' }, '2026-09-01', NOW);
+    assert.ok(!('refusal' in d) && d.lastDay === null && d.expiresAt === null);
+    const no = portalChangeDecision({ lastDay: undefined, indefinite: true, reason: 'open it', role: 'support' }, '2026-09-01', NOW);
+    assert.ok('refusal' in no && no.status === 403);
+  });
+  it('a running open-ended portal blocks a give with its own line', () => {
+    const open = portal({ billingMode: 'platform_override', freeTimeGivenAt: '2026-09-01T16:00:00Z', runningGrant: { overrideId: 'o-1', lastDay: null, expiresAt: null } });
+    assert.match(refused(give(facts({ portals: [open] }), { role: 'super_admin' })) ?? '', /free with no end date\. Change its end/);
   });
 });
 
@@ -318,14 +353,25 @@ describe('Part 3 · change the end and end it now (T11, D-1)', () => {
   it('only a staff-given portal nobody pays for; the limit anchored on its mark', () => {
     const read = give.slice(give.indexOf('export async function readFreeTimePortal'), give.indexOf('async function portalWriteBlock'));
     assert.match(read, /!data\?\.free_time_given_at \|\| data\.billing_mode !== 'platform_override'/);
-    assert.match(change, /portalChangeRefusal\([^)]*\}, portal\.firstGiveDay\)/);
+    assert.match(change, /portalChangeDecision\(\s*\{[^}]*\}, portal\.firstGiveDay,?\s*\)/);
   });
 
   it('compare-and-set on the end the window opened with; the entitlement follows, or the grant is put back', () => {
-    assert.match(change, /\.eq\('expires_at', row\.expires_at\)/);
-    assert.match(change, /\.gt\('expires_at', new Date\(\)\.toISOString\(\)\)/);
-    assert.match(change, /\.from\('team_entitlements'\)[\s\S]*\.eq\('ends_at', row\.expires_at\)/);
-    assert.match(change, /update\(\{ expires_at: row\.expires_at \}\)/);
+    assert.match(change, /write\.eq\('expires_at', wasEnd\)\.gt\('expires_at', new Date\(\)\.toISOString\(\)\)/);
+    assert.match(change, /\.from\('team_entitlements'\)[\s\S]*follow\.eq\('ends_at', wasEnd\)/);
+    assert.match(change, /update\(\{ expires_at: wasEnd \}\)/);
+  });
+
+  it('a null end is matched with is-null, never eq (which matches nothing), on the grant, the entitlement and the put-back', () => {
+    assert.match(change, /: write\.is\('expires_at', null\)/);
+    assert.match(change, /: follow\.is\('ends_at', null\)/);
+    assert.match(change, /: back\.is\('expires_at', null\)/);
+    assert.doesNotMatch(change, /typeof input\.expectedExpiresAt !== 'string'\) return/, 'a window opened on no end date sends null');
+  });
+
+  it('end it now closes an entitlement with no end too', () => {
+    assert.match(end, /\.or\(`ends_at\.is\.null,ends_at\.gt\.\$\{now\}`\)/);
+    assert.doesNotMatch(end, /\.gt\('ends_at', now\)/);
   });
 
   it("end it now closes the team's entitlement first, then Stage 4's end path, and nothing else (T15)", () => {

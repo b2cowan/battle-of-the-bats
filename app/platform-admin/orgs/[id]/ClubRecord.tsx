@@ -403,7 +403,7 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={kit.bandLabel}>Free time</span>
       <span className={kit.bandValue}>{runningFree.length}</span>
       <span className={kit.bandNote}>
-        {portalRunning ? `ends ${formatShortDay(portalRunning.lastDay)} · ${leftWords(daysLeft(portalRunning.lastDay))}`
+        {portalRunning ? (portalRunning.lastDay ? `ends ${formatShortDay(portalRunning.lastDay)} · ${leftWords(daysLeft(portalRunning.lastDay))}` : 'no end date')
           : firstEnding ? (firstEnding.lastDay
             ? `${freeTimeSubject(firstEnding, org.planLabel)} ends first, ${formatShortDay(firstEnding.lastDay)}`
             : `${freeTimeSubject(firstEnding, org.planLabel)}, no end date`)
@@ -415,7 +415,9 @@ export default function ClubRecord(props: ClubRecordProps) {
   const renewsCell = portalFt ? (
     <div className={kit.bandCell}>
       <span className={kit.bandLabel}>Billing</span>
-      <span className={`${kit.bandValueText} ${styles.quietValue}`}>{portalRunning ? freeThroughShort(portalRunning.lastDay) : 'Free time ended'}</span>
+      <span className={`${kit.bandValueText} ${styles.quietValue}`}>
+        {portalRunning ? (portalRunning.lastDay ? freeThroughShort(portalRunning.lastDay) : 'Free, no end date') : 'Free time ended'}
+      </span>
       <span className={kit.bandNote}>{portalRunning ? 'Given by staff, no Stripe subscription' : 'back on the free Coaches Portal, no Stripe subscription'}</span>
     </div>
   ) : props.ending?.overdue ? (
@@ -485,7 +487,7 @@ export default function ClubRecord(props: ClubRecordProps) {
               <button type="button" className={`${kit.chip} ${kit.chipOk} ${styles.ftChip}`} onClick={() => setTab('access')}
                 title="Open the Free time list">Free time</button>
               <span className={styles.ftBeside}>
-                {portalRunning ? `Premium free through ${formatShortDay(portalRunning.lastDay)}`
+                {portalRunning ? (portalRunning.lastDay ? `Premium free through ${formatShortDay(portalRunning.lastDay)}` : 'Premium free, no end date')
                   : firstEnding!.lastDay
                     ? `${freeTimeSubject(firstEnding!, org.planLabel)} free through ${formatShortDay(firstEnding!.lastDay)}`
                     : `${freeTimeSubject(firstEnding!, org.planLabel)} free, no end date`}
@@ -1079,7 +1081,7 @@ function PortalFreeTimeSection({ pft, overrides, can, onPortal }: {
 }) {
   const running = pft.running;
   const grant = running ? overrides.find(o => o.id === running.id) : undefined;
-  const left = running ? daysLeft(running.lastDay) : null;
+  const left = running?.lastDay ? daysLeft(running.lastDay) : null;
   return (
     <section className={kit.section} id="free-time">
       <div className={styles.blockHead}>
@@ -1095,7 +1097,7 @@ function PortalFreeTimeSection({ pft, overrides, can, onPortal }: {
               <span className={styles.listMain}>
                 <strong>Premium Coaches Portal · given by staff</strong>
                 <span className={styles.listSub}>
-                  {freeThroughShort(running.lastDay)}
+                  {running.lastDay ? freeThroughShort(running.lastDay) : 'No end date'}
                   {left != null && <> · <span className={left < 14 ? styles.soon : undefined}>{leftWords(left)}</span></>}
 {' · '}{grant?.reason ?? 'No reason kept'} · by {grant?.createdBy ?? 'staff'}
                 </span>
