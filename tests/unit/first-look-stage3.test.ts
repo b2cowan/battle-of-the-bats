@@ -14,7 +14,8 @@ import { PAID_DOOR_PLANS, START_PATH_FOR_PLAN, parseStartPricing, runATournament
 /** Every plan card in PricingSection's PLANS list, as `{ key, ctaHref }`, read from the source. */
 function pricingCards(): { key: string; ctaHref: string }[] {
   const src = readCode('components/PricingSection.tsx');
-  const list = src.slice(src.indexOf('const PLANS: Plan[] = ['), src.indexOf('const TEAM_PLAN: Plan'));
+  const start = src.indexOf('const PLANS: Plan[] = [');
+  const list = src.slice(start, src.indexOf('\n];', start));
   return list.split(/\n  \{\n/).slice(1).map(block => ({
     key: /^\s*key: '([a-z_]+)'/m.exec(block)?.[1] ?? '',
     ctaHref: /^\s*ctaHref: '([^']+)'/m.exec(block)?.[1] ?? '',
@@ -29,7 +30,7 @@ describe('3a — the plan step (Ask 4, F07, F08; G3–G6)', () => {
     // a plan opened in platform admin would have sent its button to Run a tournament with this still green. Now the
     // card's link must be the door that sells its plan in BOTH gate states, and a closed card renders no link at all.
     const cards = pricingCards();
-    assert.deepEqual(cards.map(c => c.key), ['tournament', 'tournament_plus', 'league', 'club'], 'the scan read every card');
+    assert.deepEqual(cards.map(c => c.key), ['tournament', 'tournament_plus', 'league', 'club', 'club_large'], 'the scan read every card');
     for (const card of cards) {
       const plan = card.key as keyof typeof START_PATH_FOR_PLAN;
       assert.equal(card.ctaHref, START_PATH_FOR_PLAN[plan], `${card.key}'s button opens the door that sells it`);
@@ -37,7 +38,7 @@ describe('3a — the plan step (Ask 4, F07, F08; G3–G6)', () => {
       if (door) assert.ok((PAID_DOOR_PLANS[door] as readonly string[]).includes(card.key), `${card.ctaHref} sells ${card.key}`);
       else assert.ok(card.key === 'tournament' || card.key === 'tournament_plus', `Run a tournament sells only the two tournament plans, not ${card.key}`);
     }
-    // Club · Association has no card of its own yet (S3 adds it); its door is Start a club's.
+    // Club · Association has its own card since on-sale pages S3 (W4); its door is Start a club's.
     assert.equal(START_PATH_FOR_PLAN.club_large, '/start/club');
     assert.match(readCode('components/PricingSection.tsx'), /\{isGated \? \(\s*<EarlyAccessModalTrigger/, 'a gated card renders no start link');
   });

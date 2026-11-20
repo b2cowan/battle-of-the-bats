@@ -1,0 +1,281 @@
+<title>On-Sale Pages S3 Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds (the S1 and S2 walks’ shell). */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; margin: 0; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+q { quotes: "“" "”"; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.calls li { min-width: 0; }
+.call-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.call-row select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · on-sale pages · session S3</span>
+    <h1>The pages once Club, Club · Association and League Plus are on sale</h1>
+    <p class="sub">Built 2026-11-20 on the dev server. One purpose: with the three plans open, every public page sells them the way the drawings and the ruled words say; with them closed, every page reads as S1 left it, except League Plus now says “Coming soon”.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>S2 built the doors. S3 builds what the public pages look like once the plans open: three groups on Pricing with Club leading, three doors on the picker and on home, price rows on home, the menu in the groups’ order, “Start a club” in Get started, and “How the trial works” on the Clubs and Leagues pages. Dev has every plan on sale (your 30 Oct ruling), so dev shows the open state; part H uses “Show as closed”.</p>
+    <p><strong>It passes when</strong> every step reads as written. A test renders every page in both states and in a partial flip (League Plus open, Club closed), and the layout check passed on the six pages at 320 to 1440. <code>/legal</code>, <code>/accounting</code>, <code>/marketing</code>, <code>/design</code> and <code>/review</code> ran, and their fixes are in.</p>
+    <p><strong>Not in this walk:</strong> the selling sections (S3b: pictures, “What each person at your club gets”, “Questions a board asks”), and buying from inside the product (S4).</p>
+  </section>
+
+  <section class="card">
+    <h2>Where and as whom</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server, restarted for this build.</dd>
+      <dt>Visitor</dt><dd>A private window, signed out. No account is made in this walk.</dd>
+      <dt>Club owner</dt><dd><code>owner@dev.local</code> · <code>devpass123</code> (part B only).</dd>
+      <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code>, then <code>/platform-admin/dev-tools</code>, the Plan gates box (part H).</dd>
+      <dt>Phone width</dt><dd>Narrow the window below 640px, or use the browser’s phone view, where a step says so.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Your calls (not in the count)</h2>
+    <p class="sub">Each has a recommendation. Pick one; it is copied with the summary.</p>
+    <ol class="calls" id="calls"></ol>
+  </section>
+</main>
+
+<script>
+(function () {
+  var KEY = 'club-on-sale-s3-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'Pricing: three groups, Club leading',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/pricing</code> and read the line under the heading.', see: '<q>Every plan is available now. Tournament is free, with no credit card required.</q> The fourth tick under it: <q>Move up to a larger Club plan at any time</q>.' },
+        { who: 'Visitor', do: 'Read the <q>Find your plan</q> cards.', see: 'Three, not four: <q>I run tournaments.</q>, <q>I run a league or a club.</q>, <q>I coach one team.</q> No <q>Express interest</q>.' },
+        { who: 'Visitor', do: 'Press <q>See league and club plans</q>.', see: 'The page jumps to <q>Running a league or a club</q>.' },
+        { who: 'Visitor', do: 'Look at the three cards in that group.', see: 'League Plus, Club, Club · Association, each with its small label on its first line (<q>A house league</q>, <q>A club with rep teams · up to 15 teams</q>, <q>A club with 16 to 30 teams</q>). Club has the olive edge and the page’s only lime button.' },
+        { who: 'Visitor', do: 'Read the League Plus card from the top.', see: '<q>Running a tournament too? It’s in your plan.</q>, its price, <q>plus applicable taxes</q>, <q>30-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.</q> and <q>Start your League Plus trial</q>.' },
+        { who: 'Visitor', do: 'Read the Club · Association card.', see: 'Its price and tax line, a 90-day trial sentence, <q>Everything in Club</q>, <q>Premium Coaches Portal for every coach on 16 to 30 teams — no per-team fee</q>, <q>Start your Club · Association trial</q>, and under it <q>More than 30 teams? Email support@fieldlogichq.ca for a custom quote.</q>' },
+        { who: 'Visitor', do: 'Choose Annual.', see: 'The three cards show their yearly price, the savings line, and still the trial sentence.' },
+        { who: 'Visitor', do: 'Scroll to <q>Coaching one team</q>.', see: 'The Premium Coaches Portal card across the group, its list in two columns, then <q>If your club is on Club or Club · Association, every coach’s Premium Coaches Portal is included. See what Club includes</q>. No Basic Coaches Portal.' },
+        { who: 'Visitor', do: 'Read the line under the groups.', see: '<q>Available in Canada, outside Québec for now. Prices are in Canadian dollars.</q>' },
+        { who: 'Visitor', do: 'Scroll past the groups.', see: 'One card, <q>Opening your event to registration?</q>, and no <q>League Plus and Club — what they cover</q> section.' },
+        { who: 'Visitor', do: 'Open the question <q>How do I buy League Plus, Club, or Club · Association?</q>', see: 'It names the steps, then League Plus’s 30-day sentence and Club and Club · Association’s 90-day sentence.' },
+        { who: 'Visitor', do: 'Open <q>Can I change plans later?</q>', see: 'It starts <q>It depends on the plan.</q> and ends <q>League Plus can’t be moved to another plan yet.</q> (/legal, your call C1)' },
+        { who: 'Visitor', do: 'Open <q>Which Club plan do I need?</q>, just after the team-limit question.', see: '<q>Club covers up to 15 teams with a Premium Coaches Portal and Club · Association up to 30.</q> and the custom-quote line.' },
+        { who: 'Visitor', do: 'Read the bottom band.', see: '<q>Start free with Tournament, or pick the plan that matches what you run.</q> with <q>Get started free</q> and <q>Browse all the ways to start</q>.' },
+        { who: 'Visitor', do: 'Press Ctrl+F and search the page for <q>Express interest</q>.', see: 'No match.' },
+        { who: 'Visitor', do: 'Press the Club card’s <q>Start your Club trial</q>.', see: '<code>/start/club</code> with <q>Club, billed monthly, from the pricing page.</q>' }
+      ] },
+    { id: 'B', title: 'Pricing, signed in as an owner',
+      steps: [
+        { who: 'Club owner', do: 'Sign in as <code>owner@dev.local</code> and open <code>/pricing</code>.', see: 'Your own plan’s card has <q>Current plan</q> on its first line and <q>Manage your plan</q>; every other card says <q>Choose …</q> (Club · Association: <q>Choose Club · Association</q>). Sign out after.' }
+      ] },
+    { id: 'C', title: 'Home: three doors and three price rows',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/</code>.', see: 'Under the heading, the lime <q>Get started</q> and the link <q>See plans and prices</q>.' },
+        { who: 'Visitor', do: 'Read the three cards under the hero.', see: 'Tournament, <q>Leagues and clubs</q> (<q>Available now</q> on the right, <q>Running a league or a club?</q>, links <q>I run a house league</q> and <q>I run a club with rep teams</q>), Coaches Portal. No price on any of them.' },
+        { who: 'Visitor', do: 'Read the four cards under <q>One platform. Every role.</q>', see: 'All four as full cards, each first line with the plan on the left and its pill on the right (<q>League Plus</q> · <q>Available now</q>). The lead: <q>Tournament organizers, coaches, house leagues and clubs can start today.</q>' },
+        { who: 'Visitor', do: 'Read step 1 of <q>Up and running in a day</q>.', see: '<q>…from tournaments to house league and rep teams.</q>' },
+        { who: 'Visitor', do: 'Read the Pricing section.', see: 'Three rows, no plan cards. Under them one line: <q>Prices are in Canadian dollars, plus applicable taxes. Available in Canada, outside Québec for now.</q> and <q>See every plan and price</q>.' },
+        { who: 'Visitor', do: 'Narrow the window to phone width and look at the doors and the rows.', see: 'One column each, nothing cut off.' }
+      ] },
+    { id: 'D', title: 'The menu and Get started',
+      steps: [
+        { who: 'Visitor', do: 'Read the top bar on <code>/pricing</code>.', see: 'Tournaments · Leagues · Clubs · Coaches · Pricing.' },
+        { who: 'Visitor', do: 'At phone width, read the bar along the bottom.', see: 'The same order.' },
+        { who: 'Visitor', do: 'Open <code>/start</code> and press the bar’s <q>Get started</q> menu.', see: 'Run a tournament, then Start a league season, Start a club, Coach a team, Join a team.' }
+      ] },
+    { id: 'E', title: 'The Clubs page open',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/for-clubs</code>.', see: 'Lime <q>Start your Club trial</q>, the 90-day sentence under it, and the tick <q>Move between Club and Club · Association when you need to</q>.' },
+        { who: 'Visitor', do: 'Read the plan section.', see: '<q>Pick the Club plan by how many teams will have a Premium Coaches Portal: up to 15, or up to 30 on Club · Association. House league teams are unlimited.</q> The Club card (no pill, tax line, <q>· up to 15 teams</q>, the trial sentence) beside the Club · Association card.' },
+        { who: 'Visitor', do: 'Read <q>How the trial works</q> under the cards.', see: 'The trial sentence, then four numbered steps: Start today. · Use all of it. · We email you before it ends. · Or carry on. Step 1 ends <q>The trial is for your club’s first paid plan.</q>' },
+        { who: 'Visitor', do: 'Read <q>More from FieldLogicHQ</q>.', see: 'One card, <q>Do your coaches need their own portal?</q>, ending <q>…can move their team in; their own plan then ends and they aren’t charged for it again.</q>' },
+        { who: 'Visitor', do: 'Read the bottom band.', see: '<q>Pick the Club plan that fits and start today.</q>, one button <q>Start your Club trial</q>, and <q>See every plan and price</q>. No <q>Start free with Tournament</q>.' }
+      ] },
+    { id: 'F', title: 'The Leagues and Tournaments pages open',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/for-leagues</code>.', see: 'Lime <q>Start your League Plus trial</q>, the 30-day sentence, and no <q>Upgrade or downgrade at any time</q> tick.' },
+        { who: 'Visitor', do: 'Read the plan section.', see: '<q>League Plus is open for sign-up.…</q>, the League Plus card with its tax line and trial sentence, and beside it <q>Already included</q> · <q>Running a tournament too? It is in your plan.</q>' },
+        { who: 'Visitor', do: 'Read <q>How the trial works</q>.', see: 'Step 1 says <q>name your league</q> and <q>your league’s first paid plan</q>; step 2 ends <q>build your teams</q>.' },
+        { who: 'Visitor', do: 'Read the bottom band.', see: '<q>Start League Plus today.</q> and one button.' },
+        { who: 'Visitor', do: 'Open <code>/for-tournament-organizers</code> and find the League Plus card under <q>More from FieldLogicHQ</q>.', see: 'It says <q>See what League Plus includes</q> and opens <code>/for-leagues</code>.' }
+      ] },
+    { id: 'H', title: 'Closed, as production is',
+      steps: [
+        { who: 'Platform admin', do: 'In Dev tools, Plan gates, press <q>Show as closed</q>.', see: 'The box says League Plus, Club and Club · Association read closed.' },
+        { who: 'Anyone', do: 'Open <code>/pricing</code> in that browser.', see: 'The four-card picker, one plan grid with no group headings, Tournament Plus with the lime button, and the line <q>…are available now. Tournament is free, with no credit card required. Club and League Plus are coming soon.</q>' },
+        { who: 'Anyone', do: 'Read the strip under the plan cards.', see: 'One <q>Coming soon</q> tag, League Plus and Club with their prices, and <q>Express interest in League Plus or Club</q>.' },
+        { who: 'Anyone', do: 'Press that button and look at <q>Plans interested in</q>.', see: 'League Plus and Club boxes. Close the window.' },
+        { who: 'Anyone', do: 'Open <code>/</code>.', see: '<q>Start free</q> in the hero, two doors and the <q>On the roadmap</q> row, the plan grid, and the Club and League Plus role cards as small cards with <q>Club · Coming soon</q> on the right.' },
+        { who: 'Anyone', do: 'Open <code>/for-clubs</code>.', see: 'The interest button, <q>Coming soon — it isn’t open for sign-up yet.</q>, the Club card with <q>Coming soon</q> on its first line right of the name, and no <q>How the trial works</q>.' },
+        { who: 'Anyone', do: 'Open <code>/for-leagues</code>.', see: '<q>Coming soon — it isn’t open for sign-up yet.</q> (not <q>Not open yet</q>), and the plan line <q>League Plus is coming soon — it isn’t open for sign-up yet. Tell us you’re interested.…</q>' },
+        { who: 'Anyone', do: 'Read the top bar and the Get started menu on <code>/start</code>.', see: 'Tournaments · Coaches · Leagues · Clubs · Pricing, and no Start a club or Start a league season in the menu.' },
+        { who: 'Platform admin', do: 'In Dev tools, press <q>Dev’s rows</q>.', see: 'The open pages are back.' }
+      ] }
+  ];
+
+  var CALLS = [
+    { id: 'C1', q: '/legal (must fix, applied): a League Plus organization can change to no other plan today, so “Upgrade or downgrade at any time” would be false for it. The open pages now say only the moves the product makes, and the FAQ says “League Plus can’t be moved to another plan yet.” Do you want a League Plus → Club move built?', options: ['To /plan, after launch (Recommended: nobody holds League Plus at launch)', 'Build it before the flip (with S4)', 'No'] },
+    { id: 'C2', q: 'Choices made inside ruled lines, each confirmed by /marketing or /legal: the group labels sit on the card’s first line (your pill rule); the coaches group line keeps only “The Premium Coaches Portal is for the head coach…” (no “Every coach starts free”); team counts say “with a Premium Coaches Portal” (your 11-19 rule); “Available in Canada…” without “organizations” on Pricing and home (a coach buys there as a person); home role cards split into the plan on the left and its pill on the right. Keep?', options: ['Keep all (Recommended)', 'Change (say which in the notes)'] },
+    { id: 'C3', q: '/legal note: step 2 says “Your whole plan is on from the first day.” If anything in Club or League Plus is still switched off on production at the flip (for example families paying online), the sentence is not quite true. Is anything in those plans held off at launch?', options: ['Nothing held off — keep the sentence (Recommended if so)', 'Something is held off — name it in the notes'] },
+    { id: 'C4', q: 'Partial flip (one or two of the three open): every page reads its own plan’s switch. The Pricing “what they cover” section shows only while League Plus and Club are both closed; Club · Association has no “coming soon” line of its own if it alone stays closed. The runbook opens all three together. Fine?', options: ['Fine — they open together (Recommended)', 'Give Club · Association its own closed line'] },
+    { id: 'C5', q: 'The drawings’ source was corrected to the build as version 4 (Premium-only coaches group, labels and pills on each card’s first line, League Plus’s Coming soon, the home amendments); the published drawing link still shows version 3. Republish v4 to the same link?', options: ['Yes, republish v4 (Recommended)', 'Leave v3 as the record of what was ruled'] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var li = el('li');
+    li.appendChild(el('span', null, '<strong>' + c.id + '</strong> · ' + c.q));
+    var row = el('div', 'call-row');
+    var sel = document.createElement('select'); sel.id = 'call-' + c.id;
+    sel.appendChild(new Option('Choose…', ''));
+    c.options.forEach(function (o) { sel.appendChild(new Option(o, o)); });
+    sel.value = state.calls[c.id] || '';
+    sel.addEventListener('change', function () { state.calls[c.id] = sel.value; save(); });
+    row.appendChild(sel); li.appendChild(row); callHost.appendChild(li);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['On-sale pages S3 walk: the pages’ open state (2026-11-20)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      var open = mine.filter(function (b) { return !b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (open.length ? ' (not ticked: ' + open.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    lines.push('Calls:');
+    CALLS.forEach(function (c) { lines.push('  ' + c.id + ': ' + (state.calls[c.id] || 'not chosen')); });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('call-' + c.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

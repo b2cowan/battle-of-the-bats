@@ -92,7 +92,7 @@ export default function ConsumerNav({
   workspaces?: WorkspaceDoor[];
   /** Persona-menu gating resolved server-side (lib/start-menu.ts) by mounts that are
    *  already dynamic. Omitted → StartMenu's safe defaults (chooser-routed, league hidden). */
-  startMenu?: { coachHref: string; showLeague: boolean };
+  startMenu?: { coachHref: string; showLeague: boolean; showClub?: boolean };
   /** A3 QA (2026-07-27): the coach shell passes its CURRENT portal path here so the
    *  Chat tab deep-links `/chat?back=…` — the Chat surface then offers a "back to
    *  your Coaches Portal" return to the exact page the coach left. Null (all other
@@ -352,7 +352,7 @@ export default function ConsumerNav({
                 the self-serve free-tier motion (owner answered this explicitly, 2026-08-01). */}
             <Link href="/pricing" className={styles.utilLink}>Pricing</Link>
             {/* The ratified CTA, a persona menu (WI-2) — the ACTION door, all four paths named. */}
-            <StartMenu coachHref={startMenu?.coachHref} showLeague={startMenu?.showLeague} />
+            <StartMenu coachHref={startMenu?.coachHref} showLeague={startMenu?.showLeague} showClub={startMenu?.showClub} />
           </>
         )}
         {/* The account door: person icon, menu in place, LEFT of the operator door — the order the admin and

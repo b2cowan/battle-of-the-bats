@@ -19,9 +19,9 @@ import { PLAN_CONFIG } from './plan-config.ts';
 
 /** Kept in step with components/PricingSection.tsx RENDERED_PLAN_KEYS (which imports React and so
  *  cannot be loaded by this runner — the list is short, stable, and asserted against PLAN_CONFIG). */
-const RENDERED = ['tournament', 'tournament_plus', 'league', 'club'];
+const RENDERED = ['tournament', 'tournament_plus', 'league', 'club', 'club_large'];
 /** Real plans the grid deliberately does NOT card. Adding one here is the decision point. */
-const DELIBERATELY_NOT_CARDED = ['team', 'club_large'];
+const DELIBERATELY_NOT_CARDED = ['team']; // club_large has its own card since on-sale pages S3 (W4)
 
 test('every rendered plan key is a real plan', () => {
   for (const key of RENDERED) {

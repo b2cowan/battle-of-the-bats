@@ -155,26 +155,26 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
 
 /**
  * What a customer reads about a plan that is NOT open for sign-up — one tag and one sentence per plan,
- * on every surface (BUSINESS_DECISIONS.md 2026-09-28; canon in PRICING_PAGE_COPY.md). League Plus is
- * parked, so it carries no imminence: "Not open yet". Any other closed plan (Club is the one with a
- * release under way) keeps a date-free "Coming soon". Never "early access" — that programme was
- * withdrawn 2026-07-28. Show these only when the LIVE gate says the plan is closed
- * (`getPlanGatingMap()` on the server, `usePlanGating()` on the client) — never on a typed assumption.
+ * on every surface (canon in PRICING_PAGE_COPY.md). Every closed plan wears a date-free "Coming soon": League Plus's
+ * parked words ("Not open yet", "built, but not open for sign-up", 2026-09-28) ended when it was set to go on sale with
+ * Club (BUSINESS_DECISIONS.md 2026-11-06; owner 2026-11-19, `/marketing`'s sentence 2026-11-20, on-sale pages S3).
+ * Never "early access" — that programme was withdrawn 2026-07-28. Show these only when the LIVE gate says the plan is
+ * closed (`getPlanGatingMap()` on the server, `usePlanGating()` on the client) — never on a typed assumption.
  */
-export function gatedPlanTag(planKey: OrgPlan): string {
-  return planKey === 'league' ? 'Not open yet' : 'Coming soon';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- one tag for every closed plan since 2026-11-20; callers still name the plan
+export function gatedPlanTag(_planKey: OrgPlan): string {
+  return 'Coming soon';
 }
 
 /** The full sentence (a panel's closing line, a page's note). */
 export function gatedPlanSentence(planKey: OrgPlan): string {
-  return planKey === 'league'
-    ? 'League Plus is built, but not open for sign-up.'
-    : `${planKey === 'team' ? 'The ' : ''}${PLAN_CONFIG[planKey].label} is coming soon — it isn't open for sign-up yet.`;
+  return `${planKey === 'team' ? 'The ' : ''}${PLAN_CONFIG[planKey].label} is coming soon — it isn't open for sign-up yet.`;
 }
 
 /** The short line under a closed plan card's button. */
-export function gatedPlanNote(planKey: OrgPlan): string {
-  return planKey === 'league' ? 'Built, but not open for sign-up.' : 'Not open for sign-up yet.';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- as gatedPlanTag
+export function gatedPlanNote(_planKey: OrgPlan): string {
+  return 'Not open for sign-up yet.';
 }
 
 /**
@@ -184,16 +184,14 @@ export function gatedPlanNote(planKey: OrgPlan): string {
 export const GATED_PLAN_INTEREST_LINE = "Tell us you're interested. Tick the box on the form if you'd like an email when it opens.";
 
 /**
- * The one sentence naming the closed programme plans together, read from the live gate: "Club is coming
- * soon, and League Plus is built but not open for sign-up." — or whichever half is still true, or `null`
- * when both are open (the sentence then disappears rather than going stale).
+ * The one sentence naming the closed programme plans together, read from the live gate: "Club and League Plus are
+ * coming soon." — or "Club is coming soon." / "League Plus is coming soon." for whichever is still closed, or `null`
+ * when both are open (the sentence then disappears rather than going stale). `/marketing` 2026-11-20.
  */
 export function closedProgramPlansSentence(gating: Partial<Record<OrgPlan, boolean>>): string | null {
-  const parts = [
-    gating.club && 'Club is coming soon',
-    gating.league && 'League Plus is built but not open for sign-up',
-  ].filter(Boolean) as string[];
-  return parts.length ? `${parts.join(', and ')}.` : null;
+  const names = [gating.club && 'Club', gating.league && 'League Plus'].filter(Boolean) as string[];
+  if (names.length === 0) return null;
+  return names.length === 1 ? `${names[0]} is coming soon.` : `${names.join(' and ')} are coming soon.`;
 }
 
 // ─── The one answer to "is this plan open?", and the availability words (on-sale pages S1, 2026-11-18) ──────────
@@ -214,6 +212,20 @@ export function isPlanOpen(gating: Partial<Record<OrgPlan, boolean>>, plan: OrgP
 /** The heading/label a public page puts over the plans that are on sale. */
 export const PLAN_AVAILABLE_NOW = 'Available now';
 
+/**
+ * Who can buy, said once (Ask 15, the ruled sentence in BUSINESS_DECISIONS.md; `/accounting`, `/legal`): step 1 of the
+ * paid doors, under the /pricing bands, and under home's price rows. One spelling everywhere.
+ */
+export const PLAN_AVAILABILITY_WHO = 'Available to organizations in Canada, outside Québec for now.';
+export const PLAN_AVAILABILITY_LINE = `${PLAN_AVAILABILITY_WHO} Prices are in Canadian dollars.`;
+/**
+ * The same line where an individual also buys (/pricing and home carry the Premium Coaches Portal, which a coach buys as
+ * a person): "organizations" would be wrong there, and the Terms say organizations and individuals in Canada (`/legal`
+ * 2026-11-20). The persona pages and the start doors keep the organizations sentence above.
+ */
+export const PLAN_AVAILABILITY_WHO_ANYONE = 'Available in Canada, outside Québec for now.';
+export const PLAN_AVAILABILITY_LINE_ANYONE = `${PLAN_AVAILABILITY_WHO_ANYONE} Prices are in Canadian dollars.`;
+
 const INTEREST_NAMES: Partial<Record<OrgPlan, string>> = {
   league: 'League Plus', club: 'Club', club_large: 'Club · Association', team: 'the Coaches Portal',
 };
@@ -226,13 +238,29 @@ export function interestButtonLabel(plans: OrgPlan[] = []): string {
 
 /**
  * The tag over a group of closed programme plans (the /pricing strip and its "what they cover" section; W6, Ask 3):
- * one plan closed → that plan's own tag, so Club never wears "Not open yet"; both closed → the canon's group heading
- * "Not open yet", and each plan's name carries its own status; none closed → null (the group does not render).
+ * "Coming soon" while either is closed (both plans wear the one word since 2026-11-20, so the strip needs no per-plan
+ * status); none closed → null (the group does not render).
  */
 export function closedPlansGroupTag(gating: Partial<Record<OrgPlan, boolean>>): string | null {
   const closed = (['league', 'club'] as OrgPlan[]).filter(p => gating[p]);
-  if (closed.length === 0) return null;
-  return closed.length === 1 ? gatedPlanTag(closed[0]) : gatedPlanTag('league');
+  return closed.length === 0 ? null : gatedPlanTag(closed[0]);
+}
+
+/** The three plans that go on sale together at the flip (CLUB_GATE_FLIP_RUNBOOK.md), each with its own gate. */
+export const PROGRAM_PLANS = ['league', 'club', 'club_large'] as const satisfies readonly OrgPlan[];
+
+/**
+ * "Are League Plus, Club and Club · Association all on sale?" — the one test the open-state layouts switch on (on-sale
+ * pages S3): the /pricing picker's three doors, home's three doors and price rows. Any one closed → the closed layout,
+ * with each open plan's own line still read from its gate, so a partial flip reads right.
+ */
+export function allProgramPlansOpen(gating: Partial<Record<OrgPlan, boolean>>): boolean {
+  return PROGRAM_PLANS.every(p => isPlanOpen(gating, p));
+}
+
+/** "Is any of League Plus, Club or Club · Association on sale?" — the /pricing league-and-club band renders on this. */
+export function anyProgramPlanOpen(gating: Partial<Record<OrgPlan, boolean>>): boolean {
+  return PROGRAM_PLANS.some(p => isPlanOpen(gating, p));
 }
 
 const AVAILABLE_NAMES: Partial<Record<OrgPlan, string>> = {

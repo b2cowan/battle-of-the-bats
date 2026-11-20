@@ -10,10 +10,12 @@ import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import BrandLockup from '@/components/shared/BrandLockup';
 import { DEMOS_PATH } from '@/lib/sandbox-door';
 import { isLegalPath } from '@/lib/legal-paths';
+import { usePlanGating } from '@/lib/use-plan-gating';
+import { PROGRAM_PLANS, allProgramPlansOpen, isEffectivelyGated } from '@/lib/plan-config';
 import styles from './Navbar.module.css';
 
 // Live products lead (owner-ratified 2026-08-08): the two purchasable doors sit adjacent and
-// first; the coming-soon pair follows. Re-order deliberately when one of them launches.
+// first; the coming-soon pair follows.
 const MARKETING_NAV_LINKS = [
   { href: '/for-tournament-organizers', label: 'Tournaments' },
   { href: '/for-coaches',               label: 'Coaches'    },
@@ -21,6 +23,18 @@ const MARKETING_NAV_LINKS = [
   { href: '/for-clubs',                 label: 'Clubs'      },
   { href: '/pricing',                   label: 'Pricing'    },
 ];
+
+// W63 (Ask 25, on-sale pages S3): once League Plus, Club and Club · Association are on sale the bar follows the /pricing
+// bands' order — tournaments, leagues and clubs, coaches. Leagues and Clubs stay two entries.
+const MARKETING_NAV_LINKS_OPEN = [
+  MARKETING_NAV_LINKS[0], MARKETING_NAV_LINKS[2], MARKETING_NAV_LINKS[3], MARKETING_NAV_LINKS[1], MARKETING_NAV_LINKS[4],
+];
+
+/** Until the live answer arrives, the code's own values (they read closed until the flip's step 4.3, so the bar keeps its
+ *  order through the fetch on production today, with no reshuffle). */
+function programPlansOpenInCode(): boolean {
+  return PROGRAM_PLANS.every(p => !isEffectivelyGated(p));
+}
 
 /* Which paths get the MARKETING bar rather than an org/tournament one. Read only after
    SiteChrome has already decided this Navbar mounts at all (its single mount site), so it
@@ -68,6 +82,14 @@ export default function Navbar() {
   // A real customer's session is untouched either way.
   const onMarketing = isMarketingPath(pathname);
   const marketingSignedIn = useClientSignedIn(onMarketing);
+  // The live gate, asked only on the pages that already read it per request (home, /pricing, the persona pages): the
+  // rest of the marketing ground (legal pages, the changelog, the demos) stays a request-free page and orders the bar
+  // from the code's values, which the flip's step 4.3 turns live the same day (`/review` S3).
+  const readsGate = pathname === '/' || pathname.startsWith('/pricing') || pathname.startsWith('/for-');
+  const gating = usePlanGating(onMarketing && !isAdmin && readsGate);
+  const navLinks = (gating ? allProgramPlansOpen(gating) : programPlansOpenInCode())
+    ? MARKETING_NAV_LINKS_OPEN
+    : MARKETING_NAV_LINKS;
 
   useEffect(() => {
     if (!onMarketing) return;
@@ -112,7 +134,7 @@ export default function Navbar() {
           <BrandLockup href="/" tone="warm" className={styles.marketingWordmark} />
 
           <div className={styles.marketingLinks}>
-            {MARKETING_NAV_LINKS.map(({ href, label }) => (
+            {navLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
@@ -174,7 +196,7 @@ export default function Navbar() {
       </nav>
 
       <nav className={styles.bottomNav} aria-label="Main navigation">
-        {MARKETING_NAV_LINKS.map(({ href, label }) => (
+        {navLinks.map(({ href, label }) => (
           <Link
             key={href}
             href={href}

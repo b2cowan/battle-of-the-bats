@@ -34,7 +34,9 @@ import { useRoleSummaryState } from '@/lib/use-role-summary';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 
-export default function ViewerAwarePlans({ gatingMap, marketingLayout }: { gatingMap: Record<OrgPlan, boolean>; marketingLayout?: boolean }) {
+export default function ViewerAwarePlans({ gatingMap, marketingLayout, bands, trialDays }: {
+  gatingMap: Record<OrgPlan, boolean>; marketingLayout?: boolean; bands?: boolean; trialDays?: Partial<Record<OrgPlan, number>>;
+}) {
   const signedIn = useClientSignedIn();
   const { summary: roles, resolving } = useRoleSummaryState(signedIn);
 
@@ -58,19 +60,19 @@ export default function ViewerAwarePlans({ gatingMap, marketingLayout }: { gatin
     return (
       <PricingSection
         gatingMap={gatingMap}
-        marketingLayout={marketingLayout} plusTax
+        marketingLayout={marketingLayout} bands={bands} trialDays={trialDays} plusTax
         ctaHrefFor={() => '#'}
         ctaLabel={() => '…'}
       />
     );
   }
 
-  if (!billingHref) return <PricingSection gatingMap={gatingMap} marketingLayout={marketingLayout} plusTax />;
+  if (!billingHref) return <PricingSection gatingMap={gatingMap} marketingLayout={marketingLayout} bands={bands} trialDays={trialDays} plusTax />;
 
   return (
     <PricingSection
       gatingMap={gatingMap}
-      marketingLayout={marketingLayout} plusTax
+      marketingLayout={marketingLayout} bands={bands} trialDays={trialDays} plusTax
       currentPlan={currentPlan}
       // Same destination for every card: the billing screen is where plan changes are made, and
       // sending "choose Club" somewhere else would fork one decision across two surfaces.

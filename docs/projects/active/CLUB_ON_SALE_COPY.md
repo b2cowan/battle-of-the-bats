@@ -71,6 +71,15 @@ plan's price carries none (canon, 2026-11-05: a price that cannot be bought is n
 open for sign-up."; Club "Coming soon" / "Club is coming soon — it isn't open for sign-up yet.".
 **⚖ Superseded for League Plus (owner 2026-11-19):** League Plus goes on sale with Club (2026-11-06), so its "parked"
 words no longer fit. It wears "Coming soon" too; its closed sentence is `/marketing`'s to write (plan S3).
+**✅ Written 2026-11-20 (`/marketing`). Status: in canon (`PRICING_PAGE_COPY.md`, "Closed-plan availability words"), build in S3.**
+League Plus: tag **Coming soon**; sentence **League Plus is coming soon — it isn't open for sign-up yet.**; line under a button
+**Not open for sign-up yet.** (Club's, word for word). `{closedPlansLine}` with both closed: **Club and League Plus are coming
+soon.** (one closed: "Club is coming soon." / "League Plus is coming soon."). Knock-ons the build carries: W31 hero note becomes
+**Coming soon — it isn't open for sign-up yet.** (drop the repeated sentence after the tag, as `/for-clubs` does); W32 closed intro
+becomes **League Plus is coming soon — it isn't open for sign-up yet. {interestLine}** (retires "clearest signal"); W40 reads
+**League Plus · Coming soon**; W54 sub reads **League Plus — coming soon**; the group tag over the closed strip is **Coming soon**
+and the per-plan "(Coming soon, …)" in the strip drops when both tags are the same. Every "Not open yet" / "built, but not open"
+for League Plus above in this doc is superseded by this note.
 
 ---
 
@@ -809,6 +818,40 @@ reading of a ruled line or a gap the copy doc left, flagged for the owner and `/
   organization reads on that screen, Run a tournament's included, left as shipped.
 - **Not in S2 (S3's, already planned):** the League Plus pricing card still reads "Start free" and "No credit card
   required" while it now opens the League Plus start when open; S3 writes that card's trial-and-payment sentence.
+
+**In code (S3, built 2026-11-20; checked against the canon by `/marketing` the same day, Part 0 second half):** the open
+state of W1 to W8, W10, W14 to W21, W23 to W27, W29 to W39 (W28 and W34 as ruled), W40 to W42 (W41's roadmap row replaced by
+W60), W58 to W62, W68 and W75, plus W63's nav order and the Get started menu's "Start a club". Every line matches the canon
+except the rows under "Replace" below. Where the build had to choose, each with `/marketing`'s verdict:
+- **1. Band 3's line** (only the second sentence of the drawing's, "Every coach starts free" being gone). **Replace:** "Premium"
+  alone breaks the full-name rule. **The Premium Coaches Portal is for the head coach running a competitive team’s whole season.**
+- **2. Picker door 3's body:** the existing coach door body, "The Premium Coaches Portal is the operations HQ for one competitive
+  team — roster, lineups, budget, and schedule. No org account needed." **Keep** (no "free"; says what the portal is).
+- **3. Home coach price row:** "The Premium Coaches Portal is {price}/mo." **Keep** (the amended W61: Premium and its price only).
+- **4. Club · Association features:** "Premium Coaches Portal for every coach on 16 to 30 teams — no per-team fee". **Keep.** The
+  2026-11-19 team-limit canon supersedes W4's "every team type counted the same". Its table row for this card ends at "16 to 30
+  teams"; "— no per-team fee" is true (it is "Everything in Club") and is now in the canon row too.
+- **5. W20 FAQ drops "Count every team — rep, select and development teams all count the same."** **Keep the drop** (the canon
+  says a label never defines the limit). **Replace** the bare counts that follow it: **Club covers up to 15 teams with a Premium
+  Coaches Portal and Club · Association up to 30.** (the answer must stand if read alone).
+- **6. "Start a club" menu sub-line:** "Tournaments, house league, rep teams and accounting in one place." **Keep** (W44's first
+  sentence; the menu has no room for the second).
+- **7. Band-2 labels inside the card, left, pill on the right:** placement only, words unchanged. **Keep** (`/design`'s).
+- **8. The availability line on /for-clubs and /for-leagues** sits under the plan cards (not under "See every plan and price"):
+  the ruled Ask 15 sentence. **Keep.**
+
+**Replace (bare team counts, which the 2026-11-19 team-limit canon supersedes where no definition sits beside them):**
+- Home price row 2: **League Plus is {League Plus price}/mo. Club is {Club price}/mo for up to 15 teams with a Premium Coaches
+  Portal, and Club · Association is {Club · Association price}/mo for up to 30.**
+- /for-clubs plan intro (W25 open): **Pick the Club plan by how many teams will have a Premium Coaches Portal: up to 15, or up to 30
+  on Club · Association. House league teams are unlimited.** (the canon's start-door words.)
+- /for-clubs bottom lead (W30 open): **Pick the Club plan that fits and start today.**
+- /pricing "Can I change plans later?" (W17): **…and needs 15 or fewer teams with a Premium Coaches Portal.**
+- Left as built, on purpose: the band-2 labels ("A club with rep teams · up to 15 teams", "A club with 16 to 30 teams"), the
+  Association tagline and the annual lines. Each sits on a card whose own feature line carries the definition.
+- Extras not in the doc, kept: the /pricing band-3 foot link "See what Club includes"; the eyebrow "The trial" over "How the
+  trial works".
+- **Not in S3 (S3b's):** W65 to W67, W69 to W71.
 
 ---
 

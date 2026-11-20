@@ -17,7 +17,7 @@ import {
 } from '../../lib/start-door.ts';
 import { planTrialLine } from '../../lib/plan-trial-line.ts';
 import { PLAN_BILLING_WORDS } from '../../lib/plan-billing-words.ts';
-import { gatedPlanSentence, GATED_PLAN_INTEREST_LINE } from '../../lib/plan-config.ts';
+import { gatedPlanSentence, GATED_PLAN_INTEREST_LINE, PLAN_AVAILABILITY_LINE } from '../../lib/plan-config.ts';
 import { LEGAL_PAGES_PUBLISHED } from '../../lib/legal-pages-switch.ts';
 
 /** Production until the flip, and dev's rows. */
@@ -212,7 +212,9 @@ describe('the abandoned checkout resumes on its own plan step', () => {
 describe('trap C — Québec and the US are said on step 1, before anything is made', () => {
   it('both paid doors carry the ruled availability line where step 1\'s small print sits', () => {
     const form = readCode('app/(consumer)/start/StartDoorForm.tsx');
-    assert.ok(form.includes(`const AVAILABILITY_LINE = '${AVAILABILITY}';`));
+    // One sentence, shared since S3 with the /pricing bands and home's price rows (`PLAN_AVAILABILITY_LINE`).
+    assert.ok(form.includes('PLAN_AVAILABILITY_LINE as AVAILABILITY_LINE'));
+    assert.equal(PLAN_AVAILABILITY_LINE, AVAILABILITY);
     assert.equal((form.match(/accountSmallPrint: AVAILABILITY_LINE,/g) ?? []).length, 2);
     assert.ok(readCode('docs/agents/strategy/BUSINESS_DECISIONS.md').includes(AVAILABILITY), 'one spelling with the ruling (Ask 9)');
   });

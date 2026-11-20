@@ -66,7 +66,6 @@ const PLAN_LISTS: PlanList[] = [
     identifier: 'RENDERED_PLAN_KEYS',
     exclusions: {
       team: 'its card shows only in the marketing layout (TEAM_PLAN), not in the plan grid',
-      club_large: 'a capacity band of Club, shown on the Club card rather than its own',
     },
   },
   {

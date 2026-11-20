@@ -1,14 +1,20 @@
 import Link from 'next/link';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import HowTheTrialWorks from '@/components/marketing/HowTheTrialWorks';
 import kit from '@/components/marketing/MarketingKit.module.css';
 import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import {
   PLAN_CONFIG, formatPriceAmount, isPlanOpen, interestButtonLabel, gatedPlanTag, gatedPlanSentence, GATED_PLAN_INTEREST_LINE,
+  PLAN_AVAILABILITY_LINE,
 } from '@/lib/plan-config';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { getPlanConfigOverrides } from '@/lib/plan-config-db';
+import { planTrialLine } from '@/lib/plan-trial-line';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
+import { START_PATH_FOR_PLAN, parseStartPricing, withStartPricing } from '@/lib/start-door';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
 export const metadata = marketingMetadata({
@@ -21,6 +27,13 @@ export const metadata = marketingMetadata({
 
 const { painItems: PAIN_ITEMS, steps: MODULES, features: CLUB_FEATURES } =
   PLAN_ARTICLE_CONTENT.club;
+
+/** W27 / W4: the Club · Association card's list, the same three lines as its /pricing card. */
+const CLUB_LARGE_FEATURES = [
+  'Everything in Club',
+  'Premium Coaches Portal for every coach on 16 to 30 teams — no per-team fee',
+  'Start here, or move up from Club when you pass 15 teams',
+];
 
 const CROSS_SELLS: Array<{
   label: string;
@@ -53,15 +66,44 @@ const CROSS_SELLS: Array<{
   },
 ];
 
+/**
+ * W29 open: the Coaches Portal cross-sell says what Club gives every coach; the Tournament one leaves (Club includes
+ * tournaments, and "before Club opens" no longer exists). The bring-in sentence keeps W22's closed words until the
+ * coach-into-Club move is proved on production (Ask 13).
+ */
+const OPEN_CROSS_SELL = {
+  label: 'Coaches Portal',
+  q: 'Do your coaches need their own portal?',
+  // `/legal` 2026-11-20: the move is the coach's own step, and their plan ends at once (no refund; the team move's words).
+  body: 'Every coach on your staff gets the Premium Coaches Portal with Club — every team included, no per-team fee. A coach who already has a standalone portal can move their team in; their own plan then ends and they aren’t charged for it again.',
+  cta: 'See the Coaches Portal',
+  href: '/for-coaches',
+};
+
 export default async function ForClubsPage() {
-  // The live gate, per request (on-sale pages S1). Club's open state is S3; this page shows Club's closed words.
-  const teamCheckoutOpen = isPlanOpen(await getPlanGatingMap(), 'team');
+  // The live gate, per request (on-sale pages S1). Club's open state is S3: every line below that changes reads Club's
+  // own gate (Club · Association's card reads its own).
+  const gatingMap = await getPlanGatingMap();
+  const teamCheckoutOpen = isPlanOpen(gatingMap, 'team');
+  const clubOpen = isPlanOpen(gatingMap, 'club');
+  const clubLargeOpen = isPlanOpen(gatingMap, 'club_large');
+  // The trial sentence with the length checkout will use (a platform admin can override it); none for a 0-day trial.
+  const overrides = await getPlanConfigOverrides();
+  const clubTrialDays = overrides.club.trialDays;
+  const clubTrial = clubTrialDays > 0 ? planTrialLine(clubTrialDays) : null;
+  const clubLargeTrial = overrides.club_large.trialDays > 0 ? planTrialLine(overrides.club_large.trialDays) : null;
+  // A button that names a trial needs the trial (`/accounting` 2026-11-20).
+  const clubCta = clubTrial ? 'Start your Club trial' : 'Start Club';
+  const clubLargeCta = clubLargeTrial ? 'Start your Club · Association trial' : 'Start Club · Association';
+  const startHref = (plan: 'club' | 'club_large') => withStartPricing(START_PATH_FOR_PLAN[plan], parseStartPricing(plan, 'monthly'));
   const showSandboxDoor = sandboxDoorsVisible();
-  const crossSells = CROSS_SELLS.map(cs =>
-    cs.label === 'Coaches Portal' && teamCheckoutOpen
-      ? { ...cs, href: '/for-coaches', cta: 'See the Coaches Portal' }
-      : cs,
-  );
+  const crossSells = clubOpen
+    ? [OPEN_CROSS_SELL]
+    : CROSS_SELLS.map(cs =>
+      cs.label === 'Coaches Portal' && teamCheckoutOpen
+        ? { ...cs, href: '/for-coaches', cta: 'See the Coaches Portal' }
+        : cs,
+    );
   return (
     <main className={kit.page}>
 
@@ -78,28 +120,38 @@ export default async function ForClubsPage() {
             Coaches operate independently — you keep full visibility without owning every task.
           </p>
           <div className={`${kit.row} ${fp.heroRow}`}>
-            <EarlyAccessModalTrigger
-              className={kit.btn}
-              initialPlanInterest={['club']}
-              initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
-            >
-              {interestButtonLabel(['club'])}
-            </EarlyAccessModalTrigger>
+            {clubOpen ? (
+              // W23 open: the Club start (S2's door), with the pick.
+              <Link href={startHref('club')} className={kit.btn}>{clubCta}</Link>
+            ) : (
+              <EarlyAccessModalTrigger
+                className={kit.btn}
+                initialPlanInterest={['club']}
+                initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
+              >
+                {interestButtonLabel(['club'])}
+              </EarlyAccessModalTrigger>
+            )}
             <Link href="/for-tournament-organizers" className={`${kit.link} ${kit.linkBlock}`}>
               Running a tournament? See tournament plans
             </Link>
           </div>
-          <p className={kit.small}>
-            {/* W23 closed: "Club is in development" was not the canon sentence. */}
-            <span className={fp.noteStrong}>{gatedPlanTag('club')}</span>
-            {' '}— it isn&apos;t open for sign-up yet.{' '}
-            {teamCheckoutOpen
-              ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are live today.'
-              : 'Tournament and Tournament Plus are live today.'}
-          </p>
+          {clubOpen ? (
+            clubTrial && <p className={kit.small}>{clubTrial}</p>
+          ) : (
+            <p className={kit.small}>
+              {/* W23 closed: "Club is in development" was not the canon sentence. */}
+              <span className={fp.noteStrong}>{gatedPlanTag('club')}</span>
+              {' '}— it isn&apos;t open for sign-up yet.{' '}
+              {teamCheckoutOpen
+                ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are live today.'
+                : 'Tournament and Tournament Plus are live today.'}
+            </p>
+          )}
           <div className={fp.afterNote}>
             <ul className={kit.facts}>
-              {['No long-term contract — cancel any time', 'Billed in CAD', 'Upgrade or downgrade at any time'].map(s => (
+              {/* `/legal` 2026-11-20: open, the line says the one change a Club buyer can make. */}
+              {['No long-term contract — cancel any time', 'Billed in CAD', clubOpen ? 'Move between Club and Club · Association when you need to' : 'Upgrade or downgrade at any time'].map(s => (
                 <li key={s}>{s}</li>
               ))}
             </ul>
@@ -107,28 +159,45 @@ export default async function ForClubsPage() {
         </div>
       </section>
 
-      {/* ── Both halves are live today (owner-ratified 2026-08-10) ───────────
-          The club executive is the one persona genuinely interested in BOTH demos — their
-          coming-soon page becomes proof-by-parts. Renders only while the doors are on; a door
-          pattern must never appear anywhere it would promise a demo that doesn't exist. */}
+      {/* ── The demo block (owner-ratified 2026-08-10) ───────────────────────
+          Renders only while the doors are on; a door pattern must never appear anywhere it would promise a demo that
+          doesn't exist. Closed: proof-by-parts, both halves. Open (W24, Ask 11): one coach's season inside a club, and
+          no promise of a club demo (none for launch, 2026-11-18). */}
       {showSandboxDoor && (
         <section className={kit.section}>
           <div className="container">
             <div className={`${kit.card} ${kit.cardEdge}`}>
-              <p className={kit.eyebrow}>Both halves are live today</p>
-              <p className={`${kit.body} ${fp.measure}`}>
-                Club bundles what&apos;s already running: tournaments and the Premium Coaches
-                Portal. Walk both right now — no sign-up — and express interest for the day
-                they&apos;re one product.
-              </p>
-              <div className={kit.row}>
-                <Link href={SEE_IT_LIVE_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
-                  See a live tournament
-                </Link>
-                <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
-                  See a coach&apos;s season
-                </Link>
-              </div>
+              {clubOpen ? (
+                <>
+                  <p className={kit.eyebrow}>A coach&apos;s season inside a club</p>
+                  <p className={`${kit.body} ${fp.measure}`}>
+                    Every coach on your staff works in the Premium Coaches Portal that comes with Club. This is one
+                    coach&apos;s season in a fictional club: roster, lineups, schedule and budget. No sign-up.
+                  </p>
+                  <div className={kit.row}>
+                    <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
+                      See a coach&apos;s season
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className={kit.eyebrow}>Both halves are live today</p>
+                  <p className={`${kit.body} ${fp.measure}`}>
+                    Club bundles what&apos;s already running: tournaments and the Premium Coaches
+                    Portal. Walk both right now — no sign-up — and express interest for the day
+                    they&apos;re one product.
+                  </p>
+                  <div className={kit.row}>
+                    <Link href={SEE_IT_LIVE_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
+                      See a live tournament
+                    </Link>
+                    <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
+                      See a coach&apos;s season
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -184,24 +253,40 @@ export default async function ForClubsPage() {
           <p className={kit.eyebrow}>The plan</p>
           <h2 className={kit.heading}>Club — the complete operating system.</h2>
           <p className={`${kit.body} ${fp.measure}`}>
-            {/* W25 closed: "finishing its final workflows" was the retired imminence framing. */}
-            {gatedPlanSentence('club')} {GATED_PLAN_INTEREST_LINE}
+            {clubOpen
+              // W25 open.
+              // `/marketing` 2026-11-20: the count is the teams given a Premium portal (BUSINESS_DECISIONS 2026-11-19).
+              ? 'Pick the Club plan by how many teams will have a Premium Coaches Portal: up to 15, or up to 30 on Club · Association. House league teams are unlimited.'
+              /* W25 closed: "finishing its final workflows" was the retired imminence framing. */
+              : `${gatedPlanSentence('club')} ${GATED_PLAN_INTEREST_LINE}`}
           </p>
           <div className={`${fp.planGrid} ${fp.gridTop}`}>
 
             {/* ── Club plan ──────────────────────────────────────────────── */}
             <div className={`${kit.card} ${kit.cardFeatured} ${kit.stack}`}>
               <div>
-                <p className={kit.title}>Club</p>
+                {/* The status pill on the card's first line, on the right (one place for the pill, owner 2026-11-19). */}
+                <div className={fp.cardFirstLine}>
+                  <p className={kit.title}>Club</p>
+                  {!clubOpen && <span className={kit.tag}>{gatedPlanTag('club')}</span>}
+                </div>
                 <div className={fp.priceRow}>
                   <span className={kit.price}>{formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}</span>
                   <span className={kit.small}>/month</span>
                 </div>
-                <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.club.annualPrice)}/year — save two months · priced by the teams you give a Premium Coaches Portal (up to 15 · up to 30 on Club · Association)</p>
+                {/* W26 open: the tax line under a price the buyer will be charged; a closed price carries none. */}
+                {clubOpen && <p className={kit.small}>{BILLING_TAX_WORDS.plusTax}</p>}
+                <p className={kit.small}>
+                  {formatPriceAmount(PLAN_CONFIG.club.annualPrice)}/year — save two months ·{' '}
+                  {/* W26 open: Club · Association has its own card beside it, so the pointer goes. */}
+                  {clubOpen && clubLargeOpen
+                    ? 'up to 15 teams'
+                    : 'priced by the teams you give a Premium Coaches Portal (up to 15 · up to 30 on Club · Association)'}
+                </p>
                 <p className={kit.small}>Rep, select, all-star, travel: whatever you call them. House league teams are unlimited. Archived teams and teams entered in your tournaments aren&apos;t counted.</p>
+                {clubOpen && clubTrial && <p className={kit.small}>{clubTrial}</p>}
               </div>
-              <p><span className={kit.tag}>{gatedPlanTag('club')}</span></p>
-              <p className={kit.body}>
+              <p className={`${kit.body} ${fp.planCopyTop}`}>
                 The complete operating system for established clubs — tournaments, house league,
                 rep teams, accounting, and coaching staff, all in one place.
               </p>
@@ -214,41 +299,79 @@ export default async function ForClubsPage() {
                 </ul>
               </div>
               <div className={kit.push}>
-                <EarlyAccessModalTrigger
-                  className={`${kit.btn} ${kit.btnFull}`}
-                  initialPlanInterest={['club']}
-                  initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
-                >
-                  {interestButtonLabel()}
-                </EarlyAccessModalTrigger>
+                {clubOpen ? (
+                  <Link href={startHref('club')} className={`${kit.btn} ${kit.btnFull}`}>{clubCta}</Link>
+                ) : (
+                  <EarlyAccessModalTrigger
+                    className={`${kit.btn} ${kit.btnFull}`}
+                    initialPlanInterest={['club']}
+                    initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
+                  >
+                    {interestButtonLabel()}
+                  </EarlyAccessModalTrigger>
+                )}
               </div>
             </div>
 
-            {/* ── Start with Tournament while you wait ───────────────────── */}
-            <div className={`${kit.card} ${kit.stack}`}>
-              <p className={kit.eyebrow}>Start now</p>
-              <p className={kit.title}>
-                Running a tournament this year? Get your org on the platform today.
-              </p>
-              <p className={kit.body}>
-                Tournament and Tournament Plus are live now. Start with your next event —
-                your org is already set up on FieldLogicHQ when Club opens, with no data
-                to migrate.
-              </p>
-              <div className={fp.tagRow}>
-                {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo ${BILLING_TAX_WORDS.plusTax}`].map(p => (
-                  <span key={p} className={kit.tag}>{p}</span>
-                ))}
+            {clubLargeOpen ? (
+              /* ── W27: the Club · Association card, beside Club ─────────────── */
+              <div className={`${kit.card} ${kit.stack}`}>
+                <div>
+                  <p className={kit.title}>Club · Association</p>
+                  <div className={fp.priceRow}>
+                    <span className={kit.price}>{formatPriceAmount(PLAN_CONFIG.club_large.monthlyPrice)}</span>
+                    <span className={kit.small}>/month</span>
+                  </div>
+                  <p className={kit.small}>{BILLING_TAX_WORDS.plusTax}</p>
+                  <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.club_large.annualPrice)}/year — save two months · 16 to 30 teams</p>
+                  {clubLargeTrial && <p className={kit.small}>{clubLargeTrial}</p>}
+                </div>
+                <p className={`${kit.body} ${fp.planCopyTop}`}>The full Club platform for organizations with 16 to 30 teams.</p>
+                <div>
+                  <p className={kit.subhead}>Included</p>
+                  <ul className={kit.ticks}>
+                    {CLUB_LARGE_FEATURES.map(f => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className={kit.push}>
+                  <Link href={startHref('club_large')} className={`${kit.btn} ${kit.btnSecondary} ${kit.btnFull}`}>
+                    {clubLargeCta}
+                  </Link>
+                  {/* W5: a quote above the top band — an email, never "talk to us", never the interest form. */}
+                  <p className={`${kit.small} ${fp.quietLine}`}>
+                    More than 30 teams? Email {FIELDLOGICHQ_CONTACT_EMAIL} for a custom quote.
+                  </p>
+                </div>
               </div>
-              <div className={kit.push}>
-                <Link
-                  href="/for-tournament-organizers"
-                  className={`${kit.btn} ${kit.btnSecondary} ${kit.btnFull}`}
-                >
-                  See tournament plans
-                </Link>
+            ) : !clubOpen && (
+              /* ── Start with Tournament while you wait (W28: it leaves once Club is open — Club includes tournaments) ── */
+              <div className={`${kit.card} ${kit.stack}`}>
+                <p className={kit.eyebrow}>Start now</p>
+                <p className={kit.title}>
+                  Running a tournament this year? Get your org on the platform today.
+                </p>
+                <p className={kit.body}>
+                  Tournament and Tournament Plus are live now. Start with your next event —
+                  your org is already set up on FieldLogicHQ when Club opens, with no data
+                  to migrate.
+                </p>
+                <div className={fp.tagRow}>
+                  {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo ${BILLING_TAX_WORDS.plusTax}`].map(p => (
+                    <span key={p} className={kit.tag}>{p}</span>
+                  ))}
+                </div>
+                <div className={kit.push}>
+                  <Link
+                    href="/for-tournament-organizers"
+                    className={`${kit.btn} ${kit.btnSecondary} ${kit.btnFull}`}
+                  >
+                    See tournament plans
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
 
           </div>
           <p className={fp.afterCards}>
@@ -256,14 +379,19 @@ export default async function ForClubsPage() {
               See every plan and price
             </Link>
           </p>
+          {/* Who can buy (Ask 15), once a club can. */}
+          {clubOpen && <p className={kit.small}>{PLAN_AVAILABILITY_LINE}</p>}
         </div>
       </section>
+
+      {/* ── How the trial works (W68, Ask 27): a disclosure, while Club is open and its trial exists ─────── */}
+      {clubOpen && clubTrial && <HowTheTrialWorks who="club" trialLine={clubTrial} />}
 
       {/* ── Cross-sell ───────────────────────────────────────────────────── */}
       <section className={kit.section}>
         <div className="container">
           <p className={kit.eyebrow}>More from FieldLogicHQ</p>
-          <div className={`${kit.grid2} ${fp.gridTop}`}>
+          <div className={`${crossSells.length > 1 ? kit.grid2 : ''} ${fp.gridTop}`}>
             {crossSells.map(cs =>
               cs.href ? (
                 <Link key={cs.label} href={cs.href} className={`${kit.card} ${fp.crossCard}`}>
@@ -276,8 +404,8 @@ export default async function ForClubsPage() {
                 <EarlyAccessModalTrigger
                   key={cs.label}
                   className={`${kit.card} ${fp.crossCard}`}
-                  initialPlanInterest={cs.initialPlanInterest}
-                  initialFeaturesInterested={cs.initialFeaturesInterested}
+                  initialPlanInterest={'initialPlanInterest' in cs ? cs.initialPlanInterest : undefined}
+                  initialFeaturesInterested={'initialFeaturesInterested' in cs ? cs.initialFeaturesInterested : undefined}
                 >
                   <span className={kit.eyebrow}>{cs.label}</span>
                   <span className={kit.title}>{cs.q}</span>
@@ -297,22 +425,37 @@ export default async function ForClubsPage() {
             The whole club,{' '}
             <span className={kit.accent}>one platform.</span>
           </h2>
-          <p className={kit.lead}>
-            {/* W30 closed: the canon interest line. */}
-            {GATED_PLAN_INTEREST_LINE} Running a tournament now? Start free today.
-          </p>
-          <div className={kit.row}>
-            <EarlyAccessModalTrigger
-              className={kit.btn}
-              initialPlanInterest={['club']}
-              initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
-            >
-              {interestButtonLabel(['club'])}
-            </EarlyAccessModalTrigger>
-            <Link href="/start/tournament" className={`${kit.btn} ${kit.btnSecondary}`}>
-              Start free with Tournament
-            </Link>
-          </div>
+          {clubOpen ? (
+            /* W30 open (Ask 33): one button; "Start free with Tournament" leaves — Club includes tournaments. */
+            <>
+              <p className={kit.lead}>Pick the Club plan that fits and start today.</p>
+              <div className={kit.row}>
+                <Link href={startHref('club')} className={kit.btn}>{clubCta}</Link>
+              </div>
+              <div className={fp.afterNote}>
+                <Link href="/pricing#org-plans" className={`${kit.link} ${kit.linkBlock}`}>See every plan and price</Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className={kit.lead}>
+                {/* W30 closed: the canon interest line. */}
+                {GATED_PLAN_INTEREST_LINE} Running a tournament now? Start free today.
+              </p>
+              <div className={kit.row}>
+                <EarlyAccessModalTrigger
+                  className={kit.btn}
+                  initialPlanInterest={['club']}
+                  initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
+                >
+                  {interestButtonLabel(['club'])}
+                </EarlyAccessModalTrigger>
+                <Link href="/start/tournament" className={`${kit.btn} ${kit.btnSecondary}`}>
+                  Start free with Tournament
+                </Link>
+              </div>
+            </>
+          )}
           <div className={fp.afterNote}>
             <p className={kit.small}>All plans are billed in CAD. No long-term contract. No setup fees.</p>
           </div>

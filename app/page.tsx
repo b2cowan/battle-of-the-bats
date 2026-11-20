@@ -7,9 +7,12 @@ import PricingSection from '@/components/PricingSection';
 import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
 import type { OrgPlan } from '@/lib/types';
 import {
-  gatedPlanTag, closedProgramPlansSentence,
-  isPlanOpen, gatedPlanSentence, availableNowSentence, PLAN_AVAILABLE_NOW,
+  PLAN_CONFIG, formatPriceAmount, gatedPlanTag, closedProgramPlansSentence,
+  isPlanOpen, gatedPlanSentence, availableNowSentence, PLAN_AVAILABLE_NOW, PLAN_AVAILABILITY_WHO_ANYONE,
+  allProgramPlansOpen, anyProgramPlanOpen, PROGRAM_PLANS,
 } from '@/lib/plan-config';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
+import { getPlanConfigOverrides } from '@/lib/plan-config-db';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
@@ -89,7 +92,8 @@ const MODULE_CARDS: Array<{
     href: '/for-leagues',
     planKey: 'league',
     planLabel: 'League Plus',
-    liveBadge: null,
+    // W40 (on-sale pages S3): launched — /for-leagues reads the gate for its open state in the same unit of work.
+    liveBadge: PLAN_AVAILABLE_NOW,
     tagline: 'From first registration to final standings, in one dashboard.',
     features: [
       'Player registration and waitlist management',
@@ -106,7 +110,8 @@ const MODULE_CARDS: Array<{
     href: '/for-clubs',
     planKey: 'club',
     planLabel: 'Club',
-    liveBadge: null,
+    // W40 (on-sale pages S3): launched — /for-clubs reads the gate for its open state in the same unit of work.
+    liveBadge: PLAN_AVAILABLE_NOW,
     tagline: 'Your executive team gets visibility. Coaches run their own teams.',
     features: [
       'Tournaments, house league, and rep teams under one roof',
@@ -123,6 +128,8 @@ const STEPS = [
   {
     label: 'Set up your organization',
     desc: 'Create your organization and set up the tournament tools you need today. League Plus and Club modules can be added as they open.',
+    // W38: once every plan is on sale, nothing is waiting to open.
+    openDesc: 'Create your organization and set up the tools you need, from tournaments to house league and rep teams.',
   },
   {
     label: 'Open your programs',
@@ -175,20 +182,14 @@ const PLATFORM_BENEFITS = [
  * freeze the same way, and nobody would remember this comment in time.
  *
  * ⚠ `liveBadge: null` means "nobody has written what this card should say when it IS on sale", and
- * such a card **stays presented as coming-soon even once its gate opens**. That looks like the bug
- * this file just fixed, and it is deliberately not:
+ * such a card **stays presented as coming-soon even once its gate opens** — supplying `liveBadge` is
+ * the single deliberate act that launches a card, and whoever does it makes the destination page
+ * gate-aware in the same unit of work.
  *
- *   The homepage is not the only surface that speaks for a product. `/for-leagues` and `/for-clubs`
- *   hard-code "Coming soon" in their own copy — they do not read the gate the way `/for-coaches`
- *   does. So a card that went live the instant its gate flipped would send a visitor to a page still
- *   telling them the product isn't ready: the SAME contradiction, moved one click downstream. Given
- *   a choice between two inconsistencies, this one keeps the homepage and its destination agreeing.
- *
- *   Supplying `liveBadge` is therefore the single deliberate act that launches a card — and whoever
- *   does it must make the destination page gate-aware in the same unit of work. Until then the card
- *   is honest about being unavailable rather than dishonest about being available.
- *
- * Tracked in HOMEPAGE_TRUTH_AND_ENTRY_POINTS_PLAN.md; /marketing owes copy for both.
+ * League Plus and Club never get a door of their own (W60, on-sale pages S3): once either is on sale
+ * they share ONE door, "Running a league or a club?" (`LEAGUE_CLUB_DOOR`), with a link per open plan —
+ * a league board and a club board are the same buyer. A closed one stays on the roadmap row. Their
+ * destination pages (`/for-leagues`, `/for-clubs`) read the gate for their open state since S3.
  */
 type Persona = {
   id: string;
@@ -202,9 +203,24 @@ type Persona = {
   href: string;
 };
 
-/** The one line every not-yet-purchasable card shows — its plan's own tag (League Plus is parked, so
- *  "Not open yet"; everything else "Coming soon": BUSINESS_DECISIONS.md 2026-09-28). */
+/** The one line every not-yet-purchasable card shows — its plan's own tag ("Coming soon" for every closed plan since
+ *  2026-11-20). */
 const gatedBadge = (planKey: OrgPlan) => `${gatedPlanTag(planKey)} · express interest`;
+
+/**
+ * W60 (on-sale pages S3): the middle door, once League Plus or Club is on sale. No price on any door (the 2026-08-07
+ * ruling; Ask 24 A). Its links are the roadmap row's own labels, one per OPEN plan.
+ */
+const LEAGUE_CLUB_DOOR = {
+  id: 'leagues-and-clubs',
+  label: 'Leagues and clubs',
+  question: 'Running a league or a club?',
+  body: 'House league seasons, rep teams and the club’s books in one place, built for a volunteer board.',
+  links: [
+    { planKey: 'league' as OrgPlan, cta: 'I run a house league', href: '/for-leagues' },
+    { planKey: 'club' as OrgPlan, cta: 'I run a club with rep teams', href: '/for-clubs' },
+  ],
+};
 
 /**
  * Badge copy is /marketing's (2026-08-07) and deliberately carries NO price and NO promo date — the
@@ -302,11 +318,98 @@ export default async function HomePage({
   // the same single deliberate act that launches it — supplying its `liveBadge`.
   const personas = resolvePersonas(gatingMap);
   const livePersonas = personas.filter(p => p.isLive);
-  const roadmapPersonas = personas.filter(p => !p.isLive);
+  // W60: an open League Plus or Club joins the middle door, not the roadmap row; a closed one stays on the row.
+  const leagueClubLinks = LEAGUE_CLUB_DOOR.links.filter(l => isPlanOpen(gatingMap, l.planKey));
+  const roadmapPersonas = personas.filter(p => !p.isLive && !leagueClubLinks.some(l => l.planKey === p.planKey));
   const teamOpen = isPlanOpen(gatingMap, 'team');
   const closedPlansLine = closedProgramPlansSentence(gatingMap);
   const liveModules = MODULE_CARDS.filter(m => isPlanOpen(gatingMap, m.planKey) && m.liveBadge !== null);
   const roadmapModules = MODULE_CARDS.filter(m => !isPlanOpen(gatingMap, m.planKey) || m.liveBadge === null);
+  // The open-state home (W61, W39, W38): League Plus, Club and Club · Association all on sale. Until then the page keeps
+  // the plan grid and its strip (S1's closed state), with each open plan read from its own gate.
+  const programOpen = allProgramPlansOpen(gatingMap);
+  const everyPlanOpen = programOpen && teamOpen;
+  // W62: "Start free" is true while every door on /start is free; once a paid door is on the chooser, it is not.
+  const heroOpen = anyProgramPlanOpen(gatingMap);
+  // The trial length checkout will use, for the grid's trial sentences while it still shows (Ask 9).
+  const overrides = await getPlanConfigOverrides();
+  const trialDays = Object.fromEntries(PROGRAM_PLANS.map(p => [p, overrides[p].trialDays])) as Partial<Record<OrgPlan, number>>;
+  // W61: three price rows in place of the grid. Every price from PLAN_CONFIG; no price on any door (Ask 24 A).
+  const price = (plan: OrgPlan) => formatPriceAmount(PLAN_CONFIG[plan].monthlyPrice);
+  const priceRows = [
+    {
+      heading: 'Running a tournament',
+      line: `Tournament is free. Tournament Plus is ${price('tournament_plus')}/mo.`,
+      cta: 'See tournament plans',
+      href: '/pricing#tournament-plans',
+    },
+    {
+      heading: 'Running a league or a club',
+      line: `League Plus is ${price('league')}/mo. Club is ${price('club')}/mo for up to ${PLAN_CONFIG.club.teamLimit} teams with a Premium Coaches Portal, and Club · Association is ${price('club_large')}/mo for up to ${PLAN_CONFIG.club_large.teamLimit}.`,
+      cta: 'See league and club plans',
+      href: '/pricing#league-club-plans',
+    },
+    {
+      heading: 'Coaching one team',
+      // Premium only (owner 2026-11-19): "The Coaches Portal is free." left the row with the free portal's marketing.
+      line: `The Premium Coaches Portal is ${price('team')}/mo.`,
+      cta: 'See the Coaches Portal',
+      href: '/for-coaches',
+    },
+  ].filter(row => row.heading !== 'Coaching one team' || teamOpen); // each row only while its plans can be bought (`/accounting`)
+  // A live persona's door (tournament, coaches): one card, or two links when its product has a public demo.
+  function renderPersonaDoor(p: ReturnType<typeof resolvePersonas>[number]) {
+    const body = (
+      <>
+        <div className={styles.cardHead}>
+          <p className={`${kit.eyebrow} ${styles.flush}`}>{p.label}</p>
+          {/* Defensive only — `resolvePersonas` guarantees a string either way. Absent
+              rather than empty, so a future path that does yield no badge leaves no
+              stray element in the row. */}
+          {p.badge && <span className={kit.tag}>{p.badge}</span>}
+        </div>
+        <h3 className={kit.title}>{p.question}</h3>
+        <p className={`${kit.body} ${styles.grow}`}>{p.body}</p>
+      </>
+    );
+    const linkClass = `${kit.link} ${kit.linkBlock}`;
+
+    // The TWIN DOOR (owner-ratified 2026-08-10): every live persona whose product has
+    // a public demo carries a second, quieter link into it — proof one step after the
+    // claim, never competing with the ask. Two links cannot nest, so a doored card
+    // becomes a div and the persona link stretches over it (::after) to keep
+    // whole-card clickability. A persona with no demo gets no door — a door pattern
+    // on League/Club would promise a demo that does not exist.
+    const doorPath =
+      p.id === 'tournament' ? SEE_IT_LIVE_PATH
+      : p.id === 'coaches' ? SEE_IT_LIVE_COACHES_PATH
+      : null;
+    if (showSandboxDoor && doorPath) {
+      return (
+        <div key={p.id} className={`${kit.card} ${kit.stack} ${styles.doored}`}>
+          {body}
+          <div className={styles.links}>
+            <Link href={p.href} className={`${linkClass} ${styles.stretch}`}>
+              {p.cta}
+            </Link>
+            {/* One label for both worlds — the card's own title says which "it" you'll
+                see. Product-specific wording was considered and parked (2026-08-10). */}
+            <Link href={doorPath} className={`${linkClass} ${kit.live} ${styles.secondary}`}>
+              See it live — no sign-up
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Link key={p.id} href={p.href} className={`${kit.card} ${kit.stack} ${styles.whole}`}>
+        {body}
+        <span className={`${linkClass} ${styles.ctaText}`}>{p.cta}</span>
+      </Link>
+    );
+  }
+
   return (
     <div className={kit.page}>
       {/* ── Hero ──────────────────────────────────────────────────────── */}
@@ -321,64 +424,42 @@ export default async function HomePage({
           </p>
           {/* The page's one lime (design check D6, Ask 14): the first screen carries its own action. */}
           <div className={kit.row}>
-            <Link href="/start" className={kit.btn}>Start free</Link>
-            <Link href="/start" className={`${kit.link} ${kit.linkBlock}`}>Not sure? See your options</Link>
+            {heroOpen ? (
+              /* W62 open: two buttons, two destinations. */
+              <>
+                <Link href="/start" className={kit.btn}>Get started</Link>
+                <Link href="/pricing" className={`${kit.link} ${kit.linkBlock}`}>See plans and prices</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/start" className={kit.btn}>Start free</Link>
+                <Link href="/start" className={`${kit.link} ${kit.linkBlock}`}>Not sure? See your options</Link>
+              </>
+            )}
           </div>
         </div>
       </section>
 
       <div className={`container ${styles.doors}`}>
-        <div className={`${kit.grid2} ${styles.doorsGrid}`}>
-          {livePersonas.map((p) => {
-            const body = (
-              <>
+        <div className={`${livePersonas.length + (leagueClubLinks.length > 0 ? 1 : 0) >= 3 ? kit.grid3 : kit.grid2} ${styles.doorsGrid}`}>
+          {livePersonas.flatMap((p) => {
+            // W60: the league-and-club door sits second, between the tournament and coach doors (the bands' order).
+            const leagueClubDoor = p.id === 'tournament' && leagueClubLinks.length > 0 ? [(
+              <div key={LEAGUE_CLUB_DOOR.id} className={`${kit.card} ${kit.stack}`}>
                 <div className={styles.cardHead}>
-                  <p className={`${kit.eyebrow} ${styles.flush}`}>{p.label}</p>
-                  {/* Defensive only — `resolvePersonas` guarantees a string either way. Absent
-                      rather than empty, so a future path that does yield no badge leaves no
-                      stray element in the row. */}
-                  {p.badge && <span className={kit.tag}>{p.badge}</span>}
+                  <p className={`${kit.eyebrow} ${styles.flush}`}>{LEAGUE_CLUB_DOOR.label}</p>
+                  <span className={kit.tag}>{PLAN_AVAILABLE_NOW}</span>
                 </div>
-                <h3 className={kit.title}>{p.question}</h3>
-                <p className={`${kit.body} ${styles.grow}`}>{p.body}</p>
-              </>
-            );
-            const linkClass = `${kit.link} ${kit.linkBlock}`;
-
-            // The TWIN DOOR (owner-ratified 2026-08-10): every live persona whose product has
-            // a public demo carries a second, quieter link into it — proof one step after the
-            // claim, never competing with the ask. Two links cannot nest, so a doored card
-            // becomes a div and the persona link stretches over it (::after) to keep
-            // whole-card clickability. A persona with no demo gets no door — a door pattern
-            // on League/Club would promise a demo that does not exist.
-            const doorPath =
-              p.id === 'tournament' ? SEE_IT_LIVE_PATH
-              : p.id === 'coaches' ? SEE_IT_LIVE_COACHES_PATH
-              : null;
-            if (showSandboxDoor && doorPath) {
-              return (
-                <div key={p.id} className={`${kit.card} ${kit.stack} ${styles.doored}`}>
-                  {body}
-                  <div className={styles.links}>
-                    <Link href={p.href} className={`${linkClass} ${styles.stretch}`}>
-                      {p.cta}
-                    </Link>
-                    {/* One label for both worlds — the card's own title says which "it" you'll
-                        see. Product-specific wording was considered and parked (2026-08-10). */}
-                    <Link href={doorPath} className={`${linkClass} ${kit.live} ${styles.secondary}`}>
-                      See it live — no sign-up
-                    </Link>
-                  </div>
+                <h3 className={kit.title}>{LEAGUE_CLUB_DOOR.question}</h3>
+                <p className={`${kit.body} ${styles.grow}`}>{LEAGUE_CLUB_DOOR.body}</p>
+                <div className={styles.links}>
+                  {leagueClubLinks.map(l => (
+                    <Link key={l.href} href={l.href} className={`${kit.link} ${kit.linkBlock}`}>{l.cta}</Link>
+                  ))}
                 </div>
-              );
-            }
-
-            return (
-              <Link key={p.id} href={p.href} className={`${kit.card} ${kit.stack} ${styles.whole}`}>
-                {body}
-                <span className={`${linkClass} ${styles.ctaText}`}>{p.cta}</span>
-              </Link>
-            );
+              </div>
+            )] : [];
+            return [renderPersonaDoor(p), ...leagueClubDoor];
           })}
         </div>
 
@@ -407,21 +488,27 @@ export default async function HomePage({
             <p className={`${kit.body} ${styles.sub}`}>
               {/* W39 closed (ruled 2026-11-18): "in active development" was imminence; each closed plan says its one
                   canon sentence, from the gate. */}
-              {[
-                teamOpen
-                  ? 'Tournament organizers and coaches can start today. Tournament is free, with no credit card required.'
-                  : `Tournament organizers can start today — free, no credit card required. ${gatedPlanSentence('team')}`,
-                closedPlansLine,
-              ].filter(Boolean).join(' ')}
+              {everyPlanOpen
+                // W39 open.
+                ? 'Tournament organizers, coaches, house leagues and clubs can start today. Tournament is free — no credit card required.'
+                : [
+                    teamOpen
+                      ? 'Tournament organizers and coaches can start today. Tournament is free, with no credit card required.'
+                      : `Tournament organizers can start today — free, no credit card required. ${gatedPlanSentence('team')}`,
+                    closedPlansLine,
+                  ].filter(Boolean).join(' ')}
             </p>
           </div>
           {/* Live roles: the full deep-dive. */}
           <div className={kit.grid2}>
             {liveModules.map((mod) => (
               <div key={mod.id} className={`${kit.card} ${kit.stack}`}>
-                <p className={styles.tagRow}>
-                  <span className={kit.tag}>{mod.planLabel} · {mod.liveBadge}</span>
-                </p>
+                {/* The one place for the pill (owner 2026-11-19): the plan as the small label on the left, its
+                    availability on the right, as on the doors above and the roadmap cards below (`/design` S3). */}
+                <div className={styles.cardHead}>
+                  <p className={`${kit.eyebrow} ${styles.flush}`}>{mod.planLabel}</p>
+                  <span className={kit.tag}>{mod.liveBadge}</span>
+                </div>
                 <h3 className={kit.title}>{mod.name}</h3>
                 <p className={kit.body}>{mod.tagline}</p>
                 <ul className={`${kit.ticks} ${styles.grow}`}>
@@ -470,11 +557,11 @@ export default async function HomePage({
             </p>
           </div>
           <div className={kit.grid3}>
-            {STEPS.map(({ label, desc }, i) => (
+            {STEPS.map(({ label, desc, openDesc }, i) => (
               <div key={label} className={`${kit.card} ${kit.cardFlat}`}>
                 <p className={kit.counter}>Step {i + 1}</p>
                 <h3 className={`${kit.subhead} ${styles.stepTitle}`}>{label}</h3>
-                <p className={kit.small}>{desc}</p>
+                <p className={kit.small}>{(programOpen && openDesc) || desc}</p>
               </div>
             ))}
           </div>
@@ -488,18 +575,36 @@ export default async function HomePage({
             <p className={kit.eyebrow}>Pricing</p>
             <h2 className={kit.heading}>Plans built for how you operate.</h2>
             <p className={`${kit.body} ${styles.sub}`}>
+              {/* W42: each plan is named only while open, so the sentence widens as plans open. */}
               {[
-                availableNowSentence(gatingMap, ['tournament', 'tournament_plus', 'team']),
+                availableNowSentence(gatingMap, ['tournament', 'tournament_plus', 'league', 'club', 'club_large', 'team']),
                 closedPlansLine,
               ].filter(Boolean).join(' ')}
             </p>
           </div>
 
-          <PricingSection gatingMap={gatingMap} marketingLayout plusTax />
+          {programOpen ? (
+            /* W61 open: three price rows in place of the grid (six cards are ~5,000px on a phone; /pricing holds them),
+               and ONE tax line in the same container (`/accounting`: shown only when all three plans are open). */
+            <div className={`${kit.card} ${styles.priceRows}`}>
+              {priceRows.map(row => (
+                <div key={row.heading} className={styles.priceRow}>
+                  <h3 className={`${kit.subhead} ${styles.flush}`}>{row.heading}</h3>
+                  <p className={`${kit.body} ${styles.flush}`}>{row.line}</p>
+                  <Link href={row.href} className={`${kit.link} ${kit.linkBlock}`}>{row.cta}</Link>
+                </div>
+              ))}
+              <p className={`${kit.small} ${styles.priceRowsTax}`}>
+                Prices are in Canadian dollars, {BILLING_TAX_WORDS.plusTax}. {PLAN_AVAILABILITY_WHO_ANYONE}
+              </p>
+            </div>
+          ) : (
+            <PricingSection gatingMap={gatingMap} marketingLayout plusTax trialDays={trialDays} />
+          )}
 
           <p className={styles.after}>
             <Link href="/pricing" className={`${kit.btn} ${kit.btnSecondary}`}>
-              Compare all plans in detail
+              {programOpen ? 'See every plan and price' : 'Compare all plans in detail'}
             </Link>
           </p>
         </div>

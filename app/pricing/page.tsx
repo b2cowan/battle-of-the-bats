@@ -3,13 +3,15 @@ import ViewerAwarePlans from './ViewerAwarePlans';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { getPlanConfigOverride } from '@/lib/plan-config-db';
+import { getPlanConfigOverrides } from '@/lib/plan-config-db';
 import {
   PLAN_CONFIG, formatPriceAmount, closedProgramPlansSentence,
-  isPlanOpen, interestButtonLabel, gatedPlanSentence, gatedPlanTag, closedPlansGroupTag, availableNowSentence,
-  GATED_PLAN_INTEREST_LINE, PLAN_AVAILABLE_NOW,
+  isPlanOpen, interestButtonLabel, gatedPlanSentence, closedPlansGroupTag, availableNowSentence,
+  GATED_PLAN_INTEREST_LINE, PLAN_AVAILABLE_NOW, allProgramPlansOpen, anyProgramPlanOpen, PROGRAM_PLANS,
 } from '@/lib/plan-config';
 import { planTrialLine } from '@/lib/plan-trial-line';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
+import type { OrgPlan } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS } from '@/lib/sports';
 import kit from '@/components/marketing/MarketingKit.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
@@ -82,6 +84,29 @@ const BUYER_SEGMENTS: Array<{
   },
 ];
 
+/**
+ * W59 (on-sale pages S3): with League Plus, Club and Club · Association all on sale the picker has three doors, in the
+ * bands' order, each jumping to its band. While one is closed the four-door picker above stays ("live products lead"
+ * still orders it). The coach door names Premium only (owner 2026-11-19: no marketing door sells the free portal).
+ */
+const THREE_DOORS: typeof BUYER_SEGMENTS = [
+  { ...BUYER_SEGMENTS[0], href: '#tournament-plans' },
+  {
+    eyebrow: 'League or club board',
+    title: 'I run a league or a club.',
+    body: 'House league seasons, rep teams and the club’s books, run by a volunteer board.',
+    cta: 'See league and club plans',
+    href: '#league-club-plans',
+  },
+  {
+    eyebrow: 'Coach or team manager',
+    title: 'I coach one team.',
+    body: BUYER_SEGMENTS[1].body,
+    cta: 'See the Coaches Portal',
+    href: '#coach-plans',
+  },
+];
+
 
 const UPGRADE_BRIDGES = [
   {
@@ -107,6 +132,7 @@ const UPGRADE_BRIDGES = [
     label: 'House league administrators',
     cta: interestButtonLabel(['league']),
     earlyAccess: true,
+    closedPlan: 'league' as const,
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
   },
@@ -119,6 +145,7 @@ const UPGRADE_BRIDGES = [
     label: 'Club executives',
     cta: interestButtonLabel(['club']),
     earlyAccess: true,
+    closedPlan: 'club' as const,
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
   },
@@ -191,32 +218,121 @@ export default async function PricingPage() {
   const teamCheckoutOpen = isPlanOpen(gatingMap, 'team');
   // Read from the live gate — the typed coming-soon line for both plans outlived the League park (2026-09-28).
   const closedPlansLine = closedProgramPlansSentence(gatingMap);
-  // "Tournament, Tournament Plus, and the Premium Coaches Portal are available now." from the gate (W8, W15).
-  const liveLine = availableNowSentence(gatingMap, ['tournament', 'tournament_plus', 'team']);
-  const closedGroupTag = closedPlansGroupTag(gatingMap) ?? gatedPlanTag('league');
-  // The length checkout will use (a platform admin can override it), for Tournament Plus's trial sentence (Ask 31).
+  // "Tournament, Tournament Plus, and the Premium Coaches Portal are available now." from the gate (W8, W15): every plan
+  // is named only while open, so the list widens as plans open rather than being retyped (S3).
+  const liveLine = availableNowSentence(gatingMap, ['tournament', 'tournament_plus', 'league', 'club', 'club_large', 'team']);
+  // null once League Plus and Club are both open: the "what they cover" section then does not render (W13).
+  const closedGroupTag = closedPlansGroupTag(gatingMap);
+  // The open-state layout (W59, W21, the FAQ's open answers): League Plus, Club and Club · Association all on sale.
+  const programOpen = allProgramPlansOpen(gatingMap);
+  const everyPlanOpen = programOpen && teamCheckoutOpen;
+  // League Plus and Club, whichever is still closed: the interest doors offer only those (Ask 5, W55).
+  const closedProgram = (['league', 'club'] as OrgPlan[]).filter(p => !isPlanOpen(gatingMap, p));
+  // One or two of the three on sale: the closed answers that would call an open plan "shown here" are rebuilt (`/review`).
+  const partialFlip = anyProgramPlanOpen(gatingMap) && !programOpen;
+  // The length checkout will use, per plan (a platform admin can override it), for every trial sentence (Ask 9, Ask 31).
   // No sentence for a trial of 0 days (a platform admin can switch the trial off): no "0-day trial".
-  const tpTrialDays = (await getPlanConfigOverride('tournament_plus')).trialDays;
-  const tpTrialLine = tpTrialDays > 0 ? planTrialLine(tpTrialDays) : null;
+  const overrides = await getPlanConfigOverrides();
+  const trialDays: Partial<Record<OrgPlan, number>> = Object.fromEntries(
+    (['tournament_plus', ...PROGRAM_PLANS] as OrgPlan[]).map(p => [p, overrides[p].trialDays]),
+  );
+  const trialLineOf = (plan: OrgPlan) => ((trialDays[plan] ?? 0) > 0 ? planTrialLine(trialDays[plan]!) : null);
+  const tpTrialLine = trialLineOf('tournament_plus');
+  // "League Plus: {leagueTrialLine} Club and Club · Association: {clubTrialLine}" (W15, W16, W18), each half only while
+  // its trial exists.
+  // The two Club bands share one sentence while their lengths agree; an override can split them (`/accounting` 2026-11-20).
+  const clubBandsTrialLines = trialLineOf('club') === trialLineOf('club_large')
+    ? [trialLineOf('club') && `Club and Club · Association: ${trialLineOf('club')}`]
+    : [trialLineOf('club') && `Club: ${trialLineOf('club')}`, trialLineOf('club_large') && `Club · Association: ${trialLineOf('club_large')}`];
+  const programTrialLines = [
+    trialLineOf('league') && `League Plus: ${trialLineOf('league')}`,
+    ...clubBandsTrialLines,
+  ].filter(Boolean).join(' ');
   const teamPrice = formatPriceAmount(PLAN_CONFIG.team.monthlyPrice);
-
   // The static segment/FAQ copy is written for the GATED state; when the team checkout is
   // open (Coaches Portal launch), the coach-facing entries flip to live availability so the
   // page can't contradict PLAN_PRICING_FACTS.md (Premium Coaches Portal: live, self-serve).
-  const segments = BUYER_SEGMENTS.map(segment =>
-    segment.initialPlanInterest?.[0] === 'coaches_portal' && teamCheckoutOpen
-      ? {
-          ...segment,
-          earlyAccess: false,
-          href: '/coaches/start?source=pricing',
-          cta: 'Start now',
+  const segments = programOpen
+    // The coach door jumps to its band, which renders while Premium is on sale; closed, it goes to the coach page.
+    ? THREE_DOORS.map(door => (door.href === '#coach-plans' && !teamCheckoutOpen ? { ...door, href: '/for-coaches' } : door))
+    : BUYER_SEGMENTS.map(segment => {
+        if (segment.initialPlanInterest?.[0] === 'coaches_portal' && teamCheckoutOpen) {
+          return { ...segment, earlyAccess: false, href: '/coaches/start?source=pricing', cta: 'Start now' };
         }
-      : segment,
-  );
+        // W9 (League Plus open while Club is not): the door leads to the page that carries the plan card and its terms.
+        if (segment.initialPlanInterest?.[0] === 'league' && isPlanOpen(gatingMap, 'league')) {
+          return { ...segment, earlyAccess: false, href: '/for-leagues', cta: 'See what League Plus includes' };
+        }
+        return segment;
+      });
+  // W75: a bridge card for League Plus or Club repeats its band once that plan is open, so it leaves; the Tournament Plus
+  // bridge stays. A closed plan's bridge keeps its closed words (W11, W12).
+  const bridges = UPGRADE_BRIDGES.filter(b => !b.closedPlan || !isPlanOpen(gatingMap, b.closedPlan));
   // W14, W15 (closed words, ruled 2026-11-18): each closed plan says its one canon sentence and the interest line;
   // nothing promises a plan's timing ("the next parts of the platform") or invites "plan ahead and express interest".
   const closedTail = closedPlansLine ? ` ${closedPlansLine} ${GATED_PLAN_INTEREST_LINE}` : '';
-  const faqs = FAQS.map(faq => {
+  const faqs = FAQS.flatMap(faq => {
+    // The open answers (W14 to W20): League Plus, Club and Club · Association on sale. A partial flip keeps the closed
+    // answers, each closed plan saying its own sentence from the gate.
+    if (programOpen) {
+      const open = openAnswer(faq);
+      if (open) return open;
+    }
+    return [closedAnswer(faq)];
+  });
+
+  function openAnswer(faq: typeof FAQS[number]): typeof FAQS | null {
+    switch (faq.q) {
+      case 'Is the platform only for tournaments?':
+        return everyPlanOpen
+          ? [{ ...faq, a: 'No. Tournament, Tournament Plus, League Plus, Club, Club · Association, and the Premium Coaches Portal are all available now: tournaments, house league seasons, rep teams, accounting, and a workspace for one competitive team.' }]
+          : null;
+      case 'Can I buy League Plus, Club, or the Coaches Portal today?':
+        return [{
+          q: 'How do I buy League Plus, Club, or Club · Association?',
+          a: `Choose the plan above, create your account, name your club or league, and check out. ${programTrialLines}`.trim(),
+        }];
+      case 'How does billing work?':
+        return [{ ...faq, a: `${faq.a.replace('Tournament Plus is billed monthly', 'Every paid plan is billed monthly')} ${programTrialLines}`.trim() }];
+      case 'Can I change plans later?':
+        // W17, as `/legal` corrected it (2026-11-20): "Yes, at any time" is false for League Plus, which changes to no
+        // other plan yet (lib/plan-move-options.ts has no League Plus row). Each sentence is a move the product makes.
+        return [{ ...faq, a: 'It depends on the plan. A free Tournament organization can start Tournament Plus at any time. Tournament Plus can move up to Club or Club · Association, and Club to Club · Association, at any time: you see the prorated charge before you confirm, and a move doesn\'t start a second trial. Moving from Club · Association down to Club waits for your next renewal, and needs 15 or fewer teams with a Premium Coaches Portal. League Plus can\'t be moved to another plan yet.' }];
+      case 'Do I need a credit card to get started?':
+        return [{ ...faq, a: `${faq.a} ${programTrialLines}`.trim() }];
+      case 'Is there a setup fee or onboarding cost?':
+        return [{ ...faq, a: 'No. There are no setup fees, implementation costs, or onboarding charges. You sign up, create your organization, and start using your plan\'s tools. Help articles cover every setup step.' }];
+      case 'How does the team limit on Club work?':
+        // W20 joins after the team-limit answer, where the question gets asked. Its count follows the 2026-11-19 ruling
+        // (the teams given a Premium Coaches Portal; house league teams unlimited), which the team-limit answer above says.
+        return [faq, {
+          q: 'Which Club plan do I need?',
+          a: `Club covers up to 15 teams with a Premium Coaches Portal and Club · Association up to 30. You don't need League Plus first: a club with rep teams starts on Club. Start on the one that fits today; you can move up at any time and you see the prorated charge before you confirm. More than 30 teams? Email ${FIELDLOGICHQ_CONTACT_EMAIL} for a custom quote.`,
+        }];
+      default:
+        return null;
+    }
+  }
+
+  function closedAnswer(faq: typeof FAQS[number]): typeof FAQS[number] {
+    // A partial flip (`/review` S3): once one programme plan is on sale, the two answers that say League Plus and Club
+    // are only "shown here" or "not through self-serve checkout yet" are built from the gate instead.
+    if (partialFlip && faq.q === 'Is the platform only for tournaments?') {
+      return { ...faq, a: `No. ${liveLine ?? ''} ${closedPlansLine ?? ''}`.replace(/\s+/g, ' ').trim() };
+    }
+    if (partialFlip && faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {
+      return {
+        ...faq,
+        a: [
+          availableNowSentence(gatingMap, ['league', 'club', 'club_large']),
+          programTrialLines,
+          teamCheckoutOpen
+            ? `The Premium Coaches Portal is available now through self-serve checkout at ${teamPrice}/month ${BILLING_TAX_WORDS.plusTax}.`
+            : gatedPlanSentence('team'),
+          closedTail.trim(),
+        ].filter(Boolean).join(' '),
+      };
+    }
     if (faq.q === 'Is the platform only for tournaments?') {
       return {
         ...faq,
@@ -242,7 +358,7 @@ export default async function PricingPage() {
       };
     }
     return faq;
-  });
+  }
 
   return (
     <main className={kit.page}>
@@ -257,10 +373,12 @@ export default async function PricingPage() {
           {/* W8 closed (ruled 2026-11-18): "start free, no credit card required" read as if Tournament Plus needed no
               card, and "while we finish those workflows" promised timing. The live list and the closed line read the gate. */}
           <p className={kit.lead}>
-            {liveLine} Tournament is free, with no credit card required.{closedPlansLine && <> {closedPlansLine}</>}
+            {/* W8 open: once all six are on sale the list would name every plan, so the lead says it in four words. */}
+            {everyPlanOpen ? 'Every plan is available now.' : liveLine} Tournament is free, with no credit card required.{closedPlansLine && <> {closedPlansLine}</>}
           </p>
           <ul className={kit.facts}>
-            {TRUST_SIGNALS.map(s => (
+            {/* `/legal` 2026-11-20: once League Plus is sold, "downgrade at any time" is false for it (it changes to no other plan yet). */}
+            {(programOpen ? [...TRUST_SIGNALS.slice(0, 3), 'Move up to a larger Club plan at any time'] : TRUST_SIGNALS).map(s => (
               <li key={s}>{s}</li>
             ))}
           </ul>
@@ -277,7 +395,7 @@ export default async function PricingPage() {
               Not every plan is for every organization. Pick the role that fits — you&apos;ll land in the right place.
             </p>
           </div>
-          <div className={kit.grid4}>
+          <div className={segments.length === 3 ? kit.grid3 : kit.grid4}>
             {segments.map(segment => {
               const cardClass = `${kit.card} ${kit.stack} ${styles.segmentCard}`;
               const cardContent = (
@@ -318,9 +436,12 @@ export default async function PricingPage() {
             <h2 className={kit.heading}>{PLAN_AVAILABLE_NOW}</h2>
             {/* W10 closed: "early interest" was the withdrawn early-access framing. */}
             <p className={kit.body}>
-              {teamCheckoutOpen
-                ? <>Organization plans for tournaments and operations, plus the standalone Premium Coaches Portal for coaches.{closedPlansLine && <> {closedPlansLine}</>}</>
-                : 'Use these plans when you manage events or organization-wide operations.'}
+              {programOpen && teamCheckoutOpen
+                // W10 open.
+                ? 'Plans for tournaments, house leagues and clubs, plus the standalone Premium Coaches Portal for coaches.'
+                : teamCheckoutOpen
+                  ? <>Organization plans for tournaments and operations, plus the standalone Premium Coaches Portal for coaches.{closedPlansLine && <> {closedPlansLine}</>}</>
+                  : 'Use these plans when you manage events or organization-wide operations.'}
             </p>
           </div>
           {/* R4 (2026-08-01): same grid, but it knows whether the reader already operates here.
@@ -330,15 +451,15 @@ export default async function PricingPage() {
               marketingLayout (2026-08-08): live plans as full cards — including the Premium
               Coaches Portal, which replaced the old callout strip here — and gated plans
               compressed into the coming-soon strip below the grid. */}
-          <ViewerAwarePlans gatingMap={gatingMap} marketingLayout />
+          <ViewerAwarePlans gatingMap={gatingMap} marketingLayout bands trialDays={trialDays} />
         </div>
       </section>
 
       {/* ── Upgrade bridges ──────────────────────────────────────────────── */}
       <section className={kit.section}>
         <div className="container">
-          <div className={kit.grid3}>
-            {UPGRADE_BRIDGES.map(b => (
+          <div className={bridges.length === 1 ? styles.bridgeAlone : bridges.length === 2 ? kit.grid2 : kit.grid3}>
+            {bridges.map(b => (
               <div key={b.label} className={`${kit.card} ${kit.stack}`}>
                 <p className={styles.bridgeLabel}>
                   <span className={kit.tag}>{b.label}</span>
@@ -367,7 +488,10 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      {/* ── Coming soon deep-dive ────────────────────────────────────────── */}
+      {/* W13: the section's only job is plans you cannot yet buy, and its words name both plans, so it shows only while
+          League Plus and Club are both closed (`/review` S3); in a partial flip the strip and the closed plan's bridge carry
+          the closed one. */}
+      {closedGroupTag && closedProgram.length === 2 && (
       <section className={kit.section} id="early-access">
         <div className="container">
           <div className={styles.clubInner}>
@@ -394,10 +518,10 @@ export default async function PricingPage() {
               </p>
               <EarlyAccessModalTrigger
                 className={`${kit.btn} ${kit.btnSecondary}`}
-                initialPlanInterest={['league', 'club']}
+                initialPlanInterest={closedProgram}
                 initialFeaturesInterested={['house_league', 'registration', 'accounting', 'rep_teams']}
               >
-                {interestButtonLabel(['league', 'club'])}
+                {interestButtonLabel(closedProgram)}
               </EarlyAccessModalTrigger>
             </div>
             <div className={styles.clubStats}>
@@ -430,6 +554,7 @@ export default async function PricingPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section className={kit.section}>
@@ -461,23 +586,33 @@ export default async function PricingPage() {
             <span className={kit.accent}>More sport.</span>
           </h2>
           <p className={kit.lead}>
-            {teamCheckoutOpen
-              ? <>Start free with Tournament.
-                {closedPlansLine && <>{' '}{closedPlansLine} {GATED_PLAN_INTEREST_LINE}</>}</>
-              : <>Start free with Tournament.
-                {' '}{gatedPlanSentence('team')}{closedPlansLine && <> {closedPlansLine}</>} {GATED_PLAN_INTEREST_LINE}</>}
+            {programOpen
+              // W21 open: no interest door is left to offer.
+              ? 'Start free with Tournament, or pick the plan that matches what you run.'
+              : teamCheckoutOpen
+                ? <>Start free with Tournament.
+                  {closedPlansLine && <>{' '}{closedPlansLine} {GATED_PLAN_INTEREST_LINE}</>}</>
+                : <>Start free with Tournament.
+                  {' '}{gatedPlanSentence('team')}{closedPlansLine && <> {closedPlansLine}</>} {GATED_PLAN_INTEREST_LINE}</>}
           </p>
           <div className={`${kit.row} ${styles.ctaActions}`}>
             <Link href="/start/tournament" className={kit.btn}>
               Get started free
             </Link>
-            <EarlyAccessModalTrigger
-              className={`${kit.btn} ${kit.btnSecondary}`}
-              initialPlanInterest={['league', 'club']}
-              initialFeaturesInterested={['house_league', 'registration', 'accounting', 'rep_teams']}
-            >
-              {interestButtonLabel(['league', 'club'])}
-            </EarlyAccessModalTrigger>
+            {closedProgram.length > 0 ? (
+              <EarlyAccessModalTrigger
+                className={`${kit.btn} ${kit.btnSecondary}`}
+                initialPlanInterest={closedProgram}
+                initialFeaturesInterested={['house_league', 'registration', 'accounting', 'rep_teams']}
+              >
+                {interestButtonLabel(closedProgram)}
+              </EarlyAccessModalTrigger>
+            ) : (
+              // The interest window's own link words (W21).
+              <Link href="/start" className={`${kit.btn} ${kit.btnSecondary}`}>
+                Browse all the ways to start
+              </Link>
+            )}
           </div>
           <p className={kit.small}>All plans are billed in CAD. No long-term contract. No setup fees.</p>
         </div>

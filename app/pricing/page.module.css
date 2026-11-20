@@ -29,6 +29,9 @@
 
 .bridgeLabel { margin: 0 0 0.75rem; }
 
+/* One bridge left (the Tournament Plus one, once League Plus and Club are in their band; W75): one card, 760px wide. */
+.bridgeAlone { max-width: 760px; }
+
 /* The global heading rule would set a card title in the heading face; a card title is Inter. */
 .plainHeading {
   font-family: var(--font-sans), system-ui, sans-serif;

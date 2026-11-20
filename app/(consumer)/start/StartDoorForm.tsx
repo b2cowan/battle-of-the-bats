@@ -10,7 +10,7 @@ import { accountExistsSignInHref } from '@/lib/auth-errors';
 import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 import type { TermsSend } from '@/lib/legal-acceptance-rules';
-import { pickedPlanLabel } from '@/lib/plan-config';
+import { pickedPlanLabel, PLAN_AVAILABILITY_LINE as AVAILABILITY_LINE } from '@/lib/plan-config';
 import {
   CLUB_START_STEPS, LEAGUE_PLUS_START_STEPS, RUN_A_TOURNAMENT_STEPS, START_DOOR_PATH, paidDoorPick, runATournamentPick, startDoorLinkPath,
   startPricingParams, withStartPricing, type StartDoor, type StartPricing, type StartStepViewer,
@@ -22,9 +22,9 @@ import {
  */
 type FormDoor = 'team' | 'organization' | 'club' | 'league_plus';
 
-/** Ask 15 (ruled 2026-11-18, `BUSINESS_DECISIONS.md`): said on step 1 of the paid doors, before anything is made, so a
- *  Québec or US organization learns it here rather than at its billing address. */
-const AVAILABILITY_LINE = 'Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars.';
+/* Ask 15 (ruled 2026-11-18, `BUSINESS_DECISIONS.md`): AVAILABILITY_LINE is said on step 1 of the paid doors, before anything
+ * is made, so a Québec or US organization learns it here rather than at its billing address (one sentence, shared with
+ * the /pricing bands and home's price rows: `PLAN_AVAILABILITY_LINE`). */
 
 /**
  * Each door, in one place: where its account is made and what the account remembers, the pricing-page pick it names, and

@@ -21,9 +21,12 @@ import styles from './ConsumerShell.module.css';
 export default function StartMenu({
   coachHref = '/start',
   showLeague = false,
+  showClub = false,
 }: {
   coachHref?: string;
   showLeague?: boolean;
+  /** "Start a club" while Club or Club · Association is on sale (W63); it mirrors the /start chooser's Club card. */
+  showClub?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -60,6 +63,19 @@ export default function StartMenu({
             <span className={styles.startItemSub}>Teams, schedule, brackets, and a public site — free to start.</span>
           </Link>
           <div className={styles.startGroup} aria-hidden>More ways to start</div>
+          {/* The bands' order (W63, drawing tab 10): tournaments, the league and club doors, then coaches. */}
+          {showLeague && (
+            <Link href="/start/league" role="menuitem" className={styles.startItem} onClick={close}>
+              <span className={styles.startItemTitle}>Start a league season</span>
+              <span className={styles.startItemSub}>Registration, draft, scheduling, standings, and parent comms.</span>
+            </Link>
+          )}
+          {showClub && (
+            <Link href="/start/club" role="menuitem" className={styles.startItem} onClick={close}>
+              <span className={styles.startItemTitle}>Start a club</span>
+              <span className={styles.startItemSub}>Tournaments, house league, rep teams and accounting in one place.</span>
+            </Link>
+          )}
           <Link href={coachHref} role="menuitem" className={styles.startItem} onClick={close}>
             <span className={styles.startItemTitle}>Coach a team</span>
             <span className={styles.startItemSub}>The Premium Coaches Portal for your team — no organization needed.</span>
@@ -68,12 +84,6 @@ export default function StartMenu({
             <span className={styles.startItemTitle}>Join a team</span>
             <span className={styles.startItemSub}>Invited? Create an account to accept your invitation.</span>
           </Link>
-          {showLeague && (
-            <Link href="/start/league" role="menuitem" className={styles.startItem} onClick={close}>
-              <span className={styles.startItemTitle}>Start a league season</span>
-              <span className={styles.startItemSub}>Registration, draft, scheduling, standings, and parent comms.</span>
-            </Link>
-          )}
         </div>
       )}
     </div>

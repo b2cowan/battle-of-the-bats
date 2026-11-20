@@ -11,18 +11,20 @@ import {
 
 /**
  * What a customer reads about a plan that is not open for sign-up (BUSINESS_DECISIONS 2026-09-28; canon
- * in PRICING_PAGE_COPY.md). League Plus is parked, so it never says "soon"; Club has a release under way
- * and keeps a date-free "Coming soon"; nothing says "early access" — that programme was withdrawn
+ * in PRICING_PAGE_COPY.md). Every closed plan keeps a date-free "Coming soon" (League Plus joined Club's words
+ * 2026-11-20, when it was set to go on sale with Club); nothing says "early access" — that programme was withdrawn
  * 2026-07-28. Before this, each surface typed its own availability line, and the in-app billing shelf
  * said "Coming soon · Early access only" about a parked plan (and a live one) for two months.
  */
 describe('closed-plan availability words', () => {
-  it('League Plus carries no imminence', () => {
-    assert.equal(gatedPlanTag('league'), 'Not open yet');
-    assert.equal(gatedPlanSentence('league'), 'League Plus is built, but not open for sign-up.');
-    assert.equal(gatedPlanNote('league'), 'Built, but not open for sign-up.');
+  // ⚖ League Plus goes on sale WITH Club (BUSINESS_DECISIONS 2026-11-06), so its parked words ("Not open yet", "built, but
+  // not open for sign-up", 2026-09-28) ended: it says what Club says (owner 2026-11-19; `/marketing`'s sentence 2026-11-20).
+  it('League Plus wears Club’s words while closed, its own name in the sentence', () => {
+    assert.equal(gatedPlanTag('league'), 'Coming soon');
+    assert.equal(gatedPlanSentence('league'), "League Plus is coming soon — it isn't open for sign-up yet.");
+    assert.equal(gatedPlanNote('league'), 'Not open for sign-up yet.');
     for (const s of [gatedPlanTag('league'), gatedPlanSentence('league'), gatedPlanNote('league')]) {
-      assert.doesNotMatch(s, /soon|refine|final|early/i);
+      assert.doesNotMatch(s, /built|refine|final|early|not open yet/i);
     }
   });
 
@@ -43,11 +45,8 @@ describe('closed-plan availability words', () => {
   });
 
   it('the combined sentence names only what the LIVE gate says is closed', () => {
-    assert.equal(
-      closedProgramPlansSentence({ league: true, club: true }),
-      'Club is coming soon, and League Plus is built but not open for sign-up.',
-    );
-    assert.equal(closedProgramPlansSentence({ league: true, club: false }), 'League Plus is built but not open for sign-up.');
+    assert.equal(closedProgramPlansSentence({ league: true, club: true }), 'Club and League Plus are coming soon.');
+    assert.equal(closedProgramPlansSentence({ league: true, club: false }), 'League Plus is coming soon.');
     assert.equal(closedProgramPlansSentence({ league: false, club: true }), 'Club is coming soon.');
     assert.equal(closedProgramPlansSentence({ league: false, club: false }), null);
   });

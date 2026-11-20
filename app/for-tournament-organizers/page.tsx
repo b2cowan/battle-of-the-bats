@@ -13,6 +13,7 @@ import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
+import type { OrgPlan } from '@/lib/types';
 
 export const metadata = marketingMetadata({
   title: 'For tournament organizers',
@@ -47,6 +48,8 @@ const CROSS_SELLS: Array<{
    *  express-interest modal. Absent = the product has no live state to advertise yet. */
   liveHref?: string;
   liveCta?: string;
+  /** The plan whose gate makes the card live (each card reads its own plan's gate). */
+  livePlan?: OrgPlan;
   /** Unconditional navigation — the destination page is worth visiting regardless of any gate
    *  (Club's page carries the two demo doors). Wins over the modal always. */
   alwaysHref?: string;
@@ -58,6 +61,10 @@ const CROSS_SELLS: Array<{
     q: 'Also running a house league season?',
     body: 'Player registration, draft tools, schedules, standings, and season-wide parent messaging — all in one dashboard.',
     cta: interestButtonLabel(['league']),
+    // W37 open (on-sale pages S3): the same text; the card becomes a link to the page that carries the plan card.
+    liveHref: '/for-leagues',
+    liveCta: 'See what League Plus includes',
+    livePlan: 'league',
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
   },
@@ -83,6 +90,7 @@ const CROSS_SELLS: Array<{
     // this card held a hardcoded express-interest for a live product until 2026-08-08.
     liveHref: '/for-coaches',
     liveCta: 'See the Coaches Portal',
+    livePlan: 'team',
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
   },
@@ -93,7 +101,7 @@ export default async function ForTournamentOrganizersPage() {
   // see lib/sandbox-door.ts for why that release step is a decision and not a merge.
   const showSandboxDoor = sandboxDoorsVisible();
   // The live gate, per request (on-sale pages S1).
-  const teamCheckoutOpen = isPlanOpen(await getPlanGatingMap(), 'team');
+  const gatingMap = await getPlanGatingMap();
   // Tournament Plus's trial sentence with the length checkout will use (Ask 31, ruled 2026-11-18).
   // No sentence for a trial of 0 days (a platform admin can switch the trial off): no "0-day trial".
   const tpTrialDays = (await getPlanConfigOverride('tournament_plus')).trialDays;
@@ -282,9 +290,8 @@ export default async function ForTournamentOrganizersPage() {
           <p className={kit.eyebrow}>More from FieldLogicHQ</p>
           <div className={`${kit.grid3} ${fp.gridTop}`}>
             {CROSS_SELLS.map(cs => {
-              // Only the Coaches Portal card carries liveHref today, so the team gate is the
-              // right check; a future live cross-sell must key off its own plan's gate.
-              const isLive = !!cs.liveHref && teamCheckoutOpen;
+              // Each live cross-sell keys off its own plan's gate (League Plus joined the Coaches Portal in S3).
+              const isLive = !!cs.liveHref && !!cs.livePlan && isPlanOpen(gatingMap, cs.livePlan);
               const linkHref = cs.alwaysHref ?? (isLive ? cs.liveHref : undefined);
               const content = (
                 <>

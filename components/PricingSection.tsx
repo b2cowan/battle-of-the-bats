@@ -3,8 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
-import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, gatedPlanTag, GATED_PLAN_INTEREST_LINE, interestButtonLabel } from '@/lib/plan-config';
-import { clubTrialLine, planTrialLine } from '@/lib/plan-trial-line';
+import {
+  PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, gatedPlanTag, GATED_PLAN_INTEREST_LINE, interestButtonLabel,
+  isPlanOpen, anyProgramPlanOpen, PLAN_AVAILABILITY_LINE_ANYONE,
+} from '@/lib/plan-config';
+import { planTrialLine } from '@/lib/plan-trial-line';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { parseStartPricing, withStartPricing } from '@/lib/start-door';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
@@ -32,6 +36,11 @@ interface Plan {
   ctaHref: string;
   initialPlanInterest?: string[];
   initialFeaturesInterested?: string[];
+  /** The plan says its trial in the one sentence (W1, W4, Ask 7): the note is built per render from the length
+   *  checkout will use (`trialDays` prop), in BOTH billing views (W7), and absent when that length is 0. */
+  saysTrial?: boolean;
+  /** A quiet line under the button (W5: Club · Association's custom-quote line). */
+  quietLine?: string;
 }
 
 const PLANS: Plan[] = [
@@ -110,8 +119,9 @@ const PLANS: Plan[] = [
     period: '/mo',
     // League Plus says its trial in the one sentence, with its own length (BUSINESS_DECISIONS 2026-11-18, Ask 7). Checkout
     // takes a payment method, so the old "No credit card required" line contradicted it (the free League that earned it is gone).
-    freeNote: planTrialLine(PLAN_CONFIG.league.trialDays),
-    trialNote: planTrialLine(PLAN_CONFIG.league.trialDays),
+    freeNote: '',
+    trialNote: '',
+    saysTrial: true,
     features: [
       'Everything in Tournament Plus',
       'Public organization page',
@@ -137,8 +147,9 @@ const PLANS: Plan[] = [
     period: '/mo',
     // The Club trial takes a payment method at checkout (BUSINESS_DECISIONS.md 2026-09-25; T1 2026-11-16) — the one
     // sentence billing and checkout also use. It read "No credit card required" until then, which checkout contradicted.
-    freeNote: clubTrialLine(),
-    trialNote: clubTrialLine(),
+    freeNote: '',
+    trialNote: '',
+    saysTrial: true,
     features: [
       'Everything in League Plus',
       // Says only what ships (BUSINESS_DECISIONS 2026-10-19): no invoicing until it exists. Bank reconciliation returned
@@ -155,7 +166,82 @@ const PLANS: Plan[] = [
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
   },
+  {
+    // W4 (on-sale pages S3): Club's upper band as its own card. Full name always; never "Large". Same modules as Club; it
+    // differs by team count and price only. Only the /pricing bands and the home grid render it (`marketingLayout`); the
+    // in-product chooser is S4's (`IN_PRODUCT_PLANS`).
+    key: 'club_large',
+    name: 'Club · Association',
+    tagline: 'The full Club platform for organizations with 16 to 30 teams.',
+    monthlyPrice: formatPriceAmount(PLAN_CONFIG.club_large.monthlyPrice),
+    annualPrice: formatPriceAmount(PLAN_CONFIG.club_large.annualPrice),
+    annualTotal: `${formatPriceAmount(PLAN_CONFIG.club_large.annualPrice)} CAD / year`,
+    annualSavings: `${formatAnnualSavings('club_large')}`,
+    currency: 'CAD',
+    period: '/mo',
+    freeNote: '',
+    trialNote: '',
+    saysTrial: true,
+    features: [
+      'Everything in Club',
+      // The limit counts the teams given a Premium Coaches Portal, never a team label (BUSINESS_DECISIONS 2026-11-19), so
+      // W4's "every team type counted the same" is said as Club's own line says it (house league teams are unlimited).
+      'Premium Coaches Portal for every coach on 16 to 30 teams — no per-team fee',
+      'Start here, or move up from Club when you pass 15 teams',
+    ],
+    cta: 'Start your Club · Association trial',
+    ctaHref: '/start/club',
+    initialPlanInterest: ['club'],
+    initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
+    // W5 (owner ask 2): a quote above the top band, never "talk to us" and never the interest form.
+    quietLine: `More than 30 teams? Email ${FIELDLOGICHQ_CONTACT_EMAIL} for a custom quote.`,
+  },
 ];
+
+/** The in-product chooser (onboarding's change-plan window) keeps its four cards: buying Club · Association from inside
+ *  the product is S4's, with its own screens (plan S4). */
+const IN_PRODUCT_PLANS = PLANS.filter(p => p.key !== 'club_large');
+
+/** Club's team-band line (W3): it points at Club · Association only while that plan has no card of its own. */
+const CLUB_PORTAL_LINE_ALONE = 'Premium Coaches Portal for every coach on up to 15 teams — no per-team fee';
+const CLUB_PORTAL_LINE_WITH_POINTER = 'Premium Coaches Portal for every coach on up to 15 teams, or up to 30 on Club · Association — no per-team fee';
+
+/**
+ * The /pricing plan grid in three audience bands (W58, Ask 21 as amended 2026-11-19; on-sale pages S3). A band shows only
+ * its open plans; a closed plan stays in the strip. The league-and-club band labels say what a club runs, not a rank (League
+ * Plus and Club are peers). The coaches band is the Premium Coaches Portal only: the free portal is reached through a
+ * tournament's registration, not from this page (BUSINESS_DECISIONS 2026-11-19).
+ */
+const BANDS: Array<{ id: string; heading: string; line: string; keys: OrgPlan[]; labels?: Partial<Record<OrgPlan, string>> }> = [
+  {
+    id: 'tournament-plans',
+    heading: 'Running a tournament',
+    line: 'One event or a full calendar. Tournament is free; Tournament Plus adds public registration.',
+    keys: ['tournament', 'tournament_plus'],
+  },
+  {
+    id: 'league-club-plans',
+    heading: 'Running a league or a club',
+    line: 'League Plus is for a house league. Club is for a club that also runs rep teams, and it includes house league. Pick by what your board runs; you don’t need one before the other.',
+    keys: ['league', 'club', 'club_large'],
+    labels: {
+      league: 'A house league',
+      club: 'A club with rep teams · up to 15 teams',
+      club_large: 'A club with 16 to 30 teams',
+    },
+  },
+  {
+    id: 'coach-plans',
+    heading: 'Coaching one team',
+    // The drawing's line opened "Every coach starts free."; the free portal is not sold here (2026-11-19), so the band
+    // keeps only its second half.
+    line: 'The Premium Coaches Portal is for the head coach running a competitive team’s whole season.',
+    keys: ['team'],
+  },
+];
+
+/** The League Plus card's first line in its band (W58): League Plus includes everything in Tournament Plus. */
+const LEAGUE_BAND_LEAD = 'Running a tournament too? It’s in your plan.';
 
 /**
  * The Premium Coaches Portal card — rendered ONLY in `marketingLayout` (the "live products lead"
@@ -214,15 +300,15 @@ const GATED_STRIP_LINES: Partial<Record<OrgPlan, string>> = {
 /**
  * The plan keys this component actually RENDERS a card for — deliberately a subset of
  * `PLAN_CONFIG`, which also carries `team` (the Coaches Portal — a card only in `marketingLayout`,
- * and never an org's current plan) and `club_large` (Club · Association, a capacity band of Club
- * rather than its own card).
+ * and never an org's current plan). `club_large` (Club · Association) has its own card since on-sale
+ * pages S3 (W4), on the marketing pages only; the in-product chooser keeps four cards until S4.
  *
  * Exported because a caller marking "the viewer's current plan" has to test membership of THIS
- * list, not of PLAN_CONFIG: `club_large` is a real, valid plan that no card here can match, so a
- * PLAN_CONFIG-based check silently produced a `currentPlan` that never matched anything — leaving
- * the platform's highest-paying tier with no "Current plan" badge at all (/review, 2026-08-01).
+ * list, not of PLAN_CONFIG: a real, valid plan that no card here can match silently produced a
+ * `currentPlan` that never matched anything — the platform's highest-paying tier went with no
+ * "Current plan" badge at all until it had a card (/review, 2026-08-01).
  */
-export const RENDERED_PLAN_KEYS: readonly OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+export const RENDERED_PLAN_KEYS: readonly OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club', 'club_large'];
 
 /**
  * A plan card's button (P4: says what happens, sentence case, no arrow). The kit's lime button is the view's ONE primary,
@@ -261,47 +347,76 @@ interface PricingSectionProps {
    */
   marketingLayout?: boolean;
   /**
+   * /pricing only (W58, on-sale pages S3): once League Plus, Club or Club · Association is open, the cards sit in three
+   * audience bands instead of one grid. While all three are closed the page keeps the one grid it had (S1's closed state).
+   */
+  bands?: boolean;
+  /**
    * GST/HST Stage 2 Part 4 (T4): a quiet "plus applicable taxes" line under each price the buyer will be charged (not a
    * free or gated price). Every caller turns it on (onboarding, the home page, /pricing — /marketing ruled
    * the public copy 2026-11-05); the default stays off so a new caller opts in on purpose.
    */
   plusTax?: boolean;
+  /**
+   * The trial length checkout will use per plan (Ask 9 / `/billing` Q6): the server's `getPlanConfigOverrides()` — a
+   * platform admin can override `trial_days`. A public visitor is a new customer, so this is the length their checkout
+   * starts (a returning customer's checkout gives none, and says so on the plan step). Absent → the code value.
+   */
+  trialDays?: Partial<Record<OrgPlan, number>>;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', order, featuredPlan, marketingLayout = false, plusTax = false }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', order, featuredPlan, marketingLayout = false, bands = false, plusTax = false, trialDays }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
 
+  const sourcePlans = marketingLayout ? PLANS : IN_PRODUCT_PLANS;
   const orderedPlans = order
-    ? [...PLANS].sort((a, b) => {
+    ? [...sourcePlans].sort((a, b) => {
         const ia = order.indexOf(a.key);
         const ib = order.indexOf(b.key);
-        return (ia === -1 ? PLANS.length : ia) - (ib === -1 ? PLANS.length : ib);
+        return (ia === -1 ? sourcePlans.length : ia) - (ib === -1 ? sourcePlans.length : ib);
       })
-    : PLANS;
+    : sourcePlans;
 
   // Marketing layout: cards = live org plans + the coaches card when its checkout is open;
-  // strip = whatever is still gated (including the coaches card if its gate ever re-closes).
+  // strip = whatever is still gated (including the coaches card if its gate ever re-closes). Club · Association never
+  // joins the strip: Club's strip line names both bands, as it did before the card existed (S1's closed state).
   const teamGated = gatingMap.team ?? true;
   const stripPlans = marketingLayout
-    ? [...orderedPlans.filter(p => gatingMap[p.key] ?? false), ...(teamGated ? [TEAM_PLAN] : [])]
+    ? [...orderedPlans.filter(p => (gatingMap[p.key] ?? false) && p.key !== 'club_large'), ...(teamGated ? [TEAM_PLAN] : [])]
     : [];
   const cardPlans = marketingLayout
     ? [...orderedPlans.filter(p => !(gatingMap[p.key] ?? false)), ...(teamGated ? [] : [TEAM_PLAN])]
     : orderedPlans;
+  const banded = marketingLayout && bands && anyProgramPlanOpen(gatingMap);
   // NEXT_PUBLIC_ vars are inlined into the client bundle, so this works in a client component.
   const demoDoorsOpen = marketingLayout && sandboxDoorsVisible();
+  const clubLargeOpen = marketingLayout && isPlanOpen(gatingMap, 'club_large');
 
   function getSignupHref(plan: Plan) {
     // The coaches card owns its own destination (the coach start flow takes no plan/billing params). Every other plan
-    // rides to Run a tournament's sign-up, which shows it as the plan chip (The first look, Ask 6: every plan button
-    // keeps its plan) — the free Tournament too, with no billing (G4, 2026-10-20), so the plan step opens on it.
+    // rides to its own door with the pick (The first look, Ask 6: every plan button keeps its plan) — the free
+    // Tournament too, with no billing (G4, 2026-10-20), so the plan step opens on it.
     if (plan.key === 'team') return plan.ctaHref;
     return withStartPricing(plan.ctaHref, parseStartPricing(plan.key, billing));
   }
 
-  // The plan this view leads with carries its ONE lime button and the 2px olive edge. The marketing pages lead with
-  // Tournament Plus (the plan the page leads with); the onboarding chooser names its own via `featuredPlan`.
-  const leadPlan = featuredPlan ?? (marketingLayout ? 'tournament_plus' : undefined);
+  /** The one trial sentence with the length checkout will use, or null where that length is 0 (no "0-day trial"). */
+  function trialLineFor(plan: Plan): string | null {
+    if (!plan.saysTrial) return null;
+    const days = trialDays?.[plan.key] ?? PLAN_CONFIG[plan.key].trialDays;
+    return days > 0 ? planTrialLine(days) : null;
+  }
+
+  function featuresFor(plan: Plan): string[] {
+    if (plan.key !== 'club' || !clubLargeOpen) return plan.features;
+    // W3: Club · Association has its own card beside Club, so Club's line no longer points at it.
+    return plan.features.map(f => (f === CLUB_PORTAL_LINE_WITH_POINTER ? CLUB_PORTAL_LINE_ALONE : f));
+  }
+
+  // The plan this view leads with carries its ONE lime button and the 2px olive edge. Club leads the marketing pages once
+  // it is on sale (Ask 32 B, ruled 2026-11-18; never the words "Most popular"); until then Tournament Plus does. The
+  // onboarding chooser names its own via `featuredPlan`.
+  const leadPlan = featuredPlan ?? (marketingLayout ? (isPlanOpen(gatingMap, 'club') ? 'club' : 'tournament_plus') : undefined);
   // The strip's button names the plans it covers ("Express interest in League Plus or Club"), never a bare "Express interest"
   // beside a card that is also one (label list row 4).
   const stripLabel = stripPlans.length > 0 && stripPlans.every(p => p.key === 'league' || p.key === 'club')
@@ -311,6 +426,135 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
   // one carry none). Only the onboarding chooser posts; the marketing cards are links.
   const paidChoices = !onChoosePlan ? [] : cardPlans.filter(plan => !(gatingMap[plan.key] ?? false)
     && currentPlan !== plan.key && !(disabledPlans?.includes(plan.key) ?? false) && PLAN_CONFIG[plan.key].monthlyPrice > 0);
+
+  function gridClass(count: number, extra = ''): string {
+    return `${styles.pricingGrid} ${count === 3 ? styles.pricingGridThree : ''} ${count === 2 ? styles.pricingGridTwo : ''} ${count === 1 ? styles.pricingGridOne : ''} ${extra}`;
+  }
+
+  function renderCard(plan: Plan, bandLabel?: string, inBand = false, badgeRowEmpty = false) {
+    const isGated = gatingMap[plan.key] ?? false;
+    // The coaches card never takes the org-operator CTA overrides — a plan change for an
+    // org happens on the org's billing screen, but the coach product isn't bought there.
+    const takesOverrides = plan.key !== 'team';
+    // Deliberately NOT gated on `onChoosePlan` any more (R4, 2026-08-01): the marketing
+    // pricing page renders the LINK branch and still needs to mark the viewer's own tier.
+    // Every caller that doesn't pass `currentPlan` is unaffected.
+    const isCurrent = currentPlan === plan.key;
+    const isIncluded = !!onChoosePlan && (disabledPlans?.includes(plan.key) ?? false);
+    const isFeatured = !isGated && leadPlan === plan.key;
+    const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
+    const displayPrice = isGated ? gatedPlanTag(plan.key) : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
+    const trialLine = isGated ? null : trialLineFor(plan);
+    // W7: a plan that says its trial says it in BOTH views; the annual view adds its savings line above it.
+    const displayNote = isGated
+      ? GATED_PLAN_INTEREST_LINE
+      : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : (trialLine ?? plan.freeNote));
+    const extraTrialNote = !isGated && isAnnual && trialLine ? trialLine : null;
+    // A button that names a trial needs the trial (`/accounting` 2026-11-20): an override of 0 days says "Start Club".
+    const defaultCta = plan.saysTrial && !trialLine ? `Start ${plan.name}` : plan.cta;
+    // The one lime button: the lead plan's, unless the viewer is already on it (then it is a quiet door).
+    const primary = isFeatured && !isCurrent && !isIncluded;
+    const pill = isGated ? gatedPlanTag(plan.key) : isCurrent ? 'Current plan' : null;
+
+    return (
+      <div key={plan.key} className={`${styles.planCard} ${isFeatured ? styles.planCardFeatured : ''} ${inBand && plan.key === 'team' ? styles.planCardWide : ''}`}>
+        {/* Band 1: header. The first line holds the card's small label (the league-and-club band's "what a club runs")
+            and its status pill — on the right when there is a label (the one place for the pill, owner 2026-11-19). The
+            line is always chip-high, so a card with neither still starts its name level with the cards beside it. */}
+        <div>
+          <div className={`${styles.planBadgeRow} ${bandLabel ? styles.planBadgeRowLabelled : ''} ${badgeRowEmpty ? styles.planBadgeRowNone : ''}`}>
+            {bandLabel && <span className={styles.planBandLabel}>{bandLabel}</span>}
+            {pill && <span className={kit.tag}>{pill}</span>}
+          </div>
+          <p className={kit.title}>{plan.name}</p>
+          <p className={`${kit.small} ${styles.planTagline}`}>{plan.tagline}</p>
+          {inBand && plan.key === 'league' && !isGated && (
+            <p className={`${kit.small} ${styles.planLead}`}>{LEAGUE_BAND_LEAD}</p>
+          )}
+        </div>
+
+        {/* Band 2: price. */}
+        <div className={styles.planPriceBlock}>
+          <div className={styles.planPrice}>
+            <span className={isGated ? kit.title : kit.price}>
+              {displayPrice}
+            </span>
+            {!isGated && plan.currency && (
+              <span className={kit.small}>{plan.currency}</span>
+            )}
+            {!isGated && (isAnnual || plan.period) && (
+              <span className={kit.small}>{isAnnual ? '/year' : plan.period}</span>
+            )}
+          </div>
+          {/* One line on every card while it is on, so the cards' price blocks stay level. */}
+          {plusTax && <p className={`${kit.small} ${styles.planNote}`}>{!isGated && plan.currency ? BILLING_TAX_WORDS.plusTax : null}</p>}
+          <p className={`${kit.small} ${styles.planNote}`}>{displayNote}</p>
+          {extraTrialNote && <p className={`${kit.small} ${styles.planNote}`}>{extraTrialNote}</p>}
+        </div>
+
+        {/* Band 3: divider */}
+        <hr className={styles.planDivider} />
+
+        {/* Band 4: features */}
+        <ul className={`${kit.ticks} ${styles.planFeatures}`}>
+          {featuresFor(plan).map(f => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+
+        {/* Band 5: CTA — one wrapper so the subgrid row can also hold the fine print and the quiet demo line
+            on marketing surfaces without becoming a sixth band. */}
+        <div className={styles.planCtaBand}>
+        {isGated ? (
+          <EarlyAccessModalTrigger
+            className={ctaClass(false)}
+            initialPlanInterest={plan.initialPlanInterest}
+            initialFeaturesInterested={plan.initialFeaturesInterested}
+          >
+            {interestButtonLabel()}
+          </EarlyAccessModalTrigger>
+        ) : onChoosePlan ? (
+          <button
+            type="button"
+            className={`${ctaClass(primary)} ${(isCurrent || isIncluded) ? styles.ctaDisabled : ''}`}
+            onClick={() => onChoosePlan(plan.key, billing)}
+            disabled={isCurrent || isIncluded || planLoading !== null}
+          >
+            {planLoading === plan.key
+              ? 'Loading...'
+              : isCurrent
+                ? 'Current plan'
+                : isIncluded
+                  ? 'Included in plan'
+                  : (ctaLabel?.(plan.key) ?? defaultCta)}
+          </button>
+        ) : (
+          /* R4: the caller may override the destination and the words; `isCurrent` only
+             quiets the styling, because a card for the tier you are already on should not
+             compete with the one you might move to. One link, so href and label logic can
+             never drift between a "current" and a "not current" copy of it. */
+          <Link
+            href={(takesOverrides ? ctaHrefFor?.(plan.key) : undefined) ?? getSignupHref(plan)}
+            className={`${ctaClass(primary)}${isCurrent ? ` ${styles.viewerCurrentCta}` : ''}`}
+          >
+            {(takesOverrides ? ctaLabel?.(plan.key) : undefined) ?? defaultCta}
+          </Link>
+        )}
+        {!isGated && plan.quietLine && (
+          <p className={`${kit.small} ${styles.planDemoLine}`}>{plan.quietLine}</p>
+        )}
+        {demoDoorsOpen && !isGated && !onChoosePlan && DEMO_DOORS[plan.key] && (
+          <p className={`${kit.small} ${styles.planDemoLine}`}>
+            Not ready?{' '}
+            <Link href={DEMO_DOORS[plan.key]!.href} className={`${kit.link} ${styles.planDemoLink}`}>
+              {DEMO_DOORS[plan.key]!.label}
+            </Link>
+          </p>
+        )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -337,124 +581,41 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
         </div>
       </div>
 
-      {/* Plan cards */}
-      <div className={`${styles.pricingGrid} ${cardPlans.length === 3 ? styles.pricingGridThree : ''} ${cardPlans.length === 2 ? styles.pricingGridTwo : ''}`}>
-        {cardPlans.map(plan => {
-          const isGated = gatingMap[plan.key] ?? false;
-          // The coaches card never takes the org-operator CTA overrides — a plan change for an
-          // org happens on the org's billing screen, but the coach product isn't bought there.
-          const takesOverrides = plan.key !== 'team';
-          // Deliberately NOT gated on `onChoosePlan` any more (R4, 2026-08-01): the marketing
-          // pricing page renders the LINK branch and still needs to mark the viewer's own tier.
-          // Every caller that doesn't pass `currentPlan` is unaffected.
-          const isCurrent = currentPlan === plan.key;
-          const isIncluded = !!onChoosePlan && (disabledPlans?.includes(plan.key) ?? false);
-          const isFeatured = !isGated && leadPlan === plan.key;
-          const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
-          const displayPrice = isGated ? gatedPlanTag(plan.key) : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
-          const displayNote = isGated
-            ? GATED_PLAN_INTEREST_LINE
-            : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : plan.freeNote);
-          const defaultCta = plan.cta;
-          // The one lime button: the lead plan's, unless the viewer is already on it (then it is a quiet door).
-          const primary = isFeatured && !isCurrent && !isIncluded;
-
-          return (
-            <div key={plan.key} className={`${styles.planCard} ${isFeatured ? styles.planCardFeatured : ''}`}>
-              {/* Band 1: header. The chip row is always chip-high, so a card with no chip still starts its name on the
-                  same line as the cards beside it. */}
-              <div>
-                <div className={styles.planBadgeRow}>
-                  {isGated && (
-                    <span className={kit.tag}>{gatedPlanTag(plan.key)}</span>
-                  )}
-                  {!isGated && isCurrent && (
-                    <span className={kit.tag}>Current plan</span>
-                  )}
+      {banded ? (
+        /* The three audience bands (W58). Each shows only its open plans; a band with none does not render. */
+        <div className={styles.bands}>
+          {BANDS.map(band => {
+            const plans = cardPlans.filter(p => band.keys.includes(p.key));
+            if (plans.length === 0) return null;
+            return (
+              <section key={band.id} id={band.id} className={styles.band} aria-labelledby={`${band.id}-heading`}>
+                <div className={styles.bandHead}>
+                  {/* Card-title size, so "Available now" stays the page's one display heading (Ask 34). */}
+                  <h3 id={`${band.id}-heading`} className={kit.title}>{band.heading}</h3>
+                  <p className={`${kit.small} ${styles.bandLine}`}>{band.line}</p>
                 </div>
-                <p className={kit.title}>{plan.name}</p>
-                <p className={`${kit.small} ${styles.planTagline}`}>{plan.tagline}</p>
-              </div>
-
-              {/* Band 2: price. */}
-              <div className={styles.planPriceBlock}>
-                <div className={styles.planPrice}>
-                  <span className={isGated ? kit.title : kit.price}>
-                    {displayPrice}
-                  </span>
-                  {!isGated && plan.currency && (
-                    <span className={kit.small}>{plan.currency}</span>
-                  )}
-                  {!isGated && (isAnnual || plan.period) && (
-                    <span className={kit.small}>{isAnnual ? '/year' : plan.period}</span>
-                  )}
+                <div className={gridClass(plans.length)}>
+                  {plans.map(plan => renderCard(plan, band.labels?.[plan.key], true, !plans.some(p => band.labels?.[p.key] || currentPlan === p.key)))}
                 </div>
-                {/* One line on every card while it is on, so the cards' price blocks stay level. */}
-                {plusTax && <p className={`${kit.small} ${styles.planNote}`}>{!isGated && plan.currency ? BILLING_TAX_WORDS.plusTax : null}</p>}
-                <p className={`${kit.small} ${styles.planNote}`}>{displayNote}</p>
-              </div>
-
-              {/* Band 3: divider */}
-              <hr className={styles.planDivider} />
-
-              {/* Band 4: features */}
-              <ul className={`${kit.ticks} ${styles.planFeatures}`}>
-                {plan.features.map(f => (
-                  <li key={f}>{f}</li>
-                ))}
-              </ul>
-
-              {/* Band 5: CTA — one wrapper so the subgrid row can also hold the fine print and the quiet demo line
-                  on marketing surfaces without becoming a sixth band. */}
-              <div className={styles.planCtaBand}>
-              {isGated ? (
-                <EarlyAccessModalTrigger
-                  className={ctaClass(false)}
-                  initialPlanInterest={plan.initialPlanInterest}
-                  initialFeaturesInterested={plan.initialFeaturesInterested}
-                >
-                  {interestButtonLabel()}
-                </EarlyAccessModalTrigger>
-              ) : onChoosePlan ? (
-                <button
-                  type="button"
-                  className={`${ctaClass(primary)} ${(isCurrent || isIncluded) ? styles.ctaDisabled : ''}`}
-                  onClick={() => onChoosePlan(plan.key, billing)}
-                  disabled={isCurrent || isIncluded || planLoading !== null}
-                >
-                  {planLoading === plan.key
-                    ? 'Loading...'
-                    : isCurrent
-                      ? 'Current plan'
-                      : isIncluded
-                        ? 'Included in plan'
-                        : (ctaLabel?.(plan.key) ?? defaultCta)}
-                </button>
-              ) : (
-                /* R4: the caller may override the destination and the words; `isCurrent` only
-                   quiets the styling, because a card for the tier you are already on should not
-                   compete with the one you might move to. One link, so href and label logic can
-                   never drift between a "current" and a "not current" copy of it. */
-                <Link
-                  href={(takesOverrides ? ctaHrefFor?.(plan.key) : undefined) ?? getSignupHref(plan)}
-                  className={`${ctaClass(primary)}${isCurrent ? ` ${styles.viewerCurrentCta}` : ''}`}
-                >
-                  {(takesOverrides ? ctaLabel?.(plan.key) : undefined) ?? defaultCta}
-                </Link>
-              )}
-              {demoDoorsOpen && !isGated && !onChoosePlan && DEMO_DOORS[plan.key] && (
-                <p className={`${kit.small} ${styles.planDemoLine}`}>
-                  Not ready?{' '}
-                  <Link href={DEMO_DOORS[plan.key]!.href} className={`${kit.link} ${styles.planDemoLink}`}>
-                    {DEMO_DOORS[plan.key]!.label}
-                  </Link>
-                </p>
-              )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                {band.keys.includes('team') && isPlanOpen(gatingMap, 'club') && (
+                  <p className={`${kit.small} ${styles.bandFoot}`}>
+                    If your club is on Club or Club · Association, <strong>every coach’s Premium Coaches Portal is
+                    included.</strong>{' '}
+                    <Link href="/for-clubs" className={`${kit.link} ${styles.planDemoLink}`}>See what Club includes</Link>
+                  </p>
+                )}
+              </section>
+            );
+          })}
+          {/* The availability line under the bands (Ask 15; /accounting, /legal), once a club or league can buy here. */}
+          <p className={`${kit.small} ${styles.bandsAvailability}`}>{PLAN_AVAILABILITY_LINE_ANYONE}</p>
+        </div>
+      ) : (
+        /* Plan cards */
+        <div className={gridClass(cardPlans.length)}>
+          {cardPlans.map(plan => renderCard(plan))}
+        </div>
+      )}
       {/* §20 (3) once under the cards, as under the billing table — only where the cards' own buttons start a paid plan
           (onboarding's chooser; the marketing pages' cards are links to sign-up, not purchases). Step 6.3, drawing tab 5. */}
       {/* "If your plan starts with a trial" when a paid card's plan has trial days (checkout decides — `/legal` 2026-11-09). */}
@@ -464,15 +625,15 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
           capturing interest, but never peers of what's actually on sale. */}
       {marketingLayout && stripPlans.length > 0 && (
         <div className={`${kit.card} ${kit.cardFlat} ${styles.comingSoonStrip}`}>
-          {/* W6 (Ask 3, ruled 2026-11-18): one plan in the strip wears its own tag, so Club never wears "Not open yet";
-              two keep the group tag and each name carries its own status. */}
-          <span className={kit.tag}>{stripPlans.length === 1 ? gatedPlanTag(stripPlans[0].key) : gatedPlanTag('league')}</span>
+          {/* Every closed plan wears the one tag since 2026-11-20 (League Plus joined Club's "Coming soon"), so the strip
+              says it once and no name repeats it (W6 simplified with it, plan S3). */}
+          <span className={kit.tag}>{gatedPlanTag(stripPlans[0].key)}</span>
           <p className={`${kit.small} ${styles.comingSoonStripBody}`}>
             {stripPlans.map((p, i) => (
               <span key={p.key}>
                 {i > 0 && ' · '}
                 <strong className={styles.comingSoonStripName}>{p.name}</strong>
-                {' '}({stripPlans.length > 1 ? `${gatedPlanTag(p.key)}, ` : ''}{p.monthlyPrice}/mo) — {GATED_STRIP_LINES[p.key] ?? p.tagline}
+                {' '}({p.monthlyPrice}/mo) — {GATED_STRIP_LINES[p.key] ?? p.tagline}
               </span>
             ))}
             {'. '}{GATED_PLAN_INTEREST_LINE}

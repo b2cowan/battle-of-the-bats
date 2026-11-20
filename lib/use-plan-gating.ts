@@ -23,15 +23,18 @@ function fromCode(): PlanGating {
  * Coaches Portal was "Coming soon · Early access only" from the day it opened on production
  * (2026-07-24) until the owner caught it on the §245 walk (2026-09-28).
  */
-export function usePlanGating(): PlanGating | null {
+export function usePlanGating(enabled = true): PlanGating | null {
   const [gating, setGating] = useState<PlanGating | null>(null);
   useEffect(() => {
+    // `enabled: false` asks nothing (a caller mounted on screens that do not need the answer, e.g. the marketing bar's
+    // parent, which also renders nothing on a club's or a tournament's pages).
+    if (!enabled) return;
     let live = true;
     fetch('/api/plan-gating')
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (live) setGating(d ? (d as PlanGating) : fromCode()); })
       .catch(() => { if (live) setGating(fromCode()); });
     return () => { live = false; };
-  }, []);
+  }, [enabled]);
   return gating;
 }

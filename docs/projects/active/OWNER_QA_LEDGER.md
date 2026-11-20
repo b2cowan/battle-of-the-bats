@@ -28622,3 +28622,9 @@ performed over the shared working tree. The original walk result is not claimed 
 **Writing steps to read back after the walk:** A8 moves a team (the coach's subscription is cancelled in Stripe test mode, no credit note); nothing else is written.
 **Owed after the walk:** the four calls; commit on the owner's yes (explicit pathspecs; the ledger, board and Terms draft are shared files with other sessions' edits); the release carries this build WITH the Terms version that holds T5 (same promote). `/docs` and `/design` offered, not run.
 <!-- /§549 -->
+## §550 · On-sale pages · S3, the pages' open state — **built 2026-11-20 on dev; owed the owner's walk and commit**
+<!-- §550 -->
+**Walk (checkable):** https://claude.ai/artifact/9aVyHMby5sGfy4G5Hug8WS (source `docs/projects/active/CLUB_ON_SALE_S3_WALK.html`); parts A to F and H, 45 steps, five owner calls C1 to C5 (not in the counter). Plan `CLUB_ON_SALE_PAGES_PLAN.md` S3.
+**Sign-in:** visitor signed out; club owner `owner@dev.local` · `devpass123`; platform admin `uat-platform@fieldlogichq.ca` · `UATPassword2026!`.
+**Status:** owed. Built 2026-11-20 on dev; the owner commits.
+<!-- /§550 -->

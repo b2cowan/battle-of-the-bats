@@ -92,6 +92,42 @@
   margin: 0 auto;
 }
 
+/* One card alone in its band (the coaches band, W58): it spans the band rather than sitting as a lone narrow card. */
+.pricingGridOne { grid-template-columns: minmax(0, 1fr); }
+
+/* ── The three audience bands on /pricing (W58, on-sale pages S3) ───────── */
+.bands {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.band { scroll-margin-top: 6rem; }
+
+/* The band heading sits over a rule, at card-title size (Ask 34: "Available now" stays the page's one display heading). */
+.bandHead {
+  border-bottom: 1px solid var(--home-line);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.bandHead h3 { margin: 0; }
+.bandLine {
+  margin: 0.375rem 0 0;
+  color: var(--home-ink-soft);
+  max-width: 760px;
+}
+
+/* Band 1 (two cards): the drawing's 1000px column, not the re-gated state's 780px. */
+.band .pricingGridTwo { max-width: 1000px; margin: 0; }
+
+.bandFoot { margin: 1rem 0 0; }
+
+.bandsAvailability {
+  text-align: center;
+  color: var(--home-ink-soft);
+  margin: 0;
+}
+
 /* ── Plan cards — subgrid so all 5 bands (header, price, rule, list, button) line up across cards ── */
 .planCard {
   composes: card from './marketing/MarketingKit.module.css';
@@ -115,7 +151,40 @@
   margin-bottom: 0.5rem;
 }
 
+/* A card with a small label on its first line (the league-and-club band): the status pill goes to the right. */
+.planBadgeRowLabelled { justify-content: space-between; }
+
+/* "A house league", "A club with rep teams · up to 15 teams": the kit's eyebrow face (12px, olive), on the card's line. */
+.planBandLabel {
+  composes: eyebrow from './marketing/MarketingKit.module.css';
+  margin: 0;
+}
+
 .planTagline { color: var(--home-ink-soft); }
+
+/* League Plus's first line in its band (W58): "Running a tournament too? It's in your plan." */
+.planLead {
+  margin-top: 0.5rem;
+  color: var(--home-olive);
+  font-weight: 600;
+}
+
+/* The coaches card across its band: the feature list in two columns and an auto-width button on a wide screen (drawing
+   tab 3). The kit's tick list is a grid, so the columns are grid columns. */
+@media (min-width: 900px) {
+  .planCardWide .planFeatures { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2rem; }
+  .planCardWide .planCtaBand { align-items: flex-start; }
+  .planCardWide .planCtaBand > a { width: auto; padding-inline: 28px; }
+}
+
+/* Between 1101 and 1300px a band-2 card is narrow enough for its label to wrap; reserve the second line on every
+   labelled card so the three names stay level (`/design` S3). */
+@media (min-width: 1101px) and (max-width: 1300px) {
+  .planBadgeRowLabelled { align-items: flex-start; min-height: 2.75em; }
+}
+
+/* A band where no card has a label or a pill draws no empty first line (`/design` S3). */
+.planBadgeRowNone { display: none; }
 
 .planPriceBlock { padding-top: 0.25rem; }
 
@@ -196,6 +265,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: repeat(10, auto);
   }
+  .pricingGridOne { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 640px) {
@@ -205,5 +275,7 @@
     max-width: 420px;
     margin: 0 auto;
   }
+  /* Band 1 as narrow as the other bands on a phone (its 1000px rule outranks the grid's). */
+  .band .pricingGridTwo { max-width: 420px; margin: 0 auto; }
   .toggleWrap { margin-bottom: 1.5rem; }
 }

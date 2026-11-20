@@ -1,0 +1,48 @@
+/* "How the trial works" (W68) — LAYOUT ONLY; faces and colours are the marketing kit's --home-* tokens.
+   Drawing tab 4 (DLOG): a numbered row without card boxes — four columns on a wide screen, each a 32px olive number over
+   a rule, a 16px bold title and the body; on a phone each step is a row, a 44px number column then the text. */
+.steps {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.num {
+  display: block;
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: var(--type-display);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--home-olive);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--home-line);
+}
+
+.title {
+  margin: 0 0 0.25rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--home-ink);
+}
+
+.step p:last-child { margin: 0; }
+
+/* Two columns between a phone and a wide screen (`/design` S3). */
+@media (min-width: 761px) and (max-width: 1000px) {
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .steps { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .step { flex-direction: row; gap: 0; align-items: flex-start; }
+  .num { flex: 0 0 44px; border-bottom: none; padding-bottom: 0; }
+}

@@ -332,6 +332,35 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
   production row), by a capture script kept with the build so `/demos` can re-shoot them each release cycle.
   - **⚖ Owner, 2026-11-19: before any picture is built, show him BOTH options side by side and he chooses** — (A) real
     screenshots of the product, (B) drawn pictures of the same screens. His reason: our screenshots have historically
+- **Built 2026-11-20** (prompt `CLUB_ON_SALE_S3_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S3_WALK.html`,
+  https://claude.ai/artifact/9aVyHMby5sGfy4G5Hug8WS, Owner QA Ledger §550). On dev, for the owner's commit.
+  - **Part 0:** `/marketing` wrote League Plus's closed words ("Coming soon"; "League Plus is coming soon — it isn't open for
+    sign-up yet."; both closed: "Club and League Plus are coming soon."), now one tag for every closed plan, so the strip's
+    per-plan status went (W6 simplified). `/strategy`: the Facts truth-up was already done in S1 (`4ded7e325`). `/billing`:
+    production's live webhook endpoint receives `customer.subscription.trial_will_end` (read-only API check 2026-11-20) and the
+    handler emails every active owner with the date, so "How the trial works" ships.
+  - **The open layouts switch on all three** (`allProgramPlansOpen`: League Plus, Club, Club · Association, each its own gate);
+    band 2 on any one (`anyProgramPlanOpen`). While all three are closed every page renders S1's closed state (the guard test
+    renders each page in both states and in a partial flip). Club leads `/pricing` once Club is open (Ask 32 B). The trial
+    sentence everywhere reads the length checkout will use (`getPlanConfigOverrides()`); at 0 days no sentence, no "trial"
+    button (`/accounting`). The in-product onboarding chooser keeps its four cards (S4's).
+  - **Choices inside ruled lines** (walk call C2): band-2 labels on the card's first line (pill rule); the coaches band line
+    "The Premium Coaches Portal is for the head coach running a competitive team's whole season."; team counts say "with a
+    Premium Coaches Portal" (2026-11-19 rule; `/marketing`); Club · Association's "every team type counted the same" replaced
+    by the portal line; "Available in Canada, outside Québec for now." without "organizations" on `/pricing` and home (`/legal`:
+    a coach buys there as a person); home role cards split into label left, pill right (`/design`).
+  - **`/legal` must-fix applied:** League Plus can change to no other plan (no `MOVES` row), so "Upgrade or downgrade at any
+    time" leaves the open pages and the change-plans answer says only the moves the product makes. **Owner call C1:** build a
+    League Plus → Club move (to `/plan`). `/legal` notes: step 2 "Your whole plan is on from the first day" holds only if nothing
+    in the plans is switched off at the flip (call C3). Reviews: `docs/agents/legal/ON_SALE_PAGES_S3_REVIEW.md`,
+    `docs/agents/accounting/ON_SALE_PAGES_S3_REVIEW.md`, `/design` (screenshots `.probe/s3-design/`), `/review` standard (three
+    partial-flip contradictions on `/pricing` fixed; the nav reads the gate only on the pages that already do).
+  - **Not changed:** `/for-coaches` (its Club links read true in both states; the bring-in promise stays held, Ask 13). The
+    `/pricing` "what they cover" section shows only while League Plus and Club are both closed; Club · Association has no
+    closed line of its own if it alone stays closed (call C4; they open together).
+  - **Checks:** the plan-page tests (99) pass; `check:layout --only` the six marketing screens at 320–1440 passes (`--changed`
+    widened to a whole-product sweep through another session's shared CSS, so it was not run). The full test run's 32 other
+    failures are other sessions' work in the tree. Drawings corrected to v4 locally (republish = call C5).
     looked much worse than the drawings, and if the drawings look much better he will go that route. (His point is that
     the drawings look better than our SCREENSHOTS of the product, not better than the product.) The comparison must
     be fair to both: (A) is the product captured at its best (tight crop on the part that sells, 2× pixels, a fixture

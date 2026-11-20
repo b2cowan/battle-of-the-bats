@@ -85,13 +85,14 @@
 .sub { max-width: 62ch; }
 
 /* ── What's included ────────────────────────────────────────────────────────────── */
-.tagRow { margin: 0 0 0.75rem; }
 .roadmapModules { margin-top: 1rem; }
 
+/* The status pill on the card's first line, on the right (one place for the pill, owner 2026-11-19). */
 .nameRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 0.375rem 0.75rem;
   margin-bottom: 0.375rem;
 }
@@ -101,6 +102,22 @@
 
 /* ── Pricing ────────────────────────────────────────────────────────────────────── */
 .after { margin: 1.5rem 0 0; }
+
+/* W61: three price rows in one card — heading column, the sentence, the link (drawing tab 5: 260px | text | link). */
+.priceRows { display: grid; gap: 0; }
+.priceRow {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--home-line);
+}
+.priceRowsTax { margin: 1rem 0 0; color: var(--home-ink-soft); }
+
+@media (max-width: 760px) {
+  .priceRow { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+}
 
 /* ── Bottom call to action ──────────────────────────────────────────────────────── */
 .ctaHeading { margin-bottom: 1.5rem; }

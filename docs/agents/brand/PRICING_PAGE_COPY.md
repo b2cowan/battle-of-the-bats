@@ -39,7 +39,7 @@
 | Plan step heading (Club door) | **How many teams will have a Premium Coaches Portal?** |
 | Line under it | **Rep, select, all-star: whatever your club calls them. House league teams are unlimited.** |
 | Club card | **Premium Coaches Portal for every coach on up to 15 teams, no per-team fee** · **Unlimited house league teams** |
-| Club · Association card | **Premium Coaches Portal for every coach on 16 to 30 teams** (house league carries from "Everything in Club") |
+| Club · Association card | **Premium Coaches Portal for every coach on 16 to 30 teams — no per-team fee** (house league carries from "Everything in Club"; "— no per-team fee" added 2026-11-20 to match the Club card) |
 | Pricing and billing lists (no Association card beside them) | **Premium Coaches Portal for every coach on up to 15 teams, or up to 30 on Club · Association — no per-team fee** · **Unlimited house league teams** |
 | FAQ ("How does the team limit on Club work?") and the for-clubs page | **The limit counts the teams you give a Premium Coaches Portal, whatever you call them: rep, select, all-star, travel. House league teams are unlimited. Archived teams and teams entered in your tournaments aren't counted.** |
 | Start door (Start a club) | **…Choose Club or Club · Association by how many teams will have a Premium Coaches Portal. House league teams are unlimited.** |
@@ -65,10 +65,10 @@ This section carries what S1 ships: the words that are **wrong today while a pla
 
 | Surface (W-id) | Closed words (today's words that break the canon or Facts are replaced) |
 |---|---|
-| The strip of plans not open (W6) | Tag: with one plan in the strip, that plan's own tag (Club **Coming soon**, League Plus **Not open yet**); with both, one group tag and **each plan's name carries its own status after it**. Closing line `{interestLine}` (was "Express interest to be notified when self-serve checkout opens."). Button label unchanged. |
+| The strip of plans not open (W6) | Tag: **Coming soon** for either plan (League Plus too, from 2026-11-20 — see the closed-plan words block below); with both closed there is one group tag, **Coming soon**, and no per-plan status after the names (they would only repeat it). Closing line `{interestLine}` (was "Express interest to be notified when self-serve checkout opens."). Button label unchanged. |
 | `/pricing` hero (W8) | **Tournament, Tournament Plus, and the Premium Coaches Portal are available now. Tournament is free, with no credit card required. {closedPlansLine}** (same shape without the Coaches Portal when Premium is closed). Retires "start free, no credit card required" over Tournament Plus and "while we finish those workflows". |
 | `/pricing` "Available now" intro (W10) | **Organization plans for tournaments and operations, plus the standalone Premium Coaches Portal for coaches. {closedPlansLine}** (retires "early interest"). |
-| `/pricing` League Plus bridge, last sentence (W11) | **League Plus is built, but not open for sign-up. {interestLine}** Button label stays. |
+| `/pricing` League Plus bridge, last sentence (W11) | **League Plus is coming soon — it isn't open for sign-up yet. {interestLine}** Button label stays. *(Amended 2026-11-20: was "League Plus is built, but not open for sign-up.")* |
 | `/pricing` Club bridge, last sentence (W12) | **Club is coming soon — it isn't open for sign-up yet. {interestLine}** Button label stays. |
 | `/pricing` "what they cover" section (W13) | Body: **League Plus and Club are shown here so you can see what they cover.** Last paragraph: **If you want either plan, start on a live tournament plan now, or tell us you're interested. Tick the box on the form if you'd like an email when it opens.** Third card: **Share your details and which plans you want — no commitment. Tick the box on the form if you'd like an email when they open.** (Both changed 2026-11-19 with the interest line, owner ruling: no email is promised to a visitor who leaves the updates box unticked.) Middle card keeps `{closedPlansLine}`; eyebrow follows W6. |
 | FAQ "Is the platform only for tournaments?" (W14) | Replace "…are the next parts of the platform. They're shown here so your organization can plan ahead." with **League Plus and Club — covering house league seasons, rep team management, and accounting — are shown here so your organization can plan ahead. {closedPlansLine}** |
@@ -80,10 +80,10 @@ This section carries what S1 ships: the words that are **wrong today while a pla
 | `/for-clubs` and `/for-leagues` bottom bands (W30, W36) | Lead **{interestLine} Running a tournament now? Start free today.** Buttons unchanged. |
 | `/for-leagues` Coaches Portal cross-sell (W35) | The link is **See the Coaches Portal** (to `/for-coaches`) whenever Premium is open; bring-in sentence per W22's closed words. |
 | Home "What's included" lead (W39) | **Tournament organizers and coaches can start today — free, no credit card required. {closedPlansLine}** (Premium closed: "The Coaches Portal is coming soon. {closedPlansLine}"). |
-| Home module cards' tag (W40) | **Club · Coming soon** and **League Plus · Not open yet** (retires "In development"). |
+| Home module cards' tag (W40) | **Club · Coming soon** and **League Plus · Coming soon** (retires "In development"; League Plus's was "Not open yet" until 2026-11-20). |
 | `/start` page description (W43) | **Tell us your job and get started — run a tournament or coach a team.** |
 | `/start/club` while Club is closed (W50) | Heading **Explore Club**; sub **Club — coming soon**; body **Club brings everything together for multi-team organizations — house league, rep teams, accounting, and a Premium Coaches Portal for your whole coaching staff. Club is coming soon — it isn't open for sign-up yet. {interestLine}** Button **Express interest in Club**; link "See what Club includes →" unchanged. The "We set up Club with you / Talk to us about Club" page is gone (2026-11-18 ruling). |
-| `/start/league` while League Plus is closed and the free-floor flag is off (W54) | Sub **League Plus — not open yet**; body **League Plus runs your full house league season — registration, draft, scheduling, standings, and parent communications in one dashboard. League Plus is built, but not open for sign-up. {interestLine}** Button **Express interest in League Plus**; link **See how League Plus works →**. |
+| `/start/league` while League Plus is closed and the free-floor flag is off (W54) | Sub **League Plus — coming soon**; body **League Plus runs your full house league season — registration, draft, scheduling, standings, and parent communications in one dashboard. League Plus is coming soon — it isn't open for sign-up yet. {interestLine}** *(Amended 2026-11-20: was "League Plus — not open yet" / "…is built, but not open for sign-up.")* Button **Express interest in League Plus**; link **See how League Plus works →**. |
 | The interest form (W56; never "early access" where a customer reads it) | Window kicker **Express interest** · intro **Share a few details and we'll let you know when your plan opens.** · saved, with updates **We've saved your request. When the plans you picked open, we'll write to {email}.** · saved, no updates **We've saved your request. You won't get an email when it opens, as you asked.** · close label **Close the form** · submit and trigger **Express interest** · option **Coaches Portal** (was "Coach portal"). Unchanged on purpose: the heading and the consent checkbox's words (a CASL consent: changing them is `/legal`'s). The consent box opens **unticked** (Ask 6, `/legal`). |
 | The footer (W63, both states) | A new column **Built for**: **Tournament organizers**, **House leagues**, **Clubs**, **Coaches** (the four persona pages). The "Get started" column's existing "Coaches" link becomes **Coaches Portal** (two "Coaches" links with two destinations would clash). ⚠ **That column was replaced 2026-11-19 (owner):** it is now **Account** — **Get started** (the chooser) and **Sign in**; signed in, **Open app** and **Your account**. The footer holds no sign-up door per product, so "Coaches Portal" and "Start free" are gone from it. The three new labels have not had a `/marketing` pass. |
 
@@ -111,7 +111,7 @@ block on `/for-tournament-organizers`; the Premium Coaches Portal block and its 
 the "Tournament Plus — $39/mo" chips of `/for-clubs` and `/for-leagues`; on the Premium price in the `/pricing` FAQ (the price now
 reads from the plan config, not a typed "$29"); and the one sentence in the `/pricing` "How does billing work?" answer. **Where it
 does not:** a free price, a "Free through …" / "Normally $X" price beside it (the Founding Season panel, the promo branches), and a
-gated plan (League Plus "Not open yet", Club "Coming soon") — a price that cannot be bought yet is not yet a charge. Buttons keep
+gated plan (League Plus and Club, both "Coming soon") — a price that cannot be bought yet is not yet a charge. Buttons keep
 their short price. When League Plus or Club goes on sale, its block takes the line in the same unit of work.
 
 ### ⚰ RETIRED 2026-11-19 — The free League plan runs one season at a time — the refusal words (history)
@@ -342,20 +342,29 @@ also written in the canon (§9) and in code — nothing to write on the day.
 `closedProgramPlansSentence()`) and pinned by `tests/unit/gated-plan-availability-copy.test.ts` — call
 them; never retype a status. Shown only when the **live** gate says the plan is closed.
 
+> ### ⚠ AMENDMENT 2026-11-20 — League Plus wears "Coming soon" too (owner 2026-11-19, `CLUB_ON_SALE_PAGES_PLAN.md` S3 "League Plus's closed words")
+> League Plus goes on sale with Club (`BUSINESS_DECISIONS.md` 2026-11-06), so its 2026-09-28 "parked" words ("Not open yet", "built, but
+> not open for sign-up", and `/for-leagues`' "Tell us your league is waiting — it is the clearest signal we have for when to open it")
+> are **retired**. Until the flip it reads exactly as Club does. Written by `/marketing` 2026-11-20; build in S3.
+> Still true: no date, no "early access", no "in development", no "soon" with a promise attached ("opens this fall").
+
 | | Tag | Sentence | Line under a button |
 |---|---|---|---|
-| **League Plus** (parked — no imminence) | **Not open yet** | League Plus is built, but not open for sign-up. | Built, but not open for sign-up. |
+| **League Plus** (was parked; same words as Club from 2026-11-20) | **Coming soon** | League Plus is coming soon — it isn't open for sign-up yet. | Not open for sign-up yet. |
 | **Club** (a release is under way) | **Coming soon** | Club is coming soon — it isn't open for sign-up yet. | Not open for sign-up yet. |
-| Both closed, one sentence (read from the gate; each half drops out when its plan opens) | — | Club is coming soon, and League Plus is built but not open for sign-up. | — |
+| Both closed, one sentence (read from the gate; each half drops out when its plan opens) | — | Club and League Plus are coming soon. (One closed: "Club is coming soon." / "League Plus is coming soon.") | — |
+| `/for-leagues` hero note and plan-section intro, closed | — | Hero: **Coming soon — it isn't open for sign-up yet.** then the live-plans sentence (the `/for-clubs` shape; the tag already says the plan, so the hero never repeats it). Plan intro: **League Plus is coming soon — it isn't open for sign-up yet. {interestLine}** | — |
+| Group tag over the closed strip / "what they cover" section, both closed | **Coming soon** (was "Not open yet") | — | — |
 | Beside an interest door (replaces "Join early access for launch updates"); also the interest window's intro | — | Tell us you're interested. Tick the box on the form if you'd like an email when it opens. (owner ruling 2026-11-19, `/legal`'s sentence) | — |
 
 - **Never "early access"** where a customer reads it — the programme was withdrawn 2026-07-28. (The
   platform admin's own lead pipeline keeps the name; it is internal.)
-- **Never "soon", "final refinement", "being refined" or "being finished" for League Plus** — the
-  2026-08-20 `/for-leagues` ruling, extended to every surface. Club may say "Coming soon", never with a date.
+- **Never "final refinement", "being refined" or "being finished" for League Plus** — the
+  2026-08-20 `/for-leagues` ruling, extended to every surface. *(⚖ Amended 2026-11-20: the bare tag "Coming soon" is now League Plus's too,
+  since it sells with Club; "soon" never carries a date or a promise, for either plan.)*
 - **Where it applies (applied 2026-09-28):** the org billing page's shelf and its "See what's included"
   panel (also tournament Settings → Plan & subscription); `/pricing` (plan cards, the footnote strip
-  heading **"Not open yet"** (**amended 2026-11-18, W6: each plan in the strip carries its own tag; one group tag only when both are closed**), the League Plus and Club sections, the upgrade cards, the FAQ, the
+  heading **"Coming soon"** (**amended 2026-11-18, W6: each plan in the strip carries its own tag; one group tag only when both are closed; amended 2026-11-20: both tags are now "Coming soon", so the group tag is too**), the League Plus and Club sections, the upgrade cards, the FAQ, the
   closing line); the homepage (pricing intro, persona badges `<tag> · express interest`); `/for-leagues`;
   `/start/league`; `/platform/house-league`; the admin home's locked-programs note (heading **"In
   League Plus and Club"**).

@@ -41,18 +41,20 @@ export async function getCoachStartHref(): Promise<string> {
  * mirrors the /start chooser's gating exactly — it must never promote a door the chooser itself would hide
  * (S1-1 rider: nothing not-yet-live is promoted):
  *   • coachHref — the one coach rule above;
- *   • showLeague — while League Plus is on sale (there is no free League, owner 2026-11-19).
+ *   • showLeague — while League Plus is on sale (there is no free League, owner 2026-11-19);
+ *   • showClub — while Club or Club · Association is on sale ("Start a club", W63, on-sale pages S3).
  *
  * Resolve this ONLY in mounts that are already dynamic (the consumer layout, the coach journey chrome) —
  * `getPlanGatingMap` reads cookies + DB, so calling it from the root layout would force every route dynamic.
  * Mounts that can't afford that (the root-mounted tournament strip) use StartMenu's safe defaults instead:
  * "Coach a team" routes through the /start chooser, which applies the rule itself.
  */
-export type StartMenuConfig = { coachHref: string; showLeague: boolean };
+export type StartMenuConfig = { coachHref: string; showLeague: boolean; showClub: boolean };
 
 /** Request-memoized: the /coaches layout and a nested journey layout both ask, and each ask reads plan gating. */
 export const getStartMenuConfig = cache(async (): Promise<StartMenuConfig> => {
-  // A Club row joins the menu with S3's nav order, not here.
-  const [coachHref, showLeague] = await Promise.all([getCoachStartHref(), isPaidDoorOpen('league')]);
-  return { coachHref, showLeague };
+  const [coachHref, showLeague, showClub] = await Promise.all([
+    getCoachStartHref(), isPaidDoorOpen('league'), isPaidDoorOpen('club'),
+  ]);
+  return { coachHref, showLeague, showClub };
 });

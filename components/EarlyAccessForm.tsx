@@ -3,7 +3,8 @@
 import { FormEvent, useState } from 'react';
 import { HEARD_FROM_CHOICES } from '@/lib/lead-form-answers';
 import { readRefTag } from '@/lib/ref-tag-client';
-import { interestButtonLabel } from '@/lib/plan-config';
+import { interestButtonLabel, isPlanOpen } from '@/lib/plan-config';
+import { usePlanGating } from '@/lib/use-plan-gating';
 import styles from './EarlyAccessForm.module.css';
 
 const PLAN_OPTIONS = [
@@ -45,6 +46,12 @@ export default function EarlyAccessForm({
   // Opens UNTICKED (Ask 6, ruled 2026-11-18, /legal): a box ticked for the visitor is not their consent to email, so
   // a pre-ticked box made the "consenting" list doubtful under CASL. The box's wording is unchanged (a /legal change).
   const [releaseNotificationsConsent, setReleaseNotificationsConsent] = useState(false);
+  // The form follows the gate (Ask 5, W55; on-sale pages S3): it offers only a plan that is still closed — an open plan's
+  // door is its start, never this form. Until the live answer arrives, both are listed (the doors that open the form
+  // already read the gate, so a visitor only reaches it beside a closed plan).
+  const gating = usePlanGating();
+  const planOptions = PLAN_OPTIONS.filter(option => !gating || !isPlanOpen(gating, option.value));
+  const openPlanValues = gating ? PLAN_OPTIONS.filter(o => isPlanOpen(gating, o.value)).map(o => o.value as string) : [];
 
   function toggleValue(value: string, values: string[], setter: (next: string[]) => void) {
     setter(values.includes(value) ? values.filter(v => v !== value) : [...values, value]);
@@ -64,7 +71,7 @@ export default function EarlyAccessForm({
       sports: String(form.get('sports') ?? ''),
       notes: String(form.get('notes') ?? ''),
       website: String(form.get('website') ?? ''),
-      planInterest,
+      planInterest: planInterest.filter(p => !openPlanValues.includes(p)),
       featuresInterested,
       releaseNotificationsConsent,
       sourcePath: `${window.location.pathname}${window.location.hash}`,
@@ -116,21 +123,23 @@ export default function EarlyAccessForm({
         <input name="sports" maxLength={160} placeholder="Softball, hockey, soccer, baseball..." />
       </label>
 
-      <fieldset className={styles.choiceGroup}>
-        <legend>Plans interested in</legend>
-        <div className={styles.choiceGrid}>
-          {PLAN_OPTIONS.map(option => (
-            <label key={option.value} className={styles.choice}>
-              <input
-                type="checkbox"
-                checked={planInterest.includes(option.value)}
-                onChange={() => toggleValue(option.value, planInterest, setPlanInterest)}
-              />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      {planOptions.length > 0 && (
+        <fieldset className={styles.choiceGroup}>
+          <legend>Plans interested in</legend>
+          <div className={styles.choiceGrid}>
+            {planOptions.map(option => (
+              <label key={option.value} className={styles.choice}>
+                <input
+                  type="checkbox"
+                  checked={planInterest.includes(option.value)}
+                  onChange={() => toggleValue(option.value, planInterest, setPlanInterest)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <fieldset className={styles.choiceGroup}>
         <legend>Features interested in</legend>

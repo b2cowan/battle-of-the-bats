@@ -152,7 +152,7 @@ export default function CoachPortalShell({
   /** Stage D.2: the account's places, for the nav's Workspaces popover (2+ only). */
   workspaces?: WorkspaceDoor[];
   /** WI-2: persona-menu gating resolved by the layout (already dynamic). */
-  startMenu?: { coachHref: string; showLeague: boolean };
+  startMenu?: { coachHref: string; showLeague: boolean; showClub?: boolean };
 }) {
   const pathname = usePathname();
   const router = useRouter();
