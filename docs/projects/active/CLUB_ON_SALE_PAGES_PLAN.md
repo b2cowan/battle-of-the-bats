@@ -372,6 +372,19 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
     decided at S3b. The one difference left: between refreshes, a screen that changes is caught by re-running the
     screenshot script, while a drawing needs someone to notice. W67's caption ("These are the product's own screens…")
     fits (A); (B) needs its own wording and a `/legal` read.
+  - **Part 0 built 2026-11-20, committed `a436005ab` (the comparison; owner's three calls open: A or B, the cadence, B's
+    caption; the eight PNGs are not committed until he chooses, and the script re-takes them).** The fixture
+    is **Kestrel Bay Softball Association** (`kestrel-bay`, dev only, invented names, addresses on reserved test domains,
+    no medical notes): `seed-prospect-demo.mjs --club=kestrel` (the Milton machinery now takes a pinned club config,
+    `on-sale-pictures.kestrel.config.mjs`), then `seed-on-sale-pictures-extras.mjs` (a tournament with two games live at
+    capture time, a rep team's roster, a year of club books), then `capture-on-sale-pictures.mjs` (its own guard: dev
+    server, dev project, `/kestrel-bay/` only, the fixture's marker; one-time-link sign-in, no password kept; 16:10 crops
+    at 2×; refuses a "Loading" screen). Comparison Artifact: https://claude.ai/artifact/EqmU4jxPS6epwohkC6KRog.
+    **Findings for the build:** no screen shows "the schedule beside the standings" (W67 03 / the drawing), so 03 is the
+    public standings page; the two registrations pictures use two views (To review on `/for-leagues`, Accepted on
+    `/for-clubs`); the event page is shot at desk width; every house-league screen (admin and public) opens on the
+    youngest age group even when it has no games (route to `/plan`, not S3b); the extras seed leaves the previous
+    roster's 13 children and their guardians behind on each re-run (fix in the build).
 - `/for-leagues`, `/for-clubs`: "Questions a board asks" before the bottom call to action (W70); its first four answers
   also join the `/pricing` FAQ, which is grouped under three small headings. Answer 6 (a year's cost) shows only while
   the plan is open. **Ships only with the Terms and Privacy Policy live on production** (the answer links to it), and
@@ -386,18 +399,6 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
 - Plan & billing for a free Tournament org: start Club, Club · Association or League Plus (checkout) when open —
   today `upgradePlansFor('tournament')` is Tournament Plus only (`lib/plan-upgrade.ts:28-30`), `PANEL_PLANS` lacks
   `club_large`, and only Premium's discovery card has a button (`BillingBody.tsx:509`). This is also the
-  - **Part 0 built 2026-11-20 (the comparison; owner's three calls open: A or B, the cadence, B's caption).** The fixture
-    is **Kestrel Bay Softball Association** (`kestrel-bay`, dev only, invented names, addresses on reserved test domains,
-    no medical notes): `seed-prospect-demo.mjs --club=kestrel` (the Milton machinery now takes a pinned club config,
-    `on-sale-pictures.kestrel.config.mjs`), then `seed-on-sale-pictures-extras.mjs` (a tournament with two games live at
-    capture time, a rep team's roster, a year of club books), then `capture-on-sale-pictures.mjs` (its own guard: dev
-    server, dev project, `/kestrel-bay/` only, the fixture's marker; one-time-link sign-in, no password kept; 16:10 crops
-    at 2×; refuses a "Loading" screen). Comparison Artifact: https://claude.ai/artifact/EqmU4jxPS6epwohkC6KRog.
-    **Findings for the build:** no screen shows "the schedule beside the standings" (W67 03 / the drawing), so 03 is the
-    public standings page; the two registrations pictures use two views (To review on `/for-leagues`, Accepted on
-    `/for-clubs`); the event page is shot at desk width; every house-league screen (admin and public) opens on the
-    youngest age group even when it has no games (route to `/plan`, not S3b); the extras seed leaves the previous
-    roster's 13 children and their guardians behind on each re-run (fix in the build).
   abandoned-checkout resume.
 - The plan panel drawer passes monthly only (`PlanPanelDrawer` ~:105): add the monthly / yearly choice.
 - The moves ruled in Ask 12 (recommended at launch: paying Tournament Plus → League Plus, one `MOVES` entry; League
