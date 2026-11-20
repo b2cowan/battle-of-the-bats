@@ -101,7 +101,6 @@ export const FORM_WORDS = {
   answers: 'Answers',
   answersNone: 'None yet',
   answersCount: (n: number, asked: QuestionAsked) => (asked === 'once' ? pluralize(n, 'sign-up') : pluralize(n, 'child', 'children')),
-  healthFact: 'Yes. Its answers stay out of list columns, the draft board and emails, and out of exports unless asked for.',
   archive: 'Archive this question',
   archiveNote: 'Answers already given stay on each registration and in the export, under “No longer asked”.',
   archiveAsk: (label: string) => ({

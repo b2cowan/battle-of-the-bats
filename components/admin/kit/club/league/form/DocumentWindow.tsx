@@ -322,14 +322,16 @@ function DocumentRecord({ doc, apiBase, orgQuery, canEdit, prev, next, position,
 
         {canEdit && !doc.archivedAt && (
           <RecordSection>
-            {current && (
-              <RecordAction icon={<FileUp size={13} aria-hidden />} onClick={() => void leave(() => { setAskError(''); setAsking('replace'); })} disabled={busy}>
-                {W.docReplace}
+            <div className={f.doors}>
+              {current && (
+                <RecordAction icon={<FileUp size={13} aria-hidden />} onClick={() => void leave(() => { setAskError(''); setAsking('replace'); })} disabled={busy}>
+                  {W.docReplace}
+                </RecordAction>
+              )}
+              <RecordAction icon={<Archive size={13} aria-hidden />} onClick={() => void leave(() => { setAskError(''); setAsking('archive'); })} disabled={busy}>
+                {W.docArchive}
               </RecordAction>
-            )}
-            <RecordAction icon={<Archive size={13} aria-hidden />} onClick={() => void leave(() => { setAskError(''); setAsking('archive'); })} disabled={busy}>
-              {W.docArchive}
-            </RecordAction>
+            </div>
             <p className={ck.hint}>{W.docKeepNote}</p>
           </RecordSection>
         )}

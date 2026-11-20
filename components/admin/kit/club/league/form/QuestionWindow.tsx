@@ -10,9 +10,9 @@
  * block); Show on the draft board (never for health). Once anyone has answered, Type and Asked are locked and say why.
  */
 import { useCallback, useRef, useState } from 'react';
-import { Archive, Trash2 } from 'lucide-react';
+import { Archive } from 'lucide-react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
-import { RecordAction, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
+import { RecordAction, RecordDelete, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { jsonInit } from '@/lib/money-fetch';
 import { readRefusal } from '@/lib/schedule-words';
 import { FormError, TextField } from '@/components/admin/kit/club/money/MoneyKit';
@@ -281,22 +281,24 @@ export default function QuestionWindow({
             )}
             {q.helpText && <div><dt>{W.helpText}</dt><dd>{q.helpText}</dd></div>}
             <div><dt>{W.asked}</dt><dd>{askedLabel(q.asked)}</dd></div>
-            <div><dt>{W.required}</dt><dd>{q.required ? `${W.yes}. ${W.requiredHint}` : W.no}</dd></div>
-            {q.health && <div><dt>{W.health}</dt><dd>{W.healthFact}</dd></div>}
+            <div><dt>{W.required}</dt><dd>{q.required ? W.yes : W.no}</dd></div>
+            {q.health && <div><dt>{W.health}</dt><dd>{W.yes}</dd></div>}
             <div><dt>{W.boardFact}</dt><dd>{q.onBoard ? W.shown : W.notShown}</dd></div>
             <div><dt>{W.answers}</dt><dd>{q.answers > 0 ? W.answersCount(q.answers, q.asked) : W.answersNone}</dd></div>
           </dl>
         )}
         {canEdit && !q.archivedAt && (
           <RecordSection>
-            <RecordAction icon={<Archive size={13} aria-hidden />} onClick={() => void leave(() => { setAskError(''); setAsking('archive'); })} disabled={busy}>
-              {W.archive}
-            </RecordAction>
-            {canDeleteQuestion(q) && (
-              <RecordAction icon={<Trash2 size={13} aria-hidden />} onClick={() => void leave(() => { setAskError(''); setAsking('delete'); })} disabled={busy}>
-                {W.delete}
+            <div className={f.doors}>
+              <RecordAction icon={<Archive size={13} aria-hidden />} onClick={() => void leave(() => { setAskError(''); setAsking('archive'); })} disabled={busy}>
+                {W.archive}
               </RecordAction>
-            )}
+              {canDeleteQuestion(q) && (
+                <RecordDelete onClick={() => void leave(() => { setAskError(''); setAsking('delete'); })} disabled={busy}>
+                  {W.delete}
+                </RecordDelete>
+              )}
+            </div>
             <p className={ck.hint}>{canDeleteQuestion(q) ? W.deleteNote : W.archiveNote}</p>
           </RecordSection>
         )}
