@@ -14,6 +14,9 @@
  */
 export const WEB_ADDRESS_WORDS = {
   name: 'Web address',
+  /** Settings & access's fourth tab on Tournament and Tournament Plus since it also holds the name (Settings in both
+   *  workspaces Session 2, A1). Its address stays `/settings/web-address`. */
+  tabName: 'Name & address',
   /** Settings & access's door, its sentence and its door words. */
   doorLine: (address: string) => `fieldlogichq.ca/${address} — the start of every link to your tournaments.`,
   doorAction: 'Change the address',
@@ -56,6 +59,14 @@ export const WEB_ADDRESS_WORDS = {
   /** While the club's own address is handed out, its links do not depend on this field; only the FieldLogicHQ ones do. */
   clubHintOwn: (own: string, slug: string) =>
     `Only lowercase letters, numbers, and hyphens. Links to ${own} keep working if you change it. Links to fieldlogichq.ca/${slug} stop.`,
+  /**
+   * A Premium Coaches Portal's Team settings › Organization (Settings in both workspaces Session 2): the same window, in a
+   * coach's words. What a coach's address is the start of: the team's public page and the tournaments the team RUNS (not
+   * ones it entered elsewhere); staff invites and calendar subscriptions use their own links and keep working.
+   */
+  teamDoorLine: (address: string) => `fieldlogichq.ca/${address} — the start of your team’s public page and your tournaments’ links.`,
+  teamHint: 'The start of your team’s public page and of the tournaments you run.',
+  teamWarning: 'Changing your web address breaks every existing link to your team’s public page and the tournaments you run — shared links, bookmarks and links in past emails.',
   clubWarningOwn: (own: string, slug: string) =>
     `Changing your web address immediately breaks every link that uses fieldlogichq.ca/${slug}. Links to ${own} keep working.`,
 } as const;

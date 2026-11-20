@@ -315,9 +315,9 @@
     { "id": "tournament-settings", "name": "The Tournament plan's missing settings", "track": "product", "state": "open", "checked": true,
       "files": ["TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md", "TOURNAMENT_PLAN_MISSING_SETTINGS_PM_BRIEF.md"], "ledger": ["Tournament plan settings"],
       "goals": ["quality"], "lane": "later", "order": 53, "phase": "Planning",
-      "stage": "Now: the deletion request built 20 Nov (Session 1 of 3: each request recorded, privacy@ and every owner, last on Plan & billing for Premium and both Tournament plans, the club's card on the same window) → Next: Session 2, names and addresses",
-      "next": "Session 2 of the shared build prompt: the Name & address tab, and the Premium portal's Organization rows and print options.",
-      "remains": "Sessions 2 and 3 of the build, and one walk.",
+      "stage": "Now: the deletion request built 20 Nov (Session 1 of 3: each request recorded, privacy@ and every owner, last on Plan & billing for Premium and both Tournament plans, the club's card on the same window); names and addresses built 20 Nov (Session 2 of 3, your six gate calls as recommended: the Tournament plans' Name & address tab with Rename; a Premium owner renames the team, changes the web address and the birthday date from Team settings › Organization; six More print options in How your documents look — Player notes dropped, it changed nothing); the doubled \"Coaches Portal\" name on a Premium team's public pages is with you (C5) → Next: Session 3, retiring a Premium coach's tournament-side settings",
+      "next": "Session 3 of the shared build prompt: the Premium coach's tournament-side Account group goes, and its old addresses land on the portal homes Session 2 built.",
+      "remains": "Session 3 of the build, the production step for the team rename (before the promote), and one walk.",
       "waitsOn": [], "finishesAfter": [],
       "youOwe": [] }
   ]

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContext, getAcceptedMember, unauthorized, forbidden } from '@/lib/api-auth';
 import { getRepTeam, updateRepTeamPdfLook } from '@/lib/db';
 import { getEntitledTeamMembership, requireHeadCoachMembership } from '@/lib/coach-membership';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
@@ -11,7 +11,10 @@ import {
   normalizeLogoDataUrl,
   type TeamPdfLook,
 } from '@/lib/export/resolve-pdf-settings';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
+import { cleanPrintOptions, mergePrintOptions, printOptionsOf } from '@/lib/team-print-options';
+import { mayChangeWorkspaceIdentity } from '@/lib/workspace-identity';
+import { orgManagesOwnSeasons } from '@/lib/season-doors';
 import { crestFacts } from '@/lib/team-crest';
 
 /**
@@ -25,6 +28,9 @@ import { crestFacts } from '@/lib/team-crest';
  * PUT  — replace the team's look. Head coach only, on plans that include customization
  *        (pdf_template_settings — Tournament Plus+ orgs, and the standalone Premium portal).
  *        {} returns the team to full inheritance ("Use club look").
+ *        `print` (Settings in both workspaces Session 2, rulings A8/C2): the six More print options of a STANDALONE
+ *        workspace, merged into the workspace's own print settings — the workspace OWNER only (A3); a request carrying
+ *        them from anyone else is refused whole, before anything is saved.
  *
  * ⚠ No program-year requirement on either verb: the look lives on the TEAM and outlasts any
  * season (like the club-book switch, unlike lineup caps). Membership is the gate.
@@ -70,6 +76,8 @@ export const GET = withObservability(async (req: NextRequest,
     isTeamWorkspaceOrg(ctx.org) &&
     ctx.org.teamWorkspaceStatus !== 'org_owned' &&
     ctx.org.teamWorkspaceStatus !== 'archived';
+  // More print options: a standalone workspace's own print settings, the owner's to change (A3/A8). Absent for a club's team.
+  const member = isStandalone && canCustomize ? await getAcceptedMember(ctx.org.id, ctx.user.id) : null;
 
   return NextResponse.json({
     settings,
@@ -88,6 +96,9 @@ export const GET = withObservability(async (req: NextRequest,
       canCustomize,
       isHeadCoach: membership.coachRole === 'head_coach',
       isStandalone,
+      print: isStandalone && canCustomize
+        ? { values: printOptionsOf(club), canChange: mayChangeWorkspaceIdentity(ctx.org, member?.role) }
+        : null,
     },
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/pdf-settings' });
@@ -117,6 +128,18 @@ export const PUT = withObservability(async (req: Request,
   const body = await req.json().catch(() => null);
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+  }
+
+  // More print options, checked before anything is saved so a refusal saves nothing.
+  let print: ReturnType<typeof cleanPrintOptions> | null = null;
+  if (body.print != null) {
+    if (!orgManagesOwnSeasons(ctx.org)) return NextResponse.json({ error: 'Your club sets the print options.' }, { status: 403 });
+    const member = await getAcceptedMember(ctx.org.id, ctx.user.id);
+    if (!mayChangeWorkspaceIdentity(ctx.org, member?.role)) {
+      return NextResponse.json({ error: 'Only the owner can change the print options.' }, { status: 403 });
+    }
+    print = cleanPrintOptions(body.print);
+    if ('error' in print) return NextResponse.json({ error: print.error }, { status: 400 });
   }
 
   const look: TeamPdfLook = {};
@@ -164,5 +187,16 @@ export const PUT = withObservability(async (req: Request,
 
   // Whole-object replace: absent keys mean "inherit the club's", and {} is "Use club look".
   await updateRepTeamPdfLook(team.id, look);
+
+  if (print && 'print' in print) {
+    // Merged, never replaced: the workspace's other print settings (its header lines, notes switches) stay as they are.
+    // The look above is already saved, so a failure here says exactly that (the retry resends both, harmlessly).
+    const { data: row, error: readErr } = await supabaseAdmin.from('organizations').select('pdf_settings').eq('id', ctx.org.id).single();
+    if (readErr) return captureAndJson(readErr, { error: "Your look was saved, but the print options weren’t. Try again." }, 500);
+    const next = mergePrintOptions(row?.pdf_settings as Record<string, unknown> | null, print.print);
+    const { error: writeErr } = await supabaseAdmin.from('organizations').update({ pdf_settings: next }).eq('id', ctx.org.id);
+    if (writeErr) return captureAndJson(writeErr, { error: "Your look was saved, but the print options weren’t. Try again." }, 500);
+    return NextResponse.json({ ok: true, team: look, print: print.print });
+  }
   return NextResponse.json({ ok: true, team: look });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/pdf-settings' });

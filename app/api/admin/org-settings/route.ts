@@ -5,6 +5,7 @@ import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/t
 import { withObservability, captureError } from '@/lib/observability';
 import { remakeStockLogoForTheme } from '@/lib/stock-logo-render';
 import { clubLookEditor } from '@/lib/public-site-access';
+import { NAME_MAX } from '@/lib/workspace-identity';
 import { CLUB_LOOK_FIELDS } from '@/lib/public-site-builder';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { parseTournamentLookPolicy, sanitizeTournamentLookPolicy } from '@/lib/tournament-look';
@@ -73,6 +74,11 @@ export const PATCH = withObservability(async (req: Request) => {
   if (body.name !== undefined) {
     const trimmed = String(body.name).trim();
     if (!trimmed) return NextResponse.json({ error: 'Name cannot be empty' }, { status: 400 });
+    // The screens' 40 (Settings, Name & address), held here too — only on a CHANGED name, so a club whose older name is
+    // longer can still save its other settings (Settings in both workspaces Session 2).
+    if (trimmed !== org.name && trimmed.length > NAME_MAX) {
+      return NextResponse.json({ error: `A name can be at most ${NAME_MAX} characters.` }, { status: 400 });
+    }
     updates.name = trimmed;
   }
 

@@ -13,6 +13,10 @@
  *   the move   the same server call and validation as before (PATCH /api/admin/org-settings, owner-only); on success
  *              the admin moves to the new address's Web address tab — with the window still open, as KitDialog's
  *              header requires of a button that closes a window and navigates
+ *
+ * The Premium Coaches Portal opens the same window from Team settings › Organization (Settings in both workspaces
+ * Session 2): `destination` says where the new address lands (the portal's Team settings, not a tournament tab), and
+ * `audience="team"` swaps the hint and the warning for a coach's (their team's public page, the tournaments they run).
  */
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,13 +29,17 @@ import { cleanSlugInput, isSlug } from '@/lib/slug';
 import { useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import styles from './settings-access.module.css';
 
-export default function WebAddressWindow({ orgName, current, eventSlug, onClose }: {
+export default function WebAddressWindow({ orgName, current, eventSlug, onClose, destination, audience = 'tournament' }: {
   orgName: string;
   /** The address today. */
   current: string;
   /** The event on screen, so the whole link under the field reads as one the owner knows. */
   eventSlug?: string | null;
   onClose: () => void;
+  /** Where the saved address lands; the Name & address tab when absent. */
+  destination?: (slug: string) => string;
+  /** Whose words: a Tournament plan's (its tournaments' links) or a Premium team's (its public page too). */
+  audience?: 'tournament' | 'team';
 }) {
   const router = useRouter();
   // The club's own web address while one is handed out (Club Tier 4e): the words then say its links keep working.
@@ -65,7 +73,7 @@ export default function WebAddressWindow({ orgName, current, eventSlug, onClose 
         return;
       }
       // The admin's address holds the old one — move to the new one's Web address tab, the window still open.
-      router.push(`/${data.slug}/admin/tournaments/settings/web-address`);
+      router.push(destination ? destination(data.slug) : `/${data.slug}/admin/tournaments/settings/web-address`);
       router.refresh();
     } catch {
       setError(W.failed);
@@ -111,12 +119,12 @@ export default function WebAddressWindow({ orgName, current, eventSlug, onClose 
           <p className={styles.addressPreview}>
             fieldlogichq.ca/<b>{next || '…'}</b>{eventSlug ? `/${eventSlug}` : ''}
           </p>
-          <p className={ck.hint}>{ownAddress ? W.hintOwn(ownAddress) : W.hint}</p>
+          <p className={ck.hint}>{ownAddress ? W.hintOwn(ownAddress) : audience === 'team' ? W.teamHint : W.hint}</p>
           {value.length > 0 && !valid && <p className={styles.addressBad}>{W.invalid}</p>}
           {error && <p className={styles.addressBad} role="alert">{error}</p>}
         </div>
         {changed && valid && (
-          <Callout tone="warn" flush icon={<AlertTriangle size={16} aria-hidden />}>{W.warning}</Callout>
+          <Callout tone="warn" flush icon={<AlertTriangle size={16} aria-hidden />}>{audience === 'team' ? W.teamWarning : W.warning}</Callout>
         )}
       </KitDialog>
 

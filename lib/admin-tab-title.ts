@@ -46,7 +46,7 @@ const ROUTE_LABELS: Array<[RegExp, string]> = [
   [/\/admin\/tournaments\/settings\/members(?:\/.*)?$/, 'Members'],
   [/\/admin\/tournaments\/settings\/payouts(?:\/.*)?$/, 'Payouts'],
   [/\/admin\/tournaments\/settings\/pdf(?:\/.*)?$/, 'PDF settings'],
-  [/\/admin\/tournaments\/settings\/web-address(?:\/.*)?$/, 'Web address'],
+  [/\/admin\/tournaments\/settings\/web-address(?:\/.*)?$/, 'Name & address'],
   [/\/admin\/tournaments\/settings\/subscription(?:\/.*)?$/, PLAN_BILLING_TITLE],
   [/\/admin\/tournaments\/settings(?:\/.*)?$/, SETTINGS_ACCESS_TITLE],
   [/\/admin\/tournaments(?:\/)?$/, 'Tournaments'],

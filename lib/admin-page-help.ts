@@ -139,7 +139,7 @@ export const TOURNAMENT_PAGE_HELP: Readonly<Record<string, PageHelpTopic>> = {
   branding: t(['public-site-preview'], 'Public site', 'public-site-cards'),
   summary: t(['recipe-closeout-tournament'], 'Summary', 'closeout-summary'),
   'settings/event': t(['settings-and-access'], 'Event settings', 'event-settings-cards'),
-  'settings/web-address': t(['settings-and-access'], 'Web address', 'settings-web-address'),
+  'settings/web-address': t(['settings-and-access'], 'Name & address', 'settings-web-address'),
   // ── No topic until Phase 6b ──
   'check-in': t(['scores-and-results'], 'Check-in', 'scores-t-gate'),
   communication: t(['public-communication'], 'Communications'),

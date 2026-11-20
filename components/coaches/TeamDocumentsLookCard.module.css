@@ -78,6 +78,24 @@
   flex-wrap: wrap;
 }
 
+/* More print options (Settings in both workspaces Session 2): a part folded inside the rows, after the footer row. Its
+   summary is a row of its own — the label, then the line naming what is on; the rows it holds sit indented under it. */
+.printFold { border-top: 1px solid var(--home-line, var(--border-2)); }
+.printFoldHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  min-height: 44px;
+  padding: 0.65rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+.printFoldHead::-webkit-details-marker { display: none; }
+.printFoldHead::after { content: '▸'; margin-left: auto; color: var(--text-tertiary); }
+.printFold[open] > .printFoldHead::after { content: '▾'; }
+.printFold > div { padding: 0 0 0.5rem 0.75rem; }
+
 /* Controls that have no shared-portal equivalent */
 .crestThumb {
   width: 38px;

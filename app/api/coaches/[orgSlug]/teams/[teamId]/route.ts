@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContext, getAcceptedMember, unauthorized, forbidden } from '@/lib/api-auth';
 import {
   getRepTeam,
   getActiveRepProgramYear,
@@ -14,7 +14,10 @@ import { mayManageSeasons, orgManagesOwnSeasons } from '@/lib/season-doors';
 import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import { normalizeArrivalDefault } from '@/lib/coach-arrival';
 import type { Organization } from '@/lib/types';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
+import { cleanName, mayChangeWorkspaceIdentity } from '@/lib/workspace-identity';
+import { cutoffFor } from '@/lib/born-years';
+import { normalizeSportId } from '@/lib/sports';
 import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
@@ -116,12 +119,14 @@ export const GET = withObservability(async (_req: Request,
   // together with the plan-coverage read, not behind it. (Information only: a failed payer/role read means no card, never a
   // failed page.)
   const familyAnswersRow = familyLayer && GUARDIAN_TIER_ENABLED && programYear.status === 'active';
-  const [planCoverage, familyCounts] = await Promise.all([
+  const [planCoverage, familyCounts, orgMember] = await Promise.all([
     getCoachTeamPlanCoverage(ctx.org, teamId, ctx.user.id).catch((err) => {
       console.error('[coaches team GET] plan coverage unavailable:', err);
       return null;
     }),
     familyAnswersRow ? rosterConnection(programYear.id) : null,
+    // The Organization rows are the workspace OWNER's (A3): the caller's own seat says whether they are.
+    scope.isStandalone ? getAcceptedMember(ctx.org.id, ctx.user.id) : null,
   ]);
 
   return NextResponse.json({
@@ -133,6 +138,19 @@ export const GET = withObservability(async (_req: Request,
     nextYearDefault: programYear.year + 1,
     scope,
     planCoverage,
+    /**
+     * Team settings › Organization (Settings in both workspaces Session 2, rulings A3/A5/A6): the team's name, the web
+     * address and the birthday date of a STANDALONE workspace — null for a club's team (its club owns all three).
+     * `canChange` is the workspace owner; a head coach who is not the owner reads the rows ("Owner only").
+     */
+    organization: scope.isStandalone
+      ? {
+          canChange: mayChangeWorkspaceIdentity(ctx.org, orgMember?.role),
+          workspaceName: ctx.org.name,
+          webAddress: ctx.org.slug,
+          birthday: { sport: normalizeSportId(team.sport), cutoff: cutoffFor(ctx.org.birthdayCutoffs, team.sport) },
+        }
+      : null,
     /**
      * Club Shared Book — the head coach's switch. `showSwitch` is false unless BOTH the Club
      * plan includes the feature and the club admin has turned sharing on for the org: a coach
@@ -248,7 +266,7 @@ export const GET = withObservability(async (_req: Request,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]' });
 
-// PATCH /api/coaches/[orgSlug]/teams/[teamId] — coach edits team division (standalone head coach only)
+// PATCH /api/coaches/[orgSlug]/teams/[teamId] — one team setting per request (the team's name: the workspace owner only)
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -272,6 +290,24 @@ export const PATCH = withObservability(async (req: Request,
     const saved = await setOwnShowNamePublic(membership.id, teamId, body.showMyName);
     if (saved === null) return NextResponse.json({ error: "Couldn't save your changes. Try again." }, { status: 409 });
     return NextResponse.json({ ok: true, showMyName: saved });
+  }
+
+  /**
+   * The team's name (ruling A5): renaming the team renames the workspace to "{new} Coaches Portal" with it, and the copies
+   * C1 ruled follow — one database function, one transaction (mig 517). The workspace OWNER only (A3), on a standalone
+   * workspace; a club's team is renamed on the club side.
+   */
+  if (body && typeof body === 'object' && 'name' in body) {
+    const member = await getAcceptedMember(ctx.org.id, ctx.user.id);
+    if (!mayChangeWorkspaceIdentity(ctx.org, member?.role)) {
+      return NextResponse.json({ error: 'Only the owner can rename the team.' }, { status: 403 });
+    }
+    const cleaned = cleanName(body.name);
+    if ('error' in cleaned) return NextResponse.json({ error: cleaned.error }, { status: 400 });
+    const { data, error } = await supabaseAdmin.rpc('rename_team_workspace', { p_team: teamId, p_name: cleaned.name });
+    if (error) return captureAndJson(error, { error: "Couldn't rename the team. Nothing was changed." }, 500);
+    const row = (Array.isArray(data) ? data[0] : data) as { team_name: string; workspace_name: string } | null;
+    return NextResponse.json({ ok: true, name: row?.team_name ?? cleaned.name, workspaceName: row?.workspace_name ?? null });
   }
 
   /**

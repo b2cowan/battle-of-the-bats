@@ -104,8 +104,10 @@ describe('Part B · one set of words for an event’s state (E12 (2))', () => {
 
 describe('Part B · a Tournament plan’s Settings & access is a place with tabs (E3, P1)', () => {
   const all = { members: true, payouts: true, pdf: true };
-  it('Members · Payouts · PDF settings · Web address, the person’s own only', () => {
-    assert.deepEqual(tournamentSettingsTabs(B, all).map(t => t.label), ['Members', 'Payouts', 'PDF settings', 'Web address']);
+  // ⚖ UPDATED IN THE OPEN (Settings in both workspaces Session 2, A1, owner 2026-11-20): the fourth tab holds the name too,
+  // so it is "Name & address"; its address stays /web-address.
+  it('Members · Payouts · PDF settings · Name & address, the person’s own only', () => {
+    assert.deepEqual(tournamentSettingsTabs(B, all).map(t => t.label), ['Members', 'Payouts', 'PDF settings', 'Name & address']);
     assert.deepEqual(tournamentSettingsTabs(B, { members: false, payouts: false, pdf: true }).map(t => t.id), ['pdf', 'web-address']);
     assert.deepEqual(tournamentSettingsTabs(B, { members: false, payouts: false, pdf: false }), [], 'no tab of its own = no place');
   });

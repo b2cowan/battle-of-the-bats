@@ -233,7 +233,9 @@ describe('"everything comes with it" follows the Club sale gate (ruling (c), 202
     }
     assert.match(readCode('app/[orgSlug]/admin/rep-teams/bring-in/page.tsx'), /clubPageLede\(clubName, clubOpen\)/);
     assert.match(readCode('app/[orgSlug]/coaches/link-org/page.tsx'), /coachPageLede\(ownTeamName, clubOpen\)/);
-    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx'), /&& clubOpen && \(/);
+    // ⚖ UPDATED IN THE OPEN (Settings in both workspaces Session 2, C4, owner 2026-11-20): Organization holds the team's name,
+    // web address and birthday date too, so the gate moved from the section onto the Join a club row (and its sentence).
+    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx'), /\{clubOpen && \(\s*<div className=\{styles\.settingRow\}>/);
   });
 
   it('a request that is already waiting keeps its "What comes with the team" column, whatever the sale state', () => {

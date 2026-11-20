@@ -34,7 +34,7 @@ describe('the admin tab title', () => {
     assert.equal(t('settings/notifications'), 'Your notifications - Harbourtown Invitational 2026 - Harbourtown Minor Ball - FieldLogicHQ');
     assert.equal(t('check-in'), 'Check-in - Harbourtown Invitational 2026 - Harbourtown Minor Ball - FieldLogicHQ');
     assert.equal(t('manage'), 'Tournaments - Harbourtown Minor Ball - FieldLogicHQ');
-    assert.equal(t('settings/web-address'), 'Web address - Harbourtown Minor Ball - FieldLogicHQ');
+    assert.equal(t('settings/web-address'), 'Name & address - Harbourtown Minor Ball - FieldLogicHQ'); // Settings Session 2, A1
     assert.equal(t('settings/subscription'), 'Plan & billing - Harbourtown Minor Ball - FieldLogicHQ');
     assert.equal(t('settings/members/audit'), 'Audit log - Harbourtown Minor Ball - FieldLogicHQ');
   });

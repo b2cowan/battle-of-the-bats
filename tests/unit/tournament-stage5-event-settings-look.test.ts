@@ -146,11 +146,16 @@ describe('A75 · the web address: Settings & access\'s fourth door, one name', (
     assert.equal(getWebAddressHref('x', 'league'), '/x/admin/org/settings');
     assert.equal(getWebAddressHref('x', 'club'), '/x/admin/org/settings');
   });
-  it('Settings & access’s Web address tab, on the tournament plans only — owner opens the window, anyone else reads Owner only', () => {
+  it('Settings & access’s Name & address tab, on the tournament plans only — owner opens the windows, anyone else reads Owner only', () => {
     // ⚖ Navigation Phase 2 Part B (P1, 2026-11-10): the card page's fourth door became the place's fourth tab.
+    // ⚖ UPDATED IN THE OPEN (Settings in both workspaces Session 2, A1/A3/A9, owner 2026-11-20): the tab holds the name too —
+    // one card, two rows; two equal actions, so BOTH are the white button and the tab has no lime.
     const tab = code('app/[orgSlug]/admin/tournaments/settings/web-address/WebAddressTab.tsx');
-    assert.match(tab, /\{isOwner\s*\? <button type="button" className="btn btn-lime" onClick=\{\(\) => setOpen\(true\)\} aria-haspopup="dialog">\{WA\.doorAction\}<\/button>\s*: <span className=\{styles\.addressOwnerOnly\}>\{WA\.ownerOnly\}<\/span>\}/);
-    assert.match(tab, /\{open && isOwner && currentOrg && \(/);
+    assert.match(tab, /\{isOwner\s*\? <button type="button" className="btn btn-outline" onClick=\{\(\) => setOpen\('name'\)\} aria-haspopup="dialog">\{NA\.rename\}<\/button>\s*: <span className=\{styles\.addressOwnerOnly\}>\{NA\.ownerOnly\}<\/span>\}/);
+    assert.match(tab, /\{isOwner\s*\? <button type="button" className="btn btn-outline" onClick=\{\(\) => setOpen\('address'\)\} aria-haspopup="dialog">\{WA\.doorAction\}<\/button>\s*: <span className=\{styles\.addressOwnerOnly\}>\{WA\.ownerOnly\}<\/span>\}/);
+    assert.doesNotMatch(tab, /btn-lime/);
+    assert.match(tab, /\{open === 'address' && isOwner && currentOrg && \(/);
+    assert.match(tab, /\{open === 'name' && isOwner && currentOrg && \(/);
     // A club's web address is its organization's Settings (P2): the tab's address sends it there.
     assert.match(code('app/[orgSlug]/admin/tournaments/settings/web-address/page.tsx'), /export default tournamentSideOnly\(WebAddressTab, 'org\/settings'\);/);
   });

@@ -82,7 +82,7 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 **Fields** (boilerplate `id`, `created_at` omitted):
 
 <!-- dict:col:organizations.name -->
-**`name`** (text, NOT NULL) — display name. _Writes:_ `createOrganization` ([lib/db.ts:2418](../../../lib/db.ts#L2418)), org-settings PATCH.
+**`name`** (text, NOT NULL) — display name. A team workspace's is "{team} Coaches Portal" (the product strips the suffix wherever it shows it — `teamWorkspaceDisplayName`). _Writes:_ `createOrganization` ([lib/db.ts:2418](../../../lib/db.ts#L2418)), org-settings PATCH (owner only; a CHANGED name max 40 since Settings Session 2), `rename_team_workspace` (mig 517).
 
 <!-- dict:col:organizations.slug -->
 **`slug`** (text, NOT NULL, UNIQUE) — the `/{slug}/` URL segment + primary org lookup key (`getOrganizationBySlug`, [lib/db.ts:2288](../../../lib/db.ts#L2288)). Generated collision-safe by `generateUniqueOrgSlug`; rename is uniqueness-guarded on save.
@@ -2742,6 +2742,9 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 - **Files do not move:** document rows store their own storage path (under the coach org's folder) and are read by it; nothing checks the prefix.
 - ⚠ **Function-only → invisible to `check:migrations`**; recorded in `supabase/migrations/MANUAL_PROD_STEPS.json`.
 
+**`rename_team_workspace(p_team, p_name)`** (mig 517, Settings in both workspaces Session 2, 2026-11-20, SECURITY DEFINER, service-role EXECUTE only). A Premium coach renames the TEAM and the workspace follows (owner rulings A5, C1). One transaction: `rep_teams.name`; `organizations.name` = "{name} Coaches Portal"; the workspace's `basic_coach_teams` record (via `team_workspaces.basic_coach_team_id`); the `coach_peer` `chat_rooms` row only while it reads "{old} staff"; `assistant_invite_tokens.team_name` on `pending`/`pending_approval` rows; `rep_program_years.name` only on a season not `completed`/`archived` that still reads "{old} {year}". Records keep the old name (registrations' `teams.name`, archives, Stripe metadata, snapshots, logs); neither slug changes. Refuses (raises): a blank or >40-character name; a team that is not its running workspace's (`team_workspace_status` `org_owned`/`archived`, or no `team_workspaces` row). The route (`PATCH /api/coaches/[orgSlug]/teams/[teamId]` `{ name }`) allows the workspace OWNER only.
+- ⚠ **Function-only → invisible to `check:migrations`**; recorded in `supabase/migrations/MANUAL_PROD_STEPS.json`.
+
 ### `team_workspace_claims`
 <!-- dict:table:team_workspace_claims -->
 
@@ -2848,7 +2851,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`org_id`** (FK → `organizations.id`, NOT NULL) — tenant scope; part of `UNIQUE(org_id, slug)`. Routes re-check `team.orgId !== ctx.org.id` → 404.
 
 <!-- dict:col:rep_teams.name -->
-**`name`** (text, NOT NULL) — display name; max 100 chars on create.
+**`name`** (text, NOT NULL) — display name; max 100 chars on create. **A Premium workspace's team is renamed by `rename_team_workspace` (mig 517, max 40), which renames the workspace with it**; a club's team by the club PATCH (max 100), which leaves the club's name alone. The slug never follows a rename.
 
 <!-- dict:col:rep_teams.slug -->
 **`slug`** (text, NOT NULL, `UNIQUE(org_id, slug)`) — the public URL segment (gotcha 4). **Not editable via the team PATCH** (`updateRepTeam` has no slug field) — only via `bulkRenameTeamSlugs`; 23505 → 409.

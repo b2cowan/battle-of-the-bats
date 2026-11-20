@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { birthdayCutoffApplies as appliesTo } from '@/lib/workspace-identity';
 import { loadBirthdaySports } from '@/lib/birthday-cutoff-server';
 import { cleanCutoffs } from '@/lib/born-years';
 import { normalizeSportId } from '@/lib/sports';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 
-/** A club with rep teams or house league has teams to count; any other has none, so the card is absent for it. */
-function appliesTo(org: Parameters<typeof hasModuleEntitlement>[0]): boolean {
-  return hasModuleEntitlement(org, 'module_rep_teams') || hasModuleEntitlement(org, 'module_house_league');
-}
+/* Who has teams to count: a club with rep teams or house league, or a standalone Premium workspace (owner ruling A6,
+   2026-11-20 — the portal already read the date and nothing could set it). Any other has none, so the card is absent. */
 
 /**
  * GET — what Settings' "When birthdays count from" card shows (Club Tier Stage 4c-2 Part A): the club's saved cut-offs and one

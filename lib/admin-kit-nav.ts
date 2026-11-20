@@ -1078,7 +1078,7 @@ export function tournamentSettingsTabs(base: string, access: TournamentSettingsA
   ];
   const own = tabs.filter((x): x is PlaceTab => Boolean(x));
   // The address alone is no reason to open the place: a person with none of its pages has no Settings & access.
-  return own.length ? [...own, { id: 'web-address', label: WEB_ADDRESS_WORDS.name, href: `${t}/web-address` }] : [];
+  return own.length ? [...own, { id: 'web-address', label: WEB_ADDRESS_WORDS.tabName, href: `${t}/web-address` }] : [];
 }
 
 /**

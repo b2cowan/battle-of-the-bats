@@ -1,19 +1,22 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   SETTINGS & ACCESS › WEB ADDRESS (navigation Phase 2 Part B, P1, owner 2026-11-10; drawings tab 15) and the address's
+   SETTINGS & ACCESS › NAME & ADDRESS (navigation Phase 2 Part B, P1, owner 2026-11-10; drawings tab 15; renamed and grown by
+   Settings in both workspaces Session 2, 2026-11-20) and the address's
    window. ⚰ The card page retired: Settings & access is a place with tabs (E3), so its door cards went with it.
    ⚠ TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/* The tab's one card: the address today, its line, and on the right the owner's door (or "Owner only"). */
-.addressCard {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+/* Name & address (Settings in both workspaces Session 2, drawing tab 4): one card, no padding, two rows split by a
+   hairline — each row is the old address card's row (words left, the button right). */
+.identityCard {
   max-width: 640px;
-  padding: 1.25rem;
   border: 1px solid var(--home-line);
   border-radius: 12px;
   background: var(--card-bg);
+}
+.identityRow { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; }
+.identityRow + .identityRow { border-top: 1px solid var(--home-line); }
+@media (max-width: 640px) {
+  .identityRow { flex-direction: column; align-items: flex-start; }
 }
 .addressFacts { flex: 1 1 auto; min-width: 0; }
 .addressCaption {
@@ -34,9 +37,6 @@
 }
 .addressLine { margin: 0.25rem 0 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
 .addressOwnerOnly { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
-@media (max-width: 640px) {
-  .addressCard { flex-direction: column; align-items: flex-start; }
-}
 
 /* The web address's window: the address in one box with "fieldlogichq.ca/" before it, the whole link under it. The
    box wears the kit's field, `ClubKit.module.css` `.input` (it holds an input plus its prefix, so it cannot compose

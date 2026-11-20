@@ -1,6 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Archive, Settings } from 'lucide-react';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -26,9 +27,25 @@ import { FamilyAnswersSettingRow, type FamilyAnswersSettingData } from '@/compon
 import ClubSiteOffNotice from '@/components/coaches/ClubSiteOffNotice';
 import CoachPublicPageDoor, { VISIBILITY_LABEL } from '@/components/coaches/CoachPublicPageDoor';
 import type { CoachNamesPolicy } from '@/lib/coach-names-policy';
+import { useOrg } from '@/lib/org-context';
+import NameWindow from '@/components/admin/kit/club/NameWindow';
+import WebAddressWindow from '@/app/[orgSlug]/admin/tournaments/settings/WebAddressWindow';
+import BirthdayCutoffWindow from '@/components/coaches/BirthdayCutoffWindow';
+import { TEAM_ORGANIZATION_WORDS as OW } from '@/lib/workspace-identity-words';
+import { WEB_ADDRESS_WORDS } from '@/lib/web-address-words';
+import { cutoffWords, type Cutoff } from '@/lib/born-years';
+import { sportLabel } from '@/lib/sports';
 
 interface SettingsData {
   planCoverage: { clubName: string } | null;
+  /** Team settings › Organization's rows (Settings in both workspaces Session 2): a standalone workspace's name, web
+   *  address and birthday date. Null for a club's team. `canChange` is the workspace owner (A3). */
+  organization: {
+    canChange: boolean;
+    workspaceName: string;
+    webAddress: string;
+    birthday: { sport: string; cutoff: Cutoff };
+  } | null;
   team: { id: string; name: string; division: string | null; sport: string };
   season: { id: string; name: string; year: number; status: string; lineupSettings: LineupSettings | null };
   nextYearDefault: number;
@@ -100,6 +117,10 @@ export default function TeamSettingsPage({
   // ruling (c), 2026-11-19); not yet read counts as closed. A request that already exists still reaches the coach by
   // the Overview banner and the bell.
   const clubOpen = isPlanOpen(usePlanGating() ?? {}, 'club');
+  const router = useRouter();
+  const { refresh: refreshOrg } = useOrg();
+  // Organization's three windows (Settings in both workspaces Session 2).
+  const [orgWindow, setOrgWindow] = useState<'name' | 'address' | 'birthday' | null>(null);
 
   const [data, setData] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -478,6 +499,34 @@ export default function TeamSettingsPage({
       setDefaultCreditDraft(String(defaultCredit));
     } finally {
       setDefaultCreditSaving(false);
+    }
+  }
+
+  /** Team name (A5): the team and the workspace are renamed together on the server; the page adopts the new name, and the
+   *  sidebar's team list and the organization's name are read again. */
+  async function saveTeamName(name: string): Promise<string | null> {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const json = await res.json().catch(() => ({})) as { name?: string; workspaceName?: string | null; error?: string };
+      if (!res.ok) return res.status === 400 && json.error ? json.error : OW.nameWindow.failed;
+      const saved = json.name ?? name;
+      setData(prev => prev ? {
+        ...prev,
+        team: { ...prev.team, name: saved },
+        organization: prev.organization
+          ? { ...prev.organization, workspaceName: json.workspaceName ?? prev.organization.workspaceName }
+          : prev.organization,
+      } : prev);
+      setOrgWindow(null);
+      void refreshOrg();
+      router.refresh();
+      return null;
+    } catch {
+      return OW.nameWindow.failed;
     }
   }
 
@@ -1084,18 +1133,58 @@ export default function TeamSettingsPage({
             (the link page and its API both say so), so this door is not offered to an assistant
             who holds schedule editing — a door onto a wall (`/review`, 2026-09-10). Fails open
             while capabilities load, like `showTeamGroups`. */}
-        {showTeamGroups && scope.isStandalone && (!capabilities || capabilities.isHeadCoach) && clubOpen && (
+        {/* Settings in both workspaces Session 2 (A3/A5/A6, C4): the team's name, the web address and the birthday date
+            join it — the OWNER's to change, read by a head coach who is not the owner ("Owner only"). Only Join a club,
+            and the who line's sentence about it, wait on Club being on sale (ruling (c), 2026-11-19). */}
+        {showTeamGroups && scope.isStandalone && (!capabilities || capabilities.isHeadCoach) && (data.organization || clubOpen) && (
           <CoachCollapseSection
             sectionId="organization"
-            title="Organization"
+            title={OW.title}
             defaultOpen={false}
-            meta="Not connected to a club"
+            meta={OW.meta(team.name)}
           >
             <p className={styles.settingWho}>
-              If a club asks to bring your team in, you&apos;ll see it on your Overview and on Join a
-              club.
+              {data.organization ? OW.who : ''}{data.organization && clubOpen ? ' ' : ''}{clubOpen ? OW.whoClub : ''}
             </p>
             <div className={styles.settingRows}>
+              {data.organization && (() => {
+                const o = data.organization;
+                const ownerDoor = (label: string, which: 'name' | 'address' | 'birthday') => o.canChange
+                  ? (
+                    <button type="button" className={styles.btnSecondary} onClick={() => setOrgWindow(which)} aria-haspopup="dialog">
+                      {label}
+                    </button>
+                  )
+                  : <span className={styles.settingRowDesc}>{OW.ownerOnly}</span>;
+                return (
+                  <>
+                    <div className={styles.settingRow}>
+                      <div className={styles.settingRowMain}>
+                        <span className={styles.settingRowLabel}>{OW.teamName.label}</span>
+                        <span className={styles.settingRowDesc}>{OW.teamName.line(team.name)}</span>
+                      </div>
+                      <div className={styles.settingRowCtl}>{ownerDoor(OW.teamName.action, 'name')}</div>
+                    </div>
+                    <div className={styles.settingRow}>
+                      <div className={styles.settingRowMain}>
+                        <span className={styles.settingRowLabel}>{OW.webAddress.label}</span>
+                        <span className={styles.settingRowDesc}>{WEB_ADDRESS_WORDS.teamDoorLine(o.webAddress)}</span>
+                      </div>
+                      <div className={styles.settingRowCtl}>{ownerDoor(OW.webAddress.action, 'address')}</div>
+                    </div>
+                    <div className={styles.settingRow}>
+                      <div className={styles.settingRowMain}>
+                        <span className={styles.settingRowLabel}>{OW.birthday.label}</span>
+                        <span className={styles.settingRowDesc}>
+                          {OW.birthday.line(sportLabel(o.birthday.sport), cutoffWords(o.birthday.cutoff))}
+                        </span>
+                      </div>
+                      <div className={styles.settingRowCtl}>{ownerDoor(OW.birthday.action, 'birthday')}</div>
+                    </div>
+                  </>
+                );
+              })()}
+              {clubOpen && (
               <div className={styles.settingRow}>
                 <div className={styles.settingRowMain}>
                   <span className={styles.settingRowLabel}>Join a club</span>
@@ -1110,6 +1199,7 @@ export default function TeamSettingsPage({
                   </Link>
                 </div>
               </div>
+              )}
             </div>
           </CoachCollapseSection>
         )}
@@ -1120,6 +1210,45 @@ export default function TeamSettingsPage({
           <p className={styles.muted}>There are no settings you can change for this team.</p>
         )}
       </div>
+
+      {orgWindow === 'name' && data.organization?.canChange && (
+        <NameWindow
+          title={OW.nameWindow.title}
+          identity={OW.nameWindow.identity(team.name)}
+          field={OW.nameWindow.field}
+          hint={OW.nameWindow.hint}
+          saveLabel={OW.nameWindow.save}
+          cancelLabel={OW.nameWindow.cancel}
+          current={team.name}
+          save={saveTeamName}
+          onClose={() => setOrgWindow(null)}
+        />
+      )}
+      {orgWindow === 'address' && data.organization?.canChange && (
+        <WebAddressWindow
+          orgName={team.name}
+          current={data.organization.webAddress}
+          audience="team"
+          destination={slug => `/${slug}/coaches/teams/${teamId}/settings?section=organization`}
+          onClose={() => setOrgWindow(null)}
+        />
+      )}
+      {orgWindow === 'birthday' && data.organization?.canChange && (
+        <BirthdayCutoffWindow
+          orgSlug={orgSlug}
+          sport={data.organization.birthday.sport}
+          sportName={sportLabel(data.organization.birthday.sport)}
+          current={data.organization.birthday.cutoff}
+          onSaved={cutoff => {
+            setData(prev => prev?.organization
+              ? { ...prev, organization: { ...prev.organization, birthday: { ...prev.organization.birthday, cutoff } } }
+              : prev);
+            setOrgWindow(null);
+            void refreshOrg();
+          }}
+          onClose={() => setOrgWindow(null)}
+        />
+      )}
 
       {reminderPreviewOpen && (
         <DuesReminderPreviewModal teamName={team.name} onClose={() => setReminderPreviewOpen(false)} />
