@@ -137,6 +137,15 @@ const STAYS: Record<string, string> = {
   league_practice_tells: 'house league (what one practice-times send told a team, 9d-3 mig 415)',
   league_practice_emails: 'house league (a household’s practice-times email, 9d-3 mig 415)',
   league_friend_requests: 'house league (a family’s friend request for one season’s sign-up, Board Ready Stage 1 mig 461)',
+  // A club form belongs to its owner (a house-league season now; a camp or a sponsorship package later), never a team.
+  club_forms: 'a club’s sign-up form, owned by a house-league season (Board Ready Stage 4 mig 513)',
+  club_form_questions: 'a club form’s own questions (Board Ready Stage 4 mig 513)',
+  club_form_documents: 'a club form’s documents to read (Board Ready Stage 4 mig 513)',
+  club_form_document_versions: 'a club form document’s versions (Board Ready Stage 4 mig 513)',
+  club_form_submissions: 'one family’s sign-up through a club form (Board Ready Stage 4 mig 513)',
+  club_form_answers: 'a family’s answers on a club form, on the season’s registration (Board Ready Stage 4 mig 513)',
+  club_form_ticks: 'a family’s document ticks on a club form, on the season’s registration (Board Ready Stage 4 mig 513)',
+  club_form_files: 'files a family attaches on a club form (Board Ready Stage 4 mig 513)',
   // ── Org-level setup a Coaches Portal does not use ────────────────────────────────────────────
   org_budget_lines: 'the club-side org budget (a Coaches Portal has none); moved rows that pointed at one are cleared',
   org_fiscal_years: 'the club’s fiscal years (mig 318) — the years its own plan and books are closed by; a team’s money runs on seasons, never fiscal years, so a Coaches Portal has none to move',

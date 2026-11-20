@@ -1,17 +1,169 @@
 {
-  "generated": "2026-11-19",
-  "total": 292,
+  "generated": "2026-11-20",
+  "total": 531,
   "counts": {
-    "tables": 10,
-    "columns": 140,
-    "indexes": 48,
-    "constraints": 37,
-    "rls": 57
+    "tables": 18,
+    "columns": 247,
+    "indexes": 92,
+    "constraints": 77,
+    "rls": 97
   },
   "items": [
     {
       "key": "check:changed:org_permits.org_permits_document_type_check",
       "sig": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'::text]))) :: ((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text])))"
+    },
+    {
+      "key": "check:only-dev:club_form_answers.club_form_answers_has_target",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_answers.club_form_answers_subject_pair",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_answers.club_form_answers_subject_table_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_answers.club_form_answers_value_text_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_again_reason",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_body_text_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_file_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_file_named",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_file_size_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_fingerprint_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_one_source",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_ticks_said",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_document_versions.club_form_document_versions_version_no_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_documents.club_form_documents_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_documents.club_form_documents_source_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_documents.club_form_documents_tick_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_files.club_form_files_content_type_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_files.club_form_files_file_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_files.club_form_files_size_bytes_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_files.club_form_files_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_files.club_form_files_subject_pair",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_files.club_form_files_subject_table_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_questions.club_form_questions_asked_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_questions.club_form_questions_choices_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_questions.club_form_questions_file_not_required",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_questions.club_form_questions_health_not_on_board",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_questions.club_form_questions_help_text_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_questions.club_form_questions_label_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_questions.club_form_questions_question_type_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_submissions.club_form_submissions_ref_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_ticks.club_form_ticks_fingerprint_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_ticks.club_form_ticks_moved_bare",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_ticks.club_form_ticks_sentence_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_ticks.club_form_ticks_subject_table_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_ticks.club_form_ticks_versioned",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_forms.club_forms_owner_table_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_forms.club_forms_subject_kind_check",
+      "sig": ""
     },
     {
       "key": "check:only-dev:club_group_email_bodies.club_group_email_bodies_body_check",
@@ -170,6 +322,14 @@
       "sig": ""
     },
     {
+      "key": "check:only-prod:organization_billing_facts.organization_billing_facts_next_season_billing_cycle_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-prod:organization_billing_facts.organization_billing_facts_next_season_plan_id_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-prod:organizations.organizations_free_floor_check",
       "sig": ""
     },
@@ -244,6 +404,410 @@
     {
       "key": "column:changed:family_email_sends.subject",
       "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:only-dev:club_form_answers.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.file_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.form_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.question_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.removed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.subject_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.subject_table",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.submission_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.value_bool",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.value_choice_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.value_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answers.value_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.body_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.document_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.file_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.file_path",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.file_size",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.fingerprint",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.moved_in",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.ticks_stand",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_document_versions.version_no",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.archived_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.form_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.sort_order",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.source_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.tick_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_documents.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.attached_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.content_type",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.file_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.form_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.path",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.question_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.removed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.size_bytes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.subject_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.subject_table",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_files.submission_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.archived_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.asked",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.choices",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.form_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.health",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.help_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.label",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.on_board",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.question_type",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.required",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.sort_order",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_questions.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_submissions.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_submissions.form_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_submissions.guardian_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_submissions.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_submissions.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_submissions.ref",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.consent_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.document_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.fingerprint",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.form_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.guardian_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.handed_over_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.moved",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.sentence",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.subject_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.subject_table",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.submission_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.ticked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_ticks.version_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_forms.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_forms.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_forms.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_forms.owner_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_forms.owner_table",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_forms.subject_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_forms.updated_at",
+      "sig": ""
     },
     {
       "key": "column:only-dev:club_group_email_bodies.body",
@@ -578,6 +1142,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:org_overrides.ending_reminded_14_for",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_overrides.ending_reminded_3_for",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:org_payment_accounts.fees_collector",
       "sig": ""
     },
@@ -643,6 +1215,22 @@
     },
     {
       "key": "column:only-dev:payments_terms_agreements.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:organization_billing_facts.next_season_billing_cycle",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:organization_billing_facts.next_season_chosen_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:organization_billing_facts.next_season_plan_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:organization_billing_facts.next_season_subscription_id",
       "sig": ""
     },
     {
@@ -798,6 +1386,166 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:club_form_answers.club_form_answers_file_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answers.club_form_answers_form_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answers.club_form_answers_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answers.club_form_answers_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answers.club_form_answers_question_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answers.club_form_answers_submission_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_document_versions.club_form_document_versions_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_document_versions.club_form_document_versions_document_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_document_versions.club_form_document_versions_no_uniq",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_document_versions.club_form_document_versions_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_document_versions.club_form_document_versions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_documents.club_form_documents_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_documents.club_form_documents_form_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_documents.club_form_documents_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_documents.club_form_documents_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_files.club_form_files_form_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_files.club_form_files_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_files.club_form_files_path_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_files.club_form_files_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_files.club_form_files_question_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_files.club_form_files_submission_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_questions.club_form_questions_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_questions.club_form_questions_form_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_questions.club_form_questions_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_questions.club_form_questions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_submissions.club_form_submissions_form_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_submissions.club_form_submissions_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_submissions.club_form_submissions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_submissions.club_form_submissions_ref_uniq",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_ticks.club_form_ticks_consent_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_ticks.club_form_ticks_document_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_ticks.club_form_ticks_form_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_ticks.club_form_ticks_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_ticks.club_form_ticks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_ticks.club_form_ticks_submission_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_ticks.club_form_ticks_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_ticks.club_form_ticks_version_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_forms.club_forms_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_forms.club_forms_owner_uniq",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_forms.club_forms_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:club_group_email_bodies.club_group_email_bodies_org_id_fkey",
       "sig": ""
     },
@@ -943,6 +1691,178 @@
     },
     {
       "key": "constraint:only-prod:platform_stripe_fees.platform_stripe_fees_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answers_file_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answers_form_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answers_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answers_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answers_subject_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answers_subject_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answers_submission_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answers_submission_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_document_versions_created_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_document_versions_no_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_document_versions_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_document_versions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_documents_created_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_documents_form_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_documents_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_documents_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_files_form_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_files_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_files_path_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_files_pending_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_files_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_files_question_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_files_subject_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_files_submission_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_questions_created_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_questions_form_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_questions_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_questions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_submissions_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_submissions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_submissions_ref_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_consent_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_document_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_form_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_subject_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_submission_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_ticks_version_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_forms_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_forms_owner_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_forms_pkey",
       "sig": ""
     },
     {
@@ -1094,6 +2014,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-prod:idx_org_billing_facts_no_next_season_choice",
+      "sig": ""
+    },
+    {
       "key": "index:only-prod:platform_fee_invoices_period_key",
       "sig": ""
     },
@@ -1135,6 +2059,38 @@
     },
     {
       "key": "index:only-prod:platform_stripe_fees_unbilled_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_form_answers",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_form_document_versions",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_form_documents",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_form_files",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_form_questions",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_form_submissions",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_form_ticks",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_forms",
       "sig": ""
     },
     {

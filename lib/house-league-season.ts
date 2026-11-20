@@ -403,6 +403,9 @@ export type ChecklistSeason = {
   earlyBirdUntil: string | null;
   howToPay: string | null;
   waiverText: string | null;
+  /** Board Ready Stage 4: the live documents on the season's sign-up form. When known, the waiver step reads it (the
+   *  waiver became a document; `waiverText` is only what the season was made with). Absent: the step reads `waiverText`. */
+  formDocuments?: number | null;
 };
 export type ChecklistKey = 'ageGroups' | 'prices' | 'dates' | 'pay' | 'waiver';
 export type ChecklistStep = { key: ChecklistKey; title: string; done: boolean; optional: boolean; line: string };
@@ -451,10 +454,12 @@ export function seasonChecklist(season: ChecklistSeason, divisions: readonly Che
     });
   }
 
-  const waiver = !!season.waiverText?.trim();
+  const waiver = season.formDocuments != null ? season.formDocuments > 0 : !!season.waiverText?.trim();
   steps.push({
-    key: 'waiver', title: 'Waiver', optional: true, done: waiver,
-    line: waiver ? 'On. Families agree on the form.' : 'Optional. Families sign up without one.',
+    // Board Ready Stage 4 (owner 2026-11-20, call C2): a club may hold several documents, so the step names them all. The
+    // key stays `waiver` (Start next season stores its print under it).
+    key: 'waiver', title: 'Documents', optional: true, done: waiver,
+    line: waiver ? 'On. Families tick each one to sign up.' : 'Optional. Families sign up without any.',
   });
   return steps;
 }

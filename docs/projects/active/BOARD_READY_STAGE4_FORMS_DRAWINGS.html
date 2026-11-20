@@ -1,0 +1,1156 @@
+<title>Club Sign-up Forms</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stage 4 · custom forms · drawings written Nov 20, 2026 · round 2 (after /legal, /ux and /design)</span>
+    <h1>The club’s sign-up form, first used by house league</h1>
+    <p class="lead">One form a club builds from seven kinds of question and any number of documents to read. House-league season sign-up uses it first, drawn in full. Sponsor links and camp sign-ups reuse it later and aren’t drawn here. Specimens are drawn at true size from the parts that ship today (the season’s Registration block, the tournament question editor, the family sign-up page, the Registrations list, the export menu and the draft board), and say so where something is new. Tab 1 is the season as it stands today, before sign-ups open; tabs 2 to 7 are drawn as of late February 2027, a few weeks into sign-ups. Click any number, tag or red flag to read what it refers to. The last tab holds your asks; the first answer on each is my recommendation and is already selected.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · Where it lives</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · Building it</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · Documents</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · Copy last season</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · The family’s sign-up</button>
+    <button role="tab" id="t6" aria-selected="false" data-pane="p6">6 · Who sees answers</button>
+    <button role="tab" id="t7" aria-selected="false" data-pane="p7">7 · Changing it later</button>
+    <button role="tab" id="t8" aria-selected="false" data-pane="p8">8 · A closed season</button>
+    <button role="tab" id="t9" aria-selected="false" data-pane="p9">9 · Plans · reuse · findings</button>
+    <button role="tab" id="t10" aria-selected="false" data-pane="p10">10 · Asks</button>
+  </nav>
+
+  <!-- 1 · WHERE IT LIVES -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p1"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>The waiver line becomes the season’s sign-up form, which opens as its own page</h2>
+    <p>Today the season Overview’s Registration block has two facts about the form: Waiver (a typed text) and Email consent (a fixed line). Both become one fact, Sign-up form, with a door to a page one level down. That page opens untouched exactly as a family’s sign-up works today: the fields every sign-up asks for, no questions of the club’s own, and today’s waiver as the first document.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Before · the season’s Registration block</b><span class="chrome">club admin · season Overview · today</span><button class="tag same" type="button" data-note="TODAY. The Registration block on a house-league season’s Overview, as it ships. One pencil in its head turns the whole block into its form; the waiver is a plain 4-row textarea, “Waiver text”, with the hint “Families tick a box to agree. Leave it empty if you don’t need one.”">TODAY</button></div>
+        <div class="scroll"><div class="frame adm w560">
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Registration</p><span class="btnOut same-part">Close registration</span><span class="ico">✎</span></div>
+            <dl class="facts">
+              <dt class="same-part">Registration dates</dt><dd class="same-part">Feb 1 to Mar 15, 2027<span class="s">Opens in 73 days.</span></dd>
+              <dt class="same-part">Early bird</dt><dd class="same-part">Through Feb 21, 2027.</dd>
+              <dt>Waiver</dt><dd>On · “I understand that softball involves risk of injury and…”</dd>
+              <dt>Email consent</dt><dd>Asked on the form, unticked, beside the waiver.<span class="s">Emails about a registration are sent either way.</span></dd>
+              <dt class="same-part">How to pay</dt><dd class="same-part">“e-Transfer to treasurer@riverdaleball.ca within 14 days…”</dd>
+              <dt class="same-part">Owing turns amber</dt><dd class="same-part">After 14 days.</dd>
+              <dt class="same-part">Friend requests</dt><dd class="same-part">Up to 2 per child.</dd>
+              <dt class="same-part">New registrations</dt><dd class="same-part">Held for your review.</dd>
+              <dt class="same-part">Waitlist</dt><dd class="same-part">You move it up yourself.</dd>
+            </dl>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>After · the same block</b><button class="mark" type="button" data-ask="3">3</button><button class="tag new" type="button" data-note="NEW. “Sign-up form” replaces the Waiver and Email consent facts, so the block is one line shorter. Its value counts what the club has added; its door opens the form page. The waiver text leaves this block’s edit form: it is edited as a document on the form page (tab 3). The door shows to everyone who can open the season; only the people who set up a season can change the form (ask 16).">NEW</button></div>
+        <div class="scroll"><div class="frame adm w560">
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Registration</p><span class="btnOut same-part">Close registration</span><span class="ico">✎</span></div>
+            <dl class="facts">
+              <dt class="same-part">Registration dates</dt><dd class="same-part">Feb 1 to Mar 15, 2027<span class="s">Opens in 73 days.</span></dd>
+              <dt class="same-part">Early bird</dt><dd class="same-part">Through Feb 21, 2027.</dd>
+              <dt>Sign-up form</dt><dd>No questions of your own · 1 document to read<span class="s">The waiver, and the details every sign-up asks for.</span><span class="door">Open the sign-up form ›</span></dd>
+              <dt class="same-part">How to pay</dt><dd class="same-part">“e-Transfer to treasurer@riverdaleball.ca within 14 days…”</dd>
+              <dt class="same-part">Owing turns amber</dt><dd class="same-part">After 14 days.</dd>
+              <dt class="same-part">Friend requests</dt><dd class="same-part">Up to 2 per child.</dd>
+              <dt class="same-part">New registrations</dt><dd class="same-part">Held for your review.</dd>
+              <dt class="same-part">Waitlist</dt><dd class="same-part">You move it up yourself.</dd>
+            </dl>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The form page, untouched</b><span class="chrome">one level down · desktop · 960</span><button class="mark" type="button" data-ask="4">4</button><button class="tag new" type="button" data-note="NEW PAGE. One level down from the season Overview, so the bar reads “← Overview” and the page names itself “Sign-up form”. Three cards: what every sign-up asks (locked), the club’s own questions, and the documents. An untouched season shows exactly today’s sign-up: the fixed fields, no questions, and the waiver moved in as the first document. The two adds are siblings (a question, a document), so both stay the outlined secondary and neither takes the lime.">NEW</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><span class="back">← Overview</span><p class="ttl">Sign-up form</p><span class="sub">Spring 2027 · House league</span></div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Every sign-up asks <button class="tag new" type="button" data-note="NEW, but nothing in it changes. This card writes down what the sign-up page already asks, so the club sees where its own questions will sit. These fields place a child in a division and feed the draft, the fees and every email, so they can’t be removed or edited here. The friends line shows only when the season takes friend requests.">LOCKED</button></p><span class="cardSum">Can’t be removed</span></div>
+            <div class="fixedGrid">
+              <div><span class="capL">For each child</span><ul><li>First and last name</li><li>Date of birth</li><li>Division</li><li>Friends to play with (up to 2)</li><li>Jersey number, position and notes</li></ul></div>
+              <div><span class="capL">The parent or guardian</span><ul><li>First and last name</li><li>Email</li><li>Phone</li><li>Second parent’s email</li></ul></div>
+              <div><span class="capL">At the end</span><ul><li>Riverdale Minor Ball may email me about future seasons and club news</li></ul></div>
+            </div>
+            <p class="small">These place each child in a division and feed the draft, the fees and the emails. Your questions follow them.</p>
+          </div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Your questions</p><span class="cardSum">No questions yet</span></div>
+            <div class="empty"><b>No questions yet.</b><span class="small">Every sign-up already asks for the details above. Add a question to ask for more.</span><span style="margin-top:6px"><span class="btnOut">+ Add a question</span></span></div>
+          </div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Documents to read</p><span class="btnOut">+ Add a document</span></div>
+            <div class="rlist">
+              <div class="qrow"><span class="grip">⠿</span><div><div class="qt"><span class="txtDoc">TEXT</span> Waiver</div><div class="qc">Typed text · families tick “I have read and agree to the waiver.” · no ticks yet</div></div><span class="chev">›</span></div>
+            </div>
+            <p class="small">Every document is required. <button class="tag re" type="button" data-note="MOVED IN. Today’s waiver text becomes this document, version 1, with its tick sentence unchanged (“I have read and agree to the waiver.”, ask 2). Earlier seasons’ waiver ticks stay exactly where they are and read “recorded before documents had versions” (tab 8, finding F5). A season with no waiver shows “No documents yet.” here.">THE WAIVER, MOVED IN</button></p>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Phone · the same page</b><span class="chrome">390</span><button class="tag new" type="button" data-note="On a phone the locked card starts folded to one line, so the club’s own questions are in the first view; it opens in place. The two adds become the + symbol alone, 44px.">FOLDED ON A PHONE</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>←</span><span>Sign-up form<span class="sm">Spring 2027 · House league</span></span></div>
+          <div class="pbody">
+            <div class="collapsedSec" style="border:0;padding:0">Every sign-up asks · 10 details · <span class="door" style="font-size:13px">Show</span></div>
+            <div class="card"><div class="lineTop"><p class="cardH">Your questions</p><span class="btnOut" style="width:44px;height:44px;justify-content:center;padding:0">+</span></div><div class="empty"><b>No questions yet.</b><span class="small">Add a question to ask for more.</span></div></div>
+            <div class="card"><div class="lineTop"><p class="cardH">Documents to read</p><span class="btnOut" style="width:44px;height:44px;justify-content:center;padding:0">+</span></div>
+              <div class="rlist"><div class="qrow"><span class="grip">⠿</span><div><div class="qt"><span class="txtDoc">TEXT</span> Waiver</div><div class="qc">Typed text · no ticks yet</div></div><span class="chev">›</span></div></div></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>Why its own page, and not a bigger block or a new season tab</h3>
+      <ul>
+        <li><b>Not in the block:</b> a form of five questions and two documents, each with its own settings, does not fit inside one card’s edit mode on a phone. A question is a record and opens in its own window, as the tournament questions already do.</li>
+        <li><b>Not a season tab:</b> the season already has seven (Overview, Registrations, Teams &amp; draft, Schedule, Standings, Money, Email families). The form is set up once a season and read rarely, so a door from the Registration block is enough.</li>
+        <li><b>The same page later:</b> a camp’s setup (Stage 7) and a sponsorship package (Stage 6) open the same page from their own setup, with their own fixed fields in the first card (tab 9).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2 · BUILDING -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <h2>Building the form: questions in two groups, each opening its own window</h2>
+    <p>The list and its windows are the tournament question editor’s, which ships: a framed row list with a grip, the question in bold and a caption, a chevron, and “+ Add a question” opening a window. Three things are new: the question types widen to seven, each question carries help text, and the list is in two groups, one asked for each child and one asked once per sign-up. Which group a question sits in is the club’s choice, question by question (ask 1).</p>
+    <div class="spec">
+      <div class="specHead"><b>The form page with five questions</b><span class="chrome">desktop · 960 · late February 2027</span><button class="mark" type="button" data-ask="1">1</button><button class="mark" type="button" data-ask="5">5</button><button class="mark" type="button" data-ask="12">12</button></div>
+      <div class="scroll"><div class="frame adm">
+        <div class="phead"><span class="back">← Overview</span><p class="ttl">Sign-up form</p><span class="sub">Spring 2027 · House league</span></div>
+        <div class="collapsedSec" style="border:0;padding:0">Every sign-up asks · 10 details · <span class="door" style="font-size:13px">Show</span> <button class="tag re" type="button" data-note="Once the club has questions, the locked card folds to one line at every width, so the club’s own list is at the top. It opens in place.">FOLDS</button></div>
+        <div class="card">
+          <div class="cardTop"><p class="cardH">Your questions</p><span class="cardSum">5 questions</span></div>
+          <div class="lineTop"><p class="lede">Families answer these after the details every sign-up asks for, in this order.</p><span class="btnOut">+ Add a question</span></div>
+          <div class="rlist">
+            <div class="band">For each child <span class="bc">3</span> <button class="tag new" type="button" data-note="NEW. A band row per group, the shipped row-list band. Questions in this group appear inside each child’s section on the sign-up page, under that child’s division and friends. A question moves between groups through its “Asked” setting, not by dragging across the band.">NEW</button></div>
+            <div class="qrow"><span class="grip">⠿</span><div><div class="qt">Does your child have any allergies or medical needs we should know about?<span class="chipH">HEALTH</span></div><div class="qc">Long answer · help text · 38 answers</div></div><span class="chev">›</span></div>
+            <div class="qrow"><span class="grip">⠿</span><div><div class="qt">T-shirt size</div><div class="qc">One choice · 6 choices · required · 41 answers</div></div><span class="chev">›</span></div>
+            <div class="qrow"><span class="grip">⠿</span><div><div class="qt">Your child’s medical form, if you have one<span class="chipH">HEALTH</span></div><div class="qc">File upload · 12 files</div></div><span class="chev">›</span></div>
+            <div class="band">Once per sign-up <span class="bc">2</span></div>
+            <div class="qrow"><span class="grip">⠿</span><div><div class="qt">Can a parent help this season?</div><div class="qc">Many choices · 4 choices · on the draft board · 33 answers</div></div><span class="chev">›</span></div>
+            <div class="qrow"><span class="grip">⠿</span><div><div class="qt">How did you hear about us?</div><div class="qc">One choice · 5 choices · 30 answers</div></div><span class="chev">›</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cardTop"><p class="cardH">Documents to read</p><span class="btnOut">+ Add a document</span></div>
+          <div class="rlist">
+            <div class="qrow"><span class="grip">⠿</span><div><div class="qt"><span class="txtDoc">TEXT</span> Waiver</div><div class="qc">Typed text · version 2 · “I have read and agree” · 41 ticks</div></div><span class="chev">›</span></div>
+            <div class="qrow"><span class="grip">⠿</span><div><div class="qt"><span class="pdf">PDF</span> Code of conduct</div><div class="qc">PDF · version 2 · “I have read” · 32 ticks</div></div><span class="chev">›</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>“+ Add a question”</b><span class="chrome">admin window · form</span><button class="mark" type="button" data-ask="5">5</button><button class="tag re" type="button" data-note="RESTYLED from the tournament’s “Add a question” window (KitDialog form; Cancel and a lime Add question). It gains Help text, the seven types, Asked, the Health switch and the Draft board switch. Type and Asked are dropdowns, per the form-select ruling. Switches are the kit’s switch rows with a hairline between them. The required asterisk is plain ink and nothing says “optional”. On a phone the window is the kit’s full-height sheet, fields in one column.">FROM THE TOURNAMENT WINDOW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">Add a question</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Question <span class="req">*</span></span><div class="inp">Does your child have any allergies or medical needs we should know about?</div></div>
+            <div class="fld"><span class="l">Help text</span><div class="inp">For example, an EpiPen, asthma, or a condition a coach should know about.</div><span class="hint">Shown under the question in smaller type.</span></div>
+            <div class="two">
+              <div class="fld"><span class="l">Type</span><div class="inp sel">Long answer <span>⌄</span></div></div>
+              <div class="fld"><span class="l">Asked</span><div class="inp sel">For each child <span>⌄</span></div></div>
+            </div>
+            <div class="swRows">
+              <div class="sw"><span class="t">Required<span class="h">A family can’t sign up without answering it.</span></span><span class="tog"></span></div>
+              <div class="sw"><span class="t">Health or medical<span class="h">It asks about health, medical needs or a disability.</span></span><span class="tog on"></span></div>
+              <div class="sw off"><span class="t">Show on the draft board<span class="h">Not for a health question.</span></span><span class="tog"></span></div>
+            </div>
+            <div class="nudge">Its answers stay out of list columns, the draft board and emails, and out of exports unless asked for. Ask only what a coach needs to keep a child safe. <button class="tag new" type="button" data-note="NEW, from /legal. The line shows when Health is on. When the question’s words look medical (allergy, medical, asthma, EpiPen, doctor, condition, injury and similar) and the switch is off, the same box asks “Does this ask about health?” with a Turn on button. It suggests and never blocks (ask 5).">FROM /LEGAL</button></div>
+          </div>
+          <div class="wfoot"><span class="fs">41 sign-ups so far will read “Not asked”.</span><span class="btnOut">Cancel</span><span class="btnLime">Add question</span></div>
+        </div></div></div>
+      </div>
+      <div class="explain">
+        <h3>The seven types, and what each one asks for</h3>
+        <ul>
+          <li><b>Short answer</b> and <b>Long answer</b>: a line or a box. Today’s tournament “Short text” and “Long text”.</li>
+          <li><b>One choice</b>: round buttons for up to four choices, a dropdown from five, at every width. Choices go in a box, one per line, as today’s “Dropdown”.</li>
+          <li><b>Many choices</b>: tick boxes. Same choices box.</li>
+          <li><b>Yes or no</b>: two round buttons. It replaces today’s tournament “Checkbox”, which could only say “I confirm”. A required yes/no needs an answer, not a yes.</li>
+          <li><b>Date</b>: the shared date field.</li>
+          <li><b>File upload</b>: one file per question, a PDF or a photo, up to 8 MB (ask 9). <b>It can’t be required</b>, so a failed upload never blocks a sign-up. The window adds “Don’t ask for a health card number or a photo of one.” under this type (/legal).</li>
+        </ul>
+        <h3>Rules the window keeps</h3>
+        <ul>
+          <li><b>New questions are optional</b>, and a health question stays optional unless the club turns Required on (/legal: PIPEDA 4.3.3).</li>
+          <li><b>“Asked” is absent</b> on a form with one kind of answerer (a sponsor’s link). On house league it defaults to “For each child”.</li>
+          <li><b>“Show on the draft board”</b> is off by default and can’t be turned on for a health question (ask 12).</li>
+          <li><b>The foot says who misses out.</b> A question added after sign-ups opened names how many sign-ups will read “Not asked”; those families can answer it on their Your sign-up page (ask 20).</li>
+          <li><b>No branching.</b> There is no “only ask if…”. Ruled; unchanged.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>One question, opened</b><span class="chrome">admin window · record</span><button class="tag re" type="button" data-note="RESTYLED from the tournament’s question window: it reads first, the pencil turns the whole record into its form and back, edits save as you go (the save pill in the head), Previous / Next and “n of N”. Archive ends the body, never a foot row. Delete appears only on a question nobody has answered (tab 7).">FROM THE TOURNAMENT WINDOW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">T-shirt size</p><div class="wmeta">One choice · for each child · 2 of 5</div></div><span class="ico">✎</span><span class="ico">‹</span><span class="ico">›</span><span class="ico">✕</span></div>
+          <div class="wbody">
+            <dl class="facts">
+              <dt>Type</dt><dd>One choice</dd>
+              <dt>Choices</dt><dd>YS · YM · YL · AS · AM · AL</dd>
+              <dt>Help text</dt><dd>Youth sizes run small.</dd>
+              <dt>Asked</dt><dd>For each child</dd>
+              <dt>Required</dt><dd>Yes. A family can’t sign up without answering it.</dd>
+              <dt>Draft board</dt><dd>Not shown</dd>
+              <dt>Answers</dt><dd>41 children</dd>
+            </dl>
+            <div class="sec"><span class="recAct">▣ Archive this question</span><span class="small">Answers already given stay on each registration and in the export, under “No longer asked”.</span></div>
+          </div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Phone · the questions list</b><span class="chrome">390 · hold and drag</span><button class="tag same" type="button" data-note="The shared reorder list as it ships for the tournament questions: drag the grip at a desk; on a phone the grip is a 44px handle, hold it to lift and drag, tap it for Move up · Move down · Cancel. Each move saves at once. Names wrap to two lines and are never cut.">SHIPPED REORDER</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>←</span><span>Sign-up form<span class="sm">Spring 2027 · House league</span></span></div>
+          <div class="pbody">
+            <div class="lineTop"><p class="cardH">Your questions</p><span class="btnOut" style="width:44px;height:44px;justify-content:center;padding:0">+</span></div>
+            <div class="rlist">
+              <div class="band">For each child <span class="bc">3</span></div>
+              <div class="qrow"><span class="grip">⠿</span><div><div class="qt">Does your child have any allergies or medical needs we should know about?<span class="chipH">HEALTH</span></div><div class="qc">Long answer</div></div><span class="chev">›</span></div>
+              <div class="qrow"><span class="grip">⠿</span><div><div class="qt">T-shirt size</div><div class="qc">One choice · required</div></div><span class="chev">›</span></div>
+              <div class="qrow"><span class="grip">⠿</span><div><div class="qt">Your child’s medical form, if you have one<span class="chipH">HEALTH</span></div><div class="qc">File upload</div></div><span class="chev">›</span></div>
+              <div class="band">Once per sign-up <span class="bc">2</span></div>
+              <div class="qrow"><span class="grip">⠿</span><div><div class="qt">Can a parent help this season?</div><div class="qc">Many choices · draft board</div></div><span class="chev">›</span></div>
+              <div class="qrow"><span class="grip">⠿</span><div><div class="qt">How did you hear about us?</div><div class="qc">One choice</div></div><span class="chev">›</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · DOCUMENTS -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>A document: a PDF or a typed text, a tick sentence, and versions that keep their ticks</h2>
+    <p>A document is today’s waiver, generalized, and a family must tick it to sign up. A typed text shows in place on the sign-up page, as the waiver does now, and can be ticked straight away. A PDF must be opened first: its tick stays faded until our server has handed the file over. Typed text has to stay, because every waiver consent already recorded points at a typed text. The tick’s sentence is chosen per document, so the waiver keeps “I have read and agree” (ask 2). Each tick is kept with the exact version the family saw.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>“+ Add a document”</b><span class="chrome">admin window · form</span><button class="mark" type="button" data-ask="2">2</button><button class="tag new" type="button" data-note="NEW window, on the same KitDialog form as Add a question. Name, what families read (a PDF or typed text), and the tick sentence. A document has no Required switch: every document must be ticked to sign up, which is what makes it different from a link.">NEW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">Add a document</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Name <span class="req">*</span></span><div class="inp">Code of conduct</div><span class="hint">Families see it in the tick: “I have read the code of conduct.”</span></div>
+            <div class="fld"><span class="l">What families read</span><div class="inp sel">A PDF you upload <span>⌄</span></div></div>
+            <div class="fileGot"><span class="pdf">PDF</span> code-of-conduct-2027.pdf · 412 KB <span class="door" style="margin-left:auto">Choose another file</span></div>
+            <span class="hint">A PDF up to 8 MB.</span>
+            <div class="fld"><span class="l">The tick</span><div class="inp sel">I have read the code of conduct. <span>⌄</span></div><span class="hint">Or “I have read and agree to the code of conduct.”</span></div>
+          </div>
+          <div class="wfoot"><span class="fs">Families must open a PDF before they can tick it.</span><span class="btnOut">Cancel</span><span class="btnLime">Add document</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>The waiver, opened</b><span class="chrome">admin window · record</span><button class="mark" type="button" data-ask="8">8</button><button class="mark" type="button" data-ask="18">18</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">Waiver</p><div class="wmeta">Typed text · version 2 · 1 of 2</div></div><span class="ico">✎</span><span class="ico">‹</span><span class="ico">›</span><span class="ico">✕</span></div>
+          <div class="wbody">
+            <dl class="facts">
+              <dt>The tick</dt><dd>I have read and agree to the waiver.</dd>
+              <dt>Families read</dt><dd>“I understand that softball involves risk of injury and…” <span class="door">Read it all</span></dd>
+            </dl>
+            <div class="sec"><p class="secH">Versions</p>
+              <div class="rlist">
+                <div class="qrow nogrip"><div><div class="qt">Version 2 <span class="chip good">CURRENT</span></div><div class="qc">Since Feb 9, 2027 · 15 ticks · ticks on version 1 stand</div></div><span class="chev">›</span></div>
+                <div class="qrow nogrip"><div><div class="qt">Version 1</div><div class="qc">Jan 12 to Feb 9, 2027 · 26 ticks</div></div><span class="chev">›</span></div>
+              </div>
+            </div>
+            <div class="sec"><span class="recAct">⇪ Replace with a new version</span><span class="recAct">▣ Archive this document</span><span class="small">A version with ticks is never deleted. An archived document leaves the sign-up page; its ticks stay on each registration.</span></div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>“Replace with a new version”</b><span class="chrome">admin window · question</span><button class="mark" type="button" data-ask="8">8</button><button class="tag new" type="button" data-note="NEW. The club says what the new version means for families who ticked the old one. Two answers as radio rows with their explanation (the form-select ruling keeps radio rows that carry sub-text). “They must tick again” asks for a reason, which families see on their sign-up page. The foot’s sentence sits at the left, buttons at the right.">NEW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">Replace the code of conduct</p><div class="wmeta">Version 2 → version 3</div></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fileGot"><span class="pdf">PDF</span> code-of-conduct-2027-v3.pdf · 430 KB <span class="door" style="margin-left:auto">Choose another file</span></div>
+            <div class="fld"><span class="l">Families who ticked version 2</span>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Their tick stands</div><div class="h">For a typo or a clearer copy. 32 families stay ticked on version 2.</div></div></div>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">They must tick again</div><div class="h">32 sign-ups show “Needs a new tick” until the family opens version 3 and ticks it on their sign-up page. Their places aren’t affected, and nobody is emailed automatically.</div></div></div>
+            </div>
+            <div class="fld"><span class="l">What changed <span class="req">*</span></span><div class="inp">Added a section on spectators and the umpire.</div><span class="hint">Families see this beside the new tick.</span></div>
+          </div>
+          <div class="wfoot"><span class="fs">Version 2 and its 32 ticks are kept.</span><span class="btnOut">Cancel</span><span class="btnLime">Replace</span></div>
+        </div></div></div>
+      </div>
+      <div class="explain">
+        <h3>What a tick keeps (from /legal)</h3>
+        <ul>
+          <li>The document and its version, and a fingerprint of the exact file or text the family saw.</li>
+          <li>The exact sentence ticked, as the Terms acceptance keeps its box text.</li>
+          <li>The registration and the child, and which sign-up it came from, so one tick by a parent of two children is two records that point at the same sign-up.</li>
+          <li>The guardian’s email (and the account, once families sign in), the time of the tick, and for a PDF the time our server handed the family the file.</li>
+          <li><b>No IP address,</b> as the Terms acceptance and today’s waiver keep none (ask 18).</li>
+        </ul>
+        <h3>The words the product may and may not say</h3>
+        <ul>
+          <li>It says families are asked to open the document first. It never says “we confirm they read it”.</li>
+          <li>Ticks from before versions show as “recorded before documents had versions; text as the club held it on {date}”. They never show a fingerprint or an open time, because none was taken.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · COPY -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p4"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>Copying last season’s form: one more line in “Start next season”, and a button on an empty form</h2>
+    <p>“Start next season” already copies a season’s settings, age groups, teams, practices and coaches, and its Settings line already carries the waiver text. The form becomes its own line, ticked by default. A season made without it gets the same copy from its empty form. Copying takes questions and documents, never answers: last year’s answers are about last year’s children (/legal).</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Start next season · the copy list</b><span class="chrome">admin window · the shipped “Start from” list</span><button class="mark" type="button" data-ask="17">17</button><button class="tag new" type="button" data-note="NEW line in the shipped Start next season window. The waiver leaves the Settings line and travels with the form. Each document’s current version becomes version 1 of the new season’s document; the new season starts with no ticks. The “From Spring 2026” mark the window already puts on a copied line works the same way here and disappears once the club edits the form.">NEW LINE</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">Start next season</p><div class="wmeta">From Spring 2026</div></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <p class="small" style="font-size:13px">Bring these from Spring 2026:</p>
+            <div class="tick same-part"><span class="box on">✓</span><span>Settings<span class="small" style="display:block">Fee, how to pay, approvals, waitlist</span></span></div>
+            <div class="tick same-part"><span class="box on">✓</span><span>Age groups<span class="small" style="display:block">6 divisions, birth years moved up one</span></span></div>
+            <div class="tick"><span class="box on">✓</span><span>Sign-up form<span class="small" style="display:block">5 questions and 2 documents. No answers are copied.</span></span></div>
+            <div class="tick same-part"><span class="box on">✓</span><span>Teams</span></div>
+            <div class="tick same-part"><span class="box on">✓</span><span>Practice</span></div>
+            <div class="tick same-part"><span class="box"></span><span>Coaches</span></div>
+          </div>
+          <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Start Spring 2027</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>An empty form in a season that didn’t copy</b><span class="chrome">the form page’s questions card</span><button class="tag new" type="button" data-note="NEW. Shown only while the form has no questions and no documents of its own and an earlier season of the club had a form. It names the latest such season. The window asks once: what is added, and that answers stay behind. Questions are added after any the season already has.">NEW</button></div>
+        <div class="scroll"><div class="frame adm w620">
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Your questions</p><span class="cardSum">No questions yet</span></div>
+            <div class="empty"><b>No questions yet.</b><span class="small">Every sign-up already asks for the details above. Add a question, or start from last season’s form.</span><span style="margin-top:6px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><span class="btnOut">Copy Spring 2026’s form</span><span class="btnOut">+ Add a question</span></span></div>
+          </div>
+          <div class="win sm" style="margin:6px auto 0">
+            <div class="whead"><div style="flex:1"><p class="wtitle">Copy Spring 2026’s form?</p></div><span class="ico">✕</span></div>
+            <div class="wbody"><p class="small" style="font-size:14px;color:var(--home-ink-soft)">Its 5 questions and 2 documents are added to this season’s form. Nothing families answered last season is copied.</p></div>
+            <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Copy the form</span></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · FAMILY -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p5"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>The family’s sign-up: the club’s questions sit beside what they are about</h2>
+    <p>The page stays one page, with no steps and no sign-in. Questions asked for each child sit inside that child’s section, under the division and friends. Questions asked once sit after the parent’s details. Documents take the place of today’s “Waiver and agreement”. A fixed notice, which the club can’t edit or hide, says who is asking, just above the first of the club’s questions, so the page still opens on Child 1’s name. “Show only what differs” dims everything that ships today.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Two children · desktop</b><span class="chrome">public club page · 640 form column</span><button class="mark" type="button" data-ask="1">1</button><button class="mark" type="button" data-ask="4">4</button><button class="mark" type="button" data-ask="19">19</button></div>
+        <div class="scroll"><div class="frame fam">
+          <span class="small same-part">← Back to Spring 2027</span>
+          <p class="famH same-part">Sign up — Spring 2027</p>
+          <p class="famSub same-part">Riverdale Minor Ball · Apr 26 to Jul 12, 2027</p>
+          <p class="famSub same-part" style="margin-bottom:6px">Sign up one child or several. Each child’s date of birth finds their division.</p>
+          <div class="fsec">
+            <p class="fsecH same-part">Child 1</p>
+            <div class="two same-part"><div class="fld"><span class="l">First name <span class="req">*</span></span><div class="inp">Maya</div></div><div class="fld"><span class="l">Last name <span class="req">*</span></span><div class="inp">Chen</div></div></div>
+            <div class="fld same-part"><span class="l">Date of birth <span class="req">*</span></span><div class="inp">Jun 14, 2018</div></div>
+            <div class="divLine same-part">U9 · 4 spots left · $150 early bird<span class="s">The club reviews each sign-up before it is final.</span></div>
+            <div class="friends same-part"><p class="subH">Who would you like Maya to play with?</p><span class="small">Optional. Up to 2 friends who are signing up for U9.</span><span class="door" style="font-size:13px">+ Add a friend</span></div>
+            <div class="notice">These questions come from <b>Riverdale Minor Ball</b>. The club decides what to ask and what to do with your answers. FieldLogicHQ stores them for the club, in the United States, and uses them for nothing else. Questions about your answers go to the club first. <span class="door" style="font-size:13px">The club’s privacy policy ↗</span> <button class="tag new" type="button" data-note="NEW, from /legal. Shown once, just above the first of the club’s questions, only when the form has some; the club can’t edit or hide it. The sign-up is where the family’s information is collected, so this is where they are told who is asking, who stores it and where. The privacy-policy link shows only when the club has set one. Child 2’s questions don’t repeat it.">FIXED NOTICE</button></div>
+            <div class="club">
+              <span class="capL">From Riverdale Minor Ball <button class="tag new" type="button" data-note="NEW. The per-child questions, in the club’s order, under a quiet label. They appear only once the child has a division line that signs them up (a spot or the waitlist), the same rule the friends block follows. What a family typed is kept while the block is hidden (a date of birth being corrected) and comes back with it; it is never sent for a child who isn’t signed up.">NEW</button></span>
+              <div class="fld"><span class="l">Does your child have any allergies or medical needs we should know about?</span><span class="hint">For example, an EpiPen, asthma, or a condition a coach should know about.</span><div class="inp ta">Peanut allergy. She carries an EpiPen in her bag.</div><span class="healthL">Only answer what Riverdale Minor Ball needs to keep Maya safe.</span></div>
+              <div class="fld"><span class="l">T-shirt size <span class="req">*</span></span><span class="hint">Youth sizes run small.</span><div class="inp sel">YM <span>⌄</span></div></div>
+              <div class="fld"><span class="l">Your child’s medical form, if you have one</span><div class="fileGot"><span class="pdf">PDF</span> maya-medical-form.pdf · 1.2 MB <span class="door" style="margin-left:auto">Remove</span></div><span class="hint">A PDF or a photo, up to 8 MB.</span></div>
+            </div>
+            <span class="door same-part" style="font-size:14px">Jersey number, position and notes ⌄</span>
+          </div>
+          <div class="fsec">
+            <p class="fsecH same-part">Child 2 <span class="rm">Remove</span></p>
+            <div class="two same-part"><div class="fld"><span class="l">First name <span class="req">*</span></span><div class="inp">Leo</div></div><div class="fld"><span class="l">Last name <span class="req">*</span></span><div class="inp">Chen</div></div></div>
+            <div class="divLine same-part">U11 · 2 spots left · $175 early bird</div>
+            <div class="club"><span class="capL">From Riverdale Minor Ball</span><span class="small">The same three questions, about Leo. <button class="tag same" type="button" data-note="Drawn short here to save scrolling: Child 2 gets the same three questions as Child 1, with “Leo” in the health line. Remove on a child who has any answer asks first: “Remove Child 2? Leo’s answers and his file will be cleared.”">SHORTENED</button></span></div>
+          </div>
+          <div class="same-part"><span class="btnOut">+ Add another child</span></div>
+          <div class="fsec same-part" style="margin-top:20px">
+            <p class="fsecH">Parent or guardian</p>
+            <div class="two"><div class="fld"><span class="l">First name <span class="req">*</span></span><div class="inp">Grace</div></div><div class="fld"><span class="l">Last name <span class="req">*</span></span><div class="inp">Chen</div></div></div>
+            <div class="fld"><span class="l">Email <span class="req">*</span></span><div class="inp">grace.chen@example.ca</div></div>
+            <span class="notDrawn">Phone, second parent’s email and the coach line follow, unchanged.</span>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Questions from Riverdale Minor Ball <button class="tag new" type="button" data-note="NEW section, after the parent’s details: the questions asked once per sign-up. Its heading names the club, which says who is asking a second time in the family’s own words.">NEW</button></p>
+            <div class="fld"><span class="l">Can a parent help this season?</span><div class="choices"><span><span class="box on">✓</span>Coach</span><span><span class="box"></span>Assistant coach</span><span><span class="box on">✓</span>Field set-up</span><span><span class="box"></span>Not this season</span></div></div>
+            <div class="fld"><span class="l">How did you hear about us?</span><div class="inp sel">A friend <span>⌄</span></div></div>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Documents and agreement <button class="tag re" type="button" data-note="RESTYLED. Today: “Waiver and agreement”, one waiver text in a scroll box and its tick, always tickable. Now each document is its own block. Typed text still shows in its box and ticks as today. A PDF shows an Open button; its tick stays faded until the family opens it, with the reason under the tick. Opening goes through our server, which records the time it handed the file over.">RESTYLED</button></p>
+            <div class="docBlock"><div class="docName"><span class="txtDoc">TEXT</span> Waiver</div><div class="waiverBox">I understand that softball involves risk of injury and that Riverdale Minor Ball, its coaches and volunteers… </div><div class="tick"><span class="box on">✓</span><span>I have read and agree to the waiver.</span></div></div>
+            <div class="docBlock"><div class="docName"><span class="pdf">PDF</span> Code of conduct</div><span><span class="btnOut">Open the code of conduct ↗</span> <span class="small" style="display:inline">PDF · 412 KB</span></span><div class="tick off"><span class="box off"></span><span>I have read the code of conduct.<span class="small" style="display:block">Open it first to tick.</span></span></div></div>
+            <div class="tick same-part"><span class="box"></span><span>Riverdale Minor Ball may email me about future seasons and club news. You can unsubscribe at any time.<span class="small" style="display:block">Emails about this sign-up are sent either way.</span></span></div>
+          </div>
+          <p class="same-part" style="font-size:14px;margin:6px 0 12px">$325 to pay for 2 children. Payable separately to Riverdale Minor Ball. How to pay is on the next screen and in your email.</p>
+          <span class="btnLime big same-part">Sign up 2 children</span>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Pressing Sign up with answers missing</b><span class="chrome">the foot of the same page</span><button class="tag re" type="button" data-note="RESTYLED. Today errors show under each field and one box above the button carries anything that isn’t a field; the page neither scrolls nor moves focus. A form this long can leave an error far above the button, so the box now says how many answers are missing and names the first, focus moves to the box, and “Go to it” moves focus to that field. Each field keeps its own red line.">RESTYLED</button></div>
+          <div class="scroll"><div class="frame fam">
+            <div class="fld"><span class="l">T-shirt size <span class="req">*</span></span><div class="inp sel err">Choose a size <span>⌄</span></div><span class="errL">Choose a T-shirt size for Leo.</span></div>
+            <div class="docBlock" style="margin-top:14px"><div class="docName"><span class="pdf">PDF</span> Code of conduct</div><span><span class="btnOut">Open the code of conduct ↗</span></span><div class="tick off"><span class="box off"></span><span>I have read the code of conduct.<span class="small" style="display:block">Open it first to tick.</span></span></div><span class="errL">Open the code of conduct and tick it to sign up.</span></div>
+            <div class="globalErr" style="margin:16px 0 12px">2 answers are missing. The first is T-shirt size for Leo. <span class="door">Go to it</span></div>
+            <span class="btnLime big">Sign up 2 children</span>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>A file question’s other states</b><span class="chrome">the same field, three moments</span><button class="tag new" type="button" data-note="NEW states, from /ux. A file goes up the moment it is chosen. While it travels, the row shows progress and Cancel, and Sign up waits with “Uploading…”. A file that is too big is refused before it travels, and the line says the size and the limit. A failed upload offers Try again and Remove. A file question can’t be required, so none of these ever blocks the sign-up.">NEW</button></div>
+          <div class="scroll"><div class="frame fam" style="display:grid;gap:12px">
+            <div class="fileGot"><span class="pdf">PDF</span> leo-medical-form.pdf <span class="bar"></span><span class="door">Cancel</span></div>
+            <div class="fld"><div class="fileGot bad"><span class="pdf">IMG</span> IMG_2041.HEIC · 11.4 MB <span class="door" style="margin-left:auto">Choose another</span></div><span class="errL">This photo is 11.4 MB. The limit is 8 MB. Choose a smaller photo or a PDF.</span></div>
+            <div class="fld"><div class="fileGot bad"><span class="pdf">PDF</span> leo-medical-form.pdf <span class="door" style="margin-left:auto">Try again</span><span class="door">Remove</span></div><span class="errL">It didn’t upload. Check your connection and try again.</span></div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>Phone · Child 1’s questions and a document</b><span class="chrome">390</span></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbody">
+              <span class="capL">From Riverdale Minor Ball</span>
+              <div class="fld"><span class="l">T-shirt size <span class="req">*</span></span><span class="hint">Youth sizes run small.</span><div class="inp sel" style="min-height:44px">YM <span>⌄</span></div></div>
+              <div class="fld"><span class="l">Your child’s medical form, if you have one</span><span class="btnOut" style="justify-content:center;min-height:44px">Choose a file or take a photo</span><span class="hint">A PDF or a photo, up to 8 MB.</span></div>
+              <div class="docBlock"><div class="docName"><span class="pdf">PDF</span> Code of conduct</div><span class="btnOut" style="justify-content:center;min-height:44px">Open the code of conduct ↗</span><div class="tick off" style="min-height:44px"><span class="box off"></span><span>I have read the code of conduct.<span class="small" style="display:block">Open it first to tick.</span></span></div></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>What the build must do that the pictures don’t show (from /ux and /legal)</h3>
+      <ul>
+        <li><b>Answers are saved in the same step that signs the child up.</b> Today a child’s friends are saved afterwards and a failure is only logged; an allergy must never be dropped that way. If saving fails, the sign-up fails and says so.</li>
+        <li><b>Opening the PDF never costs the family their answers.</b> It opens in a new tab. On a phone the browser can reload the form when the family comes back, so the form keeps what was typed for that browser tab until it is sent; whether health answers are kept that way is a /legal call for the build. If the PDF won’t open, a line offers “Download it instead” and the club’s contact, so a broken PDF never strands a family.</li>
+        <li><b>The faded tick is still reachable</b> by keyboard and screen reader, and says why it can’t be ticked; when the family comes back from the PDF, “Opened. You can now tick.” is announced.</li>
+        <li><b>A file is uploaded on its own</b>, one per request, PDF, JPEG, PNG or HEIC, checked from the file itself. A file never attached to a sign-up is deleted within a day; Remove deletes it at once.</li>
+        <li><b>A form that changed while the family was filling it in</b> comes back with the new question and keeps everything typed: “The club added a question while you were filling this in.”</li>
+        <li><b>A child who fits no division</b> gets no questions, and the confirmation names that child as not signed up (today it lists only the children who were, finding F8).</li>
+        <li><b>Phone tap targets:</b> the tick box is drawn 18px; the whole tick line (box and words) is the 44px target.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 6 · WHO SEES ANSWERS -->
+  <section class="pane" id="p6" role="tabpanel" aria-labelledby="t6" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p6"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>Answers on the club’s side: chosen columns, a filter, the record, the export and the board</h2>
+    <p>Ruling A8 holds: only the seats that can open Registrations see answers (owner, admins, the league admin and the registrar). A health answer reaches less. It shows on the record only, never as a column, on the board or in an email. It leaves in a file only when someone chooses the export that carries it.</p>
+    <div class="spec">
+      <div class="specHead"><b>Registrations · two answer columns chosen</b><span class="chrome">desktop · 1200 table width</span><button class="mark" type="button" data-ask="11">11</button><button class="tag new" type="button" data-note="NEW columns: T-shirt size and Can a parent help?, chosen from Tools (⋯) → Answer columns. Up to three, after Guardian; the choice is remembered per person. A health question can’t be a column. On a phone the rows don’t grow, answers stay in the record, and Tools is absent there because its one item does nothing on a phone.">NEW COLUMNS</button><button class="tag new" type="button" data-note="NEW control on this toolbar. Tools (⋯) holds what is used a few times a season; here it is one item, “Answer columns…”, a small list of the club’s non-health questions with tick boxes. Absent while the form has no questions, and absent on a phone. It sits after Export and before the lime Add, the toolbar rules’ page-action order.">TOOLS</button></div>
+      <div class="scroll"><div class="frame adm wide">
+        <div class="toolbar">
+          <span class="pill same-part">All divisions ⌄</span>
+          <span class="pill olive same-part">View Active ⌄ <span class="amberN">3</span></span>
+          <span class="sp"></span>
+          <span class="search same-part">Search players or parents</span>
+          <span class="menuWrap"><span class="sq on">☷ Filter, 1 on</span>
+            <div class="menu" style="right:0;width:300px;top:40px">
+              <div class="mi g same-part">Team</div><div class="mi same-part" style="color:var(--home-faint)">…</div>
+              <div class="mi g same-part">Flags</div><div class="mi ck same-part"><span class="box"></span>Has player notes</div>
+              <div class="mi g">T-shirt size <button class="tag new" type="button" data-note="NEW filter groups, one per question with choices (one choice, many choices, yes or no), with its choices as tick rows in the same menu, as the shipped filter draws Team and Fee. Text, date and file questions aren’t filters. A document adds one tick, Needs a new tick. Health questions are never offered, so a filter can’t become a list of children with a condition.">NEW</button></div>
+              <div class="mi ck"><span class="box"></span>YS · YM · YL · AS · AM · AL</div>
+              <div class="mi g">Can a parent help?</div>
+              <div class="mi ck"><span class="box"></span>Coach</div><div class="mi ck"><span class="box"></span>Assistant coach</div><div class="mi ck"><span class="box"></span>Field set-up</div>
+              <div class="mi g">Documents</div>
+              <div class="mi ck"><span class="box on">✓</span>Needs a new tick</div>
+            </div></span>
+          <span class="sq same-part">⤓ Export</span>
+          <span class="sq">⋯</span>
+          <span class="btnLime same-part">+ Add registration</span>
+        </div>
+        <div style="height:330px"></div>
+        <table class="tbl">
+          <thead><tr><th style="width:36px"></th><th>Player</th><th>Division</th><th>Guardian</th><th class="new">T-shirt size</th><th class="new">Can a parent help?</th><th>Fee</th><th style="width:44px"></th></tr></thead>
+          <tbody>
+            <tr><td><span class="box"></span></td><td><span class="nm">Ava Singh</span><span class="s">Signed up Feb 1 · <span class="chip warn">NEEDS A NEW TICK</span></span></td><td>U9<span class="s">Not placed</span></td><td>Ravi Singh<span class="s">ravi.s@example.ca</span></td><td class="new"><span style="color:var(--home-dim)">Not asked</span></td><td class="new">Not this season</td><td>$150</td><td>⋯</td></tr>
+            <tr><td><span class="box"></span></td><td><span class="nm">Maya Chen</span><span class="s">Signed up Feb 2 · <span class="chip warn">NEEDS A NEW TICK</span></span></td><td>U9<span class="s">Not placed</span></td><td>Grace Chen<span class="s">grace.chen@example.ca</span></td><td class="new">YM</td><td class="new">Coach, Field set-up</td><td>$150</td><td>⋯</td></tr>
+            <tr><td><span class="box"></span></td><td><span class="nm">Leo Chen</span><span class="s">Signed up Feb 2 · <span class="chip warn">NEEDS A NEW TICK</span></span></td><td>U11<span class="s">Not placed</span></td><td>Grace Chen<span class="s">grace.chen@example.ca</span></td><td class="new">YL</td><td class="new">Coach, Field set-up</td><td>$175</td><td>⋯</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Filtered to “Needs a new tick” after the code of conduct’s version 3 (Feb 24). Ava signed up before the club added T-shirt size, so her row says “Not asked”, never a blank; her family can answer it on their sign-up page (ask 20).</p>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>One registration, opened</b><span class="chrome">the shipped record window, two new sections after Fee</span><button class="mark" type="button" data-ask="6">6</button><button class="mark" type="button" data-ask="10">10</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">Maya Chen</p><div class="wmeta">U9 · Active · 4 of 41</div></div><span class="ico">‹</span><span class="ico">›</span><span class="ico">✕</span></div>
+          <div class="wbody">
+            <span class="notDrawn same-part">Details, Friend requests and Fee come first, unchanged, not drawn.</span>
+            <div class="sec"><p class="secH">Sign-up answers <button class="tag new" type="button" data-note="NEW section, after Fee and before History, so the money and the actions don’t move down. Each answer as a label and its value, in the form’s order. Answers asked once per sign-up say so, because a brother’s record shows the same answer. The club doesn’t edit a family’s answers in this stage; the family changes them on their sign-up page (ask 20).">NEW</button></p>
+              <dl class="facts">
+                <dt>Allergies or medical needs <span class="chipH">HEALTH</span></dt><dd>Peanut allergy. She carries an EpiPen in her bag.</dd>
+                <dt>T-shirt size</dt><dd>YM</dd>
+                <dt>Medical form <span class="chipH">HEALTH</span></dt><dd><span class="door">maya-medical-form.pdf ↗</span><span class="s">The link lasts an hour. Each opening is recorded in the club’s activity log.</span></dd>
+                <dt>Can a parent help?</dt><dd>Coach, Field set-up<span class="s">For the whole sign-up (Maya and Leo)</span></dd>
+                <dt>How did you hear?</dt><dd>A friend</dd>
+              </dl>
+              <p class="secH" style="margin-top:4px">No longer asked</p>
+              <dl class="facts"><dt>Preferred practice night</dt><dd>Tuesday<span class="s">Archived Feb 10. Kept because Maya’s family answered it.</span></dd></dl>
+            </div>
+            <div class="sec"><p class="secH">Documents <button class="tag new" type="button" data-note="NEW section. Each document the family ticked, with its version and the times we recorded. A tick is never editable. A tick from before versions reads “Ticked Mar 3, 2026 · recorded before documents had versions” (tab 8). An unticked current version shows the amber chip, and the Filter finds them all.">NEW</button></p>
+              <dl class="facts">
+                <dt>Waiver</dt><dd>“I have read and agree to the waiver.”<span class="s">Version 1 · ticked Feb 2, 2027, 7:14 p.m.</span></dd>
+                <dt>Code of conduct</dt><dd><span class="chip warn">NEEDS A NEW TICK</span><span class="s">Ticked version 2 on Feb 2, 2027, 7:14 p.m. · version 3 is current</span></dd>
+              </dl>
+            </div>
+            <span class="notDrawn same-part">History and What you can do follow, unchanged.</span>
+          </div>
+        </div></div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Export</b><span class="chrome">the shipped one-button export menu</span><button class="mark" type="button" data-ask="13">13</button><button class="tag re" type="button" data-note="RESTYLED. The shipped menu’s order is kept: Excel · CSV · PDF, a divider, then the opt-ins. Excel and CSV gain a column per question that isn’t about health; a file answer reads “Attached”, never the file. “Excel with contact details” keeps today’s contacts and notes. One new opt-in below it carries health answers too, with one line that says what the name doesn’t. Each export is already recorded in the club’s activity log.">RESTYLED</button></div>
+          <div class="scroll"><div class="frame adm w520" style="min-height:270px">
+            <div class="toolbar"><span class="sp"></span><span class="menuWrap"><span class="sq on">⤓ Export</span>
+              <div class="menu" style="width:360px">
+                <div class="mi">Excel (.xlsx)</div>
+                <div class="mi">CSV</div>
+                <div class="mi same-part">PDF</div>
+                <div class="mdiv"></div>
+                <div class="mi same-part">Excel with contact details<span class="h">Includes additional contact columns</span></div>
+                <div class="mi">Excel with contact details and health answers<span class="h">Answers about children’s health. Keep it private.</span></div>
+              </div></span></div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>The draft board’s note</b><span class="chrome">Teams &amp; draft · a player’s Note mark</span><button class="mark" type="button" data-ask="12">12</button></div>
+          <div class="scroll"><div class="frame adm w520">
+            <div class="boardRow same-part"><span>4.0</span><span class="nm" style="font-weight:650">Maya Chen</span><span class="small">Leo · Ava</span><span class="noteMk">▤</span><span>$</span><span>⋯</span></div>
+            <div class="pop">
+              <p class="popTitle">Maya Chen · note from the family</p>
+              <p class="popQuote same-part">“Maya is shy for the first few practices.”</p>
+              <p class="popQuote"><b>Can a parent help?</b> Coach, Field set-up <button class="tag new" type="button" data-note="NEW line in the shipped note popover (a sheet on a phone). Only questions the club turned “Show on the draft board” on for reach the board: here, a parent willing to coach, which a convenor needs when drafting a coach’s child. Health answers never reach the board, which is often read on a shared screen. The note mark now shows when a player has a note or a board answer, and the pool’s Filter gains those questions’ choices.">NEW</button></p>
+              <p class="popFoot">Written at sign-up · anyone who can open Registrations sees it</p>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>Who sees what <button class="mark" type="button" data-ask="6">6</button><button class="mark" type="button" data-ask="14">14</button><button class="mark" type="button" data-ask="16">16</button></h3>
+      <div style="overflow-x:auto"><table class="docTbl">
+        <thead><tr><th>Seat</th><th>Answers on the list and record</th><th>Health answers and files</th><th>Export with answers</th><th>Draft board answers</th><th>Change the form</th></tr></thead>
+        <tbody>
+          <tr><td>Owner, admin, league admin</td><td>Yes</td><td>Yes, on the record only</td><td>Yes</td><td>Yes</td><td>Yes, while the season is live</td></tr>
+          <tr><td>Registrar</td><td>Yes</td><td>Yes, on the record only</td><td>Yes</td><td>Yes</td><td class="s">No: reads the form page</td></tr>
+          <tr><td>Treasurer (Accounting)</td><td class="s">No: opens the season’s Money only</td><td class="s">No</td><td class="s">No</td><td class="s">No board</td><td class="s">No</td></tr>
+          <tr><td>House-league coach</td><td class="s">No: today’s team page, unchanged</td><td class="s">No (ask 14)</td><td class="s">No</td><td class="s">No board</td><td class="s">No</td></tr>
+          <tr><td>Staff, official, rep coach</td><td class="s">No: no house-league door</td><td class="s">No</td><td class="s">No</td><td class="s">No</td><td class="s">No</td></tr>
+        </tbody>
+      </table></div>
+      <p>A seat that can’t see answers sees nothing new: the columns, the filter groups, the record’s two sections and the board’s answers are not drawn, the way the board already leaves out the Note mark. There is no “Not shared” line, because these seats never reach the screens at all. The server leaves the answers out of what it sends, as it already does for the board’s notes. No answer ever rides in a push alert or a bell line.</p>
+    </div>
+  </section>
+
+  <!-- 7 · CHANGING -->
+  <section class="pane" id="p7" role="tabpanel" aria-labelledby="t7" hidden>
+    <h2>Changing the form after families have signed up</h2>
+    <p>The form stays editable while the season is live, because a club finds a missing question in week two. Two rules make that safe: an answer once given is never lost or reshaped, and no family is chased automatically. A family sees new questions and new document versions on their own sign-up page, and can change their answers there (ask 20).</p>
+    <div class="explain"><h3>The rules <button class="mark" type="button" data-ask="7">7</button></h3>
+      <div style="overflow-x:auto"><table class="docTbl">
+        <thead><tr><th>The club…</th><th>Answers already given</th><th>Families who already signed up</th></tr></thead>
+        <tbody>
+          <tr><td>Adds a question</td><td class="s">None exist; their rows read “Not asked”</td><td>Can answer it on their sign-up page. Not emailed; the club can tell them through Email families.</td></tr>
+          <tr><td>Edits the words or the help text</td><td class="s">Kept; the record shows the current words</td><td>Nothing changes for them. For a different question, archive this one and add a new one.</td></tr>
+          <tr><td>Changes the type</td><td class="s">Not allowed once anyone has answered</td><td>The Type field says why and how (below).</td></tr>
+          <tr><td>Adds or renames a choice</td><td class="s">Kept; a renamed choice renames its answers</td><td>Nothing.</td></tr>
+          <tr><td>Removes a choice</td><td class="s">Kept as given, marked “no longer offered”</td><td>Nothing.</td></tr>
+          <tr><td>Reorders, or moves a question between the groups</td><td class="s">Kept. Moving between “each child” and “once” is refused once answered.</td><td>Nothing.</td></tr>
+          <tr><td>Turns Required on</td><td class="s">Blank answers stay blank</td><td>Not blocked; their rows read “Not answered”.</td></tr>
+          <tr><td>Archives a question</td><td class="s">Kept on the record and in the export, under “No longer asked”</td><td>Nothing. <button class="fl" type="button" data-f="F1">F1</button></td></tr>
+          <tr><td>Deletes a question</td><td class="s">Only possible while nobody has answered it</td><td>Nothing.</td></tr>
+          <tr><td>Replaces a document</td><td class="s">Every tick kept on its own version</td><td>Their tick stands, or they see “Needs a new tick” (the club chooses, tab 3).</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>A question with answers, in its edit form</b><span class="chrome">the record window after the pencil</span><button class="tag new" type="button" data-note="NEW line. Type and Asked are locked once anyone answered, and the field says why and what to do instead. Today’s tournament editor lets the type change in place, which can leave a text answer under a question that is now a dropdown.">NEW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">T-shirt size</p><div class="wmeta">One choice · for each child · 2 of 5</div></div><span class="ico">✓</span><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Question <span class="req">*</span></span><div class="inp">T-shirt size</div></div>
+            <div class="two"><div class="fld"><span class="l">Type</span><div class="inp locked">One choice</div></div><div class="fld"><span class="l">Asked</span><div class="inp locked">For each child</div></div></div>
+            <span class="hint">41 children answered, so the type and who it asks about stay as they are. To ask it differently, archive it and add a new question.</span>
+            <div class="fld"><span class="l">Choices <span class="req">*</span></span><div class="inp ta">YS<br>YM<br>YL<br>AS<br>AM<br>AL</div><span class="hint">One per line. A choice you remove stays on the answers that chose it.</span></div>
+          </div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>The family’s “Your sign-up” page</b><span class="chrome">the page the emailed link opens · phone</span><button class="mark" type="button" data-ask="8">8</button><button class="mark" type="button" data-ask="20">20</button><button class="tag new" type="button" data-note="NEW on the shipped Your sign-up page. The re-tick block comes first, only while a document needs a new tick: the family opens version 3 and ticks, the tick saves at once and the block becomes “Ticked version 3 on Feb 26 · Undo” for a few seconds, then a quiet line. A failed save leaves the box unticked with “It didn’t save. Try again.” Each child’s answers sit in a folded row with Change (ask 20); a question added after they signed up shows there as “Not answered yet”.">NEW</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbody">
+            <span class="small">Riverdale Minor Ball · Spring 2027</span>
+            <p class="famH" style="font-size:22px;margin:0">Your sign-up</p>
+            <div class="docBlock" style="border-left:3px solid var(--amber)"><div class="docName"><span class="pdf">PDF</span> Code of conduct, version 3</div><span class="small" style="font-size:13px;color:var(--home-ink-soft)">Riverdale Minor Ball updated it on Feb 24: “Added a section on spectators and the umpire.” Open it and tick to confirm. Your children’s places aren’t affected.</span><span class="btnOut" style="justify-content:center;min-height:44px">Open the code of conduct ↗</span><div class="tick off" style="min-height:44px"><span class="box off"></span><span>I have read the code of conduct.<span class="small" style="display:block">For Maya and Leo. Open it first to tick.</span></span></div></div>
+            <div class="collapsedSec same-part">Maya · U9 · Active · Leo · U11 · Active · Pay · Ask to withdraw</div>
+            <div class="rlist">
+              <div class="qrow nogrip"><div><div class="qt">Maya’s answers</div><div class="qc">3 answered · T-shirt size YM</div></div><span class="door" style="font-size:13px">Change</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Leo’s answers</div><div class="qc">2 answered · 1 not answered yet</div></div><span class="door" style="font-size:13px">Change</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Questions for your sign-up</div><div class="qc">2 answered</div></div><span class="door" style="font-size:13px">Change</span></div>
+            </div>
+            <span class="small">You can change answers until the teams are made. After that, contact Riverdale Minor Ball: registrar@riverdaleball.ca</span>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>How a family gets back to the page</h3>
+      <p>Through the “Your sign-up” button already in their emails, or “Email me my link” on the club’s site. Today that button rides in every email only while the family owes something; the build shows it in Email families messages while a document needs a new tick or a question is unanswered too, so the club’s reminder carries it. That uses the existing kind of link, so no new kind of emailed link is added. Once families sign in (the signed-in family app), the same page is inside the app.</p>
+    </div>
+  </section>
+
+  <!-- 8 · CLOSED -->
+  <section class="pane" id="p8" role="tabpanel" aria-labelledby="t8" hidden>
+    <h2>A closed season reads in place, locked</h2>
+    <p>A finished house-league season reads in place under the closed-season rule (Q16): every write is absent, not greyed, and one quiet line says why. The form page and each answer read as before. Family files and health answers are removed on a clock after the season finishes (ask 10), and the record says when, so nobody meets a link that goes nowhere. This is also what an earlier season’s waiver ticks look like after the move.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The form page of a finished season</b><span class="chrome">desktop</span><button class="tag re" type="button" data-note="RESTYLED by the season’s lock. The season layout already mounts one lock line; on this page it reads “This season is finished. Its sign-up form is locked.” No Add buttons, no grips, no pencils, no Archive. Rows still open their windows to read, versions included. Reopening the season (where offered) brings every control back.">LOCKED</button></div>
+        <div class="scroll"><div class="frame adm w700">
+          <div class="phead"><span class="back">← Overview</span><p class="ttl">Sign-up form</p><span class="sub">Spring 2026 · House league · Finished</span></div>
+          <div class="lockLine">This season is finished. Its sign-up form is locked.</div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Your questions</p><span class="cardSum">3 questions</span></div>
+            <div class="rlist">
+              <div class="band">For each child <span class="bc">3</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Does your child have any allergies or medical needs we should know about?<span class="chipH">HEALTH</span></div><div class="qc">Long answer · answers removed Sep 28, 2026</div></div><span class="chev">›</span></div>
+              <div class="qrow nogrip"><div><div class="qt">T-shirt size</div><div class="qc">One choice · 198 answers</div></div><span class="chev">›</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Your child’s medical form, if you have one<span class="chipH">HEALTH</span></div><div class="qc">File upload · files removed Sep 28, 2026</div></div><span class="chev">›</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>That season’s registration record</b><span class="chrome">the record window’s new sections</span><button class="mark" type="button" data-ask="10">10</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><p class="wtitle">Maya Chen</p><div class="wmeta">U8 · Ended · Spring 2026</div></div><span class="ico">‹</span><span class="ico">›</span><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="sec" style="border:0;padding:0"><p class="secH">Sign-up answers</p>
+              <dl class="facts">
+                <dt>Allergies or medical needs <span class="chipH">HEALTH</span></dt><dd><span style="color:var(--home-dim)">Removed Sep 28, 2026</span><span class="s">Health answers are kept 90 days after the season finishes.</span></dd>
+                <dt>T-shirt size</dt><dd>YS</dd>
+                <dt>Medical form <span class="chipH">HEALTH</span></dt><dd><span style="color:var(--home-dim)">File removed Sep 28, 2026</span></dd>
+              </dl>
+            </div>
+            <div class="sec"><p class="secH">Documents</p><dl class="facts"><dt>Waiver</dt><dd>“I have read and agree to the waiver.”<span class="s">Ticked Mar 3, 2026 · recorded before documents had versions</span></dd></dl></div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · PLANS · REUSE · FINDINGS -->
+  <section class="pane" id="p9" role="tabpanel" aria-labelledby="t9" hidden>
+    <h2>Plans, room for sponsors and camps, and what the code read turned up</h2>
+    <div class="pair">
+      <div class="explain">
+        <h3>“The plan without forms” is a state no house-league club can reach</h3>
+        <p>The custom-questions gate is Tournament Plus and up. House league is in League Plus, Club and Club · Association only, and all three are above Tournament Plus. So every club that can run a house-league season already has its own questions. Camps and sponsorships ride the same three plans, so the same holds for them. I drew this instead of a screen nobody will see.</p>
+        <ul>
+          <li><b>The build checks the gate anyway</b>, with the existing key, so a plan change later lands in the right place.</li>
+          <li><b>Documents and their ticks are never behind it.</b> The waiver is a document, and the “I have read” tick is never gated (ruled).</li>
+          <li>If a plan without the key ever reached the page, the questions card would read as beside this, and the documents card would work in full.</li>
+        </ul>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>If it were ever reached</b><button class="tag same" type="button" data-note="UNREACHABLE TODAY. Drawn only so the build has the words if the plans change. The locked line follows the house rule for a plan lock: what is available, why it is locked, and a short path, without taking over the page.">UNREACHABLE TODAY</button></div>
+        <div class="scroll"><div class="frame adm w560">
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Your questions</p></div>
+            <p class="small" style="font-size:14px;color:var(--home-ink-soft)">Your own questions come with League Plus and Club. <span class="door">See plans</span></p>
+          </div>
+          <div class="card"><div class="cardTop"><p class="cardH">Documents to read</p><span class="btnOut">+ Add a document</span></div><p class="small">Documents and their ticks are on every plan.</p></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="explain"><h3>One form, four homes</h3>
+      <div style="overflow-x:auto"><table class="docTbl">
+        <thead><tr><th>Where it’s built</th><th>Who answers</th><th>“Asked”</th><th>Health switch</th><th>Fixed first card</th><th>Files kept</th></tr></thead>
+        <tbody>
+          <tr><td>A house-league season (this stage)</td><td>A family, about one or more children</td><td>For each child · once per sign-up</td><td>Yes</td><td>Child, guardian, friends, email consent</td><td>90 days after the season finishes</td></tr>
+          <tr><td>A camp or clinic (Stage 7)</td><td>A family, about one or more children</td><td>Same</td><td>Yes</td><td>Child, guardian, session</td><td>Its own clock, set in Stage 7</td></tr>
+          <tr><td>A sponsorship package (Stage 6)</td><td>A business, no account</td><td>Absent: one answerer</td><td class="s">No: a business is not a child</td><td>Business name, contact, email, logo</td><td>Set in Stage 6</td></tr>
+          <tr><td>A tryout (later)</td><td>A family</td><td>For each child</td><td>Yes</td><td>Set when tryouts take forms</td><td>Set then</td></tr>
+        </tbody>
+      </table></div>
+      <p>For the build: a form belongs to its owner (a season, a camp, a package), not to “house league”; a tick points at whatever it was ticked for, as the consent ledger already does; and every public page that takes files gets the same size limit, type check and rate limit. Answers stay on the registration and are never copied onto the child’s record across seasons (/legal).</p>
+    </div>
+    <div class="explain"><h3>Findings from the code read (click a flag)</h3>
+      <ul>
+        <li><button class="fl" type="button" data-f="F1">F1</button> Tournament questions: an archived question’s answers disappear from the team’s record and the export, though the archive window says they stay.</li>
+        <li><button class="fl" type="button" data-f="F2">F2</button> Tournament questions: a file answer shows as a storage path; nobody can open the file from the product.</li>
+        <li><button class="fl" type="button" data-f="F3">F3</button> Tournament questions: any file type is accepted, and the type is taken from the browser.</li>
+        <li><button class="fl" type="button" data-f="F4">F4</button> Tournament questions: every member who can open tournaments sees the answers, a wider reach than ruling A8 gives house league.</li>
+        <li><button class="fl" type="button" data-f="F5">F5</button> Today’s waiver can be edited after families ticked, and the records keep only the text, so migrated ticks can’t claim a version.</li>
+        <li><button class="fl" type="button" data-f="F6">F6</button> The published privacy policy doesn’t yet name club questions or files families attach; it promises expiring links and server-only reads, which the build must keep.</li>
+        <li><button class="fl" type="button" data-f="F7">F7</button> Deleting one registration leaves its stored files behind today (a known gap); family files make it sharper.</li>
+        <li><button class="fl" type="button" data-f="F8">F8</button> The sign-up’s confirmation lists only the children who were signed up, so a parent of a child who fit no division can think that child is in.</li>
+      </ul>
+    </div>
+    <div class="explain"><h3>Where the written rules disagree (found by /design; drawn one way, yours to rule another time)</h3>
+      <ul>
+        <li><b>Where Tools sits on a toolbar.</b> One rule puts Tools right after Search and Filter; another lists the page actions as Export · Tools · Add and says not to reorder them. Drawn the second way (tab 6).</li>
+        <li><b>A framed list inside a card.</b> The table standard says never two painters (no outlined list inside a card), but the shipped tournament question card does exactly that, and so does this drawing.</li>
+        <li><b>A family-facing pick-one with four or fewer choices.</b> The dropdown ruling covers admin forms; nothing written covers a family form. Drawn as round buttons up to four, a dropdown from five.</li>
+        <li><b>Two sibling adds and the lime.</b> A screen’s one add is lime; the form page has two sibling adds (question, document), drawn both outlined, as the tournament card’s add is.</li>
+        <li><b>Export hints.</b> A second line survives only where it says what the name doesn’t, yet the shipped “Excel with contact details” row carries “Includes additional contact columns”. Kept as it ships.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 10 · ASKS -->
+  <section class="pane" id="p10" role="tabpanel" aria-labelledby="t10" hidden>
+    <h2>Your asks</h2>
+    <p>Ranked by how much each one changes, most first; ask 20 came from the /ux review and ranks with 7 and 8. The first answer on each is my recommendation and is already selected. Change only the ones you disagree with, add a note if you want, then press Build the summary and paste it into the chat. Nothing is built from this page; the build prompt is written from your answers.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc" id="noteGo" type="button" hidden>Go to the ask</button><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var ASKS = [
+  {n:1, t:"Per child or per sign-up", why:"A sign-up carries several children. Some questions are about each child (allergies, T-shirt size), some about the family (can a parent help). Today’s fixed fields already split this way.", o:[
+    "The club picks per question: “For each child” (the default) or “Once per sign-up”, shown as two groups on the form page. Documents are ticked once per sign-up and recorded on each child",
+    "A fixed rule: every club question is asked for each child",
+    "A fixed rule: every club question is asked once per sign-up"]},
+  {n:2, t:"The tick’s words", why:"Ruled item 3 says “I have read {document}”. Today’s waiver tick reads “I have read and agree to the waiver.” Moving the waiver to “I have read” would drop the agreement from every new waiver tick, which is the point of a waiver.", o:[
+    "The club picks per document: “I have read {document}.” or “I have read and agree to {document}.” The waiver moves in with “agree”",
+    "Always “I have read {document}.”, as first ruled; the waiver loses “and agree”"]},
+  {n:3, t:"Where the form lives", why:"Today the waiver is one fact in the season Overview’s Registration block.", o:[
+    "Its own page one level down, opened from a “Sign-up form” fact in the Registration block",
+    "A new season tab, “Sign-up form” (the season’s eighth)",
+    "Inside the Registration block’s edit mode"]},
+  {n:4, t:"What the form can’t replace", why:"Name, date of birth, division, the friends block, the guardian’s contact and the email consent drive divisions, the draft, money and email.", o:[
+    "A locked “Every sign-up asks” card at the top of the form page (folded once there are questions); the club’s questions follow them; a fixed notice about who is asking sits just above the first of the club’s questions on the family page. None of it can be removed or edited",
+    "The same, but the club may hide “Jersey number, position and notes”"]},
+  {n:5, t:"A health or medical mark", why:"/legal: a club must be able to ask about allergies, but answers about a child’s health need more protection (PIPEDA 4.3.4, 4.7.2). A mark is how the product knows which answers those are.", o:[
+    "A “Health or medical” switch on each question. Marked answers stay off list columns, the filter, the draft board, emails and alerts, and out of every export but one. A marked question is optional by default. The window suggests the switch when a question’s words look medical, and never blocks",
+    "The same switch, with no suggestion from the question’s words",
+    "No mark; every answer is treated the same"]},
+  {n:6, t:"Who opens health answers and files", why:"/legal asked whether a narrower seat exists. In house league it doesn’t: the seats that open registrations are owner, admins, the league admin and the registrar, and the registrar is the one who needs them.", o:[
+    "The same seats that open Registrations (ruling A8); the mark narrows where an answer goes, not who may read it. Opening a file is recorded in the club’s activity log",
+    "A new per-member permission, “Health answers”, off for everyone but the owner until granted"]},
+  {n:7, t:"Changing the form after sign-ups start", why:"A club finds a missing question in week two. Today the tournament editor lets a question’s type change in place and hides archived answers.", o:[
+    "The form stays editable while the season is live, under the rules in tab 7: an answer is never lost or reshaped, the type locks once answered, archive keeps answers, and no family is chased automatically",
+    "The form locks when the first family signs up"]},
+  {n:8, t:"A new version of a document", why:"A family ticked version 1. Re-asking everyone for a typo trains families to tick without reading; never re-asking leaves a real change unagreed.", o:[
+    "The club chooses at replace time: “Their tick stands” or “They must tick again” with a reason. Tick-again sign-ups show “Needs a new tick”, places aren’t affected, the family ticks on their Your sign-up page, and the club tells them through Email families. No automatic email",
+    "Every new version asks every family again",
+    "A new version never asks again"]},
+  {n:9, t:"Files families attach", why:"Today’s tournament upload takes any file type up to 10 MB, the server’s whole per-request limit.", o:[
+    "One file per question, up to 8 MB, PDF, JPEG, PNG or HEIC, checked on the server; at most 5 files on one child’s sign-up; a file question can’t be required; the public page limits how fast files come in",
+    "The tournament’s rule: any type, up to 10 MB"]},
+  {n:10, t:"How long files and health answers are kept", why:"The privacy policy keeps a club’s records while the club exists; PIPEDA 4.5.3 says destroy what is no longer needed, and files are the riskiest. Friend requests already follow a clock like this.", o:[
+    "Family files and health answers are removed 90 days after the club marks the season finished (or 120 days after its last day if it never does); other answers stay with the registration. The privacy policy gains the sentence once the nightly job exists",
+    "Kept while the club exists, like the rest of the registration",
+    "Removed the day the season is marked finished"]},
+  {n:11, t:"Answers on the Registrations list", why:"Ruled: answers reach the list as columns, with a filter. A club with eight questions can’t show eight columns.", o:[
+    "Up to three answer columns, chosen from a new Tools (⋯) → Answer columns, remembered per person; one Filter group per question with choices; a health question is never a column or a filter; on a phone answers stay in the record",
+    "Every question is a column, in the form’s order"]},
+  {n:12, t:"Answers on the draft board", why:"Ruled: answers reach the draft board’s notes view. Most answers (T-shirt size) mean nothing to a draft; a few (a parent who will coach) mean a lot. The board is often read on a shared screen.", o:[
+    "A “Show on the draft board” switch per question, off by default and never for a health question; those answers join the family’s note in the note popover and the pool’s Filter",
+    "Every non-health answer shows in the note popover",
+    "No answers on the board (narrows the ruling)"]},
+  {n:13, t:"The export", why:"Today’s plain Excel leaves out contacts and notes; “Excel with contact details” adds them. A T-shirt list is the commonest reason to export answers.", o:[
+    "Plain Excel and CSV carry the non-health answers; a file answer reads “Attached”; health answers leave only in a new opt-in, “Excel with contact details and health answers”, with its one line",
+    "Answers only in “Excel with contact details”; health answers never exported"]},
+  {n:14, t:"Coaches and a child’s health answers", why:"Widened: an allergy answer is mostly for the coach on the field. Under A8 a house-league coach sees none of it, so the registrar will export and email a list, which is a worse leak. Sharing changes ruling A8 and adds to the coach’s team page.", o:[
+    "Not in this stage. Record it as the first follow-up, with its own drawing: a per-question “Show to the child’s coaches” switch",
+    "Add the switch in this stage"]},
+  {n:15, t:"The tournament questions", why:"One editor everywhere is the goal, but the tournament screen works and tournament-only organizers use it. The code read found three defects in it (F1 to F3).", o:[
+    "Move tournaments onto the club form later, as its own stage, after one house-league season has used it. Fix F1 to F3 now as a small separate fix",
+    "Move tournaments onto it in this stage",
+    "Never move them; fix F1 to F3 only"]},
+  {n:16, t:"Who builds the form", why:"Today the owner, admins and the league admin set up a season; the registrar works the registrations.", o:[
+    "The same three; the registrar reads the form page",
+    "The registrar can change the form too"]},
+  {n:17, t:"Copying last season’s form", why:"“Start next season” already copies settings (including the waiver text), age groups, teams, practices and coaches.", o:[
+    "A “Sign-up form” line in Start next season, on by default, and “Copy {last season}’s form” on an empty form; questions and documents only, never answers",
+    "Only the button on an empty form"]},
+  {n:18, t:"What a document tick records", why:"/legal: the Terms acceptance and today’s waiver record no IP address; tryout consent does.", o:[
+    "No IP address: the version, a fingerprint of what was seen, the words ticked, when a PDF was handed over, and the time of the tick",
+    "All of that and the IP address"]},
+  {n:19, t:"The words", why:"Draft words; /marketing confirms them after the ruling, one spelling everywhere.", o:[
+    "Club side: “Sign-up form”, “Your questions”, “Documents to read”, groups “For each child” and “Once per sign-up”. Family side: no word “form”; “From {club}” over each child’s questions, “Questions from {club}”, “Documents and agreement”",
+    "Club side “Registration form” and “Registration questions” instead"]},
+  {n:20, t:"Families see and change their answers", why:"From /ux: today “Your sign-up” shows no answers, so an allergy found in week two is a dead end, and families who signed up before a question was added can never answer it.", o:[
+    "Your sign-up shows each child’s answers in a folded row with Change, until the teams are made; after that it names the club’s contact. New questions and new document versions show there too",
+    "Show the answers read-only, with the club’s contact to change one",
+    "Nothing on Your sign-up; families contact the club"]}
+];
+var NOTES = {
+  1:"Ask 1 · Per child or per sign-up. Recommended: the club decides per question, with “For each child” as the default because most questions are about the child. The two groups on the form page show the choice, and the family sees each question beside what it is about.",
+  2:"Ask 2 · The tick’s words. Recommended: let each document choose “read” or “read and agree”, so the waiver keeps the agreement it has today. This amends ruled item 3’s wording; the reason is that “I have read the waiver” is not agreeing to it.",
+  3:"Ask 3 · Where it lives. Recommended: a page one level down, opened from the Registration block. A season already has seven tabs and the form is set once a season.",
+  4:"Ask 4 · What it can’t replace. Recommended: the fixed fields sit in a locked card and can’t be removed; the fixed notice says who is asking, above the club’s first question.",
+  5:"Ask 5 · Health mark. Recommended: a switch on each question that narrows where its answers go. The suggestion from the question’s words is a nudge, never a gate.",
+  6:"Ask 6 · Who reads health answers. Recommended: the same seats as Registrations. The registrar is the person who needs them; a new permission would mostly be switched on for them anyway.",
+  7:"Ask 7 · Changing it later. Recommended: editable while live, under tab 7’s rules.",
+  8:"Ask 8 · New document version. Recommended: the club says whether families must tick again, and the family ticks on their own sign-up page.",
+  10:"Ask 10 · Retention. Recommended: 90 days after the season finishes for files and health answers, the friend-request model.",
+  11:"Ask 11 · List columns. Recommended: up to three chosen columns, from a new Tools menu.",
+  12:"Ask 12 · Draft board. Recommended: a per-question switch, off by default, never for health.",
+  13:"Ask 13 · Export. Recommended: non-health answers in plain Excel; health answers only in an opt-in that says so.",
+  14:"Ask 14 · Coaches. Recommended: not now, but recorded as the first follow-up with its own drawing, because it changes A8.",
+  16:"Ask 16 · Who builds. Recommended: the people who set up a season.",
+  17:"Ask 17 · Copy. Recommended: a line in Start next season and a button on an empty form.",
+  18:"Ask 18 · The tick record. Recommended: no IP address, matching the Terms acceptance.",
+  19:"Ask 19 · Words. Recommended: “Sign-up form” on the club side; the family never reads the word “form”.",
+  20:"Ask 20 · Families change their answers. Recommended: answers on Your sign-up with Change until the teams are made. It also gives families who signed up before a question was added a way to answer it."
+};
+var FINDINGS = {
+  F1:["F1 · Archived tournament questions lose their answers from view", "What the code does today: archiving a tournament question only marks it archived; the answers stay in the database. But the team’s record and the export read only questions that aren’t archived, and drop any answer whose question is missing. The archive window says “Answers teams already gave stay with their registrations”, which is not what the organizer can see.", "What this proposal does: the club form keeps archived answers on the record and in the export under “No longer asked”, and ask 15 fixes the tournament screen now."],
+  F2:["F2 · A tournament file answer is a dead path", "What the code does today: an uploaded file is saved in a private store and only its storage path is kept. Nothing makes an opening link for it, so the team’s record and the export show the raw path.", "What this proposal does: a family file opens through a link that expires after an hour, which the published privacy policy already promises, and each opening is recorded. Ask 15 fixes the tournament side now."],
+  F3:["F3 · A tournament upload takes any file", "What the code does today: the file field has no type limit and the server stores whatever type the browser claims, up to 10 MB.", "What this proposal does: PDF, JPEG, PNG or HEIC, checked from the file itself, up to 8 MB (ask 9)."],
+  F4:["F4 · Tournament answers reach every tournament member", "What the code does today: the teams list returns answers to any member who can open tournaments; admin notes are hidden from some seats, answers are not.", "What this proposal does: nothing here. It is recorded for the tournament move (ask 15), which should bring A8’s rule with it."],
+  F5:["F5 · Today’s waiver has no versions", "What the code does today: the waiver is a text box the club can edit at any time, even after families ticked. Each child’s registration records when the box was ticked; a consent record keeps the text as it was, but no version or fingerprint, and a duplicate for the same guardian can be skipped.", "What this proposal does: the move never backfills or rewrites either record. Each season’s current text becomes version 1; where a family’s recorded text differs, it becomes its own older version. Every moved tick reads “recorded before documents had versions”. Counts are taken first, on dev and production (counts only), and shown to you before it runs."],
+  F6:["F6 · The privacy policy and the new form", "What the policy says today: clubs decide what to collect and FieldLogicHQ stores it for them; it names medical notes and documents the club asks for. It does not say a club can write its own questions or that families attach files. It promises that uploaded documents open only through links that expire after an hour, that sensitive records are read only through our server, and that health information is never on public pages.", "What this proposal does: the build keeps those promises (and Stages 6 and 7 never show answers on a public page); the next policy version names club questions and attached files; the retention sentence waits for the job that does it."],
+  F7:["F7 · One deleted registration leaves its files", "What the code does today: deleting a whole club removes its stored files; deleting one registration, child or player does not.", "What this proposal does: the build closes that gap for family files, and adds the new store to the club-delete list the build already guards."],
+  F8:["F8 · The confirmation leaves out a child who wasn’t signed up", "What the code does today: when one child fits a division and a sibling doesn’t, the confirmation lists only the child who was signed up. If every child fits none, the page still shows the parent’s section with no Sign up button and no reason.", "What this proposal does: the confirmation names the child who wasn’t signed up and why, with the club’s contact; a page where no child fits says so above the parent’s section. Small, and worth fixing with this stage because the form gets longer."]
+};
+var KEY = "br-stage4-forms-v1";
+var S = { pick:{}, note:{}, tab:"p1", seg:{} };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var host = document.getElementById("asks");
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + a.t + "</h3><p class=\"why\">" + a.why + "</p>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + o + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var pick = S.pick[a.n] != null ? S.pick[a.n] : 0;
+  var r = document.getElementById("a" + a.n + "o" + pick); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+
+function build(){
+  var L = ["Board Ready Stage 4, custom forms (drawings Nov 20, 2026, round 2)", ""];
+  ASKS.forEach(function(a){
+    var p = S.pick[a.n] != null ? S.pick[a.n] : 0;
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  L.push(""); L.push("Short form: " + ASKS.map(function(a){ return a.n + String.fromCharCode(65 + (S.pick[a.n] != null ? S.pick[a.n] : 0)); }).join(" · "));
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var txt = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(txt).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+
+Array.prototype.forEach.call(document.querySelectorAll(".seg"), function(seg){
+  var pane = document.getElementById(seg.getAttribute("data-seg"));
+  function set(v){ Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-v") === v ? "true" : "false"); }); pane.classList.toggle("diffs", v === "diff"); S.seg[seg.getAttribute("data-seg")] = v; save(); }
+  seg.addEventListener("click", function(ev){ var b = ev.target.closest("button"); if (b) set(b.getAttribute("data-v")); });
+  set(S.seg[seg.getAttribute("data-seg")] || "all");
+});
+
+var dlg = document.getElementById("note"), goBtn = document.getElementById("noteGo"), goTo = null;
+function open(title, paras, ask){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  goTo = ask || null; goBtn.hidden = !ask;
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+goBtn.addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); show("p10"); var el = document.getElementById("ask" + goTo); if (el) el.scrollIntoView({ block: "start" }); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); var a = ASKS.filter(function(x){ return x.n === n; })[0]; open("Ask " + n + " · " + a.t, [NOTES[n] || a.why], n); return; }
+  var f = ev.target.closest(".fl[data-f]");
+  if (f) { var F = FINDINGS[f.getAttribute("data-f")]; if (F) open(F[0], [F[1], F[2]], null); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")], null); }
+});
+})();
+</script>

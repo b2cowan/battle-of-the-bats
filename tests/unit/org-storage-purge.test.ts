@@ -214,7 +214,7 @@ describe('every bucket the app writes to is purged with the club, or said not to
 
   it('every use resolves to a bucket name', () => assert.deepEqual(unresolved, []));
 
-  it('finds the six club buckets (so the scan is looking at something)', () => {
+  it('finds every club bucket in use (so the scan is looking at something)', () => {
     for (const b of ORG_FILE_BUCKETS) assert.ok(names.has(b), `${b} is used somewhere`);
   });
 

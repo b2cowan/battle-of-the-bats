@@ -23,6 +23,7 @@ export const ORG_FILE_BUCKETS = [
   'org-permit-documents', //          private: permit documents
   'rep-team-documents', //            private: players' signed medical and waiver files, document templates (made by hand, not in a migration)
   'tournament-registration-files', // private: files families attach to a registration
+  'club-form-files', //               private: a club form's PDF documents and the files families attach (mig 513)
 ] as const;
 
 /**

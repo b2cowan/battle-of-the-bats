@@ -10,12 +10,17 @@ import 'server-only';
  * ⚠ THE SOURCE IS ONLY READ (9f·11). Every write below names the NEW season's id.
  * ⚠ NEVER COPIED (9f·12): registrations, payments, ratings, games, practices, slot uses, notices, email logs, invites (a coach
  *   row carries no invite state, so "Invited when you publish"), the club's time, the budget seed, the published marks.
+ * ⚠ THE SIGN-UP FORM (Board Ready Stage 4, ruling 17) is its own line: its live questions and documents, each document's
+ *   current version as version 1, NEVER an answer or a tick (/legal). The waiver left the settings with it. The source's form
+ *   is made on first need if it has none yet (a season made before mig 513 by a seed) — that is the source's own form
+ *   arriving, not a change to it.
  */
 import { randomUUID } from 'node:crypto';
 import { supabaseAdmin } from './supabase-admin';
 import { deleteDraftLeagueSeason } from './db';
 import { bornColumns, bornYearsOf, checkBornBody } from './born-years';
 import { isUuid } from './utils';
+import { copyForm, ensureSeasonForm, factsOf, formIsEmpty, readForm, removeSeasonFormFiles } from './club-form-server';
 import {
   bornShiftYears, datesMoved, dateShiftDays, honouredBring, isLiveSource, movedDates, moveBornYears, startPrints,
   type Bring, type StartSource, type StartedFrom,
@@ -34,13 +39,13 @@ export function readStartFromBody(v: unknown): StartFromRequest | null | 'bad' {
   return { seasonId: r.seasonId, bring: honouredBring(r.bring as Partial<Bring>), divisionIds: ids };
 }
 
-const SEASON_COLS = 'id, org_id, name, status, description, registration_fee, how_to_pay, waiver_text, ask_email_consent, '
+const SEASON_COLS = 'id, org_id, name, status, description, registration_fee, how_to_pay, ask_email_consent, '
   + 'owing_amber_days, auto_approve_under_capacity, auto_promote_waitlist, twice_in_a_day_allowed, home_away_tolerance, '
   + 'season_start_date, season_end_date, registration_open_at, registration_close_at, early_bird_until';
 
 type SourceRow = {
   id: string; org_id: string; name: string; status: string; description: string | null; registration_fee: number | null;
-  how_to_pay: string | null; waiver_text: string | null; ask_email_consent: boolean; owing_amber_days: number;
+  how_to_pay: string | null; ask_email_consent: boolean; owing_amber_days: number;
   auto_approve_under_capacity: boolean; auto_promote_waitlist: boolean; twice_in_a_day_allowed: boolean;
   home_away_tolerance: number; season_start_date: string | null; season_end_date: string | null;
   registration_open_at: string | null; registration_close_at: string | null; early_bird_until: string | null;
@@ -151,15 +156,18 @@ export async function startSeasonFrom(base: StartFromBase, sourceRow: SourceRow,
     registration_close_at: moved.registrationCloseAt,
     early_bird_until: moved.earlyBirdUntil,
     ...(s ? {
-      description: s.description, registration_fee: s.registration_fee, how_to_pay: s.how_to_pay, waiver_text: s.waiver_text,
+      description: s.description, registration_fee: s.registration_fee, how_to_pay: s.how_to_pay,
       ask_email_consent: s.ask_email_consent, owing_amber_days: s.owing_amber_days,
       auto_approve_under_capacity: s.auto_approve_under_capacity, auto_promote_waitlist: s.auto_promote_waitlist,
       twice_in_a_day_allowed: s.twice_in_a_day_allowed, home_away_tolerance: s.home_away_tolerance,
     } : {}),
   };
 
+  // The sign-up form: read now, so its print is known before the season row is written (the copy prints the same).
+  const sourceForm = bring.form ? await readForm(await ensureSeasonForm(source.id)) : null;
+  const formHas = !!sourceForm && !formIsEmpty(sourceForm);
   const brought: StartedFrom['brought'] = {
-    settings: bring.settings, ageGroups: divisionRows.length, teams: teamRows.length,
+    settings: bring.settings, ageGroups: divisionRows.length, form: formHas, teams: teamRows.length,
     practice: practiceRows.length > 0, coaches: coachRows.length,
   };
   // "Moved N weeks" only when the SOURCE had dates to move: a source with none gives empty dates and no mark, whatever first
@@ -171,7 +179,7 @@ export async function startSeasonFrom(base: StartFromBase, sourceRow: SourceRow,
       {
         registrationFee: seasonRow.registration_fee ?? null, registrationOpenAt: seasonRow.registration_open_at,
         registrationCloseAt: seasonRow.registration_close_at, earlyBirdUntil: seasonRow.early_bird_until,
-        howToPay: seasonRow.how_to_pay ?? null, waiverText: seasonRow.waiver_text ?? null,
+        howToPay: seasonRow.how_to_pay ?? null, formPrint: formHas ? factsOf(sourceForm!).print : null,
       },
       divisionRows.map(d => ({ name: d.name, capacity: d.capacity, bornFromYear: d.born_from_year, bornToYear: d.born_to_year, price: d.price, earlyPrice: d.early_price })),
       brought, shiftDays,
@@ -192,8 +200,13 @@ export async function startSeasonFrom(base: StartFromBase, sourceRow: SourceRow,
     await step('league_teams', teamRows);
     await step('league_practice_time', practiceRows);
     await step('league_team_coaches', coachRows);
+    if (formHas) {
+      await copyForm({ orgId: base.orgId, fromFormId: sourceForm!.id, from: sourceForm!, toFormId: await ensureSeasonForm(made.id), userId: base.userId });
+    }
   } catch (err) {
     // All or nothing: the season goes, and its cascade takes whatever landed under it.
+    // A form copied part-way leaves PDFs in storage; they go first (the season's delete takes only the rows).
+    await removeSeasonFormFiles(made.id).catch(() => undefined);
     await deleteDraftLeagueSeason(made.id, base.orgId).then(gone => {
       if (!gone) console.error('[house-league start-from] the half-made season', made.id, 'was not deleted (not a draft any more?)');
     }).catch(cleanupErr =>

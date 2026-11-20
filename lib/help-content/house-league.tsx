@@ -83,7 +83,7 @@ const houseLeagueHelp: HelpPageContent = {
       content: (
         <>
           <ul>
-            <li><strong>Owner, club admin and league admin</strong> — everything: create and edit seasons and divisions, start a new season from an earlier one, build teams, run the schedule, move a season between states, work registrations and fees, move a child to another division, and email families. Owners and admins also give house league its time in the club&apos;s Schedules; a league admin divides that time among divisions, hands out practices and tells the families their practice times (see <em>House league&apos;s time</em>). The registrar and treasurer never see that step.</li>
+            <li><strong>Owner, club admin and league admin</strong> — everything: create and edit seasons and divisions, start a new season from an earlier one, build teams, run the schedule, move a season between states, work registrations and fees, move a child to another division, and email families. The owner, club admins and league admins also change a season&apos;s sign-up form (its questions and documents) while it is live; everyone else who can open the season reads it. Owners and admins also give house league its time in the club&apos;s Schedules; a league admin divides that time among divisions, hands out practices and tells the families their practice times (see <em>House league&apos;s time</em>). The registrar and treasurer never see that step.</li>
             <li><strong>League registrar</strong> — works the registrations (approve, waitlist, decline, withdraw, release a spot, add one by hand), takes fees (<strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong>), refunds a card payment, emails a family their pay link, sends a family a new link to their sign-up, and uses Email families. <strong>Move to another division</strong> is not theirs: only the owner, a club admin and a league admin see it. Reads the rest of the season, with no edit controls and no status buttons.</li>
             <li><strong>Treasurer</strong> — reads a season&apos;s <strong>Money</strong> page, through the club&apos;s Accounting, and sees where the club&apos;s payouts stand. Nothing else in house league: refunds are the desk&apos;s.</li>
           </ul>
@@ -116,9 +116,9 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'create-season',
       group: 'Getting started',
       heading: 'Creating and configuring a season',
-      summary: 'Creating a season asks three things: name, sport and dates. Age groups, prices, registration dates, the waiver and how families pay are set on the season’s own page, or brought over from an earlier season with Start from.',
-      keywords: ['create season', 'season setup', 'age groups', 'add age groups', 'divisions', 'capacity', 'spots', 'price', 'prices', 'early bird', 'early bird discount', 'save', 'early-bird date', 'how to pay', 'how families pay', 'note for families', 'registration fee', 'waiver', 'email consent', 'new registrations', 'hold for review', 'birth years', 'birth year', 'born', 'age', 'cut-off', 'birthday', 'add division', 'edit division', 'remove division', 'delete division', 'pencil', 'edit season', 'edit registration', 'delete season', 'delete a season', 'remove season', 'made by mistake', 'test season', 'friend requests', 'friends a family can name per child', 'owing turns amber', 'amber after days', 'owing threshold', 'how many days before owing turns amber', 'start from', 'start next season', 'running it again', 'copy a season', 'copy last season', 'run the season again', 'repeat a season', 'next year', 'bring with it', 'a blank season', 'started from', 'moved 52 weeks', 'from draft', 'the club hasn’t given this season any time yet'],
-      searchText: 'friend requests up to 2 per child none the sign-up form doesn’t ask none don’t ask groups in the draft hold at most 3 children brothers and sisters a third friend could never be kept together create season name sport dates three questions web address made from the name season page add age groups U6 U18 chips type a name each becomes a division born in birth years the club picks size players price free early bird early amount early-bird date one date per season through last day second division U10 A U10 B tap again gap overlap warning partial overlap identical years no warning cut-off birthdays count from settings edit division pencil whole record autosave saves as you go tick note for families fits two divisions changing birth years never moves a registered child no longer fit lowering players never removes anyone remove this division only while nobody is in it accepted received waitlisted price recorded when they sign up never changes price change applies to new sign-ups only families see the early bird before they register save $20 shown on the season page and the club rows registration block registration dates form opens form closes waiver text email consent line asked on the form unticked how families pay required when any price is above $0 shown once a child is accepted and in their email new registrations approve while a division has room hold for review a child waiting for review holds a spot waitlist moves up on its own when a spot frees checklist before you open registration delete season delete the season remove a season made by mistake test season shell not yet open nothing attached complete it instead fee received accounting books owing turns amber after 14 days counted from the day the child was accepted whole number of days 1 to 365 free season has no owing row correct the price a child keeps the price fixed at sign-up start from a blank season bring with it the season’s settings age groups team names and colours practice length and teams at once coaches unticked nobody is invited until you publish teams always starts empty registrations and payments ratings games and scores practices emails and notices and the club’s time families are not emailed 52 weeks after the dates same weekdays registration dates and the early price move the same way a year in the name goes up no dates come across birth years move up one year choose which age groups come across still owe there that stays on its money tab started from banner check each line then open registration from marks moved marks clear when the line is edited running it again start next season from this one league admin owner club admin the club hasn’t given this season any time yet',
+      summary: 'Creating a season asks three things: name, sport and dates. Age groups, prices, registration dates, the sign-up form and how families pay are set on the season’s own page, or brought over from an earlier season with Start from.',
+      keywords: ['create season', 'season setup', 'age groups', 'add age groups', 'divisions', 'capacity', 'spots', 'price', 'prices', 'early bird', 'early bird discount', 'save', 'early-bird date', 'how to pay', 'how families pay', 'note for families', 'registration fee', 'waiver', 'email consent', 'sign-up form', 'new registrations', 'hold for review', 'birth years', 'birth year', 'born', 'age', 'cut-off', 'birthday', 'add division', 'edit division', 'remove division', 'delete division', 'pencil', 'edit season', 'edit registration', 'delete season', 'delete a season', 'remove season', 'made by mistake', 'test season', 'friend requests', 'friends a family can name per child', 'owing turns amber', 'amber after days', 'owing threshold', 'how many days before owing turns amber', 'start from', 'start next season', 'running it again', 'copy a season', 'copy last season', 'run the season again', 'repeat a season', 'next year', 'bring with it', 'a blank season', 'started from', 'moved 52 weeks', 'from draft', 'the club hasn’t given this season any time yet'],
+      searchText: 'friend requests up to 2 per child none the sign-up form doesn’t ask none don’t ask groups in the draft hold at most 3 children brothers and sisters a third friend could never be kept together create season name sport dates three questions web address made from the name season page add age groups U6 U18 chips type a name each becomes a division born in birth years the club picks size players price free early bird early amount early-bird date one date per season through last day second division U10 A U10 B tap again gap overlap warning partial overlap identical years no warning cut-off birthdays count from settings edit division pencil whole record autosave saves as you go tick note for families fits two divisions changing birth years never moves a registered child no longer fit lowering players never removes anyone remove this division only while nobody is in it accepted received waitlisted price recorded when they sign up never changes price change applies to new sign-ups only families see the early bird before they register save $20 shown on the season page and the club rows registration block registration dates form opens form closes sign-up form line one line open the sign-up form waiver is a document on the form email consent line asked on the form unticked how families pay required when any price is above $0 shown once a child is accepted and in their email new registrations approve while a division has room hold for review a child waiting for review holds a spot waitlist moves up on its own when a spot frees checklist before you open registration delete season delete the season remove a season made by mistake test season shell not yet open nothing attached complete it instead fee received accounting books owing turns amber after 14 days counted from the day the child was accepted whole number of days 1 to 365 free season has no owing row correct the price a child keeps the price fixed at sign-up start from a blank season bring with it the season’s settings age groups team names and colours practice length and teams at once coaches unticked nobody is invited until you publish teams always starts empty registrations and payments ratings games and scores practices emails and notices and the club’s time families are not emailed 52 weeks after the dates same weekdays registration dates and the early price move the same way a year in the name goes up no dates come across birth years move up one year choose which age groups come across still owe there that stays on its money tab started from banner check each line then open registration from marks moved marks clear when the line is edited running it again start next season from this one league admin owner club admin the club hasn’t given this season any time yet',
       content: (
         <>
           <p>Creating a season asks three things: its <strong>name</strong>, its <strong>sport</strong> and its <strong>season dates</strong>. Everything else is set on the season&apos;s own page, which opens as soon as you create it, or brought over from an earlier season (see <em>Start next season from an earlier one</em>).</p>
@@ -170,7 +170,8 @@ const houseLeagueHelp: HelpPageContent = {
             <>
               <p>When you start a season from an earlier one, the <strong>Bring with it</strong> list in the Create season window decides what comes across. Families are not emailed.</p>
               <HelpDefs>
-                <HelpDef term="Bring with it">Ticked to begin with: <strong>The season&apos;s settings</strong> (fee, how to pay, waiver, email consent, how new registrations are taken, the waitlist, Owing turns amber and the schedule rules), <strong>Age groups</strong> (names, sizes, prices, early prices, notes, games per team and Show standings; birth years move up by the years between the two first days, usually one), <strong>Team names and colours</strong> (no players, so you run the draft again) and <strong>Practice length and teams at once</strong>. <strong>Coaches</strong> (names and emails, on the same teams) is unticked. Unticking Age groups unticks and disables the teams and practice lines, and unticking Team names and colours does the same to Coaches, because neither can exist without what they hang on.</HelpDef>
+                <HelpDef term="Bring with it">Ticked to begin with: <strong>The season&apos;s settings</strong> (fee, how to pay, email consent, how new registrations are taken, the waitlist, Owing turns amber and the schedule rules), <strong>Age groups</strong> (names, sizes, prices, early prices, notes, games per team and Show standings; birth years move up by the years between the two first days, usually one), <strong>Team names and colours</strong> (no players, so you run the draft again) and <strong>Practice length and teams at once</strong>. <strong>Coaches</strong> (names and emails, on the same teams) is unticked. Unticking Age groups unticks and disables the teams and practice lines, and unticking Team names and colours does the same to Coaches, because neither can exist without what they hang on.</HelpDef>
+                <HelpDef term="Sign-up form">Ticked to begin with. Brings the form&apos;s questions and documents, the waiver included, never what families answered. Untick it to start with an empty form.</HelpDef>
                 <HelpDef term="Coaches">If you tick them, nobody is invited until you publish teams.</HelpDef>
                 <HelpDef term="Always starts empty">Registrations and payments, ratings, games and scores, practices, emails and notices, and the club&apos;s time. Teams and the schedule start unpublished. The club gives the new season its time, as it does every season.</HelpDef>
                 <HelpDef term="On the new season">Its page shows <em>Started from Draft Test 2027: settings, 4 age groups, 22 team names. Check each line, then open registration.</em> while it is Getting ready. The lines that came across carry a small mark, <strong>From Draft Test 2027</strong> (it opens that season), and the registration dates carry <strong>Moved 52 weeks</strong> (it opens the dates). A mark goes as soon as you change that line. <strong>Open registration</strong> still asks first.</HelpDef>
@@ -238,8 +239,7 @@ const houseLeagueHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="Registration dates">When the form opens and closes. Once registration is open, the dates run the form.</HelpDef>
                 <HelpDef term="Early-bird date">The last day each division&apos;s early amount applies.</HelpDef>
-                <HelpDef term="Waiver">Text families tick a box to agree to. Leave it empty if you don&apos;t need one.</HelpDef>
-                <HelpDef term="Email consent">A line the sign-up form always asks, unticked, beside the waiver: whether the club may email about future seasons and club news. Emails about the sign-up itself are sent either way.</HelpDef>
+                <HelpDef term="Sign-up form">One line, such as <em>No questions of your own · 1 document to read</em>, with <strong>Open the sign-up form &rsaquo;</strong>. The questions, the waiver and every other document live on that page (see <em>The sign-up form: your questions and documents</em>).</HelpDef>
                 <HelpDef term="How families pay">Your own words, such as an e-Transfer address and a deadline. Families see them once a child is accepted, and in their email. It is required when any division has a price above $0, and can&apos;t be emptied while registration is open and a division charges. A free season doesn&apos;t need it.</HelpDef>
                 <HelpDef term="New registrations">Either approved while a division has room, with a full division starting a waitlist, or held for your review. A child waiting for review holds a spot, so once accepted and waiting children fill a division, the next child goes to the waitlist.</HelpDef>
                 <HelpDef term="Waitlist">Moves up on its own when a spot frees, or you move it up yourself.</HelpDef>
@@ -259,6 +259,126 @@ const houseLeagueHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'signup-form',
+      group: 'Getting started',
+      heading: 'The sign-up form: your questions and documents',
+      summary: 'Each season has one sign-up form page, opened from the Registration block. Add your own questions, add documents families read and tick (the waiver is the first one), and see what every sign-up already asks.',
+      keywords: ['sign-up form', 'signup form', 'registration form', 'form questions', 'your questions', 'add a question', 'custom question', 'custom questions', 'extra questions', 'documents to read', 'add a document', 'waiver', 'waiver text', 'email consent', 'consent line', 'tick', 'I have read', 'I have read and agree', 'pdf', 'upload a pdf', 'replace a document', 'new version', 'their tick stands', 'they must tick again', 'archive a question', 'delete a question', 'health question', 'health or medical', 'show on the draft board', 'for each child', 'once per sign-up', 'every sign-up asks', 'required question', 'copy last season’s form', 'file upload question'],
+      searchText: 'open the sign-up form registration block one line no questions of your own 1 document to read back to overview every sign-up asks locked list fixed fields first and last name date of birth division friends to play with jersey number position notes parent or guardian email phone second parent’s email may email me about future seasons and club news unticked folds to one line on a phone show hide your questions add a question question help text type short answer long answer one choice many choices yes or no date file upload asked for each child once per sign-up required health or medical answers stay out of list columns draft board emails exports show on the draft board record window reads first pencil saves as you go previous next archive delete only while nobody has answered type and asked lock once answered no longer asked documents to read add a document pdf up to 8 MB typed text tick I have read I have read and agree to the waiver every document is required families must open a pdf before ticking versions replace with a new version their tick stands they must tick again what changed needs a new tick versions with ticks are kept archive the waiver brought across as the first document typed text start next season bring with it sign-up form on by default copy the form answers are never copied an empty form offers copy last season’s form owner club admin league admin change the form while the season is live others read it finished season locked League Plus and Club questions plan documents on every plan',
+      links: [
+        { label: 'House league', href: '../house-league' },
+      ],
+      content: (
+        <p>The sign-up form is what families fill in to register for a season. Each season has its own, on a page opened from the <strong>Registration</strong> block on its Overview. It holds three things: what every sign-up always asks, <strong>your own questions</strong>, and <strong>documents to read</strong> that families tick.</p>
+      ),
+      subtopics: [
+        {
+          id: 'signup-form-open',
+          title: 'Open the form, and who can change it',
+          content: (
+            <>
+              <p>On the season&apos;s Overview, the <strong>Registration</strong> block has one <strong>Sign-up form</strong> line, such as <em>No questions of your own · 1 document to read</em>. Click <strong>Open the sign-up form &rsaquo;</strong> to open the page. <strong>&larr; Overview</strong> takes you back.</p>
+              <ul>
+                <li><strong>Who changes it</strong>: the owner, club admins and league admins, while the season is live.</li>
+                <li><strong>Who reads it</strong>: everyone else who can open the season sees the page with no change controls.</li>
+                <li><strong>A finished season&apos;s form is locked.</strong> The page says so, and nothing on it can be changed.</li>
+              </ul>
+              <HelpNote>The page replaced the Waiver and Email consent lines and the Waiver text box that used to sit in the Registration block. The waiver is now a document on this page.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'signup-form-fixed',
+          title: 'What every sign-up asks',
+          content: (
+            <>
+              <p>The first card, <strong>Every sign-up asks</strong>, lists the details a family always gives. It is locked: they can&apos;t be removed, because they place each child in a division and feed the draft, the fees and the emails. Your own questions follow them on the form.</p>
+              <HelpDefs>
+                <HelpDef term="For each child">First and last name, date of birth, division, jersey number, position and notes, and the friends to play with while the season takes friend requests.</HelpDef>
+                <HelpDef term="The parent or guardian">First and last name, email, phone and the second parent&apos;s email.</HelpDef>
+                <HelpDef term="At the end">The unticked line asking whether the club may email about future seasons and club news. Emails about the sign-up itself are sent either way.</HelpDef>
+              </HelpDefs>
+              <p>Once the form has questions, and on a phone, the card folds to one line, <em>Every sign-up asks · 10 details</em>. <strong>Show</strong> opens it and <strong>Hide</strong> folds it again.</p>
+            </>
+          ),
+        },
+        {
+          id: 'signup-form-questions',
+          title: 'Add and change your own questions',
+          content: (
+            <>
+              <p>Your questions sit in two groups: <strong>For each child</strong> (asked again for every child in a sign-up) and <strong>Once per sign-up</strong> (asked a single time, however many children). Families answer them after the details every sign-up asks for, in the order you set.</p>
+              <HelpSteps>
+                <li>On the sign-up form page, click <strong>Add a question</strong>.</li>
+                <li>Write the <strong>Question</strong>, and a <strong>Help text</strong> if it needs one. It shows under the question in smaller type.</li>
+                <li>Pick the <strong>Type</strong>: Short answer, Long answer, One choice, Many choices, Yes or no, Date or File upload. A choice type asks for its choices, one per line.</li>
+                <li>Pick <strong>Asked</strong>: For each child or Once per sign-up.</li>
+                <li>Tick <strong>Required</strong> if a family can&apos;t sign up without answering. A File upload question can&apos;t be required.</li>
+                <li>Click <strong>Add question</strong>.</li>
+              </HelpSteps>
+              <ul>
+                <li><strong>Health or medical</strong> — tick it when the question asks about health, medical needs or a disability. Its answers stay out of list columns, the draft board and emails, and out of exports unless asked for. <strong>Show on the draft board</strong> isn&apos;t offered for it.</li>
+                <li><strong>Change a question</strong> — click its row to open its window. It reads first; click the pencil to change it. Changes save as you go, and <strong>Previous</strong> and <strong>Next</strong> step through the questions.</li>
+                <li><strong>Type and Asked lock once someone has answered.</strong> The window says how many answered. To ask it differently, archive it and add a new question.</li>
+                <li><strong>Archive this question</strong> takes it off the sign-up page. Answers already given stay on each registration, under <em>No longer asked</em>.</li>
+                <li><strong>Delete this question</strong> is there only while nobody has answered it.</li>
+              </ul>
+              <HelpNote>Your own questions are a plan feature. If your plan doesn&apos;t include them, the card says so and links to the plans. Documents are on every plan.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'signup-form-documents',
+          title: 'Documents families read and tick',
+          content: (
+            <>
+              <p>The <strong>Documents to read</strong> card lists each document a family must tick before they can sign up. <strong>Every document is required.</strong> The season&apos;s waiver was brought across as the first document, named <em>Waiver</em>, typed text, with the tick <em>I have read and agree to the waiver.</em></p>
+              <HelpSteps>
+                <li>Click <strong>Add a document</strong>.</li>
+                <li>Type the <strong>Name</strong>. Families see it in their tick.</li>
+                <li>Under <strong>What families read</strong>, choose <strong>A PDF you upload</strong> (up to 8 MB) or <strong>Text you type</strong>.</li>
+                <li>Pick the tick: <em>I have read {'{document}'}.</em> or <em>I have read and agree to {'{document}'}.</em></li>
+                <li>Click <strong>Add document</strong>.</li>
+              </HelpSteps>
+              <ul>
+                <li><strong>Click a document</strong> to open its window: what families read, its tick, and its <strong>Versions</strong> with how many ticks each has.</li>
+                <li><strong>The tick locks once a family has ticked it.</strong> To ask for a different tick, archive the document and add a new one.</li>
+                <li><strong>Archive this document</strong> takes it off the sign-up page. Its ticks stay on each registration.</li>
+                <li><strong>A version with ticks is never deleted.</strong></li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'signup-form-replace',
+          title: 'Replace a document with a new version',
+          content: (
+            <>
+              <p><strong>Replace with a new version</strong>, in the document&apos;s window, swaps in new text or a new PDF. It asks what happens to the families who already ticked the old version.</p>
+              <HelpDefs>
+                <HelpDef term="Their tick stands">For a typo or a clearer copy. Families who ticked the old version stay ticked.</HelpDef>
+                <HelpDef term="They must tick again">Sign-ups show <em>Needs a new tick</em> until the family reads the new version and ticks it on their sign-up page. Their places aren&apos;t affected, and nobody is emailed automatically. Write <strong>What changed</strong>: families see it beside the new tick.</HelpDef>
+              </HelpDefs>
+              <p>The old version and its ticks are kept. The window lists every version with its dates and ticks.</p>
+            </>
+          ),
+        },
+        {
+          id: 'signup-form-next-season',
+          title: 'Carry the form into next season',
+          content: (
+            <>
+              <p>When you start a season from an earlier one, the <strong>Bring with it</strong> list has a <strong>Sign-up form</strong> line, on by default, that reads like <em>5 questions and 2 documents. No answers are copied.</em> Untick it to start with an empty form. See <em>Start next season from an earlier one</em>.</p>
+              <ul>
+                <li><strong>Answers never come across</strong>, only the questions and documents.</li>
+                <li><strong>An empty form offers a copy.</strong> On the sign-up form page of a season with no questions or documents, <strong>Copy {'{season}'}&apos;s form</strong> asks first, then adds that season&apos;s questions and documents.</li>
+              </ul>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'recipe-launch-season',
       group: 'How-to recipes',
       heading: 'How to launch a house league season',
@@ -273,8 +393,8 @@ const houseLeagueHelp: HelpPageContent = {
           <p>Use this checklist when starting a new recreational season.</p>
           <ol>
             <li>Click <strong>Create season</strong> on the House league page, give it a name, sport and dates. The season starts as <strong>Getting ready</strong>, on its own page.</li>
-            <li>Work through <strong>Before you open registration</strong>. Each line shows a tick when it is done: <strong>Age groups</strong> (each with birth years and a size); <strong>Prices</strong> (a price for each age group, 0 if it is free); <strong>Registration dates</strong> (when the form opens and closes); <strong>How to pay</strong>; and <strong>Waiver</strong>, which is optional.</li>
-            <li>Check the <strong>Registration</strong> block: the early-bird date, the waiver, and whether new registrations are approved while a division has room or held for your review.</li>
+            <li>Work through <strong>Before you open registration</strong>. Each line shows a tick when it is done: <strong>Age groups</strong> (each with birth years and a size); <strong>Prices</strong> (a price for each age group, 0 if it is free); <strong>Registration dates</strong> (when the form opens and closes); <strong>How to pay</strong>; and <strong>Documents</strong>, which is optional (the documents on the sign-up form, the waiver among them).</li>
+            <li>Check the <strong>Registration</strong> block: the early-bird date, the <strong>Sign-up form</strong> line (open it to add questions or documents, the waiver among them), and whether new registrations are approved while a division has room or held for your review.</li>
             <li>When the required lines are done, <strong>Open registration</strong> appears beside the checklist. Click it and read the window, then confirm. It does not email families.</li>
             <li>Click <strong>View season page</strong> and share its link from your website, email list or social media once the form is live.</li>
           </ol>
@@ -1185,7 +1305,7 @@ const houseLeagueHelp: HelpPageContent = {
                 <li><strong>A season that doesn&apos;t sort by age</strong> shows a Division list instead, with the spots left in each.</li>
                 <li>Under the parent or guardian fields, a short note tells families that their child&apos;s coach will see their name, email and phone to reach them about the team, and the second parent&apos;s email if one is added.</li>
                 <li><strong>Second parent&apos;s email</strong> is an optional box after the parent&apos;s own details. Leaving it empty changes nothing. See <em>A second parent&apos;s email</em>.</li>
-                <li>The waiver, if you set one, and the unticked email-consent line sit before the button. The button reads <strong>Sign up 2 children</strong> when there are several.</li>
+                <li>Each document on your sign-up form, the waiver among them, shows with its own tick, and the unticked email-consent line sits with them, before the button. The button reads <strong>Sign up 2 children</strong> when there are several.</li>
               </ul>
             </>
           ),

@@ -44,3 +44,9 @@ commit time.
 - **No commit without the owner's yes.**
 - Broad reading goes to helpers, and their claims are checked against the code.
 - A product-owner summary at hand-off.
+
+### Stages 4 and 6 — custom forms, then sponsorships (written 2026-11-20, in the owner's order of that day, plan §7b)
+
+| Step | What | Kind | Prompt | State |
+|---|---|---|---|---|
+| Stage 4 drawing | The club form (question types, document blocks that replace today's waiver without losing its records), the house-league sign-up with per-child and per-family questions, copy last season's form, answers in the registrations list, export and draft notes; drawn so the sponsor link and camp sign-ups can reuse it | drawings + asks | `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md` | **drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks RULED 2026-11-20 as recommended** (plan §5 Stage 4). **Build prompt written 2026-11-20:** `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md`, three parts in order (1 the form and the waiver move · 2 the family side · 3 the club side, retention and close-out). **Part 1 built 2026-11-20** (mig 513 on dev; walk §546 https://claude.ai/artifact/UVoT5NPhYxC8B1UzKgsVui) |

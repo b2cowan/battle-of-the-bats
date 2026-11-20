@@ -550,6 +550,221 @@
     "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
   },
   {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_file_idx",
+    "indexdef": "CREATE INDEX club_form_answers_file_idx ON public.club_form_answers USING btree (file_id) WHERE (file_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_form_idx",
+    "indexdef": "CREATE INDEX club_form_answers_form_idx ON public.club_form_answers USING btree (form_id)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_org_idx",
+    "indexdef": "CREATE INDEX club_form_answers_org_idx ON public.club_form_answers USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answers_pkey ON public.club_form_answers USING btree (id)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_subject_idx",
+    "indexdef": "CREATE INDEX club_form_answers_subject_idx ON public.club_form_answers USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_subject_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answers_subject_uniq ON public.club_form_answers USING btree (question_id, subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_submission_idx",
+    "indexdef": "CREATE INDEX club_form_answers_submission_idx ON public.club_form_answers USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_submission_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answers_submission_uniq ON public.club_form_answers USING btree (question_id, submission_id) WHERE (subject_id IS NULL)"
+  },
+  {
+    "tablename": "club_form_document_versions",
+    "indexname": "club_form_document_versions_created_by_idx",
+    "indexdef": "CREATE INDEX club_form_document_versions_created_by_idx ON public.club_form_document_versions USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_document_versions",
+    "indexname": "club_form_document_versions_no_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_document_versions_no_uniq ON public.club_form_document_versions USING btree (document_id, version_no)"
+  },
+  {
+    "tablename": "club_form_document_versions",
+    "indexname": "club_form_document_versions_org_idx",
+    "indexdef": "CREATE INDEX club_form_document_versions_org_idx ON public.club_form_document_versions USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_document_versions",
+    "indexname": "club_form_document_versions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_document_versions_pkey ON public.club_form_document_versions USING btree (id)"
+  },
+  {
+    "tablename": "club_form_documents",
+    "indexname": "club_form_documents_created_by_idx",
+    "indexdef": "CREATE INDEX club_form_documents_created_by_idx ON public.club_form_documents USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_documents",
+    "indexname": "club_form_documents_form_idx",
+    "indexdef": "CREATE INDEX club_form_documents_form_idx ON public.club_form_documents USING btree (form_id, sort_order)"
+  },
+  {
+    "tablename": "club_form_documents",
+    "indexname": "club_form_documents_org_idx",
+    "indexdef": "CREATE INDEX club_form_documents_org_idx ON public.club_form_documents USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_documents",
+    "indexname": "club_form_documents_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_documents_pkey ON public.club_form_documents USING btree (id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_form_idx",
+    "indexdef": "CREATE INDEX club_form_files_form_idx ON public.club_form_files USING btree (form_id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_org_idx",
+    "indexdef": "CREATE INDEX club_form_files_org_idx ON public.club_form_files USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_path_key",
+    "indexdef": "CREATE UNIQUE INDEX club_form_files_path_key ON public.club_form_files USING btree (path)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_pending_idx",
+    "indexdef": "CREATE INDEX club_form_files_pending_idx ON public.club_form_files USING btree (created_at) WHERE (status = 'pending'::text)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_files_pkey ON public.club_form_files USING btree (id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_question_idx",
+    "indexdef": "CREATE INDEX club_form_files_question_idx ON public.club_form_files USING btree (question_id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_subject_idx",
+    "indexdef": "CREATE INDEX club_form_files_subject_idx ON public.club_form_files USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_submission_idx",
+    "indexdef": "CREATE INDEX club_form_files_submission_idx ON public.club_form_files USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_questions",
+    "indexname": "club_form_questions_created_by_idx",
+    "indexdef": "CREATE INDEX club_form_questions_created_by_idx ON public.club_form_questions USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_questions",
+    "indexname": "club_form_questions_form_idx",
+    "indexdef": "CREATE INDEX club_form_questions_form_idx ON public.club_form_questions USING btree (form_id, sort_order)"
+  },
+  {
+    "tablename": "club_form_questions",
+    "indexname": "club_form_questions_org_idx",
+    "indexdef": "CREATE INDEX club_form_questions_org_idx ON public.club_form_questions USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_questions",
+    "indexname": "club_form_questions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_questions_pkey ON public.club_form_questions USING btree (id)"
+  },
+  {
+    "tablename": "club_form_submissions",
+    "indexname": "club_form_submissions_org_idx",
+    "indexdef": "CREATE INDEX club_form_submissions_org_idx ON public.club_form_submissions USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_submissions",
+    "indexname": "club_form_submissions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_submissions_pkey ON public.club_form_submissions USING btree (id)"
+  },
+  {
+    "tablename": "club_form_submissions",
+    "indexname": "club_form_submissions_ref_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_submissions_ref_uniq ON public.club_form_submissions USING btree (form_id, ref)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_consent_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_consent_idx ON public.club_form_ticks USING btree (consent_id) WHERE (consent_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_document_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_document_idx ON public.club_form_ticks USING btree (document_id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_form_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_form_idx ON public.club_form_ticks USING btree (form_id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_org_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_org_idx ON public.club_form_ticks USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_ticks_pkey ON public.club_form_ticks USING btree (id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_subject_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_subject_idx ON public.club_form_ticks USING btree (subject_table, subject_id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_submission_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_submission_idx ON public.club_form_ticks USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_user_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_user_idx ON public.club_form_ticks USING btree (user_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_version_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_version_idx ON public.club_form_ticks USING btree (version_id) WHERE (version_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_forms",
+    "indexname": "club_forms_org_idx",
+    "indexdef": "CREATE INDEX club_forms_org_idx ON public.club_forms USING btree (org_id)"
+  },
+  {
+    "tablename": "club_forms",
+    "indexname": "club_forms_owner_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_forms_owner_uniq ON public.club_forms USING btree (owner_table, owner_id)"
+  },
+  {
+    "tablename": "club_forms",
+    "indexname": "club_forms_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_forms_pkey ON public.club_forms USING btree (id)"
+  },
+  {
     "tablename": "club_group_email_bodies",
     "indexname": "club_group_email_bodies_org_idx",
     "indexdef": "CREATE INDEX club_group_email_bodies_org_idx ON public.club_group_email_bodies USING btree (org_id)"

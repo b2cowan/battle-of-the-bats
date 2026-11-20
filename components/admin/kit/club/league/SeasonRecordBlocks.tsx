@@ -11,11 +11,14 @@ import { clubDay, registrationDatesRow } from '@/lib/league-registration-state';
 import type { LeagueSeason } from '@/lib/types';
 import { OWING_WORDS } from '@/lib/house-league-money-words';
 import { FRIEND_SETTING_WORDS as FS } from '@/lib/league-friends';
+import Link from 'next/link';
+import { FORM_WORDS, formFactLine } from '@/lib/club-form-words';
+import type { FormFacts } from '@/lib/club-form';
 import s from './LeagueSeason.module.css';
 
 /**
  * THE SEASON'S TWO RECORDS ON ITS PAGE (Club Tier Stage 9a, Part 4; frame B): Season (name, dates, description) and
- * Registration (its dates, early bird, waiver, email consent, how to pay, how new registrations are taken — 9b-1). Each READS first and EDITS WHOLE — one pencil in
+ * Registration (its dates, early bird, the sign-up form's line, how to pay, how new registrations are taken — 9b-1). Each READS first and EDITS WHOLE — one pencil in
  * the block's head flips every field into its form, ✓ in the same spot flips back — and an edit saves as you go (the
  * floating pill; a required field emptied is held, said, and not sent). Today's fields, minus the dead "Auto-generate fee
  * entries" switch (S1·b). Shown only to the people who run the league, on a live season (the gate's `run`); everyone
@@ -148,13 +151,18 @@ const quoted = (v: string) => `“${v.length > 60 ? `${v.slice(0, 60).trimEnd()}
 
 /**
  * HOW THE SEASON TAKES REGISTRATIONS (Club Tier Stage 9b-1, Part 2; drawing §2, words HOUSE_LEAGUE_STAGE9B1_COPY.md §5):
- * the form's dates, the one early-bird date (9b·2), the waiver, the email-consent line (always asked, unticked, beside the
- * waiver), how families pay (required whenever a price is above $0, 9b·9), how new registrations are taken and whether the
- * waitlist moves up on its own (the two switches that moved off Create, S1·a). Reads first, edits whole, saves as you go.
- * Prices live on the divisions now; a season's own price is only what a division with none of its own charges.
+ * the form's dates, the one early-bird date (9b·2), the sign-up form's line and its door (Board Ready Stage 4, drawing tab 1:
+ * it replaced the Waiver and Email consent lines, and the waiver box left the edit form — the waiver is a document on the
+ * form page now), how families pay (required whenever a price is above $0, 9b·9), how new registrations are taken and
+ * whether the waitlist moves up on its own (the two switches that moved off Create, S1·a). Reads first, edits whole, saves
+ * as you go. Prices live on the divisions now; a season's own price is only what a division with none of its own charges.
  */
-export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, charges, openSignal = 0, friendsPlan = false }: {
+export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, charges, openSignal = 0, friendsPlan = false, form, formHref }: {
   season: LeagueSeason; canEdit: boolean; orgSlug: string; onSaved: () => void;
+  /** Board Ready Stage 4 (drawing tab 1): what the season's sign-up form holds; null while it reads. */
+  form: FormFacts | null;
+  /** The form page, one level down. */
+  formHref: string;
   /** Close registration / Reopen until…, when the season offers one (9a·4: it sits on this block). */
   door?: ReactNode;
   /** Does any price in the season sit above $0? Then how to pay is required. */
@@ -167,7 +175,7 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
   // A block open for editing closes the moment its season can no longer be edited (finished, or the access changed).
   const [editOpen, setEditing] = useState(false);
   const editing = editOpen && canEdit;
-  const [draft, setDraft] = useState({ registrationOpenAt: '', registrationCloseAt: '', earlyBirdUntil: '', waiverText: '', howToPay: '', owingAmberDays: '' });
+  const [draft, setDraft] = useState({ registrationOpenAt: '', registrationCloseAt: '', earlyBirdUntil: '', howToPay: '', owingAmberDays: '' });
   const q = useSeasonSave(season.id, orgSlug, onSaved);
   // Registration can't close before it opens: the date that makes it so is held, said, and not sent.
   const windowBackwards = !!draft.registrationOpenAt && !!draft.registrationCloseAt && draft.registrationCloseAt < draft.registrationOpenAt;
@@ -183,7 +191,7 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
   const start = () => {
     setDraft({
       registrationOpenAt: local(season.registrationOpenAt), registrationCloseAt: local(season.registrationCloseAt),
-      earlyBirdUntil: season.earlyBirdUntil?.slice(0, 10) ?? '', waiverText: season.waiverText ?? '', howToPay: season.howToPay ?? '',
+      earlyBirdUntil: season.earlyBirdUntil?.slice(0, 10) ?? '', howToPay: season.howToPay ?? '',
       owingAmberDays: String(season.owingAmberDays ?? 14),
     });
     setEditing(true);
@@ -207,7 +215,7 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
     if ('howToPay' in out && !out.howToPay && charges && season.status === 'registration_open') return;
     void q.save(out);
   };
-  const waiver = season.waiverText?.trim();
+  const formLine = form ? formFactLine(form.questions, form.documents) : null;
   const pay = season.howToPay?.trim();
   const early = season.earlyBirdUntil?.slice(0, 10);
   // The dates run the form (Part 4): the row says what they are doing, and whether the date or you closed it.
@@ -236,8 +244,13 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
             {early ? `Through ${clubDay(early)}.` : 'Not set.'}
             <Sub>{early ? 'The last day the early-bird price applies, in the club’s time.' : 'Set a date to offer an early-bird price.'}</Sub>
           </Fact>
-          <Fact label="Waiver">{waiver ? `On · ${quoted(waiver)}` : <>None<Sub>Families sign up without one.</Sub></>}</Fact>
-          <Fact label="Email consent">Asked on the form, unticked, beside the waiver.<Sub>Emails about a registration are sent either way.</Sub></Fact>
+          {/* Board Ready Stage 4 (drawing tab 1): one line for the form, replacing Waiver and Email consent. The door shows
+              to everyone who can open the season; only the people who set up a season change the form (ruling 16). */}
+          <Fact label={FORM_WORDS.fact}>
+            {formLine ? formLine.value : '…'}
+            {formLine && <Sub>{formLine.sub}</Sub>}
+            <Link href={formHref} className={repKit.inlineLink}>{FORM_WORDS.door} ›</Link>
+          </Fact>
           <Fact label="How to pay">
             {!charges ? 'Not needed: this season is free.'
               : pay ? quoted(pay)
@@ -287,13 +300,6 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
             {draft.earlyBirdUntil && closesDay && draft.earlyBirdUntil > closesDay && (
               <span className={s.amberText}>The early-bird date is after the form closes, so it never applies.</span>
             )}
-          </label>
-          <label className={ck.field}>
-            <span className={ck.label}>Waiver text</span>
-            <textarea className={ck.textarea} rows={4} value={draft.waiverText}
-              onChange={e => setDraft(d => ({ ...d, waiverText: e.target.value }))}
-              onBlur={() => draft.waiverText.trim() !== (season.waiverText ?? '') && commit({ waiverText: draft.waiverText.trim() || null })} />
-            <span className={ck.hint}>Families tick a box to agree. Leave it empty if you don’t need one.</span>
           </label>
           <label className={ck.field}>
             <span className={ck.label}>How families pay{charges && <span className={repKit.req} aria-hidden>*</span>}</span>

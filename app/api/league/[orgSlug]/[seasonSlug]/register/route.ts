@@ -28,6 +28,8 @@ import { hasSecondParentStop, withSecondParentStop } from '@/lib/league-second-p
 import { friendMaxFor, readFriends, type FriendIn } from '@/lib/league-friends';
 import { readFriendCodes, saveFriendRequests } from '@/lib/league-friends-server';
 import { showFriendCode } from '@/lib/league-friend-code';
+import { ensureSeasonForm, liveTextDocuments, recordTicks } from '@/lib/club-form-server';
+import { docInSentence } from '@/lib/club-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +50,11 @@ export const dynamic = 'force-dynamic';
  *      the rest of the form and stored once the child is placed; a code resolves then. Every child gets a friend code
  *      (mig 461's trigger), shown on the confirmation and in the email while the club asks for friends. A friend that
  *      fails to store never fails the sign-up.
+ *   8. Board Ready Stage 4 Part 1: the documents a family ticks come from the season's sign-up form (the waiver moved into it;
+ *      typed text until Part 2). Every live document must be ticked, on the version the page showed (a document replaced
+ *      while the family filled the form asks again). One tick per document per child placed, with its version, fingerprint
+ *      and exact sentence (`recordTicks`); `waiver_accepted_at` is still set, so every reader of it keeps working. Part 2
+ *      moves the ticks into the placement's own locked step.
  * The email and the notice are AWAITED (each in its own try): the email carries the family's reference and how to pay, and
  * work left running after the response can be dropped on the host (Next after() on Amplify). Neither fails the sign-up.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -60,6 +67,9 @@ const consentLine = (club: string) => `${club} may email me about future seasons
 function isValidEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
+
+/** A blank line between paragraphs of the consent ledger's evidence. */
+const PARA = '\n\n';
 
 function str(v: unknown, max?: number): string | null {
   if (typeof v !== 'string') return null;
@@ -129,10 +139,28 @@ export const POST = withObservability(async (req: Request,
   // Signed-in family accounts Stage 3: the second parent's email, one for the whole sign-up. Empty changes nothing.
   const second = readSecondParentEmail(str(body.guardianEmail2, 200), guardianEmail);
   const guardianEmail2 = 'email' in second ? second.email : null;
-  const waiverAccepted = body.waiverAccepted === true;
+  // 8. The documents ticked: [{ id, versionId }]. (`waiverAccepted` from a page drawn before Stage 4 reads as no ticks.)
+  const sentTicks = new Map<string, string>();
+  // Every document the page was drawn with, ticked or not (a document added or replaced since then asks for a reload).
+  const shown = new Map<string, string>();
+  if (Array.isArray(body.shown)) {
+    for (const t of body.shown as unknown[]) {
+      const r = (t ?? {}) as Record<string, unknown>;
+      if (typeof r.id === 'string' && typeof r.versionId === 'string') shown.set(r.id, r.versionId);
+    }
+  }
+  if (Array.isArray(body.documents)) {
+    for (const t of body.documents as unknown[]) {
+      const r = (t ?? {}) as Record<string, unknown>;
+      if (typeof r.id === 'string' && typeof r.versionId === 'string') sentTicks.set(r.id, r.versionId);
+    }
+  }
   const emailConsent = body.emailConsent === true;
 
-  const divisions = await getDivisionsForSeason(season.id);
+  const [{ formId, documents }, divisions] = await Promise.all([
+    ensureSeasonForm(season.id).then(async id => ({ formId: id, documents: await liveTextDocuments(id) })),
+    getDivisionsForSeason(season.id),
+  ]);
   if (divisions.length === 0) return NextResponse.json({ error: 'No divisions are available for this season' }, { status: 409 });
   const bands = divisions.some(d => d.bornFromYear != null || d.bornToYear != null);
   const cutoff = cutoffFor(org.birthdayCutoffs, season.sport);
@@ -161,7 +189,14 @@ export const POST = withObservability(async (req: Request,
   if ('refusal' in second) errors.guardianEmail2 = secondParentRefusalWords(second.refusal, 'parent');
   // Stage 3b (O4): an address that asked this club to stop is refused in words, never accepted silently.
   else if (guardianEmail2) { const stopped = await stoppedSecondParentRefusal(org.id, guardianEmail2); if (stopped) errors.guardianEmail2 = stopped; }
-  if (season.waiverText && !waiverAccepted) errors.waiverAccepted = 'Agree to the waiver to sign up.';
+  // A document the page never showed, or showed in an older version, can't be ticked from this page: the family reloads
+  // to read it (Part 2 keeps what they typed across that). Said in the page's own box, never under a field it doesn't have.
+  if (documents.some(d => shown.get(d.id) !== d.versionId || (sentTicks.has(d.id) && sentTicks.get(d.id) !== d.versionId))) {
+    return NextResponse.json({ error: `${org.name} updated its documents while you were signing up. Reload the page to read them, then sign up again.`, code: 'form_changed' }, { status: 409 });
+  }
+  for (const d of documents) {
+    if (!sentTicks.has(d.id)) errors[`documents.${d.id}`] = d.tickKind === 'read_agree' ? `Agree to ${docInSentence(d.name)} to sign up.` : `Tick that you have read ${docInSentence(d.name)} to sign up.`;
+  }
   if (Object.keys(errors).length > 0) return NextResponse.json({ errors }, { status: 400 });
   if (chosen.every(c => c === 'nofit')) {
     const year = kids.find(k => k.dob)?.dob?.slice(0, 4);
@@ -179,7 +214,13 @@ export const POST = withObservability(async (req: Request,
   // 4. Each child through the one locked step, in the form's order; its own outcome.
   const reference = newReference();
   const today = tournamentToday();
-  const waiverAcceptedAt = season.waiverText && waiverAccepted ? new Date().toISOString() : null;
+  // Every document was ticked (checked above); the time is the server's, once for the sign-up. `waiver_accepted_at` keeps its
+  // meaning — the family AGREED to something — so it is set only when a document asked "I have read and agree" (/legal
+  // 2026-11-20: a code of conduct ticked "I have read" is not a waiver accepted). Every tick is recorded either way.
+  const tickedAt = documents.length > 0 ? new Date().toISOString() : null;
+  const waiverAcceptedAt = documents.some(d => d.tickKind === 'read_agree') ? tickedAt : null;
+  // The consent ledger's evidence (mig 252): the words of every document ticked, as the family read them.
+  const consentText = documents.length ? documents.map(d => [d.sentence, d.text].join(PARA)).join(`${PARA}———${PARA}`) : null;
   type Result = PlacedChild & { outcome: 'active' | 'pending_review' | 'waitlisted' | 'duplicate' | 'nofit'; id: string | null };
   const results: Result[] = [];
   let position = 0;
@@ -200,7 +241,7 @@ export const POST = withObservability(async (req: Request,
         source: 'public_form', waiverAcceptedAt,
       },
       // With waiverAcceptedAt this files the consent-ledger row (mig 252) beside the placement.
-      waiverText: season.waiverText ?? null,
+      waiverText: consentText,
     });
     } catch (e) {
       console.error('[league-register] placing a child failed:', e);
@@ -226,6 +267,18 @@ export const POST = withObservability(async (req: Request,
     });
   }
   const placedKids = results.filter(r => r.id);
+  // 8. The ticks: one per document per child placed. A failed record is logged by code only (never the row, which names a
+  // family) and doesn't fail the sign-up in Part 1; Part 2 saves ticks inside the placement's own step.
+  if (tickedAt && placedKids.length) {
+    try {
+      await recordTicks({
+        orgId: org.id, formId, ref: reference, guardianEmail: normalizeGuardianEmailRequired(guardianEmail!),
+        registrationIds: placedKids.map(r => r.id!), documents, tickedAt,
+      });
+    } catch (e) {
+      console.error('[league-register] recording the document ticks failed:', (e as { code?: string })?.code ?? 'no code');
+    }
+  }
   if (placedKids.length === 0) {
     const dup = results.find(r => r.outcome === 'duplicate');
     return NextResponse.json({

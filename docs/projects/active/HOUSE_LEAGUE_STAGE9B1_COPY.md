@@ -355,7 +355,7 @@ dash reads "Optional"). A registrar reads the lines as facts and sees no button.
 | `check.prices` | Prices | Set a price for each age group. Enter 0 if it is free. | $165 – $175 · early bird through Jun 30 | |
 | `check.dates` | Registration dates | Set when the form opens and closes | Jun 1 – Aug 1 | Set dates |
 | `check.pay` | How to pay | Tell families how to pay. They see it once a child is accepted. | The first 60 characters of the text | Add instructions |
-| `check.waiver` | Waiver | Optional. Families sign up without one. | On. Families agree on the form. | |
+| `check.waiver` | Documents | Optional. Families sign up without any. | On. Families tick each one to sign up. | | *(renamed from "Waiver" by the owner 2026-11-20, Board Ready Stage 4 call C2: a club may hold several documents)*
 
 Done-state variants for prices: one price "$165"; every price 0 "Free"; a mix "Free – $175"; the early-bird tail ("· early bird
 through Jun 30") only when an early amount and the season date are both set.

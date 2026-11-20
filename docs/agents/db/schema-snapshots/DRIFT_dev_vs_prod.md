@@ -1,19 +1,27 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-20 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 292 divergence(s)** across dev/prod.
+**⚠️ 531 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 8 | 2 | — |
-| Columns | 100 | 38 | 2 |
-| Indexes | 36 | 12 | 0 |
-| Constraints | 30 | 7 | — |
-| RLS / CHECK | 39 | 17 | 0 (RLS state) |
+| Tables | 16 | 2 | — |
+| Columns | 203 | 42 | 2 |
+| Indexes | 79 | 13 | 0 |
+| Constraints | 70 | 7 | — |
+| RLS / CHECK | 77 | 19 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (8)
+### Only in DEV (16)
+- `club_form_answers`
+- `club_form_document_versions`
+- `club_form_documents`
+- `club_form_files`
+- `club_form_questions`
+- `club_form_submissions`
+- `club_form_ticks`
+- `club_forms`
 - `club_group_email_bodies`
 - `club_group_email_recipients`
 - `club_group_email_sends`
@@ -28,7 +36,108 @@
 - `platform_stripe_fees`
 
 ## Columns
-### Only in DEV (100)
+### Only in DEV (203)
+- `club_form_answers.created_at`
+- `club_form_answers.file_id`
+- `club_form_answers.form_id`
+- `club_form_answers.id`
+- `club_form_answers.org_id`
+- `club_form_answers.question_id`
+- `club_form_answers.removed_at`
+- `club_form_answers.subject_id`
+- `club_form_answers.subject_table`
+- `club_form_answers.submission_id`
+- `club_form_answers.updated_at`
+- `club_form_answers.value_bool`
+- `club_form_answers.value_choice_ids`
+- `club_form_answers.value_date`
+- `club_form_answers.value_text`
+- `club_form_document_versions.body_text`
+- `club_form_document_versions.created_at`
+- `club_form_document_versions.created_by`
+- `club_form_document_versions.document_id`
+- `club_form_document_versions.file_name`
+- `club_form_document_versions.file_path`
+- `club_form_document_versions.file_size`
+- `club_form_document_versions.fingerprint`
+- `club_form_document_versions.id`
+- `club_form_document_versions.moved_in`
+- `club_form_document_versions.org_id`
+- `club_form_document_versions.reason`
+- `club_form_document_versions.ticks_stand`
+- `club_form_document_versions.version_no`
+- `club_form_documents.archived_at`
+- `club_form_documents.created_at`
+- `club_form_documents.created_by`
+- `club_form_documents.form_id`
+- `club_form_documents.id`
+- `club_form_documents.name`
+- `club_form_documents.org_id`
+- `club_form_documents.sort_order`
+- `club_form_documents.source_kind`
+- `club_form_documents.tick_kind`
+- `club_form_documents.updated_at`
+- `club_form_files.attached_at`
+- `club_form_files.content_type`
+- `club_form_files.created_at`
+- `club_form_files.file_name`
+- `club_form_files.form_id`
+- `club_form_files.id`
+- `club_form_files.org_id`
+- `club_form_files.path`
+- `club_form_files.question_id`
+- `club_form_files.removed_at`
+- `club_form_files.size_bytes`
+- `club_form_files.status`
+- `club_form_files.subject_id`
+- `club_form_files.subject_table`
+- `club_form_files.submission_id`
+- `club_form_questions.archived_at`
+- `club_form_questions.asked`
+- `club_form_questions.choices`
+- `club_form_questions.created_at`
+- `club_form_questions.created_by`
+- `club_form_questions.form_id`
+- `club_form_questions.health`
+- `club_form_questions.help_text`
+- `club_form_questions.id`
+- `club_form_questions.label`
+- `club_form_questions.on_board`
+- `club_form_questions.org_id`
+- `club_form_questions.question_type`
+- `club_form_questions.required`
+- `club_form_questions.sort_order`
+- `club_form_questions.updated_at`
+- `club_form_submissions.created_at`
+- `club_form_submissions.form_id`
+- `club_form_submissions.guardian_email`
+- `club_form_submissions.id`
+- `club_form_submissions.org_id`
+- `club_form_submissions.ref`
+- `club_form_ticks.consent_id`
+- `club_form_ticks.created_at`
+- `club_form_ticks.document_id`
+- `club_form_ticks.fingerprint`
+- `club_form_ticks.form_id`
+- `club_form_ticks.guardian_email`
+- `club_form_ticks.handed_over_at`
+- `club_form_ticks.id`
+- `club_form_ticks.moved`
+- `club_form_ticks.org_id`
+- `club_form_ticks.sentence`
+- `club_form_ticks.subject_id`
+- `club_form_ticks.subject_table`
+- `club_form_ticks.submission_id`
+- `club_form_ticks.ticked_at`
+- `club_form_ticks.user_id`
+- `club_form_ticks.version_id`
+- `club_forms.created_at`
+- `club_forms.id`
+- `club_forms.org_id`
+- `club_forms.owner_id`
+- `club_forms.owner_table`
+- `club_forms.subject_kind`
+- `club_forms.updated_at`
 - `club_group_email_bodies.body`
 - `club_group_email_bodies.created_at`
 - `club_group_email_bodies.org_id`
@@ -112,6 +221,8 @@
 - `online_payments.reversal_fee_entry_id`
 - `online_payments.stripe_extra_entry_id`
 - `online_payments.stripe_fee_amount`
+- `org_overrides.ending_reminded_14_for`
+- `org_overrides.ending_reminded_3_for`
 - `org_payment_accounts.fees_collector`
 - `org_time_date_off_venues.date_off_id`
 - `org_time_date_off_venues.org_id`
@@ -130,7 +241,11 @@
 - `payments_terms_agreements.user_email`
 - `payments_terms_agreements.user_id`
 
-### Only in PROD (38)
+### Only in PROD (42)
+- `organization_billing_facts.next_season_billing_cycle`
+- `organization_billing_facts.next_season_chosen_at`
+- `organization_billing_facts.next_season_plan_id`
+- `organization_billing_facts.next_season_subscription_id`
 - `organizations.free_floor`
 - `platform_fee_invoices.amount_due`
 - `platform_fee_invoices.created_at`
@@ -175,7 +290,50 @@
 - `family_email_sends.subject` — dev: `text|text|YES|` | prod: `text|text|NO|`
 
 ## Indexes
-### Only in DEV (36)
+### Only in DEV (79)
+- `club_form_answers_file_idx`
+- `club_form_answers_form_idx`
+- `club_form_answers_org_idx`
+- `club_form_answers_pkey`
+- `club_form_answers_subject_idx`
+- `club_form_answers_subject_uniq`
+- `club_form_answers_submission_idx`
+- `club_form_answers_submission_uniq`
+- `club_form_document_versions_created_by_idx`
+- `club_form_document_versions_no_uniq`
+- `club_form_document_versions_org_idx`
+- `club_form_document_versions_pkey`
+- `club_form_documents_created_by_idx`
+- `club_form_documents_form_idx`
+- `club_form_documents_org_idx`
+- `club_form_documents_pkey`
+- `club_form_files_form_idx`
+- `club_form_files_org_idx`
+- `club_form_files_path_key`
+- `club_form_files_pending_idx`
+- `club_form_files_pkey`
+- `club_form_files_question_idx`
+- `club_form_files_subject_idx`
+- `club_form_files_submission_idx`
+- `club_form_questions_created_by_idx`
+- `club_form_questions_form_idx`
+- `club_form_questions_org_idx`
+- `club_form_questions_pkey`
+- `club_form_submissions_org_idx`
+- `club_form_submissions_pkey`
+- `club_form_submissions_ref_uniq`
+- `club_form_ticks_consent_idx`
+- `club_form_ticks_document_idx`
+- `club_form_ticks_form_idx`
+- `club_form_ticks_org_idx`
+- `club_form_ticks_pkey`
+- `club_form_ticks_subject_idx`
+- `club_form_ticks_submission_idx`
+- `club_form_ticks_user_idx`
+- `club_form_ticks_version_idx`
+- `club_forms_org_idx`
+- `club_forms_owner_uniq`
+- `club_forms_pkey`
 - `club_group_email_bodies_org_idx`
 - `club_group_email_bodies_pkey`
 - `club_group_email_recipients_org_idx`
@@ -213,8 +371,9 @@
 - `payments_terms_agreements_org_idx`
 - `payments_terms_agreements_pkey`
 
-### Only in PROD (12)
+### Only in PROD (13)
 - `club_schedule_slots_place_start`
+- `idx_org_billing_facts_no_next_season_choice`
 - `platform_fee_invoices_period_key`
 - `platform_fee_invoices_pkey`
 - `platform_fee_invoices_stripe_key`
@@ -231,7 +390,47 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (30)
+### Only in DEV (70)
+- `club_form_answers.club_form_answers_file_id_fkey`
+- `club_form_answers.club_form_answers_form_id_fkey`
+- `club_form_answers.club_form_answers_org_id_fkey`
+- `club_form_answers.club_form_answers_pkey`
+- `club_form_answers.club_form_answers_question_id_fkey`
+- `club_form_answers.club_form_answers_submission_id_fkey`
+- `club_form_document_versions.club_form_document_versions_created_by_fkey`
+- `club_form_document_versions.club_form_document_versions_document_id_fkey`
+- `club_form_document_versions.club_form_document_versions_no_uniq`
+- `club_form_document_versions.club_form_document_versions_org_id_fkey`
+- `club_form_document_versions.club_form_document_versions_pkey`
+- `club_form_documents.club_form_documents_created_by_fkey`
+- `club_form_documents.club_form_documents_form_id_fkey`
+- `club_form_documents.club_form_documents_org_id_fkey`
+- `club_form_documents.club_form_documents_pkey`
+- `club_form_files.club_form_files_form_id_fkey`
+- `club_form_files.club_form_files_org_id_fkey`
+- `club_form_files.club_form_files_path_key`
+- `club_form_files.club_form_files_pkey`
+- `club_form_files.club_form_files_question_id_fkey`
+- `club_form_files.club_form_files_submission_id_fkey`
+- `club_form_questions.club_form_questions_created_by_fkey`
+- `club_form_questions.club_form_questions_form_id_fkey`
+- `club_form_questions.club_form_questions_org_id_fkey`
+- `club_form_questions.club_form_questions_pkey`
+- `club_form_submissions.club_form_submissions_form_id_fkey`
+- `club_form_submissions.club_form_submissions_org_id_fkey`
+- `club_form_submissions.club_form_submissions_pkey`
+- `club_form_submissions.club_form_submissions_ref_uniq`
+- `club_form_ticks.club_form_ticks_consent_id_fkey`
+- `club_form_ticks.club_form_ticks_document_id_fkey`
+- `club_form_ticks.club_form_ticks_form_id_fkey`
+- `club_form_ticks.club_form_ticks_org_id_fkey`
+- `club_form_ticks.club_form_ticks_pkey`
+- `club_form_ticks.club_form_ticks_submission_id_fkey`
+- `club_form_ticks.club_form_ticks_user_id_fkey`
+- `club_form_ticks.club_form_ticks_version_id_fkey`
+- `club_forms.club_forms_org_id_fkey`
+- `club_forms.club_forms_owner_uniq`
+- `club_forms.club_forms_pkey`
 - `club_group_email_bodies.club_group_email_bodies_org_id_fkey`
 - `club_group_email_bodies.club_group_email_bodies_pkey`
 - `club_group_email_bodies.club_group_email_bodies_send_id_fkey`
@@ -276,7 +475,45 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (39)
+### CHECK only in DEV (77)
+- `club_form_answers.club_form_answers_has_target`
+- `club_form_answers.club_form_answers_subject_pair`
+- `club_form_answers.club_form_answers_subject_table_check`
+- `club_form_answers.club_form_answers_value_text_check`
+- `club_form_document_versions.club_form_document_versions_again_reason`
+- `club_form_document_versions.club_form_document_versions_body_text_check`
+- `club_form_document_versions.club_form_document_versions_file_name_check`
+- `club_form_document_versions.club_form_document_versions_file_named`
+- `club_form_document_versions.club_form_document_versions_file_size_check`
+- `club_form_document_versions.club_form_document_versions_fingerprint_check`
+- `club_form_document_versions.club_form_document_versions_one_source`
+- `club_form_document_versions.club_form_document_versions_reason_check`
+- `club_form_document_versions.club_form_document_versions_ticks_said`
+- `club_form_document_versions.club_form_document_versions_version_no_check`
+- `club_form_documents.club_form_documents_name_check`
+- `club_form_documents.club_form_documents_source_kind_check`
+- `club_form_documents.club_form_documents_tick_kind_check`
+- `club_form_files.club_form_files_content_type_check`
+- `club_form_files.club_form_files_file_name_check`
+- `club_form_files.club_form_files_size_bytes_check`
+- `club_form_files.club_form_files_status_check`
+- `club_form_files.club_form_files_subject_pair`
+- `club_form_files.club_form_files_subject_table_check`
+- `club_form_questions.club_form_questions_asked_check`
+- `club_form_questions.club_form_questions_choices_check`
+- `club_form_questions.club_form_questions_file_not_required`
+- `club_form_questions.club_form_questions_health_not_on_board`
+- `club_form_questions.club_form_questions_help_text_check`
+- `club_form_questions.club_form_questions_label_check`
+- `club_form_questions.club_form_questions_question_type_check`
+- `club_form_submissions.club_form_submissions_ref_check`
+- `club_form_ticks.club_form_ticks_fingerprint_check`
+- `club_form_ticks.club_form_ticks_moved_bare`
+- `club_form_ticks.club_form_ticks_sentence_check`
+- `club_form_ticks.club_form_ticks_subject_table_check`
+- `club_form_ticks.club_form_ticks_versioned`
+- `club_forms.club_forms_owner_table_check`
+- `club_forms.club_forms_subject_kind_check`
 - `club_group_email_bodies.club_group_email_bodies_body_check`
 - `club_group_email_bodies.club_group_email_bodies_subject_check`
 - `club_group_email_recipients.club_group_email_recipients_basis_check`
@@ -317,7 +554,9 @@ _none_
 - `payments_terms_agreements.payments_terms_agreements_text_shape`
 - `payments_terms_agreements.payments_terms_agreements_version_shape`
 
-### CHECK only in PROD (17)
+### CHECK only in PROD (19)
+- `organization_billing_facts.organization_billing_facts_next_season_billing_cycle_check`
+- `organization_billing_facts.organization_billing_facts_next_season_plan_id_check`
 - `organizations.organizations_free_floor_check`
 - `platform_fee_invoices.platform_fee_invoices_final_chk`
 - `platform_fee_invoices.platform_fee_invoices_paid_chk`

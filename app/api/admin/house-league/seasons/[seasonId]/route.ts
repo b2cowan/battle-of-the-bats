@@ -28,6 +28,7 @@ import { seedLeagueSeasonBudget } from '@/lib/house-league-budget';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import { seasonTimeFacts } from '@/lib/league-time-server';
 import { readTimeAsk } from '@/lib/league-time-handoff-server';
+import { removeSeasonFormFiles, seasonFormFacts } from '@/lib/club-form-server';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
@@ -125,9 +126,13 @@ export const GET = withObservability(async (_req: Request,
   // 12c Part 6: each accepted child's fee on a bank debit on its way.
   const seasonDebits = await loadRegistrationDebits(ctx!.org.id, regs.filter(r => r.status === 'active').map(r => r.id));
   const clearingCents = clearingCentsByReg(seasonDebits);
+  // Board Ready Stage 4: what the season's sign-up form holds (the Registration block's line, the checklist's form step,
+  // Start next season's line). Made on first need, with the waiver moved in. A failed read is null: the block says "…".
+  const form = await seasonFormFacts(season.id).catch(() => null);
   return NextResponse.json({
     season,
     deletable,
+    form,
     // The Reopen window's facts (9f-1), on a finished season only.
     ...(isFinishedLeagueSeason(season) ? { reopen: await reopenFacts(season, ctx!.org) } : {}),
     // The club's cut-off for this season's sport — what the division windows' birth years count from (Stage 4c-2).
@@ -190,7 +195,7 @@ export const PATCH = withObservability(async (req: Request,
   if ('registrationCloseAt'    in body)      patch.registrationCloseAt = body.registrationCloseAt ?? null;
   if ('seasonStartDate'        in body)      patch.seasonStartDate = body.seasonStartDate ?? null;
   if ('seasonEndDate'          in body)      patch.seasonEndDate   = body.seasonEndDate   ?? null;
-  if ('waiverText'             in body)      patch.waiverText      = body.waiverText      ?? null;
+  // The waiver is a document on the season's form now (Board Ready Stage 4): `waiverText` is no longer taken here.
   // The season's one early-bird day (9b·2), the club's day as a plain date.
   if ('earlyBirdUntil' in body) {
     const v = body.earlyBirdUntil;
@@ -329,6 +334,8 @@ export const DELETE = withObservability(async (req: Request,
   if ((await getLeagueSeasonAttachments(seasonId, ctx!.org.id)).any) {
     return NextResponse.json({ error: 'This season already has families, teams, games, email or money entries attached, so it can’t be deleted.' }, { status: 409 });
   }
+  // Board Ready Stage 4: the form's stored PDFs first (the trigger that deletes the form's rows can't reach storage).
+  await removeSeasonFormFiles(seasonId).catch(() => undefined);
   if (!(await deleteDraftLeagueSeason(seasonId, ctx!.org.id))) {
     return NextResponse.json({ error: 'This season just changed, so it can’t be deleted. Reload the page.' }, { status: 409 });
   }

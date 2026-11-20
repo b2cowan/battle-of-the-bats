@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  NEXT_SEASON_DAYS, START_FROM_WORDS as W, bornShiftYears, broughtList, bumpedName, checklistPrints, dateShiftDays,
+  DEFAULT_BRING, NEXT_SEASON_DAYS, START_FROM_WORDS as W, bornShiftYears, broughtList, bumpedName, checklistPrints, dateShiftDays,
   datesMoved, honouredBring, markedLines, moveBornYears, movedDates, optionLine, readStartedFrom, shiftStamp, startName,
   startPrints, startedLine, type PrintDivision, type PrintSeason, type StartSource, type StartedFrom,
 } from '../../lib/house-league-start-from';
@@ -114,28 +114,35 @@ describe('the name', () => {
 describe('what comes across', () => {
   test('dependants follow what they hang on', () => {
     assert.deepEqual(honouredBring({ settings: true, ageGroups: false, teams: true, practice: true, coaches: true }),
-      { settings: true, ageGroups: false, teams: false, practice: false, coaches: false });
+      { settings: true, ageGroups: false, form: false, teams: false, practice: false, coaches: false });
     assert.deepEqual(honouredBring({ ageGroups: true, teams: false, coaches: true }),
-      { settings: false, ageGroups: true, teams: false, practice: false, coaches: false });
-    assert.deepEqual(honouredBring(null), { settings: false, ageGroups: false, teams: false, practice: false, coaches: false });
+      { settings: false, ageGroups: true, form: false, teams: false, practice: false, coaches: false });
+    assert.deepEqual(honouredBring(null), { settings: false, ageGroups: false, form: false, teams: false, practice: false, coaches: false });
+  });
+  test('the sign-up form is its own line, on by default, hanging on nothing (Board Ready Stage 4, ruling 17)', () => {
+    assert.equal(DEFAULT_BRING.form, true);
+    assert.equal(honouredBring({ form: true }).form, true);
+    assert.equal(honouredBring({ settings: true, ageGroups: true }).form, false);
+    assert.ok(!W.settingsSub.includes('waiver'), 'the waiver left the settings line');
   });
   test('the banner list names only what was ticked; practice settings never', () => {
     assert.equal(broughtList({ settings: true, ageGroups: 4, teams: 22, practice: true, coaches: 0 }), 'settings, 4 age groups and 22 team names');
     assert.equal(broughtList({ settings: true, ageGroups: 4, teams: 22, practice: true, coaches: 31 }), 'settings, 4 age groups, 22 team names and 31 coaches');
     assert.equal(broughtList({ settings: false, ageGroups: 1, teams: 1, practice: false, coaches: 1 }), '1 age group, 1 team name and 1 coach');
+    assert.equal(broughtList({ settings: true, ageGroups: 4, form: true, teams: 0, practice: false, coaches: 0 }), 'settings, 4 age groups and the sign-up form');
   });
 });
 
 describe('fingerprints: a mark goes once its line is edited', () => {
   const season: PrintSeason = {
     registrationFee: 150, registrationOpenAt: '2028-02-28T08:00:00Z', registrationCloseAt: '2028-04-14T23:59:00Z',
-    earlyBirdUntil: '2028-03-13', howToPay: 'E-transfer to treasurer@devleague.ca', waiverText: 'I agree.',
+    earlyBirdUntil: '2028-03-13', howToPay: 'E-transfer to treasurer@devleague.ca', formPrint: 'a1b2c3d4e5f60718',
   };
   const divisions: PrintDivision[] = [
     { name: 'U8', capacity: 40, bornFromYear: 2020, bornToYear: 2021, price: 150, earlyPrice: 130 },
     { name: 'U10', capacity: 60, bornFromYear: 2018, bornToYear: 2019, price: 175, earlyPrice: null },
   ];
-  const brought = { settings: true, ageGroups: 2, teams: 0, practice: true, coaches: 0 };
+  const brought = { settings: true, ageGroups: 2, form: true, teams: 0, practice: true, coaches: 0 };
   const from: StartedFrom = { sourceId: 'src', sourceName: 'Draft Test 2027', live: false, shiftDays: 364, bornShift: 1, brought, prints: startPrints(season, divisions, brought, 364) };
 
   test('every line marked as it arrived, whatever shape the database hands back', () => {
@@ -146,6 +153,8 @@ describe('fingerprints: a mark goes once its line is edited', () => {
   test('editing one line clears only its mark', () => {
     assert.ok(!markedLines(from, { ...season, howToPay: 'Cash' }, divisions).has('pay'));
     assert.ok(markedLines(from, { ...season, howToPay: 'Cash' }, divisions).has('waiver'));
+    // The form's mark follows the form (the waiver became one of its documents): a new print clears it.
+    assert.ok(!markedLines(from, { ...season, formPrint: 'ffffffffffffffff' }, divisions).has('waiver'));
     const bigger = divisions.map((d, i) => (i === 0 ? { ...d, capacity: 50 } : d));
     assert.ok(!markedLines(from, season, bigger).has('ageGroups'));
     assert.ok(markedLines(from, season, bigger).has('prices'));

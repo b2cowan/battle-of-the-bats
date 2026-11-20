@@ -40,6 +40,7 @@ import { registrationState } from '@/lib/league-registration-state';
 import { seasonCharges } from '@/lib/league-price';
 import { DELETE_DOOR, START_DOOR, movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
 import { START_FROM_WORDS as SF, markedLines, readStartedFrom, startedLine } from '@/lib/house-league-start-from';
+import type { FormFacts } from '@/lib/club-form';
 import { isFinishedLeagueSeason } from '@/lib/house-league-access';
 import CreateLeagueSeasonDialog from '@/components/admin/kit/club/CreateLeagueSeasonDialog';
 import { JAN_1, type Cutoff } from '@/lib/born-years';
@@ -52,7 +53,9 @@ import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
 import { TILE_WORDS } from '@/lib/house-league-money-words';
 
 interface SeasonDetail {
-  season: LeagueSeason;
+  /** Board Ready Stage 4: the season as read, with what its sign-up form holds folded in, so the checklist's waiver step and
+   *  its "From {season}" mark follow the form (the waiver became one of its documents). */
+  season: LeagueSeason & { formDocuments?: number | null; formPrint?: string | null };
   /** A shell the season may still be deleted from: not yet open, nothing real attached (decided by the server). */
   deletable?: boolean;
   /** A finished season's Reopen facts (9f-1): the newer seasons it leaves alone, and the free plan's holder that blocks it. */
@@ -73,6 +76,8 @@ interface SeasonDetail {
   /** Has the club given this season any of its time (9f-2 mk.noTime), and has any of it been divided into a division's
    *  games or practices (Stage 13 fix-now 4)? Null where the club's schedule does not exist. */
   clubTime?: { given: boolean; divided: boolean; askedAt?: string | null } | null;
+  /** Board Ready Stage 4: what the season's sign-up form holds (null when it didn't read). */
+  form?: FormFacts | null;
 }
 
 export default function SeasonOverviewPage() {
@@ -100,7 +105,8 @@ export default function SeasonOverviewPage() {
       if (res.status === 404) { setFailed('missing'); return; }
       if (!res.ok) throw new Error(data.error ?? 'load failed');
       setFailed(null);
-      setDetail(data);
+      const form = (data.form ?? null) as FormFacts | null;
+      setDetail({ ...data, season: { ...data.season, formDocuments: form ? form.documents.length : null, formPrint: form?.print ?? null } });
     } catch {
       setFailed('error');
     } finally {
@@ -148,6 +154,7 @@ export default function SeasonOverviewPage() {
   const dates = seasonDates(season);
   const spotCount = divisions.length > 0 && divisions.every(d => d.capacity != null && d.capacity > 0)
     ? divisions.reduce((n, d) => n + (d.capacity ?? 0), 0) : null;
+  const form = detail.form ?? null;
   const steps = seasonChecklist(season, divisions);
   const foot = checklistFoot(steps);
   const charges = seasonCharges(divisions, season);
@@ -363,7 +370,8 @@ export default function SeasonOverviewPage() {
 
       {/* The season, then how it takes registrations, then the divisions inside it — the order a coach sets it up. */}
       <SeasonBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} />
-      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} charges={charges} openSignal={openRegistration} friendsPlan={hasOrgVenueLibrary(currentOrg?.planId)} />
+      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} charges={charges} openSignal={openRegistration} friendsPlan={hasOrgVenueLibrary(currentOrg?.planId)}
+        form={form} formHref={`/${orgSlug}/admin/house-league/seasons/${season.id}/form`} />
 
       <DivisionsBlock
         season={season}

@@ -118,7 +118,7 @@ const registrationsHelp: HelpPageContent = {
           question: 'Is the waiver a family accepts on the public form actually recorded?',
           answer: (
             <p>
-              Yes — since August 2026. When a season has waiver text and a guardian ticks the box on
+              Yes — since August 2026. When a season&rsquo;s sign-up form has a waiver (or another document to read) and a guardian ticks its box on
               the public form, the moment of acceptance and the exact wording they agreed to are both
               stored with the registration, and the acceptance appears as consent on the family&rsquo;s
               record. Registrations from before then, and manual registrations you type in yourself

@@ -80,6 +80,7 @@ export const CLUB_PLACE_HELP: Readonly<Record<string, PageHelpTopic>> = {
   'season/money': hl(['ledger-notifications'], 'Money', 'money-page'),
   'season/notifications': hl(['ledger-notifications'], 'Email families', 'email-families'),
   'club-schedule': hl(['house-league-time'], 'Schedule', 'house-league-time-t-club-schedule'),
+  'season-form': hl(['signup-form'], 'Sign-up form'),
   'hl-seasons': hl(['season-home'], 'Seasons'),
   // ── Accounting (nine tabs; Payment requests and Allocations only with Rep teams, Payouts only with payouts) ──
   'accounting/overview': acc(['ledgers'], 'Overview'),

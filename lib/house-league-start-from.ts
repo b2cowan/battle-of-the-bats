@@ -140,10 +140,10 @@ export function startName(source: StartSource): string {
 
 // ── What comes across ─────────────────────────────────────────────────────────────────────────────
 
-export type Bring = { settings: boolean; ageGroups: boolean; teams: boolean; practice: boolean; coaches: boolean };
+export type Bring = { settings: boolean; ageGroups: boolean; form: boolean; teams: boolean; practice: boolean; coaches: boolean };
 
-/** The defaults (9f·12): everything ticked but coaches. */
-export const DEFAULT_BRING: Bring = { settings: true, ageGroups: true, teams: true, practice: true, coaches: false };
+/** The defaults (9f·12): everything ticked but coaches. The sign-up form is on by default (Board Ready Stage 4, ruling 17). */
+export const DEFAULT_BRING: Bring = { settings: true, ageGroups: true, form: true, teams: true, practice: true, coaches: false };
 
 /**
  * The ticks as they can actually be honoured: teams and practice settings live under age groups, and a coach lives on a
@@ -154,7 +154,7 @@ export function honouredBring(b: Partial<Bring> | null | undefined): Bring {
   const settings = b?.settings === true;
   const ageGroups = b?.ageGroups === true;
   const teams = ageGroups && b?.teams === true;
-  return { settings, ageGroups, teams, practice: ageGroups && b?.practice === true, coaches: teams && b?.coaches === true };
+  return { settings, ageGroups, form: b?.form === true, teams, practice: ageGroups && b?.practice === true, coaches: teams && b?.coaches === true };
 }
 
 // ── The stored record (league_seasons.started_from) ──────────────────────────────────────────────
@@ -172,7 +172,8 @@ export type StartedFrom = {
   shiftDays: number | null;
   /** Years the birth years moved up. */
   bornShift: number;
-  brought: { settings: boolean; ageGroups: number; teams: number; practice: boolean; coaches: number };
+  /** `form`: the sign-up form came across (Board Ready Stage 4); absent on a record made before it. */
+  brought: { settings: boolean; ageGroups: number; form?: boolean; teams: number; practice: boolean; coaches: number };
   prints: Partial<Record<ChecklistKey, string>>;
 };
 
@@ -189,7 +190,7 @@ export function readStartedFrom(raw: unknown): StartedFrom | null {
   return {
     sourceId: r.sourceId, sourceName: r.sourceName, live: r.live === true,
     shiftDays: typeof r.shiftDays === 'number' ? r.shiftDays : null, bornShift: n(r.bornShift),
-    brought: { settings: b.settings === true, ageGroups: n(b.ageGroups), teams: n(b.teams), practice: b.practice === true, coaches: n(b.coaches) },
+    brought: { settings: b.settings === true, ageGroups: n(b.ageGroups), form: b.form === true, teams: n(b.teams), practice: b.practice === true, coaches: n(b.coaches) },
     prints,
   };
 }
@@ -203,7 +204,9 @@ export type PrintSeason = {
   registrationCloseAt: string | null;
   earlyBirdUntil: string | null;
   howToPay: string | null;
-  waiverText: string | null;
+  /** The season's sign-up form, printed (`formPrint`, lib/club-form-server.ts): the "waiver" line's mark follows the form
+   *  since Board Ready Stage 4 (the waiver became one of its documents). Null or absent: no form read. */
+  formPrint?: string | null;
 };
 /** What a fingerprint reads off one age group. */
 export type PrintDivision = {
@@ -236,13 +239,14 @@ export function checklistPrints(season: PrintSeason, divisions: readonly PrintDi
     prices: hash(`${num(season.registrationFee)}#${dayOf(season.earlyBirdUntil) ?? ''}#${rows(divisions.map(d => [text(d.name), num(d.price), num(d.earlyPrice)].join('|')))}`),
     dates: hash(`${stamp(season.registrationOpenAt)}#${stamp(season.registrationCloseAt)}`),
     pay: hash(text(season.howToPay)),
-    waiver: hash(text(season.waiverText)),
+    waiver: hash(text(season.formPrint)),
   };
 }
 
 /**
  * The fingerprints a new season stores: only for the lines that came across with something on them. Age groups and prices
- * come with the age groups; how to pay and the waiver with the settings; the registration dates whenever they moved.
+ * come with the age groups; how to pay with the settings; the sign-up form on its own line (Board Ready Stage 4, ruling 17:
+ * the waiver left the settings and travels with the form); the registration dates whenever they moved.
  */
 export function startPrints(
   season: PrintSeason, divisions: readonly PrintDivision[], brought: StartedFrom['brought'], shiftDays: number | null,
@@ -252,7 +256,7 @@ export function startPrints(
   if (brought.ageGroups > 0) { out.ageGroups = all.ageGroups; out.prices = all.prices; }
   if (shiftDays != null && (season.registrationOpenAt || season.registrationCloseAt)) out.dates = all.dates;
   if (brought.settings && text(season.howToPay)) out.pay = all.pay;
-  if (brought.settings && text(season.waiverText)) out.waiver = all.waiver;
+  if (brought.form && text(season.formPrint)) out.waiver = all.waiver;
   return out;
 }
 
@@ -299,7 +303,9 @@ export const START_FROM_WORDS = {
   datesLive: (name: string) => `${name} isn’t finished, so no dates come across. Set the new season’s own.`,
   bringTitle: 'Bring with it',
   settings: 'The season’s settings',
-  settingsSub: 'Fee, how to pay, waiver, email consent, how new registrations are taken, the waitlist, Owing turns amber, and the schedule rules.',
+  settingsSub: 'Fee, how to pay, email consent, how new registrations are taken, the waitlist, Owing turns amber, and the schedule rules.',
+  /** Board Ready Stage 4 (drawing tab 4): the form's own line; its second line is `copyLineSub` (lib/club-form-words.ts). */
+  form: 'Sign-up form',
   ageGroups: 'Age groups',
   ageGroupsSub: (example: { name: string; from: number | null; to: number | null } | null, years: number, phone: boolean) => {
     if (years <= 0) return phone ? null : 'Names, sizes, prices, early prices, notes, games per team and Show standings.';
@@ -347,6 +353,7 @@ export function broughtList(b: StartedFrom['brought']): string {
   const parts: string[] = [];
   if (b.settings) parts.push('settings');
   if (b.ageGroups > 0) parts.push(pluralize(b.ageGroups, 'age group'));
+  if (b.form) parts.push('the sign-up form');
   if (b.teams > 0) parts.push(pluralize(b.teams, 'team name'));
   if (b.coaches > 0) parts.push(pluralize(b.coaches, 'coach', 'coaches'));
   return joinWithAnd(parts);

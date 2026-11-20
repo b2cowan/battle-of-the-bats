@@ -797,6 +797,94 @@ board's two questions:
 - [ ] Gate: the tournament version is Tournament Plus value today, so the club gate is a `/strategy` call (Q6).
 - [ ] Migration first; dictionary + snapshots.
 
+**Drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9,
+source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`. **All 20 asks RULED 2026-11-20 as recommended** (owner: *"I agree with
+your recommendations"*). These rulings win over the checklist above where they differ. Build prompt:
+`BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md`.
+
+1. **Per child or per sign-up:** the club picks per question, "For each child" (default) or "Once per sign-up", shown as
+   two groups on the form page. Documents are ticked once per sign-up and recorded on each child.
+2. **The tick's words:** the club picks per document, "I have read {document}." or "I have read and agree to
+   {document}." The waiver moves in with "agree". *(Amends ruled item 3's wording, on the owner's yes.)*
+3. **Where it lives:** its own page one level down, opened from a "Sign-up form" fact in the season Overview's
+   Registration block (replacing the Waiver and Email consent facts).
+4. **What it can't replace:** a locked "Every sign-up asks" card at the top of the form page (folded once there are
+   questions, and on a phone); the club's questions follow the fixed fields; a fixed notice about who is asking sits just
+   above the first club question on the family page. None of it can be removed or edited.
+5. **Health or medical mark:** a switch per question. Marked answers stay off list columns, the filter, the draft board,
+   emails and alerts, and out of every export but one. Optional by default. The window suggests the switch when the
+   question's words look medical, and never blocks.
+6. **Who opens health answers and files:** the seats that open Registrations (A8); no new permission. Opening a file is
+   recorded in the club's activity log.
+7. **Changing the form after sign-ups start:** editable while the season is live under the drawing's tab 7 rules (answers
+   never lost or reshaped; type and "Asked" lock once answered; archive keeps answers under "No longer asked"; delete only
+   while unanswered; no family chased automatically).
+8. **New document version:** the club chooses "Their tick stands" or "They must tick again" (with a reason families see).
+   Tick-again sign-ups show "Needs a new tick"; places aren't affected; the family ticks on Your sign-up; the club tells
+   them through Email families. No automatic email.
+9. **Family files:** one per question, up to 8 MB, PDF/JPEG/PNG/HEIC checked on the server, at most 5 per child's
+   sign-up; a file question can't be required; the public page limits how fast files come in.
+10. **Retention:** family files and health answers removed 90 days after the season is marked finished (or 120 days after
+    its last day if it never is); other answers stay with the registration. The privacy policy gains the sentence only once
+    the nightly job exists.
+11. **Registrations list:** up to three answer columns from a new Tools (⋯) → Answer columns, remembered per person; one
+    Filter group per question with choices, plus Documents › Needs a new tick; health questions never a column or filter;
+    on a phone answers stay in the record and Tools is absent.
+12. **Draft board:** a "Show on the draft board" switch per question, off by default, never for health; those answers join
+    the family's note in the note popover and the pool's Filter.
+13. **Export:** plain Excel and CSV carry non-health answers; a file answer reads "Attached"; health answers leave only in a
+    new opt-in under the divider, "Excel with contact details and health answers".
+14. **Coaches:** not in this stage. **First follow-up, its own drawing:** a per-question "Show to the child's coaches"
+    switch (it changes ruling A8 and adds to the coach's team page).
+15. **Tournament questions:** move onto the club form later, as its own stage, after one house-league season has used it.
+    Fix F1–F3 now as a small separate fix (`BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md`). **F1–F3 committed `bd74851a3` 2026-11-20**
+    (walk: https://claude.ai/artifact/UXVbq4LEexfFFtT6xuZ9eg). Two departures from the prompt, both measured: the file limit
+    is **9 MB for all of one form's files together** (the proxy cuts a whole request at 10 MB, so "10 MB per file" arrived
+    broken), and **nosniff is not sent**: the one-hour link is the storage service's response, which sends
+    `attachment` and the type read from the bytes but no `X-Content-Type-Options` (probed on dev), and we cannot add a header
+    to it. ⚖ **Owner 2026-11-20: the nosniff gap is accepted** (a download is never rendered as a page; serving files
+    through our own route would change the "links that expire after one hour" wording and may meet the host's size limit).
+16. **Who builds the form:** owner, admin, league admin (who set up a season); the registrar reads it.
+17. **Copy last season:** a "Sign-up form" line in Start next season (on by default; the waiver leaves the Settings line)
+    and "Copy {season}'s form" on an empty form; questions and documents only, never answers.
+18. **A document tick records:** document + version, a fingerprint of what was seen, the words ticked, when a PDF was
+    handed over, the time of the tick, the registration, child and sign-up, and the guardian. **No IP address.**
+19. **Words (draft; `/marketing` confirms):** club side "Sign-up form", "Your questions", "Documents to read", groups "For
+    each child" / "Once per sign-up"; family side never says "form": "From {club}", "Questions from {club}", "Documents and
+    agreement".
+20. **Families see and change their answers:** Your sign-up shows each child's answers (and the once-per-sign-up ones) in
+    folded rows with Change until the teams are made, then the club's contact. New questions and new document versions
+    show there too.
+
+**Owed from `/legal` (not optional):** the next Privacy Policy version names "answers to a club's own sign-up questions
+and files a family attaches" (§5) and the Data Terms §12 says the same; the §9 retention sentence waits for the nightly
+job. The build keeps the policy's promises: 1-hour signed links, server-only reads, never on a public page, never in a
+push or bell line. Lawyer's-eye items (no gate): the six in the drawing's `/legal` record, carried in the build prompt.
+**Gaps found and owned by this stage:** F5 (waiver has no versions; the move counts first, on dev and production as
+counts only, shown to the owner before it runs), F7 (one deleted registration leaves files, closed for the new store),
+F8 (the confirmation leaves out a child not signed up).
+
+**Part 1 built 2026-11-20** (the form, the documents and the waiver move; QA walk §546
+https://claude.ai/artifact/UVoT5NPhYxC8B1UzKgsVui). Migration 513 applied to dev 2026-11-20 after the counts (prod 0
+seasons; dev 7 seasons with waiver text, 333 ticked; owner yes "go ahead"); the prod step is in `MANUAL_PROD_STEPS.json`.
+Reviews: `/legal` (`docs/agents/legal/BOARD_READY_STAGE4_PART1_BUILT_WORDS_REVIEW.md`), `/docs` (help `signup-form`),
+`/marketing`, `/simplify`, `/review`. Onboarding wizard: its waiver box stays and becomes the season's first document.
+**Release order RULED (owner 2026-11-20, call C1):** Parts 1, 2 and 3 reach production together.
+**Carried to Part 2 (from the reviews):** save ticks inside the placement's locked step (Part 1 records them just after,
+a failure logged); the PDF's open-first gate, and the consent-ledger text names a PDF's file and version; the family page
+keeps typed answers across a form change (Part 1 asks for a reload); health answers and files are NEVER kept across a
+reload (RULED owner 2026-11-20, call C3, on /legal's recommendation: typed answers are kept for the tab, health answers
+and files live in memory only, and after a reload the form says so; nothing is saved on the server before the sign-up); a question delete must also clear attached/removed file rows; Start next season
+must honour the questions plan gate when copying (latent: every house-league plan has it); the readers that say "Waiver
+accepted" (child page, duplicates, families export) read the ticks or say "Documents ticked" before Part 2 promotes (a
+season whose only document is "I have read" leaves `waiver_accepted_at` empty, by /legal's rule).
+**Carried to Part 3:** moved ticks count as ticks on version 1 everywhere a version's ticks are counted (Replace already
+does); "text as the club held it on {date}" uses the move date, never the tick date; retention covers
+`club_form_submissions`; storage objects of a deleted registration's files.
+**Owner calls RULED 2026-11-20** ("1 yes together, 2 yes rename, 3 agree"): C1 above; C2 the checklist's optional step is
+named "Documents" ("On. Families tick each one to sign up." / "Optional. Families sign up without any."), built the same
+day; C3 above.
+
 ### Stage 5 — Club events (item 8) — FOUNDATION: Club events
 - [ ] A club-owned event: name, kind (banquet, champs day, AGM, clinic, camp, other), date and time, venue from the venue
   library, optionally held from permit time, and audience (public · families · members · staff).

@@ -7,6 +7,7 @@ import { withObservability } from '@/lib/observability';
 import { DEFAULT_SPORT } from '@/lib/sports';
 import { seasonSlugFrom, seasonSlugRefusal } from '@/lib/house-league-season';
 import { loadStartSource, readStartFromBody, startSeasonFrom } from '@/lib/house-league-start-from-server';
+import { FORM_LIMITS } from '@/lib/club-form';
 
 const NAME_TAKEN = 'You already have a season with this name. Give this one a different name.';
 
@@ -74,6 +75,11 @@ export const POST = withObservability(async (req: Request) => {
     }
   }
 
+  // The waiver becomes a document on the season's form; it is never cut short (it is the text families agree to).
+  if (typeof body.waiverText === 'string' && body.waiverText.trim().length > FORM_LIMITS.docText) {
+    return NextResponse.json({ error: `Keep the waiver under ${FORM_LIMITS.docText.toLocaleString('en-CA')} characters.` }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('league_seasons')
     .insert({
@@ -93,7 +99,9 @@ export const POST = withObservability(async (req: Request) => {
       registration_close_at:        typeof body.registrationCloseAt === 'string' && body.registrationCloseAt ? body.registrationCloseAt : null,
       season_start_date:            typeof body.seasonStartDate === 'string' && body.seasonStartDate ? body.seasonStartDate : null,
       season_end_date:              typeof body.seasonEndDate === 'string' && body.seasonEndDate ? body.seasonEndDate : null,
-      waiver_text:                  typeof body.waiverText === 'string' && body.waiverText ? body.waiverText : null,
+      // The onboarding wizard's waiver (Board Ready Stage 4): the season's form takes it as its first document when the form is
+      // first made (`club_form_for_season`, every form reader's way in).
+      waiver_text:                  typeof body.waiverText === 'string' && body.waiverText.trim() ? body.waiverText.trim() : null,
     })
     .select()
     .single();

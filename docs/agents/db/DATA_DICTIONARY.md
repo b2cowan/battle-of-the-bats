@@ -7083,6 +7083,203 @@ sender not counted).
 **`status`** (text NOT NULL: `sending` · `done`, default `sending`) — `done` once the send finished; a row left `sending`
 is read as stopped after the grace period (gotcha 4).
 
+## `club_forms`
+<!-- dict:table:club_forms -->
+
+**Purpose:** **The club's sign-up form** (Board Ready Stage 4, **mig 513**; plan `docs/projects/active/BOARD_READY_PLAN.md` §5 Stage 4, 20 owner rulings 2026-11-20). ONE FORM PER OWNER: a house-league season now (`owner_table = 'league_seasons'`); a camp, a sponsorship package and a tryout later. It holds the club's own questions (`club_form_questions`) and the documents families tick (`club_form_documents`). Server-side code: `lib/club-form.ts` (pure rules), `lib/club-form-server.ts` (reads and writes).
+
+**Gotchas (read first):**
+1. **The data model never says "house league".** The owner is a table name + id, the way `family_consents` names its source (`source_table`/`source_id`); a new owner kind widens the CHECK. A tick or an answer points at its SUBJECT the same way (`subject_table`/`subject_id`, a registration today).
+2. **Made on first need** by `public.club_form_for_season(season, moved)` (service role only): returns the season's form, making it if absent. A form made for a season that has `league_seasons.waiver_text` gets the **Waiver** as its first document (typed text, "I have read and agree to the waiver.", version 1 = that text), and each registration already ticked gets a **moved** tick row beside it (see `club_form_ticks`). Every reader goes through `ensureSeasonForm` (lib/club-form-server.ts), so a season inserted directly (a seed) still arrives with its waiver.
+3. **The waiver move** (mig 513, 2026-11-20, owner yes after the counts): the function run once for every season with `moved = true`. Dev: 16 forms, 7 waivers moved in, 1 kept archived (its text had been emptied after families ticked), 333 moved ticks (7 with a consent record). Production: 0 seasons at the time.
+4. **SERVICE ROLE ONLY** (RLS on, no policies, revoked from anon and authenticated), as every form table: the published Privacy Policy promises sensitive records are read only through our server.
+5. **Deleting the owner deletes the form**: the AFTER DELETE trigger `club_form_owner_gone` on `league_seasons` (an owner is not a foreign key). Deleting a registration runs `club_form_subject_gone`, which deletes its answers, ticks and files and a `club_form_submissions` row left with nothing (/legal 2026-11-20: it holds a guardian's email).
+6. **The database counts** (service role only): `club_form_counts(form)` returns per-question answer counts, per-version tick and family counts and per-document moved ticks — numbers only, so no answer and no guardian email leaves the database for the form page; `club_form_reorder(form, 'questions'|'documents', ids[])` sets the order in one statement; `club_form_season_signups(season)` counts children and sign-ups (declined and withdrawn left out) for the "N sign-ups will read Not asked" foot.
+
+<!-- dict:col:club_forms.id -->
+<!-- dict:col:club_forms.org_id -->
+<!-- dict:col:club_forms.owner_table -->
+<!-- dict:col:club_forms.owner_id -->
+<!-- dict:col:club_forms.subject_kind -->
+<!-- dict:col:club_forms.created_at -->
+<!-- dict:col:club_forms.updated_at -->
+**`id`** (uuid PK) / **`org_id`** (FK → `organizations` CASCADE) / **`owner_table`** (text, CHECK `league_seasons`) + **`owner_id`** (uuid, not a FK) — UNIQUE together (`club_forms_owner_uniq`): one form per owner. **`subject_kind`** (text, CHECK `child_signup | business`) — who the form is about: `child_signup` has the two "Asked" groups and the Health switch; `business` (Stage 6, a sponsor's link) has neither (drawing tab 9). **`created_at` / `updated_at`**.
+
+## `club_form_questions`
+<!-- dict:table:club_form_questions -->
+
+**Purpose:** a club's own question on its form (mig 513). Seven types, required or not, help text, a set order, **no branching** (ruled). Plan-gated by `custom_registration_fields` (every house-league plan has it); documents never are.
+
+**Gotchas (read first):**
+1. **Type and `asked` lock once anyone has answered** (ruling 7, drawing tab 7); the routes refuse a change. To ask differently: archive and add a new question.
+2. **Delete only while unanswered**: `club_form_answers.question_id` has no cascade, so the database refuses deleting an answered question; after that it is ARCHIVED (`archived_at`), and its answers stay on the record and in the export under "No longer asked".
+3. **Choices keep their ids for life** (`choices` jsonb `[{id, label, offered}]`): a renamed choice renames its answers (answers store ids); a removed choice stays with `offered = false` ("no longer offered").
+4. **Two CHECKs carry rulings:** a file question is never required (`club_form_questions_file_not_required`, ruling 9) and a health question is never on the draft board (`club_form_questions_health_not_on_board`, ruling 12).
+
+<!-- dict:col:club_form_questions.id -->
+<!-- dict:col:club_form_questions.org_id -->
+<!-- dict:col:club_form_questions.form_id -->
+<!-- dict:col:club_form_questions.question_type -->
+<!-- dict:col:club_form_questions.label -->
+<!-- dict:col:club_form_questions.help_text -->
+<!-- dict:col:club_form_questions.choices -->
+**`id`** / **`org_id`** (CASCADE) / **`form_id`** (FK → `club_forms` CASCADE). **`question_type`** (CHECK `short_answer | long_answer | one_choice | many_choices | yes_no | date | file`). **`label`** (1–200) and **`help_text`** (nullable, 1–500; shown under the question in smaller type). **`choices`** (jsonb array, default `[]`; only the two choice types use it).
+<!-- dict:col:club_form_questions.required -->
+<!-- dict:col:club_form_questions.asked -->
+<!-- dict:col:club_form_questions.health -->
+<!-- dict:col:club_form_questions.on_board -->
+**`required`** (bool, default false: new questions are optional, and a health question stays optional unless the club turns it on, /legal PIPEDA 4.3.3). **`asked`** (CHECK `per_subject | once`, default `per_subject`): "For each child" or "Once per sign-up" (ruling 1). **`health`** (bool): the Health or medical mark (ruling 5) — marked answers never reach list columns, the filter, the draft board, emails, push or bell lines, or any export but the opt-in. **`on_board`** (bool): "Show on the draft board" (ruling 12).
+<!-- dict:col:club_form_questions.sort_order -->
+<!-- dict:col:club_form_questions.archived_at -->
+<!-- dict:col:club_form_questions.created_by -->
+<!-- dict:col:club_form_questions.created_at -->
+<!-- dict:col:club_form_questions.updated_at -->
+**`sort_order`** (int; one order across both groups) / **`archived_at`** (nullable: off the sign-up page, answers kept) / **`created_by`** (FK → `auth.users` SET NULL) / **`created_at`** / **`updated_at`** (set by the routes).
+
+## `club_form_documents`
+<!-- dict:table:club_form_documents -->
+
+**Purpose:** a document families must tick to sign up (mig 513; rulings 2, 8, 18): a PDF the club uploads or a typed text. Always required; **never behind a plan gate**. Today's season waiver became one of these (the waiver move, `club_forms` gotcha 3).
+
+**Gotchas (read first):**
+1. **Its words live on its versions** (`club_form_document_versions`); the document holds the name, the kind and the tick. A document with no live version (only the moved, emptied waiver) is archived.
+2. **Never deleted once ticked**: `club_form_ticks.document_id` has no cascade. Archive (`archived_at`) takes it off the sign-up page; its ticks stay on each registration.
+
+<!-- dict:col:club_form_documents.id -->
+<!-- dict:col:club_form_documents.org_id -->
+<!-- dict:col:club_form_documents.form_id -->
+<!-- dict:col:club_form_documents.name -->
+<!-- dict:col:club_form_documents.source_kind -->
+<!-- dict:col:club_form_documents.tick_kind -->
+<!-- dict:col:club_form_documents.sort_order -->
+<!-- dict:col:club_form_documents.archived_at -->
+<!-- dict:col:club_form_documents.created_by -->
+<!-- dict:col:club_form_documents.created_at -->
+<!-- dict:col:club_form_documents.updated_at -->
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`name`** (1–80; families see it in the tick) / **`source_kind`** (CHECK `pdf | text`; fixed once made) / **`tick_kind`** (CHECK `read | read_agree`): "I have read {doc}." or "I have read and agree to {doc}." (built by `tickSentence`, lib/club-form.ts) / **`sort_order`** / **`archived_at`** / **`created_by`** (SET NULL) / **`created_at`** / **`updated_at`**.
+
+## `club_form_document_versions`
+<!-- dict:table:club_form_document_versions -->
+
+**Purpose:** each version of a document's words (mig 513; ruling 8). Replace adds a version and the club says whether the ticks on the one before stand.
+
+**Gotchas (read first):**
+1. **A version with ticks is never deleted**: `club_form_ticks.version_id` has no cascade.
+2. **`fingerprint`** is SHA-256 (hex) of the exact bytes of the PDF, or of the UTF-8 text — computed by the server on upload (`fingerprintOf`, lib/club-form-server.ts) and by the move in SQL (`sha256(convert_to(text,'UTF8'))`); the two agree.
+3. **`ticks_stand`** is NULL on version 1 and set on every later version (CHECK `club_form_document_versions_ticks_said`); `false` ("They must tick again") needs a `reason` families see (CHECK `…_again_reason`).
+4. **Files** live in the private bucket `club-form-files` at `{org}/{form}/documents/{document}/{uuid}.pdf`; only a signed link (one hour) ever opens one.
+
+<!-- dict:col:club_form_document_versions.id -->
+<!-- dict:col:club_form_document_versions.org_id -->
+<!-- dict:col:club_form_document_versions.document_id -->
+<!-- dict:col:club_form_document_versions.version_no -->
+<!-- dict:col:club_form_document_versions.body_text -->
+<!-- dict:col:club_form_document_versions.file_path -->
+<!-- dict:col:club_form_document_versions.file_name -->
+<!-- dict:col:club_form_document_versions.file_size -->
+**`id`** / **`org_id`** / **`document_id`** (CASCADE) / **`version_no`** (≥ 1, UNIQUE per document) / **`body_text`** (typed text, ≤ 20,000) or **`file_path`** + **`file_name`** + **`file_size`** (≤ 8 MB) — exactly one source (CHECK `…_one_source`).
+<!-- dict:col:club_form_document_versions.fingerprint -->
+<!-- dict:col:club_form_document_versions.reason -->
+<!-- dict:col:club_form_document_versions.ticks_stand -->
+<!-- dict:col:club_form_document_versions.moved_in -->
+<!-- dict:col:club_form_document_versions.created_by -->
+<!-- dict:col:club_form_document_versions.created_at -->
+**`fingerprint`** (64 hex) / **`reason`** ("What changed", ≤ 300) / **`ticks_stand`** (gotcha 3) / **`moved_in`** (true only on a version 1 the waiver move made) / **`created_by`** / **`created_at`** (the version's "Since {date}").
+
+## `club_form_submissions`
+<!-- dict:table:club_form_submissions -->
+
+**Purpose:** one row per sign-up a family sends through a form (mig 513): so one tick by a parent of two children is two tick rows pointing at the same sign-up, and a "once per sign-up" answer has something to hang on. For house league, `ref` is the family's reference (`league_registrations.signup_ref`).
+
+<!-- dict:col:club_form_submissions.id -->
+<!-- dict:col:club_form_submissions.org_id -->
+<!-- dict:col:club_form_submissions.form_id -->
+<!-- dict:col:club_form_submissions.ref -->
+<!-- dict:col:club_form_submissions.guardian_email -->
+<!-- dict:col:club_form_submissions.created_at -->
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`ref`** (UNIQUE per form) / **`guardian_email`** (normalized) / **`created_at`**.
+
+## `club_form_answers`
+<!-- dict:table:club_form_answers -->
+
+**Purpose:** a family's answer to a club question (mig 513; written from Part 2). About one child (`subject_*` = its registration) or the whole sign-up (`submission_id`, no subject). **Never copied onto the child's cross-season record and never pre-filled from last season** (/legal).
+
+**Gotchas (read first):**
+1. **Read only behind the Registrations read** (ruling 6: owner, admin, league_admin, league_registrar and per-member house-league grants); every other seat gets nothing. Health answers never leave in a list column, the filter, the board, an email, push or bell line, or an export but the opt-in.
+2. **One answer per question per subject** (`club_form_answers_subject_uniq`) or per sign-up (`…_submission_uniq`).
+3. **`removed_at`**: the retention clock (ruling 10, Part 3) empties a health answer and stamps it; the record reads "Removed {date}".
+
+<!-- dict:col:club_form_answers.id -->
+<!-- dict:col:club_form_answers.org_id -->
+<!-- dict:col:club_form_answers.form_id -->
+<!-- dict:col:club_form_answers.question_id -->
+<!-- dict:col:club_form_answers.submission_id -->
+<!-- dict:col:club_form_answers.subject_table -->
+<!-- dict:col:club_form_answers.subject_id -->
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** (no cascade, gotcha 2 of `club_form_questions`) / **`submission_id`** (CASCADE) / **`subject_table`** (CHECK `league_registrations`) + **`subject_id`** (both or neither; deleting the registration deletes the answer through the trigger `club_form_subject_gone`).
+<!-- dict:col:club_form_answers.value_text -->
+<!-- dict:col:club_form_answers.value_choice_ids -->
+<!-- dict:col:club_form_answers.value_bool -->
+<!-- dict:col:club_form_answers.value_date -->
+<!-- dict:col:club_form_answers.file_id -->
+<!-- dict:col:club_form_answers.removed_at -->
+<!-- dict:col:club_form_answers.created_at -->
+<!-- dict:col:club_form_answers.updated_at -->
+**`value_text`** (≤ 5,000) / **`value_choice_ids`** (text[] of choice ids) / **`value_bool`** / **`value_date`** / **`file_id`** (FK → `club_form_files` SET NULL) — the one that fits the type. **`removed_at`** (gotcha 3) / **`created_at`** / **`updated_at`**.
+
+## `club_form_ticks`
+<!-- dict:table:club_form_ticks -->
+
+**Purpose:** a family's tick on a document (mig 513; ruling 18): the document and its version, a fingerprint of what was seen, the exact sentence, the subject (registration), the sign-up, the guardian, server time, and for a PDF the time our server handed the file over. **No IP address.** Never behind a plan gate.
+
+**Gotchas (read first):**
+1. **Moved ticks** (`moved = true`, the waiver move): one per registration that had `waiver_accepted_at`, with `ticked_at` = that time, NO version, NO fingerprint, NO hand-over (CHECK `club_form_ticks_moved_bare`) — nobody can prove which text was seen (F5). The record reads "recorded before documents had versions"; where `consent_id` points at the `family_consents` row, it adds "text as the club held it on {date}". `league_registrations.waiver_accepted_at` and `family_consents` were never written by the move.
+2. **Every other tick names its version and fingerprint** (CHECK `club_form_ticks_versioned`).
+3. **A version with ticks can't be deleted** (no cascade on `version_id` or `document_id`).
+4. Deleting the registration deletes its ticks (trigger `club_form_subject_gone`).
+
+<!-- dict:col:club_form_ticks.id -->
+<!-- dict:col:club_form_ticks.org_id -->
+<!-- dict:col:club_form_ticks.form_id -->
+<!-- dict:col:club_form_ticks.document_id -->
+<!-- dict:col:club_form_ticks.version_id -->
+<!-- dict:col:club_form_ticks.submission_id -->
+<!-- dict:col:club_form_ticks.subject_table -->
+<!-- dict:col:club_form_ticks.subject_id -->
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`document_id`** / **`version_id`** (nullable only when moved) / **`submission_id`** (SET NULL) / **`subject_table`** (CHECK `league_registrations`) + **`subject_id`** (NOT NULL).
+<!-- dict:col:club_form_ticks.guardian_email -->
+<!-- dict:col:club_form_ticks.user_id -->
+<!-- dict:col:club_form_ticks.sentence -->
+<!-- dict:col:club_form_ticks.fingerprint -->
+<!-- dict:col:club_form_ticks.handed_over_at -->
+<!-- dict:col:club_form_ticks.ticked_at -->
+<!-- dict:col:club_form_ticks.moved -->
+<!-- dict:col:club_form_ticks.consent_id -->
+<!-- dict:col:club_form_ticks.created_at -->
+**`guardian_email`** / **`user_id`** (once families sign in) / **`sentence`** (the exact words ticked) / **`fingerprint`** (copied from the version at the tick) / **`handed_over_at`** (a PDF's hand-over; Part 2) / **`ticked_at`** (server time) / **`moved`** (gotcha 1) / **`consent_id`** (FK → `family_consents` SET NULL) / **`created_at`**.
+
+## `club_form_files`
+<!-- dict:table:club_form_files -->
+
+**Purpose:** a file a family attaches to a file question (mig 513; ruling 9; uploads from Part 2): one per question, ≤ 8 MB, PDF / JPEG / PNG / HEIC checked from the file's content, ≤ 5 per child's sign-up. Uploaded one per request on choose (`pending`), `attached` when the sign-up is saved; a file never attached is deleted within a day; `removed` by Remove or the retention clock (ruling 10).
+
+<!-- dict:col:club_form_files.id -->
+<!-- dict:col:club_form_files.org_id -->
+<!-- dict:col:club_form_files.form_id -->
+<!-- dict:col:club_form_files.question_id -->
+<!-- dict:col:club_form_files.submission_id -->
+<!-- dict:col:club_form_files.subject_table -->
+<!-- dict:col:club_form_files.subject_id -->
+<!-- dict:col:club_form_files.path -->
+<!-- dict:col:club_form_files.file_name -->
+<!-- dict:col:club_form_files.size_bytes -->
+<!-- dict:col:club_form_files.content_type -->
+<!-- dict:col:club_form_files.status -->
+<!-- dict:col:club_form_files.created_at -->
+<!-- dict:col:club_form_files.attached_at -->
+<!-- dict:col:club_form_files.removed_at -->
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** / **`submission_id`** (SET NULL) / **`subject_table`** + **`subject_id`** (set when attached) / **`path`** (UNIQUE; bucket `club-form-files`, under `{org}/`, purged with the club: `ORG_FILE_BUCKETS`) / **`file_name`** / **`size_bytes`** / **`content_type`** (from the bytes, never the browser) / **`status`** (CHECK `pending | attached | removed`) / **`created_at`** / **`attached_at`** / **`removed_at`**. Opening one goes through a one-hour signed link with `Content-Disposition: attachment`, and each opening is recorded in the club's activity log (Part 3).
+
 ## `club_group_email_sends`
 <!-- dict:table:club_group_email_sends -->
 
@@ -7547,7 +7744,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`season_start_date` / `season_end_date`** (date, nullable) — informational season dates.
 
 <!-- dict:col:league_seasons.waiver_text -->
-**`waiver_text`** (text, nullable) — free-text waiver shown on the public registration form.
+**`waiver_text`** (text, nullable) — the waiver a season was MADE with. **Since mig 513 (Board Ready Stage 4) nothing shows it:** the waiver lives on the season's form as a document (`club_form_documents`), and the column is read only by `club_form_for_season` when it first makes a season's form (the move, a seed, the create route, the onboarding wizard). Editing it after the form exists changes nothing; the Registration block no longer edits it, and Start next season no longer copies it (the form travels on its own line).
 
 <!-- dict:col:league_seasons.early_bird_until -->
 **`early_bird_until`** (date, nullable; mig 361, Club Tier 9b-1, owner 9b·2) — the season's ONE early-bird day, the club's day. A child who signs up **on or before** it pays their division's `early_price` (when the division has one). Compared as a plain YYYY-MM-DD against `tournamentToday()` at sign-up — never re-zoned. Read only through [lib/league-price.ts](../../../lib/league-price.ts).
@@ -8239,7 +8436,7 @@ See `org_children` for the rules (confirm joins, undo splits, live name edits wr
 **`source`** (text, NOT NULL, default `'public_form'`; CHECK `public_form|admin_manual`) — provenance; `admin_manual` rows skip the capacity/waitlist engine (gotcha 3).
 
 <!-- dict:col:league_registrations.waiver_accepted_at -->
-**`waiver_accepted_at`** (timestamptz, nullable — mig 252) — when the guardian accepted the season waiver on the public form. **NULL = not recorded, never "not accepted":** admin-manual rows (no guardian saw a waiver) and every row written before mig 252 (the form REQUIRED the tick but stored nothing — Families P2 mockup-session finding, plan §5.3 gap 7). **Deliberately never backfilled.** Acceptance also files a `family_consents` ledger row (`basis='league_registration'`, `scope='child_data'`, `consent_text` = the season's waiver text at that moment — the season's copy can be edited later, the ledger row cannot) via `recordLeagueWaiverConsent` ([lib/org-people.ts](../../../lib/org-people.ts)), fire-and-forget from [register/route.ts](../../../app/api/league/[orgSlug]/[seasonSlug]/register/route.ts).
+**`waiver_accepted_at`** (timestamptz, nullable — mig 252) — when the guardian accepted the season waiver on the public form. **NULL = not recorded, never "not accepted":** admin-manual rows (no guardian saw a waiver) and every row written before mig 252 (the form REQUIRED the tick but stored nothing — Families P2 mockup-session finding, plan §5.3 gap 7). **Deliberately never backfilled.** **Since mig 513 (Board Ready Stage 4)** the document ticks live in `club_form_ticks`: the waiver move added one MOVED tick beside every row that had this time (this column untouched), and every new sign-up records one tick per document with its version and fingerprint. This column is still set on a new sign-up that ticked a document, so readers of "did the family tick" keep working. Acceptance also files a `family_consents` ledger row (`basis='league_registration'`, `scope='child_data'`, `consent_text` = the season's waiver text at that moment — the season's copy can be edited later, the ledger row cannot) via `recordLeagueWaiverConsent` ([lib/org-people.ts](../../../lib/org-people.ts)), fire-and-forget from [register/route.ts](../../../app/api/league/[orgSlug]/[seasonSlug]/register/route.ts).
 
 <!-- dict:col:league_registrations.signup_ref -->
 <!-- dict:col:league_registrations.signup_position -->

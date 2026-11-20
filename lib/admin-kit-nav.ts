@@ -946,6 +946,13 @@ export function clubPlaceAt(pathname: string, base: string, {
         })
         : null;
     }
+    // The season's sign-up form (Board Ready Stage 4, drawing tab 1): one level down from the Overview's Registration
+    // block, so the bar reads "← Overview" and names the page. Read by anyone who can open the season.
+    if (pathname === `${seasonPath}/form`) {
+      return seasonAccess.read
+        ? namedScreen(`season-form:${seasonId}`, 'Sign-up form', { back: { href: seasonPath, label: 'Overview' }, facts: ['House league'] })
+        : null;
+    }
     const tab = placeTabFor(seasonTabs(seasonPath, EVERY_SEASON_PAGE), pathname);
     if (!tab) return null;
     return {

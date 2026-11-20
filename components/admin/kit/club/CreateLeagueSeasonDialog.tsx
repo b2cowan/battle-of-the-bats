@@ -20,6 +20,7 @@ import {
   DEFAULT_BRING, START_FROM_WORDS as SF, bornShiftYears, dateShiftDays, datesMoved, honouredBring, isLiveSource, movedDates,
   optionLine, shiftStamp, startName, type Bring, type StartSource,
 } from '@/lib/house-league-start-from';
+import { copyLineSub } from '@/lib/club-form-words';
 import type { LeagueSeasonSummary } from '@/lib/types';
 
 /**
@@ -43,6 +44,8 @@ type SourceDetail = {
   id: string;
   divisions: { id: string; name: string; bornFromYear: number | null; bornToYear: number | null; teamCount: number; coachCount?: number }[];
   owing: { amount: number; players: number } | null;
+  /** Board Ready Stage 4: what the source's sign-up form holds (its own line, drawing tab 4). Null when it didn't read. */
+  form: { questions: number; documents: number } | null;
 };
 
 const asSource = (s: LeagueSeasonSummary['season']): StartSource => ({
@@ -127,8 +130,10 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, knownSe
       if (pickRef.current !== id) return;
       const divisions: SourceDetail['divisions'] = Array.isArray(data.divisions) ? data.divisions : [];
       const money = data.money as { owing?: number; owingPlayers?: number } | undefined;
+      const form = data.form as { questions?: number; documents?: string[] } | null | undefined;
       setDetail({
         id, divisions,
+        form: form ? { questions: form.questions ?? 0, documents: form.documents?.length ?? 0 } : null,
         owing: money && (money.owing ?? 0) > 0 && (money.owingPlayers ?? 0) > 0 ? { amount: money.owing!, players: money.owingPlayers! } : null,
       });
       setChosen(new Set(divisions.map(d => d.id)));
@@ -296,7 +301,7 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, knownSe
 
   // The dates' line: a finished source's moved dates, a live source's empty ones, or today's hint for a blank season.
   const datesHint = !source
-    ? 'Next, on the season’s page: age groups and prices, when the form opens and closes, the waiver and how families pay. Its web address is made from the name.'
+    ? 'Next, on the season’s page: age groups and prices, when the form opens and closes, the sign-up form and how families pay. Its web address is made from the name.'
     : live ? SF.datesLive(source.name)
     : shift != null && datesMoved(source, shift) ? SF.dates(source.name, shift, phone)
     : null;
@@ -391,6 +396,9 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, knownSe
                 </div>
               )}
             </BringRow>
+            {/* Board Ready Stage 4 (drawing tab 4, ruling 17): the form on its own line, on by default; never its answers. */}
+            <BringRow id={`${fieldId}-form`} checked={honoured.form} onChange={tick('form')}
+              title={SF.form} sub={detail?.form ? copyLineSub(detail.form.questions, detail.form.documents) : null} />
             {/* Teams and practice settings live under age groups, and a coach on a team: each needs what it hangs on. */}
             <BringRow id={`${fieldId}-teams`} checked={honoured.teams} onChange={tick('teams')} disabled={!honoured.ageGroups}
               title={SF.teams} sub={phone ? null : SF.teamsSub} count={counts.teams} />

@@ -55,7 +55,9 @@ interface Props {
   seasonName: string;
   /** "May 31 – Aug 30" for the eyebrow, or null. */
   seasonDates: string | null;
-  waiverText: string | null;
+  /** Board Ready Stage 4: the documents on the season's sign-up form a family ticks (typed text until Part 2), in order.
+   *  Each tick names the version the page was drawn with. Today's waiver is the first of them. */
+  documents: { id: string; versionId: string; name: string; sentence: string; text: string }[];
   askEmailConsent: boolean;
   divisions: FormDivision[];
   season: FormSeason;
@@ -69,7 +71,7 @@ interface Props {
 }
 
 export default function RegisterForm({
-  orgSlug, orgName, seasonSlug, seasonName, seasonDates, waiverText, askEmailConsent, divisions, season, cutoff, today, contact, friendMax,
+  orgSlug, orgName, seasonSlug, seasonName, seasonDates, documents, askEmailConsent, divisions, season, cutoff, today, contact, friendMax,
 }: Props) {
   const friendKey = useRef(1);
   const orgHref = useOrgHref(orgSlug);
@@ -77,7 +79,7 @@ export default function RegisterForm({
   const [children, setChildren] = useState<Child[]>([blankChild(1)]);
   const [nextKey, setNextKey] = useState(2);
   const [guardian, setGuardian] = useState({ firstName: '', lastName: '', email: '', phone: '', email2: '' });
-  const [waiver, setWaiver] = useState(false);
+  const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -121,7 +123,9 @@ export default function RegisterForm({
           guardianEmail: guardian.email,
           guardianPhone: guardian.phone || undefined,
           guardianEmail2: guardian.email2 || undefined,
-          waiverAccepted: waiver,
+          // One tick per document, with the version the family read.
+          documents: documents.filter(d => ticked[d.id]).map(d => ({ id: d.id, versionId: d.versionId })),
+          shown: documents.map(d => ({ id: d.id, versionId: d.versionId })),
           emailConsent: consent,
         }),
       });
@@ -353,17 +357,24 @@ export default function RegisterForm({
         <p className={formKit.hint}>{SP.coachLine}</p>
       </div>
 
-      {(waiverText || askEmailConsent) && (
+      {(documents.length > 0 || askEmailConsent) && (
         <div className={formKit.section}>
-          {waiverText && (
+          {documents.length > 0 && (
             <>
+              {/* Board Ready Stage 4 Part 1: each typed document in place with its own tick (the shipped waiver block,
+                  once per document). Part 2 redraws this section (tab 5) with the PDF's open-first gate. */}
               <h2 className={formKit.sectionTitle}>Waiver and agreement</h2>
-              <div className={styles.waiverBox}>{waiverText}</div>
-              <div className={styles.checkRow}>
-                <input type="checkbox" id="waiverAccepted" checked={waiver} onChange={e => { setWaiver(e.target.checked); clear('waiverAccepted'); }} />
-                <label htmlFor="waiverAccepted">I have read and agree to the waiver.</label>
-              </div>
-              {errors.waiverAccepted && <p className={`${formKit.errorMsg} ${styles.checkError}`}>{errors.waiverAccepted}</p>}
+              {documents.map(d => (
+                <div key={d.id}>
+                  <div className={styles.waiverBox} role="document" aria-label={d.name}>{d.text}</div>
+                  <div className={styles.checkRow}>
+                    <input type="checkbox" id={`doc-${d.id}`} checked={!!ticked[d.id]}
+                      onChange={e => { const on = e.target.checked; setTicked(t => ({ ...t, [d.id]: on })); clear(`documents.${d.id}`); }} />
+                    <label htmlFor={`doc-${d.id}`}>{d.sentence}</label>
+                  </div>
+                  {errors[`documents.${d.id}`] && <p className={`${formKit.errorMsg} ${styles.checkError}`}>{errors[`documents.${d.id}`]}</p>}
+                </div>
+              ))}
             </>
           )}
           {askEmailConsent && (

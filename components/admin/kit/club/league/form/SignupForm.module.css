@@ -1,0 +1,67 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE SEASON'S SIGN-UP FORM — what the kit's sections, row lists and windows have no slot for (Board Ready Stage 4 Part 1;
+   drawing BOARD_READY_STAGE4_FORMS_DRAWINGS.html tabs 1–4). Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.page { display: flex; flex-direction: column; gap: 1rem; }
+
+/* ── Every sign-up asks: three columns at a desk, one on a phone; folded to one line once there are questions ── */
+.fixedGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem 1.25rem; margin: 0 0 0.75rem; }
+.fixedGrid ul { margin: 0.25rem 0 0; padding-left: 1.1rem; font-size: var(--type-support); line-height: 1.55; color: var(--text-secondary); }
+.capL { font-size: var(--type-caption, 0.75rem); font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-tertiary); }
+.small { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.folded {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  font-size: var(--type-support); color: var(--text-secondary);
+}
+.titleChip { margin-left: 0.4rem; vertical-align: middle; }
+
+/* ── A card's first line: what the list is, and its add at the right (above the list it fills) ── */
+.head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.75rem; }
+.lede { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.outline { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.foot { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* None yet: what is missing, one sentence, and the actions. */
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.35rem; padding: 0.75rem 0.5rem; }
+.emptyTitle { margin: 0; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.emptyActions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 0.35rem; }
+
+/* The row's marks: HEALTH after the question; TEXT / PDF before a document's name. */
+.rowMark { margin-left: 0.45rem; vertical-align: 1px; }
+.kind { margin-right: 0.45rem; vertical-align: 1px; }
+
+/* The caption that changes with the width (drawing tab 2: a phone keeps the type and the two marks). */
+.deskOnly { display: inline; }
+.phoneOnly { display: none; }
+@media (max-width: 768px) {
+  .fixedGrid { grid-template-columns: 1fr; }
+  .deskOnly { display: none; }
+  .phoneOnly { display: inline; }
+  .add { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+}
+
+/* ── The windows ── */
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+@media (max-width: 560px) { .two { grid-template-columns: 1fr; } }
+.nudge {
+  margin: 0; padding: 0.6rem 0.75rem; border-left: 3px solid var(--home-line-strong, var(--home-line)); border-radius: 6px;
+  background: var(--surface-subtle, transparent); font-size: var(--type-support); line-height: 1.5; color: var(--text-secondary);
+}
+.nudgeRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.fileGot {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 0.55rem 0.7rem;
+  border: 1px solid var(--home-line); border-radius: 8px; font-size: var(--type-support); color: var(--text-secondary);
+}
+.chooseAgain { margin-left: auto; }
+.hiddenInput { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.readText { white-space: pre-wrap; margin: 0; }
+.radioRow {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.6rem; align-items: start; padding: 0.6rem 0.7rem;
+  border: 1px solid var(--home-line); border-radius: 8px; cursor: pointer;
+}
+.radioRow + .radioRow { margin-top: 0.4rem; }
+.radioRow input { margin-top: 0.2rem; }
+.radioTitle { font-weight: 600; color: var(--text-primary); font-size: var(--type-body); }
+.radioSub { grid-column: 2; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.legend { padding: 0; margin: 0 0 0.35rem; font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); }

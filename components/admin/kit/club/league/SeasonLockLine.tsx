@@ -1,7 +1,8 @@
 'use client';
 import { useParams, usePathname } from 'next/navigation';
 import { useHouseLeagueSeasons } from '../../useHouseLeagueSeasons';
-import { seasonGroup, seasonPageAt, type SeasonPageKey } from '@/lib/house-league-season';
+import { seasonGroup, seasonPageAt, seasonSegment, type SeasonPageKey } from '@/lib/house-league-season';
+import { FORM_WORDS } from '@/lib/club-form-words';
 import s from './LeagueSeason.module.css';
 
 /** What each page of a finished season says, once (copy §5). Email families says nothing: it stays open (owner 2026-10-24). */
@@ -25,6 +26,7 @@ export default function SeasonLockLine() {
   const pathname = usePathname();
   const season = useHouseLeagueSeasons(true).find(x => x.id === seasonId);
   if (!season || seasonGroup(season) !== 'past') return null;
-  const line = LOCK_LINE[seasonPageAt(pathname)];
+  // The sign-up form, one level down from the Overview (Board Ready Stage 4, drawing tab 8), says its own line.
+  const line = seasonSegment(pathname) === 'form' ? FORM_WORDS.lockLine : LOCK_LINE[seasonPageAt(pathname)];
   return line ? <p className={s.lockLine}>{line}</p> : null;
 }
