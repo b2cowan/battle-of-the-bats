@@ -55,8 +55,23 @@ moving between the two meets the same shape — a name beside its web address, a
 relative to billing. Drawn to the house mockup rules (an Artifact page, whole-screen before/after, true size; `/design`
 reviews it before hand-off).
 
-- [ ] Drawing session, both workspaces on one page (sister plan step 2a + this stage).
-- [ ] Owner rules the named questions below at the drawing.
+- [x] Drawing session, both workspaces on one page (sister plan step 2a + this stage) — 2026-11-20,
+  https://claude.ai/artifact/K6TYzjQ1NZSZxfug9u4Rpz v1 (source `SETTINGS_BOTH_WORKSPACES_DRAWINGS.html`), `/design` review
+  applied before hand-off.
+- [x] Owner rules the named questions below at the drawing — **⚖ RULED 2026-11-20** (owner, paste-back of all eleven asks,
+  every one as recommended):
+  - **A1 (Q1):** the Web address tab becomes **Name & address** — one card, two rows (Name · Web address), no new tab.
+  - **A2 (Q2):** the deletion request is the **last section of Plan & billing**, free Tournament (after "Managing more than
+    tournaments?") and Tournament Plus (after Reduce or cancel) — the same place as the Premium portal.
+  - **A3 (Q3):** everyone who reaches Settings & access sees the name; only the owner gets **Rename**, others read
+    "Owner only" (the web address's rule). The deletion door needs no rule: Plan & billing is owner-only already.
+  - **A4 (Q4):** the drafted window (drawing tab 6) goes to `/legal` as written.
+  - **A9:** both buttons on Name & address are the white button (two equal actions, no lime on the tab).
+  - **A10:** **record each deletion request** (a small database change); the section shows "Request sent {date}. We'll
+    reply to {owner email} within 30 days." until we answer. Stage 3's first task (migration + dictionary + snapshots),
+    subject to `/legal`.
+  - **A11:** the window says a paid plan keeps renewing and points at Cancel; a request does not cancel the plan.
+  - (A5–A8 are the sister plan's — recorded there.)
 
 **Named questions for the drawing (open — not decided here):**
 
@@ -77,7 +92,7 @@ reviews it before hand-off).
 
 Shared with the sister plan's step 2b (`/legal` on the same request's new home in the Coaches Portal): one review for both.
 
-- [ ] `/legal` reviews the drawn wording against the privacy policy (§ rights, "ask us to close your account and delete your
+- [x] `/legal` reviews the drawn wording against the privacy policy (§ rights, "ask us to close your account and delete your
   information … within 30 days").
 - [ ] **Questions to put to `/legal`, found in the re-check (not decided):** the request goes to `fieldlogichq@gmail.com`
   while the policy names `privacy@fieldlogichq.ca`; nothing is recorded, so nobody can show a request was answered within
@@ -85,6 +100,24 @@ Shared with the sister plan's step 2b (`/legal` on the same request's new home i
   **person's** account — does the window need to say which it is, and where a staff member (not the owner) asks?
 - [ ] Apply what it finds, or record it here as an owner question. A policy that promises what the product does not do is
   a defect to plan, not wording to soften.
+- **✅ `/legal` ran 2026-11-20** — `docs/agents/legal/ORG_DELETION_REQUEST_WINDOW.md` (wording v0.2, applied to drawing
+  tab 6). No lawyer needed for the window. Applied: "What isn't" names the tax records, the deletion record and backups
+  and keeps everyone's sign-in; "Download or print anything you need to keep first"; reply promised within 30 days,
+  deletion only on confirmation. For the build: the request goes to **privacy@fieldlogichq.ca**; the A10 record (org,
+  who, when, reason, status, when answered) survives deletion as part of the deletion record; the confirmation goes to
+  **every active owner**; the reply carries nothing commercial (CASL); "Export them first from Accounting" must name a
+  page a Tournament Plus organization has. Privacy Policy: one §9 clause in the next version (carried forward in the
+  legal index).
+- **Owner questions from `/legal` — ⚖ RULED 2026-11-20** (owner: "L-A yes, L-B copy all"): L-A the paid-plan line as
+  recommended; L-B the confirmation email copies every active owner, and one owner's confirmation is enough.
+  - **L-A · a paid plan blocks deletion.** Platform-admin deletion refuses an uncancelled subscription, so a paying
+    customer's organization can be deleted only when the paid time ends, or now by ending the plan early with no refund
+    (Terms §8). /legal recommends the window say exactly that — "{Plan} is paid until {date}. We can delete {name} then,
+    or now. Deleting now ends {plan} early, and the time left isn't refunded. Tell us which when we reply." — in place of
+    A11's "Cancel it first" line (which does not make deletion sooner). Amends A11's wording, not its rule (a request
+    still does not cancel the plan).
+  - **L-B · co-owners.** One owner's confirmation deletes an organization other owners run; /legal recommends the
+    confirmation email copy every active owner (a co-owner can object in reply). Yes / or require every owner?
 
 ### Stage 3 — Build
 

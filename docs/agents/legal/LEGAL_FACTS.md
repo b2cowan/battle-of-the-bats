@@ -75,7 +75,10 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   created on the first live open). Two-step sign-in (authenticator app + hashed backup codes; club-requirable; staff always) is built on dev, Parts 1–4 (`docs/projects/active/BOARD_READY_TWO_STEP_BUILD_PROMPTS.md`, 2026-11-11/12; see `TWO_STEP_SIGNIN_PRIVACY.md`); deployment state lives in the release-history record, and the privacy policy describes it only once it is live. No automatic purge at the end of a retention window. Deleting an organization
   removes the files uploaded to it after its rows (every file under its id in the six club stores, and its old rules files
   no other club links to); a removal that fails is shown to staff and logged by the club's id; the public demo clubs are
-  refused (built, committed `45c134bea` 2026-11-15; deployment state: the release-history record). Deleting one tournament,
+  refused (built, committed `45c134bea` 2026-11-15; deployment state: the release-history record). **Read 2026-11-20:** that
+  deletion (our staff's tool) refuses while the organization's Stripe subscription is not cancelled, and while a card
+  dispute or bank debit is open; it deletes no sign-in account. The owner's in-product request records nothing (a record
+  ruled 2026-11-20, A10, not built). Topic: `ORG_DELETION_REQUEST_WINDOW.md`. Deleting one tournament,
   team, player or person still leaves that item's files. Full list: `drafts/PRIVACY_POLICY.md` § Product findings.
 - **Stripe:** a data-processing addendum is in place (`FACILITATED_PAYMENTS_COUNSEL_BRIEF.md` ~L37).
 - **Data-processing terms — how each supplier's are accepted** (read on each supplier's own site 2026-11-08; owner P3 ruled

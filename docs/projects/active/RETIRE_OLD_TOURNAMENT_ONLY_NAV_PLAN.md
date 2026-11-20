@@ -261,6 +261,31 @@ answers undid call 1:
   (`birthday-cutoffs/route.ts:11-13`), so it is stuck at January 1. Not ruled; a candidate row for the same Organization
   section, to raise at the drawing.
 
+**⚖ Step 2a, the drawing — RULED 2026-11-20** (owner, paste-back of all eleven asks, every one as recommended). Drawing:
+https://claude.ai/artifact/K6TYzjQ1NZSZxfug9u4Rpz v1 (source `SETTINGS_BOTH_WORKSPACES_DRAWINGS.html`), drawn with the
+sister plan's Stage 1; its A1/A2/A9–A11 are recorded there. For the Premium Coaches Portal:
+- **A3:** the Organization section's name, web address and birthday rows are the **owner's**; a head coach who is not the
+  owner sees them read-only ("Owner only"). The deletion request needs no rule (the billing page is owner-only).
+- **A5 — the coach renames the TEAM.** One row, **Team name**; saving it renames the team and the workspace to
+  "{new name} Coaches Portal" with it (the product already names a workspace that way and strips the suffix for display).
+  Needs a new team-name save; the team PATCH takes no name today.
+- **A6:** a **When birthdays count from** row in Organization — one date for the team's sport (the card's module gate does
+  not let a Premium coach set it today).
+- **A7:** with the seats meter gone, the plan card is **one column**; the slot is a line, "1 of 1 tournament slot in use"
+  (a lone one-slot meter is full — danger-coloured — whenever the coach runs their one tournament).
+- **A8:** **More print options** (folded inside How your documents look, saved by its one Save look) holds seven rows: Page
+  numbers · Date printed · FieldLogicHQ mark · Page direction · Spacing · Guardian contacts · Player notes. Not carried:
+  file names (a fixed pattern, no control), the two header lines, accent colour and footer (already in the card),
+  internal admin notes (registration forms).
+- **A4/A10/A11** as in the sister plan: the draft deletion window goes to `/legal`; each request is recorded and the
+  "Request sent" line stays until answered; a paid plan keeps renewing and the window says so.
+- Organization's meta becomes "{team} · not in a club" and its who line opens "The owner changes these."
+No build go was given with these rulings.
+
+**Step 2b's `/legal` on the deletion request ran 2026-11-20**, shared with the sister plan:
+`docs/agents/legal/ORG_DELETION_REQUEST_WINDOW.md`, wording v0.2 on drawing tab 6. What it applied and the two owner
+questions it raised (L-A: a paid plan blocks deletion; L-B: co-owners) are recorded in the sister plan's Stage 2.
+
 **Call 4 narrows with it.** Two-step and the birthday cutoff are not tournament concerns, so the Tournament plan's real
 gap is a **rename and a deletion request** only. **Opened through `/plan` 2026-11-20:**
 [TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md](TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md). The re-check narrowed it again: the
