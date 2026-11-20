@@ -44,6 +44,7 @@ This file is the **index** of open work: **one line per project**. **A project's
 - [ ] **Club, after launch** — status on the board · plan [CLUB_TIER_PRODUCTION_READINESS_PLAN.md §7](docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md)
 - [ ] **Tryouts from a phone** — status on the board · plan [COACH_TRYOUTS_PHONE_PLAN.md](docs/projects/active/COACH_TRYOUTS_PHONE_PLAN.md)
 - [ ] **The public face, warm** — status on the board · plan [PUBLIC_FACE_WARM_PLAN.md](docs/projects/active/PUBLIC_FACE_WARM_PLAN.md)
+- [ ] **The Tournament plan's missing settings** — status on the board · plan [TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md](docs/projects/active/TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md)
 
 ## Chores
 

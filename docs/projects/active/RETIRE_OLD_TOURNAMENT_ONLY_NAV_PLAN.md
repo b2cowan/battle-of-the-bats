@@ -165,7 +165,9 @@ built and the gate's findings:
    the `proxy.ts` redirect, the path-keyed references, the delete of the old help branch, a unit guard against a new link to
    `/admin/org/tournaments`. Fold in found-on-the-way 2 and 3. Independent of everything else; smallest; do it first.
 2. **⚖ Replaced by 1R (2026-11-20):** step 2 is now (a) the drawing of the portal additions, (b) `/strategy` on the
-   Premium board seats and `/legal` on the deletion request's wording, (c) the portal's three settings built, (d) the old
+   Premium board seats and `/legal` on the deletion request's wording — (a) and the `/legal` review are shared with
+   [TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md](TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md) Stages 1–2, one drawing for both
+   workspaces — (c) the portal's three settings built, (d) the old
    Account group, the tournament side's Staff & access / Audit log / Settings for a Premium workspace, and the two-step
    switch retired, with redirects for their old addresses (the coaches' help rewritten with `/docs`). The text below is
    the step as it stood under call 1, kept for the record.
@@ -181,7 +183,9 @@ built and the gate's findings:
    covering a Premium coach on a computer and a phone, and a Tournament-plan owner's list with `?create=1`.
 
 The Tournament plan's missing settings (call 4) is a separate item whatever is ruled; if it is built, it shares step 2's
-drawing so both kinds of workspace end on one Settings & access shape.
+drawing so both kinds of workspace end on one Settings & access shape. **Opened 2026-11-20:**
+[TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md](TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md) — its Stage 1 is step 2a's drawing
+(one session for both workspaces) and its Stage 2 shares step 2b's `/legal` review of the deletion request.
 
 #### Owner calls — ⚖ RULED 2026-11-20 (owner, in conversation: "1 yes, 2 yes, i am not asking you to change but I need to visualize what you are talking about here, 3 yes, 4 yes")
 
@@ -258,7 +262,9 @@ answers undid call 1:
   section, to raise at the drawing.
 
 **Call 4 narrows with it.** Two-step and the birthday cutoff are not tournament concerns, so the Tournament plan's real
-gap is a **rename and a deletion request** only. The item is still to be opened through `/plan`.
+gap is a **rename and a deletion request** only. **Opened through `/plan` 2026-11-20:**
+[TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md](TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md). The re-check narrowed it again: the
+Tournament plan already changes its **web address** (Settings & access › Web address), so the rename is the **name** only.
 
 The calls as they were put:
 

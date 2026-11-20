@@ -311,6 +311,14 @@
       "next": "Rule the tap size for dialog-footer buttons on a phone and a tablet.",
       "remains": "Your call, then the small controls below the tap size across the coaches portal, a screen at a time.",
       "waitsOn": [], "finishesAfter": [],
-      "youOwe": ["Rule the tap size for dialog-footer buttons on a phone and a tablet"] }
+      "youOwe": ["Rule the tap size for dialog-footer buttons on a phone and a tablet"] },
+    { "id": "tournament-settings", "name": "The Tournament plan's missing settings", "track": "product", "state": "open", "checked": true,
+      "files": ["TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md", "TOURNAMENT_PLAN_MISSING_SETTINGS_PM_BRIEF.md"], "ledger": ["Tournament plan settings"],
+      "goals": ["quality"], "lane": "later", "order": 53, "phase": "Planning",
+      "stage": "Now: planned 20 Nov; the gap re-checked: a Tournament or Tournament Plus owner cannot change the organization's name or ask us to delete it (the web address already has its own tab) → Next: one drawing shared with the Premium coach's settings move",
+      "next": "Draw both kinds of workspace's settings in one session (the Premium coach's three portal settings and these two), ruling where the name and the deletion request sit.",
+      "remains": "The shared drawing and its four questions, /legal on the deletion request's wording (shared with the Premium coach's), the build, and one walk.",
+      "waitsOn": [], "finishesAfter": [],
+      "youOwe": [] }
   ]
 }
