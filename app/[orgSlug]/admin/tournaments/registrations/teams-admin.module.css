@@ -298,6 +298,9 @@
 .recordFacts dt { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
 .recordFacts dd { margin: 0; min-width: 0; text-align: right; overflow-wrap: anywhere; }
 .recordFacts a { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }
+/* The answers to questions the organizer archived (F1, owner ruling 15): a quiet label under the current answers. A heading,
+   not a <p>, for the `.modal p` reason given at `.paySub` below. */
+.answersSub { margin: 0.75rem 0 0.15rem; font-size: var(--type-support); line-height: 1.3; font-weight: 650; color: var(--text-tertiary); }
 /* A section's first row of fields sits right under its heading. */
 .recordFieldsLead { margin-top: 0; }
 .recordFieldWide { grid-column: 1 / -1; }

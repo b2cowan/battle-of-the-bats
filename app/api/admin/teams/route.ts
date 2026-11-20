@@ -40,6 +40,7 @@ import {
   getTournamentRegistrationFieldAnswersForRegistrations,
   getTournamentRegistrationFields,
 } from '@/lib/db';
+import { teamRecordAnswers } from '@/lib/registration-answers';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { paymentErrorResponse, payTeamDue } from '@/lib/team-payments-server';
@@ -116,28 +117,14 @@ export const GET = withObservability(async (req: Request) => {
     seed: t.seed ?? null,
   }));
 
+  // F1 (owner ruling 15, 2026-11-20): an archived question's answers stay with the registration, so the record reads every
+  // question, archived included. F2: a file answer carries its NAME and `file: true`, never the storage key — the record
+  // opens it through the signed-link route (lib/registration-answers.ts).
   const [fields, answers] = await Promise.all([
-    getTournamentRegistrationFields(tournamentId),
+    getTournamentRegistrationFields(tournamentId, { includeArchived: true }),
     getTournamentRegistrationFieldAnswersForRegistrations(teams.map(team => team.id)),
   ]);
-  const fieldMap = new Map(fields.map(field => [field.id, field]));
-  const answersByRegistration = new Map<string, Array<{
-    fieldId: string;
-    label: string;
-    fieldType: string;
-    value: string;
-  }>>();
-  for (const answer of answers) {
-    const field = fieldMap.get(answer.fieldId);
-    if (!field) continue;
-    let value = answer.fileUrl ?? answer.valueText ?? '';
-    if (!value && answer.valueJson && typeof answer.valueJson === 'object' && 'checked' in answer.valueJson) {
-      value = (answer.valueJson as { checked?: unknown }).checked ? 'Yes' : 'No';
-    }
-    const list = answersByRegistration.get(answer.registrationId) ?? [];
-    list.push({ fieldId: field.id, label: field.label, fieldType: field.fieldType, value });
-    answersByRegistration.set(answer.registrationId, list);
-  }
+  const answersByRegistration = teamRecordAnswers(fields, answers);
 
   const teamsWithAnswers = teams.map(team => ({
     ...team,

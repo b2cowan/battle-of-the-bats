@@ -24,6 +24,9 @@ import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { PAY_WORDS } from '@/lib/online-payment-words';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import PublicPage from '@/components/public/PublicPage';
+import {
+  looksLikeRegistrationFile, REGISTRATION_FILE_ACCEPT, REGISTRATION_FILE_WORDS, REGISTRATION_FILES_MAX_BYTES,
+} from '@/lib/registration-answers';
 import parts from '@/components/public/PublicParts.module.css';
 
 /**
@@ -51,6 +54,25 @@ type FeeSchedule = {
 
 type CustomAnswerState = Record<string, string>;
 type CustomFileState = Record<string, File | null>;
+
+/** A refusal that belongs under one file question (F3), carried through the submit's `throw`. */
+function fileFieldError(fieldId: string, message: string): Error {
+  return Object.assign(new Error(message), { fileFieldId: fieldId });
+}
+/** Hands a held file back to a picker that came back empty. A browser that cannot set a picker's files keeps it empty;
+ *  the held file is still sent, and the question is not re-required (its `required` follows the held file). */
+function restoreHeldFile(input: HTMLInputElement | null, file: File | null | undefined) {
+  if (!input || !file || (input.files && input.files.length > 0)) return;
+  try {
+    const held = new DataTransfer();
+    held.items.add(file);
+    input.files = held.files;
+  } catch { /* an older browser: see above */ }
+}
+function fileFieldIdOf(err: unknown): string | null {
+  const id = err && typeof err === 'object' ? (err as { fileFieldId?: unknown }).fileFieldId : null;
+  return typeof id === 'string' ? id : null;
+}
 
 type RegistrationConfirmation = {
   id?: string;
@@ -290,6 +312,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   });
   const [customAnswers, setCustomAnswers] = useState<CustomAnswerState>({});
   const [customFiles, setCustomFiles] = useState<CustomFileState>({});
+  /** F3: the words under a file question whose file was refused (by the picker's early check, or by the server's). */
+  const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [signedInCoachEmail, setSignedInCoachEmail] = useState<string | null>(null);
   // True once the coach-session check has settled. Nothing but the loading line renders before it:
   // Step 1 must not flash at a coach who is already signed in and starts at Step 2 (J6-037's
@@ -587,8 +611,53 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       return !customAnswers[field.id]?.trim();
     });
     if (missingField) throw new Error(`Please complete: ${missingField.label}`);
+    // F3: the files together under the proxy's limit — past it the form arrives cut and the server cannot say which.
+    let fileBytes = 0;
+    for (const field of registrationFields) {
+      const file = field.fieldType === 'file' ? customFiles[field.id] : null;
+      if (!file) continue;
+      fileBytes += file.size;
+      if (fileBytes > REGISTRATION_FILES_MAX_BYTES) throw fileFieldError(field.id, REGISTRATION_FILE_WORDS.tooBig(field.label));
+    }
 
     return { selectedGroup, isWaitlist, headCoach: headCoachPick.headCoach };
+  }
+
+  /** A refused file: its question says why, the file is let go (a remounted picker is empty anyway), and the person is
+   *  back on the form at that question — never on the error card, whose Try Again would resend the same file. */
+  function showFileError(fieldId: string, message: string) {
+    setCustomFiles(prev => ({ ...prev, [fieldId]: null }));
+    setFileErrors(prev => ({ ...prev, [fieldId]: message }));
+    setStep('form');
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`reg-file-${fieldId}`) as HTMLInputElement | null;
+      if (!el) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      el.value = ''; // a picker that stayed mounted still names the refused file
+
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      el.focus({ preventScroll: true });
+    });
+  }
+
+  /** The picker's early answer (F3): the name or type must look like one of the four, and the files together must fit.
+   *  The server still reads the bytes. */
+  function pickFile(field: { id: string; label: string }, file: File | null, input: HTMLInputElement) {
+    if (file && !looksLikeRegistrationFile(file.name, file.type)) {
+      input.value = '';
+      setCustomFiles(prev => ({ ...prev, [field.id]: null }));
+      setFileErrors(prev => ({ ...prev, [field.id]: REGISTRATION_FILE_WORDS.wrongType(field.label) }));
+      return;
+    }
+    const others = registrationFields.reduce((sum, f) => sum + (f.id !== field.id && f.fieldType === 'file' ? customFiles[f.id]?.size ?? 0 : 0), 0);
+    if (file && others + file.size > REGISTRATION_FILES_MAX_BYTES) {
+      input.value = '';
+      setCustomFiles(prev => ({ ...prev, [field.id]: null }));
+      setFileErrors(prev => ({ ...prev, [field.id]: REGISTRATION_FILE_WORDS.tooBig(field.label) }));
+      return;
+    }
+    setCustomFiles(prev => ({ ...prev, [field.id]: file }));
+    setFileErrors(prev => { const next = { ...prev }; delete next[field.id]; return next; });
   }
 
   function handleReview(e: React.FormEvent) {
@@ -600,6 +669,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       setStep('review');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
+      const fileFieldId = fileFieldIdOf(err);
+      if (fileFieldId) { showFileError(fileFieldId, (err as Error).message); return; }
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStep('error');
     }
@@ -669,7 +740,11 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         });
 
         if (!res.ok) {
-          const { error, code, termsVersion } = await res.json() as { error?: string; code?: string; termsVersion?: string };
+          const { error, code, termsVersion, fieldId } = await res.json() as { error?: string; code?: string; termsVersion?: string; fieldId?: string };
+          // F3: a file the server refused goes back under its own question.
+          if (fieldId && error && registrationFields.some(f => f.id === fieldId && f.fieldType === 'file')) {
+            throw fileFieldError(fieldId, error);
+          }
           // The Terms refusal: the box un-ticks when the Terms moved, and the next tick sends the version now current.
           const termsLine = terms.refusal({ code, termsVersion });
           if (termsLine) throw new Error(termsLine);
@@ -874,6 +949,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       setStep('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
+      const fileFieldId = fileFieldIdOf(err);
+      if (fileFieldId) { showFileError(fileFieldId, (err as Error).message); return; }
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStep('error');
     }
@@ -1254,12 +1331,24 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                 </label>
               )}
               {field.fieldType === 'file' && (
-                <input
-                  className="form-input"
-                  type="file"
-                  onChange={e => setCustomFiles(prev => ({ ...prev, [field.id]: e.target.files?.[0] ?? null }))}
-                  required={field.required}
-                />
+                <>
+                  <input
+                    id={`reg-file-${field.id}`}
+                    // A picker remounted on the way back to the form (from Review or a refusal) is born empty while the
+                    // chosen file is still held and still sent: put it back, so what the page shows is what goes (/review).
+                    ref={el => restoreHeldFile(el, customFiles[field.id])}
+                    className="form-input"
+                    type="file"
+                    accept={REGISTRATION_FILE_ACCEPT}
+                    onChange={e => pickFile(field, e.target.files?.[0] ?? null, e.target)}
+                    required={field.required && !customFiles[field.id]}
+                    aria-invalid={fileErrors[field.id] ? true : undefined}
+                    aria-describedby={fileErrors[field.id] ? `reg-file-${field.id}-error` : undefined}
+                  />
+                  {fileErrors[field.id] && (
+                    <p id={`reg-file-${field.id}-error`} className={styles.inlineError} role="alert">{fileErrors[field.id]}</p>
+                  )}
+                </>
               )}
             </div>
           ))}

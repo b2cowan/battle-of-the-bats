@@ -37,6 +37,7 @@ import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
 import { RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { formatStoredDate } from '@/lib/timezone';
+import { REGISTRATION_FILE_WORDS } from '@/lib/registration-answers';
 import { TEAM_RECORD_WORDS as W, TEAM_STATUS_CHIP, TEAMS_LOCK_PLAN, TEAMS_WORDS } from '@/lib/registration-words';
 import { formatPoolName } from '@/lib/utils';
 import type { EventPayments } from '@/lib/invite-only-event';
@@ -525,13 +526,33 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
           )}
         </RecordSection>}
 
-        {t.customAnswers && t.customAnswers.length > 0 && (
-          <RecordSection title={W.answers}>
-            <dl className={styles.recordFacts}>
-              {t.customAnswers.map(a => <div key={a.fieldId}><dt>{a.label}</dt><dd>{a.value || '—'}</dd></div>)}
-            </dl>
-          </RecordSection>
-        )}
+        {t.customAnswers && t.customAnswers.length > 0 && (() => {
+          // F1: an archived question's answer stays with the team, under "No longer asked". F2: a file answer is its name,
+          // opened through the signed-link route (a one-hour download link, after the answers' own access check).
+          const fileHref = (fieldId: string) => {
+            const org = props.orgQuery ? props.orgQuery.replace(/^\?/, '&') : '';
+            return `/api/admin/tournaments/${encodeURIComponent(props.tournamentId)}/registrations/${encodeURIComponent(t.id)}/file?fieldId=${encodeURIComponent(fieldId)}${org}`;
+          };
+          const fact = (a: NonNullable<typeof t.customAnswers>[number]) => (
+            <div key={a.fieldId}>
+              <dt>{a.label}</dt>
+              <dd>{a.file
+                ? <a href={fileHref(a.fieldId)} target="_blank" rel="noopener noreferrer">{a.value}</a>
+                : a.value || '—'}</dd>
+            </div>
+          );
+          const asked = t.customAnswers.filter(a => !a.archived);
+          const archived = t.customAnswers.filter(a => a.archived);
+          return (
+            <RecordSection title={W.answers}>
+              {asked.length > 0 && <dl className={styles.recordFacts}>{asked.map(fact)}</dl>}
+              {archived.length > 0 && <>
+                <h4 className={styles.answersSub}>{REGISTRATION_FILE_WORDS.noLongerAsked}</h4>
+                <dl className={styles.recordFacts}>{archived.map(fact)}</dl>
+              </>}
+            </RecordSection>
+          );
+        })()}
 
         {registrationBlock}
 

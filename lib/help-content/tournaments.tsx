@@ -510,8 +510,9 @@ const tournamentsHelp: HelpPageContent = {
           content: (
             <>
               <p><strong>Registration questions</strong> (Tournament Plus and above; the free Tournament plan has no registration form, so no card) is a card on <strong>Event settings</strong>. It lists the extra questions every team&rsquo;s registration form asks, in the order teams see them: each says its type, how many choices a dropdown has, and whether it&rsquo;s required. On the Teams page, <strong>Tools</strong> &rsaquo; <strong>Registration questions</strong> opens the same card.</p>
-              <p><strong>Add a question</strong> sits at the top right of the card (on a phone, the <strong>+</strong> button). Tap a question to open it over Event settings. The pencil lets you change its words, its type, a dropdown&rsquo;s choices (one per line), and whether it&rsquo;s required; your changes save as you go. <strong>Archive this question</strong> at the end asks first: a question is archived, not deleted, so the answers teams already gave stay with their registrations.</p>
+              <p><strong>Add a question</strong> sits at the top right of the card (on a phone, the <strong>+</strong> button). Tap a question to open it over Event settings. The pencil lets you change its words, its type, a dropdown&rsquo;s choices (one per line), and whether it&rsquo;s required; your changes save as you go. <strong>Archive this question</strong> at the end asks first: a question is archived, not deleted, so the answers teams already gave stay with their registrations. The form stops asking it; a team&rsquo;s record keeps its answer under <strong>No longer asked</strong>, and the export keeps it as a column marked <strong>(no longer asked)</strong>, after the current questions.</p>
               <p>To change the order, drag a question by its handle (on a phone, hold it first), or tap the handle for <strong>Move up</strong> and <strong>Move down</strong>. Each move saves.</p>
+              <p>A <strong>File upload</strong> question takes a PDF, JPEG, PNG or HEIC (an iPhone photo). FieldLogicHQ checks what the file really is, not just its name, and all the files on one registration together can be up to 9 MB. Anything else gets a message under that question naming the four types. On the team&rsquo;s record the answer is the file&rsquo;s name: click it to download the file through a link that works for one hour. The export says <strong>Attached</strong>.</p>
             </>
           ),
         },
@@ -777,10 +778,16 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-custom-registration-questions',
           question: 'How do custom registration questions work?',
-          answerText: 'Tournament Plus lets admins add tournament-specific questions and file uploads to the public team registration form. Open Event settings, then the Registration questions card, and choose Add a question. The questions appear on the public registration form, and submitted answers appear in registration details and exports. The free Tournament plan has no registration form, so Event settings has no Registration questions card.',
-          keywords: ['custom questions', 'registration fields', 'file upload', 'Tournament Plus', 'add a question', 'event settings', 'free plan'],
+          answerText: 'Tournament Plus lets admins add tournament-specific questions and file uploads to the public team registration form. Open Event settings, then the Registration questions card, and choose Add a question. The questions appear on the public registration form, and submitted answers appear on the team’s record and in the export. An archived question stops being asked, but its answers stay: under No longer asked on the record, and as a (no longer asked) column in the export. A File upload question takes a PDF, JPEG, PNG or HEIC (an iPhone photo), up to 9 MB for all the files on one registration; on the record, click the file’s name to download it through a link that works for one hour, and the export says Attached. The free Tournament plan has no registration form, so Event settings has no Registration questions card.',
+          keywords: ['custom questions', 'registration fields', 'file upload', 'Tournament Plus', 'add a question', 'event settings', 'free plan', 'archive a question', 'no longer asked', 'archived answers', 'file types', 'pdf', 'jpeg', 'png', 'heic', 'iphone photo', 'file size', '9 MB', 'download file', 'attached'],
           answer: (
-            <p>Open <strong>Event settings</strong>, then the <strong>Registration questions</strong> card, and choose <strong>Add a question</strong>. Tournament Plus questions appear on the public registration form and submitted answers appear in registration details and exports.</p>
+            <>
+              <p>Open <strong>Event settings</strong>, then the <strong>Registration questions</strong> card, and choose <strong>Add a question</strong>. Tournament Plus questions appear on the public registration form, and submitted answers appear on the team&rsquo;s record and in the export.</p>
+              <ul>
+                <li><strong>An archived question</strong> stops being asked, but its answers stay: under <strong>No longer asked</strong> on the record, and as a <strong>(no longer asked)</strong> column in the export.</li>
+                <li><strong>A File upload question</strong> takes a PDF, JPEG, PNG or HEIC (an iPhone photo), up to 9 MB for all the files on one registration. On the record, click the file&rsquo;s name to download it through a link that works for one hour; the export says <strong>Attached</strong>.</li>
+              </ul>
+            </>
           ),
         },
       ],

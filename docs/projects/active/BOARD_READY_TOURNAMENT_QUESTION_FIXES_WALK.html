@@ -1,0 +1,277 @@
+<title>Registration Questions Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one reading column; a sticky progress strip; each walk a section of Do → See rows with boxes on the left. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d231c; --muted: #5a6357; --line: #dde2d8;
+  --accent: #3f6b2a; --accent-ink: #ffffff; --soft: #e8efe2;
+  --pass: #2f7a3a; --issue: #b23a2e; --call: #9a6a00;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141813; --surface: #1c221b; --ink: #e7ece3; --muted: #a3ad9e; --line: #2f382d;
+  --accent: #8fc46f; --accent-ink: #10150e; --soft: #243020;
+  --pass: #6fcf7d; --issue: #ff8a7a; --call: #e6b54a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141813; --surface: #1c221b; --ink: #e7ece3; --muted: #a3ad9e; --line: #2f382d;
+  --accent: #8fc46f; --accent-ink: #10150e; --soft: #243020;
+  --pass: #6fcf7d; --issue: #ff8a7a; --call: #e6b54a; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.7rem; } h2 { font-size: 1.25rem; } h3 { font-size: 1rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.strip { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.strip-in { max-width: 760px; margin: 0 auto; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 160px; height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); width: 0; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.card dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.9em; background: var(--soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ul.plain { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; }
+section.walk { display: grid; gap: 12px; }
+.walk-head { display: grid; gap: 6px; }
+.steps { display: grid; gap: 8px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; }
+.step.done { border-color: var(--accent); }
+.num { font-family: var(--font-display); font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.6rem; }
+.who { display: inline-block; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.do b, .see b { font-weight: 600; }
+.see { color: var(--muted); }
+.see::before { content: "You should see: "; font-weight: 600; color: var(--ink); }
+.boxes { display: grid; gap: 4px; margin-top: 4px; }
+label.box { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+label.box input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+.signoff { display: grid; gap: 8px; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdicts button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdicts button[aria-pressed="true"][data-v="pass"] { background: var(--pass); border-color: var(--pass); color: var(--accent-ink); }
+.verdicts button[aria-pressed="true"][data-v="issue"] { background: var(--issue); border-color: var(--issue); color: var(--accent-ink); }
+.verdicts button[aria-pressed="true"][data-v="call"] { background: var(--call); border-color: var(--call); color: var(--accent-ink); }
+textarea { font: inherit; width: 100%; box-sizing: border-box; min-height: 64px; padding: 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.primary { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 6px; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#summary { white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 0.85rem; }
+</style>
+
+<div class="strip"><div class="strip-in">
+  <strong>Registration questions F1–F3</strong>
+  <div class="bar" aria-hidden="true"><span id="barFill"></span></div>
+  <span class="count" id="count">0 of 0</span>
+</div></div>
+
+<main class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>Registration questions: archived answers, file links, file types</h1>
+    <p class="muted">Board Ready ruling 15 (fixes F1–F3). Written 2026-11-20 against the dev build. One walk per job; tick a box only when you see what it says.</p>
+  </header>
+
+  <div class="card">
+    <h2>What this checks</h2>
+    <ul class="plain">
+      <li><b>F3 · the form:</b> a File upload question takes a PDF, JPEG, PNG or HEIC only, checked from the file itself; all files together up to 9 MB; a refused file says why under its own question and you stay on the form.</li>
+      <li><b>F2 · the record:</b> a file answer is its name, and clicking it downloads the file; the export says “Attached”, never a storage address.</li>
+      <li><b>F1 · archiving:</b> an archived question leaves the form, but its answer stays on the team’s record under “No longer asked” and in the export as a “(no longer asked)” column.</li>
+    </ul>
+    <p class="muted"><b>It passes when</b> every box is ticked as written. <b>Not in this walk:</b> waiting an hour for a download link to expire (the link is made with a one-hour limit; the unit tests pin it), every role’s access (the unit tests run the real access rule for coach, treasurer, official and an admin without Tournaments; the walk tries one), and the help article (read it at Help › Tournaments › Event settings if you like).</p>
+  </div>
+
+  <div class="card">
+    <h2>Before you start</h2>
+    <ul class="plain">
+      <li><b>Restart the dev server once</b> (this change added new files): stop it, then <code>npm run dev</code>, and wait for “Ready”.</li>
+      <li><b>Test files</b> are in <code>C:\tmp\f3-walk-files</code>: <code>medical-form.pdf</code> (a real PDF), <code>fake.pdf</code> (a web page renamed .pdf), <code>notes.txt</code>, <code>big-scan.pdf</code> (10 MB). For the optional step 15, an iPhone photo (.HEIC) if you have one.</li>
+      <li><b>Two windows:</b> a normal one signed in as the owner, and a <b>private window</b> for the public form (it must be signed out).</li>
+    </ul>
+    <h3>Sign in as (dev only — keep this page private)</h3>
+    <dl>
+      <dt>Address</dt><dd><code>http://localhost:3000/login</code></dd>
+      <dt>Owner</dt><dd><code>uat-owner@uat-test-org.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>Official</dt><dd><code>uat-scorekeeper@uat-test-org.local</code> · <code>UATPassword2026!</code> (step 26 only)</dd>
+      <dt>Club</dt><dd>UAT Test Org (Tournament Plus)</dd>
+      <dt>Event</dt><dd><b>UAT Import Smoke Tournament</b> (starts 2099, so registration is open; division U12). Pick it in the tournament switcher on every admin screen.</dd>
+      <dt>Public form</dt><dd><code>http://localhost:3000/uat-test-org/uat-import-smoke/register</code></dd>
+    </dl>
+    <p class="muted"><b>Stop check:</b> if Event settings for this event already lists questions named “Jersey colour” or “Medical form”, an earlier run was not put back — archive them first, then start.</p>
+  </div>
+
+  <div id="walks"></div>
+
+  <div class="card">
+    <h2>Send the results</h2>
+    <p class="muted">Builds plain text of every box, verdict and note. Copy it and paste it into the chat.</p>
+    <div><button class="primary" id="build" type="button">Build the summary</button></div>
+    <div id="summary" aria-live="polite"></div>
+  </div>
+</main>
+
+<script>
+const KEY = 'f3-question-walk-v1';
+const WALKS = [
+  { id: 'A', title: 'Walk 1 · A team attaches its file (F3)',
+    intent: 'A coach registering on the public form can only attach a PDF, JPEG, PNG or HEIC, sees why a file is refused right under the question, and never loses the rest of the form to a refusal.',
+    steps: [
+      { who: 'Owner', do: 'Open <b>Event settings</b>, then the <b>Registration questions</b> card. Press <b>Add a question</b> and make <b>Jersey colour</b>, type Short text, not required.', see: 'Jersey colour is in the list.' },
+      { who: 'Owner', do: 'Press <b>Add a question</b> again and make <b>Medical form</b>, type File upload, required.', see: 'Medical form is second in the list and says it is required.' },
+      { who: 'Private window', do: 'Open the public form address.', see: 'the form asks Jersey colour and Medical form * on the team step.' },
+      { who: 'Private window', do: 'Setup: fill in the form with email <code>f3-walk-1@example.test</code>, name F3 Walker, any password, division U12, team name <b>F3 Walk Team</b>, and tick the Terms box. Leave the two questions empty.', see: 'nothing refused yet.' },
+      { who: 'Private window', do: 'Type <b>Red</b> in Jersey colour.', see: 'Red in the box.' },
+      { who: 'Private window', do: 'Under Medical form, press <b>Choose file</b> and open <code>C:\\tmp\\f3-walk-files</code>.', see: 'the file window lists the PDFs but not notes.txt (it offers only PDF, JPEG, PNG and HEIC).' },
+      { who: 'Private window', do: 'Switch the file window to <b>All files</b> and choose <code>notes.txt</code>.', see: 'under Medical form, in red: “Medical form: upload a PDF, JPEG, PNG or HEIC file.” The picker shows no file.' },
+      { who: 'Private window', do: 'Choose <code>big-scan.pdf</code>.', see: 'under Medical form: “…the files on this form must be 9 MB or smaller in total. Choose a smaller copy.” The picker shows no file.' },
+      { who: 'Private window', do: 'Choose <code>fake.pdf</code>.', see: 'no message (its name looks like a PDF; the server reads what it really is).' },
+      { who: 'Private window', do: 'Press <b>Review Registration</b>.', see: 'the review lists Medical form: fake.pdf.' },
+      { who: 'Private window', do: 'Press <b>Submit Registration</b>.', see: 'you are back on the form at Medical form, with the four-types message under it and an empty picker. F3 Walk Team, your name and Red are all still filled in.' },
+      { who: 'Private window', do: 'Choose <code>medical-form.pdf</code>.', see: 'the red message is gone.' },
+      { who: 'Private window', do: 'Press <b>Review Registration</b>.', see: 'the review lists Medical form: medical-form.pdf and Jersey colour: Red.' },
+      { who: 'Private window', do: 'Press <b>Submit Registration</b>.', see: 'the registration is sent (the check-your-email card).' },
+      { who: 'Private window', do: 'Optional, a real phone photo: register a second team, <b>F3 Photo Team</b> (email <code>f3-walk-2@example.test</code>), attaching an iPhone .HEIC photo as its Medical form.', see: 'it is sent without a message.',
+        options: ['Did it: F3 Photo Team was sent with a .HEIC photo', 'Skipped: no iPhone photo to hand'] },
+    ] },
+  { id: 'B', title: 'Walk 2 · The organizer reads the answers back (F2, F1)',
+    intent: 'The organizer sees a file answer as its name and can download it; the export never shows a storage address; and archiving a question takes it off the form while its answers stay on the record and in the export.',
+    steps: [
+      { who: 'Owner', do: 'Open <b>Teams</b> and open <b>F3 Walk Team</b>.', see: 'under Registration answers: Jersey colour — Red, and Medical form — <u>medical-form.pdf</u> as a link.' },
+      { who: 'Owner', do: 'Click <b>medical-form.pdf</b>.', see: 'medical-form.pdf downloads (a new tab may flash open; the file is not shown in it).' },
+      { who: 'Owner', do: 'Open the downloaded file.', see: 'one page reading “F3 walk - medical form”.' },
+      { who: 'Owner', do: 'Close the record. Press <b>Export</b>, then <b>CSV</b>, and open the file.', see: 'F3 Walk Team’s Medical form column says <b>Attached</b>; nothing anywhere in the file looks like a folder path; Jersey colour says Red.' },
+      { who: 'Owner', do: 'In Event settings › Registration questions, open <b>Jersey colour</b> and press <b>Archive this question</b>.', see: 'a window asks “Archive “Jersey colour”?” and says the answers stay with the registrations.' },
+      { who: 'Owner', do: 'Press <b>Archive</b> in that window.', see: 'Jersey colour leaves the list; Medical form stays.' },
+      { who: 'Private window', do: 'Reload the public form.', see: 'Jersey colour is no longer asked; Medical form still is.' },
+      { who: 'Owner', do: 'Open <b>Teams</b> and open <b>F3 Walk Team</b>.', see: 'Medical form under Registration answers; below it a small “No longer asked” line, then Jersey colour — Red.' },
+      { who: 'Owner', do: 'Close the record. Press <b>Export</b>, then <b>CSV</b>, and open the file.', see: 'the last column is “Jersey colour (no longer asked)”, Red for F3 Walk Team; Medical form (Attached) comes before it.' },
+      { who: 'Owner', do: 'Open F3 Walk Team again, right-click <b>medical-form.pdf</b> and copy the link address.', see: 'the link is copied.' },
+      { who: 'Official', do: 'In the private window, sign in as the official (scorekeeper), then paste the copied link into the address bar.', see: 'no download: a short error (“Forbidden”) instead. An official cannot read the teams’ answers, so cannot open their files.' },
+    ] },
+  { id: 'C', title: 'Put it back',
+    intent: 'Leave the shared test event as you found it. One press per box.',
+    steps: [
+      { who: 'Owner', do: 'Open F3 Walk Team and press <b>Delete this team…</b>.', see: 'a window asks first.' },
+      { who: 'Owner', do: 'Confirm the delete.', see: 'F3 Walk Team is gone from Teams.' },
+      { who: 'Owner', do: 'If you did step 15: open F3 Photo Team, press Delete this team…, and confirm.', see: 'F3 Photo Team is gone.',
+        options: ['Deleted F3 Photo Team', 'Nothing to delete (step 15 skipped)'] },
+      { who: 'Owner', do: 'In Event settings › Registration questions, open <b>Medical form</b> and press <b>Archive this question</b>.', see: 'the window asks first.' },
+      { who: 'Owner', do: 'Press <b>Archive</b>.', see: 'the card says no questions (“Every registration already collects team name…”).' },
+    ] },
+];
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* private mode */ } }
+
+function boxesOf(step) { return step.options ? step.options : ['Done']; }
+function stepDone(w, i) { const s = WALKS.find(x => x.id === w).steps[i]; return boxesOf(s).some((_, j) => state[`${w}${i}.${j}`]); }
+
+function render() {
+  let n = 0;
+  const root = document.getElementById('walks');
+  root.innerHTML = '';
+  WALKS.forEach(w => {
+    const sec = document.createElement('section');
+    sec.className = 'walk';
+    sec.innerHTML = `<div class="walk-head"><h2>${w.title}</h2><p class="muted"><b>What this walk is for:</b> ${w.intent}</p></div>`;
+    const list = document.createElement('div');
+    list.className = 'steps';
+    w.steps.forEach((s, i) => {
+      n += 1;
+      const el = document.createElement('div');
+      el.className = 'step' + (stepDone(w.id, i) ? ' done' : '');
+      const boxes = boxesOf(s).map((label, j) => {
+        const id = `cb-${w.id}-${i}-${j}`;
+        const on = state[`${w.id}${i}.${j}`] ? 'checked' : '';
+        return `<label class="box" for="${id}"><input type="checkbox" id="${id}" data-k="${w.id}${i}.${j}" ${on}><span>${label}</span></label>`;
+      }).join('');
+      el.innerHTML = `<div class="num">${n}</div><div><span class="who">${s.who}</span><div class="do">${s.do}</div><div class="see">${s.see}</div><div class="boxes">${boxes}</div></div>`;
+      list.appendChild(el);
+    });
+    sec.appendChild(list);
+    const v = state[`v-${w.id}`] || '';
+    const so = document.createElement('div');
+    so.className = 'card signoff';
+    so.innerHTML = `<h3>Sign off: ${w.title}</h3>
+      <div class="verdicts" role="group" aria-label="Verdict">
+        <button type="button" data-w="${w.id}" data-v="pass" aria-pressed="${v === 'pass'}">Passed</button>
+        <button type="button" data-w="${w.id}" data-v="issue" aria-pressed="${v === 'issue'}">Issue</button>
+        <button type="button" data-w="${w.id}" data-v="call" aria-pressed="${v === 'call'}">Needs a call</button>
+      </div>
+      <label for="note-${w.id}" class="muted">Notes</label>
+      <textarea id="note-${w.id}" data-note="${w.id}">${(state[`n-${w.id}`] || '').replace(/</g, '&lt;')}</textarea>`;
+    sec.appendChild(so);
+    root.appendChild(sec);
+  });
+  updateCount();
+}
+
+function updateCount() {
+  let done = 0, total = 0;
+  WALKS.forEach(w => w.steps.forEach((_, i) => { total += 1; if (stepDone(w.id, i)) done += 1; }));
+  document.getElementById('count').textContent = `${done} of ${total}`;
+  document.getElementById('barFill').style.width = total ? `${(done / total) * 100}%` : '0';
+}
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('input[type=checkbox][data-k]')) {
+    state[t.dataset.k] = t.checked;
+    save();
+    const step = t.closest('.step');
+    const any = [...step.querySelectorAll('input[type=checkbox]')].some(x => x.checked);
+    step.classList.toggle('done', any);
+    updateCount();
+  }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.matches('textarea[data-note]')) { state[`n-${t.dataset.note}`] = t.value; save(); }
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('.verdicts button');
+  if (b) {
+    const k = `v-${b.dataset.w}`;
+    state[k] = state[k] === b.dataset.v ? '' : b.dataset.v;
+    save();
+    b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(state[k] === x.dataset.v)));
+  }
+});
+
+document.getElementById('build').addEventListener('click', () => {
+  const plain = html => html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+  let n = 0, done = 0, total = 0;
+  const lines = ['Registration questions F1–F3 walk (2026-11-20)'];
+  WALKS.forEach(w => {
+    let wd = 0;
+    const body = [];
+    w.steps.forEach((s, i) => {
+      n += 1; total += 1;
+      const ticked = boxesOf(s).filter((_, j) => state[`${w.id}${i}.${j}`]);
+      if (ticked.length) { done += 1; wd += 1; }
+      const mark = ticked.length ? '[x]' : '[ ]';
+      const which = s.options && ticked.length ? ` — ${ticked.join(' / ')}` : '';
+      body.push(`${mark} ${n}. ${plain(s.do)}${which}`);
+    });
+    const verdict = { pass: 'PASSED', issue: 'ISSUE', call: 'NEEDS A CALL' }[state[`v-${w.id}`]] || 'no verdict';
+    lines.push('', `${w.title} — ${verdict} · ${wd} of ${w.steps.length} ticked`, ...body);
+    const note = (state[`n-${w.id}`] || '').trim();
+    if (note) lines.push(`Notes: ${note}`);
+  });
+  lines.splice(1, 0, `Checked ${done} of ${total}`);
+  const text = lines.join('\n');
+  const out = document.getElementById('summary');
+  out.textContent = text;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => { out.insertAdjacentText('afterbegin', 'Copied. Paste it into the chat.\n\n'); }).catch(() => {
+      const r = document.createRange(); r.selectNodeContents(out); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    });
+  }
+});
+
+render();
+</script>

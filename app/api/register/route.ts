@@ -41,9 +41,12 @@ import {
   findTeamEntriesInTournament,
 } from '@/lib/team-registration-duplicates';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { checkDocumentUpload } from '@/lib/document-upload';
+import { REGISTRATION_FILE_KINDS, REGISTRATION_FILE_WORDS, REGISTRATION_FILES_MAX_BYTES } from '@/lib/registration-answers';
 
 const REGISTRATION_FILES_BUCKET = 'tournament-registration-files';
-const MAX_REGISTRATION_FILE_BYTES = 10 * 1024 * 1024;
+/** F3: all of one form's files together (the proxy's per-request limit; lib/registration-answers.ts). */
+const MAX_REGISTRATION_FILE_BYTES = REGISTRATION_FILES_MAX_BYTES;
 
 type RegistrationRequestBody = {
   teamName?: unknown;
@@ -101,10 +104,6 @@ type WaitlistRow = {
 
 function cleanString(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
-}
-
-function cleanStorageFileName(value: string) {
-  return value.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/-+/g, '-').slice(0, 120) || 'upload';
 }
 
 function isFileLike(value: FormDataEntryValue | null): value is File {
@@ -191,13 +190,20 @@ function readCustomAnswer(field: TournamentRegistrationField, formData: FormData
   return (rawAnswers as Record<string, unknown>)[field.id] ?? null;
 }
 
-function validateCustomAnswers(fields: TournamentRegistrationField[], formData: FormData | null, body: RegistrationRequestBody) {
+/**
+ * Every answer checked before anything is filed. A refusal names the question (`fieldId`) so the form can put the words
+ * under it. F3 (owner ruling 15, 2026-11-20): a file is a PDF, JPEG, PNG or HEIC read from its own bytes (never the
+ * browser's name or claimed type), stored under a cleaned name with that type; all of the form's files together stay
+ * under the proxy's per-request limit.
+ */
+async function validateCustomAnswers(fields: TournamentRegistrationField[], formData: FormData | null, body: RegistrationRequestBody) {
   const answers: Array<{
     field: TournamentRegistrationField;
     valueText?: string | null;
     valueJson?: unknown;
-    file?: File;
+    file?: { bytes: Uint8Array; contentType: string; storedName: string };
   }> = [];
+  let fileBytes = 0;
 
   for (const field of fields) {
     const raw = readCustomAnswer(field, formData, body);
@@ -205,13 +211,17 @@ function validateCustomAnswers(fields: TournamentRegistrationField[], formData: 
     if (field.fieldType === 'file') {
       const file = formData ? raw : null;
       if (field.required && !isFileLike(file as FormDataEntryValue | null)) {
-        return { error: `Please upload a file for: ${field.label}` };
+        return { error: `Please upload a file for: ${field.label}`, fieldId: field.id };
       }
       if (isFileLike(file as FormDataEntryValue | null)) {
-        if ((file as File).size > MAX_REGISTRATION_FILE_BYTES) {
-          return { error: `${field.label} must be 10MB or smaller.` };
+        fileBytes += (file as File).size;
+        if (fileBytes > MAX_REGISTRATION_FILE_BYTES) {
+          return { error: REGISTRATION_FILE_WORDS.tooBig(field.label), fieldId: field.id };
         }
-        answers.push({ field, file: file as File });
+        const bytes = new Uint8Array(await (file as File).arrayBuffer());
+        const checked = checkDocumentUpload(bytes, (file as File).name, REGISTRATION_FILE_KINDS);
+        if (!checked) return { error: REGISTRATION_FILE_WORDS.wrongType(field.label), fieldId: field.id };
+        answers.push({ field, file: { bytes, contentType: checked.contentType, storedName: checked.storedName } });
       }
       continue;
     }
@@ -244,6 +254,11 @@ export const POST = withObservability(async (req: NextRequest) => {
     const refused = throttleRegisterForm(req);
     if (refused) return refused;
 
+    // F3: a form past the proxy's limit arrives cut and cannot be read, so it is refused by its size before the body is
+    // read (the form checks this first; this is the backstop, and it cannot say which question).
+    if (Number(req.headers.get('content-length') ?? 0) > REGISTRATION_FILES_MAX_BYTES + 512 * 1024) {
+      return NextResponse.json({ error: REGISTRATION_FILE_WORDS.tooBig('Your files') }, { status: 413 });
+    }
     const { body, formData } = await parseRegistrationRequest(req);
     const teamName = cleanString(body.teamName);
     const coachName = cleanString(body.coachName);
@@ -459,9 +474,9 @@ export const POST = withObservability(async (req: NextRequest) => {
     const registrationFields = organization && hasPlanFeature(organization.planId, 'custom_registration_fields')
       ? await getTournamentRegistrationFields(tournamentId)
       : [];
-    const customAnswerResult = validateCustomAnswers(registrationFields, formData, body);
+    const customAnswerResult = await validateCustomAnswers(registrationFields, formData, body);
     if ('error' in customAnswerResult) {
-      return NextResponse.json({ error: customAnswerResult.error }, { status: 400 });
+      return NextResponse.json({ error: customAnswerResult.error, fieldId: customAnswerResult.fieldId }, { status: 400 });
     }
 
     // Resolve member-based contact emails in parallel.
@@ -590,12 +605,12 @@ export const POST = withObservability(async (req: NextRequest) => {
 
       for (const answer of customAnswersToSave) {
         if (answer.file) {
-          const ext = answer.file.name.includes('.') ? answer.file.name.split('.').pop() : 'bin';
-          const path = `${organization.id}/${tournamentId}/${data.id}/${answer.field.id}-${crypto.randomUUID()}-${cleanStorageFileName(answer.file.name || `upload.${ext}`)}`;
-          const bytes = new Uint8Array(await answer.file.arrayBuffer());
+          // The key's last part is `{fieldId}-{uuid}-{name}`: the record reads the name back from it
+          // (registrationFileName). The type is the one read from the bytes, never the browser's claim (F3).
+          const path = `${organization.id}/${tournamentId}/${data.id}/${answer.field.id}-${crypto.randomUUID()}-${answer.file.storedName}`;
           const { error: uploadError } = await supabaseAdmin.storage
             .from(REGISTRATION_FILES_BUCKET)
-            .upload(path, bytes, { contentType: answer.file.type || 'application/octet-stream' });
+            .upload(path, answer.file.bytes, { contentType: answer.file.contentType });
           if (uploadError) {
             console.error('Registration custom file upload error:', uploadError);
             return captureAndJson(uploadError, { error: 'Registration file upload failed. Please try again.' }, 500);

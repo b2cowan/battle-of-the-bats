@@ -14,14 +14,38 @@
  */
 import { cleanResourceFileName } from './resource-file-storage.ts';
 
-export type DocumentUploadKind = 'pdf' | 'jpeg' | 'png' | 'docx';
+export type DocumentUploadKind = 'pdf' | 'jpeg' | 'png' | 'docx' | 'heic';
 
 const KINDS: Record<DocumentUploadKind, { mime: string; ext: string; also?: readonly string[] }> = {
   pdf: { mime: 'application/pdf', ext: 'pdf' },
   jpeg: { mime: 'image/jpeg', ext: 'jpg', also: ['jpeg'] },
   png: { mime: 'image/png', ext: 'png' },
   docx: { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ext: 'docx' },
+  // A phone photo (an iPhone's default). Only the tournament registration questions take it (F3, owner ruling 15,
+  // 2026-11-20) — it is NOT one of the default four below, so the document and permit doors are unchanged.
+  heic: { mime: 'image/heic', ext: 'heic' },
 };
+
+/** What a door takes when it names no list: the four the document and permit doors have always taken. */
+const DEFAULT_KINDS: readonly DocumentUploadKind[] = ['pdf', 'jpeg', 'png', 'docx'];
+
+/** HEIF brands that mean an HEVC-coded image (HEIC). `mif1`/`msf1` are any HEIF (an AVIF too), so they need a HEIC brand
+ *  among the compatible ones. */
+const HEIC_BRANDS = new Set(['heic', 'heix', 'heim', 'heis', 'hevc', 'hevx', 'hevm', 'hevs']);
+const ascii4 = (b: Uint8Array, at: number) => String.fromCharCode(b[at], b[at + 1], b[at + 2], b[at + 3]);
+
+/** An ISO media file whose first box is `ftyp` naming a HEIC brand (as major brand, or as compatible to a generic HEIF one). */
+function isHeic(b: Uint8Array): boolean {
+  if (b.length < 16 || ascii4(b, 4) !== 'ftyp') return false;
+  const major = ascii4(b, 8);
+  if (HEIC_BRANDS.has(major)) return true;
+  if (major !== 'mif1' && major !== 'msf1') return false;
+  const size = ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+  // A box size of 0 (to the end of the file) or 1 (a 64-bit size follows) says nothing small: read the first 256 bytes.
+  const end = Math.min(size < 16 ? 256 : size, b.length, 256);
+  for (let at = 16; at + 4 <= end; at += 4) if (HEIC_BRANDS.has(ascii4(b, at))) return true;
+  return false;
+}
 
 const startsWith = (b: Uint8Array, sig: readonly number[], at = 0) => sig.every((v, i) => b[at + i] === v);
 
@@ -45,6 +69,7 @@ export function sniffDocumentUpload(bytes: ArrayBuffer | Uint8Array): DocumentUp
   if (startsWith(b, [0xff, 0xd8, 0xff])) return 'jpeg';
   if (startsWith(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'png';
   if (startsWith(b, [0x50, 0x4b, 0x03, 0x04]) && indexOfAscii(b, 'word/') >= 0) return 'docx';
+  if (isHeic(b)) return 'heic';
   return null;
 }
 
@@ -68,15 +93,16 @@ export const DOCUMENT_TYPE_REFUSAL = 'File type not allowed. Use PDF, JPG, PNG, 
 
 /**
  * The whole check, as the three upload routes ask it: what the file really is, the type it is stored and served with, the
- * cleaned name for its key and the name the screens show — or null when the bytes are none of the four types. `allowed`
- * narrows the four for a door that takes fewer (none today: a permit's file took PDF, JPEG, PNG under leftover call 10,
- * and all four since the owner's yes 2026-11-19, P8b); such a door refuses in its own words.
+ * cleaned name for its key and the name the screens show — or null when the bytes are none of the door's types. With no
+ * `allowed`, a door takes the default four (a permit's file took PDF, JPEG, PNG under leftover call 10, and all four since
+ * the owner's yes 2026-11-19, P8b); a door that takes another set names it (the tournament registration questions: PDF,
+ * JPEG, PNG, HEIC — `lib/registration-answers.ts`) and refuses in its own words.
  */
 export function checkDocumentUpload(
-  bytes: ArrayBuffer | Uint8Array, name: string, allowed?: readonly DocumentUploadKind[],
+  bytes: ArrayBuffer | Uint8Array, name: string, allowed: readonly DocumentUploadKind[] = DEFAULT_KINDS,
 ): { contentType: string; storedName: string; displayName: string } | null {
   const kind = sniffDocumentUpload(bytes);
-  if (!kind || (allowed && !allowed.includes(kind))) return null;
+  if (!kind || !allowed.includes(kind)) return null;
   return { contentType: documentUploadMime(kind), storedName: documentStoredName(name, kind), displayName: documentDisplayName(name, kind) };
 }
 

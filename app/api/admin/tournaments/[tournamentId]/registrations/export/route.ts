@@ -16,6 +16,7 @@ import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { listPaymentsByTournament } from '@/lib/team-payments-server';
 import { ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 import { lowerEntryRow } from '@/lib/tournament-teams';
+import { exportAnswerColumns, exportAnswerValue } from '@/lib/registration-answers';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -58,16 +59,6 @@ type DivisionExportRow = FeeRow & {
 function csvCell(value: unknown) {
   const text = value == null ? '' : String(value);
   return `"${text.replace(/"/g, '""')}"`;
-}
-
-function answerValue(answer: Awaited<ReturnType<typeof getTournamentRegistrationFieldAnswersForRegistrations>>[number] | undefined) {
-  if (!answer) return '';
-  if (answer.fileUrl) return answer.fileUrl;
-  if (answer.valueText) return answer.valueText;
-  if (answer.valueJson && typeof answer.valueJson === 'object' && 'checked' in answer.valueJson) {
-    return (answer.valueJson as { checked?: unknown }).checked ? 'Yes' : 'No';
-  }
-  return '';
 }
 
 function effectiveFee(team: TeamExportRow, tournament: TournamentExportRow, divisions: Map<string, DivisionExportRow>): FeeRow {
@@ -153,7 +144,8 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
       .from('divisions')
       .select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
       .eq('tournament_id', tournamentId),
-    getTournamentRegistrationFields(tournamentId),
+    // F1: archived questions too — a column for each one a team answered, after the current questions.
+    getTournamentRegistrationFields(tournamentId, { includeArchived: true }),
   ]);
 
   if (teamsError) return NextResponse.json({ error: teamsError.message }, { status: 500 });
@@ -170,6 +162,8 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
     registrationAnswers.set(answer.fieldId, answer);
     answersByRegistration.set(answer.registrationId, registrationAnswers);
   }
+  // The current questions, then each archived one a team answered (F1); a file answer is "Attached", never its key (F2).
+  const answerColumns = exportAnswerColumns(fields, answers);
 
   // "Not tracked here": the export has no payment columns at all (owner 2026-10-13).
   const tracksPayments = tournamentTracksPayments(tournament.settings);
@@ -191,7 +185,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
       'Payment due date',
     ] : []),
     'Waitlist position',
-    ...fields.map(field => field.label),
+    ...answerColumns.map(column => column.heading),
   ];
 
   const today = tournamentToday();
@@ -225,7 +219,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
         due.dueDate,
       ] : []),
       team.waitlist_position ?? '',
-      ...fields.map(field => answerValue(answersByRegistration.get(team.id)?.get(field.id))),
+      ...answerColumns.map(column => exportAnswerValue(answersByRegistration.get(team.id)?.get(column.fieldId))),
     ];
   });
 

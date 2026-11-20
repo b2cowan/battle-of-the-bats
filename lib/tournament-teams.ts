@@ -31,7 +31,9 @@ export interface TeamRecord {
   slotId?: string | null;
   waitlistPosition?: number | null;
   seed?: number | null;
-  customAnswers?: Array<{ fieldId: string; label: string; fieldType: string; value: string }>;
+  /** The record's answers (`lib/registration-answers.ts`): `archived` — the question is no longer asked (F1); `file` — a
+   *  stored file, `value` its name, opened through the signed-link route (F2). */
+  customAnswers?: Array<{ fieldId: string; label: string; fieldType: string; value: string; archived?: boolean; file?: boolean }>;
   /** 12c (mig 382): how much this team's entry is lowered by part refunds (`teams.entry_lowered`). */
   entryLowered?: number;
   /** 12c Part 6: the team's bank debit on its way (its base) — never paid, never past due while it clears. */
