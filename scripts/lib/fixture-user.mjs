@@ -11,6 +11,7 @@
  * exempt (`lib/legal-acceptance-exempt.ts`), never tick, and keep their own `createUser`. The UAT specs' counterpart is
  * `tests/uat/helpers/fixture-user.ts`.
  */
+import { createClient } from '@supabase/supabase-js';
 import { recordLegalAcceptance } from './record-legal-acceptance.mjs';
 
 /**
@@ -31,8 +32,32 @@ export async function findUserByEmail(db, email) {
 }
 
 /**
- * The sign-in for this address: found (password reset to `password`, unless `resetPassword` is false; nothing else about it
- * changes) or made (confirmed, with `userMetadata`). Either way the account records Terms acceptance (the warn-and-carry-on form).
+ * Does `password` already sign this address in? Asked with a throwaway, non-persisting anon client, and signed out LOCALLY
+ * afterwards — a password sign-in does not end the account's other sessions (measured 2026-10-19), a password RESET does.
+ * True also for `email_not_confirmed` (the password is right; a reset would not confirm it either).
+ * @returns {Promise<boolean>} false only for `invalid_credentials`; any other failure throws (never guess into a reset).
+ */
+async function passwordAlreadyWorks(email, password, env) {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) throw new Error(`check ${email} can sign in: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY missing (password left alone)`);
+  const probe = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await probe.auth.signInWithPassword({ email, password });
+  if (!error) { await probe.auth.signOut({ scope: 'local' }); return true; }
+  if (error.code === 'email_not_confirmed') return true;
+  if (error.code === 'invalid_credentials') return false;
+  throw new Error(`check ${email} can sign in (password left alone): ${error.code ?? ''} ${error.message}`);
+}
+
+/**
+ * The sign-in for this address: found or made (confirmed, with `userMetadata`). Either way the account records Terms
+ * acceptance (the warn-and-carry-on form).
+ *
+ * A found account's password is set to `password` ONLY when that password does not already sign it in (`resetPassword`
+ * false skips even that). ⚠ A reset signs the account out EVERYWHERE, so resetting on every run killed the saved UAT and
+ * layout-sweep sign-ins of whatever session was mid-run: the free coach's on 2026-10-19 (fixed then in its own seed), and
+ * the club admin's during the club UAT suite on 2026-11-19 (Club Tier Stage 8 cause check). Nothing else about a found
+ * account changes.
  * @param {any} db a service-role Supabase client
  * @param {{ email: string, password: string, userMetadata?: Record<string, unknown>, resetPassword?: boolean, env?: Record<string, string | undefined> }} opts
  * @returns {Promise<{ user: any, created: boolean }>}
@@ -42,7 +67,7 @@ export async function ensureFixtureUser(db, { email, password, userMetadata, res
   let user = await findUserByEmail(db, email);
   let created = false;
   if (user) {
-    if (resetPassword) {
+    if (resetPassword && !(await passwordAlreadyWorks(email, password, env))) {
       // Password only — an existing account keeps its name and its confirmation as another seed or a tester left them.
       const { data, error } = await db.auth.admin.updateUserById(user.id, { password });
       if (error) throw new Error(`updateUser ${email}: ${error.message}`);
