@@ -120,8 +120,8 @@ export interface EmailLogPage {
   seasons: { id: string; name: string }[];
 }
 
-/** Families › Emails' Season filter: every email, the club-wide ones, or one season's. */
-export type EmailLogFilter = 'all' | 'club' | { seasonId: string };
+/** The Season filter: every email, the club-wide ones, or the emails of the seasons ticked (Communications' Filter). */
+export type EmailLogFilter = 'all' | 'club' | { seasonIds: readonly string[] };
 
 const CLUB_COLS = 'id, sent_at, sent_by, subject, audience_kind, audience_label, season_id, family_count, reached_count, opted_out_count, failed_count, coach_count, status, retried_at';
 
@@ -165,7 +165,7 @@ export function familyNamesShown(reader: FamilyLogReader, row: { season_id: stri
 
 export async function readEmailLog(orgId: string, before: string | null, filter: EmailLogFilter = 'all', reader: FamilyLogReader = EVERY_READER): Promise<EmailLogPage> {
   // The Season filter, on any of the three reads below (each a query on a table with season_id).
-  const narrow = (q: any) => (filter === 'all' ? q : filter === 'club' ? q.is('season_id', null) : q.eq('season_id', filter.seasonId));
+  const narrow = (q: any) => (filter === 'all' ? q : filter === 'club' ? q.is('season_id', null) : q.in('season_id', [...filter.seasonIds]));
   // The reader's own rows (legal §2c), on top of the filter.
   const sendsFor = (q: any) => (reader.scope === 'league' ? q.or('season_id.not.is.null,audience_kind.eq.every') : q);
   const messagesFor = (q: any) => (reader.scope === 'league' ? q.not('season_id', 'is', null) : q);

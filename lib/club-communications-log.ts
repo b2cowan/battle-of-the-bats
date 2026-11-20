@@ -1,9 +1,9 @@
 import 'server-only';
-import { readClubEmail, readEmailLog, type ClubEmailRecord, type EmailLogFilter, type EmailLogRow } from './families-emails-log';
+import { readClubEmail, readEmailLog, type ClubEmailRecord, type EmailLogRow } from './families-emails-log';
 import { colleagueSummary, listColleagueEmails, type ListedSend } from './club-group-email-read';
-import { familyDoor, seasonDoorOpen } from './club-communications-place';
+import { colleagueFilter, commsFilterOff, familyDoor, familyFilter, seasonDoorOpen, type CommsFilter, type CommsKind } from './club-communications-place';
 import type { CommunicationsGate } from './club-communications-auth';
-import { SAY, type ColleagueKind } from './club-group-email-words';
+import { SAY } from './club-group-email-words';
 
 /**
  * CLUB COMMUNICATIONS — THE ONE LIST (Stage 1, Session 2; drawing tabs 1 and 3). One reader over the family log
@@ -17,9 +17,6 @@ import { SAY, type ColleagueKind } from './club-group-email-words';
  * A season's Email families tab keeps its own reader (`readSeasonHistory`) — the same tables, narrowed to that season.
  */
 
-export type CommsFilter = 'all' | 'families' | 'coaches' | 'board' | { seasonId: string };
-export type CommsKind = 'families' | ColleagueKind;
-
 /** How a stopped family email is finished from here (ask 14): back down the door it came from, or who can. */
 export type CommsFinish = { door: 'club' } | { door: 'season'; seasonId: string } | { line: string };
 export interface CommsRow extends EmailLogRow { finish?: CommsFinish }
@@ -28,6 +25,8 @@ export interface CommsPage {
   rows: CommsRow[];
   /** The reader's emails under this filter (first page only; 0 on a later page). */
   total: number;
+  /** The reader's emails with no filter — the "of" in "2 of 9 emails" (first page only; 0 on a later page). */
+  whole: number;
   next: string | null;
   /** First page only: the seasons emailed and the kinds this reader has rows of (the filter's choices, ask 8). */
   seasons: { id: string; name: string }[];
@@ -51,11 +50,6 @@ export function familyFinish(g: Pick<CommunicationsGate, 'facts'>, row: Pick<Ema
   return mayClub ? { door: 'club' } : { line: SAY.finishWho('coaches', row.by) };
 }
 
-const familyFilter = (f: CommsFilter): EmailLogFilter | null =>
-  f === 'all' || f === 'families' ? 'all' : typeof f === 'object' ? { seasonId: f.seasonId } : null;
-const colleagueFilter = (f: CommsFilter): ColleagueKind | 'all' | null =>
-  f === 'all' ? 'all' : f === 'coaches' || f === 'board' ? f : null;
-
 export async function readCommunications(g: CommunicationsGate, before: string | null, filter: CommsFilter): Promise<CommsPage> {
   const fam = g.families ? familyFilter(filter) : null;
   const col = g.seat.any ? colleagueFilter(filter) : null;
@@ -65,7 +59,7 @@ export async function readCommunications(g: CommunicationsGate, before: string |
     col ? listColleagueEmails(g.ctx, g.seat, before, col === 'all' ? undefined : col) : null,
     first && g.seat.any ? colleagueSummary(g.ctx, g.seat) : null,
     // The filter's choices come from the reader's whole log, whatever is filtered now (first page only).
-    first && g.families && filter !== 'all' ? readEmailLog(g.ctx.org.id, null, 'all', g.families) : null,
+    first && g.families && !commsFilterOff(filter) ? readEmailLog(g.ctx.org.id, null, 'all', g.families) : null,
   ]);
 
   const familyRows: CommsRow[] = (family?.rows ?? []).map(r => r.kind === 'club' && r.state === 'stopped' ? { ...r, finish: familyFinish(g, r) } : r);
@@ -79,7 +73,7 @@ export async function readCommunications(g: CommunicationsGate, before: string |
 
   const familyTotal = family?.total ?? 0;
   const colleagueTotal = counts ? (col === 'all' ? counts.coaches + counts.board : col ? counts[col] : 0) : 0;
-  const famAll = filter === 'all' ? family : everything;
+  const famAll = commsFilterOff(filter) ? family : everything;
   const kinds: CommsKind[] = !first ? [] : [
     ...((famAll?.total ?? 0) > 0 ? ['families' as const] : []),
     ...(counts && counts.coaches > 0 ? ['coaches' as const] : []),
@@ -88,6 +82,7 @@ export async function readCommunications(g: CommunicationsGate, before: string |
   return {
     rows,
     total: first ? familyTotal + colleagueTotal : 0,
+    whole: first ? (famAll?.total ?? 0) + (counts ? counts.coaches + counts.board : 0) : 0,
     next: cut,
     seasons: first ? (famAll?.seasons ?? []) : [],
     kinds,

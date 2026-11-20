@@ -18,7 +18,8 @@ import { NotYoursScreen } from '@/components/admin/kit/club/NotYoursScreen';
  *     it": no switch gives them the place, they have nobody to write to.
  * A tournament-only organization has no club side; a team workspace goes to its portal; a plan that does not carry the
  * place (a cancelled one: the plan half closes) goes home, as Families' layout does — that is not "not yours".
- * ⚖ Session 2: a treasurer has no place yet (their one button, Email the board, comes with Session 3's window).
+ * ⚖ Session 3: a treasurer has the place (their one button is Email the board), so a treasurer whose switch is off is a board
+ * seat like the rest: "{owner} can give a treasurer access".
  */
 export default async function CommunicationsLayout({ children, params }: {
   children: React.ReactNode;
@@ -34,7 +35,7 @@ export default async function CommunicationsLayout({ children, params }: {
   if (!hasModuleEntitlement(ctx.org, 'module_communications')) redirect(`/${ctx.org.slug}/admin`);
   const facts = placeFacts({ role: ctx.role, capabilities: ctx.capabilities, limited: !!ctx.repGroupIds }, ctx.org);
   if (!opensCommunications(facts)) {
-    const page = (BOARD_ROLES as readonly string[]).includes(ctx.role) && ctx.role !== 'treasurer' && !ctx.repGroupIds ? 'communications' : 'communicationsBoard';
+    const page = (BOARD_ROLES as readonly string[]).includes(ctx.role) && !ctx.repGroupIds ? 'communications' : 'communicationsBoard';
     return <NotYoursScreen {...await notYoursScreenProps(ctx, page)} />;
   }
   return <CommunicationsFrame>{children}</CommunicationsFrame>;

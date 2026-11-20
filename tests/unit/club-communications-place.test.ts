@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import {
-  familyDoor, familyReader, opensCommunications, seasonDoorOpen, type PlaceFacts,
+  colleagueFilter, commsFilterOf, familyDoor, familyFilter, familyReader, opensCommunications, seasonDoorOpen, type PlaceFacts,
 } from '../../lib/club-communications-place.ts';
 import { seatOf } from '../../lib/club-group-email-rules.ts';
 import { WINDOW } from '../../lib/club-group-email-words.ts';
@@ -18,12 +18,14 @@ import { ROLE_DEFAULTS } from '../../lib/roles.ts';
 import type { OrgRole } from '../../lib/types.ts';
 
 /** A seat on a Club plan, role defaults only; `o` overrides a fact. */
-function facts(role: OrgRole, o: Partial<PlaceFacts> = {}): PlaceFacts {
+function facts(role: OrgRole, o: Partial<Omit<PlaceFacts, 'seat'>> = {}): PlaceFacts {
   const has = (c: string) => role === 'owner' || ROLE_DEFAULTS[role].has(c as never);
-  return {
+  const f = {
     role, switchOn: has('module_communications'), teamLimited: false, tournamentOnly: false, planFamilies: true,
     runsLeague: has('module_house_league'), holdsBook: has('module_families'), ...o,
   };
+  // The colleague seat from the same facts (a Club plan carries rep teams and house league).
+  return { ...f, seat: seatOf({ role, switchOn: f.switchOn, teamLimited: f.teamLimited, tournamentOnly: f.tournamentOnly, planRep: true, planLeague: true, leagueModule: f.runsLeague }) };
 }
 
 describe('T9 · the seat table (legal §2c, drawing tab 4)', () => {
@@ -32,8 +34,8 @@ describe('T9 · the seat table (legal §2c, drawing tab 4)', () => {
     ['admin (no book)', facts('admin'), { door: 'club', place: true, season: true, reader: 'all' }],
     ['league admin', facts('league_admin'), { door: 'season', place: true, season: true, reader: 'league' }],
     ['registrar', facts('league_registrar'), { door: 'season', place: true, season: true, reader: 'league' }],
-    // Session 2: no family choice, so no place yet (the board window is Session 3's).
-    ['treasurer', facts('treasurer'), { door: null, place: false, season: false, reader: null }],
+    // Session 3: no family choice, but the board is theirs to write to, so they have the place (one button, Email the board).
+    ['treasurer', facts('treasurer'), { door: null, place: true, season: false, reader: null }],
     ['staff', facts('staff'), { door: null, place: false, season: false, reader: null }],
     ['volunteer', facts('official'), { door: null, place: false, season: false, reader: null }],
     ['coach', facts('coach'), { door: null, place: false, season: false, reader: null }],
@@ -161,5 +163,40 @@ describe('T23 · the old Families › Emails address forwards, above the Familie
   it('the destination applies Communications’ own gate (the "not yours" screen, never a 404)', () => {
     const layout = readCode('app/[orgSlug]/admin/club-emails/layout.tsx');
     assert.match(layout, /<NotYoursScreen \{\.\.\.await notYoursScreenProps\(ctx, page\)\} \/>/);
+  });
+});
+
+describe('Communications Filter — the ticks (owner 2026-11-20)', () => {
+  const S1 = '11111111-1111-4111-8111-111111111111';
+  const S2 = '22222222-2222-4222-8222-222222222222';
+  const of = (q: string) => commsFilterOf(new URLSearchParams(q));
+
+  it('reads the two tick lists from the address and drops anything else', () => {
+    assert.deepEqual(of(''), { kinds: [], seasons: [] });
+    assert.deepEqual(of('who=board,families,nobody').kinds, ['families', 'board']);
+    assert.deepEqual(of(`season=${S1},not-a-uuid,${S1},${S2}`).seasons, [S1, S2]);
+  });
+
+  it('no ticks reads everything from both sources', () => {
+    assert.equal(familyFilter(of('')), 'all');
+    assert.equal(colleagueFilter(of('')), 'all');
+  });
+
+  it('within Sent to the ticks are OR', () => {
+    assert.equal(familyFilter(of('who=families')), 'all');
+    assert.equal(colleagueFilter(of('who=families')), null);
+    assert.equal(familyFilter(of('who=coaches')), null);
+    assert.equal(colleagueFilter(of('who=coaches')), 'coaches');
+    assert.equal(colleagueFilter(of('who=board')), 'board');
+    assert.equal(colleagueFilter(of('who=coaches,board')), 'all');
+    assert.equal(familyFilter(of('who=families,board')), 'all');
+    assert.equal(colleagueFilter(of('who=families,board')), 'board');
+  });
+
+  it('a season narrows the family emails and leaves no coach or board email (AND across groups)', () => {
+    assert.deepEqual(familyFilter(of(`season=${S1},${S2}`)), { seasonIds: [S1, S2] });
+    assert.equal(colleagueFilter(of(`season=${S1}`)), null);
+    assert.equal(familyFilter(of(`who=coaches&season=${S1}`)), null);
+    assert.equal(colleagueFilter(of(`who=coaches&season=${S1}`)), null);
   });
 });

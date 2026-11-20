@@ -53,6 +53,7 @@ import type { SeasonEmailPreview } from '@/lib/house-league-email';
 import { SEASON_STATUS_KEYS, type SeasonStatusKey } from '@/lib/families-audience';
 import { joinWithAnd } from '@/lib/utils';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { ReplyChoice, useReplyChoice } from '../communications/ReplyParts';
 
 type ClubKind = 'every' | 'teams' | 'season' | 'list';
 type SeasonKind = 'season' | 'season_divisions' | 'season_teams' | 'season_statuses' | 'season_families';
@@ -106,6 +107,10 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
   const [preview, setPreview] = useState<FamilyEmailPreview | null>(null);
   const [sPreview, setSPreview] = useState<SeasonEmailPreview | null>(null);
   const lv = useSendLevel(VW.backToMessage);
+  // Where replies go and the club-inbox copy (R2–R4): the same two controls as the coach and board windows. The club's contact
+  // makes club mode the default; a club with none keeps the shipped behaviour (replies to the sender, nothing drawn).
+  const replies = (season ? sPreview?.replies : preview?.replies) ?? null;
+  const reply = useReplyChoice(replies);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -227,11 +232,13 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
         ? {
           action: 'send', kind: sKind, divisionIds, teamIds: leagueTeamIds, statuses, registrationIds: ticked ?? undefined,
           subject, body: message, copyCoaches: copyCoaches && (sPreview?.coaches ?? 0) > 0, expected: families,
+          ...(one ? {} : reply.fields),
         }
         : {
           kind, teamIds: kind === 'teams' ? teamIds : undefined, seasonId: kind === 'season' ? seasonId : undefined,
           list: kind === 'list' ? list : undefined,
           subject, body: message, copyCoaches: copyCoaches && preview!.coaches > 0, expected: families,
+          ...reply.fields,
         };
       const r = await moneyFetch<{
         reached?: number; families?: number; coaches?: number; sendId?: string | null; missedNamed?: string | null;
@@ -280,7 +287,10 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
   const reason = season ? sPreview?.reason : preview?.reason;
   const orgName = season ? sPreview?.orgName : preview?.orgName;
   const club = season ? sPreview?.club ?? null : preview?.club ?? null;
-  const replyLine = season ? sPreview?.replyLine : preview?.replyLine;
+  // The envelope's reply line follows the mode the send will use: the club's (the shipped system variant) or the sender's.
+  // A message to one family always replies to its sender (the server's rule), whatever the switch says.
+  const replyLine = reply.mode === 'club' && !one ? (season ? sPreview?.replyLineClub : preview?.replyLineClub) ?? undefined : season ? sPreview?.replyLine : preview?.replyLine;
+  const seasonStatement = (name: string) => phone ? SW.statementPhone : reply.mode === 'club' ? CW.familyStatementSeasonClub(name) : SW.statement(name);
   const footer = reason && orgName ? familyEnvelopeFooterWords(orgName, reason) : null;
   const last = (season ? sPreview?.lastSent : preview?.lastSent) ?? null;
   const used = allowance?.used ?? 0;
@@ -365,6 +375,10 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
           </label>
           {/* Who can read this afterwards (Communications ask 11; the wording /legal corrected, C7: it promises a registrar no names). */}
           <p className={ck.hint}>{CW.readers}</p>
+          {/* Where replies go, and a copy to the club's inbox (R2–R4). A message to one family keeps its own rule: nothing here. */}
+          {!one && replies && (
+            <ReplyChoice idBase="email-families" replies={replies} state={reply} offerCopy />
+          )}
           {ready && (season ? sPreview!.noFamily > 0 && families > 0 : preview!.noFamily > 0) && (
             <p className={ck.hint}>
               {season ? SW.noAddress(sPreview!.noFamily) : <><b>{W.nobodyLead}</b> {W.noFamily(preview!.noFamily)}</>}
@@ -395,7 +409,7 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
     const orgSlug = new URLSearchParams(q).get('orgSlug') ?? '';
     return (
       <>
-        <Statement lead={W.statement} />
+        <Statement lead={reply.mode === 'club' ? CW.familyStatementClub : W.statement} />
         <p className={repKit.factsLabel} id="email-families-who-label">{W.who}</p>
         <SendRows group={{ radio: true, labelledBy: 'email-families-who-label' }}>
           <SendRow
@@ -507,7 +521,7 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
       const named = p.who.map(f => `${f.familyName ?? f.children[0]?.last ?? ''}${f.children.length ? ` (${joinWithAnd(f.children.map(k => k.first))})` : ''}`);
       return (
         <>
-          <Statement lead={phone ? SW.statementPhone : SW.statement(season.name)} />
+          <Statement lead={seasonStatement(season.name)} />
           <p className={repKit.factsLabel}>{W.who}</p>
           <SendRows>
             <SendRow title={SW.tickedLead(p.who.length)}
@@ -518,7 +532,7 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
     }
     return (
       <>
-        <Statement lead={phone ? SW.statementPhone : SW.statement(season.name)} />
+        <Statement lead={seasonStatement(season.name)} />
         <p className={repKit.factsLabel} id="email-season-who-label">{W.who}</p>
         <SendRows group={{ radio: true, labelledBy: 'email-season-who-label' }}>
           <SendRow

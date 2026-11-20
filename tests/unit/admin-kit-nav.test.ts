@@ -404,15 +404,15 @@ describe('13i · the club sidebar lists places only', () => {
   // list before — owner 10 → 11, admin 9 → 10, league admin 4 → 5, registrar 4 → 5, treasurer 3 → 4 (and staff, the same day).
   // ⚖ E4 (navigation Phase 1, owner 2026-11-09): a hosted Tournaments left the places for the foot's door — owner 11 → 10,
   // admin 10 → 9 (the door is `tournamentsDoor`, below). ⚖ Club Communications Stage 1 (tab 4): Communications after
-  // Families for every seat with a family choice — owner 11, admin 10, league admin 6, registrar 6; the treasurer waits for
-  // Session 3's board window.
-  it('the place lists and their gates: owner 11, admin 10, league admin 6, registrar 5, treasurer 4', () => {
+  // Families for every seat with somebody to write to — owner 11, admin 10, league admin 6, registrar 5, and (Session 3, the
+  // board window) the treasurer 5.
+  it('the place lists and their gates: owner 11, admin 10, league admin 6, registrar 5, treasurer 5', () => {
     assert.deepEqual(rows('owner'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'families', 'club-emails', 'public-site', 'org']);
     assert.deepEqual(rows('admin'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'club-emails', 'public-site', 'org'], 'no Families: an explicit grant only');
     assert.deepEqual(rows('league_admin'), ['overview', 'calendar', 'permits', 'house-league', 'club-emails', 'org']);
     // Trust close-out 2 (owner 2026-11-18): a registrar no longer reads permits; Organization stays, holding The board.
     assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'house-league', 'club-emails', 'org']);
-    assert.deepEqual(rows('treasurer'), ['overview', 'permits', 'accounting', 'org']);
+    assert.deepEqual(rows('treasurer'), ['overview', 'permits', 'accounting', 'club-emails', 'org']);
   });
 
   it('Permits: those who schedule, run tournaments or handle money (trust close-out 2, owner 2026-11-18; replaces 13c staff = A)', () => {

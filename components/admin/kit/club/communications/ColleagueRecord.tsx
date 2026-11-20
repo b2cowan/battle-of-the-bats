@@ -5,12 +5,13 @@
  * league seat's record of a wider coach email names only its house-league coaches and counts the rest; a board email opens
  * only for its sender, its recipients, the owner and the admins. Names and lines only, never an address.
  *
- * "Send to the N it missed" (ask 14) when this reader may finish it; otherwise who can. "Send again to these people" opens
- * the coach or board window with the pick filled in: Session 3 adds it with those windows.
+ * "Send to the N it missed" (ask 14) when this reader may finish it; otherwise who can. "Send again to these people" (Session 3)
+ * opens the coach or board window with the pick filled in, the subject copied and the message empty; it sends nothing.
  */
 import { useCallback, useState } from 'react';
 import type { EmailLogRow } from '@/lib/families-emails-log';
-import { RECORD } from '@/lib/club-group-email-words';
+import { RECORD, SAY, type ColleagueKind } from '@/lib/club-group-email-words';
+import type { SendAgain } from './EmailColleaguesWindow';
 import { FAMILY_EMAILS_TAB_WORDS as W } from '@/lib/families-words';
 import LoadingState from '@/components/shared/LoadingState';
 import KitDialog, { DialogCancel } from '../KitDialog';
@@ -30,9 +31,12 @@ interface Detail {
   finish: { may: boolean; line: string | null } | null;
 }
 
-export function ColleagueRecord({ row, eyebrow, q, onClose, onFinished }: {
+export function ColleagueRecord({ row, eyebrow, q, canSendAgain, onSendAgain, onClose, onFinished }: {
   row: EmailLogRow;
   eyebrow: string;
+  /** The reader may write to this email's group now (the server asks again). */
+  canSendAgain: boolean;
+  onSendAgain: (kind: ColleagueKind, again: SendAgain) => void;
   /** `orgSlug=…` */
   q: string;
   onClose: () => void;
@@ -58,6 +62,23 @@ export function ColleagueRecord({ row, eyebrow, q, onClose, onFinished }: {
   const mayFinish = state === 'stopped' && missed > 0 && !!detail?.finish?.may && !detail.wordsCleared;
   const statusWord = (s: Person['status']) => s === 'sent' ? RECORD.statusSent : s === 'failed' ? RECORD.statusFailed
     : state === 'sending' ? RECORD.statusSending : RECORD.statusPending;
+
+  async function sendAgain() {
+    if (busy) return;
+    setBusy(true); setError('');
+    try {
+      const res = await moneyFetch<{ kind?: ColleagueKind; keys?: string[]; dropped?: number; subject?: string | null; error?: string; code?: string }>(`${url.replace('?', '/again?')}`);
+      if (res.ok && res.data.kind && res.data.keys) {
+        onSendAgain(res.data.kind, { keys: res.data.keys, subject: res.data.subject ?? null, dropped: res.data.dropped ?? 0 });
+        return;
+      }
+      setError(refusalText(res.data, SAY.failed));
+    } catch {
+      setError(SAY.failed);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function finish() {
     if (busy) return;
@@ -121,6 +142,11 @@ export function ColleagueRecord({ row, eyebrow, q, onClose, onFinished }: {
             )}
             <p className={ck.hint}>{detail.replies}{detail.copy ? ` · ${detail.copy}` : ''}</p>
             <p className={ck.hint}>{detail.note}</p>
+            {canSendAgain && !detail.namesCleared && (
+              <p className={ck.hint}>
+                <button type="button" className={repKit.inlineLink} onClick={() => void sendAgain()} disabled={busy}>{RECORD.sendAgain}</button>
+              </p>
+            )}
           </>
         )}
     </KitDialog>

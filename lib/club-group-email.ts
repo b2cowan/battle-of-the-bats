@@ -23,7 +23,7 @@ import { hasModuleEntitlement, isTournamentOnlyWorkspace } from './module-entitl
 import { inParallel } from './supabase-paging';
 import { writeOrgAudit } from './org-audit';
 import { getUserPersonName } from './user-display';
-import { usableContactEmail } from './email-club-identity';
+import { replyChoicesFrom } from './club-reply-choices';
 import {
   GROUP, LINES, MAIL, SAY, renderColleagueEmail, renderInboxCopy, type BoardSeat, type ColleagueBasis, type ColleagueKind, type ReplyMode,
 } from './club-group-email-words';
@@ -101,6 +101,13 @@ const liveSeasonsOf = (w: CoachWorld) => w.rows.seasons.map(s => ({ id: s.id, di
 const shownCoach = (p: CoachPerson) => ({ key: p.key, name: p.name ?? 'A coach', line: coachLine(p) });
 const shownMember = (m: BoardMember) => ({ key: `u:${m.userId}`, name: displayName({ name: m.name, boardRole: m.role }, 'board'), line: LINES.seat(m.role) });
 
+/** A tournament of this club that is under way (status 'active'), named for the coach window's one pointer line. */
+async function runningTournament(orgId: string): Promise<{ name: string } | null> {
+  const { data, error } = await supabaseAdmin.from('tournaments').select('name').eq('org_id', orgId).eq('status', 'active').order('name').limit(1);
+  if (error) { console.error('[club-group-email] the running tournament could not be read:', error.message); return null; }
+  return data?.[0]?.name ? { name: data[0].name as string } : null;
+}
+
 // ── Options: what the window offers this seat (GET) ──────────────────────────────────────────────────────────────────────
 
 export async function colleagueOptions(ctx: AuthContextWithRole, seat: Seat, kind: ColleagueKind): Promise<Out> {
@@ -108,11 +115,7 @@ export async function colleagueOptions(ctx: AuthContextWithRole, seat: Seat, kin
   const [clubContact, name, lastSent] = await Promise.all([
     clubPublicContact(ctx.org.id), senderNameOf(ctx.org.id, ctx.user), lastColleagueSend(ctx, seat, kind),
   ]);
-  const replies = {
-    club: clubContact ? { name: ctx.org.name, address: clubContact } : null,
-    me: usableContactEmail(ctx.user.email) ? { address: ctx.user.email } : null,
-    default: clubContact ? 'club' : 'sender',
-  };
+  const replies = replyChoicesFrom(ctx.org.name, clubContact, ctx.user.email);
   const common = { kind, replies, senderNamed: !!name, lastSent };
 
   if (kind === 'board') {
@@ -130,7 +133,8 @@ export async function colleagueOptions(ctx: AuthContextWithRole, seat: Seat, kin
   }
 
   if (!seat.coaches) return refuse(403, 'not_offered', SAY.notOffered);
-  const w = await coachWorld(ctx, seat);
+  // The running-tournament pointer is independent of the coach world, so the two reads go together.
+  const [w, tournament] = await Promise.all([coachWorld(ctx, seat), seat.coaches.rep ? runningTournament(ctx.org.id) : null]);
   const count = (group: CoachGroup) => { const r = chooseCoaches(w.people, group, seat, sender, liveSeasonsOf(w)); return r.ok ? r.people.length : 0; };
   return okay({
     ...common,
@@ -145,6 +149,9 @@ export async function colleagueOptions(ctx: AuthContextWithRole, seat: Seat, kin
       })) : null,
     },
     pick: pickable(w.people, seat).filter(p => !!p.email && !isSender(p, sender)).map(shownCoach),
+    // The pointer line (coach drawing tab 2): a tournament that is running names where ITS coaches are emailed. Tournament
+    // announcements stay the owner's and admins' own tool, so only a seat that reaches rep coaches is pointed there.
+    tournament,
     // Invited rep coaches are left out and named by team (coach ask 8), to the seats that may see rep names; the head-coach
     // ones alone for "Head coaches only".
     invited: seat.coaches.rep ? w.rows.invited.map(i => i.line) : [],

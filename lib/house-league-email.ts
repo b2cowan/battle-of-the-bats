@@ -12,10 +12,11 @@ import {
   type EmailAllowance, type FamilyEmailPreview, type FamilyEmailResult, type FamilyMessageResult,
 } from './families-email';
 import { leagueCoachesToCopy } from './families-email-coaches';
-import { SAY as CW } from './club-group-email-words';
+import { SAY as CW, type ReplyChoices } from './club-group-email-words';
+import { replyFacts } from './club-reply-choices';
 import { namesColleagueAudience } from './club-group-email-rules';
 import { senderName } from './families-coach-ask';
-import { clubEmailFacts } from './club-email-context';
+import { clubEmailFacts, clubPublicContact } from './club-email-context';
 import { familyReplyPlan, type ClubEmailFacts } from './email-club-identity';
 import { FAMILY_EMAIL_WORDS as W, SEASON_EMAIL_WORDS as SW, familiesNamed } from './families-words';
 import type { FamilyMessageState } from './families-read';
@@ -112,6 +113,9 @@ export interface SeasonEmailPreview {
   reason: string;
   club: ClubEmailFacts | null;
   replyLine: string;
+  /** Where replies can go (R2–R4) and the envelope's reply line in club mode: the window's switch and its inbox tick. */
+  replies: ReplyChoices;
+  replyLineClub: string | null;
 }
 
 /** The person whose household a one-family season scope is: the one holding a picked registration. */
@@ -127,10 +131,10 @@ function oneFamilyPerson(world: FamilyAudienceWorld, audience: FamilyAudience, s
 export async function seasonEmailPreview(ctx: AuthContextWithRole, season: LeagueSeason, scope: FamilyAudienceScope | null): Promise<SeasonEmailPreview> {
   // The window's open runs the attach (the club's own registrations, added by hand since the last visit, join their
   // family before anyone counts) — so the count the sender sees is the count the press finds.
-  const [world, shape, allowance, lastSent, club, sender] = await Promise.all([
+  const [world, shape, allowance, lastSent, club, sender, clubContact] = await Promise.all([
     loadFamilyAudience(ctx.org.id, ctx.org.slug, { attach: true }), loadSeasonShape(season.id),
     emailAllowance(ctx.org.id, season.id), lastFamilyEmail(ctx.org.id, season.id),
-    clubEmailFacts(ctx.org), senderName(ctx).catch(() => null),
+    clubEmailFacts(ctx.org), senderName(ctx).catch(() => null), clubPublicContact(ctx.org.id),
   ]);
   const senderEmail = ctx.user.email ?? null;
   const teams = publishedTeams(shape);
@@ -144,6 +148,7 @@ export async function seasonEmailPreview(ctx: AuthContextWithRole, season: Leagu
     anyPublished: teams.length > 0,
     allowance, lastSent, orgName: ctx.org.name, reason: reasonFor(season.name), club,
     replyLine: familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail, senderName: sender }).line,
+    ...replyFacts(ctx.org.name, clubContact, senderEmail),
   };
   if (!scope || scopeNeedsPick(scope)) {
     return { ...base, scope, families: 0, children: 0, optedOut: 0, optedOutNamed: null, senderSkipped: false, noFamily: 0, who: [], coaches: 0, one: null };

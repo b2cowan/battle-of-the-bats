@@ -616,14 +616,15 @@ const familiesHelp: HelpPageContent = {
       heading: 'Emailing many families, and the list of what was sent',
       summary: 'Email every family, some rep teams, a house league season or a Families list, each family once, from Communications. The club sends 3 in any 24 hours; each house league season has its own 3.',
       keywords: ['email families', 'email these families', 'communications', 'new email', 'to families', 'email every family', 'email a season', 'email rep teams', 'email a list', 'emails tab', 'sent emails', 'three emails', '3 emails', 'in any 24 hours', 'allowance', 'season filter', 'club-wide', 'head coach copy', 'send to the ones it missed', 'stopped', 'opted out', 'house league season'],
-      searchText: 'communications new email to families to coaches to the board show filter email families window emails tab moved from families every family some rep teams a house league season families from a list owes money missing forms each family once siblings one email opted out counted skipped replies come to you copy each team’s head coach the club can send three emails in any 24 hours the next can go a house league season counts toward that season’s own 3 not the club’s every season with families any status registration closed finished divisions teams statuses on the season’s own email families message this family never counts emails tab every email from families and every season season named season filter all club-wide one season open an email what it said reached missed opted out stopped partway send to the 1 it missed does not count automatic emails publish teams listed on the season page',
+      searchText: 'communications new email to families to coaches to the board filter sent to the board season tick more than one email families window emails tab moved from families every family some rep teams a house league season families from a list owes money missing forms each family once siblings one email opted out counted skipped replies go to the club or to you replies come to me copy to the club’s inbox copy each team’s head coach the club can send three emails in any 24 hours the next can go a house league season counts toward that season’s own 3 not the club’s every season with families any status registration closed finished divisions teams statuses on the season’s own email families message this family never counts emails tab every email from families and every season season named season filter all club-wide one season open an email what it said reached missed opted out stopped partway send to the 1 it missed does not count automatic emails publish teams listed on the season page',
       content: (
         <>
           <p>
             <strong>Email families</strong>, on the <strong>Communications</strong> page, writes to many
             families at once: every family, some rep teams, a house league season, or the families on a list such as
             <em> Owes money</em>. The owner and club admins can use it, and only while group email is on for the club. On a Families list that names families, <strong>Email these families</strong> opens the same window with that list chosen. Each family gets it once, however many children it has. A family that opted out of
-            club email is counted and skipped, replies come to you, and a rep team choice can copy each team&rsquo;s head
+            club email is counted and skipped. Replies go to the club&rsquo;s contact address, or to you if you choose
+            <em> Replies come to me</em>, and you can tick a copy to the club&rsquo;s inbox. A rep team choice can copy each team&rsquo;s head
             coach.
           </p>
           <ul>
@@ -633,8 +634,8 @@ const familiesHelp: HelpPageContent = {
           </ul>
           <p>
             <strong>Communications</strong> lists every email sent from Families and from each house league season, a
-            season&rsquo;s named with its season (<em>Fall 2026 &middot; Jays</em>), and the club&rsquo;s emails to coaches and the board. Once the club has sent more than one kind, the <strong>Show</strong> filter
-            narrows it to <strong>To families</strong>, <strong>To coaches</strong>, <strong>To the board</strong> or one season. Open an email to see what it said, how many families
+            season&rsquo;s named with its season (<em>Fall 2026 &middot; Jays</em>), and the club&rsquo;s emails to coaches and the board. Once the club has sent more than one kind, <strong>Filter</strong>
+            narrows it by who it was sent to (<strong>Families</strong>, <strong>Coaches</strong>, <strong>The board</strong>) and by season; tick more than one to see them together. Open an email to see what it said, how many families
             it reached, and which it missed or who opted out. One that stopped partway offers <strong>Send to the 1 it
             missed</strong>, which doesn&rsquo;t count. A season&rsquo;s automatic emails, like the ones Publish teams
             sends, are listed on that season&rsquo;s own page instead.

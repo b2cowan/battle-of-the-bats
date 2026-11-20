@@ -580,14 +580,14 @@ describe('13i · places in the sidebar, pages on the page', () => {
   });
 
   // ⚖ Club Communications Stage 1 (drawing tab 4): Communications between Families and Public site, for every seat with
-  // somebody to write to; Session 2 = a family choice, so the treasurer has none until the board window ships (Session 3).
+  // somebody to write to: a family, coach or board choice (Session 3 — the treasurer's one choice is the board).
   it('Communications sits in the Club group after Families, per seat (drawing tab 4)', () => {
     const club = (role: OrgRole) => clubNavFor(role, RUNS_BOTH).groups.find(g => g.key === 'club')?.places.map(p => p.key);
     assert.deepEqual(club('owner'), ['accounting', 'families', 'club-emails', 'public-site', 'org']);
     assert.deepEqual(club('admin'), ['accounting', 'club-emails', 'public-site', 'org']);
     assert.deepEqual(club('league_admin'), ['club-emails', 'org']);
     assert.deepEqual(club('league_registrar'), ['club-emails', 'org']);
-    assert.ok(!club('treasurer')?.includes('club-emails'), 'the treasurer: no place until Session 3');
+    assert.deepEqual(club('treasurer'), ['accounting', 'club-emails', 'org'], 'the treasurer: the place, with its one button, Email the board');
     assert.equal(clubNavFor('admin', RUNS_BOTH, { module_communications: false }).communications, null, 'the switch off: no row');
   });
 });

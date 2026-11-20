@@ -176,8 +176,8 @@ export async function readColleagueEmail(ctx: AuthContextWithRole, seat: Seat, s
 }
 
 /**
- * How many coach and board emails this reader may read, and of which kinds (Communications' lede "7 emails sent" and its
- * filter, Session 2). The facts only — no subject, no body, no recipient — filtered by the same `canReadSend`.
+ * How many coach and board emails this reader may read, and of which kinds (Communications' count "7 emails" and its
+ * Filter, Session 2). The facts only — no subject, no body, no recipient — filtered by the same `canReadSend`.
  */
 export async function colleagueSummary(ctx: AuthContextWithRole, seat: Seat): Promise<Record<ColleagueKind, number>> {
   if (!seat.any) return { coaches: 0, board: 0 };

@@ -11,6 +11,7 @@ import {
 } from '../../lib/admin-kit-nav.ts';
 import { clubPhoneNav } from '../../lib/nav-tiles.ts';
 import { opensCommunications } from '../../lib/club-communications-place.ts';
+import { seatOf } from '../../lib/club-group-email-rules.ts';
 import { canReadVenueLibrary } from '../../lib/venue-library.ts';
 import type { EntitlementOrg } from '../../lib/module-entitlements.ts';
 
@@ -56,6 +57,10 @@ export function clubNavFor(role: OrgRole, shape: ClubShape, extra: Record<string
     opens: opensCommunications({
       role, switchOn: canUse('module_communications'), teamLimited: false, tournamentOnly: false, planFamilies: true,
       runsLeague: canUse('module_house_league'), holdsBook: canUse('module_families'),
+      seat: seatOf({
+        role, switchOn: canUse('module_communications'), teamLimited: false, tournamentOnly: false, planRep: true, planLeague: true,
+        leagueModule: canUse('module_house_league'),
+      }),
     }),
   });
   const groups = clubPlaceGroups<KitLink>({ programs, alsoOnPlan, organization: orgPlace, communications });

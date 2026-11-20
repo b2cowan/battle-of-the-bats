@@ -28,6 +28,8 @@ export const BOARD_SEATS = ['owner', 'admin', 'league_admin', 'league_registrar'
 export type BoardSeat = (typeof BOARD_SEATS)[number];
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+/** "3 coaches" / "1 board member": the people a colleague email reaches, said for its kind. */
+const whoWord = (kind: ColleagueKind, n: number) => kind === 'board' ? plural(n, 'board member', 'board members') : plural(n, 'coach', 'coaches');
 
 // ── The email itself (pinned) ─────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -55,6 +57,14 @@ export const MAIL = {
   foot: (club: string) => { const w = platformLineWords(club); return `${w.lead}FieldLogicHQ${w.tail}`; },
   from: (club: string) => familySenderName(club),
 };
+
+/** Where a window's replies can go, as the server reads it live (never stored): the club's public contact, the sender's own
+ *  address, and the one a window opens on (R2: the club when it has a contact, else the sender). */
+export interface ReplyChoices {
+  club: { name: string; address: string } | null;
+  me: { address: string } | null;
+  default: ReplyMode;
+}
 
 export interface ColleagueMailInput {
   club: string;
@@ -144,6 +154,9 @@ export const GROUP = {
   boardLabel: 'The board',
   boardPickedLabel: (n: number) => `${plural(n, 'board member', 'board members')} you picked`,
   noCoachesYet: 'No coaches yet',
+  seasonLabel: 'Season',
+  divisionLabel: 'Division',
+  count: (n: number) => ` · ${n}`,
 };
 
 export const LINES = {
@@ -182,7 +195,44 @@ export const WINDOW = {
   invitedCoaches: (m: number) => m === 1 ? "1 invited coach hasn't accepted yet and won't." : `${m} invited coaches haven't accepted yet and won't.`,
   invitedMembers: (m: number) => m === 1 ? "1 invited member hasn't accepted yet and won't." : `${m} invited members haven't accepted yet and won't.`,
   noAddressCoaches: (m: number) => m === 1 ? "1 coach has no email on file and won't get it." : `${m} coaches have no email on file and won't get it.`,
+
+  // ── Session 3: the coach and board windows (coach drawing tabs 2–5 and 7; Stage 1 drawing tab 8) and the reply choice ──
+  coachTitle: 'Email coaches',
+  boardTitle: 'Email the board',
+  /** The family season window's statement in club mode (the table's family row, said for a season). */
+  familyStatementSeasonClub: (season: string) => `Sends one email to each family you choose in ${season}, from the club, with the club's address to reply to. A family that opted out of club email is skipped.`,
+  /** The reply switch and the inbox tick (R2, R4): a small group under the message box, drawn from the shipped Who rows. */
+  repliesLabel: 'Replies',
+  copyTickSub: 'One copy to the club, not counted as someone it reached.',
+  counting: 'Counting who this reaches…',
+  countFailed: "We couldn't load who this would reach.",
+  loadingEmail: 'Loading the email…',
+  /** "See the email" (level 2): the To line. */
+  mailTo: (kind: ColleagueKind, n: number) => `${whoWord(kind, n)}, one email each`,
+  /** Under the mail view's own "This is how it will arrive. Nothing has been sent." */
+  mailNote: 'Each person’s first name is added for you, or “Hi,” when there is none.',
+  mailFailed: "We couldn't load the email.",
+  /** "See who gets it" (level 3): its head and the people it won't reach, last and dimmed, each with its reason. */
+  whoHead: (kind: ColleagueKind, n: number) => `Who gets it · ${whoWord(kind, n)}`,
+  wontInvited: "Won't get it: the invitation isn't accepted yet",
+  wontNoEmail: (n: number) => n === 1 ? "1 person has no email on file and won't get it" : `${n} people have no email on file and won't get it`,
+  lastSent: 'Last sent',
+  /** `at` is the date as the screen writes it ("Nov 3"). */
+  lastSentValue: (at: string, by: string | null, subject: string | null, n: number, kind: ColleagueKind) =>
+    `${at}${by ? ` by ${by}` : ''}${subject ? ` · “${subject}”` : ''} · ${whoWord(kind, n)}`,
+  /** The press: sent, and what it didn't reach. */
+  sent: (kind: ColleagueKind, reached: number, of: number) => `Sent. Reached ${reached} of ${whoWord(kind, of)}.`,
+  missed: (n: number, named: string | null) => named ? `${n} didn’t go: ${named}.` : `${plural(n, 'person', 'people')} didn’t get it.`,
+  /** The pointer line (coach drawing tab 2): only while a tournament is running; tournament teams are not a coach group. */
+  tournamentPointer: (tournament: string) => `Coaches of the teams in ${tournament} are emailed from the tournament.`,
+  tournamentPointerLink: 'Open Communications',
+  pickedSearch: 'Search the list',
+  /** "Send again to these people": a pick opened with some of the people gone. */
+  againDropped: (n: number) => n === 1 ? "1 person from that email can't be picked now." : `${n} people from that email can't be picked now.`,
+  /** The recount's held foot, built by the server (`SAY.changed`); the window keeps the lime for the new number. */
+  discardAsk: 'Close without sending? What you typed won’t be kept.',
 };
+
 
 // ── Refusals and states (the routes' error words) ────────────────────────────────────────────────────────────────────────
 
@@ -208,7 +258,7 @@ export const SAY = {
   notDelivered: "It wasn't sent: the mail service didn't accept it for anyone. Try again in a few minutes.",
   /** The recount (coach ask 11): nothing is sent when anyone was added or taken off, even at the same total. */
   changed: (kind: ColleagueKind, now: number, before: number, changes: string | null) => {
-    const who = kind === 'board' ? plural(now, 'board member', 'board members') : plural(now, 'coach', 'coaches');
+    const who = whoWord(kind, now);
     const lead = 'Who this reaches changed while you were writing.';
     const tail = 'Nothing was sent. Check it and send again.';
     if (!changes) return `${lead} It now goes to ${who}. See who gets it. ${tail}`;
@@ -259,25 +309,42 @@ export const RECORD = {
 
 export const PLACE = {
   name: 'Communications',
-  /** The list's lede (tab 1: "7 emails sent"). */
-  lede: (n: number) => plural(n, 'email sent', 'emails sent'),
+  /** The list's count, the toolbar's one count wording (owner 2026-11-20): "7 emails", "2 of 7 emails" while filtered. */
+  countOne: 'email',
+  countMany: 'emails',
   emptyTitle: 'No emails yet',
   emptyBody: 'Emails the club sends to families and coaches are listed here, with who they reached.',
   loading: 'Loading emails…',
   loadFailed: 'We couldn’t load the emails.',
   tryAgain: 'Try again',
   showMore: 'Show more',
-  /** The filter (ask 8): All · To families · To coaches · To the board, then each season emailed. */
-  filterLabel: 'Show',
-  filterAll: 'All',
-  filterFamilies: 'To families',
-  filterCoaches: 'To coaches',
-  filterBoard: 'To the board',
+  /** The Filter (ask 8; owner 2026-11-20: the toolbar's Filter button, ticks): Sent to (Families · Coaches · The board)
+   *  and Season (each season emailed). */
+  filter: 'Filter',
+  filterOn: (n: number) => `${n} on`,
+  filterClear: 'Clear filter',
+  filterWho: 'Sent to',
+  filterFamilies: 'Families',
+  filterCoaches: 'Coaches',
+  filterBoard: 'The board',
+  filterSeason: 'Season',
+  noMatch: 'No emails match this filter.',
   /** New email (asks 1, 10): with one choice the button names it; with more, the create menu. */
   newEmail: 'New email',
   emailFamilies: 'Email families',
   toFamilies: 'To families',
   toFamiliesSub: 'Every family, rep teams, a season or a list',
+  /** The other two choices (drawing tab 2), each with the second line for this seat. */
+  emailCoaches: 'Email coaches',
+  toCoaches: 'To coaches',
+  toCoachesSub: 'All coaches, or the ones you choose',
+  toCoachesSubLeague: 'House-league coaches',
+  emailBoard: 'Email the board',
+  toBoard: 'To the board',
+  toBoardSub: 'Everyone on the board, or the ones you choose',
+  /** A seat whose only choice is the board (the treasurer, tab 8): its empty list. */
+  emptyBoardTitle: 'No board emails yet',
+  emptyBoardBody: "Emails you send to the club's board are listed here, with who they reached.",
   /** The small line above a window's title when opened here (ask 9; a season's window keeps the season's name). */
   eyebrow: 'Communications',
   /** The member window's one line for the switch (tab 4, ask 5). */

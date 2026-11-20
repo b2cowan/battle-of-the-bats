@@ -11,7 +11,8 @@ import {
 import { coachCopyWords, headCoachesToCopy, sendClubInboxCopy, sendCoachCopies, type CopiedCoach } from './families-email-coaches';
 import { senderName } from './families-coach-ask';
 import { clubEmailFacts, clubPublicContact } from './club-email-context';
-import { SAY as CW } from './club-group-email-words';
+import { replyFacts } from './club-reply-choices';
+import { SAY as CW, type ReplyChoices } from './club-group-email-words';
 import { namesColleagueAudience } from './club-group-email-rules';
 import { familyReplyPlan, type ClubEmailFacts } from './email-club-identity';
 import {
@@ -88,6 +89,9 @@ export interface FamilyEmailPreview {
   /** The club's face and the reply line the email will carry (S3b): the sample draws its band and foot from these. */
   club: ClubEmailFacts | null;
   replyLine: string;
+  /** Where replies can go (R2–R4): the window's switch and its inbox tick. `replyLineClub` is the envelope's reply line in club mode. */
+  replies: ReplyChoices;
+  replyLineClub: string | null;
 }
 
 function noFamilyIn(world: FamilyAudienceWorld, scope: FamilyAudienceScope): number {
@@ -166,9 +170,9 @@ export const reasonFor = (seasonName: string | null) => (seasonName ? seasonEmai
  *  window's "Show them" link drawn (it lands in Families). */
 export async function familyEmailPreview(ctx: AuthContextWithRole, scope: FamilyAudienceScope, opts: { holdsBook: boolean } = { holdsBook: true }): Promise<FamilyEmailPreview> {
   const seasonId = scopeSeasonId(scope);
-  const [world, lastSent, cap, club, sender] = await Promise.all([
+  const [world, lastSent, cap, club, sender, clubContact] = await Promise.all([
     loadFamilyAudience(ctx.org.id, ctx.org.slug, { lists: opts.holdsBook }), lastFamilyEmail(ctx.org.id), emailAllowance(ctx.org.id, seasonId || null),
-    clubEmailFacts(ctx.org), senderName(ctx).catch(() => null),
+    clubEmailFacts(ctx.org), senderName(ctx).catch(() => null), clubPublicContact(ctx.org.id),
   ]);
   const senderEmail = ctx.user.email ?? null;
   const choices = audienceChoices(world.people, world.suppressed, senderEmail);
@@ -201,6 +205,7 @@ export async function familyEmailPreview(ctx: AuthContextWithRole, scope: Family
     lastSent, cap, season: seasonId && seasonName ? { id: seasonId, name: seasonName } : null,
     orgName: ctx.org.name, reason: reasonFor(seasonName), holdsBook: opts.holdsBook,
     club, replyLine: familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail, senderName: sender }).line,
+    ...replyFacts(ctx.org.name, clubContact, senderEmail),
   };
 }
 
@@ -245,9 +250,10 @@ async function recordOutcomes(ids: readonly string[], families: readonly Audienc
 }
 
 /**
- * Where replies go and whether the club's inbox gets a copy (Club Communications R2–R4, 2026-11-17). The DEFAULT is the shipped
- * behaviour (replies to the sender, no copy): the shipped window sends neither field, and its words say "your address to reply
- * to". Club mode and the copy need the club's public contact; without one they are refused, never quietly switched (T21).
+ * Where replies go and whether the club's inbox gets a copy (Club Communications R2–R4, 2026-11-17). A send that carries neither
+ * field keeps the shipped behaviour (replies to the sender, no copy). The window (Session 3) sends `replyTo` whenever the club has
+ * a public contact, so club mode is what a sender gets unless they choose "Replies come to me". Club mode and the copy need the
+ * club's public contact; without one they are refused, never quietly switched (T21).
  */
 export interface FamilyReply { mode: 'club' | 'sender'; contact: string | null; copy: boolean }
 export async function familyReplyChoice(ctx: AuthContextWithRole, body: Record<string, unknown>): Promise<FamilyReply | FamilyEmailResult> {
