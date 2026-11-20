@@ -139,7 +139,12 @@ hand-off.
 1. **The duplicate address** — no owner call needed (the note already rules it): page code home at `tournaments/manage`,
    the `proxy.ts` redirect, the path-keyed references, the delete of the old help branch, a unit guard against a new link to
    `/admin/org/tournaments`. Fold in found-on-the-way 2 and 3. Independent of everything else; smallest; do it first.
-2. **The team workspace's Settings & access** (after call 1, plus a drawing if call 2 says so): the sidebar row in place of
+2. **⚖ Replaced by 1R (2026-11-20):** step 2 is now (a) the drawing of the portal additions, (b) `/strategy` on the
+   Premium board seats and `/legal` on the deletion request's wording, (c) the portal's three settings built, (d) the old
+   Account group, the tournament side's Staff & access / Audit log / Settings for a Premium workspace, and the two-step
+   switch retired, with redirects for their old addresses (the coaches' help rewritten with `/docs`). The text below is
+   the step as it stood under call 1, kept for the record.
+   *(Superseded)* **The team workspace's Settings & access** (after call 1, plus a drawing if call 2 says so): the sidebar row in place of
    the Account group, a tab row on its organization pages (Staff & access · Settings · PDF settings; Audit log from Staff &
    access), the branch at `AdminKitRail.tsx:298-308` and the team-workspace exemption at `useAdminKitNav.ts:37-44` reviewed
    for deletion, the coaches' help rewritten, the unit tests, `check:layout --changed` on the touched screens. The
@@ -155,15 +160,80 @@ drawing so both kinds of workspace end on one Settings & access shape.
 
 #### Owner calls — ⚖ RULED 2026-11-20 (owner, in conversation: "1 yes, 2 yes, i am not asking you to change but I need to visualize what you are talking about here, 3 yes, 4 yes")
 
-- **1 · Yes** — a running Premium Coaches Portal gets the Tournament plan's Settings & access row and tab row, on its
-  existing `/admin/org/*` addresses.
+- ~~**1 · Yes** — a running Premium Coaches Portal gets the Tournament plan's Settings & access row and tab row, on its
+  existing `/admin/org/*` addresses.~~ **REPLACED the same day by 1R below**, after the owner looked at the picture.
 - **2 · Yes** — no new mockup session. The owner asked to **see** what step 2 means: a picture of today versus after,
-  published as an artifact to look at, not a drawing for approval.
+  published as an artifact to look at, not a drawing for approval. (Overtaken by 1R: the picture was redrawn as 1R's
+  portal settings, and 1R's portal additions are a new surface that needs its own drawing.)
 - **3 · Yes** — redirect the typed-only pages away, in this project (step 3).
 - **4 · Yes** — the Tournament plan's missing settings (rename, two-step requirement, birthday cutoff, delete) become
   their own board item, drawn together with step 2, routed through `/plan`. The item is not opened yet.
 
 No build go was given with these rulings; the census was committed on the owner's word.
+
+#### ⚖ 1R · RULED 2026-11-20 (owner, "yes, record it and redraw the picture") — replaces call 1
+
+**Why call 1 was reopened.** Looking at the picture, the owner asked four questions: should a coach who is only running
+a tournament be able to delete the organization there ("one delete home, and for a coach it should be in their own
+portal"); are payouts even on the plan; is two-step management overhead; and does a coach need a second staff list
+("2 places to manage users doesn't seem like good ux"). Read in the code (`Explore` helper, cited lines re-read), the
+answers undid call 1:
+
+- **Delete organization** only emails a deletion request to support (`app/api/admin/org/request-deletion/route.ts:19-48`,
+  owner only, no plan check). The Coaches Portal has "Cancel Premium…" on its billing page
+  (`components/billing/BillingBody.tsx:471-478`) and no deletion request; the tournament side's Settings was its only door.
+- **Payouts:** online payments start at Tournament Plus; the free Tournament plan and Premium (`team`) are excluded
+  (`lib/plan-features.ts:72-79, 159-161`). The Payouts card was already absent for a Premium coach; the first picture drew
+  it by mistake.
+- **Two-step:** the requirement switch shows and saves for a team workspace but does nothing — the rule exempts a coach's
+  own workspace ("offered, with a nudge, never required: the coach is the only person who could reset it",
+  `lib/two-step-rule.ts:14-15, 62`). A dead control. Personal two-step (`/account/security`) is untouched.
+- **Staff:** already one list for coaches. The team staff page adds them and carries the **Run tournaments** switch
+  (`components/coaches/CoachStaffSheet.tsx:152`), which projects the tournament grant onto the coach's membership
+  (`lib/coach-membership.ts:863-903`). Staff & access shows them read-only ("Coaches are added and removed on each
+  team's staff page", `MembersKit.tsx:424-432`). It adds only Admin and Staff board roles (`lib/board-roles.ts:72-85`;
+  three seats, `plan-config.ts:63`). **Production, counted 2026-11-20 (counts only):** the one non-test Premium workspace
+  has its owner and 5 coaches, no board members — nothing to strand.
+- **PDF settings** are read by the portal's own printouts (lineups, practice plans, money exports, e.g.
+  `coaches/teams/[teamId]/lineups/[eventId]/page.tsx:151, 768`), more than by the tournament; the portal already has
+  **How your documents look** (team crest, accent colour, footer — `TeamDocumentsLookCard.tsx`), but the organization
+  level carries more (page numbers, date stamp, orientation, FieldLogicHQ branding, privacy defaults for guardian
+  contacts and notes, file names — `admin/org/settings/pdf/page.tsx:200-394`) with no portal door.
+- **Name and web address** of the workspace can be changed only on the tournament side's Settings
+  (`SettingsKit.tsx:275-312`); the portal has no rename (its team PATCH takes no name).
+
+**The ruling.** For a Premium Coaches Portal (a running one-team workspace):
+
+- **Retire** the tournament side's Staff & access, Audit log and Settings for it, and the old Account group with them.
+  **No Settings & access place replaces it.** The tournament admin is just the tournament.
+- **People have one home: the team staff page** (already there, with Run tournaments). The board roles (Admin, Staff)
+  are no longer offered to a Premium workspace.
+- **The portal gets the three real settings:**
+  1. **Name and web address** — rows in team settings' **Organization** section (the standalone head coach's section,
+     today only "Join a club").
+  2. **Print options** — the rest of the organization's PDF settings joins **How your documents look** for a standalone
+     team (a "More print options" part: page numbers, date stamp, orientation, branding, what printouts include, file
+     names).
+  3. **The deletion request** — on the portal's **Billing** page, its own section after Cancel Premium, shown to the
+     owner whether or not the plan is still paid (someone who already cancelled may want their data gone).
+- **Two-step requirement:** removed for a Premium workspace (it does nothing there).
+
+**What 1R carries with it (not ruled — each goes where it belongs):**
+- **A drawing first.** The portal additions are a new surface: drawn (`/design`) before they are built. The 2026-11-20
+  picture (https://claude.ai/artifact/5JxvQHCQcWZHxuHCtt9Uqh, redrawn for 1R) shows the idea; it is not that drawing.
+- **The three Premium board seats** are a packaging fact (`PLAN_PRICING_FACTS.md`, `plan-config.ts:63`): withdrawing board
+  roles from Premium goes through `/strategy`, not quietly in the build.
+- **The deletion request's new home** changes where a customer asks to close their account (the privacy policy promises
+  "ask us to close your account"): `/legal` reviews the wording before hand-off.
+- **Open for the drawing session:** the workspace's name ("Riverdale Ridge 13U Coaches Portal") is not the team's name, and
+  the team's own name cannot be changed anywhere in the portal; decide which one the coach is renaming.
+- **Found: the birthday cutoff.** The portal reads the organization's birthday cutoff (next season's birth years, roster
+  warnings, tryout decisions) but a Premium coach cannot set it — the card hides itself without house league or rep teams
+  (`birthday-cutoffs/route.ts:11-13`), so it is stuck at January 1. Not ruled; a candidate row for the same Organization
+  section, to raise at the drawing.
+
+**Call 4 narrows with it.** Two-step and the birthday cutoff are not tournament concerns, so the Tournament plan's real
+gap is a **rename and a deletion request** only. The item is still to be opened through `/plan`.
 
 The calls as they were put:
 
