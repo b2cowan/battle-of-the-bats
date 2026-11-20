@@ -1,0 +1,167 @@
+<title>Sign-up Questions Walk §551</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column; a sticky progress bar; each part a card of one-action steps with its verdict and notes. */
+:root {
+  --bg: #f6f7f2; --card: #ffffff; --ink: #1d2318; --soft: #5b6352; --line: #dfe3d6; --olive: #56702c; --lime: #c9e265;
+  --good: #2f7a3b; --warn: #a1630a; --bad: #b3352a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif; --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141811; --card: #1c2118; --ink: #e8ecdf; --soft: #a5ad98; --line: #313a29; --olive: #a9c86a; --lime: #c9e265;
+  --good: #6fc27b; --warn: #e3a64a; --bad: #ef7d70; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141811; --card: #1c2118; --ink: #e8ecdf; --soft: #a5ad98; --line: #313a29; --olive: #a9c86a; --lime: #c9e265;
+  --good: #6fc27b; --warn: #e3a64a; --bad: #ef7d70; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 24px 64px; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-family: var(--display); font-size: 1.6rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.1rem; margin: 0; }
+.lede { color: var(--soft); margin: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.signin dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.signin dt { color: var(--soft); font-size: .85rem; }
+.signin dd { margin: 0; overflow-wrap: anywhere; }
+code { font-size: .85em; background: color-mix(in srgb, var(--olive) 12%, transparent); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.meter { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--olive); transition: width .2s; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.steps label { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; padding: 6px 4px; border-radius: 6px; cursor: pointer; }
+.steps label:hover { background: color-mix(in srgb, var(--olive) 7%, transparent); }
+.steps input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--olive); }
+.n { font-variant-numeric: tabular-nums; color: var(--soft); font-size: .8rem; margin-right: 4px; }
+.exp { display: block; color: var(--soft); font-size: .9rem; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: inherit; font-size: .85rem; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; min-height: 32px; }
+.verdict button[aria-pressed="true"][data-v="pass"] { border-color: var(--good); color: var(--good); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="issue"] { border-color: var(--bad); color: var(--bad); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="call"] { border-color: var(--warn); color: var(--warn); font-weight: 600; }
+textarea { font: inherit; width: 100%; box-sizing: border-box; min-height: 56px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: var(--bg); color: var(--ink); }
+.calls { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 8px; }
+.calls li { color: var(--ink); }
+.btn { font: inherit; font-weight: 600; background: var(--lime); color: #1d2318; border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; min-height: 44px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+#out { min-height: 160px; font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
+:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1>Sign-up questions walk · §551</h1>
+    <p class="lede">Board Ready Stage 4, Part 2: what a family sees and does when the club has asked its own questions and added documents, and Your sign-up afterwards. You play the family in a private window and the club owner in a normal one. Tick a box when what it says is true; give each part a verdict, then build the summary and paste it back.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="si">
+    <h2 id="si">Sign in as</h2>
+    <dl>
+      <dt>Club owner</dt><dd><code>http://localhost:3000/login</code> · email <code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code> (UAT Rep Club). House league → <strong>2026 Fall House League</strong> → Sign-up form.</dd>
+      <dt>Family</dt><dd>No sign-in. <code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/register</code> in a private window.</dd>
+      <dt>Before you start</dt><dd>The dev database is already set for this walk: R2 Walk has no teams made (so Your sign-up’s Change is open) and R1, R2 and R3 Walk take children born 2014 or 2015 (so a child born in 2000 fits no division). Restart the dev server first if it was running before this build.</dd>
+      <dt>You’ll need</dt><dd>One small PDF, one file that is not a PDF or photo (a .txt will do), and one file over 8 MB.</dd>
+      <dt>When you finish</dt><dd>Say so in the chat. The walk’s test sign-ups (last name Walktwo) and the dev changes above are put back with <code>node .probe/stage4-part2-walk-fixture.mjs off</code>.</dd>
+      <dt>Keep private</dt><dd>Dev-only test accounts. The password lives in <code>.env.local</code> as <code>UAT_REP_CLUB_OWNER_PASSWORD</code>; if it is ever changed, this card is out of date.</dd>
+    </dl>
+  </section>
+
+  <div class="bar" role="status" aria-live="polite">
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <span class="count" id="count">0 of 0</span>
+  </div>
+
+  <main id="parts" style="display:flex;flex-direction:column;gap:16px"></main>
+
+  <section class="card" aria-labelledby="calls">
+    <h2 id="calls">Your calls (not in the count)</h2>
+    <ol class="calls">
+      <li><strong>The Email families “Your sign-up” button.</strong> The build prompt assumed that button already rides family emails while a tick is owed. It does not: Email families sends one shared message to every family, so a personal link means changing Club Communications’ sender. /legal and the plan lean the same way: carry it to Part 3 or a small follow-up with Club Communications. Families reach Your sign-up today through the confirmation link and “Email me my link”.</li>
+      <li><strong>The six-hourly clean-up of waiting files (migration 516).</strong> A file a family attaches is stored while the sign-up is finished and deleted within 12 hours if it never joins one. Until a schedule runs, that clean-up only happens when someone uploads a file. /legal: make the schedule a condition of putting Parts 1–3 on production, and write no “within a day” sentence in a policy before it runs. Yes, or not yet?</li>
+      <li><strong>A document added after a family signed up.</strong> Your sign-up shows it in the tick-again card as “UAT Rep Club added it on {date}.” The drawing never showed that case. Confirm, or redraw?</li>
+      <li><strong>Health answers on Your sign-up.</strong> Their words never show on that page (it opens from an emailed link, no sign-in); it reads “Answered” and Change replaces or clears it. /legal agrees and added a rule: a club can no longer take the health mark off a question people have answered. Keep?</li>
+      <li><strong>Not walked here.</strong> Change closing once a division’s teams are made, the club’s staff reading “Agreed to documents on {date}”, and an upload that fails halfway are proved by the build’s probes and tests, not by this walk.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="sum">
+    <h2 id="sum">Summary to paste back</h2>
+    <div class="row">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn ghost" id="copy" type="button">Copy</button>
+      <button class="btn ghost" id="reset" type="button">Clear my ticks</button>
+      <span id="copied" class="lede" role="status"></span>
+    </div>
+    <label for="out" class="lede">Select all and copy if the Copy button doesn’t work here.</label>
+    <textarea id="out" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [{"id":"A","title":"A · The club’s questions (club owner)","steps":[["Sign in as the club owner, open House league, then 2026 Fall House League, then Sign-up form.","The page lists two questions (“Does your child have any allergies?” marked Health, and “T-shirt size”, asked once, required) and two documents (the waiver, typed; the code of conduct, a PDF)."],["Press “+ Add a question”, call it “Allergy note”, choose the type File, asked about each child, and save.","It is saved and listed. The window carried “Don’t ask for a health card number or a photo of one.” and the file question has no Required switch."]]},{"id":"B","title":"B · The page as a family (desktop)","steps":[["Open a private window and go to http://localhost:3000/uat-rep-club/league/2026-fall-house-league/register. No sign-in.","The sign-up page opens. Everything below is done in this window."],["Type first name Ada, last name Walktwo, date of birth June 1, 2014 for Child 1.","The page offers divisions for her. Keep every sign-up in this walk on the last name “Walktwo”: the clean-up finds them by it."],["Choose R2 Walk as her division.","A line says what will happen for her, and the club’s questions appear below it."],["Look just above the first club question.","One notice reads: “These questions come from UAT Rep Club. The club decides what to ask and what to do with your answers. FieldLogicHQ stores them for the club, in the United States, and uses them for nothing else. Questions about your answers go to the club first.” It shows once, not once per question."],["Look under “Does your child have any allergies?”.","The line “Only answer what UAT Rep Club needs to keep Ada safe.” sits under that question only. It is not under “T-shirt size” or “Allergy note”."],["Type “Peanuts” into the allergies box.","It takes the text. Nothing else on the page changes."]]},{"id":"C","title":"C · Attaching a file","steps":[["Under “Allergy note”, choose a file that is not a PDF or a photo (a .txt or .docx).","A red row shows the file’s name and “That file isn’t a PDF or a photo. Choose a PDF, or a JPEG, PNG or HEIC photo.” with two links, “Choose another” and “Remove”. Nothing was uploaded."],["Press “Remove” on that row.","The row goes and “Choose a file” is back."],["Choose a file bigger than 8 MB.","A red row says how big it is and “The limit is 8 MB. Choose a smaller file or a PDF.” at once, with no progress bar first."],["Press “Choose another” on that row and choose a small PDF (under 8 MB).","The picker opens from the button (with the keyboard too). A progress bar and “Cancel” show while it goes up, then a row with a PDF tag, the file name, its size and “Remove”. While it uploads the Sign up button reads “Uploading…” and is disabled."],["Press Tab from the row’s Remove link.","Focus moves on to the next control on the page, not to an invisible file box."]]},{"id":"D","title":"D · Documents, errors and the PDF gate","steps":[["Scroll to “Documents and agreement”.","The waiver’s text is in a box with its tick under it. The code of conduct shows “Open the code of conduct”, its size, and a faded tick with “Open it first to tick.” under it."],["Press the faded tick for the code of conduct.","It does not tick. (With the keyboard it can still be reached and read out.)"],["Open “Jersey number, position and notes” and type “Bee sting kit in the bag” in Additional notes.","The notes box takes it. You will check what a reload does with it in part E."],["Press Sign up with the T-shirt size empty and no ticks.","Nothing is saved. A box above the button says how many answers are missing (“N answers are missing. The first is …”), names the first one, and focus is on the box. “Go to it” is in it."],["Press “Go to it”.","The page scrolls to the first missing answer and focuses it."],["Choose a T-shirt size.","That answer’s red message goes, the count in the box drops by one, and focus stays on the size you just chose (it is not pulled back up to the box)."],["Tick the waiver.","Its red message goes."],["Press “Open the code of conduct”.","The PDF opens in a new tab."],["Come back to the sign-up tab.","A quiet line, “Opened. You can now tick.”, is announced and shown, and “Won’t open? Download it instead, or contact UAT Rep Club” appears. The tick is no longer faded."],["Tick the code of conduct.","It ticks and its message goes."]]},{"id":"E","title":"E · A reload, and the club changing the questions","steps":[["Reload the sign-up page.","The names, date of birth, T-shirt size and both ticks are still there. At the top a note reads “Answers to health questions, additional notes and attached files weren’t kept when the page reloaded. Please enter and attach them again.” The allergies box, the Additional notes box and the file are empty."],["Type “Peanuts” into the allergies box again.","It takes it."],["Attach the small PDF again under “Allergy note”.","It uploads and shows its row."],["In the club owner’s tab, add a question “Jersey colour”, short answer, asked about each child, required off, and save.","It is saved."],["Back in the family tab, press Sign up.","Nothing is signed up. The page scrolls up to a note and focus is on it: “UAT Rep Club added a question while you were filling this in. Everything you typed is still here.” “Jersey colour” now shows under Ada. Everything you typed, the ticks and the file are still there."],["Type “Blue” under “Jersey colour”.","It takes it."]]},{"id":"F","title":"F · Several children, and Remove","steps":[["Press “+ Add another child” and enter first name Bea, last name Walktwo, date of birth June 1, 2014, division R2 Walk.","A second block appears with its own questions."],["Type “None” in Bea’s allergies box and press “Remove child 2”.","A question appears with focus on it: “Remove Child 2? Bea’s answers will be cleared.” The buttons are Keep, then Remove."],["Press Keep.","The question closes, Bea’s answer is still there, and focus goes back to “Remove child 2”."],["Press “Remove child 2”, then Remove.","Bea’s block goes."],["Press “+ Add another child” and enter first name Cy, last name Walktwo, date of birth January 1, 2000.","Cy’s block says no division this season takes a child born in 2000, and none of the club’s questions show for Cy."]]},{"id":"G","title":"G · Signing up","steps":[["Press Sign up.","The confirmation names Ada as signed up. Cy is named too: “Cy wasn’t signed up: no division this season fits their age.”"],["Press “Your sign-up →”.","Your sign-up opens for Ada. Keep this tab open for parts H and I."]]},{"id":"H","title":"H · Your sign-up: the answers","steps":[["Find Ada’s answers on Your sign-up.","A folded row with “Change” and a short line such as “3 answered”. It does not show “Peanuts” or any other health answer’s words, anywhere on the page."],["Press Change on Ada’s row.","The questions open. The allergies box is empty with a note that her answer is kept unless you type a new one or clear it. “Jersey colour” shows “Blue”."],["Type “Peanuts and bees” in the allergies box and press Save.","“Saved.” shows and the row folds again, still without the words."],["Press Change on “your answers” (the T-shirt row), choose another size and press Save.","“Saved.” shows. Reload Your sign-up: the new size is shown."]]},{"id":"I","title":"I · Your sign-up: ticking again","steps":[["In the club owner’s tab, open the waiver document, change a sentence, choose that families must tick again, add a short reason, and save.","It saves as version 2."],["Reload Your sign-up.","A card is first on the page: “waiver, version 2”, “For Ada.”, and “UAT Rep Club updated it on {date}: “{your reason}.” Read it and tick to confirm. Your child’s place isn’t affected.”"],["Tick it.","It saves at once: “Ticked version 2 on {day}” with “Undo”."],["Press Undo.","The tick is removed and the card asks again."],["Tick it again and wait about ten seconds.","The Undo link goes and a quiet line remains: the waiver, version 2, ticked on {day}."]]},{"id":"J","title":"J · The health mark stays (club owner)","steps":[["In the club owner’s tab, open “Does your child have any allergies?” and switch Health off.","It is refused: “People have answered it, so it stays marked as health. To ask it without that mark, archive it and add a new question.”"]]},{"id":"K","title":"K · At phone width (390 px)","steps":[["Open the sign-up page again in a private window made 390 px wide and start a sign-up for Ada.","The page does not scroll sideways."],["Look at the “Allergy note” button.","It reads “Choose a file or take a photo”."],["Press Sign up with the required T-shirt size empty.","The box appears with focus on it and “Go to it” is easy to tap (a full-height button, not a small word)."],["Tap the round buttons under T-shirt size.","Each row is easy to tap with a thumb."]]}];
+const KEY = 'stage4-part2-walk-551';
+let state = { ticks: {}, verdict: {}, notes: {} };
+try { const raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const total = PARTS.reduce((n, p) => n + p.steps.length, 0);
+const root = document.getElementById('parts');
+for (const p of PARTS) {
+  const sec = document.createElement('section'); sec.className = 'card'; sec.setAttribute('aria-labelledby', 'h-' + p.id);
+  const h = document.createElement('h2'); h.id = 'h-' + p.id; h.textContent = p.title; sec.appendChild(h);
+  const ol = document.createElement('ol'); ol.className = 'steps';
+  p.steps.forEach(([act, exp], i) => {
+    const id = p.id + (i + 1); const li = document.createElement('li'); const lab = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', () => { state.ticks[id] = cb.checked; save(); tally(); });
+    const sp = document.createElement('span');
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = id;
+    sp.appendChild(n); sp.appendChild(document.createTextNode(act));
+    const e = document.createElement('span'); e.className = 'exp'; e.textContent = exp; sp.appendChild(e);
+    lab.appendChild(cb); lab.appendChild(sp); li.appendChild(lab); ol.appendChild(li);
+  });
+  sec.appendChild(ol);
+  const v = document.createElement('div'); v.className = 'verdict'; v.setAttribute('role', 'group'); v.setAttribute('aria-label', p.title + ' verdict');
+  for (const [val, txt] of [['pass', 'Passed'], ['issue', 'Issue'], ['call', 'Needs a call']]) {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.v = val; b.textContent = txt;
+    b.setAttribute('aria-pressed', String(state.verdict[p.id] === val));
+    b.addEventListener('click', () => { state.verdict[p.id] = state.verdict[p.id] === val ? '' : val; save();
+      v.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(state.verdict[p.id] === x.dataset.v))); });
+    v.appendChild(b);
+  }
+  sec.appendChild(v);
+  const ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for ' + p.title.split(' · ')[0];
+  ta.setAttribute('aria-label', 'Notes for part ' + p.id); ta.value = state.notes[p.id] || '';
+  ta.addEventListener('input', () => { state.notes[p.id] = ta.value; save(); });
+  sec.appendChild(ta); root.appendChild(sec);
+}
+function tally() {
+  const done = Object.values(state.ticks).filter(Boolean).length;
+  document.getElementById('count').textContent = done + ' of ' + total;
+  document.getElementById('meter').style.width = (100 * done / total) + '%';
+}
+tally();
+const out = document.getElementById('out');
+document.getElementById('build').addEventListener('click', () => {
+  const done = PARTS.reduce((n, p) => n + p.steps.filter((_, i) => state.ticks[p.id + (i + 1)]).length, 0);
+  const lines = ['§551 Sign-up questions walk (Board Ready Stage 4 Part 2): ' + done + ' of ' + total];
+  for (const p of PARTS) {
+    const got = p.steps.filter((_, i) => state.ticks[p.id + (i + 1)]).length;
+    const missed = p.steps.map((_, i) => p.id + (i + 1)).filter(id => !state.ticks[id]);
+    const vd = { pass: 'PASSED', issue: 'ISSUE', call: 'NEEDS A CALL' }[state.verdict[p.id]] || 'no verdict';
+    lines.push(p.title + ': ' + got + '/' + p.steps.length + ' · ' + vd + (missed.length ? ' · unticked ' + missed.join(', ') : ''));
+    if (state.notes[p.id]) lines.push('  notes: ' + state.notes[p.id].replace(/\s+/g, ' ').trim());
+  }
+  out.value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', () => {
+  const msg = document.getElementById('copied');
+  if (!out.value) document.getElementById('build').click();
+  navigator.clipboard.writeText(out.value).then(() => { msg.textContent = 'Copied.'; }, () => { out.select(); msg.textContent = 'Selected. Press Ctrl+C to copy.'; });
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = { ticks: {}, verdict: {}, notes: {} }; save(); location.reload();
+});
+</script>

@@ -6,6 +6,7 @@ import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason, getClubSiteContent } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
 import { openSignupLink } from '@/lib/league-signup-link';
+import { familyFormForPage } from '@/lib/club-form-family-route';
 import { buildSignupStatus } from '@/lib/league-signup-status';
 import { buildLeaguePayView } from '@/lib/league-pay-view';
 import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
@@ -56,9 +57,13 @@ export default async function YourSignupPage({
   const contactEmail = siteContent?.contactEmail ?? null;
 
   const link = await openSignupLink(token, { at: { orgId: org.id, seasonId: season.id } });
+  // Board Ready Stage 4 Part 2: the season's sign-up form as this sign-up stands on it (tab 7), read alongside the rest.
+  // It never throws (it never breaks the page).
+  const signupFormP = link.ok ? familyFormForPage(season, link) : Promise.resolve(null);
   const [found, pay] = link.ok
     ? await Promise.all([buildSignupStatus(season, org.name, link.rows, friendMaxFor(org.planId, season.friendRequestsMax)), buildLeaguePayView(link.registrationId, contactEmail)])
     : [null, null];
+  const signupForm = await signupFormP;
   // Signed-in family accounts Stage 4a, Part 6.6: the way back to the app, once a child on this sign-up is on a team (tier on only).
   const placed = link.ok ? await placedOnSignup(link.rows, season.status) : [];
 
@@ -86,6 +91,7 @@ export default async function YourSignupPage({
           returnedSession={paid ?? null}
           left={left === '1'}
           wayBack={placed.length > 0 ? <WayBack token={token} kids={placed} /> : null}
+          signupForm={signupForm}
         />
       ) : !link.ok && link.ended === 'finished' ? (
         <div className={kit.card}>

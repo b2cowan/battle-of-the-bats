@@ -881,6 +881,27 @@ season whose only document is "I have read" leaves `waiver_accepted_at` empty, b
 **Carried to Part 3:** moved ticks count as ticks on version 1 everywhere a version's ticks are counted (Replace already
 does); "text as the club held it on {date}" uses the move date, never the tick date; retention covers
 `club_form_submissions`; storage objects of a deleted registration's files.
+**Part 2 built 2026-11-20 on dev** (the family side of the sign-up form; QA walk §551 https://claude.ai/artifact/4T7SUVwYi2Fa67tcjsU3VN, 50 steps, owed the owner).
+Migration 515 applied to dev 2026-11-20 (the placement saves a child's answers, files and ticks in one transaction, a refusal rolls
+the sign-up back; Your sign-up's Change; the sign-up's own answers go with its last child); migration 516 (the six-hourly sweep of
+waiting files) is written, applied nowhere, and waits for the owner's yes and its own commit; both are in `MANUAL_PROD_STEPS.json`.
+Reviews: `/review` (four lenses; fixes applied: the waiting-file sweep, Remove and the question delete delete the row before the stored
+file, Your sign-up leaves no email-only sign-up row, an upload finishing after an earlier child was removed lands on its own child,
+focus stays on the field being fixed, a stale tick, Open or choice is dropped after the club changes the form), `/legal`
+(`docs/agents/legal/BOARD_READY_STAGE4_PART2_BUILT_REVIEW.md`: the health mark can't come off a question people have answered, the
+child's Additional notes are never kept in the tab, rules for Part 3 and the release), `/marketing` (eight strings), `/ux` (a refused
+file can be removed, the file picker works by keyboard, "Clear my answer" on an optional choice, the form-changed note takes focus),
+`/docs` (house-league help, club and family halves). Probes `.probe/stage4-part2-probe.mjs` 28 of 28 and
+`.probe/stage4-part2-files.mjs` 14 of 14 (re-run after the fixes). Walk fixture: `.probe/stage4-part2-walk-fixture.mjs on|off`.
+**Carried to Part 3 (added by Part 2):** the three staff readers read `club_form_ticks` (the duplicates line already says "Agreed to
+documents on {date}"; the child page and the families export still read `waiver_accepted_at`); the rep-team Waiver fold; stored files of a
+deleted registration, of a season delete cascade, and of a replaced file whose storage delete failed (a `removed` row, an object left)
+(`/legal`: close these before Parts 1–3 are promoted); one shared signer for the product's signed values; the club's record shows
+"Answer changed by the family {date}" on a health answer changed after the sign-up, and never words the PDF hand-over as read or viewed
+(`/legal`); the Privacy Policy §5 and Data Terms §12 sentences, with no "within a day" sentence until migration 516 runs; the Email
+families "Your sign-up" button (owner call C4, recommended: carry it); a unique key per document version and child on re-ticks (two parents
+at once insert two tick rows); Change is not re-checked against teams being made inside the same transaction. Accepted as known: the public
+upload and hand-over doors share one platform-wide limit, and the per-address limit trusts the forwarded address like every public form.
 **Owner calls RULED 2026-11-20** ("1 yes together, 2 yes rename, 3 agree"): C1 above; C2 the checklist's optional step is
 named "Documents" ("On. Families tick each one to sign up." / "Optional. Families sign up without any."), built the same
 day; C3 above.

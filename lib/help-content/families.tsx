@@ -415,7 +415,7 @@ const familiesHelp: HelpPageContent = {
               <ul>
                 <li><strong>Last signed</strong> shows the newest copy: its season, or its date for a document that is good until replaced.</li>
                 <li>When there are older copies, <strong>+2 earlier</strong> (or however many) opens every copy, newest first, with the date and how each was signed.</li>
-                <li>A house-league waiver accepted at sign-up counts as a copy of the Waiver, in date order. Teams are never added together.</li>
+                <li>A house-league sign-up where the family agreed to the club&rsquo;s documents counts as a copy of the Waiver, in date order, dated when they agreed. A child with no rep team reads <em>documents agreed to at sign-up</em>. Teams are never added together.</li>
                 <li>Papers are read-only here: they are uploaded by the club or the coach, on the team. On a phone the card says what is owed now; open earlier copies on a computer.</li>
               </ul>
             </>

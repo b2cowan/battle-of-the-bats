@@ -7249,6 +7249,8 @@ is read as stopped after the grace period (gotcha 4).
 1. **Read only behind the Registrations read** (ruling 6: owner, admin, league_admin, league_registrar and per-member house-league grants); every other seat gets nothing. Health answers never leave in a list column, the filter, the board, an email, push or bell line, or an export but the opt-in.
 2. **One answer per question per subject** (`club_form_answers_subject_uniq`) or per sign-up (`…_submission_uniq`).
 3. **`removed_at`**: the retention clock (ruling 10, Part 3) empties a health answer and stamps it; the record reads "Removed {date}".
+4. **Written only two ways (Part 2, mig 515):** inside the child's locked placement, `club_form_place_signup` (the sign-up page: the child's answers, and the sign-up's own on the first child placed — a failure rolls the placement back), and `club_form_family_answers` (Your sign-up's Change, until the child's division has its teams made; a cleared answer is deleted). Both re-check that the question is this form's, live, and asked for that kind of subject. A health answer's words are never sent to Your sign-up (it reads "Answered").
+5. **The sign-up's own answers go with its last child**: `club_form_subject_gone` (re-made by mig 515) deletes them, and their files' rows, when the last registration of the sign-up is deleted.
 
 <!-- dict:col:club_form_answers.id -->
 <!-- dict:col:club_form_answers.org_id -->
@@ -7278,6 +7280,7 @@ is read as stopped after the grace period (gotcha 4).
 2. **Every other tick names its version and fingerprint** (CHECK `club_form_ticks_versioned`).
 3. **A version with ticks can't be deleted** (no cascade on `version_id` or `document_id`).
 4. Deleting the registration deletes its ticks (trigger `club_form_subject_gone`).
+5. **Written inside the placement (Part 2, mig 515 `club_form_place_signup`)**, one per document per child placed; or from Your sign-up's re-tick (`recordFamilyTicks`), on the CURRENT version for the children it asks about. `handed_over_at` is set for a PDF only: the time in the signed receipt our server's hand-over route gave the browser (`app/api/league/[orgSlug]/[seasonSlug]/form/documents/[documentId]/open`, a cookie good for a day); a PDF tick without one is refused. Undo (Your sign-up) deletes a tick only within two minutes of making it.
 
 <!-- dict:col:club_form_ticks.id -->
 <!-- dict:col:club_form_ticks.org_id -->
@@ -7303,6 +7306,8 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:table:club_form_files -->
 
 **Purpose:** a file a family attaches to a file question (mig 513; ruling 9; uploads from Part 2): one per question, ≤ 8 MB, PDF / JPEG / PNG / HEIC checked from the file's content, ≤ 5 per child's sign-up. Uploaded one per request on choose (`pending`), `attached` when the sign-up is saved; a file never attached is deleted within a day; `removed` by Remove or the retention clock (ruling 10).
+
+**Part 2 (mig 515):** stored under `{org}/{form}/files/{uuid}/{name}` in `club-form-files`, its type read from the bytes (`lib/document-upload.ts`). `pending` → `attached` inside the placement (or Your sign-up's Change), which checks it is this form's, this question's and still pending. Remove deletes a pending file at once (row and stored file). A file a Change replaced or cleared reads `removed` with `removed_at` (its stored file deleted at once). Pending files older than 12 hours are deleted by `sweepWaitingFiles` (the platform job `club-form-files-sweep`, and a few on each upload).
 
 <!-- dict:col:club_form_files.id -->
 <!-- dict:col:club_form_files.org_id -->

@@ -89,3 +89,17 @@ export function throttleInvitationAttempt(token: string): NextResponse | null {
   }
   return null;
 }
+
+// Board Ready Stage 4 Part 2 (ruling 9): a family's file goes up the moment it is chosen, one per request, on a public
+// page with no sign-in. Its own budget, so a family attaching files never spends the sign-up's (or the other way round):
+// 40 files an hour from one address (three children, three file questions, a few tries each), and a ceiling across all.
+const formFileIpLimiter = new FixedWindowRateLimiter(60 * MINUTE, 40);
+const formFileGlobalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 300);
+
+/** The sign-up page's file upload and a document's hand-over: call first thing. Returns a 429 to send back, or null to carry on. */
+export function throttleSignupFiles(req: Request): NextResponse | null {
+  if (!formFileIpLimiter.take(clientIpFrom(req)) || !formFileGlobalLimiter.take('global')) {
+    return NextResponse.json({ error: TOO_MANY }, { status: 429 });
+  }
+  return null;
+}

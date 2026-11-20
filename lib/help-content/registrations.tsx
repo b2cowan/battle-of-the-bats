@@ -115,20 +115,19 @@ const registrationsHelp: HelpPageContent = {
       faqs: [
         {
           id: 'faq-waiver-recorded',
-          question: 'Is the waiver a family accepts on the public form actually recorded?',
+          question: 'Is a waiver or other document a family ticks on the public sign-up actually recorded?',
           answer: (
             <p>
-              Yes — since August 2026. When a season&rsquo;s sign-up form has a waiver (or another document to read) and a guardian ticks its box on
-              the public form, the moment of acceptance and the exact wording they agreed to are both
-              stored with the registration, and the acceptance appears as consent on the family&rsquo;s
-              record. Registrations from before then, and manual registrations you type in yourself
+              Yes. A season can have several documents to read, such as a waiver or a code of conduct. When a guardian ticks one on
+              the public sign-up, the document, its version and the time they ticked are stored with the registration, with no IP address, and the
+              date shows on the family&rsquo;s record as documents agreed to. A family can tick again later on their Your sign-up page, for a new version. Registrations from before then, and manual registrations you type in yourself
               (where no guardian saw a waiver), show no acceptance — that means &ldquo;not
               recorded&rdquo;, not &ldquo;refused&rdquo;.
             </p>
           ),
           answerText:
-            'Yes since August 2026. Public-form acceptance stores the time and the exact waiver wording, and shows as consent on the family record. Older rows and manual registrations show no acceptance, meaning not recorded rather than refused.',
-          keywords: ['waiver', 'accepted', 'consent', 'recorded', 'proof', 'signed'],
+            'Yes. A season can have several documents to read, such as a waiver or a code of conduct. When a guardian ticks one on the public sign-up, the document, its version and the time are stored with the registration, with no IP address, and the date shows on the family record as documents agreed to. A family can tick again later on Your sign-up for a new version. Older rows and manual registrations show no acceptance, meaning not recorded rather than refused.',
+          keywords: ['waiver', 'accepted', 'consent', 'recorded', 'proof', 'signed', 'documents agreed to', 'code of conduct', 'tick', 'version', 'IP address'],
         },
         {
           id: 'faq-registration-too-many-attempts',
@@ -149,13 +148,13 @@ const registrationsHelp: HelpPageContent = {
               </p>
               <p>
                 Taking registrations in person on one device? Enter them yourself with{' '}
-                <strong>Add registration</strong>, which has no such limit. No guardian sees the
-                waiver on a manual entry, so it shows no acceptance.
+                <strong>Add registration</strong>, which has no such limit. No guardian ticks your
+                documents on a manual entry, so it shows no acceptance.
               </p>
             </>
           ),
           answerText:
-            'The public registration form and the Email me my link form limit how many times they can be used from one internet connection, and how many confirmation emails one address can receive, within an hour, to stop automated abuse such as flooding a stranger\'s inbox. A family normally meets it only when many registrations go in from the same connection in a short time (a registration table running everyone through one laptop) or the same email is sent again and again. Ask them to wait a few minutes and try again. For in-person registration on one device, use Add registration, which has no such limit; a manual entry shows no waiver acceptance.',
+            'The public registration form and the Email me my link form limit how many times they can be used from one internet connection, and how many confirmation emails one address can receive, within an hour, to stop automated abuse such as flooding a stranger\'s inbox. A family normally meets it only when many registrations go in from the same connection in a short time (a registration table running everyone through one laptop) or the same email is sent again and again. Ask them to wait a few minutes and try again. For in-person registration on one device, use Add registration, which has no such limit; a manual entry shows no document acceptance.',
           keywords: ['too many attempts', 'try again later', 'form limit', 'cannot register', 'form blocked', 'rate limit', 'registration night', 'status lookup', 'email me my link'],
         },
       ],

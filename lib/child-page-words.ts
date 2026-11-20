@@ -286,8 +286,9 @@ export const CHILD_PAGE_WORDS = {
   colHow: 'How',
   howUploaded: 'Uploaded',
   howSignUp: 'Accepted at sign-up',
-  /** The child with no rep team: "House league: Summer 2029 waiver accepted at sign-up." */
-  leagueOnlyWaiver: (seasonName: string) => `${seasonName} waiver accepted at sign-up.`,
+  /** The child with no rep team: "House league: Summer 2029 documents agreed to at sign-up." (Board Ready Stage 4: the date is
+   *  set when a family agreed to a sign-up document, which may not be a waiver.) */
+  leagueOnlyWaiver: (seasonName: string) => `${seasonName} documents agreed to at sign-up.`,
   waiver: 'Waiver',
   born: (dob: string) => `Born ${formatStoredDate(dob)}`,
   medicalNote: 'Medical note',

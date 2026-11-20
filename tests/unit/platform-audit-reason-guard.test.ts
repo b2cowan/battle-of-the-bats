@@ -28,6 +28,7 @@ const NO_REASON_FILES: Record<string, string> = {
   'app/api/platform-admin/coach-sandbox-tick/route.ts': 'product job (scheduler tick)',
   'app/api/platform-admin/demo-sandbox-tick/route.ts': 'product job (scheduler tick)',
   'app/api/platform-admin/dues-reminders/route.ts': 'product job (scheduler sweep)',
+  'app/api/platform-admin/club-form-files-sweep/route.ts': 'product job (scheduler sweep: Board Ready Stage 4 Part 2, family files that never joined a sign-up, deleted within a day)',
   'app/api/platform-admin/insights-digest/route.ts': 'product job (scheduler sweep)',
   'app/api/platform-admin/schedule-change-notices/route.ts': 'product job (scheduler sweep)',
   'app/api/platform-admin/stripe-fees-daily/route.ts': 'product job (scheduler sweep: 12d-1 Part 4, the online-payments daily job)',

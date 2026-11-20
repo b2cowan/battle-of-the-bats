@@ -7,6 +7,7 @@ import {
   type DocumentSource, type FormFacts, type DocumentVersion, type FormDocument, type FormQuestion, type QuestionAsked, type QuestionChoice,
   type QuestionType, type TickKind,
 } from './club-form';
+import type { SignupDocument, SignupFormView, SignupQuestion } from './club-form-signup';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -15,8 +16,8 @@ import {
  *   ensureSeasonForm   the season's form, made on first need by `club_form_for_season` (the waiver moves in with it)
  *   readForm           questions and documents, with COUNTS of answers and ticks — never an answer, never a tick's family
  *   seasonFormFacts    what the Registration block, the checklist and Start next season say about a form
- *   liveTextDocuments  what the sign-up page shows until Part 2 (typed text only; a PDF waits for Part 2's open-first gate)
- *   recordTicks        a sign-up's ticks: one per document per child, each with its version, fingerprint and sentence
+ *   signupFormView     the form as a family meets it (Part 2): live questions, live documents at their current version
+ *                      (a sign-up's answers, files and ticks are saved inside the placement: mig 515, lib/club-form-family.ts)
  *   copyForm           questions and documents into another form; NEVER answers (/legal)
  *
  * Every table is service-role only: this module is the one way in, and the routes in front of it decide who may ask.
@@ -177,51 +178,62 @@ export async function seasonSignupCounts(seasonId: string): Promise<{ children: 
   return { children: row?.children ?? 0, signups: row?.signups ?? 0 };
 }
 
-/** A document as the sign-up page shows it until Part 2: typed text, read in place, its tick enabled straight away. */
-export type SignupDocument = { id: string; name: string; tickKind: TickKind; sentence: string; versionId: string; text: string; fingerprint: string };
+/**
+ * The form as a FAMILY meets it (Part 2, drawing tab 5): the live questions with their offered choices (no counts, no
+ * "draft board" mark) and the live documents at their current version — typed text in full, a PDF by its size only
+ * (its path never leaves the server; families open it through the hand-over route). In the form's order.
+ */
+export async function signupFormView(formId: string): Promise<SignupFormView> {
+  return (await readSignupForm(formId)).view;
+}
+
+/** A version of a live document, as the server-side family readers use it (its path never reaches a page). */
+export type SignupVersionRow = { id: string; documentId: string; versionNo: number; ticksStand: boolean | null; reason: string | null; createdAt: string; fingerprint: string; filePath: string | null };
 
 /**
- * The live typed-text documents a family ticks, in the form's order. A PDF waits for Part 2, whose page asks families to
- * open it before ticking (Parts 1 and 2 reach production together; MANUAL_PROD_STEPS.json, mig 513).
+ * The family's view of the form AND every version of its live documents (newest first) in the same two reads, for the
+ * server-side readers that need a version's history, fingerprint or stored path (Your sign-up's ticks, the hand-over).
  */
-export async function liveTextDocuments(formId: string): Promise<SignupDocument[]> {
-  const { data, error } = await supabaseAdmin.from('club_form_documents').select(DOCUMENT_COLS)
-    .eq('form_id', formId).is('archived_at', null).eq('source_kind', 'text').order('sort_order').order('created_at');
-  if (error) throw error;
-  const docs = (data ?? []) as DocumentRow[];
-  if (docs.length === 0) return [];
-  const { data: vs, error: vErr } = await supabaseAdmin.from('club_form_document_versions').select(VERSION_COLS)
-    .in('document_id', docs.map(d => d.id)).order('version_no', { ascending: false });
+export async function readSignupForm(formId: string): Promise<{ view: SignupFormView; versions: SignupVersionRow[] }> {
+  const [q, d] = await Promise.all([
+    supabaseAdmin.from('club_form_questions').select(QUESTION_COLS).eq('form_id', formId).is('archived_at', null).order('sort_order').order('created_at'),
+    supabaseAdmin.from('club_form_documents').select(DOCUMENT_COLS).eq('form_id', formId).is('archived_at', null).order('sort_order').order('created_at'),
+  ]);
+  if (q.error) throw q.error;
+  if (d.error) throw d.error;
+  const docs = (d.data ?? []) as DocumentRow[];
+  const { data: vs, error: vErr } = docs.length
+    ? await supabaseAdmin.from('club_form_document_versions').select(VERSION_COLS).in('document_id', docs.map(x => x.id)).order('version_no', { ascending: false })
+    : { data: [] as VersionRow[], error: null };
   if (vErr) throw vErr;
   const latest = new Map<string, VersionRow>();
   for (const v of (vs ?? []) as VersionRow[]) if (!latest.has(v.document_id)) latest.set(v.document_id, v);
-  return docs.flatMap(d => {
-    const v = latest.get(d.id);
-    return v?.body_text ? [{ id: d.id, name: d.name, tickKind: d.tick_kind, sentence: tickSentence(d.name, d.tick_kind), versionId: v.id, text: v.body_text, fingerprint: v.fingerprint }] : [];
+
+  const questions: SignupQuestion[] = ((q.data ?? []) as QuestionRow[]).map(r => ({
+    id: r.id, type: r.question_type, label: r.label, helpText: r.help_text,
+    choices: readChoices(r.choices).filter(c => c.offered).map(c => ({ id: c.id, label: c.label })),
+    required: r.required && r.question_type !== 'file', asked: r.asked, health: r.health,
+  }));
+  const documents: SignupDocument[] = docs.flatMap(x => {
+    const v = latest.get(x.id);
+    if (!v) return [];
+    return [{
+      id: x.id, name: x.name, tickKind: x.tick_kind, sentence: tickSentence(x.name, x.tick_kind), source: x.source_kind,
+      versionId: v.id, versionNo: v.version_no, text: v.body_text, fileSize: v.file_path ? v.file_size : null,
+      fileName: v.file_path ? v.file_name : null,
+    }];
   });
+  const versions = ((vs ?? []) as VersionRow[]).map(v => ({
+    id: v.id, documentId: v.document_id, versionNo: v.version_no, ticksStand: v.ticks_stand, reason: v.reason, createdAt: v.created_at,
+    fingerprint: v.fingerprint, filePath: v.file_path,
+  }));
+  return { view: { questions, documents, stamp: signupStamp(questions, documents) }, versions };
 }
 
-/**
- * A sign-up's ticks (Part 1: typed text only). One sign-up row for the family's reference, then one tick per document per
- * child placed — each with the version and fingerprint the page was drawn with, the exact sentence, and server time. No IP
- * address (ruling 18). Throws on failure: the caller decides what a failed record means.
- */
-export async function recordTicks(input: {
-  orgId: string; formId: string; ref: string; guardianEmail: string; registrationIds: readonly string[];
-  documents: readonly Pick<SignupDocument, 'id' | 'versionId' | 'fingerprint' | 'sentence'>[]; tickedAt: string;
-}): Promise<void> {
-  if (input.documents.length === 0 || input.registrationIds.length === 0) return;
-  const { data: sub, error: subErr } = await supabaseAdmin.from('club_form_submissions')
-    .upsert({ org_id: input.orgId, form_id: input.formId, ref: input.ref, guardian_email: input.guardianEmail }, { onConflict: 'form_id,ref' })
-    .select('id').single();
-  if (subErr) throw subErr;
-  const rows = input.registrationIds.flatMap(regId => input.documents.map(d => ({
-    org_id: input.orgId, form_id: input.formId, document_id: d.id, version_id: d.versionId, submission_id: (sub as { id: string }).id,
-    subject_table: 'league_registrations', subject_id: regId, guardian_email: input.guardianEmail,
-    sentence: d.sentence, fingerprint: d.fingerprint, ticked_at: input.tickedAt,
-  })));
-  const { error } = await supabaseAdmin.from('club_form_ticks').insert(rows);
-  if (error) throw error;
+/** What a family acts on, printed (see SignupFormView.stamp): a typo fix leaves it alone, a new question changes it. */
+function signupStamp(questions: readonly SignupQuestion[], documents: readonly Pick<SignupDocument, 'id' | 'versionId'>[]): string {
+  const qs = questions.map(x => [x.id, x.type, x.required, x.asked, x.health, x.choices.map(c => c.id).join(',')].join('|'));
+  return fingerprintOf(`${qs.join('\n')}#${documents.map(x => `${x.id}:${x.versionId}`).join('\n')}`).slice(0, 16);
 }
 
 /** True when a form has nothing of its own yet: no live question, no live document (the empty form's copy, Start next

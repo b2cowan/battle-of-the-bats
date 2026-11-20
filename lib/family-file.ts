@@ -190,7 +190,8 @@ export function familyFileLines(file: FamilyFile): { id: FamilyFileSectionId; ti
   ].map(top);
   const forms = [
     ...s.forms.documents.map(d => `${d.type} · ${d.child} · received ${day(d.receivedAt)}${d.fileName ? ` (${d.fileName})` : ''}`),
-    ...s.forms.waivers.map(w => `Waiver accepted · ${w.child} · ${w.season} · ${day(w.acceptedAt)}`),
+    // Board Ready Stage 4: the date is set when a family agreed to a sign-up document, which may not be a waiver.
+    ...s.forms.waivers.map(w => `Documents agreed to · ${w.child} · ${w.season} · ${day(w.acceptedAt)}`),
     ...s.forms.consents.map(c => `Consent · ${c.basis.replace(/_/g, ' ')} (${c.scope}) · ${c.email} · from ${day(c.startedAt)}${c.withdrawnAt ? ` · withdrawn ${day(c.withdrawnAt)}` : ''}`),
   ].map(top);
   const messages = s.messages.map(x => top(`${day(x.at)}${x.by ? ` by ${x.by}` : ''}`));

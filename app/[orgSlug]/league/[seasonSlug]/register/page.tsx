@@ -14,7 +14,8 @@ import { cutoffFor } from '@/lib/born-years';
 import { seasonDates } from '@/lib/house-league-season';
 import { tournamentToday } from '@/lib/timezone';
 import { friendMaxFor } from '@/lib/league-friends';
-import { ensureSeasonForm, liveTextDocuments } from '@/lib/club-form-server';
+import { ensureSeasonForm, signupFormView } from '@/lib/club-form-server';
+import { getOrgPrivacyPolicyHref } from '@/lib/privacy-policy';
 import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -52,9 +53,9 @@ export default async function RegisterPage({
 
   // What the form forecasts from (9b-1 Part 5): each division's birth years, price, note, and what holds a spot (accepted
   // and received, mig 362) and who is waiting. The server decides for real, under the season lock. Read together with the
-  // club's contact and (Board Ready Stage 4) the documents families tick, which come from the season's sign-up form (the
-  // waiver moved into it): typed text until Part 2, each tick naming the version the page was drawn with.
-  const [rawDivisions, { data: regRows }, siteContent, signupDocuments] = await Promise.all([
+  // club's contact and (Board Ready Stage 4) the season's sign-up form as a family meets it: the club's questions and the
+  // documents families tick (the waiver moved into them), each at the version the page is drawn with.
+  const [rawDivisions, { data: regRows }, siteContent, signupForm] = await Promise.all([
     getDivisionsForSeason(season.id),
     supabaseAdmin
       .from('league_registrations')
@@ -63,7 +64,7 @@ export default async function RegisterPage({
       .in('status', ['active', 'pending_review', 'waitlisted']),
     // Where a family's questions go (the no-division-fits card): the club's public-site contact, never org.contactEmail.
     getClubSiteContent(org.id),
-    registrationOpen ? ensureSeasonForm(season.id).then(liveTextDocuments) : Promise.resolve([]),
+    registrationOpen ? ensureSeasonForm(season.id).then(signupFormView) : Promise.resolve(null),
   ]);
   const count = (id: string, statuses: string[]) => (regRows ?? []).filter(r => r.division_id === id && statuses.includes(r.status)).length;
   const divisions: FormDivision[] = rawDivisions.map(d => ({
@@ -71,7 +72,6 @@ export default async function RegisterPage({
     heldCount: count(d.id, ['active', 'pending_review']), waitlistCount: count(d.id, ['waitlisted']),
     bornFromYear: d.bornFromYear, bornToYear: d.bornToYear, price: d.price, earlyPrice: d.earlyPrice,
   }));
-  const documents = signupDocuments.map(d => ({ id: d.id, versionId: d.versionId, name: d.name, sentence: d.sentence, text: d.text }));
   const notYet = regState === 'opensAhead' || regState === 'notSet' || regState === 'draft';
   const closedLine = regState === 'opensAhead' ? `Registration for ${season.name} opens ${clubDay(season.registrationOpenAt!)}.`
     : regState === 'closedByDate' ? `Registration for ${season.name} closed ${clubDay(season.registrationCloseAt!)}.`
@@ -113,14 +113,15 @@ export default async function RegisterPage({
             </p>
           )}
         </div>
-      ) : (
+      ) : signupForm && (
         <RegisterForm
           orgSlug={orgSlug}
           orgName={org.name}
           seasonSlug={seasonSlug}
           seasonName={season.name}
           seasonDates={seasonDates(season)}
-          documents={documents}
+          form={signupForm}
+          privacyUrl={getOrgPrivacyPolicyHref(org)}
           askEmailConsent={season.askEmailConsent}
           divisions={divisions}
           season={{ registrationFee: season.registrationFee, earlyBirdUntil: season.earlyBirdUntil, autoApproveUnderCapacity: season.autoApproveUnderCapacity }}

@@ -1,5 +1,5 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-18 (Board Ready data terms follow-through: the four supplier dates, ImprovMX countersigned, notices subscribed, server logs 90 days, the AI rule written into `AGENCY_RULES.md`); 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+**Last updated:** 2026-11-20 (Stage 4 Part 2: family sign-up form answers and waiting files); 2026-11-18 (Board Ready data terms follow-through: the four supplier dates, ImprovMX countersigned, notices subscribed, server logs 90 days, the AI rule written into `AGENCY_RULES.md`); 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
 Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
 rests on it.
 
@@ -57,6 +57,12 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   go 2026-11-18) runs on dev only; production gets it after the code: until it runs there, nothing is deleted on production and
   the privacy policy must not say so.** Topic:
   `CASL_MEMBER_INVITE_EMAILS.md`; draft `drafts/PRIVACY_POLICY.md` §9 (0.3, conditional).
+- **About a child, written by a parent on a club's sign-up form (Board Ready Stage 4 Part 2, built on dev 2026-11-20; dev only):** the club's own questions
+  (some marked health) and an optional PDF or photo per file question, up to 8 MB, typed from its bytes, in a private bucket under the club's id. A file is
+  stored "waiting" before the sign-up exists and deleted within 12 hours if never attached (the sweep's 6-hourly schedule, mig 516, is not applied: until it
+  is, only an upload triggers it, so the policy must not say "within a day"). A health answer's words never return to Your sign-up (it reads "Answered"); the
+  question's health mark cannot come off once answered. No IP is stored with a tick or an upload. Topic: `BOARD_READY_STAGE4_PART2_BUILT_REVIEW.md`; possibly
+  stale because of it: the published Privacy Policy §5/§9 and Data Terms §12 (Part 3 owes the sentences).
 - No public sharing of a child's data (`BUSINESS_DECISIONS.md` ~L2871); no one-to-one adult–minor
   messaging (`docs/projects/active/COACH_PORTAL_CHUNK_D_COUNSEL_PACKET.md` ~L188).
 - **Known gaps on file:** no player-information retention or purge rule (TODO, raised 2026-07-17); the

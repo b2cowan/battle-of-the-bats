@@ -115,7 +115,8 @@ export async function buildChildProposals(orgId: string, { detail = true }: { de
     const detailLine = [
       docCount > 0 ? pluralize(docCount, 'document') : null,
       c.medical_notes && c.medical_notes.trim() ? 'medical note on file' : null,
-      docCount === 0 && waiver ? `Waiver accepted ${formatStoredDate(String(waiver.waiver_accepted_at))}` : null,
+      // Board Ready Stage 4: the date is set when a family agreed to a sign-up document, which may not be a waiver.
+      docCount === 0 && waiver ? `Agreed to documents on ${formatStoredDate(String(waiver.waiver_accepted_at))}` : null,
     ].filter(Boolean).join(' · ');
 
     records.push({

@@ -234,6 +234,11 @@ export function readQuestionInput(
   if (hasChoices(type) && !choices.some(c => c.offered)) return { error: 'Give it at least one choice to save it.' };
 
   const health = opts.healthSwitch && ('health' in body ? body.health === true : existing?.health ?? false);
+  // /legal 2026-11-20: Your sign-up hides a health answer's words by the question's mark as it is NOW, so the mark can't come
+  // off once people have answered (their words would then show on a page opened from an emailed link). Turning it ON is always fine.
+  if (existing && opts.healthSwitch && existing.health && !health && isAnswered(existing)) {
+    return { error: 'People have answered it, so it stays marked as health. To ask it without that mark, archive it and add a new question.' };
+  }
   const settled = settledQuestion({
     type,
     required: 'required' in body ? body.required === true : existing?.required ?? false,

@@ -13,6 +13,8 @@ import LeaguePayBlock from '@/components/public/LeaguePayBlock';
 import FriendFields, { FriendCodeRow, friendsToSend, codeHasTypo, type FriendDraft } from '@/components/league/FriendFields';
 import { FRIEND_WORDS as FW, type FriendAsked } from '@/lib/league-friends';
 import reg from '@/components/league/register.module.css';
+import { SignupAnswers, SignupRetick } from '@/components/league/YourSignupForm';
+import type { FamilyFormState } from '@/lib/club-form-family';
 
 /**
  * THE FAMILY'S "YOUR SIGN-UP" PAGE (Club Tier Stage 9b-1, Part 5; drawing §5, words HOUSE_LEAGUE_STAGE9B1_COPY.md §9;
@@ -29,6 +31,9 @@ import reg from '@/components/league/register.module.css';
  * with Copy, and "Plays with" one line per friend the family named (the name or code they typed — never the name behind
  * a code, never whether it was honoured). Change opens the same question as the sign-up form, until the child's
  * division has its teams made; then the lines stay and "Friend requests closed when the teams were made."
+ * Board Ready Stage 4 Part 2 (drawing tab 7, rulings 8 and 20): the club's sign-up form. FIRST on the page, while a
+ * document needs a tick, the re-tick block; after the children, each child's answers and the sign-up's own in folded rows
+ * with Change until the teams are made (`components/league/YourSignupForm.tsx`).
  */
 
 type Registration = {
@@ -108,6 +113,7 @@ export default function YourSignup({
   left = false,
   footLine = SW.foot,
   wayBack = null,
+  signupForm = null,
 }: {
   orgSlug: string;
   seasonSlug: string;
@@ -127,6 +133,8 @@ export default function YourSignup({
   footLine?: string;
   /** The emailed page's way back to the app (Stage 4a, Part 6.6, drawing 4.1), once a child on it is on a team. */
   wayBack?: React.ReactNode;
+  /** Board Ready Stage 4 Part 2: the season's sign-up form as this sign-up stands on it (null: nothing to show). */
+  signupForm?: FamilyFormState | null;
 }) {
   // "Ask to withdraw a child" (9b-2): the link is the possession proof (Stage 1: the only one).
   const [asked, setAsked] = useState<string | null>(null);
@@ -223,6 +231,11 @@ export default function YourSignup({
     <>
       {regs.length > 0 && (
         <>
+          {/* Board Ready Stage 4 Part 2 (tab 7): the re-tick block comes first, only while a document needs one. */}
+          {signupForm && !found.finished && (
+            <SignupRetick asks={signupForm.asks} childCount={signupForm.children.length} orgSlug={orgSlug} seasonSlug={seasonSlug}
+              token={token} club={found.clubName} contact={contactEmail} />
+          )}
           {sharedRef && <p style={soft}>{SW.reference} <strong style={{ color: 'var(--club-text)' }}>{sharedRef}</strong> {SW.referenceQuote}</p>}
           {/* R5 (club round, 2026-11-05): the children are one framed list, a row each on a hairline (they were a card
               each). Every fact a row carried stays in it — the shipped page wins over the drawing's one-line row. */}
@@ -326,6 +339,11 @@ export default function YourSignup({
             );
           })}
           </ul>
+
+          {/* Board Ready Stage 4 Part 2 (tab 7, ruling 20): each child's answers and the sign-up's own, with Change. */}
+          {signupForm && (
+            <SignupAnswers state={signupForm} orgSlug={orgSlug} seasonSlug={seasonSlug} token={token} club={found.clubName} contact={contactEmail} />
+          )}
 
           {wayBack}
 

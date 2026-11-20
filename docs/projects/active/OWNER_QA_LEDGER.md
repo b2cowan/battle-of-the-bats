@@ -28628,3 +28628,12 @@ performed over the shared working tree. The original walk result is not claimed 
 **Sign-in:** visitor signed out; club owner `owner@dev.local` · `devpass123`; platform admin `uat-platform@fieldlogichq.ca` · `UATPassword2026!`.
 **Status:** owed. Built 2026-11-20 on dev; the owner commits.
 <!-- /§550 -->
+## §551 · Board Ready Stage 4 Part 2 · the family side of the club sign-up form — **built 2026-11-20 on dev; owed the owner's walk and commit**
+<!-- §551 -->
+**Walk (checkable):** https://claude.ai/artifact/4T7SUVwYi2Fa67tcjsU3VN (source `docs/projects/active/BOARD_READY_STAGE4_PART2_WALK.html`); parts A to K, 50 steps, five owner calls (not in the counter). Plan `BOARD_READY_PLAN.md` §5 Stage 4 "Part 2 built".
+**Sign-in:** club owner `uat-club-owner@uat-rep-club.local` · `UATPassword2026!` (UAT Rep Club); the family side needs no sign-in (private window).
+**Fixture:** set on dev 2026-11-20 with `node .probe/stage4-part2-walk-fixture.mjs on` (R2 Walk has no teams made; R1, R2 and R3 Walk take births 2014 to 2015). After the walk: `node .probe/stage4-part2-walk-fixture.mjs off` puts every date and band back and deletes the walk's sign-ups (last name Walktwo).
+**Writing steps to read back after the walk:** A2 adds a file question "Allergy note" and E4 adds "Jersey colour" to 2026 Fall House League's form; I1 makes the waiver version 2; the family steps create the sign-ups for Ada Walktwo and, in F, Bea and Cy.
+**Reviews (before hand-off):** `/review`, `/legal`, `/marketing`, `/ux`, `/docs`, `/simplify`; all applied. Owner calls: C4 (Email families' "Your sign-up" button: carry to Part 3), C5 (migration 516, the six-hourly sweep: yes or no), C6 (a document added after sign-up shows in the tick-again card), C7 (health answers read "Answered" on Your sign-up; the health mark can't come off an answered question).
+**Status:** owed. Built 2026-11-20 on dev; the owner commits (two commits: Part 2, and migration 516 alone on the owner's yes).
+<!-- /§551 -->

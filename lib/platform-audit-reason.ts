@@ -30,6 +30,8 @@ const NO_REASON = new Set([
   // Board Ready two-step, Part 3: the hourly run of waiting support resets, the person's own confirmation, and the
   // product's cancel when the person signs in with a real code. Support's request, hold, release and cancel ask why.
   'two_step_resets_tick', 'two_step_reset_confirmed', 'two_step_reset_cancelled',
+  // Board Ready Stage 4 Part 2: the sweep of family files that never joined a sign-up (ruling 9: within a day).
+  'club_form_files_sweep',
   // Plans & pricing Stage 2 Part 4: the Renewals export (a work tool; the entry is its own record).
   'export_renewals',
   // Stage 0 Part 10: sign in again and the owner's email. Each sits beside the change that carries the reason.

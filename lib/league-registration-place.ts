@@ -59,6 +59,18 @@ export interface PlaceInput {
   signupPosition?: number | null;
   /** The season's waiver text at acceptance: with `waiverAcceptedAt`, the consent-ledger row is filed here. */
   waiverText?: string | null;
+  /**
+   * Board Ready Stage 4 Part 2: the sign-up form's part of this child, saved INSIDE the same locked step (mig 515
+   * `club_form_place_signup`): the child's answers, the sign-up's own (`once`, saved with the first child placed), the
+   * files they attach and one tick per document. Any failure throws and the child is not placed. Already checked by the
+   * caller against the form; the database checks the questions, files and versions again.
+   */
+  form?: {
+    formId: string;
+    answers: readonly unknown[]; once: readonly unknown[];
+    ticks: readonly { documentId: string; versionId: string; sentence: string; handedOverAt: string | null }[];
+    tickedAt: string | null;
+  };
 }
 
 export type Placed = { id: string; status: LeagueRegistrationStatus; waitlistPosition: number | null };
@@ -66,7 +78,7 @@ export type Placed = { id: string; status: LeagueRegistrationStatus; waitlistPos
 export async function placeLeagueRegistration(input: PlaceInput): Promise<{ placed: Placed } | { refusal: PlaceRefusal }> {
   const email = normalizeGuardianEmailRequired(input.child.guardianEmail);
   const c = input.child;
-  const { data, error } = await supabaseAdmin.rpc('league_registration_place', {
+  const args = {
     p_org: input.orgId,
     p_season: input.seasonId,
     p_division: input.divisionId,
@@ -81,7 +93,12 @@ export async function placeLeagueRegistration(input: PlaceInput): Promise<{ plac
     p_signup_ref: input.signupRef ?? null,
     p_signup_position: input.signupPosition ?? null,
     p_fee: input.feeAmount,
-  });
+  };
+  // With a sign-up form, the placement and the form's answers, files and ticks are one transaction (mig 515); without,
+  // the placement alone, as every staff placement is.
+  const { data, error } = input.form
+    ? await supabaseAdmin.rpc('club_form_place_signup', { ...args, p_form: input.form })
+    : await supabaseAdmin.rpc('league_registration_place', args);
   if (error) throw error;
   const row = (Array.isArray(data) ? data[0] : data) as { id: string | null; status: string | null; waitlist_position: number | null; refusal: string | null };
   if (row.refusal) return { refusal: row.refusal as PlaceRefusal };

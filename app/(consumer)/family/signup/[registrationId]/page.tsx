@@ -6,6 +6,7 @@ import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { familySignupFor } from '@/lib/family-home';
 import { getOrgForGate } from '@/lib/family-access';
 import { openSignupLink } from '@/lib/league-signup-link';
+import { familyFormForPage } from '@/lib/club-form-family-route';
 import { buildSignupStatus } from '@/lib/league-signup-status';
 import { buildLeaguePayView } from '@/lib/league-pay-view';
 import { getClubSiteContent } from '@/lib/club-page-meta';
@@ -64,9 +65,11 @@ export default async function FamilySignupPage({ params }: { params: Promise<{ r
   ]);
   if (!org || !season) notFound();
   const contactEmail = siteContent?.contactEmail ?? null;
-  const [found, pay] = await Promise.all([
+  const [found, pay, signupForm] = await Promise.all([
     buildSignupStatus(season, org.name, link.rows, friendMaxFor(org.planId, season.friendRequestsMax)),
     buildLeaguePayView(link.registrationId, contactEmail),
+    // Board Ready Stage 4 Part 2: the season's sign-up form as this sign-up stands on it (tab 7).
+    familyFormForPage(season, link),
   ]);
 
   // Back to the team (one team for these children), or to the family list.
@@ -99,6 +102,7 @@ export default async function FamilySignupPage({ params }: { params: Promise<{ r
           token={mine.token}
           emailShown={link.rows[0]?.guardian_email ? maskEmail(link.rows[0].guardian_email) : null}
           footLine={W.inApp.seeing(mine.children)}
+          signupForm={signupForm}
         />
       </PublicPage>
     </div>

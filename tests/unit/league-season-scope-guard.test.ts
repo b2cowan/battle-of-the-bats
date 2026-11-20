@@ -184,20 +184,31 @@ describe('house-league and tryout emails escape what a family typed', () => {
 });
 
 describe('the public family forms are throttled', () => {
-  const PUBLIC_FORMS = [...routesUnder('app/api/league/[orgSlug]'), ...routesUnder('app/api/rep-teams/[orgSlug]')]
-    .filter(f => /export const POST\b/.test(read(f)));
+  const PUBLIC_ROUTES = [...routesUnder('app/api/league/[orgSlug]'), ...routesUnder('app/api/rep-teams/[orgSlug]')];
+  const PUBLIC_FORMS = PUBLIC_ROUTES.filter(f => /export const POST\b/.test(read(f)));
+  // Every request-keyed budget the throttle module exports counts (a form's own budget, like the sign-up's file door,
+  // Board Ready Stage 4 Part 2): read from the module, so a new budget needs no edit here.
+  const THROTTLES = [...read('lib/public-form-throttle.ts').matchAll(/export function (throttle\w+)\(req: Request\)/g)].map(m => `${m[1]}(req)`);
 
-  it('finds the forms (it cannot silently find none)', () => {
+  it('finds the forms and the throttles (it cannot silently find none)', () => {
     assert.ok(PUBLIC_FORMS.length >= 3, PUBLIC_FORMS.join(', '));
+    assert.ok(THROTTLES.includes('throttlePublicForm(req)'), THROTTLES.join(', '));
   });
 
-  for (const file of PUBLIC_FORMS) {
-    it(`${file} throttles before it resolves anything`, () => {
-      const post = handlers(read(file)).POST;
-      const throttle = post.indexOf('throttlePublicForm(req)');
-      assert.ok(throttle > 0, 'missing throttlePublicForm(req)');
-      assert.ok(throttle < post.indexOf('await ', post.indexOf('await params') + 1), 'throttle must come first');
-    });
+  // Every exported verb of every public route: a GET that signs a link or a DELETE that removes a file is a door too.
+  // A verb behind a sign-in is not a public form; each one is named here, with why.
+  const SIGNED_IN: Record<string, string> = {
+    'app/api/league/[orgSlug]/[seasonSlug]/team/[teamId]/calendar-link/route.ts GET': 'a signed-in coach reading their own link: the sign-in is the gate',
+  };
+  for (const file of PUBLIC_ROUTES) {
+    for (const [verb, body] of Object.entries(handlers(read(file))).filter(([v]) => !SIGNED_IN[`${file} ${v}`])) {
+      it(`${file} ${verb} throttles before it resolves anything`, () => {
+        const at = THROTTLES.map(t => body.indexOf(t)).filter(i => i >= 0);
+        const throttle = at.length ? Math.min(...at) : -1;
+        assert.ok(throttle > 0, `missing a throttle (${THROTTLES.join(' | ')})`);
+        assert.ok(throttle < body.indexOf('await ', body.indexOf('await params') + 1), 'throttle must come first');
+      });
+    }
   }
 
   it('the two registration forms also cap mail to one recipient', () => {

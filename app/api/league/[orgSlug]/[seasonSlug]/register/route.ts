@@ -28,8 +28,11 @@ import { hasSecondParentStop, withSecondParentStop } from '@/lib/league-second-p
 import { friendMaxFor, readFriends, type FriendIn } from '@/lib/league-friends';
 import { readFriendCodes, saveFriendRequests } from '@/lib/league-friends-server';
 import { showFriendCode } from '@/lib/league-friend-code';
-import { ensureSeasonForm, liveTextDocuments, recordTicks } from '@/lib/club-form-server';
-import { docInSentence } from '@/lib/club-form';
+import { cookies } from 'next/headers';
+import { ensureSeasonForm, signupFormView } from '@/lib/club-form-server';
+import { answersIn, checkAnswers, onceQuestions, perChildQuestions, signupConsentText, type AnswerIn, type AnswerOut, type SignupQuestion } from '@/lib/club-form-signup';
+import { checkFileUses, formGoneError, handoversFrom } from '@/lib/club-form-family';
+import { FAMILY_FORM_WORDS as FW_FORM } from '@/lib/club-form-family-words';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,11 +53,15 @@ export const dynamic = 'force-dynamic';
  *      the rest of the form and stored once the child is placed; a code resolves then. Every child gets a friend code
  *      (mig 461's trigger), shown on the confirmation and in the email while the club asks for friends. A friend that
  *      fails to store never fails the sign-up.
- *   8. Board Ready Stage 4 Part 1: the documents a family ticks come from the season's sign-up form (the waiver moved into it;
- *      typed text until Part 2). Every live document must be ticked, on the version the page showed (a document replaced
- *      while the family filled the form asks again). One tick per document per child placed, with its version, fingerprint
- *      and exact sentence (`recordTicks`); `waiver_accepted_at` is still set, so every reader of it keeps working. Part 2
- *      moves the ticks into the placement's own locked step.
+ *   8. Board Ready Stage 4 (Parts 1–2): the season's sign-up form. The page sends the STAMP of the form it was drawn with;
+ *      a form the club changed since comes back (409 `form_changed`, with the form as it is now) and the page keeps what
+ *      was typed. Each child's answers to the per-child questions and the sign-up's own are checked against their types and
+ *      Required (a file question never is); a file must be one this form is still holding for that question, at most five
+ *      a child. Every live document must be ticked, and a PDF only after OUR SERVER handed it over (its receipt). Then,
+ *      INSIDE each child's locked placement (mig 515 `club_form_place_signup`): the child's answers, files and ticks; the
+ *      sign-up's own answers ride the first child placed. Any failure rolls that child's placement back: the child is not
+ *      signed up and the confirmation says so — an answer is never dropped the way a failed friend request is logged.
+ *      `waiver_accepted_at` is set only when a document asked "I have read and agree" (/legal 2026-11-20).
  * The email and the notice are AWAITED (each in its own try): the email carries the family's reference and how to pay, and
  * work left running after the response can be dropped on the host (Next after() on Amplify). Neither fails the sign-up.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -68,9 +75,6 @@ function isValidEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
-/** A blank line between paragraphs of the consent ledger's evidence. */
-const PARA = '\n\n';
-
 function str(v: unknown, max?: number): string | null {
   if (typeof v !== 'string') return null;
   const t = v.trim();
@@ -78,7 +82,8 @@ function str(v: unknown, max?: number): string | null {
   return max ? t.slice(0, max) : t;
 }
 
-type ChildIn = { firstName: string | null; lastName: string | null; dob: string | null; divisionId: string | null; jersey: string | null; position: string | null; notes: string | null; friends: FriendIn[] };
+type ChildIn = { firstName: string | null; lastName: string | null; dob: string | null; divisionId: string | null; jersey: string | null; position: string | null; notes: string | null; friends: FriendIn[]; answers: AnswerIn[] };
+
 
 /** A family's reference: eight characters they can read back, to quote to the club (it opens nothing). */
 function newReference(): string {
@@ -129,6 +134,7 @@ export const POST = withObservability(async (req: Request,
     return {
       firstName: str(c.firstName, 80), lastName: str(c.lastName, 80), dob: str(c.dateOfBirth), divisionId: str(c.divisionId),
       jersey: str(c.jerseyPref, 3), position: str(c.positionPref, 60), notes: str(c.notes, 500), friends: read.friends,
+      answers: answersIn(c.answers),
     };
   });
 
@@ -141,14 +147,6 @@ export const POST = withObservability(async (req: Request,
   const guardianEmail2 = 'email' in second ? second.email : null;
   // 8. The documents ticked: [{ id, versionId }]. (`waiverAccepted` from a page drawn before Stage 4 reads as no ticks.)
   const sentTicks = new Map<string, string>();
-  // Every document the page was drawn with, ticked or not (a document added or replaced since then asks for a reload).
-  const shown = new Map<string, string>();
-  if (Array.isArray(body.shown)) {
-    for (const t of body.shown as unknown[]) {
-      const r = (t ?? {}) as Record<string, unknown>;
-      if (typeof r.id === 'string' && typeof r.versionId === 'string') shown.set(r.id, r.versionId);
-    }
-  }
   if (Array.isArray(body.documents)) {
     for (const t of body.documents as unknown[]) {
       const r = (t ?? {}) as Record<string, unknown>;
@@ -157,10 +155,16 @@ export const POST = withObservability(async (req: Request,
   }
   const emailConsent = body.emailConsent === true;
 
-  const [{ formId, documents }, divisions] = await Promise.all([
-    ensureSeasonForm(season.id).then(async id => ({ formId: id, documents: await liveTextDocuments(id) })),
+  const [{ formId, view }, divisions] = await Promise.all([
+    ensureSeasonForm(season.id).then(async id => ({ formId: id, view: await signupFormView(id) })),
     getDivisionsForSeason(season.id),
   ]);
+  const documents = view.documents;
+  // 8. A form the club changed while the family filled it in comes back with the form as it is now; the page keeps what
+  // was typed (drawing tab 5). Before any other check: an answer to the old form isn't worth correcting.
+  if (body.formStamp !== view.stamp) {
+    return NextResponse.json({ error: FW_FORM.changedOther(org.name), code: 'form_changed', form: view }, { status: 409 });
+  }
   if (divisions.length === 0) return NextResponse.json({ error: 'No divisions are available for this season' }, { status: 409 });
   const bands = divisions.some(d => d.bornFromYear != null || d.bornToYear != null);
   const cutoff = cutoffFor(org.birthdayCutoffs, season.sport);
@@ -189,15 +193,32 @@ export const POST = withObservability(async (req: Request,
   if ('refusal' in second) errors.guardianEmail2 = secondParentRefusalWords(second.refusal, 'parent');
   // Stage 3b (O4): an address that asked this club to stop is refused in words, never accepted silently.
   else if (guardianEmail2) { const stopped = await stoppedSecondParentRefusal(org.id, guardianEmail2); if (stopped) errors.guardianEmail2 = stopped; }
-  // A document the page never showed, or showed in an older version, can't be ticked from this page: the family reloads
-  // to read it (Part 2 keeps what they typed across that). Said in the page's own box, never under a field it doesn't have.
-  if (documents.some(d => shown.get(d.id) !== d.versionId || (sentTicks.has(d.id) && sentTicks.get(d.id) !== d.versionId))) {
-    return NextResponse.json({ error: `${org.name} updated its documents while you were signing up. Reload the page to read them, then sign up again.`, code: 'form_changed' }, { status: 409 });
-  }
+  // 8. The answers: each child who will be placed (a child with no division gets no questions, and answers are never kept
+  // for one), then the sign-up's own. `missing` lists the errors that are an unanswered question (the page counts them).
+  const missing: string[] = [];
+  const childAnswers: AnswerOut[][] = kids.map((k, i) => {
+    if (chosen[i] === 'nofit') return [];
+    const r = checkAnswers(perChildQuestions(view), k.answers, k.firstName, qid => `children.${i}.q.${qid}`);
+    Object.assign(errors, r.errors);
+    missing.push(...r.missing);
+    return r.answers;
+  });
+  const onceChecked = checkAnswers(onceQuestions(view), answersIn(body.once), null, qid => `once.q.${qid}`);
+  Object.assign(errors, onceChecked.errors);
+  missing.push(...onceChecked.missing);
+  // A file must be one this form is still holding, for that question, used once; at most five a child (ruling 9).
+  Object.assign(errors, await checkFileUses(formId, [
+    ...childAnswers.flatMap((list, i) => list.map(answer => ({ answer, key: `children.${i}.q.${answer.questionId}`, who: kids[i].firstName, set: `children.${i}` }))),
+    ...onceChecked.answers.map(answer => ({ answer, key: `once.q.${answer.questionId}`, who: null, set: 'once' })),
+  ], new Map<string, SignupQuestion>(view.questions.map(q => [q.id, q]))));
+  // Every live document ticked; a PDF only once OUR SERVER handed it over (the receipt the open route gave this browser).
+  const jar = await cookies();
+  const handedOver = handoversFrom(name => jar.get(name)?.value, documents);
   for (const d of documents) {
-    if (!sentTicks.has(d.id)) errors[`documents.${d.id}`] = d.tickKind === 'read_agree' ? `Agree to ${docInSentence(d.name)} to sign up.` : `Tick that you have read ${docInSentence(d.name)} to sign up.`;
+    if (sentTicks.get(d.id) !== d.versionId) { errors[`documents.${d.id}`] = FW_FORM.docMissing(d.name, d.tickKind, d.source === 'pdf'); missing.push(`documents.${d.id}`); }
+    else if (d.source === 'pdf' && !handedOver.has(d.id)) errors[`documents.${d.id}`] = FW_FORM.docNotOpened(d.name);
   }
-  if (Object.keys(errors).length > 0) return NextResponse.json({ errors }, { status: 400 });
+  if (Object.keys(errors).length > 0) return NextResponse.json({ errors, missing }, { status: 400 });
   if (chosen.every(c => c === 'nofit')) {
     const year = kids.find(k => k.dob)?.dob?.slice(0, 4);
     return NextResponse.json({ error: `No division takes children born in ${year}. Contact ${org.name} to ask what is available.`, code: 'nofit' }, { status: 409 });
@@ -220,8 +241,11 @@ export const POST = withObservability(async (req: Request,
   const tickedAt = documents.length > 0 ? new Date().toISOString() : null;
   const waiverAcceptedAt = documents.some(d => d.tickKind === 'read_agree') ? tickedAt : null;
   // The consent ledger's evidence (mig 252): the words of every document ticked, as the family read them.
-  const consentText = documents.length ? documents.map(d => [d.sentence, d.text].join(PARA)).join(`${PARA}———${PARA}`) : null;
-  type Result = PlacedChild & { outcome: 'active' | 'pending_review' | 'waitlisted' | 'duplicate' | 'nofit'; id: string | null };
+  const consentText = signupConsentText(documents);
+  // One tick per document for each child placed, inside the placement (mig 515). The sign-up's own answers ride every
+  // child's call; the database saves them with the first child placed.
+  const ticks = documents.map(d => ({ documentId: d.id, versionId: d.versionId, sentence: d.sentence, handedOverAt: handedOver.get(d.id)?.toISOString() ?? null }));
+  type Result = PlacedChild & { outcome: 'active' | 'pending_review' | 'waitlisted' | 'duplicate' | 'nofit' | 'failed' | 'failed_file'; id: string | null };
   const results: Result[] = [];
   let position = 0;
   for (let i = 0; i < kids.length; i++) {
@@ -242,10 +266,16 @@ export const POST = withObservability(async (req: Request,
       },
       // With waiverAcceptedAt this files the consent-ledger row (mig 252) beside the placement.
       waiverText: consentText,
+      // Only when there is something to save: a sign-up row holding nothing but an email is never made (/legal 2026-11-20).
+      form: childAnswers[i].length || onceChecked.answers.length || ticks.length
+        ? { formId, answers: childAnswers[i], once: onceChecked.answers, ticks, tickedAt }
+        : undefined,
     });
     } catch (e) {
-      console.error('[league-register] placing a child failed:', e);
-      results.push({ ...base, divisionName: d.name, status: 'pending_review', fee, outcome: 'nofit' });
+      // Never the error object: a constraint error echoes the failing row, which holds a typed child's name (/legal).
+      const gone = formGoneError(e);
+      console.error('[league-register] placing a child failed:', gone ?? (e as { code?: string })?.code ?? 'no code');
+      results.push({ ...base, divisionName: d.name, status: 'pending_review', fee, outcome: gone === 'file' ? 'failed_file' : 'failed' });
       continue;
     }
     if ('refusal' in placed) {
@@ -267,24 +297,14 @@ export const POST = withObservability(async (req: Request,
     });
   }
   const placedKids = results.filter(r => r.id);
-  // 8. The ticks: one per document per child placed. A failed record is logged by code only (never the row, which names a
-  // family) and doesn't fail the sign-up in Part 1; Part 2 saves ticks inside the placement's own step.
-  if (tickedAt && placedKids.length) {
-    try {
-      await recordTicks({
-        orgId: org.id, formId, ref: reference, guardianEmail: normalizeGuardianEmailRequired(guardianEmail!),
-        registrationIds: placedKids.map(r => r.id!), documents, tickedAt,
-      });
-    } catch (e) {
-      console.error('[league-register] recording the document ticks failed:', (e as { code?: string })?.code ?? 'no code');
-    }
-  }
   if (placedKids.length === 0) {
     const dup = results.find(r => r.outcome === 'duplicate');
+    const failed = results.some(r => r.outcome === 'failed' || r.outcome === 'failed_file');
     return NextResponse.json({
-      error: dup ? `${dup.firstName} ${dup.lastName} is already signed up for this season. To see their sign-up, use "${SW.door}" on the season page.` : 'Nothing was signed up.',
-      code: dup ? 'duplicate' : 'nothing',
-    }, { status: 409 });
+      error: dup ? `${dup.firstName} ${dup.lastName} is already signed up for this season. To see their sign-up, use "${SW.door}" on the season page.`
+        : failed ? 'Nothing was signed up: your answers didn’t save. Please try again.' : 'Nothing was signed up.',
+      code: dup ? 'duplicate' : failed ? 'failed' : 'nothing',
+    }, { status: dup ? 409 : failed ? 500 : 409 });
   }
 
   // 6. The email-consent line (CASL): one row for the sign-up, filed against its first registration.

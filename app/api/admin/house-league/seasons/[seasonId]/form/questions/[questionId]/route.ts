@@ -69,13 +69,12 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   const existing = await readQuestion(formId, questionId);
   if (!existing) return NextResponse.json({ error: 'Question not found' }, { status: 404 });
   if (!canDeleteQuestion(existing)) return conflict('People have answered it, so it can only be archived.');
-  // A file a family chose but never sent (Part 2) holds the question; it goes with it, stored file first.
-  const { data: pending } = await supabaseAdmin.from('club_form_files').select('id, path').eq('question_id', questionId).eq('status', 'pending');
-  const paths = ((pending ?? []) as { path: string }[]).map(f => f.path);
-  if (paths.length) {
-    await supabaseAdmin.storage.from(CLUB_FORM_BUCKET).remove(paths);
-    await supabaseAdmin.from('club_form_files').delete().in('path', paths);
-  }
+  // A file a family chose but never sent, and the record of one a family replaced or removed (Part 2), hold the question;
+  // they go with it, stored file first. (An attached file has its answer, so the question can't be deleted then.)
+  // Rows first, by status: a file a family attached in the meantime is neither deleted nor stripped of its stored file.
+  const { data: dropped } = await supabaseAdmin.from('club_form_files').delete().eq('question_id', questionId).in('status', ['pending', 'removed']).select('path');
+  const paths = ((dropped ?? []) as { path: string }[]).map(f => f.path);
+  if (paths.length) await supabaseAdmin.storage.from(CLUB_FORM_BUCKET).remove(paths);
   const { error } = await supabaseAdmin.from('club_form_questions').delete().eq('id', questionId).eq('form_id', formId);
   // 23503: an answer arrived between the count and the delete; the database kept the question.
   if (error) return error.code === '23503' ? conflict('People have answered it, so it can only be archived.') : serverError(W.deleteFailed);
