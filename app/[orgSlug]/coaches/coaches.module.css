@@ -5683,6 +5683,10 @@ a.oneChip:hover { border-color: currentColor; }
 .footerIconBtn.sectionEditBtn { border-color: transparent; background: none; color: var(--text-tertiary); }
 .footerIconBtn.sectionEditBtn:hover { color: var(--text-primary); background: var(--white-8); }
 .pageSectionBody { composes: collapseBody; padding-top: 0.4rem; }
+/* A table INSIDE a section card is not a second card: the section's frame is the frame (one frame, table standard §3.3),
+   so the table's own border goes and it runs to the card's edges under the heading. Documents is the only one today. */
+.pageSectionBody > .tableWrap { border: 0; border-radius: 0; background: transparent; margin-inline: -1.1rem; margin-bottom: -1.1rem; }
+.pageSectionBody > .tableWrap tbody tr:last-child .td { border-bottom: 0; }
 /* A section with no heading (the Skills & goals tab's one section, a month group) opens with the
    full top padding its missing head row would have left. A class, not an inline style — a size
    set inline is invisible to every CSS-reading guard, which is the roster's 13.6px lesson. */
@@ -5932,23 +5936,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 
 /* ── Detail form (player detail page) ──────────────────────────────────── */
-.detailSection {
-  background: var(--home-olive-soft, rgba(255,255,255,0.03));
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-bottom: 1.25rem;
-}
-
-.detailSectionTitle {
-  font-size: var(--type-support);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-tertiary);
-  margin: 0 0 1rem;
-}
-
 .detailPlaceholder {
   font-size: var(--type-body);
   color: var(--text-tertiary);
@@ -8465,8 +8452,9 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .linkCard {
   background: var(--home-card, var(--card-bg));
   border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  border-radius: 8px;
-  padding: 1rem;
+  /* Same radius and padding as the page's section cards (`.pageSection`) it sits beside on Join a club. */
+  border-radius: var(--radius);
+  padding: 1.1rem;
 }
 
 .linkCardHeader {
@@ -8480,7 +8468,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   margin: 0;
   color: var(--text-primary);
   font-size: var(--type-heading);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* ════════════════════════════════════════════════════════════════════════

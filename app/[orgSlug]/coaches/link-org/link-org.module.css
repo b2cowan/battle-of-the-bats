@@ -2,6 +2,8 @@
    need: the three facts a coach reads before saying yes, in the same eyebrow + sentence idiom as the
    club's own card (specimen 9). Tokens only. */
 
+/* A club's request is a white card on the paper page (the tinted outer panel retired, 2026-09-21): only the gap below it. */
+.requestCard { margin-bottom: 0.75rem; }
 .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; margin-top: 0.9rem; }
 .factCol { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
 .eye {

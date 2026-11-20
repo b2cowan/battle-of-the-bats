@@ -193,7 +193,9 @@ describe('the one place a move says "not refunded" (ruling (a), 2026-11-19)', ()
     // Owner 2026-11-20: one open request at a time as the coach sees it. The ask form is absent while a club waits on
     // the coach or the coach waits on a club, so "Ask a club" never sits under a club's own request.
     assert.match(page, /const canAsk = fromClubs\.length === 0 && mine\.length === 0;/);
-    assert.match(page, /\{canAsk && <section[^>]*>\s*<h2[^>]*>\{COACH_REQUEST_FORM_TITLE\}/);
+    assert.match(page, /\{canAsk && <CoachPageSection title=\{COACH_REQUEST_FORM_TITLE\}>/);
+    // The portal's standard white section card, never the retired tinted panel (owner 2026-09-21).
+    assert.doesNotMatch(page, /detailSection/);
     // The club's screen is NOT changed by ruling (a).
     assert.doesNotMatch(readCode('app/[orgSlug]/admin/rep-teams/bring-in/page.tsx'), /team-move-carve-out|coachPlanEndsLine/);
   });

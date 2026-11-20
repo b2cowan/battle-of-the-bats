@@ -4,6 +4,7 @@ import { FormEvent, use, useCallback, useEffect, useState } from 'react';
 import { Building2, RefreshCw } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
+import CoachPageSection from '@/components/coaches/CoachPageSection';
 import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
@@ -264,7 +265,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         const club = link.linkedOrg?.name ?? 'A club';
         const team = link.repTeam?.name ?? ownTeamName;
         return (
-          <section key={link.id} className={styles.detailSection}>
+          <section key={link.id} className={own.requestCard}>
             <article className={styles.linkCard}>
               <div className={styles.linkCardHeader}>
                 <h3 className={styles.linkCardTitle}>{coachCardTitle(club, team)}</h3>
@@ -314,8 +315,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         );
       })}
 
-      {canAsk && <section className={styles.detailSection}>
-        <h2 className={styles.detailSectionTitle}>{COACH_REQUEST_FORM_TITLE}</h2>
+      {canAsk && <CoachPageSection title={COACH_REQUEST_FORM_TITLE}>
         <p className={own.lede}>{coachPageLede(ownTeamName, clubOpen)}</p>
         <form className={styles.linkForm} onSubmit={handleSubmit}>
           <label className={styles.field}>
@@ -333,11 +333,10 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
           </button>
         </form>
         <p className={own.hint}>{COACH_REQUEST_HINT}</p>
-      </section>}
+      </CoachPageSection>}
 
       {mine.length > 0 && (
-        <section className={styles.detailSection}>
-          <h2 className={styles.detailSectionTitle}>Waiting on the club</h2>
+        <CoachPageSection title="Waiting on the club">
           {mine.map(link => (
             <div key={link.id} className={own.row}>
               <div className={own.rowMain}>
@@ -349,12 +348,11 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
               </button>
             </div>
           ))}
-        </section>
+        </CoachPageSection>
       )}
 
       {history.length > 0 && (
-        <section className={styles.detailSection}>
-          <h2 className={styles.detailSectionTitle}>Earlier requests</h2>
+        <CoachPageSection title="Earlier requests">
           {history.map(link => (
             <div key={link.id} className={own.row}>
               <div className={own.rowMain}>
@@ -365,7 +363,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
               </div>
             </div>
           ))}
-        </section>
+        </CoachPageSection>
       )}
 
       <QuestionShell

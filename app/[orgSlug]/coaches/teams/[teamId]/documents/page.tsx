@@ -5,6 +5,7 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachPageSection from '@/components/coaches/CoachPageSection';
 import { canViewDocuments } from '@/lib/coach-capabilities';
 import styles from '../../../coaches.module.css';
 import type { RepDocumentType } from '@/lib/types';
@@ -182,16 +183,14 @@ export default function TeamDocumentsPage({
       )}
 
       {/* Org-wide templates */}
-      <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Org-Wide Templates</p>
+      <CoachPageSection title="Org-wide templates">
         <TemplateTable rows={orgWide} />
-      </div>
+      </CoachPageSection>
 
       {/* Team templates */}
-      <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Team Templates</p>
+      <CoachPageSection title="Team templates">
         <TemplateTable rows={teamSpecific} />
-      </div>
+      </CoachPageSection>
 
     </div>
   );
