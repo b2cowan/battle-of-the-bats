@@ -118,6 +118,10 @@ export const PLAN_BILLING_WORDS = {
     tournamentCount: (count: number, limit: number) => limit >= NO_LIMIT
       ? `${pluralize(count, 'tournament slot')} · unlimited`
       : `${count} of ${pluralize(limit, 'tournament slot')}`,
+    /** A7 (Premium's plan card, one column): the slot as a line, "1 of 1 tournament slot in use". */
+    slotsInUse: (count: number, limit: number) => limit >= NO_LIMIT
+      ? `${pluralize(count, 'tournament slot')} in use`
+      : `${count} of ${pluralize(limit, 'tournament slot')} in use`,
     staffCount: (count: number, limit: number) => limit >= NO_LIMIT
       ? `${pluralize(count, 'staff seat')} · unlimited`
       : `${count} of ${pluralize(limit, 'staff seat')}`,

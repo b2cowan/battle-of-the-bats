@@ -9,7 +9,9 @@ import { PLAN_BILLING_PROFILES, type PlanBillingProfile, type BillingPlanChange 
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
-import { teamWorkspaceReactivatePath, COACHES_START_PATH, COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import { teamWorkspaceReactivatePath, teamWorkspaceDisplayName, COACHES_START_PATH, COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import { ORG_DELETION_WORDS as DW, deletionPaidUntil, deletionPlanName } from '@/lib/org-deletion-words';
+import { DeletionRequestWindow, DeletionSentLine, useDeletionRequest, type DeletionRead } from './DeletionRequest';
 import type { Organization, OrgPlan } from '@/lib/types';
 import type { BillingCycle } from '@/lib/plan-config';
 import type { PanelPlanKey } from '@/lib/plan-upgrade';
@@ -76,12 +78,34 @@ export type BillingBodyViewProps = {
   /** GST/HST Stage 1 (drawing tab 6): the billing address on file, read on the plan card, and its Billing address button.
    *  Absent before anything is bought (nothing new shows). */
   billingAddress?: { line: string; onEdit: () => void } | null;
+  /** Settings in both workspaces Session 1: the deletion request's read and its door (the plan's `deletionWorkspace`). */
+  deletion?: { read: DeletionRead; onRequest: () => void } | null;
 };
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return <section className={styles.section} aria-labelledby={id}>
     <div className={styles.sectionHead}><h2 id={id} className={styles.sectionTitle}>{title}</h2></div>{children}
   </section>;
+}
+
+/** The name the deletion request says: a Premium workspace by its team's name ("Riverdale Ridge 13U", not "… Coaches Portal"). */
+export function deletionName(org: { name: string }, workspace: 'premium' | 'tournament'): string {
+  return workspace === 'premium' ? teamWorkspaceDisplayName(org.name) : org.name;
+}
+
+/** "Delete {name}" — the LAST section of Plan & billing, in every state of the plan (drawing tabs 3 and 5, marks 11, 12, 17):
+ *  after Reduce or cancel when paid, after the plans shelf on the free plan, after Basic records once Premium is cancelled.
+ *  The door wears the Cancel door's look (white, red words); once sent, the olive line holds its place until staff close it. */
+function DeletionSection({ org, workspace, deletion }: { org: { name: string }; workspace: 'premium' | 'tournament'; deletion: NonNullable<BillingBodyViewProps['deletion']> }) {
+  const name = deletionName(org, workspace);
+  const read = deletion.read;
+  return <Section id="billing-delete" title={DW.section.title(name)}>
+    <p className={styles.cancelCopy}>{DW.section.body(workspace === 'premium' ? DW.section.premiumWhat : name)}</p>
+    {read.status === 'loading' ? <LoadingState inline label={W.page.loading} />
+      : read.status === 'error' ? <p role="alert" className={styles.hint}>{DW.section.loadFailed}</p>
+      : read.data.request ? <DeletionSentLine request={read.data.request} orgName={name} ownerCount={read.data.ownerCount} />
+      : <button type="button" className={`btn btn-outline ${styles.dangerText}`} id="billing-delete-btn" onClick={deletion.onRequest}>{DW.section.door}</button>}
+  </Section>;
 }
 
 function ReadFailure({ read, section }: { read: BillingRead<unknown>; section: string }) {
@@ -173,10 +197,12 @@ function PickWindow({ orgName, endsAt, since, pick, busy, onChange, onSave, onCl
 /** The actual billing presentation, also rendered by the isolated profile fixtures. No portal chrome or providers. */
 export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = PLAN_BILLING_PROFILES, actions: a,
   notice, waitNotice = null, detail = null, onCloseDetail = () => {},
-  billingAddress = null,
+  billingAddress = null, deletion = null,
 }: BillingBodyViewProps) {
   const org = s.org;
   if (!s.canManageBilling) return <LockedCard orgName={org.name} />;
+  const deletionSection = ownProfile.deletionWorkspace && deletion
+    ? <DeletionSection org={org} workspace={ownProfile.deletionWorkspace} deletion={deletion} /> : null;
 
   const sale = (key: string) => s.gating.status === 'ready' && s.gating.data[key as OrgPlan] === false;
   const ft = s.freeTime.status === 'ready' ? s.freeTime.data : null;
@@ -266,6 +292,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       {keepLine}
       <div className={styles.planActions}>{keepButton}{retry}<a href={CONTACT_HREF} className="btn btn-outline">{W.change.contact}</a></div>
     </CoachCard>
+    {/* The deletion request reads on its own, so a failed free-time read never takes its door away. */}
+    {deletionSection}
   </div>{panel}</>;
 
   const readRecovery = [s.usage, s.gating, s.cancellation, s.move].some(read => read.status === 'error') ? retry : null;
@@ -286,6 +314,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     <FreeTimeBand band={portalCopy!.band} />
     {readRecovery}
     {keepPremium}{joinClub}
+    {deletionSection}
   </div>{panel}</>;
 
   if (cancelled && controlsReady) {
@@ -336,6 +365,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         <a href={COACHES_TOURNAMENTS_PATH} className="btn btn-outline">{W.reactivate.basicDoor}</a>
       </CoachCard>}
       {readRecovery}
+      {deletionSection}
     </div>{panel}</>;
   }
 
@@ -357,13 +387,22 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       <button type="button" className={`btn btn-outline ${styles.lineButton}`} onClick={a.portal} disabled={disabled}><CreditCard size={14} aria-hidden />{a.busy === 'portal' ? W.plan.openingPortal : W.plan.payment}</button>
     </div>}
     <CoachCard className={styles.planCard}>
-      <div className={styles.planGrid}>
+      <div className={`${styles.planGrid} ${profile.usageLine ? styles.planOne : ''}`}>
         <div className={styles.planSide}>
           <CoachEyebrow chip={<CoachChip tone={pendingCancel ? 'warn' : staffFree ? band?.tone === 'amber' ? 'warn' : 'good' : org.subscriptionStatus === 'canceled' ? 'danger' : org.subscriptionStatus === 'past_due' ? 'warn' : 'good'}>{pendingCancel ? W.plan.ending : portalCopy?.band.eyebrow ?? (staffFree ? freeCopy?.band.eyebrow : W.plan.status(org.subscriptionStatus))}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
           <h2 className={styles.planName}>{profile.config.label}</h2>
           {s.freeTime.status === 'loading' ? <LoadingState inline label={W.page.loading} /> : <p className={styles.planPrice}>{price}{taxedPrice && <> <span className={styles.plusTax}>{W.move.plusTax}</span></>}</p>}
           {freeCard && <p className={styles.hint}>{freeCard.from}</p>}
           {controlsReady && ownBilling && !cancelled && !pending && org.currentPeriodEnd && <p className={styles.hint}>{org.subscriptionStatus === 'trialing' ? W.plan.trialEnds(org.currentPeriodEnd) : W.plan.renews(org.currentPeriodEnd)}</p>}
+          {/* A7: one meter, said as a line under the renewal date (no bar to turn red when the one slot is used). */}
+          {/* Held until the free-time read lands: a portal on free time hosts no tournament, so its slot line never flashes in. */}
+          {profile.usageLine && controlsReady && <>
+            {s.usage.status === 'loading' && <LoadingState inline label="Loading billing usage…" />}
+            {usage && profile.usageMeters.filter(m => !portal || m !== 'tournament_slots').map(meter =>
+              <p key={meter} className={styles.slotLine}>{W.usage.slotsInUse(usage[meter].count, usage[meter].limit)}</p>)}
+            <ReadFailure read={s.usage} section="billing usage" />
+            {portal && <p className={styles.hint}>{W.change.hostingExcluded}</p>}
+          </>}
           {pending && <>
             {keepLine}
             {pending.heldMovePlan && <p className={styles.hint}>{W.plan.renewsAs(PLAN_CONFIG[pending.heldMovePlan].label)}</p>}
@@ -378,7 +417,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
           </div>}
           <ReadFailure read={s.freeTime} section="free time" />
         </div>
-        <div className={styles.capSide}>
+        {!profile.usageLine && <div className={styles.capSide}>
           <CoachEyebrow>{W.page.sections.usage}</CoachEyebrow>
           {s.usage.status === 'loading' && <LoadingState inline label="Loading billing usage…" />}
           <ReadFailure read={s.usage} section="billing usage" />
@@ -412,7 +451,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
             </div>;
           })}
           {portal && <p className={styles.hint}>{W.change.hostingExcluded}</p>}
-        </div>
+        </div>}
       </div>
     </CoachCard>
     {pendingMove && <MoveBand move={pendingMove.move} movesAt={pendingMove.endsAt} retentionDays={preflight?.retentionDays ?? ownProfile.retentionDays} onChange={a.changePick} disabled={disabled} />}
@@ -482,6 +521,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         <button type="button" className={`btn btn-outline ${styles.dangerText}`} id="billing-cancel-btn" onClick={a.cancel} disabled={disabled}>{premium ? W.cancel.premiumDoor : preflight.ending?.endsOn ? W.cancel.waitDoor(ownProfile.config.label) : W.cancel.orgDoor(org.name)}</button>
       </> : s.cancellation.status === 'loading' ? <LoadingState inline label="Loading cancellation details…" /> : <ReadFailure read={s.cancellation} section="cancellation details" />}
     </Section>}
+    {deletionSection}
   </div>{panel}</>;
 }
 
@@ -549,6 +589,12 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const [keepOpen, setKeepOpen] = useState(initialReturn.keepPlan);
   const [keepError, setKeepError] = useState<string | null>(null);
   const [waitNotice, setWaitNotice] = useState<string | null>(null);
+  // Settings in both workspaces Session 1: the deletion request (owner only — this whole body is). Read only for a plan
+  // whose last section it is; the club asks from its Settings card.
+  const deletionWorkspace = ownProfile.deletionWorkspace ?? null;
+  const deletion = useDeletionRequest(deletionWorkspace ? org.slug : '');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const deletionPaid = deletionPaidUntil(org, ownProfile.key as OrgPlan);
   const scope = `orgSlug=${encodeURIComponent(org.slug)}`;
   const version = `${org.planId}:${ownProfile.key}:${org.subscriptionStatus}:${revision}`;
   const usage = useBillingRead<BillingUsage>(`/api/billing/usage?${scope}`, version);
@@ -755,7 +801,12 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     });
   }
   return <>
-    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} detail={detail} onCloseDetail={() => setDetail(null)} billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
+    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} detail={detail} onCloseDetail={() => setDetail(null)} billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null}
+      deletion={deletionWorkspace ? { read: deletion.read, onRequest: () => setDeleteOpen(true) } : null} />
+    {deleteOpen && deletionWorkspace && deletion.read.status === 'ready' && <DeletionRequestWindow orgSlug={org.slug}
+      orgName={deletionName(org, deletionWorkspace)} workspace={deletionWorkspace} facts={deletion.read.data}
+      paid={deletionPaid ? { plan: deletionPlanName(ownProfile.key as OrgPlan), until: deletionPaid } : null}
+      onClose={() => setDeleteOpen(false)} onSent={request => { deletion.sent(request); setDeleteOpen(false); }} />}
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
       freeThrough={freeTime.status === 'ready' ? (freeTime.data.portal && freeTime.data.portal.state !== 'open' ? freeTime.data.portal.lastDay : null) ?? freeTime.data.freeTime?.lastDay ?? null : null}
       // A waiting cancel refuses every move: the window's door is Keep {Plan}, here the same question window.

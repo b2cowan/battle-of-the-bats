@@ -365,3 +365,23 @@
 @media (max-width: 640px) {
   .keepButton.keepButton { justify-content: center; width: 100%; min-height: var(--tap-min, 44px); }
 }
+
+/* The deletion request (Settings in both workspaces Session 1, drawing tabs 3, 5, 6). The window's parts are the wait
+   callout's recipe: an olive edge for what is deleted, a plain line for what isn't, the amber edge for the paid line (L-A).
+   Doubled classes: KitDialog's body paragraph rule (0,1,1) would otherwise put a bottom margin on each line. No new token. */
+.deleteParts { display: grid; gap: 0.75rem; }
+.deleteParts.deleteParts > p { margin: 0; }
+.deleteLead { line-height: 1.45; }
+.deletePart { composes: waitCallout; }
+.deletePart.deletePart { margin: 0; max-width: none; display: grid; gap: 0.3rem; font-size: var(--type-support); }
+.deletePart.deletePart > p { margin: 0; }
+.deletePart ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.2rem; }
+.deletePartHeading { margin: 0; font-size: var(--type-support); font-weight: 700; color: var(--text-primary); }
+.deleteGone.deleteGone { border-left-color: var(--home-olive); }
+.deleteKept.deleteKept { border-left-color: var(--home-line-strong); }
+/* "Request sent {date}…": the olive check line (drawing mark 13), in place of the door until staff close the request. */
+.sentLine { display: flex; align-items: flex-start; gap: 0.45rem; margin: 0; max-width: 64ch; font-size: var(--type-body); font-weight: 600; line-height: 1.45; color: var(--home-olive); }
+.sentLine svg { flex: none; margin-top: 0.15rem; }
+/* The Premium plan card without its usage column (A7): one column, the slot as a line under the renewal date. */
+.planGrid.planOne { grid-template-columns: minmax(0, 1fr); }
+.slotLine { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }

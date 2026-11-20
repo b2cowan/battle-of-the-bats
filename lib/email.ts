@@ -1955,6 +1955,21 @@ export function orgDeletionRequestHtml(p: {
   `);
 }
 
+/**
+ * The acknowledgement of a deletion request, to EVERY active owner (Settings in both workspaces Session 1; /legal L-B,
+ * ruled 2026-11-20: a co-owner can object in reply). Words: `ORG_DELETION_WORDS.email`. A reply to the owner's own request,
+ * so not a commercial message (CASL, finding 10): no offer, no price, no "come back". The reason is left out on purpose —
+ * it can be personal to the sender. Replies go to privacy@ (the send sets `replyTo`).
+ */
+export function orgDeletionReceivedHtml(lines: { asked: string; reply: string; object: string; signature: string }) {
+  return wrap(`
+    <p style="margin:0 0 1rem;">${escapeHtml(lines.asked)}</p>
+    <p style="margin:0 0 1rem;">${escapeHtml(lines.reply)}</p>
+    <p style="margin:0 0 1rem;">${escapeHtml(lines.object)}</p>
+    <p style="margin:0;color:${WARM_EMAIL.secondary};">${escapeHtml(lines.signature)}</p>
+  `);
+}
+
 export function cancellationConfirmationHtml(p: {
   orgName: string;
   planLabel: string;

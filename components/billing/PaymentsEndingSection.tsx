@@ -10,10 +10,12 @@
 import { formatStoredDate } from '@/lib/timezone';
 import { LEAVING_WORDS as L } from '@/lib/online-payment-words';
 import type { EndingSection } from '@/lib/online-payment-endings';
+import type { DeletionExportFrom } from '@/lib/org-deletion-words';
 import ck from './Billing.module.css';
 
 /** `cancelOn`: a cancel that waits for its date (Plans end at the renewal date, Part C) — dated, with its own way back. */
-export type PaymentsEndingKind = { kind: 'move'; dateLong: string } | { kind: 'cancelOn'; dateLong: string; plan: string } | { kind: 'cancel' } | { kind: 'delete' };
+export type PaymentsEndingKind = { kind: 'move'; dateLong: string } | { kind: 'cancelOn'; dateLong: string; plan: string } | { kind: 'cancel' }
+  | { kind: 'delete'; exportFrom: DeletionExportFrom };
 
 export default function PaymentsEndingSection({ section, ending }: { section: EndingSection | null | undefined; ending: PaymentsEndingKind }) {
   if (!section) return null;
@@ -50,7 +52,7 @@ export default function PaymentsEndingSection({ section, ending }: { section: En
       {waiting && <p>{waiting}</p>}
       {owing && <p>{owing}</p>}
       <p>{L.delete.disconnect}</p>
-      <p>{L.delete.export}</p>
+      <p>{L.delete.export[ending.exportFrom]}</p>
     </section>
   );
 }

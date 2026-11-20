@@ -121,3 +121,37 @@ after deletion as part of our record that it happened. §3's row already covers 
 ## Lawyer's eye needed?
 No for the window. Optional, low: whether one co-owner's confirmation should be enough to delete an organization others
 own (finding 6) — a governance question the Terms do not answer today, worth a line in the Terms' next version.
+
+## Addendum 2026-11-20 — the NEW words as built (Settings in both workspaces, Session 1): CASL + promise check
+Read: `lib/org-deletion-words.ts`, `orgDeletionReceivedHtml` (`lib/email.ts:1964`), `acknowledge()` (`lib/org-deletion-requests.ts:111`),
+`app/api/platform-admin/orgs/[id]/delete/route.ts`, `supabase/migrations/514_a_deletion_request_is_recorded.sql`, Privacy Policy 2026-11-17 §9.
+No new outside source opened (CASL text already read; see `CASL_PURCHASE_DETAILS_EMAIL.md`).
+
+1. **Acknowledgement email — OK, one wording change.** Not a CEM (no commercial purpose; a reply to the owner's own request), so no
+   s.6 sender-identification or unsubscribe duty; the signature line plus Reply-To privacy@ is more than a non-CEM needs. Requester's
+   email shown to co-owners: fine (same organization, same class as "Bought by" to every owner); the reason is NOT in the email
+   (good, keep it out). Matches L-B (one owner's confirmation is enough, a co-owner objects in reply). **Change:** "confirms by replying
+   to that email" reads as this email. Use: "Nothing is deleted until an owner confirms in answer to our reply." Runbook point (not
+   wording): if one owner objects, staff hold the deletion.
+2. **Club "What is deleted" / "What isn't" — accurate, nothing overstated.** The cascade removes the club's rows and files; accounts
+   are not deleted (no `deleteUser` in the route); `team_org_links.linked_org_id` is ON DELETE CASCADE, so a coach's own linked
+   Premium workspace survives and only loses its link, while a team the club took over (ownership transferred, `org_id` moved) goes
+   with the club. Optional clause for the club window only: "A coach's own Coaches Portal stays theirs; it loses its link to {name}."
+   When guardian accounts ship, the people clause needs "and families'" (existing re-verify trigger).
+3. **Export lines — OK.** Nothing in them is a promise we break ("deleted with everything else" is true of our copy; Stripe and the
+   club's own bank hold their own records, and the window already says "Download or print anything you need to keep first").
+4. **The record (mig 514) — matches finding 9 and Privacy §9 as published.** Holds: organization name and web address, who asked
+   (email as text, no account link), the optional reason, status, times, the staff email that closed it. It holds no more than the
+   request email held. §9's "who deleted it, when and why" covers it. **Carry-forward §9 clause still OWED (do not edit the
+   published policy), restated with the one fact finding 9 missed — the requester's email address and the reason outlive the account:**
+   "If you ask us to delete an organization, we keep your request (the email address you used, the reason you gave if any, when you
+   asked, and when and how we answered) with the organization. After the organization is deleted we keep it as part of our record
+   that the deletion happened. Closing your account does not remove it." Two notes: a withdrawn or answered request for an
+   organization that is later deleted stays as an orphan row (`markDeletionRequestDeleted` only marks sent/answered): harmless, covered
+   by the clause as worded; and the reason is free text that can name a person (backlog L16 class), so the hint should read
+   "For our records. Please don't name anyone. You can leave it empty."
+5. **Club Settings card's hint — soft over-promise, owner call.** "Permanently remove your organization and all its data. This can't be
+   undone." implies the button deletes at once and that everything goes; records, the deletion note and backups survive and nothing
+   is deleted until the owner confirms. The window corrects it, so not a defect, but the card is where the customer first reads it.
+   Recommended: reuse the ruled section line, "Ask us to delete {name} and everything in it. Nothing is deleted until you confirm by
+   email." (`ORG_DELETION_WORDS.section.body`), the same as the other two workspaces.

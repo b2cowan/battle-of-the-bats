@@ -38,7 +38,9 @@ describe('the real shared billing body renders every profile', () => {
       const props = fixture(key), rendered = html(props);
       assert.ok(rendered.includes(props.profile.config.label));
       for (const item of props.profile.included.billing) assert.ok(rendered.includes(item), item);
-      const order = ['Your plan', "What's in use", "What's included"];
+      // A7 (Settings in both workspaces Session 1): Premium's card is one column — no "What's in use", no staff seats.
+      const order = props.profile.usageLine ? ['Your plan', '1 of 1 tournament slot in use', "What's included"] : ['Your plan', "What's in use", "What's included"];
+      if (props.profile.usageLine) { assert.doesNotMatch(rendered, /What's in use|staff seat|role="meter"/); }
       for (const item of order) assert.ok(rendered.includes(item), `Missing section: ${item}`);
       for (let i = 1; i < order.length; i++) assert.ok(rendered.indexOf(order[i - 1]) < rendered.indexOf(order[i]), order.join(' → '));
       if (props.profile.changes.length) assert.ok(rendered.indexOf('Change plan') < rendered.indexOf("What's included"));

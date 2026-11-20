@@ -2845,6 +2845,21 @@
     "indexdef": "CREATE INDEX org_custom_domains_status_idx ON public.org_custom_domains USING btree (status, last_checked_at)"
   },
   {
+    "tablename": "org_deletion_requests",
+    "indexname": "org_deletion_requests_one_open",
+    "indexdef": "CREATE UNIQUE INDEX org_deletion_requests_one_open ON public.org_deletion_requests USING btree (org_id) WHERE (status = 'sent'::text)"
+  },
+  {
+    "tablename": "org_deletion_requests",
+    "indexname": "org_deletion_requests_org_idx",
+    "indexdef": "CREATE INDEX org_deletion_requests_org_idx ON public.org_deletion_requests USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "org_deletion_requests",
+    "indexname": "org_deletion_requests_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_deletion_requests_pkey ON public.org_deletion_requests USING btree (id)"
+  },
+  {
     "tablename": "org_fiscal_year_reopenings",
     "indexname": "org_fiscal_year_reopenings_by_idx",
     "indexdef": "CREATE INDEX org_fiscal_year_reopenings_by_idx ON public.org_fiscal_year_reopenings USING btree (reopened_by) WHERE (reopened_by IS NOT NULL)"

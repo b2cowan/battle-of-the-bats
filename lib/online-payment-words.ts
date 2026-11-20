@@ -584,7 +584,13 @@ export const LEAVING_WORDS = {
     },
     owe: (owe: string) => (owe ? `${owe} Their pay pages close when we disconnect.` : null),
     disconnect: 'We disconnect your payouts before deleting. Your Stripe account stays yours, with any money in it.',
-    export: 'Your payment records here are deleted with everything else. Export them first from Accounting.',
+    /** Names a page the organization has (Settings in both workspaces Session 1, the build check on "from Accounting"): only
+     *  the Club plans have Accounting; Tournament Plus exports from its Payouts tab, League Plus from Payouts on Settings. */
+    export: {
+      accounting: 'Your payment records here are deleted with everything else. Export them first from Accounting.',
+      tournament_payouts: 'Your payment records here are deleted with everything else. Export them first from Payouts to your bank, on the Payouts tab.',
+      settings_payouts: 'Your payment records here are deleted with everything else. Export them first from Payouts to your bank, under Payouts on your Settings page.',
+    },
   },
   ending: {
     title: (dateLong: string) => `Online payments stop on ${dateLong}`,

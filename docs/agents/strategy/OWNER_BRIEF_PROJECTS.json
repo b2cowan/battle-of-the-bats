@@ -315,9 +315,9 @@
     { "id": "tournament-settings", "name": "The Tournament plan's missing settings", "track": "product", "state": "open", "checked": true,
       "files": ["TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md", "TOURNAMENT_PLAN_MISSING_SETTINGS_PM_BRIEF.md"], "ledger": ["Tournament plan settings"],
       "goals": ["quality"], "lane": "later", "order": 53, "phase": "Planning",
-      "stage": "Now: planned 20 Nov; drawn 20 Nov with the Premium coach's settings, and all eleven asks ruled as recommended (the Web address tab becomes Name & address; the deletion request is the last section of Plan & billing; each request recorded) → Next: /legal on the deletion window's wording, then the build",
-      "next": "/legal reviews the drafted deletion window (shared with the Premium coach's), then the build, which starts with recording each request.",
-      "remains": "The shared drawing and its four questions, /legal on the deletion request's wording (shared with the Premium coach's), the build, and one walk.",
+      "stage": "Now: the deletion request built 20 Nov (Session 1 of 3: each request recorded, privacy@ and every owner, last on Plan & billing for Premium and both Tournament plans, the club's card on the same window) → Next: Session 2, names and addresses",
+      "next": "Session 2 of the shared build prompt: the Name & address tab, and the Premium portal's Organization rows and print options.",
+      "remains": "Sessions 2 and 3 of the build, and one walk.",
       "waitsOn": [], "finishesAfter": [],
       "youOwe": [] }
   ]

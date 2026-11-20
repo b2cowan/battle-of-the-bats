@@ -88,7 +88,8 @@ describe('Plan & billing profiles', () => {
     assert.equal(PLAN_BILLING_PROFILES.tournament_plus.downgradeLosses?.length, 8, 'D23: detailed feature-loss list');
     for (const p of Object.values(PLAN_BILLING_PROFILES)) {
       const club = p.key === 'club' || p.key === 'club_large';
-      assert.deepEqual(p.usageMeters, club ? ['teams'] : ['tournament_slots', 'staff_seats']);
+      // The board-seats ruling (A7, 2026-11-20): the Premium Coaches Portal counts no staff seats; the Tournament plans keep theirs.
+      assert.deepEqual(p.usageMeters, club ? ['teams'] : p.key === 'team' ? ['tournament_slots'] : ['tournament_slots', 'staff_seats']);
     }
   });
 });

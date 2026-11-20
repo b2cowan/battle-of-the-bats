@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-20",
-  "total": 531,
+  "total": 551,
   "counts": {
-    "tables": 18,
-    "columns": 247,
-    "indexes": 92,
-    "constraints": 77,
-    "rls": 97
+    "tables": 19,
+    "columns": 258,
+    "indexes": 95,
+    "constraints": 79,
+    "rls": 100
   },
   "items": [
     {
@@ -295,6 +295,18 @@
     },
     {
       "key": "check:only-dev:online_payments.online_payments_stripe_fee_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_deletion_requests.org_deletion_requests_closed_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_deletion_requests.org_deletion_requests_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_deletion_requests.org_deletion_requests_status_check",
       "sig": ""
     },
     {
@@ -1142,6 +1154,50 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:org_deletion_requests.closed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.closed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.org_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.org_slug",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.requested_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.requester_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_deletion_requests.status",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:org_overrides.ending_reminded_14_for",
       "sig": ""
     },
@@ -1646,6 +1702,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:org_deletion_requests.org_deletion_requests_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_deletion_requests.org_deletion_requests_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:org_time_date_off_venues.org_time_date_off_venues_date_off_id_fkey",
       "sig": ""
     },
@@ -1990,6 +2054,18 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:org_deletion_requests_one_open",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_deletion_requests_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_deletion_requests_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_time_date_off_venues_org_idx",
       "sig": ""
     },
@@ -2115,6 +2191,10 @@
     },
     {
       "key": "table:only-dev:online_payment_stripe_fee_lines",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_deletion_requests",
       "sig": ""
     },
     {

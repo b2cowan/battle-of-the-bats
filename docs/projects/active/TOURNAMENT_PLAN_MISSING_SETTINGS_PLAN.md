@@ -127,12 +127,16 @@ of requests, that becomes a migration and this stage's **first** task, with `doc
 
 - [ ] The name door where Q1 lands (likely `app/[orgSlug]/admin/tournaments/settings/…`, reusing the existing name save; the
   `tournamentSettingsTabs` list in `lib/admin-kit-nav.ts` if a tab is added).
-- [ ] The deletion request where Q2 lands, reusing the existing window and route rather than a copy (if it moves out of
+- [x] The deletion request where Q2 lands, reusing the existing window and route rather than a copy (if it moves out of
   `SettingsKit.tsx` for both this and the portal, it moves once, shared with the sister plan's step 2c).
 - [ ] Unit tests for who sees each door (owner; Q3's answer for others) and that a club's Settings page is unchanged.
 - [ ] `check:layout --changed` on the touched screens; `npm run verify:changed`.
 - [ ] `/review`; `/docs` for the tournament help (rename and closing the account are customer flows).
 - [ ] The words in "Words for /marketing" settled in one `/marketing` pass before the walk.
+  **Built 2026-11-20 (build prompt Session 1, gate "as recommended"), commit owed:** migration 514 records each request
+  (dev; prod before the promote); privacy@ and every active owner; one shared window (/legal v0.2 + its 2026-11-20
+  addendum) used by Plan & billing (Premium, Tournament, Tournament Plus) and the club's Settings card; staff close it on
+  the organization's platform-admin page; Premium's plan card one column (A7). Privacy Policy §9 clause now due.
 
 ### Stage 4 — The walk and the close
 

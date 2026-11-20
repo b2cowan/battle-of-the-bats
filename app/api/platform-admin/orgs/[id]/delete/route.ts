@@ -1,3 +1,4 @@
+import { findDeletionRequestToMark, markDeletionRequestDeleted } from '@/lib/org-deletion-requests';
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
@@ -254,6 +255,11 @@ export const DELETE = withObservability(async (req: NextRequest,
     { reason },
   );
 
+  // Settings in both workspaces Session 1 (gate 2): the owner's latest deletion request, when it is open or answered, is
+  // found now (its org_id turns NULL with the organization, mig 514) and marked "deleted" only AFTER the organization row is
+  // gone — a delete that fails part-way leaves the request as it was. Best effort: never holds a deletion staff decided on.
+  const deletionRequest = await findDeletionRequestToMark(id).catch(() => null);
+
   // Purge tables whose org_id FKs are NO ACTION (confirmed via schema check). The club's held time first (mig 322): its
   // blocks name the facilities. Blocks, never permits — a permit carrying money in a closed year refuses a delete.
   // The club's schedules too (Club Tier 11a, mig 326): their slots name the facilities (NO ACTION), and the schedule takes
@@ -291,6 +297,10 @@ export const DELETE = withObservability(async (req: NextRequest,
       { error: deleteError.message ?? 'Delete failed.' },
       { status: 500 }
     );
+  }
+
+  if (deletionRequest) {
+    await markDeletionRequestDeleted(deletionRequest, auth.user.email ?? 'platform-admin').catch(e => captureError(e));
   }
 
   // Optional GDPR: delete the Stripe customer object after the org row is gone.

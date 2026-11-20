@@ -28,6 +28,12 @@ export type PlanBillingDefinition<Key extends string = OrgPlan> = {
   joinClub?: boolean;
   discoveryPlans?: readonly Key[];
   freeTimeOmittedBillingItems?: readonly number[];
+  /** The plan card shows its one meter as a LINE under the renewal date, with no usage column (A7, owner 2026-11-20: a lone
+   *  one-slot meter is full — danger-coloured — whenever the coach runs the one tournament the plan sells). */
+  usageLine?: boolean;
+  /** "Delete {name}", the last section of Plan & billing, and which "What is deleted" its window reads (Settings in both
+   *  workspaces Session 1). Absent: the plan asks from its own Settings page (the club's card), or not at all. */
+  deletionWorkspace?: 'premium' | 'tournament';
 };
 /** Days kept follows the cancellation kind, so the registry derives it rather than storing it twice. */
 export type PlanBillingProfile<Key extends string = OrgPlan> = PlanBillingDefinition<Key> & {
@@ -197,11 +203,15 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     usageMeters: ['tournament_slots', 'staff_seats'],
     changes: checkoutAndMoves('tournament'),
     cancellationKind: 'organization',
+    deletionWorkspace: 'tournament',
     discoveryPlans: ['team', 'league', 'club'],
   },
   team: {
     included: { billing: TEAM_CORE, article: TEAM_ARTICLE, explore: TEAM_EXPLORE },
-    usageMeters: ['tournament_slots', 'staff_seats'],
+    // The board-seats ruling (2026-11-20): the Premium Coaches Portal has no staff seats to count — the meter goes (A7).
+    usageMeters: ['tournament_slots'],
+    usageLine: true,
+    deletionWorkspace: 'premium',
     // The larger Club band remains reachable after becoming a club; the Premium door offers Club only.
     changes: checkoutAndMoves('team').filter(change => change.target === 'club'),
     cancellationKind: 'premium',
@@ -213,6 +223,7 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     usageMeters: ['tournament_slots', 'staff_seats'],
     changes: [...checkoutAndMoves('tournament_plus'), { target: 'tournament', mechanism: 'downgrade' }],
     cancellationKind: 'organization',
+    deletionWorkspace: 'tournament',
     discoveryPlans: ['team', 'league', 'club'],
     downgradeLosses: [
       'custom tournament branding', 'custom registration controls', 'exports', 'payment reminders',

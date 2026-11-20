@@ -594,6 +594,44 @@ country is NOT copied here: it is read live from `org_payment_accounts.country`.
 
 ---
 
+## `org_deletion_requests`
+<!-- dict:table:org_deletion_requests -->
+
+**Purpose:** **an owner's "Ask us to delete {name}" request** (mig 514, ruling A10; `/legal` `ORG_DELETION_REQUEST_WINDOW.md` finding 9). Written by `POST /api/admin/org/request-deletion` (owner only), which also emails privacy@ and every active owner; read by the same route's GET (the "Request sent" line on Plan & billing / club Settings) and by the organization's platform-admin page (Mark answered / Mark withdrawn).
+
+**Gotchas (read first):**
+1. **It OUTLIVES the organization.** `org_id` is `ON DELETE SET NULL`, and the name and web address are copied as text when the request is made. After deletion the row is part of "our record that the deletion happened" (Privacy Policy §9). Never change the FK to CASCADE.
+2. **One open request per organization:** partial unique index `org_deletion_requests_one_open` on `org_id WHERE status = 'sent'`. The route returns the open one instead of writing a second (a race loses on the index, 23505).
+3. **`status = 'sent'` ⇔ `closed_at IS NULL`** (CHECK). Staff close a request as `answered` or `withdrawn` (written to `platform_audit_log` with a reason). The platform-admin deletion finds the organization's LATEST request (when it is sent or answered) before the organization goes, and marks it `deleted` only AFTER the organization row is gone (by id, guarded on the status it was found in) — a delete that fails part-way leaves it as it was.
+6. **Never rolled back.** Once written, a row stays even when its privacy@ email is not confirmed — that opens an issue in the platform feed instead. Secondary index `org_deletion_requests_org_idx` (org_id, created_at DESC) serves the latest-request read.
+4. **Service role only** (rule 7): no grant to `anon`/`authenticated`, no policy.
+5. **Holds no more than the request email held** (finding 9): no plan, no IP, no copy of the acknowledgement.
+
+**Fields** (boilerplate `id`, `created_at` = when the owner sent it):
+
+<!-- dict:col:org_deletion_requests.org_id -->
+**`org_id`** (FK → organizations.id ON DELETE SET NULL, nullable) — the organization; NULL once it has been deleted.
+
+<!-- dict:col:org_deletion_requests.org_name -->
+<!-- dict:col:org_deletion_requests.org_slug -->
+**`org_name`** / **`org_slug`** (text, NOT NULL) — its name and web address when the request was made (gotcha 1).
+
+<!-- dict:col:org_deletion_requests.requested_by -->
+<!-- dict:col:org_deletion_requests.requester_email -->
+**`requested_by`** (uuid, nullable, **no FK** — a closed account must not take the record) / **`requester_email`** (text, NOT NULL) — the owner who asked.
+
+<!-- dict:col:org_deletion_requests.reason -->
+**`reason`** (text, nullable, ≤ 1000) — "Why are you leaving?", optional.
+
+<!-- dict:col:org_deletion_requests.status -->
+**`status`** (text, NOT NULL, default `'sent'`; `sent` · `answered` · `withdrawn` · `deleted`) — `sent` is the only open state.
+
+<!-- dict:col:org_deletion_requests.closed_at -->
+<!-- dict:col:org_deletion_requests.closed_by -->
+**`closed_at`** (timestamptz, nullable) / **`closed_by`** (text, nullable — a staff email) — when and by whom it left `sent` (gotcha 3).
+
+---
+
 ## `org_public_site_content`
 <!-- dict:table:org_public_site_content -->
 

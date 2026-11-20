@@ -43,6 +43,7 @@ import type { ClubOnlinePayments } from '@/lib/platform-online-payments';
 import type { OrgPlan } from '@/lib/types';
 import OnlinePaymentsTab from './OnlinePaymentsTab';
 import type { EndingSection } from '@/lib/online-payment-endings';
+import type { StaffDeletionRequest } from '@/lib/org-deletion-requests';
 import { wholeDaysUntil } from '@/lib/format-date';
 
 const NOT_IN_STORY = 'Not in the Story yet: account emails such as password resets.';
@@ -120,6 +121,8 @@ export type ClubRecordProps = {
   /** Club Tier 12d-2: the Online payments tab's read (the roles that read Stripe's records; null = no tab — never
    *  connected, or a role without it; 'failed' = the tab shows, its read offers Read again). */
   onlinePayments: ClubOnlinePayments | 'failed' | null;
+  /** Settings in both workspaces Session 1 (gate 2): the owner's open deletion request, closed here (answered / withdrawn). */
+  deletionRequest: { request: StaffDeletionRequest | null; failed: boolean };
   /** The Money tab (Stage 3): our record's side, and whether this role reads Stripe's (A2). */
   money: { readsStripe: boolean; marksLooks?: boolean; ours: OurMoneyRecord };
   /** Giving free time (a giver only): what the console knows before the click, and the window's bounds. */
@@ -156,6 +159,7 @@ type Window =
   | { kind: 'endPlanNow' }
   | { kind: 'finishEnding' }
   | { kind: 'delete' }
+  | { kind: 'closeDeletion'; status: 'answered' | 'withdrawn' }
   | null;
 
 /** Who asked for a waiting cancel, as the callout says it: the door its log records. */
@@ -542,6 +546,28 @@ export default function ClubRecord(props: ClubRecordProps) {
         </div>
       )}
       {notice && <NoticeLine notice={notice} />}
+      {props.deletionRequest.failed && (
+        <div className={kit.notice} role="status">
+          Whether the owner has asked us to delete this organization could not be read. Reload to try again.
+        </div>
+      )}
+      {/* Settings in both workspaces Session 1 (gate 2): an owner's deletion request stays here until staff close it. The
+          owner's page shows "Request sent" until then; the 30-day reply is ours to keep. */}
+      {!editing && props.deletionRequest.request && (
+        <div className={`${kit.callout} ${kit.calloutWarn}`}>
+          <span>
+            <strong>Deletion requested.</strong> {props.deletionRequest.request.requesterEmail} asked on {consoleDate(props.deletionRequest.request.sentAt)} for
+            this organization to be deleted{props.deletionRequest.request.reason ? <>: “{props.deletionRequest.request.reason}”</> : '. No reason given.'} Reply
+            within 30 days of the request; every active owner was copied.
+          </span>
+          {can.support && (
+            <span className={kit.calloutEnd}>
+              <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setWin({ kind: 'closeDeletion', status: 'answered' })}>Mark answered</button>
+              <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setWin({ kind: 'closeDeletion', status: 'withdrawn' })}>Mark withdrawn</button>
+            </span>
+          )}
+        </div>
+      )}
       {/* Plans end at the renewal date: a waiting cancel says who asked, when and why, with its two exits (Stage 0 ruling 5).
           While it waits, operator plan moves stay refused, so Keep and End now are the only doors. */}
       {/* Part C (G3, Stage 0 Tab 6): an overdue ending is the red callout; its one door reads Stripe before it changes anything. */}
@@ -860,6 +886,10 @@ export default function ClubRecord(props: ClubRecordProps) {
       )}
       {win?.kind === 'keepPlan' && props.ending && (
         <KeepPlanWindow orgId={org.id} orgName={org.name} planLabel={org.planLabel} ending={props.ending}
+          onDone={doneWithNotice} onClose={() => setWin(null)} />
+      )}
+      {win?.kind === 'closeDeletion' && props.deletionRequest.request && (
+        <CloseDeletionRequestWindow orgId={org.id} request={props.deletionRequest.request} status={win.status}
           onDone={doneWithNotice} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'delete' && (
@@ -1295,6 +1325,33 @@ function EndPlanNowWindow({ orgId, orgName, hasStripe, ending, onDone, onClose }
 
 // ── Keep the plan: the operator's Keep {Plan}, undoing a waiting cancel on the owner's behalf (a typed Why, like every
 // console record window). Stripe renews it on its date; a cheaper move the cancel set aside comes back (G1). ─────────────
+// ── Close a deletion request (Settings in both workspaces Session 1, gate 2): answered or withdrawn, with the staff reason. ─
+function CloseDeletionRequestWindow({ orgId, request, status, onDone, onClose }: {
+  orgId: string; request: StaffDeletionRequest; status: 'answered' | 'withdrawn';
+  onDone: (message: RecordNotice | null) => void; onClose: () => void;
+}) {
+  const answered = status === 'answered';
+  return (
+    <RecordWindow
+      title={answered ? 'Mark the deletion request answered?' : 'Mark the deletion request withdrawn?'}
+      sentence={answered
+        ? <>Use this once we have replied to {request.requesterEmail}. The owner’s “Request sent” line goes, and they can send a new request.</>
+        : <>Use this when the owner told us they no longer want the organization deleted. The owner’s “Request sent” line goes.</>}
+      whyPlaceholder={answered ? 'What did we reply?' : 'What did the owner tell us?'}
+      footNote="Writes a staff log entry. Sends nothing."
+      cancelLabel="Not now"
+      confirmLabel={answered ? 'Mark answered' : 'Mark withdrawn'}
+      onConfirm={async reason => {
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/deletion-request`, 'PATCH', { requestId: request.id, status, reason });
+        if (!ok) return errorOf(data, 'The request could not be closed.');
+        onDone(typeof data.notice === 'string' ? data.notice : null);
+        return null;
+      }}
+      onClose={onClose}
+    />
+  );
+}
+
 function KeepPlanWindow({ orgId, orgName, planLabel, ending, onDone, onClose }: {
   orgId: string; orgName: string; planLabel: string; ending: NonNullable<ClubRecordProps['ending']>;
   onDone: (message: RecordNotice | null) => void; onClose: () => void;

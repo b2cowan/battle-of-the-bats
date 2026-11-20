@@ -17,7 +17,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, CheckCircle2, Globe } from 'lucide-react';
+import { AlertTriangle, Globe } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -25,11 +25,12 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
+import { DeletionRequestWindow, DeletionSentLine, useDeletionRequest } from '@/components/billing/DeletionRequest';
+import { ORG_DELETION_WORDS as DW, deletionPaidUntil, deletionPlanName } from '@/lib/org-deletion-words';
+import { ownPlanOf } from '@/lib/free-time';
 import BirthdayCutoffCard, { loadBirthdayCutoffs, type CardData } from './BirthdayCutoffCard';
 import PayoutsCard, { loadPayouts, type PayoutsView } from './PayoutsCard';
 import TwoStepRequirementCard, { loadTwoStepSwitches, type TwoStepSwitches } from './TwoStepRequirementCard';
-import PaymentsEndingSection from './PaymentsEndingSection';
-import type { EndingSection } from '@/lib/online-payment-endings';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
@@ -61,12 +62,10 @@ export default function SettingsKit() {
   const [urlSlug, setUrlSlug] = useState('');
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useNotice();
+  // The deletion request (Settings in both workspaces Session 1, gate 4 "as recommended" 2026-11-20): this card keeps its
+  // place and words; it opens the ONE shared window (/legal v0.2) and shows the recorded "Request sent" line (mig 514).
   const [deleteOpen, setDeleteOpen] = useState(false);
-  // 12d-2 (words §4.4): "Your online payments" in the deletion window, read when the window opens (owner only).
-  const [deletePayments, setDeletePayments] = useState<EndingSection | null>(null);
-  const [deleteReason, setDeleteReason] = useState('');
-  const [deleteSending, setDeleteSending] = useState(false);
-  const [deleteSent, setDeleteSent] = useState(false);
+  const deletion = useDeletionRequest(userRole === 'owner' ? (currentOrg?.slug ?? '') : '');
   const [guardOpen, setGuardOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   // The club's own web address, only while it is handed out (Club Tier Stage 4e): the field's hint then names it. A plan
@@ -227,35 +226,6 @@ export default function SettingsKit() {
     if (settings) adopt(settings);
   }
 
-  async function loadDeletePayments() {
-    const res = await fetch(`/api/admin/org/request-deletion${orgQuery}`, { credentials: 'same-origin' }).catch(() => null);
-    const d = res?.ok ? await res.json().catch(() => null) : null;
-    setDeletePayments((d?.onlinePayments as EndingSection | null | undefined) ?? null);
-  }
-
-  async function requestDeletion() {
-    setDeleteSending(true);
-    try {
-      const res = await fetch(`/api/admin/org/request-deletion${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: deleteReason }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(d.error ?? 'The request didn’t send.');
-      }
-      setDeleteSent(true);
-      setDeleteOpen(false);
-      setDeleteReason('');
-    } catch (err) {
-      setDeleteOpen(false);
-      setNotice({ tone: 'bad', text: err instanceof Error ? err.message : 'The request didn’t send. Try again.' });
-    } finally {
-      setDeleteSending(false);
-    }
-  }
-
   return (
     <div className={`${ck.page} ${styles.narrow}`}>
       <TabPageHeader eyebrow="Organization" title="Settings" />
@@ -336,41 +306,27 @@ export default function SettingsKit() {
           {/* ── Delete the organization ────────────────────────────────────────────────────── */}
           <section className={`${styles.card} ${styles.danger}`} aria-labelledby="settings-delete">
             <h2 id="settings-delete" className={styles.cardTitle}>Delete organization</h2>
-            <p className={ck.hint}>Permanently remove your organization and all its data. This can’t be undone.</p>
-            {deleteSent ? (
-              <p className={styles.sent}><CheckCircle2 size={14} aria-hidden /> Request sent — we’ll be in touch.</p>
-            ) : (
+            {/* Owner 2026-11-20 (call 1, on /legal's addendum): the ruled sentence the other workspaces show — nothing is deleted
+                until the owner confirms, and records and backups survive, so "permanently … can't be undone" over-promised. */}
+            <p className={ck.hint}>{DW.section.body(currentOrg.name)}</p>
+            {deletion.read.status === 'loading' ? <LoadingState inline label="Loading…" />
+              : deletion.read.status === 'error' ? <p role="alert" className={ck.hint}>{DW.section.loadFailed}</p>
+              : deletion.read.data.request ? <DeletionSentLine request={deletion.read.data.request} orgName={currentOrg.name} ownerCount={deletion.read.data.ownerCount} />
+              : (
               <div className={styles.imageActions}>
-                <button type="button" className={`btn btn-outline ${styles.dangerText}`} onClick={() => { setDeleteOpen(true); void loadDeletePayments(); }}>Request account deletion…</button>
+                <button type="button" className={`btn btn-outline ${styles.dangerText}`} onClick={() => setDeleteOpen(true)}>Request account deletion…</button>
               </div>
             )}
           </section>
         </>
       )}
 
-      {deleteOpen && (
-        <KitDialog
-          kind="question"
-          title={`Ask us to delete ${currentOrg.name}?`}
-          onClose={() => setDeleteOpen(false)}
-          busy={deleteSending}
-          footer={
-            <>
-              <button type="button" className="btn btn-outline" onClick={() => setDeleteOpen(false)} disabled={deleteSending}>Cancel</button>
-              <button type="button" className="btn btn-danger" onClick={() => void requestDeletion()} disabled={deleteSending}>
-                {deleteSending ? 'Sending…' : 'Send deletion request'}
-              </button>
-            </>
-          }
-        >
-          <p>We’ll contact you to confirm before anything is deleted. Deleting removes your organization and all its data for good.</p>
-          <PaymentsEndingSection section={deletePayments} ending={{ kind: 'delete' }} />
-          <div className={ck.field}>
-            <label className={ck.label} htmlFor="settings-delete-reason">Why are you leaving?</label>
-            <textarea id="settings-delete-reason" className={ck.textarea} value={deleteReason} onChange={e => setDeleteReason(e.target.value)} rows={3} maxLength={1000} />
-          </div>
-        </KitDialog>
-      )}
+      {deleteOpen && deletion.read.status === 'ready' && (() => {
+        const paidUntil = deletionPaidUntil(currentOrg, ownPlanOf(currentOrg));
+        return <DeletionRequestWindow orgSlug={slug} orgName={currentOrg.name} workspace="club" facts={deletion.read.data}
+          paid={paidUntil ? { plan: deletionPlanName(ownPlanOf(currentOrg)), until: paidUntil } : null}
+          onClose={() => setDeleteOpen(false)} onSent={request => { deletion.sent(request); setDeleteOpen(false); }} />;
+      })()}
 
       {guardOpen && (
         <KitDialog

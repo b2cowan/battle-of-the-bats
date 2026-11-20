@@ -1,3 +1,4 @@
+import { readOpenDeletionRequest } from '@/lib/org-deletion-requests';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from '@/lib/plan-config';
@@ -94,6 +95,8 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const onlinePaymentsRead = readsStripe ? readClubOnlinePayments(id).catch(() => 'failed' as const) : Promise.resolve(null);
   // Plans end at the renewal date (Stage 1): a cancel waiting for its date — the record's "Ending" callout, its band cell and
   // the Keep and End now doors. A failed read is SAID and holds the Cancel door back, never read as "nothing is waiting".
+  // Settings in both workspaces Session 1 (gate 2): an owner's open deletion request and its two closes. A failed read is said.
+  const deletionRead = readOpenDeletionRequest(id).then(request => ({ request, failed: false }), () => ({ request: null, failed: true }));
   const waitingRead = readPendingEnding(id).then(
     intent => ({ intent, failed: false }),
     () => ({ intent: null, failed: true }),
@@ -259,6 +262,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
       portalFreeTime: canGivePortal,
     },
     onlinePayments,
+    deletionRequest: await deletionRead,
     money: {
       readsStripe,
       // GST/HST Stage 3 Part 3b: marking a sale as looked at is the refund power's (Super admin, Billing); Support only reads the list.

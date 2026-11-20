@@ -56,6 +56,8 @@ export const EMAIL_KINDS = {
   team_workspace_welcome:               { klass: 'account', label: 'Coaches Portal welcome' },
   team_workspace_cancelled:             { klass: 'account', label: 'Premium ended' },
   cancellation_confirmation:            { klass: 'account', label: 'Plan ended' },
+  // Settings in both workspaces Session 1 (L-B, 2026-11-20): the acknowledgement of a deletion request, to every active owner.
+  org_deletion_request_received:        { klass: 'account', label: 'Deletion request received' },
   // Plans end at the renewal date (Stage 1 Part C, G6): a cancel that waits, its reminder, and Keep {Plan}.
   plan_ends_on:                         { klass: 'account', label: 'Plan ends on a date' },
   plan_ending_reminder:                 { klass: 'account', label: 'Plan ending reminder' },

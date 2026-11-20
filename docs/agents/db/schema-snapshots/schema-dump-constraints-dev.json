@@ -5520,6 +5520,26 @@
     "update_rule": null
   },
   {
+    "table_name": "org_deletion_requests",
+    "constraint_name": "org_deletion_requests_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "constraint_name": "org_deletion_requests_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "org_fiscal_year_reopenings",
     "constraint_name": "org_fiscal_year_reopenings_fiscal_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
