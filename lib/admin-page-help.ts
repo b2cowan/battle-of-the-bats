@@ -192,8 +192,6 @@ export function adminPageTopicAt(
     // ⚠ Own keys only: an address is typed by a person, and `/tournaments/constructor` must not find an Object's inherited member.
     return own(TOURNAMENT_PAGE_HELP, rest);
   }
-  // The organization's Tournaments list, under its club address (the page `tournaments/manage` re-exports).
-  if (path === `${base}/org/tournaments`) return tournament.opens ? TOURNAMENT_PAGE_HELP.manage : null;
   if (!place) return onOverview ? CLUB_PLACE_HELP.overview : null;
   const key = clubPlaceHelpKey(place);
   const lit = place.tabs.find(tab => tab.id === place.activeId);

@@ -93,6 +93,9 @@ section on the team's Tournaments page **stays unchanged** (the live-season way 
   team through `/admin` → `/coaches` → the "not ready" screen.**
 - **Do not redirect** `/admin/org/tournaments`, `/admin/tournaments/**`, `/admin/org/members`, the audit log, org settings or
   PDF settings for a team workspace: they are the hosted-tournament shell, now reached from the portal.
+  *(Amended 2026-11-20, Retire the old tournament-only menu step 1: `/admin/org/tournaments` now forwards to
+  `/admin/tournaments/manage` for every workspace, search kept — the portal's door already used that address, so this
+  line's reason holds. The rest of the line stands until that plan's step 2.)*
 - **Old billing addresses → the coach page, permanently** (`permanentRedirect` or the Next 16 equivalent — read the docs): the
   org billing page (`admin/org/billing`, which just renders `BillingKit`) and the tournament-tier `settings/subscription`
   re-export, for a team workspace only. **Keep `allowSuspendedOrg: true`** on every layout in that path (`admin/layout.tsx`,

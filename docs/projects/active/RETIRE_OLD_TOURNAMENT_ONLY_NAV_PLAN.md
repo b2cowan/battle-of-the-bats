@@ -136,6 +136,31 @@ hand-off.
 
 #### Build order (by dependency and rework risk)
 
+**Build prompt for steps 1 and 3** (written 2026-11-20, the owner's request): `RETIRE_OLD_TOURNAMENT_ONLY_NAV_BUILD_PROMPT.md`.
+Step 2 starts with its drawing, not a build prompt.
+
+**✅ Steps 1 and 3 BUILT 2026-11-20** (owner go "yes, build it", same day), reviewed (`/review`, four lenses, no
+Critical/High; the Low fixes applied), proved on the dev server from the server's response; committed 2026-11-20 on the owner's word ("commit"). What was
+built and the gate's findings:
+- **Step 1.** The page lives at `admin/tournaments/manage/` (the old folder deleted); `proxy.ts` forwards
+  `/{org}/admin/org/tournaments[/…]` → `/{org}/admin/tournaments/manage`, 307, search kept (measured: `?create=1&source=x`
+  survives for the Tournament plan, a Premium workspace and a club). Path-keyed lists, baselines, sweep screen
+  (`admin-tournaments-list`) and tests re-pointed; the old-address help branch deleted. Guard:
+  `tests/unit/tournaments-list-one-address-guard.test.ts` (any built form of `org/tournaments` outside `proxy.ts`).
+  Found on the way 2: the declined notice links via `getMembersHref` on the plan right now (`effectiveOrgFactsForId`, a
+  failed read falls back to the Organization's Members). Found on the way 3: the UAT test visits Settings & access › PDF
+  settings and checks the status, the place's heading and the lit tab (passes).
+- **Step 3.** One rule, `lib/typed-only-pages.ts`, asked by each page's layout through
+  `redirectWorkspaceWithoutProgram` (`lib/coach-portal-request.ts`): a Premium workspace → its sign-in landing
+  (`getStandaloneAdminHref`: the portal, or the tournaments list for a staff member with the tournament grant and no team —
+  never the portal's no-team wall); a Tournament / Tournament Plus organization → `/admin/tournaments`. Clubs and leagues
+  never. **The gate found two pages that were not refusals** for a Premium workspace: the Calendar (a working, doorless
+  calendar of its tournament) and the board (no gate at all). Calendar: owner 2026-11-20, "send Premium home too"; the
+  board as ruled. Both fire only while the plan carries nothing beyond the tournament tools (a workspace whose plan grows
+  keeps them — `/review` finding). The Tournament plan's Calendar used to say a bare "Forbidden"; it now sends home.
+- `.claude/settings.json:111` still names the old folder's stylesheet in a permission line (shared automation — left as
+  is; it now points at a file that no longer exists).
+
 1. **The duplicate address** — no owner call needed (the note already rules it): page code home at `tournaments/manage`,
    the `proxy.ts` redirect, the path-keyed references, the delete of the old help branch, a unit guard against a new link to
    `/admin/org/tournaments`. Fold in found-on-the-way 2 and 3. Independent of everything else; smallest; do it first.

@@ -127,10 +127,16 @@ test.describe('Tournament admin / org settings', () => {
     await expect(ownerPage.locator('main').first()).toBeVisible({ timeout: 8_000 });
   });
 
-  test('org settings organization page loads', async ({ ownerPage, orgSlug }) => {
-    await ownerPage.goto(`/${orgSlug}/admin/tournaments/settings/organization`);
+  // It visited `settings/organization`, an address that does not exist, and only checked that a page area showed — so it
+  // passed on a 404 (Retire the old tournament-only menu, found on the way 3). PDF settings is a real Settings & access tab
+  // on the Tournament plan; the response status, the place's heading and its lit tab would all fail on a missing page.
+  test('settings & access PDF settings page loads', async ({ ownerPage, orgSlug }) => {
+    const res = await ownerPage.goto(`/${orgSlug}/admin/tournaments/settings/pdf`);
+    expect(res?.status()).toBe(200);
     await expect(ownerPage).not.toHaveURL(/\/auth\/login/);
-    await expect(ownerPage.locator('main').first()).toBeVisible({ timeout: 8_000 });
+    await expect(ownerPage).toHaveURL(new RegExp(`/${orgSlug}/admin/tournaments/settings/pdf`));
+    await expect(ownerPage.getByRole('heading', { level: 1, name: 'Settings & access' })).toBeVisible({ timeout: 8_000 });
+    await expect(ownerPage.locator('a[aria-current="page"]', { hasText: 'PDF settings' })).toBeVisible();
   });
 });
 

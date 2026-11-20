@@ -29,4 +29,12 @@ describe('Home invitation decline', () => {
     assert.ok(NOTIFICATION_EVENT_LABELS.member_invite_declined);
     assert.ok(PUSH_DEFAULT_ON_EVENTS.has('member_invite_declined'));
   });
+
+  it('the declined notice opens Members where the plan keeps it (a Tournament plan’s is its tournament settings, 2026-11-20)', () => {
+    const route = readCode('app/api/auth/invitations/[memberId]/route.ts');
+    assert.match(route, /const planId = \(await effectiveOrgFactsForId\(orgId\)\.catch\(\(\) => null\)\)\?\.planId \?\? null;/,
+      'the plan right now, through the door — and a failed read never loses the notice');
+    assert.match(route, /link: slug \? getMembersHref\(slug, planId\) : undefined/);
+    assert.doesNotMatch(route, /admin\/org\/members/);
+  });
 });

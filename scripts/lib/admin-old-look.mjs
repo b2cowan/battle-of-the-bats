@@ -21,7 +21,7 @@ const OWNERS = [
   ['components/admin/tournament/GuidanceRail', DASHBOARD],
   ['app/[orgSlug]/admin/tournaments/archives/', `${T} Stage 4 — Past tournaments`],
   ['app/[orgSlug]/admin/tournaments/summary/', `${T} Stage 4 — Summary`],
-  ['app/[orgSlug]/admin/org/tournaments/', `${T} Stage 4 — the Tournaments list`],
+  ['app/[orgSlug]/admin/tournaments/manage/', `${T} Stage 4 — the Tournaments list`],
   ['app/[orgSlug]/admin/tournaments/registrations/', `${T} Stage 2 — Teams and registration`],
   ['app/[orgSlug]/admin/tournaments/communication/', `${T} Stage 2 — Communications`],
   ['app/[orgSlug]/admin/tournaments/schedule/', `${T} Stage 3 — the schedule`],

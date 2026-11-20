@@ -15,6 +15,8 @@ import { accountNameOf } from '@/lib/family-invitation';
 import { notify } from '@/lib/notify';
 import { invitationHasLapsed, invitationLapseCutoff, lapsedInvitationMessage } from '@/lib/invitation-lapse';
 import { orgFromRelation } from '@/lib/invite-reconciliation';
+import { getMembersHref } from '@/lib/billing-urls';
+import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -61,6 +63,11 @@ async function tellClubMemberInviteDeclined(
     if (ids.length === 0) return;
     const who = member.display_name?.trim() || accountNameOf(user.user_metadata) || user.email || 'Someone';
     const slug = orgSlugFromRelation(member.organizations);
+    // Members where the plan keeps it (a Tournament plan's is under the tournament's settings: the org address would
+    // send its owner to the Tournaments list — Retire the old tournament-only menu, found on the way 2). The plan right
+    // now, through the door: a Tournament plan on free Club time has the Organization's Members. A failed read costs the
+    // link's precision (the Organization's Members), never the notice.
+    const planId = (await effectiveOrgFactsForId(orgId).catch(() => null))?.planId ?? null;
     await notify({
       orgId,
       eventType: 'member_invite_declined',
@@ -68,7 +75,7 @@ async function tellClubMemberInviteDeclined(
       body: `They won’t join as ${roleLabel(member.role)}.`,
       userIds: ids,
       excludeUserIds: [user.id],
-      link: slug ? `/${slug}/admin/org/members` : undefined,
+      link: slug ? getMembersHref(slug, planId) : undefined,
     });
   } catch { /* the notice is best-effort */ }
 }

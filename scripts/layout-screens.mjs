@@ -1646,7 +1646,7 @@ export const SCREENS = [
   { id: 'admin-schedule-send',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"], #read-schedule-title', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
     interact: (page) => openKitDialogBy(page, page.locator('main button.btn-lime:visible:has-text("Send")')), scope: '[data-kit-dialog]' },
   { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/bring-in` },
-  { id: 'admin-org-tournaments',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/tournaments` },
+  { id: 'admin-tournaments-list',      area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/tournaments/manage` },
 
   // ── Rep Teams (15U AAA: a live 2026 season and a finished 2025 one) ──
   // The hub's Upcoming Bills panel counts days to each due date on the SERVER's real clock, which the

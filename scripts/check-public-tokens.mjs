@@ -615,7 +615,7 @@ const RESTYLED_DIRS = [
   'app/[orgSlug]/admin/house-league',
   'app/[orgSlug]/admin/onboarding',
   'app/[orgSlug]/admin/org/venues',
-  'app/[orgSlug]/admin/org/tournaments',
+  'app/[orgSlug]/admin/tournaments/manage',
   'app/[orgSlug]/admin/org/coaches-portal-links',
   'app/[orgSlug]/admin/org/settings/pdf',
   'app/[orgSlug]/admin/org/billing/mock-portal',

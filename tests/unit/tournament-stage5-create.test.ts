@@ -143,7 +143,7 @@ describe('the first run opens the one window (F25, F91)', () => {
     assert.doesNotMatch(page, /— Diamond/);
   });
   it('?create=1 never opens the window at the slot limit (F83)', () => {
-    const list = code('app/[orgSlug]/admin/org/tournaments/page.tsx');
+    const list = code('app/[orgSlug]/admin/tournaments/manage/page.tsx');
     assert.match(list, /if \(!atLimit && canWrite\) openNew\('manage_tournaments_new_button'\)/);
     assert.match(code('components/admin/tournament/SetupWizardOpener.tsx'), /if \(atLimit && door !== 'first_run'\)/);
   });

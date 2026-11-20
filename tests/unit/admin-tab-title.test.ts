@@ -14,7 +14,7 @@ describe('the admin tab title', () => {
   it('the Organization pages with a tournament chosen: no tournament name', () => {
     assert.equal(adminTabTitle({ ...chosen, pathname: '/harbourtown/admin/org' }), 'Organization - Harbourtown Minor Ball - FieldLogicHQ');
     assert.equal(adminTabTitle({ ...chosen, pathname: '/harbourtown/admin/org/members' }), 'Members - Harbourtown Minor Ball - FieldLogicHQ');
-    assert.equal(adminTabTitle({ ...chosen, pathname: '/harbourtown/admin/org/tournaments' }), 'Tournaments - Harbourtown Minor Ball - FieldLogicHQ',
+    assert.equal(adminTabTitle({ ...chosen, pathname: '/harbourtown/admin/tournaments/manage' }), 'Tournaments - Harbourtown Minor Ball - FieldLogicHQ',
       'the organization\'s tournament list is not one tournament\'s page');
   });
   it('rep teams, accounting and the Overview: no tournament name', () => {

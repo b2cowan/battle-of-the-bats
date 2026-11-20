@@ -148,6 +148,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, { status: 307 });
   }
 
+  // The Tournaments list has ONE address (Retire the old tournament-only menu, step 1, 2026-11-20): the duplicate under
+  // Organization forwards to it, search kept (`?create=1` opens the setup wizard — the Tournament plan's org layout used
+  // to drop it). Before auth, so a login `next` already names today's page. 307 as above: a cached 301 outlives a change.
+  if (segments.length >= 4 && segments[0] !== 'api' && segments[1] === 'admin' && segments[2] === 'org' && segments[3] === 'tournaments') {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${segments[0]}/admin/tournaments/manage`;
+    return NextResponse.redirect(url, { status: 307 });
+  }
+
   // ⚖ The club's money pages MOVED to Accounting (Club Tier Stage 3a, Ask 2 option B): Rep Teams › Cost
   // allocation (and every allocation's own address, and New), Rep Teams › Payment requests, and a
   // ledger's own address (→ the Ledger tab on that book). Forwarded HERE, before auth and before the Rep

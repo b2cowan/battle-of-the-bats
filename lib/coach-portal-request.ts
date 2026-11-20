@@ -9,6 +9,7 @@ import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { orgPlanCarriesCoachesPortal } from './coach-portal-plan';
 import { isOrgBillingSuspended } from './org-billing-access';
 import { getDemoOrgBySlug } from './demo-org';
+import { typedOnlyPageHome, type TypedOnlyPage } from './typed-only-pages';
 import type { OrgRole } from './types';
 
 /**
@@ -105,8 +106,28 @@ export async function getStandaloneAdminHref(
 export async function redirectStandaloneWorkspace(orgSlug: string): Promise<void> {
   const auth = await getCoachPortalAuth(orgSlug);
   if (!auth || !isTeamWorkspaceOrg(auth.org)) return;
-  const member = await getAcceptedMember(auth.org.id, auth.user.id);
-  redirect(await getStandaloneAdminHref(auth.org, auth.user.id, (member?.role as OrgRole) ?? null, member?.capabilities ?? null));
+  await redirectToStandaloneLanding(auth.org, auth.user.id);
+}
+
+/**
+ * A typed-only club page's layout (Retire the old tournament-only menu, step 3): a Premium workspace or a tournament-only
+ * organization whose plan does not carry the page is sent home before the page mounts (`typedOnlyPageHome`, the rule and
+ * its reasons). Everyone else — every club and league, and anyone not signed in to this org — falls through to the page,
+ * which keeps its own sign-in and refusal. `getCoachPortalAuth` resolves a cancelled org on purpose: its home answers it
+ * (the portal's subscription-ended wall; the admin shell's Plan & billing).
+ */
+export async function redirectWorkspaceWithoutProgram(orgSlug: string, page: TypedOnlyPage): Promise<void> {
+  const auth = await getCoachPortalAuth(orgSlug);
+  if (!auth) return;
+  const home = typedOnlyPageHome(page, auth.org);
+  if (home === 'tournaments') redirect(`/${auth.org.slug}/admin/tournaments`);
+  if (home === 'portal') await redirectToStandaloneLanding(auth.org, auth.user.id);
+}
+
+async function redirectToStandaloneLanding(org: CoachTournamentOrg & { id: string }, userId: string): Promise<never> {
+  // A blip on the member read must not 500 a page (the landing's own rule): no role reads as the portal, whose wall answers.
+  const member = await getAcceptedMember(org.id, userId).catch(() => null);
+  redirect(await getStandaloneAdminHref(org, userId, (member?.role as OrgRole) ?? null, member?.capabilities ?? null));
 }
 
 /**

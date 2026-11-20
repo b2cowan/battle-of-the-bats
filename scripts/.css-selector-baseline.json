@@ -30,7 +30,7 @@
       "planIcon",
       "priceUnit"
     ],
-    "app/[orgSlug]/admin/org/tournaments/tournaments-admin.module.css": [
+    "app/[orgSlug]/admin/tournaments/manage/tournaments-admin.module.css": [
       "activeToggle",
       "contactList",
       "contactPicker",

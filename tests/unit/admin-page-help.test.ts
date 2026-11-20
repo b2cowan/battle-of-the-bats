@@ -127,12 +127,11 @@ describe('every tournament admin page has a topic, or a stated reason it has non
       else assert.ok(topic, `${rel} has no "?" topic and no stated reason`);
     });
   }
-  it('the organization’s Tournaments list under its club address', () => {
-    assert.equal(adminPageTopicAt(`${BASE}/org/tournaments`, BASE, null, false), TOURNAMENT_PAGE_HELP.manage);
+  it('the Tournaments list, at its one address (its old Organization address is forwarded by the proxy, 2026-11-20)', () => {
+    assert.equal(adminPageTopicAt(`${BASE}/tournaments/manage`, BASE, null, false), TOURNAMENT_PAGE_HELP.manage);
   });
   it('someone the tournament admin refuses gets no tournament "?"; the dashboard with no event has none (as before the move)', () => {
     assert.equal(adminPageTopicAt(`${BASE}/tournaments/schedule`, BASE, null, false, { opens: false, hasEvent: true }), null);
-    assert.equal(adminPageTopicAt(`${BASE}/org/tournaments`, BASE, null, false, { opens: false, hasEvent: false }), null);
     assert.equal(adminPageTopicAt(`${BASE}/tournaments/dashboard`, BASE, null, false, { opens: true, hasEvent: false }), null);
     assert.ok(adminPageTopicAt(`${BASE}/tournaments/divisions`, BASE, null, false, { opens: true, hasEvent: false }), 'other pages keep theirs');
     assert.ok(adminPageTopicAt(`${BASE}/tournaments/settings/members`, BASE, null, false, { opens: false, hasEvent: false }), 'Settings & access keeps its own gate');

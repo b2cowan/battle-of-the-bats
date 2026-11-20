@@ -47,10 +47,6 @@
     "hex": 1,
     "rgba": 0
   },
-  "app/[orgSlug]/admin/org/tournaments/page.tsx": {
-    "hex": 1,
-    "rgba": 0
-  },
   "app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx": {
     "hex": 10,
     "rgba": 0
@@ -113,6 +109,10 @@
   },
   "app/[orgSlug]/admin/tournaments/branding/page.tsx": {
     "hex": 3,
+    "rgba": 0
+  },
+  "app/[orgSlug]/admin/tournaments/manage/page.tsx": {
+    "hex": 1,
     "rgba": 0
   },
   "app/[orgSlug]/admin/tournaments/registrations/page.tsx": {

@@ -88,7 +88,7 @@ export default function TournamentCreationPreview({
   themePicker = null,
 }: Props) {
   // The host is a browser-only value, and this wizard CAN be server-rendered on first paint
-  // (`/admin/org/tournaments?create=1` opens it immediately). Reading window.location during
+  // (`/admin/tournaments/manage?create=1` opens it immediately). Reading window.location during
   // render would print the fallback on the server and the real host on the client — a
   // hydration mismatch. useSyncExternalStore renders the server snapshot, then swaps after
   // hydration, which is exactly the sanctioned shape for this.
