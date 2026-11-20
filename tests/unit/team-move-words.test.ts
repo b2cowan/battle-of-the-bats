@@ -134,7 +134,7 @@ describe('the team move never mentions money coming back', () => {
     assert.match(words.coachPlanLineForClub('Sam Cole'), /^Sam Cole won’t be charged for their own Coaches Portal again\./);
     assert.match(words.COACH_PLAN_LINE, /^You won’t be charged for your own Coaches Portal again\./);
     assert.match(readSource('app/[orgSlug]/admin/rep-teams/bring-in/page.tsx'), /coachPlanLineForClub\(coach\)/);
-    assert.match(readSource('app/[orgSlug]/coaches/link-org/page.tsx'), /\{COACH_PLAN_LINE\}/);
+    assert.match(readSource('app/[orgSlug]/coaches/link-org/page.tsx'), /: COACH_PLAN_LINE\}/);
   });
 });
 
@@ -146,19 +146,19 @@ describe('the one place a move says "not refunded" (ruling (a), 2026-11-19)', ()
     assert.equal(
       coachPlanEndsLine({ clubName: club, plan: paidOn, dateText: 'Mar 1, 2027' }),
       'Your own plan ends today, because Northfield Minor Ball now covers this team. ' +
-      'The unused part of what you paid, to Mar 1, 2027, is not refunded. You won’t be charged for your own plan again.',
+      'You won’t be charged for it again, and the unused part of what you paid, to Mar 1, 2027, is not refunded.',
     );
   });
 
   it('a paying coach with no usable date hears it without a date, never an invented one', () => {
     const line = coachPlanEndsLine({ clubName: club, plan: { kind: 'paid', endsOn: null }, dateText: null });
-    assert.match(line, /The unused part of what you paid is not refunded\./);
+    assert.match(line, /You won’t be charged for it again, and the unused part of what you paid is not refunded\.$/);
     assert.doesNotMatch(line, /, to /);
   });
 
   it('a trial, free time or no subscription says nothing about a refund: there is nothing paid', () => {
     const line = coachPlanEndsLine({ clubName: club, plan: { kind: 'nothing_paid' }, dateText: null });
-    assert.equal(line, 'Your own plan ends today, because Northfield Minor Ball now covers this team. You won’t be charged for your own plan.');
+    assert.equal(line, 'Your own plan ends today, because Northfield Minor Ball now covers this team. You won’t be charged for it.');
     assert.doesNotMatch(line, NO_MONEY_BACK);
   });
 
@@ -187,7 +187,13 @@ describe('the one place a move says "not refunded" (ruling (a), 2026-11-19)', ()
     const page = readCode('app/[orgSlug]/coaches/link-org/page.tsx');
     assert.match(page, /from '@\/lib\/team-move-carve-out'/);
     assert.equal((page.match(/endsLineFor\(/g) ?? []).length, 3, 'defined once, used on the card and in the confirm window');
-    assert.match(page, /\{COACH_PLAN_LINE\}/, 'the ruling-(c) sentence stays beside it');
+    // Owner 2026-11-20: the card said "won't be charged" twice. The ends line carries ruling (c)'s meaning; the general
+    // line is only the fallback when the coach's plan is unknown, never shown beside it.
+    assert.match(page, /ownPlan \? endsLineFor\(club, ownPlan\) : COACH_PLAN_LINE/, 'one money statement on the card, not two');
+    // Owner 2026-11-20: one open request at a time as the coach sees it. The ask form is absent while a club waits on
+    // the coach or the coach waits on a club, so "Ask a club" never sits under a club's own request.
+    assert.match(page, /const canAsk = fromClubs\.length === 0 && mine\.length === 0;/);
+    assert.match(page, /\{canAsk && <section[^>]*>\s*<h2[^>]*>\{COACH_REQUEST_FORM_TITLE\}/);
     // The club's screen is NOT changed by ruling (a).
     assert.doesNotMatch(readCode('app/[orgSlug]/admin/rep-teams/bring-in/page.tsx'), /team-move-carve-out|coachPlanEndsLine/);
   });

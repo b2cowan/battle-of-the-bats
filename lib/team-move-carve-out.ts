@@ -45,14 +45,17 @@ export function ownPlanEndOf(input: { realSubscription: boolean; status: string 
 /**
  * The sentence, in the card's "What it costs you" and in the confirm window. One spelling everywhere it appears.
  * `dateText` is the date already formatted for the reader (the page formats it, in the viewer's own style).
+ *
+ * It already says "won't be charged … again", so the card does NOT also show `COACH_PLAN_LINE` beside it — that line
+ * is only the fallback when the coach's plan is unknown (owner 2026-11-20: the card said it twice, and named the same
+ * thing "your own plan" and "your own Coaches Portal"). /legal's meaning, merged into two sentences, order changed only.
  */
 export function coachPlanEndsLine(p: { clubName: string; plan: OwnPlanAtTheYes; dateText: string | null }): string {
   const ends = `Your own plan ends today, because ${p.clubName} now covers this team.`;
   // "again" only where something was paid: a trial or free time was never charged (/legal review, 2026-11-20).
-  if (p.plan.kind === 'nothing_paid') return `${ends} You won’t be charged for your own plan.`;
-  const never = 'You won’t be charged for your own plan again.';
+  if (p.plan.kind === 'nothing_paid') return `${ends} You won’t be charged for it.`;
   const forfeited = p.dateText
-    ? `The unused part of what you paid, to ${p.dateText}, is not refunded.`
-    : 'The unused part of what you paid is not refunded.';
-  return `${ends} ${forfeited} ${never}`;
+    ? `the unused part of what you paid, to ${p.dateText}, is not refunded.`
+    : 'the unused part of what you paid is not refunded.';
+  return `${ends} You won’t be charged for it again, and ${forfeited}`;
 }

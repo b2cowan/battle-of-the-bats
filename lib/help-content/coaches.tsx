@@ -6843,7 +6843,7 @@ const coachesHelp: HelpPageContent = {
           <p>If your team runs on your own Premium Coaches Portal and your club runs on FieldLogicHQ, the club can bring your team in. Everything the team built comes with it — seasons, roster, schedule and results, practices, lineups, attendance, awards, player development, tryouts, documents and money records — and your staff keep what each of them can open.</p>
           <ul>
             <li>Usually the club asks: a banner appears on your <strong>Overview</strong>, and the request waits on <strong>Join a club</strong> (Settings → Organization).</li>
-            <li>You can also ask a club yourself from <strong>Join a club</strong>, with the club&apos;s web address or contact email.</li>
+            <li>You can also ask a club yourself from <strong>Join a club</strong>, with the club&apos;s web address or contact email. One request is open at a time: while a club is waiting on you, or you on a club, the page shows only that request. To ask a different club, decline or withdraw it first.</li>
             <li>Press <strong>Approve and join</strong>, type your team&apos;s name to confirm, and the team moves there and then. Nothing moves until both sides say yes, and it can&apos;t be undone.</li>
           </ul>
           <p>Afterwards you keep coaching the team as one of the club&apos;s teams, and the club starts and closes your seasons. You won&apos;t be charged for your own Coaches Portal again — it stops the moment the move completes.</p>

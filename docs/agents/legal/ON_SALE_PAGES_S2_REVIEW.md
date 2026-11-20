@@ -83,6 +83,8 @@ Drafted text for the **next Terms version** (the held draft `drafts/TERMS_OF_SER
 
 Words at the moment of the coach's yes (ruled item (a); the wording is a draft): **"Your own plan ends today, because {club name} now covers this team. The unused part of what you paid, to {date}, is not refunded. You won’t be charged for your own plan again."**
 
+*Shipped form (owner 2026-11-20, same meaning, order changed): "Your own plan ends today, because {club name} now covers this team. You won’t be charged for it again, and the unused part of what you paid, to {date}, is not refunded." It replaces the card's older "You won’t be charged for your own Coaches Portal again" line rather than sitting beside it, which had said the same thing twice under two names.*
+
 **What the Terms version needs (the owner's and the publishing session's steps; not done here):**
 1. Add the paragraph above as edit **T5** to the held draft `drafts/TERMS_OF_SERVICE.md` (0.2, which already carries T1 to T4). Start from the published file, set `draftPath` in `lib/legal-documents.ts`, keep the draft's owner-note shape so the preview filter test passes.
 2. The owner approves the wording (these drafts are not yet approved).

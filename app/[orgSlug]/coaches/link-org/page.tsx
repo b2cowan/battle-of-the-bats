@@ -233,6 +233,10 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
   const confirmingLive = confirming && fromClubs.some(l => l.id === confirming.id) ? confirming : null;
   const mine = links.filter(l => l.askedBy === 'coach');
   const history = links.filter(l => l.historyState !== null);
+  // One open request at a time, as the coach sees it (owner 2026-11-20): while a club is waiting on the coach, or the
+  // coach is waiting on a club, the ask form is absent, so the page says one thing. To ask a different club the coach
+  // declines or withdraws first. Two clubs may still ask at once from their side; the coach then picks a card.
+  const canAsk = fromClubs.length === 0 && mine.length === 0;
 
   return (
     <div className={styles.page}>
@@ -272,8 +276,9 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
                 <div className={own.factCol}>
                   <div>
                     <div className={own.eye}>What it costs you</div>
-                    {ownPlan && <p className={own.factText}>{endsLineFor(club, ownPlan)}</p>}
-                    <p className={own.factText}>{COACH_PLAN_LINE}</p>
+                    {/* One statement of the money, not two: the ends line already says "won't be charged … again";
+                        the general line is only the fallback when the coach's plan is not known. */}
+                    <p className={own.factText}>{ownPlan ? endsLineFor(club, ownPlan) : COACH_PLAN_LINE}</p>
                   </div>
                   <div>
                     <div className={own.eye}>What changes</div>
@@ -309,7 +314,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         );
       })}
 
-      <section className={styles.detailSection}>
+      {canAsk && <section className={styles.detailSection}>
         <h2 className={styles.detailSectionTitle}>{COACH_REQUEST_FORM_TITLE}</h2>
         <p className={own.lede}>{coachPageLede(ownTeamName, clubOpen)}</p>
         <form className={styles.linkForm} onSubmit={handleSubmit}>
@@ -328,7 +333,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
           </button>
         </form>
         <p className={own.hint}>{COACH_REQUEST_HINT}</p>
-      </section>
+      </section>}
 
       {mine.length > 0 && (
         <section className={styles.detailSection}>

@@ -80,10 +80,10 @@ ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; g
     <h2>Where and as whom</h2>
     <dl class="facts">
       <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server, restarted for this build.</dd>
-      <dt>Club admin</dt><dd>An owner of a Club (or Club · Association) organization on dev. Dev has every plan on sale, so a club from the doors walk will do.</dd>
-      <dt>Coach</dt><dd>A second account with its own Premium Coaches Portal bought in Stripe test mode (card <code>4242 4242 4242 4242</code>), monthly or yearly, with one team and no open tournament.</dd>
-      <dt>Free-time coach</dt><dd>A third coach whose Premium portal is staff-given free time (platform admin → the coach’s organization → give Premium free time).</dd>
-      <dt>Dev tools</dt><dd>Platform admin <code>/platform-admin/dev-tools</code>, the “show as closed” switch, for part E.</dd>
+      <dt>Club admin</dt><dd>Sign in as <code>uat-club-owner@uat-rep-club.local</code> (owner of UAT Rep Club, a Club plan). Password for every account below: <code>UATPassword2026!</code></dd>
+      <dt>Coach</dt><dd>Sign in as <code>uat-free-coach@uat-free-coach.local</code> (a coach with one free team, no club). Buy Premium for it in Stripe test mode (card <code>4242 4242 4242 4242</code>), monthly or yearly. No fixture has a paid plan yet, so this purchase is part of the setup.</dd>
+      <dt>Free-time coach</dt><dd>Sign in as <code>uat-coach@uat-test-org.local</code> (owner of UAT Standalone Team). Staff first: sign in to <code>/platform-admin</code> as <code>uat-platform@fieldlogichq.ca</code>, open the organization <code>uat-standalone</code> and give Premium free time.</dd>
+      <dt>Dev tools</dt><dd>Signed in as <code>uat-platform@fieldlogichq.ca</code>: <code>/platform-admin/dev-tools</code>, the “show as closed” switch, for part E.</dd>
     </dl>
   </section>
 
@@ -111,9 +111,9 @@ ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; g
       steps: [
         { who: 'Club admin', do: 'Open <code>/{club}/admin/rep-teams/bring-in</code>, type the paying coach’s email and press the send button.', see: 'A request is sent and waits on the coach. Nothing moves.' },
         { who: 'Coach', do: 'Sign in as the paying coach and open <q>Join a club</q> from the bell or the Overview banner.', see: 'A card titled <q>{club} wants to bring in {team}</q>.' },
-        { who: 'Coach', do: 'Read the first sentence under <q>What it costs you</q>.', see: '<q>Your own plan ends today, because {club} now covers this team. The unused part of what you paid, to {date}, is not refunded. You won’t be charged for your own plan again.</q>' },
+        { who: 'Coach', do: 'Read the first sentence under <q>What it costs you</q>.', see: '<q>Your own plan ends today, because {club} now covers this team. You won’t be charged for it again, and the unused part of what you paid, to {date}, is not refunded.</q>' },
         { who: 'Coach', do: 'Open <q>Plan &amp; billing</q> in another tab and read the renewal date.', see: 'The date in the sentence is the date Plan &amp; billing shows as when the plan renews.' },
-        { who: 'Coach', do: 'Read the line under that sentence.', see: '<q>You won’t be charged for your own Coaches Portal again. Billing for it stops the moment the move completes.</q> Still there, beside the new sentence.' },
+        { who: 'Coach', do: 'Read the rest of <q>What it costs you</q>.', see: 'Nothing else: the paragraph above is the only one. <q>You won’t be charged</q> appears once, and the card never says <q>your own Coaches Portal</q>.' },
         { who: 'Coach', do: 'Press <q>Approve and join {club}</q>.', see: 'The confirm window opens. Above <q>The move can’t be undone. Type your team’s name to confirm.</q> it says the same <q>Your own plan ends today…</q> sentence, word for word.' },
         { who: 'Coach', do: 'Press Cancel in the window.', see: 'The window closes. Nothing moved: the team is still on the coach’s own portal.' },
         { who: 'Coach', do: 'Approve again, type the team’s name and press <q>Join {club}</q>.', see: 'The coach lands on the team inside the club.' },
@@ -122,7 +122,7 @@ ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; g
     { id: 'B', title: 'A coach with nothing paid is told nothing about a refund',
       steps: [
         { who: 'Club admin', do: 'Send a request to the free-time coach’s email, as in A1.', see: 'A request is sent.' },
-        { who: 'Free-time coach', do: 'Open <q>Join a club</q> and read under <q>What it costs you</q>.', see: '<q>Your own plan ends today, because {club} now covers this team. You won’t be charged for your own plan.</q> No refund sentence, no date, and no <q>again</q>.' },
+        { who: 'Free-time coach', do: 'Open <q>Join a club</q> and read under <q>What it costs you</q>.', see: '<q>Your own plan ends today, because {club} now covers this team. You won’t be charged for it.</q> Nothing else under the heading: no refund sentence, no date, and no <q>again</q> anywhere on the card.' },
         { who: 'Free-time coach', do: 'Press <q>Approve and join {club}</q> and read the window.', see: 'The same two sentences above <q>The move can’t be undone.</q>' },
         { who: 'Free-time coach', do: 'Press Cancel.', see: 'The window closes and nothing moves. (A coach in a trial, or one whose payment is past due, reads this same wording.)' }
       ] },
@@ -166,11 +166,18 @@ ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; g
         { who: 'Visitor', do: 'Read the tabs on <code>/start/club</code>, <code>/start/league</code>, <code>/start/tournament</code> and <code>/start/team</code>.', see: '<q>Start a club | FieldLogicHQ</q>, <q>Start a league season | FieldLogicHQ</q>, <q>Run a tournament | FieldLogicHQ</q>, <q>Coach a team | FieldLogicHQ</q>. No title says FieldLogicHQ twice.' },
         { who: 'Visitor', do: 'Read the tab on <code>/coaches/start</code>.', see: '<q>Coaches Portal | FieldLogicHQ</q>.' },
         { who: 'Staff', do: 'Read the tab on <code>/platform-admin/bookkeeping</code>.', see: '<q>Bookkeeping | FieldLogicHQ</q>.' }
+      ] },
+    { id: 'I', title: 'One request at a time (added 2026-11-20, your ask)',
+      steps: [
+        { who: 'Coach', do: 'With UAT Rep Club’s request waiting (A1), open <q>Join a club</q> as <code>uat-free-coach@uat-free-coach.local</code>.', see: 'Only the request card (and <q>Earlier requests</q> if any). No <q>Ask a club to bring in your team</q> section below it.' },
+        { who: 'Coach', do: 'Press <q>Decline</q> on the card.', see: 'The card goes to <q>Earlier requests</q>, and the <q>Ask a club to bring in your team</q> form appears.' },
+        { who: 'Coach', do: 'Type <code>uat-rep-club</code> in the form and press <q>Send request</q>.', see: '<q>Request sent. UAT Rep Club will see it in its own admin.</q> A <q>Waiting on the club</q> row with <q>Withdraw</q>, and the form is gone.' },
+        { who: 'Coach', do: 'Press <q>Withdraw</q>.', see: 'The row moves to <q>Earlier requests</q> and the form is back. (Do this part after A, B and C; re-send from the club side if a later part needs a waiting request.)' }
       ] }
   ];
 
   var CALLS = [
-    { id: 'C1', q: 'Is the wording right? Paying coach: “Your own plan ends today, because {club} now covers this team. The unused part of what you paid, to {date}, is not refunded. You won’t be charged for your own plan again.” With nothing paid (a trial, free time, or a payment past due): “… covers this team. You won’t be charged for your own plan.” With no date on record: “The unused part of what you paid is not refunded.” The Terms paragraph (edit T5 in the held draft) says the same and promises the date “where we have it”.', options: ['Approve as written', 'Approve with changes (say which in the notes)', 'Send back to /legal'] },
+    { id: 'C1', q: 'Is the wording right? Paying coach: “Your own plan ends today, because {club} now covers this team. You won’t be charged for it again, and the unused part of what you paid, to {date}, is not refunded.” With nothing paid (a trial, free time, or a payment past due): “… covers this team. You won’t be charged for it.” With no date on record: “… and the unused part of what you paid is not refunded.” (Merged 2026-11-20 at your ask: the card no longer also says “You won’t be charged for your own Coaches Portal again”.) The Terms paragraph (edit T5 in the held draft) says the same and promises the date “where we have it”.', options: ['Approve as written', 'Approve with changes (say which in the notes)', 'Send back to /legal'] },
     { id: 'C2', q: 'Is the Terms sentence a significant change under Terms section 18 (30 days’ email, then accept again)? /legal’s first view: an ordinary new version, published before any club can receive a team on production. Its second look: do not rely on “no club is on sale” unless counts show no move is possible, because a staff-made or free-time club could receive a team. Recommendation: check by counts only (coach teams with a paid plan, and club-type organizations on production) before the release; if either is zero, an ordinary version.', options: ['Ordinary new version, check the counts first (recommended)', 'Significant: 30 days’ email and accept again', 'Block moves on production until the version is published'] },
     { id: 'C3', q: 'If Stripe’s cancel fails after a move, the move still completes, platform admin is alerted, and the coach keeps being charged until staff cancel by hand, which makes “you won’t be charged” untrue for a while. A change to the move itself, so not done here. Make it an urgent same-day staff task and refund any charge after the move?', options: ['Yes, to /plan as a small item (recommended)', 'Leave as is', 'Discuss'] },
     { id: 'C4', q: 'Two tabs at the exact same moment: the fix settles it by the earlier owner seat, which covers realistic double submits but not a stalled request on top. An exact fix is a database function with a per-person lock, which is a migration and a production step. Build it?', options: ['No, the current fix is enough for now (recommended)', 'Yes, as a small item with a migration'] }
