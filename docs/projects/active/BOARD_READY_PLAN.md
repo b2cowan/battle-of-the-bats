@@ -905,7 +905,7 @@ upload and hand-over doors share one platform-wide limit, and the per-address li
 **Owner calls RULED 2026-11-20** ("1 yes together, 2 yes rename, 3 agree"): C1 above; C2 the checklist's optional step is
 named "Documents" ("On. Families tick each one to sign up." / "Optional. Families sign up without any."), built the same
 day; C3 above.
-**Part 3 built 2026-11-20 on dev** (the club's side, retention and the close-out; drawing tabs 6, 8, 9). **Owner calls RULED
+**Part 3 built 2026-11-20 on dev, committed `4dd9e659f` 2026-11-20** (the club's side, retention and the close-out; drawing tabs 6, 8, 9). **Owner calls RULED
 2026-11-20 at the UX summary, "as recommended":** (1) ONE scheduled job: migration 516's six-hourly sweep also runs the 90/120-day
 removal and deletes the stored files of deleted sign-ups (still waits for the owner's yes and its own commit); (2) Email families carries
 the "Your sign-up" button (Part 2's C4); (3) a moved tick reads "recorded before documents had versions; text as the club held it on
@@ -932,11 +932,12 @@ one season-form lookup, one "last day" rule `league_season_last_day`), `/review`
 read ordered, a failed board-answers or tick read no longer takes its page down, a club door's resend carries no button, the columns
 window saves one tick at a time, a file opens in a tab made on the press, a stale filter pick narrows nothing, a tick never names a
 version it didn't record, an archived question nobody answered is no export column, the health export is logged only when it carries
-health). **Open owner calls from Part 3:** (1) migration 516's yes (now also the retention clock and the removal list); (2) a season
-reopened after its last day is past 120 days has its files and health answers removed at the next run (the ruling's "never marked
-finished" reads it so): keep, or skip reopened seasons; (3) the audit row for a file opening or a health export is written after the
-link or the data goes out and never blocks it (/legal F2): keep, or refuse when the log can't be written; (4) plain Excel, CSV and PDF
-exports into the audit log, or not; (5) the Email families button counts optional questions too: keep, or required only.
+health). **Committed `4dd9e659f` 2026-11-20** (owner "commit"). **Owner calls RULED 2026-11-20** ("go with your
+recommendations"): (1) migration 516's schedule YES (its own commit; on production only after the Parts 1–3 code serves); (2) a season
+reopened after its finish is skipped by the 120-day clock until it is finished again (migration 519, `league_seasons.reopened_at`);
+(3) the audit line for a file opening or a health export is written FIRST, and nothing goes out when it can't be (`writeOrgAuditFirst`);
+(4) plain Excel, CSV and PDF exports stay out of the audit log; (5) the Email families button counts required questions only (and any
+document to tick).
 
 ### Stage 5 — Club events (item 8) — FOUNDATION: Club events
 - [ ] A club-owned event: name, kind (banquet, champs day, AGM, clinic, camp, other), date and time, venue from the venue

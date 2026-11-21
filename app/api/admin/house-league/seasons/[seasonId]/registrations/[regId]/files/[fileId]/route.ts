@@ -25,5 +25,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   if (!reg) return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
   const url = await openFamilyFile({ orgId: ctx.org.id, actorId: ctx.user.id, seasonId: season.id, reg, fileId });
   if (!url) return NextResponse.json({ error: 'That file is no longer here.' }, { status: 404 });
+  // The audit log couldn't record the opening, so the file doesn't open (owner call 3).
+  if (url === 'unrecorded') return NextResponse.json({ error: 'The file didn’t open. Try again.' }, { status: 503 });
   return NextResponse.json({ url }, { headers: { 'Cache-Control': 'no-store' } });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/files/[fileId]' });

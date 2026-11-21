@@ -10,8 +10,10 @@ import { signupHasFormToDo, type SignupFormTodoInput, type TodoChild } from '../
 
 const read = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
-const SHIRT = { id: 'q-shirt', asked: 'per_subject' as const };
-const ALLERGY = { id: 'q-once', asked: 'once' as const };
+const SHIRT = { id: 'q-shirt', asked: 'per_subject' as const, required: true };
+const ALLERGY = { id: 'q-once', asked: 'once' as const, required: true };
+// Owner 2026-11-20 (Part 3 call 5): an optional question a family skipped does not bring the button.
+const OPTIONAL = { id: 'q-optional', asked: 'per_subject' as const, required: false };
 const WAIVER = { id: 'd-waiver' };
 const v = (id: string, versionNo: number, ticksStand: boolean | null = null, documentId = 'd-waiver') => ({ id, versionNo, ticksStand, documentId });
 const kid = (id: string, over: Partial<TodoChild> = {}): TodoChild => ({ id, live: true, open: true, ...over });
@@ -20,6 +22,13 @@ const base = (over: Partial<SignupFormTodoInput> = {}): SignupFormTodoInput => (
   answered: new Map(), onceAnswered: new Set(), ticks: [], ...over,
 });
 const tick = (versionId: string | null, subjectId = 'c1', moved = false, documentId = 'd-waiver') => ({ documentId, versionId, moved, subjectId });
+
+describe('only a required question counts', () => {
+  test('an optional question left empty is nothing to do; a required one is', () => {
+    assert.equal(signupHasFormToDo(base({ questions: [OPTIONAL] })), false);
+    assert.equal(signupHasFormToDo(base({ questions: [OPTIONAL, SHIRT] })), true);
+  });
+});
 
 describe('a document needing a tick', () => {
   test('a document added since they signed up (never ticked) counts', () => {

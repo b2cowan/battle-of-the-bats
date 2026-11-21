@@ -10,7 +10,7 @@ import {
   type AnswerCell, type GridQuestion, type RecordAnswers, type RecordAnswer, type RecordDocument, type BoardAnswer, type SeasonAnswerGrid,
 } from './club-form-staff-words';
 import { FILE_OPENED_ACTION } from './member-audit';
-import { writeOrgAudit } from './org-audit';
+import { writeOrgAuditFirst } from './org-audit';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -299,9 +299,10 @@ export async function saveAnswerColumns(userId: string, formId: string, ids: rea
 /**
  * A one-hour DOWNLOAD link to a family's file on this registration (ruling 9: `Content-Disposition: attachment`; the
  * Privacy Policy's one-hour links), or null when it is not this registration's, not attached, or removed. Each opening is
- * written to the club's audit log: who, when, the registration and the file's id — never its name or content.
+ * written to the club's audit log FIRST — who, when, the registration and the file's id, never its name or content — and
+ * the link is not made when that line can't be written ('unrecorded'; owner call 3, 2026-11-20).
  */
-export async function openFamilyFile(input: { orgId: string; actorId: string; seasonId: string; reg: StaffRegRow; fileId: string }): Promise<string | null> {
+export async function openFamilyFile(input: { orgId: string; actorId: string; seasonId: string; reg: StaffRegRow; fileId: string }): Promise<string | 'unrecorded' | null> {
   const formId = await seasonFormId(input.seasonId);
   if (!formId) return null;
   const { data, error } = await supabaseAdmin.from('club_form_files').select('id, path, file_name, status, subject_id, submission_id')
@@ -315,10 +316,10 @@ export async function openFamilyFile(input: { orgId: string; actorId: string; se
     const { data: sub } = await supabaseAdmin.from('club_form_submissions').select('ref').eq('id', f.submission_id).maybeSingle();
     if ((sub as { ref: string } | null)?.ref !== signupKey(input.reg)) return null;
   }
+  // The record first; no line, no link. No target person: the log names the child and the season from the ids at read time.
+  if (!(await writeOrgAuditFirst(input.orgId, input.actorId, null, FILE_OPENED_ACTION, { registrationId: input.reg.id, fileId: f.id }))) return 'unrecorded';
   const { data: signed, error: sErr } = await supabaseAdmin.storage.from(CLUB_FORM_BUCKET).createSignedUrl(f.path, 3600, { download: f.file_name });
   if (sErr || !signed?.signedUrl) throw sErr ?? new Error('club-form: no signed link');
-  // No target person: the log names the child and the season from the ids at read time (app/api/admin/members/audit).
-  await writeOrgAudit(input.orgId, input.actorId, null, FILE_OPENED_ACTION, { registrationId: input.reg.id, fileId: f.id });
   return signed.signedUrl;
 }
 

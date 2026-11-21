@@ -11844,6 +11844,15 @@
     "ordinal_position": 30
   },
   {
+    "table_name": "league_seasons",
+    "column_name": "reopened_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
     "table_name": "league_slot_uses",
     "column_name": "slot_id",
     "data_type": "uuid",

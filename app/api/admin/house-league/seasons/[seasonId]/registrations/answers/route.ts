@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { fetchAll } from '@/lib/supabase-paging';
-import { writeOrgAudit } from '@/lib/org-audit';
+import { writeOrgAuditFirst } from '@/lib/org-audit';
 import { STAFF_REG_COLS, readSeasonAnswerGrid, saveAnswerColumns, type StaffRegRow } from '@/lib/club-form-staff';
 import { seasonFormId } from '@/lib/club-form-server';
 import { ANSWER_COLUMNS_MAX } from '@/lib/club-form-staff-words';
@@ -29,8 +29,12 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const regs = await fetchAll<StaffRegRow>((a, b) => supabaseAdmin.from('league_registrations')
     .select(STAFF_REG_COLS).eq('season_id', season.id).order('id').range(a, b));
   const grid = await readSeasonAnswerGrid({ seasonId: season.id, regs, health: true });
-  // Logged when the file it builds carries health answers; a season with none is not a health export.
-  if (grid?.questions.some(q => q.health)) await writeOrgAudit(ctx.org.id, ctx.user.id, null, HEALTH_EXPORT_ACTION, { seasonId: season.id });
+  // Logged when the file it builds carries health answers (a season with none is not a health export) — and written
+  // BEFORE the answers leave: when the line can't be written, nothing goes out (owner call 3, 2026-11-20).
+  if (grid?.questions.some(q => q.health)
+    && !(await writeOrgAuditFirst(ctx.org.id, ctx.user.id, null, HEALTH_EXPORT_ACTION, { seasonId: season.id }))) {
+    return NextResponse.json({ error: 'The health answers didn’t export. Try again.' }, { status: 503 });
+  }
   return NextResponse.json({ form: grid }, { headers: { 'Cache-Control': 'no-store' } });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations/answers' });
 

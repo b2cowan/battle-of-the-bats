@@ -33,3 +33,25 @@ export async function writeOrgAudit(
     payload,
   }));
 }
+
+/**
+ * ONE ROW THAT MUST BE WRITTEN BEFORE WHAT IT RECORDS (Board Ready Stage 4 Part 3, owner call 3, 2026-11-20, on /legal's
+ * recommendation F2): opening a family's file and the export that carries health answers say "each opening is recorded in
+ * the audit log", so the record comes first and nothing goes out when it can't be written. True when written; a failure is
+ * reported the same way (`writeOrReport`), and the caller refuses.
+ */
+export async function writeOrgAuditFirst(
+  orgId: string,
+  actorId: string | null,
+  targetId: string | null,
+  action: string,
+  payload: Record<string, unknown>,
+): Promise<boolean> {
+  return writeOrReport('org_audit_log', action, orgId, () => supabaseAdmin.from('org_audit_log').insert({
+    org_id: orgId,
+    actor_id: actorId,
+    target_id: targetId,
+    action,
+    payload,
+  }));
+}

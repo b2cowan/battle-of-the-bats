@@ -450,7 +450,7 @@ const houseLeagueHelp: HelpPageContent = {
             <>
               <p>Family files and health answers are removed 90 days after the season is finished. The window that completes a season says so when its form has a health or file question.</p>
               <ul>
-                <li><strong>A season that is never marked finished</strong> has them removed 120 days after its last day.</li>
+                <li><strong>A season that is never marked finished</strong> has them removed 120 days after its last day. A season you reopen keeps them until you finish it again.</li>
                 <li><strong>What the record reads afterwards</strong>: <em>Removed {'{date}'}</em> for a health answer, <em>File removed {'{date}'}</em> for a file. The line under it says <em>Health answers are removed 90 days after the season finishes.</em> or <em>Family files are removed 90 days after the season finishes.</em></li>
                 <li><strong>On the form page</strong>, the question reads <em>answers removed {'{date}'}</em> or <em>files removed {'{date}'}</em>.</li>
                 <li><strong>Other answers stay</strong> with the registration. A file you export is yours to delete.</li>

@@ -1,9 +1,9 @@
 {
   "generated": "2026-11-21",
-  "total": 583,
+  "total": 584,
   "counts": {
     "tables": 21,
-    "columns": 270,
+    "columns": 271,
     "indexes": 104,
     "constraints": 85,
     "rls": 103
@@ -1131,6 +1131,10 @@
     },
     {
       "key": "column:only-dev:family_email_sends.words_cleared_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.reopened_at",
       "sig": ""
     },
     {

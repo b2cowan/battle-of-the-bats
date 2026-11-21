@@ -9,7 +9,8 @@ import { needsTick, tickState, type SignupDocument, type SignupQuestion, type Ve
  *
  *   · a DOCUMENT NEEDING A TICK: for any live child, the tick on the document's current version is "again" (a version asked
  *     for a new tick) or "none" (a document added since they signed up) — `tickState` / `needsTick`, the page's own rule;
- *   · a LIVE QUESTION this sign-up has not answered: a per-child question for any live child whose answers can still change,
+ *   · a REQUIRED LIVE QUESTION this sign-up has not answered (owner 2026-11-20, Part 3 call 5: an optional question a family
+ *     skipped never brings the button back on every send): a per-child question for any live child whose answers can still change,
  *     or a once-per-sign-up question while any live child can still change theirs (the page closes the sign-up's own
  *     questions the same way: `once.open`). An answer the family cleared, or the club removed, is not an answer.
  *
@@ -34,8 +35,8 @@ export interface TodoVersion extends VersionStep { documentId: string }
 
 export interface SignupFormTodoInput {
   finished: boolean;
-  /** The form's LIVE questions (archived ones are not asked). */
-  questions: readonly Pick<SignupQuestion, 'id' | 'asked'>[];
+  /** The form's LIVE questions (archived ones are not asked). Only the required ones count. */
+  questions: readonly Pick<SignupQuestion, 'id' | 'asked' | 'required'>[];
   /** The form's live documents. */
   documents: readonly Pick<SignupDocument, 'id'>[];
   /** Every version of those documents, any order. */
@@ -62,8 +63,9 @@ export function signupHasFormToDo(i: SignupFormTodoInput): boolean {
     if (live.some(c => needsTick(tickState(steps, mine.filter(t => t.subjectId === c.id))))) return true;
   }
 
-  const perChild = i.questions.filter(q => q.asked === 'per_subject');
-  const once = i.questions.filter(q => q.asked === 'once');
+  const required = i.questions.filter(q => q.required);
+  const perChild = required.filter(q => q.asked === 'per_subject');
+  const once = required.filter(q => q.asked === 'once');
   for (const c of live) {
     if (!c.open) continue;
     const have = i.answered.get(c.id);

@@ -64,7 +64,8 @@ describe('3 · a health answer never rides the list', () => {
     assert.match(functionBody(readCode(STAFF), 'readSeasonAnswerGrid'), /all\.filter\(q => input\.health \|\| !q\.health\)/);
   });
   it('the opt-in export is written to the club’s activity log', () => {
-    assert.match(readCode(EXPORT), /writeOrgAudit\([^)]*HEALTH_EXPORT_ACTION/);
+    // Written first, and nothing leaves when it can't be (owner call 3).
+    assert.match(readCode(EXPORT), /!\(await writeOrgAuditFirst\([^)]*HEALTH_EXPORT_ACTION[^)]*\)\)\)\s*\{\s*return NextResponse\.json\(/);
   });
   it('the Answer columns save keeps health questions out', () => {
     assert.match(readCode(EXPORT), /\.eq\('health', false\)/);
@@ -101,8 +102,9 @@ describe('6 · a family file opens as a one-hour download, recorded', () => {
   it('the link lasts an hour, downloads, and the opening is logged without the file’s name', () => {
     const body = functionBody(readCode(STAFF), 'openFamilyFile');
     assert.match(body, /createSignedUrl\(f\.path, 3600, \{ download:/);
-    assert.match(body, /writeOrgAudit\([^;]*FILE_OPENED_ACTION, \{ registrationId: input\.reg\.id, fileId: f\.id \}\)/);
-    assert.ok(!/file_name[^;]*writeOrgAudit|writeOrgAudit[^;]*file_name/.test(body));
+    assert.match(body, /writeOrgAuditFirst\([^;]*FILE_OPENED_ACTION, \{ registrationId: input\.reg\.id, fileId: f\.id \}\)\)\) return 'unrecorded';/);
+    assert.ok(body.indexOf('writeOrgAuditFirst(') < body.indexOf('createSignedUrl('), 'the link is made before the opening is recorded');
+    assert.ok(!/file_name[^;]*writeOrgAuditFirst\(|writeOrgAuditFirst\([^;]*file_name/.test(body));
   });
   it('only an attached file of this registration (or its sign-up) opens', () => {
     const body = functionBody(readCode(STAFF), 'openFamilyFile');

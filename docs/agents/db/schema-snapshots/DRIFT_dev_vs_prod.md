@@ -2,12 +2,12 @@
 
 **Generated:** 2026-11-21 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 583 divergence(s)** across dev/prod.
+**⚠️ 584 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 19 | 2 | — |
-| Columns | 226 | 42 | 2 |
+| Columns | 227 | 42 | 2 |
 | Indexes | 91 | 13 | 0 |
 | Constraints | 78 | 7 | — |
 | RLS / CHECK | 83 | 19 | 0 (RLS state) |
@@ -39,7 +39,7 @@
 - `platform_stripe_fees`
 
 ## Columns
-### Only in DEV (226)
+### Only in DEV (227)
 - `club_form_answer_clears.cleared_at`
 - `club_form_answer_clears.form_id`
 - `club_form_answer_clears.id`
@@ -216,6 +216,7 @@
 - `family_email_sends.names_cleared_at`
 - `family_email_sends.reply_to`
 - `family_email_sends.words_cleared_at`
+- `league_seasons.reopened_at`
 - `online_payment_stripe_fee_lines.amount`
 - `online_payment_stripe_fee_lines.booked_at`
 - `online_payment_stripe_fee_lines.created_at`

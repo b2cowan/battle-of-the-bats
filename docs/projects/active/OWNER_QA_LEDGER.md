@@ -28637,11 +28637,22 @@ performed over the shared working tree. The original walk result is not claimed 
 **Reviews (before hand-off):** `/review`, `/legal`, `/marketing`, `/ux`, `/docs`, `/simplify`; all applied. Owner calls: C4 (Email families' "Your sign-up" button: carry to Part 3), C5 (migration 516, the six-hourly sweep: yes or no), C6 (a document added after sign-up shows in the tick-again card), C7 (health answers read "Answered" on Your sign-up; the health mark can't come off an answered question).
 **Status:** owed. Built 2026-11-20 on dev; the owner commits (two commits: Part 2, and migration 516 alone on the owner's yes).
 <!-- /§551 -->
-## §552 · On-sale pages · S3b, the selling sections, the home page's "old way" cards and "module" off the marketing pages — **built 2026-11-20 on dev; owed the owner's walk and commit**
+## §552 · On-sale pages · S3b, the selling sections, the home page's "old way" cards and "module" off the marketing pages — ✅ PASSED 2026-11-20 (38/38, zero flags; C1–C6 all ruled as recommended) · built 2026-11-20 on dev; commit owed
 <!-- §552 -->
 **Walk (checkable):** https://claude.ai/artifact/CL2ACjnWNB5AgXiZiL5Tbi (source `docs/projects/active/CLUB_ON_SALE_S3B_WALK.html`); parts A to F, 38 steps, six owner calls C1 to C6 and three owner steps (not in the counter). Plan `CLUB_ON_SALE_PAGES_PLAN.md` S3b; words `PRICING_PAGE_COPY.md` (S3b section, owner "accept" 2026-11-20).
 **Sign-in:** visitor signed out; platform admin `uat-platform@fieldlogichq.ca` · `UATPassword2026!` (part F, Dev tools › Plan gates › "Show as closed").
 **Built:** home "The old way" cards (four on production, six while League Plus or Club is open); /for-clubs hero, W66 cards, "Four jobs. One platform." with the product's own screens on the four cards and W67's caption, card 03 cut to what the club sees, W69, W70; /for-leagues pictures + W70; /pricing FAQ in three groups with W70's first four; /for-coaches "Copy a link for your club"; /demos club line; "module" and "visibility" off the marketing pages. W70 renders only while the legal pages are published, and answer 4's "or ask us for a full copy" only once the data terms are; W71's /for-tournament-organizers line left to S4.
 **Reviews (before hand-off):** `/marketing` (words as built: all match), `/legal` (no fix; three owner steps), `/design` (no must-fix; the FAQ tag wrap fixed), `/review` standard (no Critical/High/Medium; picture guard + tag selector fixed). Tests 149/149; layout check: no new findings on the six pages.
-**Status:** owed. Built 2026-11-20 on dev; the owner commits.
+**Walked ✅ 2026-11-20: 38 of 38 (A 6/6, B 15/15, C 4/4, D 3/3, E 4/4, F 6/6).** Calls, all the recommended option: C1 keep the /pricing closed Club door line (card 03's words); C2 keep the For Clubs repetition as accepted; C3 keep the pictures on phones; C4 keep "club" in W70's league wording; C5 keep the drawing (FAQ heading); **C6 yes — the For Leagues Club card's "org-wide financials" became "the club's books"** (edited 2026-11-20 after the walk, one line in `app/for-leagues/page.tsx`).
+**Still owed (owner steps, not in the counter):** a name search for Kestrel Bay; the by-hand owner change (W70 answer 2); the by-hand full copy before the data terms publish.
+**Status:** walked ✅; the owner commits.
 <!-- /§552 -->
+## §553 · Board Ready Stage 4 Part 3 · the club's side of the sign-up form, and its clock — **committed `4dd9e659f` 2026-11-20; owed the owner's walk**
+<!-- §553 -->
+**Walk (checkable):** https://claude.ai/artifact/QhtSYswpFHJqAAkyy8X6Dk (source `docs/projects/active/BOARD_READY_STAGE4_PART3_WALK.html`); parts A to I, 32 steps, owner calls not in the counter. Plan `BOARD_READY_PLAN.md` §5 Stage 4 "Part 3 built".
+**Sign-in:** registrar `league-registrar@dev.local`, owner `league-owner@dev.local`, treasurer `league-treasurer@dev.local`, coach `j9-coach@dev.local` (all `devpass123`, dev-league-org, Walk Summer 2027); the finished season is the owner's own Milton Bats account (2026 Summer House League).
+**Fixture:** set on dev 2026-11-20 with `node .probe/stage4-part3-walk-fixture.mjs on` (five questions and answers on Walk Summer 2027, the Waiver's version 2, and Milton's finished 2026 season already through the 90-day clock). After the walk: `node .probe/stage4-part3-walk-fixture.mjs off`.
+**Reviews (before hand-off):** `/legal`, `/docs`, `/marketing`, `/simplify`, `/review` (five lenses, no Critical or High); all applied. Owner calls 1–5 ruled 2026-11-20 ("go with your recommendations"), built the same day.
+**Status:** owed.
+<!-- /§553 -->
+
