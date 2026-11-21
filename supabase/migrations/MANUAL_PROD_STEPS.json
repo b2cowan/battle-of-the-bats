@@ -886,6 +886,10 @@
     "519_a_reopened_season_keeps_its_answers.sql": {
       "prod": "pending",
       "note": "Board Ready Stage 4 Part 3, owner call 2 (2026-11-20, \"go with your recommendations\": skip reopened seasons). Column league_seasons.reopened_at is visible to check:migrations. FUNCTIONS ARE NOT: public.league_seasons_finished (mig 471's body, plus the reopen stamp) and public.club_form_retention_sweep (mig 518's body; the 120-day branch skips a reopened season). ORDER: after 518, with Parts 1–3 (call C1). Idempotent. Applied to DEV 2026-11-20 (a rolled-back reopen stamped reopened_at and cleared finished_at). Verify on prod: select position('reopened_at' in pg_get_functiondef('public.league_seasons_finished'::regproc)) > 0 -> true; select position('reopened_at IS NULL' in pg_get_functiondef('public.club_form_retention_sweep'::regproc)) > 0 -> true."
+    },
+    "516_waiting_family_files_are_swept_every_six_hours.sql": {
+      "prod": "pending",
+      "note": "WATCHED AUTOMATION; the owner's yes 2026-11-20 (Part 3 call 1), applied nowhere yet (Board Ready Stage 4 Part 2; ruling 9: a family file never attached to a sign-up is deleted within a day). One cron.schedule: 'club-form-files-sweep' at 37 */6 * * * calling public.app_cron_http_tick('club_form_files_sweep', '/api/platform-admin/club-form-files-sweep') (mig 183/502). INVISIBLE to check:migrations. Since Part 3 the same run also removes family files and health answers on the retention clock (mig 518/519) and deletes the stored files on mig 518's removal list; it is a PROMOTE CONDITION for Parts 1–3 (/legal). ORDER: only AFTER the Parts 1–3 code is serving on production (the tick is a harmless 404 before). Idempotent (cron.schedule upserts by name). Verify: select schedule, command from cron.job where jobname='club-form-files-sweep' -> 37 */6 * * * and the tick command."
     }
   }
 }
