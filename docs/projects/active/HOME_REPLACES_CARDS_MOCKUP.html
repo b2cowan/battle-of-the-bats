@@ -1,0 +1,280 @@
+<title>What It Replaces Cards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: document chrome on a cool slate ground; the home page specimen keeps its own warm-paper tokens so it reads as a specimen. Sticky numbered tabs, one section at a time. */
+:root {
+  --doc-bg: #EEF0F2; --doc-surface: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #59626D; --doc-line: #D5DAE0;
+  --doc-accent: #2F5D8A; --doc-new: #2E7D4F; --doc-new-bg: #E3F2E8; --doc-gone: #A33A2C; --doc-gone-bg: #F8E4E0;
+  --doc-gate: #8A5A12; --doc-gate-bg: #FBEFD9;
+  /* the shipped warm home tokens (warm light theme) */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235;
+  --home-line: rgba(70, 55, 30, 0.12); --home-olive: #57651E; --home-radius: 14px;
+  --font-ui: 'Inter', system-ui, sans-serif; --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14181D; --doc-surface: #1C2229; --doc-ink: #E7EBEF; --doc-soft: #A2ACB7; --doc-line: #313942;
+  --doc-accent: #8DB7E2; --doc-new: #7FD3A0; --doc-new-bg: #183325; --doc-gone: #F0A397; --doc-gone-bg: #3A1D19;
+  --doc-gate: #F0C477; --doc-gate-bg: #3A2C12; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --doc-bg: #14181D; --doc-surface: #1C2229; --doc-ink: #E7EBEF; --doc-soft: #A2ACB7; --doc-line: #313942;
+  --doc-accent: #8DB7E2; --doc-new: #7FD3A0; --doc-new-bg: #183325; --doc-gone: #F0A397; --doc-gone-bg: #3A1D19;
+  --doc-gate: #F0C477; --doc-gate-bg: #3A2C12; color-scheme: dark; }
+
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-surface); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1320px; margin: 0 auto; }
+header.top { padding-block: 24px 12px; }
+h1 { font-size: 22px; margin: 0 0 4px; text-wrap: balance; }
+.lede { color: var(--doc-soft); margin: 0; max-width: 72ch; }
+
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-surface); border-bottom: 1px solid var(--doc-line); }
+.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; }
+.tab { font: 600 14px var(--font-ui); color: var(--doc-soft); background: none; border: 0; border-radius: 8px; padding: 8px 12px; white-space: nowrap; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--doc-ink); background: var(--doc-bg); }
+.tab:focus-visible, .seg button:focus-visible, .mark:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+
+main { padding-block: 20px 48px; }
+section.pane { display: flex; flex-direction: column; gap: 16px; }
+.explain { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; max-width: 900px; }
+.explain p { margin: 0 0 6px; } .explain p:last-child { margin: 0; }
+.viewrow { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--doc-soft); }
+/* The shipped view switch: ONE white track, olive-soft selected option (never a dark fill) */
+.seg { display: inline-flex; gap: 2px; background: #FFFFFF; border: 1px solid rgba(70, 55, 30, 0.20); border-radius: 999px; padding: 3px; }
+.seg button { font: 600 12px var(--font-ui); border: 0; background: none; color: #4A4235; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87, 101, 30, 0.10); color: #57651E; }
+
+.spec-label { font: 600 12px var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--doc-soft); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tag { font: 700 11px var(--font-ui); letter-spacing: .05em; padding: 2px 8px; border-radius: 999px; }
+.tag.new { color: var(--doc-new); background: var(--doc-new-bg); }
+.tag.gone { color: var(--doc-gone); background: var(--doc-gone-bg); }
+.tag.same { color: var(--doc-soft); background: var(--doc-bg); border: 1px solid var(--doc-line); }
+.tag.gate { color: var(--doc-gate); background: var(--doc-gate-bg); }
+.scroller { overflow-x: auto; border-radius: 12px; border: 1px solid var(--doc-line); }
+
+/* ── The specimen: the home page section at true size (container 1200px desktop, 390px phone) ── */
+.home { background: var(--home-paper); color: var(--home-ink); font-family: var(--font-ui); border-top: 1px solid var(--home-line); }
+.home.desk { width: 1200px; padding: 72px 0 72px; }
+.home.desk .container { width: 1152px; margin: 0 auto; }
+.home.phone { width: 390px; padding: 44px 0; }
+.home.phone .container { padding: 0 24px; }
+.h-eyebrow { font-size: 12px; font-weight: 600; line-height: 1.3; letter-spacing: .06em; text-transform: uppercase; color: var(--home-olive); margin: 0 0 10px; }
+.h-heading { font-family: var(--font-display); font-weight: 700; font-size: 32px; line-height: 1.1; margin: 0 0 34px; text-wrap: balance; color: var(--home-ink); }
+.h-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.phone .h-grid { grid-template-columns: minmax(0, 1fr); }
+.h-card { position: relative; background: var(--home-card); border: 1px solid var(--home-line); border-radius: var(--home-radius); padding: 24px; min-width: 0; }
+.h-card .h-eyebrow { margin-bottom: 10px; text-wrap: balance; }
+.h-body { font-size: 16px; line-height: 1.6; color: var(--home-ink-soft); margin: 0; }
+.h-card.gated { border-style: dashed; border-color: #B88A3A; }
+
+.mark { position: absolute; top: -10px; right: -10px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); cursor: pointer; display: grid; place-items: center; }
+.gatechip { position: absolute; top: -11px; left: 18px; font: 700 11px var(--font-ui); color: #7A4E0E; background: #FBEFD9; border: 1px solid #E5C58A; padding: 1px 8px; border-radius: 999px; }
+
+/* "Show only what differs": dim the unchanged parts */
+.differs .same-part { opacity: .18; }
+
+.pair { display: flex; flex-direction: column; gap: 20px; }
+.phones { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.phones > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* words + asks */
+.words { display: grid; gap: 12px; max-width: 960px; }
+.word { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; scroll-margin-top: 80px; }
+.word.flash { outline: 2px solid var(--doc-accent); }
+.word h3 { font-size: 15px; margin: 0 0 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); flex: none; }
+.kv { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 4px 12px; font-size: 14px; }
+.kv dt { color: var(--doc-soft); } .kv dd { margin: 0; min-width: 0; }
+@media (max-width: 600px) { .kv { grid-template-columns: minmax(0, 1fr); } .kv dd { margin-bottom: 6px; } }
+.ask { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; max-width: 900px; }
+.ask h3 { margin: 0 0 6px; font-size: 15px; }
+.ask p { margin: 0 0 6px; }
+.rec { color: var(--doc-new); font-weight: 600; }
+@media (prefers-reduced-motion: no-preference) { .word { transition: outline-color .3s; } }
+</style>
+
+<header class="top wrap">
+  <h1>Home page · "What it actually replaces"</h1>
+  <p class="lede">Each card names the habit a volunteer uses today, then says what takes its place. The "module" tags go. Every claim was checked against the product as it is today. Cards for plans that aren't on sale yet appear only once those plans open. Nothing on the live page has changed.</p>
+</header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist">
+  <button class="tab" role="tab" data-tab="desk" aria-selected="true">1 · Before and after</button>
+  <button class="tab" role="tab" data-tab="phone" aria-selected="false">2 · On a phone</button>
+  <button class="tab" role="tab" data-tab="open" aria-selected="false">3 · Once League Plus and Club open</button>
+  <button class="tab" role="tab" data-tab="words" aria-selected="false">4 · The words</button>
+  <button class="tab" role="tab" data-tab="asks" aria-selected="false">5 · Asks</button>
+</div></nav>
+
+<main class="wrap">
+
+<!-- 1 · desktop before/after -->
+<section class="pane" id="pane-desk">
+  <div class="explain">
+    <p><strong>Before:</strong> this is the section as it is today. It tours the product a second time, and three of its four tags say "module".</p>
+    <p><strong>After:</strong> four cards, all for plans you can buy on production today, in the house tag style. Each numbered marker opens that card's words, with its evidence and where it was checked.</p>
+  </div>
+  <div class="viewrow">View
+    <div class="seg" role="group" aria-label="View">
+      <button type="button" data-view="all" aria-pressed="true">Everything</button>
+      <button type="button" data-view="diff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+  <div class="pair" id="deskpair">
+    <div class="spec-label">Before · desktop, 1200px <span class="tag gone">TODAY</span></div>
+    <div class="scroller"><div class="home desk"><div class="container">
+      <p class="h-eyebrow same-part">Platform highlights</p>
+      <h2 class="h-heading same-part">What it actually replaces</h2>
+      <div class="h-grid">
+        <div class="h-card"><p class="h-eyebrow">Tournament module</p><p class="h-body">Generate brackets in seconds, not hours. Coaches and parents see live scores the moment you enter them — no calls to the scorekeeper's table.</p></div>
+        <div class="h-card"><p class="h-eyebrow">House league module</p><p class="h-body">Open registration, run your draft, publish the schedule, and track standings — all in one dashboard. Parents hear about their registration automatically, and you can message the whole league in one go.</p></div>
+        <div class="h-card"><p class="h-eyebrow">Rep teams module</p><p class="h-body">Coaches manage their own roster, documents, and team finances independently. Organization admins get visibility without owning the day-to-day.</p></div>
+        <div class="h-card"><p class="h-eyebrow">Coaches Portal</p><p class="h-body">The roster in a group text, the lineup in a notes app, and team fees tracked in someone's head. The Coaches Portal puts all of it in one place — whether or not your organization is on FieldLogicHQ.</p></div>
+      </div>
+    </div></div></div>
+
+    <div class="spec-label">After · desktop, 1200px, production today <span class="tag new">NEW</span> words · <span class="tag same">UNCHANGED</span> layout</div>
+    <div class="scroller"><div class="home desk"><div class="container">
+      <p class="h-eyebrow">The old way</p>
+      <h2 class="h-heading same-part">What it actually replaces</h2>
+      <div class="h-grid" data-cards="prod"></div>
+    </div></div></div>
+  </div>
+</section>
+
+<!-- 2 · phone -->
+<section class="pane" id="pane-phone" hidden>
+  <div class="explain"><p>On a phone the grid is one column, as it is today. The after column is longer: the new cards have about 30% more words, roughly five more lines in all. The two columns are side by side so you can see the difference. Open this page on your phone to check the length at true size. On the smallest phones the longest tags wrap onto a second line, so the build balances those two lines.</p></div>
+  <div class="phones">
+    <div><div class="spec-label">Before · phone, 390px <span class="tag gone">TODAY</span></div>
+      <div class="scroller"><div class="home phone"><div class="container">
+        <p class="h-eyebrow">Platform highlights</p><h2 class="h-heading">What it actually replaces</h2>
+        <div class="h-grid" data-cards="before"></div>
+      </div></div></div></div>
+    <div><div class="spec-label">After · phone, 390px <span class="tag new">NEW</span></div>
+      <div class="scroller"><div class="home phone"><div class="container">
+        <p class="h-eyebrow">The old way</p><h2 class="h-heading">What it actually replaces</h2>
+        <div class="h-grid" data-cards="prod"></div>
+      </div></div></div></div>
+  </div>
+</section>
+
+<!-- 3 · open -->
+<section class="pane" id="pane-open" hidden>
+  <div class="explain">
+    <p>When League Plus or Club goes on sale, two more cards appear and the grid becomes three rows. Both cards are about house league and fields, so neither appears while those plans are closed. The page's other plan sections already work this way.</p>
+    <p>The dashed edge and the yellow chip appear only in this drawing, to mark the two cards that depend on a plan being open. Both come out in the build. On the page, all six cards look the same.</p>
+  </div>
+  <div class="spec-label">After · desktop, 1200px, League Plus or Club open <span class="tag gate">+2 CARDS</span></div>
+  <div class="scroller"><div class="home desk"><div class="container">
+    <p class="h-eyebrow">The old way</p>
+    <h2 class="h-heading">What it actually replaces</h2>
+    <div class="h-grid" data-cards="open"></div>
+  </div></div></div>
+  <div class="explain"><p>The longest version of the section, all six cards on a phone, is the column below. It is roughly twice the length of today's four cards. Scroll it and decide whether that is too long for this point in the page (ask A1).</p></div>
+  <div class="spec-label">After · phone, 390px, League Plus or Club open <span class="tag gate">+2 CARDS</span></div>
+  <div class="scroller" style="max-width: 392px"><div class="home phone"><div class="container">
+    <p class="h-eyebrow">The old way</p><h2 class="h-heading">What it actually replaces</h2>
+    <div class="h-grid" data-cards="open"></div>
+  </div></div></div>
+</section>
+
+<!-- 4 · words -->
+<section class="pane" id="pane-words" hidden>
+  <div class="explain"><p>Each card gets three things: the words, why they're true, and how strong the case is that this is a real problem for our users. Only card 5 rests on something a real prospect asked for. The rest are the problems our own pages for each audience already name, and earlier copy reviews have checked those for accuracy.</p></div>
+  <div class="words" id="wordlist"></div>
+</section>
+
+<!-- 5 · asks -->
+<section class="pane" id="pane-asks" hidden>
+  <div class="ask"><h3>A1 · Four cards always, or up to six as plans open?</h3>
+    <p>Production shows the four cards in tab 1. Cards 5 and 6 join when League Plus or Club opens.</p>
+    <p class="rec">Recommended: up to six. The house league card leaves production until League Plus is for sale, which is honest. Today's page describes a house league plan nobody can buy yet.</p></div>
+  <div class="ask"><h3>A2 · Change the label above the heading from "Platform highlights" to "The old way"?</h3>
+    <p>"Platform highlights" promises a feature list, which is what the section above already gives. The For Leagues page already labels its problem section "The old way".</p>
+    <p class="rec">Recommended: yes. The heading stays the same.</p></div>
+  <div class="ask"><h3>A3 · Does the permit card wait for Club, or come with League Plus?</h3>
+    <p>The product lets League Plus record permits too. The pricing facts call permits part of the Club release.</p>
+    <p class="rec">Recommended: show it when either plan opens, because that matches what the product does. Say if "part of the Club release" means it should wait for Club.</p></div>
+  <div class="ask"><h3>A4 · Do these problems match what you hear from clubs?</h3>
+    <p>Only the friend-request card (5) comes from a prospect's ask, on the Board Ready list. The others are the problems our own pages for each audience already name. You know the people better than the code does.</p>
+    <p class="rec">Recommended: replace any card that doesn't sound like a real conversation you've had. The treasurer's spreadsheet is an alternate card, held for when Club opens.</p></div>
+  <div class="ask"><h3>Checked before it's built, not your call</h3>
+    <p>The build uses the shipped view switch and balances the card tags across two lines only on this page, not on every page's labels. A standalone Premium coach's tryout screens, tested end to end. The permit card's "flagged as you schedule it" line, checked on the game screen. If either fails, that card's words get cut back before anything goes live.</p></div>
+</section>
+</main>
+
+<script>
+const CARDS = {
+  1: { tag: 'The phone call after every game', body: "Coaches crowd the scorekeeper's table to ask who plays next, and parents text you for the score. Enter it once, and the event page's scores, standings and playoff bracket update on their own while the games are on.",
+       current: 'Tournament module card', why: 'Keeps the old card\'s real promise but names the habit instead of the feature. It drops "the moment you enter them": the page refreshes itself on a short timer during an event, not instantly.',
+       evidence: 'The For Tournament Organizers page already names this problem ("Coaches crowd the table after every game"). No prospect asked for it.',
+       checked: 'Event pages refresh themselves on game day only, and pause while the tab is hidden. Scores, standings, the bracket and each team\'s page all follow along.', gate: 'Always shown (the free Tournament plan)' },
+  2: { tag: 'The registration inbox', body: "Teams email their entry, you copy it into a spreadsheet, and you chase fees one reply at a time. Teams register on your event page instead. You approve them, record what's been paid, and send one reminder to every team that still owes.",
+       current: 'new', why: 'Tells the registration part of the tour above as the volunteer\'s week. "Record what\'s been paid" is the honest verb, because the product does not match e-transfers or take card payments on production.',
+       evidence: 'The For Tournament Organizers page ("Teams register by email… 24 entries in a spreadsheet"). No prospect asked for it.',
+       checked: 'Registration emails the team. The reminder goes only to accepted teams with money still owing and an email on file, and never to the club\'s own teams.', gate: 'Shown while Tournament Plus is for sale (the reminders are a Tournament Plus feature)' },
+  3: { tag: 'The group text', body: "The roster in a group text, the lineup in a notes app, and team fees tracked in someone's head. The Coaches Portal puts all of it in one place and emails your families from it — whether or not your organization is on FieldLogicHQ.",
+       current: 'Coaches Portal card (kept, one clause added)', why: 'Today\'s best card. The added clause is the part that actually replaces the group text.',
+       evidence: 'The For Coaches page, plus the Club page\'s "Your coaching staff runs on WhatsApp". No prospect asked for it.',
+       checked: 'A Premium coach emails the families on the active roster and keeps a log of what was sent. Separate dues reminders go to families who owe.', gate: 'Shown while the Premium Coaches Portal is for sale (open since July)' },
+  4: { tag: 'The tryout clipboard', body: "Paper score sheets, a name on every page, and a late night adding it up. Check players in on your phone, let helpers score without signing up, and watch the ranking build as scores come in. Names stay hidden until you choose to show them.",
+       current: 'new', why: 'The closing paragraph of the home page names rep tryouts, and nothing above the cards does. It is also the Coaches Portal\'s strongest feature after the group text.',
+       evidence: 'The home page\'s closing paragraph and the Club page\'s "Tryouts run on email chains". No prospect asked for it.',
+       checked: 'Check-in gives every player a bib number. A helper\'s scoring link needs no sign-in and lasts 48 hours. The scoreboard ranks players live. Hidden names are on by default.', gate: 'Shown while the Premium Coaches Portal is for sale' },
+  5: { tag: "The registrar's spreadsheet", body: "Registration is a form, the answers land in a spreadsheet, and \"she wants to play with Maya\" is matched by eye. Families register on your season page and get a confirmation email. Friend requests come to you as suggestions to confirm before the draft.",
+       current: 'House league card (rewritten)', why: 'Names the one problem a real prospect gave us. It says "suggestions to confirm" because the product never pairs friends on its own.',
+       evidence: 'The Board Ready prospect list, ask 2: "Today the registrar does this in Excel."',
+       checked: 'Families get a sign-up email, and another when they are approved or waitlisted. Friend requests are suggested, never confirmed automatically, and confirmed pairs stay together in the draft.', gate: 'Shown only once League Plus or Club is for sale' },
+  6: { tag: 'The permit in an email thread', body: "The field permit is a PDF in someone's inbox, and the clash turns up at 8:00 a.m. on a Saturday. Keep each permit's field, days and hours in one place, and a game set outside them is flagged as you schedule it.",
+       current: 'new', why: 'The home page\'s closing paragraph names field bookings. This card says what the product does about them, on the league and club side only.',
+       evidence: 'The home page\'s closing paragraph ("field bookings"). No prospect asked for it.',
+       checked: 'Permits are kept per field with their days and hours. The schedule\'s game check asks about permits as the date, time and field are set. Still to check: the line the coach sees on the game screen.', gate: 'Shown only once League Plus or Club is for sale (see ask A3)' },
+};
+const BEFORE = [
+  ['Tournament module', "Generate brackets in seconds, not hours. Coaches and parents see live scores the moment you enter them — no calls to the scorekeeper's table."],
+  ['House league module', 'Open registration, run your draft, publish the schedule, and track standings — all in one dashboard. Parents hear about their registration automatically, and you can message the whole league in one go.'],
+  ['Rep teams module', 'Coaches manage their own roster, documents, and team finances independently. Organization admins get visibility without owning the day-to-day.'],
+  ['Coaches Portal', "The roster in a group text, the lineup in a notes app, and team fees tracked in someone's head. The Coaches Portal puts all of it in one place — whether or not your organization is on FieldLogicHQ."],
+];
+const ORDER = { prod: [1, 2, 3, 4], open: [1, 5, 2, 6, 3, 4] };
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+function card(n, showGate) {
+  const c = CARDS[n]; const gated = n >= 5;
+  return `<div class="h-card${gated && showGate ? ' gated' : ''}">` +
+    (gated && showGate ? '<span class="gatechip">When League Plus or Club opens</span>' : '') +
+    `<button class="mark" type="button" data-goto="${n}" aria-label="Card ${n}: see the words">${n}</button>` +
+    `<p class="h-eyebrow">${esc(c.tag)}</p><p class="h-body">${esc(c.body)}</p></div>`;
+}
+document.querySelectorAll('[data-cards]').forEach(g => {
+  const k = g.dataset.cards;
+  g.innerHTML = k === 'before'
+    ? BEFORE.map(([t, b]) => `<div class="h-card"><p class="h-eyebrow">${esc(t)}</p><p class="h-body">${esc(b)}</p></div>`).join('')
+    : ORDER[k].map(n => card(n, k === 'open')).join('');
+});
+document.getElementById('wordlist').innerHTML = [1, 2, 3, 4, 5, 6].map(n => {
+  const c = CARDS[n];
+  return `<article class="word" id="w${n}"><h3><span class="num">${n}</span>${esc(c.tag)} ${n >= 5 ? '<span class="tag gate">WHEN LEAGUE PLUS OR CLUB OPENS</span>' : '<span class="tag new">NEW · PRODUCTION TODAY</span>'}</h3>
+  <dl class="kv"><dt>Card text</dt><dd>${esc(c.body)}</dd><dt>Replaces</dt><dd>${esc(c.current)}</dd><dt>Why</dt><dd>${esc(c.why)}</dd>
+  <dt>Is the problem real?</dt><dd>${esc(c.evidence)}</dd><dt>Checked in the product</dt><dd>${esc(c.checked)}</dd><dt>When it shows</dt><dd>${esc(c.gate)}</dd></dl></article>`;
+}).join('') + `<article class="word"><h3>Label above the heading</h3><dl class="kv"><dt>Current</dt><dd>Platform highlights</dd><dt>Proposed</dt><dd>The old way</dd><dt>Why</dt><dd>The cards now describe the old way. "Platform highlights" promised the feature list the section above already gives.</dd></dl></article>`;
+
+const tabs = [...document.querySelectorAll('.tab')];
+function show(name) {
+  tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
+  document.querySelectorAll('.pane').forEach(p => { p.hidden = p.id !== 'pane-' + name; });
+}
+tabs.forEach(t => t.addEventListener('click', () => { show(t.dataset.tab); window.scrollTo(0, 0); }));
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-goto]'); if (!b) return;
+  show('words');
+  const w = document.getElementById('w' + b.dataset.goto);
+  w.scrollIntoView({ block: 'start' }); w.classList.add('flash'); setTimeout(() => w.classList.remove('flash'), 1600);
+});
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  document.getElementById('deskpair').classList.toggle('differs', b.dataset.view === 'diff');
+}));
+</script>

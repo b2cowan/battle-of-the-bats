@@ -372,8 +372,11 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
     decided at S3b. The one difference left: between refreshes, a screen that changes is caught by re-running the
     screenshot script, while a drawing needs someone to notice. W67's caption ("These are the product's own screens…")
     fits (A); (B) needs its own wording and a `/legal` read.
-  - **Part 0 built 2026-11-20, committed `a436005ab` (the comparison; owner's three calls open: A or B, the cadence, B's
-    caption; the eight PNGs are not committed until he chooses, and the script re-takes them).** The fixture
+  - **Part 0 built 2026-11-20, committed `a436005ab` (the comparison; the eight PNGs are not committed until he chooses,
+    and the script re-takes them).** **⚖ Owner's three calls, ruled 2026-11-20:** (1) **A, the product's own screens**
+    (script-shot from Kestrel Bay); (2) **refreshed quarterly** (one command and a look; record it in the `/demos`
+    checklist); (3) **the caption as drawn**: W67's line, "These are the product's own screens, shown with a fictional
+    house league." (`/for-clubs`: "…shown with a fictional club."); B's caption is not needed. The fixture
     is **Kestrel Bay Softball Association** (`kestrel-bay`, dev only, invented names, addresses on reserved test domains,
     no medical notes): `seed-prospect-demo.mjs --club=kestrel` (the Milton machinery now takes a pinned club config,
     `on-sale-pictures.kestrel.config.mjs`), then `seed-on-sale-pictures-extras.mjs` (a tournament with two games live at
@@ -391,7 +394,31 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
   with the data terms published or the by-hand "full copy" procedure confirmed (Ask 29).
 - The paths between audiences (W71): one line on `/for-tournament-organizers`' two cross-sells (true once S4 ships, so
   it ships with or after S4); "Copy a link for your club" on `/for-coaches`; one line under the coach demo on `/demos`.
-- **Screens:** `/for-clubs`, `/for-leagues`, `/pricing` (FAQ), `/for-tournament-organizers`, `/for-coaches`, `/demos`.
+- **Home page "What it actually replaces" rebuilt around today's habits (added 2026-11-20, owner "sure").** The four
+  `PLATFORM_BENEFITS` cards (`app/page.tsx` ~144 and ~613) stop re-touring the product: each tag names the habit a
+  volunteer uses today and the body says what takes its place. Mockup with the words, evidence and code checks:
+  `docs/projects/active/HOME_REPLACES_CARDS_MOCKUP.html` (https://claude.ai/artifact/XtZ9EmTg4FQBykkesNn9EY; `/design`
+  run, fixes applied). **Owner rulings 2026-11-20 (A1–A4, "I agree"):** (A1) production shows four cards (the phone
+  call after every game · the registration inbox · the group text · the tryout clipboard), each on its plan's live gate;
+  the registrar's spreadsheet and the permit card join only while League Plus or Club is open (`leagueClubLinks`), so
+  the house league card leaves production until League Plus is for sale; (A2) eyebrow "Platform highlights" → "The old
+  way", heading kept; (A3) the permit card shows when EITHER League Plus or Club opens (the venue library's code gate);
+  (A4) any card that does not sound like a real club conversation is swapped — only the friend-request card rests on a
+  prospect ask (Board Ready ask 2). Claims are cut to what ships: refreshes "while the games are on" (a timer, not
+  instant), "record what's been paid" (no e-transfer matching). Before build: a standalone Premium coach's tryout
+  screens end to end, and the permit card's "flagged as you schedule it" line on the game screen; the card tag gets
+  `text-wrap: balance` in the page's own styles only; the phone length grows (~5 lines at four cards, ~2× at six).
+- **The word "module" leaves the marketing pages (added 2026-11-20).** The pricing says "No modules to buy separately",
+  so "module" reads as an add-on. Covers: `/for-clubs` "Four modules. One platform." (`stepsHeadline`,
+  `lib/plan-article-content.ts` ~270), "every module" under it, "the full house league module" (card 02 and the note
+  under the cards); the home page's first how-it-works step ("League Plus and Club modules can be added as they open")
+  and the cards above. **The eight pictures (W67) stay as they are:** they match each card's subject, not its words, and
+  the four For Clubs subjects remain a product tour. Same pass: `/for-clubs` card 03's "You get org-wide visibility"
+  overstates — the club sees ONE cash figure per team, never a coach's books (owner 2026-11-06,
+  `decision_coach_books_stay_the_teams`); cut it to what the club actually sees.
+- **One `/marketing` pass** settles the home cards, the "module" sweep, card 03 and the `/for-clubs` "old way" cards
+  (W66) together, so the two sets of "old way" cards read as one family. Accepted words go into `PRICING_PAGE_COPY.md`.
+- **Screens:** `/` (home), `/for-clubs`, `/for-leagues`, `/pricing` (FAQ), `/for-tournament-organizers`, `/for-coaches`, `/demos`.
 - **Reviews:** `/legal` on W70 as built; `/design` on the pictures in place; `/docs` not needed (no product flow changes).
 
 ### S4 — Buying from inside the product (depends on S1; after S3 because both touch the plan cards)
