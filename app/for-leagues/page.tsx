@@ -2,7 +2,7 @@ import Link from 'next/link';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import HowTheTrialWorks from '@/components/marketing/HowTheTrialWorks';
 import { BoardQuestionsSection } from '@/components/marketing/BoardQuestions';
-import { ScreenShot, shotCaption, type OnSaleShot } from '@/components/marketing/ScreenShot';
+import { OnSaleDrawing, type OnSaleDrawingId } from '@/components/marketing/OnSaleDrawing';
 import kit from '@/components/marketing/MarketingKit.module.css';
 import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
@@ -31,8 +31,8 @@ export const metadata = marketingMetadata({
 const { painItems: PAIN_ITEMS, steps: STEPS, features: LEAGUE_FEATURES } =
   PLAN_ARTICLE_CONTENT.league;
 
-/** W67: the product's own screen for each step (Registration, Draft, Schedule and standings, Notifications), in order. */
-const STEP_SHOTS: readonly OnSaleShot[] = ['leagues-01-registrations', 'leagues-02-draft', 'leagues-03-standings', 'leagues-04-email'];
+/** W67, as re-ruled 2026-11-21: a drawing for each step (Registration, Draft, Schedule and standings, Notifications), in order. */
+const STEP_DRAWINGS: readonly OnSaleDrawingId[] = ['leagues-01-registration', 'leagues-02-draft', 'leagues-03-standings', 'leagues-04-notifications'];
 
 const CROSS_SELLS: Array<{
   label: string;
@@ -164,10 +164,10 @@ export default async function ForLeaguesPage() {
           <p className={`${kit.body} ${fp.measure}`}>
             From the moment registration opens to the final game night — everything runs in one place.
           </p>
-          <div className={`${kit.grid2} ${fp.gridTop}`}>
+          <div className={`${kit.grid2} ${fp.gridTop} ${fp.drawingGrid}`}>
             {STEPS.map((step, i) => (
               <div key={step.num} className={kit.card}>
-                {STEP_SHOTS[i] && <ScreenShot id={STEP_SHOTS[i]} />}
+                {STEP_DRAWINGS[i] && <OnSaleDrawing id={STEP_DRAWINGS[i]} />}
                 <p className={kit.counter}>{step.num}</p>
                 <p className={kit.eyebrow}>{step.label}</p>
                 <p className={kit.title}>{step.title}</p>
@@ -175,7 +175,6 @@ export default async function ForLeaguesPage() {
               </div>
             ))}
           </div>
-          <p className={fp.hnote}>{shotCaption('house league')}</p>
         </div>
       </section>
 

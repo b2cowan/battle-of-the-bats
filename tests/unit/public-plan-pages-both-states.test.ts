@@ -274,22 +274,43 @@ describe('S3b, in both states', () => {
     assert.ok(clubs.includes('the cash it holds') && clubs.includes("Lineups and the team's own books stay with the coach."), 'card 03');
   });
 
-  it('/for-clubs and /for-leagues: the pictures and their caption; W66 and W69 on /for-clubs, both states', async () => {
+  // W67 as re-ruled 2026-11-21: each card carries a DRAWING (old way → answer), so neither page says "the product's own
+  // screens" any more, and neither sends a reader to a demo for them: no demo shows a house league or the club's books
+  // (`/marketing` + `/legal`, the same day). A line under the cards comes back only with a demo that shows those screens.
+  it('/for-clubs and /for-leagues: a drawing on each card and no claim about the pictures; W66 and W69 on /for-clubs, both states', async () => {
+    const UNTRUE = ["the product's own screens", 'Walk the real screens'];
+    // `render` hands back the page's TEXT, so a drawing is counted by its answer label (the two ink words on its right).
+    const drawings = (pageText: string, answers: string[]) => answers.filter((label) => pageText.includes(label)).length;
+    const CLUB_ANSWERS = ['THE LIVE BRACKET', 'ONE SEASON', 'EVERY TEAM', 'ONE LEDGER'];
+    const LEAGUE_ANSWERS = ['ONE LIST', 'THE DRAFT', 'THE STANDINGS', 'ONE MESSAGE'];
     for (const [name, gating] of [['production', PRODUCTION], ['all open', ALL_OPEN]] as const) {
       const clubs = await render('app/for-clubs/page.tsx', gating);
-      assert.ok(clubs.includes("These are the product's own screens, shown with a fictional club."), `W67 (${name})`);
+      for (const words of UNTRUE) assert.ok(!clubs.includes(words), `/for-clubs still says or shows "${words}" (${name})`);
+      assert.equal(drawings(clubs, CLUB_ANSWERS), 4, `/for-clubs: one drawing on each of the four cards (${name})`);
       assert.ok(clubs.includes("The treasurer's three spreadsheets") && !clubs.includes('Tryouts run on email chains.'), `W66 (${name})`);
       assert.ok(clubs.includes('What each person at your club gets') && clubs.includes('A Premium Coaches Portal for every coach.'), `W69 (${name})`);
       assert.ok(clubs.includes('The plans and prices are on one page.') && !clubs.includes('the trial are on one page'), 'W69: no trial in a both-states line');
       const leagues = await render('app/for-leagues/page.tsx', gating);
-      assert.ok(leagues.includes("These are the product's own screens, shown with a fictional house league."), `W67 (${name})`);
+      for (const words of UNTRUE) assert.ok(!leagues.includes(words), `/for-leagues still says or shows "${words}" (${name})`);
+      assert.equal(drawings(leagues, LEAGUE_ANSWERS), 4, `/for-leagues: one drawing on each of the four steps (${name})`);
     }
+    // What a screen reader hears, and the words set inside the drawings: no figure, no plan, and none of the three claims
+    // the reads cut (a bare "the bank" reads as a bank feed; an opted-out family is skipped; enrolment is "registration").
     const loaded = loaderFor(PRODUCTION);
-    const html = renderToStaticMarkup(await (loaded('app/for-clubs/page.tsx') as { default: () => Promise<ReactElement> }).default());
-    for (const id of ['clubs-01-event', 'clubs-02-registrations', 'clubs-03-roster', 'clubs-04-budget']) {
-      assert.ok(html.includes(`src="/marketing/on-sale/${id}.png"`), id);
+    for (const page of ['app/for-clubs/page.tsx', 'app/for-leagues/page.tsx']) {
+      const html = renderToStaticMarkup(await (loaded(page) as { default: () => Promise<ReactElement> }).default());
+      const pictures = [...html.matchAll(/<svg\b[^>]*viewBox="0 0 800 500"[\s\S]*?<\/svg>/g)].map((m) => m[0]);
+      assert.equal(pictures.length, 4, page);
+      assert.ok(!html.includes('/marketing/on-sale/'), `${page}: no screenshot is left on the page`);
+      for (const svg of pictures) {
+        assert.match(svg, /role="img"/, `${page}: a drawing is announced as a picture`);
+        assert.match(svg, /aria-label="[^"]{30,}"/, `${page}: a drawing says what it shows`);
+        assert.doesNotMatch(svg, /\$\d|League Plus|Premium|included with/, `${page}: no figure or plan inside a drawing`);
+        // Read as a visitor reads it: the bank line is set over two <text> lines, so the tags come out first.
+        const words = svg.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+        assert.doesNotMatch(words, /the bank(?! statement)|to every family|SIGN-UP/i, `${page}: a claim the reads cut is back in a drawing`);
+      }
     }
-    assert.doesNotMatch(html, /alt="[^"]*\$\d/, 'no figure quoted in alt text');
   });
 
   it('W70: the board questions show only while the legal pages are published; the year cost only while the plan is open', async () => {

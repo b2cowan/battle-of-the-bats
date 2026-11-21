@@ -1,4 +1,9 @@
 /**
+ * ⚠ NO PAGE SHOWS THESE PICTURES ANY MORE (owner re-ruling 2026-11-21): /for-clubs and /for-leagues carry drawings
+ * (`components/marketing/OnSaleDrawing.tsx`), the eight PNGs are deleted and the quarterly re-shoot is retired. The script
+ * and Kestrel Bay are kept, unruled, as a way to photograph the house league and club screens for a walk or a deck; the
+ * pictures now land in `.probe/on-sale-pictures/` (ignored), not in public/.
+ *
  * CAPTURE THE ON-SALE PAGES' PICTURES — the product's own screens for /for-leagues' four steps and /for-clubs' four
  * modules (plan docs/projects/active/CLUB_ON_SALE_PAGES_PLAN.md S3b, copy W67), shot from KESTREL BAY, an invented club on
  * the DEV database built for the purpose. Never the live demo clubs (anyone can type into them), never a production row.
@@ -39,7 +44,9 @@ const DEV_REF = 'npgnrxaitgbtbtvvykto';
 const SLUG = 'kestrel-bay';
 const MARKER = '[ON_SALE_PICTURES]';
 const BASE = process.env.ON_SALE_PICTURES_BASE_URL || 'http://localhost:3000';
-const OUT = 'public/marketing/on-sale';
+// Not under public/ any more (2026-11-21): no page shows these, and a picture written there would be published with the
+// next build for nobody. `.probe/` is this repo's ignored scratch folder.
+const OUT = '.probe/on-sale-pictures';
 const SURVEY_OUT = '.probe/on-sale-survey';
 const RATIO = 10 / 16;
 

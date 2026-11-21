@@ -73,17 +73,6 @@ Anything in the second or third bucket is a **proposal to the owner** with the b
 sentence or the seeded moment described; build it only on a yes. The tour is eight beats and the
 docks are three and five; those counts do not grow here.
 
-### 5b · Quarterly: re-shoot the on-sale pages' pictures
-Owner ruling 2026-11-20 (on-sale pages S3b, option A): the eight pictures on `/for-leagues` and `/for-clubs` are the
-product's own screens, shot from **Kestrel Bay** (an invented club, dev only), and are **re-shot every quarter** whether or
-not the screens changed. On the first pass of each quarter (January, April, July, October), in the daytime with the dev
-server up, run in this order:
-`node --env-file=.env.local scripts/seed-prospect-demo.mjs --club=kestrel` →
-`node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs` →
-`node --env-file=.env.local scripts/capture-on-sale-pictures.mjs` (within an hour: the event page's "Live now" reads the
-clock). Look at all eight in `public/marketing/on-sale/` (nothing cut mid-line, no loading screen, no birth date or contact
-column), then commit the PNGs. A screen that changed between quarters can be re-shot the same way at any time.
-
 ### 6 · Record the pass
 Append one line to the pass log at the bottom of `DEMO_PROCESS_DECOUPLING_PLAN.md`:
 `- <date> — <N> commits reviewed · sentences changed: <n> · moments proposed: <n> · walked by owner: yes/no`

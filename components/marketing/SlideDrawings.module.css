@@ -16,6 +16,17 @@
   height: 100%;
 }
 
+/* ON THE WARM PAGES (/for-clubs, /for-leagues — `OnSaleDrawing.tsx`, 2026-11-21). The marketing kit never re-points
+   the three tokens the inks read (it does not read the dark set at all), so a drawing placed straight on a For page would
+   be drawn in the dark set's near-white. The panel that holds it wears this class, and the four inks below follow. It
+   lives HERE, not in ForPage.module.css, because this sheet is the one the marketing colour guard does not scan
+   (`tests/unit/public-face-s4-marketing.test.ts`) and the one place the ink grammar is written down. */
+.onPaper {
+  --fl-text: var(--home-ink);
+  --data-gray: var(--home-dim);
+  --warning-light: var(--home-amber);
+}
+
 /* Structure of the old way: the boxes, the bubbles, the ring arcs. Deliberately BELOW its own
    contents in weight — a faint container holding dim marks reads as "somewhere you have to go
    looking", which is the whole subject of these pictures. */

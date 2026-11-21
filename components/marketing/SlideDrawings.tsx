@@ -758,6 +758,408 @@ function TournamentYear() {
   );
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   THE ON-SALE CARDS — seven more instances of the same house style (owner ruling 2026-11-21).
+
+   /for-clubs' "Four jobs. One platform." cards and /for-leagues' four steps each carry one of
+   these where a product screenshot sat for a day. The owner was shown three options at true size
+   (old way → answer · the same screens drawn · the screenshots) and chose this one; the mockup and
+   his four calls are docs/projects/active/ON_SALE_CARD_DRAWINGS_MOCKUP.html. /for-leagues 01 is
+   `RegistrationsFromEmail` above, reused unchanged — the deck and the page share one picture.
+
+   ⚠ Three things `/design` caught on the way, each a rule for the next drawing here:
+     1. NEVER DRAW A LEADER TO "THE COACH'S OWN". A dotted line from the club's list to a coach's
+        clipboard is this style's grammar for "this flows there" (the FAMILIES phone) — the exact
+        opposite of the card, and of the 2026-11-06 ruling that a coach's lineups and books stay
+        the team's. A negative claim is not drawable; the card's words carry it.
+     2. NO PLAN NAME INSIDE A PICTURE. "included with Club" was a price line wearing a label.
+     3. AMBER GOES ON THE SPECIFIC HURT — the final nobody has heard, the address nobody is sure
+        of, the cell that does not add up — not on a stock "?" bubble. Four cards sit side by side
+        on these pages, and four identical bubbles read as one drawing repeated.
+
+   ⚠ An ANSWER-ONLY drawing of a screen was the second option and lost for a reason worth keeping:
+   without the faint, tilted mess beside it, nothing marks a tidy row list as a drawing (rule 5).
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* /for-clubs 01 — a paper bracket → the live bracket.
+   The amber is the final nobody has phoned in. On the right the winners are already in the next
+   round and the final is a dashed slot: "it fills in as the games end", not "it is finished". */
+function PaperBracket() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="translate(0 22) rotate(-6 165 215)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="60" y="100" width="215" height="230" rx="5" />
+        <rect className={styles.sFaint} strokeWidth="2" x="140" y="88" width="56" height="22" rx="3" />
+        <path className={styles.sFaint} strokeWidth="2" d="M150 135h22v50h-22M150 235h22v50h-22M172 160h30v100h-30" />
+        <path className={styles.sAmber} strokeWidth="3" strokeDasharray="7 6" d="M206 210h30" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="254" y="221" fontSize="30" textAnchor="middle" stroke="none">?</text>
+        <path className={styles.sDim} strokeWidth="3.5" d="M78 135h64M78 185h52M78 235h68M78 285h46" />
+        <path className={styles.sDim} strokeWidth="2" d="M74 191l62-12" />
+      </g>
+
+      <path className={styles.sFaint} strokeWidth="2" d="M298 244C350 244 400 237 446 235" />
+      <circle className={styles.fDim} cx="458" cy="235" r="5" stroke="none" />
+
+      <g transform="rotate(-0.6 630 235)">
+        <rect className={styles.fInk} stroke="none" x="490" y="124" width="78" height="11" rx="5.5" />
+        <rect className={styles.fDim} stroke="none" x="490" y="184" width="64" height="11" rx="5.5" />
+        <rect className={styles.fDim} stroke="none" x="490" y="264" width="70" height="11" rx="5.5" />
+        <rect className={styles.fInk} stroke="none" x="490" y="324" width="78" height="11" rx="5.5" />
+        <path className={styles.sInk} strokeWidth="2.5" d="M578 130h14v60h-14M592 160h12M578 270h14v60h-14M592 300h12" />
+        <rect className={styles.fInk} stroke="none" x="612" y="154" width="70" height="12" rx="6" />
+        <rect className={styles.fInk} stroke="none" x="612" y="294" width="70" height="12" rx="6" />
+        <path className={styles.sInk} strokeWidth="2.5" d="M690 160h14v140h-14M704 230h10" />
+        <rect className={styles.sInk} strokeWidth="2.5" strokeDasharray="6 6" x="720" y="221" width="52" height="18" rx="9" />
+      </g>
+
+      <Say x={163} y={452} tone="dim">A PAPER BRACKET</Say>
+      <Say x={632} y={412} tone="ink">THE LIVE BRACKET</Say>
+      {/* "as they go in", not "as the games end" (/marketing 2026-11-21): a person enters a score. */}
+      <Sub x={632} y={442}>scores as they go in</Sub>
+    </g>
+  );
+}
+
+/* /for-clubs 02 — three tools → one season.
+   The four rows ARE the card's four nouns (the `CopiedForward` precedent), set at the 26 floor. */
+function OneSeason() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="rotate(-7 145 155)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="70" y="95" width="150" height="120" rx="5" />
+        <g className={styles.sDim} strokeWidth="2">
+          <rect x="86" y="115" width="12" height="12" rx="2" />
+          <rect x="86" y="143" width="12" height="12" rx="2" />
+          <rect x="86" y="171" width="12" height="12" rx="2" />
+        </g>
+        <path className={styles.sDim} strokeWidth="3.5" d="M110 121h84M110 149h60M110 177h76" />
+      </g>
+      <g transform="rotate(5 215 232)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="120" y="180" width="190" height="105" rx="5" />
+        <path className={styles.sFaint} strokeWidth="1.2" d="M167 180v105M215 180v105M262 180v105M120 215h190M120 250h190" />
+        <path className={styles.sDim} strokeWidth="3.5" d="M132 198h24M180 233h24M228 268h24M132 268h24" />
+      </g>
+      {/* the question that falls between the three */}
+      <g transform="rotate(-3 150 340)">
+        <rect className={styles.sAmber} strokeWidth="2.5" x="70" y="312" width="160" height="54" rx="27" />
+        <path className={styles.sAmber} strokeWidth="2.5" d="M78 362l-13 16 26-6" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="150" y="349" fontSize="28" textAnchor="middle" stroke="none">?</text>
+      </g>
+
+      <path
+        className={styles.sFaint} strokeWidth="2"
+        d="M232 150C320 168 400 212 446 232M322 238C370 238 410 237 446 236M240 338C320 320 400 264 446 241"
+      />
+      <circle className={styles.fDim} cx="458" cy="236" r="5" stroke="none" />
+
+      <g transform="rotate(-0.6 630 225)">
+        {/* sign-up */}
+        <rect className={styles.sInk} strokeWidth="3" x="503" y="98" width="38" height="44" rx="4" />
+        <rect className={styles.sInk} strokeWidth="2.5" x="511" y="107" width="9" height="9" rx="2" />
+        <path className={styles.sInk} strokeWidth="2.5" d="M526 112h8M511 126h22M511 134h14" />
+        {/* draft — three teams, as shapes (sport-neutral, the PracticeRotation rule) */}
+        <rect className={styles.fInk} stroke="none" x="499" y="181" width="13" height="13" rx="2" />
+        <circle className={styles.sInk} strokeWidth="2.5" cx="523" cy="187.5" r="6.5" />
+        <path className={styles.sInk} strokeWidth="2.5" d="M534 194l7-13 7 13z" />
+        {/* games */}
+        <rect className={styles.sInk} strokeWidth="3" x="502" y="237" width="40" height="40" rx="4" />
+        <path className={styles.sInk} strokeWidth="3" d="M502 249h40M512 232v8M532 232v8" />
+        <rect className={styles.fInk} stroke="none" x="510" y="255" width="8" height="6" rx="1.5" />
+        <rect className={styles.fDim} stroke="none" x="524" y="255" width="8" height="6" rx="1.5" />
+        <rect className={styles.fDim} stroke="none" x="510" y="265" width="8" height="6" rx="1.5" />
+        <rect className={styles.fInk} stroke="none" x="524" y="265" width="8" height="6" rx="1.5" />
+        {/* standings */}
+        <rect className={styles.fInk} stroke="none" x="502" y="308" width="40" height="8" rx="4" />
+        <rect className={styles.fInk} stroke="none" x="502" y="321" width="30" height="8" rx="4" />
+        <rect className={styles.fInk} stroke="none" x="502" y="334" width="20" height="8" rx="4" />
+
+        <path className={styles.sDim} strokeWidth="2.5" d="M522 152v12M522 208v12M522 286v12" />
+        {/* REGISTRATION, the card's and the product's word for enrolment — never "sign-up"
+            (/marketing 2026-11-21). It is the longest of the four and ends at x≈764: do not widen
+            the spacing or move the column right. */}
+        <g className={`${styles.label} ${styles.fInk}`} fontSize="26" letterSpacing="1.4" stroke="none">
+          <text x="560" y="129">REGISTRATION</text>
+          <text x="560" y="197">DRAFT</text>
+          <text x="560" y="266">GAMES</text>
+          <text x="560" y="334">STANDINGS</text>
+        </g>
+      </g>
+
+      <Say x={160} y={442} tone="dim">THREE TOOLS</Say>
+      <Say x={620} y={414} tone="ink">ONE SEASON</Say>
+      <Sub x={620} y={444}>registration to standings</Sub>
+    </g>
+  );
+}
+
+/* /for-clubs 03 — asking every coach → every team.
+   ⚠ The right side stops at what the CLUB sees (roster, results, what each team owes). Nothing of
+   the coach's own is drawn, and nothing links to it — see rule 1 in the block comment above. */
+function EveryTeam() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="rotate(-4 145 133)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="60" y="105" width="170" height="56" rx="28" />
+        <path className={styles.sFaint} strokeWidth="2.5" d="M68 157l-13 17 27-6" />
+        <text className={`${styles.label} ${styles.fDim}`} x="145" y="142" fontSize="26" textAnchor="middle" stroke="none">roster?</text>
+      </g>
+      <g transform="rotate(3 187 206)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="95" y="180" width="186" height="52" rx="26" />
+        <path className={styles.sFaint} strokeWidth="2.5" d="M103 228l-13 16 26-5" />
+        <text className={`${styles.label} ${styles.fDim}`} x="188" y="215" fontSize="26" textAnchor="middle" stroke="none">paid yet?</text>
+      </g>
+      {/* the coach who has not answered */}
+      <g transform="rotate(-3 150 288)">
+        <rect className={styles.sAmber} strokeWidth="2.5" x="75" y="262" width="150" height="52" rx="26" />
+        <path className={styles.sAmber} strokeWidth="2.5" d="M83 310l-13 16 26-5" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="150" y="298" fontSize="27" textAnchor="middle" stroke="none">?</text>
+      </g>
+
+      <path className={styles.sFaint} strokeWidth="2" d="M302 212C350 212 400 204 446 201" />
+      <circle className={styles.fDim} cx="458" cy="200" r="5" stroke="none" />
+
+      <g transform="rotate(-0.6 630 205)">
+        {[0, 68, 136].map((dy, i) => (
+          <g key={dy} transform={`translate(0 ${dy})`}>
+            <rect className={styles.sInk} strokeWidth="2.5" x="500" y="120" width="42" height="42" rx="7" />
+            {i === 0 && <rect className={styles.fInk} stroke="none" x="513" y="133" width="16" height="16" rx="2" />}
+            {i === 1 && <circle className={styles.sInk} strokeWidth="2.5" cx="521" cy="141" r="9" />}
+            {i === 2 && <path className={styles.sInk} strokeWidth="2.5" d="M521 130l10 18h-20z" />}
+            <rect className={styles.fInk} stroke="none" x="560" y="127" width={[104, 88, 116][i]} height="10" rx="5" />
+            <rect className={styles.fDim} stroke="none" x="560" y="147" width={[60, 74, 52][i]} height="7" rx="3.5" />
+            {/* what the team owes the club — right-aligned, as an amount is */}
+            <rect className={styles.fInk} stroke="none" x={[704, 714, 698][i]} y="134" width={[64, 54, 70][i]} height="11" rx="5.5" />
+            <path className={styles.sFaint} strokeWidth="1.4" d="M500 176h268" />
+          </g>
+        ))}
+      </g>
+
+      <Say x={163} y={420} tone="dim">ASK EVERY COACH</Say>
+      <Say x={630} y={390} tone="ink">EVERY TEAM</Say>
+      <Sub x={630} y={420}>roster · results · owing</Sub>
+    </g>
+  );
+}
+
+/* /for-clubs 04 — three sheets → one ledger, checked against the bank.
+   A sibling of `MoneySources` (#02), not a copy: that one is a coach's e-transfer with no name on
+   it; this is a treasurer's three spreadsheets that do not agree. The bank line under the double
+   rule is the card's own claim — type in the statement's balance and see whether the books agree. */
+function OneLedger() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="rotate(-9 153 142)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="58" y="92" width="190" height="100" rx="5" />
+        <path className={styles.sFaint} strokeWidth="1.2" d="M105 92v100M153 92v100M200 92v100M58 125h190M58 158h190" />
+        <path className={styles.sDim} strokeWidth="3.5" d="M70 110h22M118 143h22M165 176h22M212 110h22" />
+      </g>
+      <g transform="rotate(6 207 225)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="110" y="175" width="195" height="100" rx="5" />
+        <path className={styles.sFaint} strokeWidth="1.2" d="M159 175v100M208 175v100M256 175v100M110 208h195M110 241h195" />
+        <path className={styles.sDim} strokeWidth="3.5" d="M122 193h24M171 226h24M219 259h24M268 193h24" />
+      </g>
+      {/* the cell that does not add up */}
+      <g transform="rotate(-3 152 317)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="52" y="265" width="200" height="104" rx="5" />
+        <path className={styles.sFaint} strokeWidth="1.2" d="M102 265v104M152 265v104M202 265v104M52 300h200M52 334h200" />
+        <path className={styles.sDim} strokeWidth="3.5" d="M64 284h24M114 352h24M214 284h24" />
+        <rect className={styles.sAmber} strokeWidth="2.5" strokeDasharray="7 6" x="156" y="304" width="42" height="26" rx="3" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="177" y="325" fontSize="22" textAnchor="middle" stroke="none">?</text>
+      </g>
+
+      <path
+        className={styles.sFaint} strokeWidth="2"
+        d="M264 136C340 165 404 208 446 240M316 230C365 236 410 244 446 246M264 320C340 306 404 276 446 252"
+      />
+      <circle className={styles.fDim} cx="458" cy="246" r="5" stroke="none" />
+
+      <g transform="rotate(-0.6 630 235)">
+        {[0, 48, 96].map((dy, i) => (
+          <g key={dy} transform={`translate(0 ${dy})`}>
+            <rect className={styles.fInk} stroke="none" x="500" y="130" width={[120, 96, 134][i]} height="10" rx="5" />
+            <rect className={styles.fDim} stroke="none" x="500" y="149" width={[70, 58, 80][i]} height="7" rx="3.5" />
+            <rect className={styles.fInk} stroke="none" x={[700, 712, 694][i]} y="130" width={[68, 56, 74][i]} height="11" rx="5.5" />
+            <path className={styles.sFaint} strokeWidth="1.4" d="M500 166h268" />
+          </g>
+        ))}
+        <path className={styles.sInk} strokeWidth="2.5" d="M660 277h108M660 284h108" />
+        {/* the bank, and the total that agrees with it */}
+        <path className={styles.sInk} strokeWidth="2.5" d="M500 310l19-13 19 13zM506 316v13M519 316v13M532 316v13M497 334h44" />
+        <path className={styles.sFaint} strokeWidth="2" strokeDasharray="3 9" d="M556 316h88" />
+        <rect className={styles.fInk} stroke="none" x="660" y="309" width="70" height="13" rx="6.5" />
+        <path className={styles.sInk} strokeWidth="4" d="M742 315l8 8 16-18" />
+      </g>
+
+      <Say x={163} y={446} tone="dim">THREE SHEETS</Say>
+      <Say x={632} y={398} tone="ink">ONE LEDGER</Say>
+      {/* ⚠ "the bank STATEMENT", over two lines, never a bare "the bank" (/marketing + /legal
+          2026-11-21): there is no bank connection — the treasurer types the statement's balance —
+          and "checked against the bank" reads as a bank feed. */}
+      <Sub x={632} y={428}>checked against</Sub>
+      <Sub x={632} y={454}>the bank statement</Sub>
+    </g>
+  );
+}
+
+/* /for-leagues 02 — a printed list → the draft.
+   Three teams as shapes, three rounds as faint numerals (the `PracticeRotation` grammar), and the
+   last slot dashed: the draft is mid-pick, which is the only way a still picture says "order". */
+function DraftFromPrintedList() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="rotate(-6 160 222)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="70" y="105" width="180" height="235" rx="8" />
+        <path className={styles.sFaint} strokeWidth="1.6" d="M70 128h180" />
+        <path
+          className={styles.sDim} strokeWidth="3"
+          d="M88 150h92M88 170h74M88 190h100M88 210h66M88 230h84M88 250h78M88 270h54M88 290h90M88 310h62"
+        />
+        {/* crossed out, moved, and one nobody is sure about */}
+        <path className={styles.sDim} strokeWidth="2" d="M82 170h88M82 270h68" />
+        <path className={styles.sDim} strokeWidth="2" d="M200 150c22 10 22 32 0 42M200 192l11-2M200 192l4-11" />
+        <ellipse className={styles.sAmber} strokeWidth="2.5" strokeDasharray="7 6" cx="130" cy="230" rx="56" ry="14" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="212" y="240" fontSize="27" textAnchor="middle" stroke="none">?</text>
+      </g>
+
+      <path className={styles.sFaint} strokeWidth="2" d="M280 226C330 226 380 230 428 232" />
+      <circle className={styles.fDim} cx="440" cy="232" r="5" stroke="none" />
+
+      <g transform="rotate(-0.5 625 225)">
+        <g className={`${styles.label} ${styles.fFaint}`} fontSize="22" textAnchor="middle" stroke="none">
+          <text x="478" y="208">1</text><text x="478" y="254">2</text><text x="478" y="300">3</text>
+        </g>
+        <rect className={styles.fInk} stroke="none" x="536" y="120" width="24" height="24" rx="3" />
+        <circle className={styles.sInk} strokeWidth="3" cx="636" cy="132" r="13" />
+        <path className={styles.sInk} strokeWidth="3" d="M724 119l14 25h-28z" />
+        <path className={styles.sFaint} strokeWidth="1.4" d="M500 164h266" />
+        {[
+          [72, 64, 70],
+          [60, 72, 62],
+          [68, 58, 0],
+        ].map((row, r) => row.map((w, c) => w > 0 && (
+          <rect key={`${r}-${c}`} className={styles.fInk} stroke="none" x={512 + c * 88} y={194 + r * 46} width={w} height="12" rx="6" />
+        )))}
+        {/* the next pick */}
+        <rect className={styles.sInk} strokeWidth="2.5" strokeDasharray="6 6" x="688" y="284" width="72" height="16" rx="8" />
+      </g>
+
+      <Say x={160} y={450} tone="dim">A PRINTED LIST</Say>
+      <Say x={630} y={378} tone="ink">THE DRAFT</Say>
+      <Sub x={630} y={408}>pick order or a draw</Sub>
+    </g>
+  );
+}
+
+/* /for-leagues 03 — done by hand → the standings.
+   The score going in and the table under it are ONE cause and effect, joined by the arrow — that
+   is the card's claim, so it counts as one object (rule 6). ⚠ No "moved up" arrows on the rows:
+   the standings table shows no movement, and a picture owes functionality. */
+function StandingsByHand() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="rotate(-7 140 192)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="60" y="100" width="160" height="185" rx="5" />
+        <path className={styles.sFaint} strokeWidth="1.2" d="M140 100v185M60 130h160" />
+        <path
+          className={styles.sDim} strokeWidth="2.5"
+          d="M76 150v18M84 150v18M92 150v18M100 150v18M72 165l32-11M76 188v18M84 188v18M156 150v18M164 150v18M172 150v18M156 188v18M164 188v18M172 188v18M180 188v18M152 203l32-11"
+        />
+        <path className={styles.sDim} strokeWidth="3" d="M76 234h44M156 234h36M76 258h30" />
+      </g>
+      <g transform="rotate(6 242 271)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="200" y="215" width="84" height="112" rx="8" />
+        <rect className={styles.sDim} strokeWidth="2" x="212" y="227" width="60" height="22" rx="3" />
+        {[260, 280, 300].map(y => [212, 235, 258].map(x => (
+          <rect key={`${x}-${y}`} className={styles.fFaint} stroke="none" x={x} y={y} width="14" height="12" rx="2" />
+        )))}
+      </g>
+      {/* "who's in first?" */}
+      <g transform="rotate(-3 150 360)">
+        <rect className={styles.sAmber} strokeWidth="2.5" x="62" y="334" width="170" height="52" rx="26" />
+        <path className={styles.sAmber} strokeWidth="2.5" d="M70 382l-13 16 26-5" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="147" y="370" fontSize="27" textAnchor="middle" stroke="none">?</text>
+      </g>
+
+      <path className={styles.sFaint} strokeWidth="2" d="M306 240C350 240 400 240 446 240" />
+      <circle className={styles.fDim} cx="458" cy="240" r="5" stroke="none" />
+
+      <g transform="rotate(-0.6 630 230)">
+        <rect className={styles.sInk} strokeWidth="3" x="552" y="98" width="66" height="52" rx="8" />
+        <rect className={styles.sInk} strokeWidth="3" x="640" y="98" width="66" height="52" rx="8" />
+        <rect className={styles.fInk} stroke="none" x="570" y="118" width="30" height="12" rx="6" />
+        <rect className={styles.fInk} stroke="none" x="658" y="118" width="30" height="12" rx="6" />
+        <path className={styles.sInk} strokeWidth="3" d="M629 162v24M621 178l8 9 8-9" />
+        {[0, 48, 96].map((dy, i) => (
+          <g key={dy} transform={`translate(0 ${dy})`}>
+            <text className={`${styles.label} ${styles.fDim}`} x="508" y="230" fontSize="22" textAnchor="middle" stroke="none">{i + 1}</text>
+            <rect className={styles.fInk} stroke="none" x="532" y="217" width={[112, 92, 104][i]} height="10" rx="5" />
+            <rect className={styles.fDim} stroke="none" x="672" y="218" width="26" height="8" rx="4" />
+            <rect className={styles.fDim} stroke="none" x="708" y="218" width="26" height="8" rx="4" />
+            <rect className={styles.fDim} stroke="none" x="744" y="218" width="24" height="8" rx="4" />
+            <path className={styles.sFaint} strokeWidth="1.4" d="M500 246h268" />
+          </g>
+        ))}
+      </g>
+
+      <Say x={160} y={452} tone="dim">DONE BY HAND</Say>
+      <Say x={632} y={400} tone="ink">THE STANDINGS</Say>
+      <Sub x={632} y={430}>updated with every score</Sub>
+    </g>
+  );
+}
+
+/* /for-leagues 04 — reply-all → one message.
+   The amber is the address nobody is sure of, in a pasted list. (`ScoreTheyWatch` lost its
+   envelope because a final score emails no one; this envelope is real — the season email is a
+   thing a person sends.) */
+function OneMessageToFamilies() {
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="translate(0 40) rotate(-6 162 141)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="62" y="98" width="200" height="86" rx="5" />
+        <g className={styles.sDim} strokeWidth="1.8">
+          <rect x="78" y="112" width="40" height="12" rx="6" /><rect x="124" y="112" width="52" height="12" rx="6" />
+          <rect x="182" y="112" width="36" height="12" rx="6" /><rect x="78" y="132" width="48" height="12" rx="6" />
+          <rect x="132" y="132" width="38" height="12" rx="6" /><rect x="176" y="132" width="50" height="12" rx="6" />
+          <rect x="78" y="152" width="36" height="12" rx="6" />
+        </g>
+        <rect className={styles.sAmber} strokeWidth="2.2" strokeDasharray="6 5" x="120" y="152" width="48" height="12" rx="6" />
+        <text className={`${styles.label} ${styles.fAmber}`} x="186" y="167" fontSize="26" textAnchor="middle" stroke="none">?</text>
+      </g>
+      <g transform="translate(0 40) rotate(4 192 229)">
+        <rect className={styles.sFaint} strokeWidth="2.5" x="92" y="192" width="200" height="74" rx="5" />
+        <text className={`${styles.label} ${styles.fDim}`} x="110" y="226" fontSize="24" stroke="none">re: re: re:</text>
+        <path className={styles.sDim} strokeWidth="3.5" d="M110 246h96" />
+      </g>
+
+      <path className={styles.sFaint} strokeWidth="2" d="M308 262C356 258 404 238 446 232" />
+      <circle className={styles.fDim} cx="458" cy="230" r="5" stroke="none" />
+
+      <g transform="rotate(-0.6 630 230)">
+        <rect className={styles.sInk} strokeWidth="3" x="492" y="196" width="92" height="66" rx="7" />
+        <path className={styles.sInk} strokeWidth="3" d="M494 204l44 32 44-32" />
+        <path
+          className={styles.sDim} strokeWidth="2"
+          d="M594 229C640 229 660 118 702 118M594 229C640 229 664 174 702 174M594 229H702M594 229C640 229 664 286 702 286M594 229C640 229 660 342 702 342"
+        />
+        {[118, 174, 230, 286, 342].map(y => (
+          <g key={y}>
+            <circle className={styles.fDim} cx="704" cy={y} r="3.5" stroke="none" />
+            <circle className={styles.sInk} strokeWidth="3" cx="738" cy={y - 10} r="8" />
+            <path className={styles.sInk} strokeWidth="3" d={`M722 ${y + 14}c0-17 32-17 32 0`} />
+          </g>
+        ))}
+      </g>
+
+      <Say x={160} y={440} tone="dim">REPLY-ALL</Say>
+      <Say x={612} y={412} tone="ink">ONE MESSAGE</Say>
+      {/* ⚠ "from one screen", not "to every family" (/marketing + /legal 2026-11-21): a family
+          that opted out of club email is skipped, so "every" is not ours to draw. */}
+      <Sub x={612} y={442}>from one screen</Sub>
+    </g>
+  );
+}
+
 /**
  * THE REGISTRY — a slide names a drawing by id, exactly as it names a capture by shot id.
  *
@@ -779,6 +1181,15 @@ export const SLIDE_DRAWINGS = {
   'practice-rotation':  { Draw: PracticeRotation,       ...WIDE },
   'coach-year':         { Draw: CoachYear,              ...WHEEL },
   'tournament-year':    { Draw: TournamentYear,         ...WHEEL },
+  // The on-sale cards (2026-11-21) — named by `components/marketing/OnSaleDrawing.tsx`, not by a
+  // slide. /for-leagues 01 reuses 'registration-inbox' above.
+  'paper-bracket':      { Draw: PaperBracket,           ...WIDE },
+  'one-season':         { Draw: OneSeason,              ...WIDE },
+  'every-team':         { Draw: EveryTeam,              ...WIDE },
+  'one-ledger':         { Draw: OneLedger,              ...WIDE },
+  'draft-list':         { Draw: DraftFromPrintedList,   ...WIDE },
+  'standings-by-hand':  { Draw: StandingsByHand,        ...WIDE },
+  'families-message':   { Draw: OneMessageToFamilies,   ...WIDE },
 } satisfies Record<string, { Draw: () => React.ReactElement; width: number; height: number }>;
 
 export type DrawingId = keyof typeof SLIDE_DRAWINGS;

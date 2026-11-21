@@ -2,7 +2,7 @@ import Link from 'next/link';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import HowTheTrialWorks from '@/components/marketing/HowTheTrialWorks';
 import { BoardQuestionsSection } from '@/components/marketing/BoardQuestions';
-import { ScreenShot, shotCaption, type OnSaleShot } from '@/components/marketing/ScreenShot';
+import { OnSaleDrawing, type OnSaleDrawingId } from '@/components/marketing/OnSaleDrawing';
 import kit from '@/components/marketing/MarketingKit.module.css';
 import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
@@ -30,8 +30,8 @@ export const metadata = marketingMetadata({
 const { painItems: PAIN_ITEMS, steps: MODULES, stepsHeadline: STEPS_HEADLINE, features: CLUB_FEATURES } =
   PLAN_ARTICLE_CONTENT.club;
 
-/** W67: the product's own screen for each of the four (Tournaments, House league, Rep teams, Accounting), in order. */
-const MODULE_SHOTS: readonly OnSaleShot[] = ['clubs-01-event', 'clubs-02-registrations', 'clubs-03-roster', 'clubs-04-budget'];
+/** W67, as re-ruled 2026-11-21: a drawing for each of the four (Tournaments, House league, Rep teams, Accounting), in order. */
+const MODULE_DRAWINGS: readonly OnSaleDrawingId[] = ['clubs-01-tournaments', 'clubs-02-house-league', 'clubs-03-rep-teams', 'clubs-04-accounting'];
 
 /**
  * W69 (S3b, both states): what each person at the club gets. Every line is something the product does today (board roles,
@@ -268,15 +268,15 @@ export default async function ForClubsPage() {
           <p className={`${kit.body} ${fp.measure}`}>
             Club is the complete operating system for established clubs: every program, every role, one sign-in.
           </p>
-          <div className={`${kit.grid2} ${fp.gridTop}`}>
+          <div className={`${kit.grid2} ${fp.gridTop} ${fp.drawingGrid}`}>
             {MODULES.map((mod, i) => (
               <div key={mod.num} className={kit.card}>
-                {MODULE_SHOTS[i] && <ScreenShot id={MODULE_SHOTS[i]} />}
+                {MODULE_DRAWINGS[i] && <OnSaleDrawing id={MODULE_DRAWINGS[i]} />}
                 <p className={kit.counter}>{mod.num}</p>
                 <p className={kit.eyebrow}>{mod.label}</p>
                 <p className={kit.title}>{mod.title}</p>
                 <p className={kit.body}>{mod.body}</p>
-                {/* W67 (drawing tab 4): a coach's season, live, under the roster picture while the demo doors are on. */}
+                {/* W67 (drawing tab 4): a coach's season, live, on the rep teams card while the demo doors are on. */}
                 {mod.num === '03' && showSandboxDoor && (
                   <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
                     See a coach&apos;s season
@@ -285,7 +285,6 @@ export default async function ForClubsPage() {
               </div>
             ))}
           </div>
-          <p className={fp.hnote}>{shotCaption('club')}</p>
           <div className={`${kit.card} ${kit.cardEdge} ${kit.cardFlat} ${fp.calloutTop}`}>
             <p className={kit.body}>
               Club includes house league in full. If your club runs a house league alongside rep teams, you don&apos;t

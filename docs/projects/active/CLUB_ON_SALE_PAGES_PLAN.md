@@ -388,6 +388,43 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
     `/for-clubs`); the event page is shot at desk width; every house-league screen (admin and public) opens on the
     youngest age group even when it has no games (route to `/plan`, not S3b); the extras seed leaves the previous
     roster's 13 children and their guardians behind on each re-run (fix in the build).
+  - **⚖ Owner, 2026-11-21: the pictures become drawings. This replaces calls (1) to (3) above.** Shown three options at
+    true size (old way → answer drawings; the same eight screens drawn by hand; the screenshots as shipped) in
+    `ON_SALE_CARD_DRAWINGS_MOCKUP.html` (https://claude.ai/artifact/XtoEyMFbxhESdqnPp8UvVD; `/design` run on both drawn
+    sets, fixes applied), he ruled: (D1) **the old way → answer drawings, on both pages**, in the pitch slides' house
+    style (`components/marketing/SlideDrawings.tsx`): seven new drawings, and `RegistrationsFromEmail` reused unchanged
+    for `/for-leagues` 01; (D2) each drawing sits on a **paper-coloured panel with no outline**; (D3) the line under the
+    cards becomes **"Walk the real screens in the demo."**, linked, and W67's "These are the product's own screens…"
+    comes off (the words go to `/marketing` and `/legal` before the build); (D4) **no re-shoot any more**, so `/demos`
+    step 5b goes.
+  - **Built 2026-11-21 on dev (owner "build it now"), reviewed and committed the same day on his "review and commit"
+    (the commit that adds `components/marketing/OnSaleDrawing.tsx`); his browser look owed, ledger §552's
+    after-the-walk note.** The seven new drawings join `SlideDrawings.tsx` and its registry; a new
+    `components/marketing/OnSaleDrawing.tsx` names the drawing and the screen-reader words for each of the eight cards
+    and replaces `ScreenShot.tsx` (deleted, with the eight PNGs and `/demos` step 5b; the capture script and Kestrel Bay
+    stay, with a note that no page uses the pictures). The panel is `ForPage.module.css` `.drawing`; the drawing's three
+    ink tokens are pointed at the warm page's own in `SlideDrawings.module.css` `.onPaper`, because the marketing kit
+    does not re-point them (a drawing dropped straight on a For page would draw near-white). **On a phone the panel runs
+    to the card's edges** (340px, not 292px), so the words keep the size the drawings were authored for; `/review`
+    (standard: correctness + blast radius, no Critical or High) then found the same shrink between 601 and 860px, where
+    two cards to a row left a 228–302px drawing, so the cards go one to a row to 720px and the panel bleeds from 721 to
+    860px (every width now draws at 340px or wider), and the kept capture script writes to `.probe/on-sale-pictures/`,
+    not back into `public/`.
+    **⚠ D3 did not survive its reads: there is NO line under the cards.** `/marketing` and `/legal` both cut "Walk the
+    real screens in the demo.": the two demos are a tournament and a coach's season (`lib/demo-org.ts` `DEMO_ORGS`), so
+    nobody can walk a house league or the club's books; `/for-clubs` keeps its own scoped demo block and card 03's "See a
+    coach's season". The same reads changed four sets of words inside the drawings, recorded in `PRICING_PAGE_COPY.md`
+    W67: "scores as they go in", REGISTRATION (never "sign-up"), "checked against the bank statement" (never a bare
+    "the bank"), "from one screen" (never "to every family": an opted-out family is skipped). **Bracket check held:** a
+    final score moves the winner into the next round by itself (`lib/db.ts` `updateGame` → `advancePlayoffs`); where a
+    club requires score approval, a volunteer's score advances on the admin's approval. `/design` ran on the mockup
+    (both drawn sets). Guard: `tests/unit/public-plan-pages-both-states.test.ts` (four drawings per page, both states;
+    no "product's own screens", no demo line, no screenshot path; no figure or plan in a drawing; the cut claims stay
+    out). Checks: that test 46/46, the marketing colour guard 13/13, typecheck clean for these files, spelling clean,
+    layout check no new findings on the two pages; the token, CSS-selector and plan-move failures in the tree are other
+    sessions' files. **Open owner question:** `/for-leagues` card 04's title "Tell every parent in one message." and its
+    "every registered family" over-claim the same way the cut sub-line did (opted-out families are skipped); the card
+    words were outside this change. The Kestrel Bay name search is no longer needed for these pages.
 - `/for-leagues`, `/for-clubs`: "Questions a board asks" before the bottom call to action (W70); its first four answers
   also join the `/pricing` FAQ, which is grouped under three small headings. Answer 6 (a year's cost) shows only while
   the plan is open. **Ships only with the Terms and Privacy Policy live on production** (the answer links to it), and

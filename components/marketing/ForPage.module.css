@@ -29,22 +29,43 @@
 /* The olive-edged callout that closes a block of cards. */
 .calloutTop { margin-top: 1rem; }
 
-/* A picture of the product's own screen at the top of a step or module card (S3b, W67; drawing `.shot`: 16:10, full card
-   width, above the card's number). */
-.shot {
-  display: block;
-  width: 100%;
-  height: auto;
+/* The drawing at the top of a step or module card (S3b, W67; owner 2026-11-21, call D2): 16:10, full card width, above
+   the card's number, on a paper-coloured panel with NO outline. The hairline the screenshot wore is what made a picture
+   read as a window; a well in the page's own paper on a white card is the One Window rule's tone for a box on a white
+   row. */
+.drawing {
   aspect-ratio: 16 / 10;
-  object-fit: cover;
-  object-position: top left;
-  border: 1px solid var(--home-line);
   border-radius: 8px;
-  background: var(--home-card);
+  background: var(--home-paper);
   margin-bottom: 0.875rem;
+  overflow: hidden;
 }
 
-/* The quiet line under a block of cards (the pictures' caption, W67; the board-meeting line, W69). */
+/* WHERE THE CARD IS NARROW THE PANEL RUNS TO ITS EDGES, and that is the drawings' own arithmetic rather than a look
+   (SlideDrawings.tsx, "a drawing's canvas is not free space"): a drawing's two words are authored to read at ~11px when
+   it is drawn ~350px wide. Measured 2026-11-21 inside the card's 1.5rem padding: 292px on a 390px phone (words 9.5px, the
+   quiet line 7px), and 228–302px two-up between 620 and 768px (words as small as 7.4px), which `/review` caught after
+   the phone was fixed. So, three bands, each keeping the drawing at ~330px or wider:
+     · to 600px     one card to a row (the kit), bled to the card's edges: 340px on a 390px phone
+     · 601–720px    one card to a row (`.drawingGrid`, below), inside the padding: 505–624px
+     · 721–860px    two to a row, bled to the edges: 326–396px
+     · wider        two to a row, inside the padding: 348px and up
+   ⚠ The -1.5rem is `kit.card`'s padding: if that changes, this follows. */
+@media (max-width: 600px), (min-width: 721px) and (max-width: 860px) {
+  .drawing {
+    margin: -1.5rem -1.5rem 0.875rem;
+    border-radius: calc(var(--home-radius) - 1px) calc(var(--home-radius) - 1px) 0 0;
+  }
+}
+
+/* The grid of cards that each carry a drawing: one to a row a little longer than the kit's two-up grid would have it.
+   The class is doubled so it outranks `kit.grid2` whichever of the two sheets loads last (this sheet's first rule: the
+   order must not change how a page looks). */
+@media (max-width: 720px) {
+  .drawingGrid.drawingGrid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* The quiet line under a block of cards (the board-meeting line, W69). */
 .hnote {
   margin: 1rem 0 0;
   max-width: 72ch;

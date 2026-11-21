@@ -1,0 +1,733 @@
+<title>On-sale card drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky decision tabs, one section at a time; the marketing page is a warm specimen
+   sitting on a cool document ground so the specimen never reads as the page chrome. */
+:root {
+  --bg: #EEF1F4; --panel: #FFFFFF; --fg: #18212B; --muted: #56626F; --line: #D5DBE2;
+  --accent: #1F5FBF; --accent-soft: #E3EDFB; --new: #1B6B3A; --new-soft: #E0F2E6;
+  --changed: #8A5300; --changed-soft: #FBEFD9; --same-soft: #E8EBEF;
+  /* the specimen: the marketing pages are always warm, in either theme */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235;
+  --home-dim: #615A54; --home-line: rgba(70,55,30,0.12); --home-olive: #57651E; --home-amber: #835006;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', 'Inter', sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171D; --panel: #1B222B; --fg: #E6EBF0; --muted: #9AA6B2; --line: #2C3642;
+    --accent: #7FB0F5; --accent-soft: #1D2C40; --new: #7FD49B; --new-soft: #183124;
+    --changed: #F0BC62; --changed-soft: #3A2C12; --same-soft: #252E38; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171D; --panel: #1B222B; --fg: #E6EBF0; --muted: #9AA6B2; --line: #2C3642;
+  --accent: #7FB0F5; --accent-soft: #1D2C40; --new: #7FD49B; --new-soft: #183124;
+  --changed: #F0BC62; --changed-soft: #3A2C12; --same-soft: #252E38; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1500px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 22px; line-height: 1.25; margin: 0 0 6px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0 0 14px; }
+.lede strong { color: var(--fg); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { font: 600 14px var(--font-ui); color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { color: var(--fg); background: var(--panel); border-color: var(--line); }
+.tab:focus-visible, .seg button:focus-visible, .chip:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.views { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.views[hidden] { display: none; }
+.viewlabel { font: 500 12px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.seg button { font: 500 13px var(--font-ui); color: var(--muted); background: transparent; border: 0; border-radius: 6px; padding: 5px 11px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); font-weight: 600; }
+
+.panel { padding-top: 18px; }
+.note { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin-bottom: 14px; color: var(--muted); font-size: 14px; }
+.tag { font: 500 11px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; border-radius: 5px; padding: 3px 7px; }
+.tag.new { background: var(--new-soft); color: var(--new); }
+.tag.changed { background: var(--changed-soft); color: var(--changed); }
+.tag.same { background: var(--same-soft); color: var(--muted); }
+.chip { font: 600 12px var(--font-data); color: var(--accent); background: var(--accent-soft); border: 0; border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+
+/* ── the specimen: a piece of the warm marketing page ── */
+.spec { container-type: inline-size; background: var(--home-paper); color: var(--home-ink); border: 1px solid var(--line); border-radius: 12px; padding: 36px 28px 30px; margin-inline: auto; }
+.speclabel { font: 500 11px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.s-eyebrow { font: 600 13px var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; color: var(--home-olive); margin: 0 0 6px; }
+.s-heading { font: 700 40px/1.05 var(--font-display); color: var(--home-ink); margin: 0 0 12px; text-wrap: balance; }
+.s-intro { font-size: 20px; line-height: 1.5; color: var(--home-ink-soft); max-width: 44ch; margin: 0 0 30px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+.card { min-width: 0; max-width: 710px; background: var(--home-card); border: 1px solid var(--home-line); border-radius: 14px; padding: 30px; }
+@container (min-width: 980px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .card { max-width: none; } }
+.pic { aspect-ratio: 8 / 5; max-width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+.pic.draw, .pic.sketch { background: var(--home-paper); }
+.pic.shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; border: 1px solid var(--home-line); border-radius: 8px; background: var(--home-card); }
+.counter { font: 500 15px var(--font-ui); color: var(--home-dim); font-variant-numeric: tabular-nums; }
+.c-eyebrow { font: 600 14px var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; color: var(--home-olive); margin-top: 2px; }
+.c-title { font: 600 24px/1.25 var(--font-ui); color: var(--home-ink); margin: 12px 0 8px; text-wrap: balance; }
+.c-body { font-size: 16px; line-height: 1.55; color: var(--home-ink-soft); margin: 0; }
+.s-caption { font-size: 14px; color: var(--home-dim); margin: 18px 0 0; }
+.s-caption u { color: var(--home-olive); text-underline-offset: 3px; }
+.pic, .s-caption { display: none; }
+.stage[data-pic="draw"] .pic.draw, .stage[data-pic="sketch"] .pic.sketch, .stage[data-pic="shot"] .pic.shot { display: block; }
+.stage[data-pic="draw"] .cap-draw, .stage[data-pic="sketch"] .cap-draw, .stage[data-pic="shot"] .cap-shot { display: block; }
+.stage[data-w="phone"] .spec { max-width: 390px; padding: 24px 16px; }
+.stage[data-w="phone"] .card { padding: 20px; }
+.stage[data-w="phone"] .s-heading { font-size: 32px; }
+.stage[data-w="phone"] .s-intro { font-size: 17px; margin-bottom: 22px; }
+.stage[data-w="phone"] .c-title { font-size: 21px; }
+
+/* ── the drawing inks: the pitch slides' four, on the warm page ── */
+.dw { display: block; width: 100%; height: 100%; }
+.dw .sF { stroke: var(--home-dim); opacity: 0.55; }
+.dw .fF { fill: var(--home-dim); opacity: 0.55; stroke: none; }
+.dw .sD { stroke: var(--home-dim); }
+.dw .fD { fill: var(--home-dim); stroke: none; }
+.dw .sI { stroke: var(--home-ink); }
+.dw .fI { fill: var(--home-ink); stroke: none; }
+.dw .sA { stroke: var(--home-amber); }
+.dw .fA { fill: var(--home-amber); stroke: none; }
+.dw text { font-family: var(--font-data); stroke: none; }
+.dw .say { font-size: 26px; letter-spacing: 2.4px; text-anchor: middle; }
+.dw .sub { font-size: 20px; text-anchor: middle; }
+
+/* ── promises + calls ── */
+.sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; max-width: 980px; }
+.sheet h2 { font-size: 17px; margin: 0 0 10px; }
+.sheet p { margin: 0 0 12px; max-width: 70ch; }
+.sheet ul { margin: 0 0 14px; padding-left: 20px; max-width: 72ch; }
+.sheet li { margin-bottom: 6px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-top: 1px solid var(--line); }
+th { font: 500 11px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-top: 0; }
+td.k { font-weight: 600; white-space: nowrap; }
+.call { border-top: 1px solid var(--line); padding: 16px 0; scroll-margin-top: 120px; }
+.call:first-of-type { border-top: 0; padding-top: 4px; }
+.call h3 { font-size: 15px; margin: 0 0 6px; }
+.call h3 span { font: 600 12px var(--font-data); color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 9px; margin-right: 8px; }
+.call p { color: var(--muted); margin: 0 0 10px; }
+.call.flash { background: var(--accent-soft); border-radius: 8px; padding-inline: 10px; }
+.opts { display: flex; flex-direction: column; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { margin-top: 4px; accent-color: var(--accent); }
+.rec { font: 500 11px var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--new); }
+.btn { font: 600 14px var(--font-ui); color: var(--panel); background: var(--fg); border: 0; border-radius: 8px; padding: 9px 16px; cursor: pointer; }
+.copyrow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 14px; }
+#copied { color: var(--new); font-size: 14px; }
+#answers { width: 100%; margin-top: 12px; min-height: 150px; font: 13px/1.5 var(--font-data); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+</style>
+
+<div class="wrap">
+  <h1>On-sale pages · three ways to picture each card</h1>
+  <p class="lede">Each card on <strong>For Clubs</strong> and <strong>For Leagues</strong>, pictured three ways. Switch with <strong>Pictures</strong> below: the old way turning into the answer (the pitch slides’ grammar), the same eight screens drawn by hand, and today’s screenshots. Both drawn options use one hand, with bars in place of names and figures, so neither can be mistaken for a screen of the product. The card words are untouched.</p>
+
+  <p class="lede"><strong>Ruled 2026-11-21 and built the same day.</strong> D1: old way → answer, on both pages. D2: the paper panel, as drawn. D4: no re-shoot. <strong>D3 changed in the build:</strong> there is no line under the cards, because the marketing and legal reads found “Walk the real screens in the demo.” untrue (the demos are a tournament and a coach’s season; neither shows a house league or the club’s books). The same reads changed four sets of words, so the live pages differ from these drawings in: “scores as they go in”, REGISTRATION for SIGN-UP, “checked against the bank statement”, and “from one screen”.</p>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-clubs" data-tab="clubs" aria-selected="true">1 · For Clubs</button>
+      <button class="tab" role="tab" id="tab-leagues" data-tab="leagues" aria-selected="false">2 · For Leagues</button>
+      <button class="tab" role="tab" id="tab-promises" data-tab="promises" aria-selected="false">3 · What each one promises</button>
+      <button class="tab" role="tab" id="tab-calls" data-tab="calls" aria-selected="false">4 · Your calls</button>
+    </div>
+    <div class="views" id="views">
+      <span><span class="viewlabel">Pictures</span><span class="seg" id="seg-pic"><button type="button" id="pic-draw" data-pic="draw" aria-pressed="true">Old way → answer</button><button type="button" id="pic-sketch" data-pic="sketch" aria-pressed="false">The same screens, drawn</button><button type="button" id="pic-shot" data-pic="shot" aria-pressed="false">Today’s screenshots</button></span></span>
+      <span><span class="viewlabel">Width</span><span class="seg" id="seg-w"><button type="button" id="w-desk" data-w="desk" aria-pressed="true">Computer</button><button type="button" id="w-phone" data-w="phone" aria-pressed="false">Phone</button></span></span>
+    </div>
+  </div>
+
+  <div class="stage" id="stage" data-pic="draw" data-w="desk">
+
+  <!-- ═════════ 1 · FOR CLUBS ═════════ -->
+  <section class="panel" id="panel-clubs" role="tabpanel" aria-labelledby="tab-clubs">
+    <div class="note">
+      <span class="tag new">New</span> the four pictures, in either drawn option
+      <span class="tag changed">Reworded</span> the line under the cards
+      <span class="tag same">Unchanged</span> every card’s words
+      <button class="chip" type="button" data-call="d1">D1 which pictures</button>
+      <button class="chip" type="button" data-call="d2">D2 the paper panel</button>
+      <button class="chip" type="button" data-call="d3">D3 the line under the cards</button>
+    </div>
+    <p class="speclabel">/for-clubs · the “Four jobs. One platform.” section · true size</p>
+    <div class="spec">
+      <p class="s-eyebrow">What’s included</p>
+      <h2 class="s-heading">Four jobs. One platform.</h2>
+      <p class="s-intro">Club is the complete operating system for established clubs: every program, every role, one sign-in.</p>
+      <div class="grid">
+
+        <article class="card">
+          <div class="pic draw">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing: a paper bracket with a question mark becomes one live bracket that fills in as games end">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="translate(0 22) rotate(-6 165 215)">
+                  <rect class="sF" stroke-width="2.5" x="60" y="100" width="215" height="230" rx="5"/>
+                  <rect class="sF" stroke-width="2" x="140" y="88" width="56" height="22" rx="3"/>
+                  <path class="sF" stroke-width="2" d="M150 135h22v50h-22M150 235h22v50h-22M172 160h30v100h-30"/>
+                  <path class="sA" stroke-width="3" stroke-dasharray="7 6" d="M206 210h30"/>
+                  <text class="fA" x="254" y="221" font-size="30" text-anchor="middle">?</text>
+                  <path class="sD" stroke-width="3.5" d="M78 135h64M78 185h52M78 235h68M78 285h46"/>
+                  <path class="sD" stroke-width="2" d="M74 191l62-12"/>
+                </g>
+                <path class="sF" stroke-width="2" d="M298 244C350 244 400 237 446 235"/>
+                <circle class="fD" cx="458" cy="235" r="5"/>
+                <g transform="rotate(-0.6 630 235)">
+                  <rect class="fI" x="490" y="124" width="78" height="11" rx="5.5"/>
+                  <rect class="fD" x="490" y="184" width="64" height="11" rx="5.5"/>
+                  <rect class="fD" x="490" y="264" width="70" height="11" rx="5.5"/>
+                  <rect class="fI" x="490" y="324" width="78" height="11" rx="5.5"/>
+                  <path class="sI" stroke-width="2.5" d="M578 130h14v60h-14M592 160h12M578 270h14v60h-14M592 300h12"/>
+                  <rect class="fI" x="612" y="154" width="70" height="12" rx="6"/>
+                  <rect class="fI" x="612" y="294" width="70" height="12" rx="6"/>
+                  <path class="sI" stroke-width="2.5" d="M690 160h14v140h-14M704 230h10"/>
+                  <rect class="sI" stroke-width="2.5" stroke-dasharray="6 6" x="720" y="221" width="52" height="18" rx="9"/>
+                </g>
+                <text class="say fD" x="163" y="452">A PAPER BRACKET</text>
+                <text class="say fI" x="632" y="412">THE LIVE BRACKET</text>
+                <text class="sub fD" x="632" y="442">scores as the games end</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pic sketch">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing of the event page: two games live and three final scores"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-0.6 400 220)"><circle class="fI" cx="98" cy="90" r="5"/><circle class="sI" stroke-width="2" cx="98" cy="90" r="11"/><text class="fI" x="120" y="99" font-size="24" letter-spacing="2">LIVE</text><rect class="sI" stroke-width="2.5" x="86" y="116" width="330" height="104" rx="10"/><rect class="fI" x="106" y="138" width="160" height="11" rx="5.5"/><rect class="fI" x="106" y="170" width="128" height="11" rx="5.5"/><rect class="sI" stroke-width="2.5" x="362" y="130" width="34" height="26" rx="5"/><rect class="sI" stroke-width="2.5" x="362" y="164" width="34" height="26" rx="5"/><path class="sD" stroke-width="3" d="M372 143h14M372 177h14"/><rect class="fD" x="106" y="198" width="96" height="7" rx="3.5"/><rect class="sI" stroke-width="2.5" x="86" y="238" width="330" height="104" rx="10"/><rect class="fI" x="106" y="260" width="140" height="11" rx="5.5"/><rect class="fI" x="106" y="292" width="150" height="11" rx="5.5"/><rect class="sI" stroke-width="2.5" x="362" y="252" width="34" height="26" rx="5"/><rect class="sI" stroke-width="2.5" x="362" y="286" width="34" height="26" rx="5"/><path class="sD" stroke-width="3" d="M372 265h14M372 299h14"/><rect class="fD" x="106" y="320" width="110" height="7" rx="3.5"/><text class="fD" x="470" y="99" font-size="24" letter-spacing="2">FINAL</text><rect class="fI" x="470" y="126" width="150" height="11" rx="5.5"/><rect class="fD" x="470" y="154" width="124" height="10" rx="5"/><rect class="sD" stroke-width="2" x="684" y="120" width="34" height="22" rx="5"/><rect class="fI" x="693" y="128" width="16" height="6" rx="3"/><rect class="sD" stroke-width="2" x="684" y="148" width="34" height="22" rx="5"/><rect class="fD" x="693" y="156" width="16" height="6" rx="3"/><path class="sF" stroke-width="1.4" d="M470 184h250"/><rect class="fI" x="470" y="204" width="132" height="11" rx="5.5"/><rect class="fD" x="470" y="232" width="146" height="10" rx="5"/><rect class="sD" stroke-width="2" x="684" y="198" width="34" height="22" rx="5"/><rect class="fI" x="693" y="206" width="16" height="6" rx="3"/><rect class="sD" stroke-width="2" x="684" y="226" width="34" height="22" rx="5"/><rect class="fD" x="693" y="234" width="16" height="6" rx="3"/><path class="sF" stroke-width="1.4" d="M470 262h250"/><rect class="fI" x="470" y="282" width="160" height="11" rx="5.5"/><rect class="fD" x="470" y="310" width="112" height="10" rx="5"/><rect class="sD" stroke-width="2" x="684" y="276" width="34" height="22" rx="5"/><rect class="fI" x="693" y="284" width="16" height="6" rx="3"/><rect class="sD" stroke-width="2" x="684" y="304" width="34" height="22" rx="5"/><rect class="fD" x="693" y="312" width="16" height="6" rx="3"/><path class="sF" stroke-width="1.4" d="M470 340h250"/></g><text class="say fI" x="400" y="414">LIVE SCORES</text><text class="sub fD" x="400" y="444">and results as the games end</text></g></svg>
+          </div>
+          <div class="pic shot"><img src="shots/clubs-01-event.png" alt="Today’s screenshot: a tournament’s public event page" loading="lazy"></div>
+          <div class="counter">01</div>
+          <div class="c-eyebrow">Tournaments</div>
+          <h3 class="c-title">Run events year-round.</h3>
+          <p class="c-body">Registration, scheduling, brackets, and live scores — same tools your tournament organizers already use. Unlimited tournaments included.</p>
+        </article>
+
+        <article class="card">
+          <div class="pic draw">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing: a form, a spreadsheet and an unanswered message become one season, from sign-up to standings">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="rotate(-7 145 155)">
+                  <rect class="sF" stroke-width="2.5" x="70" y="95" width="150" height="120" rx="5"/>
+                  <g class="sD" stroke-width="2"><rect x="86" y="115" width="12" height="12" rx="2"/><rect x="86" y="143" width="12" height="12" rx="2"/><rect x="86" y="171" width="12" height="12" rx="2"/></g>
+                  <path class="sD" stroke-width="3.5" d="M110 121h84M110 149h60M110 177h76"/>
+                </g>
+                <g transform="rotate(5 215 232)">
+                  <rect class="sF" stroke-width="2.5" x="120" y="180" width="190" height="105" rx="5"/>
+                  <path class="sF" stroke-width="1.2" d="M167 180v105M215 180v105M262 180v105M120 215h190M120 250h190"/>
+                  <path class="sD" stroke-width="3.5" d="M132 198h24M180 233h24M228 268h24M132 268h24"/>
+                </g>
+                <g transform="rotate(-3 150 340)">
+                  <rect class="sA" stroke-width="2.5" x="70" y="312" width="160" height="54" rx="27"/>
+                  <path class="sA" stroke-width="2.5" d="M78 362l-13 16 26-6"/>
+                  <text class="fA" x="150" y="349" font-size="28" text-anchor="middle">?</text>
+                </g>
+                <path class="sF" stroke-width="2" d="M232 150C320 168 400 212 446 232M322 238C370 238 410 237 446 236M240 338C320 320 400 264 446 241"/>
+                <circle class="fD" cx="458" cy="236" r="5"/>
+                <g transform="rotate(-0.6 630 225)">
+                  <g class="sI" stroke-width="3"><rect x="503" y="98" width="38" height="44" rx="4"/></g>
+                  <g class="sI" stroke-width="2.5"><rect x="511" y="107" width="9" height="9" rx="2"/><path d="M526 112h8M511 126h22M511 134h14"/></g>
+                  <rect class="fI" x="499" y="181" width="13" height="13" rx="2"/>
+                  <circle class="sI" stroke-width="2.5" cx="523" cy="187.5" r="6.5"/>
+                  <path class="sI" stroke-width="2.5" d="M534 194l7-13 7 13z"/>
+                  <g class="sI" stroke-width="3"><rect x="502" y="237" width="40" height="40" rx="4"/><path d="M502 249h40M512 232v8M532 232v8"/></g>
+                  <rect class="fI" x="510" y="255" width="8" height="6" rx="1.5"/><rect class="fD" x="524" y="255" width="8" height="6" rx="1.5"/><rect class="fD" x="510" y="265" width="8" height="6" rx="1.5"/><rect class="fI" x="524" y="265" width="8" height="6" rx="1.5"/>
+                  <rect class="fI" x="502" y="308" width="40" height="8" rx="4"/><rect class="fI" x="502" y="321" width="30" height="8" rx="4"/><rect class="fI" x="502" y="334" width="20" height="8" rx="4"/>
+                  <path class="sD" stroke-width="2.5" d="M522 152v12M522 208v12M522 286v12"/>
+                  <g class="fI" font-size="26" letter-spacing="1.6">
+                    <text x="566" y="129">SIGN-UP</text><text x="566" y="197">DRAFT</text><text x="566" y="266">GAMES</text><text x="566" y="334">STANDINGS</text>
+                  </g>
+                </g>
+                <text class="say fD" x="160" y="442">THREE TOOLS</text>
+                <text class="say fI" x="620" y="414">ONE SEASON</text>
+                <text class="sub fD" x="620" y="444">sign-up to standings</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pic sketch">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing of the registrations list: each player, their guardian, and whether the fee has come in"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-0.5 400 230)"><rect class="fI" x="90" y="96" width="170" height="13" rx="6.5"/><rect class="fD" x="90" y="120" width="100" height="8" rx="4"/><rect class="fD" x="330" y="99" width="150" height="10" rx="5"/><rect class="fF" x="330" y="120" width="180" height="7" rx="3.5"/><rect class="fD" x="560" y="98" width="84" height="13" rx="6.5"/><path class="sI" stroke-width="4" d="M676 105l10 10 19-21"/><path class="sF" stroke-width="1.4" d="M90 146h620"/><rect class="fI" x="90" y="170" width="146" height="13" rx="6.5"/><rect class="fD" x="90" y="194" width="116" height="8" rx="4"/><rect class="fD" x="330" y="173" width="130" height="10" rx="5"/><rect class="fF" x="330" y="194" width="180" height="7" rx="3.5"/><rect class="fD" x="560" y="172" width="100" height="13" rx="6.5"/><circle class="sD" stroke-width="3" cx="690" cy="179" r="10"/><path class="sF" stroke-width="1.4" d="M90 220h620"/><rect class="fI" x="90" y="244" width="186" height="13" rx="6.5"/><rect class="fD" x="90" y="268" width="92" height="8" rx="4"/><rect class="fD" x="330" y="247" width="162" height="10" rx="5"/><rect class="fF" x="330" y="268" width="180" height="7" rx="3.5"/><rect class="fD" x="560" y="246" width="100" height="13" rx="6.5"/><circle class="sD" stroke-width="3" cx="690" cy="253" r="10"/><path class="sF" stroke-width="1.4" d="M90 294h620"/><rect class="fI" x="90" y="318" width="158" height="13" rx="6.5"/><rect class="fD" x="90" y="342" width="108" height="8" rx="4"/><rect class="fD" x="330" y="321" width="140" height="10" rx="5"/><rect class="fF" x="330" y="342" width="180" height="7" rx="3.5"/><rect class="fD" x="560" y="320" width="84" height="13" rx="6.5"/><path class="sI" stroke-width="4" d="M676 327l10 10 19-21"/><path class="sF" stroke-width="1.4" d="M90 368h620"/></g><text class="say fI" x="400" y="424">EVERY REGISTRATION</text><text class="sub fD" x="400" y="454">who signed up, who has paid</text></g></svg>
+          </div>
+          <div class="pic shot"><img src="shots/clubs-02-registrations.png" alt="Today’s screenshot: the house league registrations list" loading="lazy"></div>
+          <div class="counter">02</div>
+          <div class="c-eyebrow">House league</div>
+          <h3 class="c-title">Full season management — included.</h3>
+          <p class="c-body">Player registration, draft, schedules, standings, and season-wide parent messaging. Club includes all of it, with no separate plan to buy.</p>
+        </article>
+
+        <article class="card">
+          <div class="pic draw">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing: messages asking each coach become one view of every team">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="rotate(-4 145 133)">
+                  <rect class="sF" stroke-width="2.5" x="60" y="105" width="170" height="56" rx="28"/>
+                  <path class="sF" stroke-width="2.5" d="M68 157l-13 17 27-6"/>
+                  <text class="fD" x="145" y="142" font-size="26" text-anchor="middle">roster?</text>
+                </g>
+                <g transform="rotate(3 187 206)">
+                  <rect class="sF" stroke-width="2.5" x="95" y="180" width="186" height="52" rx="26"/>
+                  <path class="sF" stroke-width="2.5" d="M103 228l-13 16 26-5"/>
+                  <text class="fD" x="188" y="215" font-size="26" text-anchor="middle">paid yet?</text>
+                </g>
+                <g transform="rotate(-3 150 288)">
+                  <rect class="sA" stroke-width="2.5" x="75" y="262" width="150" height="52" rx="26"/>
+                  <path class="sA" stroke-width="2.5" d="M83 310l-13 16 26-5"/>
+                  <text class="fA" x="150" y="298" font-size="27" text-anchor="middle">?</text>
+                </g>
+                <path class="sF" stroke-width="2" d="M302 212C350 212 400 204 446 201"/>
+                <circle class="fD" cx="458" cy="200" r="5"/>
+                <g transform="rotate(-0.6 630 205)">
+                  <g class="sI" stroke-width="2.5"><rect x="500" y="120" width="42" height="42" rx="7"/><rect x="500" y="188" width="42" height="42" rx="7"/><rect x="500" y="256" width="42" height="42" rx="7"/></g>
+                  <rect class="fI" x="513" y="133" width="16" height="16" rx="2"/>
+                  <circle class="sI" stroke-width="2.5" cx="521" cy="209" r="9"/>
+                  <path class="sI" stroke-width="2.5" d="M521 266l10 18h-20z"/>
+                  <rect class="fI" x="560" y="127" width="104" height="10" rx="5"/><rect class="fD" x="560" y="147" width="60" height="7" rx="3.5"/><rect class="fI" x="704" y="134" width="64" height="11" rx="5.5"/>
+                  <rect class="fI" x="560" y="195" width="88" height="10" rx="5"/><rect class="fD" x="560" y="215" width="74" height="7" rx="3.5"/><rect class="fI" x="714" y="202" width="54" height="11" rx="5.5"/>
+                  <rect class="fI" x="560" y="263" width="116" height="10" rx="5"/><rect class="fD" x="560" y="283" width="52" height="7" rx="3.5"/><rect class="fI" x="698" y="270" width="70" height="11" rx="5.5"/>
+                  <path class="sF" stroke-width="1.4" d="M500 176h268M500 244h268M500 312h268"/>
+                </g>
+                <text class="say fD" x="163" y="420">ASK EVERY COACH</text>
+                <text class="say fI" x="630" y="390">EVERY TEAM</text>
+                <text class="sub fD" x="630" y="420">roster · results · owing</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pic sketch">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing of a team roster: number, player, positions and the family contact"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-0.5 400 230)"><rect class="sI" stroke-width="2.5" x="96" y="88" width="48" height="48" rx="8"/><text class="fI" x="120" y="121" font-size="26" text-anchor="middle">#</text><rect class="fI" x="170" y="97" width="180" height="13" rx="6.5"/><rect class="fD" x="170" y="119" width="84" height="8" rx="4"/><rect class="sD" stroke-width="2" x="410" y="100" width="44" height="24" rx="12"/><rect class="sD" stroke-width="2" x="462" y="100" width="44" height="24" rx="12"/><rect class="fD" x="540" y="106" width="120" height="11" rx="5.5"/><rect class="sD" stroke-width="2" x="676" y="101" width="30" height="22" rx="3"/><path class="sD" stroke-width="2" d="M676 102l15 11 15-11"/><path class="sF" stroke-width="1.4" d="M96 148h614"/><rect class="sI" stroke-width="2.5" x="96" y="160" width="48" height="48" rx="8"/><text class="fI" x="120" y="193" font-size="26" text-anchor="middle">#</text><rect class="fI" x="170" y="169" width="150" height="13" rx="6.5"/><rect class="fD" x="170" y="191" width="100" height="8" rx="4"/><rect class="sD" stroke-width="2" x="410" y="172" width="44" height="24" rx="12"/><rect class="sD" stroke-width="2" x="462" y="172" width="44" height="24" rx="12"/><rect class="fD" x="540" y="178" width="104" height="11" rx="5.5"/><rect class="sD" stroke-width="2" x="676" y="173" width="30" height="22" rx="3"/><path class="sD" stroke-width="2" d="M676 174l15 11 15-11"/><path class="sF" stroke-width="1.4" d="M96 220h614"/><rect class="sI" stroke-width="2.5" x="96" y="232" width="48" height="48" rx="8"/><text class="fI" x="120" y="265" font-size="26" text-anchor="middle">#</text><rect class="fI" x="170" y="241" width="196" height="13" rx="6.5"/><rect class="fD" x="170" y="263" width="74" height="8" rx="4"/><rect class="sD" stroke-width="2" x="410" y="244" width="44" height="24" rx="12"/><rect class="sD" stroke-width="2" x="462" y="244" width="44" height="24" rx="12"/><rect class="fD" x="540" y="250" width="128" height="11" rx="5.5"/><rect class="sD" stroke-width="2" x="676" y="245" width="30" height="22" rx="3"/><path class="sD" stroke-width="2" d="M676 246l15 11 15-11"/><path class="sF" stroke-width="1.4" d="M96 292h614"/><rect class="sI" stroke-width="2.5" x="96" y="304" width="48" height="48" rx="8"/><text class="fI" x="120" y="337" font-size="26" text-anchor="middle">#</text><rect class="fI" x="170" y="313" width="166" height="13" rx="6.5"/><rect class="fD" x="170" y="335" width="92" height="8" rx="4"/><rect class="sD" stroke-width="2" x="410" y="316" width="44" height="24" rx="12"/><rect class="sD" stroke-width="2" x="462" y="316" width="44" height="24" rx="12"/><rect class="fD" x="540" y="322" width="112" height="11" rx="5.5"/><rect class="sD" stroke-width="2" x="676" y="317" width="30" height="22" rx="3"/><path class="sD" stroke-width="2" d="M676 318l15 11 15-11"/><path class="sF" stroke-width="1.4" d="M96 364h614"/></g><text class="say fI" x="400" y="422">THE ROSTER</text><text class="sub fD" x="400" y="452">numbers, positions, contacts</text></g></svg>
+          </div>
+          <div class="pic shot"><img src="shots/clubs-03-roster.png" alt="Today’s screenshot: a rep team’s roster" loading="lazy"></div>
+          <div class="counter">03</div>
+          <div class="c-eyebrow">Rep teams and Coaches Portal</div>
+          <h3 class="c-title">Coaches run their team. You run the club.</h3>
+          <p class="c-body">Every coach gets a Premium Coaches Portal for roster, lineups, documents and team budget. You see each team’s roster, schedule and results, what it owes the club, and the cash it holds. Lineups and the team’s own books stay with the coach.</p>
+        </article>
+
+        <article class="card">
+          <div class="pic draw">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing: three spreadsheets, one with a blank, become one ledger checked against the bank">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="rotate(-9 153 142)">
+                  <rect class="sF" stroke-width="2.5" x="58" y="92" width="190" height="100" rx="5"/>
+                  <path class="sF" stroke-width="1.2" d="M105 92v100M153 92v100M200 92v100M58 125h190M58 158h190"/>
+                  <path class="sD" stroke-width="3.5" d="M70 110h22M118 143h22M165 176h22M212 110h22"/>
+                </g>
+                <g transform="rotate(6 207 225)">
+                  <rect class="sF" stroke-width="2.5" x="110" y="175" width="195" height="100" rx="5"/>
+                  <path class="sF" stroke-width="1.2" d="M159 175v100M208 175v100M256 175v100M110 208h195M110 241h195"/>
+                  <path class="sD" stroke-width="3.5" d="M122 193h24M171 226h24M219 259h24M268 193h24"/>
+                </g>
+                <g transform="rotate(-3 152 317)">
+                  <rect class="sF" stroke-width="2.5" x="52" y="265" width="200" height="104" rx="5"/>
+                  <path class="sF" stroke-width="1.2" d="M102 265v104M152 265v104M202 265v104M52 300h200M52 334h200"/>
+                  <path class="sD" stroke-width="3.5" d="M64 284h24M114 352h24M214 284h24"/>
+                  <rect class="sA" stroke-width="2.5" stroke-dasharray="7 6" x="156" y="304" width="42" height="26" rx="3"/>
+                  <text class="fA" x="177" y="325" font-size="22" text-anchor="middle">?</text>
+                </g>
+                <path class="sF" stroke-width="2" d="M264 136C340 165 404 208 446 240M316 230C365 236 410 244 446 246M264 320C340 306 404 276 446 252"/>
+                <circle class="fD" cx="458" cy="246" r="5"/>
+                <g transform="rotate(-0.6 630 235)">
+                  <rect class="fI" x="500" y="130" width="120" height="10" rx="5"/><rect class="fD" x="500" y="149" width="70" height="7" rx="3.5"/><rect class="fI" x="700" y="130" width="68" height="11" rx="5.5"/>
+                  <rect class="fI" x="500" y="178" width="96" height="10" rx="5"/><rect class="fD" x="500" y="197" width="58" height="7" rx="3.5"/><rect class="fI" x="712" y="178" width="56" height="11" rx="5.5"/>
+                  <rect class="fI" x="500" y="226" width="134" height="10" rx="5"/><rect class="fD" x="500" y="245" width="80" height="7" rx="3.5"/><rect class="fI" x="694" y="226" width="74" height="11" rx="5.5"/>
+                  <path class="sF" stroke-width="1.4" d="M500 166h268M500 214h268M500 262h268"/>
+                  <path class="sI" stroke-width="2.5" d="M660 277h108M660 284h108"/>
+                  <path class="sI" stroke-width="2.5" d="M500 310l19-13 19 13zM506 316v13M519 316v13M532 316v13M497 334h44"/>
+                  <path class="sF" stroke-width="2" stroke-dasharray="3 9" d="M556 316h88"/>
+                  <rect class="fI" x="660" y="309" width="70" height="13" rx="6.5"/>
+                  <path class="sI" stroke-width="4" d="M742 315l8 8 16-18"/>
+                </g>
+                <text class="say fD" x="163" y="446">THREE SHEETS</text>
+                <text class="say fI" x="632" y="398">ONE LEDGER</text>
+                <text class="sub fD" x="632" y="428">checked against the bank</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pic sketch">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing of the club budget: four headline figures, then each line planned, actual and the difference"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-0.5 400 220)"><rect class="fD" x="90" y="86" width="64" height="8" rx="4"/><rect class="fI" x="90" y="106" width="118" height="18" rx="9"/><rect class="fF" x="90" y="136" width="100" height="7" rx="3.5"/><rect class="fD" x="250" y="86" width="64" height="8" rx="4"/><rect class="fI" x="250" y="106" width="108" height="18" rx="9"/><rect class="fF" x="250" y="136" width="100" height="7" rx="3.5"/><rect class="fD" x="410" y="86" width="64" height="8" rx="4"/><rect class="fI" x="410" y="106" width="74" height="18" rx="9"/><rect class="fF" x="410" y="136" width="100" height="7" rx="3.5"/><rect class="fD" x="570" y="86" width="64" height="8" rx="4"/><rect class="fI" x="570" y="106" width="100" height="18" rx="9"/><rect class="fF" x="570" y="136" width="100" height="7" rx="3.5"/><rect class="fI" x="96" y="200" width="190" height="11" rx="5.5"/><rect class="fD" x="400" y="200" width="70" height="10" rx="5"/><rect class="fI" x="530" y="200" width="70" height="10" rx="5"/><rect class="fD" x="664" y="200" width="56" height="10" rx="5"/><path class="sF" stroke-width="1.4" d="M80 226h640"/><rect class="fI" x="96" y="244" width="130" height="11" rx="5.5"/><rect class="fD" x="408" y="244" width="62" height="10" rx="5"/><rect class="fI" x="538" y="244" width="62" height="10" rx="5"/><rect class="fD" x="676" y="244" width="44" height="10" rx="5"/><path class="sF" stroke-width="1.4" d="M80 270h640"/><rect class="fI" x="96" y="288" width="156" height="11" rx="5.5"/><rect class="fD" x="404" y="288" width="66" height="10" rx="5"/><rect class="fI" x="534" y="288" width="66" height="10" rx="5"/><rect class="fD" x="670" y="288" width="50" height="10" rx="5"/><path class="sF" stroke-width="1.4" d="M80 314h640"/><path class="sI" stroke-width="2.5" d="M380 328h340M380 335h340"/><rect class="fI" x="96" y="350" width="120" height="12" rx="6"/><rect class="fI" x="392" y="350" width="78" height="12" rx="6"/><rect class="fI" x="522" y="350" width="78" height="12" rx="6"/><rect class="fI" x="656" y="350" width="64" height="12" rx="6"/></g><text class="say fI" x="400" y="420">BUDGET AGAINST ACTUAL</text><text class="sub fD" x="400" y="450">planned, spent and the difference</text></g></svg>
+          </div>
+          <div class="pic shot"><img src="shots/clubs-04-budget.png" alt="Today’s screenshot: the club’s budget against actual" loading="lazy"></div>
+          <div class="counter">04</div>
+          <div class="c-eyebrow">Accounting</div>
+          <h3 class="c-title">Finances in one place — not three spreadsheets.</h3>
+          <p class="c-body">One ledger for the club’s money, a budget checked against what was actually spent, and club costs split across teams, with a reminder to each head coach and a tick when the payment arrives. Type in a bank statement’s balance and see whether your books agree; when they don’t, it helps you find the difference. The treasurer stops living in spreadsheets.</p>
+        </article>
+
+      </div>
+      <p class="s-caption cap-draw"><u>Walk the real screens in the demo</u>.</p>
+      <p class="s-caption cap-shot">These are the product’s own screens, shown with a fictional club.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 2 · FOR LEAGUES ═════════ -->
+  <section class="panel" id="panel-leagues" role="tabpanel" aria-labelledby="tab-leagues" hidden>
+    <div class="note">
+      <span class="tag new">New</span> the drawn pictures
+      <span class="tag same">Unchanged</span> every card’s words; under “Old way → answer”, picture 01 is the pitch slides’ own drawing
+      <button class="chip" type="button" data-call="d1">D1 which pictures</button>
+      <button class="chip" type="button" data-call="d3">D3 the line under the cards</button>
+    </div>
+    <p class="speclabel">/for-leagues · the “four steps” section · true size</p>
+    <div class="spec">
+      <p class="s-eyebrow">How it works</p>
+      <h2 class="s-heading">Registration to final standings — four steps.</h2>
+      <p class="s-intro">From the moment registration opens to the final game night — everything runs in one place.</p>
+      <div class="grid">
+
+        <article class="card">
+          <div class="pic draw">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing: a pile of forwarded emails becomes one list to approve, waitlist or decline from">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="rotate(-12 172 126)" opacity="0.55"><rect class="sF" stroke-width="2.5" x="80" y="92" width="190" height="70" rx="5"/></g>
+                <g transform="rotate(-6 160 139)">
+                  <rect class="sF" stroke-width="2.5" x="60" y="100" width="200" height="78" rx="5"/>
+                  <path class="sD" stroke-width="2.5" d="M84 118c0-8 12-8 12 0v22c0 12-20 12-20 0v-26"/>
+                  <path class="sD" stroke-width="3.5" d="M116 122h116M116 148h74"/>
+                </g>
+                <g transform="rotate(4 187 223)">
+                  <rect class="sF" stroke-width="2.5" x="90" y="185" width="195" height="76" rx="5"/>
+                  <path class="sD" stroke-width="2.5" d="M114 203c0-8 12-8 12 0v22c0 12-20 12-20 0v-26"/>
+                  <path class="sD" stroke-width="3.5" d="M146 206h108M146 232h62"/>
+                </g>
+                <g transform="rotate(-2 152 304)">
+                  <rect class="sF" stroke-width="2.5" x="50" y="265" width="205" height="78" rx="5"/>
+                  <path class="sD" stroke-width="2.5" d="M74 283c0-8 12-8 12 0v22c0 12-20 12-20 0v-26"/>
+                  <path class="sA" stroke-width="3.5" d="M106 286h118M106 312h68"/>
+                </g>
+                <path class="sF" stroke-width="2" d="M292 222C352 224 402 226 448 228"/>
+                <circle class="fD" cx="458" cy="228" r="5"/>
+                <g transform="rotate(-0.5 630 235)">
+                  <g>
+                    <rect class="fI" x="500" y="122" width="104" height="10" rx="5"/><rect class="fD" x="622" y="123" width="42" height="8" rx="4"/><rect class="fD" x="678" y="123" width="30" height="8" rx="4"/>
+                    <path class="sI" stroke-width="3.5" d="M732 127l9 9 17-19"/><path class="sF" stroke-width="1.4" d="M500 150h268"/>
+                  </g>
+                  <g transform="translate(0 62)">
+                    <rect class="fI" x="500" y="122" width="86" height="10" rx="5"/><rect class="fD" x="622" y="123" width="42" height="8" rx="4"/><rect class="fD" x="678" y="123" width="30" height="8" rx="4"/>
+                    <path class="sI" stroke-width="3.5" d="M732 127l9 9 17-19"/><path class="sF" stroke-width="1.4" d="M500 150h268"/>
+                  </g>
+                  <g transform="translate(0 124)" opacity="0.75">
+                    <rect class="fD" x="500" y="122" width="118" height="10" rx="5"/><rect class="fF" x="622" y="123" width="42" height="8" rx="4"/><rect class="fF" x="678" y="123" width="30" height="8" rx="4"/>
+                    <path class="sD" stroke-width="3.5" d="M737 120v16M749 120v16"/><path class="sF" stroke-width="1.4" d="M500 150h268"/>
+                  </g>
+                  <g transform="translate(0 186)" opacity="0.55">
+                    <rect class="fD" x="500" y="122" width="94" height="10" rx="5"/><rect class="fF" x="622" y="123" width="42" height="8" rx="4"/><rect class="fF" x="678" y="123" width="30" height="8" rx="4"/>
+                    <path class="sD" stroke-width="3.5" d="M734 119l18 18m0-18l-18 18"/><path class="sF" stroke-width="1.4" d="M500 150h268"/>
+                  </g>
+                </g>
+                <text class="say fD" x="155" y="440">AN INBOX</text>
+                <text class="say fI" x="612" y="440">ONE LIST</text>
+                <text class="sub fD" x="612" y="470">approve · waitlist · decline</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pic sketch">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing of sign-ups being decided: two approved, one waitlisted, one declined"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-0.5 400 230)"><g opacity="1"><rect class="fI" x="96" y="100" width="190" height="13" rx="6.5"/><rect class="fD" x="96" y="124" width="110" height="8" rx="4"/><rect class="fD" x="350" y="103" width="140" height="10" rx="5"/><path class="sI" stroke-width="4" d="M640 108l11 11 21-23"/><path class="sF" stroke-width="1.4" d="M96 148h600"/></g><g opacity="1"><rect class="fI" x="96" y="170" width="160" height="13" rx="6.5"/><rect class="fD" x="96" y="194" width="96" height="8" rx="4"/><rect class="fD" x="350" y="173" width="150" height="10" rx="5"/><path class="sI" stroke-width="4" d="M640 178l11 11 21-23"/><path class="sF" stroke-width="1.4" d="M96 218h600"/></g><g opacity="0.75"><rect class="fD" x="96" y="240" width="210" height="13" rx="6.5"/><rect class="fF" x="96" y="264" width="120" height="8" rx="4"/><rect class="fF" x="350" y="243" width="128" height="10" rx="5"/><path class="sD" stroke-width="4" d="M648 237v22M664 237v22"/><path class="sF" stroke-width="1.4" d="M96 288h600"/></g><g opacity="0.55"><rect class="fD" x="96" y="310" width="172" height="13" rx="6.5"/><rect class="fF" x="96" y="334" width="104" height="8" rx="4"/><rect class="fF" x="350" y="313" width="144" height="10" rx="5"/><path class="sD" stroke-width="4" d="M645 307l22 22m0-22l-22 22"/><path class="sF" stroke-width="1.4" d="M96 358h600"/></g></g><text class="say fI" x="400" y="420">EVERY SIGN-UP</text><text class="sub fD" x="400" y="450">approve · waitlist · decline</text></g></svg>
+          </div>
+          <div class="pic shot"><img src="shots/leagues-01-registrations.png" alt="Today’s screenshot: registrations waiting for review" loading="lazy"></div>
+          <div class="counter">01</div>
+          <div class="c-eyebrow">Registration</div>
+          <h3 class="c-title">Players register online.</h3>
+          <p class="c-body">Your season page collects player info and contact details. You review applications, accept players, and manage the waitlist — no Google Form, no inbox.</p>
+        </article>
+
+        <article class="card">
+          <div class="pic draw">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing: a marked-up printed list becomes three teams filling in, one pick at a time">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="rotate(-6 160 222)">
+                  <rect class="sF" stroke-width="2.5" x="70" y="105" width="180" height="235" rx="8"/>
+                  <path class="sF" stroke-width="1.6" d="M70 128h180"/>
+                  <path class="sD" stroke-width="3" d="M88 150h92M88 170h74M88 190h100M88 210h66M88 230h84M88 250h78M88 270h54M88 290h90M88 310h62"/>
+                  <path class="sD" stroke-width="2" d="M82 170h88M82 270h68"/>
+                  <path class="sD" stroke-width="2" d="M200 150c22 10 22 32 0 42M200 192l11-2M200 192l4-11"/>
+                  <ellipse class="sA" stroke-width="2.5" stroke-dasharray="7 6" cx="130" cy="230" rx="56" ry="14"/>
+                  <text class="fA" x="212" y="240" font-size="27" text-anchor="middle">?</text>
+                </g>
+                <path class="sF" stroke-width="2" d="M280 226C330 226 380 230 428 232"/>
+                <circle class="fD" cx="440" cy="232" r="5"/>
+                <g transform="rotate(-0.5 625 225)">
+                  <g class="fF" font-size="22" text-anchor="middle"><text x="478" y="208">1</text><text x="478" y="254">2</text><text x="478" y="300">3</text></g>
+                  <rect class="fI" x="536" y="120" width="24" height="24" rx="3"/>
+                  <circle class="sI" stroke-width="3" cx="636" cy="132" r="13"/>
+                  <path class="sI" stroke-width="3" d="M724 119l14 25h-28z"/>
+                  <path class="sF" stroke-width="1.4" d="M500 164h266"/>
+                  <rect class="fI" x="512" y="194" width="72" height="12" rx="6"/><rect class="fI" x="600" y="194" width="64" height="12" rx="6"/><rect class="fI" x="688" y="194" width="70" height="12" rx="6"/>
+                  <rect class="fI" x="512" y="240" width="60" height="12" rx="6"/><rect class="fI" x="600" y="240" width="72" height="12" rx="6"/><rect class="fI" x="688" y="240" width="62" height="12" rx="6"/>
+                  <rect class="fI" x="512" y="286" width="68" height="12" rx="6"/><rect class="fI" x="600" y="286" width="58" height="12" rx="6"/>
+                  <rect class="sI" stroke-width="2.5" stroke-dasharray="6 6" x="688" y="284" width="72" height="16" rx="8"/>
+                </g>
+                <text class="say fD" x="160" y="450">A PRINTED LIST</text>
+                <text class="say fI" x="630" y="378">THE DRAFT</text>
+                <text class="sub fD" x="630" y="408">pick order or a draw</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pic sketch">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing of the draft board: three teams, each with its players listed"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-0.5 400 224)"><rect class="sI" stroke-width="2.5" x="80" y="80" width="200" height="288" rx="10"/><rect class="fI" x="98" y="100" width="16" height="16" rx="2"/><rect class="fI" x="126" y="102" width="96" height="12" rx="6"/><rect class="fD" x="126" y="124" width="110" height="7" rx="3.5"/><path class="sF" stroke-width="1.4" d="M80 146h200"/><rect class="sD" stroke-width="2" x="96" y="160" width="20" height="20" rx="4"/><rect class="fI" x="128" y="165" width="96" height="10" rx="5"/><rect class="fD" x="246" y="166" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="96" y="200" width="20" height="20" rx="4"/><rect class="fI" x="128" y="205" width="84" height="10" rx="5"/><rect class="fD" x="246" y="206" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="96" y="240" width="20" height="20" rx="4"/><rect class="fI" x="128" y="245" width="104" height="10" rx="5"/><rect class="fD" x="246" y="246" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="96" y="280" width="20" height="20" rx="4"/><rect class="fI" x="128" y="285" width="90" height="10" rx="5"/><rect class="fD" x="246" y="286" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="96" y="320" width="20" height="20" rx="4"/><rect class="fI" x="128" y="325" width="78" height="10" rx="5"/><rect class="fD" x="246" y="326" width="16" height="8" rx="4"/><rect class="sI" stroke-width="2.5" x="300" y="80" width="200" height="288" rx="10"/><circle class="sI" stroke-width="2.5" cx="326" cy="108" r="8"/><rect class="fI" x="346" y="102" width="80" height="12" rx="6"/><rect class="fD" x="346" y="124" width="110" height="7" rx="3.5"/><path class="sF" stroke-width="1.4" d="M300 146h200"/><rect class="sD" stroke-width="2" x="316" y="160" width="20" height="20" rx="4"/><rect class="fI" x="348" y="165" width="88" height="10" rx="5"/><rect class="fD" x="466" y="166" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="316" y="200" width="20" height="20" rx="4"/><rect class="fI" x="348" y="205" width="102" height="10" rx="5"/><rect class="fD" x="466" y="206" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="316" y="240" width="20" height="20" rx="4"/><rect class="fI" x="348" y="245" width="80" height="10" rx="5"/><rect class="fD" x="466" y="246" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="316" y="280" width="20" height="20" rx="4"/><rect class="fI" x="348" y="285" width="98" height="10" rx="5"/><rect class="fD" x="466" y="286" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="316" y="320" width="20" height="20" rx="4"/><rect class="fI" x="348" y="325" width="92" height="10" rx="5"/><rect class="fD" x="466" y="326" width="16" height="8" rx="4"/><rect class="sI" stroke-width="2.5" x="520" y="80" width="200" height="288" rx="10"/><path class="sI" stroke-width="2.5" d="M546 99l10 18h-20z"/><rect class="fI" x="566" y="102" width="104" height="12" rx="6"/><rect class="fD" x="566" y="124" width="110" height="7" rx="3.5"/><path class="sF" stroke-width="1.4" d="M520 146h200"/><rect class="sD" stroke-width="2" x="536" y="160" width="20" height="20" rx="4"/><rect class="fI" x="568" y="165" width="100" height="10" rx="5"/><rect class="fD" x="686" y="166" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="536" y="200" width="20" height="20" rx="4"/><rect class="fI" x="568" y="205" width="90" height="10" rx="5"/><rect class="fD" x="686" y="206" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="536" y="240" width="20" height="20" rx="4"/><rect class="fI" x="568" y="245" width="84" height="10" rx="5"/><rect class="fD" x="686" y="246" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="536" y="280" width="20" height="20" rx="4"/><rect class="fI" x="568" y="285" width="106" height="10" rx="5"/><rect class="fD" x="686" y="286" width="16" height="8" rx="4"/><rect class="sD" stroke-width="2" x="536" y="320" width="20" height="20" rx="4"/><rect class="fI" x="568" y="325" width="82" height="10" rx="5"/><rect class="fD" x="686" y="326" width="16" height="8" rx="4"/></g><text class="say fI" x="400" y="422">EVERY PLAYER ON A TEAM</text><text class="sub fD" x="400" y="452">by pick order or a draw</text></g></svg>
+          </div>
+          <div class="pic shot"><img src="shots/leagues-02-draft.png" alt="Today’s screenshot: the draft board" loading="lazy"></div>
+          <div class="counter">02</div>
+          <div class="c-eyebrow">Draft</div>
+          <h3 class="c-title">Draft your teams before the first game.</h3>
+          <p class="c-body">Assign players to divisions and teams from your registered pool — by pick order or a random draw. The draft happens in the dashboard — no printed lists, no floor-level sorting.</p>
+        </article>
+
+        <article class="card">
+          <div class="pic draw">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing: a tally sheet and a calculator become standings that follow from each score entered">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="rotate(-7 140 192)">
+                  <rect class="sF" stroke-width="2.5" x="60" y="100" width="160" height="185" rx="5"/>
+                  <path class="sF" stroke-width="1.2" d="M140 100v185M60 130h160"/>
+                  <path class="sD" stroke-width="2.5" d="M76 150v18M84 150v18M92 150v18M100 150v18M72 165l32-11M76 188v18M84 188v18M156 150v18M164 150v18M172 150v18M156 188v18M164 188v18M172 188v18M180 188v18M152 203l32-11"/>
+                  <path class="sD" stroke-width="3" d="M76 234h44M156 234h36M76 258h30"/>
+                </g>
+                <g transform="rotate(6 242 271)">
+                  <rect class="sF" stroke-width="2.5" x="200" y="215" width="84" height="112" rx="8"/>
+                  <rect class="sD" stroke-width="2" x="212" y="227" width="60" height="22" rx="3"/>
+                  <g class="fF"><rect x="212" y="260" width="14" height="12" rx="2"/><rect x="235" y="260" width="14" height="12" rx="2"/><rect x="258" y="260" width="14" height="12" rx="2"/><rect x="212" y="280" width="14" height="12" rx="2"/><rect x="235" y="280" width="14" height="12" rx="2"/><rect x="258" y="280" width="14" height="12" rx="2"/><rect x="212" y="300" width="14" height="12" rx="2"/><rect x="235" y="300" width="14" height="12" rx="2"/><rect x="258" y="300" width="14" height="12" rx="2"/></g>
+                </g>
+                <g transform="rotate(-3 150 360)">
+                  <rect class="sA" stroke-width="2.5" x="62" y="334" width="170" height="52" rx="26"/>
+                  <path class="sA" stroke-width="2.5" d="M70 382l-13 16 26-5"/>
+                  <text class="fA" x="147" y="370" font-size="27" text-anchor="middle">?</text>
+                </g>
+                <path class="sF" stroke-width="2" d="M306 240C350 240 400 240 446 240"/>
+                <circle class="fD" cx="458" cy="240" r="5"/>
+                <g transform="rotate(-0.6 630 230)">
+                  <g class="sI" stroke-width="3"><rect x="552" y="98" width="66" height="52" rx="8"/><rect x="640" y="98" width="66" height="52" rx="8"/></g>
+                  <rect class="fI" x="570" y="118" width="30" height="12" rx="6"/><rect class="fI" x="658" y="118" width="30" height="12" rx="6"/>
+                  <path class="sI" stroke-width="3" d="M629 162v24M621 178l8 9 8-9"/>
+                  <g class="fD" font-size="22" text-anchor="middle"><text x="508" y="230">1</text><text x="508" y="278">2</text><text x="508" y="326">3</text></g>
+                  <rect class="fI" x="532" y="217" width="112" height="10" rx="5"/><rect class="fD" x="672" y="218" width="26" height="8" rx="4"/><rect class="fD" x="708" y="218" width="26" height="8" rx="4"/><rect class="fD" x="744" y="218" width="24" height="8" rx="4"/>
+                  <rect class="fI" x="532" y="265" width="92" height="10" rx="5"/><rect class="fD" x="672" y="266" width="26" height="8" rx="4"/><rect class="fD" x="708" y="266" width="26" height="8" rx="4"/><rect class="fD" x="744" y="266" width="24" height="8" rx="4"/>
+                  <rect class="fI" x="532" y="313" width="104" height="10" rx="5"/><rect class="fD" x="672" y="314" width="26" height="8" rx="4"/><rect class="fD" x="708" y="314" width="26" height="8" rx="4"/><rect class="fD" x="744" y="314" width="24" height="8" rx="4"/>
+                  <path class="sF" stroke-width="1.4" d="M500 246h268M500 294h268M500 342h268"/>
+                </g>
+                <text class="say fD" x="160" y="452">DONE BY HAND</text>
+                <text class="say fI" x="632" y="400">THE STANDINGS</text>
+                <text class="sub fD" x="632" y="430">updated with every score</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pic sketch">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing of the standings: four teams ranked, each with its record and points"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-0.5 400 220)"><text class="fD" x="110" y="118" font-size="26" text-anchor="middle">1</text><rect class="fI" x="152" y="102" width="16" height="16" rx="2"/><rect class="fI" x="192" y="104" width="170" height="13" rx="6.5"/><rect class="fD" x="470" y="106" width="28" height="10" rx="5"/><rect class="fD" x="540" y="106" width="28" height="10" rx="5"/><rect class="fI" x="630" y="104" width="40" height="13" rx="6.5"/><path class="sF" stroke-width="1.4" d="M90 144h620"/><text class="fD" x="110" y="184" font-size="26" text-anchor="middle">2</text><circle class="fI" cx="160" cy="176" r="8"/><rect class="fI" x="192" y="170" width="196" height="13" rx="6.5"/><rect class="fD" x="470" y="172" width="28" height="10" rx="5"/><rect class="fD" x="540" y="172" width="28" height="10" rx="5"/><rect class="fI" x="630" y="170" width="40" height="13" rx="6.5"/><path class="sF" stroke-width="1.4" d="M90 210h620"/><text class="fD" x="110" y="250" font-size="26" text-anchor="middle">3</text><path class="fI" d="M160 233l9 17h-18z"/><rect class="fI" x="192" y="236" width="180" height="13" rx="6.5"/><rect class="fD" x="470" y="238" width="28" height="10" rx="5"/><rect class="fD" x="540" y="238" width="28" height="10" rx="5"/><rect class="fI" x="630" y="236" width="40" height="13" rx="6.5"/><path class="sF" stroke-width="1.4" d="M90 276h620"/><text class="fD" x="110" y="316" font-size="26" text-anchor="middle">4</text><circle class="sD" stroke-width="2.5" cx="160" cy="308" r="7"/><rect class="fI" x="192" y="302" width="140" height="13" rx="6.5"/><rect class="fD" x="470" y="304" width="28" height="10" rx="5"/><rect class="fD" x="540" y="304" width="28" height="10" rx="5"/><rect class="fI" x="630" y="302" width="40" height="13" rx="6.5"/><path class="sF" stroke-width="1.4" d="M90 342h620"/></g><text class="say fI" x="400" y="410">THE STANDINGS</text><text class="sub fD" x="400" y="440">updated with every score</text></g></svg>
+          </div>
+          <div class="pic shot"><img src="shots/leagues-03-standings.png" alt="Today’s screenshot: the public standings page" loading="lazy"></div>
+          <div class="counter">03</div>
+          <div class="c-eyebrow">Schedule and standings</div>
+          <h3 class="c-title">Games generate. Standings update automatically.</h3>
+          <p class="c-body">Auto-generate a round-robin schedule, then adjust any game individually. Standings update the moment scores are entered — parents see results without asking.</p>
+        </article>
+
+        <article class="card">
+          <div class="pic draw">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing: a pasted address list with one address in doubt, and a reply-all chain, become one message that reaches every family">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <g transform="translate(0 40) rotate(-6 162 141)">
+                  <rect class="sF" stroke-width="2.5" x="62" y="98" width="200" height="86" rx="5"/>
+                  <g class="sD" stroke-width="1.8"><rect x="78" y="112" width="40" height="12" rx="6"/><rect x="124" y="112" width="52" height="12" rx="6"/><rect x="182" y="112" width="36" height="12" rx="6"/><rect x="78" y="132" width="48" height="12" rx="6"/><rect x="132" y="132" width="38" height="12" rx="6"/><rect x="176" y="132" width="50" height="12" rx="6"/><rect x="78" y="152" width="36" height="12" rx="6"/></g>
+                  <rect class="sA" stroke-width="2.2" stroke-dasharray="6 5" x="120" y="152" width="48" height="12" rx="6"/>
+                  <text class="fA" x="186" y="167" font-size="26" text-anchor="middle">?</text>
+                </g>
+                <g transform="translate(0 40) rotate(4 192 229)">
+                  <rect class="sF" stroke-width="2.5" x="92" y="192" width="200" height="74" rx="5"/>
+                  <text class="fD" x="110" y="226" font-size="24">re: re: re:</text>
+                  <path class="sD" stroke-width="3.5" d="M110 246h96"/>
+                </g>
+                <path class="sF" stroke-width="2" d="M308 262C356 258 404 238 446 232"/>
+                <circle class="fD" cx="458" cy="230" r="5"/>
+                <g transform="rotate(-0.6 630 230)">
+                  <rect class="sI" stroke-width="3" x="492" y="196" width="92" height="66" rx="7"/>
+                  <path class="sI" stroke-width="3" d="M494 204l44 32 44-32"/>
+                  <path class="sD" stroke-width="2" d="M594 229C640 229 660 118 702 118M594 229C640 229 664 174 702 174M594 229H702M594 229C640 229 664 286 702 286M594 229C640 229 660 342 702 342"/>
+                  <g class="fD"><circle cx="704" cy="118" r="3.5"/><circle cx="704" cy="174" r="3.5"/><circle cx="704" cy="230" r="3.5"/><circle cx="704" cy="286" r="3.5"/><circle cx="704" cy="342" r="3.5"/></g>
+                  <g class="sI" stroke-width="3">
+                    <circle cx="738" cy="108" r="8"/><path d="M722 132c0-17 32-17 32 0"/>
+                    <circle cx="738" cy="164" r="8"/><path d="M722 188c0-17 32-17 32 0"/>
+                    <circle cx="738" cy="220" r="8"/><path d="M722 244c0-17 32-17 32 0"/>
+                    <circle cx="738" cy="276" r="8"/><path d="M722 300c0-17 32-17 32 0"/>
+                    <circle cx="738" cy="332" r="8"/><path d="M722 356c0-17 32-17 32 0"/>
+                  </g>
+                </g>
+                <text class="say fD" x="160" y="440">REPLY-ALL</text>
+                <text class="say fI" x="612" y="412">ONE MESSAGE</text>
+                <text class="sub fD" x="612" y="442">to every family</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pic sketch">
+            <svg class="dw" viewBox="0 0 800 500" role="img" aria-label="Drawing of emailing families: choose everyone, a division or a team, then write one message"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-0.5 400 222)"><path class="sI" stroke-width="4" d="M94 106l10 10 19-21"/><circle class="sI" stroke-width="2.5" cx="166" cy="100" r="7"/><path class="sI" stroke-width="2.5" d="M153 120c0-14 26-14 26 0"/><circle class="sI" stroke-width="2.5" cx="200" cy="100" r="7"/><path class="sI" stroke-width="2.5" d="M187 120c0-14 26-14 26 0"/><circle class="sI" stroke-width="2.5" cx="234" cy="100" r="7"/><path class="sI" stroke-width="2.5" d="M221 120c0-14 26-14 26 0"/><rect class="fI" x="290" y="98" width="200" height="13" rx="6.5"/><rect class="fD" x="290" y="120" width="260" height="8" rx="4"/><path class="sF" stroke-width="1.4" d="M90 144h620"/><circle class="sD" stroke-width="2.5" cx="108" cy="172" r="9"/><circle class="sD" stroke-width="2.5" cx="166" cy="164" r="7"/><path class="sD" stroke-width="2.5" d="M153 184c0-14 26-14 26 0"/><circle class="sD" stroke-width="2.5" cx="200" cy="164" r="7"/><path class="sD" stroke-width="2.5" d="M187 184c0-14 26-14 26 0"/><rect class="fD" x="290" y="162" width="150" height="13" rx="6.5"/><rect class="fF" x="290" y="184" width="170" height="8" rx="4"/><path class="sF" stroke-width="1.4" d="M90 208h620"/><circle class="sD" stroke-width="2.5" cx="108" cy="236" r="9"/><circle class="sD" stroke-width="2.5" cx="166" cy="228" r="7"/><path class="sD" stroke-width="2.5" d="M153 248c0-14 26-14 26 0"/><rect class="fD" x="290" y="226" width="120" height="13" rx="6.5"/><rect class="fF" x="290" y="248" width="190" height="8" rx="4"/><path class="sF" stroke-width="1.4" d="M90 272h620"/><rect class="sI" stroke-width="3" x="96" y="298" width="64" height="46" rx="6"/><path class="sI" stroke-width="3" d="M98 304l30 22 30-22"/><rect class="fI" x="186" y="308" width="260" height="13" rx="6.5"/><rect class="fD" x="186" y="332" width="380" height="8" rx="4"/></g><text class="say fI" x="400" y="414">EMAIL FAMILIES</text><text class="sub fD" x="400" y="444">everyone, a division or a team</text></g></svg>
+          </div>
+          <div class="pic shot"><img src="shots/leagues-04-email.png" alt="Today’s screenshot: the season email screen" loading="lazy"></div>
+          <div class="counter">04</div>
+          <div class="c-eyebrow">Notifications</div>
+          <h3 class="c-title">Tell every parent in one message.</h3>
+          <p class="c-body">Send a season-wide update — a schedule change, a postponement, a standings recap — to every registered family from one screen. No reply-all, no personal inbox, no copy-pasted address list.</p>
+        </article>
+
+      </div>
+      <p class="s-caption cap-draw"><u>Walk the real screens in the demo</u>.</p>
+      <p class="s-caption cap-shot">These are the product’s own screens, shown with a fictional house league.</p>
+    </div>
+  </section>
+  </div>
+
+  <!-- ═════════ 3 · PROMISES ═════════ -->
+  <section class="panel" id="panel-promises" role="tabpanel" aria-labelledby="tab-promises" hidden>
+    <div class="sheet">
+      <h2>The rule these follow</h2>
+      <p>The pitch slides already set it (your ruling of 2026-08-21): a drawing may show anything the product does, as long as nobody can mistake it for a screen, and it never promises something the product lacks. The same six habits keep these eight honest.</p>
+      <ul>
+        <li>The old way is on the left, faint and tilted. The answer is on the right, in ink.</li>
+        <li>Two words each side. Everything else is texture: bars stand in for names and amounts, so no invented person or figure appears.</li>
+        <li>One amber mark per picture, on the exact thing that hurts: the final nobody has heard, the address nobody is sure of, the cell that does not add up.</li>
+        <li>No window, no menu, no buttons, no column headings. The answer is sketched in the same hand as the mess.</li>
+        <li>Squares, circles and triangles stand for teams, so no picture belongs to one sport.</li>
+      </ul>
+      <h2>What each picture says, and where the card already says it</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Card</th><th>The picture says</th><th>The card’s own words</th><th>Check before building</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Clubs 01</td><td>A paper bracket → the live bracket, scores as the games end</td><td>“brackets, and live scores”</td><td>The winner is drawn already moved into the next round. Confirm the bracket does that from the score alone; if a person places them, the picture still holds, but say so.</td></tr>
+            <tr><td class="k">Clubs 02</td><td>Three tools → one season: sign-up, draft, games, standings</td><td>“Player registration, draft, schedules, standings… Club includes all of it”</td><td>None.</td></tr>
+            <tr><td class="k">Clubs 03</td><td>Asking every coach → every team: roster, results, owing</td><td>“You see each team’s roster, schedule and results, what it owes the club… Lineups and the team’s own books stay with the coach.”</td><td>None. The picture stops at what the club sees; “stays with the coach” is left to the card’s words, because a drawn link to the coach would say the opposite (your ruling of 2026-11-06).</td></tr>
+            <tr><td class="k">Clubs 04</td><td>Three sheets → one ledger, checked against the bank</td><td>“One ledger… Type in a bank statement’s balance and see whether your books agree”</td><td>None.</td></tr>
+            <tr><td class="k">Leagues 01</td><td>An inbox → one list: approve, waitlist, decline</td><td>“You review applications, accept players, and manage the waitlist — no Google Form, no inbox.”</td><td>None. This is pitch slide 16’s drawing, unchanged.</td></tr>
+            <tr><td class="k">Leagues 02</td><td>A printed list → the draft, by pick order or a draw</td><td>“by pick order or a random draw… no printed lists”</td><td>None.</td></tr>
+            <tr><td class="k">Leagues 03</td><td>Done by hand → the standings, updated with every score</td><td>“Standings update the moment scores are entered”</td><td>None. No “moved up” arrows are drawn, because the standings table does not show movement.</td></tr>
+            <tr><td class="k">Leagues 04</td><td>Reply-all → one message, to every family</td><td>“to every registered family from one screen. No reply-all… no copy-pasted address list.”</td><td>None.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2 style="margin-top:18px">The same screens, drawn</h2>
+      <p>Each one shows only what today’s screenshot of that screen shows, with bars in place of names and figures, so it promises nothing the screenshot does not. After the design check, none of them draws a window, a tab or a button shape: a decision is a pen stroke, and the email picture shows who gets the message and the message, not the window it is written in.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 4 · CALLS ═════════ -->
+  <section class="panel" id="panel-calls" role="tabpanel" aria-labelledby="tab-calls" hidden>
+    <div class="sheet">
+      <h2>Your calls</h2>
+      <p>Four, each with a recommendation. Pick, then copy your answers back into the chat.</p>
+
+      <div class="call" id="call-d1">
+        <h3><span>D1</span>Which pictures go on the cards</h3>
+        <p>The plan records your picture call of 2026-11-20 as “A, the product’s own screens”, which is why screenshots shipped; either drawn option replaces that. <strong>Old way → answer</strong> says the most in each picture and matches the pitch deck, but For Clubs then says “before and after” twice, once in its old-way cards and once here. <strong>The same screens, drawn</strong> is calm and shows what you get, but once names and figures become bars, a registration list, a roster and a standings table look much alike; and with no faint old way beside it, an answer-only picture has less to mark it as a drawing, which is the one thing your 2026-08-21 ruling asks a drawing to make certain. <strong>Screenshots</strong> are the only ones that are proof, and the busiest at card size.</p>
+        <div class="opts">
+          <label><input type="radio" name="d1" id="d1-a" value="Old way → answer drawings, on both pages" checked> <span>Old way → answer, on both pages <span class="rec">recommended</span></span></label>
+          <label><input type="radio" name="d1" id="d1-b" value="The same screens, drawn, on both pages"> <span>The same screens, drawn, on both pages</span></label>
+          <label><input type="radio" name="d1" id="d1-c" value="Keep today’s screenshots"> <span>Keep today’s screenshots</span></label>
+          <label><input type="radio" name="d1" id="d1-d" value="A mix (I will say which card gets which)"> <span>A mix: tell me which card gets which</span></label>
+        </div>
+      </div>
+
+      <div class="call" id="call-d2">
+        <h3><span>D2</span>A drawn picture sits on a paper-coloured panel with no outline</h3>
+        <p>Today’s screenshot has a hairline frame, which is what makes a picture read as a window. Either drawn option drops the frame and takes the page’s own paper colour.</p>
+        <div class="opts">
+          <label><input type="radio" name="d2" id="d2-a" value="Paper panel, no outline, as drawn" checked> <span>As drawn <span class="rec">recommended</span></span></label>
+          <label><input type="radio" name="d2" id="d2-b" value="White, straight on the card, no panel at all"> <span>White, straight on the card, no panel at all</span></label>
+        </div>
+      </div>
+
+      <div class="call" id="call-d3">
+        <h3><span>D3</span>The line under the cards</h3>
+        <p>With drawings, “These are the product’s own screens…” is no longer true and comes off. Your ruling of 2026-08-21 on the pitch pages was to make no claim about the pictures and point at the demo instead, so the line is an invitation only. Its words go through the marketing and legal reads before it is built.</p>
+        <div class="opts">
+          <label><input type="radio" name="d3" id="d3-a" value="Walk the real screens in the demo. (linked; words to /marketing and /legal)" checked> <span>“Walk the real screens in the demo.”, linked <span class="rec">recommended</span></span></label>
+          <label><input type="radio" name="d3" id="d3-b" value="Drawings, not screenshots. Walk the real screens in the demo."> <span>“Drawings, not screenshots. Walk the real screens in the demo.”</span></label>
+          <label><input type="radio" name="d3" id="d3-c" value="No line under the cards"> <span>No line at all</span></label>
+        </div>
+      </div>
+
+      <div class="call" id="call-d4">
+        <h3><span>D4</span>What happens to the screenshot upkeep</h3>
+        <p>With no screenshots on these pages, the quarterly re-shoot has nothing to refresh. A drawing needs someone to notice when its screen changes; the old-way drawings are the least exposed to that, because they picture the job and not the layout.</p>
+        <div class="opts">
+          <label><input type="radio" name="d4" id="d4-a" value="Remove the eight screenshots and the quarterly re-shoot step; keep the invented club and its capture script for the walks and the deck" checked> <span>Remove the eight screenshots and the quarterly re-shoot; keep the invented club and its capture script <span class="rec">recommended</span></span></label>
+          <label><input type="radio" name="d4" id="d4-b" value="Keep the screenshots and the quarterly re-shoot for use elsewhere (say where)"> <span>Keep the screenshots and the re-shoot for use somewhere else</span></label>
+        </div>
+      </div>
+
+      <div class="copyrow">
+        <button class="btn" type="button" id="copybtn">Copy my answers</button>
+        <span id="copied" role="status"></span>
+      </div>
+      <textarea id="answers" readonly aria-label="Your answers, ready to paste back"></textarea>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var TABS = ["clubs", "leagues", "promises", "calls"];
+  var stage = document.getElementById("stage");
+  var views = document.getElementById("views");
+
+  function show(name) {
+    if (TABS.indexOf(name) < 0) { name = "clubs"; }
+    TABS.forEach(function (t) {
+      document.getElementById("panel-" + t).hidden = (t !== name);
+      document.getElementById("tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false");
+    });
+    views.hidden = (name === "promises" || name === "calls");
+  }
+
+  function fromHash() { show((location.hash || "").replace("#", "")); }
+
+  document.querySelectorAll(".tab").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var name = b.getAttribute("data-tab");
+      show(name);
+      try { history.replaceState(null, "", "#" + name); } catch (e) { location.hash = name; }
+    });
+  });
+  window.addEventListener("hashchange", fromHash);
+  fromHash();
+
+  function seg(id, attr) {
+    var buttons = document.querySelectorAll("#" + id + " button");
+    buttons.forEach(function (b) {
+      b.addEventListener("click", function () {
+        stage.setAttribute("data-" + attr, b.getAttribute("data-" + attr));
+        buttons.forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      });
+    });
+  }
+  seg("seg-pic", "pic");
+  seg("seg-w", "w");
+
+  document.querySelectorAll(".chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      show("calls");
+      var el = document.getElementById("call-" + c.getAttribute("data-call"));
+      if (!el) { return; }
+      el.scrollIntoView({ block: "center" });
+      el.classList.add("flash");
+      setTimeout(function () { el.classList.remove("flash"); }, 1600);
+    });
+  });
+
+  var out = document.getElementById("answers");
+  function build() {
+    var lines = ["On-sale card drawings: my calls"];
+    ["d1", "d2", "d3", "d4"].forEach(function (k) {
+      var picked = document.querySelector("input[name=" + k + "]:checked");
+      lines.push(k.toUpperCase() + ": " + (picked ? picked.value : "(no answer)"));
+    });
+    out.value = lines.join("\n");
+  }
+  document.querySelectorAll(".opts input").forEach(function (i) { i.addEventListener("change", build); });
+  build();
+
+  document.getElementById("copybtn").addEventListener("click", function () {
+    build();
+    var done = document.getElementById("copied");
+    function fallback() { out.focus(); out.select(); done.textContent = "Selected below. Press Ctrl+C to copy."; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(out.value).then(function () { done.textContent = "Copied."; }, fallback);
+    } else { fallback(); }
+  });
+})();
+</script>

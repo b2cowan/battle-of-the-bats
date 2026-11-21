@@ -71,7 +71,17 @@
 | **The coaches' group chat** | Rosters live in personal phones and lineups in notes apps, and you hear how a team is doing when a coach mentions it at the AGM. Each coach gets a Premium Coaches Portal, and you can read every team's roster, schedule and results. |
 | **The contact list in someone's Drive** | The contact list is in a personal Drive and the roster in someone's spreadsheet, so next year's board starts from nothing. Here the books, the families and last season's setup belong to the club, and the next volunteer picks up from there. |
 
-**W67 · caption** (as ruled): **"These are the product's own screens, shown with a fictional house league."** · /for-clubs: **"These are the product's own screens, shown with a fictional club."**
+**W67 · the pictures and their words** (owner re-ruling 2026-11-21, replacing the 2026-11-20 screenshots and their caption "These are the product's own screens…"): each card carries an **old way → answer drawing**, and **no line sits under the cards**. The owner's pick for that line, "Walk the real screens in the demo.", was subject to the `/marketing` and `/legal` reads, and both cut it: the two demos are a tournament and a coach's season, so nobody can walk a house league or the club's books. It comes back only with a demo that shows those screens. The words inside the drawings (old way → answer · the quiet line), as read by `/marketing` and `/legal` the same day:
+- /for-clubs 01 **A PAPER BRACKET → THE LIVE BRACKET** · "scores as they go in" (a person enters a score; never "as the games end")
+- /for-clubs 02 **THREE TOOLS → ONE SEASON** · "registration to standings" · rows **REGISTRATION · DRAFT · GAMES · STANDINGS** (enrolment is "registration", never "sign-up")
+- /for-clubs 03 **ASK EVERY COACH → EVERY TEAM** · "roster · results · owing" · the old-way bubbles "roster?" and "paid yet?"
+- /for-clubs 04 **THREE SHEETS → ONE LEDGER** · "checked against the bank statement" (never a bare "the bank": there is no bank connection)
+- /for-leagues 01 **AN INBOX → ONE LIST** · "approve · waitlist · decline" (the pitch deck's drawing, unchanged)
+- /for-leagues 02 **A PRINTED LIST → THE DRAFT** · "pick order or a draw"
+- /for-leagues 03 **DONE BY HAND → THE STANDINGS** · "updated with every score"
+- /for-leagues 04 **REPLY-ALL → ONE MESSAGE** · "from one screen" (never "to every family": a family that opted out of club email is skipped)
+
+No drawing names a plan, a price or a person. **Open owner question from the same reads:** /for-leagues card 04's own title, "Tell every parent in one message.", and its body's "every registered family" over-claim in the same way the cut sub-line did; the card words were out of scope for the picture change and are unchanged.
 
 **W69 · "What each person at your club gets"** (both states): President **"One place for the whole club."** / "House league, rep teams, tournaments and the books behind one sign-in. Give each board member their role, and take it back when someone steps down." · Treasurer and Registrar as in `CLUB_ON_SALE_COPY.md` W69 · Coaches **"A Premium Coaches Portal for every coach."** / **"Roster, lineups, schedule and team budget for every team you give a portal, with no per-team fee. The team's books stay with the coach."** · under the cards **"Taking this to a board meeting? The plans and prices are on one page."** link **"See every plan and price"** (no "trial": the section shows while closed).
 
