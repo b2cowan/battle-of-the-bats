@@ -64,6 +64,8 @@ export type MoveFacts = {
   reopen?: { newer: string[] };
   /** The season takes friend requests (Board Ready Stage 1 Part 2, A12): the finish deletes them, and says so. */
   friendRequests?: boolean;
+  /** Board Ready Stage 4 Part 3 (ruling 10): the sign-up form asks a health or a file question; the clock removes them. */
+  formRemoves?: boolean;
 };
 
 export type MoveWords = {
@@ -186,6 +188,8 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
           'Player ratings are erased.',
           // Board Ready Stage 1 Part 2 (A12; mig 471 in the same trigger): the form promises families this.
           ...(f.friendRequests ? ['Friend requests and friend codes are deleted.'] : []),
+          // Board Ready Stage 4 Part 3 (ruling 10): the clock, said where the clock starts.
+          ...(f.formRemoves ? ['Family files and health answers are removed 90 days after the season is finished.'] : []),
           NOT_EMAILED,
         ],
         looseEnds: [...ahead, ...(end ? [end] : [])],

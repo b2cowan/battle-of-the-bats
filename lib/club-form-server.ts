@@ -80,18 +80,25 @@ function toVersion(v: VersionRow, ticks: number, families: number): DocumentVers
   };
 }
 
-export type ClubForm = { id: string; questions: FormQuestion[]; documents: FormDocument[] };
+export type ClubForm = {
+  id: string; questions: FormQuestion[]; documents: FormDocument[];
+  /** When the retention clock removed the family files and health answers (Stage 4 Part 3, ruling 10), else null. */
+  removedAt?: string | null;
+};
 
 /**
  * The form as the club's page reads it: every question and document, archived ones included (the page shows the live
  * ones; a record opened from elsewhere can still read an archived one), each with COUNTS only.
  */
 export async function readForm(formId: string): Promise<ClubForm> {
-  const [q, d, counts] = await Promise.all([
+  const [q, d, counts, removed] = await Promise.all([
     supabaseAdmin.from('club_form_questions').select(QUESTION_COLS).eq('form_id', formId).order('sort_order').order('created_at'),
     supabaseAdmin.from('club_form_documents').select(DOCUMENT_COLS).eq('form_id', formId).order('sort_order').order('created_at'),
     // The database counts (mig 513 `club_form_counts`): no answer and no guardian's email comes back, only numbers.
     supabaseAdmin.rpc('club_form_counts', { p_form: formId }),
+    // Stage 4 Part 3: the clock removes a finished season's files and health answers in one run; the form page names the day.
+    supabaseAdmin.from('club_form_answers').select('removed_at').eq('form_id', formId).not('removed_at', 'is', null)
+      .order('removed_at', { ascending: false }).limit(1),
   ]);
   if (q.error) throw q.error;
   if (d.error) throw d.error;
@@ -111,6 +118,7 @@ export async function readForm(formId: string): Promise<ClubForm> {
 
   return {
     id: formId,
+    removedAt: ((removed.data ?? []) as { removed_at: string }[])[0]?.removed_at ?? null,
     questions: ((q.data ?? []) as QuestionRow[]).map(r => toQuestion(r, count.get(`question:${r.id}`)?.n ?? 0)),
     documents: docs.map(r => ({
       id: r.id, name: r.name, source: r.source_kind, tickKind: r.tick_kind, sortOrder: r.sort_order, archivedAt: r.archived_at,
@@ -159,6 +167,8 @@ export function factsOf(form: Pick<ClubForm, 'questions' | 'documents'>): FormFa
     questions: form.questions.filter(isLiveQuestion).length,
     documents: form.documents.filter(isLiveDocument).map(d => d.name),
     print: formPrint(form),
+    // Stage 4 Part 3 (ruling 10): the finish confirm says the clock will remove family files and health answers.
+    removesOnClock: form.questions.some(q => q.health || q.type === 'file'),
   };
 }
 
@@ -336,14 +346,20 @@ export async function copyForm(input: {
   return { questions: questions.length, documents: added };
 }
 
+/** The season's form id, or null when it has none — a READ (`ensureSeasonForm` makes one). The one lookup (Stage 4 Part 3). */
+export async function seasonFormId(seasonId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.from('club_forms').select('id').eq('owner_table', 'league_seasons').eq('owner_id', seasonId).maybeSingle();
+  if (error) throw error;
+  return (data as { id: string } | null)?.id ?? null;
+}
+
 /**
  * Remove every stored file of a season's form (its documents' PDFs and any file a family attached) — called BEFORE the
- * season's rows go, since the database trigger that deletes the form can't reach storage (/review 2026-11-20). A season
- * with no form, or a failed removal, leaves nothing worse than today: the club purge still finds the files by prefix.
+ * season's rows go: the fast path. Since Part 3 (mig 518) the rows' own triggers also list every path for the six-hourly
+ * sweep, so a failed removal here is caught there; the club purge still finds the files by prefix.
  */
 export async function removeSeasonFormFiles(seasonId: string): Promise<void> {
-  const { data: f } = await supabaseAdmin.from('club_forms').select('id').eq('owner_table', 'league_seasons').eq('owner_id', seasonId).maybeSingle();
-  const formId = (f as { id: string } | null)?.id;
+  const formId = await seasonFormId(seasonId).catch(() => null);
   if (!formId) return;
   const [{ data: docs }, { data: files }] = await Promise.all([
     supabaseAdmin.from('club_form_documents').select('club_form_document_versions(file_path)').eq('form_id', formId),

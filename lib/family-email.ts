@@ -1,6 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { sendEmail, sendEmailBatch, EMAIL_BATCH_SIZE, escapeHtml, type SendEmailResult } from './email';
+import { sendEmail, sendEmailBatch, signupButton, EMAIL_BATCH_SIZE, escapeHtml, type SendEmailResult } from './email';
 import type { UnloggedEmailKind } from './email-kinds';
 import { buildGuardianUnsubscribeUrl, oneClickUnsubscribeHeaders } from './unsubscribe-token';
 import { normalizeGuardianEmail, isSendableGuardianEmail } from './guardian-email';
@@ -130,6 +130,10 @@ export interface FamilyEmailContent {
   body: string;
   /** Optional call to action, e.g. "See the full schedule →". */
   cta?: { href: string; label: string };
+  /** The family's "Your sign-up" button, by the recipient's normalized address (the club's own Email families, when that
+   *  family's sign-up has something to do on the form: lib/club-form-email-links.ts). An address not in it gets no button;
+   *  the button is the one `signupButton` every house-league family email wears. */
+  signupLinks?: ReadonlyMap<string, string>;
   /** Why this family is receiving it, completing "Sent by {org} because …". */
   reason: string;
   /** The club's face (S3b): the band, the foot and the reply line. Omitted, the email is exactly what S3a shipped. */
@@ -144,6 +148,7 @@ function familyEmailHtml(content: FamilyEmailContent, orgId: string, recipientEm
   const sender = content.orgName ? escapeHtml(content.orgName) : escapeHtml(content.teamName);
   const footer = familyEnvelopeFooterWords(sender, escapeHtml(content.reason));
   const unsubscribeUrl = buildGuardianUnsubscribeUrl(orgId, recipientEmail);
+  const signup = signupButton(content.signupLinks?.get(recipientEmail));
   const cta = content.cta
     ? `<p style="${WARM_EMAIL_STYLE.paragraph}margin-top:22px;"><a href="${content.cta.href}" style="${WARM_EMAIL_STYLE.textLink}">${escapeHtml(content.cta.label)}</a></p>`
     : '';
@@ -156,7 +161,7 @@ function familyEmailHtml(content: FamilyEmailContent, orgId: string, recipientEm
   return warmEmailDocument(`
 ${eyebrow}${warmEmailHeading(escapeHtml(content.title))}
 <div style="${WARM_EMAIL_STYLE.paragraph}">${escapeHtml(content.body)}</div>
-${cta}
+${signup}${cta}
 ${warmEmailFootnote(`${footer.sentBy}<br>
 ${reply}${unsubscribeUrl ? `<a href="${unsubscribeUrl}" style="${WARM_EMAIL_STYLE.finePrintLink}">${footer.unsubscribe}</a>` : ''}`)}`, content.club);
 }

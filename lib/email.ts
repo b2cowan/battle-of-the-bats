@@ -924,9 +924,10 @@ function payBlock(toPay: number, howToPay: string | null, clubName: string, onli
 /**
  * A house-league family email's ONE link (Signed-in family accounts Stage 1, asks 2 and 3; drawing tab 5): the "Your
  * sign-up" button, carrying the signed link. The sender decides whether this email carries it (the sign-up confirmation
- * always; every later email only while money is owed); no link, no button.
+ * always; every later email only while money is owed; the club's own "Email families" while the sign-up has something to do
+ * on the season's form, lib/club-form-email-links.ts); no link, no button.
  */
-function signupButton(url: string | null | undefined): string {
+export function signupButton(url: string | null | undefined): string {
   return url ? warmEmailButton(SIGNUP_LINK_WORDS.mail.button, escapeEmailHtml(url)) : '';
 }
 

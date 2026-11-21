@@ -17,6 +17,7 @@ import { withObservability } from '@/lib/observability';
 import { readRegistrationDisputes } from '@/lib/online-dispute-read';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { likeOrTerm } from '@/lib/house-league-registrations';
+import { readAnswerColumns, readSeasonAnswerGrid, type StaffRegRow } from '@/lib/club-form-staff';
 import { clubPayoutsConnected, clubTakesCards, loadCardRefunds, loadRegistrationDebits, loadUnassignedRefunds, returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
 
 export const GET = withObservability(async (req: Request,
@@ -72,7 +73,19 @@ export const GET = withObservability(async (req: Request,
   const registrations = await withFamilyAppStatuses(ctx!.org.id, await withSecondParentStops(ctx!.org.id, (data ?? []).map(mapLeagueRegistration)));
   const shown = new Set(registrations.map(r => r.id));
   const money = Object.fromEntries([...lines].filter(([id]) => shown.has(id)));
-  const [unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes] = await Promise.all([
+  // Board Ready Stage 4 Part 3 (ruling 11): the form's answers for the list's columns, its Filter and plain Excel/CSV —
+  // NEVER a health question's (`health: false` leaves them out of the response entirely, ruling 5) — and the columns this
+  // person chose. An extra never takes the list down: the rows read as before without it.
+  const formRead = readSeasonAnswerGrid({ seasonId, regs: (data ?? []) as StaffRegRow[], health: false })
+    .then(async grid => grid && {
+      ...grid,
+      columns: await readAnswerColumns(ctx!.user.id, grid.formId, grid.questions.filter(q => !q.archived).map(q => q.id)),
+    })
+    .catch(e => {
+      console.error('[registrations] couldn’t read the sign-up form’s answers:', e instanceof Error ? e.message : String(e));
+      return null;
+    });
+  const [unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes, form] = await Promise.all([
     unrecordedCardShares([...shown]), returnedCardRefunds([...shown]), loadCardRefunds(ctx!.org.id, [...shown]),
     loadUnassignedRefunds(ctx!.org.id, seasonId), loadRegistrationDebits(ctx!.org.id, [...shown]),
     // 12d-1 Part 3 (words §1.1–§1.2): each child's card dispute, read for THIS reader (amber and the Stripe door are the
@@ -85,6 +98,7 @@ export const GET = withObservability(async (req: Request,
       console.error('[registrations] couldn’t read card disputes:', e instanceof Error ? e.message : String(e));
       return {};
     }),
+    formRead,
   ]);
   const priceChanges = (changes.data ?? []).map(c => ({
     registrationId: c.registration_id as string, kind: c.kind as 'corrected' | 'moved',
@@ -93,7 +107,7 @@ export const GET = withObservability(async (req: Request,
     refundEntryId: (c.refund_entry_id as string | null) ?? null,
   }));
 
-  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, payoutsOn, unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes });
+  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, payoutsOn, unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes, form });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
 
 

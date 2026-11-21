@@ -1,7 +1,7 @@
 # The Audit log screen's scope note, and "recorded in the audit log" promises
-**Last verified:** 2026-11-19 (re-verified when the screen gained the pay-link actions, Board Ready P8c; wording against the code, no outside sources)
-**Re-verify by:** the day the Audit log screen gains or loses an event kind (the 2026-11-12 "no expansion" was superseded by one ruled widening, 2026-11-19: the pay-link actions, owner only), or when the club data-processing terms are drafted
-**Depends on facts:** `LEGAL_FACTS.md` § Personal information the product holds; the screen reads `AUDIT_LOG_ACTIONS` only (`MEMBER_AUDIT_ACTIONS` + `PAY_LINK_AUDIT_ACTIONS`, `lib/member-audit.ts`)
+**Last verified:** 2026-11-20 (re-verified when the screen gained the family-file and health-export actions, Board Ready Stage 4 Part 3; before that 2026-11-19, the pay-link actions, P8c; wording against the code, no outside sources)
+**Re-verify by:** the day the Audit log screen gains or loses an event kind (the 2026-11-12 "no expansion" was superseded by two ruled widenings: the pay-link actions 2026-11-19 and the form's file opening and health export 2026-11-20, owner only), or when the club data-processing terms are drafted
+**Depends on facts:** `LEGAL_FACTS.md` § Personal information the product holds; the screen reads `AUDIT_LOG_ACTIONS` only (`MEMBER_AUDIT_ACTIONS` + `PAY_LINK_AUDIT_ACTIONS` + `FORM_AUDIT_ACTIONS`, `lib/member-audit.ts`)
 
 ## Question(s) this answers
 Does the scope note on the Audit log screen (club and tournament-side), and the help copy around it, say what a user will actually find? Can the Families help article say "every export is recorded in the club's audit log"?
@@ -29,6 +29,21 @@ Does the scope note on the Audit log screen (club and tournament-side), and the 
   seeing it doesn’t mean it didn’t happen" already covers it. No wording change. Who reads it (owner only, admins not)
   was the owner's need-to-know call, ruled 2026-11-19; the privacy draft's "Your use of the product" paragraph covers an
   admin's actions shown to the club's owner. Pay-link sends before 2026-11-19 were never written, so the log starts then.
+
+- **2026-11-20 re-verify (Board Ready Stage 4 Part 3, the screen gained two event kinds):** `AUDIT_LOG_ACTIONS` now also holds
+  `club_form_file_opened` ("Opened a file a family attached") and `club_form_health_exported` ("Exported registrations with
+  health answers"), `lib/member-audit.ts` `FORM_AUDIT_ACTIONS`; ids only, the child and season are named at read time
+  (`app/api/admin/members/audit/route.ts` `nameFormRows`), still owner only. The scope note said "family records … isn't
+  listed here", which now misleads (a family's file opening is listed). **Corrected sentence, applied in
+  `components/admin/kit/club/AuditLogKit.tsx` (words only):** "It also lists each time a team’s pay link is emailed,
+  replaced or stopped, each time a family’s file is opened, and each export that carries health answers. Other activity
+  (schedule and score edits, payments and refunds, changes to family records, other exports, sign-ins) isn’t listed here."
+  "Other exports" is deliberate: the plain Registrations and Families exports are NOT logged, so no sentence may say every
+  export is recorded (the Families help line is still the open item below). The record's file note "Each opening is recorded in
+  the audit log." is true by design; a failed log write is swallowed and reported to us (`lib/org-audit.ts`), the same caveat as
+  the pay-link lines, owner call F2 in `BOARD_READY_STAGE4_PART3_BUILT_REVIEW.md`. Still stale for `/docs`: the Organization help
+  (`lib/help-content/org.tsx:905`) and the Audit log export's catalog summary (`lib/export/catalog.ts:985`) name only pay-link
+  actions beside the member changes.
 
 ## What the product does today
 Screen: `app/api/admin/members/audit/route.ts` (`scope=members` = `AUDIT_LOG_ACTIONS`; pay-link rows named by `namePayLinkTeams`, this

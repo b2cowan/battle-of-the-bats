@@ -550,6 +550,41 @@
     "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
   },
   {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_form_idx",
+    "indexdef": "CREATE INDEX club_form_answer_clears_form_idx ON public.club_form_answer_clears USING btree (form_id)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_org_idx",
+    "indexdef": "CREATE INDEX club_form_answer_clears_org_idx ON public.club_form_answer_clears USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_pkey ON public.club_form_answer_clears USING btree (id)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_subject_idx",
+    "indexdef": "CREATE INDEX club_form_answer_clears_subject_idx ON public.club_form_answer_clears USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_subject_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_subject_uniq ON public.club_form_answer_clears USING btree (question_id, subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_submission_idx",
+    "indexdef": "CREATE INDEX club_form_answer_clears_submission_idx ON public.club_form_answer_clears USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_submission_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_submission_uniq ON public.club_form_answer_clears USING btree (question_id, submission_id) WHERE (subject_id IS NULL)"
+  },
+  {
     "tablename": "club_form_answers",
     "indexname": "club_form_answers_file_idx",
     "indexdef": "CREATE INDEX club_form_answers_file_idx ON public.club_form_answers USING btree (file_id) WHERE (file_id IS NOT NULL)"
@@ -688,6 +723,16 @@
     "tablename": "club_form_questions",
     "indexname": "club_form_questions_pkey",
     "indexdef": "CREATE UNIQUE INDEX club_form_questions_pkey ON public.club_form_questions USING btree (id)"
+  },
+  {
+    "tablename": "club_form_storage_removals",
+    "indexname": "club_form_storage_removals_created_idx",
+    "indexdef": "CREATE INDEX club_form_storage_removals_created_idx ON public.club_form_storage_removals USING btree (created_at)"
+  },
+  {
+    "tablename": "club_form_storage_removals",
+    "indexname": "club_form_storage_removals_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_storage_removals_pkey ON public.club_form_storage_removals USING btree (path)"
   },
   {
     "tablename": "club_form_submissions",

@@ -37,8 +37,20 @@ export const MEMBER_AUDIT_ACTIONS = [
  */
 export const PAY_LINK_AUDIT_ACTIONS = ['pay_link_emailed', 'pay_link_replaced', 'pay_link_stopped'] as const;
 
-/** Everything the owner's log lists (the route's `?scope=members`): the member changes and the pay-link actions. */
-export const AUDIT_LOG_ACTIONS = [...MEMBER_AUDIT_ACTIONS, ...PAY_LINK_AUDIT_ACTIONS] as const;
+/**
+ * A family's file opened by the club, and the one export that carries health answers (Board Ready Stage 4 Part 3,
+ * rulings 6 and 13). The row holds ids only — the registration and the file's id, or the season — never a file's name or
+ * an answer; the route names the child and the season at read time, inside this organization.
+ */
+export const FILE_OPENED_ACTION = 'club_form_file_opened';
+export const HEALTH_EXPORT_ACTION = 'club_form_health_exported';
+export const FORM_AUDIT_ACTIONS = [FILE_OPENED_ACTION, HEALTH_EXPORT_ACTION] as const;
+
+export const isFormAuditAction = (action: string): boolean =>
+  (FORM_AUDIT_ACTIONS as readonly string[]).includes(action);
+
+/** Everything the owner's log lists (the route's `?scope=members`): the member changes, the pay-link and the form actions. */
+export const AUDIT_LOG_ACTIONS = [...MEMBER_AUDIT_ACTIONS, ...PAY_LINK_AUDIT_ACTIONS, ...FORM_AUDIT_ACTIONS] as const;
 
 export const isPayLinkAuditAction = (action: string): boolean =>
   (PAY_LINK_AUDIT_ACTIONS as readonly string[]).includes(action);
@@ -152,6 +164,10 @@ export function auditChangeSentence(action: string, payload: Record<string, unkn
     case 'pay_link_stopped':
       // `asked: 'send'` = a "Send a new link" whose new link did not go: recorded as what it was.
       return p.asked === 'send' ? 'Stopped the pay link (the new one didn’t go out)' : 'Stopped the pay link';
+    case FILE_OPENED_ACTION:
+      return 'Opened a file a family attached';
+    case HEALTH_EXPORT_ACTION:
+      return 'Exported registrations with health answers';
     default:
       return action;
   }

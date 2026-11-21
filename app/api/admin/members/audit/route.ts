@@ -4,7 +4,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { getUserDisplayName } from '@/lib/user-display';
-import { auditChangeSentence, AUDIT_LOG_ACTIONS, isPayLinkAuditAction } from '@/lib/member-audit';
+import { auditChangeSentence, AUDIT_LOG_ACTIONS, isFormAuditAction, isPayLinkAuditAction } from '@/lib/member-audit';
 
 const PAGE_SIZE = 25;
 
@@ -24,6 +24,8 @@ const ACTION_LABELS: Record<string, string> = {
   pay_link_emailed:  'Pay link emailed',
   pay_link_replaced: 'Pay link replaced',
   pay_link_stopped:  'Pay link stopped',
+  club_form_file_opened:     'Family file opened',
+  club_form_health_exported: 'Health answers exported',
 };
 
 function summarizePayload(action: string, payload: Record<string, unknown> | null): string {
@@ -126,11 +128,15 @@ export const GET = withObservability(async (req: Request) => {
 
   // P8c: a pay-link row's "To" is the team and its tournament. Names only (never `teams.email` / `coach_email`), and
   // only tournaments of THIS organization — a row's ids were written by our own route, but the read never trusts that.
-  const payLinkNames = membersOnly ? await namePayLinkTeams(ctx.org.id, rows ?? []) : null;
+  const [payLinkNames, formNames] = membersOnly
+    ? await Promise.all([namePayLinkTeams(ctx.org.id, rows ?? []), nameFormRows(ctx.org.id, rows ?? [])])
+    : [null, null];
 
   const result = (rows ?? []).map(r => {
     const payload = r.payload as Record<string, unknown> | null;
-    const payLinkTo = payLinkNames && isPayLinkAuditAction(r.action) ? payLinkNames(payload) : null;
+    // A row with no target person names what it was about: a team (pay links) or a child and season (Stage 4 forms).
+    const namedTarget = payLinkNames && isPayLinkAuditAction(r.action) ? payLinkNames(payload)
+      : formNames && isFormAuditAction(r.action) ? formNames(payload) : null;
     // member_removed stores email in payload because the auth user is deleted by then.
     const targetEmail =
       r.action === 'member_removed' && payload?.email
@@ -147,7 +153,7 @@ export const GET = withObservability(async (req: Request) => {
       createdAt: r.created_at,
       ...(membersOnly ? {
         actorName: r.actor_id ? nameOf(r.actor_id) : null,
-        targetName: payLinkTo ?? (r.action === 'member_removed' ? null : nameOf(r.target_id)),
+        targetName: namedTarget ?? (r.action === 'member_removed' ? null : nameOf(r.target_id)),
         sentence: auditChangeSentence(r.action, payload),
       } : {}),
     };
@@ -160,6 +166,45 @@ export const GET = withObservability(async (req: Request) => {
     pageSize: PAGE_SIZE,
   });
 }, { route: '/api/admin/members/audit' });
+
+/**
+ * "{child}, {season}" for a family file opened, "{season}" for a health export (Board Ready Stage 4 Part 3), from two
+ * reads for the page, inside this organization only. A registration or season deleted since reads "Deleted registration"
+ * / "Deleted season". Never a file's name.
+ */
+async function nameFormRows(
+  orgId: string,
+  rows: { action: string; payload: unknown }[],
+): Promise<(payload: Record<string, unknown> | null) => string> {
+  const payloads = rows.filter(r => isFormAuditAction(r.action)).map(r => (r.payload ?? {}) as Record<string, unknown>);
+  const regIds = [...new Set(payloads.map(p => idOf(p.registrationId)).filter((id): id is string => !!id))];
+  const regs = new Map<string, { name: string; seasonId: string }>();
+  if (regIds.length > 0) {
+    const { data, error } = await supabaseAdmin.from('league_registrations')
+      .select('id, player_first_name, player_last_name, season_id').in('id', regIds);
+    if (error) throw error;
+    for (const r of data ?? []) {
+      regs.set(r.id as string, { name: `${r.player_first_name ?? ''} ${r.player_last_name ?? ''}`.trim() || 'Unnamed child', seasonId: r.season_id as string });
+    }
+  }
+  const seasonIds = [...new Set([...payloads.map(p => idOf(p.seasonId)), ...[...regs.values()].map(r => r.seasonId)].filter((id): id is string => !!id))];
+  const seasonName = new Map<string, string>();
+  if (seasonIds.length > 0) {
+    const { data, error } = await supabaseAdmin.from('league_seasons').select('id, name').eq('org_id', orgId).in('id', seasonIds);
+    if (error) throw error;
+    for (const s of data ?? []) seasonName.set(s.id as string, (s.name as string | null)?.trim() || 'Untitled season');
+  }
+  return (payload) => {
+    const p = payload ?? {};
+    const regId = idOf(p.registrationId);
+    if (regId) {
+      const r = regs.get(regId);
+      // A registration is named only under a season of THIS organization.
+      return r && seasonName.has(r.seasonId) ? `${r.name}, ${seasonName.get(r.seasonId)}` : 'Deleted registration';
+    }
+    return seasonName.get(idOf(p.seasonId) ?? '') ?? 'Deleted season';
+  };
+}
 
 // Only a real id is looked up (the writer validates them; a malformed one must never fail the whole page's read).
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

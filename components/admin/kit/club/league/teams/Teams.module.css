@@ -346,6 +346,8 @@
 .popTitle { margin: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
 .popLine, .popQuote { margin: 0; color: var(--text-secondary); overflow-wrap: anywhere; }
 .popQuote { white-space: pre-line; }
+/* Board Ready Stage 4 Part 3 (ruling 12): a board answer under the family's note, its question in bold. */
+.popAnswer { margin: 6px 0 0; }
 .popFoot { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
 .popList { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; margin: 0; padding: 0; list-style: none; }
 .popList li { display: contents; }

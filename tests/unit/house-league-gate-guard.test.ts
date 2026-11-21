@@ -38,7 +38,15 @@ function firstGate(body: string): string | null {
  * The one write handler whose FIRST gate is a read: the registration PATCH decides per field (fee, notes, placement,
  * status), and section 2b proves each branch asks its own write action on the season.
  */
-const FIRST_GATE_READ = new Set(['app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts PATCH']);
+const FIRST_GATE_READ = new Set([
+  'app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts PATCH',
+  // Board Ready Stage 4 Part 3 (ruling 6): opening a family's file is a READ by whoever opens Registrations; it is a POST
+  // only so a prefetch never counts as an opening in the audit log, and it changes nothing of the season's.
+  'app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/files/[fileId]/route.ts POST',
+  // Board Ready Stage 4 Part 3 (ruling 11): the answer columns are the READER's own preference (user_preferences), saved
+  // by anyone who opens Registrations; nothing of the season is written.
+  'app/api/admin/house-league/seasons/[seasonId]/registrations/answers/route.ts PUT',
+]);
 
 describe('1 · every house-league route goes through the one gate', () => {
   it('the glob found the tree', () => assert.ok(ROUTES.length >= 20, `only ${ROUTES.length} routes found`));

@@ -87,7 +87,8 @@ export interface FamilyFileMoney {
 
 export interface FamilyFileForms {
   documents: { child: string; type: string; fileName: string | null; receivedAt: string }[];
-  waivers: { child: string; season: string; acceptedAt: string }[];
+  /** The sign-up's documents ticked: `acceptedAt` is the earliest tick; `agreed` (absent reads true) is false when every tick was only "I have read …". */
+  waivers: { child: string; season: string; acceptedAt: string; agreed?: boolean }[];
   consents: { email: string; basis: string; scope: string; startedAt: string; withdrawnAt: string | null }[];
 }
 
@@ -190,8 +191,8 @@ export function familyFileLines(file: FamilyFile): { id: FamilyFileSectionId; ti
   ].map(top);
   const forms = [
     ...s.forms.documents.map(d => `${d.type} · ${d.child} · received ${day(d.receivedAt)}${d.fileName ? ` (${d.fileName})` : ''}`),
-    // Board Ready Stage 4: the date is set when a family agreed to a sign-up document, which may not be a waiver.
-    ...s.forms.waivers.map(w => `Documents agreed to · ${w.child} · ${w.season} · ${day(w.acceptedAt)}`),
+    // Board Ready Stage 4: read from the sign-up's ticks — "agreed to" when a tick said "I have read and agree …", else "ticked".
+    ...s.forms.waivers.map(w => `Documents ${w.agreed === false ? 'ticked' : 'agreed to'} · ${w.child} · ${w.season} · ${day(w.acceptedAt)}`),
     ...s.forms.consents.map(c => `Consent · ${c.basis.replace(/_/g, ' ')} (${c.scope}) · ${c.email} · from ${day(c.startedAt)}${c.withdrawnAt ? ` · withdrawn ${day(c.withdrawnAt)}` : ''}`),
   ].map(top);
   const messages = s.messages.map(x => top(`${day(x.at)}${x.by ? ` by ${x.by}` : ''}`));

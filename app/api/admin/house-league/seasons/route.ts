@@ -8,6 +8,7 @@ import { DEFAULT_SPORT } from '@/lib/sports';
 import { seasonSlugFrom, seasonSlugRefusal } from '@/lib/house-league-season';
 import { loadStartSource, readStartFromBody, startSeasonFrom } from '@/lib/house-league-start-from-server';
 import { FORM_LIMITS } from '@/lib/club-form';
+import { questionsOnPlan } from '@/lib/club-form-route';
 
 const NAME_TAKEN = 'You already have a season with this name. Give this one a different name.';
 
@@ -64,6 +65,8 @@ export const POST = withObservability(async (req: Request) => {
         orgId: ctx!.org.id, userId: ctx!.user.id, name, slug,
         sport: typeof body.sport === 'string' && body.sport ? body.sport : DEFAULT_SPORT,
         seasonStartDate: seasonStart || null, seasonEndDate: seasonEnd || null,
+        // Board Ready Stage 4 Part 2 (carried from Part 1's review): the plan gate holds when the form is copied too.
+        questionsOnPlan: questionsOnPlan(ctx!),
       }, source, startFrom);
       return NextResponse.json(made, { status: 201 });
     } catch (e) {

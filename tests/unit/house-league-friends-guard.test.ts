@@ -108,7 +108,8 @@ describe('3 · friend names stay out of the contact-details file', () => {
     assert.doesNotMatch(reg, /typedFirst|typedLast|typedParent|askedText|matchedRegistration/);
   });
   it('every CSV cell of both files is written formula-safe (an Excel cell is stored as text and never runs)', () => {
-    assert.match(reg, /generateCSV\(serializeHeaders\(colsFor\(rows\)\), serializeRows\(source\(rows\), colsFor\(rows\)\)\.map\(formulaSafeRow\)\)/);
+    // Board Ready Stage 4 Part 3: the CSV also carries the sign-up form's answer columns; every cell still goes formula-safe.
+    assert.match(reg, /const cols = colsFor\(rows, answerCols\.filter\(c => !c\.health\)\);[\s\S]{0,200}generateCSV\(serializeHeaders\(cols\), serializeRows\(source\(rows, answerCols\), cols\)\.map\(formulaSafeRow\)\)/);
     assert.match(readCode(FRIEND_EXPORT), /forCsv \? cells\.map\(v => String\(formulaSafe\(v\)\)\) : cells/);
     // Part 3 passes the live result as a fifth argument; the CSV flag (true) is what makes every cell formula-safe.
     assert.match(readCode(FRIEND_EXPORT), /generateCSV\(HEAD, lines\(p\.rows, p\.divisionName, p\.teamName, true(, p\.resultOf)?\)\)/);

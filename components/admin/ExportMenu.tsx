@@ -96,6 +96,12 @@ export interface ExportMenuProps {
    */
   sensitiveFeatureKey?: PlanFeature;
   /**
+   * A SECOND opt-in under the first, for a file that carries more than contacts (Board Ready Stage 4 Part 3, ruling 13:
+   * "Excel with contact details and health answers"). Drawn only beside the first opt-in, under the same plan gate; its
+   * hint says what the name doesn't.
+   */
+  extraSensitiveOption?: { label: string; hint: string; onExport: () => void | Promise<void> };
+  /**
    * When true, a "full dataset" server-side export option appears.
    * Use for paginated tables where client state is a subset of all records.
    */
@@ -166,6 +172,7 @@ export default function ExportMenu({
   sensitiveOptionLabel = 'Excel with contact details',
   onExportXLSXWithSensitive,
   sensitiveFeatureKey,
+  extraSensitiveOption,
   hasServerExport = false,
   onServerExport,
   planId,
@@ -413,34 +420,32 @@ export default function ExportMenu({
             <div className={styles.divider} role="separator" />
           )}
 
-          {/* Sensitive opt-in */}
-          {!lockAll && hasSensitiveOption && onExportXLSXWithSensitive && (
+          {/* The sensitive opt-ins, under one plan gate: the shipped one, then (Stage 4 Part 3) one that also carries more. */}
+          {!lockAll && hasSensitiveOption && onExportXLSXWithSensitive && [
+            { key: 'contacts', label: sensitiveOptionLabel, hint: 'Includes additional contact columns', onExport: onExportXLSXWithSensitive },
+            ...(extraSensitiveOption ? [{ key: 'extra', ...extraSensitiveOption }] : []),
+          ].map(opt => (
             <button
+              key={opt.key}
               role="menuitem"
               className={`${styles.menuItem}${!sensitiveAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
               onClick={() => {
                 if (!sensitiveAccessible || exportDisabled) return;
-                runExport(onExportXLSXWithSensitive!);
+                runExport(opt.onExport);
               }}
               aria-disabled={!sensitiveAccessible || exportDisabled}
               title={sensitiveAccessible ? undefined : sensitiveUpgradeCopy}
             >
               <FileSpreadsheet size={14} className={styles.menuIcon} aria-hidden />
-              {!sensitiveAccessible && (
-                <Lock size={12} className={styles.lockIcon} aria-hidden />
-              )}
+              {!sensitiveAccessible && <Lock size={12} className={styles.lockIcon} aria-hidden />}
               <span>
-                <span className={styles.menuItemLabel}>{sensitiveOptionLabel}</span>
+                <span className={styles.menuItemLabel}>{opt.label}</span>
                 <span className={styles.menuItemHint}>
-                  {!sensitiveAccessible
-                    ? sensitiveUpgradeCopy
-                    : exportDisabled
-                      ? 'No rows available to export'
-                      : 'Includes additional contact columns'}
+                  {!sensitiveAccessible ? sensitiveUpgradeCopy : exportDisabled ? 'No rows available to export' : opt.hint}
                 </span>
               </span>
             </button>
-          )}
+          ))}
 
           {/* Server-side full export */}
           {!lockAll && hasServerExport && onServerExport && (

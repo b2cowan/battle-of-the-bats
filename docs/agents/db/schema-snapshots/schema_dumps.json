@@ -2918,6 +2918,78 @@
         "column_default": "now()"
       },
       {
+        "table_name": "club_form_answer_clears",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 3,
+        "column_name": "form_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 4,
+        "column_name": "question_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 5,
+        "column_name": "submission_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 6,
+        "column_name": "subject_table",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 7,
+        "column_name": "subject_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 8,
+        "column_name": "cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "club_form_answers",
         "pos": 1,
         "column_name": "id",
@@ -3551,6 +3623,33 @@
         "table_name": "club_form_questions",
         "pos": 16,
         "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_storage_removals",
+        "pos": 1,
+        "column_name": "path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_storage_removals",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_storage_removals",
+        "pos": 3,
+        "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -32591,6 +32690,15 @@
         "column_default": "false"
       },
       {
+        "table_name": "user_preferences",
+        "pos": 7,
+        "column_name": "registration_answer_columns",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",
@@ -33164,6 +33272,34 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "child_match_rejections_rejected_by_fkey"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "column_name": "form_id",
+        "foreign_table": "club_forms",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answer_clears_form_id_fkey"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answer_clears_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "column_name": "question_id",
+        "foreign_table": "club_form_questions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answer_clears_question_id_fkey"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "column_name": "submission_id",
+        "foreign_table": "club_form_submissions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answer_clears_submission_id_fkey"
       },
       {
         "table_name": "club_form_answers",
@@ -39738,6 +39874,41 @@
         "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
       },
       {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_form_idx",
+        "indexdef": "CREATE INDEX club_form_answer_clears_form_idx ON public.club_form_answer_clears USING btree (form_id)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_org_idx",
+        "indexdef": "CREATE INDEX club_form_answer_clears_org_idx ON public.club_form_answer_clears USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_pkey ON public.club_form_answer_clears USING btree (id)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_subject_idx",
+        "indexdef": "CREATE INDEX club_form_answer_clears_subject_idx ON public.club_form_answer_clears USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_subject_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_subject_uniq ON public.club_form_answer_clears USING btree (question_id, subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_submission_idx",
+        "indexdef": "CREATE INDEX club_form_answer_clears_submission_idx ON public.club_form_answer_clears USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_submission_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_submission_uniq ON public.club_form_answer_clears USING btree (question_id, submission_id) WHERE (subject_id IS NULL)"
+      },
+      {
         "tablename": "club_form_answers",
         "indexname": "club_form_answers_file_idx",
         "indexdef": "CREATE INDEX club_form_answers_file_idx ON public.club_form_answers USING btree (file_id) WHERE (file_id IS NOT NULL)"
@@ -39876,6 +40047,16 @@
         "tablename": "club_form_questions",
         "indexname": "club_form_questions_pkey",
         "indexdef": "CREATE UNIQUE INDEX club_form_questions_pkey ON public.club_form_questions USING btree (id)"
+      },
+      {
+        "tablename": "club_form_storage_removals",
+        "indexname": "club_form_storage_removals_created_idx",
+        "indexdef": "CREATE INDEX club_form_storage_removals_created_idx ON public.club_form_storage_removals USING btree (created_at)"
+      },
+      {
+        "tablename": "club_form_storage_removals",
+        "indexname": "club_form_storage_removals_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_storage_removals_pkey ON public.club_form_storage_removals USING btree (path)"
       },
       {
         "tablename": "club_form_submissions",
@@ -46283,6 +46464,30 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "club_form_answer_clears",
+        "detail": "club_form_answer_clears_has_target",
+        "check_clause": "((subject_id IS NOT NULL) OR (submission_id IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_answer_clears",
+        "detail": "club_form_answer_clears_subject_pair",
+        "check_clause": "((subject_table IS NULL) = (subject_id IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_answer_clears",
+        "detail": "club_form_answer_clears_subject_table_check",
+        "check_clause": "((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_answer_clears",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "club_form_answers",
         "detail": "club_form_answers_has_target",
         "check_clause": "((subject_id IS NOT NULL) OR (submission_id IS NOT NULL))"
@@ -46488,6 +46693,12 @@
       {
         "kind": "RLS",
         "table_name": "club_form_questions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_storage_removals",
         "detail": "ENABLED",
         "check_clause": null
       },

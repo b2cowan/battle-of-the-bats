@@ -1,17 +1,29 @@
 {
-  "generated": "2026-11-20",
-  "total": 551,
+  "generated": "2026-11-21",
+  "total": 583,
   "counts": {
-    "tables": 19,
-    "columns": 258,
-    "indexes": 95,
-    "constraints": 79,
-    "rls": 100
+    "tables": 21,
+    "columns": 270,
+    "indexes": 104,
+    "constraints": 85,
+    "rls": 103
   },
   "items": [
     {
       "key": "check:changed:org_permits.org_permits_document_type_check",
       "sig": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'::text]))) :: ((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text])))"
+    },
+    {
+      "key": "check:only-dev:club_form_answer_clears.club_form_answer_clears_has_target",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_answer_clears.club_form_answer_clears_subject_pair",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_form_answer_clears.club_form_answer_clears_subject_table_check",
+      "sig": ""
     },
     {
       "key": "check:only-dev:club_form_answers.club_form_answers_has_target",
@@ -418,6 +430,38 @@
       "sig": "text|text|YES| :: text|text|NO|"
     },
     {
+      "key": "column:only-dev:club_form_answer_clears.cleared_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answer_clears.form_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answer_clears.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answer_clears.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answer_clears.question_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answer_clears.subject_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answer_clears.subject_table",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_answer_clears.submission_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:club_form_answers.created_at",
       "sig": ""
     },
@@ -699,6 +743,18 @@
     },
     {
       "key": "column:only-dev:club_form_questions.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_storage_removals.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_storage_removals.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_form_storage_removals.path",
       "sig": ""
     },
     {
@@ -1274,6 +1330,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:user_preferences.registration_answer_columns",
+      "sig": ""
+    },
+    {
       "key": "column:only-prod:organization_billing_facts.next_season_billing_cycle",
       "sig": ""
     },
@@ -1442,6 +1502,26 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:club_form_answer_clears.club_form_answer_clears_form_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answer_clears.club_form_answer_clears_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answer_clears.club_form_answer_clears_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answer_clears.club_form_answer_clears_question_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_answer_clears.club_form_answer_clears_submission_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:club_form_answers.club_form_answers_file_id_fkey",
       "sig": ""
     },
@@ -1539,6 +1619,10 @@
     },
     {
       "key": "constraint:only-dev:club_form_questions.club_form_questions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_form_storage_removals.club_form_storage_removals_pkey",
       "sig": ""
     },
     {
@@ -1758,6 +1842,34 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:club_form_answer_clears_form_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answer_clears_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answer_clears_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answer_clears_subject_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answer_clears_subject_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answer_clears_submission_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_answer_clears_submission_uniq",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:club_form_answers_file_idx",
       "sig": ""
     },
@@ -1867,6 +1979,14 @@
     },
     {
       "key": "index:only-dev:club_form_questions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_storage_removals_created_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_form_storage_removals_pkey",
       "sig": ""
     },
     {
@@ -2138,6 +2258,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:club_form_answer_clears",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:club_form_answers",
       "sig": ""
     },
@@ -2155,6 +2279,10 @@
     },
     {
       "key": "table:only-dev:club_form_questions",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_form_storage_removals",
       "sig": ""
     },
     {

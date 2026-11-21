@@ -72,6 +72,8 @@ const asSource = (r: SourceRow): StartSource => ({
 export type StartFromBase = {
   orgId: string; userId: string; name: string; slug: string; sport: string;
   seasonStartDate: string | null; seasonEndDate: string | null;
+  /** The club's own questions come across only on a plan with them (`custom_registration_fields`); documents always do. */
+  questionsOnPlan: boolean;
 };
 
 /**
@@ -201,7 +203,7 @@ export async function startSeasonFrom(base: StartFromBase, sourceRow: SourceRow,
     await step('league_practice_time', practiceRows);
     await step('league_team_coaches', coachRows);
     if (formHas) {
-      await copyForm({ orgId: base.orgId, fromFormId: sourceForm!.id, from: sourceForm!, toFormId: await ensureSeasonForm(made.id), userId: base.userId });
+      await copyForm({ orgId: base.orgId, fromFormId: sourceForm!.id, from: sourceForm!, toFormId: await ensureSeasonForm(made.id), userId: base.userId, questions: base.questionsOnPlan });
     }
   } catch (err) {
     // All or nothing: the season goes, and its cascade takes whatever landed under it.

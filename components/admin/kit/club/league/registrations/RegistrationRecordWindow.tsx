@@ -91,7 +91,7 @@ function SecondParentFact({ reg, onSave, family }: {
 export default function RegistrationRecordWindow({
   model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onNote, onClose,
   cardRefunds = [], dispute = null, orgSlug = '', canDesk = false, isPhone = false, focus = null, onAnotherWay, onSecondEmail = null, onFamily = null,
-  friends = null, clearingCents = 0,
+  friends = null, clearingCents = 0, formSections = null,
 }: {
   /** This child's fee on a bank debit on its way (`clearingShareCents`): Still owing is after it, as on the Fee cell (13e-9). */
   clearingCents?: number;
@@ -132,6 +132,8 @@ export default function RegistrationRecordWindow({
    * child nobody named and who named nobody: the section is absent.
    */
   friends?: { asked: readonly ReactNode[]; askedFor: readonly string[]; onOpen: () => void } | null;
+  /** Board Ready Stage 4 Part 3 (drawing tab 6 · B): "Sign-up answers" and "Documents", after Fee and before History. */
+  formSections?: ReactNode;
 }) {
   const reg: LeagueRegistration = model.reg;
   const got = receivedOf(lines);
@@ -224,6 +226,8 @@ export default function RegistrationRecordWindow({
           )}
         </section>
       )}
+
+      {formSections}
 
       <section className={css.recordSection}>
         <h3 className={css.recordHead}>{W.history}</h3>

@@ -145,8 +145,9 @@ export default function AuditLogKit() {
       <p className={styles.scope}>
         Lists changes to who has access and what they can do: invites, removals, role and access changes,
         suspensions, and two-step sign-in settings. It also lists each time a team’s pay link is emailed,
-        replaced or stopped. Other activity (schedule and score edits, payments and refunds, family records,
-        sign-ins) isn’t listed here.
+        replaced or stopped, each time a family’s file is opened, and each export that carries health answers.
+        Other activity (schedule and score edits, payments and refunds, changes to family records, other
+        exports, sign-ins) isn’t listed here.
       </p>
 
       {status === 'error' ? (

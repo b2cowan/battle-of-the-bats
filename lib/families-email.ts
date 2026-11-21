@@ -5,7 +5,7 @@ import { resolvePersonNamer } from './db';
 import { sendFamilyEmail, sendFamilyEmailBatch, type FamilySendResult } from './family-email';
 import { loadFamilyAudience, loadHouseholdReach, type FamilyAudienceWorld } from './families-read';
 import {
-  audienceChoices, familyAudience, familyCounts, isSeasonDoorScope, parseScope, scopeNeedsPick, scopeSeasonId,
+  audienceChoices, familyAudience, familyCounts, isLiveRegStatus, isSeasonDoorScope, parseScope, scopeNeedsPick, scopeSeasonId,
   type AudienceChoices, type AudienceFamily, type AudiencePerson, type FamilyAudience, type FamilyAudienceScope,
 } from './families-audience';
 import { coachCopyWords, headCoachesToCopy, sendClubInboxCopy, sendCoachCopies, type CopiedCoach } from './families-email-coaches';
@@ -22,6 +22,7 @@ import {
 import { writeOrgAudit } from './org-audit';
 import { seasonState } from './house-league-season';
 import { secondParentsOf } from './league-second-parent';
+import { formButtonLinksOrNone } from './club-form-email-links';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -347,6 +348,9 @@ export async function deliverFamilyEmail(d: {
   reply: FamilyReply;
   /** The season door's own refusal words; the club door's otherwise. */
   words: { capReason: (nextAt: string | null) => string; sentNoneDelivered: string };
+  /** A season's send only: each address's "Your sign-up" button, for the households whose sign-up has something to do on the
+   *  form (lib/club-form-email-links.ts). Decided by the caller; none = no button on any email of the send. */
+  signupLinks?: ReadonlyMap<string, string>;
 }): Promise<FamilyEmailResult> {
   const { ctx, scope, world, audience } = d;
   const senderEmail = ctx.user.email ?? null;
@@ -400,7 +404,7 @@ export async function deliverFamilyEmail(d: {
     orgId: ctx.org.id,
     to: audience.families.flatMap(f => f.addresses),
     subject: d.subject,
-    content: { teamName: ctx.org.name, orgName: ctx.org.name, title: d.subject, body: d.message, reason: reasonFor(d.seasonName), club, replyLine: reply.line },
+    content: { teamName: ctx.org.name, orgName: ctx.org.name, title: d.subject, body: d.message, reason: reasonFor(d.seasonName), club, replyLine: reply.line, signupLinks: d.signupLinks },
     suppressed: world.suppressed,
     replyTo,
     onBatch: async so => {
@@ -490,7 +494,7 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
   if (opts.seasonId) q = q.eq('season_id', opts.seasonId);
   if (opts.noLists) q = q.neq('audience_kind', 'list');
   // Taking the row is the press's claim: a second press finds it already taken, and nothing goes twice.
-  const { data: taken, error } = await q.select('id, subject, body, season_id, family_count').maybeSingle();
+  const { data: taken, error } = await q.select('id, subject, body, season_id, family_count, audience_kind').maybeSingle();
   if (error) throw error;
   if (!taken) {
     // The nightly clean-up may have won the race between the look above and the take: say so in its own words.
@@ -529,7 +533,19 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
     if (list.length) await supabaseAdmin.from('family_email_recipients').update({ status, updated_at: new Date().toISOString() }).in('id', list);
   }
 
-  const seasonName = taken.season_id ? await seasonNameOf(taken.season_id) : null;
+  const season = taken.season_id ? await seasonFactsOf(taken.season_id) : null;
+  const seasonName = season?.name ?? null;
+  // The button the first send would have carried (Board Ready Stage 4 Part 3, owner call C4) — only a season door's send
+  // carries one (/review 2026-11-20: a club door's send names a season too, and went without) — decided as the family stands now:
+  // a household's live registrations in this season, in the order the list holds them.
+  const fromSeasonDoor = String((taken as { audience_kind?: string | null }).audience_kind ?? '').startsWith('season_');
+  const signupLinks = season && fromSeasonDoor && families.length > 0 ? await formButtonLinksOrNone({
+    org: ctx.org, season,
+    families: families.map(f => ({
+      addresses: f.addresses,
+      regIds: f.personIds.flatMap(id => (peopleById.get(id)?.seasonRows ?? []).filter(r => r.seasonId === season.id && isLiveRegStatus(r.status)).map(r => r.regId)),
+    })),
+  }) : undefined;
   const [club, name] = await Promise.all([clubEmailFacts(ctx.org), senderName(ctx).catch(() => null)]);
   const reply = replyPlanFor(ctx, { mode, contact }, ctx.user.email ?? null, name);
   const known: RecipientStatus[] = families.map(() => 'pending');
@@ -538,7 +554,7 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
     orgId: ctx.org.id,
     to: families.flatMap(f => f.addresses),
     subject: taken.subject,
-    content: { teamName: ctx.org.name, orgName: ctx.org.name, title: taken.subject, body: taken.body, reason: reasonFor(seasonName), club, replyLine: reply.line },
+    content: { teamName: ctx.org.name, orgName: ctx.org.name, title: taken.subject, body: taken.body, reason: reasonFor(seasonName), club, replyLine: reply.line, signupLinks },
     suppressed: world.suppressed,
     replyTo: mode === 'club' ? contact : (ctx.user.email ?? null),
     onBatch: async so => recordOutcomes(familyIds, families, so, known),
@@ -561,9 +577,9 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
   };
 }
 
-async function seasonNameOf(seasonId: string): Promise<string | null> {
-  const { data } = await supabaseAdmin.from('league_seasons').select('name').eq('id', seasonId).maybeSingle();
-  return data?.name ?? null;
+async function seasonFactsOf(seasonId: string): Promise<{ id: string; name: string; slug: string; status: string } | null> {
+  const { data } = await supabaseAdmin.from('league_seasons').select('id, name, slug, status').eq('id', seasonId).maybeSingle();
+  return data ? { id: data.id, name: data.name, slug: data.slug, status: data.status } : null;
 }
 
 export type FamilyMessageResult =

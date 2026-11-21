@@ -11,6 +11,7 @@ import { useEffect, useRef } from 'react';
 import { RepChip, RowAction, repKit, ClubRowList } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { REGS_WORDS } from '@/lib/house-league-money-words';
+import { STAFF_FORM_WORDS } from '@/lib/club-form-staff-words';
 import type { FeeCellParts, RowActionKey } from '@/lib/house-league-registrations';
 import type { LeagueRegistration } from '@/lib/types';
 import FeeCell from './FeeCell';
@@ -44,6 +45,10 @@ export interface RegRowModel {
   sheet: MenuItem[];
   sheetSub: string;
   note: RowNote | null;
+  /** Board Ready Stage 4 Part 3 (ruling 11): the chosen answer columns, in the chosen order. "Not asked" reads dim, never blank. */
+  answers?: { text: string; dim: boolean }[];
+  /** A document asks this sign-up for a new tick (the amber chip on the player's sub-line, drawing tab 6). */
+  needsTick?: boolean;
 }
 
 type Handlers = {
@@ -144,10 +149,12 @@ function Check({ allOn, someOn, onChange, label }: { allOn: boolean; someOn: boo
 }
 
 export default function RegistrationsList({
-  rows, showFee, onSelectAll, hidden, onMore, ...h
+  rows, showFee, answerHeads = [], onSelectAll, hidden, onMore, ...h
 }: Handlers & {
   rows: readonly RegRowModel[];
   showFee: boolean;
+  /** The chosen answer columns' headings (up to three, after Guardian; never on a phone). */
+  answerHeads?: readonly string[];
   onSelectAll: () => void;
   /** How many more rows the list holds than are drawn, and the press that draws the next page. */
   hidden: number;
@@ -179,6 +186,7 @@ export default function RegistrationsList({
             <th scope="col">{REGS_WORDS.col.player}</th>
             <th scope="col">{REGS_WORDS.col.division}</th>
             <th scope="col">{REGS_WORDS.col.guardian}</th>
+            {answerHeads.map((label, i) => <th key={i} scope="col" className={css.answerCol}>{label}</th>)}
             {showFee && <th scope="col">{REGS_WORDS.col.fee}</th>}
             <th scope="col"><span className={repKit.srOnly}>{REGS_WORDS.col.actions}</span></th>
           </tr>
@@ -199,7 +207,10 @@ export default function RegistrationsList({
                     onClick={e => { e.stopPropagation(); h.onOpen(row.reg.id); }}>{row.name}</button>
                   {row.reg.status === 'waitlisted' && row.reg.waitlistPosition != null && <RepChip>{REGS_WORDS.waitingPosition(row.reg.waitlistPosition)}</RepChip>}
                 </span>
-                <span className={repKit.cellSub}>{row.playerSub}</span>
+                <span className={repKit.cellSub}>
+                  {row.playerSub}
+                  {row.needsTick && <>{' · '}<RepChip tone="warn">{STAFF_FORM_WORDS.needsNewTick}</RepChip></>}
+                </span>
                 <Note row={row} onNote={h.onNote} />
               </td>
               <td>
@@ -212,6 +223,10 @@ export default function RegistrationsList({
                   ? <span className={repKit.cellSub}>{row.email}</span>
                   : <span className={`${repKit.cellSub} ${css.noEmail}`}>{REGS_WORDS.noEmail}</span>}
               </td>
+              {answerHeads.map((_, i) => {
+                const cell = row.answers?.[i];
+                return <td key={i} className={css.answerCol}>{cell ? (cell.dim ? <span className={repKit.dim}>{cell.text}</span> : cell.text) : null}</td>;
+              })}
               {showFee && <td><FeeCell parts={row.fee} onAlert={h.onAlert ? id => h.onAlert!(row, id) : undefined} /></td>}
               <td className={css.actionsCol} onClick={e => e.stopPropagation()}>
                 <span className={css.actions}>
@@ -221,7 +236,7 @@ export default function RegistrationsList({
               </td>
             </tr>
           ))}
-          {more && <tr><td colSpan={4 + (h.selectable ? 1 : 0) + (showFee ? 1 : 0)}>{more}</td></tr>}
+          {more && <tr><td colSpan={4 + answerHeads.length + (h.selectable ? 1 : 0) + (showFee ? 1 : 0)}>{more}</td></tr>}
         </tbody>
       </table>
     </div>

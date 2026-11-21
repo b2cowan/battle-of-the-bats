@@ -146,6 +146,8 @@ const STAYS: Record<string, string> = {
   club_form_answers: 'a family’s answers on a club form, on the season’s registration (Board Ready Stage 4 mig 513)',
   club_form_ticks: 'a family’s document ticks on a club form, on the season’s registration (Board Ready Stage 4 mig 513)',
   club_form_files: 'files a family attaches on a club form (Board Ready Stage 4 mig 513)',
+  club_form_answer_clears: 'a health answer a family cleared on a club form, on the season’s registration (Board Ready Stage 4 mig 518)',
+  club_form_storage_removals: 'stored club form files still to delete; a path, never moved (Board Ready Stage 4 mig 518)',
   // ── Org-level setup a Coaches Portal does not use ────────────────────────────────────────────
   org_budget_lines: 'the club-side org budget (a Coaches Portal has none); moved rows that pointed at one are cleared',
   org_fiscal_years: 'the club’s fiscal years (mig 318) — the years its own plan and books are closed by; a team’s money runs on seasons, never fiscal years, so a Coaches Portal has none to move',

@@ -34,15 +34,16 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { getBillingHref } from '@/lib/billing-urls';
 import { isLiveDocument, isLiveQuestion, type FormDocument, type FormQuestion, type QuestionAsked } from '@/lib/club-form';
 import {
-  ASKED_WORDS, FORM_WORDS as W, documentCaption, fixedFields, foldedLine, questionCaption, questionsSummary,
+  ASKED_WORDS, FORM_WORDS as W, typeLabel, documentCaption, fixedFields, foldedLine, questionCaption, questionsSummary,
 } from '@/lib/club-form-words';
 import type { OrgPlan } from '@/lib/types';
 import QuestionWindow from './QuestionWindow';
 import DocumentWindow from './DocumentWindow';
 import f from './SignupForm.module.css';
+import { STAFF_FORM_WORDS } from '@/lib/club-form-staff-words';
 
 export type FormRead = {
-  form: { id: string; questions: FormQuestion[]; documents: FormDocument[] };
+  form: { id: string; questions: FormQuestion[]; documents: FormDocument[]; removedAt?: string | null };
   counts: { children: number; signups: number };
   canEdit: boolean;
   finished: boolean;
@@ -160,9 +161,12 @@ export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlu
   const questionTitle = (q: FormQuestion) => (
     <>{q.label}{q.health && <span className={f.rowMark}><RepChip tone="warn">Health</RepChip></span>}</>
   );
-  const questionCaptions = (q: FormQuestion) => (
-    <><span className={f.deskOnly}>{questionCaption(q)}</span><span className={f.phoneOnly}>{questionCaption(q, true)}</span></>
-  );
+  // Board Ready Stage 4 Part 3 (drawing tab 8 · A): once the clock has removed a finished season's family files and health
+  // answers, those questions say so in place of their count.
+  const removedAt = read.form.removedAt ?? null;
+  const questionCaptions = (q: FormQuestion) => removedAt && q.answers > 0 && (q.health || q.type === 'file')
+    ? <>{[typeLabel(q.type), STAFF_FORM_WORDS.questionRemovedCaption(q.type, removedAt)].join(' · ')}</>
+    : <><span className={f.deskOnly}>{questionCaption(q)}</span><span className={f.phoneOnly}>{questionCaption(q, true)}</span></>;
 
   const bandList = (asked: QuestionAsked) => {
     const qs = band(asked);

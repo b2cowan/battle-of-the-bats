@@ -194,7 +194,7 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
               ))}
               {leagueCopies.length > 0 && (
                 <p className={css.sentence}>
-                  {`${W.houseLeague}: ${W.leagueOnlyWaiver(copyName(leagueCopies[0]))}`}
+                  {`${W.houseLeague}: ${W.leagueOnlyWaiver(copyName(leagueCopies[0]), leagueCopies[0].agreed)}`}
                   {!isPhone && leagueCopies.length > 1 && (
                     <EarlierLink doc={W.waiver} n={leagueCopies.length - 1}
                       onOpen={() => setCopiesOf({ title: W.waiver, eyebrow: W.copiesEyebrow(read.child.name, W.houseLeague), copies: leagueCopies })} />

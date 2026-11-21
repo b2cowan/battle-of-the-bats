@@ -5,10 +5,20 @@
 | **Version** | next after 2026-11-17 (posted with a new effective date under §13; no new use and no new kind of company, so no advance email is owed: what we collect does not change, one purpose narrows, one email and one invoice kind are gone, and one existing record is named in two rows) |
 | **Status** | draft — held to publish on the same day as the Payments Terms (owner call (b), recommended); not published |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
-| **Last reviewed** | 2026-11-18 (0.2: Board Ready data terms, with its follow-through) |
+| **Last reviewed** | 2026-11-20 (0.4: Board Ready Stage 4 Part 3 §5 edits; before that 2026-11-18, 0.2: Board Ready data terms, with its follow-through) |
 | **Starts from** | `lib/legal-documents/privacy/2026-11-17.md`, word for word, with the changes in the log |
 
 **Change log**
+- **Draft 0.4 (2026-11-20, Board Ready Stage 4 Part 3 close-out; `BOARD_READY_STAGE4_PART3_BUILT_REVIEW.md`)** — two §5
+  edits, no new use and no new kind of company, so no advance email under §13. (1) A new §5 bullet names answers to a
+  club's own sign-up questions, files a family attaches, and the record of each document ticked (words, version, who,
+  when, no IP address); who reads them; the one-hour link; the opening recorded in the club's audit log. (2) The
+  "About registrants" bullet no longer says every consent record carries an internet (IP) address: only a tryout
+  registration's does (`consent_ip` on the rep registration, `app/api/rep-teams/.../tryouts/.../register/route.ts:126`);
+  the house-league waiver and email-consent ledger rows (`lib/org-people.ts` `recordLeagueWaiverConsent`,
+  `recordLeagueMarketingConsent`) and the new document ticks hold none. **Deliberately NOT in this draft:** the §9
+  retention sentence for family files and health answers, and any "within a day" sentence for files that never join a
+  sign-up. Both wait for migration 516 (the six-hourly sweep) to be running on production (Before list item 8).
 - **Draft 0.3 (2026-11-18, Board Ready trust close-out 13 call (b); `CASL_MEMBER_INVITE_EMAILS.md`)** — one added §9 bullet,
   "Invitations nobody accepts" (30 days open, 30 more run out, then removed; a never-used account the invitation made is
   deleted; the club's audit line keeps the address). Conditional on the nightly sweep being scheduled on production
@@ -125,8 +135,14 @@ process it for them, as their service provider**, and only to provide FieldLogic
   notes, awards, and documents the club asks for (for example signed waivers, medical consent forms and codes of conduct).
 - **About parents and guardians:** name, email addresses, phone number, relationship to the player, registration and
   consent records, payments and amounts owed, and messages.
-- **About registrants:** what the registration or tryout form asks for, and a record of the consents given — including
-  when, and the internet (IP) address it was given from.
+- **About registrants:** what the registration or tryout form asks for, and a record of the consents given, including
+  when. For a tryout registration, that record also includes the internet (IP) address the consent was given from.
+- **About a club's own sign-up questions and documents:** the answers a family gives to a club's own sign-up questions
+  (a club may mark some of them as being about a child's health), the files a family attaches (for example a doctor's
+  note), and, for each document a parent ticks to agree to, the exact words ticked, which version of the document it was,
+  who ticked it and when. We do not record an internet (IP) address for these ticks. The club's staff who can open its
+  registrations can read the answers and open the files. A family's file opens only through a private link that lasts an
+  hour, and each opening is recorded in the club's audit log.
 
 **One record for each child, across seasons.** A club keeps one record for each child, which carries from season to
 season. The child's current medical note and emergency contact sit on that record; each season's roster also keeps what it
@@ -409,6 +425,18 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
    published text says nothing about invitations, so it is silent, not false). Soften "Thirty days after that" to "About
    thirty days after that" if the owner will not hold the sweep to the day (the sweep takes 200 rows a run, so a backlog
    can slip a night). Re-read the bullet against the sweep's keep rule if `lib/member-account-keep.ts` changes.
+
+8. **(0.4, 2026-11-20, Board Ready Stage 4 Part 3)** The new §5 bullet about a club's own sign-up questions, files and
+   ticks publishes no earlier than the day the club's side of the sign-up form (Parts 1–3 together) is on production,
+   and it is true as soon as Part 2 collects an answer. **The §9 retention sentence and any "within a day" sentence are
+   NOT in this draft. Add them only once migration 516 (the six-hourly sweep schedule, a watched-automation change that
+   needs the owner's yes) has been applied on production AND one run has succeeded.** The sentence then says: family
+   files and health answers a club's sign-up form collected are removed 90 days after the season is marked finished, or
+   120 days after its last day if it is never marked finished, and a file a family chose but never sent in with a
+   sign-up is deleted within about 18 hours. Until the schedule runs, nothing is removed by the clock (the sweep also
+   runs by hand and a few files at a time when a family uploads one), so the sentence would be false. Cut the 120-day
+   half only if the finish-or-backstop rule changes. The sentence about the audit log in the new §5 bullet is true once
+   Part 3 is on production (the log lists a file opening; `lib/member-audit.ts` `AUDIT_LOG_ACTIONS`).
 
 **Publishing steps**
 1. Freeze the text as `lib/legal-documents/privacy/<date>.md` (the filter's output), add `{ version, sha256 }` to

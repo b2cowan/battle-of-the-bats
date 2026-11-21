@@ -10,6 +10,14 @@
 | **Research** | `BOARD_READY_DATA_TERMS_REVIEW.md` (census, supplier terms, Québec/PIPEDA fit, owner questions, lawyer's eye) |
 
 **Change log**
+- **0.1, 2026-11-20 (Board Ready Stage 4 Part 3 close-out; `BOARD_READY_STAGE4_PART3_BUILT_REVIEW.md`)** — §12 gains one
+  sentence naming answers to the club's own sign-up questions and files a family attaches (never in an email, notification
+  or public page; read only through the registrations seats; one-hour link; each opening in the audit log; what to ask
+  is the club's decision). It adds a statement about what we do and no duty on the club, so still not a §18 change.
+  **Deliberately NOT added:** the §10/§11 retention promise for these files and health answers (90 days after a season
+  is marked finished, 120 after its last day) — it waits for migration 516 to be running on production (Before list
+  item 6). Note for item 6: the draft's §10 and §11 wording about deleting a child's record should be read again once the
+  retention sentence goes in, because the clock leaves the registration, the other answers and the ticks in place.
 - **0.1 (2026-11-18)** — first draft. Every statement of fact rests on the published Terms and Privacy Policy (version
   2026-11-17), `BREACH_PROCEDURE.md` (owner-approved 2026-11-17), `docs/agents/ops/BACKUPS_AND_RESTORE.md` (2026-11-18)
   or the 2026-11-18 code census. **Design rule: these terms add obligations to FieldLogicHQ and none to the club** that
@@ -211,7 +219,12 @@ of a failure in our safeguards or a company on our list:
 
 FieldLogicHQ is built on the expectation that much of your information is about children. We treat it, and health
 information about anyone, as sensitive: it is never shown on public pages, and uploaded documents open only through
-short-lived private links. Children don't hold FieldLogicHQ accounts; everyone who does confirms they are 18 or older.
+short-lived private links. That includes the answers a family gives to your organization's own sign-up questions
+(including any you mark as being about a child's health) and the files a family attaches to a sign-up: they are never
+put in an email, a notification or a public page, inside your organization they are readable only by the people who can open its
+registrations, and a family's file opens only through a private link that lasts an hour, each opening recorded in your
+organization's audit log. Which questions to ask, and whether to ask for health information at all, is your
+organization's decision (§2). Children don't hold FieldLogicHQ accounts; everyone who does confirms they are 18 or older.
 Getting a parent's or guardian's consent where the law requires it is your organization's responsibility (§2), and we
 do not check it.
 
@@ -243,6 +256,11 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
 3. Two-step sign-in is on production (the §8 bullet), or the bullet is cut.
 4. Org deletion removes files on production (`45c134bea`; the release-history record).
 5. The owner has a by-hand procedure for §10 (a child's record and its files) and §11 (a full copy within 30 days).
+6. **(2026-11-20, Board Ready Stage 4 Part 3)** The §12 sentence about sign-up answers and files is true once Parts 1–3
+   of the club sign-up form are on production. **No retention or "within a day" sentence about those files and health
+   answers goes into §10, §11 or §12 until migration 516 (the six-hourly sweep schedule; the owner's yes) has been applied
+   on production and one run has succeeded.** Then add: family files and health answers collected by a club's sign-up
+   form are removed 90 days after the season is marked finished, or 120 days after its last day if it never is.
 
 **Publishing steps** — as the Terms' (Stage 6 plan §6.7 shape): frozen as part of the Terms version, served beside it,
 this draft deleted and the index pointed at the product's copy.

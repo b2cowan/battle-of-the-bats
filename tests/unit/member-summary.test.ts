@@ -188,8 +188,9 @@ describe('the audit log reads as sentences (specimen 11)', () => {
   });
 
   // Board Ready P8c (owner 2026-11-19): the owner's log also lists a team's pay link emailed, replaced or stopped.
-  it('the owner\'s log lists the member changes and the three pay-link actions, nothing else', () => {
-    assert.deepEqual([...AUDIT_LOG_ACTIONS], [...MEMBER_AUDIT_ACTIONS, 'pay_link_emailed', 'pay_link_replaced', 'pay_link_stopped']);
+  it('the owner\'s log lists the member changes, the three pay-link actions and the two form actions, nothing else', () => {
+    // Board Ready Stage 4 Part 3 (rulings 6 and 13): a family's file opened, and the export that carries health answers.
+    assert.deepEqual([...AUDIT_LOG_ACTIONS], [...MEMBER_AUDIT_ACTIONS, 'pay_link_emailed', 'pay_link_replaced', 'pay_link_stopped', 'club_form_file_opened', 'club_form_health_exported']);
     assert.deepEqual([...PAY_LINK_AUDIT_ACTIONS], ['pay_link_emailed', 'pay_link_replaced', 'pay_link_stopped']);
     assert.ok(!AUDIT_LOG_ACTIONS.some(a => a.startsWith('plan_') || a.includes('cancel') || a.includes('billing') || a.startsWith('family_')));
     assert.ok(isPayLinkAuditAction('pay_link_stopped'));

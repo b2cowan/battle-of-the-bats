@@ -5,6 +5,7 @@ import { loadOrgFamilyWorld, householdOf, fullName, personDisplayName, readRepMo
 import { familyFileStatement, type FamilyFile, type FamilyFileChild } from './family-file';
 import { readHandoffs, handoffNamer } from './families-payment';
 import { NOTE_COLUMNS } from './families-notes';
+import { readTickSummaries } from './club-form-tick-summary-read';
 
 /**
  * THE FAMILY FILE'S ASSEMBLER (Club Tier Stage 5a, E04; Ask 10 A — "the administrative file"). Everything the club's
@@ -38,13 +39,15 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
   const addressSet = new Set(myAddresses.map((a: any) => a.email_normalized));
   const rosterIds = roster.map(r => r.id);
 
-  const [details, leagueDetails, tryouts, docs, templates, money, messages, merges, familyNotes, handoffs] = await Promise.all([
+  const [details, leagueDetails, tickByReg, tryouts, docs, templates, money, messages, merges, familyNotes, handoffs] = await Promise.all([
     fetchAllIn<any>(rosterIds, (chunk, from, to) => supabaseAdmin.from('rep_roster_players')
       .select('id, player_date_of_birth, medical_notes, emergency_contact_name, emergency_contact_phone, admin_notes, status')
       .eq('org_id', orgId).in('id', chunk).order('id').range(from, to)),
     fetchAllIn<any>(league.map(r => r.id), (chunk, from, to) => supabaseAdmin.from('league_registrations')
-      .select('id, player_date_of_birth, player_notes, admin_notes, status, registered_at, waiver_accepted_at')
+      .select('id, player_date_of_birth, player_notes, admin_notes, status, registered_at')
       .eq('org_id', orgId).in('id', chunk).order('id').range(from, to)),
+    // The documents a family ticked at sign-up, from the ticks (not the old waiver date): one bulk read.
+    readTickSummaries(orgId, league.map(r => r.id)),
     fetchAll<any>((from, to) => supabaseAdmin.from('rep_tryout_registrations')
       .select('id, player_first_name, player_last_name, player_date_of_birth, player_notes, admin_notes, status, submitted_at, consent_data_collection, consent_email_comms, consent_eligibility, consent_at, consent_ip, rep_teams(name), rep_program_years(name, year)')
       .eq('org_id', orgId).eq('person_id', p.id).order('id').range(from, to)),
@@ -179,8 +182,8 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
         documents: docs.map(d => ({ child: childOf(d.player_id), type: templateName.get(d.template_id) ?? d.document_type, fileName: d.file_name ?? null, receivedAt: d.created_at }))
           .sort((a, b) => a.receivedAt.localeCompare(b.receivedAt)),
         waivers: league.flatMap(r => {
-          const at = leagueById.get(r.id)?.waiver_accepted_at;
-          return at ? [{ child: fullName(r.player_first_name, r.player_last_name), season: r.league_seasons?.name ?? 'House league', acceptedAt: at }] : [];
+          const t = tickByReg.get(r.id);
+          return t ? [{ child: fullName(r.player_first_name, r.player_last_name), season: r.league_seasons?.name ?? 'House league', acceptedAt: t.at, agreed: t.agreed }] : [];
         }),
         consents,
       },

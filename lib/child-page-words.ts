@@ -180,14 +180,19 @@ export interface DocumentCopy {
   /** "2026 Season" / "Summer 2025". */
   seasonName: string;
   houseLeague: boolean;
-  /** The stored timestamp: when the copy was recorded on the team, or when the sign-up accepted the waiver. */
+  /** The stored timestamp: when the copy was recorded on the team, or when the sign-up's documents were first ticked. */
   at: string;
+  /** House-league copies only: false when the family only ticked "I have read …" (the line then says "ticked", not "agreed to"). */
+  agreed?: boolean;
 }
 
-/** A house-league sign-up that accepted the waiver. */
+/** A house-league sign-up whose documents a family ticked (read from the sign-up's ticks, not `waiver_accepted_at`). */
 export interface LeagueWaiver {
   seasonName: string;
+  /** The earliest tick on the sign-up. */
   acceptedAt: string;
+  /** Any tick read "I have read and agree …". Absent reads as true (the old waiver-only meaning). */
+  agreed?: boolean;
 }
 
 /** A stored timestamp as a sort key; one that will not parse sorts last rather than scrambling the order (NaN). */
@@ -197,7 +202,7 @@ const sortKey = (at: string) => Date.parse(at) || 0;
 export function documentCopies(documents: readonly SeasonDocument[], leagueWaivers: readonly LeagueWaiver[] = []): DocumentCopy[] {
   const copies: DocumentCopy[] = [
     ...documents.map(d => ({ seasonName: d.seasonName, houseLeague: false, at: d.createdAt })),
-    ...leagueWaivers.map(w => ({ seasonName: w.seasonName, houseLeague: true, at: w.acceptedAt })),
+    ...leagueWaivers.map(w => ({ seasonName: w.seasonName, houseLeague: true, at: w.acceptedAt, agreed: w.agreed ?? true })),
   ];
   return copies.sort((a, b) => sortKey(b.at) - sortKey(a.at));
 }
@@ -219,14 +224,11 @@ function lastSigned(copies: readonly DocumentCopy[], byDate: boolean): ChildDocu
 export function documentRows(p: {
   state: readonly DocumentStateRow[];
   documents: readonly SeasonDocument[];
-  /** House-league sign-ups that accepted the waiver — copies of the Waiver row. */
-  leagueWaivers?: readonly LeagueWaiver[];
 }): ChildDocumentRow[] {
+  // The team's own uploads only. A house-league sign-up's ticked documents are NOT a copy of the team's Waiver (owner 2026-11-20):
+  // they read on the house-league line (`leagueOnlyWaivers`).
   return p.state.map(s => {
-    const copies = documentCopies(
-      p.documents.filter(d => d.documentType === s.documentType),
-      s.documentType === 'waiver' ? p.leagueWaivers : [],
-    );
+    const copies = documentCopies(p.documents.filter(d => d.documentType === s.documentType));
     return {
       documentType: s.documentType, label: s.label, validity: VALIDITY_LABEL[s.validity],
       state: s.state, chip: s.chip, tone: s.state === 'on_file' ? 'good' : 'warn',
@@ -236,10 +238,10 @@ export function documentRows(p: {
 }
 
 /** A team with no working season: what was signed, with no state — each type's last copy by season. */
-export function historyOnlyRows(documents: readonly SeasonDocument[], leagueWaivers: readonly LeagueWaiver[] = []): ChildDocumentRow[] {
+export function historyOnlyRows(documents: readonly SeasonDocument[]): ChildDocumentRow[] {
   const order: RepDocumentType[] = ['waiver', 'code_of_conduct', 'medical_consent', 'other'];
   return order.flatMap(t => {
-    const copies = documentCopies(documents.filter(d => d.documentType === t), t === 'waiver' ? leagueWaivers : []);
+    const copies = documentCopies(documents.filter(d => d.documentType === t));
     return copies.length
       ? [{ documentType: t, label: DOCUMENT_TYPE_LABEL[t], validity: null, state: null, chip: null, tone: null, last: lastSigned(copies, false), copies }]
       : [];
@@ -286,9 +288,9 @@ export const CHILD_PAGE_WORDS = {
   colHow: 'How',
   howUploaded: 'Uploaded',
   howSignUp: 'Accepted at sign-up',
-  /** The child with no rep team: "House league: Summer 2029 documents agreed to at sign-up." (Board Ready Stage 4: the date is
-   *  set when a family agreed to a sign-up document, which may not be a waiver.) */
-  leagueOnlyWaiver: (seasonName: string) => `${seasonName} documents agreed to at sign-up.`,
+  /** The house-league line: "House league: Summer 2029 documents agreed to at sign-up." — or "… documents ticked at sign-up." when
+   *  the family only ticked "I have read …" (Board Ready Stage 4: the tick may not be a waiver or an agreement). */
+  leagueOnlyWaiver: (seasonName: string, agreed = true) => `${seasonName} documents ${agreed ? 'agreed to' : 'ticked'} at sign-up.`,
   waiver: 'Waiver',
   born: (dob: string) => `Born ${formatStoredDate(dob)}`,
   medicalNote: 'Medical note',

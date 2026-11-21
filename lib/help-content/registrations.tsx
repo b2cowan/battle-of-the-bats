@@ -120,14 +120,14 @@ const registrationsHelp: HelpPageContent = {
             <p>
               Yes. A season can have several documents to read, such as a waiver or a code of conduct. When a guardian ticks one on
               the public sign-up, the document, its version and the time they ticked are stored with the registration, with no IP address, and the
-              date shows on the family&rsquo;s record as documents agreed to. A family can tick again later on their Your sign-up page, for a new version. Registrations from before then, and manual registrations you type in yourself
+              date shows on the family&rsquo;s record as documents agreed to (or documents ticked, when the documents only asked <em>I have read</em>). A family can tick again later on their Your sign-up page, for a new version. Registrations from before then, and manual registrations you type in yourself
               (where no guardian saw a waiver), show no acceptance — that means &ldquo;not
               recorded&rdquo;, not &ldquo;refused&rdquo;.
             </p>
           ),
           answerText:
-            'Yes. A season can have several documents to read, such as a waiver or a code of conduct. When a guardian ticks one on the public sign-up, the document, its version and the time are stored with the registration, with no IP address, and the date shows on the family record as documents agreed to. A family can tick again later on Your sign-up for a new version. Older rows and manual registrations show no acceptance, meaning not recorded rather than refused.',
-          keywords: ['waiver', 'accepted', 'consent', 'recorded', 'proof', 'signed', 'documents agreed to', 'code of conduct', 'tick', 'version', 'IP address'],
+            'Yes. A season can have several documents to read, such as a waiver or a code of conduct. When a guardian ticks one on the public sign-up, the document, its version and the time are stored with the registration, with no IP address, and the date shows on the family record as documents agreed to, or documents ticked when they only asked I have read. A family can tick again later on Your sign-up for a new version. Older rows and manual registrations show no acceptance, meaning not recorded rather than refused.',
+          keywords: ['waiver', 'accepted', 'consent', 'recorded', 'proof', 'signed', 'documents agreed to', 'documents ticked', 'code of conduct', 'tick', 'version', 'IP address'],
         },
         {
           id: 'faq-registration-too-many-attempts',

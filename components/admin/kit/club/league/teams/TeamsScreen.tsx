@@ -412,6 +412,7 @@ export default function TeamsScreen() {
             players={players}
             ratings={ratings}
             notes={read.notes ?? null}
+            answers={read.answers ?? null}
             friends={read.friends ?? null}
             divisionName={division.name}
             paymentsHref={`${base}/registrations?tab=active`}

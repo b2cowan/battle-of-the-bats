@@ -11,6 +11,12 @@
  * preferences come from an anonymous public form, and a value that starts with "=" must never run when the CSV is opened
  * in Excel (lib/export/formula-safe.ts). The Excel file stores every value as text, which never runs, so it is left as
  * typed: an apostrophe there would show (a guardian phone "+1 519…"; /review 2026-11-11).
+ *
+ * Board Ready Stage 4 Part 3 (drawing tab 6 · C, ruling 13): Excel and CSV gain a column per sign-up question that isn't
+ * about health, after the shipped columns, in the form's order (an archived question reads "{label} (no longer asked)");
+ * a file answer reads "Attached", never the file. Health answers leave ONLY in "Excel with contact details and health
+ * answers", read from the server when it is chosen (the list never holds them). The CSV's formula-safe pass covers every
+ * answer column, as it does every other cell (/legal: anonymous text reaches the file).
  */
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders,
@@ -28,7 +34,12 @@ export interface ExportRow {
   reg: LeagueRegistration; division: string; fee: string;
   /** Present only on a season that takes friend requests: the two name-free columns' values. */
   friends?: { requests: number; honoured: string };
+  /** The sign-up form's answers in words, by question id ("Not asked", never blank). */
+  answers?: Record<string, string>;
 }
+
+/** A sign-up question as a file's column: its heading, and whether it is a health question (the opt-in file only). */
+export type AnswerCol = { id: string; label: string; health: boolean };
 
 const COLS: ExportColumnDef[] = [
   { label: 'First Name',     key: 'playerFirstName',   format: 'text' },
@@ -55,7 +66,11 @@ const FRIEND_COLS: ExportColumnDef[] = [
 ];
 
 /** The file's columns: the two friend columns only when the season takes friend requests (at None, none). */
-const colsFor = (rows: readonly ExportRow[]) => (rows.some(r => r.friends) ? [...COLS, ...FRIEND_COLS] : COLS);
+const colsFor = (rows: readonly ExportRow[], answerCols: readonly AnswerCol[] = []): ExportColumnDef[] => [
+  ...(rows.some(r => r.friends) ? [...COLS, ...FRIEND_COLS] : COLS),
+  // A health column is sensitive: it serializes only in the file that asked for health answers.
+  ...answerCols.map(c => ({ label: c.label, key: `a:${c.id}`, format: 'text' as const, ...(c.health ? { sensitive: true } : {}) })),
+];
 
 const PDF_COLS: ExportColumnDef[] = [
   { label: 'Player',     key: 'player',       format: 'text' },
@@ -74,8 +89,9 @@ function statusWord(r: LeagueRegistration): string {
   }
 }
 
-function source(rows: readonly ExportRow[]) {
-  return rows.map(({ reg: r, division, fee, friends }) => ({
+function source(rows: readonly ExportRow[], answerCols: readonly AnswerCol[] = []) {
+  return rows.map(({ reg: r, division, fee, friends, answers }) => ({
+    ...Object.fromEntries(answerCols.map(c => [`a:${c.id}`, answers?.[c.id] ?? ''])),
     playerFirstName: r.playerFirstName,
     playerLastName: r.playerLastName,
     division,
@@ -96,18 +112,25 @@ function source(rows: readonly ExportRow[]) {
   }));
 }
 
-export async function exportXlsx(rows: readonly ExportRow[], orgSlug: string | undefined, scope: RegTab, withContacts: boolean) {
+export async function exportXlsx(
+  rows: readonly ExportRow[], orgSlug: string | undefined, scope: RegTab, withContacts: boolean,
+  answerCols: readonly AnswerCol[] = [], withHealth = false,
+) {
   if (!rows.length) return;
+  // A health column never reaches a file that didn't ask for health answers, whatever the caller passed.
+  const cols = colsFor(rows, answerCols.filter(c => withHealth || !c.health));
+  const dataset = withHealth ? 'registrations-with-health-answers' : withContacts ? 'registrations-with-contacts' : 'registrations';
   await downloadXLSX(
-    buildFilename({ org: orgSlug, dataset: withContacts ? 'registrations-with-contacts' : 'registrations', scope }, 'xlsx'),
-    serializeHeaders(colsFor(rows), withContacts), serializeRows(source(rows), colsFor(rows), withContacts), 'Registrations',
+    buildFilename({ org: orgSlug, dataset, scope }, 'xlsx'),
+    serializeHeaders(cols, withContacts), serializeRows(source(rows, answerCols), cols, withContacts), 'Registrations',
   );
 }
 
-export function exportCsv(rows: readonly ExportRow[], orgSlug: string | undefined, scope: RegTab) {
+export function exportCsv(rows: readonly ExportRow[], orgSlug: string | undefined, scope: RegTab, answerCols: readonly AnswerCol[] = []) {
+  const cols = colsFor(rows, answerCols.filter(c => !c.health));
   downloadCSVBlob(
     buildFilename({ org: orgSlug, dataset: 'registrations', scope }, 'csv'),
-    generateCSV(serializeHeaders(colsFor(rows)), serializeRows(source(rows), colsFor(rows)).map(formulaSafeRow)),
+    generateCSV(serializeHeaders(cols), serializeRows(source(rows, answerCols), cols).map(formulaSafeRow)),
   );
 }
 

@@ -48,7 +48,7 @@ import {
   familiesOf, filterCounts, narrowPool, sortPool, togetherOf, type PoolFilter, type PoolSort, type TogetherPerson,
 } from '@/lib/house-league-board-pool';
 import type { DivisionFriends } from '@/lib/league-friend-draft';
-import { dayOf, type BoardLeft, type BoardPlayer, type BoardTeam } from './api';
+import { dayOf, type BoardAnswers, type BoardLeft, type BoardPlayer, type BoardTeam } from './api';
 import css from './Teams.module.css';
 
 export interface BoardRights {
@@ -66,6 +66,12 @@ export interface BoardProps {
   ratings: ReadonlyMap<string, number>;
   /** The families' sign-up notes — present only for a reader who can open registrations (A8). */
   notes: Readonly<Record<string, string>> | null;
+  /**
+   * Board Ready Stage 4 Part 3 (ruling 12): answers to the sign-up questions the club turned "Show on the draft board" —
+   * never a health question — for the same reader as the notes; absent otherwise. They join the note popover and the
+   * pool's Filter.
+   */
+  answers?: BoardAnswers | null;
   /** The division's confirmed friend links and who asked — present only for a reader who can open registrations (A11). */
   friends: DivisionFriends | null;
   left: readonly BoardLeft[];
@@ -273,9 +279,11 @@ function TogetherPlace({ p, props, kit }: { p: BoardPlayer; props: BoardProps; k
 
 function NotePlace({ p, props }: { p: BoardPlayer; props: BoardProps }) {
   const note = props.notes?.[p.id];
+  const answers = props.answers?.answers[p.id] ?? [];
+  // The note mark shows when a player has a note OR a board answer (drawing tab 6 · D).
   return (
     <span className={css.place}>
-      {note && (
+      {(note || answers.length > 0) && (
         <MarkButton
           label={W.mark.noteAria(p.firstName)}
           title={W.mark.noteTitle(`${p.firstName} ${p.lastName}`)}
@@ -284,7 +292,12 @@ function NotePlace({ p, props }: { p: BoardPlayer; props: BoardProps }) {
           isPhone={props.isPhone}
           foot={W.mark.noteFoot}
         >
-          {() => <p className={css.popQuote}>“{note}”</p>}
+          {() => (
+            <>
+              {note && <p className={css.popQuote}>“{note}”</p>}
+              {answers.map(a => <p key={a.questionId} className={css.popAnswer}><b>{a.label}</b> {a.text}</p>)}
+            </>
+          )}
         </MarkButton>
       )}
     </span>
@@ -434,14 +447,24 @@ function usePoolTools(props: BoardProps, pool: readonly BoardPlayer[], families:
   const [sort, setSort] = useState<PoolSort>('last');
   // The arrow beside Sort reverses the order a sort opens in; picking another sort opens that one in its own order.
   const [reverse, setReverse] = useState(false);
+  // Stage 4 Part 3 (ruling 12): the board questions' choices, one group per question (any choice within; every group).
+  const [answerPicks, setAnswerPicks] = useState<Readonly<Record<string, readonly string[]>>>({});
   // An emptied pool hides its tools (it folds), so a search or a tick left behind would hide the next player to land
   // there with no way to clear it: the narrowing goes when the pool empties.
   const empty = pool.length === 0;
   const [wasEmpty, setWasEmpty] = useState(empty);
   if (empty !== wasEmpty) {
     setWasEmpty(empty);
-    if (empty) { setQuery(''); setPicks([]); }
+    if (empty) { setQuery(''); setPicks([]); setAnswerPicks({}); }
   }
+  const boardQs = (props.answers?.questions ?? []).filter(q => q.choices.length > 0);
+  // Each player's board answers by question, read once per render (the filter asks per player, per question, per choice).
+  const answerIndex = new Map(Object.entries(props.answers?.answers ?? {}).map(([id, list]) => [id, new Map(list.map(a => [a.questionId, a.choiceIds]))]));
+  const choicesOf = (id: string, qid: string): readonly string[] => answerIndex.get(id)?.get(qid) ?? [];
+  const passAnswers = (id: string, except?: string) => boardQs.every(q => {
+    const want = (answerPicks[q.id] ?? []).filter(k => q.choices.some(c => c.id === k));
+    return q.id === except || want.length === 0 || choicesOf(id, q.id).some(c => want.includes(c));
+  });
   const askedFriend = props.friends ? new Set(props.friends.asked) : null;
   const facts = { ratings: props.ratings, notes: props.notes, families, friends: askedFriend };
   // Absent beats disabled: Not rated only for a reader who sees ratings; Has player notes only when a family wrote one.
@@ -456,7 +479,7 @@ function usePoolTools(props: BoardProps, pool: readonly BoardPlayer[], families:
   const picks = rawPicks.filter(p => offer.includes(p));
   const counts = filterCounts(pool, offer, facts);
   const label: Record<PoolFilter, string> = { notRated: W.pool.notRated, notes: REGS_WORDS.filterNotes, owing: REGS_WORDS.filterOwing, sibling: W.pool.sibling, friend: W.pool.friend };
-  const shown = sortPool(narrowPool(pool, query, picks, facts), sort, props.ratings, { reverse, households: families });
+  const shown = sortPool(narrowPool(pool, query, picks, facts).filter(p => passAnswers(p.id)), sort, props.ratings, { reverse, households: families });
   const sorts: { id: PoolSort; label: string }[] = [
     { id: 'last', label: W.pool.sortBy.last },
     ...(props.rights.seeRatings ? [{ id: 'rating' as const, label: W.pool.sortBy.rating }] : []),
@@ -473,11 +496,19 @@ function usePoolTools(props: BoardProps, pool: readonly BoardPlayer[], families:
           options: offer.map(f => ({ key: f, label: label[f], count: counts[f] })),
           selected: picks,
           onToggle: k => setPicks(prev => (prev.includes(k as PoolFilter) ? prev.filter(x => x !== k) : [...prev, k as PoolFilter])),
-        }]}
+        }, ...boardQs.map(q => ({
+          key: `q:${q.id}`, label: q.label,
+          options: q.choices.map(c => ({ key: c.id, label: c.label, count: pool.filter(p => passAnswers(p.id, q.id) && choicesOf(p.id, q.id).includes(c.id)).length })),
+          selected: [...(answerPicks[q.id] ?? [])],
+          onToggle: (k: string) => setAnswerPicks(prev => {
+            const was = prev[q.id] ?? [];
+            return { ...prev, [q.id]: was.includes(k) ? was.filter(x => x !== k) : [...was, k] };
+          }),
+        }))]}
         label={W.pool.filter}
         onLabel={W.pool.filterOn}
         resetLabel={W.pool.filterClear}
-        onReset={() => setPicks([])}
+        onReset={() => { setPicks([]); setAnswerPicks({}); }}
       />
       <SingleSelectDropdown label={W.pool.sort} labelSuffix=":" lead options={sorts} value={sort} onChange={v => { setSort(v as PoolSort); setReverse(false); }} />
       <button type="button" className={css.sortDir} onClick={() => setReverse(r => !r)}
@@ -486,11 +517,12 @@ function usePoolTools(props: BoardProps, pool: readonly BoardPlayer[], families:
       </button>
     </div>
   );
-  const narrowed = query.trim() !== '' || picks.length > 0;
+  const narrowed = query.trim() !== '' || picks.length > 0
+    || boardQs.some(q => (answerPicks[q.id] ?? []).some(k => q.choices.some(c => c.id === k)));
   const count = narrowed ? W.pool.shown(shown.length, pool.length) : String(pool.length);
   /** "Go to" a child the search or a tick hides: the narrowing goes first, so the row is there to reach. */
   const reveal = (id: string) => {
-    if (pool.some(p => p.id === id) && !shown.some(p => p.id === id)) { setQuery(''); setPicks([]); }
+    if (pool.some(p => p.id === id) && !shown.some(p => p.id === id)) { setQuery(''); setPicks([]); setAnswerPicks({}); }
   };
   return { shown, search, tools, count, reveal };
 }

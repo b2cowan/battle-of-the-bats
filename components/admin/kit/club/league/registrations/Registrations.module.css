@@ -348,3 +348,21 @@
 .twinLine { margin: 0 0 0.75rem; font-size: var(--type-support); color: var(--text-secondary); }
 .twinLine a { font-weight: 600; }
 @media (max-width: 640px) { .twinLine a { display: inline-flex; align-items: center; min-height: 44px; } }
+
+/* Board Ready Stage 4 Part 3 (ruling 11): a chosen answer column. A long answer wraps at a readable width, never widens the row. */
+.answerCol { max-width: 180px; overflow-wrap: anywhere; }
+.answerColumnList { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.answerColumnRow { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+
+/* Board Ready Stage 4 Part 3: the record's Sign-up answers and Documents (drawing tab 6 · B). A long answer reads as prose,
+   left-aligned under its label on a narrow window, never squeezed into a right-hand column. */
+.answerRow { flex-wrap: wrap; gap: 4px 16px; }
+.answerValue { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; max-width: 100%; }
+.answerText { white-space: pre-wrap; }
+.answerSub { font-weight: 400; font-size: var(--type-support); color: var(--text-tertiary); }
+.answerFile { font-weight: 650; text-align: right; }
+.answerSubHead { margin: 14px 0 6px; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+@media (max-width: 600px) {
+  .answerRow { flex-direction: column; align-items: flex-start; }
+  .answerValue { align-items: flex-start; text-align: left; }
+}

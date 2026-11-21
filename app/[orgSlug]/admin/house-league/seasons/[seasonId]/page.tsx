@@ -183,6 +183,7 @@ export default function SeasonOverviewPage() {
     unpaidFeeCount: summary.unpaidFeeCount,
     reopen: detail.reopen,
     friendRequests: friendRequestsOn(currentOrg?.planId, season.friendRequestsMax),
+    formRemoves: !!detail.form?.removesOnClock,
   };
   const teams = divisions.reduce((n, d) => n + d.teamCount, 0);
 

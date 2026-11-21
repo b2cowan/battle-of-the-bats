@@ -31,7 +31,7 @@ export interface ChildRecordIn {
   parentLine: string | null;
   /** One line per season: "Lynx 11U AAA, 2026 Season" / "House league, Summer 2025 · U10 Rookie · Blue Jays", newest first. */
   seasons: readonly string[];
-  /** "3 documents · medical note on file" / "Agreed to documents on May 2, 2025" — or null. */
+  /** "3 documents · medical note on file" / "Agreed to documents on May 2, 2025" / "Documents ticked on May 2, 2025" — or null. */
   detailLine: string | null;
   /** One key per rep roster entry, `${teamId}|${programYearId}` — two records sharing one cannot be joined. */
   teamSeasons: readonly { key: string; label: string }[];

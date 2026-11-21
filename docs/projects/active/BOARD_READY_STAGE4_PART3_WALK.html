@@ -1,0 +1,210 @@
+<title>Club Answers Walk §553</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column; a sticky progress bar; each part a card of one-action steps with its verdict and notes. */
+:root {
+  --bg: #f6f7f2; --card: #ffffff; --ink: #1d2318; --soft: #5b6352; --line: #dfe3d6; --olive: #56702c; --lime: #c9e265;
+  --good: #2f7a3b; --warn: #a1630a; --bad: #b3352a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif; --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141811; --card: #1c2118; --ink: #e8ecdf; --soft: #a5ad98; --line: #313a29; --olive: #a9c86a; --lime: #c9e265;
+  --good: #6fc27b; --warn: #e3a64a; --bad: #ef7d70; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141811; --card: #1c2118; --ink: #e8ecdf; --soft: #a5ad98; --line: #313a29; --olive: #a9c86a; --lime: #c9e265;
+  --good: #6fc27b; --warn: #e3a64a; --bad: #ef7d70; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 24px 64px; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-family: var(--display); font-size: 1.6rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.1rem; margin: 0; }
+.lede { color: var(--soft); margin: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.signin dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.signin dt { color: var(--soft); font-size: .85rem; }
+.signin dd { margin: 0; overflow-wrap: anywhere; }
+code { font-size: .85em; background: color-mix(in srgb, var(--olive) 12%, transparent); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.meter { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--olive); transition: width .2s; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.steps label { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; padding: 6px 4px; border-radius: 6px; cursor: pointer; }
+.steps label:hover { background: color-mix(in srgb, var(--olive) 7%, transparent); }
+.steps input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--olive); }
+.n { font-variant-numeric: tabular-nums; color: var(--soft); font-size: .8rem; margin-right: 4px; }
+.exp { display: block; color: var(--soft); font-size: .9rem; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: inherit; font-size: .85rem; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; min-height: 32px; }
+.verdict button[aria-pressed="true"][data-v="pass"] { border-color: var(--good); color: var(--good); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="issue"] { border-color: var(--bad); color: var(--bad); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="call"] { border-color: var(--warn); color: var(--warn); font-weight: 600; }
+textarea { font: inherit; width: 100%; box-sizing: border-box; min-height: 56px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: var(--bg); color: var(--ink); }
+.calls { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 8px; }
+.calls li { color: var(--ink); }
+.btn { font: inherit; font-weight: 600; background: var(--lime); color: #1d2318; border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; min-height: 44px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+#out { min-height: 160px; font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
+:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1>The club’s answers walk · §553</h1>
+    <p class="lede">Board Ready Stage 4, Part 3: what the club sees of a family’s answers on Registrations, a registration’s window, the export, the draft board and the audit log, who sees none of it, and a finished season after its answers were removed. Tick a box when what it says is true; give each part a verdict, then build the summary and paste it back.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="si">
+    <h2 id="si">Sign in as</h2>
+    <dl>
+      <dt>Registrar</dt><dd><code>http://localhost:3000/login</code> · email <code>league-registrar@dev.local</code> · password <code>devpass123</code> (dev-league-org). House league → <strong>Walk Summer 2027</strong>.</dd>
+      <dt>Club owner</dt><dd>email <code>league-owner@dev.local</code> · password <code>devpass123</code>.</dd>
+      <dt>Treasurer</dt><dd>email <code>league-treasurer@dev.local</code> · password <code>devpass123</code>.</dd>
+      <dt>Coach</dt><dd>email <code>j9-coach@dev.local</code> · password <code>devpass123</code>.</dd>
+      <dt>Finished season</dt><dd>Your own <code>b2cowan+owner@gmail.com</code> account (Milton Bats) · House league → <strong>2026 Summer House League</strong>.</dd>
+      <dt>Before you start</dt><dd>The dev database is already set: Walk Summer 2027 has five sign-up questions with answers (Kai Kim has a health answer, a medical form and an archived answer; Ben Osei’s family cleared their health answer), and its Waiver has a version 2 families must tick again. Milton’s finished 2026 season has answers the 90-day clock has already removed. Restart the dev server first if it was running before this build.</dd>
+      <dt>When you finish</dt><dd>Say so in the chat. Everything above is taken back out with <code>node .probe/stage4-part3-walk-fixture.mjs off</code>.</dd>
+      <dt>Keep private</dt><dd>Dev-only test accounts; the sample answers are invented.</dd>
+    </dl>
+  </section>
+
+  <div class="bar" role="status" aria-live="polite">
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <span class="count" id="count">0 of 0</span>
+  </div>
+
+  <main id="parts" style="display:flex;flex-direction:column;gap:16px"></main>
+
+  <section class="card" aria-labelledby="calls">
+    <h2 id="calls">Your calls (not in the count)</h2>
+    <ol class="calls">
+      <li><strong>The removal clock (migration 516).</strong> Ninety days after a season is finished, family files and health answers are removed, and the stored files of deleted sign-ups are deleted. One scheduled job does all of it (your call 1), and it still waits for your yes and its own commit. Until it runs on production, nothing is removed by itself and the Privacy Policy carries no retention sentence. Yes, or not yet?</li>
+      <li><strong>Plain exports aren’t in the audit log.</strong> The drawing said every export was already recorded there; it never was. This build records the new health-answers export and every file opening. Should Excel, CSV and PDF exports of Registrations be recorded in the audit log too?</li>
+      <li><strong>The Email families button on optional questions.</strong> The “Your sign-up” button now rides Email families for a family with a document to tick or a question unanswered, optional ones included, so a family that skipped an optional question gets it on every send. Keep, or only for required questions? (The one-family “Message this family” send doesn’t carry it.)</li>
+      <li><strong>Not walked here.</strong> The finish confirmation’s new line (“Family files and health answers are removed 90 days after the season is finished.”, shown only when the form asks a health or file question), a deleted sign-up’s stored files, and the Email families button are proved by the build’s probe and tests, not by this walk.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="sum">
+    <h2 id="sum">Summary to paste back</h2>
+    <div class="row">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn ghost" id="copy" type="button">Copy</button>
+      <button class="btn ghost" id="reset" type="button">Clear my ticks</button>
+      <span id="copied" class="lede" role="status"></span>
+    </div>
+    <label for="out" class="lede">Select all and copy if the Copy button doesn’t work here.</label>
+    <textarea id="out" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+{"id":"A","title":"A · Answer columns (registrar)","steps":[
+["Sign in as the registrar, open House league, then Walk Summer 2027, then Registrations.","The toolbar reads, left to right: the division picker, View, Search, Filter, Export, a ⋯ button, then the lime Add registration."],
+["Press the ⋯ button.","One item: “Answer columns…”."],
+["Press “Answer columns…”.","A window titled “Answer columns” lists “T-shirt size” and “Can a parent help?” with tick boxes, and says health questions are never a column. Neither health question and not “Preferred practice night” (archived) is listed."],
+["Tick both, then press Done.","Two columns appear after Guardian: T-shirt size and Can a parent help?. Rows signed up before T-shirt size was added read “Not asked” in grey; no cell is blank."],
+["Reload the page.","The two columns are still there."],
+["Sign out, sign in as the club owner and open the same Registrations.","No answer columns: the registrar’s choice was the registrar’s own."]]},
+{"id":"B","title":"B · The Filter (club owner)","steps":[
+["Press Filter.","After the shipped groups come “T-shirt size” (YS · YM · YL · AS · AM · AL), “Can a parent help?” (Coach, Assistant coach, Field set-up) and “Documents” with one row, “Needs a new tick”, each with a count. No allergies or medical form group."],
+["Tick “Coach” under Can a parent help?.","The list narrows to children whose family ticked Coach, and the line under the toolbar names the pick."],
+["Untick Coach and tick Documents › Needs a new tick.","The rows left each show an amber “NEEDS A NEW TICK” chip on the player’s line."],
+["Press Clear in the Filter.","Every row is back."]]},
+{"id":"C","title":"C · One registration’s window (club owner)","steps":[
+["Search “Kai” and open Kai Kim.","The window’s sections run Details, Fee, Sign-up answers, Documents, History, What you can do."],
+["Read Sign-up answers.","“Does your child have any allergies…” carries an amber HEALTH chip and reads “Peanut allergy. She carries an EpiPen in her bag.”; T-shirt size reads “Not asked”; Can a parent help? reads “Not answered” or the family’s choice."],
+["Find the medical form.","It shows “medical-form.pdf ↗” with its size and “The link lasts an hour. Each opening is recorded in the audit log.”"],
+["Press “medical-form.pdf ↗”.","The PDF downloads as a file; it doesn’t open as a page in the tab."],
+["Look under Sign-up answers for “No longer asked”.","“Preferred practice night” reads Tuesday, with “Archived {date}. Kept because Kai’s family answered it.”"],
+["Read Documents.","Waiver shows an amber “NEEDS A NEW TICK” and “Ticked {date} · recorded before documents had versions; text as the club held it on {date}”. Nothing on it can be edited."],
+["Close the window, search “Ben” and open Ben Osei.","The allergies question reads “Not answered” in grey, with “Answer changed by the family {date}” under it."]]},
+{"id":"D","title":"D · The export (club owner)","steps":[
+["Clear the search and press Export.","In order: Excel (.xlsx), CSV, PDF, a divider, “Excel with contact details”, then “Excel with contact details and health answers” with “Answers about children’s health. Keep it private.”"],
+["Choose Excel (.xlsx) and open the file.","After the shipped columns: T-shirt size, Can a parent help?, and “Preferred practice night (no longer asked)”. No allergies or medical form column; no cell is blank."],
+["Choose “Excel with contact details and health answers” and open the file.","It also has the allergies column with the answers, and “Your child’s medical form, if you have one” reading “Attached” for Kai (never the file)."]]},
+{"id":"E","title":"E · The audit log (club owner)","steps":[
+["Open the club’s Members, then Audit log.","The newest rows include “Opened a file a family attached” for “Kai Kim, Walk Summer 2027” and “Exported registrations with health answers” for “Walk Summer 2027”, with who and when. No file name anywhere."]]},
+{"id":"F","title":"F · The draft board (club owner)","steps":[
+["Open Teams & draft for Walk Summer 2027, on U8.","Players whose family answered “Can a parent help?” have the note mark, even with no note."],
+["Press one of those note marks.","The popover shows the family’s note if any, then “Can a parent help?” in bold with the answer. No allergies or medical answer."],
+["Open the pool’s Filter.","A “Can a parent help?” group with its three choices sits under the shipped group."],
+["Tick Coach.","The pool narrows to those children; Clear brings everyone back."]]},
+{"id":"G","title":"G · The seats that see nothing (treasurer, coach)","steps":[
+["Sign in as the treasurer and open Walk Summer 2027.","Money opens; Registrations is not offered (or refuses), and no answer, file or column shows anywhere they can reach."],
+["Sign in as the coach.","No house-league Registrations, no answers, no “Not shared” line."]]},
+{"id":"H","title":"H · A finished season, after the clock (Milton owner)","steps":[
+["Sign in as b2cowan+owner@gmail.com, open House league, then 2026 Summer House League, then Sign-up form.","The lock line reads “This season is finished. Its sign-up form is locked.” No add buttons, grips or pencils."],
+["Read the questions’ lines.","Allergies: “Long answer · answers removed {date}”. Medical form: “File upload · files removed {date}”. T-shirt size shows its count."],
+["Open Registrations, then Jayden Okafor-Francis.","Allergies reads “Removed {date}” in grey with “Health answers are removed 90 days after the season finishes.”; the medical form reads “File removed {date}”; T-shirt size still shows the answer."]]},
+{"id":"I","title":"I · At phone width (390 px)","steps":[
+["As the club owner, open Walk Summer 2027’s Registrations at 390 px wide.","No ⋯ button and no answer columns; the page doesn’t scroll sideways."],
+["Open Kai Kim.","Sign-up answers and Documents read one under the other, each answer under its question, nothing cut off."]]}
+];
+const KEY = 'stage4-part3-walk-553';
+let state = { ticks: {}, verdict: {}, notes: {} };
+try { const raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const total = PARTS.reduce((n, p) => n + p.steps.length, 0);
+const root = document.getElementById('parts');
+for (const p of PARTS) {
+  const sec = document.createElement('section'); sec.className = 'card'; sec.setAttribute('aria-labelledby', 'h-' + p.id);
+  const h = document.createElement('h2'); h.id = 'h-' + p.id; h.textContent = p.title; sec.appendChild(h);
+  const ol = document.createElement('ol'); ol.className = 'steps';
+  p.steps.forEach(([act, exp], i) => {
+    const id = p.id + (i + 1); const li = document.createElement('li'); const lab = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', () => { state.ticks[id] = cb.checked; save(); tally(); });
+    const sp = document.createElement('span');
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = id;
+    sp.appendChild(n); sp.appendChild(document.createTextNode(act));
+    const e = document.createElement('span'); e.className = 'exp'; e.textContent = exp; sp.appendChild(e);
+    lab.appendChild(cb); lab.appendChild(sp); li.appendChild(lab); ol.appendChild(li);
+  });
+  sec.appendChild(ol);
+  const v = document.createElement('div'); v.className = 'verdict'; v.setAttribute('role', 'group'); v.setAttribute('aria-label', p.title + ' verdict');
+  for (const [val, txt] of [['pass', 'Passed'], ['issue', 'Issue'], ['call', 'Needs a call']]) {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.v = val; b.textContent = txt;
+    b.setAttribute('aria-pressed', String(state.verdict[p.id] === val));
+    b.addEventListener('click', () => { state.verdict[p.id] = state.verdict[p.id] === val ? '' : val; save();
+      v.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(state.verdict[p.id] === x.dataset.v))); });
+    v.appendChild(b);
+  }
+  sec.appendChild(v);
+  const ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for ' + p.title.split(' · ')[0];
+  ta.setAttribute('aria-label', 'Notes for part ' + p.id); ta.value = state.notes[p.id] || '';
+  ta.addEventListener('input', () => { state.notes[p.id] = ta.value; save(); });
+  sec.appendChild(ta); root.appendChild(sec);
+}
+function tally() {
+  const done = Object.values(state.ticks).filter(Boolean).length;
+  document.getElementById('count').textContent = done + ' of ' + total;
+  document.getElementById('meter').style.width = (100 * done / total) + '%';
+}
+tally();
+const out = document.getElementById('out');
+document.getElementById('build').addEventListener('click', () => {
+  const done = PARTS.reduce((n, p) => n + p.steps.filter((_, i) => state.ticks[p.id + (i + 1)]).length, 0);
+  const lines = ['§553 The club’s answers walk (Board Ready Stage 4 Part 3): ' + done + ' of ' + total];
+  for (const p of PARTS) {
+    const got = p.steps.filter((_, i) => state.ticks[p.id + (i + 1)]).length;
+    const missed = p.steps.map((_, i) => p.id + (i + 1)).filter(id => !state.ticks[id]);
+    const vd = { pass: 'PASSED', issue: 'ISSUE', call: 'NEEDS A CALL' }[state.verdict[p.id]] || 'no verdict';
+    lines.push(p.title + ': ' + got + '/' + p.steps.length + ' · ' + vd + (missed.length ? ' · unticked ' + missed.join(', ') : ''));
+    if (state.notes[p.id]) lines.push('  notes: ' + state.notes[p.id].replace(/\s+/g, ' ').trim());
+  }
+  out.value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', () => {
+  const msg = document.getElementById('copied');
+  if (!out.value) document.getElementById('build').click();
+  navigator.clipboard.writeText(out.value).then(() => { msg.textContent = 'Copied.'; }, () => { out.select(); msg.textContent = 'Selected. Press Ctrl+C to copy.'; });
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = { ticks: {}, verdict: {}, notes: {} }; save(); location.reload();
+});
+</script>

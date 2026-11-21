@@ -1090,6 +1090,56 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "club_form_answer_clears",
+    "constraint_name": "club_form_answer_clears_form_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "form_id",
+    "foreign_table": "club_forms",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "constraint_name": "club_form_answer_clears_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "constraint_name": "club_form_answer_clears_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "constraint_name": "club_form_answer_clears_question_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "question_id",
+    "foreign_table": "club_form_questions",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "constraint_name": "club_form_answer_clears_submission_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "submission_id",
+    "foreign_table": "club_form_submissions",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "club_form_answers",
     "constraint_name": "club_form_answers_file_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -1344,6 +1394,16 @@
     "constraint_name": "club_form_questions_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_form_storage_removals",
+    "constraint_name": "club_form_storage_removals_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "path",
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": null,

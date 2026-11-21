@@ -75,3 +75,24 @@ describe('3 · the same gate as opening a registration', () => {
     assert.match(readCode(BOARD_ROUTE), /\.\.\.\(notes \? \{ notes \} : \{\}\)/);
   });
 });
+
+// Board Ready Stage 4 Part 3 (ruling 12): the sign-up answers shown on the draft board ride the notes' own gate — read in
+// the same block, right after the notes, and a refused reader gets no `answers` key. Never a health question.
+describe('4 · board answers ride the notes gate', () => {
+  it('the board route reads answers only inside the notes block', () => {
+    const code = readCode(BOARD_ROUTE);
+    assert.match(code, /if \(board && !houseLeagueRefusal\(ctx, '\w+'\)\) \{\s*notes = await readBoardNotes\([^)]*\);\s*answers = await readBoardAnswers\(/,
+      'the board answers are read outside the notes gate');
+    assert.equal((code.match(/readBoardAnswers\(/g) ?? []).length, 1, 'a second answers read in the board route');
+    assert.match(code, /\.\.\.\(answers \? \{ answers \} : \{\}\)/);
+  });
+  it('only the Teams & draft board route reads board answers', () => {
+    const readers = [...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...filesUnder('lib', '.ts'), ...filesUnder('components', '.tsx')]
+      .filter(f => f !== 'lib/club-form-staff.ts' && /\breadBoardAnswers\b/.test(readCode(f)));
+    assert.deepEqual(readers, [BOARD_ROUTE]);
+  });
+  it('board answers leave out every health question', () => {
+    const body = functionBody(readCode('lib/club-form-staff.ts'), 'readBoardAnswers');
+    assert.match(body, /q\.on_board && !q\.health && !q\.archived_at/);
+  });
+});

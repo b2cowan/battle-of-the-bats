@@ -905,6 +905,38 @@ upload and hand-over doors share one platform-wide limit, and the per-address li
 **Owner calls RULED 2026-11-20** ("1 yes together, 2 yes rename, 3 agree"): C1 above; C2 the checklist's optional step is
 named "Documents" ("On. Families tick each one to sign up." / "Optional. Families sign up without any."), built the same
 day; C3 above.
+**Part 3 built 2026-11-20 on dev** (the club's side, retention and the close-out; drawing tabs 6, 8, 9). **Owner calls RULED
+2026-11-20 at the UX summary, "as recommended":** (1) ONE scheduled job: migration 516's six-hourly sweep also runs the 90/120-day
+removal and deletes the stored files of deleted sign-ups (still waits for the owner's yes and its own commit); (2) Email families carries
+the "Your sign-up" button (Part 2's C4); (3) a moved tick reads "recorded before documents had versions; text as the club held it on
+{move date}"; (4) "Answer changed by the family {date}" under a health answer only; (5) answer columns are remembered with the account;
+(6) the policy sentences go into the unpublished drafts. Migration 518 applied to dev 2026-11-20 (answer columns per person, a cleared
+health answer kept as an empty row, the stored-file removal list and its triggers, the retention function); the prod step is in
+`MANUAL_PROD_STEPS.json`. Built: Registrations' Tools (⋯) → Answer columns (up to three, never health, absent on a phone), the answer
+Filter groups and Documents › Needs a new tick, "Not asked" / "Not answered" cells; the record's Sign-up answers and Documents after Fee;
+plain Excel/CSV answer columns and the opt-in "Excel with contact details and health answers" (read from the server when chosen, logged);
+file openings as a one-hour download, logged in the club's activity log (ids only); the draft board's note popover and pool Filter carry
+board answers; the finish confirm's line; a finished season's form page names the removal date; the child page, duplicates and families
+export read the ticks ("ticked" unless a document asked "agree"); a house-league tick no longer counts as a rep team's Waiver copy.
+Guards: `tests/unit/club-form-staff-guard.test.ts` (every reader's callers and gate, health never in the list, a mail or push module, or
+the browser) and the board-notes guard extended to answers. Probe `.probe/stage4-part3-probe.mjs` 34 of 34 (owner, registrar, treasurer,
+coach through the real routes; 35 of 35 after the reviews); walk fixture `.probe/stage4-part3-walk-fixture.mjs on|off`; QA walk §553
+https://claude.ai/artifact/QhtSYswpFHJqAAkyy8X6Dk (32 steps, owed the owner). **Found:** the drawing's "each export is already
+recorded in the club's activity log" was not true; only the new health export and file openings are logged (plain exports: an owner
+question). Reviews: `/legal` (`docs/agents/legal/BOARD_READY_STAGE4_PART3_BUILT_REVIEW.md`; the Privacy Policy §5 and Data Terms §12
+sentences are in the unpublished drafts, the §9 retention sentence waits for migration 516's first production run; a removed file
+loses its family-chosen name; the Audit log's scope note names the two new kinds of row), `/docs` (the `signup-form` article's four
+registrar sub-topics, the child page's Waiver bullet, the audit log help), `/marketing` ("audit log", the removal notes), `/simplify`
+(four lenses: the cleared marker moved to its own table so every answer row is a real answer, one sign-up rule with the family's door,
+one season-form lookup, one "last day" rule `league_season_last_day`), `/review` (five lenses, no Critical or High; fixed: every paged
+read ordered, a failed board-answers or tick read no longer takes its page down, a club door's resend carries no button, the columns
+window saves one tick at a time, a file opens in a tab made on the press, a stale filter pick narrows nothing, a tick never names a
+version it didn't record, an archived question nobody answered is no export column, the health export is logged only when it carries
+health). **Open owner calls from Part 3:** (1) migration 516's yes (now also the retention clock and the removal list); (2) a season
+reopened after its last day is past 120 days has its files and health answers removed at the next run (the ruling's "never marked
+finished" reads it so): keep, or skip reopened seasons; (3) the audit row for a file opening or a health export is written after the
+link or the data goes out and never blocks it (/legal F2): keep, or refuse when the log can't be written; (4) plain Excel, CSV and PDF
+exports into the audit log, or not; (5) the Email families button counts optional questions too: keep, or required only.
 
 ### Stage 5 — Club events (item 8) — FOUNDATION: Club events
 - [ ] A club-owned event: name, kind (banquet, champs day, AGM, clinic, camp, other), date and time, venue from the venue

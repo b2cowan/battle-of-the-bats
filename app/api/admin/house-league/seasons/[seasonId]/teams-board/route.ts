@@ -9,6 +9,7 @@ import { getRatings } from '@/lib/house-league-ratings';
 import { friendRequestsOn } from '@/lib/league-friends';
 import { readDivisionFriendLinks, type DivisionFriends } from '@/lib/league-friend-queue-server';
 import { withObservability } from '@/lib/observability';
+import { readBoardAnswers } from '@/lib/club-form-staff';
 
 /**
  * Teams & draft's one read (Club Tier 9c): the season's division tabs and one division's board. Anyone who opens house
@@ -41,8 +42,15 @@ export const GET = withObservability(async (req: Request,
   // own gate, asked by name (tests/unit/house-league-board-notes-guard.test.ts holds the two together). Notes can be
   // medical; a reader the gate refuses gets no `notes` key at all.
   let notes: Record<string, string> | undefined;
+  // Board Ready Stage 4 Part 3 (ruling 12): the answers to questions turned "Show on the draft board" (never a health
+  // question) join the note, for the same reader, in the same step; a refused reader gets no `answers` key at all.
+  let answers: Awaited<ReturnType<typeof readBoardAnswers>> | undefined;
   if (board && !houseLeagueRefusal(ctx, 'read')) {
     notes = await readBoardNotes(seasonId, board.division.id);
+    answers = await readBoardAnswers(seasonId, board.division.id).catch(e => {
+      console.error('[teams-board] couldn’t read the board answers:', e instanceof Error ? e.message : String(e));
+      return null;
+    });
   }
   // Board Ready Stage 1 Part 3 (A11): the confirmed friend links, the requests still to confirm and who asked — ids only,
   // never a typed name — for the same reader as the notes, on a season that takes friend requests. A reader the gate
@@ -51,5 +59,5 @@ export const GET = withObservability(async (req: Request,
   if (board && friendRequestsOn(ctx!.org.planId, season.friendRequestsMax) && !houseLeagueRefusal(ctx, 'read')) {
     friends = await readDivisionFriendLinks(ctx!.org.id, seasonId, board.division.id);
   }
-  return NextResponse.json({ tabs, board, ...(ratings ? { ratings } : {}), ...(notes ? { notes } : {}), ...(friends ? { friends } : {}) });
+  return NextResponse.json({ tabs, board, ...(ratings ? { ratings } : {}), ...(notes ? { notes } : {}), ...(answers ? { answers } : {}), ...(friends ? { friends } : {}) });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/teams-board' });

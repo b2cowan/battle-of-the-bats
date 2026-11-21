@@ -20,6 +20,7 @@ import { clubEmailFacts, clubPublicContact } from './club-email-context';
 import { familyReplyPlan, type ClubEmailFacts } from './email-club-identity';
 import { FAMILY_EMAIL_WORDS as W, SEASON_EMAIL_WORDS as SW, familiesNamed } from './families-words';
 import type { FamilyMessageState } from './families-read';
+import { formButtonLinksOrNone } from './club-form-email-links';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -232,8 +233,14 @@ export async function sendSeasonEmail(ctx: AuthContextWithRole, season: LeagueSe
   const label = seasonAudienceLabel(scope, shape);
   const reply = await familyReplyChoice(ctx, body);
   if ('ok' in reply) return reply;
+  // Board Ready Stage 4 Part 3 (owner call C4): a family whose sign-up has something to do on the form — a document to tick, or a
+  // live question not yet answered — gets its "Your sign-up" button on this email. The club's own send only, never an automatic one.
+  const signupLinks = await formButtonLinksOrNone({
+    org: ctx.org, season, teamsMade: new Set(shape.divisions.filter(d => d.published).map(d => d.id)),
+    families: audience.families.map(f => ({ addresses: f.addresses, regIds: f.children.map(c => c.regId) })),
+  });
   return deliverFamilyEmail({
-    ctx, scope, world, audience, label, seasonName: season.name, ...words, reply,
+    ctx, scope, world, audience, label, seasonName: season.name, ...words, reply, signupLinks,
     copy: scope.kind === 'season_teams' && body.copyCoaches === true
       ? { league: true, coaches: addresses => leagueCoachesToCopy(ctx.org.id, season.id, scope.teamIds, ctx.user.id, addresses) }
       : null,

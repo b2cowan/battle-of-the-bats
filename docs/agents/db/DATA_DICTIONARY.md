@@ -7248,9 +7248,11 @@ is read as stopped after the grace period (gotcha 4).
 **Gotchas (read first):**
 1. **Read only behind the Registrations read** (ruling 6: owner, admin, league_admin, league_registrar and per-member house-league grants); every other seat gets nothing. Health answers never leave in a list column, the filter, the board, an email, push or bell line, or an export but the opt-in.
 2. **One answer per question per subject** (`club_form_answers_subject_uniq`) or per sign-up (`…_submission_uniq`).
-3. **`removed_at`**: the retention clock (ruling 10, Part 3) empties a health answer and stamps it; the record reads "Removed {date}".
+3. **`removed_at`**: the retention clock (ruling 10, Part 3, mig 518 `club_form_retention_sweep`) empties every HEALTH answer and every FILE answer of a season finished 90 days ago (`league_seasons.finished_at`), or whose last day was 120 days ago when it never finished (`public.league_season_last_day`, mig 518: the end date, else a year after the start, else a year after it was made), and stamps it; the file row goes to `removed` and its `file_name` to "removed" (a family's own name can carry health words, /legal Part 3 F1). The record reads "Removed {date}" / "File removed {date}"; the form page "answers removed {date}" / "files removed {date}". Every other answer stays with the registration. Run by the six-hourly sweep route (mig 516's schedule, on the owner's yes); nothing else calls it.
 4. **Written only two ways (Part 2, mig 515):** inside the child's locked placement, `club_form_place_signup` (the sign-up page: the child's answers, and the sign-up's own on the first child placed — a failure rolls the placement back), and `club_form_family_answers` (Your sign-up's Change, until the child's division has its teams made; a cleared answer is deleted). Both re-check that the question is this form's, live, and asked for that kind of subject. A health answer's words are never sent to Your sign-up (it reads "Answered").
 5. **The sign-up's own answers go with its last child**: `club_form_subject_gone` (re-made by mig 515) deletes them, and their files' rows, when the last registration of the sign-up is deleted.
+6. **Every row is a real answer.** A cleared answer is deleted (mig 515). When the question is a HEALTH one, mig 518 records the clear and its date in `club_form_answer_clears` instead, so no reader of this table ever filters a "cleared" row.
+7. **The club reads them only through `lib/club-form-staff.ts`** (Part 3), whose callers are held to five routes by `tests/unit/club-form-staff-guard.test.ts`: the Registrations list (non-health only, `health: false`), the record's answers, opening a file, the one opt-in export (with health, logged), and the draft board (questions turned "Show on the draft board", never health).
 
 <!-- dict:col:club_form_answers.id -->
 <!-- dict:col:club_form_answers.org_id -->
@@ -7268,7 +7270,40 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_form_answers.removed_at -->
 <!-- dict:col:club_form_answers.created_at -->
 <!-- dict:col:club_form_answers.updated_at -->
-**`value_text`** (≤ 5,000) / **`value_choice_ids`** (text[] of choice ids) / **`value_bool`** / **`value_date`** / **`file_id`** (FK → `club_form_files` SET NULL) — the one that fits the type. **`removed_at`** (gotcha 3) / **`created_at`** / **`updated_at`**.
+**`value_text`** (≤ 5,000) / **`value_choice_ids`** (text[] of choice ids) / **`value_bool`** / **`value_date`** / **`file_id`** (FK → `club_form_files` SET NULL) — the one that fits the type. **`removed_at`** (gotcha 3) / **`created_at`** / **`updated_at`** (a health answer with `updated_at` later than `created_at` reads "Answer changed by the family {date}" on the club's record).
+
+## `club_form_answer_clears`
+<!-- dict:table:club_form_answer_clears -->
+
+**Purpose:** a family emptied a HEALTH answer on Your sign-up (mig 518; /legal Part 2 review (f)). The answer row itself is deleted, as every cleared answer is; this row keeps only the fact and its date, so the club's record reads "Not answered" with "Answer changed by the family {date}". Written only by `club_form_family_answers` (answering again KEEPS it: the answer still changed after it was first given, and the new answer is a new row; gotcha 1 lists what removes it); read only by `lib/club-form-staff.ts`.
+
+**Gotchas (read first):**
+1. **It goes with what it is about**: the question (CASCADE), the sign-up (CASCADE), the child (`club_form_subject_gone` deletes it with the registration, and the sign-up's own with its last child), and the retention clock deletes a season's clears when it removes its health answers.
+2. **Service role only** (RLS on, no policies, anon/authenticated revoked). Never an answer's words.
+
+<!-- dict:col:club_form_answer_clears.id -->
+<!-- dict:col:club_form_answer_clears.org_id -->
+<!-- dict:col:club_form_answer_clears.form_id -->
+<!-- dict:col:club_form_answer_clears.question_id -->
+<!-- dict:col:club_form_answer_clears.submission_id -->
+<!-- dict:col:club_form_answer_clears.subject_table -->
+<!-- dict:col:club_form_answer_clears.subject_id -->
+<!-- dict:col:club_form_answer_clears.cleared_at -->
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** (CASCADE) / **`submission_id`** (CASCADE) / **`subject_table`** + **`subject_id`** (the child's registration, or neither for a question asked once per sign-up; one row per question and subject, or per question and sign-up) / **`cleared_at`** (timestamptz, NOT NULL, DEFAULT now(): the latest clear; the record says the later of it and the answer's own change).
+
+## `club_form_storage_removals`
+<!-- dict:table:club_form_storage_removals -->
+
+**Purpose:** stored files of the sign-up form still to delete from the `club-form-files` bucket (mig 518; Board Ready Stage 4 Part 3; closes F7 for this store). A trigger lists a path in the same statement its row goes: `club_form_file_row_gone` on every `club_form_files` DELETE (a deleted registration through `club_form_subject_gone`, a season delete's cascade, a question delete, a family's Remove, the waiting-file sweep) and on every status change to `removed` (a replaced file, the retention clock); `club_form_version_row_gone` on a deleted document version with a PDF. The six-hourly sweep route (`/api/platform-admin/club-form-files-sweep`, `clearStorageRemovals`) deletes the stored objects, then the lines; a delete that already happened is harmless.
+
+**Gotchas (read first):**
+1. **No foreign key on `org_id`, on purpose**: an organization delete cascades its file rows, and the line must survive that statement (the org delete also walks the `{orgId}/` prefix).
+2. **Service role only** (RLS on, no policies, anon/authenticated revoked). A path, never a name or an answer.
+
+<!-- dict:col:club_form_storage_removals.path -->
+<!-- dict:col:club_form_storage_removals.org_id -->
+<!-- dict:col:club_form_storage_removals.created_at -->
+**`path`** (text, PK: the stored object's path) / **`org_id`** (uuid, NOT NULL, no FK, gotcha 1) / **`created_at`** (when its row went).
 
 ## `club_form_ticks`
 <!-- dict:table:club_form_ticks -->
@@ -12286,6 +12321,9 @@ Account-level notification settings keyed by `user_id` (the "Pause notifications
 
 <!-- dict:col:user_preferences.coach_setup_hints_off -->
 **`coach_setup_hints_off`** (bool, NN, DEFAULT false; mig 209) — whether this coach turned off Premium **season-setup guidance** (the header chip's count + the next-action line under the page header). `false` = show guidance, the default a brand-new coach gets. **Per COACH, not per team** — a coach with three teams dismisses once. Plain bool with a NOT NULL default rather than `theme`'s nullable tri-state: there is no third "unset" meaning here, and defaulting to `false` keeps the read path free of null-coalescing. Fully reversible from the season-setup chip ("Turn setup hints back on"); nothing is destroyed while it is true. **Per-team setup STEP skips are NOT here** — those stay device-local (`flhq.coachSetupSkips.<teamId>`) because they record a fact about a season, not a preference about the coach.
+
+<!-- dict:col:user_preferences.registration_answer_columns -->
+**`registration_answer_columns`** (jsonb, NOT NULL, DEFAULT `{}`; mig 518, Board Ready Stage 4 Part 3, ruling 11) — the answer columns a person chose on a house-league season's Registrations list: a map of sign-up form id → up to three question ids (live, never a health question; the route re-checks and the list re-filters on read). Remembered per PERSON, so they follow the account to another computer (owner call 5, 2026-11-20). Never an answer. Written by `saveAnswerColumns` (`lib/club-form-staff.ts`), which changes only that form's key.
 
 <!-- dict:col:user_preferences.created_at -->
 **`created_at`** (tstz, NN, DEFAULT now()) — row creation (first preference set); audit only.

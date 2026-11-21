@@ -15,6 +15,8 @@ import { pluralize } from './utils';
 import { pairKey } from './families-duplicates';
 import { proposeChildDuplicates, type ChildProposal, type ChildRecordIn } from './children-duplicates';
 import { CHILD_JOIN_WORDS as W, CHILD_SPLIT_WORDS as SW } from './child-join-words';
+import { readTickSummaries } from './club-form-tick-summary-read';
+import { documentsTickLine } from './club-form-tick-summary';
 import { storeNotSameChild } from './past-players';
 import { GUARDIAN_TIER_ENABLED } from './family-guardian';
 import { personDisplayName } from './families-read';
@@ -30,7 +32,7 @@ interface RepRow {
   rep_program_years: Rel<{ name: string; year: number }>;
 }
 interface LeagueRow {
-  id: string; child_id: string; status: string; registered_at: string | null; waiver_accepted_at: string | null; team_id: string | null;
+  id: string; child_id: string; status: string; registered_at: string | null; team_id: string | null;
   guardian_first_name: string | null; guardian_last_name: string | null; guardian_email: string | null; guardian_email_2: string | null;
   league_seasons: Rel<{ name: string; season_start_date: string | null }>;
   league_divisions: Rel<{ name: string }>;
@@ -59,13 +61,16 @@ export async function buildChildProposals(orgId: string, { detail = true }: { de
         .eq('org_id', orgId).order('id').range(from, to)),
     fetchAll<LeagueRow>((from, to) =>
       supabaseAdmin.from('league_registrations')
-        .select('id, child_id, status, registered_at, waiver_accepted_at, team_id, guardian_first_name, guardian_last_name, guardian_email, guardian_email_2, league_seasons(name, season_start_date), league_divisions(name)')
+        .select('id, child_id, status, registered_at, team_id, guardian_first_name, guardian_last_name, guardian_email, guardian_email_2, league_seasons(name, season_start_date), league_divisions(name)')
         .eq('org_id', orgId).neq('status', 'declined').order('id').range(from, to)),
     detail
       ? fetchAll<{ player_id: string }>((from, to) =>
         supabaseAdmin.from('rep_player_documents').select('player_id').eq('org_id', orgId).order('id').range(from, to))
       : Promise.resolve([] as { player_id: string }[]),
   ]);
+
+  // The date a family ticked a sign-up's documents comes from the ticks (one bulk read), only for the card's description line.
+  const ticks = detail ? await readTickSummaries(orgId, league.map(r => r.id)) : new Map<string, { at: string; agreed: boolean }>();
 
   const leagueTeamIds = !detail ? [] : [...new Set(league.map(r => r.team_id).filter((x): x is string => !!x))];
   const teamRows = leagueTeamIds.length
@@ -111,12 +116,14 @@ export async function buildChildProposals(orgId: string, { detail = true }: { de
       if ('guardian_email_2' in r) { const e2 = normalizeGuardianEmail(r.guardian_email_2); if (e2) emails.add(e2); }
     }
     const docCount = seen.reduce((n, r) => n + (docsByEntry.get(r.id) ?? 0), 0);
-    const waiver = leagues.filter(r => r.waiver_accepted_at).sort((a, b) => String(b.waiver_accepted_at).localeCompare(String(a.waiver_accepted_at)))[0];
+    // The newest sign-up that has a tick, by the date its documents were first ticked.
+    const ticked = leagues.filter(r => ticks.has(r.id)).map(r => ticks.get(r.id)!)
+      .sort((a, b) => (Date.parse(b.at) || 0) - (Date.parse(a.at) || 0))[0];
     const detailLine = [
       docCount > 0 ? pluralize(docCount, 'document') : null,
       c.medical_notes && c.medical_notes.trim() ? 'medical note on file' : null,
-      // Board Ready Stage 4: the date is set when a family agreed to a sign-up document, which may not be a waiver.
-      docCount === 0 && waiver ? `Agreed to documents on ${formatStoredDate(String(waiver.waiver_accepted_at))}` : null,
+      // Board Ready Stage 4: read from the sign-up's ticks — "Agreed to documents" when a tick said "I have read and agree …", else "Documents ticked".
+      docCount === 0 && ticked ? documentsTickLine(ticked.agreed, formatStoredDate(ticked.at)) : null,
     ].filter(Boolean).join(' · ');
 
     records.push({

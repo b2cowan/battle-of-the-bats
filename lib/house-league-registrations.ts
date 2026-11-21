@@ -10,6 +10,7 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import type { LeagueRegistration, LeagueRegistrationStatus } from './types';
+import type { StaffFormGrid } from './club-form-staff-words';
 import {
   feeState, formatLeagueMoney, isOwing, lastPayment, receivedOf, stillOwingCents,
   type FeeState, type LeagueMoneyLine,
@@ -86,6 +87,8 @@ export interface RegsRead {
   debits?: Record<string, RegDebit>;
   /** 12d-1 Part 3: a child's card dispute, as this reader's record shows it (the Fee cell, the record's block). */
   disputes?: Record<string, DisputeRecord>;
+  /** Board Ready Stage 4 Part 3: the sign-up form's non-health answers, for the columns, the Filter and plain Excel/CSV. */
+  form?: StaffFormGrid | null;
 }
 
 // ── Words about a person and a day ──────────────────────────────────────────────────────────────

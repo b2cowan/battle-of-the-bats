@@ -1,24 +1,26 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-20 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-21 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 551 divergence(s)** across dev/prod.
+**⚠️ 583 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 17 | 2 | — |
-| Columns | 214 | 42 | 2 |
-| Indexes | 82 | 13 | 0 |
-| Constraints | 72 | 7 | — |
-| RLS / CHECK | 80 | 19 | 0 (RLS state) |
+| Tables | 19 | 2 | — |
+| Columns | 226 | 42 | 2 |
+| Indexes | 91 | 13 | 0 |
+| Constraints | 78 | 7 | — |
+| RLS / CHECK | 83 | 19 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (17)
+### Only in DEV (19)
+- `club_form_answer_clears`
 - `club_form_answers`
 - `club_form_document_versions`
 - `club_form_documents`
 - `club_form_files`
 - `club_form_questions`
+- `club_form_storage_removals`
 - `club_form_submissions`
 - `club_form_ticks`
 - `club_forms`
@@ -37,7 +39,15 @@
 - `platform_stripe_fees`
 
 ## Columns
-### Only in DEV (214)
+### Only in DEV (226)
+- `club_form_answer_clears.cleared_at`
+- `club_form_answer_clears.form_id`
+- `club_form_answer_clears.id`
+- `club_form_answer_clears.org_id`
+- `club_form_answer_clears.question_id`
+- `club_form_answer_clears.subject_id`
+- `club_form_answer_clears.subject_table`
+- `club_form_answer_clears.submission_id`
 - `club_form_answers.created_at`
 - `club_form_answers.file_id`
 - `club_form_answers.form_id`
@@ -109,6 +119,9 @@
 - `club_form_questions.required`
 - `club_form_questions.sort_order`
 - `club_form_questions.updated_at`
+- `club_form_storage_removals.created_at`
+- `club_form_storage_removals.org_id`
+- `club_form_storage_removals.path`
 - `club_form_submissions.created_at`
 - `club_form_submissions.form_id`
 - `club_form_submissions.guardian_email`
@@ -252,6 +265,7 @@
 - `payments_terms_agreements.terms_version`
 - `payments_terms_agreements.user_email`
 - `payments_terms_agreements.user_id`
+- `user_preferences.registration_answer_columns`
 
 ### Only in PROD (42)
 - `organization_billing_facts.next_season_billing_cycle`
@@ -302,7 +316,14 @@
 - `family_email_sends.subject` — dev: `text|text|YES|` | prod: `text|text|NO|`
 
 ## Indexes
-### Only in DEV (82)
+### Only in DEV (91)
+- `club_form_answer_clears_form_idx`
+- `club_form_answer_clears_org_idx`
+- `club_form_answer_clears_pkey`
+- `club_form_answer_clears_subject_idx`
+- `club_form_answer_clears_subject_uniq`
+- `club_form_answer_clears_submission_idx`
+- `club_form_answer_clears_submission_uniq`
 - `club_form_answers_file_idx`
 - `club_form_answers_form_idx`
 - `club_form_answers_org_idx`
@@ -331,6 +352,8 @@
 - `club_form_questions_form_idx`
 - `club_form_questions_org_idx`
 - `club_form_questions_pkey`
+- `club_form_storage_removals_created_idx`
+- `club_form_storage_removals_pkey`
 - `club_form_submissions_org_idx`
 - `club_form_submissions_pkey`
 - `club_form_submissions_ref_uniq`
@@ -405,7 +428,12 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (72)
+### Only in DEV (78)
+- `club_form_answer_clears.club_form_answer_clears_form_id_fkey`
+- `club_form_answer_clears.club_form_answer_clears_org_id_fkey`
+- `club_form_answer_clears.club_form_answer_clears_pkey`
+- `club_form_answer_clears.club_form_answer_clears_question_id_fkey`
+- `club_form_answer_clears.club_form_answer_clears_submission_id_fkey`
 - `club_form_answers.club_form_answers_file_id_fkey`
 - `club_form_answers.club_form_answers_form_id_fkey`
 - `club_form_answers.club_form_answers_org_id_fkey`
@@ -431,6 +459,7 @@ _none_
 - `club_form_questions.club_form_questions_form_id_fkey`
 - `club_form_questions.club_form_questions_org_id_fkey`
 - `club_form_questions.club_form_questions_pkey`
+- `club_form_storage_removals.club_form_storage_removals_pkey`
 - `club_form_submissions.club_form_submissions_form_id_fkey`
 - `club_form_submissions.club_form_submissions_org_id_fkey`
 - `club_form_submissions.club_form_submissions_pkey`
@@ -492,7 +521,10 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (80)
+### CHECK only in DEV (83)
+- `club_form_answer_clears.club_form_answer_clears_has_target`
+- `club_form_answer_clears.club_form_answer_clears_subject_pair`
+- `club_form_answer_clears.club_form_answer_clears_subject_table_check`
 - `club_form_answers.club_form_answers_has_target`
 - `club_form_answers.club_form_answers_subject_pair`
 - `club_form_answers.club_form_answers_subject_table_check`

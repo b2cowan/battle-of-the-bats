@@ -22,6 +22,7 @@ import 'server-only';
  *               typed guardian, with no door.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
+import { readTickSummaries } from './club-form-tick-summary-read';
 import { supabaseAdmin } from './supabase-admin';
 import { readRepMoney, leagueFeeLine, personDisplayName, LEAGUE_FEE_FACTS, type LeagueFeeFacts } from './families-read';
 import { loadRegistrationsReceivedCents } from './league-money-read';
@@ -59,7 +60,7 @@ export interface ChildPagePayload {
   currentChip: string | null;
   seasons: ChildSeasonRow[];
   documents: ChildPageDocuments[];
-  /** House-league waivers when the child has no rep team at all (the Documents section's only rows), newest first. */
+  /** The house-league sign-ups whose documents a family ticked, newest first — the Documents section's house-league line (own line, never folded into a rep team's Waiver). */
   leagueOnlyWaivers: LeagueWaiver[];
   health: {
     medicalNotes: string | null;
@@ -90,7 +91,6 @@ interface RepRow {
 interface LeagueRow {
   id: string; child_id: string; person_id: string | null; status: string; season_id: string; division_id: string | null;
   team_id: string | null; fee_amount: number | null; registration_fee_paid?: boolean | null; /* read only — never written here */ registered_at: string | null;
-  waiver_accepted_at: string | null;
   guardian_first_name: string | null; guardian_last_name: string | null; guardian_email: string | null; guardian_phone: string | null;
   league_seasons: Rel<{ name: string; status: string; registration_fee: number | null; season_start_date: string | null }>;
   league_divisions: Rel<{ name: string }>;
@@ -104,7 +104,7 @@ const REP_SELECT = 'id, child_id, person_id, team_id, program_year_id, status, p
   + 'guardian_first_name, guardian_last_name, guardian_email, guardian_phone, created_at, '
   + 'rep_teams(name), rep_program_years(id, name, year, status, credit_application)';
 const LEAGUE_SELECT = 'id, child_id, person_id, status, season_id, division_id, team_id, fee_amount, registration_fee_paid, '
-  + 'registered_at, waiver_accepted_at, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, '
+  + 'registered_at, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, '
   + 'league_seasons(name, status, registration_fee, season_start_date), league_divisions(name)';
 
 /** The child's rows: the record, every non-call-up rep entry, every house-league sign-up that was not declined. */
@@ -138,9 +138,10 @@ export async function buildChildPage(orgId: string, childId: string): Promise<Ch
   // no org column; the ids come from this org's own sign-ups, which is what scopes the read.
   const leagueTeamIds = [...new Set(league.map(r => r.team_id).filter(Boolean))] as string[];
   // Everything below depends only on the rows above, so the reads that need no one else's answer run together.
-  const [money, received, leagueTeams, { parents, connected }, templatesRes] = await Promise.all([
+  const [money, received, ticks, leagueTeams, { parents, connected }, templatesRes] = await Promise.all([
     readRepMoney(orgId, rep.map(r => ({ ...r, rep_program_years: yearOf(r) }))),
     loadRegistrationsReceivedCents(league.map(r => r.id)),
+    readTickSummaries(orgId, league.map(r => r.id)),
     leagueTeamIds.length
       ? supabaseAdmin.from('league_teams').select('id, name').in('id', leagueTeamIds)
       : Promise.resolve({ data: [] as { id: string; name: string }[], error: null }),
@@ -188,23 +189,23 @@ export async function buildChildPage(orgId: string, childId: string): Promise<Ch
   const sortedSeasons = sortSeasonRows(seasons);
 
   // ── Documents, per team ──
-  // Each with the date the sign-up accepted it, so the Waiver row sorts it in among the team's copies by date.
-  const leagueWaivers: LeagueWaiver[] = league.filter(r => r.waiver_accepted_at)
+  // The house-league line reads the sign-up's own ticks (club_form_ticks): the earliest tick is the date, and "agreed to" only when
+  // a tick said "I have read and agree …". A sign-up with no tick shows nothing (not recorded, never "not accepted"). Newest first.
+  const leagueWaivers: LeagueWaiver[] = league.filter(r => ticks.has(r.id))
     // A missing season record gives '' (the copy then reads by its date), never "House league" — the row already says that.
-    .map(r => ({ seasonName: String(one(r.league_seasons)?.name ?? ''), acceptedAt: String(r.waiver_accepted_at) }));
+    .map(r => ({ seasonName: String(one(r.league_seasons)?.name ?? ''), acceptedAt: ticks.get(r.id)!.at, agreed: ticks.get(r.id)!.agreed }))
+    .sort((a, b) => (Date.parse(b.acceptedAt) || 0) - (Date.parse(a.acceptedAt) || 0));
   const liveEntries = liveRepEntries(rep);
   const documents: ChildPageDocuments[] = [];
   const asEntry = (r: RepRow) => ({ id: r.id, childId: r.child_id, teamId: r.team_id, orgId, status: r.status });
   // One live entry per team (the one-child-per-season lock allows one per season; a team has one live season).
   const liveByTeam = new Map<string, RepRow>();
   for (const r of liveEntries) if (!liveByTeam.has(r.team_id)) liveByTeam.set(r.team_id, r);
-  let waiversPlaced = false;
   for (const r of liveByTeam.values()) {
     const y = yearOf(r)!;
     const docs = await readChildTeamDocuments(asEntry(r));
     const state = documentStateRows({ templates: templatesForTeam(templateRows, r.team_id), documents: docs, season: { id: y.id, name: y.name } });
-    const rows = documentRows({ state, documents: docs, leagueWaivers: waiversPlaced ? [] : leagueWaivers });
-    if (rows.some(x => x.documentType === 'waiver')) waiversPlaced = true;
+    const rows = documentRows({ state, documents: docs });
     documents.push({
       teamId: r.team_id, teamName: teamNameOf(r), seasonName: y.name, seasonYear: Number(y.year),
       rows, toSign: rows.filter(x => x.state === 'needs_signing').length,
@@ -214,8 +215,8 @@ export async function buildChildPage(orgId: string, childId: string): Promise<Ch
     // No live season on any team: the newest team's papers, as history.
     const newest = rep.slice().sort(byYearDesc)[0];
     const docs = await readChildTeamDocuments(asEntry(newest));
-    const rows = historyOnlyRows(docs, leagueWaivers);
-    if (rows.length) { waiversPlaced = true; documents.push({ teamId: newest.team_id, teamName: teamNameOf(newest), seasonName: null, seasonYear: null, rows, toSign: 0 }); }
+    const rows = historyOnlyRows(docs);
+    if (rows.length) { documents.push({ teamId: newest.team_id, teamName: teamNameOf(newest), seasonName: null, seasonYear: null, rows, toSign: 0 }); }
   }
 
   // ── Health: the child's one value; asked as the coach's page asks it ──
@@ -241,7 +242,7 @@ export async function buildChildPage(orgId: string, childId: string): Promise<Ch
     currentChip: currentChip(sortedSeasons),
     seasons: sortedSeasons,
     documents,
-    leagueOnlyWaivers: waiversPlaced ? [] : leagueWaivers,
+    leagueOnlyWaivers: leagueWaivers,
     health: {
       medicalNotes: child.medical_notes ?? null,
       emergencyName: child.emergency_contact_name ?? null,

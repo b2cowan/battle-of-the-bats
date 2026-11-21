@@ -384,7 +384,7 @@ const familiesHelp: HelpPageContent = {
       heading: 'One page per child',
       summary: 'A child’s seasons with the club, their papers, their health check and their parents, on one page.',
       keywords: ['child page', 'child', 'player page', 'seasons', 'fees by season', 'documents', 'waiver', 'medical consent', 'code of conduct', 'last signed', 'earlier copies', 'health check', 'still right', 'confirm', 'medical note', 'emergency contact', 'parents', 'no family on file', 'roster name', 'split records', 'split a child', 'two children joined by mistake', 'undo a join'],
-      searchText: 'split records tick the seasons that leave a different child new record parents stay with the kept record nothing is deleted never proposed again one page per child open a child select the name in a family record children list roster name no family on file row seasons newest first rep house league fees paid in full no dues documents per team needs signing on file waiver code of conduct medical consent last signed earlier copies every copy newest first accepted at sign-up uploaded earlier season health medical note emergency contact still right for the season confirm clears the coach question parents open the household typed guardian no door read only no add player',
+      searchText: 'house league documents agreed to at sign-up documents ticked at sign-up i have read split records tick the seasons that leave a different child new record parents stay with the kept record nothing is deleted never proposed again one page per child open a child select the name in a family record children list roster name no family on file row seasons newest first rep house league fees paid in full no dues documents per team needs signing on file waiver code of conduct medical consent last signed earlier copies every copy newest first accepted at sign-up uploaded earlier season health medical note emergency contact still right for the season confirm clears the coach question parents open the household typed guardian no door read only no add player',
       content: (
         <p>
           A child&rsquo;s page shows everything the club holds about one child, across rep teams and house league. Open it
@@ -415,7 +415,7 @@ const familiesHelp: HelpPageContent = {
               <ul>
                 <li><strong>Last signed</strong> shows the newest copy: its season, or its date for a document that is good until replaced.</li>
                 <li>When there are older copies, <strong>+2 earlier</strong> (or however many) opens every copy, newest first, with the date and how each was signed.</li>
-                <li>A house-league sign-up where the family agreed to the club&rsquo;s documents counts as a copy of the Waiver, in date order, dated when they agreed. A child with no rep team reads <em>documents agreed to at sign-up</em>. Teams are never added together.</li>
+                <li>A house-league sign-up&rsquo;s documents are not a copy of a team&rsquo;s Waiver. They read on their own line under the rows: <em>House league: Summer 2029 documents agreed to at sign-up.</em> It says <em>ticked</em> instead when the documents only asked <em>I have read</em>. On a computer, <strong>+2 earlier</strong> opens every sign-up&rsquo;s copy, dated when the family first ticked. A child with no rep team shows that line alone. Teams are never added together.</li>
                 <li>Papers are read-only here: they are uploaded by the club or the coach, on the team. On a phone the card says what is owed now; open earlier copies on a computer.</li>
               </ul>
             </>
@@ -522,7 +522,7 @@ const familiesHelp: HelpPageContent = {
               </ul>
               <p>
                 Two different birth dates are never proposed, and neither are two records that both lack one. A record with no birth date
-                never ties two records with different dates into one card; they come up as separate questions. Three records that all match are one card.
+                never ties two records with different dates into one card; they come up as separate questions. Three records that all match are one card. Each record&rsquo;s line says <em>Agreed to documents on May 2, 2025</em> when a sign-up document asked <em>I have read and agree</em>, and <em>Documents ticked on May 2, 2025</em> when they only asked <em>I have read</em>.
               </p>
               <ul>
                 <li><strong>Keep this record</strong> sits on each side. The record you keep decides the child&rsquo;s name and birth date; it starts on the record with the most seasons. The card says what joining will keep.</li>
@@ -583,7 +583,7 @@ const familiesHelp: HelpPageContent = {
             holds &mdash; contact and every address used, the club-email setting and how it was recorded, each
             child&rsquo;s registrations with birth date, medical notes and emergency contact, tryout applications
             and their consent, every dues line and payment (including a payment the club sent to a coach), documents,
-            waivers and consents, the dates the club messaged them, <strong>Notes about the family</strong>, and
+            waivers and consents (a house-league sign-up&rsquo;s documents read as <em>agreed to</em> or <em>ticked</em>), the dates the club messaged them, <strong>Notes about the family</strong>, and
             records joined &mdash; and what it doesn&rsquo;t, under <em>Not in this file</em>: coaching records stay
             with each team, including a coach&rsquo;s pinned note about a player. Every export is recorded in the club&rsquo;s audit log.
           </p>

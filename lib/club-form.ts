@@ -89,6 +89,8 @@ export type FormFacts = {
   documents: string[];
   /** The form printed by content (Start next season's "From {season}" mark clears when it changes). */
   print: string;
+  /** It asks a health or a file question (any, archived too): the finish confirm says when those answers are removed. */
+  removesOnClock?: boolean;
 };
 
 /** The longest a question, its help text, a choice and a document's name may be. */

@@ -24,10 +24,15 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { kitCountText } from '@/lib/admin-kit-nav';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { MoreHorizontal, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import ExportMenu from '@/components/admin/ExportMenu';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import AnswerColumnsWindow from './AnswerColumnsWindow';
+import RecordFormSections from './RecordFormSections';
+import { ANSWER_COLUMNS_MAX, STAFF_FORM_WORDS, gridCellText, type SeasonAnswerGrid, type StaffFormGrid } from '@/lib/club-form-staff-words';
+import { toggleKey } from '@/lib/toggle-key';
 import { announceSeasonsChanged, useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import KitDialog, { DialogCancel, type KitStep } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
@@ -82,6 +87,9 @@ import { useSeasonEmailOpen } from '@/components/admin/kit/useCommunicationsFact
 
 /** A list longer than this draws its first rows and "… n more". */
 const PAGE = 50;
+/** The Filter's Documents group (drawing tab 6 · A): its one row is Needs a new tick. */
+const DOCS_KEY = 'documents';
+const DOCS_NEEDS = 'needsTick';
 
 type Act =
   // The windows that can refuse and read again keep what they OPENED on: a reload must never change their targets (a
@@ -151,6 +159,10 @@ export default function RegistrationsScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [result, setResult] = useState<{ text: string; stayed: number } | null>(null);
   const [landed, setLanded] = useState<RegTab | null>(null);
+  // Board Ready Stage 4 Part 3 (ruling 11): the Filter's answer groups (a question's choices; Documents › Needs a new tick),
+  // and the Answer columns window (the person's columns ride the read; a save writes them into it).
+  const [answerPicks, setAnswerPicks] = useState<Record<string, ReadonlySet<string>>>({});
+  const [columnsOpen, setColumnsOpen] = useState(false);
 
   const beginRead = useLatestRead();
   // The first read (and a retry) reads everything. A reload after a press reads the registrations, and the season only when
@@ -187,6 +199,7 @@ export default function RegistrationsScreen() {
       unrecordedCard: regsRes.data.unrecordedCard ?? {}, returnedRefunds: regsRes.data.returnedRefunds ?? {},
       cardRefunds: regsRes.data.cardRefunds ?? {}, notMatched: regsRes.data.notMatched ?? {}, debits: regsRes.data.debits ?? {},
       disputes: regsRes.data.disputes ?? {},
+      form: regsRes.data.form ?? null,
     });
     setFailed(null);
   }, [orgSlug, seasonId, orgQuery, beginRead]);
@@ -315,6 +328,29 @@ export default function RegistrationsScreen() {
   // Fee: Owing keeps a child with part of the fee clearing, owing the rest, as Money does.
   const clearingOf = useCallback((r: LeagueRegistration) => clearingShareCents(read?.debits?.[r.id]), [read]);
 
+  // ── The sign-up form's answers (Board Ready Stage 4 Part 3; drawing tab 6 · A) ─────────────────────────
+  // The read never holds a health question; only live questions are columns or filters, and only ones with choices filter.
+  const form: StaffFormGrid | null = read?.form ?? null;
+  const needsTickIds = useMemo(() => new Set(form?.needsTick ?? []), [form]);
+  const liveQs = useMemo(() => (form?.questions ?? []).filter(q => !q.archived && !q.health), [form]);
+  const filterQs = useMemo(() => liveQs.filter(q => q.choices.length > 0), [liveQs]);
+  const columnQs = useMemo(() => (form?.columns ?? [])
+    .flatMap(id => liveQs.filter(q => q.id === id)).slice(0, ANSWER_COLUMNS_MAX), [form, liveQs]);
+  const answerOf = useCallback((regId: string, qid: string) => form?.cells[regId]?.[qid], [form]);
+  /** A registration passes the answer groups (any ticked choice within a group; every group), leaving out `except`. */
+  const answerMatch = useCallback((regId: string, except?: string) => Object.entries(answerPicks).every(([key, set]) => {
+    if (key === except || set.size === 0) return true;
+    if (key === DOCS_KEY) return needsTickIds.has(regId);
+    const q = filterQs.find(x => x.id === key);
+    if (!q) return true; // a question the club archived since: its pick filters nothing
+    const live = [...set].filter(id => q.choices.some(c => c.id === id)); // a removed choice's pick, likewise
+    if (live.length === 0) return true;
+    const c = answerOf(regId, key);
+    return c?.state === 'answered' && c.choiceIds.some(id => live.includes(id));
+  }), [answerPicks, needsTickIds, filterQs, answerOf]);
+  const answerPicksOn = Object.entries(answerPicks).some(([key, set]) => set.size > 0
+    && (key === DOCS_KEY || filterQs.some(q => q.id === key && q.choices.some(c => set.has(c.id)))));
+
   // The Filter (Team · Fee · Flags). A pick belongs to the tab whose menu offers it (Refunded is the Ended tab's, Team the
   // Active tab's): a hidden pick filters nothing.
   const scopeTeams = useMemo(() => (scope ? teams.filter(t => t.divisionId === scope) : []), [teams, scope]);
@@ -326,14 +362,20 @@ export default function RegistrationsScreen() {
     const only = (g: RegFilterGroup) => new Set([...picks[g]].filter(k => offer[g].includes(k)));
     return { team: only('team'), fee: only('fee'), flags: only('flags') };
   }, [picks, offer]);
-  const filterOn = activePicks.team.size + activePicks.fee.size + activePicks.flags.size > 0;
+  const basePicksOn = activePicks.team.size + activePicks.fee.size + activePicks.flags.size > 0;
+  const filterOn = basePicksOn || answerPicksOn;
   const searchedTab = useMemo(() => matched.filter(r => regTab(r.status) === tab), [matched, tab]);
+  // The shipped picks once; the answer groups narrow that, and count their choices over it (Stage 4 Part 3).
+  const baseMatched = useMemo(
+    () => searchedTab.filter(r => !basePicksOn || matchesPicks(activePicks, r, fees.get(r.id)!.state, undefined, clearingOf(r), hasFriend(r))),
+    [searchedTab, basePicksOn, activePicks, fees, clearingOf, hasFriend],
+  );
   const tabRegs = useMemo(() => {
-    const list = searchedTab.filter(r => !filterOn || matchesPicks(activePicks, r, fees.get(r.id)!.state, undefined, clearingOf(r), hasFriend(r)));
+    const list = baseMatched.filter(r => answerMatch(r.id));
     if (tab === 'waitlist') return list.sort((a, b) => (a.waitlistPosition ?? 9999) - (b.waitlistPosition ?? 9999));
     if (tab === 'ended') return list.sort((a, b) => Date.parse(b.endedAt ?? b.updatedAt) - Date.parse(a.endedAt ?? a.updatedAt));
     return list;
-  }, [searchedTab, tab, filterOn, fees, activePicks, hasFriend, clearingOf]);
+  }, [baseMatched, tab, answerMatch]);
 
   const bulkKeys = useMemo(() => bulkActions(tab, rights, charges), [tab, rights, charges]);
   const selectable = bulkKeys.length > 0;
@@ -400,8 +442,11 @@ export default function RegistrationsScreen() {
       sheet,
       sheetSub: REGS_WORDS.sheetSub(division ?? REGS_WORDS.noDivision, fee.alert?.text ?? fee.chip?.text ?? fee.primary),
       note: notes[reg.id] ?? null,
+      // Stage 4 Part 3: the chosen answer columns ("Not asked", never a blank) and the amber Needs a new tick.
+      answers: columnQs.map(q => gridCellText(form, reg.id, q)),
+      needsTick: needsTickIds.has(reg.id),
     };
-  }, [fees, divisionName, teamName, today, linesOf, rights, itemFor, busyIds, notes, read]);
+  }, [fees, divisionName, teamName, today, linesOf, rights, itemFor, busyIds, notes, read, columnQs, form, needsTickIds]);
 
   const rowModels = useMemo(() => tabRegs.slice(0, shown).map(modelFor), [tabRegs, shown, modelFor]);
 
@@ -666,6 +711,14 @@ export default function RegistrationsScreen() {
   } : null;
 
   // ── Export ─────────────────────────────────────────────────────────────────────────────────────
+  // Stage 4 Part 3 (ruling 13): a column per question the read holds (never a health one in the list's read), in the
+  // form's order; an archived question reads "{label} (no longer asked)".
+  const answerColsOf = (g: SeasonAnswerGrid | null) => (g?.questions ?? []).map(q => ({
+    id: q.id, health: q.health, type: q.type, label: q.archived ? STAFF_FORM_WORDS.noLongerAskedHeader(q.label) : q.label,
+  }));
+  const answersFor = (g: SeasonAnswerGrid | null, cols: ReturnType<typeof answerColsOf>, regId: string) =>
+    Object.fromEntries(cols.map(c => [c.id, gridCellText(g, regId, c).text]));
+  const answerCols = answerColsOf(form);
   const exportRows: ExportRow[] = tabRegs.map(reg => {
     const f = fees.get(reg.id);
     const t = tallies.get(reg.id);
@@ -673,8 +726,18 @@ export default function RegistrationsScreen() {
       reg, division: divisionName(reg.divisionId) ?? '', fee: f?.alert?.text ?? f?.chip?.text ?? f?.primary ?? '',
       // Board Ready Stage 1 Part 2 (tab 7): two name-free columns, only on a season that takes friend requests.
       ...(friendsOn ? { friends: { requests: t?.asked ?? 0, honoured: honouredText(t) } } : {}),
+      ...(form ? { answers: answersFor(form, answerCols, reg.id) } : {}),
     };
   });
+  // "Excel with contact details and health answers": the health answers are read from the server only now (the list never
+  // holds them), for the rows the screen shows. The server records the read in the club's audit log.
+  const exportWithHealth = async () => {
+    const r = await moneyFetch<{ form: SeasonAnswerGrid | null }>(`/api/admin/house-league/seasons/${seasonId}/registrations/answers${orgQuery}`).catch(() => null);
+    if (!r?.ok) { setNotice(STAFF_FORM_WORDS.healthExportFailed); return; }
+    const full = r.data.form;
+    const cols = answerColsOf(full);
+    await exportXlsx(exportRows.map(row => ({ ...row, answers: answersFor(full, cols, row.reg.id) })), currentOrg?.slug, tab, true, cols, true);
+  };
 
   // ── The header ─────────────────────────────────────────────────────────────────────────────────
   // ⚖ None of its own (Club Tier Stage 13i, A4): Registrations is a tab of its season, whose frame draws the one header
@@ -755,7 +818,7 @@ export default function RegistrationsScreen() {
   }
 
   // ── The Filter: Team · Fee · Flags, each choice counted given the other groups' ticks ──────────────────
-  const filterCounts = regFilterCounts(searchedTab, r => fees.get(r.id)!.state, activePicks, offer, clearingOf, hasFriend);
+  const filterCounts = regFilterCounts(searchedTab.filter(r => answerMatch(r.id)), r => fees.get(r.id)!.state, activePicks, offer, clearingOf, hasFriend);
   const W = REGS_WORDS;
   const optionWord: Record<RegFilterGroup, (k: string) => string> = {
     team: k => (k === NOT_PLACED ? W.notPlaced : scopeTeams.find(t => t.id === k)?.name ?? k),
@@ -771,7 +834,7 @@ export default function RegistrationsScreen() {
     });
     setShown(PAGE); clearSelection();
   };
-  const groups = (['team', 'fee', 'flags'] as const).map(g => ({
+  const baseGroups = (['team', 'fee', 'flags'] as const).map(g => ({
     key: g,
     label: g === 'team' ? W.filterTeam : g === 'fee' ? W.filterFee : W.filterFlags,
     note: g === 'team' && !scope ? W.filterPickDivision : undefined,
@@ -779,7 +842,35 @@ export default function RegistrationsScreen() {
     selected: [...activePicks[g]],
     onToggle: (k: string) => toggle(g, k),
   })).filter(g => g.options.length > 0);
-  const resetFilter = () => { setPicks(NO_PICKS); setShown(PAGE); };
+  // Stage 4 Part 3 (drawing tab 6 · A): one group per question with choices, then Documents › Needs a new tick. Each choice
+  // is counted given every other group's ticks, as the shipped groups are. Health questions never reach this read.
+  const answerBase = baseMatched;
+  const toggleAnswer = (key: string, k: string) => {
+    setAnswerPicks(prev => ({ ...prev, [key]: toggleKey(prev[key] ?? new Set<string>(), k) }));
+    setShown(PAGE); clearSelection();
+  };
+  const answerGroups = [
+    ...filterQs.map(q => {
+      const among = answerBase.filter(r => answerMatch(r.id, q.id));
+      return {
+        key: `q:${q.id}`, label: q.label,
+        options: q.choices.map(c => ({
+          key: c.id, label: c.label,
+          count: among.filter(r => { const x = answerOf(r.id, q.id); return x?.state === 'answered' && x.choiceIds.includes(c.id); }).length,
+        })),
+        selected: [...(answerPicks[q.id] ?? [])],
+        onToggle: (k: string) => toggleAnswer(q.id, k),
+      };
+    }),
+    ...(form && (needsTickIds.size > 0 || (answerPicks[DOCS_KEY]?.size ?? 0) > 0) ? [{
+      key: DOCS_KEY, label: STAFF_FORM_WORDS.documentsGroup,
+      options: [{ key: DOCS_NEEDS, label: STAFF_FORM_WORDS.needsNewTick, count: answerBase.filter(r => answerMatch(r.id, DOCS_KEY) && needsTickIds.has(r.id)).length }],
+      selected: [...(answerPicks[DOCS_KEY] ?? [])],
+      onToggle: (k: string) => toggleAnswer(DOCS_KEY, k),
+    }] : []),
+  ];
+  const groups = [...baseGroups, ...answerGroups];
+  const resetFilter = () => { setPicks(NO_PICKS); setAnswerPicks({}); setShown(PAGE); };
 
   // ── The empty states ───────────────────────────────────────────────────────────────────────────
   const E = REGS_WORDS.empty;
@@ -840,8 +931,8 @@ export default function RegistrationsScreen() {
         {/* Every plan that runs a house league exports (the free League plan that could not is gone, owner 2026-11-19). */}
         <ExportMenu
           formats={['xlsx', 'csv', 'pdf']}
-          onExportXLSX={() => exportXlsx(exportRows, currentOrg?.slug, tab, false)}
-          onExportCSV={() => exportCsv(exportRows, currentOrg?.slug, tab)}
+          onExportXLSX={() => exportXlsx(exportRows, currentOrg?.slug, tab, false, answerCols)}
+          onExportCSV={() => exportCsv(exportRows, currentOrg?.slug, tab, answerCols)}
           onExportPDF={() => exportPdf({
             rows: exportRows, divisionOrder: divisions.map(d => ({ id: d.id, name: d.name })), orgSlug: currentOrg?.slug, orgName: currentOrg?.name,
             orgQuery, seasonName: season.name, tab, query,
@@ -851,10 +942,25 @@ export default function RegistrationsScreen() {
           pdfFeatureKey="league_exports"
           hasSensitiveOption
           sensitiveOptionLabel="Excel with contact details"
-          onExportXLSXWithSensitive={() => exportXlsx(exportRows, currentOrg?.slug, tab, true)}
+          onExportXLSXWithSensitive={() => exportXlsx(exportRows, currentOrg?.slug, tab, true, answerCols)}
+          // Only when the form asks a health question: otherwise this file would be the one above it.
+          extraSensitiveOption={form?.hasHealth ? {
+            label: STAFF_FORM_WORDS.healthExport, hint: STAFF_FORM_WORDS.healthExportHint, onExport: exportWithHealth,
+          } : undefined}
           planId={currentOrg?.planId}
           disabled={tabRegs.length === 0}
         />
+        {/* Stage 4 Part 3 (drawing tab 6 · A): Tools (⋯) after Export and before the lime Add — absent on a phone (its one
+            item does nothing there) and while the form has no question that can be a column. */}
+        {!isPhone && liveQs.length > 0 && (
+          <CoachToolbarMenu
+            label={STAFF_FORM_WORDS.tools}
+            icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
+            triggerClassName={tb.tool}
+          >
+            <CoachToolbarMenuItem label={STAFF_FORM_WORDS.answerColumns} onSelect={() => setColumnsOpen(true)} />
+          </CoachToolbarMenu>
+        )}
         {access?.register && (
           <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-label={REGS_WORDS.add} onClick={() => setAct({ kind: 'add' })}>
             <Plus size={14} aria-hidden /><span className={ck.btnWord}>{REGS_WORDS.add}</span>
@@ -881,6 +987,7 @@ export default function RegistrationsScreen() {
           <RegistrationsList
             rows={rowModels}
             showFee={charges}
+            answerHeads={isPhone ? [] : columnQs.map(q => q.label)}
             isPhone={isPhone}
             selectable={selectable}
             selected={selected}
@@ -903,6 +1010,22 @@ export default function RegistrationsScreen() {
       )}
 
       {/* ── The record ── */}
+      {columnsOpen && (
+        <AnswerColumnsWindow
+          questions={liveQs}
+          chosen={columnQs.map(q => q.id)}
+          onClose={() => setColumnsOpen(false)}
+          onSave={async ids => {
+            const r = await moneyFetch<{ columns?: string[] }>(`/api/admin/house-league/seasons/${seasonId}/registrations/answers${orgQuery}`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questionIds: ids }),
+            }).catch(() => null);
+            if (!r?.ok) return false;
+            const columns = r.data.columns ?? ids;
+            setRead(prev => (prev?.form ? { ...prev, form: { ...prev.form, columns } } : prev));
+            return true;
+          }}
+        />
+      )}
       {openReg && (
         <RegistrationRecordWindow
           key={openReg.id}
@@ -925,6 +1048,7 @@ export default function RegistrationsScreen() {
           onClose={() => { setOpenId(null); setFeeFocus(null); }}
           cardRefunds={refundsOf(openReg.id)}
           friends={friendRecord(openReg)}
+          formSections={form ? <RecordFormSections seasonId={seasonId} regId={openReg.id} orgQuery={orgQuery} childName={openReg.playerFirstName} /> : null}
           dispute={read?.disputes?.[openReg.id] ?? null}
           orgSlug={orgSlug}
           canDesk={rights.takeFees}

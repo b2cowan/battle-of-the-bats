@@ -2916,6 +2916,78 @@
     "ordinal_position": 6
   },
   {
+    "table_name": "club_form_answer_clears",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "form_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "question_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "submission_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "subject_table",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "subject_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "cleared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
     "table_name": "club_form_answers",
     "column_name": "id",
     "data_type": "uuid",
@@ -3553,6 +3625,33 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 16
+  },
+  {
+    "table_name": "club_form_storage_removals",
+    "column_name": "path",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_storage_removals",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_storage_removals",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
   },
   {
     "table_name": "club_form_submissions",
@@ -32587,6 +32686,15 @@
     "is_nullable": "NO",
     "column_default": "false",
     "ordinal_position": 6
+  },
+  {
+    "table_name": "user_preferences",
+    "column_name": "registration_answer_columns",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 7
   },
   {
     "table_name": "venue_facilities",

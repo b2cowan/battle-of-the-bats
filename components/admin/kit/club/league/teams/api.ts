@@ -4,6 +4,7 @@
  * the window is stale), and a failure to reach the server is the one "That didn't go through" line.
  */
 import { moneyFetch, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
+import type { BoardAnswer, GridQuestion } from '@/lib/club-form-staff-words';
 import { MONEY_REFUSAL } from '@/lib/house-league-money-words';
 import { clubDay } from '@/lib/league-registration-state';
 import { orgDayKey } from '@/lib/timezone';
@@ -12,6 +13,9 @@ import type { DivisionFriends } from '@/lib/league-friend-draft';
 
 export type { BoardCoach, BoardLeft, BoardPlayer, BoardTeam, DivisionBoard, DivisionTab } from '@/lib/house-league-teams';
 
+/** Board Ready Stage 4 Part 3: the draft board's sign-up answers (never health), for the note popover and the pool's Filter. */
+export type BoardAnswers = { questions: GridQuestion[]; answers: Record<string, BoardAnswer[]> };
+
 export interface BoardRead {
   tabs: DivisionTab[];
   board: DivisionBoard | null;
@@ -19,6 +23,8 @@ export interface BoardRead {
   ratings?: Record<string, number>;
   /** The families' sign-up notes: present only for a reader who can open registrations (A8). */
   notes?: Record<string, string>;
+  /** Board Ready Stage 4 Part 3 (ruling 12): the answers to questions shown on the draft board (never health), same reader. */
+  answers?: BoardAnswers;
   /** Board Ready Stage 1 Part 3: the division's confirmed friend links, ids only — present only for a reader who can
    *  open registrations, on a season that takes friend requests (A11). */
   friends?: DivisionFriends;

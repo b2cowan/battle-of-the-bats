@@ -129,9 +129,9 @@ describe('documents, per team', () => {
   const last = (r: { last: { text: string; houseLeague: boolean } | null }) => r.last && (r.last.houseLeague ? `${r.last.text} / House league` : r.last.text);
 
   it('the drawn rows: one Last signed value a row, and how many earlier copies sit behind it', () => {
-    const rows = documentRows({ state, documents, leagueWaivers: [{ seasonName: 'Summer 2025', acceptedAt: '2025-05-20T14:00:00Z' }] });
+    const rows = documentRows({ state, documents });
     assert.deepEqual(rows.map(r => [r.label, r.chip, last(r), r.copies.length - 1]), [
-      ['Waiver', 'Needs signing', '2026 Season', 1],
+      ['Waiver', 'Needs signing', '2026 Season', 0],
       ['Code of conduct', 'Needs signing', '2026 Season', 0],
       ['Medical consent', 'On file', 'Apr 12, 2026', 0],
     ]);
@@ -139,15 +139,13 @@ describe('documents, per team', () => {
     assert.equal(rows[2].validity, 'Good until replaced');
   });
 
-  it('a house-league waiver newer than the team\'s copy comes FIRST: sorted in by date, never appended', () => {
-    const rows = documentRows({ state, documents, leagueWaivers: [
-      { seasonName: 'Summer 2026', acceptedAt: '2026-06-02T14:00:00Z' },
-      { seasonName: 'Summer 2025', acceptedAt: '2025-05-20T14:00:00Z' },
-    ] });
-    assert.equal(last(rows[0]), 'Summer 2026 / House league');
-    assert.deepEqual(rows[0].copies.map(c => c.seasonName), ['Summer 2026', '2026 Season', 'Summer 2025']);
-    // Only the Waiver row takes house-league copies.
-    assert.equal(rows[1].copies.length, 1);
+  it('a house-league tick is NOT a copy of the team\'s Waiver (owner 2026-11-20): the rows hold the team\'s own copies only', () => {
+    // documentRows / historyOnlyRows take no house-league input at all; the house-league line reads its own copies.
+    const rows = documentRows({ state, documents });
+    assert.equal(last(rows[0]), '2026 Season');
+    assert.deepEqual(rows[0].copies.map(c => [c.seasonName, c.houseLeague]), [['2026 Season', false]]);
+    assert.ok(rows.every(r => r.copies.every(c => !c.houseLeague)));
+    assert.ok(historyOnlyRows([doc({})]).every(r => r.copies.every(c => !c.houseLeague)));
   });
 
   it('this season\'s own copy is the last signed (A1); a replaced good-until-replaced copy is still an earlier copy (A4)', () => {
@@ -175,12 +173,13 @@ describe('documents, per team', () => {
   });
 
   it('a copy whose season record is missing reads by its date, never a blank (/review)', () => {
-    const rows = historyOnlyRows([doc({ seasonId: '', seasonName: '' })], [{ seasonName: '', acceptedAt: 'not a date' }]);
+    const rows = historyOnlyRows([doc({ seasonId: '', seasonName: '' })]);
     assert.equal(last(rows[0]), 'Apr 12, 2026');
     assert.equal(rows[0].last?.isDate, true);
-    // An unreadable timestamp sorts last, it never scrambles the order.
-    assert.deepEqual(rows[0].copies.map(c => c.houseLeague), [false, true]);
     assert.equal(copyName(rows[0].copies[0]), 'Apr 12, 2026');
+    // An unreadable timestamp sorts last, it never scrambles the order.
+    const copies = documentCopies([doc({ seasonId: '', seasonName: '' })], [{ seasonName: '', acceptedAt: 'not a date' }]);
+    assert.deepEqual(copies.map(c => c.houseLeague), [false, true]);
   });
 
   it('the phone\'s sentence', () => {
