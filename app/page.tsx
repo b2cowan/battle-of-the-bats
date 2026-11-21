@@ -112,11 +112,13 @@ const MODULE_CARDS: Array<{
     planLabel: 'Club',
     // W40 (on-sale pages S3): launched — /for-clubs reads the gate for its open state in the same unit of work.
     liveBadge: PLAN_AVAILABLE_NOW,
-    tagline: 'Your executive team gets visibility. Coaches run their own teams.',
+    // S3b: never "visibility" — the club reads each team's roster, schedule and results and ONE cash figure, never a
+    // coach's books (owner 2026-11-06).
+    tagline: 'The board runs the club. Coaches run their own teams.',
     features: [
       'Tournaments, house league, and rep teams under one roof',
       'Coaches manage their own roster, lineups, and team budget',
-      'Organization-wide visibility into rosters, documents, and finances',
+      "Each team's roster, schedule and results, and what it owes the club",
       'Tryout registration and program year management',
       'Club ledger, budget vs. actual, and costs split across teams',
     ],
@@ -127,7 +129,7 @@ const MODULE_CARDS: Array<{
 const STEPS = [
   {
     label: 'Set up your organization',
-    desc: 'Create your organization and set up the tournament tools you need today. League Plus and Club modules can be added as they open.',
+    desc: 'Create your organization and set up the tournament tools you need today. League Plus and Club can be added when they open.',
     // W38: once every plan is on sale, nothing is waiting to open.
     openDesc: 'Create your organization and set up the tools you need, from tournaments to house league and rep teams.',
   },
@@ -141,29 +143,52 @@ const STEPS = [
   },
 ];
 
-const PLATFORM_BENEFITS = [
+/**
+ * "The old way" (on-sale pages S3b, owner rulings A1–A4 2026-11-20; words in PRICING_PAGE_COPY.md, mockup
+ * HOME_REPLACES_CARDS_MOCKUP.html). Each tag names a habit a volunteer has today; the body says what takes its place.
+ * Each card shows on its own plan's live gate (`plans`: shown when ANY of them is open), so a card never sells a
+ * closed plan. Order with all six: 1 · 5 · 2 · 6 · 3 · 4.
+ * ⚠ Card 4 never says names stay hidden (blind is the helper's; the head coach sees every name, owner 2026-08-26), and
+ * card 1 never says "the moment you enter them" (the event pages refresh on a timer).
+ */
+const PLATFORM_BENEFITS: ReadonlyArray<{ id: string; habit: string; entry: string; plans: readonly OrgPlan[] }> = [
   {
-    id: 'BEN-001',
-    module: 'Tournament module',
-    entry: 'Generate brackets in seconds, not hours. Coaches and parents see live scores the moment you enter them — no calls to the scorekeeper\'s table.',
+    id: 'phone-call',
+    habit: 'The phone call after every game',
+    entry: "Coaches crowd the scorekeeper's table to ask who plays next, and parents text you for the score. Enter it once, and the event page's scores, standings and bracket update on their own while the games are on.",
+    plans: ['tournament'],
   },
   {
-    id: 'BEN-002',
-    module: 'House league module',
-    entry: 'Open registration, run your draft, publish the schedule, and track standings — all in one dashboard. Parents hear about their registration automatically, and you can message the whole league in one go.',
+    id: 'registrar-spreadsheet',
+    habit: "The registrar's spreadsheet",
+    entry: 'Registration is a form, the answers land in a spreadsheet, and "she wants to play with Maya" gets matched by eye. Families register on your season page and get an email back. Friend requests reach you as suggestions to confirm before the draft.',
+    plans: ['league', 'club'],
   },
   {
-    id: 'BEN-003',
-    module: 'Rep teams module',
-    entry: 'Coaches manage their own roster, documents, and team finances independently. Organization admins get visibility without owning the day-to-day.',
+    id: 'registration-inbox',
+    habit: 'The registration inbox',
+    entry: "Teams email their entry, you copy it into a spreadsheet, and you chase fees one reply at a time. With Tournament Plus, teams register on your event page instead. You approve them, record what's been paid, and remind every team that still owes in one step.",
+    plans: ['tournament_plus'],
   },
   {
-    id: 'BEN-004',
-    module: 'Coaches Portal',
-    entry: 'The roster in a group text, the lineup in a notes app, and team fees tracked in someone\'s head. The Coaches Portal puts all of it in one place — whether or not your organization is on FieldLogicHQ.',
+    id: 'permit',
+    habit: 'The permit in an email thread',
+    entry: "The field permit is a PDF in someone's inbox, and the mix-up turns up at 8:00 a.m. on a Saturday. Keep each permit's field, days and hours in one place, and a game set outside them gets a note as you schedule it.",
+    plans: ['league', 'club'],
+  },
+  {
+    id: 'group-text',
+    habit: 'The group text',
+    entry: "The roster is in a group text, the lineup in a notes app, and the team's fees in someone's head. The Premium Coaches Portal keeps all three in one place and emails your families from it, whether or not your club uses FieldLogicHQ.",
+    plans: ['team'],
+  },
+  {
+    id: 'tryout-clipboard',
+    habit: 'The tryout clipboard',
+    entry: 'Paper score sheets, a name on every page, and a late night adding it up. Check players in on your phone, give helpers a link to score on bib numbers without signing up, and watch the ranking build as scores come in.',
+    plans: ['team'],
   },
 ];
-// id field kept for React key only — not rendered
 
 /**
  * The persona cards.
@@ -254,7 +279,7 @@ const PERSONAS: Persona[] = [
     planKey: 'club',
     label: 'Club',
     question: 'Running a club with rep teams?',
-    body: 'Tournaments, house league, rep teams, and accounting in one place. Your executive team gets visibility. Coaches run their own teams.',
+    body: "Tournaments, house league, rep teams, and accounting in one place. The board sees every team's roster, schedule and results. Coaches run the rest.",
     liveBadge: null,
     cta: 'I run a club',
     href: '/for-clubs',
@@ -331,6 +356,8 @@ export default async function HomePage({
   const everyPlanOpen = programOpen && teamOpen;
   // W62: "Start free" is true while every door on /start is free; once a paid door is on the chooser, it is not.
   const heroOpen = anyProgramPlanOpen(gatingMap);
+  // "The old way" (S3b A1/A3): each card on its own plan's gate.
+  const oldWayCards = PLATFORM_BENEFITS.filter(c => c.plans.some(p => isPlanOpen(gatingMap, p)));
   // The trial length checkout will use, for the grid's trial sentences while it still shows (Ask 9).
   const overrides = await getPlanConfigOverrides();
   const trialDays = Object.fromEntries(PROGRAM_PLANS.map(p => [p, overrides[p].trialDays])) as Partial<Record<OrgPlan, number>>;
@@ -610,17 +637,17 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ── Platform highlights ───────────────────────────────────────── */}
+      {/* ── The old way ───────────────────────────────────────────────── */}
       <section className={kit.section}>
         <div className="container">
           <div className={styles.head}>
-            <p className={kit.eyebrow}>Platform highlights</p>
+            <p className={kit.eyebrow}>The old way</p>
             <h2 className={kit.heading}>What it actually replaces</h2>
           </div>
           <div className={kit.grid2}>
-            {PLATFORM_BENEFITS.map(({ id, module, entry }) => (
+            {oldWayCards.map(({ id, habit, entry }) => (
               <div key={id} className={`${kit.card} ${kit.cardFlat}`}>
-                <p className={kit.eyebrow}>{module}</p>
+                <p className={`${kit.eyebrow} ${styles.habit}`}>{habit}</p>
                 <p className={`${kit.body} ${styles.flush}`}>{entry}</p>
               </div>
             ))}

@@ -13,7 +13,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
 import {
   PLAN_CONFIG, gatedPlanSentence, GATED_PLAN_INTEREST_LINE, isPlanOpen, interestButtonLabel,
-  closedPlansGroupTag, availableNowSentence, allProgramPlansOpen, anyProgramPlanOpen,
+  closedPlansGroupTag, availableNowSentence, allProgramPlansOpen, anyProgramPlanOpen, formatPriceAmount,
 } from '../../lib/plan-config.ts';
 import { BILLING_TAX_WORDS } from '../../lib/billing-tax.ts';
 import { planTrialLine, clubTrialLine } from '../../lib/plan-trial-line.ts';
@@ -29,8 +29,16 @@ const PREMIUM_CLOSED: Gating = { ...PRODUCTION, team: true };
 
 const TP_TRIAL_DAYS = 14;
 
-function loaderFor(gating: Gating) {
+/** The legal pages as production will serve them with S3b: Terms and Privacy published, the data terms not yet. */
+const LEGAL_LIVE = {
+  termsHref: 'https://www.fieldlogichq.ca/legal/terms', privacyHref: 'https://www.fieldlogichq.ca/legal/privacy',
+  termsVersion: '2026-11-17', dataTermsHref: null, subprocessorsHref: null,
+};
+
+function loaderFor(gating: Gating, legal: typeof LEGAL_LIVE | { dataTermsHref: string } | null = LEGAL_LIVE) {
   return billingTestLoader({
+    '@/lib/legal-links': { resolveLegalLinks: () => (legal ? { ...LEGAL_LIVE, ...legal } : null) },
+    '@/lib/app-origin': { canonicalAppOrigin: () => 'https://www.fieldlogichq.ca' },
     // The pricing grid asks the browser who is signed in; a prospect is signed out.
     '@/lib/use-client-signed-in': { useClientSignedIn: () => false },
     '@/lib/plan-gating-server': {
@@ -64,8 +72,8 @@ const decode = (html: string) => html
 /** The text a visitor reads (tags out, whitespace collapsed). */
 const text = (html: string) => decode(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
-async function render(file: string, gating: Gating): Promise<string> {
-  const page = (loaderFor(gating)(file) as { default: (props?: unknown) => Promise<ReactElement> }).default;
+async function render(file: string, gating: Gating, legal?: Parameters<typeof loaderFor>[1]): Promise<string> {
+  const page = (loaderFor(gating, legal)(file) as { default: (props?: unknown) => Promise<ReactElement> }).default;
   return text(renderToStaticMarkup(await page({ searchParams: Promise.resolve({}) })));
 }
 
@@ -228,6 +236,104 @@ describe('the public plan pages, closed (as production) and open (as dev)', () =
     const closed = await render('app/for-coaches/page.tsx', PREMIUM_CLOSED);
     assert.ok(closed.includes('Coming soon'));
     assert.ok(closed.includes(GATED_PLAN_INTEREST_LINE));
+  });
+});
+
+// ── S3b: the selling sections, the home page's "old way" cards, "module" off the marketing pages ─────────────────────
+describe('S3b, in both states', () => {
+  const CLOSED_GATINGS = [['production', PRODUCTION], ['Premium closed', PREMIUM_CLOSED], ['League Plus only', LEAGUE_ONLY]] as const;
+
+  it('home: four habit cards on production; the registrar and the permit join while League Plus or Club is open (A1–A3)', async () => {
+    const closed = await render('app/page.tsx', PRODUCTION);
+    assert.ok(closed.includes('The old way') && closed.includes('What it actually replaces') && !closed.includes('Platform highlights'), 'A2');
+    for (const tag of ['The phone call after every game', 'The registration inbox', 'The group text', 'The tryout clipboard']) {
+      assert.ok(closed.includes(tag), tag);
+    }
+    assert.ok(!closed.includes("The registrar's spreadsheet") && !closed.includes('The permit in an email thread'), 'A1: closed plans sell nothing');
+    for (const gating of [ALL_OPEN, LEAGUE_ONLY, { ...PRODUCTION, club: false }]) {
+      const page = await render('app/page.tsx', gating);
+      assert.ok(page.includes("The registrar's spreadsheet") && page.includes('The permit in an email thread'), 'A1/A3: either one opens both');
+    }
+    const premiumClosed = await render('app/page.tsx', PREMIUM_CLOSED);
+    assert.ok(!premiumClosed.includes('The group text') && !premiumClosed.includes('The tryout clipboard'), 'each card on its own gate');
+    // Claims cut to what ships (owner 2026-08-26: the head coach sees every name; the event pages refresh on a timer).
+    assert.ok(!closed.includes('Names stay hidden') && !closed.includes('the moment you enter'));
+  });
+
+  it('no "module", no "visibility", no "the org" on the pages S3b touched, in any state', async () => {
+    for (const file of ['app/page.tsx', 'app/for-clubs/page.tsx', 'app/for-leagues/page.tsx', 'app/pricing/page.tsx', 'app/demos/page.tsx']) {
+      for (const [name, gating] of [['production', PRODUCTION], ['all open', ALL_OPEN]] as const) {
+        const page = await render(file, gating);
+        assert.doesNotMatch(page, /\bmodules?\b/i, `${file} (${name}) says "module"`);
+        assert.doesNotMatch(page, /visibility/i, `${file} (${name}) promises visibility`);
+      }
+    }
+    const clubs = await render('app/for-clubs/page.tsx', PRODUCTION);
+    assert.ok(clubs.includes('You run the club.') && !clubs.includes('You run the org.'), 'W65');
+    assert.ok(clubs.includes('Four jobs. One platform.'), 'the steps headline');
+    assert.ok(clubs.includes('the cash it holds') && clubs.includes("Lineups and the team's own books stay with the coach."), 'card 03');
+  });
+
+  it('/for-clubs and /for-leagues: the pictures and their caption; W66 and W69 on /for-clubs, both states', async () => {
+    for (const [name, gating] of [['production', PRODUCTION], ['all open', ALL_OPEN]] as const) {
+      const clubs = await render('app/for-clubs/page.tsx', gating);
+      assert.ok(clubs.includes("These are the product's own screens, shown with a fictional club."), `W67 (${name})`);
+      assert.ok(clubs.includes("The treasurer's three spreadsheets") && !clubs.includes('Tryouts run on email chains.'), `W66 (${name})`);
+      assert.ok(clubs.includes('What each person at your club gets') && clubs.includes('A Premium Coaches Portal for every coach.'), `W69 (${name})`);
+      assert.ok(clubs.includes('The plans and prices are on one page.') && !clubs.includes('the trial are on one page'), 'W69: no trial in a both-states line');
+      const leagues = await render('app/for-leagues/page.tsx', gating);
+      assert.ok(leagues.includes("These are the product's own screens, shown with a fictional house league."), `W67 (${name})`);
+    }
+    const loaded = loaderFor(PRODUCTION);
+    const html = renderToStaticMarkup(await (loaded('app/for-clubs/page.tsx') as { default: () => Promise<ReactElement> }).default());
+    for (const id of ['clubs-01-event', 'clubs-02-registrations', 'clubs-03-roster', 'clubs-04-budget']) {
+      assert.ok(html.includes(`src="/marketing/on-sale/${id}.png"`), id);
+    }
+    assert.doesNotMatch(html, /alt="[^"]*\$\d/, 'no figure quoted in alt text');
+  });
+
+  it('W70: the board questions show only while the legal pages are published; the year cost only while the plan is open', async () => {
+    for (const [name, gating] of CLOSED_GATINGS) {
+      const clubs = await render('app/for-clubs/page.tsx', gating);
+      assert.ok(clubs.includes('Questions a board asks') && clubs.includes('Read the Privacy Policy'), `/for-clubs (${name})`);
+      assert.ok(clubs.includes('Coaches can paste or upload a roster.'), 'the club answer');
+      assert.ok(!clubs.includes('What does a year cost?'), `/for-clubs (${name}): no closed price`);
+      assert.ok(clubs.includes("if you cancel, we don't refund the unused part"), '/legal: if you cancel');
+      assert.ok(!clubs.includes('ask us for a full copy'), 'the full copy waits for the data terms');
+    }
+    const open = await render('app/for-clubs/page.tsx', ALL_OPEN);
+    assert.ok(open.includes(`Club is ${formatPriceAmount(PLAN_CONFIG.club.annualPrice)} a year or ${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)} a month, ${BILLING_TAX_WORDS.plusTax}.`), 'answer 6 from PLAN_CONFIG');
+    assert.ok(open.includes(`It covers up to ${PLAN_CONFIG.club.teamLimit} teams with a Premium Coaches Portal`) && open.includes(`Club · Association covers up to ${PLAN_CONFIG.club_large.teamLimit}.`));
+    const leaguesOpen = await render('app/for-leagues/page.tsx', ALL_OPEN);
+    assert.ok(leaguesOpen.includes('What does a year cost?') && leaguesOpen.includes('That covers your seasons and your tournaments.'));
+    assert.ok(!leaguesOpen.includes('Coaches can paste or upload a roster.'), 'the league answer');
+    // Legal pages off: nothing points at a "not found" page.
+    for (const file of ['app/for-clubs/page.tsx', 'app/for-leagues/page.tsx', 'app/pricing/page.tsx']) {
+      const off = await render(file, PRODUCTION, null);
+      assert.ok(!off.includes('Questions a board asks') && !off.includes('Read the Privacy Policy') && !off.includes('Switching, your board'), file);
+    }
+    // The data terms published: the full-copy clause joins.
+    const withTerms = await render('app/for-clubs/page.tsx', PRODUCTION, { dataTermsHref: 'https://www.fieldlogichq.ca/legal/data-terms' });
+    assert.ok(withTerms.includes('You can download your lists as Excel, CSV or PDF, or ask us for a full copy.'));
+  });
+
+  it('/pricing: three small headings, the board group holding the first four answers', async () => {
+    const page = await render('app/pricing/page.tsx', PRODUCTION);
+    const at = (s: string) => page.indexOf(s);
+    assert.ok(at('Plans and billing') > -1 && at('Plans and billing') < at("Switching, your board and your families' information"));
+    assert.ok(at("Switching, your board and your families' information") < at('Getting started'));
+    for (const q of ['Can we switch in the middle of a season?', 'What happens when our treasurer or registrar changes?', "What do you do with our families' information?", 'What if we decide to stop?']) {
+      assert.ok(page.includes(q), q);
+    }
+    assert.ok(!page.includes('Do our volunteers need training?'), 'training stays on the persona pages');
+    assert.ok(at('Is this too complex for a volunteer-run organization?') > at('Getting started'), 'drawing tab 2');
+  });
+
+  it('W71: /for-coaches copies a link for the club; /demos names the portal a club gives its coaches', async () => {
+    const coaches = await render('app/for-coaches/page.tsx', PRODUCTION);
+    assert.ok(coaches.includes('Is your club considering the Club plan?') && coaches.includes('Copy a link for your club'));
+    const demos = await render('app/demos/page.tsx', PRODUCTION);
+    assert.ok(demos.includes('Running a club? This is the portal each of your coaches gets with Club.'));
   });
 });
 

@@ -1,0 +1,280 @@
+<title>On-Sale Pages S3b Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds (the S1 and S2 walks’ shell). */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; margin: 0; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+q { quotes: "“" "”"; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.calls li { min-width: 0; }
+.call-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.call-row select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · on-sale pages · session S3b · §552</span>
+    <h1>The selling sections, the home page’s “old way” cards, and “module” off the pages</h1>
+    <p class="sub">Built 2026-11-20 on the dev server. One purpose: each page now sells with the product’s own screens and the words you accepted on 20 Nov, open and closed.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Home’s “What it actually replaces” cards now name a habit a volunteer has today. For Clubs gets “You run the club.”, new “old way” cards, a picture of the real screen on each of its four cards, “What each person at your club gets” and “Questions a board asks”. For Leagues gets its four pictures and the same questions. The Pricing questions sit under three small headings. For Coaches can copy a link for the club, and Demos has one line for a club buyer. The word “module” and the “visibility” promise are gone.</p>
+    <p><strong>It passes when</strong> every step reads as written. A test renders every page in both states, and the layout check passed on the six pages from 320 to 1440 pixels wide. <code>/marketing</code>, <code>/legal</code>, <code>/design</code> and <code>/review</code> ran, and their fixes are in.</p>
+    <p><strong>Not in this walk:</strong> the For Tournament Organizers line “Start League Plus from Plan &amp; billing”, which is left to S4 (it is true only once S4 ships). Buying from inside the product is also S4.</p>
+  </section>
+
+  <section class="card">
+    <h2>Where and as whom</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server.</dd>
+      <dt>Visitor</dt><dd>A private window, signed out. No account is made in this walk.</dd>
+      <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code>, then <code>/platform-admin/dev-tools</code>, the Plan gates box (part F only).</dd>
+      <dt>Phone width</dt><dd>Narrow the window below 600px, or use the browser’s phone view, where a step says so.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Your calls (not in the count)</h2>
+    <p class="sub">Each has a recommendation. Pick one; it is copied with the summary.</p>
+    <ol class="calls" id="calls"></ol>
+  </section>
+
+  <section class="card">
+    <h2>Owner steps (not in the count)</h2>
+    <ul>
+      <li>Search once that “Kestrel Bay Softball Association” and its team names are not a real club’s (/legal, low risk).</li>
+      <li>Answer 2 of the board questions tells a club to email us from the current owner’s address to change owners. Confirm you will do that by hand.</li>
+      <li>Before the data terms are published, confirm the by-hand “full copy within 30 days”. The page adds “or ask us for a full copy” by itself the day the data terms go live.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var KEY = 'club-on-sale-s3b-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'Home: the old way',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/</code> and scroll to <q>What it actually replaces</q>.', see: 'The small label above it reads <q>The old way</q>, not <q>Platform highlights</q>.' },
+        { who: 'Visitor', do: 'Read the six card labels in order.', see: '<q>The phone call after every game</q> · <q>The registrar’s spreadsheet</q> · <q>The registration inbox</q> · <q>The permit in an email thread</q> · <q>The group text</q> · <q>The tryout clipboard</q>.' },
+        { who: 'Visitor', do: 'Read the first card’s body.', see: 'It ends <q>…update on their own while the games are on.</q> No <q>the moment you enter them</q>.' },
+        { who: 'Visitor', do: 'Read the tryout clipboard card.', see: 'It ends <q>…watch the ranking build as scores come in.</q> No sentence about names staying hidden.' },
+        { who: 'Visitor', do: 'Find the Club card under <q>What’s included</q>.', see: 'Its line reads <q>The board runs the club. Coaches run their own teams.</q> One tick reads <q>Each team’s roster, schedule and results, and what it owes the club</q>.' },
+        { who: 'Visitor', do: 'Narrow to phone width and look at the six cards.', see: 'One column; a label that wraps breaks into two even lines.' }
+      ] },
+    { id: 'B', title: 'For Clubs, open',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/for-clubs</code>.', see: 'The heading ends <q>You run the club.</q> The line under it: <q>One place for house league, rep teams, tournaments and the club’s books. Coaches run their own teams; the board handles registration and the club’s money.</q>' },
+        { who: 'Visitor', do: 'Read the four cards under <q>The old way</q>.', see: '<q>The treasurer’s three spreadsheets</q> · <q>The registrar’s inbox</q> · <q>The coaches’ group chat</q> · <q>The contact list in someone’s Drive</q>. No tryouts card.' },
+        { who: 'Visitor', do: 'Read the heading over the four numbered cards.', see: '<q>Four jobs. One platform.</q> and under it <q>…every program, every role, one sign-in.</q>' },
+        { who: 'Visitor', do: 'Look at the top of each of the four cards.', see: 'A picture of the real screen on each: a tournament’s public page, the registrations list, a coach’s roster, Budget vs. Actual.' },
+        { who: 'Visitor', do: 'Read the line under the four cards.', see: '<q>These are the product’s own screens, shown with a fictional club.</q>' },
+        { who: 'Visitor', do: 'Read card 03.', see: 'Its title is <q>Coaches run their team. You run the club.</q> and its body ends <q>…what it owes the club, and the cash it holds. Lineups and the team’s own books stay with the coach.</q> Under it, <q>See a coach’s season</q>.' },
+        { who: 'Visitor', do: 'Read the box under the cards.', see: '<q>Club includes house league in full. If your club runs a house league alongside rep teams, you don’t need League Plus as well.</q>' },
+        { who: 'Visitor', do: 'Read <q>What each person at your club gets</q>.', see: 'Four cards: President, Treasurer, Registrar, Coaches. The coaches card ends <q>The team’s books stay with the coach.</q>' },
+        { who: 'Visitor', do: 'Read the line under those four cards.', see: '<q>Taking this to a board meeting? The plans and prices are on one page.</q> with <q>See every plan and price</q>.' },
+        { who: 'Visitor', do: 'In the Club card’s <q>Included</q> list, find accounting and rep teams.', see: '<q>Accounting: the club’s ledger and expense tracking</q> and <q>Rep teams: tryout registration and roster management</q>.' },
+        { who: 'Visitor', do: 'Scroll past <q>How the trial works</q> to <q>Questions a board asks</q>.', see: 'Six questions, the last <q>What does a year cost?</q>' },
+        { who: 'Visitor', do: 'Open <q>What do you do with our families’ information?</q>', see: 'It names Ohio and ends with the link <q>Read the Privacy Policy</q> on its own line.' },
+        { who: 'Visitor', do: 'Open <q>What if we decide to stop?</q>', see: '<q>…and if you cancel, we don’t refund the unused part.</q> It ends <q>…as Excel, CSV or PDF.</q> with no <q>full copy</q>.' },
+        { who: 'Visitor', do: 'Open <q>What does a year cost?</q>', see: 'Club’s yearly and monthly price, <q>plus applicable taxes</q>, <q>up to 15 teams with a Premium Coaches Portal</q>, <q>house league teams are unlimited</q>, and Club · Association’s 30.' },
+        { who: 'Visitor', do: 'Press Ctrl+F and search the page for <q>module</q>.', see: 'No match.' }
+      ] },
+    { id: 'C', title: 'For Leagues, open',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/for-leagues</code> and look at the four step cards.', see: 'A picture on each: the registrations list, the draft board, a division’s standings, the Email families window.' },
+        { who: 'Visitor', do: 'Read the line under the four cards.', see: '<q>These are the product’s own screens, shown with a fictional house league.</q>' },
+        { who: 'Visitor', do: 'Open <q>Can we switch in the middle of a season?</q> under <q>Questions a board asks</q>.', see: 'No <q>Coaches can paste or upload a roster.</q> sentence (that one is the Clubs page’s).' },
+        { who: 'Visitor', do: 'Open <q>What does a year cost?</q>', see: 'League Plus’s yearly and monthly price, <q>plus applicable taxes</q>, <q>That covers your seasons and your tournaments.</q>' }
+      ] },
+    { id: 'D', title: 'Pricing: three small headings',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/pricing</code> and scroll to the questions.', see: 'Three small headings in order: <q>Plans and billing</q>, <q>Switching, your board and your families’ information</q>, <q>Getting started</q>.' },
+        { who: 'Visitor', do: 'Read the middle group.', see: 'Four questions: switching mid-season, a new treasurer or registrar, families’ information, deciding to stop. No training question.' },
+        { who: 'Visitor', do: 'Read the first question under <q>Getting started</q> at phone width.', see: 'The <q>Volunteer orgs</q> tag stays on one line beside the question.' }
+      ] },
+    { id: 'E', title: 'Coaches and Demos',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/for-coaches</code> and find the <q>When your org joins</q> card.', see: 'The button <q>Is your club considering the Club plan?</q> and under it the link <q>Copy a link for your club</q>.' },
+        { who: 'Visitor', do: 'Press <q>Copy a link for your club</q>.', see: '<q>Link copied. Send it to your club’s board.</q> Nothing else happens.' },
+        { who: 'Visitor', do: 'Paste into the address bar.', see: 'The For Clubs page’s address, nothing added.' },
+        { who: 'Visitor', do: 'Open <code>/demos</code> and read under the coach demo card’s buttons.', see: '<q>Running a club? This is the portal each of your coaches gets with Club.</q>' }
+      ] },
+    { id: 'F', title: 'Closed, as production is',
+      steps: [
+        { who: 'Platform admin', do: 'In Dev tools, Plan gates, press <q>Show as closed</q>.', see: 'League Plus, Club and Club · Association read closed.' },
+        { who: 'Anyone', do: 'Open <code>/</code> and read the old-way cards.', see: 'Four: the phone call, the registration inbox, the group text, the tryout clipboard. No registrar’s spreadsheet, no permit card.' },
+        { who: 'Anyone', do: 'Open <code>/for-clubs</code> and scroll the page.', see: 'The pictures, the caption, <q>What each person at your club gets</q> and <q>Questions a board asks</q> are all there; the questions end at <q>Do our volunteers need training?</q> with no <q>What does a year cost?</q>' },
+        { who: 'Anyone', do: 'Search the page for <q>trial</q>.', see: 'No match.' },
+        { who: 'Anyone', do: 'Open <code>/for-leagues</code> and read the questions.', see: 'Five, no year cost.' },
+        { who: 'Platform admin', do: 'In Dev tools, press <q>Dev’s rows</q>.', see: 'The open pages are back.' }
+      ] }
+  ];
+
+  var CALLS = [
+    { id: 'C1', q: 'Not on the accepted list: the Pricing page’s closed Club door said “you get the visibility without the constant check-ins”, the same claim you removed from For Clubs. It now says “you see each team’s roster, schedule and results without the constant check-ins” (card 03’s accepted words). Keep?', options: ['Keep (Recommended)', 'Other words (say in the notes)'] },
+    { id: 'C2', q: '/design: on For Clubs the treasurer, registrar and coaches each appear in the old-way cards, the four numbered cards and “What each person at your club gets”, and card 03’s title repeats the page heading. All are your accepted words. Trim?', options: ['Keep as accepted (Recommended for now: walk it first)', 'Cut the old-way bodies to the habit only (a /marketing pass)', 'Retitle card 03'] },
+    { id: 'C3', q: '/design: on a phone the pictures shrink to about a third of their size, so the text inside them can’t be read; the caption and alt text carry the meaning. Hide them below 480px?', options: ['Keep them on phones (Recommended: proof of a real screen)', 'Hide them on phones'] },
+    { id: 'C4', q: 'The board questions on For Leagues use the approved words, which say “club” (“the club’s owner”, “your club’s information”). Give the Leagues page its own wording?', options: ['Keep “club” (Recommended: the product calls every organization a club here)', 'A /marketing pass for league wording'] },
+    { id: 'C5', q: '/marketing suggested a shorter middle Pricing heading (“Switching and your families’ information”) and “Getting started” first. The drawing you approved has the current ones. Change?', options: ['Keep the drawing (Recommended)', 'Shorter heading', 'Getting started first', 'Both'] },
+    { id: 'C6', q: '/marketing: For Leagues’ Club card still says “org-wide financials” (it means the club’s own accounting, so it is not false). Change it to “the club’s books”?', options: ['Yes, “the club’s books” (Recommended: one word family)', 'Leave it'] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var li = el('li');
+    li.appendChild(el('span', null, '<strong>' + c.id + '</strong> · ' + c.q));
+    var row = el('div', 'call-row');
+    var sel = document.createElement('select'); sel.id = 'call-' + c.id;
+    sel.appendChild(new Option('Choose…', ''));
+    c.options.forEach(function (o) { sel.appendChild(new Option(o, o)); });
+    sel.value = state.calls[c.id] || '';
+    sel.addEventListener('change', function () { state.calls[c.id] = sel.value; save(); });
+    row.appendChild(sel); li.appendChild(row); callHost.appendChild(li);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['On-sale pages S3b walk §552: the selling sections (2026-11-20)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      var open = mine.filter(function (b) { return !b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (open.length ? ' (not ticked: ' + open.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    lines.push('Calls:');
+    CALLS.forEach(function (c) { lines.push('  ' + c.id + ': ' + (state.calls[c.id] || 'not chosen')); });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('call-' + c.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

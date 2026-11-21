@@ -21,6 +21,9 @@
 
 .flush { margin: 0; }
 
+/* "The old way" card's tag: the longest habits wrap on a small phone, so balance the two lines (S3b). */
+.habit { text-wrap: balance; }
+
 /* The paragraph (or list) that takes the spare height, so the links line up along the card's foot. */
 .grow { flex: 1; }
 

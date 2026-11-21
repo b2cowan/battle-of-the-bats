@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import HowTheTrialWorks from '@/components/marketing/HowTheTrialWorks';
+import { BoardQuestionsSection } from '@/components/marketing/BoardQuestions';
+import { ScreenShot, shotCaption, type OnSaleShot } from '@/components/marketing/ScreenShot';
 import kit from '@/components/marketing/MarketingKit.module.css';
 import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
@@ -25,8 +27,39 @@ export const metadata = marketingMetadata({
   path: '/for-clubs',
 });
 
-const { painItems: PAIN_ITEMS, steps: MODULES, features: CLUB_FEATURES } =
+const { painItems: PAIN_ITEMS, steps: MODULES, stepsHeadline: STEPS_HEADLINE, features: CLUB_FEATURES } =
   PLAN_ARTICLE_CONTENT.club;
+
+/** W67: the product's own screen for each of the four (Tournaments, House league, Rep teams, Accounting), in order. */
+const MODULE_SHOTS: readonly OnSaleShot[] = ['clubs-01-event', 'clubs-02-registrations', 'clubs-03-roster', 'clubs-04-budget'];
+
+/**
+ * W69 (S3b, both states): what each person at the club gets. Every line is something the product does today (board roles,
+ * the board report as PDF or Excel, registration with a waitlist, Email families). The coaches card follows the 2026-11-19
+ * team-limit ruling (the teams GIVEN a portal), and types no count.
+ */
+const BOARD_CARDS = [
+  {
+    label: 'President',
+    title: 'One place for the whole club.',
+    body: 'House league, rep teams, tournaments and the books behind one sign-in. Give each board member their role, and take it back when someone steps down.',
+  },
+  {
+    label: 'Treasurer',
+    title: 'Books the next treasurer can read.',
+    body: 'One ledger, a budget checked against what was actually spent, and club costs split across teams. Export the board report for the meeting as a PDF or an Excel file.',
+  },
+  {
+    label: 'Registrar',
+    title: 'Registration without the inbox.',
+    body: "Families register on your club's page. You accept players, manage the waitlist and email every family from one screen.",
+  },
+  {
+    label: 'Coaches',
+    title: 'A Premium Coaches Portal for every coach.',
+    body: "Roster, lineups, schedule and team budget for every team you give a portal, with no per-team fee. The team's books stay with the coach.",
+  },
+];
 
 /** W27 / W4: the Club · Association card's list, the same three lines as its /pricing card. */
 const CLUB_LARGE_FEATURES = [
@@ -97,6 +130,11 @@ export default async function ForClubsPage() {
   const clubLargeCta = clubLargeTrial ? 'Start your Club · Association trial' : 'Start Club · Association';
   const startHref = (plan: 'club' | 'club_large') => withStartPricing(START_PATH_FOR_PLAN[plan], parseStartPricing(plan, 'monthly'));
   const showSandboxDoor = sandboxDoorsVisible();
+  // W70 answer 6, open only: every price and both team limits from PLAN_CONFIG, never typed.
+  const clubYearCost =
+    `Club is ${formatPriceAmount(PLAN_CONFIG.club.annualPrice)} a year or ${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)} a month, ${BILLING_TAX_WORDS.plusTax}. ` +
+    `It covers up to ${PLAN_CONFIG.club.teamLimit} teams with a Premium Coaches Portal, with no per-team fee, and house league teams are unlimited.` +
+    (clubLargeOpen ? ` Club · Association covers up to ${PLAN_CONFIG.club_large.teamLimit}.` : '');
   const crossSells = clubOpen
     ? [OPEN_CROSS_SELL]
     : CROSS_SELLS.map(cs =>
@@ -113,11 +151,13 @@ export default async function ForClubsPage() {
           <p className={kit.eyebrow}>For club executives</p>
           <h1 className={kit.headline}>
             Coaches run their team.<br />
-            <span className={kit.accent}>You run the org.</span>
+            <span className={kit.accent}>You run the club.</span>
           </h1>
+          {/* W65 (S3b): never "full visibility" — the club reads each team's roster, schedule and results and ONE cash
+              figure, never a coach's books (owner 2026-11-06). */}
           <p className={kit.lead}>
-            One platform for tournaments, house league, rep teams, and org finances.
-            Coaches operate independently — you keep full visibility without owning every task.
+            One place for house league, rep teams, tournaments and the club&apos;s books. Coaches run their own teams;
+            the board handles registration and the club&apos;s money.
           </p>
           <div className={`${kit.row} ${fp.heroRow}`}>
             {clubOpen ? (
@@ -223,27 +263,57 @@ export default async function ForClubsPage() {
       <section className={kit.section}>
         <div className="container">
           <p className={kit.eyebrow}>What&apos;s included</p>
-          <h2 className={kit.heading}>Four modules. One platform.</h2>
+          {/* S3b: "module" leaves the marketing pages (the pricing promises "No modules to buy separately"). */}
+          <h2 className={kit.heading}>{STEPS_HEADLINE}</h2>
           <p className={`${kit.body} ${fp.measure}`}>
-            Club is the complete operating system for established clubs — every module,
-            every role, one login.
+            Club is the complete operating system for established clubs: every program, every role, one sign-in.
           </p>
           <div className={`${kit.grid2} ${fp.gridTop}`}>
-            {MODULES.map(mod => (
+            {MODULES.map((mod, i) => (
               <div key={mod.num} className={kit.card}>
+                {MODULE_SHOTS[i] && <ScreenShot id={MODULE_SHOTS[i]} />}
                 <p className={kit.counter}>{mod.num}</p>
                 <p className={kit.eyebrow}>{mod.label}</p>
                 <p className={kit.title}>{mod.title}</p>
                 <p className={kit.body}>{mod.body}</p>
+                {/* W67 (drawing tab 4): a coach's season, live, under the roster picture while the demo doors are on. */}
+                {mod.num === '03' && showSandboxDoor && (
+                  <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
+                    See a coach&apos;s season
+                  </Link>
+                )}
               </div>
             ))}
           </div>
+          <p className={fp.hnote}>{shotCaption('club')}</p>
           <div className={`${kit.card} ${kit.cardEdge} ${kit.cardFlat} ${fp.calloutTop}`}>
             <p className={kit.body}>
-              Club includes the full house league module — if your org runs a house league program
-              alongside rep teams, you do not need to purchase League Plus separately.
+              Club includes house league in full. If your club runs a house league alongside rep teams, you don&apos;t
+              need League Plus as well.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ── What each person at your club gets (W69, both states; drawing tab 4) ── */}
+      <section className={kit.section}>
+        <div className="container">
+          <p className={kit.eyebrow}>Your board</p>
+          <h2 className={kit.heading}>What each person at your club gets</h2>
+          <div className={`${kit.grid4} ${fp.gridTop}`}>
+            {BOARD_CARDS.map(c => (
+              <div key={c.label} className={kit.card}>
+                <p className={kit.eyebrow}>{c.label}</p>
+                <p className={kit.title}>{c.title}</p>
+                <p className={kit.body}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+          {/* No "trial" here: the section shows while Club is closed, when there is none. */}
+          <p className={fp.hnote}>
+            Taking this to a board meeting? The plans and prices are on one page.{' '}
+            <Link href="/pricing" className={`${kit.link} ${kit.linkBlock}`}>See every plan and price</Link>
+          </p>
         </div>
       </section>
 
@@ -386,6 +456,9 @@ export default async function ForClubsPage() {
 
       {/* ── How the trial works (W68, Ask 27): a disclosure, while Club is open and its trial exists ─────── */}
       {clubOpen && clubTrial && <HowTheTrialWorks who="club" trialLine={clubTrial} />}
+
+      {/* ── Questions a board asks (W70; only while the legal pages are published) ── */}
+      <BoardQuestionsSection club cost={clubOpen ? clubYearCost : null} />
 
       {/* ── Cross-sell ───────────────────────────────────────────────────── */}
       <section className={kit.section}>

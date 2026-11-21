@@ -137,9 +137,10 @@ const LEAGUE_ARTICLE = [
 const CLUB_ARTICLE = [
   'Everything in League (tournaments, house league, public org page)',
   'Unlimited staff / admin seats',
-  'Accounting module — org ledger and expense tracking',
+  // S3b (owner "accept" 2026-11-20): "module" leaves the marketing words — it reads as an add-on.
+  "Accounting: the club's ledger and expense tracking",
   'Club costs split across teams, with reminders and payment tracking',
-  'Rep teams module — tryout registration and roster management',
+  'Rep teams: tryout registration and roster management',
   'Player documents and season history',
   'Team financial management',
   // Added 2026-08-20 — a real, Club-ONLY capability that the page had never mentioned.

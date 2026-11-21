@@ -420,9 +420,32 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
   (W66) together, so the two sets of "old way" cards read as one family. Accepted words go into `PRICING_PAGE_COPY.md`.
 - **Screens:** `/` (home), `/for-clubs`, `/for-leagues`, `/pricing` (FAQ), `/for-tournament-organizers`, `/for-coaches`, `/demos`.
 - **Reviews:** `/legal` on W70 as built; `/design` on the pictures in place; `/docs` not needed (no product flow changes).
+- **Built 2026-11-20 on dev (walk §552, https://claude.ai/artifact/CL2ACjnWNB5AgXiZiL5Tbi; commit owed on the owner's
+  yes).** Words: the `/marketing` batch pass, owner "accept" 2026-11-20 (all five calls as recommended), recorded in
+  `PRICING_PAGE_COPY.md`'s S3b section. **Checks before building, both held:** a standalone Premium coach runs tryouts
+  end to end with no plan or club gate (check-in on a phone, the helper's bib-number link, the ranking polling every
+  6 seconds); the permit note shows in the house league game window as the date, time and field are picked (quiet,
+  never blocks), so card 6's words stand. **Pictures (option A):** seven re-shot 2026-11-20 at night with the capture
+  script; the event page keeps the 16:04 shot of the same day (its seed builds a live tournament around "now", so a
+  re-seed waits for daytime); the PNGs are committed with S3b; "quarterly" is step 5b of the `/demos` checklist (owner
+  asked). The extras seed's "13 children left behind" finding no longer reproduces: its cleanup (committed in
+  `a436005ab`) removes them, proved in a rolled-back transaction on dev. **W70 gate:** the section renders only while
+  the legal pages are published (`resolveLegalLinks()`), so it first reaches production with the promote that publishes
+  the Privacy Policy, and never links to a "not found" page; answer 4's "or ask us for a full copy" joins by itself once
+  the data terms page is live (`dataTermsHref`); `/legal` added "if you cancel" to the refund sentence. **W71's
+  /for-tournament-organizers line is not built** (true only once S4 ships): it moves to S4. The /pricing closed Club
+  door's "you get the visibility" became card 03's accepted words (walk call C1). **Open after the walk:** the owner
+  calls C1–C6 in the walk (the pricing door line, For Clubs repetition, pictures on phones, league wording of W70, the
+  FAQ heading, "org-wide financials"); owner steps: a name search for Kestrel Bay, the by-hand owner change (W70
+  answer 2), the by-hand full copy before the data terms publish.
 
 ### S4 — Buying from inside the product (depends on S1; after S3 because both touch the plan cards)
 
+- **Moved from S3b (W71):** the /for-tournament-organizers League Plus and Club cross-sells gain "Already running
+  tournaments here? Start League Plus from Plan & billing. Your events, teams and staff stay where they are." (Club the
+  same), each only while its own plan is open, built when S4's in-product start ships. Prove first that a Tournament
+  Plus organization can start League Plus (not only a free Tournament one): "already running tournaments here" covers
+  both. Words in `PRICING_PAGE_COPY.md`'s S3b section.
 - Plan & billing for a free Tournament org: start Club, Club · Association or League Plus (checkout) when open —
   today `upgradePlansFor('tournament')` is Tournament Plus only (`lib/plan-upgrade.ts:28-30`), `PANEL_PLANS` lacks
   `club_large`, and only Premium's discovery card has a button (`BillingBody.tsx:509`). This is also the

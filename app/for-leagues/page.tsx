@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import HowTheTrialWorks from '@/components/marketing/HowTheTrialWorks';
+import { BoardQuestionsSection } from '@/components/marketing/BoardQuestions';
+import { ScreenShot, shotCaption, type OnSaleShot } from '@/components/marketing/ScreenShot';
 import kit from '@/components/marketing/MarketingKit.module.css';
 import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
@@ -28,6 +30,9 @@ export const metadata = marketingMetadata({
 
 const { painItems: PAIN_ITEMS, steps: STEPS, features: LEAGUE_FEATURES } =
   PLAN_ARTICLE_CONTENT.league;
+
+/** W67: the product's own screen for each step (Registration, Draft, Schedule and standings, Notifications), in order. */
+const STEP_SHOTS: readonly OnSaleShot[] = ['leagues-01-registrations', 'leagues-02-draft', 'leagues-03-standings', 'leagues-04-email'];
 
 const CROSS_SELLS: Array<{
   label: string;
@@ -160,8 +165,9 @@ export default async function ForLeaguesPage() {
             From the moment registration opens to the final game night — everything runs in one place.
           </p>
           <div className={`${kit.grid2} ${fp.gridTop}`}>
-            {STEPS.map(step => (
+            {STEPS.map((step, i) => (
               <div key={step.num} className={kit.card}>
+                {STEP_SHOTS[i] && <ScreenShot id={STEP_SHOTS[i]} />}
                 <p className={kit.counter}>{step.num}</p>
                 <p className={kit.eyebrow}>{step.label}</p>
                 <p className={kit.title}>{step.title}</p>
@@ -169,6 +175,7 @@ export default async function ForLeaguesPage() {
               </div>
             ))}
           </div>
+          <p className={fp.hnote}>{shotCaption('house league')}</p>
         </div>
       </section>
 
@@ -287,6 +294,15 @@ export default async function ForLeaguesPage() {
 
       {/* ── How the trial works (W68, Ask 27): a disclosure, while League Plus is open and its trial exists ─── */}
       {leagueOpen && leagueTrial && <HowTheTrialWorks who="league" trialLine={leagueTrial} />}
+
+      {/* ── Questions a board asks (W70; only while the legal pages are published). Answer 6 only while League Plus is
+          open: a closed price carries no tax line. ── */}
+      <BoardQuestionsSection
+        club={false}
+        cost={leagueOpen
+          ? `League Plus is ${formatPriceAmount(PLAN_CONFIG.league.annualPrice)} a year or ${formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)} a month, ${BILLING_TAX_WORDS.plusTax}. That covers your seasons and your tournaments.`
+          : null}
+      />
 
       {/* ── Cross-sell ───────────────────────────────────────────────────── */}
       <section className={kit.section}>

@@ -852,6 +852,12 @@ except the rows under "Replace" below. Where the build had to choose, each with 
 - Extras not in the doc, kept: the /pricing band-3 foot link "See what Club includes"; the eyebrow "The trial" over "How the
   trial works".
 - **Not in S3 (S3b's):** W65 to W67, W69 to W71.
+- **In code (S3b, built 2026-11-20, walk §552):** W65, W66, W67 (option A, the caption as ruled), W69, W70 and W71's
+  /for-coaches and /demos lines, in the words the owner accepted on 2026-11-20 — **`PRICING_PAGE_COPY.md`'s S3b section
+  is the record and supersedes this section where they differ** (W65's second sentence, W66 in the home cards' habit
+  style, W69's coaches card and its line without "the trial", W70 answer 4's "if you cancel" and answer 6's team
+  limits, W71's "the Club plan" and "the portal each of your coaches gets"). W71's /for-tournament-organizers line moved
+  to S4.
 
 ---
 

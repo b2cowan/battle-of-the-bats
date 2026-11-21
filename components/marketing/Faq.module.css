@@ -1,0 +1,73 @@
+/* The marketing FAQ card (moved from app/pricing/page.module.css in on-sale pages S3b, so /pricing, /for-clubs and
+   /for-leagues share one accordion): native details/summary rows in one card. --home-* tokens only. */
+
+.list {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  overflow: hidden;
+}
+
+.item { border-bottom: 1px solid var(--home-line); }
+.item:last-child { border-bottom: none; }
+
+.featured { border-left: 3px solid var(--home-olive); }
+
+.question {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-height: var(--tap-min, 44px);
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--home-ink);
+  cursor: pointer;
+  list-style: none;
+}
+.question::-webkit-details-marker { display: none; }
+/* A row's tag ("Volunteer orgs") keeps to one line; the question wraps beside it (/design S3b: at 390 the tag broke). */
+.tag { flex-shrink: 0; white-space: nowrap; }
+.question:hover { color: var(--home-olive); }
+.question:focus-visible { outline: 3px solid var(--home-olive); outline-offset: -3px; }
+
+.question::after {
+  content: '+';
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--home-dim);
+}
+details[open] .question::after { content: '−'; }
+
+.item .answer {
+  padding: 0 1.25rem 1.25rem;
+  max-width: 72ch;
+  color: var(--home-ink-soft);
+  line-height: 1.7;
+}
+
+/* A link that closes an answer: its own line, a full tap target (the layout check's 44px floor). */
+.answerLink {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-height: var(--tap-min, 44px);
+}
+
+/* A small uppercase heading over a group of questions (/pricing, drawing tab 2). */
+.group {
+  margin: 2rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  /* type-ok: eyebrow — a group heading over the questions, set as the kit's eyebrow (drawing tab 2) */
+  text-transform: uppercase;
+  color: var(--home-olive);
+}
+.group + .list { margin-top: 0.75rem; }

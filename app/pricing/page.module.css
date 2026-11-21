@@ -53,56 +53,7 @@
   gap: 1rem;
 }
 
-/* ── FAQ ─────────────────────────────────────────────────────────────────── */
-
-.faqList {
-  margin-top: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  background: var(--home-card);
-  border: 1px solid var(--home-line);
-  border-radius: var(--home-radius);
-  overflow: hidden;
-}
-
-.faqItem { border-bottom: 1px solid var(--home-line); }
-.faqItem:last-child { border-bottom: none; }
-
-.faqFeatured { border-left: 3px solid var(--home-olive); }
-
-.faqQuestion {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  min-height: var(--tap-min, 44px);
-  padding: 1rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.4;
-  color: var(--home-ink);
-  cursor: pointer;
-  list-style: none;
-}
-.faqQuestion::-webkit-details-marker { display: none; }
-.faqQuestion:hover { color: var(--home-olive); }
-.faqQuestion:focus-visible { outline: 3px solid var(--home-olive); outline-offset: -3px; }
-
-.faqQuestion::after {
-  content: '+';
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: 1.25rem;
-  line-height: 1.2;
-  color: var(--home-dim);
-}
-details[open] .faqQuestion::after { content: '−'; }
-
-.faqItem .faqAnswer {
-  padding: 0 1.25rem 1.25rem;
-  max-width: 72ch;
-  color: var(--home-ink-soft);
-  line-height: 1.7;
-}
+/* ── FAQ: the accordion lives in components/marketing/Faq.module.css (shared with /for-clubs and /for-leagues, S3b). */
 
 /* ── Bottom CTA ──────────────────────────────────────────────────────────── */
 

@@ -108,7 +108,9 @@ describe('published article preservation — owner baseline 2026-10-28', () => {
     league: [12, '7bc70028124f074200bb2bd6494df2a19b99d1737702814a1b4035c8f70b9ce2'],
     // Re-baselined 2026-11-19 on the owner's say-so: the Club team limit's unit and "Unlimited house league teams"
     // (BUSINESS_DECISIONS.md 2026-11-19) replaced two bullets; the count is unchanged.
-    club: [10, 'e8f96d82403808dfe57caa222ede5ab70951b5be6ec08c90d9fb961524aac441'],
+    // Re-baselined 2026-11-20 on the owner's "accept" (on-sale pages S3b, PRICING_PAGE_COPY.md): "module" leaves two
+    // bullets ("Accounting: the club's ledger…", "Rep teams: tryout registration…"); the count is unchanged.
+    club: [10, '83c63b070086b7158e9541c5a669f2745201af01b1244b92d659a367f47249f5'],
   } as const;
   it('keeps the published article keys, and every feature string/order byte for byte', () => {
     assert.deepEqual(Object.keys(PLAN_ARTICLE_CONTENT).sort(), Object.keys(baseline).sort());

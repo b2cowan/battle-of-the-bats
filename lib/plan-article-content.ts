@@ -247,27 +247,31 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
     billingSub:
       'Club adds full accounting and rep team management — the two tools that take the most time from any volunteer organization.',
     eyebrow: 'Club',
-    panelHeadline: 'Coaches run their team. You run the org.',
+    // S3b (W65): "the club", never "the org" — "org" is our word, not a volunteer's.
+    panelHeadline: 'Coaches run their team. You run the club.',
     painHeadline: 'If this is how your club operates, we know the drill.',
+    // W66 (S3b, owner 2026-11-20): the home page's "old way" family — the title names a habit, the body is the habit
+    // then what takes its place. Rebalanced toward the board; the tryouts card left (tryouts stay in step 03).
     painItems: [
       {
-        title: 'Your coaching staff runs on WhatsApp.',
-        body: "Rosters live in personal phones. Lineups are in notes apps. You find out about tryout results when a coach mentions it at an AGM.",
+        title: "The treasurer's three spreadsheets",
+        body: 'Team dues in one, club fees in another, the bank statement in a third, and a best guess when the board asks where the money went. One ledger and a budget checked against what was actually spent give the next treasurer an answer.',
       },
       {
-        title: "You can't see the team finances without asking.",
-        body: 'Coaches track dues on their own. The treasurer asks every spring. Nobody is ever quite sure where the money went.',
+        title: "The registrar's inbox",
+        body: "Registration is a form and an inbox: confirmations by hand, a spreadsheet to cross-check, the same email all month. Families register on your club's page, and you accept players, run the waitlist and email every family from one screen.",
       },
       {
-        title: 'Tryouts run on email chains.',
-        body: 'Registration comes in through personal inboxes. Coaches pick teams independently. There is no central record of who tried out or who was cut.',
+        title: "The coaches' group chat",
+        body: "Rosters live in personal phones and lineups in notes apps, and you hear how a team is doing when a coach mentions it at the AGM. Each coach gets a Premium Coaches Portal, and you can read every team's roster, schedule and results.",
       },
       {
-        title: 'When a coach leaves, knowledge walks with them.',
-        body: "The contact list is in a personal Google Drive. The roster is someone's spreadsheet. The new coach inherits nothing.",
+        title: "The contact list in someone's Drive",
+        body: "The contact list is in a personal Drive and the roster in someone's spreadsheet, so next year's board starts from nothing. Here the books, the families and last season's setup belong to the club, and the next volunteer picks up from there.",
       },
     ],
-    stepsHeadline: 'Four modules. One platform.',
+    // S3b: "module" leaves the marketing pages (the pricing promises "No modules to buy separately").
+    stepsHeadline: 'Four jobs. One platform.',
     steps: [
       {
         num: '01',
@@ -279,13 +283,15 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
         num: '02',
         label: 'House league',
         title: 'Full season management — included.',
-        body: 'Player registration, draft, schedules, standings, and season-wide parent messaging. Club includes the full house league module — no separate plan required.',
+        body: 'Player registration, draft, schedules, standings, and season-wide parent messaging. Club includes all of it, with no separate plan to buy.',
       },
       {
         num: '03',
         label: 'Rep teams and Coaches Portal',
-        title: 'Coaches run their team. You run the org.',
-        body: 'Coaches get a dedicated portal to manage roster, lineups, documents, and team finances independently. You get org-wide visibility without owning the day-to-day.',
+        title: 'Coaches run their team. You run the club.',
+        // S3b: what the club actually reads (help "What the club sees"): roster, schedule and results, what the team
+        // owes, ONE cash figure. Never "org-wide visibility" — the coach's books stay the team's (owner 2026-11-06).
+        body: "Every coach gets a Premium Coaches Portal for roster, lineups, documents and team budget. You see each team's roster, schedule and results, what it owes the club, and the cash it holds. Lineups and the team's own books stay with the coach.",
       },
       {
         num: '04',

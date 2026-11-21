@@ -14,6 +14,8 @@ import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import type { OrgPlan } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS } from '@/lib/sports';
 import kit from '@/components/marketing/MarketingKit.module.css';
+import faqStyles from '@/components/marketing/Faq.module.css';
+import { FaqList, boardQuestions } from '@/components/marketing/BoardQuestions';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import styles from './page.module.css';
 
@@ -74,7 +76,7 @@ const BUYER_SEGMENTS: Array<{
   {
     eyebrow: 'Club executive',
     title: 'I run a club with rep teams.',
-    body: 'Tournaments, house league, rep teams, and accounting in one place. Coaches manage their teams; you get the visibility without the constant check-ins.',
+    body: 'Tournaments, house league, rep teams, and accounting in one place. Coaches manage their teams; you see each team\'s roster, schedule and results without the constant check-ins.',
     // 2026-08-10 reroute: to the Club page, not straight to the interest form — that page now
     // carries both demo doors, and the form waits there. This also restores the section's own
     // promise ("you'll land in the right place"). League Plus above stays form-first on purpose:
@@ -212,6 +214,14 @@ const FAQS = [
   },
 ];
 
+/** The FAQ's "Getting started" group (drawing tab 2); every other answer sits under "Plans and billing". */
+const GETTING_STARTED = new Set([
+  'Is this too complex for a volunteer-run organization?',
+  'What if I only manage one competitive team?',
+  'What if we get stuck?',
+  'Can I use FieldLogicHQ for multiple sports?',
+]);
+
 export default async function PricingPage() {
   // The live gate, per request (getPlanGatingMap() makes this page render on each visit: on-sale pages S1).
   const gatingMap = await getPlanGatingMap();
@@ -280,6 +290,10 @@ export default async function PricingPage() {
     }
     return [closedAnswer(faq)];
   });
+
+  const faqItems = faqs.map(f => ({ q: f.q, a: f.a, tag: f.featured ? 'Volunteer orgs' : undefined }));
+  // W70: the first four (switching, handover, families' information, stopping); training stays on the persona pages.
+  const boardFaqs = boardQuestions({ club: true })?.slice(0, 4) ?? null;
 
   function openAnswer(faq: typeof FAQS[number]): typeof FAQS | null {
     switch (faq.q) {
@@ -564,17 +578,18 @@ export default async function PricingPage() {
             No jargon. No sales pitch. Just what you need to know before signing up.
           </p>
 
-          <div className={styles.faqList}>
-            {faqs.map(faq => (
-              <details key={faq.q} className={`${styles.faqItem} ${faq.featured ? styles.faqFeatured : ''}`}>
-                <summary className={styles.faqQuestion}>
-                  {faq.featured && <span className={kit.tag}>Volunteer orgs</span>}
-                  {faq.q}
-                </summary>
-                <p className={`${kit.small} ${styles.faqAnswer}`}>{faq.a}</p>
-              </details>
-            ))}
-          </div>
+          {/* S3b (drawing tab 2): three small headings. The middle group is W70's first four board questions, which render
+              only while the legal pages are published (answer 3 links to the Privacy Policy). */}
+          <p className={faqStyles.group}>Plans and billing</p>
+          <FaqList items={faqItems.filter(f => !GETTING_STARTED.has(f.q))} />
+          {boardFaqs && (
+            <>
+              <p className={faqStyles.group}>Switching, your board and your families&apos; information</p>
+              <FaqList items={boardFaqs} />
+            </>
+          )}
+          <p className={faqStyles.group}>Getting started</p>
+          <FaqList items={faqItems.filter(f => GETTING_STARTED.has(f.q))} />
         </div>
       </section>
 

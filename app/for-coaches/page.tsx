@@ -2,6 +2,8 @@ import Link from 'next/link';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import kit from '@/components/marketing/MarketingKit.module.css';
 import fp from '@/components/marketing/ForPage.module.css';
+import CopyLinkButton from '@/components/marketing/CopyLinkButton';
+import { canonicalAppOrigin } from '@/lib/app-origin';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import {
@@ -234,8 +236,14 @@ export default async function ForCoachesPage() {
                   proof; the interest form waits there. */}
               <div className={kit.push}>
                 <Link href="/for-clubs" className={`${kit.btn} ${kit.btnSecondary} ${kit.btnFull}`}>
-                  Is your org considering Club?
+                  Is your club considering the Club plan?
                 </Link>
+                {/* W71 (S3b): the coach hands their board the /for-clubs address; nothing is sent by us. */}
+                <CopyLinkButton
+                  url={`${canonicalAppOrigin()}/for-clubs`}
+                  label="Copy a link for your club"
+                  done="Link copied. Send it to your club's board."
+                />
               </div>
             </div>
 

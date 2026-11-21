@@ -132,6 +132,12 @@ export default function DemosPage() {
                     {demo.learnMore.label}
                   </Link>
                 </div>
+                {/* W71 (S3b): the path from a club buyer to the coach demo. No "free" on a coach surface (2026-11-19). */}
+                {demo.id === 'coaches' && (
+                  <p className={cn(kit.small, styles.clubLine)}>
+                    Running a club? This is the portal each of your coaches gets with Club.
+                  </p>
+                )}
               </div>
             ))}
           </div>

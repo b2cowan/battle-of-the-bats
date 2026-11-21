@@ -30,6 +30,59 @@
 
 ---
 
+### 🆕 The on-sale pages, S3b: the selling sections, the home page's "old way" cards and "module" off the marketing pages — RULED 2026-11-20 (owner: *"accept"*, all five calls as recommended; `/marketing` batch pass; plan `CLUB_ON_SALE_PAGES_PLAN.md` §S3b, mockup `HOME_REPLACES_CARDS_MOCKUP.html`, source words `CLUB_ON_SALE_COPY.md` §M). No price, trial length, tax word or team count is typed: each comes from `PLAN_CONFIG` / `lib/plan-trial-line.ts`. **Supersedes** W65, W66, W69, W70 answer 6 and W71 in `CLUB_ON_SALE_COPY.md` where they differ, and every "module" word below where it describes what a customer buys.
+
+**Home, "What it actually replaces"** (both states; eyebrow **"The old way"**, heading kept). The tag names today's habit; the body is the habit, then what takes its place. Cards 1–4 show on their own plan's live gate; cards 5 and 6 only while League Plus or Club is open (card 6 when **either** is). Order with all six: 1 · 5 · 2 · 6 · 3 · 4.
+
+| # | Tag | Body |
+|---|---|---|
+| 1 | **The phone call after every game** | Coaches crowd the scorekeeper's table to ask who plays next, and parents text you for the score. Enter it once, and the event page's scores, standings and bracket update on their own while the games are on. |
+| 2 | **The registration inbox** | Teams email their entry, you copy it into a spreadsheet, and you chase fees one reply at a time. With Tournament Plus, teams register on your event page instead. You approve them, record what's been paid, and remind every team that still owes in one step. |
+| 3 | **The group text** | The roster is in a group text, the lineup in a notes app, and the team's fees in someone's head. The Premium Coaches Portal keeps all three in one place and emails your families from it, whether or not your club uses FieldLogicHQ. |
+| 4 | **The tryout clipboard** | Paper score sheets, a name on every page, and a late night adding it up. Check players in on your phone, give helpers a link to score on bib numbers without signing up, and watch the ranking build as scores come in. |
+| 5 | **The registrar's spreadsheet** | Registration is a form, the answers land in a spreadsheet, and "she wants to play with Maya" gets matched by eye. Families register on your season page and get an email back. Friend requests reach you as suggestions to confirm before the draft. |
+| 6 | **The permit in an email thread** | The field permit is a PDF in someone's inbox, and the mix-up turns up at 8:00 a.m. on a Saturday. Keep each permit's field, days and hours in one place, and a game set outside them gets a note as you schedule it. |
+
+⚠ **Never** "Names stay hidden until you choose to show them" on card 4 (blind is the helper's, the head coach sees every name: owner 2026-08-26). Never "the moment you enter them" on card 1 (the pages refresh on a timer). Card 6's last clause is cut back if the game screen does not show the note.
+
+**"Module" leaves the marketing pages** (the pricing promise "No modules to buy separately" makes the word read as an add-on):
+
+| Where | Words |
+|---|---|
+| Home, how-it-works step 1 (closed) | …League Plus and Club can be added when they open. |
+| /for-clubs heading over the four cards (and the plan article's steps headline) | **Four jobs. One platform.** |
+| /for-clubs line under it | Club is the complete operating system for established clubs: every program, every role, one sign-in. |
+| /for-clubs note under the cards | Club includes house league in full. If your club runs a house league alongside rep teams, you don't need League Plus as well. |
+| /for-clubs card 02 (plan article) | …season-wide parent messaging. Club includes all of it, with no separate plan to buy. |
+| Club "Included" list (page + in-product plan panel) | **Accounting: the club's ledger and expense tracking** · **Rep teams: tryout registration and roster management** |
+
+**/for-clubs card 03** (plan article): title **"Coaches run their team. You run the club."** Body: **"Every coach gets a Premium Coaches Portal for roster, lineups, documents and team budget. You see each team's roster, schedule and results, what it owes the club, and the cash it holds. Lineups and the team's own books stay with the coach."** Never "org-wide visibility" (the club sees ONE cash figure per team: owner 2026-11-06).
+
+**Home, the same claim fixed:** the Club tagline **"The board runs the club. Coaches run their own teams."**; the Club bullet **"Each team's roster, schedule and results, and what it owes the club"**; the coach-band line **"…The board sees every team's roster, schedule and results. Coaches run the rest."**
+
+**W65 · /for-clubs hero:** **"Coaches run their team. You run the club."** / **"One place for house league, rep teams, tournaments and the club's books. Coaches run their own teams; the board handles registration and the club's money."**
+
+**W66 · /for-clubs "old way" cards** (tag style, one family with the home cards; the tryouts card is out):
+
+| Tag | Body |
+|---|---|
+| **The treasurer's three spreadsheets** | Team dues in one, club fees in another, the bank statement in a third, and a best guess when the board asks where the money went. One ledger and a budget checked against what was actually spent give the next treasurer an answer. |
+| **The registrar's inbox** | Registration is a form and an inbox: confirmations by hand, a spreadsheet to cross-check, the same email all month. Families register on your club's page, and you accept players, run the waitlist and email every family from one screen. |
+| **The coaches' group chat** | Rosters live in personal phones and lineups in notes apps, and you hear how a team is doing when a coach mentions it at the AGM. Each coach gets a Premium Coaches Portal, and you can read every team's roster, schedule and results. |
+| **The contact list in someone's Drive** | The contact list is in a personal Drive and the roster in someone's spreadsheet, so next year's board starts from nothing. Here the books, the families and last season's setup belong to the club, and the next volunteer picks up from there. |
+
+**W67 · caption** (as ruled): **"These are the product's own screens, shown with a fictional house league."** · /for-clubs: **"These are the product's own screens, shown with a fictional club."**
+
+**W69 · "What each person at your club gets"** (both states): President **"One place for the whole club."** / "House league, rep teams, tournaments and the books behind one sign-in. Give each board member their role, and take it back when someone steps down." · Treasurer and Registrar as in `CLUB_ON_SALE_COPY.md` W69 · Coaches **"A Premium Coaches Portal for every coach."** / **"Roster, lineups, schedule and team budget for every team you give a portal, with no per-team fee. The team's books stay with the coach."** · under the cards **"Taking this to a board meeting? The plans and prices are on one page."** link **"See every plan and price"** (no "trial": the section shows while closed).
+
+**/pricing, the closed Club door (built in S3b, the same claim as card 03; owner call C1 of walk §552):** "…Coaches manage their teams; you see each team's roster, schedule and results without the constant check-ins." (was "you get the visibility…").
+
+**W70 · Questions a board asks:** answers 1–5 as in `CLUB_ON_SALE_COPY.md` W70, except answer 4 reads **"…and if you cancel, we don't refund the unused part."** (`/legal` 2026-11-20: the Terms refund the unused part when WE end a plan), and its closing **", or ask us for a full copy"** shows only once the data terms page is published. The section renders only while the legal pages are published. /pricing shows answers 1–4 under the heading **"Switching, your board and your families' information"**, between **"Plans and billing"** and **"Getting started"**. Answer 6 (open only), /for-clubs: **"Club is {annual} a year or {monthly} a month, {plusTax}. It covers up to {Club team limit} teams with a Premium Coaches Portal, with no per-team fee, and house league teams are unlimited. Club · Association covers up to {Club · Association team limit}."** /for-leagues answer 6 unchanged.
+
+**W71 · paths between audiences:** /for-coaches card **"Is your club considering the Club plan?"**, link **"Copy a link for your club"**, then **"Link copied. Send it to your club's board."** · /demos under the coach demo **"Running a club? This is the portal each of your coaches gets with Club."** · /for-tournament-organizers (true only once S4 ships; gated off until then) **"Already running tournaments here? Start League Plus from Plan & billing. Your events, teams and staff stay where they are."** (Club the same).
+
+---
+
 ### 🆕 The Club team limit — the unit is "teams with a Premium Coaches Portal", and house league is unlimited — RULED 2026-11-19 (owner: *"I agree with your recommendations"*; `/marketing` main session; decision logged in `BUSINESS_DECISIONS.md` 2026-11-19). **Supersedes** every bare "Up to 15 teams" / "16 to 30 teams" / "How many teams does your club run?" below.
 
 **The rule.** A label never defines the limit. The limit counts **the teams a club gives a Premium Coaches Portal**, whatever the club calls them (rep, select, all-star, travel, development; every type counts the same). **Not counted:** house league teams (unlimited on Club and Club · Association), teams entered in the club's own tournaments, archived teams. The list of labels appears once, beside the definition, never as the definition. "Rep teams" stays as the module's name in a feature list ("Tournaments, house league, rep teams and accounting"); it is never the unit of the limit.

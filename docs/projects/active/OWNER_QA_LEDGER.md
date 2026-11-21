@@ -28637,3 +28637,11 @@ performed over the shared working tree. The original walk result is not claimed 
 **Reviews (before hand-off):** `/review`, `/legal`, `/marketing`, `/ux`, `/docs`, `/simplify`; all applied. Owner calls: C4 (Email families' "Your sign-up" button: carry to Part 3), C5 (migration 516, the six-hourly sweep: yes or no), C6 (a document added after sign-up shows in the tick-again card), C7 (health answers read "Answered" on Your sign-up; the health mark can't come off an answered question).
 **Status:** owed. Built 2026-11-20 on dev; the owner commits (two commits: Part 2, and migration 516 alone on the owner's yes).
 <!-- /§551 -->
+## §552 · On-sale pages · S3b, the selling sections, the home page's "old way" cards and "module" off the marketing pages — **built 2026-11-20 on dev; owed the owner's walk and commit**
+<!-- §552 -->
+**Walk (checkable):** https://claude.ai/artifact/CL2ACjnWNB5AgXiZiL5Tbi (source `docs/projects/active/CLUB_ON_SALE_S3B_WALK.html`); parts A to F, 38 steps, six owner calls C1 to C6 and three owner steps (not in the counter). Plan `CLUB_ON_SALE_PAGES_PLAN.md` S3b; words `PRICING_PAGE_COPY.md` (S3b section, owner "accept" 2026-11-20).
+**Sign-in:** visitor signed out; platform admin `uat-platform@fieldlogichq.ca` · `UATPassword2026!` (part F, Dev tools › Plan gates › "Show as closed").
+**Built:** home "The old way" cards (four on production, six while League Plus or Club is open); /for-clubs hero, W66 cards, "Four jobs. One platform." with the product's own screens on the four cards and W67's caption, card 03 cut to what the club sees, W69, W70; /for-leagues pictures + W70; /pricing FAQ in three groups with W70's first four; /for-coaches "Copy a link for your club"; /demos club line; "module" and "visibility" off the marketing pages. W70 renders only while the legal pages are published, and answer 4's "or ask us for a full copy" only once the data terms are; W71's /for-tournament-organizers line left to S4.
+**Reviews (before hand-off):** `/marketing` (words as built: all match), `/legal` (no fix; three owner steps), `/design` (no must-fix; the FAQ tag wrap fixed), `/review` standard (no Critical/High/Medium; picture guard + tag selector fixed). Tests 149/149; layout check: no new findings on the six pages.
+**Status:** owed. Built 2026-11-20 on dev; the owner commits.
+<!-- /§552 -->

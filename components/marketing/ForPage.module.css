@@ -29,6 +29,43 @@
 /* The olive-edged callout that closes a block of cards. */
 .calloutTop { margin-top: 1rem; }
 
+/* A picture of the product's own screen at the top of a step or module card (S3b, W67; drawing `.shot`: 16:10, full card
+   width, above the card's number). */
+.shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top left;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--home-card);
+  margin-bottom: 0.875rem;
+}
+
+/* The quiet line under a block of cards (the pictures' caption, W67; the board-meeting line, W69). */
+.hnote {
+  margin: 1rem 0 0;
+  max-width: 72ch;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+}
+
+/* A link-styled button ("Copy a link for your club", W71) and the quiet line that answers it. */
+.linkButton {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.copyNote { margin: 0.25rem 0 0; min-height: 1.5em; }
+.copyNote:empty { min-height: 0; }
+.copyUrl { overflow-wrap: anywhere; user-select: all; }
+
 /* A line of links that closes a section, centred under the cards. */
 .afterCards {
   margin: 1.125rem 0 0;
