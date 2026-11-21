@@ -46,7 +46,7 @@ const CROSS_SELLS: Array<{
   {
     label: 'Club',
     q: 'Also running rep teams?',
-    body: 'Club combines everything in League Plus with rep teams, accounting, org-wide financials, and a Premium Coaches Portal for every coach on up to 15 teams, or up to 30 on Club · Association, with no per-team fee — for clubs that do it all.',
+    body: 'Club combines everything in League Plus with rep teams, accounting, the club’s books, and a Premium Coaches Portal for every coach on up to 15 teams, or up to 30 on Club · Association, with no per-team fee — for clubs that do it all.',
     cta: interestButtonLabel(['club']),
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],

@@ -434,9 +434,10 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
   the Privacy Policy, and never links to a "not found" page; answer 4's "or ask us for a full copy" joins by itself once
   the data terms page is live (`dataTermsHref`); `/legal` added "if you cancel" to the refund sentence. **W71's
   /for-tournament-organizers line is not built** (true only once S4 ships): it moves to S4. The /pricing closed Club
-  door's "you get the visibility" became card 03's accepted words (walk call C1). **Open after the walk:** the owner
-  calls C1–C6 in the walk (the pricing door line, For Clubs repetition, pictures on phones, league wording of W70, the
-  FAQ heading, "org-wide financials"); owner steps: a name search for Kestrel Bay, the by-hand owner change (W70
+  door's "you get the visibility" became card 03's accepted words (walk call C1). **Walked ✅ 38/38 by the owner
+  2026-11-20; calls C1–C6 (the pricing door line, For Clubs repetition, pictures on phones, league wording of W70, the
+  FAQ heading, "org-wide financials") all ruled as recommended** — C1–C5 keep what was built; C6 changed the For Leagues
+  Club card's "org-wide financials" to "the club's books". **Owner steps still owed:** a name search for Kestrel Bay, the by-hand owner change (W70
   answer 2), the by-hand full copy before the data terms publish.
 
 ### S4 — Buying from inside the product (depends on S1; after S3 because both touch the plan cards)
