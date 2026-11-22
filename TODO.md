@@ -44,11 +44,14 @@ This file is the **index** of open work: **one line per project**. **A project's
 - [ ] **Club, after launch** — status on the board · plan [CLUB_TIER_PRODUCTION_READINESS_PLAN.md §7](docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md)
 - [ ] **Tryouts from a phone** — status on the board · plan [COACH_TRYOUTS_PHONE_PLAN.md](docs/projects/active/COACH_TRYOUTS_PHONE_PLAN.md)
 - [ ] **The public face, warm** — status on the board · plan [PUBLIC_FACE_WARM_PLAN.md](docs/projects/active/PUBLIC_FACE_WARM_PLAN.md)
+- [ ] **Every tournament game on a real venue** — status on the board · plan [TOURNAMENT_REAL_VENUES_ONLY_PLAN.md](docs/projects/active/TOURNAMENT_REAL_VENUES_ONLY_PLAN.md)
 - [ ] **The Tournament plan's missing settings** — status on the board · plan [TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md](docs/projects/active/TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md)
 
 ## Chores
 
 - [ ] **Every PDF's footer date in the house form** — the shared PDF footer prints "Exported: 2026-11-18"; move it to the house date form for every document (owner 2026-11-18, Stage 10 A11; run it through `/plan` as one small item, the PDF check matches on the footer wording).
+
+- [ ] **One trusted visitor address for every rate limit** — the per-visitor limits read an address a caller can forge; move all 22 readers onto the already-built trusted reader, after measuring what the hosted site really sends (owner 2026-11-18, found by the Stage 10 review; plan [TRUSTED_CLIENT_ADDRESS_PLAN.md](docs/projects/active/TRUSTED_CLIENT_ADDRESS_PLAN.md)).
 
 ## Living documents (not tasks; they evolve in place)
 

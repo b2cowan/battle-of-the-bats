@@ -1,0 +1,302 @@
+<title>Add Time Parts Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, as the several-permits walks). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · A schedule on several permits · Phase 8, Add time as its own part</span>
+    <h1>Add time to a sent schedule as a part of its own, bill it separately and send the whole family at once</h1>
+    <p class="sub">Written 2026-11-17, after Session 3 (<code>839645c5c</code>) and the Close’s words pass. One purpose: a club adds more time to a schedule already sent, and each addition is its own part with its own bill. The families hear once, the coach sees a second charge, someone without Accounting sees no money, and a part can be taken off before or after it is sent. Nothing from Session 3 has been tried in a browser before this walk.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Harbourtown sent <strong>Fall practices</strong> to three teams (14U AA, 15U AA, 13U AAA), built from <strong>Milton evenings</strong> and billed in three payments. You add <strong>Halton Hills evenings</strong> to it three ways (two parts that are sent, one that you take off, one that you send free), and watch what each person sees: you as the owner, the coach of 14U AA, a scheduling admin who does <em>not</em> hold the club’s Accounting, and a registrar who has no Rep Teams. Part 5 sends the family while a second admin changes one part under you, so only part of it goes out.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1</strong> Add time makes a named part, “Time added Nov 17”, with its own teams, and moves nothing already on the schedule or its bill.</li>
+    <li><strong>2</strong> Send the changes sends the schedule’s own change and the new part together: one row and one email per team, the part’s bill on a line of its own, set with Bill it…, no money in the coaches’ lines.</li>
+    <li><strong>3</strong> The coach of 14U AA sees a second charge named for the part, the first bill’s payments are as they were, and a bell for the new bill.</li>
+    <li><strong>4</strong> A reader without Accounting sees “Bill set” with no figure and no dollar sign anywhere, and cannot send what holds a bill.</li>
+    <li><strong>5</strong> A send refused part-way tells only the families of what landed and says the rest is still waiting.</li>
+    <li><strong>6</strong> A part sent free gets its own “sent without a bill” row; a part taken off before its first send is gone, with no one told; a window open on it closes.</li>
+    <li><strong>7</strong> A part taken off after its first send leaves at the next send, credited on its own bill.</li>
+    <li><strong>8</strong> A person without Rep Teams neither sees nor sends a part that holds rep teams.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>Reading the emails.</strong> Every address in this club ends <code>@dev.local</code>, so a send is attempted and some may count as “couldn’t be delivered”. That is expected here and is not a failure. The email’s words are read in the Send window’s preview of what a coach gets, if you want them.</li>
+    <li>Building a schedule on two permits, Find the time and the bill’s price per permit: that is <strong>walk 1</strong> (§531).</li>
+    <li>Regenerating one part and the played-practices rules: <strong>walk 2</strong> (§532, parts 2 to 4). ⚠ Walk 2’s part 1 describes the <em>old</em> Add time (a correction on the first bill) that this build retired; do not use it, this walk replaces it.</li>
+    <li>Exact figures that move with the calendar. Dollar figures here are pinned as a relationship (“$90.00 times the hours shown”).</li>
+    <li>The four owner calls below are not counted in the progress.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd><code>http://localhost:3000</code>. It was restarted for this walk (new files). If a page will not load, tell Claude before walking.</dd>
+    <dt>The club</dt><dd>A fresh Harbourtown copy, <strong>navj-club-spw2</strong>, rebuilt 2026-11-17 for this walk (“today” is Tue, Nov 17, 2026): <strong>Fall practices</strong> sent and billed, Milton evenings on it, Halton Hills evenings ($90.00 an hour) not used. If you walk on a later day, ask Claude to rebuild so the played and future practices move with the calendar.</dd>
+    <dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> · dev only · keep this page private.</dd>
+    <dt>Accounts</dt><dd><strong>Owner</strong> <code>navj-club-spw2-owner@dev.local</code> (Morgan Ellis) · <strong>Admin without Accounting</strong> <code>navj-club-spw2-admin2@dev.local</code> (Sam Okafor) · <strong>Coach of 14U AA</strong> <code>navj-club-spw2-coach-14aa@dev.local</code> (Taylor Brooks) · <strong>Registrar</strong> <code>navj-club-spw2-registrar@dev.local</code> (Riley Okonkwo, house league only). Use a private window for the second person so the owner stays signed in.</dd>
+    <dt>Open</dt><dd><code>http://localhost:3000/navj-club-spw2/admin/schedules</code>, then press <strong>Fall practices</strong>. (Its address ends <code>5ceaf68f-7498-41d8-ab41-e70890a5e664</code>.)</dd>
+    <dt>Date windows</dt><dd>Halton Hills evenings is Tue and Thu, 6:00 to 8:00 p.m., to Jan 31. An added part keeps <em>all</em> the time it is made from, including slots no team got, and a second part can’t be made from time another part holds (the window says “The schedule already uses all of this time”). So parts 2, 3 and 4 each take their own dates: <strong>part 2 Dec 1 to 31, part 3 Jan 1 to 14, part 4 Jan 15 to 31</strong>. The first part’s practices are untouched; on 2026-11-17 its unused 6:00 p.m. slots were released in the dev data (without redoing parts 1 to 3) so parts 2 to 4 have time to take. If the club is rebuilt, tell Claude: part 1 would then need its own narrower window too.</dd>
+    <dt>Stop check</dt><dd>Step 0.1. If the schedule already says “Changed since sent”, or has a part, the copy was touched after it was built: stop and tell Claude.</dd>
+    <dt>Width</dt><dd>Desk, all parts.</dd>
+    <dt>Order</dt><dd>Parts 0 to 8 in order. Each part changes what the next one reads (part 2 sends, part 4 adds a part that part 5 sends, part 7 is destructive and goes last but one).</dd>
+    <dt>Two tabs</dt><dd>Parts 5 and 6 each use a second browser tab on the same schedule, signed in as the owner. Say “Tab A” and “Tab B” to yourself.</dd>
+    <dt>When done</dt><dd>Tell Claude “add time parts walk done” and paste the build summary. It then reads the writes back and tears the club’s layer down.</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+  <section class="card" id="callsCard"><h2>Your calls (not counted in the progress)</h2><p class="sub">Tick the option you choose; the box is the answer. Say why in the note, if you like. Claude’s recommendation is marked.</p><div id="calls" style="display:flex;flex-direction:column;gap:14px"></div></section>
+</main>
+<script>
+(function () {
+  var OWN = 'Owner · navj-club-spw2-owner@dev.local';
+  var A2 = 'Admin without Accounting · navj-club-spw2-admin2@dev.local';
+  var CO = 'Coach of 14U AA · navj-club-spw2-coach-14aa@dev.local';
+  var RG = 'Registrar · navj-club-spw2-registrar@dev.local';
+  var D = {
+    KEY: 'club-schedule-add-time-parts-walk-v1',
+    TITLE: 'Add time as its own part · the walk (2026-11-17)',
+    PARTS: [
+      { id: '0', title: 'Start from the sent schedule (desk)', intro: 'Part 0 changes nothing. Keep a scrap of paper for the payments you write down.', steps: [
+        { who: OWN, do: 'Open <strong>Schedules</strong> and press <strong>Fall practices</strong>.', see: 'The pill reads <strong>Final</strong> with <strong>no</strong> “Changed since sent” beside it. There is no <strong>Part</strong> filter and no line about added time. <strong>Needs attention</strong> has no row naming a part. <strong>If any of that is there, stop:</strong> the copy was changed after it was built.' },
+        { who: OWN, do: 'Open the <strong>Bill</strong> tile and write down each team’s three payments.', see: 'Built as: <strong>14U AA $480.00 · $240.00 · $240.00</strong> (total $960.00); <strong>15U AA $540.00 · $240.00 · $240.00</strong> ($1,020.00); <strong>13U AAA $840.00 · $480.00 · $480.00</strong> ($1,800.00). The first is dated Nov 3, before today. A bill’s terms never change, so these are the pass condition for every later “unchanged”.' },
+        { who: OWN, do: 'Open <strong>Tools</strong> and read the first item.', see: '<strong>Add time…</strong> is first, above <strong>Settings…</strong>, with the hint “More time, for the teams you choose, on a bill of its own. Nothing already on the schedule moves.”' }
+      ] },
+      { id: '1', title: 'Add time makes a part (desk)', intro: 'Halton Hills evenings (Prospect Park, $90.00 an hour) runs from Mon, Nov 30. You add it for two of the three teams.', steps: [
+        { who: OWN, do: 'Press <strong>Add time…</strong>.', see: 'A window <strong>Add time</strong>, “Step 1 of 2 · the new time”. A read-only field <strong>Shown on the schedule as</strong> reads <strong>Time added Nov 17</strong>, with “A part of Fall practices, with its own teams and bill”.' },
+        { who: OWN, do: 'Open <strong>Permits</strong> and tick <strong>Halton Hills evenings</strong>.', see: 'The hint under Permits reads “Any permit the club holds. One already on this schedule brings only the time the schedule doesn’t use.” A card for Halton Hills evenings appears with its row at Prospect Park, Tue and Thu, 6:00 to 8:00 p.m. Under <strong>From</strong> a line reads “Not before today: Fall practices has been sent.” and under <strong>To</strong> “Halton Hills evenings runs …” with the permit’s own dates, to Jan 31, 2027.' },
+        { who: OWN, do: 'Look at the team table.', see: '<strong>Nobody is ticked</strong>, and the hint reads “Starts with nobody ticked. The teams you tick share only this time.” A club team that is not on Fall practices says <strong>Not on Fall practices yet</strong>.' },
+        { who: OWN, do: 'Tick <strong>14U AA</strong> and <strong>15U AA</strong> (not 13U AAA) and press <strong>Generate drafts for the new time</strong>.', see: '“Step 2 of 2 · drafts for the new time”. The statement reads “<strong>N new practices</strong>, Dec 1, 2026 to Jan 28, 2027” (the first Tue or Thu on or after Nov 30; exact dates may differ), then “From Halton Hills evenings. The other <strong>M practices</strong> stay exactly where they were sent.” M is <strong>63</strong>, every practice the schedule already had.' },
+        { who: OWN, do: 'Read the table under the statement.', see: 'Columns <strong>Team · New · Hours</strong> with rows for <strong>14U AA</strong> and <strong>15U AA</strong> only, and a total line “2 teams”. Write down each team’s <strong>Hours</strong>.' },
+        { who: OWN, do: 'Press <strong>Keep this draft</strong> on the first draft.', see: 'The window closes and the page says “<strong>Time added Nov 17 is on the schedule. The coaches aren’t told until you send the changes.</strong>”' },
+        { who: OWN, do: 'Look at the line under the schedule’s name, the <strong>Part</strong> filter and <strong>Needs attention</strong>.', see: 'The line names <strong>Time added Nov 17</strong> with its dates, “14U AA and 15U AA” and “<strong>not sent yet</strong>”. The Part filter offers <strong>Every part</strong> and <strong>Time added Nov 17</strong>. A Needs attention row reads “<strong>Time added Nov 17 isn’t billed yet. You can bill it when you send the changes.</strong>”' },
+        { who: OWN, do: 'Open the <strong>Bill</strong> tile again and compare with 0.2.', see: 'Every payment is <strong>exactly</strong> what you wrote down. The added time is not on the first bill at all.' }
+      ] },
+      { id: '2', title: 'Send the changes sends the family (desk)', intro: 'You first change the schedule’s own time, so the send holds both: a cleared practice (a credit for 14U AA) and the new part.', steps: [
+        { who: OWN, do: 'In the <strong>Grid</strong>, go to the week of Mon, Nov 30, press 14U AA’s <strong>Thu, Dec 3, 6:00 p.m.</strong> practice on Diamond A and choose <strong>Clear this slot</strong>.', see: 'The notice says the slot was cleared, with Undo. The page wears <strong>Final</strong> and the amber <strong>Changed since sent</strong> together. (Do not clear the locked Nov 26 slot.)' },
+        { who: OWN, do: 'Press <strong>Send the changes</strong>.', see: 'The window opens. Under <strong>Who is told</strong> there are rows for <strong>14U AA</strong> and <strong>15U AA</strong>, one row each. <strong>13U AAA is not listed</strong>: nothing changed for it.' },
+        { who: OWN, do: 'Read 14U AA’s row.', see: 'Its lines include the cleared practice (“No longer Thu, Dec 3, 6:00 p.m. · Diamond A”) and the part’s new practices, each ending <strong>· Time added Nov 17</strong> (“Gains Tue, …”). <strong>No dollar figure</strong> is in any coach line.' },
+        { who: OWN, do: 'Read the bill line under Who is told.', see: 'A line “<strong>Time added Nov 17 · its bill</strong>” with <strong>Not billed</strong> and a button <strong>Bill it…</strong>.' },
+        { who: OWN, do: 'Look for the <strong>Bill the corrections</strong> switch.', see: 'It is there and on, because the cleared practice credits 14U AA. (With nothing of the schedule’s own to correct it would be absent, and a hint would say it appears only when a change touches Fall practices’ own time.)' },
+        { who: OWN, do: 'Press <strong>Bill it…</strong>.', see: 'The <strong>Bill the teams</strong> window opens with the eyebrow “<strong>Fall practices · Time added Nov 17</strong>” and the statement “A bill of its own, for Time added Nov 17.” Its footer button reads <strong>Add the bill to the schedule</strong>.' },
+        { who: OWN, do: 'Keep what the window proposes (the time at the permit’s price, one payment) and press <strong>Add the bill to the schedule</strong>.', see: 'You are back in <strong>Send the changes</strong>, on the same window, not on the page behind it.' },
+        { who: OWN, do: 'Read the bill line again.', see: 'It now reads a dollar total, the teams and the payments (“$… · 14U AA and 15U AA · one payment, due …”) with <strong>Change…</strong> beside it, over “N hours of Halton Hills evenings for 14U AA and 15U AA”. <strong>The total is $90.00 times that number of hours</strong>, and the hours add up to the two Hours you wrote down in 1.5.' },
+        { who: OWN, do: 'Press the <strong>Send</strong> button (it reads “Send to N coaches”, or “Send to N people”).', see: 'The notice reads “<strong>Sent to N … on 2 teams.</strong>” A count of “couldn’t be delivered” after it is expected here (dev addresses). The window closes. <strong>The page no longer says Changed since sent</strong>; the line under the name now says Time added Nov 17 was sent today; Needs attention has no row about the part.' },
+        { who: OWN, do: 'Open <strong>Tools › Send log</strong>.', see: 'The newest rows are from this send: one for Fall practices’ own changes and one for <strong>Time added Nov 17</strong>, the same time, each listing 14U AA and 15U AA and no one else.' }
+      ] },
+      { id: '3', title: 'The coach sees a second charge (coach)', intro: 'A private window, signed in as the coach of 14U AA.', steps: [
+        { who: CO, do: 'Open the team’s <strong>Money › Club</strong> tab.', see: '<strong>Two</strong> charges: <strong>Fall practices</strong> and <strong>Fall practices · Time added Nov 17</strong>. The second is the total you read in 2.8.' },
+        { who: CO, do: 'Open <strong>Fall practices</strong> and look at its payments.', see: 'The payments are exactly 14U AA’s in 0.2 ($480.00 · $240.00 · $240.00). The cleared practice shows as a <strong>Credited</strong> figure ($60.00 for the hour), never as a changed payment.' },
+        { who: CO, do: 'Open <strong>Notifications</strong>.', see: 'One bell for the part’s bill, reading “For Fall practices · Time added Nov 17 · 1 payment, …”, and a separate bell that the changes were sent.' }
+      ] },
+      { id: '4', title: 'A reader without Accounting (desk, two people)', intro: 'You add a second part and bill it; then Sam Okafor, who can schedule but not open the club’s Accounting, looks at the same send.', steps: [
+        { who: OWN, do: 'Add a second part: <strong>Tools › Add time…</strong>, tick <strong>Halton Hills evenings</strong>, set <strong>To</strong> to <strong>Thu, Dec 31, 2026</strong> (leave From as it is), tick <strong>all three teams</strong>, press <strong>Generate drafts for the new time</strong> and <strong>Keep this draft</strong>.', see: 'The page says “Time added Nov 17 (2) is on the schedule…”. The Part filter now lists <strong>Every part</strong>, <strong>Time added Nov 17</strong> and <strong>Time added Nov 17 (2)</strong>. The new practices are all in <strong>December, at 6:00 p.m.</strong> (the hour the first part left open), and all three teams get some. If the window says “The schedule already uses all of this time”, or no team gets any, stop and tell Claude. (Every part keeps all the time it is made from, so each part needs a window of dates no other part holds: December here, Jan 1 to 14 for the third part and Jan 15 to 31 for the fourth.)' },
+        { who: OWN, do: 'Press <strong>Send the changes</strong>, press <strong>Bill it…</strong> on the second part, keep what is proposed, press <strong>Add the bill to the schedule</strong>, then close the Send window <strong>without sending</strong>.', see: 'The second part’s bill line shows a total. Closing leaves it unsent: the part still reads “not sent yet”.' },
+        { who: A2, do: 'In a private window, sign in as Sam Okafor, open Fall practices and press <strong>Send the changes</strong>. Read the second part’s bill line.', see: 'It reads <strong>Bill set</strong> with <strong>no figure</strong> and <strong>no Bill it… or Change… button</strong>. No dollar sign appears anywhere in the window.' },
+        { who: A2, do: 'In the <strong>Grid</strong>, with the <strong>Part</strong> filter on <strong>Time added Nov 17</strong>, press one future 15U AA practice and choose <strong>Clear this slot</strong>.', see: 'The slot is cleared, with Undo. The page wears Changed since sent.' },
+        { who: A2, do: 'Press <strong>Send the changes</strong> again and look for <strong>Bill the corrections</strong>.', see: 'The switch is <strong>shown</strong> and a sentence says why the send is held (a credit takes the club’s Accounting). Before the review fix, Send was dead here with no message.' },
+        { who: A2, do: 'Try to press the <strong>Send</strong> button.', see: 'It is held: nothing is sent, and a sentence names the club’s Accounting as what is needed (the second part carries a bill). Close the window.' }
+      ] },
+      { id: '5', title: 'A send refused part-way (desk, two tabs)', intro: 'Back as the owner. Part 1 has a credit waiting (Sam’s cleared practice) and part 2 has its first send waiting. In Tab B you change part 2’s bill after Tab A has already read it, so part 2 is refused after part 1 has gone.', steps: [
+        { who: OWN + ' · Tab A', do: 'Open Fall practices and press <strong>Send the changes</strong>. Leave the window open.', see: 'Rows for <strong>14U AA, 15U AA and 13U AAA</strong> (part 1’s credit touches 15U AA; part 2’s first send touches all three). Part 2 has its bill line with its total.' },
+        { who: OWN + ' · Tab B', do: 'Open the same schedule in a second tab, press <strong>Send the changes</strong>, press <strong>Change…</strong> on part 2’s bill, change the payment plan (or any term) and press <strong>Add the bill to the schedule</strong>. Close the window without sending.', see: 'Part 2’s bill line now shows the changed terms. Tab A has not seen it.' },
+        { who: OWN + ' · Tab A', do: 'Press the <strong>Send</strong> button in Tab A.', see: 'The notice reads “Sent to N … on <strong>1 team</strong>.” (15U AA, the only team part 1 touches) followed by “<strong>Only part of it went out.</strong>” the refusal’s own sentence and “<strong>The rest is still waiting to be sent.</strong>” <strong>If Tab A’s send went all the way through, tell Claude</strong> (a changed bill did not stop it).' },
+        { who: OWN, do: 'Open <strong>Tools › Send log</strong>.', see: 'A new row for part 1 listing <strong>15U AA</strong> only. <strong>14U AA and 13U AAA are not on it</strong>: nothing reached their coaches, because part 2 is what holds them and that was refused.' },
+        { who: OWN, do: 'Reload, press <strong>Send the changes</strong> and press the <strong>Send</strong> button.', see: 'Only part 2 is left in the window, with the terms you saved in Tab B, and all three teams. The notice reads “Sent to N … on 3 teams.” Nothing is left in Changed since sent.' }
+      ] },
+      { id: '6', title: 'Sent free, and a part taken off before it is sent (desk, two tabs)', intro: 'You add a third part and send it with no bill, then add a fourth and take it off while another tab has its settings open.', steps: [
+        { who: OWN, do: 'Add a third part for <strong>14U AA only</strong> (<strong>Tools › Add time…</strong>, Halton Hills evenings, set <strong>From</strong> to <strong>Fri, Jan 1, 2027</strong> and <strong>To</strong> to <strong>Thu, Jan 14, 2027</strong>, <strong>Generate drafts</strong>, <strong>Keep this draft</strong>).', see: 'The page says Time added Nov 17 (3) is on the schedule. Its practices are all in the first two weeks of January.' },
+        { who: OWN, do: 'Press <strong>Send the changes</strong>, leave the third part on <strong>Not billed</strong> and press the <strong>Send</strong> button.', see: 'The notice reads “Sent to … on 1 team.” (14U AA).' },
+        { who: OWN, do: 'Look at <strong>Needs attention</strong>.', see: 'A row reads “<strong>Time added Nov 17 (3) was sent without a bill. You can bill the teams whenever you’re ready; its practices stay as they are.</strong>” with the chip <strong>Not billed</strong> and a <strong>Bill it…</strong> button. (It will not clear on its own: see call C2.)' },
+        { who: OWN, do: 'Add a fourth part for <strong>15U AA only</strong> (From <strong>Fri, Jan 15, 2027</strong>, To <strong>Sun, Jan 31, 2027</strong>) and do <strong>not</strong> send it.', see: 'The page says Time added Nov 17 (4) is on the schedule; it reads “not sent yet”.' },
+        { who: OWN + ' · Tab A', do: 'Press <strong>Tools › Settings…</strong>.', see: 'A question “<strong>Settings for which part?</strong>” lists Fall practices and every part that is still on it (four of them), with a <strong>Go back</strong> and an <strong>Open its settings</strong>.' },
+        { who: OWN + ' · Tab A', do: 'Choose <strong>Time added Nov 17 (4)</strong> and press <strong>Open its settings</strong>. Leave the window open.', see: 'Settings opens for that part, with the eyebrow “Fall practices · Time added Nov 17 (4)”, and a card for Halton Hills evenings.' },
+        { who: OWN + ' · Tab B', do: 'Open the same schedule in a second tab, press <strong>Tools › Settings…</strong>, choose part (4), press <strong>Open its settings</strong> and press <strong>Take it off…</strong> on the permit’s card.', see: 'A question “<strong>Take “Time added Nov 17 (4)” off?</strong>” says “Its N practices go. Nobody has been told about them, and nothing else on the schedule moves.”' },
+        { who: OWN + ' · Tab B', do: 'Press <strong>Take it off</strong>.', see: 'The page says “<strong>Time added Nov 17 (4) is off the schedule.</strong>” The Part filter no longer lists it.' },
+        { who: OWN + ' · Tab A', do: 'Go back to Tab A and press <strong>Cancel</strong> on the open Settings window, then press <strong>Tools › Regenerate the unlocked slots…</strong>.', see: 'The question is “<strong>Regenerate which part?</strong>” and it lists Fall practices and parts (1), (2) and (3) <strong>only</strong>; part (4) is gone. (If Tab A’s Settings window closed by itself before you pressed Cancel, that is the intended behaviour: it never lets you save or bill a part that is gone.) Press <strong>Go back</strong>.' }
+      ] },
+      { id: '7', title: 'Take a sent part off (desk, destructive)', intro: 'Part 3 (14U AA, sent free) goes. It was sent, so it leaves at the next send and is credited on its own bill.', steps: [
+        { who: OWN, do: 'Press <strong>Tools › Settings…</strong>, choose <strong>Time added Nov 17 (3)</strong>, press <strong>Open its settings</strong> and press <strong>Take it off…</strong> on the permit’s card.', see: 'The question is “<strong>Take “Time added Nov 17 (3)” off?</strong>” with “Its N practices from today on come off: 14U AA.” and “The change waits in Changed since sent. Send the changes tells the coaches and shows what each team is credited for that time.” and “After you send the changes, “Time added Nov 17 (3)” leaves the schedule. Its bill and what was sent stay on record.”' },
+        { who: OWN, do: 'Press <strong>Take it off</strong>.', see: 'The page says the part is taken off. It still shows in the Part filter, and the page wears <strong>Changed since sent</strong> again.' },
+        { who: OWN, do: 'Press <strong>Send the changes</strong> and press the <strong>Send</strong> button.', see: 'Part (3)’s line says its practices come off. The notice reads “Sent to … on 1 team.” <strong>Time added Nov 17 (3) is then gone</strong> from the line under the name and from the Part filter; Changed since sent clears.' },
+        { who: OWN, do: 'Open <strong>Tools › Send log</strong>.', see: 'Part (3)’s two sends (its first send and this one) are still listed, with its label: the record stays after the part is gone.' }
+      ] },
+      { id: '8', title: 'Someone without Rep Teams (desk)', intro: 'A different account, the registrar, who has house league only. Fall practices is a rep teams schedule and holds parts of rep teams.', steps: [
+        { who: RG + ' · private window', do: 'Sign in and open <code>http://localhost:3000/navj-club-spw2/admin/schedules</code>.', see: 'The list does not offer <strong>Fall practices</strong>, or offers it without any rep team named, a bill or an added part. <strong>It is a fail</strong> if you can read a part’s rep teams or its bill here.' },
+        { who: RG + ' · private window', do: 'Open Fall practices by its address: <code>http://localhost:3000/navj-club-spw2/admin/schedules/5ceaf68f-7498-41d8-ab41-e70890a5e664</code>.', see: 'The page does not open for this person (or opens with no Send the changes, no rep team, no part and no bill). <strong>It is a fail</strong> if Send the changes is offered.' }
+      ] }
+    ],
+    CALLS: [
+      { id: 'C1', title: 'Bill it… and back: keep the window’s choices', text: 'When you go from Send the changes to Bill it… and back, any team you unticked and the “Bill the corrections” setting go back to their defaults. Try it once in part 2: untick a team, press Bill it…, add the bill, and see whether the tick came back. A small build lifts them into the page. Claude recommends A.', options: ['A · Build it: the window keeps what you chose', 'B · Leave as built'] },
+      { id: 'C2', title: '“Sent without a bill” never clears, and shows to people who cannot bill', text: 'The row in Needs attention stays for a part the club sends free on purpose, and shows to a reader who has no Bill it… button. Claude recommends C.', options: ['A · Add a dismiss (“It’s free”) for people who can bill', 'B · Hide the row from people without Accounting', 'C · Both A and B', 'D · Leave as built'] },
+      { id: 'C3', title: 'One figure in the email, two charges on Money › Club', text: 'When the schedule’s own change and a sent part’s change both correct a team’s bill, the email and the bell say one added-up figure, while Money › Club lists two charges (the schedule’s and the part’s). Does that read right to a coach? Claude recommends A: each charge is named, and the figure is their total.', options: ['A · As built: one figure, two named charges', 'B · Say each correction on its own line in the email and the bell', 'C · Look closer first'] },
+      { id: 'C4', title: 'A sender without Accounting cannot send a family that includes a new bill', text: 'The window shows them “Bill set”, but pressing Send is held until someone with Accounting sends it (the same as a single Finalize). You pressed it in step 4.6. Claude recommends C if the held message in 4.6 read clearly only after the press.', options: ['A · Intended, as built: the press explains why', 'B · Let them send; the bill goes with it and they never see a figure', 'C · Say it in the window before they press (“Someone with the club’s Accounting sends this one”)'] }
+    ]
+  };
+  var KEY = D.KEY, TITLE = D.TITLE, PARTS = D.PARTS, CALLS = D.CALLS;
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    if (p.intro) body.appendChild(el('p', 'sub', p.intro));
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var box = el('div', 'callbox'); box.style.cssText = 'display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px';
+    box.appendChild(el('strong', null, c.id + ' · ' + c.title));
+    box.appendChild(el('span', 'see', c.text));
+    c.options.forEach(function (o, i) {
+      var key = c.id + '.' + i;
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!state.calls[key]; cb.style.cssText = 'width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none';
+      cb.addEventListener('change', function () { state.calls[key] = cb.checked; save(); });
+      var row = el('label', 'step'); row.style.borderTop = '0'; row.style.paddingBlock = '4px';
+      row.appendChild(cb); row.appendChild(el('span', 'txt', o)); box.appendChild(row);
+    });
+    var ta = document.createElement('textarea'); ta.id = 'callnote-' + c.id; ta.placeholder = 'Why (optional)'; ta.value = state.callNotes[c.id] || '';
+    ta.addEventListener('input', function () { state.callNotes[c.id] = ta.value; save(); });
+    box.appendChild(ta); callHost.appendChild(box);
+  });
+  if (!CALLS.length) document.getElementById('callsCard').hidden = true;
+
+  function doneSteps(partId) { return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; }); }
+  var totalSteps = boxes.length;
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length, v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    if (CALLS.length) {
+      lines.push('Calls (not counted):');
+      CALLS.forEach(function (c) {
+        var chosen = c.options.filter(function (o, i) { return state.calls[c.id + '.' + i]; });
+        lines.push('  ' + c.id + ' ' + c.title + ': ' + (chosen.length ? chosen.join(' / ') : 'not answered') + (state.callNotes[c.id] ? ' — ' + state.callNotes[c.id] : ''));
+      });
+    }
+    return lines.join('\n');
+  }
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('callnote-' + c.id).value = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('#calls input[type=checkbox]'), function (b) { b.checked = false; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

@@ -231,7 +231,9 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
   the billing address screen, the payment return, Home's waiting card.
 - **Reviews:** `/review` high-risk tier (money, accounts, terms acceptance); `/legal` on the plan step's promises.
 - **Built 2026-11-19** (prompt `CLUB_ON_SALE_S2_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S2_WALK.html`, Owner QA Ledger §545). Committed
-  `d21eade14` 2026-11-19, with the simplify + docs pass below (walk §545 owed). What the build found and decided, against the plan above:
+  `d21eade14` 2026-11-19, with the simplify + docs pass below. **Walk §545 passed 41 of 41, 2026-11-19; its five calls ruled as
+  recommended the same day** (team move = its own small session next; `/marketing` confirmed the S2 words, none changed; the League Plus card's
+  "Start free" waits for S3; production order as in the runbook; the three recorded items to `/plan`). What the build found and decided, against the plan above:
   - **`startup_tasks` does not exist** on either database (mig 026 was never applied; the code ignores the missing column, which
     is also why a cancelled checkout opened New tournament). The intended plan lives in a new column instead,
     **`organizations.start_plan`** (mig 508, owner ruling 2026-11-19 "New field on the organization"), written by
@@ -279,6 +281,18 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
     return; one poll interval shared by the three setup waits; the wait not blocking on the offer read when `?door=` is
     present (a visible speed-up); a shared helper for the two door pages' signed-in branch (the S2 page tests stub
     `start-plan-server` by name).
+  - **Three small items routed to `/plan` 2026-11-19** (owner call C5 of walk §545, "To /plan as small items"; recorded, **not built**;
+    none holds the flip, so each is a small item run on its own, not a stage). No PM brief: each is a defect against a behaviour
+    already ruled. Before building any, re-read the cited screen; the walk saw them on dev only.
+    - [ ] **Two tabs naming a club at the same moment make two organizations.** What the visitor sees: two clubs with the same
+      name, one of them empty. "Run a tournament" has the same gap, so the fix belongs to the shared create step, not the Start
+      a club door alone; test both doors. Risk: low, but it touches account creation, so `/review` the create route.
+    - [ ] **Signing in from `/auth/login?next=/start/club` lands on Home (dev).** The visitor expects to resume Start a club
+      (the sign-in resume already works from the door itself, walk part G). Find whether `next` is dropped by the sign-in page or
+      by Home's own redirect; check `/start/league` the same way. Risk: low.
+    - [ ] **Start-page titles read "… — FieldLogicHQ | FieldLogicHQ"** (older than S2; the brand name is added twice). Fix the
+      title on the start pages (and any other page that doubles it: grep the built titles), keeping the one-spelling gate green.
+      Risk: none; copy only, no `/marketing` pass needed.
 
 ### S3 — The pages' open state (depends on S1 + S2 + the words ruled)
 
@@ -318,22 +332,8 @@ walked with a dev-only "show as closed" switch (S1) and proved on production at 
   tests and the strip's group-tag rule (W6) simplify with it, since both plans then wear one word.
 - **Screens:** `/pricing`, home, `/for-clubs`, `/for-leagues`, `/for-tournament-organizers`, `/for-coaches` (Club line
   only), the interest form, the public nav and the Get started menu.
-
-### S3b — The selling sections (depends on S3 for the pages' shape; does NOT hold the flip)
-
-Added by the audience review. By the owner's 2026-11-17 ruling marketing is after the launch, so nothing here is a flip
-prerequisite: it can ship closed-safe before the flip, or after it. Every section is true in both states unless marked.
-
-- `/for-clubs`: the heading's "org" becomes "club" and the sub-line names the club's books (W65); the four "old way"
-  cards rebalanced toward the treasurer and registrar (W66); a new section "What each person at your club gets" after
-  the modules (W69).
-- `/for-leagues` and `/for-clubs`: one picture of the real screen in each of the four steps / four modules (W67). The
-  pictures are shot from a fixture club built for the purpose with invented names (never the live demo clubs, never a
-  production row), by a capture script kept with the build so `/demos` can re-shoot them each release cycle.
-  - **⚖ Owner, 2026-11-19: before any picture is built, show him BOTH options side by side and he chooses** — (A) real
-    screenshots of the product, (B) drawn pictures of the same screens. His reason: our screenshots have historically
 - **Built 2026-11-20** (prompt `CLUB_ON_SALE_S3_BUILD_PROMPT.md`; walk `CLUB_ON_SALE_S3_WALK.html`,
-  https://claude.ai/artifact/9aVyHMby5sGfy4G5Hug8WS, Owner QA Ledger §550). **Committed `1f3bdb41b` 2026-11-20** (owner's "commit"); walk §550 owed.
+  https://claude.ai/artifact/9aVyHMby5sGfy4G5Hug8WS, Owner QA Ledger §550). **Committed `1f3bdb41b` 2026-11-20** (owner's "commit"); **walk §550 passed 45 of 45, 2026-11-20; calls C1–C5 all ruled as recommended** (C1 League Plus → Club move: to `/plan`, after launch; C2 keep all; C3 nothing held off, the "whole plan is on from the first day" sentence stays; C4 the three plans open together; C5 drawings republished as v4 to the same link, version 7).
   - **Part 0:** `/marketing` wrote League Plus's closed words ("Coming soon"; "League Plus is coming soon — it isn't open for
     sign-up yet."; both closed: "Club and League Plus are coming soon."), now one tag for every closed plan, so the strip's
     per-plan status went (W6 simplified). `/strategy`: the Facts truth-up was already done in S1 (`4ded7e325`). `/billing`:
@@ -350,9 +350,9 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
     by the portal line; "Available in Canada, outside Québec for now." without "organizations" on `/pricing` and home (`/legal`:
     a coach buys there as a person); home role cards split into label left, pill right (`/design`).
   - **`/legal` must-fix applied:** League Plus can change to no other plan (no `MOVES` row), so "Upgrade or downgrade at any
-    time" leaves the open pages and the change-plans answer says only the moves the product makes. **Owner call C1:** build a
-    League Plus → Club move (to `/plan`). `/legal` notes: step 2 "Your whole plan is on from the first day" holds only if nothing
-    in the plans is switched off at the flip (call C3). Reviews: `docs/agents/legal/ON_SALE_PAGES_S3_REVIEW.md`,
+    time" leaves the open pages and the change-plans answer says only the moves the product makes. **Owner call C1 (ruled 2026-11-20: to `/plan`, after launch, not built):** a
+    League Plus → Club move. `/legal` notes: step 2 "Your whole plan is on from the first day" holds only if nothing
+    in the plans is switched off at the flip (call C3, ruled 2026-11-20: nothing is held off, keep the sentence). Reviews: `docs/agents/legal/ON_SALE_PAGES_S3_REVIEW.md`,
     `docs/agents/accounting/ON_SALE_PAGES_S3_REVIEW.md`, `/design` (screenshots `.probe/s3-design/`), `/review` standard (three
     partial-flip contradictions on `/pricing` fixed; the nav reads the gate only on the pages that already do).
   - **Not changed:** `/for-coaches` (its Club links read true in both states; the bring-in promise stays held, Ask 13). The
@@ -361,6 +361,20 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
   - **Checks:** the plan-page tests (99) pass; `check:layout --only` the six marketing screens at 320–1440 passes (`--changed`
     widened to a whole-product sweep through another session's shared CSS, so it was not run). The full test run's 32 other
     failures are other sessions' work in the tree. Drawings corrected to v4 locally (republish = call C5).
+
+### S3b — The selling sections (depends on S3 for the pages' shape; does NOT hold the flip)
+
+Added by the audience review. By the owner's 2026-11-17 ruling marketing is after the launch, so nothing here is a flip
+prerequisite: it can ship closed-safe before the flip, or after it. Every section is true in both states unless marked.
+
+- `/for-clubs`: the heading's "org" becomes "club" and the sub-line names the club's books (W65); the four "old way"
+  cards rebalanced toward the treasurer and registrar (W66); a new section "What each person at your club gets" after
+  the modules (W69).
+- `/for-leagues` and `/for-clubs`: one picture of the real screen in each of the four steps / four modules (W67). The
+  pictures are shot from a fixture club built for the purpose with invented names (never the live demo clubs, never a
+  production row), by a capture script kept with the build so `/demos` can re-shoot them each release cycle.
+  - **⚖ Owner, 2026-11-19: before any picture is built, show him BOTH options side by side and he chooses** — (A) real
+    screenshots of the product, (B) drawn pictures of the same screens. His reason: our screenshots have historically
     looked much worse than the drawings, and if the drawings look much better he will go that route. (His point is that
     the drawings look better than our SCREENSHOTS of the product, not better than the product.) The comparison must
     be fair to both: (A) is the product captured at its best (tight crop on the part that sells, 2× pixels, a fixture
@@ -510,6 +524,72 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
 - **Part 3 of 4 built on dev 2026-11-21/22** (prompt `CLUB_ON_SALE_S4_PART3_PROMPT.md`; call 40 option A — **free time falls back**). **Owner calls ruled at the start, all as recommended, 2026-11-21:** (1) the line under the table says "**while your free time runs**", not the drawn "If you stop it, …" — a yearly plan can outlast the free time, and the drawn words would then promise a fall-back that does not happen (pushed back on at the start); the cancel window and emails say the fall-back only when free time covers the real end date; (2) the emails are the same three (ends on, the 7-day reminder, has ended) with the fall-back sentence in place of the suspension and no data-kept line; (3) **Cancel is the one door:** a paying club whose running free plan would catch it is offered, and allowed, no move to that plan or below it (a move to free Tournament included). **Built:** the ending (`applyEnding` → `applyFallBack`: cancel at period end, staff End now, Stripe giving up, a cancel with no paid period, the free-time reclose) asks the running whole-plan grant at the instant the plan ends (`freeTimeCatchesEnd`; no end date always catches) and, when it covers it, stores the free own plan (`tournament`, `team_limit` back to the plan's own, `active`) — NOT suspended, site untouched, nothing archived but what the granted plan cannot hold (today nothing), no account record, no data clock; one `subscription_canceled` event marked `fellBackToFreeTime` (one churn); the intent applied LAST; replay-safe (the event and email name the plan that ended). A plan that outlasts the free time closes as before; when the free time later ends unpaid, the shipped free-time ending applies (back to free Tournament). Words (`W.fallBack`, `/marketing` all kept): the table line, Reduce or cancel and the cancel window ("What stops on {date}" lists only what the paid plan alone carried, then "{org} goes back to free Tournament Plus through {date}."), its door, title, confirm and notice; the emails' panel and the "has ended" email (built-in words even over a customised template; `/legal` added "Tools that come only with {plan} turn off."); the staff Cancel and End now windows ("…To close it, end its free time first."), the Finish notice and the staff history title. **The comeback trap:** a fall-back stores the club `active`, so its next purchase is an ordinary start (no restore, no `subscription_recovered`, no "Welcome back"); dev holds no free-time organization stored `canceled`. **Webhook:** a `canceled` subscription, or any ended one not on file, never writes the record from the created/updated arm (a late message cannot write the lapsed plan back). **Carried items:** (1) checkout's `below_free_plan` now holds for any own plan (not a cancelled club buying its way back); (2) the move, its preview and the move to free refuse a plan at or below a running free plan (`refuseBelowFreePlan`, checkout's words), judged at the renewal the move lands on (`moveLandsAt`) — free time ending before then catches nothing, so that club keeps its move down; the page hides the same rows. **Reminders and the console** (no change needed): an outranked grant's ending email is skipped without spending its stamp, so it still goes after a fall-back; the staff free-time console never calls running free time ended. **Proofs (dev, Stripe test, throwaway organizations on test clocks, teardown proved; evidence `club-on-sale-s4/after-p3/proof-fall-back*.json`):** cancel at period end → free Tournament Plus, active, site on, 0 of 2 archived, one event marked, intent applied, then a new Club start reads as a start (no recovery); Stripe giving up (a failing card through four attempts, deleted at +48 days — the test account cancels, it does not mark unpaid) → the same; no end date → the same, and a late signed "updated" for the cancelled subscription left the club unchanged; the free time then ending → free Tournament, open; control with no free time → closed, suspended, 2 of 2 archived. **Not proved live:** staff End now through its route (dev staff sign-in needs two-step); its ending is the same `applyEnding` the cases prove. Found: the staging deployment (dev.fieldlogichq.ca) receives the same Stripe test events on the same dev database with older code, so a dev proof must keep staging out of the race until Part 3 reaches it. **Reviews:** `/review` high-risk on Part 3 alone (no Critical or High; fixed: a replay named "Tournament" as the plan that ended; the move refusals judged at today rather than the renewal; checkout blocking an ended club's buy-back; a late "canceled" update in the seconds before the record clear; the custom team limit outliving the band; staff Finish and the history title; the notice reading the server's answer; the dictionary); `/billing` (no gating hole, double charge, second trial or unpaid feature; Facts line added); `/accounting` (nothing new invoiced, refunded or credited; free time after it is no-consideration; `FREE_TIME_FALL_BACK_REVIEW.md`); `/legal` (no must-fix; `ON_SALE_PAGES_S4_PART3_REVIEW.md`); `/marketing` (all kept); `/design` (built to tab 6, the line kept in the closed state; phone not seen past the fold — a walk step). **Recorded, not built:** a replay after the grant lapses mid-retry (narrow; would close a club the first run had moved to free); a fall-back onto a half-closed club does not un-suspend it (needs a crash and a newly given grant); a strict free-time read that fails stops endings, the cancel window and moves until it reads (deliberate); the renewals card does not tag a fallen-back club's open bill; tab 6's note 3 spacing ("No billing action needed…" flush on "Change plan") is still open; Terms draft 0.4 §9 sentence (`/legal`, owner); staff ending free time early while a cancel waits should warn and offer to email the owner (`/legal` → `/plan`). **Owed:** the production count of free-time organizations stored `canceled` (a count, read by the owner or as a count); your commit; Part 4; the walk.
 - **Part 4 of 4 built on dev 2026-11-22** (prompt `CLUB_ON_SALE_S4_PART4_PROMPT.md`; calls 43, 44, 45; committed 2026-11-22 at the owner's yes). **Owner asks at the start, all as recommended, 2026-11-22:** the alert is an email to the admin inbox plus a line on the club's Story in the support console (every console role; its price in the money view only); no new queue on the console's Today list; no cancel button for a stray subscription in our admin (staff cancel it in Stripe from the alert's link, then refund its charge from the club's Money tab so the credit note returns the tax). **Re-ruled mid-build, 2026-11-22 (call 43, "only plans it can reach"):** the onboarding change-plan window opens only from a League Plus organization's onboarding page (a free Tournament one never sees it; a Club one gets its setup kit), so the ruled sentence would have told its only audience about the plan it holds and a move it cannot make until after launch; the sentence now names only OPEN plans the organization can REACH (a free Tournament organization starts either, a paying one moves where the move table goes), so a League Plus owner reads today's subtitle unchanged. **Built:** (1) **call 45** — the webhook's second-subscription branch (a second subscription on a customer whose record follows another live one; the record stays on the first) tells the owner ONCE per stray subscription (`lib/stray-subscription-alert.ts`): only one that bills (active, trialing, past_due) as Stripe holds it when told, never from the ended-subscription guard, never a mock; an email to the admin inbox outside the error alert's hourly limit, naming the club, the plan, both subscriptions, what it charges and what its invoice (by number) took, and the two hand steps (cancel in Stripe with its refund and unused-time credit left off; refund that invoice's charge from Money; nothing charged → nothing to refund, an open invoice voided); the "told" mark (`platform_events` `second_subscription`, keyed `<sub>:second_subscription`) is written only after the email went; a failed send (or a live one with no mail key) fails the event so Stripe sends it again; the mail service's once-only key names the exact words. The club's Story reads "A second subscription slipped through: {plan}". (2) **call 43** as re-ruled. (3) **W71** (call 44) — the last line of /for-tournament-organizers' League Plus and Club cards, each only while its plan is open AND the move from Tournament Plus onto it exists (guard test takes the move away); "Plan & billing" links through the plan's start door; the card is a box whose own press is stretched over it, so the line's link is not nested; the link clears the 44px tap floor; a tap on the sentence's plain words opens the card. (4) Carried: the free-time line under the band gets its section gap before Change plan (tab 6 note 3); the ended-guard log line no longer says "not the subscription on file" for the one on file. **Proved on dev in Stripe test mode, twice** (throwaway organization, staging kept out of the race as Part 3 did, by hiding the Stripe ids except while the probe posts clones): the record keeps the first subscription; one alert after three replays (the same delivery, `created` again under a new id, an `updated`); "Setting up" holds while the stray bills and clears once it is cancelled (a refund alone does not clear it); the refund went through; teardown proved with per-customer lists and `invoices.search` (evidence `club-on-sale-s4/after-p4/proof-stray-subscription*.json`). The probe could not count the inbox (the mail key can only send): walk step G1. **Relied on from earlier parts, not re-run:** the starts and the wait (`after-p2/proof-move-*.json` for the move; Part 1's starts), the fall-back (`after-p3/proof-fall-back*.json`). **Reviews:** `/review` high-risk (four lenses; no Critical or High; applied: bill-only states and Stripe's current state, the live no-key send, the words-keyed mail key; recorded: two deliveries racing can log one failed event, never a lost alert), `/billing` (no must-fix; applied the unused-time credit and "only starts are refused"), `/accounting` (order right; applied the invoice number, nothing-charged case and unticked options; first live credit note still needs the live account's header checked), `/legal` (no must-fix; minimisation met; owner call C3 on a working target), `/marketing` (no change to customer words), `/design` (no must-fix; the sentence lets a tap through; call C1 on the link stagger), `/docs` (help synced across Parts 1–4: org Plan & billing, free time, cancelling, the staff Story entry). **Fixture:** `dev-tplus-org` was half-closed (paid Tournament Plus ended 2026-08-26: stamp, site off, its tournament archived, a 90-day clock ending 2026-11-24) though its free time ran; restored 2026-11-22 the way the product reopens a club (before-state `.probe/club-on-sale/s4p4/dev-tplus-org-before.json`). Most likely its free time was written straight into the database by a fixture script rather than given through the console (which reopens a club, `3e85488bf`) — not verified; to `/plan` if the console path ever shows it. **Recorded, not built:** two first payments whose messages land in the same instant can both find no plan on file and the second wins without an alert until the stray's next message (walk call C4); the Story line has no "resolved" state; a League Plus owner in onboarding sees a Club card that is refused (League Plus → Club is after launch); when the followed subscription ends while a stray still bills, the stray is not adopted until its own next message. **Walk:** §556 (S4's one walk, all four parts), https://claude.ai/artifact/CsE6aQt8kngPhaVDXHSe2G — before it, push `dev` so staging carries S4 (Stripe's test events run there). **Walked and passed 39 of 39 by the owner, 2026-11-22; calls C1 to C4 all ruled as recommended:** C1 the cards' links stay as drawn (staggered); C2 the "taking longer than usual" words stay for a stray second subscription; C3 working target — cancel and refund within one business day of the alert, then a short personal email to the club (an operating practice for the owner, not code); C4 the same-instant double first payment is recorded for `/plan`, not built. S4 is complete on dev; it is a launch item (before the flip, call 42), and production waits on the promote (migration 508 and the earlier parts' production steps).
 
+#### S4 drawing round (2026-11-20/21) — the drawing, what the code showed, and asks 35–46
+
+Drawing: `CLUB_ON_SALE_S4_DRAWINGS.html`, published https://claude.ai/artifact/5axLqJjfLTuT42Hm589H2y (version 2, after
+`/design`, `/ux`, `/marketing`, `/billing`, `/accounting`, `/legal`). Captures and the probe: `club-on-sale-s4/`
+(script `.probe/club-on-sale/s4/capture-s4.mjs`, its own guard). Prompt: `CLUB_ON_SALE_S4_DRAWING_PROMPT.md`.
+
+**What the code showed (each opened this session):**
+- **A paying Tournament Plus organization cannot start League Plus today, by any path** — dev probe 2026-11-20 on
+  `uat-test-org` (a real Stripe test subscription; unchanged afterwards; `club-on-sale-s4/probe-tp-to-league.json`): the
+  move list offers Club and Club · Association only; checkout answers 409 `subscription_exists` with no move; the move
+  answers 400 `not_a_move`. Cause: no `tournament_plus → league` row (`lib/plan-move-options.ts:6-12`). So W71's line
+  ships with S4's new move, never before it.
+- A paying Tournament Plus organization **already** moves to Club and Club · Association (same table); S4 adds League
+  Plus only. A move up is prorated today from Stripe's preview, same cycle, no second trial; a trialing subscription keeps
+  its trial (`lib/plan-move.ts:26-38`).
+- **A free-time organization has no Change plan section at all** (`BillingBody.tsx:217-221`); checkout never reads free
+  time; a paid plan above the granted one outranks it, the free-time card and its ending reminders go quiet, and the
+  grant applies again if the paid plan ends (`lib/free-time.ts:265-269`, `lib/club-free-time-reminders.ts:109`).
+- **The "setting up" wait reaches only a door organization** (`create-checkout/route.ts:199-203`): any other start of
+  League Plus / Club returns to "Your plan is active. Everything it includes is open now." before the plan lands (trap A
+  for an existing organization). The onboarding chooser's purchase has the same gap.
+- The plan panel over any page charges monthly only (`PlanPanelDrawer.tsx:54, :93`); inside Plan & billing the same
+  start already opens the Monthly | Yearly window (`PlanCycleDialog`). `PANEL_PLANS` lacks `club_large`
+  (`lib/plan-upgrade.ts:19`).
+- The move window's first sentence would read "can hold up to 9999 teams" for League Plus (`move.up`, its team limit).
+- **A paid plan's ending closes the organization even while plan free time runs** (suspended, site off, the 90-day
+  clock; only billing-status free time lets an ended organization back in — `lib/free-time-reclose.ts:6-8`,
+  `lib/free-time.ts:488-491`). Found by `/legal` on the drawn free-time sentence; call 40.
+- A free-time record stored as `canceled` would make its first purchase a "comeback" (Welcome back email, a
+  `subscription_recovered` event) (`lib/billing-webhook-handler.ts:603-606, :640-668`) — dev fixtures read `active`;
+  checked in the build.
+- Not captured: the free Tournament org's page (its dev owner has not ticked the current Terms; drawn from the code) and
+  the four-card change-plan window (no dev organization reaches it).
+
+**Decided from the code, not asked (build-prompt guards):** the wait for every Tournament organization's start of League
+Plus / Club / Club · Association; no second start while a paid one is still landing (the start asks Stripe first);
+the server refuses a start at or below a running free plan; the move AND its preview refuse the three plans when the
+legal pages are off on a live key (newly covers Tournament Plus → Club too — say so in the commit); the true-trial read
+never creates a Stripe customer; Québec and US refused as every purchase is; League Plus's own move sentence; W71 behind
+a test that fails if it can render without the move; the panel opens for Club · Association.
+
+**Asks — RULED 2026-11-21, all twelve as recommended (owner "accept"; call 40 = option A, the plan ending falls back to
+the free plan while free time runs).** Build prompt: `CLUB_ON_SALE_S4_BUILD_PROMPT.md`. Agreement is not a go to build:
+the build session starts on the owner's word.
+
+| # | Call | Recommendation |
+|---|---|---|
+| 35 | Where the starts live | Rows in the existing Change plan table (League Plus, Club, Club · Association); the "Managing more than tournaments?" shelf keeps the Premium Coaches Portal card only; no new compare panel |
+| 36 | A closed row | "Coming soon" pill on the plan's first line; the button reads "Contact us" (same mail link), not "Contact us to move" |
+| 37 | Club's team count | One line under the table when a Club row shows: "Club and Club · Association count the teams you give a Premium Coaches Portal. House league teams are unlimited. More than 30? Contact us for a custom plan." Club's card line gets the same clause |
+| 38 | Monthly or yearly | Every start (the panel over any page included) opens the shipped payment window, on Monthly, saving from the plan config, stating the TRUE trial or "no second trial" |
+| 39 | Tournament Plus → League Plus charge | The shipped move-up rule: today the difference for the rest of the period (Stripe's preview, with tax), then League Plus's price from renewal; same cycle; no second trial; mid-trial pays nothing today. `/accounting`: correct and complete |
+| 40 | A free-time org moving up, and what happens if it then stops | Starts for the plans ABOVE its free plan; buying does not end the free time. **A (recommended):** ending the paid plan falls back to the free plan while free time runs (a change to the plan ending, built in S4), line: "Starting a plan doesn't end your free time. If you stop it, {org} goes back to free Tournament Plus through {date}." **B:** no fall-back; line: "…Your free time runs on its dates, and the plan you start is billed as usual." plus a warning in the cancel window. Today an ended paid plan closes the organization and plan free time does not catch it (`lib/free-time-reclose.ts:6-8`), so a former Founding holder who stops a Club trial is closed with free time left; `/legal` caught version 1 promising the fall-back |
+| 41 | A start left halfway | One line above the table while the plan it came for is remembered: "You were starting Club. Pick up where you left off with Upgrade to Club below." No expiry state (every press makes a fresh Stripe page) |
+| 42 | Before or after the flip | Before: S4 is a launch item (the public pages send every signed-in owner to Plan & billing, which cannot sell them League Plus or Club without S4) |
+| 43 | The onboarding window's subtitle | Keep the four cards; while open, add "Running more than tournaments? League Plus adds house league seasons, and Club adds rep teams and the club's books." (only the open plan's clause; today's sentence while closed) |
+| 44 | W71 says "Start", the buttons say "Upgrade to" / "Move to" | Keep the ruled line ("Start" names the act; one verb cannot fit both buttons) |
+| 45 | A second subscription that slips through | The owner is alerted and refunds by hand from our admin; no automatic cancel or refund at launch |
+| 46 | A Tournament Plus org whose payment is failing | Refused before the move window, with Premium's words |
+
+Also raised and left as it is: a free-time organization still cannot buy the plan it already holds during free time
+("To keep Tournament Plus, contact us" — the free-time rules, not S4). For the accountant list: a buyer who changed
+province between purchase and move is credited at the new rate (as Club moves are today).
+
+**Next:** the S4 build session, on the owner's word (`CLUB_ON_SALE_S4_BUILD_PROMPT.md`, written 2026-11-21).
+
 ### After the build (runbook, not this plan)
 
 Step 1 sandbox purchases with S1–S4 on staging; Step 2 live Stripe; Step 3 promote with gates closed and check
@@ -524,6 +604,14 @@ production shows today's pages; Step 4 the flip; Step 4.3 the three code values 
   still sits on (`/pricing` FAQ, home, `/for-tournament-organizers`, `/for-coaches`), and S4 carried three items that
   exist only because of the free floor and Founding (struck above). Built in the other order, S3/S4 would build and walk
   states that are then deleted. The flip does not move: it waits on live Stripe and the test purchase either way.
+  **Full order (owner's yes, 2026-11-19, after walk §545):** removal Stage 1 → 2a → 2b → **the team move's own small session
+  (call C1) and the three small items (call C5, listed under S2 above)** → S3 → S3b → S4. The team move and the
+  two-tabs fix go after 2b because the plan-move, team-transfer and create code they edit carry Founding branches that 2b
+  deletes; the title fix and the sign-in fix are independent and may go any time after removal Stage 1. Nothing in this list
+  starts while a removal build is open in the shared copy.
+  **Added 2026-11-20 (walk §549, C3):** the failed-Stripe-cancel small item goes after the team-move session is committed
+  (same file), holds nothing, and comes before the first paying coach can move a team into a club on production — see
+  "C3 · A failed Stripe cancel after a team move" at the end of this plan.
 
 - **Touches the same screens as:** Plan & billing (the billing body, the plan move window — `plan-billing` project);
   the first look (start doors, plan step); the GST/HST tax line (`BILLING_TAX_WORDS`). S4 must not overlap a Plan &
@@ -724,6 +812,119 @@ Prompt `TEAM_MOVE_WORDS_AND_SMALL_FIXES_BUILD_PROMPT.md`. Built on dev, not comm
 
 **Part B.** (1) Two tabs: `/api/org/create` now claims, then verifies (`lib/org-create-claim.ts`): the earliest owner seat keeps its organization, the later removes only what it just made and answers with the winner's address when that was made under two minutes ago, else the ordinary "already has a workspace" refusal; a generated address taken between the check and the insert is retried (4 times), a typed one is refused as taken; the name step ignores a second press while one create is in flight. No migration. **Honest limit:** the order is the seat's database timestamp, not commit order, so a stalled request on top of a double submit could still make two (call C4: the exact fix is a database function with a per-person lock, a migration). The live race was NOT reproduced on dev. (2) `lib/login-destination.ts`: `next` is honoured without a workspace only for `/start`, `/start/club`, `/start/league`, `/start/tournament`, `/start/team` (a recovery destination such as a suspended account wins); the `hasWorkspace` rule is kept for everything else (it stops a person with no organization being sent to an admin page they cannot open). **Not changed:** `StartDoorForm`'s bare `/auth/login` link sits on the "you've been invited" screen, where a start-door `next` would be wrong. (3) Titles: the brand removed from 11 titles (the start pages, the coaches start and checkout-complete pages, the platform-admin layout and bookkeeping page, and `/discover` and `/scores`, which had the same doubling); `tests/unit/page-title-brand-guard.test.ts` fails if a page title names the brand again.
 
-**Owner questions open (walk §549 calls):** C1 the wording; **C2 section 18 (30 days' email and accept again?)** `/legal` first said an ordinary version published before any club can receive a team on production, then, on a second look, not to rely on "no club is on sale": the move code has no sale check, so a platform-admin or free-time club could receive a team on production. Check by counts only (coach teams with a paid plan; club-type organizations) before the release; **C3 a failed Stripe cancel after a move** leaves the coach charged until staff cancel by hand, making "you won't be charged" untrue for a while (a change to the move itself; to `/plan`); C4 above. Also: `/accounting` could not find Stripe's no-refund default for the cancel call in our own notes (a two-minute test-mode check settles it), and an unpaid open invoice on a past-due coach after a move is an owner and accountant call. The Ontario consumer-rule question stays open (a lawyer's-eye item).
+**Owner rulings (walk §549, passed 44 of 44, 2026-11-20): C1 approved as written; C2 an ordinary new version, counts checked first; C3 yes, to `/plan` as a small item; C4 no, the current fix is enough for now.** The questions below are kept as the reasoning behind each call.
+
+**Owner questions (walk §549 calls, now ruled above):** C1 the wording; **C2 section 18 (30 days' email and accept again?)** `/legal` first said an ordinary version published before any club can receive a team on production, then, on a second look, not to rely on "no club is on sale": the move code has no sale check, so a platform-admin or free-time club could receive a team on production. Check by counts only (coach teams with a paid plan; club-type organizations) before the release; **C3 a failed Stripe cancel after a move** leaves the coach charged until staff cancel by hand, making "you won't be charged" untrue for a while (a change to the move itself; to `/plan`); C4 above. Also: `/accounting` could not find Stripe's no-refund default for the cancel call in our own notes (a two-minute test-mode check settles it), and an unpaid open invoice on a past-due coach after a move is an owner and accountant call. The Ontario consumer-rule question stays open (a lawyer's-eye item).
 
 **What the release must do:** publish the Terms version that carries T5 in the SAME promote as this build (the confirm sentence must not reach production before it), after the section 18 call. Existing failures not from this work: `team-move-coverage` (four tables that carry an organization id have no written move decision: club_schedule_bill_rates, league_season_time_asks, online_payment_stripe_fee_lines, platform_charge_tax_looks; for whoever added them) and 30 others from other sessions' uncommitted work.
+
+## C3 · A failed Stripe cancel after a team move — small item (planned 2026-11-20; owner's yes, walk §549)
+
+Not a project and not a stage: one short build session inside this plan. No PM brief (AGENCY_RULES asks for one with a
+dedicated plan for a significant feature; this is a fix to an existing safety net, planned here). Status stays on the
+board's Club on-sale pages line. **Ruled:** C3 yes, to `/plan` as a small item. Nothing else about it was ruled; the
+recommendation below is this plan's, for the owner's yes at the build session's UX summary.
+
+### The problem, in the owner's terms
+
+A coach says yes to moving their team into a club. The move happens, and the coach is told, on the request card and in
+the confirm window: *"Your own plan ends today, because {club} now covers this team. You won't be charged for it again,
+and the unused part of what you paid, to {date}, is not refunded."* If Stripe refuses or times out on the cancel that
+follows, the coach's subscription is still live in Stripe, and **"You won't be charged for it again" is untrue until
+someone cancels it by hand.**
+
+- **The coach sees:** nothing different. The move answers "moved" either way (the cancel result is not sent back to the
+  screen; both routes return only `moved`). Their old portal is closed and its members suspended, so they cannot see a
+  plan page there. They learn of it when their card is charged.
+- **When the charge lands — sooner than "the next renewal" for two kinds of coach:** a paying coach at the renewal date;
+  a coach on a trial at the trial's end; **a coach whose payment is past due as soon as Stripe retries the unpaid
+  invoice** (days, on Stripe's retry schedule, not a year). The window staff have is "until the next charge attempt".
+- **Our app records nothing of that charge.** The move cleared the Stripe customer and subscription ids on both the
+  workspace and the coach organization (`DATA_DICTIONARY.md`, `move_team_into_club`), so the renewal's
+  `invoice.payment_succeeded` matches no organization (`lib/billing-webhook-handler.ts` ~:768-791 looks up by
+  customer id and updates nothing). Whether Stripe also sends the coach its own receipt depends on the Stripe account's
+  receipt setting (not checked here).
+- **Staff see:** see "What the code does today" — one email the first time, then possibly nothing.
+- **Staff cannot fix it from our own admin.** Platform admin's Cancel subscription
+  (`app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts` ~:192) reads the organization's own
+  `stripe_subscription_id`, which the move set to null. "By hand" today means the Stripe dashboard, with the id copied
+  from the alert, the platform event, or the coach organization's `team_moved_into_club` audit row
+  (`previousStripeSubscriptionId`, the one durable record).
+
+### What the code does today on a failed cancel (checked 2026-11-20, not from the plan's claim)
+
+`lib/team-ownership-transfer.ts` `cancelCoachSubscription` (:526-540) and `approveTeamMove` (:675-703):
+
+1. **Not silent, and not retried.** A Stripe error is caught and returned as `failed`. `approveTeamMove` then logs it
+   (`console.error`), records an error issue (`captureError`, severity `error`, title "Team moved into a club, but the
+   coach's own subscription was not cancelled", message "Team move: cancel sub_… by hand — {Stripe's error}"), and
+   writes the platform event `team_org_ownership_transfer_completed` with `stripeCancellation: 'failed'`, the
+   subscription id and the error. One attempt; no retry, no scheduled follow-up. `tests/unit/team-move-guard.test.ts`
+   :82-85 pins the capture.
+2. **The email reaches the owner only for the first failure of its kind.** Production error issues email the admin
+   inbox once per issue transition (`lib/observability/alerts.ts`, "further occurrences of this issue will not email
+   you"). The issue's fingerprint is route + error name + stack (`lib/observability/fingerprint.ts` :39-50), not the
+   message, so **a second coach's failed cancel, while the first issue is still open, groups into it and sends no
+   email.** Its subscription id is then only in the platform event and the audit row.
+3. **⚠ One failure skips all of it (found in this check, wider than the C3 question).** Before the cancel,
+   `cancelCoachSubscription` withdraws any waiting plan ending (`withdrawPendingEnding`, :532) **outside** its `try`.
+   That function throws on a database read or write error (`lib/plan-ending-store.ts` :71-84). A throw there escapes
+   `approveTeamMove` after the move has committed: no cancel, no "cancel by hand" issue, no platform event, no bells to
+   either side, and the route's wrapper answers 500, so **the person who pressed Approve is told the move failed when the
+   team has moved.** Only `withObservability`'s generic capture records it. Same root as C3 (a post-commit step that can
+   leave the coach charged without the right record), so it is in this item.
+4. Ids that are null or do not start with `sub_` are skipped as `not_needed` (:528): a free-time coach and a dev mock id
+   never reach Stripe. A server with no Stripe key returns `failed` (production always has one).
+
+### Options
+
+| | Option | Verdict |
+|---|---|---|
+| 0 | **Do nothing until the first paying coach exists.** Production has none today (0 of 1 coach workspace, which is staff-given free time; counts 2026-11-20), so no customer is exposed. | **Honest for urgency, not for the decision.** The gap is not only "someone might be charged": point 3 tells a coach the move failed when it worked, and point 2 can hide the second case from the owner entirely. The fix is small and sits in a file the team-move session just edited. Not urgent; not "never". |
+| 1 | **Make the existing safety net trustworthy (recommended).** (a) Every post-commit step of the cancel — the withdraw included — fails into the same `failed` answer, so the move always reports "moved" and always records what to cancel. (b) Try the cancel again, twice, a moment apart, before calling it failed (a timeout or a Stripe hiccup is the likely cause). (c) **Every** failure emails the owner, not only the first of its kind: the coach organization, the team, the subscription id, and **the date of the next charge attempt** (renewal, trial end, or the past-due retry; read from Stripe in the same request, "unknown" if that read fails too), plus "cancel it in Stripe; refund any charge that lands after {move date}". (d) The guard test pins (a)–(c). | **Recommended.** It closes all three findings above with no new screen, no migration and no new automation. Staff (the owner) already reads the admin inbox. |
+| 2 | Option 1 **plus a staff door**: on the coach organization's platform-admin page, an "Owed: cancel subscription sub_… (next charge {date})" line with a Cancel now button that reads the audit row's id. | **Not now.** It is the right answer once someone other than the owner works support; today the Stripe dashboard does the same job from the email. Revisit with the support console (board: Platform admin support console). |
+| 3 | A scheduled retry (a nightly job that re-tries failed cancels). | **No.** A job that runs by itself against production is shared automation (AGENCY_RULES: only on the owner's ask, its own commit), and for an event this rare it adds a moving part the per-failure email already covers. |
+| 4 | Cancel in Stripe **before** the move commits. | **No.** The code says why (:677-678): the move must clear the Stripe ids first, or the cancel's webhook finds the workspace and emails the coach "your plan was cancelled"; and a cancel followed by a failed move leaves the coach with no plan and their team still theirs. |
+| 5 | Soften the words ("You shouldn't be charged again"). | **No.** C1 is ruled, and a promise the product does not keep is a product defect to fix, not wording to hedge (CLAUDE.md, `/legal`). |
+
+**No disagreement with the owner's yes.** One push-back on its framing: the plan paragraph describes C3 as "a change to
+the move itself". It is not — the move, its order and its refund rule stay exactly as they are; the change is to the
+steps after the commit and to how a failure reaches a person.
+
+### What changes, and what does not
+
+- **Changes:** the post-commit cancel step and its failure record (`lib/team-ownership-transfer.ts`), the failure email
+  (its own ops email through the existing ops-alert path, alongside the existing issue), the guard test. Staff-only; no
+  customer-visible words.
+- **Does not change:** the move and its single transaction; cancel-after-commit; no refund, no proration (ruling
+  2026-09-28); the coach's and club's words (C1); the Terms draft (T5, C2); the two-tabs fix (C4); the club's screen;
+  the database (no migration); scheduled jobs (none added).
+- **Agents:** `/review` (the move is high-risk code). `/accounting`, short: what staff do when a charge did land after
+  the move (a full refund of that charge, and what its receipt and credit note say), and — since the retry calls the
+  same Stripe cancel — **settle in the same session the open question of Stripe's no-refund default** with the
+  two-minute test-mode check (cancel a test subscription mid-period with no parameters; confirm no credit and no
+  proration invoice). That check is folded in only because it is the same call; if it shows a credit, it is
+  `/accounting`'s ruling, not this item's. `/legal`: not needed (no words change; the fix makes the existing promise
+  true). `/docs`: not needed (no help article covers staff alerts).
+- **Not this item:** the unpaid open invoice on a past-due coach after a move (owner and accountant call, unchanged).
+  Note for that call: with a failed cancel, that same open invoice is what Stripe retries — option 1's email names it.
+
+### Priority and place
+
+**Low-medium, its own small session inside this plan.** No customer is exposed today; the exposure starts with the
+first paying coach who could move a team into a club on production, and the move has no sale check (C2's note: a
+free-time or platform-admin club can receive a team), so that is not tied to the flip. Sequence: **after the team-move
+session's build is committed** (same file), independent of S3, S3b and S4, and it holds nothing. Before the first paying
+coach can move a team into a club on production.
+
+**Success criteria (walked on dev with Stripe test mode):**
+- A move whose cancel is forced to fail still answers "moved" to the person who approved; the coach and club screens are
+  unchanged.
+- The owner receives an email naming the coach organization, the team, the subscription id and the next charge date.
+- A second forced failure for a different coach, with the first issue still open, also sends its own email.
+- A forced failure in the withdraw step lands the same way (moved, recorded, emailed), not as a 500.
+- A cancel that succeeds on the second try records `cancelled` and sends nothing.
+- A free-time coach (no subscription) is unchanged: nothing sent to Stripe, nothing emailed.
+- The test-mode check of Stripe's cancel default is recorded in `/accounting`'s notes.
+
+- [ ] **C3 build session** (plan's recommendation, option 1, pending the owner's yes at its UX summary)

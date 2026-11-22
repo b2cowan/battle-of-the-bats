@@ -1,6 +1,11 @@
 # Board Ready — what a club board needs before it says yes — Implementation Plan
 
-> **Status:** Planning — nothing ruled, nothing built. Owner questions in §7 come first.
+> **Status:** In flight (trued up 2026-11-16). Every owner question in §7 is ruled. **Built, walked and in release
+> `release/2026-11-15`:** the third access sweep's fixes A–E, two-step sign-in (four parts), friend requests (three
+> parts). **Committed, not yet in a release tag:** deleting a club removes its files (`45c134bea` 2026-11-15).
+> **Done since:** the legal pages, published as version 2026-11-17 (GST/HST 6.7); backups written down and a restore
+> rehearsed (2026-11-18). **Not started:** the board pack (0c) and Stages 2–7 (none drawn). Where each step stands: the State column in §7b. Deployment state has one home, the release-history
+> record; this plan cites commits and release tags only.
 > **Created:** 2026-11-10
 > **Branch:** dev
 > **PM brief:** `BOARD_READY_PM_BRIEF.md`
@@ -65,7 +70,7 @@ opening the record. RLS is on widely but the API runs service-role with checks i
   certified infrastructure (Supabase, AWS, Stripe; each certification **verified on the supplier's own page before it is
   quoted**), holding as little as possible (no card data ever; the club is the merchant), the club in control of its
   data (export, delete), a breach procedure, and candour. An independent penetration test is the one paid step a board
-  recognises; it is owner question Q5.
+  recognises; it was owner question Q5, **ruled out of scope 2026-11-15** (§7).
 - **Items 5–8 must not be four features.** See the Goal. If camps get their own form builder, the house league gets a second one
   and sponsors a third. The foundations are the plan.
 - **Item 3 should be live groups, not lists someone keeps up.** A hand-kept "all house-league coaches" list is wrong the
@@ -81,6 +86,7 @@ opening the record. RLS is on widely but the API runs service-role with checks i
   sensitive files (`/legal`, as the club's data).
 - **Item 8 re-opens a ruling.** D5 kept the club calendar read-only. Club-owned events don't break D3 (they are the
   club's own, not a team's schedule), but they do need a new owner ruling to make the calendar writable for club events.
+  **Ruled yes 2026-11-15 (Q7, §7).**
 
 ## 4. Shape: one trust track, then three foundations, then assembly
 
@@ -106,19 +112,62 @@ sponsor or camp payment, though everything up to the pay button can ship first.
 ### Stage 0 — Trust pack (item 1)
 **0a · Fix what a board would find** (each is a real defect; most belong to Club Tier Stage 8 Release readiness, which
 points here, so they aren't tracked twice)
-- [ ] **Third access sweep** (replaces "contact-email leak", which was already fixed `b15b01fea` 2026-10-16). It is
+- [x] **Third access sweep** (replaces "contact-email leak", which was already fixed `b15b01fea` 2026-10-16). It is
   report-only first, on the pattern of the second sweep (`TEAM_UPDATE_ALLOWLIST_FIX_PROMPT.md` § Second sweep). It covers
   every route and page added or changed since 2026-10-16, reads as well as writes, tenant boundaries and seat by seat.
   Each finding is fixed with the owner's go. It is the evidence behind the pack's "doesn't leak", and it comes before Stage 2.
   → **Swept 2026-11-10, report [`BOARD_READY_ACCESS_SWEEP_3.md`](BOARD_READY_ACCESS_SWEEP_3.md): 2 serious, 5 medium, about
   25 small; nothing reads another club's people.** Serious: (1) inside a club, assistant coaches, scorekeepers and staff
   read the tournament emails and their recipient lists; (2) any signed-in account can delete or replace any club's rules
-  files. Both are proven on dev and the same code is on production. Fixes are awaiting the owner's go. The report's seat
+  files. ~~Both are proven on dev and the same code is on production. Fixes are awaiting the owner's go.~~ **Fixes A–E
+  committed 2026-11-11** (Wave 2, prompts in `BOARD_READY_PROMPTS_INDEX.md`): A `3d9b1ec13` (findings 1 + 3), B
+  `b164c707e` + `ad978ce6b` + `551bd4f82` (finding 2: the files, the link rows, the rules sections), C `ae474966e`
+  (findings 6 + 7 and the public smalls), D `0d424d8bc` + `90d2f23b0` (demo billing refused, team pay-link version,
+  throttles), E `d8a6bb4c0` (findings 4 + 5 and the seat smalls). All are in `release/2026-11-15`. The report's seat
   table is the source for the pack's "who can see what".
-- [ ] **Two-step sign-in** (§7b step 3). **Drawn 2026-11-10; ALL ASKS RULED 2026-11-10** (ask 1 as amended by the owner; asks 2–8 and A–F as recommended,
+  **Census against the code, 2026-11-16 (read-only; every item of the report re-checked on `dev`): 48 items · 28 fixed
+  and confirmed · 9 left open on purpose (owner calls) · 9 open with no ruling (all small) · 2 answerable only on
+  production.** None reads another club's people. The report's own status words are stale in places (its line "returning
+  -player scan: still open" is fixed by `d8a6bb4c0`; "a See it live session can create real clubs, leagues" is now true
+  only of a coach's team, the other two being turned away by the one-club rule). Until the 18 are ruled and the chosen
+  fixes are live, the public roadmap says "with its fixes live", never "every finding fixed"
+  (`PRODUCT_ROADMAP.md` §4 item 5).
+  **The owner's checklist, published 2026-11-16:** https://claude.ai/artifact/2KZrC64ucjBpWCgMkfPCej (source
+  `BOARD_READY_TRUST_CLOSE_CHECKLIST.html`). Part A is the 18 open items as calls, each with a recommendation, plus two
+  production checks, one new finding and the public wording; nothing is built until it is pasted back.
+  **Pasted back 2026-11-18: Part A 22/22 all as recommended (rulings recorded at the top of `BOARD_READY_ACCESS_SWEEP_3.md`);
+  Part B PASSED 8/8; Part C PASSED 16/16 (first restore rehearsal done). Facts written to
+  `docs/agents/ops/BACKUPS_AND_RESTORE.md`.** Open after it: the owner's go to build fixes 1–14 + call 21 (call 12 needs a
+  drawing first), the production read of old link rows (call 19; RUN 2026-11-18, read-only: 3 link rows, none pointing anywhere but a web address, nothing to clean), and the public wording (call 22) once the fixes
+  are live.
+  **Call 12 (a team's pay link: "Send a new link") DRAWN 2026-11-18, round 2 after `/design` + `/ux`:**
+  https://claude.ai/artifact/XGaoqcuEuo2973Mc4vsq5F (source `BOARD_READY_PAY_LINK_BUTTON_DRAWINGS.html`). **ALL NINE
+  ASKS RULED 2026-11-18, as recommended (1A–9A)** (paste-back "Pay link button (drawings Nov 18, 2026)"):
+  1. one Pay link line under the payments on every team, its ⋯ holding both items, and the due row keeps only Record;
+  2. the same people as Email the pay link (owner, admins, Run tournaments);
+  3. "Stop the pay link" when no new link can go out;
+  4. no copy button;
+  5. the old link's words unchanged;
+  6. the dispute is asked in the same window before anything stops, with "Only stop the link";
+  7. the line reads "Pay link replaced/stopped {date}" until the next send;
+  8. stopping still works on a completed tournament, a deliberate exception to the lock;
+  9. Stop answers red-tinted, "Send a new link" lime. The drawing widens the premise: a paid team has no
+  pay-link control today (the only ⋯ sits on the last "Still due" row), and it is the team whose forwarded link shows
+  receipts. So the proposal is one "Pay link" line under the payments on every team, offering "Send a new link", or
+  "Stop the pay link" when no new link can go out. Build notes the drawing records:
+  - the record must be told when a link was replaced, whether to show the line, and whether the team ever paid online;
+  - the server should send back a cause code instead of its refusal sentence (its "tournament over" sentence misreads here);
+  - a dispute-first, stop-only answer is about a day of work with tests;
+  - a family who has the old page open but hasn't pressed Pay is refused, and that gap is accepted, not closed.
+  The build is its own session, from the build prompt written 2026-11-18 (`BOARD_READY_TRUST_FIX_PROMPTS.md` P6, queue row 6).
+  Mig 467 was applied to production 2026-11-15 (release history), so the build has no production order of its own unless it
+  adds a migration.
+- [x] **Two-step sign-in** (§7b step 3). **Drawn 2026-11-10; ALL ASKS RULED 2026-11-10** (ask 1 as amended by the owner; asks 2–8 and A–F as recommended,
   owner: "I agree with the recommendations on this mockup"). **Build prompts written 2026-11-10: `BOARD_READY_TWO_STEP_BUILD_PROMPTS.md`
-  (Part 1 Opus, 2 Sonnet, 3 Opus, 4 Sonnet); Part 1 waits for Board Ready Wave 2 Fix A to be committed** (both change the shared sign-in check in `lib/api-auth.ts`); nothing
-  built.** Drawings (round 3, after `/design` + `/legal` and the ask 1 ruling):
+  (Part 1 Opus, 2 Sonnet, 3 Opus, 4 Sonnet).** **All four parts built, committed and walked** (the "Part N BUILT" notes
+  below hold the detail): Part 1 `7c8f092ab` (walk §511 24/24), Part 2 `0a0ee533d` (§513 28/28), Part 3 `5a22b498a`
+  (§515 35/35), Part 4 `24e5b9e45` (§520 29/29); all in `release/2026-11-15`. What is left is the open owner calls in
+  those notes; none blocks a build. Drawings (round 3, after `/design` + `/legal` and the ask 1 ruling):
   https://claude.ai/artifact/5b956A7svYzjzmZhZUfnkc, source `BOARD_READY_TWO_STEP_SIGNIN_DRAWINGS.html`. Prompt:
   `BOARD_READY_W1_TWO_STEP_SIGNIN_PROMPT.md`.
   - **Decisions (owner asks 1–8, A–F on the drawings' Asks tab; all RULED 2026-11-10, 2–8 and A–F as written
@@ -447,8 +496,27 @@ points here, so they aren't tracked twice)
 - [x] Org delete removes its file storage — built, committed `45c134bea` 2026-11-15 (`BOARD_READY_ORG_DELETE_FILES_PROMPT.md`;
   deployment state: the release-history record). Demo clubs refused (owner 2026-11-15). Findings: deleting one tournament,
   rep team, player or person still leaves its files; the dev club fixture files sample documents under the web name.
-- [ ] Backups: confirm what the Pro plan does (daily backups vs point-in-time recovery), decide whether PITR is worth the add-on, and write it down in `docs/agents/ops/`.
-- [ ] Publish the legal pages (privacy policy, terms) already tied to `GST_HST_STAGE6_TERMS_PLAN.md`, so this plan does not duplicate that work.
+- [x] Backups: confirm what the Pro plan does (daily backups vs point-in-time recovery), decide whether PITR is worth the add-on, and write it down in `docs/agents/ops/`.
+  **Done 2026-11-18:** the trust close-out checklist's Part B (the backups read off the host's screen, 8/8) and Part C
+  (the first restore rehearsal, 16/16) passed; written in `docs/agents/ops/BACKUPS_AND_RESTORE.md`. Ticked 2026-11-19.
+  **RULED 2026-11-16 (owner): daily backups are sufficient; no point-in-time recovery add-on before a single customer.**
+  Left: write down what the daily backups are (how long they are kept, read from the host's page, not from memory).
+  **Owner's steps written 2026-11-16** in the same checklist (https://claude.ai/artifact/2KZrC64ucjBpWCgMkfPCej):
+  Part B reads the backups off the host's screen; Part C rehearses one restore into a separate project and deletes
+  it. The ops write-up in `docs/agents/ops/` is written from his paste-back. What the host's own pages say (read
+  2026-11-16, to be confirmed on screen in Part B): Pro keeps the last 7 days of daily backups;
+  **a database backup does not include uploaded files** (logos, rules files, player documents: only their records),
+  and a deleted file cannot be recovered, so the pack says "daily backups of the database" and never implies files;
+  a restore over the live project means downtime.
+  **Finding while writing the rehearsal (2026-11-16):** a restore into a new project copies the scheduled jobs and the
+  Vault keys, and the host starts those jobs at once, so the copy calls the live site's job routes with a valid secret
+  (the 5-minute game-change notices and the 15-minute web-address check included). Part C switches the copy's jobs off
+  and deletes its two keys by hand; both statements were proven on dev in a rolled-back transaction. The durable fix
+  (the live site refuses a second caller for the same job and minute) is the checklist's call 21, and matters before
+  the roadmap's quarterly restore drill.
+- [x] Publish the legal pages (privacy policy, terms) already tied to `GST_HST_STAGE6_TERMS_PLAN.md`, so this plan does not duplicate that work.
+  **Done 2026-11-17** (GST/HST Stage 6 step 6.7: both frozen as version 2026-11-17 and switched on; deployment state is in
+  the release-history record). Ticked 2026-11-19.
 - [ ] Data-processing terms for clubs and a sub-processor list via `/legal`. **Drafted 2026-11-18** (`docs/agents/legal/drafts/DATA_TERMS_FOR_ORGANIZATIONS.md`, `drafts/SUBPROCESSOR_LIST.md`; research `BOARD_READY_DATA_TERMS_REVIEW.md`); **owner questions 1–11 RULED as recommended 2026-11-18**; **both texts owner-approved and the owner's five steps done 2026-11-18** (ImprovMX agreement countersigned; the host's "password changed" email switched off; server logs expire after 90 days; supplier notices subscribed; the four dates filled); `/accounting` answered the objection refund (0a-6 below) and `/plan` planned the two pages (0a-5 below). Left: the `/legal` record pass and Terms edits, and the AI rule written into `AGENCY_RULES.md`.
 - [ ] **0a-5 · The Data Terms page and the list of companies** (planned 2026-11-18, `/plan`, Data Terms follow-through
   Section 2; no code yet). Brief: `docs/agents/legal/DATA_TERMS_ACCEPTANCE_NOTE.md`. Both texts owner-approved 2026-11-18.
@@ -501,7 +569,7 @@ points here, so they aren't tracked twice)
       (`lib/legal-pages-switch.ts`). Nothing is revived for it: the texts were approved from the drafts, and the owner reads
       the rendered pages on dev after the publishing commit.
     - Security page (0c): links both through `legalPageHref` when it is built.
-  - **Asks (recommended answers; they stand unless the owner objects):** (1) T1–T4 ride the held Terms version, with the
+  - **Asks — RULED 2026-11-19 (owner: "I agree with your recommendations", all three as recommended):** (1) T1–T4 ride the held Terms version, with the
     fallback above; (2) the addresses `/legal/data-terms` and `/legal/subprocessors` ("sub-processors" is the word a
     board's checklist uses; the page title stays in plain words); (3) the footer only, not the sign-in doors.
   - **Words for `/marketing`** (one pass in the build session): the two footer link words and the list page's title line.
@@ -708,9 +776,10 @@ board's two questions:
     owed (a narrower promise, no new use of data); `LEGAL_FACTS.md` corrected (a failed write to the log is NOT silent:
     it opens an issue and can email an alert, leftover call 18 (a), so the earlier "fails silently" note here was out of
     date). **Owed:** mig 521 on production BEFORE the promote (`MANUAL_PROD_STEPS.json`, pending); the Privacy draft 0.6
-    and the Data Terms publish later with the Payments Terms (the published 2026-11-17 text is frozen). **One call left
-    for the owner,** flagged in the draft's change log: whether §5 should also name the page-visit list beside the
-    records log (§9 already discloses it).
+    and the Data Terms publish later with the Payments Terms (the published 2026-11-17 text is frozen). **Last call
+    ruled 2026-11-22 (owner, "go with your recommendation"):** §5 does NOT also name the page-visit list. §9 already
+    discloses it, and naming it beside the records log would re-promise a list that is browser-driven and can miss a
+    visit. Nothing is left open on D1 but the production steps above.
   - [x] **D2 · The database's member test.** Until migs 505 and 506 are on production, a pending invitee's or suspended
     member's own browser can read the club's venues and teams. **Already queued**, no new work:
     `BOARD_READY_TRUST_FIX_PROMPTS.md` hand-off (505 and 506 either side of the promote). The Security page says nothing
@@ -741,23 +810,30 @@ answers it himself if a board asks. The items below are not started unless he ca
   - what happens to stored data.
 
 ### Stage 1 — Friend requests (item 2)
-- [ ] Sign-up form: per child, "Who would you like {child} to play with?" Up to the **club's set maximum per child,
+**State (trued up 2026-11-16): built in three parts, all committed and walked, in `release/2026-11-15`.** Part 1
+`9269b5eab` (walk §510 25/25), Part 2 `f291a8bb1` + the nightly job `3628b51a1` (§516 37/37), Part 3 `06a2b17f1`
+(§518 48/48), wording follow-up `81e3967e0`. The boxes below are the plan as first written; what was built follows the
+drawings and the rulings A1–A15 further down, which differ in places (one "Together" place on the board rows, the
+keep-together group fixed at 3). Left: the owner calls in the three "Part N" notes and the `/legal` document
+follow-ups.
+- [x] Sign-up form: per child, "Who would you like {child} to play with?" Up to the **club's set maximum per child,
   default 2** (owner ruling 2026-11-10, Q3), first + last, plus an
   optional "their parent's name" to help the match. Each confirmed sign-up shows a short **friend code** on the
   "Your sign-up" page (no new link to families), and a parent may enter another family's code instead of a name.
-- [ ] Registrar **Friend requests** queue in the season's registrations: each request shows its best suggestions from
+- [x] Registrar **Friend requests** queue in the season's registrations: each request shows its best suggestions from
   this season's sign-ups in the same division (normalised name, then parent name). The registrar chooses **Confirm**,
   **Pick another**, **Not signed up** or **Can't honour**. Code matches arrive confirmed. A request made both ways is marked
   "Both asked".
-- [ ] Draft: confirmed requests become a **keep-together** group, using the "Families together" machinery. Groups are
+- [x] Draft: confirmed requests become a **keep-together** group, using the "Families together" machinery. Groups are
   capped at a size (Q3) so friend chains can't break team balance, and the convenor can split one. After a draft, every
   request reads **Honoured** or **Not honoured — why** (cap, division, locked).
-- [ ] Draft board: a Friends filter and a mark on the player chip, just like siblings.
-- [ ] Transparency is **for the club's admins**: after the draft they see every request as Honoured / Not honoured,
+- [x] Draft board: a Friends filter and a mark on the player chip, just like siblings. (Built as the drawings' option
+  B: one "Together" place for family and friends.)
+- [x] Transparency is **for the club's admins**: after the draft they see every request as Honoured / Not honoured,
   with the reason. **Parents get no honoured / not-honoured message** (owner ruling 2026-11-10, Q3). On "Your sign-up" a
   parent sees only what they asked for, and never another child's details.
-- [ ] Migration first (request rows + code), then `docs/agents/db/DATA_DICTIONARY.md` + `npm run refresh:snapshots`.
-- [ ] `/legal`: a parent typing another child's name, and how long requests are kept (purge at season end).
+- [x] Migration first (request rows + code), then `docs/agents/db/DATA_DICTIONARY.md` + `npm run refresh:snapshots`.
+- [x] `/legal`: a parent typing another child's name, and how long requests are kept (purge at season end).
   **Done 2026-11-10 at the drawing session** (findings below, applied to the drawings).
 - **Drawings (2026-11-10, round 2 after `/design` + `/legal`):** https://claude.ai/artifact/KxYr8LW6r5yvsUJ7FmvPL8
   (source `BOARD_READY_FRIEND_REQUESTS_DRAWINGS.html`). Eight tabs: the parent's question, the friend code, the
@@ -901,6 +977,39 @@ answers it himself if a board asks. The items below are not started unless he ca
 - [ ] CASL guard: colleague mail carries no plan, price or offer (`CASL_MEMBER_INVITE_EMAILS.md`). `/legal` reviews the
   wording rules.
 - [ ] Prerequisite: the Stage 0a third access sweep (its findings on contact-detail reads).
+- **DRAWN 2026-11-16** (round 2 after `/ux`, `/design`, `/legal`): https://claude.ai/artifact/WVuNq47ywkxKgmFSYew2eF,
+  source `BOARD_READY_STAGE2_GROUP_EMAIL_DRAWINGS.html`. Counts from a seeded Harbourtown copy (`navj-grpmail`, removed the
+  same day): All coaches 9 · Rep staff 7 / head coaches 6 · House league 2. **Asks 1–13 OWED** (paste-back "Group email
+  asks: …"), all recommendations, nothing ruled:
+  1 who sends: owner + admin every group; league admin + registrar house-league coaches only; nobody else; team-limited
+  members no tab · 2 groups: All coaches · Rep coaches (all staff / head only) · House-league coaches (season / division) ·
+  Coaches you pick · 3 saved lists DEFERRED (one-off pick + "Send again to these coaches" instead) · 4 all rep staff count
+  as coaches (managers included, said plainly) · 5 tournament announcements LEFT ALONE and "Tournament coaches" DROPPED
+  as a group (3 of the seeded tournament's 4 teams are visiting clubs; a pointer line instead) · 6 history = its own list
+  on the new tab, each record names its recipients · 7 the door = a new **Group email** tab on Organization after Members
+  (changes NAV_STANDARD N11) · 8 rep teams count unless archived (a closed season still counts; live-only would empty the
+  list between seasons); unaccepted rep invites left out and named; house-league coaches in whether signed in or not ·
+  9 From "{Club} via FieldLogicHQ", reply-to the sender (today's colleague mail says only "FieldLogicHQ") · 10 names and
+  teams only, never an address · 11 the recount compares the PEOPLE, not the number, and never sends by itself ·
+  12 no daily allowance, just-sent check only · 13 no second door on Rep teams / a season in this build.
+  Plan line corrections the drawing makes, pending the asks: L689 "Tournament coaches" (ask 5), L690 saved lists (ask 3).
+  `/legal` (`docs/agents/legal/CASL_COACH_GROUP_EMAIL.md`): not a commercial message as drawn; foot "Sent through
+  FieldLogicHQ, the software {Club} uses."; a line under the message box against promotion; the reply address named in
+  the statement; per-group "why you get this" + "Not right for you? Reply and tell {Sender}."; build-guard rule in that
+  file. **Owed from /legal:** a privacy policy §5/§9 sentence for the coach-email log and a retention clock for it (→ `/plan`);
+  a `/legal` re-check before each Stage 3 group (a group only from a role the club recorded, never from guardians).
+  Third-sweep contact-read findings (staff on the Communication screen; score-feed emails) are NOT widened.
+  Fits a one-to-two-session build if asks 3, 5 and 13 go as recommended. Next: the owner's answers, then
+  `BOARD_READY_STAGE2_GROUP_EMAIL_BUILD_PROMPT.md`.
+- **HOME CHANGED 2026-11-16 (owner ruling):** the coach email is built inside a new club **Communications** place, not
+  as an Organization tab. **Asks 6, 7 and 13 are replaced** by `CLUB_COMMUNICATIONS_PLAN.md` (its Stage 1). **Asks 1–5
+  and 8–12 RULED 2026-11-16, all as recommended** (owner, in the Club Communications session, answering whether his
+  agreement covered these ten). Do not build the Organization › Group email tab. The build runs from
+  `CLUB_COMMUNICATIONS_STAGE1_BUILD_PROMPT.md`, which also adds **the board** as a group (seat-based, owner request).
+  **Built 2026-11-22 inside Club Communications Stage 1:** the coach and board email windows, sessions 1–3 committed
+  (`95cac82d6`, `817c95523`, `684ee0b38`, `cc99f58e9`), walks §537 and §547 passed, the Close built 2026-11-22 (record in
+  `CLUB_COMMUNICATIONS_PLAN.md` §3 Stage 1). Status lives on the board. This stage's saved lists, tournament-coach group
+  and volunteers are not built (Stage 3 and Club Communications Stages 2–4).
 
 ### Stage 3 — The club's people and their credentials (item 4) — FOUNDATION: People
 **3a · People**
@@ -976,7 +1085,8 @@ your recommendations"*). These rulings win over the checklist above where they d
     switch (it changes ruling A8 and adds to the coach's team page).
 15. **Tournament questions:** move onto the club form later, as its own stage, after one house-league season has used it.
     Fix F1–F3 now as a small separate fix (`BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md`). **F1–F3 committed `bd74851a3` 2026-11-20**
-    (walk: https://claude.ai/artifact/UXVbq4LEexfFFtT6xuZ9eg). Two departures from the prompt, both measured: the file limit
+    (walk: https://claude.ai/artifact/UXVbq4LEexfFFtT6xuZ9eg; **walked 2026-11-20, 31 of 31 passed**; the optional phone-photo
+    step 15 was skipped, no iPhone photo to hand, so a real .HEIC upload is unverified). Two departures from the prompt, both measured: the file limit
     is **9 MB for all of one form's files together** (the proxy cuts a whole request at 10 MB, so "10 MB per file" arrived
     broken), and **nosniff is not sent**: the one-hour link is the storage service's response, which sends
     `attachment` and the type read from the bytes but no `X-Content-Type-Options` (probed on dev), and we cannot add a header
@@ -1059,7 +1169,7 @@ export read the ticks ("ticked" unless a document asked "agree"); a house-league
 Guards: `tests/unit/club-form-staff-guard.test.ts` (every reader's callers and gate, health never in the list, a mail or push module, or
 the browser) and the board-notes guard extended to answers. Probe `.probe/stage4-part3-probe.mjs` 34 of 34 (owner, registrar, treasurer,
 coach through the real routes; 35 of 35 after the reviews); walk fixture `.probe/stage4-part3-walk-fixture.mjs on|off`; QA walk §553
-https://claude.ai/artifact/QhtSYswpFHJqAAkyy8X6Dk (32 steps, owed the owner). **Found:** the drawing's "each export is already
+https://claude.ai/artifact/QhtSYswpFHJqAAkyy8X6Dk (32 steps, walked ✅ 32 of 32 by the owner 2026-11-21; fixture `off` owed). **Found:** the drawing's "each export is already
 recorded in the club's activity log" was not true; only the new health export and file openings are logged (plain exports: an owner
 question). Reviews: `/legal` (`docs/agents/legal/BOARD_READY_STAGE4_PART3_BUILT_REVIEW.md`; the Privacy Policy §5 and Data Terms §12
 sentences are in the unpublished drafts, the §9 retention sentence waits for migration 516's first production run; a removed file
@@ -1077,13 +1187,37 @@ reopened after its finish is skipped by the 120-day clock until it is finished a
 (4) plain Excel, CSV and PDF exports stay out of the audit log; (5) the Email families button counts required questions only (and any
 document to tick).
 
+**The fixed notice above the club's questions is removed (owner 2026-11-21).** Ruling 4's "a fixed notice about who is asking"
+no longer stands. `/legal` (`docs/agents/legal/CLUB_FORM_NOTICE_REMOVAL.md`) found that saying data is stored outside Canada is the
+club's notice to give, and the published Terms §4 already tell clubs so. The default fields never carried a notice, and the family
+reads one form. The club's privacy link moved under Sign up, and still shows only when the club has one. The health line stays.
+Part 3 release condition 3 (Privacy 0.4 and Data Terms §12 live no later than the first club that asks a question on production)
+stands as written. It no longer has the notice as a safety net in the meantime.
+
+#### 4.P — A club sets its own privacy link (added 2026-11-21, owner; built and committed `f11841ac8` 2026-11-22, walk §555 passed 19 of 19 on 2026-11-22)
+**Built as ruled 2026-11-21:** the owner AND an admin set it (Organization › Settings, card "Your privacy policy", field "Link
+to your privacy policy"); each change families can see shows on the owner's Audit log as "Privacy policy link added / changed /
+removed", never the address; the helper carries Terms §4's words (after `/legal`). No coaches-only door was found (the tryout
+page that reads the link serves club teams only).
+**What the club does:** in its settings, a club owner or admin pastes the web address of the club's own privacy policy, and can
+change or clear it. Every family-facing door that already reads it then shows "{club}'s privacy policy". Those doors are the
+house-league sign-up form (under Sign up), the tryout sign-up's consent line, and the guardian accept page.
+**Why:** the published Terms §4 tell clubs "you can link your own privacy policy on your forms" and "your own privacy notice is the
+place to tell them" that data is stored in the United States. Today only our staff can set the link (the column has no screen and no
+route; `lib/privacy-policy.ts:13`), so that promise holds only when we set it by hand. With the form notice removed, the club's own
+link is the only way a club tells families about the cross-border storage at the point of sign-up. At the first Québec club it is also
+how the club gives its Law 25 s. 8 notice.
+**Shape (for the build session to confirm):** one field in the club's settings, http/https only (the existing scheme check is the
+single seam), seats that may edit the club's profile, an audit line on change. Help: one line in the settings article and in the
+sign-up form article. **Reviews owed at build:** `/legal` (the setting's helper text), `/docs`.
+
 ### Stage 5 — Club events (item 8) — FOUNDATION: Club events
 - [ ] A club-owned event: name, kind (banquet, champs day, AGM, clinic, camp, other), date and time, venue from the venue
   library, optionally held from permit time, and audience (public · families · members · staff).
 - [ ] Shows on the club calendar (writable **for club events only**; teams' schedules untouched, D3) and in an **Events**
   section on the club site and in the family app. No RSVP links by email (2026-10-31); a sign-up uses a Stage 4 form.
 - [ ] Champs day: an event that gathers the house-league playoff or final games under it.
-- [ ] Owner ruling owed: D5 reopened for club events (Q7).
+- [x] D5 reopened for club events: ruled yes 2026-11-15 (Q7).
 - [ ] Migration first; dictionary + snapshots.
 
 ### Stage 6 — Sponsorships (item 7)
@@ -1141,9 +1275,11 @@ document to tick).
   siblings counted. ~~*Not ruled:* whether the club can change it.~~ **Ruled at the Stage 1 drawing 2026-11-10 (A1):
   fixed at 3, not club-set.**
 - [x] **Q4 Missing document** — RULED 2026-11-10: **warn, never block**.
-- [ ] **Q5 Penetration test:** still open (no recommendation was made). Recommend deciding once 0a is done, when the pack is ready.
+- [x] **Q5 Penetration test** — RULED 2026-11-15 (owner): **out of scope at this stage.** The pack leans instead on the security
+  already in place and the checks we run (access sweeps, two-step sign-in, the guards the build enforces), stated plainly.
 - [x] **Q6 Gates** — RULED 2026-11-10 ("agreed"): §9 as written; `/strategy` logs it.
-- [ ] **Q7 Ruling D5:** let the club calendar hold club-owned events?
+- [x] **Q7 Ruling D5** — RULED 2026-11-15 (owner): **yes, the club calendar should be able to handle club events.** Stage 5's
+  shape below is unchanged; D3 (the club never writes a team's schedule) still stands.
 - [x] **Q8 Tax** — RULED 2026-11-10 ("agreed"): the §9 shape.
 - ~~Q9 Board proposal scope~~. **Withdrawn (owner 2026-11-10):** the owner sets the priority sequence as the project
   goes, as on every project. The plan recommends, and the owner decides.
@@ -1153,22 +1289,22 @@ document to tick).
 Each build step is drawing (`/design`), then the owner's ruling, then the build, then a walk. Steps in the same wave can run in
 parallel.
 
-| # | Step | Wave | Waits on | Drawing? |
-|---|---|---|---|---|
-| 1 | **0a-1** Third access sweep (report, then fixes on the owner's go) | 1 | nothing | no |
-| 2 | **Stage 1** Friend requests in the draft | 1 | nothing | yes |
-| 3 | **0a-2** Two-step sign-in: offered to everyone, club may require (all asks ruled 2026-11-10) | 1 | build waits on Wave 2 Fix A (same shared sign-in check) | yes |
-| 4 | **0a-3** Org delete removes its files · backups written down (PITR call) | 2 | nothing | no |
-| 5 | **0a-4** Privacy policy + terms published (the legal-pages work in GST/HST Stage 6) | 2 | that plan | no |
-| 6 | **0c** Board pack: brief, diagrams, questionnaire answers, Security page | 2 | 1, 3, 4, 5 | the page only |
-| 7 | **Stage 2** Group email to coaches | 2 | 1 | yes |
-| 8 | **Stage 3** The club's people + documents with expiry | 3 | nothing (adds groups to 7) | yes |
-| 9 | **Stage 4** Custom forms (house-league sign-up first) | 3 | nothing | yes |
-| 10 | **Stage 5** Club events | 3 | Q7 | yes |
-| 11 | **Stage 6** Sponsorships | 4 | 9, 10; live card pay waits on Club Tier Stage 12 | yes |
-| 12 | **Stage 7** Camps & clinics | 4 | 9, 10; live card pay waits on Club Tier Stage 12 | yes |
-| — | **0d** Continuity message points + `/legal` + write-up | when the owner calls it | — | no |
-| — | **Q5** Penetration test | decide after 6 | — | — |
+| # | Step | Wave | Waits on | Drawing? | State (2026-11-16) |
+|---|---|---|---|---|---|
+| 1 | **0a-1** Third access sweep (report, then fixes on the owner's go) | 1 | nothing | no | **Done:** swept 2026-11-10; fixes A–E committed 2026-11-11, in `release/2026-11-15`. Owner calls left open by the report are still open (§5 Stage 0a) |
+| 2 | **Stage 1** Friend requests in the draft | 1 | nothing | yes | **Done:** three parts committed and walked (§510, §516, §518), in `release/2026-11-15` |
+| 3 | **0a-2** Two-step sign-in: offered to everyone, club may require (all asks ruled 2026-11-10) | 1 | ~~build waits on Wave 2 Fix A~~ (Fix A committed `3d9b1ec13`) | yes | **Done:** four parts committed and walked (§511, §513, §515, §520), in `release/2026-11-15` |
+| 4 | **0a-3** Org delete removes its files · backups written down | 2 | nothing | no | **Half done:** org delete committed `45c134bea` 2026-11-15 (not yet in a release tag). Backups ruled 2026-11-16 (daily is enough); writing down the retention and a first restore rehearsal are owed |
+| 5 | **0a-4** Privacy policy + terms published (the legal-pages work in GST/HST Stage 6) | 2 | that plan | no | Not started here (tracked in that plan). Data terms for clubs and the supplier list: not started |
+| 6 | **0c** Board pack: brief, diagrams, questionnaire answers, Security page, the public roadmap | 2 | 1, 3, 4, 5 | the page only | Roadmap drawn and ruled 2026-11-16; everything else not started |
+| 7 | **Stage 2** Group email to coaches | 2 | 1 (done) | yes | **Drawn 2026-11-16** (https://claude.ai/artifact/WVuNq47ywkxKgmFSYew2eF), asks 1–13 owed; nothing built. The public roadmap carries it as Committed for 2026 only if it is built before the roadmap is first shown (roadmap ask 11) |
+| 8 | **Stage 3** The club's people + documents with expiry | 3 | nothing (adds groups to 7) | yes | Not started, not drawn |
+| 9 | **Stage 4** Custom forms (house-league sign-up first) | 3 | nothing | yes | **Drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks ruled 2026-11-20 as recommended** (§5 Stage 4); build prompt `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md` (three parts) and the tournament fixes `BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md` written 2026-11-20; nothing built. **First in the owner's order of 2026-11-20** (prompt `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md`) |
+| 10 | **Stage 5** Club events | 3 | ~~Q7~~ (ruled yes 2026-11-15) | yes | Not started, not drawn |
+| 11 | **Stage 6** Sponsorships | 4 | 9 (10 no longer, owner 2026-11-20: a club event joins later); live card pay waits on Club Tier Stage 12 | yes | Not started, not drawn. Drawing prompt written 2026-11-20 (`BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_PROMPT.md`), drawn while Stage 4 is built. Sponsors on the public tournament pages wait for this stage (owner 2026-11-20) |
+| 12 | **Stage 7** Camps & clinics | 4 | 9, 10; live card pay waits on Club Tier Stage 12 | yes | Not started, not drawn |
+| — | **0d** Continuity message points + `/legal` + write-up | when the owner calls it; **not in the pack (owner 2026-11-16)** | — | no |
+| — | ~~**Q5** Penetration test~~ | ruled out of scope 2026-11-15 | — | — |
 
 Why this order:
 - Wave 1 has the two things a board will test, safety and the registrar's biggest spreadsheet, and needs nothing else.
@@ -1178,6 +1314,24 @@ Why this order:
 - The three foundations (8–10) come before the two assemblies (11–12). Sponsorship leads wave 4 on the owner's
   "important" mark.
 - 11 and 12 can be built up to the pay button before Stage 12's production switch.
+
+**ORDER RULED 2026-11-20 (owner, "agree", on the recommendation in that session). It replaces wave 3 and 4 above:**
+1. **Now, side by side:** draw and build **Stage 4, custom forms** (prompt `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md`);
+   **draft the board pack (0c)**, which goes public with the privacy policy, terms and data terms in the Club release (0a-4);
+   finish **Club Communications** as already sequenced (it carries Stage 2).
+2. **Stage 6, sponsorships,** drawn while Stage 4 is built, then built on it: the sponsor link's questions are a Stage 4
+   form (prompt `BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_PROMPT.md`). It **no longer waits for Stage 5**: "a club event"
+   joins its "attached to" choices when events exist. When its drawing is ruled, the public tournament pages' sponsors
+   drawing can start (owner 2026-11-20: tournament sponsors wait for this stage).
+3. **Stage 5, club events,** then "a club event" is added to sponsorship's choices.
+4. **Stage 3, people and documents,** once Club Communications has its coach and board email windows (its reminders and
+   groups use them). It needs neither forms nor events, so it can move up if a board's screening question becomes urgent.
+5. **Stage 7, camps and clinics,** last: it needs forms, events, permit time and online payments.
+
+Why: three things sit on forms (house-league sign-up, the sponsor link, camp sign-ups), and its first use pays off on its
+own; building sponsorships first would build a fixed set of sponsor questions and move them into a form later. Events is
+only one of sponsorship's five choices, so sponsorship does not wait for it. Card payment for sponsors and camps stays
+off until online payments are switched on in production; everything up to the pay button can ship first.
 
 ## 8. Moving production to Canada: effort and cost (researched 2026-11-10, for Q1) — **RULED: NOT MOVING**
 
@@ -1223,7 +1377,7 @@ and 7 stored files (6.6 MB). This is the cheapest the move will ever be.
   Team/Enterprise plans; Resend states SOC 2 Type II. Quote what each supplier's page says, nothing more.
 - **Execution, if approved:** its own short plan from `/dba` + `/release` (rehearse once on a scratch project).
 
-## 9. Specialist findings (2026-11-10; proposed, nothing ruled or logged)
+## 9. Specialist findings (2026-11-10; the gates and the tax shape were accepted by the owner 2026-11-10, Q6 and Q8 in §7)
 
 **Gates (`/strategy` brief):** no new price, band or key.
 - **Stage 0 is on every plan, never gated:** a security fix sold as an upgrade is a trust defect.

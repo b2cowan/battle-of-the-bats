@@ -690,7 +690,7 @@ anchor (date, commit, walk §), never deletes it.
   `billing-drift-daily` runs from the next morning; `MANUAL_PROD_STEPS.json` updated).**
 - [x] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode). Stage 0 walk §438 WALKED
   COMPLETE 2026-11-02; Walk 6 marked complete by the owner 2026-11-02 (no counts given; ledger §419).
-- [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3).
+- [x] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (ticked 2026-11-17: `1e18e9e4f` is in tag `release/2026-11-05` and on master) (owner ruling 2026-11-01, Session 3).
   **Design half DONE 2026-11-02: drawn, all 13 asks ruled (see Part 10's status line above). BUILT, simplified and reviewed
   2026-11-02, committed `1e18e9e4f` on the owner's go; the browser walk (§446) WALKED 2026-11-03 (25/25 steps passed; A6 and F1 phone skipped) and the sign-in
   settings (Part 10's note and its 2026-11-03 correction) are DONE 2026-11-03: both on in dev and production, invite + reset
@@ -729,6 +729,14 @@ anchor (date, commit, walk §), never deletes it.
     the Premium Coaches Portal product renamed, and the four retired prices deleted (zero workspaces on them in production); lookup keys are not part of the target
     (the audit stopped checking them, owner 2026-11-06); test also has a League yearly slot pointing at a monthly price (and one extra, harmless invoice event).
   - [ ] **O12b · Test cleanup done and audited**, then **live matched** (ticks O3), then **end-to-end done** (ticks O6).
+    **2026-11-17:** test audited read-only: 0 failures; the two retired products were archived by the owner the same day (re-read,
+    confirmed); their four prices still carry the active flag; the League yearly slot is fixed; tax rows filled. The audit's 17-event list omits the three credit-note events the code acts on (owner
+    added them 2026-11-07 per the setup guide), so live's missing-event count is re-read first. Owner checklist (42 boxes) published:
+    `https://claude.ai/artifact/NTYToS8ueibVFEqBiaydXm`. The live purchase waits for Terms and Privacy to be public (Q-L1).
+    **2026-11-17 · O3 done (evidenced by the owner's live audit paste):** live billing endpoint carries the four dispute/refund events, the
+    two card events, the four fee-invoice events and the three credit-note events; live equals the target apart from our portal settings
+    v2, which the first live press creates. **Still open: O6** (first live portal press) and the live purchase, cancel and refund of
+    O12 step 5, then O13 closes with them.
 - [ ] **O13 · Deadline and tripwire for O12, ruled 2026-11-06 (owner, agreeing).** *Deadline:* all of O12 is done **before Club goes on
   sale** (the owner's own 2026-11-03 line; not "when the projects are done", which has no date). *Tripwire:* **the first real paying
   customer pulls O3 (the four events on the live endpoint) and O6 (the first live portal press) forward**, ahead of the rest of O12,

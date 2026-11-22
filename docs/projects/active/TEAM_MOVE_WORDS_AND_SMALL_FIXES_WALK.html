@@ -73,18 +73,23 @@ ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; g
     <h2>What this walk is for</h2>
     <p>The move has always ended the coach’s own plan at once with no refund. The coach was never told, and the published Terms promise a cancelled plan runs to its end. Now the coach reads it at the yes, in <code>/legal</code>’s words (your wording call is below, not in the count). The same build hides the “everything comes with it” lines while Club is closed, makes two tabs naming a club one club, sends a signed-in newcomer from <code>/auth/login?next=/start/club</code> to the club door, and takes the doubled brand out of tab titles.</p>
     <p><strong>It passes when</strong> every step reads as written. The Terms sentence is in the held next Terms draft and is not published: it is a call below.</p>
-    <p><strong>Not in this walk:</strong> the exact two-tab race (a live race cannot be set up by hand; it is proved by the unit tests, and a plain second submit is part G), the Terms version itself, and a refund (not built, your ruling).</p>
+    <p><strong>Not in this walk:</strong> the exact two-tab race (a live race cannot be set up by hand; it is proved by the unit tests, and a plain second submit is part H), the Terms version itself, and a refund (not built, your ruling).</p>
   </section>
 
   <section class="card">
     <h2>Where and as whom</h2>
+    <p class="sub">Parts B to J were rewritten on 2026-11-20 after Part A passed. Part A moved its coach’s team into the club, so the rest of the walk no longer uses that coach. Every step names the account to use. Run the parts in order: some leave a request waiting for the next part.</p>
     <dl class="facts">
-      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server, restarted for this build.</dd>
-      <dt>Club admin</dt><dd>Sign in as <code>uat-club-owner@uat-rep-club.local</code> (owner of UAT Rep Club, a Club plan). Password for every account below: <code>UATPassword2026!</code></dd>
-      <dt>Coach</dt><dd>Sign in as <code>uat-free-coach@uat-free-coach.local</code> (a coach with one free team, no club). Buy Premium for it in Stripe test mode (card <code>4242 4242 4242 4242</code>), monthly or yearly. No fixture has a paid plan yet, so this purchase is part of the setup.</dd>
-      <dt>Free-time coach</dt><dd>Sign in as <code>uat-coach@uat-test-org.local</code> (owner of UAT Standalone Team). Staff first: sign in to <code>/platform-admin</code> as <code>uat-platform@fieldlogichq.ca</code>, open the organization <code>uat-standalone</code> and give Premium free time.</dd>
-      <dt>Dev tools</dt><dd>Signed in as <code>uat-platform@fieldlogichq.ca</code>: <code>/platform-admin/dev-tools</code>, the “show as closed” switch, for part E.</dd>
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server.</dd>
+      <dt>Club admin</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (owner of UAT Rep Club)</dd>
+      <dt>Nothing-paid coach</dt><dd><code>coach@dev.local</code> · <code>devpass123</code> (runs one team of its own, Dev Standalone U13 Bats, on a staff-given plan with nothing paid; portal <code>/dev-standalone-team</code>)</dd>
+      <dt>Paying coach</dt><dd><code>uat-paying-coach@uat-free-coach.local</code> · <code>UATPassword2026!</code> (new for this walk: one free team, UAT Paying Team; you buy Premium for it in Part B)</dd>
+      <dt>Staff</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> (dev tools, Part G; Bookkeeping, Part J)</dd>
+      <dt>Visitor F</dt><dd><code>uat-visitor-f@uat-walk.local</code> · <code>UATPassword2026!</code> (no organization; Part H makes its one club)</dd>
+      <dt>Visitor G</dt><dd><code>uat-visitor-g@uat-walk.local</code> · <code>UATPassword2026!</code> (no organization; Parts I and J)</dd>
+      <dt>Part A (done)</dt><dd><code>uat-free-coach@uat-free-coach.local</code>: its team is now in UAT Rep Club, so it is not used again.</dd>
     </dl>
+    <p class="sub">Tip: use a separate private window (or browser) per account so you are not signing in and out.</p>
   </section>
 
   <section class="card">
@@ -119,60 +124,67 @@ ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; g
         { who: 'Coach', do: 'Approve again, type the team’s name and press <q>Join {club}</q>.', see: 'The coach lands on the team inside the club.' },
         { who: 'Coach', do: 'In Stripe’s test dashboard, open the coach’s subscription.', see: 'It is cancelled the same minute, with no refund and no credit note.' }
       ] },
-    { id: 'B', title: 'A coach with nothing paid is told nothing about a refund',
+    { id: 'B', title: 'Setup: a second paying coach (rewritten from here, 2026-11-20)',
       steps: [
-        { who: 'Club admin', do: 'Send a request to the free-time coach’s email, as in A1.', see: 'A request is sent.' },
-        { who: 'Free-time coach', do: 'Open <q>Join a club</q> and read under <q>What it costs you</q>.', see: '<q>Your own plan ends today, because {club} now covers this team. You won’t be charged for it.</q> Nothing else under the heading: no refund sentence, no date, and no <q>again</q> anywhere on the card.' },
-        { who: 'Free-time coach', do: 'Press <q>Approve and join {club}</q> and read the window.', see: 'The same two sentences above <q>The move can’t be undone.</q>' },
-        { who: 'Free-time coach', do: 'Press Cancel.', see: 'The window closes and nothing moves. (A coach in a trial, or one whose payment is past due, reads this same wording.)' }
+        { who: 'Paying coach · uat-paying-coach@uat-free-coach.local', do: 'In a new private window, sign in at <code>/auth/login</code> as <code>uat-paying-coach@uat-free-coach.local</code>, password <code>UATPassword2026!</code>.', see: 'The free Coaches Portal opens on <q>UAT Paying Team</q>.' },
+        { who: 'Paying coach · uat-paying-coach@uat-free-coach.local', do: 'Buy Premium for UAT Paying Team the same way you did before Part A: Stripe test card <code>4242 4242 4242 4242</code>, any future date, any CVC, monthly or yearly.', see: 'The purchase goes through and the team opens in its own Premium portal.' },
+        { who: 'Paying coach · uat-paying-coach@uat-free-coach.local', do: 'Open <q>Plan &amp; billing</q> and note the address bar: the part between the first <code>/</code> and <code>/coaches</code> is this portal’s name (probably <code>uat-paying-team-coaches-portal</code>).', see: 'Premium, with a renewal date a month or a year from today. Keep this window open: Parts F and G come back to it.' }
       ] },
-    { id: 'C', title: 'A coach already set to end at renewal',
+    { id: 'C', title: 'A coach with nothing paid is told nothing about a refund',
       steps: [
-        { who: 'Coach', do: 'On the paying coach’s <q>Plan &amp; billing</q>, cancel the plan so it ends at renewal (a new request is sent first if the old one moved).', see: 'The page says the plan ends on the renewal date.' },
-        { who: 'Coach', do: 'Open the club’s waiting request on <q>Join a club</q>.', see: 'The sentence names the same date: the day the plan was going to end anyway, now ending today.' }
+        { who: 'Club admin · uat-club-owner@uat-rep-club.local', do: 'In a second private window, sign in as <code>uat-club-owner@uat-rep-club.local</code>, open <code>/uat-rep-club/admin/rep-teams/bring-in</code>, type <code>coach@dev.local</code> and press <q>Send request</q>.', see: 'A request is sent and waits on the coach. Nothing moves.' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'In a third private window, sign in as <code>coach@dev.local</code>, password <code>devpass123</code>, and open <code>/dev-standalone-team/coaches/link-org</code>.', see: 'A card titled <q>UAT Rep Club wants to bring in Dev Standalone U13 Bats</q>. Under <q>What it costs you</q>: <q>Your own plan ends today, because UAT Rep Club now covers this team. You won’t be charged for it.</q> Nothing else under the heading: no refund sentence, no date, and no <q>again</q> anywhere on the card.' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Press <q>Approve and join UAT Rep Club</q> and read the window.', see: 'The same two sentences above <q>The move can’t be undone.</q>' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Press Cancel.', see: 'The window closes and nothing moves. The request is still waiting: leave it for Part D. (This team’s plan was given by staff with nothing paid, the same case as free time; a trial or a payment past due reads this same wording.)' }
       ] },
-    { id: 'D', title: 'The club’s screen is unchanged',
+    { id: 'D', title: 'One request at a time (added 2026-11-20, your ask)',
       steps: [
-        { who: 'Club admin', do: 'On the club’s <q>Bring in a coach’s team</q> page, look at a waiting request from a coach (the coach asks from their Join a club page).', see: '<q>{Coach} won’t be charged for their own Coaches Portal again. Billing for it stops the moment the move completes.</q> No refund words, no date.' },
-        { who: 'Club admin', do: 'Read the whole card.', see: 'Cost to the club, what changes, and what comes with the team, all as before.' }
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Reload <code>/dev-standalone-team/coaches/link-org</code>.', see: 'Only UAT Rep Club’s request card (and <q>Earlier requests</q> if any). No <q>Ask a club to bring in your team</q> section below it.' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Press <q>Decline</q> on the card.', see: 'The card goes to <q>Earlier requests</q>, and the <q>Ask a club to bring in your team</q> form appears.' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Type <code>uat-rep-club</code> in the form and press <q>Send request</q>.', see: '<q>Request sent. UAT Rep Club will see it in its own admin.</q> A <q>Waiting on the club</q> row with <q>Withdraw</q>, and the form is gone. Leave it waiting for Part E.' }
       ] },
-    { id: 'E', title: 'The “everything comes with it” lines follow the sale',
+    { id: 'E', title: 'The club’s screen is unchanged',
       steps: [
-        { who: 'Staff', do: 'In dev tools, switch plan gating to <q>show as closed</q>.', see: 'Club, Club · Association and League Plus read as closed.' },
-        { who: 'Coach', do: 'Open the standalone coach’s team <q>Settings</q> (a coach with no waiting request).', see: 'There is no <q>Organization</q> section and no <q>Join a club</q> row.' },
-        { who: 'Coach', do: 'Open the coach’s <q>Plan &amp; billing</q>.', see: 'There is no <q>Part of a club?</q> card.' },
-        { who: 'Coach', do: 'Open <code>/{coach portal}/coaches/link-org</code> directly.', see: 'The page opens. The line under <q>Ask a club to bring in your team</q> says <q>…it can bring {team} in, and you keep coaching it as one of the club’s teams.</q> with no <q>Everything the team built comes with it</q>.' },
-        { who: 'Club admin', do: 'Open the club’s <q>Bring in a coach’s team</q> page.', see: 'The opening line has no <q>Everything the team built comes with it</q>.' },
-        { who: 'Coach', do: 'With a request waiting, open its card on the coach’s page.', see: 'The card still has its <q>What comes with the team</q> column: it is what the coach is agreeing to move.' },
-        { who: 'Staff', do: 'Switch plan gating back to live (or clear the switch).', see: 'Plans read as on sale again.' },
-        { who: 'Coach', do: 'Reload team Settings, Plan &amp; billing and the Join a club page.', see: 'The <q>Organization</q> row, the <q>Part of a club?</q> card and the full opening lines are back.' }
+        { who: 'Club admin · uat-club-owner@uat-rep-club.local', do: 'Reload <code>/uat-rep-club/admin/rep-teams/bring-in</code> and find the waiting request for Dev Standalone U13 Bats (the one the coach sent in D3).', see: '<q>{the coach’s name} won’t be charged for their own Coaches Portal again. Billing for it stops the moment the move completes.</q> No refund words, no date.' },
+        { who: 'Club admin · uat-club-owner@uat-rep-club.local', do: 'Read the whole card. Do not approve it.', see: 'Cost to the club, what changes, and what comes with the team, all as before.' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Back on <code>/dev-standalone-team/coaches/link-org</code>, press <q>Withdraw</q>.', see: 'The row moves to <q>Earlier requests</q> and the form is back. This coach now has no request waiting, which Part G needs.' }
       ] },
-    { id: 'F', title: 'Two tabs naming a club make one club',
+    { id: 'F', title: 'A coach already set to end at renewal',
       steps: [
-        { who: 'Visitor', do: 'With a fresh signed-in account that has no organization, open <code>/start/club</code> in two tabs.', see: 'Both show the name step.' },
-        { who: 'Visitor', do: 'Name the club in tab 1 and press the create button once, then try pressing it twice quickly.', see: 'One request goes (the button reads <q>Creating…</q> and ignores the second press).' },
-        { who: 'Visitor', do: 'Name a club in tab 2 and press create after tab 1 has finished.', see: 'A plain sentence: <q>Your account already has a workspace. To join another organization, ask them to invite you.</q> No second club, no error page.' },
-        { who: 'Visitor', do: 'Open the club list on <q>Home</q>.', see: 'Exactly one club is there. No empty twin.' }
+        { who: 'Paying coach · uat-paying-coach@uat-free-coach.local', do: 'On <q>Plan &amp; billing</q> (the window from Part B), end the plan at renewal.', see: 'The page says the plan ends on the renewal date. Note that date.' },
+        { who: 'Club admin · uat-club-owner@uat-rep-club.local', do: 'On <code>/uat-rep-club/admin/rep-teams/bring-in</code>, type <code>uat-paying-coach@uat-free-coach.local</code> and press <q>Send request</q>.', see: 'A request is sent and waits on the coach.' },
+        { who: 'Paying coach · uat-paying-coach@uat-free-coach.local', do: 'Open <q>Join a club</q> from the bell, or type the portal’s name from B3 followed by <code>/coaches/link-org</code>.', see: 'Under <q>What it costs you</q>: <q>Your own plan ends today, because UAT Rep Club now covers this team. You won’t be charged for it again, and the unused part of what you paid, to {date}, is not refunded.</q> The date is the one from F1. Do not approve: leave the request waiting for Part G.' }
       ] },
-    { id: 'G', title: 'Signing in lands on the door you asked for',
+    { id: 'G', title: 'The “everything comes with it” lines follow the sale',
       steps: [
-        { who: 'Visitor', do: 'In a private window, open <code>/auth/login?next=/start/club</code> and sign in as an account with no organization yet.', see: 'You land on <q>Start a club</q>, not on Home.' },
-        { who: 'Visitor', do: 'Sign out and try <code>/auth/login?next=/harbourtown/admin</code> (any club page) with the same account.', see: 'You land on Home, not on the club page: a person with no workspace is still never sent to a page they cannot open.' },
-        { who: 'Visitor', do: 'Sign in again with <code>?next=/start/league</code>.', see: 'You land on <q>Start a league season</q>.' }
+        { who: 'Staff · uat-platform@fieldlogichq.ca', do: 'The switch is a setting of the browser you press it in, not of the whole site, so press it in the same browser window you use for the next step. Sign in as <code>uat-platform@fieldlogichq.ca</code>, open <code>/platform-admin/dev-tools</code>, press <q>Show as closed</q> on the Plan gates card, then sign out. (Steps G5 and G6 use other windows: do the same in each of those windows before you read them.)', see: 'The card’s line reads “League Plus, Club and Club · Association read closed, as on production before the flip.”' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'In that same window, sign in as <code>coach@dev.local</code> and open <code>/dev-standalone-team/coaches/teams/a5d0f3fd-99a0-4297-9734-0381e2a462f7/settings</code> (the team’s Settings). Open the <q>Organization</q> section.', see: 'The section is still there, with its three rows: Team name, Web address and When birthdays count from. There is <b>no</b> <q>Join a club</q> row, and the line under the heading says only <q>The owner changes these.</q> (no sentence about a club asking to bring your team in).' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Open <code>/dev-standalone-team/coaches/billing</code> (Plan &amp; billing).', see: 'There is no <q>Part of a club?</q> card.' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Open <code>/dev-standalone-team/coaches/link-org</code> directly.', see: 'The page opens. The line under <q>Ask a club to bring in your team</q> says <q>…it can bring Dev Standalone U13 Bats in, and you keep coaching it as one of the club’s teams.</q> with no <q>Everything the team built comes with it</q>.' },
+        { who: 'Club admin · uat-club-owner@uat-rep-club.local', do: 'Reload <code>/uat-rep-club/admin/rep-teams/bring-in</code>.', see: 'The opening line has no <q>Everything the team built comes with it</q>.' },
+        { who: 'Paying coach · uat-paying-coach@uat-free-coach.local', do: 'Reload the Join a club page from F3 (UAT Rep Club’s request is still waiting).', see: 'The card still has its <q>What comes with the team</q> column: it is what the coach is agreeing to move.' },
+        { who: 'Staff · uat-platform@fieldlogichq.ca', do: 'Switch plan gating back to live (or clear the switch).', see: 'Plans read as on sale again.' },
+        { who: 'Nothing-paid coach · coach@dev.local', do: 'Reload the three pages from G2, G3 and G4.', see: 'The <q>Join a club</q> row (with its sentence under the Organization heading), the <q>Part of a club?</q> card and the full opening line are back.' }
       ] },
-    { id: 'H', title: 'Tab titles carry the brand once',
+    { id: 'H', title: 'Two tabs naming a club make one club',
       steps: [
-        { who: 'Visitor', do: 'Read the browser tab on <code>/start</code>.', see: '<q>Get started | FieldLogicHQ</q>, the brand once.' },
-        { who: 'Visitor', do: 'Read the tabs on <code>/start/club</code>, <code>/start/league</code>, <code>/start/tournament</code> and <code>/start/team</code>.', see: '<q>Start a club | FieldLogicHQ</q>, <q>Start a league season | FieldLogicHQ</q>, <q>Run a tournament | FieldLogicHQ</q>, <q>Coach a team | FieldLogicHQ</q>. No title says FieldLogicHQ twice.' },
-        { who: 'Visitor', do: 'Read the tab on <code>/coaches/start</code>.', see: '<q>Coaches Portal | FieldLogicHQ</q>.' },
-        { who: 'Staff', do: 'Read the tab on <code>/platform-admin/bookkeeping</code>.', see: '<q>Bookkeeping | FieldLogicHQ</q>.' }
+        { who: 'Visitor F · uat-visitor-f@uat-walk.local', do: 'In a new private window, sign in at <code>/auth/login</code> as <code>uat-visitor-f@uat-walk.local</code>, password <code>UATPassword2026!</code>, then open <code>/start/club</code> in two tabs.', see: 'Both show the name step.' },
+        { who: 'Visitor F · uat-visitor-f@uat-walk.local', do: 'Name the club in tab 1 and press the create button once, then try pressing it twice quickly.', see: 'One request goes (the button reads <q>Creating…</q> and ignores the second press).' },
+        { who: 'Visitor F · uat-visitor-f@uat-walk.local', do: 'Name a club in tab 2 and press create after tab 1 has finished.', see: 'A plain sentence: <q>Your account already has a workspace. To join another organization, ask them to invite you.</q> No second club, no error page.' },
+        { who: 'Visitor F · uat-visitor-f@uat-walk.local', do: 'Open the club list on <q>Home</q>.', see: 'Exactly one club is there. No empty twin.' }
       ] },
-    { id: 'I', title: 'One request at a time (added 2026-11-20, your ask)',
+    { id: 'I', title: 'Signing in lands on the door you asked for',
       steps: [
-        { who: 'Coach', do: 'With UAT Rep Club’s request waiting (A1), open <q>Join a club</q> as <code>uat-free-coach@uat-free-coach.local</code>.', see: 'Only the request card (and <q>Earlier requests</q> if any). No <q>Ask a club to bring in your team</q> section below it.' },
-        { who: 'Coach', do: 'Press <q>Decline</q> on the card.', see: 'The card goes to <q>Earlier requests</q>, and the <q>Ask a club to bring in your team</q> form appears.' },
-        { who: 'Coach', do: 'Type <code>uat-rep-club</code> in the form and press <q>Send request</q>.', see: '<q>Request sent. UAT Rep Club will see it in its own admin.</q> A <q>Waiting on the club</q> row with <q>Withdraw</q>, and the form is gone.' },
-        { who: 'Coach', do: 'Press <q>Withdraw</q>.', see: 'The row moves to <q>Earlier requests</q> and the form is back. (Do this part after A, B and C; re-send from the club side if a later part needs a waiting request.)' }
+        { who: 'Visitor G · uat-visitor-g@uat-walk.local', do: 'In a new private window, open <code>/auth/login?next=/start/club</code> and sign in as <code>uat-visitor-g@uat-walk.local</code>, password <code>UATPassword2026!</code>. Do not create a club.', see: 'You land on <q>Start a club</q>, not on Home.' },
+        { who: 'Visitor G · uat-visitor-g@uat-walk.local', do: 'Sign out, open <code>/auth/login?next=/uat-rep-club/admin</code> and sign in as <code>uat-visitor-g@uat-walk.local</code> again.', see: 'You land on Home, not on the club page: a person with no workspace is still never sent to a page they cannot open.' },
+        { who: 'Visitor G · uat-visitor-g@uat-walk.local', do: 'Sign out, open <code>/auth/login?next=/start/league</code> and sign in as <code>uat-visitor-g@uat-walk.local</code> again.', see: 'You land on <q>Start a league season</q>.' }
+      ] },
+    { id: 'J', title: 'Tab titles carry the brand once',
+      steps: [
+        { who: 'Visitor G · uat-visitor-g@uat-walk.local', do: 'Still signed in, open <code>/start</code> and read the browser tab.', see: '<q>Get started | FieldLogicHQ</q>, the brand once.' },
+        { who: 'Visitor G · uat-visitor-g@uat-walk.local', do: 'Read the tabs on <code>/start/club</code>, <code>/start/league</code>, <code>/start/tournament</code> and <code>/start/team</code>.', see: '<q>Start a club | FieldLogicHQ</q>, <q>Start a league season | FieldLogicHQ</q>, <q>Run a tournament | FieldLogicHQ</q>, <q>Coach a team | FieldLogicHQ</q>. No title says FieldLogicHQ twice.' },
+        { who: 'Visitor G · uat-visitor-g@uat-walk.local', do: 'Read the tab on <code>/coaches/start</code>.', see: '<q>Coaches Portal | FieldLogicHQ</q>.' },
+        { who: 'Staff · uat-platform@fieldlogichq.ca', do: 'In the staff window, read the tab on <code>/platform-admin/bookkeeping</code>.', see: '<q>Bookkeeping | FieldLogicHQ</q>.' }
       ] }
   ];
 
@@ -251,7 +263,7 @@ ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; g
   }
 
   function summary() {
-    var lines = ['Team move words and three small fixes walk (2026-11-20)'];
+    var lines = ['Team move words and three small fixes walk (2026-11-20; parts B to J rewritten after A)'];
     var done = boxes.filter(function (b) { return b.cb.checked; }).length;
     lines.push('Checked ' + done + ' of ' + boxes.length);
     PARTS.forEach(function (p) {

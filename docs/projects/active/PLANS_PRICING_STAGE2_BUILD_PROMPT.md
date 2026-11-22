@@ -113,7 +113,7 @@ that is the owner's dashboard work.
       "card reported lost/stolen" were already shown; `fraudulent`/`pickup_card` read as "declined by the bank"); viewing is NOT
       logged (the drawings do not ask for it). `/accounting`: nothing charged, recorded or invoiced changed; the notice says the
       amount owed and "It includes $X tax" only when the whole bill is owed.
-- [ ] Part 4 reports: drawing session 2026-11-07, drawings https://claude.ai/artifact/PqUgoHqg57j1SGSo2YypjP
+- [x] Part 4 reports (both sessions committed, walks §487 and §493 passed): drawing session 2026-11-07, drawings https://claude.ai/artifact/PqUgoHqg57j1SGSo2YypjP
       (`PLANS_PRICING_STAGE2_PART4_REPORTS_DRAWINGS.html`, PM brief `PLANS_PRICING_STAGE2_PART4_REPORTS_PM_BRIEF.md`). Re-framed:
       Customers › Renewals (Coming up + Unpaid bills, from our own records, no Stripe call) + Bookkeeping › Reports › Sales;
       no "This month" card; Stripe's fees to us = a monthly Bookkeeping expense. Reviews: `/accounting`
@@ -172,7 +172,7 @@ that is the owner's dashboard work.
       to the cent with the return's own line 101. Not run: `check:layout --changed` (Bookkeeping is not on the layout screen list;
       the list was not edited). Walk B = Owner QA Ledger §493 (https://claude.ai/artifact/LJoTxy3w69bzXVLapi7Qrq). Known red, not
       this work: the export registry's founding-season entry (a moved file) and the twelve unit tests listed in the review notes.
-- [ ] Part 5 replay: drawing session 2026-11-08, drawings https://claude.ai/artifact/Chw946z38BkoFa91XafRGh
+- [x] Part 5 replay (engine `3817838e8`, screen `48ffd770a`, walk §496 passed 18/18 2026-11-17): drawing session 2026-11-08, drawings https://claude.ai/artifact/Chw946z38BkoFa91XafRGh
       (`PLANS_PRICING_STAGE2_PART5_REPLAY_DRAWINGS.html`, PM brief `PLANS_PRICING_STAGE2_PART5_REPLAY_PM_BRIEF.md`), `/design` pass done
       (main action ink-on-lime, "Why *", console dates without the current year, the row door has no arrow). **Owner ruled all six asks
       as recommended 2026-11-08** (paste-back): (1) a replay never sends a customer email, and the window and result say so; (2) the door
@@ -260,7 +260,7 @@ that is the owner's dashboard work.
       notice on the owners' Needs attention list (ruling 1 silences the notice that feeds it); the window's facts (Received, Last
       result) need a read of the row, which the POST does not offer (add a GET lookup); the drawings' audit line "Status: Past due →
       Active" is not stored (the first row is written before the run): show it from a companion row or drop it.
-      **Session 2 BUILT 2026-11-08 (the screen); walk C = Owner QA Ledger §496 (https://claude.ai/artifact/2iYbKwN8fgEJHeCNhkyYTM), owed.**
+      **Session 2 BUILT 2026-11-08 (the screen); walk C = Owner QA Ledger §496 (https://claude.ai/artifact/2iYbKwN8fgEJHeCNhkyYTM), PASSED 18/18 steps 2026-11-17.**
       Health › Stripe: the word Replay on each "What failed in Plan billing" line (a refused kind's too) and the card "Replay an update by
       its id", both Super admin only (`replay_events`, server-checked on the new GET and the POST); one window that asks (the update,
       Received, Club, Last result, Messages, Why *) and turns into the answer (Before/After; refusals are Close alone, no reason asked);
@@ -286,6 +286,7 @@ that is the owner's dashboard work.
       whole product and stopped at its fixture check (the Stripe page is not in the sweep's screen list): not run. `verify:changed`
       reds that remain are other sessions' work (listed in §496). Next: the follow-up stage item (subscription changes replayable,
       drawn first), then Part 6.
-- [ ] Part 6 closeout (Part 3 committed `514d3a2d0`, above)
+- [x] Part 6 closeout, DONE 2026-11-17 (records only; no code). **No separate closing walk written, by decision:** every part had its own checkable walk and all five passed (§483 22/22, §484 19/19, §487, §493 25/25, §496 18/18), so a sixth would re-ask the same questions. `/simplify`, `/review`, `/docs`, `/legal` (L16) and `/accounting` ran per part. No migration in Stage 2, so nothing is owed on production; the Stage 2 commits shipped in release/2026-11-15.
+      **Carried out of Stage 2 (not dropped):** (1) making subscription changes replayable stays its own later item (TODO: "Later, once real customers pay"; drawn first; refused today so a replay cannot write Stripe's old copy over newer state; low value while nobody pays). (2) Check the first production replay: the format refusal assumes production's events are written in API version `2026-04-22.dahlia` like dev's. (3) The accepted `/review` items listed under Part 5 stay accepted. (4) `/legal` L16 (staff reasons are free text on a permanent log) stays open in `LEGAL_INDEX.md`.
 - Known red tests NOT from this work: `workspace-flip-guard` and `support-console-stage4b-inforce-guard` (an untracked file from another
   session and a committed one the allowlists do not list), `support-console-stage3-guard` (a modified bookkeeping window file).

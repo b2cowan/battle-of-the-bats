@@ -70,7 +70,11 @@ when a part isn't billed yet), lists show only the original, and nothing in the 
 Session 2 is built too: on a final schedule, Add time opens New schedule's form for the new time — any permit (one already
 on the schedule offers only the time the schedule doesn't use), its own dates from today on, its own dates off, and nobody
 ticked to start — and keeping the draft adds it as its own part without touching anything already on the schedule. On a
-draft, Add time is gone and Settings… has the Permits picker. Next: Session 3 (sending and billing a part; until then a
-part can be added and seen, not sent).
+draft, Add time is gone and Settings… has the Permits picker. Session 3 is built (2026-11-17): Send the changes sends the
+schedule and its added parts in one go, one email per team and one bell per bill; each part is billed on its own, from a
+"Bill it…" door on the part (a reader without the club's Accounting sees "Bill set" and no figure); a part sent free gets a
+reminder row; a part can be taken off before or after it is sent; and if a send is refused part-way, only the families of what
+went out are told and the rest waits. The words, the legal check and the help are done; the owner's walk (§538) is published
+and is the last step before this closes.
 
 Plan: `docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`.

@@ -206,7 +206,9 @@ sentence; the walked working-draft cards change shape and their walks are redone
   30-day sentence only once 523 is on production). **Owner ruling 2026-11-22: the GENERAL row** — one "work you save
   for later" row, worded so it is true of the bank check today, so later saved-work features need no line of their own
   (carried into the next privacy draft by `/legal`; not the published 2026-11-17 text). **Part 2 owner question still to
-  raise:** a "No" to "Still waiting?" is not kept (WD2).
+  raise:** a "No" to "Still waiting?" is not kept (WD2). Committed `96e2135ea` (the record) and `e5dc36ad1` (the
+  nightly sweep, its own commit) 2026-11-22. **Part 2 build prompt written 2026-11-22:**
+  `BANK_CHECK_NOVICE_UX_S7_PART2_BUILD_PROMPT.md`.
 
 **Order:** S1 → S1b → S2 → S3 → S7 (drawing session, then build). S4 may run any time after S1. S5 is decided after S3.
 

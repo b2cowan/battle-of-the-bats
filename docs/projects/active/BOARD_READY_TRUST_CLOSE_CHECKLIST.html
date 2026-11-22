@@ -1,0 +1,362 @@
+<title>Trust Close-Out Checklist</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; an index of three part cards, one part open at a time; calls as radio rows, steps as Do / You should see rows with a tick; one paste-back at the foot. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.card.key { border-color: var(--accent); }
+.card.danger { border-color: var(--bad); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+.never { background: var(--bad-soft); color: var(--ink); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.part { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step.hot { border-color: var(--bad); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .n { font: 600 12px/1.9 var(--font-mono); color: var(--muted); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .who.new { color: var(--bad); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opts label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opts input { margin-top: 4px; accent-color: var(--accent); }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.fields label { display: grid; gap: 3px; font-size: 13px; color: var(--muted); min-width: 0; }
+.fields input { font: 14px/1.4 var(--font-mono); padding: 8px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; min-width: 0; }
+.sql { display: grid; gap: 6px; }
+.sql pre { margin: 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 13px/1.5 var(--font-mono); overflow-x: auto; white-space: pre; }
+.call { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.call h4 { margin: 0; font-size: 15.5px; line-height: 1.3; text-wrap: balance; }
+.call .what { color: var(--muted); }
+.grp { display: grid; gap: 10px; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; min-height: 40px; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+.btn.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.btn.small { padding: 7px 10px; font-size: 13px; min-height: 0; justify-self: start; }
+textarea { width: 100%; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+[hidden] { display: none !important; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (pointer: coarse) { .verdict button, .btn { min-height: 44px; } .opts label { padding: 11px 10px; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <span class="eyebrow">Board Ready · owner checklist · written 16 November 2026</span>
+    <h1>Close the access review, write down the backups, rehearse one restore</h1>
+    <p class="lead">Three parts, done in this order. Part A is decisions only, and nothing is built until you paste them back. Parts B and C are things only you can do, in the host's dashboard. Your ticks are saved in this browser. When you are done, press <b>Build the summary</b> at the foot and paste it into the chat.</p>
+  </header>
+
+  <div class="card key">
+    <h3>Read this first: it is not three calls</h3>
+    <p>I checked every item in the access review against the code as it stands today. Of 48 items, <b>28 are fixed and confirmed</b>. The three calls I named earlier are real, but <b>18 items in all are not fixed</b>: 9 the review left open on purpose for you to rule, and 9 small ones nobody had ruled. None exposes one club's people to another club. Two more can only be answered on production. Part A is all of them, each with my recommendation already selected, so you only change the ones you disagree with.</p>
+  </div>
+
+  <div class="index" id="index"></div>
+  <div id="open"></div>
+
+  <div class="card">
+    <h2>Paste-back</h2>
+    <p class="lead">One summary for all three parts. The counts beside each part are what I read; a verdict is your opinion of it.</p>
+    <div class="row"><button class="btn primary" id="build" type="button">Build the summary</button><button class="btn" id="copy" type="button">Copy</button><span class="progress" id="overall"></span></div>
+    <pre class="out" id="out">Press Build the summary.</pre>
+  </div>
+</div>
+
+<script>
+(function(){
+var KEY = "br-trust-close-v1";
+var S = { calls:{}, ticks:{}, picks:{}, vals:{}, verdict:{}, notes:{}, open:"A" };
+try { var raw = localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); for (var k in o) S[k] = o[k]; } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+var SQL = {
+count: "select\n  (select count(*) from organizations) as clubs,\n  (select count(*) from auth.users) as accounts,\n  (select to_char(max(created_at) at time zone 'America/Toronto', 'YYYY-MM-DD HH24:MI') from auth.users) as newest_account,\n  (select count(*) from storage.objects) as file_records,\n  (select count(*) from cron.job where active) as jobs_switched_on;",
+jobs: "select cron.unschedule(jobname) from cron.job;",
+keys: "delete from vault.secrets where name in ('app_cron_base_url', 'app_cron_secret');",
+check: "select\n  (select count(*) from cron.job) as jobs_left,\n  (select count(*) from vault.secrets where name in ('app_cron_base_url', 'app_cron_secret')) as keys_left;"
+};
+
+/* ---------- Part A: the calls. First option is the recommendation and starts selected, unless pre:false ---------- */
+var CALLS = [
+ {g:"Small fixes I recommend (each is under an hour or two of build)"},
+ {id:1, t:"A \"See it live\" visitor can create a real coach's team", what:"The no-login demo signs every visitor into one shared demo account. That account is turned away when it tries to create a club or a league, though only by the one-club rule, which lets the request through if its own check fails. Nothing stops it creating a coach's team. It takes a hand-written request, not a button. The harm is junk teams on the demo account and a bounced welcome email. No customer's information is exposed.", o:["Refuse the demo account outright at all three doors, with a build check that keeps it so","Leave as is"]},
+ {id:2, t:"Scorekeepers and staff can read permits and the venue library", what:"Today everyone in a club except a coach reads them: permit names, reference numbers, dates, notes, who booked each block, and each venue's bookings contact email. They never see costs or the permit file itself.", o:["Only people who schedule, run tournaments or handle money read them","Leave as is: it was the library's own rule"]},
+ {id:3, t:"An assistant coach can confirm \"same player\" without seeing the details", what:"Since the fix, an assistant without roster privacy sees only the child's name and season on the returning-player card, but can still press Confirm. A confirm joins two children's records across the club and opens the earlier tryout history.", o:["Only a coach who can see roster details confirms; the others don't see the button","Leave as is"]},
+ {id:4, t:"Every member's browser receives the club's billing facts", what:"Any active member, a scorekeeper included, is sent the club's subscription amount, renewal date, billing contact email and payment-processor ids behind the scenes. No screen shows them to that person, and the ids are useless without our secret key.", o:["Send them only to the owner and admins","Leave as is"]},
+ {id:5, t:"A check-in volunteer is sent fee amounts", what:"The check-in board's data carries each division's fee total. The board itself doesn't show it.", o:["Stop sending it to check-in volunteers","Leave as is"]},
+ {id:6, t:"Uploaded files keep the name and type the browser claims", what:"Player documents and document templates are stored under the name and type as sent. They stay inside the club's own private store.", o:["Clean the name and check the type on upload","Leave as is"]},
+ {id:7, t:"A mistyped week in a house-league schedule address shows an error page", what:"A bad date in the address crashes the page instead of falling back.", o:["Show the current week instead","Leave as is"]},
+ {id:8, t:"A rules save that times out and is retried can add a point twice", what:"The fix narrowed this but didn't end it. It needs the save done as one step.", o:["Save in one step so it can't happen","Leave as is"]},
+ {id:9, t:"A permit file's name and size show to readers who can't open it", what:"A file named with the fee would give the fee away.", o:["Those readers see \"File attached\" and nothing more","Leave as is"]},
+ {id:10, t:"A group-limited member can hold a permit for a team outside their groups", what:"The save checks the club but never the member's own team groups.", o:["Check it on save","Leave as is"]},
+ {id:11, t:"A parent with an unconfirmed email gets a vague refusal", what:"When a family claim is refused because the email isn't confirmed, the page says only that it didn't go through.", o:["Say \"confirm your email first\"","Leave as is"]},
+ {g:"Bigger, or a judgement call"},
+ {id:12, t:"A club can't replace a team's pay link from its own screen", what:"The fix made a link replaceable, but only behind the scenes. Until there is a \"Send a new link\" button, a club that learns a link was forwarded has to ask us.", o:["Draw and build the button (its own short drawing session first)","Leave it with support for now, and say so in the report"]},
+ {id:13, t:"Adding a person who already has an account needs no yes from them", what:"Inviting someone new sends an invitation they accept. Inviting someone who already has an account makes them an active member straight away. A board may care that a person can be attached to a club without agreeing. This is a medium build.", o:["An existing account gets an invitation to accept too","Leave as is"]},
+ {id:14, t:"Rules and resources can still be edited after a tournament is completed", what:"Pools and the schedule lock when an event is completed. Rules, files and links don't, and never did.", o:["Lock them with the rest of a completed event","Leave them editable"]},
+ {id:15, t:"A coach's Remove ends the parent's connection on every team", what:"The link is to the child, not to one team. Since the fix, Remove asks first and says exactly that.", o:["Accept it: the window says what happens","Build per-team removal (a project of its own)"]},
+ {id:16, t:"Staff who can open Communication see who each email went to", what:"That is the screen's own rule: whoever can open it sees the recipients.", o:["Accept it as designed","Hide recipients from staff"]},
+ {id:17, t:"About eight people could close anonymous feedback for a day", what:"The daily cap of 40 anonymous messages is shared by everyone. Signed-in feedback is not affected.", o:["Accept it for now","Soften the cap"]},
+ {id:18, t:"Sign-up tells a person their email has a pending invitation, and names the club", what:"Decided on purpose in July after a review: the club's name only, never the role, so an invited person isn't sent down the wrong path.", o:["Accept it as designed","Make the message neutral"]},
+ {g:"Two checks, one new finding, and what we say afterwards"},
+ {id:19, t:"A read-only check of old link rows on production", what:"After the resources fix, one question to the production database lists any old link that points somewhere other than a web address. I can run it. It reads and changes nothing.", o:["Yes, run the read","Not now"]},
+ {id:20, t:"Live Stripe: are there any demo customers?", pre:false, what:"Only you can look. In Stripe, with live mode on, open Customers and search for example.com (the demo accounts' address). The review asked for this because reports don't leave the demo clubs out.", o:["Looked: none found","Looked: found some (say what in the notes)","Not looked yet"]},
+ {id:21, t:"New finding: a restored copy's scheduled jobs call the live site", what:"A restored copy of the database starts its scheduled jobs at once, and they call the live site with a valid key. Part C switches them off by hand. A restore drill every quarter is on the public roadmap, so before the first live club the live site should refuse a second caller for the same job and minute.", o:["Plan it as a small build before the first live club","Keep the by-hand step"]},
+ {id:22, t:"What the public roadmap says once the fixes you chose are live", what:"Some items will be fixed and some accepted as designed, so \"every finding fixed\" would still not be true. \"Resolved\" is: each one fixed, or ruled acceptable with the reason on record.", o:["\"A full access review of who can see what, every finding resolved\"","Keep \"with its fixes live\""]}
+];
+
+/* ---------- Parts B and C: steps. kinds: check · pick (one box per answer) · fill (boxes to type into) ---------- */
+var PARTS = {
+ B:{ title:"Part B · Write down the backups", job:"Read what the host actually keeps, off the host's own pages", who:"prod",
+  meta:[
+   ["What this is for","You ruled that daily backups are enough. The board pack and the public roadmap say \"daily backups, kept 7 days\". This part reads that off the host's own screen and page, so the sentence rests on something you saw."],
+   ["It passes when","You have the number of backups, the oldest and newest dates, and whether a restore to a new project is offered."],
+   ["Not in this part","Restoring anything. Nothing here changes a setting."],
+   ["Where","The host's dashboard (Supabase), signed in as yourself, in the PRODUCTION project: the one the live site runs on, not the dev one. About 10 minutes, on a computer."]
+  ],
+  steps:[
+   {id:"b1", k:"check", do:"In the production project, open Database, then Backups.", see:"A list of daily backups, one row per day."},
+   {id:"b2", k:"fill", do:"Count the rows in the daily list.", see:"The host's page says Pro keeps 7 days, so expect 7.", f:[["count","How many"]]},
+   {id:"b3", k:"fill", do:"Write down the oldest and the newest backup's date and time, as the screen shows them.", f:[["oldest","Oldest"],["newest","Newest"]]},
+   {id:"b4", k:"pick", do:"Look for a tab named \"Restore to a New Project\" on the Backups page.", o:["It is there","It is not there"]},
+   {id:"b5", k:"pick", do:"Look at one row in the daily list. Does it offer a Download button?", see:"Either answer is fine. It tells me which kind of backup this is.", o:["Yes, there is Download","No Download, only Restore"]},
+   {id:"b6", k:"pick", do:"Open the host's own page and find the sentence about the Pro plan.", link:["https://supabase.com/docs/guides/platform/backups","supabase.com/docs/guides/platform/backups"], o:["It says the last 7 days of daily backups","It says something else (write it in the notes)"]},
+   {id:"b7", k:"check", do:"On the same page, read the sentence that begins \"Database backups do not include objects you store via the Storage API\".", see:"Uploaded files (logos, rules files, player documents) are not in a database backup. You should know this before the pack is written; it is in my notes for the brief."},
+   {id:"b8", k:"pick", do:"In the production project, open Settings, then Add-ons, and look at Point in Time Recovery.", o:["Off, as ruled","On"]}
+  ]},
+ C:{ title:"Part C · Rehearse one restore", job:"Bring a backup back as a separate copy, check it, delete it", who:"both",
+  meta:[
+   ["What this is for","A backup nobody has restored is a hope. This restores the newest daily backup into a brand-new, separate project, checks the data is there, and deletes the copy. After it, the pack can say a restore has been rehearsed, and how long it took."],
+   ["It passes when","The copy's counts match production's as of the backup, its jobs are switched off, the copy is deleted, and the live site is untouched."],
+   ["Not in this part","Restoring over the live database. That is never part of a rehearsal."],
+   ["Where","The host's dashboard, on a computer. Give it 45 minutes without interruption. The copy bills by the hour until deleted; read the estimate in step 4."]
+  ],
+  before:[
+   "<b>Start on a weekday after 9:00 a.m. Eastern.</b> The daily jobs run between 3:10 and 8:30 a.m. Eastern, and one runs at 7 minutes past every hour, so aim for the copy to finish between 10 and 55 past.",
+   "<b>Why steps 7 and 8 are urgent.</b> The copy starts its scheduled jobs the moment it is ready, and they call the live site with a valid key. Two of them run every 5 and 15 minutes (game-change emails, web-address checks). Until you run steps 7 and 8, the copy can call the live site alongside the real job. With no live clubs, the worst realistic outcome is one duplicated email to a test family. Both commands were proven on the dev database on 16 November.",
+   "Have this page open beside the dashboard, so the commands are one click away."
+  ],
+  never:"Never press the Restore button beside a backup in the daily list. That one replaces the live database and takes the site down while it runs. The only restore in this part starts from the \"Restore to a New Project\" tab.",
+  steps:[
+   {id:"c1", k:"check", stop:1, do:"Stop check: Part B step 4 said the \"Restore to a New Project\" tab is there.", see:"If it isn't, stop here and paste back what you have. The rehearsal needs a different route."},
+   {id:"c2", k:"fill", who:"prod", do:"In the PRODUCTION project open the SQL Editor, paste the count question, and run it. It only reads.", sql:"count", f:[["p_clubs","clubs"],["p_accounts","accounts"],["p_newest","newest_account"],["p_files","file_records"]]},
+   {id:"c3", k:"fill", who:"prod", do:"Open Database, Backups, then the \"Restore to a New Project\" tab, and choose the newest backup.", f:[["backup","Backup date and time"]]},
+   {id:"c4", k:"fill", who:"prod", do:"Read the cost estimate it shows before you confirm.", see:"There is no restore fee in the host's pages; the copy bills as a second project, by the hour.", f:[["cost","Estimate shown"]]},
+   {id:"c5", k:"fill", who:"prod", do:"Confirm the restore. If it asks for a name, call it RESTORE TEST.", f:[["started","Time started"]]},
+   {id:"c6", k:"fill", do:"Stay on the page until the new project shows as ready.", see:"The host gives no figure for how long this takes. The time you note here goes in the board pack.", f:[["finished","Time finished"]]},
+   {id:"c7", k:"check", hot:1, who:"copy", do:"At once, in the NEW project (its name at the top reads RESTORE TEST), open the SQL Editor, paste this, and run it.", sql:"jobs", see:"A short list of results and no error. The copy's scheduled jobs are gone."},
+   {id:"c8", k:"check", hot:1, who:"copy", do:"In the same editor, paste this and run it.", sql:"keys", see:"Success. The copy no longer holds the key to the live site."},
+   {id:"c9", k:"check", who:"copy", do:"In the same editor, paste this check and run it.", sql:"check", see:"jobs_left reads 0 and keys_left reads 0. If either doesn't, go to step 14 and delete the copy now."},
+   {id:"c10", k:"fill", who:"copy", do:"Still in the NEW project, paste the count question from step 2 and run it.", f:[["c_clubs","clubs"],["c_accounts","accounts"],["c_newest","newest_account"],["c_files","file_records"]]},
+   {id:"c11", k:"check", do:"Compare step 10 with step 2.", see:"Clubs and accounts are the same as production's, or lower only by what was added after the backup's time. The copy's newest account is not later than the backup's time. jobs_switched_on reads 0 in the copy."},
+   {id:"c12", k:"check", who:"copy", do:"In the NEW project open the Table Editor and the organizations table.", see:"A club you know by name is in the list."},
+   {id:"c13", k:"pick", who:"copy", do:"In the NEW project open Storage.", see:"Expected: nothing there. Uploaded files are not part of a database backup, though step 10 still counts their records.", o:["No files, as expected","Files are there"]},
+   {id:"c14", k:"check", hot:1, who:"copy", do:"Delete the copy: in the NEW project open Settings, General, Delete project. Before you type anything, read the project name on the page.", see:"The name reads RESTORE TEST, not your production project. Then type it and delete."},
+   {id:"c15", k:"check", do:"Open the list of all your projects.", see:"Only your original projects are there. The copy is gone, so it has stopped billing."},
+   {id:"c16", k:"check", who:"prod", do:"Open the live site and sign in.", see:"It loads and signs you in as normal."}
+  ]}
+};
+var WHO = { prod:"In the production project", copy:"In the new copy", both:"" };
+
+function callAnswer(c){ var v = S.calls[c.id]; if (v === undefined && c.pre !== false) v = 0; return v; }
+function stepDone(st){
+  if (st.k === "pick") return S.picks[st.id] !== undefined;
+  return !!S.ticks[st.id];
+}
+function partCount(p){ var n = 0; PARTS[p].steps.forEach(function(st){ if (stepDone(st)) n++; }); return [n, PARTS[p].steps.length]; }
+function callsCount(){ var n = 0, m = 0; CALLS.forEach(function(c){ if (!c.id) return; m++; if (callAnswer(c) !== undefined) n++; }); return [n, m]; }
+function changed(){ var n = 0; CALLS.forEach(function(c){ if (c.id && c.pre !== false && S.calls[c.id] !== undefined && S.calls[c.id] !== 0) n++; }); return n; }
+
+function chip(p){
+  var v = S.verdict[p];
+  if (p === "A"){
+    var c = callsCount();
+    if (v === "pass") return ['pass', 'Ruled · ' + c[0] + ' of ' + c[1]];
+    return c[0] === c[1] ? ['prog', c[1] + ' calls · ' + changed() + ' changed from my recommendation'] : ['prog', c[0] + ' of ' + c[1] + ' answered'];
+  }
+  var k = partCount(p), full = k[0] === k[1];
+  if (v === "pass") return full ? ['pass','Passed'] : ['thin','Passed · only ' + k[0] + ' of ' + k[1] + ' ticked'];
+  if (v === "issue") return ['issue','Issue · ' + k[0] + ' of ' + k[1]];
+  if (v === "call") return ['call','Needs a call · ' + k[0] + ' of ' + k[1]];
+  return k[0] ? ['prog','In progress ' + k[0] + ' of ' + k[1]] : ['', 'Not started'];
+}
+function renderIndex(){
+  var cards = [["A","Part A · Your calls on the access review","Decide the 18 open items, two checks and what we say afterwards"],["B",PARTS.B.title,PARTS.B.job],["C",PARTS.C.title,PARTS.C.job]];
+  document.getElementById("index").innerHTML = cards.map(function(c){
+    var ch = chip(c[0]);
+    return '<button class="wcard" type="button" data-part="' + c[0] + '" aria-expanded="' + (S.open === c[0]) + '"><span class="t">' + esc(c[1]) + '</span><span class="j">' + esc(c[2]) + '</span><span class="chip ' + ch[0] + '">' + esc(ch[1]) + '</span></button>';
+  }).join("");
+  var b = partCount("B"), c2 = partCount("C"), a = callsCount();
+  document.getElementById("overall").textContent = "Calls " + a[0] + " of " + a[1] + " · boxes " + (b[0] + c2[0]) + " of " + (b[1] + c2[1]);
+}
+function verdictRow(p, labels){
+  return '<div class="verdict" data-part="' + p + '">' + labels.map(function(l){ return '<button type="button" data-v="' + l[0] + '" class="' + (S.verdict[p] === l[0] ? "on" : "") + '">' + l[1] + '</button>'; }).join("") + '</div>'
+    + '<label style="display:grid;gap:4px"><span class="lab" style="font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Notes for this part</span><textarea id="notes-' + p + '" data-notes="' + p + '">' + esc(S.notes[p] || "") + '</textarea></label>';
+}
+function renderA(){
+  var h = '<div class="card part"><h2>Part A · Your calls on the access review</h2><div class="meta">'
+    + '<div><h3>What this is for</h3><p>To let us say, truthfully, that the access review is closed: every item fixed, or ruled acceptable with the reason on record. Each call below is one item the review did not fix.</p></div>'
+    + '<div><h3>How to answer</h3><p>The first answer on each is my recommendation and is already selected. Change only the ones you disagree with. Nothing is built from this page: I build the fixes you choose after you paste the summary back, with a review and your yes before any commit.</p></div></div>';
+  CALLS.forEach(function(c){
+    if (c.g){ h += '<h3 style="margin-top:6px">' + esc(c.g) + '</h3>'; return; }
+    var a = callAnswer(c);
+    h += '<div class="call"><h4>' + c.id + ' · ' + esc(c.t) + '</h4><p class="what">' + esc(c.what) + '</p><div class="opts">'
+      + c.o.map(function(o, j){ return '<label><input type="radio" name="call' + c.id + '" id="call' + c.id + '-' + j + '" data-call="' + c.id + '" value="' + j + '"' + (a === j ? " checked" : "") + '><span><b>' + String.fromCharCode(65 + j) + '</b> · ' + esc(o) + (j === 0 && c.pre !== false ? " (recommended)" : "") + '</span></label>'; }).join("")
+      + '</div></div>';
+  });
+  h += '<h3>Sign off the calls</h3>' + verdictRow("A", [["pass","These are my rulings"],["call","I want to talk some through first"]]) + '</div>';
+  return h;
+}
+function sqlBlock(key){
+  return '<div class="sql"><pre id="sql-' + key + '">' + esc(SQL[key]) + '</pre><button class="btn small" type="button" data-copysql="' + key + '">Copy this</button></div>';
+}
+function renderSteps(p){
+  var P = PARTS[p];
+  var h = '<div class="card part"><h2>' + esc(P.title) + '</h2><div class="meta">' + P.meta.map(function(m){ return '<div><h3>' + esc(m[0]) + '</h3><p>' + esc(m[1]) + '</p></div>'; }).join("") + '</div>';
+  if (P.before) h += '<div class="note"><h3 style="margin-bottom:6px">Before you start</h3><ul class="plain">' + P.before.map(function(b){ return '<li>' + b + '</li>'; }).join("") + '</ul></div>';
+  if (P.never) h += '<div class="never"><b>The one thing never to do.</b> ' + esc(P.never) + '</div>';
+  h += '<ol class="steps">';
+  P.steps.forEach(function(st, i){
+    var done = stepDone(st);
+    h += '<li class="step' + (done ? " done" : "") + (st.stop ? " stop" : "") + (st.hot ? " hot" : "") + '">';
+    h += st.k === "pick" ? '<span class="n">' + (i + 1) + '</span>' : '<input type="checkbox" id="t-' + st.id + '" data-tick="' + st.id + '"' + (S.ticks[st.id] ? " checked" : "") + ' aria-label="Step ' + (i + 1) + ' done">';
+    h += '<div class="body">';
+    if (st.who) h += '<span class="who' + (st.who === "copy" ? " new" : "") + '">' + WHO[st.who] + '</span>';
+    h += '<div><span class="lab">' + (i + 1) + ' · Do</span><p>' + esc(st.do) + '</p></div>';
+    if (st.link) h += '<p><a href="' + st.link[0] + '" target="_blank" rel="noopener">' + esc(st.link[1]) + '</a></p>';
+    if (st.sql) h += sqlBlock(st.sql);
+    if (st.see) h += '<div><span class="lab">You should see</span><p>' + esc(st.see) + '</p></div>';
+    if (st.f) h += '<div class="fields">' + st.f.map(function(f){ return '<label>' + esc(f[1]) + '<input type="text" id="v-' + f[0] + '" data-val="' + f[0] + '" value="' + esc(S.vals[f[0]] || "") + '" autocomplete="off"></label>'; }).join("") + '</div>';
+    if (st.o) h += '<div class="opts">' + st.o.map(function(o, j){ return '<label><input type="radio" name="pick-' + st.id + '" id="p-' + st.id + '-' + j + '" data-pick="' + st.id + '" value="' + j + '"' + (S.picks[st.id] === j ? " checked" : "") + '><span>' + esc(o) + '</span></label>'; }).join("") + '</div>';
+    h += '</div></li>';
+  });
+  h += '</ol><h3>Sign off this part</h3>' + verdictRow(p, [["pass","Passed"],["issue","Issue"],["call","Needs a call"]]) + '</div>';
+  return h;
+}
+function renderOpen(){
+  document.getElementById("open").innerHTML = S.open === "A" ? renderA() : S.open ? renderSteps(S.open) : "";
+}
+function refresh(full){ renderIndex(); if (full) renderOpen(); save(); }
+
+document.getElementById("index").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-part]"); if (!b) return;
+  S.open = S.open === b.dataset.part ? "" : b.dataset.part; refresh(true);
+  if (S.open) document.getElementById("open").scrollIntoView({ block: "start" });
+});
+document.getElementById("open").addEventListener("change", function(e){
+  var t = e.target;
+  if (t.dataset.call){ S.calls[t.dataset.call] = Number(t.value); refresh(false); }
+  else if (t.dataset.pick){ S.picks[t.dataset.pick] = Number(t.value); t.closest(".step").classList.add("done"); refresh(false); }
+  else if (t.dataset.tick){ S.ticks[t.dataset.tick] = t.checked; t.closest(".step").classList.toggle("done", t.checked); refresh(false); }
+});
+document.getElementById("open").addEventListener("input", function(e){
+  var t = e.target;
+  if (t.dataset.val){ S.vals[t.dataset.val] = t.value; save(); }
+  else if (t.dataset.notes){ S.notes[t.dataset.notes] = t.value; save(); }
+});
+function copyText(text, btn, selId){
+  var done = function(){ var old = btn.textContent; btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = old; }, 1400); };
+  var pick = function(){ var r = document.createRange(); r.selectNodeContents(document.getElementById(selId)); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(pick); else pick();
+}
+document.getElementById("open").addEventListener("click", function(e){
+  var c = e.target.closest("button[data-copysql]");
+  if (c){ copyText(SQL[c.dataset.copysql], c, "sql-" + c.dataset.copysql); return; }
+  var v = e.target.closest(".verdict button"); if (!v) return;
+  var p = v.parentNode.dataset.part;
+  S.verdict[p] = S.verdict[p] === v.dataset.v ? undefined : v.dataset.v;
+  v.parentNode.querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", S.verdict[p] === b.dataset.v); });
+  refresh(false);
+});
+
+function val(k){ var v = (S.vals[k] || "").trim(); return v || "(blank)"; }
+function pickText(p, id){ var st = PARTS[p].steps.filter(function(x){ return x.id === id; })[0]; var v = S.picks[id]; return v === undefined ? "(not answered)" : st.o[v]; }
+function verdictWord(p){ var v = S.verdict[p]; return v === "pass" ? "PASS" : v === "issue" ? "ISSUE" : v === "call" ? "NEEDS A CALL" : "no verdict"; }
+function unticked(p){ var out = []; PARTS[p].steps.forEach(function(st, i){ if (!stepDone(st)) out.push(i + 1); }); return out.length ? " · not ticked: " + out.join(", ") : ""; }
+function build(){
+  var L = [];
+  L.push("Trust close-out (checklist written 2026-11-16)");
+  L.push("");
+  var cc = callsCount();
+  L.push("PART A · access calls [" + (S.verdict.A === "pass" ? "RULED" : S.verdict.A === "call" ? "TALK FIRST" : "no sign-off") + "] " + cc[0] + "/" + cc[1]);
+  L.push("Access calls: " + CALLS.filter(function(c){ return c.id; }).map(function(c){ var a = callAnswer(c); return c.id + (a === undefined ? "?" : String.fromCharCode(65 + a)); }).join(" · "));
+  var diff = CALLS.filter(function(c){ return c.id && c.pre !== false && S.calls[c.id] !== undefined && S.calls[c.id] !== 0; });
+  L.push(diff.length ? "Changed from the recommendation: " + diff.map(function(c){ return c.id + " (" + c.o[S.calls[c.id]] + ")"; }).join("; ") : "All as recommended.");
+  var s20 = S.calls[20]; L.push("Live Stripe check (20): " + (s20 === undefined ? "(not answered)" : CALLS.filter(function(c){ return c.id === 20; })[0].o[s20]));
+  if ((S.notes.A || "").trim()) L.push("Notes A: " + S.notes.A.trim());
+  L.push("");
+  var b = partCount("B");
+  L.push("PART B · backups [" + verdictWord("B") + "] " + b[0] + "/" + b[1] + unticked("B"));
+  L.push("Backups listed: " + val("count") + " · oldest: " + val("oldest") + " · newest: " + val("newest"));
+  L.push("Restore to a New Project tab: " + pickText("B","b4") + " · Download on a row: " + pickText("B","b5"));
+  L.push("Host's page: " + pickText("B","b6") + " · Point in Time Recovery: " + pickText("B","b8"));
+  if ((S.notes.B || "").trim()) L.push("Notes B: " + S.notes.B.trim());
+  L.push("");
+  var c = partCount("C");
+  L.push("PART C · restore rehearsal [" + verdictWord("C") + "] " + c[0] + "/" + c[1] + unticked("C"));
+  L.push("Production: clubs " + val("p_clubs") + " · accounts " + val("p_accounts") + " · newest " + val("p_newest") + " · file records " + val("p_files"));
+  L.push("Backup used: " + val("backup") + " · estimate: " + val("cost") + " · started " + val("started") + " · finished " + val("finished"));
+  L.push("Copy:       clubs " + val("c_clubs") + " · accounts " + val("c_accounts") + " · newest " + val("c_newest") + " · file records " + val("c_files"));
+  L.push("Storage in the copy: " + pickText("C","c13"));
+  if ((S.notes.C || "").trim()) L.push("Notes C: " + S.notes.C.trim());
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){ build(); copyText(document.getElementById("out").textContent, this, "out"); });
+
+refresh(true);
+})();
+</script>

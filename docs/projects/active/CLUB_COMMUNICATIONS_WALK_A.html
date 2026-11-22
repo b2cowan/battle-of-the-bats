@@ -103,7 +103,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   </dl></section>
   <section class="card"><h2>Calls to make as you go</h2><ul>
     <li><strong>The switch’s line (6.1).</strong> “Group email and the list of what was sent. Off: none from any screen; board email still arrives.” Clear enough on the member window, or want it said differently? (Close runs the one words pass.)</li>
-    <li><strong>The filter (1.2).</strong> It reads “Show: All” with To families and To coaches inside, shown because the club has sent more than one kind. Is that where you expect it?</li>
+    <li><strong>The filter (1.2).</strong> A square <strong>Filter</strong> button at the right, before Email families, as on Registrations (owner 2026-11-20, replacing the “Show: All” dropdown), shown because the club has sent more than one kind. Is that where you expect it?</li>
   </ul></section>
   <section class="card">
     <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
@@ -130,13 +130,13 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   { who: OWNER + " · desk", do: "Sign in and look at the sidebar’s <strong>Club</strong> group.",
     see: "Accounting · Families · <strong>Communications</strong> (an envelope) · Public site · Organization." },
   { who: OWNER, do: "Press <strong>Communications</strong>.",
-    see: "The bar names <strong>Communications</strong>, with no tab row under it. The row above the list reads “<strong>3 emails sent</strong>”, a <strong>Show</strong> filter on All, and a lime <strong>+ Email families</strong> button. Columns Sent · Subject · To · By · Reached.", call: "Call: the filter’s place." },
+    see: "The bar names <strong>Communications</strong>, with no tab row under it. The row above the list reads “<strong>3</strong> emails” in small grey type on the left; on the right a square <strong>Filter</strong> button and a lime <strong>+ Email families</strong> button. Columns Sent · Subject · To · By · Reached.", call: "Call: the filter’s place." },
   { who: OWNER, do: "Read the three rows.",
     see: COACHES + " · All coaches · Morgan Ellis · <strong>9 of 9</strong>; “A message to this family” · 2026 Fall House League · Dana Hollis · Riley Okonkwo · 1 family; “A message to this family” · Chidi Okafor · Morgan Ellis · 1 family." },
   { who: OWNER, do: "Open " + COACHES + ".",
     see: "Eyebrow <strong>Communications</strong>. Sent, By Morgan Ellis, To All coaches, Reached 9 of 9; the message; “<strong>Who it went to · 9</strong>”: Casey Morgan, Jordan Reyes, Marcus Bell, Pat Doucet (House league · Reds, U9 Rookie), Priya Nair, Riley Assistant, Robin Hale (House league · Hawks, U11 Pinto), Sam Whitford, Taylor Brooks, each Sent; “Replies went to Morgan Ellis”; the line “Sent means the mail service accepted it…”. No email address anywhere." },
-  { who: OWNER, do: "Close the record and open the <strong>Show</strong> filter.",
-    see: "All · To families · To coaches · 2026 Fall House League." }
+  { who: OWNER, do: "Close the record and open <strong>Filter</strong>.",
+    see: "Two groups of ticks: <strong>Sent to</strong> Families · Coaches, and <strong>Season</strong> 2026 Fall House League. Nothing ticked; close it." }
  ]},
  { id: "2", title: "The owner emails every family (desk)", steps: [
   { who: OWNER, do: "Press <strong>+ Email families</strong>.",
@@ -144,7 +144,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   { who: OWNER, do: "Leave Every family, type the subject <code>Fields closed Saturday</code> and a one-line message.",
     see: "The foot counts <strong>102 families</strong> (the Okafors left out as opted out) and the button reads <strong>Send to 102</strong>." },
   { who: OWNER, do: "Press <strong>Send to 102</strong>.",
-    see: "The window closes; the note “Sent. Reached 102 of 102 families.” The list now reads “<strong>4 emails sent</strong>”, " + FIELDS + " at the top · Every family · Morgan Ellis · 102 of 102." },
+    see: "The window closes; the note “Sent. Reached 102 of 102 families.” The list now reads “<strong>4</strong> emails”, " + FIELDS + " at the top · Every family · Morgan Ellis · 102 of 102." },
   { who: OWNER, do: "Open " + FIELDS + ".",
     see: "Going to 102 · Reached 102 of 102 · <strong>Opted out 1: the Okafor family</strong> · Didn’t go 0 · Head coaches copied 5, then the message." }
  ]},
@@ -152,13 +152,13 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   { who: ADMIN + " · desk", do: "Sign in and look at the sidebar’s Club group.",
     see: "Accounting · <strong>Communications</strong> · Public site · Organization. No Families." },
   { who: ADMIN, do: "Open <strong>Communications</strong>.",
-    see: "“<strong>2 emails sent</strong>”: " + FIELDS + " and " + COACHES + ". <strong>No one-family messages</strong> (they are the Families book’s)." },
+    see: "“<strong>2</strong> emails”:" + FIELDS + " and " + COACHES + ". <strong>No one-family messages</strong> (they are the Families book’s)." },
   { who: ADMIN, do: "Open " + FIELDS + ".",
     see: "The same facts as the owner’s, including <strong>Opted out 1: the Okafor family</strong> (an admin sees family names, ruled ask 12). No link to a household." },
   { who: ADMIN, do: "Close it and press <strong>+ Email families</strong>.",
     see: "Who: Every family, Some rep teams, A house league season. <strong>No Families from a list.</strong> The readers line under the message box." },
   { who: ADMIN, do: "Choose <strong>Some rep teams</strong>, tick <strong>15U AAA</strong>, type the subject <code>15U AAA picture day</code> and a message, and press Send.",
-    see: "Sent, with the reached figure. The list reads “<strong>3 emails sent</strong>”, 15U AAA picture day at the top. You never left Communications." },
+    see: "Sent, with the reached figure. The list reads “<strong>3</strong> emails”, 15U AAA picture day at the top. You never left Communications." },
   { who: ADMIN, do: "In the address bar, open <code>http://localhost:3000/navj-club-comms/admin/families/emails</code>.",
     see: "You land on <strong>Communications</strong> (the old Emails address forwards), not on a Families “not yours” screen." }
  ]},
@@ -166,7 +166,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   { who: REG + " · desk", do: "Sign in and look at the sidebar’s Club group.",
     see: "<strong>Communications</strong> · Organization." },
   { who: REG, do: "Open <strong>Communications</strong>.",
-    see: "“<strong>3 emails sent</strong>”: " + FIELDS + " (Every family), " + COACHES + ", and the one-family message to <strong>the Hollis family</strong> from the season. <strong>Not</strong> 15U AAA picture day (a rep team’s) and not the Okafors’ message (sent from Families)." },
+    see: "“<strong>3</strong> emails”: " + FIELDS + " (Every family), " + COACHES + ", and the one-family message to <strong>the Hollis family</strong> from the season. <strong>Not</strong> 15U AAA picture day (a rep team’s) and not the Okafors’ message (sent from Families)." },
   { who: REG, do: "Open " + FIELDS + ".",
     see: "The message and the counts: Going to 102 · Reached 102 of 102 · <strong>Opted out 1</strong> · <strong>Didn’t go 0</strong> · Head coaches copied 5, with <strong>no family name</strong> anywhere." },
   { who: REG, do: "Close it and open " + COACHES + ".",

@@ -34,10 +34,10 @@ has a home in one of these stages. Order is by dependency and rework risk, never
    created in Stripe, and `tests/unit/promotions-record-only-guard.test.ts` fails if a checkout reads promotions or hands Stripe a discount;
    enforcing them is a future stage of its own (`/strategy` stacking rule against free time, Founding comps and trials, then `/accounting`).
    The Stripe setup guide's subscription half was rewritten against the code; the Connect half kept. Owner ruled "Stage 0 and the checklist first".
-2. **Stage 2 — read-only views.** Not built. One customer's billing record on our own copy of Stripe facts (drawings tab 9); webhook health and the Stripe
+2. **Stage 2 — read-only views.** **Parts 1–5 built, walked and shipped (release/2026-11-15; walks §483, §484, §487, §493, §496 all passed; no migrations).** **Stage 2 CLOSED 2026-11-17** (Part 6 closeout is records only; see the build prompt). Carried, not dropped: making subscription changes replayable is its own later item (drawn first, low value until real customers pay). Originally: one customer's billing record on our own copy of Stripe facts (drawings tab 9); webhook health and the Stripe
    settings panel (tab 10, includes the failed-payment outcome setting, S11); reports (§6 item 17: renewals this month, trials ending, failed payments,
    revenue by month, Stripe fees); replay one missed webhook event (§6 item 15). Waits on Stage 0.
-3. **Stage 3 — one-customer tools** (reason required, logged). Not built. §6 items 1-9: (1) billing email, name, address, tax number synced to Stripe;
+3. **Stage 3 — one-customer tools** (reason required, logged). Mostly not built; code check 2026-11-17: item 7 (End at renewal, undo, Finish this ending now, staff side) BUILT, item 4 partly built (Refund this charge via a credit note; account credit and a standalone credit note are not), the rest not built. §6 items 1-9: (1) billing email, name, address, tax number synced to Stripe;
    (2) failed payment: retry now, "fix your card" link, next retry date; (3) mark an invoice paid by cheque or e-transfer, void, write off; (4) credit note and
    account credit; (5) one customer's discount with an end date; (6) move the next charge date, end a trial now, align renewal to season start; (7) End at
    renewal and its undo, staff side; (8) resend our own document; (9) merge duplicate Stripe customers. Also here: payout-failed alert for family
@@ -75,6 +75,23 @@ R. **Stripe test ↔ live reconciliation (owner ask 2026-11-03).** Not planned y
    live-read findings), clean the TEST sandbox until it equals the target, confirm it, make LIVE match, then end-to-end testing (the
    first live portal press, a live purchase, cancel and refund). **Deadline: before Club goes on sale. Tripwire: the first real paying
    customer pulls the four live webhook events and the first live portal press forward.**
+   **2026-11-17 · test audited (read-only, Claude), checklist published** (`https://claude.ai/artifact/NTYToS8ueibVFEqBiaydXm`, 42 boxes
+   plus eight owner calls). Test: 0 failures, 6 warnings. All ten prices, product names, our portal settings and the tax rows (Canada
+   registered, one tax code on every product, prices tax-exclusive) equal the target; the League yearly slot defect of 11-06 is gone.
+   Retired plans in test: the owner archived both retired products on 2026-11-17 (re-read the same day, confirmed archived); their
+   four prices still carry the active flag, so the audit still warns (archive them, or let the audit treat a price on an archived
+   product as retired). The account logo is empty (ruled empty, Q-D2). **Drift found:** the written list of 17 events omits `credit_note.created/.updated/.voided`, which the code acts on
+   (GST/HST Stage 3) and the setup guide says the owner added to BOTH endpoints on 2026-11-07, so the live "ten events missing" count
+   of 11-06 may be stale; the live fix list starts from a fresh live audit (checklist B). The target's own condition that cleanup
+   waits for the tax rows is met in test.
+   **2026-11-17 · LIVE audit pasted by the owner: live equals the target** (0 failures, 3 warnings, 25 passes). Ten prices match; no
+   product-name warning (Premium Coaches Portal renamed); one enabled billing endpoint, no other endpoints, carrying all 17 listed events
+   plus the three credit-note events; no active price outside the ten slots; production holds ten price rows (the four retired rows
+   are gone); live tax read of the same day: Canada registered since 2026-11-06, one tax code on all ten prices, prices tax-behaviour
+   "unspecified" with the account default exclusive (test prices say exclusive explicitly). The three warnings: the credit-note events
+   the audit does not list, our portal settings v2 (created by the first live press), the empty logo (ruled). Left of R: the first live
+   portal press, a live purchase, cancel and refund (after Terms and Privacy are public, Q-L1). The dashboard work was done between
+   2026-11-06 and 11-17 and is evidenced by the audit, not by a dated owner note.
 
 **Done when** Stages 0–9 are complete (R is its own owner ask).
 Open questions, not stages (to `/strategy`): pay by invoice (net 30) for Club and Association; pause billing for the off-season.

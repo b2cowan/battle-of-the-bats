@@ -1,0 +1,252 @@
+<title>Free Time Same Rules Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk shell). */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; margin: 0; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+q { quotes: "“" "”"; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.before { font-size: 14px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+.mail { border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: var(--bg); }
+.mail .btn { align-self: flex-start; background: var(--accent); color: var(--accent-fg); border-radius: 6px; padding: 4px 10px; font-size: 14px; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · §548 · Free time, the same rules</span>
+    <h1>Free time with no end date, and the club’s ending email</h1>
+    <p class="sub">Built and committed 2026-11-20 on the dev server. Two purposes: a coach can be given Premium free time with no end date and staff can still change or end it, and a club whose free time is ending emails its owner.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Until today only a club could be given free time with no end date, and only a coach got reminder emails before free time ran out. Now both work the same way. You give the test coach free time with no end date, see what the coach sees, move it to a date and back, and end it. Then you give the test club a month of Club and see the owner emailed.</p>
+    <p><strong>It passes when</strong> every step reads as written, and Sent emails shows exactly one reminder, to the club’s one owner.</p>
+    <p><strong>Not in this walk</strong> (covered by automated tests instead): that Billing and Support staff keep their 90-day limit and never see <q>No end date</q> (dev has no such staff account); that a coach with no end date cannot cancel (the Cancel section is not shown to them at all, and the server refuses it too); the 3-day email, and a new end date sending both emails again; a team moved into a club ending the old portal’s free time.</p>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server, restarted for this build.</dd>
+      <dt>Staff</dt><dd><code>uat-platform@fieldlogichq.ca</code>, password <code>UATPassword2026!</code> (Pat Quinlan, Super admin), at <code>/platform-admin/login</code>.</dd>
+      <dt>Coach</dt><dd><code>uat-free-coach@uat-free-coach.local</code>, password <code>UATPassword2026!</code> (Frankie Okafor). Use a second browser or a private window, so both stay signed in.</dd>
+      <dt>Keep private</dt><dd>These are dev-only test accounts; the page carries their password.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+      <li>Frankie’s Premium portal had free time that ended on October 29, so the Coaches Portal tab offers to give it again. If the tab instead says Frankie already has free time running, stop and tell me.</li>
+      <li>UAT Test Org is on Tournament Plus with no free time. Its people are one owner, one admin and eight coaches, all test addresses that the mail service never delivers, so the reminder is recorded but goes nowhere.</li>
+      <li>Keep this chat open for part E. I’m watching dev for your give in part D, and I run the day’s reminder job twice within a minute of it.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>The email the club’s owner gets</h2>
+    <p class="sub">Built from the product’s own words for part D’s give (Club through December 4, 2026). Walked today, it says 14 days; tomorrow, 13. Step E3 asks whether it reads right.</p>
+    <div class="mail">
+      <span class="label">Subject</span>
+      <strong>Your free time on Club has 14 days left</strong>
+      <p>UAT Test Org’s free time on Club has 14 days left. It runs through December 4, 2026.</p>
+      <p>On December 5 UAT Test Org goes back to Tournament Plus automatically. Nothing is charged for this, and nothing you made is deleted. The tools that come only with Club close then. To keep Club, contact us.</p>
+      <span class="btn">Open Plan &amp; billing</span>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var KEY = 'free-time-same-rules-walk-v1';
+  var PERSON = '/platform-admin/customer-users/bd12238b-dbe0-4f9e-a559-b85adcb4a5ed';
+  var PORTAL = '/platform-admin/orgs/80734e7e-9dbc-434e-bb7f-235ca65f2938';
+  var CLUB = '/platform-admin/orgs/4b59ca15-2f0b-4d0d-acce-05f68e6f09e3';
+  var PARTS = [
+    { id: 'A', title: 'Give a coach free time with no end date',
+      steps: [
+        { who: 'Staff', do: 'Open Frankie’s record, <code>' + PERSON + '</code>, and its <q>Coaches Portal</q> tab.', see: '<q>Give free time</q> at the head of <q>Free team</q>, and <q>UAT Free Team Coaches Portal</q> under <q>Premium Coaches Portals</q>.' },
+        { who: 'Staff', do: 'Press <q>Give free time</q>.', see: '<q>Give free time to Frankie Okafor</q>, a <q>Free through</q> date with no month limit in its hint, and the tick <q>No end date: it stays until someone ends it</q>.' },
+        { who: 'Staff', do: 'Tick <q>No end date</q>.', see: 'The date greys out, and the sentence reads <q>Frankie Okafor gets the Premium Coaches Portal again, with no end date, on the same portal … It stays until staff end it from the portal’s record. Nothing is charged, nothing is deleted, and Frankie is not emailed about an end.</q>' },
+        { who: 'Staff', do: 'Type a reason and press <q>Give free time</q>.', see: 'The portal’s <q>Now</q> reads <q>Free time, no end date</q>.' }
+      ] },
+    { id: 'B', title: 'What the coach sees',
+      steps: [
+        { who: 'Coach', do: 'Signed in as Frankie, open <code>/uat-free-team-coaches-portal/coaches/billing</code>.', see: '<q>Free time</q>, then <q>Premium Coaches Portal is free from FieldLogicHQ.</q> and <q>FieldLogicHQ gave you Premium, with no end date set. Nothing is charged.</q>' },
+        { who: 'Coach', do: 'Look over the whole page.', see: 'No <q>Free through</q> date, no days-left count, no <q>Keep Premium</q> card asking for a payment, and no Cancel section.' }
+      ] },
+    { id: 'C', title: 'Staff move it to a date, back, and end it',
+      steps: [
+        { who: 'Staff', do: 'Open the portal’s record, <code>' + PORTAL + '</code>, and its <q>Access</q> tab.', see: 'The free time row reads <q>No end date</q>, with <q>Change the end date</q> and <q>End it now</q>. The band at the top says <q>Free, no end date</q>.' },
+        { who: 'Staff', do: 'Press <q>Change the end date</q>.', see: 'The window opens with <q>No end date</q> already ticked, and its foot says <q>Putting it back to no end date is not offered.</q>' },
+        { who: 'Staff', do: 'Untick <q>No end date</q> and pick January 15, 2027.', see: '<q>… now runs through January 15, 2027 instead of having no end date. Then back to the free Coaches Portal by itself. Frankie is emailed 14 days and 3 days before the new last day.</q>' },
+        { who: 'Staff', do: 'Type a reason and press <q>Change the end date</q>.', see: 'The row now reads <q>Free through</q> January 15.' },
+        { who: 'Coach', do: 'Reload Frankie’s Plan &amp; billing.', see: 'It now names January 15, 2027 as the last free day.' },
+        { who: 'Staff', do: 'Press <q>Change the end date</q>, tick <q>No end date</q>, and type a reason.', see: '<q>… Premium free time now has no end date. It stays until staff end it from this record. Frankie is not emailed about an end.</q>' },
+        { who: 'Staff', do: 'Press <q>Change the end date</q>.', see: 'The row reads <q>No end date</q> again.' },
+        { who: 'Staff', do: 'Press <q>End it now</q>.', see: '<q>… Premium free time ends now (it had no end date). Frankie goes back to the free Coaches Portal at once … Nothing is deleted: what Frankie made on Premium is kept.</q>' },
+        { who: 'Staff', do: 'Type a reason and press <q>End it now</q>.', see: 'The row is gone, and the band at the top says <q>Free time ended</q>.' },
+        { who: 'Coach', do: 'Reload Frankie’s Plan &amp; billing.', see: '<q>Free time ended</q> and <q>Your Premium free time ran through</q> today’s date. No email was sent to Frankie for this (your ruling today).' }
+      ] },
+    { id: 'D', title: 'Give a club free time',
+      steps: [
+        { who: 'Staff', do: 'Open UAT Test Org’s record, <code>' + CLUB + '</code>, its <q>Access</q> tab, and press <q>Give free time</q>.', see: '<q>Give free time to UAT Test Org</q>, with <q>A whole plan</q>, <q>Sections</q> and <q>Billing status</q>.' },
+        { who: 'Staff', do: 'Choose <q>A whole plan</q>, then Club, then Free through December 4, 2026.', see: '<q>UAT Test Org gets Club through December 4, 2026. On December 5 it goes back to Tournament Plus by itself. Nothing is charged or deleted. The owner is emailed 14 days and 3 days before it runs out.</q>' },
+        { who: 'Staff', do: 'Tick <q>No end date</q>.', see: 'The sentence now ends <q>… Nothing is charged, nothing is deleted, and the owner is not emailed.</q>' },
+        { who: 'Staff', do: 'Untick it, type a reason and press <q>Give free time</q>.', see: 'An Access row <q>Club · the whole plan</q>, free through December 4.' }
+      ] },
+    { id: 'E', title: 'The owner is emailed, once',
+      before: 'Within about a minute of D4, I run the day’s reminder job twice and tell you here. If two minutes pass with no word from me, type “run the reminder” in the chat.',
+      steps: [
+        { who: 'Staff', do: 'Open <code>/platform-admin/sent-emails</code>.', see: 'A new row: Email <q>Club free time ending</q>, To <code>uat-owner@uat-test-org.local</code>, Club UAT Test Org.' },
+        { who: 'Staff', do: 'Count the <q>Club free time ending</q> rows.', see: 'Exactly one, although the job ran twice and the club has nine other people. Only the owner is emailed.' },
+        { who: 'Staff', do: 'Read the email at the foot of this page.', see: 'It reads right to you, as the email UAT Test Org’s owner gets (use the notes if not).' }
+      ] },
+    { id: 'F', title: 'Put the club back',
+      steps: [
+        { who: 'Staff', do: 'On UAT Test Org’s Access tab, press <q>End it now</q> on the Club row.', see: 'A window that ends the free time now and asks why.' },
+        { who: 'Staff', do: 'Type a reason and confirm.', see: 'The row is gone, and the record reads Tournament Plus again.' }
+      ] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    if (p.before) body.appendChild(el('p', 'before', '<strong>Before this part:</strong> ' + p.before));
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['Free time same rules walk §548 (built 2026-11-20)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      var open = mine.filter(function (b) { return !b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (open.length ? ' (not ticked: ' + open.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

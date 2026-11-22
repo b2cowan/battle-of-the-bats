@@ -281,7 +281,11 @@ answers undid call 1:
 - **A drawing first.** The portal additions are a new surface: drawn (`/design`) before they are built. The 2026-11-20
   picture (https://claude.ai/artifact/5JxvQHCQcWZHxuHCtt9Uqh, redrawn for 1R) shows the idea; it is not that drawing.
 - **The three Premium board seats** are a packaging fact (`PLAN_PRICING_FACTS.md`, `plan-config.ts:63`): withdrawing board
-  roles from Premium goes through `/strategy`, not quietly in the build.
+  roles from Premium goes through `/strategy`, not quietly in the build. **✅ RULED 2026-11-20 (owner, via `/strategy`):
+  withdrawn entirely, no rename; any existing or transferred Admin/Staff is converted to team staff (the rule is owed to
+  `/plan`, an owner call); the billing page's seats meter leaves and the cap value stays unused.** Record: `BUSINESS_DECISIONS.md`
+  "The Premium Coaches Portal has NO board seats" (2026-11-20). Production recount 2026-11-20 (counts only): 1 owner,
+  5 coaches, no Admin or Staff, no pending invite. Build follow-through is in that entry's handoffs.
 - **The deletion request's new home** changes where a customer asks to close their account (the privacy policy promises
   "ask us to close your account"): `/legal` reviews the wording before hand-off.
 - **Open for the drawing session:** the workspace's name ("Riverdale Ridge 13U Coaches Portal") is not the team's name, and
@@ -314,7 +318,10 @@ No build go was given with these rulings.
 
 **Step 2b's `/legal` on the deletion request ran 2026-11-20**, shared with the sister plan:
 `docs/agents/legal/ORG_DELETION_REQUEST_WINDOW.md`, wording v0.2 on drawing tab 6. What it applied and the two owner
-questions it raised (L-A: a paid plan blocks deletion; L-B: co-owners) are recorded in the sister plan's Stage 2.
+questions it raised (L-A: a paid plan blocks deletion; L-B: co-owners — both ruled 2026-11-20) are recorded in the
+sister plan's Stage 2. **Build prompt for step 2 (c, d) and step 4's guard**, shared with the sister plan's Stage 3:
+[SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md](SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md) (three sessions, written 2026-11-20;
+no build go yet).
 
 **Call 4 narrows with it.** Two-step and the birthday cutoff are not tournament concerns, so the Tournament plan's real
 gap is a **rename and a deletion request** only. **Opened through `/plan` 2026-11-20:**

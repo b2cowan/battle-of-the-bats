@@ -16,7 +16,8 @@
   payment time, and change the terms then if we choose. **Supersedes T2 for the application fee** (`BUSINESS_DECISIONS.md`
   ~L545). T3 is unchanged: the fee is FieldLogicHQ's charge to the club, so the club's billing address decides the rate.
   → `/strategy` logs it (Stage 1 step 4).
-- **R2 — D1 goes to the accountant before online payments switch on:** is our payment fee a taxable supply or an exempt
+- **R2 — D1 goes to the accountant before online payments switch on** *(timing amended by the owner 2026-11-18: AFTER
+  switch-on; see BUSINESS_DECISIONS.md)*: is our payment fee a taxable supply or an exempt
   financial service? (Stripe treats its own processing as exempt.) The questions to bring are in Stage 1 step 5.
 - **R3 — Move to Stripe-owned pricing before launch, starting with a test-mode trial.** Stripe charges each club's
   account for its own processing (and disputes, returned debits, foreign cards); FieldLogicHQ takes only its margin as the

@@ -1,0 +1,635 @@
+<title>Buying from inside</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: the on-sale drawings' house layout (sticky numbered tabs, one section at a time, a View row, true-size framed
+   specimens with a numbered note rail). Document chrome on a cool slate ground; the product specimens in FieldLogicHQ's
+   warm admin tokens (app/globals.css, components/billing/Billing.module.css) so they read as specimens. */
+:root{
+  --doc-bg:#EDEFF2; --doc-card:#FFFFFF; --doc-ink:#1D2229; --doc-dim:#5A6270; --doc-line:#D5DAE1;
+  --doc-accent:#3E5BA9; --doc-accent-soft:#E3E9F7;
+  --k-false:#B03A22; --k-new:#57651E; --k-fix:#835006; --k-same:#6B7280;
+  /* product (warm, light) — fixed: the admin is drawn as it ships in light */
+  --p-paper:#F7F3EC; --p-grid:rgba(70,55,30,.05); --p-card:#FFFFFF; --p-ink:#241E15; --p-soft:#4A4235; --p-dim:#6E665C;
+  --p-line:rgba(70,55,30,.14); --p-line2:rgba(70,55,30,.24); --p-olive:#57651E; --p-olive-soft:rgba(87,101,30,.10);
+  --p-lime:#D9F99D; --p-warn:#9A5B05; --p-warn-soft:#FBF1DF; --p-danger:#B03A22; --p-free:#E6E4D6;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-disp:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --doc-bg:#14171C; --doc-card:#1D2229; --doc-ink:#E7EAEE; --doc-dim:#9AA3AF; --doc-line:#30363F;
+  --doc-accent:#8FA8EC; --doc-accent-soft:#25304A; --k-false:#F08A73; --k-new:#B5C46A; --k-fix:#E2A84F; --k-same:#9AA3AF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doc-bg:#14171C; --doc-card:#1D2229; --doc-ink:#E7EAEE; --doc-dim:#9AA3AF; --doc-line:#30363F;
+  --doc-accent:#8FA8EC; --doc-accent-soft:#25304A; --k-false:#F08A73; --k-new:#B5C46A; --k-fix:#E2A84F; --k-same:#9AA3AF; color-scheme:dark}
+body{background:var(--doc-bg);color:var(--doc-ink);font:14px/1.5 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--doc-card)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--doc-card);border-bottom:1px solid var(--doc-line)}
+header.top .wrap{padding-block:18px 14px;max-width:1240px;margin:0 auto}
+h1{font:700 30px/1.1 var(--f-disp);margin:0 0 4px;text-wrap:balance}
+.lede{color:var(--doc-dim);margin:0;max-width:86ch}
+.mini{font-size:12.5px;color:var(--doc-dim)}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--doc-card);border-bottom:1px solid var(--doc-line)}
+.tabs .wrap{max-width:1440px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding-block:6px;scrollbar-width:thin}
+.tab{flex:none;border:0;background:none;color:var(--doc-dim);font:600 13px var(--f-body);padding:8px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--doc-accent-soft);color:var(--doc-ink)}
+.tab:focus-visible,.seg button:focus-visible,.rn:focus-visible,.mk:focus-visible{outline:2px solid var(--doc-accent);outline-offset:2px}
+.viewrow{max-width:1840px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding-block:12px}
+.vlabel{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.8px;color:var(--doc-dim);margin-right:6px}
+.seg{display:inline-flex;background:var(--doc-card);border:1px solid var(--doc-line);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:none;color:var(--doc-dim);font:600 12.5px var(--f-body);padding:6px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:rgba(87,101,30,.16);color:var(--doc-ink)}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+main .wrap{max-width:1840px;margin:0 auto;padding-block:4px 60px}
+h2{font:700 24px/1.15 var(--f-disp);margin:10px 0 4px;text-wrap:balance}
+h3{font:600 15px/1.3 var(--f-body);margin:18px 0 6px}
+.explain{display:grid;gap:10px;margin:6px 0 14px}
+.explain p{margin:0;max-width:96ch}
+.note{background:var(--doc-card);border:1px solid var(--doc-line);border-radius:10px;padding:12px 14px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.tag{display:inline-block;font:500 10.5px var(--f-mono);letter-spacing:.7px;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid currentColor;vertical-align:1px}
+.t-new{color:var(--k-new)} .t-false{color:var(--k-false)} .t-fix{color:var(--k-fix)} .t-same{color:var(--k-same)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;font-size:12.5px;color:var(--doc-dim)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.dot{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font:700 11px var(--f-body);color:#fff}
+.d-false{background:var(--k-false)} .d-new{background:var(--k-new)} .d-fix{background:var(--k-fix)} .d-same{background:var(--k-same)}
+.specwrap{overflow-x:auto;border:1px solid var(--doc-line);border-radius:12px;background:var(--doc-card);padding:12px;margin-top:10px}
+.speclabel{font:500 11px var(--f-mono);letter-spacing:.8px;text-transform:uppercase;color:var(--doc-dim);margin:0 0 8px}
+.spec{display:flex;gap:16px;align-items:flex-start;width:max-content}
+.rail{width:320px;flex:none;display:grid;gap:8px}
+.rn{display:block;width:100%;text-align:left;background:var(--doc-card);color:var(--doc-ink);border:1px solid var(--doc-line);border-left:4px solid var(--k-same);border-radius:8px;padding:8px 10px;font:12.5px/1.45 var(--f-body);cursor:pointer}
+.rn.k-false{border-left-color:var(--k-false)}.rn.k-new{border-left-color:var(--k-new)}.rn.k-fix{border-left-color:var(--k-fix)}
+.rn b.n{font:700 11px var(--f-mono);margin-right:6px}
+.rn.on{outline:3px solid var(--doc-accent);outline-offset:2px}
+.differs .same{opacity:.2;filter:grayscale(1)}
+.differs .rn.k-same{display:none}
+.shot{display:block;border:0;box-shadow:0 0 0 1px var(--doc-line)}
+.shotcap{font:500 11px var(--f-mono);color:var(--doc-dim);margin:6px 0 0}
+.cut{border-top:2px dashed rgba(62,91,169,.55);margin:0;position:relative;height:0}
+.cut::after{content:"rest of the page as today";position:absolute;right:8px;top:-9px;font:500 10px var(--f-mono);color:#3E5BA9;background:var(--p-paper);padding:0 4px}
+/* the notes dialog */
+dialog#nd{border:1px solid var(--doc-line);border-radius:12px;background:var(--doc-card);color:var(--doc-ink);max-width:min(560px,calc(100vw - 32px));padding:0}
+dialog#nd::backdrop{background:rgba(20,23,28,.45)}
+#nd .hd{display:flex;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--doc-line)}
+#nd .bd{padding:14px 16px;display:grid;gap:10px}
+#nd .bd p{margin:0}
+#nd .bd b.lab{display:block;font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.7px;color:var(--doc-dim);margin-bottom:2px}
+#nd .ft{padding:10px 16px 14px;text-align:right}
+#nd button.close{border:1px solid var(--doc-line);background:var(--doc-card);color:var(--doc-ink);font:600 13px var(--f-body);padding:7px 14px;border-radius:8px;cursor:pointer}
+table.asks{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--doc-card);border:1px solid var(--doc-line)}
+.asks th,.asks td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--doc-line)}
+.asks th{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.7px;color:var(--doc-dim);background:var(--doc-bg)}
+.asks td:first-child{font:700 13px var(--f-mono);white-space:nowrap}
+.asks .grp td{background:var(--doc-accent-soft);font:600 12px var(--f-body);text-transform:uppercase;letter-spacing:.7px}
+.tblwrap{overflow-x:auto}
+.rec{font-weight:600}
+.pick select{font:13px var(--f-body);padding:4px 6px;border-radius:6px;border:1px solid var(--doc-line);background:var(--doc-card);color:var(--doc-ink)}
+textarea#pickout{width:100%;min-height:90px;font:12.5px var(--f-mono);border:1px solid var(--doc-line);border-radius:8px;background:var(--doc-card);color:var(--doc-ink);padding:8px;box-sizing:border-box}
+.copy{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.copy button{border:1px solid var(--doc-line);background:var(--doc-card);color:var(--doc-ink);font:600 13px var(--f-body);padding:8px 14px;border-radius:8px;cursor:pointer}
+
+/* ===== product kit (drawn from the shipped admin: Billing.module.css, the coach kit card, KitDialog) ===== */
+.pf{position:relative;flex:none;background:var(--p-paper);background-image:linear-gradient(var(--p-grid) 1px,transparent 1px),linear-gradient(90deg,var(--p-grid) 1px,transparent 1px);background-size:40px 40px;color:var(--p-ink);font:15px/1.45 var(--f-body);box-shadow:0 0 0 1px var(--doc-line)}
+.pf *{box-sizing:border-box}
+.pf.desk{width:1440px;display:grid;grid-template-columns:240px 1fr;grid-template-rows:48px auto}
+.pf.phone{width:390px}
+.pf .topbar{grid-column:1 / -1;display:grid;grid-template-columns:240px 1fr auto;align-items:center;background:#fff;border-bottom:1px solid var(--p-line);height:48px}
+.pf .brand{display:flex;gap:10px;align-items:center;padding:0 18px;font:700 15px var(--f-body);border-right:1px solid var(--p-line);height:100%}
+.pf .brand small{font:600 10.5px var(--f-body);letter-spacing:1.4px;color:var(--p-dim);border-left:1px solid var(--p-line);padding-left:10px}
+.pf .ptitle{font:700 17px var(--f-body);padding-left:32px}
+.pf .tright{display:flex;gap:10px;align-items:center;padding-right:16px;font:600 13px var(--f-body)}
+.pf .tright span{border:1px solid var(--p-line2);border-radius:999px;padding:5px 12px;background:#fff}
+.pf .side{background:#fff;border-right:1px solid var(--p-line);padding:14px 0;font-size:14.5px;color:var(--p-soft);min-height:100%}
+.pf .side .org{padding:4px 18px 14px;border-bottom:1px solid var(--p-line);font-weight:700;color:var(--p-ink)}
+.pf .side .grp{font:600 11px var(--f-body);letter-spacing:1.2px;color:var(--p-dim);padding:16px 20px 6px}
+.pf .side .it{padding:8px 20px}
+.pf .side .it.on{background:var(--p-olive-soft);color:var(--p-ink);font-weight:600}
+.pf .main{padding:32px 0 48px}
+.pf .col{width:960px;margin:0 auto;display:grid;gap:28px}
+.pf.phone .col{width:auto;margin:0 16px;gap:24px}
+.pf.phone .ph{display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--p-line);padding:16px;font:700 20px var(--f-body)}
+.pf.phone .main{padding:16px 0 28px}
+.pc{background:#fff;border:1px solid var(--p-line);border-radius:10px;padding:18px 20px}
+.pc.grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:24px}
+.pf.phone .pc.grid2{grid-template-columns:1fr;gap:16px}
+.eb{display:flex;justify-content:space-between;align-items:center;font:600 11.5px var(--f-mono);letter-spacing:1.6px;text-transform:uppercase;color:var(--p-soft);margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;font:600 11px var(--f-mono);letter-spacing:.5px;padding:2px 9px;border-radius:999px;border:1px solid rgba(87,101,30,.35);background:rgba(87,101,30,.07);color:var(--p-olive);text-transform:none;white-space:nowrap}
+.chip.warn{border-color:rgba(154,91,5,.35);background:var(--p-warn-soft);color:var(--p-warn)}
+.chip.soon{border-color:var(--p-line2);background:#F2EFE8;color:var(--p-soft)}
+.pname{font:700 22px/1.2 var(--f-body);margin:2px 0 6px}
+.price{color:var(--p-soft);font-variant-numeric:tabular-nums}
+.price .tx{color:var(--p-dim)}
+.hint{font-size:13px;color:var(--p-dim);line-height:1.45;margin:0}
+.big{font:700 17px var(--f-body);margin:0 0 2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--p-line2);background:#fff;color:var(--p-ink);font:600 14px var(--f-body);white-space:nowrap}
+.btn.lime{background:var(--p-lime);border-color:#c5e98a}
+.btn.wide{width:100%;min-height:44px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.lnk{color:var(--p-olive);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.sh{font:700 17px var(--f-body);margin:0 0 10px}
+.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--p-line);border-radius:10px;overflow:hidden;font-size:14.5px}
+.tbl th{font:600 12.5px var(--f-body);color:var(--p-soft);text-align:left;padding:12px 14px;border-bottom:1px solid var(--p-line)}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--p-line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl td.ch{text-align:left;width:250px}
+.tbl .pn{font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tbl .det{display:block;margin-top:4px;font-size:14px}
+.after{font-size:13px;color:var(--p-dim);margin:12px 0 0;max-width:64ch;line-height:1.5}
+.callout{background:#fff;border:1px solid var(--p-line);border-left:3px solid var(--p-olive);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--p-soft)}
+.callout.warn{border-left-color:var(--p-warn)}
+.callout.danger{border-left-color:var(--p-danger)}
+.callout b{color:var(--p-ink)}
+.ftband{background:var(--p-free);border:1px solid rgba(87,101,30,.35);border-radius:4px;padding:16px 18px;display:grid;grid-template-columns:36px 1fr;gap:14px;font-size:14px;color:var(--p-soft)}
+.ftband .ic{width:36px;height:36px;border:1px solid rgba(87,101,30,.45);border-radius:6px;display:grid;place-items:center;color:var(--p-olive);font-size:16px;background:#fff}
+.ftband b{display:block;color:var(--p-ink)}
+.ftband .eyb{font:600 11px var(--f-mono);letter-spacing:1.4px;color:var(--p-olive)}
+.disc{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pf.phone .disc{grid-template-columns:1fr}
+.incl{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:14.5px;color:var(--p-soft);list-style:none;margin:0;padding:0}
+.incl li::before{content:"✓ ";color:var(--p-olive);font-weight:700}
+.pf.phone .incl{grid-template-columns:1fr}
+/* phone change-plan cards (the shipped table on a phone: one white card per plan, label rows) */
+.pcard{background:#fff;border:1px solid var(--p-line);border-radius:10px;padding:16px;display:grid;gap:8px}
+.pcard .r{display:flex;justify-content:space-between;font-size:14.5px}
+.pcard .r span:first-child{color:var(--p-dim)}
+.pcard .btn.wide{width:auto;justify-self:end;min-height:44px}
+/* the window (KitDialog) */
+.scrim{position:absolute;inset:0;background:rgba(36,30,21,.32)}
+/* KitDialog .question: max-width 26rem (416px), as capture 07 measures */
+.win{position:absolute;left:50%;top:120px;transform:translateX(-50%);width:416px;background:#fff;border-radius:12px;box-shadow:0 18px 50px rgba(36,30,21,.25);z-index:2}
+.pf.phone .win{top:auto;bottom:0;width:100%;border-radius:14px 14px 0 0}
+.win.st{position:relative;left:auto;top:auto;transform:none;margin:0 auto}
+.mini-frame.ph .win.st{width:100%;border-radius:14px 14px 0 0;margin:120px 0 0}
+.win .wh{padding:18px 22px 6px;font:700 18px var(--f-body)}
+.win .wsub{padding:0 22px;font:600 11.5px var(--f-mono);letter-spacing:1px;color:var(--p-dim);text-transform:uppercase}
+.win .wb{padding:10px 22px 16px;display:grid;gap:12px;font-size:14.5px;color:var(--p-soft)}
+.win .wf{display:flex;justify-content:flex-end;gap:8px;padding:12px 22px 16px;border-top:1px solid var(--p-line)}
+.pf.phone .win .wf .btn{flex:1}
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.payc{border:1px solid var(--p-line2);border-radius:8px;padding:12px;display:grid;gap:3px}
+.payc.on{border-color:var(--p-olive);background:var(--p-olive-soft)}
+.payc b{font-weight:700;color:var(--p-ink)} .payc .pp{font-variant-numeric:tabular-nums;color:var(--p-ink)}
+.payc .r{display:flex;gap:8px;align-items:center}
+.payc .r i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--p-dim);display:inline-block}
+.payc.on .r i{border:4px solid var(--p-olive)}
+.billed{display:flex;justify-content:space-between;font-size:13.5px;color:var(--p-soft);border-bottom:1px solid var(--p-line);padding-bottom:10px}
+.figs{margin:0;display:grid;gap:6px;border:1px solid var(--p-line);border-radius:8px;padding:12px 14px}
+.figs div{display:flex;justify-content:space-between;gap:10px}
+.figs dt{color:var(--p-soft)} .figs dd{margin:0;font-variant-numeric:tabular-nums;color:var(--p-ink);text-align:right}
+.figs dd small{display:block;color:var(--p-dim);font-size:12px}
+.figs .due{border-top:1px solid var(--p-line);padding-top:6px;font-weight:700}
+.terms{font-size:12.5px;color:var(--p-dim);line-height:1.5;margin:0}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--p-line);border-top-color:var(--p-olive);animation:sp 1s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+/* numbered markers in a specimen */
+.mk{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:0;font:700 11px var(--f-body);color:#fff;cursor:pointer;vertical-align:middle;margin-left:6px;box-shadow:0 0 0 2px #fff;flex:none}
+.mk.k-false{background:var(--k-false)}.mk.k-new{background:var(--k-new)}.mk.k-fix{background:var(--k-fix)}.mk.k-same{background:var(--k-same)}
+.mk.on{outline:3px solid var(--doc-accent);outline-offset:2px}
+.nu{box-shadow:0 0 0 2px rgba(87,101,30,.55);border-radius:6px}
+.fx{box-shadow:0 0 0 2px rgba(131,80,6,.55);border-radius:6px}
+.gone{text-decoration:line-through;text-decoration-color:var(--k-false);opacity:.6}
+.stack{display:grid;gap:14px}
+.flowrow{display:flex;gap:16px;align-items:flex-start;flex-wrap:nowrap}
+.flowcap{font:600 12px var(--f-body);color:var(--doc-dim);margin:0 0 6px}
+.mini-frame{background:var(--p-paper);box-shadow:0 0 0 1px var(--doc-line);border-radius:6px;padding:18px;flex:none;position:relative;color:var(--p-ink);font:15px/1.45 var(--f-body)}
+.mini-frame *{box-sizing:border-box}
+@media (max-width:640px){h1{font-size:25px}.rail{width:260px}}
+</style>
+
+<header class="top"><div class="wrap">
+  <h1>Buying from inside the product</h1>
+  <p class="lede">On-sale pages S4: how a person already inside FieldLogicHQ starts League Plus, Club or Club · Association from Plan &amp; billing, what each start says and charges, and the states around it (a closed plan, a start left halfway, the wait after Stripe, a refusal). Drawn 2026-11-20 from dev captures and the shipped billing components. Plan of record: <b>CLUB_ON_SALE_PAGES_PLAN.md</b> §S4; prices: <b>lib/plan-config.ts</b> through the plan-config helpers (never typed); words: <b>PRICING_PAGE_COPY.md</b>.</p>
+  <p class="mini"><b>Version 2</b> (2026-11-21): after /design, /ux, /marketing, /billing, /accounting and /legal (their findings are on tab 10). Every new sentence is a proposal until you rule it; each one names its source.</p>
+  <div class="legend">
+    <span><i class="dot d-false">1</i> wrong today (false, or a dead end)</span>
+    <span><i class="dot d-new">1</i> new in S4</span>
+    <span><i class="dot d-fix">1</i> changed words</span>
+    <span><i class="dot d-same">1</i> kept as it ships</span>
+    <span>Every number and every marker opens its note.</span>
+  </div>
+</div></header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist" id="tabs"></div></nav>
+<div class="wrap"><div class="viewrow" id="viewrow">
+  <span><span class="vlabel">Version</span><span class="seg" data-k="ver"><button data-v="today">Today</button><button data-v="after">Proposed</button></span></span>
+  <span><span class="vlabel">The plan</span><span class="seg" data-k="gate"><button data-v="open">Open</button><button data-v="closed">Closed</button></span></span>
+  <span><span class="vlabel">Device</span><span class="seg" data-k="dev"><button data-v="desk">Desk 1440</button><button data-v="phone">Phone 390</button></span></span>
+  <span><span class="vlabel">View</span><span class="seg" data-k="view"><button data-v="all">Everything</button><button data-v="diff">Show only what differs</button></span></span>
+</div></div>
+
+<main><div class="wrap" id="panels"></div></main>
+
+<dialog id="nd" aria-labelledby="ndt"><div class="hd"><i class="dot" id="ndd">1</i><b id="ndt"></b></div><div class="bd" id="ndb"></div><div class="ft"><button class="close" id="ndc">Close</button></div></dialog>
+
+<script>
+/* ---------- facts (each from its source; never typed elsewhere) ---------- */
+// lib/plan-config.ts:43-139 (label, monthlyPrice, annualPrice, trialDays, teamLimit) — read 2026-11-20
+const P = {
+  tournament:{label:'Tournament',m:0,a:0,trial:0,holds:'1 tournament at a time'},
+  tournament_plus:{label:'Tournament Plus',m:39,a:390,trial:14,holds:'Unlimited'},
+  league:{label:'League Plus',m:89,a:890,trial:30,holds:'Unlimited'},
+  club:{label:'Club',m:219,a:2190,trial:90,holds:'Up to 15'},
+  club_large:{label:'Club · Association',m:379,a:3790,trial:90,holds:'Up to 30'},
+  team:{label:'Premium Coaches Portal',m:29,a:290,trial:0},
+};
+const money = n => n===0 ? 'Free' : '$'+n.toLocaleString('en-CA');
+// formatAnnualSavings (lib/plan-config.ts:395): monthly × 12 − annual, "Save $X — 2 months free"
+const save = k => 'Save $'+(P[k].m*12-P[k].a).toLocaleString('en-CA')+' — 2 months free';
+// planTrialLine (lib/plan-trial-line.ts:26) and clubUpgrade.noTrial (lib/plan-billing-words.ts:414)
+const trialLine = d => `${d}-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.`;
+const NO_TRIAL = 'You’ve had a subscription before, so there’s no second trial. The full charge, plus applicable taxes, is due today at checkout.';
+// PlanTermsLine (components/legal/PlanTermsLine.tsx), as shown in capture 02
+const TERMS = 'Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you’ve paid for. By continuing, you agree to the <span class="lnk">Terms of Service</span>.';
+// lib/legal-acceptance-rules.ts:144-147 (trial / trialMaybe / lead)
+const TERMS_TRIAL_MAYBE = 'If your plan starts with a trial, it ends on the date shown at checkout, and your payment method is charged then unless you cancel. ' + TERMS;
+const TERMS_TRIAL = 'Your trial ends on the date shown at checkout, and your payment method is charged then unless you cancel. ' + TERMS;
+const CAP = 'club-on-sale-s4/';
+
+/* ---------- state ---------- */
+const S = {tab:'start', ver:'after', gate:'open', dev:'desk', view:'all'};
+try { const t = localStorage.getItem('s4tab'); if (t) S.tab = t; } catch(e) {}
+if (location.hash && location.hash.length>1) S.tab = location.hash.slice(1);
+
+/* ---------- notes: every highlight opens one ---------- */
+const NOTES = {};
+function note(id, kind, title, today, proposed, why) { NOTES[id] = {kind, title, today, proposed, why}; return id; }
+function mk(id, n) { const k = NOTES[id]?.kind || 'same'; return `<button type="button" class="mk k-${k}" data-note="${id}" aria-label="Note ${n}: ${(NOTES[id]?.title||'').replace(/"/g,'&quot;')}">${n}</button>`; }
+function rail(ids) { return `<div class="rail">${ids.map((id,i)=>{const nt=NOTES[id];return `<button type="button" class="rn k-${nt.kind}" data-note="${id}"><b class="n">${i+1}</b>${nt.title}</button>`}).join('')}</div>`; }
+
+/* ---------- product chrome ---------- */
+function desk(sideItems, body, overlay='') {
+  return `<div class="pf desk">
+    <div class="topbar"><div class="brand">FieldLogicHQ <small>EVENTS</small></div><div class="ptitle">Plan &amp; billing</div><div class="tright"><span>View site</span><span>Workspaces</span></div></div>
+    <div class="side same">${sideItems}</div>
+    <div class="main"><div class="col">${body}</div></div>${overlay}</div>`;
+}
+function phone(body, overlay='') {
+  return `<div class="pf phone"><div class="ph"><span>Plan &amp; billing</span><span style="font-size:18px">◎</span></div><div class="main"><div class="col">${body}</div></div>${overlay}</div>`;
+}
+const SIDE_T = org => `<div class="org">${org}</div><div class="grp">OPERATIONS</div><div class="it">Dashboard</div><div class="it">Teams</div><div class="it">Schedule</div><div class="it">Results</div><div class="grp">SETUP</div><div class="it">Event settings</div><div class="it">Public site</div><div class="grp">&nbsp;</div><div class="it">Settings &amp; access</div><div class="it on">Plan &amp; billing</div>`;
+const SIDE_FT = org => `<div class="org">${org}</div><div class="it">Tournaments</div><div class="it">Settings &amp; access</div><div class="grp">&nbsp;</div><div class="it on">Plan &amp; billing</div>`;
+
+function planCard({name, chip='Active', chipCls='', price, sub=[], usage, actions=''}) {
+  return `<div class="pc grid2 same"><div><div class="eb"><span>Your plan</span><span class="chip ${chipCls}">${chip}</span></div>
+    <div class="pname">${name}</div><div class="price">${price}</div>${sub.map(s=>`<p class="hint" style="margin-top:4px">${s}</p>`).join('')}${actions}</div>
+    <div><div class="eb"><span>What’s in use</span></div>${usage}</div></div>`;
+}
+const USAGE_T = `<p class="big">0 of 1 tournament slot</p><p class="big" style="margin-top:12px">2 of 3 staff seats</p>`;
+const USAGE_TP = `<p class="big">2 tournament slots · unlimited</p><p class="big" style="margin-top:12px">2 staff seats · unlimited</p><p class="hint">· 1 scorekeeper free</p>`;
+
+/* one Change-plan row. o = {key, mine, chipText, btn, closed, marks, rowCls} */
+function row(o) {
+  const p = P[o.key];
+  const plan = `<div class="pn">${p.label}${o.closed?`<span class="chip soon">Coming soon</span>`:''}${o.marks||''}</div>${o.mine?'':`<span class="lnk det">See what ${p.label} includes</span>`}`;
+  const choice = o.mine ? `<span class="chip">${o.chipText||'Your plan'}</span>` : o.closed ? `<span class="btn">Contact us</span>` : `<span class="btn">${o.btn}</span>`;
+  return `<tr class="${o.rowCls||''}"><td>${plan}</td><td>${p.holds}</td><td class="num">${money(p.m)}</td><td class="num">${money(p.a)}</td><td class="ch">${choice}</td></tr>`;
+}
+function table(rows) {
+  return `<table class="tbl"><thead><tr><th>Plan</th><th>Holds</th><th class="num">Monthly</th><th class="num">Yearly</th><th><span style="position:absolute;left:-9999px">Your choice</span></th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+/* phone: the same rows as white cards (the shipped table at ≤640, capture 02 phone) */
+function pcards(rows) {
+  return rows.map(o=>{const p=P[o.key];return `<div class="pcard ${o.rowCls||''}"><div class="pn" style="font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap">${p.label}${o.closed?'<span class="chip soon">Coming soon</span>':''}${o.mine?`<span class="chip">${o.chipText||'Your plan'}</span>`:''}${o.marks||''}</div>${o.mine?'':`<span class="lnk">See what ${p.label} includes</span>`}<div class="r"><span>Holds</span><span>${p.holds}</span></div><div class="r"><span>Monthly</span><span>${money(p.m)}</span></div><div class="r"><span>Yearly</span><span>${money(p.a)}</span></div>${o.mine?'':`<span class="btn wide">${o.closed?'Contact us':o.btn}</span>`}</div>`}).join('');
+}
+function changeSection(rows, below, lead='') {
+  return `<section><h2 class="sh">Change plan</h2>${lead}${S.dev==='desk'?table(rows.map(row)):`<div class="stack">${pcards(rows)}</div>`}${below}</section>`;
+}
+function discovery(cards, mark='') {
+  const c = {team:`<div class="pc"><p class="big">Premium Coaches Portal</p><p class="hint">From $29 CAD / month plus applicable taxes</p><p style="margin:10px 0"><span class="lnk">See what Premium Coaches Portal includes</span></p><span class="btn">Start your Coaches Portal</span></div>`,
+    league:`<div class="pc"><p class="big">League Plus</p><p class="hint">From $89 CAD / month plus applicable taxes</p><p style="margin:10px 0 0"><span class="lnk">See what League Plus includes</span></p></div>`,
+    club:`<div class="pc"><p class="big">Club</p><p class="hint">From $219 CAD / month plus applicable taxes</p><p style="margin:10px 0 0"><span class="lnk">See what Club includes</span></p></div>`};
+  return `<section><h2 class="sh">Managing more than tournaments?${mark}</h2><p class="hint" style="margin:-4px 0 12px">If you also manage a team, a league program, or a full club outside your tournament, these are the next FieldLogicHQ workspaces to watch.</p><div class="disc">${cards.map(k=>c[k]).join('')}</div></section>`;
+}
+const INCLUDED_T = `<section class="same"><h2 class="sh">What’s included</h2><ul class="incl"><li>One tournament at a time</li><li>Schedules, results and standings</li><li>Invite-only registration, where you add the teams</li><li>Staff seats for your crew</li></ul></section>`;
+const INCLUDED_TP = `<section class="same"><h2 class="sh">What’s included</h2><ul class="incl"><li>Everything in Tournament</li><li>Public registration — the review queue, waitlist, questions, file uploads, and exports</li><li>Fees and payment tracking, and check-in</li><li>Unlimited tournament slots</li><li>Round-robin and playoff generators</li><li>Full branding control</li></ul></section>`;
+const CANCEL_TP = `<section class="same"><h2 class="sh">Reduce or cancel</h2><p class="hint">Cancelling ends the plan on December 9, 2026, the end of the period you paid for. Your data is kept for 90 days after that.</p><div class="acts"><span class="btn">Cancel Tournament Plus…</span></div></section>`;
+const REST = `<hr class="cut"><section class="same"><h2 class="sh">Delete the organization</h2><p class="hint">Ask us to delete it and everything in it. Nothing is deleted until you confirm by email.</p><div class="acts"><span class="btn">Request deletion…</span></div></section>`;
+
+function capture(file, w, cap) {
+  return `<div><img class="shot" src="${CAP}${file}" alt="${cap}" style="width:${w}px;max-width:none" loading="lazy"><p class="shotcap">${cap}</p></div>`;
+}
+function specimen(label, frame, notes) { return `<div class="specwrap"><p class="speclabel">${label}</p><div class="spec">${frame}${notes&&notes.length?rail(notes):''}</div></div>`; }
+
+/* ============================ TABS ============================ */
+const TABS = [
+  ['start','1 · Start here'], ['free','2 · A free Tournament org'], ['start-flow','3 · Starting a plan'], ['resume','4 · A start left halfway'],
+  ['tp','5 · Tournament Plus → League Plus'], ['freetime','6 · A free-time org'], ['panel','7 · The plan panel, monthly or yearly'],
+  ['same','8 · Unchanged'], ['line','9 · The tournament organizers’ line'], ['calls','10 · Your calls']
+];
+const USES = {start:[], free:['ver','gate','dev','view'], 'start-flow':['gate','dev'], resume:['dev','view'], tp:['ver','gate','dev','view'], freetime:['ver','gate','dev','view'], panel:['ver','dev'], same:['dev'], line:['gate'], calls:[]};
+
+/* ---------- 1 · start ---------- */
+function T_start() {
+  return `<h2>1 · Start here</h2>
+  <div class="explain"><p>Today the only way to buy League Plus or Club is the public pages, and those pages send a signed-in owner back to their own Plan &amp; billing (S2’s rule) — where nothing offers League Plus or Club to a free Tournament organization, a free-time one, or (for League Plus) a paying Tournament Plus one. At the flip that is a dead end for exactly the customers we already have. S4 closes it by <b>reusing what ships</b>: the Change plan table, the payment window, the move window and the “setting up” wait.</p></div>
+  <div class="tblwrap"><table class="asks"><tr><th>Who</th><th>Today (dev captures, every plan open)</th><th>Proposed</th></tr>
+    <tr><td>Free Tournament</td><td>Change plan offers Tournament Plus only; League Plus and Club are “find out more” cards with no button</td><td>Three more rows in the same table: League Plus, Club, Club · Association, each with its own trial (tab 2). Coming back from Stripe waits for the plan to land (tab 3).</td></tr>
+    <tr><td>Paying Tournament Plus</td><td>Moves to Club or Club · Association; League Plus refused both ways (probe below)</td><td>One more move: Tournament Plus → League Plus, prorated, no second trial (tab 5)</td></tr>
+    <tr><td>Free-time org</td><td>No Change plan section at all, so no way to buy</td><td>The plans above its free plan, as starts; buying does not end its free time; what happens if it then stops the paid plan is call 40 (tab 6)</td></tr>
+    <tr><td>Any org, from another page</td><td>The plan panel opened over a page charges monthly only</td><td>Monthly or yearly, in the payment window Plan &amp; billing already uses (tab 7)</td></tr>
+    <tr><td>League Plus org</td><td>Changes to no other plan</td><td>Unchanged (ruled: League Plus → Club comes after launch, call C1 of walk §550)</td></tr>
+    <tr><td>Premium coach</td><td>Its own Plan &amp; billing</td><td>Unchanged (tab 8)</td></tr>
+    <tr><td>Visitor, /for-tournament-organizers</td><td>No “already running tournaments here?” line (moved here from S3b)</td><td>The line, per plan, only while that plan is open (tab 9)</td></tr>
+  </table></div>
+  <h3>The proof the prompt asked for first: can a paying Tournament Plus organization start League Plus today?</h3>
+  <div class="note"><p style="margin:0 0 8px"><b>No, by no path.</b> Dev probe 2026-11-20 against <b>uat-test-org</b> (Tournament Plus on a real Stripe test subscription; evidence <b>club-on-sale-s4/probe-tp-to-league.json</b>; the organization was unchanged afterwards):</p>
+  <ul style="margin:0;padding-left:20px"><li>The move list offers Club and Club · Association only.</li><li>Checkout for League Plus: refused, “This organization already has a subscription. Change its plan instead of starting a second one.” (and no move to offer instead).</li><li>A move to League Plus: refused, “That plan change isn’t a move between plans.”</li></ul>
+  <p style="margin:8px 0 0">So the tournament organizers’ line waits for S4’s new move, and ships with it (tab 9). Code: the move table has no League Plus row (lib/plan-move-options.ts:6-12).</p></div>
+  <h3>What the drawing is made from</h3>
+  <div class="cols">
+    <div class="note"><b>Captured on dev (desk 1440, phone 390, both gate states)</b><ul style="margin:6px 0 0;padding-left:20px;font-size:13.5px"><li>02 Plan &amp; billing, paying Tournament Plus</li><li>03 Plan &amp; billing, free-time org</li><li>04 Plan &amp; billing, Premium coach</li><li>07 the move window (it stops on “Add a billing address”: that fixture has none)</li></ul></div>
+    <div class="note"><b>Drawn from the code, not captured</b><ul style="margin:6px 0 0;padding-left:20px;font-size:13.5px"><li>The free Tournament org’s page: its only dev owner has not ticked the current Terms, so every page is the Terms wall (kept as evidence, 01-…-TERMS-WALL). Its page is the Tournament Plus page with different rows; drawn from BillingBody.tsx:462-512. <b>To re-shoot it:</b> tick the Terms once as free-owner@dev.local.</li><li>The four-card change-plan window: none of the dev organizations reaches it (only a non-guided onboarding’s “View plans” opens it).</li></ul></div>
+  </div>`;
+}
+
+/* ---------- 2 · free tournament org ---------- */
+function T_free() {
+  const closed = S.gate==='closed';
+  const ids = [];
+  const org = 'Harbourview Tournaments';
+  let rows, below, disc, lead='';
+  if (S.ver==='today') {
+    ids.push(note('f-today-tbl','false','Change plan: Tournament Plus only','upgradePlansFor gives a free Tournament organization one target, Tournament Plus (lib/plan-upgrade.ts:27-29). The table builds its rows from that and from the move table, which has nothing for a free plan.','—','At the flip a free Tournament owner who presses “Start Club” on /pricing is sent here (S2 trap D) and finds no way to buy it.'));
+    ids.push(note('f-today-shelf','false','League Plus and Club: cards with no button','The shelf’s only button is the Premium Coaches Portal’s (BillingBody.tsx:510). League Plus and Club open their article and stop.','—','A person who came to buy reads about the plan and cannot start it.'));
+    rows = [{key:'tournament',mine:true},{key:'tournament_plus',btn:'Upgrade to Tournament Plus'}];
+    rows[1].marks = mk('f-today-tbl',1);
+    below = `<p class="after">Prices are plus applicable taxes.</p><p class="after">${TERMS_TRIAL_MAYBE}</p>`;
+    disc = discovery(['team','league','club'], mk('f-today-shelf',2));
+  } else {
+    ids.push(note('f-rows','new',`Three rows join the table${closed?' (and stay while closed)':''}`,'Only Tournament Plus.','League Plus, Club and Club · Association join the table the organization already has, under Tournament Plus, in price order. Open: “Upgrade to {plan}” opens the payment window (tab 3). The table is the start; no second “compare plans” panel.','One place to change plan, already walked and reviewed. The rows read the live gate the way every row does today (BillingBody.tsx:207, 485-486).'));
+    ids.push(note('f-closed','fix','A closed row: “Coming soon” and “Contact us”','A closed move row reads “Contact us to move”, a mail link (capture 02 closed).','The plan’s name carries the “Coming soon” pill on its first line (owner 2026-11-19), and the button reads “Contact us”. Same mail link; an existing customer writes to us, the interest form is for prospects (/billing Q7).','“Contact us to move” is wrong for a free organization: it is not moving a subscription, it is starting one. Call 36.'));
+    ids.push(note('f-count','fix','Club’s count says what it counts','The Holds cell says “Up to 15” and no line says what is counted. Club’s own card later says “Club holds up to 15 teams. Archived teams don’t count.”','One line under the table, only when a Club row is shown: “Club and Club · Association count the teams you give a Premium Coaches Portal. House league teams are unlimited. More than 30? Contact us for a custom plan.” (it absorbs today’s “More than 30 teams?” line).','Binding: a card that says a team count says what it counts (BUSINESS_DECISIONS 2026-11-19). Call 37; words to /marketing.'));
+    ids.push(note('f-shelf','fix','The shelf keeps the coach card only','Three cards: Premium Coaches Portal, League Plus, Club.','League Plus and Club leave the shelf: they are rows in the table now, open or closed. The Premium Coaches Portal card stays as it is (a coach’s workspace is its own sign-up, never a row here).','Saying a plan twice on one page, once with a button and once without, is the confusion we are removing. Call 35.'));
+    note('f-pend','same','While a cancel or a move waits: no doors','—','As today: while the organization has a cancel or a downgrade waiting, every row’s button is absent and one line above the table says why (BillingBody.tsx:466). The three new rows follow the same rule; a past-due organization is call 46.','/ux review: the new rows have no special case.');
+    ids.push(note('f-terms','same','The tax line and the Terms line are the shipped ones','—','Unchanged: “Prices are plus applicable taxes.” then the Terms line with “If your plan starts with a trial…”; the payment window then says the TRUE trial for this organization (tab 3).','Trap B: an existing organization may have paid before, so the table cannot promise a trial.'));
+    rows = [{key:'tournament',mine:true},{key:'tournament_plus',btn:'Upgrade to Tournament Plus',rowCls:'same'},
+      {key:'league',btn:'Upgrade to League Plus',closed,rowCls:'nu',marks:mk('f-rows',1)+(closed?mk('f-closed',2):'')},
+      {key:'club',btn:'Upgrade to Club',closed,rowCls:'nu'},{key:'club_large',btn:'Upgrade to Club · Association',closed,rowCls:'nu'}];
+    below = `<p class="after fx">Club and Club · Association count the teams you give a Premium Coaches Portal. House league teams are unlimited. More than 30? <span class="lnk">Contact us</span> for a custom plan. ${mk('f-count',closed?3:2)}</p><p class="after same">Prices are plus applicable taxes.</p><p class="after same">${TERMS_TRIAL_MAYBE} ${mk('f-terms',closed?5:4)}</p>`;
+    disc = `<div class="fx" style="padding:2px">${discovery(['team'], mk('f-shelf',closed?4:3))}</div>`;
+    if (!closed) { const i = ids.indexOf('f-closed'); ids.splice(i,1); }
+  }
+  const body = planCard({name:'Tournament', price:'Free', usage:USAGE_T}) + changeSection(rows, below, lead) + INCLUDED_T + disc + REST;
+  const frame = S.dev==='desk' ? desk(SIDE_T(org), body) : phone(body);
+  const label = `${S.ver==='today'?'Today':'Proposed'} · free Tournament org (${org}, invented) · ${S.dev==='desk'?'desktop 1440':'phone 390'} · plans ${S.gate} · drawn from BillingBody.tsx (dev capture blocked by the Terms wall)`;
+  return `<h2>2 · A free Tournament organization</h2>
+    <div class="explain"><p>Most of our customers. ${S.ver==='today'?'Today the page offers Tournament Plus and nothing else that can be bought.':`Proposed: the same page, three more rows. Flip <b>The plan</b> to see the closed rows; flip <b>Version</b> to compare with today. While a cancel or a move waits ${mk('f-pend','i')}`}</p></div>
+    ${specimen(label, frame, ids)}`;
+}
+
+/* ---------- 3 · starting a plan ---------- */
+function T_flow() {
+  const closed = S.gate==='closed';
+  const ph = S.dev==='phone';
+  const ids = [
+    note('w-pay','same','The payment window, as it ships','Plan & billing’s Upgrade already opens it (PlanCycleDialog): Monthly and Yearly side by side, the saving under Yearly, the Terms line, Continue to checkout.','Used for every start in S4, and from the panel over any page (tab 7). It opens on Monthly, as today; the saving comes from the plan config (formatAnnualSavings).','Reuse: one window for every paid start. Call 38.'),
+    note('w-trial','new','The window says the TRUE trial','The window says the plan’s own trial with an “if” (only a first subscription gets one).','It reads the same answer S2’s plan step reads (the server’s trial for this organization, lib/start-door.ts trialDaysAfterHistory): either the trial sentence with its real length, or “You’ve had a subscription before, so there’s no second trial…”. Both sentences ship already.','Trap B. An existing organization is exactly the buyer who may have paid before (a lapsed Tournament Plus).'),
+    note('w-wait','false','Coming back from Stripe: “Your plan is active” before it is','A start from Plan & billing comes back with the notice “Your plan is active. Everything it includes is open now.” (BillingBody.tsx:53) — but the plan lands only when Stripe’s message does. Only a new door’s organization gets the wait today (create-checkout:199-203).','Any start that changes what the organization is (Tournament → League Plus, Club or Club · Association) comes back to the shipped “Setting up” wait (the one S2’s doors and a Premium coach’s Club use), then opens the new workspace’s Overview. Tournament Plus keeps today’s notice: nothing changes shape.','Trap A for an existing organization. Decided from the code, not an ask: the notice is false. Shown here so you can see it.'),
+    note('w-slow','same','Taking longer, and not confirmed','—','The shipped words: “This is taking longer than usual … Please don’t start another payment. Check again in a minute.” then “We couldn’t confirm … Please don’t pay again. Contact us and we’ll sort it out.” with Check again / Contact us.','A second payment is the costly mistake; every state says not to make one.'),
+    note('w-refuse','same','Refusals before Stripe, as they ship','—','No billing address: the address window first (as today). The plan closed between page load and the press: “This plan is not open for self-serve checkout yet.” Legal pages off on a live key: “We can’t start a plan right now. Nothing has been charged…”. A declined card stays on Stripe’s own page.','Each says what happened and that nothing was charged.'),
+  ];
+  const trialKnown = `<p class="terms" style="color:var(--p-soft)">${trialLine(P.club.trial)} ${mk('w-trial',2)}</p>`;
+  const pay = `<div class="win"><div class="wh">How would you like to pay for Club?</div><div class="wb">
+      <div class="billed"><span>Billed to 14 Harbour St, Halifax NS</span><span class="lnk">Change</span></div>
+      <div class="pay"><div class="payc on"><div class="r"><i></i><b>Monthly</b></div><span class="pp">${money(P.club.m)} / month</span><span class="hint">plus applicable taxes</span><span class="hint">Billed every month.</span></div>
+      <div class="payc"><div class="r"><i></i><b>Yearly</b></div><span class="pp">${money(P.club.a)} / year</span><span class="hint">plus applicable taxes</span><span class="hint">${save('club')}. Billed once a year.</span></div></div>
+      ${trialKnown}<p class="terms">${TERMS_TRIAL}</p></div>
+      <div class="wf"><span class="btn">Cancel</span><span class="btn lime">Continue to checkout</span></div></div>`;
+  const payFrame = `<div class="mini-frame ${ph?'ph':''}" style="width:${ph?390:620}px;padding:${ph?'0':'40px 0'};overflow:hidden"><div class="scrim"></div>${pay.replace('class="win"','class="win st"')}<div style="position:absolute;left:12px;top:10px;z-index:3">${mk('w-pay',1)}</div></div>`;
+  const payNo = pay.replace(trialKnown, `<p class="terms" style="color:var(--p-soft)">${NO_TRIAL}</p>`).replace(`<p class="terms">${TERMS_TRIAL}</p>`, `<p class="terms">${TERMS}</p>`);
+  const noTrial = `<div class="mini-frame ${ph?'ph':''}" style="width:${ph?390:620}px;padding:${ph?'0':'40px 0'};overflow:hidden"><p class="flowcap" style="position:absolute;left:12px;top:10px;z-index:3;color:#fff">The same window, an organization that paid before</p><div class="scrim"></div>${payNo.replace('class="win"','class="win st"')}</div>`;
+  const waitCard = (t,b,spin,acts) => `<div class="mini-frame" style="width:${ph?390:520}px"><div class="pc"><p class="sh" style="margin-bottom:6px">${t}</p><p class="hint">${b}</p>${spin?`<p class="hint" style="margin-top:12px"><span class="spin"></span>Setting up…</p>`:`<div class="acts">${acts}</div>`}</div></div>`;
+  const w1 = waitCard('Setting up Club','We’re setting up Club for Harbourview Tournaments. Your events, teams and staff stay where they are. Please don’t start another payment.',true);
+  const w2 = waitCard('This is taking longer than usual','Club isn’t ready yet. Please don’t start another payment. Check again in a minute.',false,'<span class="btn lime">Check again</span><span class="btn">Contact us</span>');
+  const w3 = waitCard('We couldn’t confirm Club is ready','Please don’t pay again. Contact us and we’ll sort it out.',false,'<span class="btn">Check again</span><span class="btn lime">Contact us</span>');
+  const ref = `<div class="mini-frame" style="width:${ph?390:520}px;display:grid;gap:10px">
+      <div class="callout danger"><b>The plan closed before you pressed.</b><br>This plan is not open for self-serve checkout yet.</div>
+      <div class="callout danger"><b>Legal pages off, on a live key.</b><br>We can’t start a plan right now. Nothing has been charged. Please try again later or email support@fieldlogichq.ca.</div>
+      <div class="callout"><b>No billing address yet.</b> The Billing address window opens first, then this window.</div>
+      <div class="callout danger"><b>A Québec or United States billing address.</b> Refused before Stripe, as every purchase is today (S2 Ask 15), with the shipped words; the row stays (the address can be changed in the window).</div></div>`;
+  return `<h2>3 · Starting a plan</h2>
+  <div class="explain"><p>${closed?'<b>While a plan is closed there is no start:</b> its row reads “Coming soon” and “Contact us” (tab 2), so none of these windows open for it. Flip <b>The plan</b> back to Open to see the flow.':'From “Upgrade to Club” on Plan &amp; billing (Club shown; League Plus and Club · Association are the same windows with their own figures). Every price and sentence below comes from the plan config and the shipped words.'}</p></div>
+  ${closed?'':`
+  <div class="specwrap"><p class="speclabel">1 · The payment window · ${ph?'phone':'desktop'} · shipped component, true trial added</p><div class="spec">${payFrame}${noTrial}${rail(ids)}</div></div>
+  <div class="specwrap"><p class="speclabel">2 · Back from Stripe: the wait (new for an existing organization ${mk('w-wait',3)}) · then the slow states ${mk('w-slow',4)}</p><div class="spec">${w1}${w2}${w3}</div></div>
+  <div class="specwrap"><p class="speclabel">3 · When it fails before Stripe ${mk('w-refuse',5)}</p><div class="spec">${ref}</div></div>`}`;
+}
+
+/* ---------- 4 · resume ---------- */
+function T_resume() {
+  const ids = [
+    note('r-line','new','One line names the start that was left','A door organization that backs out of Stripe lands on its plan step, which offers the plan again (ruled, drawings call 2). Its Plan & billing says nothing of it.','Above the table, while the organization still remembers the plan it came for (cleared the moment a plan lands): “You were starting Club. Pick up where you left off with Upgrade to Club below.” The row itself is the same row as tab 2.','Call 41. Without the line the row is still there; with it, the person sees at once they did not lose their place.'),
+    note('r-twice','new','Paid, but the plan has not landed yet: no second start','Nothing stops it: someone who paid, closed the Stripe tab and opened Plan & billing before Stripe’s message lands sees “Upgrade to Club” again, and a person with no trial would be charged twice (the webhook then refuses the second subscription, after the charge).','Before it makes a Stripe page, the start asks Stripe whether this organization already has a subscription that has not landed; if so it refuses and Plan & billing shows the “Setting up Club” wait of tab 3 instead of the rows. Decided from the code; a guard in the build.','/ux review 2026-11-21. Paying twice is the costly mistake every wait state already warns about.'),
+    note('r-expiry','same','No “expired” state to draw','—','Every press makes a fresh Stripe page; nothing reuses the old one, so there is no expired session to explain. Pressing Back into an old Stripe page after a day shows Stripe’s own “expired” page, whose link returns here.','The prompt asked what to say when Stripe’s session has expired: the answer from the code is that we never send anyone to an old one.'),
+    note('r-closed','same','If the plan closes meanwhile','—','The line does not show while its plan is closed (the row says “Coming soon”).','A line that points at a button that is not there is the dead end we are removing.'),
+  ];
+  const lead = `<div class="callout nu" style="margin-bottom:12px">You were starting <b>Club</b>. Pick up where you left off with Upgrade to Club below. ${mk('r-line',1)}</div>`;
+  const rows = [{key:'tournament',mine:true,rowCls:'same'},{key:'tournament_plus',btn:'Upgrade to Tournament Plus',rowCls:'same'},{key:'league',btn:'Upgrade to League Plus',rowCls:'same'},{key:'club',btn:'Upgrade to Club',rowCls:'nu'},{key:'club_large',btn:'Upgrade to Club · Association',rowCls:'same'}];
+  const body = changeSection(rows, `<p class="after same">Prices are plus applicable taxes.</p>`, lead);
+  const frame = S.dev==='desk' ? `<div class="pf" style="width:1000px;padding:24px 20px">${body}</div>` : phone(body);
+  return `<h2>4 · A start left halfway</h2>
+  <div class="explain"><p>Someone made a club through a public door, reached Stripe, and left. The organization remembers the plan it came for until a plan lands. S4 makes Plan &amp; billing the second place that offers it again ${mk('r-expiry',2)} ${mk('r-closed',3)}. The opposite case, someone who DID pay and came back before the plan landed, must never see the start again ${mk('r-twice',4)}.</p></div>
+  ${specimen(`Proposed · the Change plan section only (the rest as tab 2) · ${S.dev==='desk'?'desktop':'phone'}`, frame, ids)}`;
+}
+
+/* ---------- 5 · TP → League Plus ---------- */
+function T_tp() {
+  const closed = S.gate==='closed';
+  const ph = S.dev==='phone';
+  if (S.ver==='today') {
+    const f = `02-billing-tournament-plus-${S.gate}-${ph?'phone':'desk'}.png`;
+    note('tp-today','false','League Plus is a card, not a row','The table offers Downgrade, Move to Club and Move to Club · Association; League Plus appears only in the shelf below, without a button. The probe confirms no path (tab 1).','—','The tournament organizers’ line would promise a start that does not exist.');
+    return `<h2>5 · Paying Tournament Plus → League Plus</h2><div class="explain"><p>Capture 02 (dev, ${S.gate}). ${mk('tp-today',1)}</p></div>
+    <div class="specwrap"><p class="speclabel">Today · capture · ${ph?'phone 390 (top of page)':'desktop 1440'} · plans ${S.gate}</p><div class="spec">${capture(f, ph?390:1440, f)}${rail(['tp-today'])}</div></div>`;
+  }
+  const ids = [
+    note('tp-row','new','A move row for League Plus','No League Plus row.','“Move to League Plus” between Tournament Plus and Club, a move like the Club rows (one more entry in the move table). Closed: “Coming soon” and “Contact us”.','Ruled in Ask 12 (moves at launch). One subscription, never a second checkout.'),
+    note('tp-shelf','fix','The shelf keeps the coach card only','Premium, League Plus, Club cards.','As tab 2: League Plus and Club are rows now.','Call 35.'),
+    note('tp-sent','fix','The move’s first sentence fits League Plus','The move window says “{org} moves to {plan} today and can hold up to {limit} teams.” League Plus has no team limit, so it would read “up to 9999 teams”.','“UAT Test Org moves to League Plus today. Your events, teams and staff stay where they are.” (the S3b line’s own words). Club’s sentence gains what it counts and the same reassurance: “UAT Test Org moves to Club today and can hold up to 15 teams with a Premium Coaches Portal. Your events, teams and staff stay where they are.” (Club · Association: 30). /marketing 2026-11-21.','Decided from the code (a defect); the words go to /marketing.'),
+    note('tp-charge','new','What the move charges','—','The shipped move-up rule (lib/plan-move.ts:26-38): today, the difference for the rest of this billing period, from Stripe’s own preview, with its tax; then League Plus’s price from the renewal date. Monthly stays monthly, yearly stays yearly. No second trial; an organization inside its Tournament Plus trial keeps that trial’s end and pays nothing today.','Call 39. /accounting read this sentence (see Your calls).'),
+    note('tp-example','same','The figures here are an example','—','19 days left of a 30-day month (renews December 9, today November 20), an Ontario address: ($89 − $39) × 19 ⁄ 30 = $31.67, HST 13% $4.12, due today $35.79. The real window shows Stripe’s preview, never our arithmetic.','No number in the build comes from this drawing.'),
+  ];
+  const rows = [{key:'tournament',btn:'Downgrade to Tournament',rowCls:'same'},{key:'tournament_plus',mine:true,rowCls:'same'},
+    {key:'league',btn:'Move to League Plus',closed,rowCls:'nu',marks:mk('tp-row',1)},{key:'club',btn:'Move to Club',closed,rowCls:'same'},{key:'club_large',btn:'Move to Club · Association',closed,rowCls:'same'}];
+  const below = `<p class="after same">Club and Club · Association count the teams you give a Premium Coaches Portal. House league teams are unlimited. More than 30? <span class="lnk">Contact us</span> for a custom plan.</p><p class="after same">Prices are plus applicable taxes.</p><p class="after same">${TERMS}</p>`;
+  const body = planCard({name:'Tournament Plus', price:'$39 CAD / month <span class="tx">plus applicable taxes</span>', sub:['Renews December 9, 2026'], usage:USAGE_TP, actions:'<div class="acts"><span class="btn">Payment method &amp; invoices</span><span class="btn">Billing address</span></div>'})
+    + changeSection(rows, below) + INCLUDED_TP + `<div class="fx" style="padding:2px">${discovery(['team'], mk('tp-shelf',2))}</div>` + CANCEL_TP + REST;
+  const win = closed ? '' : `<div class="win" style="top:${ph?'auto':'110px'}"><div class="wh">Move to League Plus?</div><div class="wb">
+      <p style="margin:0" class="fx">UAT Test Org moves to League Plus today. Your events, teams and staff stay where they are. ${mk('tp-sent',3)}</p>
+      <dl class="figs nu"><div><dt>Today, for the rest of this billing period</dt><dd>$31.67 CAD</dd></div><div><dt>HST (13%)</dt><dd>$4.12 CAD</dd></div><div class="due"><dt>Due today</dt><dd>$35.79 CAD</dd></div><div><dt>From December 9, 2026</dt><dd>$89 CAD / month<small>plus applicable taxes</small></dd></div></dl>
+      <p class="hint">Same subscription and payment method, with no second checkout. The prorated amount and its tax come from Stripe before you confirm. No second trial. ${mk('tp-charge',4)} ${mk('tp-example',5)}</p></div>
+      <div class="wf"><span class="btn">Cancel</span><span class="btn lime">Move to League Plus</span></div></div>`;
+  const frame = ph ? phone(body, closed?'':`<div class="scrim"></div>${win}`) : desk(SIDE_T('UAT Import Smoke Tournament'), body, closed?'':`<div class="scrim" style="grid-column:1/-1"></div>${win}`);
+  note('tp-states','same','The window’s other states, as they ship','—','Loading: “Loading the charge…”. No address: “Add a billing address before you pay.” with Billing address (capture 07). The check failed: “We couldn’t check the charge. Please check again.”. The charge moved at the press: “The charge changed to $X CAD. Nothing was charged. Check the figures, then press Move to League Plus again.”. A Québec or US address: refused before any figure. All shipped words; League Plus only takes them.','/ux review: the money window is drawn in every state, not only its happy one.');
+  note('tp-pastdue','new','A payment that is failing','A Tournament Plus organization whose last payment failed is offered the move (only a Premium coach is refused today).','Refused the same way Premium is: “Your last payment didn’t go through. Update your payment method first, then move.” (call 46).','/billing review: Stripe would refuse an incomplete payment anyway, but the person should be told before the window, not after.');
+  if (!closed) ids.push('tp-states','tp-pastdue');
+  const states = closed ? '' : `<div class="specwrap"><p class="speclabel">The move window’s other states ${mk('tp-states',6)} ${mk('tp-pastdue',7)}</p><div class="spec">
+    <div class="mini-frame" style="width:416px"><p class="sh">Move to League Plus?</p><p class="hint"><span class="spin"></span>Loading the charge…</p></div>
+    <div class="mini-frame" style="width:416px"><p class="sh">Move to League Plus?</p><div class="callout danger">Add a billing address before you pay.</div><div class="acts" style="justify-content:flex-end"><span class="btn">Cancel</span><span class="btn lime">Billing address</span></div></div>
+    <div class="mini-frame" style="width:416px"><p class="sh">Move to League Plus?</p><div class="callout danger">The charge changed to $36.12 CAD. Nothing was charged. Check the figures, then press Move to League Plus again.</div></div>
+    <div class="mini-frame" style="width:416px"><p class="sh">Move to League Plus?</p><div class="callout danger">We couldn’t check the charge. Please check again.</div><div class="acts" style="justify-content:flex-end"><span class="btn">Cancel</span><span class="btn lime">Check again</span></div></div>
+  </div></div>`;
+  return `<h2>5 · Paying Tournament Plus → League Plus</h2>
+  <div class="explain"><p>${closed?'Closed: the League Plus row reads “Coming soon” and “Contact us”; no window opens.':'The window is the shipped move window (the one Move to Club opens), with the charge as lines that add up to Due today. The page behind it is today’s Tournament Plus page with the one new row.'}</p></div>
+  ${specimen(`Proposed · paying Tournament Plus (dev fixture UAT Test Org) · ${ph?'phone 390':'desktop 1440'} · plans ${S.gate}${closed?'':' · the move window open'}`, frame, closed?['tp-row','tp-shelf']:ids)}${states}`;
+}
+
+/* ---------- 6 · free-time org ---------- */
+function T_freetime() {
+  const closed = S.gate==='closed';
+  const ph = S.dev==='phone';
+  if (S.ver==='today') {
+    const f = `03-billing-free-time-${S.gate}-${ph?'phone':'desk'}.png`;
+    note('ft-today','false','No Change plan section during free time','While free time runs, Plan & billing hides every buy, move and cancel control (BillingBody.tsx:217-221). A free-time organization cannot start League Plus or Club anywhere in the product; the three former Founding holders are in this state until September 30, 2027.','—','They are the customers most likely to buy first.');
+    note('ft-gap','fix','A spacing slip, reported','“No billing action needed…” sits against the “What’s included” heading with no gap.','Fixed in the redraw (the hint gets the section gap).','Cosmetic, found in capture 03.');
+    return `<h2>6 · A free-time organization</h2><div class="explain"><p>Capture 03 (dev, Dev Tournament+ Org: its own plan is free Tournament, with Tournament Plus free through September 30, 2027). The page is the same in both gate states. ${mk('ft-today',1)} ${mk('ft-gap',2)}</p></div>
+    <div class="specwrap"><p class="speclabel">Today · capture · ${ph?'phone 390':'desktop 1440'}</p><div class="spec">${capture(f, ph?390:1440, f)}${rail(['ft-today','ft-gap'])}</div></div>`;
+  }
+  const ids = [
+    note('ft-rows','new','The plans above its free plan, as starts','No section.','A Change plan section with the plans ABOVE the free plan only: League Plus, Club, Club · Association, as starts with their own trial (the payment window of tab 3). Its free Tournament Plus is the “Free through …” row. Nothing to buy at or below the free plan: in its last 14 days the page still says “To keep Tournament Plus, contact us.” as it does today.','Call 40. Buying the free plan itself during free time would charge for what is free; the shipped rule (“free time can never be bought out of”) stays.'),
+    note('ft-keep','new','What happens to the free time','Not decided anywhere. Checkout does not look at free time. While a paid plan above it runs, the free plan is outranked and its card and reminder emails go quiet (lib/free-time.ts:265-269; club-free-time-reminders.ts:109). But when a paid plan ENDS, the organization is suspended like any ended plan: plan free time does not let it back in (lib/free-time-reclose.ts:6-8).','Option A (recommended): the plan ending falls back to the free plan while free time runs, and the line reads “Starting a plan doesn’t end your free time. If you stop it, {org} goes back to free Tournament Plus through September 30, 2027.” (no end date: “…goes back to free Tournament Plus.”). Option B: no fall-back, and the line reads “Starting a plan doesn’t end your free time. Your free time runs on its dates, and the plan you start is billed as usual.” with a warning in the cancel window. Under the table, beside the buttons (/ux). The server refuses a start at or below the free plan (/billing).','Call 40. Version 1 of this drawing promised the fall-back as if it shipped; /legal caught it (Competition Act s. 74.01: a public statement must be true). The Premium coach’s Club start ends free time because the portal itself becomes the club; nothing is replaced here. The Premium coach’s Club start says the opposite (“free time ends when your club starts”) because there the portal itself becomes the club; here nothing is replaced. Keeping it costs nothing; ending it means new code and a sentence that reads as a penalty for buying.'),
+    note('ft-gap2','fix','The spacing slip, fixed','—','The hint gets its section gap.','Capture 03.'),
+  ];
+  const lead = '';
+  const keepLine = `<p class="after nu" style="padding:6px 8px;color:var(--p-soft)">Starting a plan doesn’t end your free time. If you stop it, Dev Tournament+ Org goes back to free Tournament Plus through September 30, 2027. ${mk('ft-keep',2)} <span style="font:500 11px var(--f-mono);color:var(--k-fix)">(call 40, option A)</span></p>`;
+  const rows = [{key:'tournament_plus',mine:true,chipText:'Free through Sep 30, 2027',rowCls:'same'},
+    {key:'league',btn:'Upgrade to League Plus',closed,rowCls:'nu',marks:mk('ft-rows',1)},{key:'club',btn:'Upgrade to Club',closed,rowCls:'nu'},{key:'club_large',btn:'Upgrade to Club · Association',closed,rowCls:'nu'}];
+  const below = `${keepLine}<p class="after">Club and Club · Association count the teams you give a Premium Coaches Portal. House league teams are unlimited. More than 30? <span class="lnk">Contact us</span> for a custom plan.</p><p class="after same">Prices are plus applicable taxes.</p><p class="after same">${TERMS_TRIAL_MAYBE}</p>`;
+  const body = planCard({name:'Tournament Plus', chip:'Free time', price:'Free through September 30, 2027', sub:['from FieldLogicHQ · then the free Tournament plan, automatically'], usage:USAGE_TP})
+    + `<div class="ftband same"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></div><div><span class="eyb">FREE TIME</span><b>Tournament Plus is free through September 30, 2027.</b>FieldLogicHQ gave your organization Tournament Plus for a while. On October 1 it goes back to the free Tournament plan automatically. Nothing is charged, and nothing you made is deleted.</div></div>`
+    + `<p class="hint fx" style="margin-top:-14px">No billing action needed: your free time runs through September 30, 2027. ${mk('ft-gap2',3)}</p>`
+    + changeSection(rows, below, lead) + INCLUDED_TP + `<div class="fx" style="padding:2px">${discovery(['team'])}</div>` + REST;
+  const frame = ph ? phone(body) : desk(SIDE_FT('Dev Tournament+ Org'), body);
+  return `<h2>6 · A free-time organization</h2>
+  <div class="explain"><p>The Founding Season is gone; its three holders are ordinary free-time organizations (free Tournament Plus through September 30, 2027). No Founding sentence is drawn. ${closed?'Closed: the three rows read “Coming soon” and “Contact us”, and the free-time sentence stays (it is true either way).':''}</p></div>
+  ${specimen(`Proposed · free-time org (dev fixture) · ${ph?'phone 390':'desktop 1440'} · plans ${S.gate}`, frame, ids)}`;
+}
+
+/* ---------- 7 · panel ---------- */
+function T_panel() {
+  const ph = S.dev==='phone';
+  const ids = [
+    note('pn-month','false','The panel over another page charges monthly only','Opened from a plan lock on any admin page (PlanPanelHost), the panel sends “monthly” and shows no choice (PlanPanelDrawer.tsx:54, :93). Inside Plan & billing the same panel already has the choice.','—','A yearly buyer who meets a lock on the branding page cannot buy yearly there.'),
+    note('pn-choice','fix','The same choice as inside Plan & billing','—','The panel’s Upgrade opens the payment window of tab 3 (Monthly or Yearly, the saving, the true trial). One window for every paid start, wherever it is pressed.','Call 38. Reuse, not a second control.'),
+    note('pn-plans','new','The panel can start the three plans','The panel offers Upgrade only for Tournament Plus, only to a free Tournament organization; it cannot open for Club · Association at all (lib/plan-upgrade.ts:19, :27-29).','It offers Upgrade for each row tab 2 shows, and opens for Club · Association too. A paying organization’s panel stays read-only and points to Plan & billing, where the move lives.','Same rule as the table, said once.'),
+  ];
+  const panelBody = (today) => `<div class="pc" style="position:absolute;right:0;top:0;bottom:0;width:${ph?'100%':'460px'};border-radius:0;display:grid;align-content:start;gap:12px;padding:22px">
+      <div class="eb"><span>Plan</span><span class="lnk" style="text-decoration:none">✕</span></div><div class="pname">Club</div>
+      <p class="hint">Everything your club runs — teams, house league, money and the board — in one place.</p>
+      <div class="hint" style="border-top:1px solid var(--p-line);padding-top:10px">${today?`$219 CAD / month plus applicable taxes ${mk('pn-month',1)}`:`From $219 CAD / month plus applicable taxes`}</div>
+      <span class="btn lime ${today?'':'fx'}">${today?'Upgrade to Club':'Upgrade to Club…'}</span>${today?'':`<span class="hint">Opens the payment window: Monthly or Yearly (${save('club')}). ${mk('pn-choice',1)} ${mk('pn-plans',2)}</span>`}</div>`;
+  const frame = `<div class="mini-frame" style="width:${ph?390:1000}px;height:520px;padding:0;overflow:hidden"><div style="padding:24px;color:var(--p-dim)">Branding · a plan lock: “Custom branding is a Tournament Plus feature. <span class='lnk'>See plans</span>”</div><div class="scrim"></div>${panelBody(S.ver==='today')}</div>`;
+  return `<h2>7 · The plan panel, monthly or yearly</h2>
+  <div class="explain"><p>The panel that opens over any admin page when a plan lock is clicked. Not captured on dev (the free organization is behind the Terms wall); drawn from PlanPanelDrawer.tsx and PlanArticlePanel.</p></div>
+  ${specimen(`${S.ver==='today'?'Today':'Proposed'} · the panel over a page · ${ph?'phone':'desktop'}`, frame, S.ver==='today'?['pn-month']:['pn-choice','pn-plans'])}`;
+}
+
+/* ---------- 8 · unchanged ---------- */
+function T_same() {
+  const ph = S.dev==='phone';
+  const f = `04-billing-premium-coach-open-${ph?'phone':'desk'}.png`;
+  return `<h2>8 · Unchanged</h2>
+  <div class="explain"><p>Shown so you can see S4 leaves them alone.</p></div>
+  <div class="cols">
+    <div class="note"><b>A Premium coach’s Plan &amp; billing.</b> Out of S4. No coach surface says “free” (2026-11-19). Capture 04 below (that fixture’s portal is in its Ending state: Keep Premium first, then Club).</div>
+    <div class="note"><b>A League Plus organization.</b> Changes to no other plan at launch, so its page has no Change plan section. League Plus → Club is built after launch (call C1, walk §550). Nobody holds League Plus at launch.</div>
+    <div class="note"><b>The onboarding change-plan window</b> keeps its four cards (plan L346): Tournament Plus, Tournament, League Plus, Club. When League Plus or Club is open, choosing it starts checkout and comes back to the wait of tab 3 (today it returns to the onboarding with a success notice, the same false-too-soon state). Its subtitle names only Tournament Plus: call 43.</div>
+  </div>
+  <div class="specwrap"><p class="speclabel">Premium coach · capture · ${ph?'phone 390':'desktop 1440'}</p><div class="spec">${capture(f, ph?390:1440, f)}</div></div>`;
+}
+
+/* ---------- 9 · line ---------- */
+function T_line() {
+  const closed = S.gate==='closed';
+  note('ln-line','new','The line, per plan, while that plan is open','Not built (moved from S3b, W71).','Under each cross-sell on /for-tournament-organizers: “Already running tournaments here? Start League Plus from Plan & billing. Your events, teams and staff stay where they are.” and the Club card the same with “Club”. Each renders only while ITS plan is open.','Ships with S4, in the same build: the build adds a test that fails if the line can render while the Tournament Plus → League Plus move is missing. “Plan & billing” in the line is a link through the plan’s own start door, which already sends a signed-in owner to their Plan & billing (S2 trap D) and a signed-out visitor to sign in (/ux: never a dead end). The verb is call 44.');
+  const card = (plan, price) => `<div class="pc" style="width:420px"><p class="eb" style="margin:0 0 6px"><span>For ${plan==='League Plus'?'league programs':'full clubs'}</span>${closed?'<span class="chip soon">Coming soon</span>':''}</p><p class="big">${plan}</p><p class="hint">From ${price} CAD / month plus applicable taxes</p>${closed?'':`<p class="hint nu" style="margin-top:10px;padding:6px;color:var(--p-soft)">Already running tournaments here? Start ${plan} from Plan &amp; billing. Your events, teams and staff stay where they are. ${mk('ln-line',1)}</p>`}</div>`;
+  return `<h2>9 · The tournament organizers’ line</h2>
+  <div class="explain"><p>Words ruled in PRICING_PAGE_COPY.md’s S3b section. True only once S4’s starts exist; proved impossible today for a paying Tournament Plus organization (tab 1). ${closed?'Closed: the line is absent and the card shows “Coming soon”, as S3 built it.':''}</p></div>
+  <div class="specwrap"><p class="speclabel">The two cross-sell cards (only the new line is drawn in detail) · plans ${S.gate}</p><div class="spec">${card('League Plus','$89')}${card('Club','$219')}${rail(['ln-line'])}</div></div>`;
+}
+
+/* ---------- 10 · calls ---------- */
+const CALLS = [
+  ['35','Where the starts live','League Plus, Club and Club · Association become <b>rows in the existing Change plan table</b> (open: Upgrade; closed: Coming soon + Contact us). The “Managing more than tournaments?” shelf keeps the Premium Coaches Portal card only. No new compare panel.','A second panel duplicates the table that is already walked; the shelf would say League Plus and Club twice.'],
+  ['36','A closed row’s words','The plan carries the <b>“Coming soon”</b> pill on its first line; the button reads <b>“Contact us”</b> (same mail link). Move rows that are closed read the same.','“Contact us to move” is wrong for an organization that is starting, not moving, a plan; “Coming soon” is the ruled closed word.'],
+  ['37','Club’s team count says what it counts','One line under the table, only when a Club row shows: “Club and Club · Association count the teams you give a Premium Coaches Portal. House league teams are unlimited. More than 30? Contact us for a custom plan.” Club’s own card line gets the same clause.','Binding since 2026-11-19; the Holds cell is too narrow to carry it. /marketing reads the words.'],
+  ['38','Monthly or yearly','Every start opens the <b>shipped payment window</b> (Monthly | Yearly, saving from the plan config, opens on Monthly), including from the panel over any page. It states the <b>true trial</b> (or “no second trial”).','One window everywhere; the panel’s monthly-only start is the gap. Defaulting to Yearly would raise the first charge without asking.'],
+  ['39','What Tournament Plus → League Plus charges','The shipped move-up rule: <b>today the difference for the rest of this period</b> (Stripe’s preview, with tax), then League Plus’s price from renewal; same cycle; no second trial; mid-trial keeps the trial’s end and pays nothing today.','It is the rule Club moves already use and /accounting already read; a second rule for one move would be a second thing to explain.'],
+  ['40','A free-time organization moving up — and what happens if it then stops','It sees the plans <b>above</b> its free plan as starts (with their trial); buying does not end the free time. <b>A (recommended): ending the paid plan falls back to the free plan</b> while free time runs (a change to the plan ending, built in S4); the sentence under the table then reads “Starting a plan doesn’t end your free time. If you stop it, {org} goes back to free Tournament Plus through September 30, 2027.” <b>B:</b> no fall-back; the sentence reads “Starting a plan doesn’t end your free time. Your free time runs on its dates, and the plan you start is billed as usual.” and the cancel window warns that stopping the plan closes the organization.','Today a paid plan’s ending suspends the organization, takes its site off and starts the 90-day clock, and plan free time does not let it back in (lib/free-time-reclose.ts:6-8; lib/free-time.ts:488-491). So a former Founding holder who tries Club’s 90-day trial and stops would be closed with free time still left. /legal caught the drawn sentence promising a fall-back the code does not do. A protects the people most likely to try; B is cheaper and honest, but harsh.'],
+  ['41','A start left halfway','One line above the table, while the organization still remembers the plan it came for: “You were starting Club. Pick up where you left off: Upgrade to Club below.” No expiry, no “expired” state (every press makes a fresh Stripe page).','The row alone works; the line tells them their place was kept.'],
+  ['42','Before the flip or after','<b>Before: S4 is a launch item.</b>','At the flip the public pages send every signed-in owner to their Plan & billing (S2’s rule). Without S4 that page cannot sell them League Plus or Club: our existing customers would hit the one dead end the flip creates. Marketing follows launch; this is product.'],
+  ['43','The onboarding window’s subtitle','Keep the four cards (ruled). While both are open, the subtitle adds: “Running more than tournaments? League Plus adds house league seasons, and Club adds rep teams and the club’s books.” (only the open plan’s clause when one is open; today’s sentence while both are closed). /marketing draft; checked against the Facts doc in the build.','Today it describes two of four cards.'],
+  ['44','The tournament organizers’ line says “Start”; the buttons say “Upgrade to” or “Move to”','<b>Keep the ruled line.</b> “Start League Plus from Plan &amp; billing” names the act; the button names the plan. (/marketing’s alternative: “Upgrade to League Plus from Plan &amp; billing…”, which a paying Tournament Plus owner then sees as “Move to”.)','A new fact the S3b ruling did not have in front of it; one verb cannot fit both buttons, so changing the line only moves the mismatch.'],
+  ['45','A second subscription that slips through','The build stops a second start while the first is still landing (tab 4). If one still slips through (two tabs pressed in the same seconds), <b>the owner is alerted and refunds it by hand</b> from our admin; no automatic cancel or refund at launch.','Today the webhook only notes it in a log while the second subscription keeps billing. An automatic refund is new money-moving automation; by hand is safe while sales are few.'],
+  ['46','A Tournament Plus organization whose payment is failing','<b>Refused before the window</b>, with Premium’s words: “Your last payment didn’t go through. Update your payment method first, then move.”','Stripe already refuses the charge; this says so before the person reads figures they cannot pay.'],
+];
+function T_calls() {
+  return `<h2>10 · Your calls</h2>
+  <div class="explain"><p class="note" style="border-left:4px solid var(--k-new)"><b>Ruled 2026-11-21: all twelve as recommended</b> (owner “accept”; call 40 = option A). Build prompt: CLUB_ON_SALE_S4_BUILD_PROMPT.md.</p><p>Numbered from 35 (the plan’s asks end at 34). Each has a recommendation; pick per call and copy the result back. Decided from the code and <b>not</b> asked: the wait after Stripe for a start that changes the organization (tab 3), the League Plus move sentence (tab 5), the move route refusing the three plans when the legal pages are off on a live key (the checkout already does; the move does not), and the line’s build test (tab 9).</p></div>
+  <div class="tblwrap"><table class="asks"><tr><th>#</th><th>Call</th><th>Recommendation</th><th>Why</th><th>Your pick</th></tr>
+  ${CALLS.map(c=>`<tr><td>${c[0]}</td><td>${c[1]}</td><td class="rec">${c[2]}</td><td>${c[3]}</td><td class="pick"><select id="pick-${c[0]}" data-call="${c[0]}"><option value="">—</option><option>As recommended</option><option>Change (say how)</option><option>Not now</option></select></td></tr>`).join('')}
+  </table></div>
+  <div class="copy"><button type="button" id="copyb">Copy my picks</button><span class="mini" id="copym"></span></div>
+  <textarea id="pickout" readonly aria-label="Your picks, to copy"></textarea>
+  <h3>Reviews run on this drawing (2026-11-21)</h3><div class="note" id="reviews"><ul style="margin:0;padding-left:20px">
+    <li><b>/design</b>: the desktop table did not render in version 1 (fixed); the payment window was clipped and too wide (now the shipped 416px window); missing “What’s included” and “Reduce or cancel” on tabs 5–6 (drawn); phone plan cards’ button aligned as shipped. Kept: one lime per screen, the closed pill, clickable markers.</li>
+    <li><b>/ux</b>: someone who paid and came back before the plan landed could pay twice (a guard, tab 4); the free-time sentence moved under the table; the move window drawn in its other states (tab 5); the line on the public page links through the start door (tab 9). Raised: a free-time organization still cannot buy the plan it holds; unchanged by S4 (“To keep Tournament Plus, contact us”, the free-time rules).</li>
+    <li><b>/marketing</b>: “the teams you give a Premium Coaches Portal” (the ruled wording); the resume line’s punctuation; Club’s move sentence keeps the reassurance; a no-end-date version of the free-time sentence; the onboarding subtitle draft (call 43); the verb clash (call 44).</li>
+    <li><b>/billing</b>: the server refuses a start at or below a running free plan; the move and its preview refuse the three plans when the legal pages are off on a live key (this also newly covers Tournament Plus → Club); the wait keys on any Tournament organization starting a plan that changes it; the true-trial read never creates a Stripe customer; Québec and US refused (tab 3); a free-time record stored as cancelled must not read as a comeback (“Welcome back” email) — checked on dev in the build; calls 45 and 46.</li>
+    <li><b>/accounting</b>: the charge sentence is correct and complete (one invoice: credit for unused Tournament Plus, charge for League Plus, both taxed at the address; a mid-trial move is a $0 invoice with no tax; yearly the same sentence). Receipts and Bookkeeping need nothing new. For the accountant list: a buyer who moved province between purchase and move is credited at the new rate (as Club moves are today).</li>
+    <li><b>/legal</b>: the free-time sentence in version 1 promised a fall-back the product does not do (an ended paid plan closes the organization; plan free time does not catch it) — now call 40, with the true line for each option. Staff can still end free time early by arrangement, so the dated line holds only while it runs. “Coming soon” + “Contact us”: fine, date-free, no “we’ll let you know”. No Terms edit needed.</li>
+  </ul></div>`;
+}
+
+/* ---------- render ---------- */
+const RENDER = {start:T_start, free:T_free, 'start-flow':T_flow, resume:T_resume, tp:T_tp, freetime:T_freetime, panel:T_panel, same:T_same, line:T_line, calls:T_calls};
+const tabs = document.getElementById('tabs');
+tabs.innerHTML = TABS.map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}">${l}</button>`).join('');
+function render() {
+  if (!RENDER[S.tab]) S.tab='start';
+  tabs.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.tab===S.tab)));
+  const uses = USES[S.tab]||[];
+  document.getElementById('viewrow').hidden = uses.length===0;
+  document.querySelectorAll('.seg').forEach(seg=>{
+    const k = seg.dataset.k; const on = uses.includes(k);
+    seg.parentElement.hidden = !on;
+    seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', String(S[k]===b.dataset.v)));
+  });
+  const panels = document.getElementById('panels');
+  panels.innerHTML = `<section class="panel">${RENDER[S.tab]()}</section>`;
+  panels.classList.toggle('differs', S.view==='diff' && uses.includes('view'));
+  if (S.tab==='calls') wireCalls();
+}
+tabs.addEventListener('click', e=>{ const b=e.target.closest('.tab'); if(!b) return; S.tab=b.dataset.tab; try{localStorage.setItem('s4tab',S.tab)}catch(x){} history.replaceState(null,'','#'+S.tab); render(); });
+document.getElementById('viewrow').addEventListener('click', e=>{ const b=e.target.closest('.seg button'); if(!b) return; S[b.parentElement.dataset.k]=b.dataset.v; render(); });
+window.addEventListener('hashchange', ()=>{ const t=location.hash.slice(1); if (RENDER[t]) { S.tab=t; render(); } });
+
+/* notes dialog */
+const nd = document.getElementById('nd');
+document.getElementById('ndc').addEventListener('click', ()=>nd.close());
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-note]'); if (!b) return;
+  const n = NOTES[b.dataset.note]; if (!n) return;
+  document.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll(`[data-note="${b.dataset.note}"]`).forEach(x=>x.classList.add('on'));
+  const dot = document.getElementById('ndd'); dot.className = 'dot d-'+n.kind; dot.textContent = b.textContent.trim().split(/\s/)[0] || '•';
+  document.getElementById('ndt').textContent = n.title;
+  document.getElementById('ndb').innerHTML = `<p><b class="lab">What ships today</b>${n.today}</p><p><b class="lab">What S4 proposes</b>${n.proposed}</p><p><b class="lab">Why</b>${n.why}</p>`;
+  try { nd.showModal(); } catch(x) { nd.setAttribute('open',''); }
+});
+
+/* calls: picks → text */
+function wireCalls() {
+  const out = document.getElementById('pickout');
+  const upd = () => { out.value = CALLS.map(c=>{const v=document.getElementById('pick-'+c[0]).value;return v?`Call ${c[0]} (${c[1]}): ${v}`:null}).filter(Boolean).join('\n'); };
+  document.querySelectorAll('.pick select').forEach(s=>s.addEventListener('change', upd));
+  document.getElementById('copyb').addEventListener('click', ()=>{ upd(); const m=document.getElementById('copym');
+    navigator.clipboard.writeText(out.value).then(()=>{m.textContent='Copied.'}).catch(()=>{out.select();m.textContent='Select and copy the text below.'}); });
+  upd();
+}
+render();
+</script>

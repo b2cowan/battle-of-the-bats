@@ -62,7 +62,7 @@ Prod = `origin/master`. Evidence is the helper's [H] unless marked [V].
 | 3 | 18 or older to manage an org or buy | no check | no check | No age field at any sign-up. **O5** widens: the follow nudge creates fan accounts. |
 | 3 | Only the owner buys, changes or cancels | yes | yes | Cancel confirm refuses a non-owner. |
 | 6 | CAD, monthly or yearly, in advance | yes | yes | |
-| 6 | Tax added from the billing address, **shown before you pay** | yes | **no** | Taxed checkout is GST/HST Stage 2, dev only. ⇒ **publication rides the release that carries taxed checkout**, or §6 says less. |
+| 6 | Tax added from the billing address, **shown before you pay** | yes | **yes** | Taxed checkout (GST/HST Stage 2) has been on production since the 2026-11-15 promote (corrected 2026-11-17 by the 6.7 hand-off review). §6 holds on release day. What §6, §7, §8 and §16 still rest on that is NOT on production: the 6.6 fixes with mig 490. |
 | 6 | Card stays on file with Stripe | yes | yes | |
 | 6 | Receipts and invoices emailed to the owner, on the billing page | partly | partly | No code of ours emails an invoice; Stripe's customer emails do, **if switched on in live** (unverified — owner lookup L-c). The billing page links Stripe's portal. → `/accounting` on what "invoice" may promise. |
 | 7 | Trial length and first charge shown at checkout; one trial per org | yes | yes | Trial days set on the checkout session; one-trial rule enforced. The pricing-card "No credit card required" line on a card-required trial is still `/billing`'s check (the draft's §7 note). |
@@ -605,10 +605,8 @@ files' "6.6" sections).
 >   carries the switch is on another day, the release session renames both version files and the six date strings in
 >   `lib/legal-documents.ts` to the promote day, in one commit, BEFORE promoting (the text and its sha256 do not change). Never
 >   after production has served it.
-> - **The release carries, together:** the switch; taxed checkout (Terms §6 "shown before you pay"); 6.5 `45c134bea` (not on
->   production on 2026-11-17; Privacy §9 rests on it); the acceptance table (mig 455) and mig 490 on production first
->   (`MANUAL_PROD_STEPS.json`); the features the Privacy Policy describes as published (house-league friend requests,
->   families' answers and notes, the bell lines): check each is on production at the promote, or `/legal` says what to cut.
+> - **The release carries, together (corrected 2026-11-17 by the hand-off review, `PUBLICATION_HANDOFF_REVIEW_6_7.md`; owner ruled to ship it all):** the switch; 6.5 `45c134bea` (dev only on 2026-11-17; Privacy §9's file-removal sentence rests on it); the 6.6 fixes with **mig 490 applied to production first** (`MANUAL_PROD_STEPS.json`); Club Communications Sessions 1–2 with **migs 492 and 493 applied first** and the nightly clearing job read back as active (Privacy §5 and §9 describe it) — owner ruled 2026-11-17 to ship it in this release. **Already on production since the 2026-11-15 promote, nothing to ship:** taxed checkout (Terms §6) and the acceptance table (mig 455), house-league friend requests, the bell lines, and the families' answers and notes (inert while `GUARDIAN_TIER_ENABLED` is not `'true'` — read it unset on production at the promote).
+> - **Release-day checks (owner 2026-11-17):** no paid, comped or Founding owner exists at the promote (the owner confirms there are none; the "We've published our Terms" screen has no cancel door); rename the version if the promote is not on 2026-11-17; leave out of any evidence of agreement the `door = 'fixture'` acceptance rows.
 > - **On dev from this commit:** every account meets the one-time "We've published our Terms" screen at its next sign-in (a
 >   `'draft'` acceptance no longer counts); re-seed a fixture to re-accept. The demos are exempt.
 

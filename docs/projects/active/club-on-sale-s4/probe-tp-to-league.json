@@ -1,0 +1,51 @@
+{
+  "note": "Dev, plan gates in the default (open) state, signed in as the fixture owner of uat-test-org (tournament_plus, live Stripe test-mode subscription). No Stripe call is reachable before these refusals.",
+  "at": "2026-11-21T04:49:57.165Z",
+  "org": {
+    "slug": "uat-test-org",
+    "plan_id": "tournament_plus",
+    "subscription_status": "active"
+  },
+  "get_moves": {
+    "status": 200,
+    "json": {
+      "planKey": "tournament_plus",
+      "moves": [
+        {
+          "planKey": "club",
+          "direction": "up",
+          "label": "Club",
+          "teamLimit": 15
+        },
+        {
+          "planKey": "club_large",
+          "direction": "up",
+          "label": "Club · Association",
+          "teamLimit": 30
+        }
+      ],
+      "scheduledMove": null,
+      "live": true
+    }
+  },
+  "post_create_checkout_league": {
+    "status": 409,
+    "json": {
+      "error": "This organization already has a subscription. Change its plan instead of starting a second one.",
+      "code": "subscription_exists",
+      "move": null
+    }
+  },
+  "post_move_league": {
+    "status": 400,
+    "json": {
+      "code": "not_a_move",
+      "error": "That plan change isn’t a move between plans."
+    }
+  },
+  "org_after": {
+    "plan_id": "tournament_plus",
+    "subscription_status": "active",
+    "same_subscription": true
+  }
+}

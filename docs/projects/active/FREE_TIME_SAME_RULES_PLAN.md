@@ -87,7 +87,9 @@ emailed where it is true.
 
 **Reviews.** `/legal` 2026-11-20: no must-fix; not a CEM on its face; the Stage 2b condition is met; applied: the ended-club
 button reads "Open Plan & billing", the coach line "no end date set" (`docs/agents/legal/CASL_FREE_TIME_ENDING_REMINDERS.md`).
-`/review`: see the commit. Owner question left by `/legal`: should ending free time early email the coach or club?
+`/review`: see the commit. `/legal`'s owner question, ruled 2026-11-20 ("i agree"): ending free time early does **not** email the coach or club, as built today; staff end it early only by arrangement with the customer, and nothing promises an email.
+
+**Walk §548 published 2026-11-20:** https://claude.ai/artifact/T36kKFsDtkNwNNhoNADP5H (source `FREE_TIME_SAME_RULES_WALK.html`), 6 parts, 24 steps, no owner calls.
 
 **Committed `8ebdee141` 2026-11-20** (owner "commit"). The dev schema snapshots that show the two new columns stay
 uncommitted for now, because the same refresh also captured another session's migration 513 while that work is still in

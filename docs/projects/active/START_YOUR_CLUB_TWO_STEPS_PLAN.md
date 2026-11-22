@@ -41,7 +41,10 @@ step 2, the address-error foot), `gst-hst-6-4-renewal-reminder.test.ts` (the for
 `premium-to-club-path.spec.ts` (Next before Start / checkout; the empty-name refusal became "Next is absent").
 
 ## Open
-- Walk: owner on desktop and phone (see the PM brief's "How to try it").
-- `/review`, `/docs` (help articles that describe the window) offered at handoff.
+- ~~Walk: owner on desktop and phone~~ **Walked by the owner 2026-11-16** inside the walk he was already running that day; closed on
+  his word ("I already walked this earlier, it was part of the walk I was already walking, close it"). No defect reported. No
+  separate ledger section.
+- ~~`/review` still owed~~ **`/review` RUN 2026-11-17** on commit `643816aba` (high-risk tier: money and Terms acceptance): no Critical, High or Medium finding. Confirmed from the code: the paid button and the Terms line sit together on step 2 only; a quote older than the typed country and province cannot be paid (the paid button waits and the server re-checks the charge); every refusal lands on step 1's fields or on its own door, none dead-ends; Back and Change keep what was typed. One advisory, left as is: Next shows while the quote is still loading (step 2 then waits, paid button disabled). Not run: the updated UAT scenario (needs a live fixture), `check:layout` (no dev server up), the full `verify:changed` suite. Typecheck shows only the two known `layout-run-journal` errors. Heads-up: `gst-hst-6-4-renewal-reminder.test.ts` "the address form shows the notice under Province when Québec is chosen" is red in the working tree because another session's uncommitted edit to `BillingAddressFields.tsx` changed the markup it matches (not this commit). `/docs` (help articles that describe the window) **moved into Plan & billing Stage 5**, the one help pass
+  (`PLAN_AND_BILLING_STAGE5_BUILD_PROMPT.md`).
 - Pre-existing, not from this change: the workspace-flip census (three unlisted files), the css-selector check
   (platform-admin record.module), the admin old-look/type baselines, a type error in `layout-run-journal.test.ts`.

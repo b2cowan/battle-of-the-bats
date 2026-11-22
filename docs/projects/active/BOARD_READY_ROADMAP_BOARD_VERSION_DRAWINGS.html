@@ -1,0 +1,478 @@
+<title>Board roadmap drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: sticky numbered tabs over one section at a time; each section = a short note, then a framed specimen of the public roadmap on warm paper. Front page reads in three blocks: shipped, next, promised. */
+:root{
+  /* drawing chrome (themes) */
+  --c-bg:#E9ECEF; --c-panel:#FFFFFF; --c-ink:#1C2128; --c-dim:#5B636E; --c-line:rgba(28,33,40,.14);
+  --c-accent:#3B4FB8; --c-accent-soft:rgba(59,79,184,.10); --c-mark:#B03A22; --c-track:#FFFFFF; --c-on:#FFFFFF;
+  /* the specimen: FieldLogicHQ warm paper (marketing is always warm, so these do not theme) */
+  --paper:#F8F4ED; --card:#FFFFFF; --ink:#241E15; --ink-soft:#4A4235; --dim:#615A54;
+  --line:rgba(70,55,30,.12); --line-strong:rgba(70,55,30,.24); --olive:#57651E; --olive-soft:rgba(87,101,30,.10);
+  --lime:#D9F99D; --amber:#835006; --amber-soft:rgba(131,80,6,.09); --win:#34662A; --win-soft:rgba(52,102,42,.10);
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-sans:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --c-bg:#14171C; --c-panel:#1D2128; --c-ink:#E8EAED; --c-dim:#A3AAB4; --c-line:rgba(232,234,237,.14);
+  --c-accent:#9AA8F5; --c-accent-soft:rgba(154,168,245,.14); --c-mark:#F08A6E; --c-track:#2A2F37; --c-on:#14171C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --c-bg:#14171C; --c-panel:#1D2128; --c-ink:#E8EAED; --c-dim:#A3AAB4; --c-line:rgba(232,234,237,.14);
+  --c-accent:#9AA8F5; --c-accent-soft:rgba(154,168,245,.14); --c-mark:#F08A6E; --c-track:#2A2F37; --c-on:#14171C; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--c-bg);color:var(--c-ink);font-family:var(--f-sans);font-size:14px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--c-panel)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+header.top{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+header.top h1{font-family:var(--f-display);font-size:30px;line-height:1.1;margin:0;text-wrap:balance}
+header.top p{margin:0;color:var(--c-dim);max-width:80ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--c-panel);border:1px solid var(--c-line);border-radius:12px;display:flex;gap:4px;padding:5px;overflow-x:auto;margin-bottom:16px}
+nav.tabs button{font:600 13px var(--f-sans);color:var(--c-dim);background:none;border:0;border-radius:8px;padding:8px 12px;white-space:nowrap;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--c-accent-soft);color:var(--c-accent)}
+nav.tabs button:focus-visible,.seg button:focus-visible,.mk:focus-visible,.ask label:focus-within{outline:2px solid var(--c-accent);outline-offset:2px}
+.note{background:var(--c-panel);border:1px solid var(--c-line);border-radius:12px;padding:14px 16px;margin-bottom:14px;display:grid;gap:8px}
+.note h2{font-family:var(--f-display);font-size:22px;margin:0;line-height:1.15}
+.note p,.note li{margin:0;max-width:95ch}
+.note ul,.note ol{margin:0;padding-left:18px;display:grid;gap:4px}
+.viewrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;color:var(--c-dim);font-weight:600;font-size:13px}
+.seg{display:inline-flex;background:var(--c-track);border:1px solid var(--c-line);border-radius:10px;padding:3px;gap:2px}
+.seg button{font:600 13px var(--f-sans);border:0;background:none;color:var(--c-dim);padding:6px 12px;border-radius:7px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--c-accent-soft);color:var(--c-accent)}
+.frame-label{font:600 11px var(--f-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--c-dim);margin:0 0 6px}
+.mk{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--c-mark);color:var(--c-on);font:700 11px var(--f-sans);border:0;cursor:pointer;vertical-align:2px;margin-left:6px}
+section[hidden]{display:none}
+
+/* ---------- the specimen (the public roadmap) ---------- */
+.doc{background:var(--paper);color:var(--ink);border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.10);padding:28px clamp(16px,3vw,36px) 32px;display:grid;gap:22px}
+.doc-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line-strong);padding-bottom:14px}
+.doc-head .brand{font:700 14px var(--f-sans);color:var(--ink)}
+.doc-head .brand span{font-weight:400;color:var(--olive)}
+.doc-head h3{font:700 32px/1.05 var(--f-display);margin:4px 0 0}
+.doc-head .sub{margin:6px 0 0;color:var(--ink-soft);max-width:62ch}
+.doc-head .date{font:500 12px var(--f-sans);color:var(--dim);font-variant-numeric:tabular-nums}
+.blk{display:grid;gap:12px}
+.blk-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0}
+.blk-h b{font:700 24px/1.05 var(--f-display)}
+.kick{font:600 12px var(--f-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--olive)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;color:var(--ink-soft)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:24px;height:14px;border-radius:4px;display:inline-block;background:var(--card)}
+.sw.h1{border:1.5px solid var(--ink-soft)} .sw.h2{border:1px solid var(--line-strong)} .sw.h3{border:1.5px dashed var(--line-strong)} .sw.h4{border:1.5px dotted var(--line-strong)}
+.st{display:inline-flex;align-items:center;gap:4px;font:600 11px var(--f-sans);padding:1px 7px;border-radius:999px;white-space:nowrap}
+.st.live{background:var(--win-soft);color:var(--win)} .st.way{background:rgba(70,55,30,.08);color:var(--ink-soft)}
+.ask-tag{font:600 11px var(--f-sans);color:var(--olive);background:var(--olive-soft);padding:1px 7px;border-radius:999px;white-space:nowrap}
+
+.grid{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--line-strong)}
+.gh{font:700 16px/1.1 var(--f-display);padding:10px 10px 8px;border-bottom:1px solid var(--line-strong)}
+.gh small{display:block;font:600 11px var(--f-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--olive);margin-bottom:3px}
+.gh.h1{box-shadow:inset 0 3px 0 var(--ink)} .gh.h2{box-shadow:inset 0 3px 0 rgba(74,66,53,.55)} .gh.h3{box-shadow:inset 0 2px 0 rgba(74,66,53,.30)} .gh.h4{box-shadow:inset 0 1px 0 rgba(74,66,53,.25)}
+.tl{padding:12px 10px 12px 0;border-bottom:1px solid var(--line);font:700 16px/1.1 var(--f-display)}
+.tl small{display:block;font:500 12px/1.35 var(--f-sans);color:var(--dim);margin-top:4px}
+.cell{padding:10px 8px;border-bottom:1px solid var(--line);border-left:1px solid var(--line);display:flex;flex-direction:column;gap:7px;min-width:0}
+.it{background:var(--card);border-radius:8px;padding:8px 9px;font-size:14px;line-height:1.35;display:grid;gap:5px}
+.it.h1{border:1.5px solid var(--ink-soft)} .it.h2{border:1px solid var(--line-strong)} .it.h3{border:1.5px dashed var(--line-strong);background:rgba(255,255,255,.7)} .it.h4{border:1.5px dotted var(--line-strong);background:rgba(255,255,255,.45)}
+.it .meta{display:flex;gap:5px;flex-wrap:wrap}
+.it .lane{font:500 11px var(--f-sans);color:var(--dim)}
+.empty{color:var(--dim);font-size:12px;padding:2px 2px}
+.bands{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+.band{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px;align-content:start}
+.band h4{font:700 20px/1.05 var(--f-display);margin:0}
+.band p{margin:0;color:var(--ink-soft);font-size:14px}
+.ship{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.ship.two{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 26px}
+.ship li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;font-size:14px;line-height:1.35}
+.ship time{font:500 12px var(--f-sans);color:var(--dim);padding-top:1px;font-variant-numeric:tabular-nums}
+.ship .area{font:500 11px var(--f-sans);color:var(--dim)}
+.proof{grid-template-columns:minmax(0,210px) minmax(0,1fr);gap:8px 26px;align-items:start}
+.proof .fig{display:grid;gap:2px}
+.proof .fig b{font:700 32px/1 var(--f-display);font-variant-numeric:tabular-nums;color:var(--ink)}
+.proof .fig .lbl{font:600 14px/1.3 var(--f-sans);color:var(--ink)}
+.proof .fig small{font:400 12px/1.4 var(--f-sans);color:var(--dim);margin-top:6px}
+.proof .rest{display:grid;gap:10px;min-width:0}
+.ol{margin:0;padding-left:20px;display:grid;gap:7px;font-size:14px;line-height:1.4}
+.ol b{font-weight:600}
+.ol.four{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 30px}
+.doc-foot{font-size:12px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .gh{display:none}
+  .tl{border-bottom:0;padding:14px 0 6px;border-top:1px solid var(--line-strong)}
+  .cell{border-left:0;border-bottom:0;padding:4px 0 8px}
+  .cell::before{content:attr(data-h);font:600 11px var(--f-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--olive)}
+  .cell.none{display:none}
+  .bands,.proof,.ship.two{grid-template-columns:minmax(0,1fr)}
+  .ol.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){.ol.four{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- tables / asks ---------- */
+.tbl-wrap{overflow-x:auto;background:var(--c-panel);border:1px solid var(--c-line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--c-line);vertical-align:top}
+th{font:600 11px var(--f-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--c-dim)}
+td.rec{color:var(--c-dim)}
+td.chg{color:var(--c-mark);font-weight:600}
+tr.grp td{font:700 15px var(--f-display);background:var(--c-accent-soft);color:var(--c-ink)}
+.asks{display:grid;gap:12px}
+.ask{background:var(--c-panel);border:1px solid var(--c-line);border-radius:12px;padding:14px 16px;display:grid;gap:8px}
+.ask h3{margin:0;font:700 19px/1.15 var(--f-display)}
+.ask .why{color:var(--c-dim);margin:0;max-width:95ch}
+.ask .opts{display:grid;gap:6px}
+.ask label{display:flex;gap:8px;align-items:flex-start;padding:7px 9px;border:1px solid var(--c-line);border-radius:8px;cursor:pointer}
+.ask label:has(input:checked){border-color:var(--c-accent);background:var(--c-accent-soft)}
+.ask input{margin-top:3px}
+.paste{position:sticky;bottom:env(safe-area-inset-bottom,0px);background:var(--c-panel);border:1px solid var(--c-line);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.paste code{font:500 13px var(--f-data);flex:1 1 300px;min-width:0;overflow-wrap:anywhere}
+.paste button{font:700 13px var(--f-sans);background:var(--c-accent);color:var(--c-on);border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){nav.tabs button,.seg button{transition:background .15s,color .15s}}
+@media (pointer:coarse){.mk{min-width:44px;height:44px}.seg button,nav.tabs button,.paste button{min-height:44px}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>The public roadmap: drawings</h1>
+  <p>Round 4, 16 November 2026. The same ruled record (v0.2, sections 2 and 6) and the same placements, redrawn for how a volunteer board reads it: what we have shipped, what comes next, what we promise. No item has moved to a different quarter. <b>All thirteen asks were ruled as recommended on 16 November 2026</b>, so this is the ruled public version; the red numbers open each ruling on the last tab, and the first tab can still show the page as it was drawn that morning. Before it is shown to anyone: /legal on the four data commitments, and your plain line for the two product lines in ask 12. Nothing here has been shown to anyone outside the business.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-tab="t1" aria-selected="true">1 · The front page</button>
+  <button role="tab" data-tab="t2" aria-selected="false">2 · Product detail</button>
+  <button role="tab" data-tab="t3" aria-selected="false">3 · Trust detail</button>
+  <button role="tab" data-tab="t4" aria-selected="false">4 · Wording</button>
+  <button role="tab" data-tab="t5" aria-selected="false">5 · Left off</button>
+  <button role="tab" data-tab="t6" aria-selected="false">6 · Asks</button>
+</nav>
+
+<!-- 1 -->
+<section id="t1">
+  <div class="note" id="note-new">
+    <h2>What changed, and why it sells better</h2>
+    <ol>
+      <li><b>Shipped comes first.</b> A dated promise from a small company is only as good as its record, so the page opens with the record: 48 releases since late June, and six of them across tournaments, rep teams, house league and security <button class="mk" data-ask="3">3</button>.</li>
+      <li><b>The rows are what a club gets, not how we organise the work.</b> New tools for your club; moving your club over, and your data; security and reliability. "Ready for every club" was our milestone, not theirs <button class="mk" data-ask="1">1</button>.</li>
+      <li><b>The front page carries 29 cards, not 40.</b> Five engineering lines (automatic tests, component alerts, the release rhythm and the like) sit on the trust detail page, and two product lines sit on the product detail page. On a front page, each future security line reads to a board as "so that isn't done today" <button class="mk" data-ask="2">2</button>.</li>
+      <li><b>Four lines that say nothing to a customer are gone</b> from the public version: two filler items and two goals that tell a prospect no club has finished a season with us <button class="mk" data-ask="8">8</button> <button class="mk" data-ask="10">10</button>.</li>
+      <li><b>The strongest sellers lead each column:</b> families paying online, bringing records over, volunteers and their documents.</li>
+      <li><b>"Your data is yours" gets the full width</b> at the foot of the page, as the last thing a board reads <button class="mk" data-ask="5">5</button>.</li>
+    </ol>
+  </div>
+  <div class="note" id="note-old" hidden>
+    <h2>As drawn this morning (round 3)</h2>
+    <p>The same items in the earlier layout: three groups named for our own lanes, every line on the front page, shipped work at the foot. Order inside a cell can differ slightly from the original; the artifact's version history holds the exact page.</p>
+  </div>
+  <div class="viewrow">View
+    <div class="seg" role="group" aria-label="View">
+      <button aria-pressed="true" data-view="new">Proposed</button>
+      <button aria-pressed="false" data-view="old">As drawn this morning</button>
+    </div>
+  </div>
+  <p class="frame-label">Public roadmap · page 1 · true size on a desktop · warm paper</p>
+  <div class="doc" id="doc-joined"></div>
+</section>
+
+<!-- 2 -->
+<section id="t2" hidden>
+  <div class="note">
+    <h2>Behind it: the product page</h2>
+    <p>Every product line, with the rows renamed for a customer. "The Club product" and "Switching and growth" were our names for the work. Two lines still need your words: the Guardians section and the "simpler everyday paths" line <button class="mk" data-ask="12">12</button>.</p>
+  </div>
+  <p class="frame-label">Public roadmap · page 2 · product</p>
+  <div class="doc" id="doc-product"></div>
+</section>
+
+<!-- 3 -->
+<section id="t3" hidden>
+  <div class="note">
+    <h2>Behind it: the trust page</h2>
+    <p>The page a treasurer or a board's IT volunteer turns to. All of the engineering detail lives here, and what is already in place comes before what is planned <button class="mk" data-ask="2">2</button>. Each line is written as what we will do <button class="mk" data-ask="4">4</button>. The backups line says no more than the ruled sentence <button class="mk" data-ask="6">6</button>, and the access review line no longer says "every finding fixed" <button class="mk" data-ask="13">13</button>.</p>
+  </div>
+  <p class="frame-label">Public roadmap · page 3 · trust</p>
+  <div class="doc" id="doc-tech"></div>
+</section>
+
+<!-- 4 -->
+<section id="t4" hidden>
+  <div class="note">
+    <h2>Every line: the record, the detail page, the front page</h2>
+    <p>The record's own row on the left. The rule: a future item says what we will do; nothing that isn't on production is written in the present tense; no line claims more than its record row <button class="mk" data-ask="4">4</button>. The last column shows where each line sits on the front page in this round. Status marks: <span class="st live">✓ Live</span> on production, <span class="st way">Under way</span> built or in progress, and nothing on an item not yet started <button class="mk" data-ask="7">7</button>.</p>
+  </div>
+  <div class="tbl-wrap"><table id="tbl-wording"><thead><tr><th>When</th><th>Record (§2)</th><th>Detail page reads</th><th>Front page</th><th>Mark</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<!-- 5 -->
+<section id="t5" hidden>
+  <div class="note">
+    <h2>What is not on the public version, and why</h2>
+    <p><b>New in this round (ruled 16 November):</b></p>
+    <ul>
+      <li><b>"Everything built since early November, released"</b> and <b>"A round of smaller improvements"</b>: neither tells a customer anything. The shipped list says the first one better <button class="mk" data-ask="8">8</button>.</li>
+      <li><b>"A club runs a full season end to end"</b> and <b>"Case studies and comparison pages"</b>: both are goals for us, and both tell a prospect that no club has done it yet. They stay on our version <button class="mk" data-ask="10">10</button>.</li>
+      <li><b>Five engineering lines</b> are on the trust detail page only, not left off <button class="mk" data-ask="2">2</button>.</li>
+    </ul>
+    <p><b>Carried from round 3 (all ruled):</b></p>
+    <ul>
+      <li><b>The internal back office</b> (Q2): on our version only (ruling 9A).</li>
+      <li><b>The independent security test</b>: off the roadmap (ruling 6B). The annual review in the goals column is our own access review, worded so it can't be read as an outside test.</li>
+      <li><b>Minute-level recovery</b>: later, no date, not on the public version (ruling T4 and its follow-up). The backups line implies nothing finer than a day.</li>
+      <li><b>The bot challenge</b> and <b>the status page on our own web address</b> (trigger rows): later, so the public version has no "tied to a trigger" section.</li>
+      <li><b>"If something happens to the owner"</b>: not raised anywhere (owner, 16 November). The four data commitments stand on their own as data ownership <button class="mk" data-ask="5">5</button>.</li>
+      <li><b>No "top of the market" claim</b> until a comparison exists (ruling 11A).</li>
+      <li><b>No second person, hire or support cover</b> (owner, 14 November).</li>
+      <li><b>Nothing that points to one club's asks</b> (owner, 16 November). You raise a prospect's own interests in the meeting.</li>
+      <li><b>Recently shipped</b> leaves out families paying online and a club's own web address (not live), and the founding offer (closed). Club items carry "Early access".</li>
+      <li><b>Sizes and the "ruled" column</b> are internal and don't appear.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="t6" hidden>
+  <div class="note">
+    <h2>Asks: all ruled</h2>
+    <p><b>Ruled 16 November 2026, every one as recommended (option A):</b> "Public roadmap asks: 1A · 2A · 3A · 4A · 5A · 6A · 7A · 8A · 9A · 10A · 11A · 12A · 13A". These thirteen replaced the seven from round 3. Two things follow from the rulings: ask 11 keeps "Group email to your coaches" in the Committed column only if it is built before the roadmap is first shown, otherwise it moves to Q1; ask 12 waits for your plain line for each of the two product lines.</p>
+  </div>
+  <div class="asks" id="asks"></div>
+  <div class="paste"><code id="paste-line"></code><button id="copy" type="button">Copy</button></div>
+</section>
+</div>
+
+<script>
+(function(){
+const H = {h1:"Rest of 2026",h2:"Q1 2027",h3:"Q2 2027",h4:"Second half of 2027"};
+const CONF = {h1:"Committed",h2:"Planned",h3:"Targeted",h4:"Goals"};
+// name = this round; old = round 3; g = front-page group this round; t = round 3 group
+const LANES = {
+  ask:{name:"New tools for your club",old:"New for clubs",g:"tools",t:"asks",page:"product"},
+  club:{name:"The club tools, out of early access",old:"The Club product",g:"tools",t:"product",page:"product"},
+  grow:{name:"Moving over",old:"Switching and growth",g:"data",t:"product",page:"product"},
+  sec:{name:"Security",old:"Security",g:"safe",t:"trust",page:"tech"},
+  rel:{name:"Reliability",old:"Reliability",g:"safe",t:"trust",page:"tech"},
+  qa:{name:"Testing and accessibility",old:"Quality",g:"safe",t:"trust",page:"tech"},
+  data:{name:"Privacy and data ownership",old:"Privacy and data ownership",g:"data",t:"trust",page:"tech"}
+};
+const GROUPS = [
+  {id:"tools",name:"New tools for your club",sub:"For your registrar, treasurer, coaches and volunteers"},
+  {id:"data",name:"Moving your club over, and your data",sub:"How your records come in, and how you take them out"},
+  {id:"safe",name:"Security and reliability",sub:"What we're doing to keep your club's information safe and the site running"}
+];
+const TRACKS_OLD = [
+  {id:"asks",name:"New for clubs",sub:"New tools for running a club"},
+  {id:"trust",name:"Trust and safety",sub:"Security, reliability, quality, and your data"},
+  {id:"product",name:"Ready for every club",sub:"Out of early access, easy to move to, proven through a full season"}
+];
+// [horizon, lane, record row (§2), detail-page text, status, ask, front]
+// front: 1 = on the front page · 0 = detail page only · "off" = left off the public version (proposed)
+// extra: o = round 3 text where it differs · ft = front-page text where it differs · into = the front card it is folded into
+const ITEMS = [
+ ["h1","ask","Friend requests in the draft, live","Friend requests in the house-league draft","live",0,1],
+ ["h1","ask","Group email to coaches","Group email to your coaches","",11,1],
+ ["h1","club","One release of everything built since 5 November","Everything built since early November, released","live",8,"off"],
+ ["h1","sec","Two-step sign-in, live","Two-step sign-in for everyone; your club can require it for its board and coaches","live",0,1],
+ ["h1","sec","Access review fixes, live","A full access review of who can see what, with its fixes live","live",13,1,{o:"A full access review of who can see what, every finding fixed"}],
+ ["h1","sec","Public Security page","A public Security page","",0,1],
+ ["h1","rel","Uptime monitoring and a public status page","Uptime monitoring and a public status page","",0,1],
+ ["h1","rel","Backups documented, first restore rehearsed","Daily backups, kept 7 days, restore rehearsed","",6,1],
+ ["h1","qa","The whole-product layout check, back in every release","Every release checked screen by screen, on a computer and a phone","",0,0],
+ ["h1","data","Privacy policy and terms published","Our privacy policy and terms, published","way",0,1],
+ ["h1","data","Data terms and the supplier list","Data-processing terms for your club, and the list of suppliers who hold data for us","",0,1],
+ ["h1","data","Deleting a club removes its files","Closing a club deletes its stored files too","way",0,1],
+ ["h2","club","Families pay online, switched on","Families pay online","way",0,1],
+ ["h2","ask","Volunteers and their documents","Volunteers and their documents, such as police checks and coaching certificates, with expiry reminders","",0,1,{o:"Volunteers and their documents, with expiry reminders"}],
+ ["h2","ask","Custom sign-up forms","Custom registration forms","",0,1],
+ ["h2","ask","Club events","Club events on the club calendar, such as banquets and the AGM","",0,1],
+ ["h2","club","Schedules on several permits","Schedules that run across several field permits","way",0,1],
+ ["h2","club","Club plan on sale","The club tools out of early access, open to every club","way",9,1],
+ ["h2","club","The rest of the journeys stage","Simpler everyday paths through the club admin","way",0,0,{into:"The club tools out of early access, open to every club"}],
+ ["h2","grow","Import from a club's current system","Bring your club's records over from the system you use today","",0,1],
+ ["h2","data","One-button export of everything, and club closure","Export everything with one button, and close your club's account yourself","",0,1],
+ ["h2","data","Continuity commitments in writing, with the export","Your data is yours: four commitments in writing","",5,1],
+ ["h2","qa","Hosted checks on every change","Every change checked automatically before it ships","",2,1,{ft:"Every change tested automatically before it ships, including that each club's data stays apart"}],
+ ["h2","sec","Cross-club tests on every change","Automatic tests on every change that keep each club's data apart","",0,0,{into:"Every change tested automatically before it ships"}],
+ ["h2","sec","Alerts for vulnerable components and leaked passwords","Automatic alerts when software we rely on has a known flaw, or a password or key leaks","",0,0],
+ ["h2","sec","Harder public forms","Public forms protected against automated sign-ups","",0,0],
+ ["h2","rel","A restore drill every quarter","A restore drill every quarter","",0,1],
+ ["h2","qa","A stated release rhythm","Releases on a regular, published timetable","",0,0],
+ ["h3","ask","Sponsorships","Sponsorships, from package to invoice","",0,1],
+ ["h3","ask","Camps and clinics","Camps and clinics","",0,1],
+ ["h3","club","One Guardians section","One Guardians section for the club","",12,0],
+ ["h3","club","Smaller open items","A round of smaller improvements","way",8,"off"],
+ ["h3","rel","Registration-day speed","Registration day stays fast under load","",0,1],
+ ["h3","qa","Accessibility checks and a statement","Accessibility checks, and a published accessibility statement","",0,1],
+ ["h4","ask","All eight asks live and used through a season","Every new tool above, live and used through a full season","",0,1],
+ ["h4","club","A club runs a full season end to end","A club runs a full season end to end on FieldLogicHQ","",10,"off"],
+ ["h4","grow","Case studies and comparison pages","Case studies and comparison pages","",10,"off"],
+ ["h4","sec","Security review repeated every year","Our access review, repeated every year","",0,1],
+ ["h4","rel","A published uptime record","A published uptime record","",0,1],
+ ["h4","data","Every commitment in the pack kept and reported on","Every commitment on this page kept, and reported on","",0,1]
+].map(r=>Object.assign({h:r[0],lane:r[1],rec:r[2],text:r[3],st:r[4],ask:r[5],f:r[6]}, r[7]||{}));
+
+// Recently shipped: from the customer release notes (compiled 2026-11-16).
+// RELEASES = the count of release tags, 28 June to 15 November 2026 (48, counted 2026-11-16). Recount it whenever this page is rebuilt.
+// d = date, t = line, a = area, ea = early access, top = on the front page this round, old = on the front page in round 3, p = product | tech
+const RELEASES = 48;
+const SHIPPED = [
+ {d:"Nov 15",t:"Two-step sign-in for everyone. A club can require it for its board and coaches.",a:"Security",p:"tech",top:1,old:1},
+ {d:"Nov 15",t:"Friend requests in the house-league draft: families ask, the registrar confirms, the draft keeps friends together.",a:"House league",ea:1,p:"product",top:1,old:1},
+ {d:"Nov 15",t:"A full access review of who can see what, and the fixes it led to.",a:"Security",p:"tech"},
+ {d:"Nov 5",t:"A Rainout button that tells families, plus coach-entered scores and public standings.",a:"House league",ea:1,p:"product",old:1},
+ {d:"Oct 30",t:"The house-league game schedule built inside the club's own field time, published once with one email per family.",a:"House league",ea:1,p:"product",top:1,old:1},
+ {d:"Oct 27",t:"The draft rebuilt: balanced teams, brothers and sisters together, a coach's child on their team, one email per family.",a:"House league",ea:1,p:"product",old:1},
+ {d:"Oct 27",t:"House-league seasons with prices and an early-bird rate for each age group; families register several children at once.",a:"House league",ea:1,p:"product"},
+ {d:"Oct 10",t:"Tournament schedules get Undo on every move, and a one-step rain delay for a whole day.",a:"Tournaments",p:"product",top:1},
+ {d:"Sep 23",t:"A team short a player can call one up for a single game.",a:"Rep teams",p:"product"},
+ {d:"Sep 18",t:"Practice plans rebuilt: a drill library, rotating stations, and the plan run on the field from a phone.",a:"Rep teams",p:"product",top:1},
+ {d:"Sep 13",t:"Player development: testing, goals and a printable handout for the family. The team progress report never ranks children against each other.",a:"Rep teams",p:"product"},
+ {d:"Aug 25",t:"Printable papers: a wall roster without birthdates or contact details, one family's statement, a season register for the treasurer.",a:"Rep teams",p:"product"},
+ {d:"Aug 17",t:"Each team keeps one dated money register; a team in a club sees what the club approved, paid and still owes.",a:"Rep teams and club",ea:1,p:"product"},
+ {d:"Jul 31",t:"Assistant coaches cannot see a child's confidential medical notes, or team money they weren't given.",a:"Privacy",p:"tech"},
+ {d:"Jul 10",t:"A season dashboard for coaches, with a playing-time fairness check.",a:"Rep teams",p:"product"},
+ {d:"Jul 7",t:"Tournament organizers move or cancel a rained-out day in one step; reminders update on their own.",a:"Tournaments",p:"product"},
+ {d:"Jul 4",t:"Head coaches invite assistants and choose what each one sees; family contacts and team money stay private by default.",a:"Rep teams and club",ea:1,p:"product"},
+ {d:"Jul 3",t:"Tryouts start to finish: check-in, several evaluators scoring live, and a decision board.",a:"Rep teams",p:"product",top:1,old:1},
+ {d:"Jul 3",t:"An innings cap for each pitcher, enforced by the lineup builder.",a:"Rep teams",p:"product"},
+ {d:"Jun 29",t:"A fair batting order and fielding plan in a click, with a printed dugout sheet.",a:"Rep teams",p:"product"}
+];
+
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mark = st => st==="live" ? '<span class="st live">✓ Live</span>' : st==="way" ? '<span class="st way">Under way</span>' : "";
+const mk = n => n ? `<button class="mk" data-ask="${n}" aria-label="Ask ${n}">${n}</button>` : "";
+function itemHTML(it, text, laneName){
+  const laneLine = laneName ? `<span class="lane">${esc(laneName)}</span>` : "";
+  const meta = (mark(it.st)||laneLine) ? `<div class="meta">${mark(it.st)}${laneLine}</div>` : "";
+  return `<div class="it ${it.h}">${esc(text)}${mk(it.ask)}${meta}</div>`;
+}
+function head(title, sub){
+  return `<div class="doc-head"><div><div class="brand">FieldLogic<span>HQ</span></div><h3>${title}</h3><p class="sub">${sub}</p></div><div class="date">November 2026</div></div>`;
+}
+const LEGEND = `<div class="legend">
+    <span><i class="sw h1"></i><b>Committed</b> · rest of 2026</span>
+    <span><i class="sw h2"></i><b>Planned</b> · Q1 2027</span>
+    <span><i class="sw h3"></i><b>Targeted</b> · Q2 2027</span>
+    <span><i class="sw h4"></i><b>Goals</b> · second half of 2027</span>
+    <span><span class="st live">✓ Live</span> on the product today</span>
+    <span><span class="st way">Under way</span> being built</span>
+  </div>`;
+// rows: [{name, sub, mk, match}] · pick(i) = the card text, or "" to leave the item out · lane(i) = small lane line or ""
+function grid(rows, pick, lane){
+  let g = `<div class="grid"><div class="gh" aria-hidden="true"></div>`;
+  for(const h of ["h1","h2","h3","h4"]) g += `<div class="gh ${h}"><small>${CONF[h]}</small>${H[h]}</div>`;
+  for(const r of rows){
+    g += `<div class="tl">${esc(r.name)}${r.sub?`<small>${esc(r.sub)}</small>`:""}${r.mk?mk(r.mk):""}</div>`;
+    for(const h of ["h1","h2","h3","h4"]){
+      const its = ITEMS.filter(i=>i.h===h && r.match(i) && pick(i));
+      g += `<div class="cell${its.length?"":" none"}" data-h="${CONF[h]} · ${H[h]}">${its.map(i=>itemHTML(i,pick(i),lane?lane(i):"")).join("")}</div>`;
+    }
+  }
+  return g + `</div>`;
+}
+function shippedList(filter, cls){
+  const list = SHIPPED.filter(filter);
+  return `<ul class="ship${cls?" "+cls:""}">${list.map(s=>`<li><time>${esc(s.d)}</time><span>${esc(s.t)}${s.ea?' <span class="ask-tag">Early access</span>':''}<br><span class="area">${esc(s.a)}</span></span></li>`).join("")}</ul>`;
+}
+const COMMIT = `<li><b>Take all of it, any time.</b> Your club can download everything itself, in ordinary spreadsheet files, without asking us.</li>
+    <li><b>A reminder to keep a copy</b> when your season closes and when registration closes.</li>
+    <li><b>60 days to take it with you</b> if your club closes its account. Then it is deleted.</li>
+    <li><b>No lock-in.</b> No long contracts. A cancelled plan simply ends at its renewal date.</li>`;
+const DATA_BAND = `<div class="band"><span class="kick">In writing from Q1 2027</span><h4>Your data is yours ${mk(5)}</h4><ol class="ol">${COMMIT}</ol></div>`;
+const DATA_WIDE = `<div class="band"><span class="kick">What we promise · in writing from Q1 2027</span><h4>Your data is yours ${mk(5)}</h4><ol class="ol four">${COMMIT}</ol></div>`;
+const FOOT_LINE = "Dates further out are less certain, and items can move between columns. We'll show you when they do.";
+function foot(n){ return `<div class="doc-foot"><span>${FOOT_LINE}</span><span>Page ${n} of 3</span></div>`; }
+
+const onPublic = i => i.f !== "off";
+function renderFront(){
+  const rows = GROUPS.map(g=>({name:g.name,sub:g.sub,mk:g.id==="tools"?1:0,match:i=>LANES[i.lane].g===g.id}));
+  const pick = i => i.f===1 ? (i.ft||i.text) : "";
+  document.getElementById("doc-joined").innerHTML =
+    head("Where FieldLogicHQ is going","What we've shipped for clubs, what comes next, and what we promise about your club's information.")
+    + `<div class="band proof"><div class="fig"><span class="kick">First, what we've shipped ${mk(3)}</span><b>${RELEASES}</b><span class="lbl">releases since late June</span><small>June 28 to November 15, 2026. The details are on our What's new page.</small></div>
+        <div class="rest">${shippedList(s=>s.top,"two")}<p>More on the next two pages.</p></div></div>`
+    + `<div class="blk"><p class="blk-h"><b>What comes next</b></p>${LEGEND}${grid(rows,pick,null)}</div>`
+    + DATA_WIDE + foot(1);
+}
+function renderOld(){
+  const rows = TRACKS_OLD.map(t=>({name:t.name,sub:t.sub,match:i=>LANES[i.lane].t===t.id}));
+  document.getElementById("doc-joined").innerHTML =
+    head("Where FieldLogicHQ is going","What we've built for clubs, and what comes next: new tools for running a club, the work that keeps your club's information safe, and the steps that make it ready for every club.")
+    + LEGEND + grid(rows, i=>i.o||i.text, i=>LANES[i.lane].old)
+    + `<div class="bands"><div class="band"><span class="kick">The past six months</span><h4>Recently shipped</h4>${shippedList(s=>s.old)}<p>The full list is on the next two pages.</p></div>${DATA_BAND}</div>`
+    + foot(1);
+}
+function renderPage(id, page, title, sub, n){
+  const rows = Object.entries(LANES).filter(([k,v])=>v.page===page).map(([k,v])=>({name:v.name,match:i=>i.lane===k}));
+  const pick = i => onPublic(i) ? i.text : "";
+  const shipped = `<div class="band"><span class="kick">${page==="tech"?"Already in place":"Since late June"}</span><h4>${page==="tech"?"Shipped since late June":"Recently shipped"}</h4>${shippedList(s=>s.p===page, page==="tech"?"":"two")}</div>`;
+  const next = `<div class="blk"><p class="blk-h"><b>${page==="tech"?"What comes next":"What comes next"}</b></p>${LEGEND}${grid(rows,pick,null)}</div>`;
+  document.getElementById(id).innerHTML = head(title, sub)
+    + (page==="tech" ? shipped + next + DATA_WIDE : next + shipped)
+    + foot(n);
+}
+function frontCell(i){
+  if(i.f==="off") return `<td class="chg">Left off the public version${mk(i.ask)}</td>`;
+  if(i.f===1) return i.ft ? `<td class="chg">${esc(i.ft)}</td>` : `<td>Same</td>`;
+  return i.into ? `<td class="chg">Folded into "${esc(i.into)}"</td>` : `<td class="chg">Detail page only</td>`;
+}
+function renderWording(){
+  const tb = document.querySelector("#tbl-wording tbody"); let html="";
+  for(const h of ["h1","h2","h3","h4"]){
+    html += `<tr class="grp"><td colspan="5">${CONF[h]} · ${H[h]}</td></tr>`;
+    for(const i of ITEMS.filter(x=>x.h===h)) html += `<tr><td>${H[h]}</td><td class="rec">${esc(i.rec)}</td><td>${esc(i.text)}${i.f==="off"?"":mk(i.ask)}</td>${frontCell(i)}<td>${mark(i.st)||'<span class="empty">none</span>'}</td></tr>`;
+  }
+  tb.innerHTML = html;
+}
+
+const ASKS = [
+ {n:1,t:"How is the front page grouped?",why:"Replaces round 3's ask 1. Round 3 rolled our seven lanes into three groups, and one of them (\"Ready for every club\") is our milestone, not something a club gets. A board reads for three things: what new can we do, how hard is it to move and can we leave, and is our information safe. The rows now answer those in that order. The detail pages keep finer rows.",o:["New tools for your club · Moving your club over, and your data · Security and reliability","Round 3's groups: New for clubs · Trust and safety · Ready for every club","The seven lanes everywhere"]},
+ {n:2,t:"Five engineering lines move to the trust detail page",why:"New. The tests that keep clubs apart, component alerts, public-form screening, the release rhythm, the screen-by-screen release check. They show rigour to a reader who goes looking, and the trust page is where that reader goes. On the front page a volunteer board reads each future security line as a thing that is missing today, and twenty-two of the forty cards were technology. The automatic checks and the tests that keep clubs apart share one front-page card: \"Every change tested automatically before it ships, including that each club's data stays apart\".",o:["Front page carries the customer-visible lines; the engineering detail sits on the trust page","Every line on the front page, as in round 3"]},
+ {n:3,t:"Shipped work first, with the release count",why:"New. The hardest question in the room is whether a small company will deliver. A dated promise doesn't answer it; the record does. 48 is the count of production releases from June 28 to November 15, 2026, counted from the release tags today, and it is recounted whenever the page is rebuilt. The six highlights now span tournaments, rep teams, house league and security; round 3 showed four house-league items out of seven.",o:["Shipped first, with the count","Shipped first, without the count","Shipped at the foot of the page, as in round 3"]},
+ {n:4,t:"Items worded as commitments, not gaps?",why:"Round 3's ask 2, unchanged. Every line is written as what we will do. The guard: nothing that isn't on production is in the present tense, and no line claims more than its record row.",o:["Yes, with that guard","No, keep the record's own wording"]},
+ {n:5,t:"The four data commitments: under what name?",why:"Round 3's ask 3, unchanged. The record calls them \"continuity commitments\". You ruled that the pack does not raise \"what if something happens to the owner\", and the word \"continuity\" invites that question. They now close the front page at full width. The wording still goes through /legal.",o:["\"Your data is yours\", with no \"continuity\" anywhere on the public version","Keep \"continuity\" as the record has it"]},
+ {n:6,t:"\"Restore rehearsed\": the roadmap row only, for now",why:"Round 3's ask 4, unchanged. No restore has been rehearsed yet. On the roadmap it reads as a commitment for the rest of 2026, which is true. The brief and the Security page should not say it in the present tense until the first rehearsal is done.",o:["Roadmap row as drawn; the brief and Security page say it only after the first rehearsal","Rehearse the first restore before the roadmap is shown to anyone, then use it everywhere"]},
+ {n:7,t:"Status marks on the public version",why:"Round 3's ask 5, unchanged. \"Live\" on what's on production, \"Under way\" on what's built or in progress, nothing on an item not yet started. A reader never sees \"Not started\".",o:["As drawn","No status marks at all; the columns carry the confidence"]},
+ {n:8,t:"Drop the two filler lines from the public version",why:"Round 3's ask 6, and my recommendation has changed. \"Everything built since early November, released\" and \"A round of smaller improvements\" tell a customer nothing they can picture. With the shipped list now at the top, the first is said better there. Both rows stay in the record.",o:["Drop both from the public version","Keep both"]},
+ {n:9,t:"\"The Club plan on sale\" names a plan on a pitch surface",why:"Round 3's ask 7, unchanged. Your 21 August ruling: no plan, tier or price appears on a pitch surface. The placement stays as ruled (Q1); only the words change. The rest of the journeys stage is folded into this card on the front page, because it ships as part of the same step.",o:["\"The club tools out of early access, open to every club\"","Keep \"The Club plan on sale\" (an exception to the 21 August ruling for this page)"]},
+ {n:10,t:"Two H2 goals come off the public version",why:"New. \"A club runs a full season end to end on FieldLogicHQ\" and \"Case studies and comparison pages\" are goals for us. On a public page each one tells a prospect that no club has finished a season with us yet. You will be asked that in the room and can answer it there; the page should not volunteer it. \"Every new tool above, live and used through a full season\" stays, as you worded it today.",o:["Leave both off the public version; keep them on ours","Keep both on the public version"]},
+ {n:11,t:"\"Group email to your coaches\" in the Committed column",why:"New. It is the one product build promised for the rest of 2026 that has not been started, and the Committed column is the first thing a board will check us against. A missed first column costs more than a later date. The other committed lines are the trust pack itself, which is finished before the roadmap is shown anyway.",o:["Keep it Committed only if it is built before the roadmap is first shown; otherwise it moves to Q1","Keep it Committed for 2026 regardless","Move it to Q1 now"]},
+ {n:12,t:"Two product lines need your words",why:"New. \"One Guardians section for the club\": I could not find what this means to a customer beyond its row in the record. \"Simpler everyday paths through the club admin\": the copy review called it vague, and I agree, but I will not invent what the rest of the journeys stage delivers. Both sit on the product detail page only until each has a plain line.",o:["Detail page only for now; you give me a plain line for each","Leave both off the public version"]},
+ {n:13,t:"\"Every finding fixed\" claims more than the record holds",why:"New, and a correction to round 3. The record's row is \"Access review fixes, live\". Round 3 worded it \"every finding fixed\". The review's own report still lists owner calls that were left open on purpose (a \"See it live\" visitor can create a real club; whether scorekeepers and staff can read permits; one button shown when details are hidden), and I could not confirm that every one of its small findings is closed. A board that asks to see the report would find the gap. The line now reads \"with its fixes live\".",o:["\"A full access review of who can see what, with its fixes live\"","Close the open calls and confirm the small findings first, then say \"every finding fixed\""]}
+];
+function renderAsks(){
+  document.getElementById("asks").innerHTML = ASKS.map(a=>`<div class="ask" id="ask-${a.n}"><h3>${a.n} · ${esc(a.t)}</h3><p class="why">${esc(a.why)}</p><div class="opts">${a.o.map((o,j)=>`<label><input type="radio" name="a${a.n}" id="a${a.n}-${j}" value="${String.fromCharCode(65+j)}"${j===0?" checked":""}><span><b>${String.fromCharCode(65+j)}</b> · ${esc(o)}${j===0?" (recommended)":""}</span></label>`).join("")}</div></div>`).join("");
+  document.getElementById("asks").addEventListener("change", paste);
+  paste();
+}
+function paste(){
+  const line = "Public roadmap asks: " + ASKS.map(a=>`${a.n}${(document.querySelector(`input[name=a${a.n}]:checked`)||{}).value||"?"}`).join(" · ");
+  document.getElementById("paste-line").textContent = line;
+}
+document.getElementById("copy").addEventListener("click", ()=>{
+  const t = document.getElementById("paste-line").textContent;
+  const done = ()=>{const b=document.getElementById("copy"); b.textContent="Copied"; setTimeout(()=>b.textContent="Copy",1500);};
+  const pick = ()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("paste-line"));const s=getSelection();s.removeAllRanges();s.addRange(r);};
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(done).catch(pick); else pick();
+});
+
+function show(tab){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===tab));
+  document.querySelectorAll("section").forEach(s=>s.hidden = s.id!==tab);
+  try{localStorage.setItem("brv-tab",tab)}catch(e){}
+}
+function view(v){
+  document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed", x.dataset.view===v));
+  document.getElementById("note-new").hidden = v!=="new";
+  document.getElementById("note-old").hidden = v!=="old";
+  if(v==="old") renderOld(); else renderFront();
+}
+document.querySelector("nav.tabs").addEventListener("click", e=>{const b=e.target.closest("button[data-tab]"); if(b) show(b.dataset.tab);});
+document.addEventListener("click", e=>{const m=e.target.closest(".mk"); if(!m) return; show("t6"); const a=document.getElementById("ask-"+m.dataset.ask); if(a) a.scrollIntoView({block:"center"});});
+document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>view(b.dataset.view)));
+
+view("new");
+renderPage("doc-product","product","The product","New tools for running a club, and the work that takes the club tools out of early access.",2);
+renderPage("doc-tech","tech","Security, reliability and your data","What we're doing to keep your club's information safe, the site running, and your data yours.",3);
+renderWording(); renderAsks();
+try{const t=localStorage.getItem("brv-tab"); if(t&&document.getElementById(t)) show(t);}catch(e){}
+})();
+</script>

@@ -88,7 +88,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
       <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
       <dt>Password</dt><dd><code>UATPassword2026!</code> for every account below</dd>
       <dt>UAT Rep Club</dt><dd>Owner <code>uat-club-owner@uat-rep-club.local</code><br>Treasurer <code>uat-club-treasurer@uat-rep-club.local</code><br>League admin <code>uat-club-league-admin@uat-rep-club.local</code><br>Registrar <code>uat-club-registrar@uat-rep-club.local</code><br>Club home: <code>localhost:3000/uat-rep-club/admin</code></dd>
-      <dt>Coach (walk 4)</dt><dd><code>uat-coach@uat-test-org.local</code>, head coach of <b>UAT Test Team</b>: <code>localhost:3000/uat-test-org/coaches</code></dd>
+      <dt>Coach (walk 4)</dt><dd><code>uat-coach@uat-test-org.local</code>, head coach of <b>UAT Test Team</b> in the UAT Rep Club: <code>localhost:3000/uat-rep-club/coaches</code></dd>
     </dl>
     <p class="lead">Dev-only sign-ins. Keep this page private. A private window per account saves signing out and in.</p>
   </section>
@@ -219,7 +219,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    "passes": "The real PDF is added under its own name; the fake is refused with the message; the list is back as it was at the end.",
    "notIn": "The club’s own player documents and templates (proved behind the screens; same check).",
    "who": "uat-coach@uat-test-org.local",
-   "where": "localhost:3000/uat-test-org/coaches › UAT Test Team › Roster › Indigo Test › Family &amp; paperwork",
+   "where": "localhost:3000/uat-rep-club/coaches › UAT Test Team › Roster › Indigo Test › Family &amp; paperwork",
    "steps": [
     { "stop": true, "d": "Open UAT Test Team’s <b>Roster</b>, click <b>Indigo Test</b>, then the <b>Family &amp; paperwork</b> tab.", "s": "A <b>Documents</b> section with an <b>Upload</b> button. Note what it lists now." },
     { "d": "Press <b>Upload</b>, set Document type to <b>Other</b>, choose your real PDF, and press <b>Upload</b>.", "s": "The window closes and a new row shows your file’s name, Other, this season, its size and today." },

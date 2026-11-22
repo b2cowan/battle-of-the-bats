@@ -34,6 +34,27 @@ actually shipped. The order is set by dependency and rework risk, never by calen
 
 If B and D both need a migration, each checks the latest migration number at commit time.
 
+### Stage 0a — the remaining trust-pack fix (written 2026-11-15)
+
+| Item | What | Model | Prompt |
+|---|---|---|---|
+| Org delete | Deleting an organization removes its stored files (same item as Stage 6 step 6.5 / P7); prove on dev with real objects; report-only list of files already orphaned | Sonnet: shape decided; no migration, code only | `BOARD_READY_ORG_DELETE_FILES_PROMPT.md` — built, committed `45c134bea` 2026-11-15 |
+
+### Stage 2 — group email to coaches (written 2026-11-16)
+
+| Step | What | Kind | Prompt | State |
+|---|---|---|---|---|
+| Drawing | Live coach groups on the shipped send window, the door, the recount, history, phone; the owner's asks | drawings + asks | `BOARD_READY_STAGE2_GROUP_EMAIL_DRAWING_PROMPT.md` | **drawn 2026-11-16** (round 2 after `/ux`, `/design`, `/legal`): https://claude.ai/artifact/WVuNq47ywkxKgmFSYew2eF; asks 1–13 owed (plan §5 Stage 2); build prompt written after the rulings |
+| Build | **Replaced by Club Communications Stage 1** (owner 2026-11-16): the coach and board email is built inside the Communications place, not as an Organization tab | built, 3 sessions + Close | `CLUB_COMMUNICATIONS_STAGE1_BUILD_PROMPT.md`, `CLUB_COMMUNICATIONS_CLOSE_PROMPT.md` | sessions 1–3 committed `95cac82d6` `817c95523` `684ee0b38` `cc99f58e9` (2026-11-17 to 2026-11-20); walks §537 (35/35) and §547 (47/47) passed; Close built 2026-11-22 — status on the board |
+
+### Stages 4 and 6 — custom forms, then sponsorships (written 2026-11-20, in the owner's order of that day, plan §7b)
+
+| Step | What | Kind | Prompt | State |
+|---|---|---|---|---|
+| Stage 4 drawing | The club form (question types, document blocks that replace today's waiver without losing its records), the house-league sign-up with per-child and per-family questions, copy last season's form, answers in the registrations list, export and draft notes; drawn so the sponsor link and camp sign-ups can reuse it | drawings + asks | `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md` | **drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks RULED 2026-11-20 as recommended** (plan §5 Stage 4). **Build prompt written 2026-11-20:** `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md`, three parts in order (1 the form and the waiver move · 2 the family side · 3 the club side, retention and close-out). **Part 1 built 2026-11-20** (mig 513 on dev; walk §546 https://claude.ai/artifact/UVoT5NPhYxC8B1UzKgsVui). **Part 2 committed `2b3269da6` 2026-11-20** (the family side; mig 515 on dev; walk §551 https://claude.ai/artifact/4T7SUVwYi2Fa67tcjsU3VN passed 50 of 50, 2026-11-21); **Part 3 committed `4dd9e659f` 2026-11-20** (the club's side and the clock; migrations 518 and 519 on dev, 516's schedule committed alone on the owner's yes; walk §553 https://claude.ai/artifact/QhtSYswpFHJqAAkyy8X6Dk, passed 32 of 32, 2026-11-21) |
+| Tournament question fixes | F1–F3 from the Stage 4 drawing (archived answers hidden, a file answer is a dead path, any file type), ruling 15 | small fix | `BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md` | **committed `bd74851a3` 2026-11-20**; **walked 31 of 31 passed 2026-11-20** (https://claude.ai/artifact/UXVbq4LEexfFFtT6xuZ9eg; the optional phone-photo step skipped); the nosniff gap accepted by the owner 2026-11-20 |
+| Stage 6 drawing | Packages, deals and their states, the sponsor link (its questions a Stage 4 form), the club's invoice under the §9 tax shape, delivery, renewal, the deal feeding the one sponsor list; asks include the tournament sponsor-display gate and the card fee | drawings + asks | `BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_PROMPT.md` | **written 2026-11-20**, not run. Runs after Stage 4's drawing is ruled, while Stage 4 is built. Sponsors on the public tournament pages wait for it (owner 2026-11-20) |
+
 ### Stage 0c — the board pack's public Security page (written 2026-11-21, owner ruling of that day; plan §0c steps S1–S5)
 
 | Step | What | Kind | Prompt | State |
@@ -41,11 +62,13 @@ If B and D both need a migration, each checks the latest migration number at com
 | S1 | The words: the security brief edited in place into the page copy (one text for the private brief and the public page), every claim locked to the `/legal` review of 2026-11-21, the page's own links and labels, the held Data Terms sentences, one spelling shared with "Questions a board asks" | `/marketing` + `/legal` on any changed claim; no code | `BOARD_READY_SECURITY_PAGE_S1_WORDS_PROMPT.md` | **done 2026-11-21**: the brief is v0.4, the page copy; republished at the same link; S3 tasks in the plan |
 | S2 | The drawing: the page in the site's own kit, desktop and phone, Warm and Dark; the diagram's phone form with its ten checked labels unchanged; the two tables on a phone; before and after the Data Terms publish; the two doors in (footer, "Questions a board asks"); print; the share card | `/design` drawing, `/legal` on any new or moved word; no code | `BOARD_READY_SECURITY_PAGE_S2_DRAWING_PROMPT.md` | **drawn 2026-11-21** (https://claude.ai/artifact/9yp7PVd33SjyRQrSBqXZmv, source `BOARD_READY_SECURITY_PAGE_DRAWINGS.html`); **all eleven asks RULED as recommended 2026-11-21**; `/legal` on the six moves: all say as is |
 | S3 | The build: `/security` as a static marketing page gated with the legal pages, to the ruled drawing (document head, the redrawn diagram in two forms, the short-answer card, the tables, versions A/B, print, share card), the footer link and "Questions a board asks" answer 3 | build + `/review` + `/legal` on the page as built against the drawing | `BOARD_READY_SECURITY_PAGE_S3_BUILD_PROMPT.md` | **written 2026-11-21; run 2026-11-21: built on dev**, reviewed (`/design`, `/legal`), committed `f9197cb05`; owner walk §554 https://claude.ai/artifact/MsJw2L8YVgvKyxuKZhoWPG passed 33 of 33 on 2026-11-22; ships in the release that carries the legal pages |
-| S2–S5 | The drawing (`/design`), the build in the release that carries the legal pages, `/legal` on the page as built, the release check line | later prompts, each written after the step before it lands | — | not written |
+| S4–S5 | `/legal` on the page as built against production at the promote, the release check line | later prompts | — | not written |
 
 The three Wave 1 prompts can run at the same time. Only step 1 runs probes, on dev only, and none of them writes product code. The
 builds for steps 2 and 3 come as later prompts. If both need a migration, each checks the latest migration number at
 commit time.
+
+**Stage 4.P · a club sets its own privacy link** (owner ask 2026-11-21; build, no migration): prompt `BOARD_READY_CLUB_PRIVACY_LINK_PROMPT.md`, written 2026-11-21. One settings field, one route, an audit line and two help lines; the three family doors that already read the link then show it. `/legal` and `/review` before hand-off. **Built and committed `f11841ac8` 2026-11-22** (owner and admin set it; the change shows on the owner's Audit log; walk §555 passed 19 of 19, 2026-11-22).
 
 **Standing for every prompt:**
 - Branch `dev`.
@@ -53,9 +76,3 @@ commit time.
 - **No commit without the owner's yes.**
 - Broad reading goes to helpers, and their claims are checked against the code.
 - A product-owner summary at hand-off.
-
-### Stages 4 and 6 — custom forms, then sponsorships (written 2026-11-20, in the owner's order of that day, plan §7b)
-
-| Step | What | Kind | Prompt | State |
-|---|---|---|---|---|
-| Stage 4 drawing | The club form (question types, document blocks that replace today's waiver without losing its records), the house-league sign-up with per-child and per-family questions, copy last season's form, answers in the registrations list, export and draft notes; drawn so the sponsor link and camp sign-ups can reuse it | drawings + asks | `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md` | **drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks RULED 2026-11-20 as recommended** (plan §5 Stage 4). **Build prompt written 2026-11-20:** `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md`, three parts in order (1 the form and the waiver move · 2 the family side · 3 the club side, retention and close-out). **Part 1 built 2026-11-20** (mig 513 on dev; walk §546 https://claude.ai/artifact/UVoT5NPhYxC8B1UzKgsVui). **Part 2 committed `2b3269da6` 2026-11-20** (the family side; mig 515 on dev; walk §551 https://claude.ai/artifact/4T7SUVwYi2Fa67tcjsU3VN passed 50 of 50, 2026-11-21); **Part 3 committed `4dd9e659f` 2026-11-20** (the club's side and the clock; migrations 518 and 519 on dev, 516's schedule committed alone on the owner's yes; walk §553 https://claude.ai/artifact/QhtSYswpFHJqAAkyy8X6Dk, owed) |

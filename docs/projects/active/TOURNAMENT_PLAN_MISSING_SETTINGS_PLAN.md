@@ -121,6 +121,9 @@ Shared with the sister plan's step 2b (`/legal` on the same request's new home i
 
 ### Stage 3 — Build
 
+**Build prompt (written 2026-11-20):** [SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md](SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md)
+— three sessions shared with the sister plan's step 2: (1) the deletion request, both workspaces; (2) names and addresses
+and More print options; (3) retiring the Premium coach's tournament-side settings. No build go yet.
 **Session 3 of [SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md](SETTINGS_BOTH_WORKSPACES_BUILD_PROMPT.md) built 2026-11-20**
 (owner gate "as recommended"); its record is in the sister plan ("Step 2 (c, d) and step 4's guard BUILT"). All three
 sessions are built; Stage 4's one walk is next.

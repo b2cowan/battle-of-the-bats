@@ -1,0 +1,373 @@
+<title>Registrations Toolbar Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: sticky tab row, View row (Everything / Show only what differs + window width), one framed specimen, notes under it.
+   Document chrome is cool slate so the warm product frames read as specimens. */
+:root {
+  --bg: #e6e9ee; --panel: #f6f7f9; --fg: #1c2430; --muted: #566171; --line: #c9d0da; --accent: #2b5a8c; --accent-soft: #dbe6f2;
+  --good: #2f6b2f; --warn: #8a5a00; --bad: #9b2c2c;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11151b; --panel: #1a2029; --fg: #e6eaf0; --muted: #9aa5b5; --line: #2c3541; --accent: #86b4e2; --accent-soft: #223144;
+  --good: #8fd18f; --warn: #e3b25a; --bad: #ee9a9a; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11151b; --panel: #1a2029; --fg: #e6eaf0; --muted: #9aa5b5; --line: #2c3541; --accent: #86b4e2; --accent-soft: #223144;
+  --good: #8fd18f; --warn: #e3b25a; --bad: #ee9a9a; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { max-width: 1320px; margin: 0 auto; }
+h1 { font-size: 1.35rem; margin: 20px 0 2px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0 0 14px; max-width: 78ch; }
+.tabs-bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  display: flex; gap: 4px; padding: 6px; overflow-x: auto; }
+.tabs-bar button { flex: none; font: inherit; font-weight: 600; font-size: 14px; color: var(--muted); background: none; border: 0; border-radius: 7px; padding: 8px 14px; cursor: pointer; }
+.tabs-bar button[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+.tabs-bar button:focus-visible, .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin: 14px 0; }
+.viewrow .lab { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-right: 8px; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+.seg button { font: inherit; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin: 0 0 14px; }
+.note { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.note ul { margin: 0; padding-left: 18px; } .note li { margin: 3px 0; }
+.note.good h3 { color: var(--good); } .note.cost h3 { color: var(--warn); }
+.pill { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+.pill.rec { background: var(--accent-soft); color: var(--accent); }
+.meas { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+.scroller { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px; }
+.cap { font-size: 12px; color: var(--muted); margin: 0 0 8px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+.tag { font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; background: var(--panel); }
+.tag b { font-family: var(--mono); font-size: 11px; margin-right: 6px; }
+.tag .moved { color: var(--accent); } .tag .rest { color: var(--warn); } .tag .same { color: var(--muted); }
+table.fit { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.fit td, table.fit th { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+table.fit td.n { font-family: var(--mono); text-align: right; }
+.asks ol { padding-left: 20px; } .asks li { margin: 14px 0; } .asks .rec { color: var(--accent); font-weight: 600; }
+
+/* ───────────── The product frame: warm portal look, drawn from the shipped toolbar (46px gaps = .5rem, 38px controls, lime Add) ───────────── */
+.frame { --p-bg: #f4efe3; --p-card: #fffdf8; --p-ink: #241E15; --p-soft: #6b6354; --p-line: rgba(70,55,30,.20); --p-hair: rgba(70,55,30,.10);
+  --p-olive: #57651E; --p-olive-soft: rgba(87,101,30,.10); --p-lime: #D9F99D; --p-onlime: #0f1123; --p-amber-bg: #efdcb6; --p-amber: #6f4d0b;
+  flex: none; container-type: inline-size; background: var(--p-bg); color: var(--p-ink); border-radius: 8px; overflow: hidden;
+  font-family: var(--font); font-size: 13.5px; line-height: 1.3; border: 1px solid var(--p-line); }
+.frame svg { width: 15px; height: 15px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hdr, .tabs, .body { padding-left: 24px; padding-right: 24px; }
+.hdr { display: flex; align-items: center; gap: 14px; height: 54px; background: var(--p-card); border-bottom: 1px solid var(--p-hair); }
+.hdr .back { color: var(--p-soft); font-weight: 500; display: flex; gap: 6px; align-items: center; }
+.hdr .name { font-weight: 700; font-size: 16px; border-left: 1px solid var(--p-line); padding-left: 14px; }
+.hdr .chip { font-family: var(--mono); font-size: 10.5px; border: 1px solid var(--p-line); border-radius: 999px; padding: 2px 9px; background: var(--p-olive-soft); color: var(--p-olive); }
+.hdr .sp { flex: 1; }
+.hdr .site { border: 1px solid var(--p-line); border-radius: 999px; padding: 4px 12px; font-weight: 600; background: var(--p-card); }
+.hdr .ico { width: 28px; height: 28px; border: 1.5px solid var(--p-soft); border-radius: 50%; color: var(--p-soft); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+.tabs { display: flex; align-items: center; gap: 24px; height: 46px; background: var(--p-card); border-bottom: 1px solid var(--p-line); }
+.tabs .t { font-weight: 500; color: var(--p-ink); height: 46px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tabs .t.on { font-weight: 700; color: var(--p-olive); box-shadow: inset 0 -2px 0 var(--p-olive); }
+.cnt { background: var(--p-amber-bg); color: var(--p-amber); border-radius: 999px; font-size: 11px; font-weight: 700; padding: 0 7px; }
+.tabs .sp { flex: 1; }
+.body { padding-top: 14px; padding-bottom: 6px; }
+.actionrow { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px; }
+.tb { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.tb .sp { flex: 1 1 auto; }
+/* The shipped view switch: ONE white rounded track, the chosen view in soft olive */
+.vs { flex: none; width: 473px; height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 3px; gap: 2px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 999px; font-size: 12.5px; white-space: nowrap; }
+.vs span { color: var(--p-soft); font-weight: 600; padding: 0 12px; height: 30px; display: flex; align-items: center; gap: 6px; border-radius: 999px; }
+.vs span.on { color: var(--p-ink); font-weight: 700; background: var(--p-olive-soft); }
+.vs i { font-style: normal; font-weight: 600; } .vs .on i { font-style: normal; }
+.div { flex: none; width: 260px; height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 999px; font-weight: 700; }
+.div em { width: 7px; height: 7px; border-radius: 50%; background: #8a5a00; display: inline-block; margin-right: 6px; }
+.btn { flex: none; height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; font-weight: 600; color: var(--p-ink); white-space: nowrap; }
+.btn.lime { background: var(--p-lime); border-color: #b9d97c; color: var(--p-onlime); font-weight: 700; }
+.search { flex: none; width: 256px; justify-content: flex-start; color: var(--p-soft); font-weight: 400; border-radius: 999px; }
+.search svg { color: var(--p-soft); }
+.w { display: inline; }
+.rows { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px 8px 0 0; border-bottom: 0; }
+.rows .r { display: grid; grid-template-columns: 28px minmax(120px,1.1fr) minmax(90px,.8fr) minmax(140px,1.2fr) minmax(120px,1fr) 96px 28px; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--p-hair); }
+.rows .r.h { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; color: var(--p-soft); padding: 9px 16px; }
+.rows .cb { width: 20px; height: 20px; border: 1.5px solid var(--p-soft); border-radius: 5px; }
+.rows b { display: block; } .rows small { color: var(--p-soft); font-size: 12px; }
+.rows .ap { border: 1px solid var(--p-olive); color: var(--p-olive); border-radius: 8px; text-align: center; padding: 7px 0; font-weight: 700; }
+.rows .dots { color: var(--p-soft); font-weight: 700; letter-spacing: 2px; }
+
+/* Differences: Show only what differs hides the shared page and the rows */
+.frame.diff .hdr, .frame.diff .rows { display: none; }
+.frame.diff[data-opt="today"] .tabs, .frame.diff[data-opt="a"] .tabs, .frame.diff[data-opt="c"] .tabs, .frame.diff[data-opt="d"] .tabs { display: none; }
+.frame.diff .body { padding-top: 14px; }
+
+/* Option A: things shrink to icons as the line tightens (container = the frame; +48px for the frame's side padding) */
+@container (max-width: 1446px) {
+  .frame[data-opt="a"] .search { width: 38px; padding: 0; justify-content: center; }
+  .frame[data-opt="a"] .search .w { display: none; }
+  .frame[data-opt="a"] .div { width: 208px; }
+}
+@container (max-width: 1196px) {
+  .frame[data-opt="a"] .tb .btn:not(.search) { width: 38px; padding: 0; }
+  .frame[data-opt="a"] .tb .btn:not(.search) .w { display: none; }
+}
+/* Options B and C: the line is shorter, so only Search tucks in at the small end */
+@container (max-width: 1196px) {
+  .frame[data-opt="b"] .search, .frame[data-opt="c"] .search { width: 38px; padding: 0; justify-content: center; }
+  .frame[data-opt="b"] .search .w, .frame[data-opt="c"] .search .w { display: none; }
+  .frame[data-opt="b"] .tabs .btn { width: 38px; padding: 0; } .frame[data-opt="b"] .tabs .btn .w { display: none; }
+}
+.frame[data-opt="b"] .tabs { overflow: hidden; }
+.frame[data-opt="b"] .tabs .btn { height: 34px; }
+/* Option D: the shipped olive lead pill (SingleSelectDropdown lead): olive tint, 40% olive border, rounded, olive label + bold value */
+.vpill { flex: none; width: 210px; height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(87,101,30,.4); background: rgba(87,101,30,.08); white-space: nowrap; }
+.vpill .vl { color: var(--p-olive); font-weight: 500; }
+.vpill .vv { font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.vpill svg:last-child { margin-left: auto; }
+.vpill .q { background: var(--p-amber-bg); color: var(--p-amber); border-radius: 999px; font-size: 11px; font-weight: 700; padding: 0 7px; }
+.menu { position: absolute; left: 0; top: 44px; z-index: 2; width: 300px; background: var(--p-card); border-radius: 12px; box-shadow: 0 8px 28px rgba(60,45,20,.22); padding: 8px 0; font-size: 14px; }
+.menu .mi { display: flex; align-items: center; gap: 10px; padding: 8px 18px; color: var(--p-ink); }
+.menu .mi .d { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.menu .mi.on { font-weight: 700; } .menu .mi.on .d { background: var(--p-olive); }
+.menu .mi .n { margin-left: auto; color: var(--p-soft); font-variant-numeric: tabular-nums; }
+.menu .mi .n.amber { background: var(--p-amber-bg); color: var(--p-amber); border-radius: 999px; font-size: 11px; font-weight: 700; padding: 0 7px; }
+.openrow { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 999px; color: var(--p-soft); margin-bottom: 10px; }
+.openrow svg { color: var(--p-soft); }
+.btn.on { border-color: var(--p-olive); color: var(--p-olive); }
+/* Tablet band: the product already gives the view tabs their own row under 900px, and every control is 44px at 768 and under (Toolbar Rules, Rule 5) */
+@container (max-width: 948px) { .frame .vs { flex: 1 1 100%; width: auto; } }
+@container (max-width: 816px) {
+  .frame .btn, .frame .vs, .frame .div, .frame .openrow { height: 44px; }
+  .frame .vs span { height: 36px; }
+  .frame[data-opt="a"] .search, .frame[data-opt="b"] .search, .frame[data-opt="c"] .search { width: 44px; }
+  .frame[data-opt="a"] .tb .btn:not(.search) { width: 44px; }
+  .frame[data-opt="b"] .tabs .btn { width: 44px; height: 44px; }
+}
+/* Option D steps: Export and Add lose their words under about 1,150 px; Search tucks only at tablet width */
+@container (max-width: 1196px) {
+  .frame[data-opt="d"] .tb .btn.act { width: 38px; padding: 0; }
+  .frame[data-opt="d"] .tb .btn.act .w { display: none; }
+}
+@container (max-width: 948px) {
+  .frame[data-opt="d"] .search { width: 38px; padding: 0; justify-content: center; }
+  .frame[data-opt="d"] .search .w { display: none; }
+  .frame[data-opt="d"] .div { width: 208px; }
+}
+@container (max-width: 816px) {
+  .frame[data-opt="d"] .search, .frame[data-opt="d"] .tb .btn.act { width: 44px; }
+  .frame .vpill { height: 44px; }
+}
+</style>
+
+<div class="wrap">
+  <h1>Registrations toolbar: where do Export and Add registration live?</h1>
+  <p class="lede">The buttons wrap to a second line on a laptop-width window. Three ways to fix it, drawn with the real widths of each control from your screenshot. Pick a window width to see how each behaves.</p>
+  <div class="tabs-bar" role="tablist" id="tabs"></div>
+  <div class="viewrow" id="viewrow"></div>
+  <div id="stage"></div>
+</div>
+
+<script>
+const ICON = {
+  dl: `<svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`,
+  search: `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>`,
+  filter: `<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>`,
+  chev: `<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>`,
+  back: `<svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>`
+};
+const TABS = [
+  { id: "today", label: "1 · What happens today" },
+  { id: "a", label: "2 · A · Search tucks in" },
+  { id: "b", label: "3 · B · Buttons join the tab row" },
+  { id: "c", label: "4 · C · Buttons get their own line" },
+  { id: "d", label: "5 · D · View becomes a dropdown (recommended)" },
+  { id: "asks", label: "6 · Asks" }
+];
+const WIDTHS = [
+  { w: 1440, label: "Wide monitor · 1440" },
+  { w: 1200, label: "Your screenshot · 1200" },
+  { w: 1000, label: "Small laptop · 1000" },
+  { w: 768, label: "Tablet · 768" }
+];
+let state = { tab: "today", diff: false, w: 1200 };
+try { const h = location.hash.slice(1); if (TABS.some(t => t.id === h)) state.tab = h; } catch (e) {}
+
+const exportBtn = `<span class="btn act">${ICON.dl}<span class="w">Export</span></span>`;
+const addBtn = `<span class="btn lime act">${ICON.plus}<span class="w">Add registration</span></span>`;
+const VS = `<div class="vs"><span class="on">To review <b class="cnt">15</b></span><span>Active <i>22</i></span><span>Waitlist <i>3</i></span><span>Ended <i>1</i></span><span>Friend requests</span></div>`;
+const DIV = `<div class="div"><span>All divisions</span><span style="display:flex;align-items:center;gap:6px"><em style="margin:0"></em>${ICON.chev}</span></div>`;
+const VPILL = (value, queue) => `<div class="vpill"><span class="vl">View</span><span class="vv">${value}${queue ? `<span class="q">${queue}</span>` : ""}</span>${ICON.chev}</div>`;
+const VPILL_ON = VPILL(`To review <span class="q">15</span>`);
+const VPILL_OTHER = VPILL("Active", "15");
+
+function frame(opt) {
+  const tabNames = ["Overview", "Registrations", "Teams &amp; draft", "Schedule", "Standings", "Money", "Email families"];
+  const tabs = tabNames.map(n => n === "Registrations"
+    ? `<span class="t on">${n} <span class="cnt">15</span></span>` : `<span class="t">${n}</span>`).join("");
+  const rowsData = [
+    ["Jonah Weiss", "Signed up Nov 17", "U11 Pinto", "Parent Weiss", "weiss.family@example.test", "$160 once accepted"],
+    ["Noah Tremblay", "Signed up Nov 17", "U9 Rookie", "Julie Tremblay", "julie.tremblay@example.test", "$150 once accepted"],
+    ["Aiden Patel", "Signed up Nov 17", "U9 Rookie", "Jen Patel", "jen.patel.122@example.test", "$150 once accepted"]
+  ];
+  const rows = `<div class="rows"><div class="r h"><span></span><span>PLAYER</span><span>DIVISION</span><span>GUARDIAN</span><span>FEE</span><span></span><span></span></div>` +
+    rowsData.map(r => `<div class="r"><span class="cb"></span><span><b>${r[0]}</b><small>${r[1]}</small></span><span>${r[2]}<small style="display:block">Not placed</small></span><span>${r[3]}<small style="display:block">${r[4]}</small></span><span><b>Nothing owed yet</b><small>${r[5]}</small></span><span class="ap">Approve</span><span class="dots">&middot;&middot;&middot;</span></div>`).join("") + `</div>`;
+  const hdr = `<div class="hdr"><span class="back">${ICON.back} Seasons</span><span class="name">2026 Fall House League</span><span class="chip">REGISTRATION OPEN</span><span class="sp"></span><span class="site">View site</span><span class="ico">?</span></div>`;
+  const tabRow = `<div class="tabs">${tabs}<span class="sp"></span>${opt === "b" ? exportBtn + addBtn : ""}</div>`;
+  const actionRow = opt === "c" ? `<div class="actionrow">${exportBtn}${addBtn}</div>` : "";
+  const tb = `<div class="tb">
+    ${opt === "d" ? DIV + VPILL_ON : VS + DIV}
+    <span class="sp"></span>
+    <span class="btn search">${ICON.search}<span class="w">Search players or parents&hellip;</span></span>
+    <span class="btn">${ICON.filter}<span class="w">Filter</span>${ICON.chev.replace("<svg", "<svg class=\"w\"")}</span>
+    ${opt === "today" || opt === "a" || opt === "d" ? exportBtn + addBtn : ""}
+  </div>`;
+  return `<div class="frame${state.diff ? " diff" : ""}" data-opt="${opt}" style="width:${state.w + 48}px">${hdr}${tabRow}<div class="body">${actionRow}${tb}</div>${rows}</div>`;
+}
+
+function tags(items) {
+  return `<div class="tags">` + items.map(i => `<span class="tag"><b class="${i[0]}">${i[1]}</b>${i[2]}</span>`).join("") + `</div>`;
+}
+function specimen(opt, caption, tagList) {
+  return `<p class="cap">${caption}</p><div class="scroller">${frame(opt)}</div>${tags(tagList)}`;
+}
+function noteBox(cls, title, items) {
+  return `<div class="note ${cls}"><h3>${title}</h3><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul></div>`;
+}
+
+const PANES = {
+  today: () => `
+    <div class="grid2">
+      <div class="note"><h3>What the line needs</h3>
+        <table class="fit">
+          <tr><td>View tabs (To review &hellip; Friend requests)</td><td class="n">473</td></tr>
+          <tr><td>Division picker</td><td class="n">260</td></tr>
+          <tr><td>Search (the shared field, 16rem)</td><td class="n">256</td></tr>
+          <tr><td>Filter</td><td class="n">98</td></tr>
+          <tr><td>Export</td><td class="n">110</td></tr>
+          <tr><td>Add registration</td><td class="n">165</td></tr>
+          <tr><td>Gaps between them</td><td class="n">40</td></tr>
+          <tr><th>Total</th><th class="n">&asymp; 1,402 px</th></tr>
+        </table></div>
+      <div class="note"><h3>Why it breaks</h3><ul>
+        <li>The line fits only when the page area is about 1,400 px wide. Your screenshot had about 1,200.</li>
+        <li>Whatever does not fit drops to a second line and sits at the left edge, because the gap that pushes buttons to the right is on the first line.</li>
+        <li>So Export and Add registration end up under the tabs, not top right. Both are drawn exactly as the product draws them today.</li>
+        <li>Try the window widths: the 1000 px laptop is worse, with four controls on the second line.</li></ul></div>
+    </div>
+    ${specimen("today", "Registrations · desktop · TODAY", [["same", "UNCHANGED", "Nothing here is a proposal. This is the current screen at the chosen width."]])}`,
+  a: () => `
+    <div class="grid2">
+      ${noteBox("good", "What you get", [
+        "One line at every laptop width. Add registration stays the last control at the right end, which is the 2026-10-17 toolbar rule.",
+        "Nothing moves between windows. Controls only shrink, in a fixed order.",
+        "No change to the season header or its tabs, so every other season tab is untouched.",
+        "A phone already does this (Search is a magnifier), so the behaviour is not new."])}
+      ${noteBox("cost", "What it costs", [
+        "On a laptop, Search is one tap away instead of open. For a 120-player list that is the control people reach for most.",
+        "In a small window Export and Add registration become icons with a tooltip. Add keeps its lime fill and the plus, so it still reads as the main button.",
+        "The order of shrinking is a judgment call (Search, then the division picker, then the words).",
+        "The shared search field only tucks away on a phone today. Teaching it a laptop step means changing the shared field, not this screen, because the toolbar rules say no screen styles its own search. Every list that uses it would change and need its own check."])}
+    </div>
+    <p class="meas"><b>Superseded by D</b>, which keeps Search open. Steps: under about 1,400 px Search becomes an icon and the division picker narrows to 208. Under about 1,150 px Filter, Export and Add lose their words. Line needs 1,132 px after step 1 and 833 px after step 2. At tablet width the view tabs take their own row, as the product already does under 900 px, and every control grows to 44.</p>
+    ${specimen("a", "Registrations · desktop · OPTION A", [
+      ["rest", "RESTYLED", "Search: icon when tight"], ["rest", "RESTYLED", "Division: 208 px when tight"],
+      ["rest", "RESTYLED", "Filter · Export · Add: icons when tightest"], ["same", "UNCHANGED", "View tabs, header, season tabs, table"]])}
+    <p class="cap" style="margin-top:18px">Option A · Search tapped open (the shared field&rsquo;s own full-width row, as on a phone)</p>
+    <div class="scroller"><div class="frame" data-opt="x" style="width:${state.w + 48}px"><div class="body" style="padding-top:14px">
+      <div class="tb" style="margin-bottom:10px"><div class="vs"><span class="on">To review <b class="cnt">15</b></span><span>Active <i>22</i></span><span>Waitlist <i>3</i></span><span>Ended <i>1</i></span><span>Friend requests</span></div>
+      <span class="sp"></span><span class="btn on" style="width:38px;padding:0">${ICON.search}</span><span class="btn" style="width:38px;padding:0">${ICON.filter}</span><span class="btn" style="width:38px;padding:0">${ICON.dl}</span><span class="btn lime" style="width:38px;padding:0">${ICON.plus}</span></div>
+      <div class="openrow">${ICON.search}<span>Search players or parents&hellip;</span></div></div></div></div>
+    <div class="tags"><span class="tag"><b class="moved">NEW</b>The opened search row. It costs 48 px of height only while open.</span></div>`,
+  b: () => `
+    <div class="grid2">
+      ${noteBox("good", "What you get", [
+        "Your instinct, literally: the two buttons are top right, above the table, and the line below has room for everything else.",
+        "Uses empty space that the season tab row already has at the right end.",
+        "Search stays open down to about 1,150 px."])}
+      ${noteBox("cost", "What it costs", [
+        "The tab row belongs to the whole season, and is shared by Overview, Teams, Schedule, Money and Email families. It would have to carry different buttons per tab, which no screen does today.",
+        "On a phone the season tabs scroll sideways, so the buttons need a different home there. That is two places to keep in step.",
+        "Export reads the filters, and it now sits away from them (a 2026-05-24 ruling put Export beside the filters).",
+        "It breaks Toolbar Rules, Rule 3 (no action moves between header and toolbar), for this screen, and every other screen would still put its create button at the right end of its toolbar."])}
+    </div>
+    <p class="meas">Toolbar line needs about 1,111 px (Search open) or 869 px (Search as an icon). Tab row: seven tabs plus both buttons fit down to 1,000 px only with the buttons as icons. At tablet width (768) the seven tabs fill the row and the buttons are pushed off the edge: try that window.</p>
+    ${specimen("b", "Registrations · desktop · OPTION B", [
+      ["moved", "MOVED", "Export and Add registration: toolbar to season tab row"], ["rest", "RESTYLED", "Search: icon under about 1,150 px; buttons icon-only under about 1,150 px"],
+      ["same", "UNCHANGED", "Everything else"]])}`,
+  c: () => `
+    <div class="grid2">
+      ${noteBox("good", "What you get", [
+        "Exactly &ldquo;top right, above the filter buttons&rdquo;, and the buttons always keep their words.",
+        "Search is open at every width above 1,150 px, and the line below has room to spare.",
+        "Nothing outside the Registrations screen changes."])}
+      ${noteBox("cost", "What it costs", [
+        "About 48 px of height on every visit. The list is the point of this screen and it starts lower, on every laptop, whether or not the window was tight.",
+        "A row holding two buttons and nothing else, with empty space to its left. It looks like a separate header band.",
+        "It breaks Toolbar Rules, Rule 3 (page actions stay at the toolbar's end on club and coach screens, Export · lime add), and the 2026-05-24 ruling that Export lives with the filters, for this screen only. Other screens would differ."])}
+    </div>
+    <p class="meas">Same narrow-width behaviour as B for Search. The table starts about 48 px lower than in option A.</p>
+    ${specimen("c", "Registrations · desktop · OPTION C", [
+      ["moved", "MOVED", "Export and Add registration: onto their own line above the toolbar"], ["rest", "RESTYLED", "Search: icon under about 1,150 px"],
+      ["same", "UNCHANGED", "Everything else, pushed down about 48 px"]])}`,
+  d: () => `
+    <div class="grid2">
+      ${noteBox("good", "What you get", [
+        "The line fits at every laptop width and Search stays open down to about 1,000 px. Search is the control you expect to use most, and it is never the first thing to give way.",
+        "Export and Add registration stay at the right end, with their words, until about 1,150 px. Add keeps its lime fill after that.",
+        "It follows the written rule: a switch for up to three views, the olive View pill for four or more. This screen has five.",
+        "Nothing outside the Registrations toolbar changes: no new behaviour in the shared search, no change to the season header or its tabs."])}
+      ${noteBox("cost", "What it costs", [
+        "Changing view takes two clicks instead of one.",
+        "The To review count is the queue people act on, so it stays on the pill face (amber), and stays there even when another view is chosen. The other counts (Waitlist, Ended) now show only inside the open menu.",
+        "The division picker and the View pill are two pickers side by side. Division is drawn first, because a scope that does not depend on the view leads and the view follows."])}
+    </div>
+    <p class="meas">Line needs about 1,139 px (210 + 260 + 256 + 98 + 110 + 165 + 40). Under about 1,150 px Export and Add lose their words (940 px). Search tucks only at tablet width, with the division picker narrowing to 208 and every control at 44.</p>
+    ${specimen("d", "Registrations · desktop · OPTION D", [
+      ["moved", "NEW", "View pill (olive lead pill) replaces the five-view switch"], ["moved", "MOVED", "Division picker now leads, the View pill follows"],
+      ["rest", "RESTYLED", "Export and Add: icons under about 1,150 px; Search: icon at tablet width only"], ["same", "UNCHANGED", "Filter, header, season tabs, table"]])}
+    <p class="cap" style="margin-top:18px">Option D · The View menu open, and the pill with another view chosen</p>
+    <div class="scroller"><div style="display:flex;gap:20px;flex-wrap:nowrap">
+      <div class="frame" data-opt="x" style="width:560px"><div class="body" style="padding-top:14px;padding-bottom:230px;position:relative">
+        <div class="tb" style="margin:0;position:relative">${DIV}<div style="position:relative">${VPILL_ON}
+          <div class="menu"><div class="mi on"><span class="d"></span>To review<span class="n amber">15</span></div><div class="mi"><span class="d"></span>Active<span class="n">22</span></div><div class="mi"><span class="d"></span>Waitlist<span class="n">3</span></div><div class="mi"><span class="d"></span>Ended<span class="n">1</span></div><div class="mi"><span class="d"></span>Friend requests</div></div></div></div></div></div>
+      <div class="frame" data-opt="x" style="width:560px"><div class="body" style="padding-top:14px;padding-bottom:230px"><div class="tb" style="margin:0">${DIV}${VPILL_OTHER}</div>
+        <p style="margin:12px 0 0;color:var(--p-soft);font-size:12.5px">Active is chosen, and the 15 still waiting for review stay on the pill.</p></div></div>
+    </div></div>
+    <div class="tags"><span class="tag"><b class="moved">NEW</b>The menu lists each view with its count, counted before any filter narrows, as the Book menu lists its amounts.</span></div>`,
+  asks: () => `
+    <div class="asks"><ol>
+      <li><b>Which option?</b> <span class="rec">I recommend D.</span> It fixes the cause (the five-view switch is the widest control on the line), follows the written rule for four or more views, keeps Search open at every laptop width, and touches only this toolbar. A is the fallback if you want to keep the switch. B and C match your first instinct about &ldquo;top right&rdquo;, but break the rule that page actions stay at the toolbar&rsquo;s end.</li>
+      <li><b>Is the amber To review count on the View pill enough?</b> It stays on the pill even when another view is chosen, so the queue is never hidden. The alternative is a separate amber chip beside the pill, which costs about 40 px of line.</li>
+      <li><b>Order: Division first, then View?</b> The written rule says a scope that does not depend on the view leads and the view follows. Today the view tabs are first. Keeping today&rsquo;s order (View, then Division) is also workable, but it differs from the rule.</li>
+      <li><b>In a window under about 1,150 px, are icon-only Export and Add registration fine?</b> Add keeps its lime fill and plus. Filter keeps its word.</li>
+      <li><b>Other screens with a switch of four or more views.</b> They break the same rule. I would list them and bring them back as a separate decision, not change them here.</li>
+      <li><b>If you pick B or C:</b> does it become the rule for every list screen&rsquo;s buttons, or only this one? A screen that differs from its siblings needs that said out loud.</li>
+      </ol></div>`
+};
+
+function render() {
+  const tabsEl = document.getElementById("tabs");
+  tabsEl.innerHTML = TABS.map(t => `<button role="tab" id="tab-${t.id}" aria-selected="${t.id === state.tab}" data-tab="${t.id}">${t.label}</button>`).join("");
+  const vr = document.getElementById("viewrow");
+  if (state.tab === "asks") { vr.innerHTML = ""; }
+  else {
+    const showDiff = state.tab !== "today";
+    vr.innerHTML =
+      `<span><span class="lab">Window</span><span class="seg">${WIDTHS.map(x => `<button data-w="${x.w}" aria-pressed="${x.w === state.w}">${x.label}</button>`).join("")}</span></span>` +
+      (showDiff ? `<span><span class="lab">View</span><span class="seg"><button data-diff="0" aria-pressed="${!state.diff}">Everything</button><button data-diff="1" aria-pressed="${state.diff}">Show only what differs</button></span></span>` : "");
+  }
+  document.getElementById("stage").innerHTML = PANES[state.tab]();
+  const rec = state.tab === "a" ? "" : "";
+  document.title = "Registrations Toolbar Options";
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.tab) { state.tab = b.dataset.tab; try { location.hash = state.tab; } catch (x) {} }
+  else if (b.dataset.w) state.w = Number(b.dataset.w);
+  else if (b.dataset.diff != null) state.diff = b.dataset.diff === "1";
+  else return;
+  render();
+});
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (TABS.some(t => t.id === h)) { state.tab = h; render(); } });
+render();
+</script>

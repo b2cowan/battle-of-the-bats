@@ -5,6 +5,9 @@
 > **Branch:** dev
 > **Prompt:** `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN_PROMPT.md` (owner, 2026-08-07)
 > **PM brief:** `GAME_LOCATION_SOURCE_OF_TRUTH_PM_BRIEF.md`
+> ⚠ **Superseded in part (owner 2026-11-19):** tournament games no longer take a typed field name at all — not as an off-site
+> choice, not from the import. See [TOURNAMENT_REAL_VENUES_ONLY_PLAN.md](TOURNAMENT_REAL_VENUES_ONLY_PLAN.md) §1. The rest of
+> this plan (location as a server-written display cache, no database constraint, the lane layer) stands.
 
 ## Goal
 

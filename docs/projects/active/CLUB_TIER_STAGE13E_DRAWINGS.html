@@ -1,0 +1,1050 @@
+<title>Stage 13e Numbers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the house drawings sheet. Sticky numbered tabs; one View row (Today / With 13d, Everything / Show only what
+   differs); each tab shows the real capture from the club copy (Today) or the drawn change (With 13d) at true size, with
+   numbered notes that answer to pins on the frame. Cool slate chrome so the warm product frames read as specimens. */
+:root {
+  --bg: #E7EAEE; --surface: #FFFFFF; --fg: #1A1F25; --muted: #56606B; --rule: #D0D6DC;
+  --accent: #2D5B86; --accent-soft: rgba(45, 91, 134, 0.10);
+  --new: #2D5B86; --re: #7A4E12; --same: #6B7480; --warn: #9A3B1E;
+  --shadow: 0 1px 2px rgba(20, 30, 40, 0.08), 0 10px 28px rgba(20, 30, 40, 0.12);
+  --doc-font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --doc-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  /* the product's shipped warm tokens (fixed: a specimen looks the same in either theme) */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink2: #4A4235; --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12); --p-line2: rgba(70, 55, 30, 0.20); --p-fill: rgba(70, 55, 30, 0.06);
+  --p-olive: #57651E; --p-olive-soft: rgba(87, 101, 30, 0.10); --p-lime: #D9F99D;
+  --p-amber: #835006; --p-amber-soft: rgba(131, 80, 6, 0.08); --p-amber-line: rgba(131, 80, 6, 0.32);
+  --p-red: #B03A22; --p-good: #2A5222; --p-blue: #2B4F7A;
+  --p-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --p-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+    --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE; --warn: #F0A58C;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+  --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE; --warn: #F0A58C;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-font); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.doc { max-width: 1500px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 56px; }
+.dochead { display: grid; gap: 4px; margin-bottom: 14px; }
+.eyebrow { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.dochead h1 { margin: 0; font-size: 24px; line-height: 1.2; text-wrap: balance; }
+.dochead p { margin: 0; color: var(--muted); max-width: 86ch; }
+
+.stabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--rule); display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.stabs::-webkit-scrollbar { display: none; }
+.stabs button { border: 0; background: none; color: var(--muted); cursor: pointer; white-space: nowrap; font: 600 14px/1 var(--doc-font); padding: 16px 12px 14px; border-bottom: 2px solid transparent; }
+.stabs button:hover { color: var(--fg); }
+.stabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+button:focus-visible, a:focus-visible, .ask input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding: 12px 0 16px; }
+.viewrow[hidden] { display: none; }
+.vgroup { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vgroup > span { font: 600 11px/1 var(--doc-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 2px; background: var(--surface); border: 1px solid var(--rule); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; color: var(--muted); cursor: pointer; font: 600 13px/1 var(--doc-font); padding: 8px 13px; border-radius: 999px; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.vnote { font-size: 13px; color: var(--muted); }
+
+.lede { margin: 4px 0 14px; max-width: 92ch; }
+.lede b { color: var(--fg); }
+.sub-h { font: 600 12px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 26px 0 8px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.sub-h:first-of-type { margin-top: 8px; }
+.sub-h em { font: 400 13px/1.4 var(--doc-font); text-transform: none; letter-spacing: 0; color: var(--muted); font-style: normal; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 24px; align-items: start; }
+.stage.wide { grid-template-columns: minmax(0, 1fr); }
+.stage.wide .notes { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.fcol { min-width: 0; display: grid; gap: 8px; }
+.fscroll { overflow-x: auto; max-width: 100%; padding: 14px 4px 18px 14px; }
+.cap { width: max-content; max-width: none; display: block; box-shadow: var(--shadow); border-radius: 10px; }
+.notes { min-width: 0; display: grid; gap: 8px; align-content: start; margin: 0; padding: 0; list-style: none; }
+.nt { text-align: left; border: 1px solid var(--rule); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; font: 14px/1.5 var(--doc-font); width: 100%; }
+.nt:hover { border-color: var(--accent); }
+.nt.flash { box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.nt .nn { grid-row: span 3; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px/1 var(--doc-mono); color: #fff; background: #6B7480; }
+.nt.new .nn { background: #2D5B86; }
+.nt.re .nn { background: #9A6418; }
+.nt b { font-weight: 600; }
+.nt .tx { color: var(--muted); font-size: 13.5px; }
+.tag { justify-self: start; font: 600 10.5px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--rule); color: var(--same); }
+.nt.new .tag { color: var(--new); border-color: var(--new); }
+.nt.re .tag { color: var(--re); border-color: var(--re); }
+.show-today .v-new, .show-new .v-today { display: none !important; }
+.prose { max-width: 96ch; }
+.prose h2 { margin: 20px 0 6px; font-size: 19px; line-height: 1.25; }
+.prose h2:first-child { margin-top: 0; }
+.prose p { margin: 0 0 10px; }
+.prose ul, .prose ol { margin: 0 0 12px; padding-left: 20px; }
+.prose li { margin-bottom: 6px; }
+.v { font: 700 10.5px/1 var(--doc-mono); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--new); color: var(--new); margin-right: 4px; vertical-align: 1px; }
+.src { display: block; font: 12px/1.4 var(--doc-mono); color: var(--muted); }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 0 0 12px; max-width: 96ch; }
+.callout.push { border-left-color: var(--warn); }
+.callout h3 { margin: 0 0 4px; font-size: 15px; }
+.callout p { margin: 0 0 6px; }
+.callout p:last-child { margin: 0; }
+.tblwrap { overflow-x: auto; max-width: 100%; margin-bottom: 18px; }
+.who { border-collapse: collapse; background: var(--surface); border: 1px solid var(--rule); font-size: 13.5px; min-width: 1060px; }
+.who th, .who td { border-bottom: 1px solid var(--rule); padding: 8px 10px; text-align: left; vertical-align: top; }
+.who th { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.who td:first-child { font-weight: 600; white-space: nowrap; }
+.who .no { color: var(--muted); }
+.who .y { color: var(--new); font-weight: 600; }
+.fx { border-collapse: collapse; background: var(--surface); border: 1px solid var(--rule); font-size: 14px; min-width: 880px; }
+.fx th, .fx td { border-bottom: 1px solid var(--rule); padding: 9px 12px; text-align: left; vertical-align: top; }
+.fx th { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.fx td:first-child { white-space: nowrap; font-weight: 600; }
+
+/* asks */
+.asks { display: grid; gap: 14px; max-width: 940px; }
+.ask { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.ask h3 { margin: 0; font-size: 16px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.ask h3 .n { font: 700 12px/1 var(--doc-mono); color: var(--accent); }
+.ask h3 .ids { font: 500 11.5px/1 var(--doc-mono); color: var(--muted); }
+.ask p { margin: 0; color: var(--muted); }
+.ask .opts { display: grid; gap: 8px; }
+.ask label { display: flex; cursor: pointer; position: relative; }
+.ask input { position: absolute; opacity: 0; pointer-events: none; }
+.ask label span { flex: 1; border: 1px solid var(--rule); border-radius: 8px; padding: 9px 12px; font-size: 14px; background: var(--bg); }
+.ask label span b { font-weight: 600; }
+.ask input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
+.ask .go { font-size: 13px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; justify-self: start; font-weight: 600; font-family: inherit; }
+.answers { display: grid; gap: 8px; max-width: 940px; margin-top: 18px; }
+.answers textarea { width: 100%; min-height: 110px; font: 13px/1.5 var(--doc-mono); background: var(--surface); color: var(--fg); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.copyrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.copyrow button { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 12px; font: 600 13px/1 var(--doc-font); cursor: pointer; }
+.copyrow span { color: var(--muted); font-size: 13px; }
+/* a 1280 frame plus the notes column needs ~1690 px: below that the notes sit under the frame */
+@media (max-width: 1720px) { .stage { grid-template-columns: minmax(0, 1fr); } .stage .notes { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
+.seg button:disabled { opacity: 0.45; cursor: default; }
+
+/* ═════════════ PRODUCT SPECIMEN (shipped warm-theme values) ═════════════ */
+.fr { background: var(--p-paper); color: var(--p-ink); font: 14px/1.4 var(--p-sans); overflow: hidden; box-shadow: var(--shadow); border-radius: 10px; font-variant-numeric: tabular-nums; position: relative; flex: none; }
+.fr * { box-sizing: border-box; }
+.fr svg.i { flex: none; }
+.ground { background-color: var(--p-paper); background-image: linear-gradient(rgba(87,101,30,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(87,101,30,0.06) 1px, transparent 1px); background-size: 40px 40px; }
+.fr.desk { display: grid; grid-template-rows: 48px minmax(0, 1fr); }
+.fr.desk.tabbed { grid-template-rows: 48px 45px minmax(0, 1fr); }
+.fr .body { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+.fr .main { min-width: 0; overflow: hidden; position: relative; }
+.differs .fr [data-same] { opacity: 0.18; filter: grayscale(1); }
+.strip { display: grid; grid-template-columns: 240px minmax(0, 1fr); background: var(--p-card); border-bottom: 1px solid var(--p-line); position: relative; z-index: 3; }
+.strip .lc { display: flex; align-items: center; padding: 0 1.25rem; border-right: 1px solid var(--p-line); gap: 0.75rem; }
+.strip .rc { display: flex; align-items: center; gap: 0.9rem; padding: 0 1rem 0 2rem; min-width: 0; }
+.brand { display: inline-flex; align-items: center; gap: 6px; font: 700 15px/1 var(--p-sans); letter-spacing: -0.018em; color: var(--p-ink); }
+.brand em { font-style: normal; color: var(--p-olive); }
+.sdiv { width: 1px; height: 14px; background: var(--p-line2); }
+.area { font: 700 10px/1 var(--p-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--p-dim); }
+.pt { font: 700 17px/1.2 var(--p-sans); white-space: nowrap; }
+.backl { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--p-ink2); font: 500 14px/1 var(--p-sans); }
+.vr { width: 1px; height: 22px; background: var(--p-line); }
+.doors { margin-left: auto; display: flex; gap: 0.9rem; align-items: center; color: var(--p-ink2); }
+.vpill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.38rem 0.75rem; border: 1px solid var(--p-line); border-radius: 999px; background: rgba(36,30,21,0.05); font: 650 12.5px/1.1 var(--p-sans); color: var(--p-ink); }
+.door { position: relative; display: inline-grid; place-items: center; }
+.door .dot { position: absolute; top: -3px; right: -4px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 999px; background: var(--p-red); color: #fff; font: 700 9.5px/15px var(--p-sans); text-align: center; }
+.chip { display: inline-flex; align-items: center; font: 700 10px/1.4 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 0.14rem 0.5rem; border-radius: 999px; white-space: nowrap; }
+.chip.open { color: var(--p-olive); background: rgba(217,249,157,0.45); border: 1px solid rgba(87,101,30,0.35); }
+.chip.amb { color: var(--p-amber); background: var(--p-amber-soft); border: 1px solid var(--p-amber-line); }
+.chip.good { color: var(--p-good); background: rgba(52,102,42,0.08); border: 1px solid rgba(52,102,42,0.28); }
+.chip.neu { color: var(--p-ink2); background: var(--p-fill); border: 1px solid var(--p-line2); }
+.chip.to { color: var(--p-red); background: rgba(176,58,34,0.07); border: 1px solid rgba(176,58,34,0.35); border-radius: 4px; }
+.chip.from { color: var(--p-olive); background: var(--p-olive-soft); border: 1px solid rgba(87,101,30,0.35); border-radius: 4px; }
+.rail { background: var(--p-card); border-right: 1px solid var(--p-line); display: flex; flex-direction: column; overflow: hidden; }
+.rail .cell { min-height: 45px; padding: 0.55rem 1rem; border-bottom: 1px solid var(--p-line); font: 700 14px/1.2 var(--p-sans); display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.5rem; }
+.rail .cell .ab { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--p-line2); display: grid; place-items: center; font: 700 10px/1 var(--p-sans); flex: none; }
+.rail .sec { font: 700 11px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); padding: 0.9rem 1.25rem 0.4rem; }
+.rail .it { display: flex; align-items: center; gap: 0.55rem; padding: 0.56rem 1.25rem; color: var(--p-ink2); font-size: 14px; }
+.rail .it.on { background: var(--p-olive-soft); color: var(--p-olive); font-weight: 600; }
+.cnt { margin-left: auto; min-width: 1.3rem; height: 1.15rem; padding: 0 0.35rem; border-radius: 999px; display: inline-grid; place-items: center; font: 700 10px/1 var(--p-mono); color: var(--p-amber); background: rgba(131,80,6,0.11); border: 1px solid var(--p-amber-line); }
+.tabsband { background: var(--p-card); border-bottom: 1px solid var(--p-line); display: grid; grid-template-columns: 240px minmax(0, 1fr); }
+.tabsband .lc2 { border-right: 1px solid var(--p-line); }
+.tabsrow { display: flex; gap: 0.2rem; padding: 0 1.15rem; }
+.tab { display: inline-flex; align-items: center; gap: 0.4rem; height: 45px; padding: 0 0.85rem; font: 500 15px/1 var(--p-sans); color: var(--p-ink2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.pad { padding: 1.4rem 2rem 2rem; display: grid; gap: 1rem; align-content: start; }
+.eye { font: 700 11px/1 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-ink2); }
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; }
+.fr small, .fr .dim { font-size: 12.5px; color: var(--p-dim); }
+.fr a, .lk { color: var(--p-olive); font-weight: 600; text-decoration: none; }
+.u { text-decoration: underline; text-underline-offset: 2px; }
+.amb { color: var(--p-amber); }
+.red { color: var(--p-red); }
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 38px; padding: 0 0.95rem; border-radius: 8px; background: var(--p-card); border: 1px solid var(--p-line2); font: 600 14px/1 var(--p-sans); color: var(--p-ink); white-space: nowrap; }
+.btn.lime { background: var(--p-lime); border-color: transparent; }
+.btn.sm { min-height: 32px; font-size: 13px; padding: 0 0.75rem; }
+/* This morning cards */
+.morn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+.morn.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mc { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 1rem 1.05rem; display: grid; gap: 0.4rem; align-content: start; min-height: 118px; position: relative; }
+.mc .tl { display: flex; justify-content: space-between; gap: 0.5rem; font: 700 11px/1.3 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink); }
+.mc .tl svg { color: var(--p-dim); }
+.mc .n { font: 800 24px/1.1 var(--p-sans); }
+.mc .n.amb { color: var(--p-amber); }
+.mc p { margin: 0; font-size: 13px; color: var(--p-ink2); }
+.cband { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.cband.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cband > div { padding: 0.95rem 1rem; border-right: 1px solid var(--p-line); display: grid; gap: 4px; align-content: start; position: relative; }
+.cband > div:last-child { border-right: 0; }
+.cband .k { font: 600 11px/1.2 var(--p-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink2); display: flex; justify-content: space-between; }
+.cband .bv { font: 700 24px/1.15 var(--p-sans); }
+.cband .bv.amb { color: var(--p-amber); }
+.cband p { margin: 0; font-size: 13px; color: var(--p-ink2); line-height: 1.4; }
+.fband { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.fband > div { padding: 0.85rem 1rem; border-right: 1px solid var(--p-line); display: grid; gap: 3px; }
+.fband > div:last-child { border-right: 0; }
+.fband .k { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink); }
+.fband .bv { font: 700 21px/1.2 var(--p-sans); }
+.fband small { font-size: 12.5px; }
+.timeln { margin: 0; font-size: 14px; color: var(--p-ink2); display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.asked { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 13px; color: var(--p-good); }
+/* notifications page (shipped: a 720 px centred column; filter pills left, an Unread | All track right; the whole row is
+   one button that opens the reader — glyph, title, two-line body, time under it, the unread dot at the right end) */
+.npage { max-width: 720px; width: 100%; margin: 0 auto; display: grid; gap: 0.9rem; }
+.nfil { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.nfil .pl { display: inline-flex; align-items: center; min-height: 32px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid var(--p-line2); background: var(--p-card); font: 600 13px/1 var(--p-sans); color: var(--p-ink2); }
+.nfil .pl.on { background: var(--p-olive-soft); color: var(--p-olive); border-color: rgba(87,101,30,0.35); }
+.nfil .trk { margin-left: auto; display: inline-flex; gap: 2px; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 999px; padding: 3px; }
+.nfil .trk span { padding: 0.4rem 0.75rem; border-radius: 999px; font: 600 13px/1 var(--p-sans); color: var(--p-ink2); }
+.nfil .trk span.on { background: var(--p-olive-soft); color: var(--p-olive); }
+.nrow { display: grid; grid-template-columns: 18px minmax(0, 1fr) 10px; gap: 0.7rem; padding: 0.85rem 1rem; align-items: start; border-bottom: 1px solid var(--p-line); }
+.nrow:last-child { border-bottom: 0; }
+.nrow .ud { width: 8px; height: 8px; border-radius: 50%; background: var(--p-olive); margin-top: 0.4rem; }
+.nrow .ic { color: var(--p-olive); padding-top: 1px; }
+.nrow .ttl { font-weight: 600; font-size: 14px; }
+.nrow p { margin: 0.15rem 0 0.3rem; font-size: 12.8px; color: var(--p-ink2); line-height: 1.45; }
+.nrow p.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nrow .meta { font-size: 12px; color: var(--p-dim); }
+.empty { padding: 2.5rem 1rem; text-align: center; color: var(--p-dim); }
+/* windows */
+.scrim { position: absolute; inset: 0; background: rgba(36,30,21,0.36); z-index: 4; }
+.dlg { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); background: var(--p-card); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.dlg .dh { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1.05rem 1.5rem 0.85rem; }
+.dlg .dh .tt { flex: 1; display: grid; gap: 4px; }
+.dlg .dh .tt .ey { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-ink2); }
+.dlg .dh .tt b { font-size: 17px; }
+.dlg .db { padding: 0.2rem 1.5rem 1.2rem; display: grid; gap: 0.9rem; align-content: start; overflow: hidden; }
+.dlg .df { display: flex; gap: 0.5rem; justify-content: flex-end; padding: 0.8rem 1.5rem; border-top: 1px solid var(--p-line); }
+.dlg .df.split { justify-content: space-between; }
+.facts { background: rgba(70,55,30,0.05); border: 1px solid var(--p-line); border-radius: 8px; padding: 0.8rem 0.95rem; display: grid; gap: 0.45rem; font-size: 14px; }
+.facts .r { display: flex; justify-content: space-between; gap: 1rem; }
+.facts .r span:first-child { color: var(--p-ink2); }
+.facts .r b { font-weight: 650; }
+.flab { font: 600 13px/1.3 var(--p-sans); color: var(--p-ink); margin-bottom: 0.3rem; }
+.lbl { font: 700 11px/1 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-ink2); margin-bottom: 0.45rem; }
+.rows { border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.rows .rw { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; gap: 0.75rem; align-items: center; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--p-line); min-height: 56px; }
+.rows .rw:last-child { border-bottom: 0; }
+.rows .rw b { font-weight: 650; display: block; }
+.rows .rw .s { font-size: 12.5px; color: var(--p-dim); }
+.rows .rw .s.amb { color: var(--p-amber); }
+.rows .rw.held { background: var(--p-card); }
+/* the shipped callout: a white card with an amber edge (tinted panels were retired) */
+.notice { border: 1px solid var(--p-line); border-left: 3px solid var(--p-amber); background: var(--p-card); border-radius: 8px; padding: 0.7rem 0.85rem; display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 0.5rem; font-size: 13.5px; line-height: 1.45; color: var(--p-ink2); }
+.notice svg { color: var(--p-amber); margin-top: 1px; }
+.notice b { color: var(--p-ink); }
+.notice .dr { display: flex; gap: 1rem; margin-top: 0.35rem; }
+.field { display: grid; gap: 0.35rem; }
+.field label { font-size: 13px; font-weight: 600; }
+.inp { min-height: 38px; border: 1px solid var(--p-line2); border-radius: 7px; background: rgba(70,55,30,0.05); padding: 0 0.75rem; display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: var(--p-ink); gap: 0.5rem; }
+.inp.on { border-color: var(--p-olive); box-shadow: 0 0 0 1px var(--p-olive); }
+.inp .ph { color: var(--p-dim); }
+.choice2 { min-height: 48px; padding: 0.4rem 0.75rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.choice2 b { display: block; font-weight: 600; font-size: 14px; }
+.choice2 small { display: block; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th { font: 700 11px/1 var(--p-sans); letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-ink2); text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.tbl td { padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl .r { text-align: right; }
+.tbl .b td { font-weight: 650; }
+.tbl .sub td:first-child { color: var(--p-ink2); }
+.tbl .cap2 td { padding-top: 0; font-size: 12.5px; color: var(--p-dim); }
+.kv { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 0.55rem 1rem; font-size: 14px; }
+.kv .k { color: var(--p-ink2); }
+.kv .nw { font-weight: 600; }
+.who2 .rw2 { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--p-line); font-size: 13.5px; align-items: center; }
+.who2 .rw2:last-child { border-bottom: 0; }
+.dcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.dcard .dh2 { display: flex; justify-content: space-between; align-items: baseline; padding: 1rem 1.15rem 0.6rem; }
+.dcard .dh2 b { font-size: 17px; }
+.dcard .dh2 small { font: 600 11px/1 var(--p-mono); color: var(--p-ink2); }
+.drow { display: grid; grid-template-columns: minmax(0, 1fr) 16px; gap: 0.6rem; align-items: center; padding: 0.75rem 1.15rem; border-top: 1px solid var(--p-line); min-height: 48px; }
+.drow b { font-weight: 600; display: block; }
+.drow .s { font-size: 12.5px; color: var(--p-dim); }
+/* phone */
+.fr.ph { width: 404px; border-radius: 28px; border: 7px solid #2A2D31; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.ph .pbar { background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0.4rem 0.6rem 0.4rem 1rem; display: flex; align-items: center; gap: 0.35rem; min-height: 52px; }
+.ph .pbar .nm { font: 700 16.5px/1.2 var(--p-sans); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ph .gl { width: 44px; height: 44px; display: grid; place-items: center; color: var(--p-ink2); flex: none; }
+.ph .ptabs { display: flex; gap: 0.1rem; overflow: hidden; background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0 0.6rem; }
+.ph .ptabs span { padding: 0.75rem 0.6rem; font: 500 14px/1 var(--p-sans); color: var(--p-ink2); white-space: nowrap; border-bottom: 2px solid transparent; }
+.ph .ptabs span.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.ph .ppad { padding: 0.9rem 1rem 96px; display: grid; gap: 0.8rem; align-content: start; }
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; min-height: 72px; padding: 0.45rem 0 0.6rem; display: flex; justify-content: space-around; background: rgba(248,244,237,0.97); border-top: 1px solid var(--p-line); z-index: 6; }
+.bt { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; color: var(--p-dim); position: relative; }
+.bt .w { width: 46px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
+.bt.on { color: var(--p-olive); }
+.bt.on .w { background: var(--p-olive-soft); }
+.bt .lb { font: 700 10px/1 var(--p-sans); }
+.bt .dot { position: absolute; top: -4px; left: 55%; min-width: 16px; height: 16px; border-radius: 999px; background: var(--p-lime); color: #3F4A12; font: 700 9.5px/16px var(--p-sans); text-align: center; padding: 0 3px; }
+.pfig { display: grid; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.pfig > div { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.pfig > div:last-child { border-bottom: 0; }
+.pfig .k { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink); }
+.pfig b { font: 700 17px/1.2 var(--p-sans); }
+.psheet { position: absolute; inset: 0; z-index: 7; background: var(--p-card); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.psheet .dh { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.75rem 0.6rem 0.75rem 1rem; border-bottom: 1px solid var(--p-line); }
+.psheet .dh .tt { flex: 1; display: grid; gap: 3px; }
+.psheet .dh .tt .ey { font: 700 10.5px/1.2 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-ink2); }
+.psheet .dh .tt b { font-size: 16.5px; }
+.psheet .db { padding: 0.9rem 1rem 1rem; display: grid; gap: 0.85rem; align-content: start; overflow: hidden; }
+.psheet .df { display: flex; gap: 0.5rem; padding: 0.7rem 1rem; border-top: 1px solid var(--p-line); }
+.psheet .df .btn { flex: 1; justify-content: center; min-height: 44px; }
+
+/* highlights and pins */
+.hl { position: relative; }
+.hl.new { box-shadow: 0 0 0 2px #2D5B86; border-radius: 8px; }
+.hl.re { box-shadow: 0 0 0 2px #9A6418; border-radius: 8px; }
+.hl.same { outline: 1.5px dashed #6B7480; outline-offset: 2px; border-radius: 8px; }
+.hl.flash { animation: flash 1.2s ease-out 1; }
+@keyframes flash { 0%, 60% { background-color: rgba(45, 91, 134, 0.18); } 100% { background-color: transparent; } }
+.pin { position: absolute; top: -11px; left: -11px; z-index: 6; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font: 700 11px/1 var(--doc-mono); color: #fff; background: #6B7480; cursor: pointer; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.pin::after { content: ""; position: absolute; inset: -11px; }
+.pin.new { background: #2D5B86; }
+.pin.re { background: #9A6418; }
+span.hl { display: inline-flex; }
+.ex { font: 700 9.5px/1 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: #6B7480; padding: 3px 5px; border-radius: 3px; vertical-align: 2px; margin-left: 0.4rem; }
+@media (prefers-reduced-motion: reduce) { .hl.flash { animation: none; outline: 3px solid var(--accent); } }
+
+/* ═════════════ 13e additions ═════════════ */
+.fr.partial { display: block; }
+.mtabs { display: flex; gap: 1.5rem; }
+.mtabs span { padding: 0.55rem 0 0.7rem; font: 500 15px/1 var(--p-sans); color: var(--p-ink2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.mtabs span.on { color: var(--p-ink); font-weight: 600; border-bottom-color: var(--p-ink); }
+.mtabs i { font: 500 12px/1 var(--p-mono); font-style: normal; color: var(--p-dim); margin-left: 0.2rem; }
+.mtabs i.hit { color: var(--p-amber); font-weight: 700; }
+.mtabs.sm { gap: 1rem; } .mtabs.sm span { font-size: 14px; }
+.tbl td.b { font-weight: 700; }
+.tbl .good { color: var(--p-good); } .tbl .bad { color: var(--p-red); }
+.tbl.bva tr.grp td { background: rgba(43, 79, 122, 0.07); font: 700 11px/1 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-olive); padding: 0.85rem 0.9rem 0.6rem; }
+.tbl.bva tr.row td { background: rgba(70, 55, 30, 0.035); font-weight: 600; }
+.tbl.bva tr.net td { border-top: 2px solid var(--p-line2); }
+.kfind { display: flex; align-items: center; gap: 0.6rem; min-height: 46px; padding: 0 1rem; border: 1px solid var(--p-line2); border-radius: 999px; background: var(--p-card); color: var(--p-dim); font: 400 15px/1.2 var(--p-sans); }
+.kfind.on { border-color: var(--p-olive); box-shadow: 0 0 0 1px var(--p-olive); }
+.kfind.sq { border-radius: 8px; }
+.kfind .typed { color: var(--p-ink); font-weight: 500; }
+.res { overflow: hidden; }
+.res .rr { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; gap: 0.4rem 0.9rem; align-items: center; padding: 0.85rem 1rem; }
+.res .rr > span:first-child { display: grid; gap: 3px; min-width: 0; }
+.res .rr b { font-weight: 600; font-size: 15px; }
+.res .s { font-size: 12.8px; color: var(--p-ink2); }
+.res .s b.ink { font-size: 12.8px; color: var(--p-ink); }
+.res .rt { display: grid; justify-items: end; gap: 5px; }
+.res .rt b { font-size: 14px; }
+.res .nx { border-top: 1px solid var(--p-line); padding: 0.6rem 1rem; display: flex; gap: 0.45rem; align-items: baseline; font-size: 13px; color: var(--p-ink2); }
+.res .nx svg { flex: none; position: relative; top: 2px; }
+.res.ph .rr { grid-template-columns: minmax(0, 1fr) 16px; }
+.res.ph .rr > svg { grid-column: 2; grid-row: 1 / span 2; }
+.res.ph .rt { grid-column: 1; grid-row: 2; display: flex; gap: 0.5rem; align-items: center; justify-items: start; }
+.vpill2 { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.8rem; border: 1px solid rgba(87, 101, 30, 0.35); border-radius: 999px; background: var(--p-olive-soft); font: 400 13px/1.1 var(--p-sans); color: var(--p-ink2); white-space: nowrap; }
+.vpill2 b { font-weight: 600; color: var(--p-ink); }
+.vpill2.w { background: var(--p-card); border-color: var(--p-line2); }
+.gdot { width: 6px; height: 6px; border-radius: 50%; background: var(--p-olive); display: inline-block; }
+.g22 { display: grid; grid-template-columns: 1fr 1fr; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.g22 > div { padding: 0.8rem 0.9rem; display: grid; gap: 3px; border-bottom: 1px solid var(--p-line); }
+.g22 > div:nth-child(odd) { border-right: 1px solid var(--p-line); }
+.g22 > div:nth-child(n+3) { border-bottom: 0; }
+.g22 .k { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink); display: flex; align-items: center; gap: 4px; }
+.g22 b { font: 700 19px/1.2 var(--p-sans); }
+.g22 small { font-size: 12px; }
+.lk { color: var(--p-olive); font-weight: 600; display: inline-flex; align-items: center; gap: 2px; }
+.ph small.mono { font: 500 11px/1.2 var(--p-mono); color: var(--p-dim); display: block; }
+.cband .k svg { color: var(--p-ink2); }
+.pairs { display: flex; gap: 24px; align-items: flex-start; flex-wrap: nowrap; }
+.why { max-width: 96ch; margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+.why b { color: var(--fg); }
+/* the shipped phone Money band: two figures side by side, the third full width */
+.g22.g21 > div:nth-child(3) { grid-column: 1 / -1; border-right: 0; }
+.g22.g21 > div:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--p-line); }
+.g22.g21 > div:nth-child(1) { border-bottom: 1px solid var(--p-line); }
+/* the shipped phone Still owing row: name and amount on one line, the facts under them, full width */
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; gap: 0.2rem 0.6rem; align-items: center; padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.prow:last-child { border-bottom: 0; }
+.prow b { font-weight: 650; font-size: 16px; }
+.prow .s { grid-column: 1 / 3; font-size: 13px; color: var(--p-dim); }
+.prow > svg { grid-row: 1 / span 2; grid-column: 3; color: var(--p-dim); }
+/* a tab with a count never wraps */
+.ph .ptabs span { display: inline-flex; align-items: center; gap: 0.35rem; flex: none; }
+/* a pin inside a band or a list sits inside its cell: the band clips anything outside it */
+.cband > .hl > .pin, .g22 > .hl > .pin, .pfig > .hl > .pin { top: 6px; left: auto; right: 6px; }
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 3.1a4 4 0 0 1 0 7.8M22 21a7 7 0 0 0-4-6.3"/></symbol>
+  <symbol id="i-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+  <symbol id="i-org" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.7 18-8-14a2 2 0 0 0-3.5 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0z"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h13v4H9v3h7v4H9v7H5z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+</svg>
+<div class="doc show-new" id="doc">
+  <header class="dochead">
+    <span class="eyebrow">Club tier · Stage 13e · drawing for rulings · 2026-11-16</span>
+    <h1>Numbers open their lines</h1>
+    <p>A figure people act on should open the names or lines behind it, and a figure shown on two screens should say which one it is. Drawn on a fresh Harbourtown copy (navj-club-13e), production build, today. "Today" is that copy's capture; "With 13e" is the drawing at true size.</p>
+  </header>
+  <nav class="stabs" role="tablist" aria-label="Sections">
+    <button role="tab" data-t="overview" aria-selected="true">1 · What changes</button>
+    <button role="tab" data-t="owes" aria-selected="false">2 · Who owes</button>
+    <button role="tab" data-t="find" aria-selected="false">3 · Find a child</button>
+    <button role="tab" data-t="offplan" aria-selected="false">4 · Off-plan</button>
+    <button role="tab" data-t="which" aria-selected="false">5 · Which figure</button>
+    <button role="tab" data-t="book" aria-selected="false">6 · The tournament's book</button>
+    <button role="tab" data-t="schedule" aria-selected="false">7 · Phone schedule</button>
+    <button role="tab" data-t="asks" aria-selected="false">8 · Asks</button>
+  </nav>
+  <div class="viewrow" id="viewrow" hidden>
+    <div class="vgroup"><span>Show</span><div class="seg" role="group" aria-label="Today or with 13e">
+      <button type="button" data-show="today" aria-pressed="false">Today</button><button type="button" data-show="new" aria-pressed="true">With 13e</button></div></div>
+    <div class="vgroup"><span>View</span><div class="seg" role="group" aria-label="Everything or only what differs">
+      <button type="button" data-view="all" aria-pressed="true">Everything</button><button type="button" data-view="differs" aria-pressed="false">Show only what differs</button></div></div>
+    <span class="vnote">Pins on a frame open their note; a note lights its part of the frame.</span>
+  </div>
+<section data-sec="overview">
+  <div class="prose"><p class="lede">Nine findings from the 2026-11-06 walks, re-opened today on a fresh club copy. <b>Seven reproduce as written. Two don't:</b> F-R5-4 (the phone schedule) asks for a change that wouldn't have helped the person in the walk, and F-T3-8 (Off-plan and Not filed) is half built already. Every count below comes from the copy.</p></div>
+
+  <div class="callout push"><h3>1. 13e is Medium, not Small: two build sessions and one walk.</h3>
+    <p>It touches ten screens, in two groups that never share a file. <b>Session A, the registrar's house league:</b> House league's home (Find a child), Registrations (search, a link-set Owing filter, its door to Money), Money (rows, Email these families, its door to Registrations, the Received caption) and This morning's Still owing tile. Find a child needs one new read across running seasons. <b>Session B, the money screens:</b> Budget vs. Actual (the Off-plan door, the Not filed link, a bug in the Actual window), the Accounting Overview (the Off-plan row, three captions, the books' column, the board report), the Ledger door from a tournament's or season's book, Rep teams' Outstanding caption, a team's account band, and the club Overview's installments line.</p></div>
+
+  <div class="callout push"><h3>2. F-R5-4: opening the schedule on the next event would not have helped.</h3>
+    <p>In the walk, the division's next event was the Nov 19 game, and it was already in the week the schedule opened on. "Open on the next event" shows that same week. The parent asked "when is her first practice?", and the registrar needed the <b>child's team's</b> next practice. The schedule can't know which child is meant. Today the schedule already opens on the next week with something in it when this week is empty (rule C3, 2026-10-27). On this copy it opened on Nov 23–29. <b>Recommendation:</b> the answer goes on the child's row in Find a child ("Reds' next: Thu, Nov 26, 6:00 p.m."), and F-R5-4 closes into F-R5-2. That way it belongs to neither 13e's schedule nor 13g (ask 1).</p></div>
+
+  <div class="callout push"><h3>3. F-T3-8 is half built, and the window it opens has a bug.</h3>
+    <p>The Not filed row's Actual figure already opens its two lines (Diamond permits — spring block $2,000.00, Practice balls $340.00) and "Open these lines in the Ledger". What has no door is the <b>Off-plan</b> tile, the Overview's Off-plan row and the Not filed note. Off-plan is $3,660.00 = Field Equipment $1,200.00 + Paid to teams on request $120.00 + Not filed $2,340.00, three lines in three categories. No total on the page adds up to it. The Actual window's small heading also reads <b>"ACTUAL · [OBJECT OBJECT]"</b> (seen on the copy). 13e fixes it, since the new door opens that window.</p></div>
+
+  <div class="callout push"><h3>4. "One who-owes door" means a link. The two lists already share one rule.</h3>
+    <p>Money's Still owing and Registrations' Owing filter use the same test, and both say 12 today. They differ in one case: a bank debit still clearing. Still owing keeps a child with whatever isn't clearing yet; the filter drops the child entirely. The walk's "14, then 12" was the walker's own Mark received presses. A merge would be a redesign; a link in each direction, plus the same clearing rule in the filter, closes it (ask 3). <b>Found today:</b> "Received" disagrees. Money says 8 players, the filter says 7, because Dev Sharma has paid $75 of $150 (ask 8).</p></div>
+
+  <div class="callout push"><h3>5. F-O5-6 is the club's Ledger, not the tournament portal. Fix the door, not the default.</h3>
+    <p>"The tournament's book" is Accounting › Ledger with that book picked. It opens on This month by an owner rule ("the club's difference from the coach's Around today"), pinned by a test. On this copy it shows a Starting balance of $1,440.00 and the $500.00 float, and none of the registrations. Changing the default would undo the ruling for the General book, where This month is right. The door from a tournament's or a season's book is what should open on All time (ask 5).</p></div>
+
+  <div class="callout"><h3>6. Not in 13e, said out loud</h3>
+    <p><b>Families' "Owes money"</b> is a third answer to "who owes", and theme 4 names it. It is per family, across rep and house league, and it doesn't net a clearing debit. The registrar can't open Families by default. It answers a different question, so it stays out of 13e; 13h (one name per thing) is its home. <b>F-T3-1 and F-T5-1</b> are settled by 13d: the treasurer's "Owed to the club" (teams $10,950.00 · house league $1,740.00), Revenue's "includes" caption, and the door to the running season's Money all show on the copy. <b>F-T3-5</b> is settled by the bank check's Find. Neither is redrawn here.</p></div>
+
+  <h2 class="prose" style="margin:22px 0 8px;font-size:19px">Who sees what, with 13e</h2>
+  <div class="tblwrap"><table class="who">
+    <thead><tr><th>Person</th><th>Still owing opens the child</th><th>Email these families</th><th>Find a child</th><th>Search names the tab</th><th>Off-plan opens its lines</th><th>A figure says which</th><th>A book's door opens on All time</th></tr></thead>
+    <tbody>
+      <tr><td>Registrar (Riley Okonkwo)</td><td class="y">Yes</td><td class="y">Yes (they may email families)</td><td class="y">Yes, where they land</td><td class="y">Yes</td><td class="no">No: can't open Accounting</td><td class="no">—</td><td class="no">—</td></tr>
+      <tr><td>Owner, admin</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Rep teams, Overview, This morning</td><td class="y">Yes, and from the tournament's Payments card</td></tr>
+      <tr><td>Treasurer (Avery Chen)</td><td class="no">No: reads Money (13d's door), rows stay plain</td><td class="no">No</td><td class="no">No: can't open Registrations</td><td class="no">—</td><td class="y">Yes, desk and phone</td><td class="y">Overview, Teams, a team's account</td><td class="y">Yes</td></tr>
+      <tr><td>Coach (Coaches Portal)</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">— (D1: no door into a coach's book)</td><td class="no">—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 class="prose" style="margin:22px 0 8px;font-size:19px">What I settled from the code and the copy</h2>
+  <div class="tblwrap"><table class="fx">
+    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+    <tbody>
+      <tr><td>Where the registrar lands</td><td><span class="v">V</span>House league's home, the list of seasons, not a season. On a phone: "Running now" and "Past seasons", nothing else. This morning's tiles are on the season's Overview, one tap in.</td></tr>
+      <tr><td>Still owing vs the Owing filter</td><td><span class="v">V</span>The same test, on the same money lines. Both read 12 on the copy. They differ only for a child with a bank debit still clearing. Neither links to the other. The Still owing tile opens Money on "Every line", not on Still owing.</td></tr>
+      <tr><td>Received</td><td><span class="v">V</span>Money: $1,155 · 8 players. The Fee filter's Received: 7. Dev Sharma has paid $75 of $150, so Money counts him and the filter doesn't.</td></tr>
+      <tr><td>Opening one registration from a link</td><td><span class="v">V</span>Registrations opens one child's record, on the child's own tab, from a link, and can land on its fee. The Fee filter can't be set by a link yet; one small addition.</td></tr>
+      <tr><td>Email families from a list</td><td><span class="v">V</span>The season's Email families window already takes a set of ticked registrations and fixes "Who" to their families. That's what Registrations' bulk bar uses. No second sender, no new audience.</td></tr>
+      <tr><td>Registrations search</td><td><span class="v">V</span>The open tab only. It matches the child, the guardian and both emails. A miss reads "No registrations match your search." with no hint. Tested on a phone: "isaac" on To review; Isaac Walsh is on Active.</td></tr>
+      <tr><td>Off-plan and Not filed</td><td><span class="v">V</span>Off-plan $3,660.00 = Field Equipment $1,200.00 + Paid to teams on request $120.00 + Not filed $2,340.00. The tile and the Overview row open nothing. Not filed's figure opens its 2 lines and the Ledger. The Ledger can be narrowed by a link to a category, an item and dates, but has no "off-plan" filter.</td></tr>
+      <tr><td>Two Outstanding figures</td><td><span class="v">V</span>Rep teams: 13U AAA $3,900.00, every year. Accounting › Teams: $3,300.00 with "+ $600.00 overdue from 2025–26" under it. The Overview's "teams $10,950.00" against Teams' total $9,750.00 is the same gap ($600.00 × 2). It's a labelling problem, not money.</td></tr>
+      <tr><td>Installments due 12 · 7 overdue</td><td><span class="v">V</span>12 = 7 overdue + 5 due in the next 14 days. The 7 are inside the 12.</td></tr>
+      <tr><td>The tournament's book</td><td><span class="v">V</span>Opens on This month (owner rule, test-pinned). Its balance, $1,940.00, is all-time. On All time: Oct 27 registrations $1,440.00, Nov 8 float $500.00. The Overview's Revenue says "Harbourtown Invitational 2026 $1,440.00" (the year's), and the books table says $1,940.00 (the balance today).</td></tr>
+      <tr><td>The phone Schedule</td><td><span class="v">V</span>Opens on today's week when that week holds anything, otherwise on the next day with something. It ignores the Show filter. On the copy it opened on Nov 23–29 (Reds vs Blues, Thu Nov 26).</td></tr>
+      <tr><td>Off-plan and the several-permits work</td><td><span class="v">V</span>Off-plan is spending only, read from the year's plan and the Ledger. Its door opens a window of plan lines, never the schedule's Bill window or a "being billed" line. 13e stays on its side of that line.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><h3>Where 13e sits</h3>
+    <p>After 13d (walk §528 passed 47/47). Beside 13f and 13g: no shared screen with 13f's family-facing words, and with 13g only the house-league phone header, which 13e doesn't change. Before 13h. It needs nothing from the several-permits work and changes nothing it re-prices. Session A and Session B can run in either order.</p></div>
+</section>
+<section data-sec="owes" hidden>
+  <p class="lede"><b>F-R3-1, F-R3-6.</b> The registrar finds 12 names on Money's Still owing and can do nothing with them there. With 13e each name opens the child, and two buttons take the whole list where the work is.</p>
+  <div class="sub-h">Money › Still owing · 1280 <em>Riley Okonkwo, registrar, 2026 Fall House League</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/registrar-money-owing-1280.webp" width="1280" height="900" alt="Today: the Still owing list, read-only" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr desk tabbed ground" style="width:1280px;height:1010px">
+  <div class="strip" data-same><div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div><div class="rc"><span class="backl"><svg class="i" width="16" height="16"><use href="#i-back"/></svg>Seasons</span><span class="vr"></span><span class="pt">2026 Fall House League</span><svg class="i" width="16" height="16"><use href="#i-chevd"/></svg><span class="chip open">Registration open</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div></div>
+  <div class="tabsband" data-same><div class="lc2"><div class="rail" style="border:0;height:100%"><div class="cell" style="margin:0;border:0"><span class="ab">HM</span>Harbourtown Minor Ball</div></div></div><div class="tabsrow"><span class="tab">Overview</span><span class="tab">Registrations <span class="cnt" style="margin:0">15</span></span><span class="tab">Teams &amp; draft</span><span class="tab">Schedule</span><span class="tab">Standings</span><span class="tab on">Money</span><span class="tab">Email families</span></div></div>
+  <div class="body"><nav class="rail" data-same style="padding-top:0">
+  <div class="it" style="margin-top:0.5rem"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div><div class="it"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>Calendar</div><div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits</div>
+  <div class="sec">Programs</div><div class="it on"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>House league<span class="cnt">15</span></div>
+  <div class="sec">Club</div><div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div></nav>
+    <div class="main"><div class="pad" style="padding-top:1.4rem;gap:1.15rem">
+  <div style="display:flex;justify-content:flex-end" data-same><span class="btn"><svg class="i" width="15" height="15"><use href="#i-dl"/></svg>Export</span></div>
+  <div class="cband three">
+    <div data-same><span class="k">Owed</span><span class="bv">$2,895</span><p>19 players</p></div>
+    <div class="hl re" data-hl="owes-4" style="box-shadow:inset 0 0 0 2px #9A6418;border-radius:0"><button class="pin re" type="button" data-n="4" aria-label="Note 4">4</button><span class="k">Received</span><span class="bv">$1,155</span><p>8 players · 1 in part</p></div>
+    <div data-same><span class="k">Still owing</span><span class="bv amb">$1,740</span><p>12 players</p></div>
+  </div>
+  <div style="display:flex;align-items:flex-end;gap:1rem;border-bottom:1px solid var(--p-line)">
+    <div class="mtabs" data-same><span>Every line <i>8</i></span><span class="on">Still owing <i>12</i></span><span>Refunds <i>0</i></span></div>
+    <div style="margin-left:auto;display:flex;gap:0.6rem;padding-bottom:0.5rem">
+      <span class="hl new" data-hl="owes-3" style="border-radius:8px"><button class="pin new" type="button" data-n="3" aria-label="Note 3">3</button><span class="btn"><svg class="i" width="15" height="15"><use href="#i-list"/></svg>Open on Registrations</span></span>
+      <span class="hl new" data-hl="owes-2" style="border-radius:8px"><button class="pin new" type="button" data-n="2" aria-label="Note 2">2</button><span class="btn"><svg class="i" width="15" height="15"><use href="#i-mail"/></svg>Email these families</span></span>
+    </div>
+  </div>
+  <div class="hl re" data-hl="owes-1" style="border-radius:10px"><button class="pin re" type="button" data-n="1" aria-label="Note 1">1</button><div class="card" style="overflow:hidden"><table class="tbl owe"><thead><tr><th>Player</th><th>Division</th><th>Owing since</th><th class="r">Owing</th><th style="width:28px"></th></tr></thead><tbody>
+    <tr><td>Hudson Byrne</td><td>U9 Rookie</td><td>Accepted Oct 21, 2026 · 26 days</td><td class="r b">$150</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Marcus Bell-Ng</td><td>U13 Bantam</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$175</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Poppy Reyes</td><td>U7 Tee-ball</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$120</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Finn Gallagher</td><td>U7 Tee-ball</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$120</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Nora Haddad</td><td>U11 Pinto</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$160</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Eli Okonkwo</td><td>U11 Pinto</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$160</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Maya Sutherland</td><td>U11 Pinto</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$160</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Hugo Lambert</td><td>U11 Pinto</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$160</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Isla Brennan</td><td>U9 Rookie</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$150</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Priya Venkat</td><td>U11 Pinto</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$160</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Zoe Papadakis</td><td>U9 Rookie</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$150</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr><tr><td>Dev Sharma</td><td>U9 Rookie</td><td>Accepted Nov 16, 2026 · 0 days</td><td class="r">$75</td><td class="r dim"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></td></tr>
+  </tbody></table></div></div>
+  <small data-same>Fees file on the club’s Budget vs. Actual under House league registration fees, in the fiscal year each one is received. Fees are marked received, refunded and corrected on Registrations.</small></div></div>
+  </div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="owes-1"><span class="nn">1</span><b>A row opens the child</b><span class="tag">Restyled</span><span class="tx">The whole row is a link to that child’s registration, opened on its fee (the record Registrations opens, on the child’s own tab). Mark received is there. Back returns to Still owing: the tab gets its own address, so Back and This morning’s tile both land on it. <b>The treasurer</b> reads this page (13d’s door) but can’t open Registrations: for them the rows stay plain and both buttons are absent, never a door to a refused page.</span></button></li>
+<li><button class="nt new" type="button" data-for="owes-2"><span class="nn">2</span><b>Email these families</b><span class="tag">New · ask 2</span><span class="tx">Opens the season’s Email families window with these 12 already ticked, so "Who" reads their families. Nothing goes until Send in that window, under its own rules. It’s the same window Registrations’ bulk bar opens, not a second sender. The window counts families, so two siblings are one. With nothing owing, the tab shows its empty state and both buttons go.</span></button></li>
+<li><button class="nt new" type="button" data-for="owes-3"><span class="nn">3</span><b>Open on Registrations</b><span class="tag">New · ask 3</span><span class="tx">Registrations, Active, with Fee: Owing already on: the same 12, with Mark received on every row. The way back is drawn below.</span></button></li>
+<li><button class="nt re" type="button" data-for="owes-4"><span class="nn">4</span><b>Received says "1 in part"</b><span class="tag">Restyled · ask 8</span><span class="tx">"8 players · 1 in part": Dev Sharma has paid $75 of $150. Registrations’ Received filter counts paid in full (7); the caption says why the two differ.</span></button></li>
+<li><button class="nt re" type="button" data-for="owes-0"><span class="nn">·</span><b>This morning’s Still owing tile</b><span class="tag">Restyled</span><span class="tx">Opens Money on this tab. Today it lands on "Every line", where the 12 aren’t.</span></button></li></ol>
+  </div>
+  <div class="sub-h">The same, at 390</div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/registrar-money-owing-390.webp" width="390" height="1486" alt="Today: Still owing on a phone" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr ph ground" style="height:858px">
+  <div class="pbar" data-same style="align-items:flex-start"><span class="gl"><svg class="i" width="20" height="20"><use href="#i-back"/></svg></span><span style="flex:1;min-width:0;padding-top:0.3rem"><span style="display:flex;align-items:center;gap:0.3rem"><span class="nm">2026 Fall House League</span><svg class="i" width="16" height="16"><use href="#i-chevd"/></svg></span><span style="display:flex;align-items:center;gap:0.4rem;margin-top:3px"><small class="mono" style="display:inline">House league</small><span class="chip open" style="font-size:9px">Registration open</span></span></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-globe"/></svg></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-help"/></svg></span></div>
+  <div style="position:relative;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden"><div class="ptabs" data-same><span class="dim">‹</span><span>Teams &amp; draft</span><span>Schedule</span><span>Standings</span><span class="on">Money</span><span class="dim">›</span></div><div class="ppad">
+  <div style="display:flex;justify-content:flex-end" data-same><span class="btn" style="min-height:44px;width:44px;justify-content:center;padding:0"><svg class="i" width="16" height="16"><use href="#i-dl"/></svg></span></div>
+  <div class="g22 g21">
+    <div data-same><span class="k">Owed</span><b>$2,895</b><small>19 players</small></div>
+    <div class="hl re" data-hl="owes-4" style="box-shadow:inset 0 0 0 2px #9A6418;border-radius:0"><button class="pin re" type="button" data-n="4" aria-label="Note 4">4</button><span class="k">Received</span><b>$1,155</b><small>8 players · 1 in part</small></div>
+    <div data-same><span class="k">Still owing</span><b class="amb">$1,740</b><small>12 players</small></div>
+  </div>
+  <div class="mtabs sm" data-same><span>Every line <i>8</i></span><span class="on">Still owing <i>12</i></span><span>Refunds <i>0</i></span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+    <div class="hl new" data-hl="owes-3" style="border-radius:8px"><button class="pin new" type="button" data-n="3" aria-label="Note 3">3</button><span class="btn" style="width:100%;justify-content:center;min-height:44px">Open on Registrations</span></div>
+    <div class="hl new" data-hl="owes-2" style="border-radius:8px"><button class="pin new" type="button" data-n="2" aria-label="Note 2">2</button><span class="btn" style="width:100%;justify-content:center;min-height:44px"><svg class="i" width="15" height="15"><use href="#i-mail"/></svg>Email these</span></div>
+  </div>
+  <div class="hl re" data-hl="owes-1" style="border-radius:8px"><button class="pin re" type="button" data-n="1" aria-label="Note 1">1</button><div class="rows" style="background:var(--p-card)"><div class="prow"><b>Hudson Byrne</b><b class="amb">$150</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg><span class="s">U9 Rookie · Accepted Oct 21, 2026 · 26 days</span></div><div class="prow"><b>Marcus Bell-Ng</b><b class="">$175</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg><span class="s">U13 Bantam · Accepted Nov 16, 2026 · 0 days</span></div><div class="prow"><b>Poppy Reyes</b><b class="">$120</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg><span class="s">U7 Tee-ball · Accepted Nov 16, 2026 · 0 days</span></div><div class="prow"><b>Finn Gallagher</b><b class="">$120</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg><span class="s">U7 Tee-ball · Accepted Nov 16, 2026 · 0 days</span></div></div></div></div><div class="bnav" data-same><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-grid"/></svg></span><span class="lb">Overview</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="lb">Calendar</span></span><span class="bt on"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="dot">15</span><span class="lb">House league</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dots"/></svg></span><span class="lb">More</span></span></div></div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="owes-1"><span class="nn">1</span><b>Rows open the child</b><span class="tag">Restyled</span><span class="tx">Each row gets a chevron and is one 56 px target.</span></button></li>
+<li><button class="nt new" type="button" data-for="owes-2"><span class="nn">2</span><b>"Email these"</b><span class="tag">New</span><span class="tx">The short label fits beside its pair at 390. Its spoken name is "Email these families".</span></button></li>
+<li><button class="nt new" type="button" data-for="owes-3"><span class="nn">3</span><b>Open on Registrations</b><span class="tag">New</span><span class="tx">The two buttons sit under the tabs, at 44 px.</span></button></li>
+<li><button class="nt re" type="button" data-for="owes-4"><span class="nn">4</span><b>Received</b><span class="tag">Restyled</span><span class="tx">The band is rows on a phone; the caption sits under the figure.</span></button></li></ol>
+  </div>
+  <div class="sub-h">Registrations, Fee: Owing · crop at true size <em>the way back</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/registrar-regs-owing-1280.webp" width="1280" height="1147" alt="Today: Registrations with the Owing filter on" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr partial ground" style="width:1040px">
+  <div class="pad" style="gap:0.8rem">
+    <div class="mtabs" data-same style="border-bottom:1px solid var(--p-line)"><span>To review <i>15</i></span><span class="on">Active <i>19</i></span><span>Waitlist <i>3</i></span><span>Ended <i>1</i></span><span>Friend requests</span></div>
+    <div style="display:flex;gap:0.6rem;align-items:center" data-same><span class="inp" style="min-width:200px">All divisions <svg class="i" width="14" height="14"><use href="#i-chevd"/></svg></span><span class="inp" style="min-width:250px"><span class="ph"><svg class="i" width="14" height="14"><use href="#i-search"/></svg> Search players or parents</span></span><span class="btn sm"><svg class="i" width="14" height="14"><use href="#i-filter"/></svg>Filter <span class="cnt" style="margin:0">1</span></span><span style="margin-left:auto" class="btn sm"><svg class="i" width="14" height="14"><use href="#i-dl"/></svg>Export</span><span class="btn sm lime"><svg class="i" width="14" height="14"><use href="#i-plus"/></svg>Add registration</span></div>
+    <div class="hl new" data-hl="reg-1" style="padding:0.35rem 0.5rem;justify-self:start"><button class="pin new" type="button" data-n="1" aria-label="Note 1">1</button><p class="timeln" style="margin:0"><span class="chip neu">Fee: Owing</span><span>12 owing, the same 12 as Money’s Still owing.</span><span class="lk">Open Still owing <svg class="i" width="13" height="13"><use href="#i-chev"/></svg></span></p></div>
+    <div class="card" data-same style="overflow:hidden"><table class="tbl"><thead><tr><th>Player</th><th>Division</th><th>Guardian</th><th>Fee</th><th class="r">Actions</th></tr></thead><tbody>
+      <tr><td><b>Hudson Byrne</b><br><small>Signed up Nov 16</small></td><td>U9 Rookie<br><small>Blues</small></td><td>Chris Byrne<br><small>chris.byrne.125@example.test</small></td><td class="amb"><b>$150 owing · 26 days</b></td><td class="r"><span class="btn sm">Mark received</span></td></tr>
+      <tr><td><b>Marcus Bell-Ng</b><br><small>Signed up Nov 8</small></td><td>U13 Bantam<br><small>Bears</small></td><td>Parent Bell-Ng<br><small>bellng.family@example.test</small></td><td><b>$175 owing</b></td><td class="r"><span class="btn sm">Mark received</span></td></tr>
+    </tbody></table></div>
+  </div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt new" type="button" data-for="reg-1"><span class="nn">1</span><b>The filter names its twin</b><span class="tag">New · ask 3</span><span class="tx">With Fee: Owing on, one line says "12 owing, the same 12 as Money’s Still owing. Open Still owing". The two lists use one rule; 13e makes the filter treat a part-clearing child as Still owing does, so the two counts can’t drift. The line shows only when it’s true: Active, all divisions, no search, Owing the only filter. With a division picked, the list is a part of the 12 and the line goes.</span></button></li></ol>
+  </div>
+</section>
+<section data-sec="find" hidden>
+  <p class="lede"><b>F-R5-2, F-R5-1.</b> A parent calls: "which team is my daughter on, and when does she play?" Today that's 5 taps, a typed search, and a wrong-tab detour. With 13e the registrar types the name where they land.</p>
+  <div class="sub-h">House league's home · 1280 <em>where the registrar lands after signing in · typed "zoe"</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/registrar-hlhome-1280.webp" width="1280" height="900" alt="Today: House league home, two cards, no search" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr desk ground" style="width:1280px;height:620px">
+  <div class="strip" data-same><div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div><div class="rc"><span class="pt">Seasons</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div></div>
+  
+  <div class="body"><div style="display:grid;grid-template-rows:auto 1fr;min-height:0"><div class="rail" data-same style="flex:none;border-bottom:1px solid var(--p-line)"><div class="cell" style="margin:0;border:0"><span class="ab">HM</span>Harbourtown Minor Ball</div></div><nav class="rail" data-same>
+  <div class="it" style="margin-top:0.5rem"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div><div class="it"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>Calendar</div><div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits</div>
+  <div class="sec">Programs</div><div class="it on"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>House league<span class="cnt">15</span></div>
+  <div class="sec">Club</div><div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div></nav></div>
+    <div class="main"><div class="pad" style="padding-top:1.4rem;gap:0.9rem">
+  <div class="hl new" data-hl="find-1" style="border-radius:999px"><button class="pin new" type="button" data-n="1" aria-label="Note 1">1</button><div class="kfind on"><svg class="i" width="17" height="17"><use href="#i-search"/></svg><span class="typed">zoe</span><span class="dim" style="margin-left:auto;font-size:13px">every season that’s running · every tab</span></div></div>
+  <div class="hl new" data-hl="find-2" style="border-radius:10px"><button class="pin new" type="button" data-n="2" aria-label="Note 2">2</button><div class="card res">
+    <div class="rr">
+      <span><b>Zoe Papadakis</b><span class="s">U9 Rookie · <b class="ink">Reds</b> · 2026 Fall House League</span><span class="s">Elena Papadakis · papadakis.family@example.test</span></span>
+      <span class="rt"><span class="chip neu">Active</span><b class="amb">$150 owing</b></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg>
+    </div>
+    <div class="nx"><svg class="i" width="13" height="13"><use href="#i-clock"/></svg><span>Reds’ next: <b>Thu, Nov 26, 6:00 p.m.</b> · Reds vs Blues · Kinsmen Park, Diamond B</span></div>
+    
+  </div></div>
+  <div class="card" data-same style="padding:1.1rem 1.15rem;display:grid;gap:0.6rem">
+    <b style="font-size:17px">Running now</b>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto 16px;gap:0.75rem;align-items:center">
+      <span><span style="display:flex;gap:0.5rem;align-items:center"><b style="font-weight:600">2026 Fall House League</b><span class="chip open">Registration open</span></span><small style="display:block;margin-top:4px">Dec 7, 2026 – Feb 14, 2027 · Baseball · 4 divisions · 19 of 48 spots taken</small><small style="display:block">Registration closes Nov 30</small></span>
+      <span class="cnt" style="margin:0">15</span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg>
+    </div></div>
+  <div class="card" data-same style="padding:0.95rem 1.15rem;display:flex;align-items:center;gap:0.5rem"><b style="font-size:17px">Past seasons</b><span class="chip neu" style="border-radius:999px">1</span><span style="margin-left:auto"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></span></div></div></div>
+  </div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt new" type="button" data-for="find-1"><span class="nn">1</span><b>Find a child or a parent</b><span class="tag">New · ask 4</span><span class="tx">Above "Running now". It searches every registration in every running season, on every tab, by the child, the guardian or an email. Empty, it reads "Find a child or a parent".</span></button></li>
+<li><button class="nt new" type="button" data-for="find-2"><span class="nn">2</span><b>The answer is the row</b><span class="tag">New</span><span class="tx">The child, their division, <b>their team</b>, the season, the guardian, the status and what’s owing, then the team’s next game or practice. The row opens the registration. This line answers the walk’s "first practice" question (F-R5-4).</span></button></li></ol>
+  </div>
+  <div class="sub-h">The same, at 390</div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/registrar-hlhome-390.webp" width="390" height="844" alt="Today: House league home on a phone" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr ph ground" style="height:858px">
+  <div class="pbar" data-same><span style="flex:1;min-width:0"><span class="nm" style="display:block">Seasons</span><small class="mono">House league</small></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-globe"/></svg></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-help"/></svg></span></div>
+  <div style="position:relative;min-height:0;display:grid;grid-template-rows:minmax(0,1fr);overflow:hidden"><div class="ppad">
+  <div class="hl new" data-hl="find-1" style="border-radius:999px"><button class="pin new" type="button" data-n="1" aria-label="Note 1">1</button><div class="kfind on"><svg class="i" width="17" height="17"><use href="#i-search"/></svg><span class="typed">zoe</span></div></div>
+  <div class="hl new" data-hl="find-2" style="border-radius:10px"><button class="pin new" type="button" data-n="2" aria-label="Note 2">2</button><div class="card res ph">
+    <div class="rr">
+      <span><b>Zoe Papadakis</b><span class="s">U9 Rookie · <b class="ink">Reds</b> · 2026 Fall House League</span><span class="s">Elena Papadakis · papadakis.family@example.test</span></span>
+      <span class="rt"><span class="chip neu">Active</span><b class="amb">$150 owing</b></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg>
+    </div>
+    <div class="nx"><svg class="i" width="13" height="13"><use href="#i-clock"/></svg><span>Reds’ next: <b>Thu, Nov 26, 6:00 p.m.</b> · Reds vs Blues · Kinsmen Park, Diamond B</span></div>
+    
+  </div></div>
+  <div class="card" data-same style="padding:1.1rem 1.15rem;display:grid;gap:0.6rem">
+    <b style="font-size:17px">Running now</b>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto 16px;gap:0.75rem;align-items:center">
+      <span><span style="display:flex;gap:0.5rem;align-items:center"><b style="font-weight:600">2026 Fall House League</b><span class="chip open">Registration open</span></span><small style="display:block;margin-top:4px">Dec 7, 2026 – Feb 14, 2027 · Baseball · 4 divisions · 19 of 48 spots taken</small><small style="display:block">Registration closes Nov 30</small></span>
+      <span class="cnt" style="margin:0">15</span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg>
+    </div></div>
+  <div class="card" data-same style="padding:0.95rem 1.15rem;display:flex;align-items:center;gap:0.5rem"><b style="font-size:17px">Past seasons</b><span class="chip neu" style="border-radius:999px">1</span><span style="margin-left:auto"><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></span></div></div><div class="bnav" data-same><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-grid"/></svg></span><span class="lb">Overview</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="lb">Calendar</span></span><span class="bt on"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="dot">15</span><span class="lb">House league</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dots"/></svg></span><span class="lb">More</span></span></div></div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt new" type="button" data-for="find-1"><span class="nn">1</span><b>The search at the top</b><span class="tag">New</span><span class="tx">Full width, 46 px. The phone’s "Seasons" page is short, so it’s in view on arrival.</span></button></li>
+<li><button class="nt new" type="button" data-for="find-2"><span class="nn">2</span><b>Status and owing wrap under the name</b><span class="tag">New</span><span class="tx">At 390 the result is one target with the next-event line under it.</span></button></li></ol>
+  </div>
+  <div class="sub-h">The other answers · crop at true size <em>a child with no team yet; no match</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><p class="why" style="max-width:60ch">Today there is no search here, so no states to show.</p></div>
+      <div class="fscroll v-new"><div class="fr partial ground" style="width:1040px"><div class="pad" style="gap:0.9rem">
+  <div class="kfind on" data-same><svg class="i" width="17" height="17"><use href="#i-search"/></svg><span class="typed">oduya</span></div>
+  <div class="hl new" data-hl="find-5" style="border-radius:10px"><button class="pin new" type="button" data-n="5" aria-label="Note 5">5</button><div class="card res"><div class="rr"><span><b>Wren Oduya</b><span class="s">U9 Rookie · no team yet · 2026 Fall House League</span><span class="s">Tunde Oduya · oduya.family@example.test</span></span><span class="rt"><span class="chip amb">Waitlist #3</span><span class="dim" style="font-size:13px">Nothing owed yet</span></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div></div></div>
+  <div class="kfind on" data-same style="margin-top:0.6rem"><svg class="i" width="17" height="17"><use href="#i-search"/></svg><span class="typed">smyth</span></div>
+  <div class="hl new" data-hl="find-6" style="border-radius:10px"><button class="pin new" type="button" data-n="6" aria-label="Note 6">6</button><div class="card" style="padding:1.1rem 1.15rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap"><span style="color:var(--p-ink2)">No child or parent matches “smyth” in a season that’s running.</span><span class="btn" style="margin-left:auto">Search past seasons too</span></div></div>
+</div></div></div>
+    </div>
+    <ol class="notes"><li><button class="nt new" type="button" data-for="find-5"><span class="nn">5</span><b>No team yet: no next-event line</b><span class="tag">New</span><span class="tx">A child on the waitlist or still to review shows their place ("Waitlist #3") and no team or schedule line. Several matches (a surname two families share) list one row each, the running season first, at most 8, then a "Show all" row. While it reads, the rows wait under the field; nothing jumps.</span></button></li>
+<li><button class="nt new" type="button" data-for="find-6"><span class="nn">6</span><b>A miss offers last season</b><span class="tag">New</span><span class="tx">A parent from last year calls too. "Search past seasons too" repeats the search over finished seasons, and their rows say the season.</span></button></li></ol>
+  </div>
+  <div class="sub-h">Registrations, searching from the wrong tab · 390 <em>"isaac" typed on To review; Isaac Walsh is on Active</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/registrar-regs-search-miss-390.webp" width="390" height="844" alt="Today: No registrations match your search" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr ph ground" style="height:858px">
+  <div class="pbar" data-same style="align-items:flex-start"><span class="gl"><svg class="i" width="20" height="20"><use href="#i-back"/></svg></span><span style="flex:1;min-width:0;padding-top:0.3rem"><span style="display:flex;align-items:center;gap:0.3rem"><span class="nm">2026 Fall House League</span><svg class="i" width="16" height="16"><use href="#i-chevd"/></svg></span><span style="display:flex;align-items:center;gap:0.4rem;margin-top:3px"><small class="mono" style="display:inline">House league</small><span class="chip open" style="font-size:9px">Registration open</span></span></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-globe"/></svg></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-help"/></svg></span></div>
+  <div style="position:relative;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden"><div class="ptabs" data-same><span>Overview</span><span class="on">Registrations <span class="cnt" style="margin:0">15</span></span><span>Teams &amp; draft</span><span>Schedule</span></div><div class="ppad">
+  <div class="hl re" data-hl="find-3" style="border-radius:6px"><button class="pin re" type="button" data-n="3" aria-label="Note 3">3</button><div class="mtabs sm" style="border-bottom:1px solid var(--p-line)"><span class="on">To review <i>0</i></span><span>Active <i class="hit">1</i></span><span>Waitlist <i>0</i></span><span>Ended <i>0</i></span></div></div>
+  <div class="kfind on sq" data-same><svg class="i" width="17" height="17"><use href="#i-search"/></svg><span class="typed">isaac</span><span style="margin-left:auto"><svg class="i" width="16" height="16"><use href="#i-x"/></svg></span></div>
+  <div class="hl new" data-hl="find-4" style="border-radius:10px"><button class="pin new" type="button" data-n="4" aria-label="Note 4">4</button><div class="card" style="padding:1.2rem 1rem;display:grid;gap:0.55rem;text-align:center;justify-items:center"><span style="color:var(--p-ink2)">No one in To review matches “isaac”.</span><b>1 match in Active</b><span class="btn" style="min-height:44px">Show it in Active</span></div></div></div><div class="bnav" data-same><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-grid"/></svg></span><span class="lb">Overview</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="lb">Calendar</span></span><span class="bt on"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="dot">15</span><span class="lb">House league</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dots"/></svg></span><span class="lb">More</span></span></div></div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="find-3"><span class="nn">3</span><b>The tab counts follow the search</b><span class="tag">Restyled</span><span class="tx">While a search is typed, each tab’s count is its matches: To review 0, Active 1. The match shows before anyone taps.</span></button></li>
+<li><button class="nt new" type="button" data-for="find-4"><span class="nn">4</span><b>The miss names the tab</b><span class="tag">New</span><span class="tx">"No one in To review matches “isaac”. 1 match in Active", with a button that switches tab and keeps the search. The hub’s other choice, one list across every tab, would mix rows that carry different buttons (Approve sits on To review only).</span></button></li></ol>
+  </div>
+</section>
+<section data-sec="offplan" hidden>
+  <p class="lede"><b>F-T3-8.</b> Avery, the treasurer, sees "Off-plan $3,660.00 · nobody budgeted this" and can't find which $3,660.00. With 13e the figure opens its three lines. No month control (hub ruling ALSO T3), and the band stays Collected · Spent · Off-plan · Cash on hand.</p>
+  <div class="sub-h">Budget vs. Actual · 1280 <em>Avery Chen, treasurer, 2026–27</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/treasurer-bva-1280.webp" width="1280" height="1058" alt="Today: Budget vs Actual; the Off-plan tile opens nothing" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr desk tabbed ground" style="width:1280px;height:1060px">
+  <div class="strip" data-same><div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div><div class="rc"><span class="pt">Accounting</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div></div>
+  <div class="tabsband" data-same><div class="lc2"><div class="rail" style="border:0;height:100%"><div class="cell" style="margin:0;border:0"><span class="ab">HM</span>Harbourtown Minor Ball</div></div></div><div class="tabsrow"><span class="tab">Overview</span><span class="tab">Budget</span><span class="tab">Teams</span><span class="tab">Ledger</span><span class="tab">Bank</span><span class="tab">Allocations</span><span class="tab">Payment requests</span><span class="tab on">Budget vs. Actual</span></div></div>
+  <div class="body"><nav class="rail" data-same style="padding-top:0">
+  <div class="it" style="margin-top:0.5rem"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div><div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits</div>
+  <div class="sec">Club</div><div class="it on"><svg class="i" width="15" height="15"><use href="#i-dollar"/></svg>Accounting<span class="cnt">3</span></div><div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div></nav>
+    <div class="main"><div class="pad" style="padding-top:1.4rem;gap:0.95rem">
+  <div class="cband">
+    <div data-same><span class="k">Collected</span><span class="bv">$8,045.00</span><p>of $16,550.00 planned</p></div>
+    <div data-same><span class="k">Spent</span><span class="bv">$5,510.00</span><p>of $46,000.00 planned</p></div>
+    <div class="hl re" data-hl="op-1" style="box-shadow:inset 0 0 0 2px #9A6418;border-radius:0;cursor:pointer"><button class="pin re" type="button" data-n="1" aria-label="Note 1">1</button><span class="k">Off-plan <svg class="i" width="14" height="14"><use href="#i-chev"/></svg></span><span class="bv amb">$3,660.00</span><p>nobody budgeted this</p></div>
+    <div data-same><span class="k">Cash on hand</span><span class="bv">$2,870.00</span><p>the club’s books · as of today</p></div>
+  </div>
+  <div style="display:flex;gap:0.6rem;align-items:center" data-same><span class="vpill2">Fiscal year <b>2026–27</b> <span class="gdot"></span><svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span><span class="vpill2">View <b>Statement</b><svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span><span class="vpill2 w">Compare <b>Whole year</b><svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span><span style="color:var(--p-ink2);padding:0 0.5rem">Expand all</span><span class="btn" style="margin-left:auto"><svg class="i" width="15" height="15"><use href="#i-dl"/></svg>Export</span></div>
+  <div class="card" data-same style="overflow:hidden"><table class="tbl bva"><thead><tr><th>Category / line item</th><th class="r">Budgeted</th><th class="r">Actual</th><th class="r">Variance</th></tr></thead><tbody>
+  <tr class="grp"><td colspan="4">Revenue</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> From the teams</td><td class="r">$11,550.00</td><td class="r">$2,750.00</td><td class="r bad">-$8,800.00</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> House league registration fees</td><td class="r">—</td><td class="r">$2,355.00</td><td class="r good">+$2,355.00</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> Tournaments</td><td class="r">—</td><td class="r">$1,440.00</td><td class="r good">+$1,440.00</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> Sponsorship</td><td class="r">$5,000.00</td><td class="r">$1,500.00</td><td class="r bad">-$3,500.00</td></tr><tr class="b"><td>Total revenue</td><td class="r">$16,550.00</td><td class="r">$8,045.00</td><td class="r bad">-$8,505.00</td></tr><tr class="grp"><td colspan="4">Expenses</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> Tournaments</td><td class="r">$3,000.00</td><td class="r">$0.00</td><td class="r good">$3,000.00 under</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> Facilities</td><td class="r">$36,000.00</td><td class="r">$3,050.00</td><td class="r good">$32,950.00 under</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> Officials</td><td class="r">$4,500.00</td><td class="r">$0.00</td><td class="r good">$4,500.00 under</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> Admin</td><td class="r">$2,500.00</td><td class="r">$0.00</td><td class="r good">$2,500.00 under</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> Team support</td><td class="r">—</td><td class="r">$120.00</td><td class="r bad">$120.00 over</td></tr><tr class="row"><td><svg class="i" width="13" height="13"><use href="#i-chev"/></svg> Not filed</td><td class="r">—</td><td class="r">$2,340.00</td><td class="r bad">$2,340.00 over</td></tr><tr class="b"><td>Total expenses</td><td class="r">$46,000.00</td><td class="r">$5,510.00</td><td class="r good">$40,490.00 under</td></tr>
+  <tr class="b net"><td>Net for 2026–27</td><td class="r">($29,450.00)</td><td class="r">$2,535.00</td><td class="r good">+$31,985.00</td></tr>
+</tbody></table></div>
+  <div style="display:grid;gap:0.45rem;font-size:13px;color:var(--p-ink2)">
+    <span data-same>Variance reads: revenue +/− against plan · costs <b>under / over</b> plan. Good news is always green.</span>
+    <span data-same>A figure opens what is behind it. Revenue is <b>$8,505.00</b> under plan so far, and <b>$8,505.00</b> of that is what the teams still owe.</span>
+    <span data-same>2 lines ($1,060.00 out) are pending; each counts once it posts.</span>
+    <span class="hl new" data-hl="op-3" style="padding:0.2rem 0.35rem;margin:-0.2rem -0.35rem;justify-self:start"><button class="pin new" type="button" data-n="3" aria-label="Note 3">3</button><span><b>Not filed</b> is spending with no budget word yet. It counts as off-plan. <span class="lk">File them on the Ledger <svg class="i" width="12" height="12"><use href="#i-chev"/></svg></span></span></span>
+  </div></div></div>
+  </div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="op-1"><span class="nn">1</span><b>The Off-plan tile opens its lines</b><span class="tag">Restyled</span><span class="tx">The tile becomes a button, with a chevron by its label. Its words don’t change, and no "N lines" count is added (the figure-doors guard forbids one).</span></button></li>
+<li><button class="nt new" type="button" data-for="op-3"><span class="nn">3</span><b>"File them on the Ledger"</b><span class="tag">New</span><span class="tx">The Not filed note ends with a link to the Ledger narrowed to Not filed over the fiscal year: the two lines to file. On a closed year those lines are locked, so the link reads "See them on the Ledger".</span></button></li></ol>
+  </div>
+  <div class="sub-h">The window the tile opens · 1280 <em>over Budget vs. Actual</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/treasurer-bva-expanded-1280.webp" width="1280" height="1721" alt="Today: the expanded table, where the three off-plan rows sit in three categories" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr desk ground" style="width:1280px;height:600px;display:block">
+  <div class="scrim"></div>
+  <div class="dlg" style="top:60px;width:560px">
+    <div class="hl new" data-hl="op-2" style="border-radius:12px"><button class="pin new" type="button" data-n="2" aria-label="Note 2">2</button><div>
+      <div class="dh"><div class="tt"><span class="ey">Off-plan · 2026–27</span><b>$3,660.00 nobody budgeted</b></div><svg class="i" width="18" height="18"><use href="#i-x"/></svg></div>
+      <div class="db">
+        <small>Spending on a word this year’s plan has no line for, and spending not filed under a word yet. Each opens its lines.</small>
+        <div class="rows">
+          <div class="rw"><span><b>Field Equipment</b><span class="s">Facilities · not planned</span></span><b>$1,200.00</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div>
+          <div class="rw"><span><b>Paid to teams on request</b><span class="s">Team support · not planned</span></span><b>$120.00</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div>
+          <div class="rw"><span><b>Not filed</b><span class="s amb">No budget word yet · file them on the Ledger</span></span><b>$2,340.00</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div>
+        </div>
+      </div>
+      <div class="df"><span class="btn">Done</span></div>
+    </div></div>
+  </div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt new" type="button" data-for="op-2"><span class="nn">2</span><b>Off-plan, line by line</b><span class="tag">New</span><span class="tx">One row per line nobody budgeted, with its category, adding up to the tile. Each row opens that line’s Actual window, which already holds "Open these lines in the Ledger". The window has no Ledger button of its own: the Ledger can’t filter "off-plan" without guessing items across categories.</span></button></li></ol>
+  </div>
+  <div class="sub-h">The Actual window · 1280 <em>from Not filed’s figure, today and with 13e</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/treasurer-bva-behind-1280.webp" width="1280" height="1721" alt="Today: the Actual window, its heading reads ACTUAL [OBJECT OBJECT]" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr desk ground" style="width:1280px;height:520px;display:block">
+  <div class="scrim"></div>
+  <div class="dlg" style="top:50px;width:560px">
+    <div class="dh"><div class="hl re" data-hl="op-4" style="flex:1;border-radius:6px;padding:0.15rem"><button class="pin re" type="button" data-n="4" aria-label="Note 4">4</button><div class="tt"><span class="ey">Actual · 2026–27</span><b>Not filed</b></div></div><svg class="i" width="18" height="18"><use href="#i-x"/></svg></div>
+    <div class="db" data-same>
+      <span><b style="font-size:20px">$2,340.00</b> paid</span>
+      <small>2 lines on Harbourtown Minor Ball (navj-club-13e) — General, filed under Not filed.</small>
+      <div class="rows"><div class="rw" style="grid-template-columns:minmax(0,1fr) auto"><span><b>Diamond permits — spring block</b><span class="s">Oct 2</span></span><b>$2,000.00</b></div><div class="rw" style="grid-template-columns:minmax(0,1fr) auto"><span><b>Practice balls</b><span class="s">Nov 4</span></span><b>$340.00</b></div></div>
+    </div>
+    <div class="df" data-same><span class="btn">Done</span><span class="btn">Open these lines in the Ledger <svg class="i" width="13" height="13"><use href="#i-chev"/></svg></span></div>
+  </div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="op-4"><span class="nn">4</span><b>"Actual · 2026–27"</b><span class="tag">Restyled · a bug</span><span class="tx">Today the heading prints "ACTUAL · [OBJECT OBJECT]" (the year is printed as a raw value, not its name). 13e’s door opens this window, so 13e fixes it.</span></button></li></ol>
+  </div>
+  <div class="sub-h">The Overview’s Off-plan row · crop at true size</div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/treasurer-overview-1280.webp" width="1280" height="1545" alt="Today: the Accounting Overview; Off-plan is plain text" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr partial ground" style="width:1000px"><div class="pad" style="gap:0.6rem">
+  <div class="dcard" style="padding-bottom:0.6rem"><div class="dh2" data-same><b>2026–27 against the budget</b><small>To Nov 16</small></div>
+  <table class="tbl" style="margin:0 1.15rem;width:calc(100% - 2.3rem)"><thead data-same><tr><th></th><th class="r">Planned</th><th class="r">So far</th></tr></thead><tbody>
+    <tr data-same class="b"><td>Expenses</td><td class="r">$46,000.00</td><td class="r">$5,510.00</td></tr>
+    <tr data-same class="sub"><td>Paid to teams on request</td><td class="r"></td><td class="r">$120.00</td></tr>
+    <tr class="sub"><td colspan="3" style="padding:0"><div class="hl re" data-hl="op-5" style="border-radius:4px"><button class="pin re" type="button" data-n="5" aria-label="Note 5">5</button><span style="display:flex;justify-content:space-between;padding:0.65rem 0.9rem"><span class="lk">Off-plan <svg class="i" width="13" height="13"><use href="#i-chev"/></svg></span><span>$3,660.00</span></span></div></td></tr>
+    <tr data-same class="b"><td>Net for 2026–27</td><td class="r">($29,450.00)</td><td class="r">$2,535.00</td></tr>
+  </tbody></table></div></div></div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="op-5"><span class="nn">5</span><b>The row opens the same window</b><span class="tag">Restyled</span><span class="tx">The word becomes the link, as Budget vs. Actual’s doors are worded elsewhere on the Overview.</span></button></li></ol>
+  </div>
+  <div class="sub-h">Budget vs. Actual at 390</div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/treasurer-bva-390.webp" width="390" height="1664" alt="Today: Budget vs Actual on a phone" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr ph ground" style="height:858px">
+  <div class="pbar" data-same><span style="flex:1;min-width:0"><span class="nm" style="display:block">Accounting</span></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-globe"/></svg></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-help"/></svg></span></div>
+  <div style="position:relative;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden"><div class="ptabs" data-same><span>Allocations</span><span>Payment requests</span><span class="on">Budget vs. Actual</span></div><div class="ppad">
+  <div class="g22">
+    <div data-same><span class="k">Collected</span><b>$8,045.00</b><small>of $16,550.00 planned</small></div>
+    <div data-same><span class="k">Spent</span><b>$5,510.00</b><small>of $46,000.00 planned</small></div>
+    <div class="hl re" data-hl="op-1" style="box-shadow:inset 0 0 0 2px #9A6418;border-radius:0"><button class="pin re" type="button" data-n="1" aria-label="Note 1">1</button><span class="k">Off-plan <svg class="i" width="13" height="13"><use href="#i-chev"/></svg></span><b class="amb">$3,660.00</b><small>nobody budgeted this</small></div>
+    <div data-same><span class="k">Cash on hand</span><b>$2,870.00</b><small>the club’s books · as of today</small></div>
+  </div>
+  <div data-same style="display:flex;gap:0.5rem;flex-wrap:wrap"><span class="vpill2">Fiscal year <b>2026–27</b> <span class="gdot"></span><svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span><span class="vpill2">View <b>Statement</b><svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span></div>
+  <div class="psheet" style="position:relative;inset:auto;border:1px solid var(--p-line);border-radius:12px;display:block">
+    <div class="hl new" data-hl="op-2" style="border-radius:12px"><button class="pin new" type="button" data-n="2" aria-label="Note 2">2</button><div class="dh"><div class="tt"><span class="ey">Off-plan · 2026–27</span><b>$3,660.00 nobody budgeted</b></div><span class="gl"><svg class="i" width="18" height="18"><use href="#i-x"/></svg></span></div>
+    <div class="rows" style="border:0;border-radius:0">
+      <div class="rw"><span><b>Field Equipment</b><span class="s">Facilities</span></span><b>$1,200.00</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div>
+      <div class="rw"><span><b>Paid to teams on request</b><span class="s">Team support</span></span><b>$120.00</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div>
+      <div class="rw"><span><b>Not filed</b><span class="s amb">No budget word yet</span></span><b>$2,340.00</b><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div>
+    </div></div>
+  </div>
+  <small class="dim">The sheet, opened from the tile: drawn here under the band so both show.</small></div><div class="bnav" data-same><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-grid"/></svg></span><span class="lb">Overview</span></span><span class="bt on"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dollar"/></svg></span><span class="dot">3</span><span class="lb">Accounting</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dots"/></svg></span><span class="lb">More</span></span></div></div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="op-1"><span class="nn">1</span><b>The tile is the door</b><span class="tag">Restyled</span><span class="tx">The shipped two-by-two band; Off-plan gets the chevron.</span></button></li>
+<li><button class="nt new" type="button" data-for="op-2"><span class="nn">2</span><b>A full-screen sheet with rows</b><span class="tag">New</span><span class="tx">The same three rows, each opening its Actual sheet.</span></button></li></ol>
+  </div>
+</section>
+<section data-sec="which" hidden>
+  <p class="lede"><b>F-O6-5, F-O6-2 and the three known lows.</b> Theme 4's rule: a figure shown on two screens has one definition, or says which it is. Every change here is words on a figure that already exists. The money doesn't change.</p>
+  <div class="sub-h">Rep teams' Outstanding · crop <em>Morgan Ellis, owner</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/owner-repteams-1280.webp" width="1280" height="960" alt="Today: Rep teams; 13U AAA Outstanding $3,900.00" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr partial ground" style="width:1040px"><div class="pad" style="gap:0.6rem">
+  <div class="card" style="overflow:hidden"><table class="tbl"><thead data-same><tr><th>Team</th><th>Season</th><th>Head coach</th><th>Roster</th><th>Next event</th><th>Documents</th><th class="r">Outstanding</th></tr></thead><tbody>
+    <tr><td data-same><b>13U AAA</b><br><small>13U</small></td><td data-same><span class="chip good">2026 · Live</span><br><small>No games yet</small></td><td data-same>Priya Nair</td><td data-same>12</td><td data-same>Tue, Nov 24<br><small>Practice · 6:00 p.m.</small></td><td data-same>12 of 12</td>
+      <td class="r"><div class="hl re" data-hl="which-1" style="display:inline-block;padding:0.2rem 0.35rem;text-align:right"><button class="pin re" type="button" data-n="1" aria-label="Note 1">1</button><b>$3,900.00</b><br><small>includes $600.00 from 2025–26</small></div></td></tr>
+    <tr data-same><td><b>14U AA</b><br><small>14U</small></td><td><span class="chip good">2026 · Live</span></td><td>Taylor Brooks</td><td>12</td><td>—</td><td>0 of 12</td><td class="r"><b>$600.00</b><br><small>includes $600.00 from 2025–26</small></td></tr>
+  </tbody></table></div></div></div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="which-1"><span class="nn">1</span><b>"includes $600.00 from 2025–26"</b><span class="tag">Restyled · ask 7</span><span class="tx">Rep teams keeps the every-year figure (what the team still owes, all told) and says what’s in it. A team’s own account band gets the same line. Accounting › Teams, below, is unchanged: the year, with the earlier year as its own line.</span></button></li></ol>
+  </div>
+  <div class="fscroll" style="margin-top:6px"><div class="fr partial ground" style="width:1040px" data-same><div class="pad"><div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Team</th><th class="r">Allocated</th><th class="r">Collected</th><th class="r">Outstanding</th><th class="r">Requests</th></tr></thead><tbody>
+  <tr><td><b>13U AAA</b></td><td class="r">$3,750.00</td><td class="r">$450.00</td><td class="r"><b>$3,300.00</b><br><small>$450.00 sent, waiting for you</small><br><small class="red">+ $600.00 overdue from 2025–26</small></td><td class="r">1</td></tr>
+  <tr class="b"><td>8 teams</td><td class="r">$11,550.00</td><td class="r">$1,800.00</td><td class="r">$9,750.00</td><td class="r">3</td></tr>
+</tbody></table></div></div></div></div>
+  <p class="why">Accounting › Teams today (unchanged): $3,300.00 for 2026–27, "+ $600.00 overdue from 2025–26" beneath it. Same team, same money, now saying the same thing.</p>
+  <div class="sub-h">Owed to the club · crop <em>the treasurer's Overview</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/treasurer-overview-1280.webp" width="1280" height="1545" alt="Today: Owed to the club, teams $10,950.00" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr partial ground" style="width:1040px"><div class="pad" style="gap:0.6rem">
+  <div class="cband three">
+    <div data-same><span class="k">Cash on hand</span><span class="bv">$2,870.00</span><p>the club’s 4 books · $1,060.00 in 2 lines not yet cleared</p></div>
+    <div class="hl re" data-hl="which-2" style="box-shadow:inset 0 0 0 2px #9A6418;border-radius:0"><button class="pin re" type="button" data-n="2" aria-label="Note 2">2</button><span class="k">Owed to the club</span><span class="bv">$12,690.00</span><p>teams $10,950.00 ($3,450.00 overdue, $1,200.00 of it from 2025–26) · house league $1,740.00 (12 players)</p></div>
+    <div data-same><span class="k">Waiting on you</span><span class="bv amb">$920.00</span><p>3 requests · 3 holding up a payout</p></div>
+  </div></div></div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="which-2"><span class="nn">2</span><b>The caption names the earlier year</b><span class="tag">Restyled</span><span class="tx">"teams $10,950.00 ($3,450.00 overdue, $1,200.00 of it from 2025–26)". Teams’ own total for the year is $9,750.00; the caption says where the other $1,200.00 is. The figure is unchanged, still from the one shared sum.</span></button></li></ol>
+  </div>
+  <div class="sub-h">Installments due · crop <em>the club Overview's This morning</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/owner-overview-1280.webp" width="1280" height="1008" alt="Today: Installments due 12, in the next 14 days, 7 overdue" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr partial ground" style="width:1040px"><div class="pad" style="gap:0.6rem">
+  <div class="eye" data-same>This morning</div>
+  <div class="morn" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+    <div class="mc" data-same><span class="tl">Requests <svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></span><span class="n amb">3</span><p>waiting for you · $920.00</p></div>
+    <div class="hl re" data-hl="which-3" style="border-radius:8px"><button class="pin re" type="button" data-n="3" aria-label="Note 3">3</button><div class="mc" style="height:100%"><span class="tl">Installments due <svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></span><span class="n">12</span><p><span class="red">7 overdue</span> · 5 more in the next 14 days</p></div></div>
+    <div class="mc" data-same><span class="tl">Registrations <svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></span><span class="n">15</span><p>waiting for review</p></div>
+    <div class="mc" data-same><span class="tl">Still owing <svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></span><span class="n amb">$1,740</span><p>12 players · house league</p></div>
+  </div></div></div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="which-3"><span class="nn">3</span><b>"7 overdue · 5 more in the next 14 days"</b><span class="tag">Restyled</span><span class="tx">Today: "12 · in the next 14 days · 7 overdue", which reads as 12 coming up plus 7 late. The 7 are inside the 12. Overdue first, in red, because it’s the call to act. With none overdue: "in the next 14 days". With none coming up: "7 overdue".</span></button></li></ol>
+  </div>
+  <div class="sub-h">The tournament in two places on one screen · crop <em>the treasurer's Overview · the first known low</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/treasurer-overview-1280.webp" width="1280" height="1545" alt="Today: Revenue includes Harbourtown Invitational 2026 $1,440.00; the books table says $1,940.00" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr partial ground" style="width:1040px"><div class="pad" style="gap:0.8rem">
+  <div class="dcard" style="padding-bottom:0.5rem"><div class="dh2" data-same><b>2026–27 against the budget</b><small>To Nov 16</small></div>
+    <table class="tbl" style="margin:0 1.15rem;width:calc(100% - 2.3rem)"><tbody>
+      <tr data-same class="b"><td>Revenue</td><td class="r">$16,550.00</td><td class="r">$8,045.00</td></tr>
+      <tr class="sub"><td colspan="3" style="padding:0"><div class="hl re" data-hl="which-4" style="border-radius:4px"><button class="pin re" type="button" data-n="4" aria-label="Note 4">4</button><span style="display:block;padding:0.55rem 0.9rem;color:var(--p-ink2)">2026–27 includes house league fees $2,355.00 · Harbourtown Invitational 2026 $1,440.00</span></div></td></tr>
+    </tbody></table></div>
+  <div class="dcard"><div class="dh2" data-same><b>The club’s books</b><small>4 ledgers</small></div>
+    <table class="tbl"><thead><tr><th style="padding-left:1.15rem">Ledger</th><th>Kind</th><th class="r"><span class="hl re" data-hl="which-5" style="display:inline-block;padding:0.1rem 0.3rem"><button class="pin re" type="button" data-n="5" aria-label="Note 5">5</button>Balance today</span></th><th style="width:30px"></th></tr></thead><tbody data-same>
+      <tr><td style="padding-left:1.15rem"><b>Harbourtown Minor Ball (navj-club-13e) — General</b></td><td><span class="chip open">Club</span></td><td class="r">($1,425.00)</td><td><svg class="i" width="14" height="14"><use href="#i-chev"/></svg></td></tr>
+      <tr><td style="padding-left:1.15rem"><b>Harbourtown Invitational 2026</b></td><td><span class="chip neu">Tournament</span></td><td class="r">$1,940.00</td><td><svg class="i" width="14" height="14"><use href="#i-chev"/></svg></td></tr>
+      <tr><td style="padding-left:1.15rem"><b>2026 Fall House League</b></td><td><span class="chip neu">House league</span></td><td class="r">$1,155.00</td><td><svg class="i" width="14" height="14"><use href="#i-chev"/></svg></td></tr>
+    </tbody></table></div></div></div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="which-4"><span class="nn">4</span><b>"2026–27 includes …"</b><span class="tag">Restyled · ask 6</span><span class="tx">The caption names its year. $1,440.00 is the tournament’s 2026–27 revenue.</span></button></li>
+<li><button class="nt re" type="button" data-for="which-5"><span class="nn">5</span><b>"Balance today"</b><span class="tag">Restyled · ask 6</span><span class="tx">$1,940.00 is the book’s balance today, the float included. Two true figures, each now saying what it is.</span></button></li></ol>
+  </div>
+  <div class="sub-h">Owed to the club on a closed year · the second known low</div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><p class="why" style="max-width:60ch">Today, with the Year pill on 2025–26 (closed), "Owed to the club" shows today’s $12,690.00 and nothing says so. The section heading above it reads "Where the club stands · today, Nov 16", and the tile doesn’t carry that. Showing the year’s own closing figure would be a new read, not words.</p></div>
+      <div class="fscroll v-new"><div class="fr partial ground" style="width:520px"><div class="pad" style="gap:0.6rem">
+  <span class="vpill2" data-same style="justify-self:start">Fiscal year <b>2025–26</b> · Closed <svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span>
+  <div class="cband" style="grid-template-columns:1fr"><div class="hl re" data-hl="which-6" style="box-shadow:inset 0 0 0 2px #9A6418;border-radius:0"><button class="pin re" type="button" data-n="6" aria-label="Note 6">6</button><span class="k">Owed to the club</span><span class="bv">$12,690.00</span><p>today, Nov 16, not at the close · teams $10,950.00 · house league $1,740.00</p></div></div>
+</div></div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="which-6"><span class="nn">6</span><b>"today, Nov 16, not at the close"</b><span class="tag">Restyled · ask 6</span><span class="tx">Only on a closed year. Words only, no new read.</span></button></li></ol>
+  </div>
+  <p class="why"><b>The third known low (no drawing):</b> the board report exported from the Overview carries "Owed to the club" but not Revenue's "includes" line. Adding it to the open year's report is one line. The closed year's year-end file would need a new field in its locked read (ask 6).</p>
+</section>
+<section data-sec="book" hidden>
+  <p class="lede"><b>F-O5-6.</b> From "The club's books", the Harbourtown Invitational 2026 row opens the Ledger on This month. That shows the $500.00 float, a Starting balance of $1,440.00, and not one of the registrations behind it. With 13e that door opens on All time.</p>
+  <div class="sub-h">Accounting › Ledger, the tournament's book · 1280 <em>opened from the Overview's book row</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13e-shots/treasurer-tbook-1280.webp" width="1280" height="900" alt="Today: the book on This month; Starting balance $1,440.00, one line" loading="lazy"></div>
+      <div class="fscroll v-new"><div class="fr desk tabbed ground" style="width:1280px;height:560px">
+  <div class="strip" data-same><div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div><div class="rc"><span class="pt">Accounting</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div></div>
+  <div class="tabsband" data-same><div class="lc2"><div class="rail" style="border:0;height:100%"><div class="cell" style="margin:0;border:0"><span class="ab">HM</span>Harbourtown Minor Ball</div></div></div><div class="tabsrow"><span class="tab">Overview</span><span class="tab">Budget</span><span class="tab">Teams</span><span class="tab on">Ledger</span><span class="tab">Bank</span><span class="tab">Allocations</span><span class="tab">Payment requests</span><span class="tab">Budget vs. Actual</span></div></div>
+  <div class="body"><nav class="rail" data-same style="padding-top:0">
+  <div class="it" style="margin-top:0.5rem"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div><div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits</div>
+  <div class="sec">Club</div><div class="it on"><svg class="i" width="15" height="15"><use href="#i-dollar"/></svg>Accounting<span class="cnt">3</span></div><div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div></nav>
+    <div class="main"><div class="pad" style="padding-top:1.3rem;gap:0.9rem">
+  <div style="display:flex;gap:0.6rem;align-items:center" data-same><span class="vpill2">Book <b>Harbourtown Invitational 2026</b><svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span><span class="btn" style="margin-left:auto"><svg class="i" width="15" height="15"><use href="#i-dl"/></svg>Export</span><span class="btn">Tools <svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span><span class="btn lime"><svg class="i" width="15" height="15"><use href="#i-plus"/></svg>Add entry</span></div>
+  <div style="display:flex;gap:0.5rem;align-items:center"><span class="vpill2 w" data-same>Type <svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span><span class="vpill2 w" data-same>Status <svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span><span class="hl re" data-hl="book-1" style="border-radius:999px"><button class="pin re" type="button" data-n="1" aria-label="Note 1">1</button><span class="vpill2">Date <b>All time</b><svg class="i" width="13" height="13"><use href="#i-chevd"/></svg></span></span><span style="margin-left:auto;font-size:14px" data-same>Balance <b style="font-size:17px">$1,940.00</b></span></div>
+  <div class="hl re" data-hl="book-2" style="border-radius:10px"><button class="pin re" type="button" data-n="2" aria-label="Note 2">2</button><div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Date</th><th>What</th><th>Category</th><th>Item</th><th class="r">Money out</th><th class="r">Money in</th><th class="r">Balance</th></tr></thead><tbody>
+    <tr class="sub"><td colspan="6">Starting balance</td><td class="r">$0.00</td></tr>
+    <tr><td>Oct 27</td><td>Team registrations — three visiting teams · E-Transfer</td><td>Tournaments</td><td>Registration revenue</td><td></td><td class="r">$1,440.00</td><td class="r">$1,440.00</td></tr>
+    <tr><td>Nov 8</td><td>From Harbourtown Minor Ball — General · Tournament float · transfer</td><td></td><td></td><td></td><td class="r">$500.00</td><td class="r">$1,940.00</td></tr>
+    <tr class="b"><td colspan="6">Ending balance</td><td class="r">$1,940.00</td></tr>
+  </tbody></table></div></div></div></div>
+  </div>
+</div></div>
+    </div>
+    <ol class="notes"><li><button class="nt re" type="button" data-for="book-1"><span class="nn">1</span><b>Date: All time, from the door</b><span class="tag">Restyled · ask 5</span><span class="tx">Only the link changes. The Overview’s row for a tournament’s or a season’s book, and the tournament dashboard’s "In the club’s book" row, open the Ledger on All time. The Ledger’s own default stays This month, as ruled, and so does picking a book from its Book pill.</span></button></li>
+<li><button class="nt re" type="button" data-for="book-2"><span class="nn">2</span><b>Every line of the event</b><span class="tag">Restyled</span><span class="tx">Starting balance $0.00, the Oct 27 registrations $1,440.00, the Nov 8 float $500.00, ending at the $1,940.00 the Overview shows. That is the shipped "All time", read on the copy.</span></button></li></ol>
+  </div>
+  <p class="why">Why not the event's dates (Nov 26–28)? Registrations come in weeks before the event: on this copy, Oct 27. A window on the event's dates would show neither the registrations nor the float. On a phone, the same door opens the same window. No new phone shape.</p>
+</section>
+<section data-sec="schedule" hidden>
+  <p class="lede"><b>F-R5-4.</b> "The phone Schedule opens on today's week rather than the team's next event; an early game hides the real first practice." Recommended: <b>don't change the schedule</b>. Answer the question where the registrar is looking for the child (ask 1).</p>
+  <div class="stage">
+    <div class="fcol"><div class="pairs" style="overflow-x:auto;padding:14px 4px 18px 14px">
+      <img class="cap" src="stage13e-shots/registrar-schedule-390.webp" width="390" height="844" alt="Today: the season Schedule on a phone opens on Nov 23 to 29" loading="lazy">
+      <div class="fr ph ground" style="height:534px">
+  <div class="pbar" data-same><span style="flex:1;min-width:0"><span class="nm" style="display:block">Seasons</span><small class="mono">House league</small></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-globe"/></svg></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-help"/></svg></span></div>
+  <div style="position:relative;min-height:0;display:grid;grid-template-rows:minmax(0,1fr);overflow:hidden"><div class="ppad">
+  <div class="kfind on" data-same><svg class="i" width="17" height="17"><use href="#i-search"/></svg><span class="typed">zoe</span></div>
+  <div class="hl new" data-hl="sch-1" style="border-radius:10px"><button class="pin new" type="button" data-n="1" aria-label="Note 1">1</button><div class="card res ph">
+    <div class="rr">
+      <span><b>Zoe Papadakis</b><span class="s">U9 Rookie · <b class="ink">Reds</b> · 2026 Fall House League</span><span class="s">Elena Papadakis · papadakis.family@example.test</span></span>
+      <span class="rt"><span class="chip neu">Active</span><b class="amb">$150 owing</b></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg>
+    </div>
+    <div class="nx"><svg class="i" width="13" height="13"><use href="#i-clock"/></svg><span>Reds’ next: <b>Thu, Nov 26, 6:00 p.m.</b> · Reds vs Blues · Kinsmen Park, Diamond B</span></div>
+    
+  </div></div>
+  <small class="dim">If Reds had a practice before the game, the line would name the practice: it is the team’s next thing, whatever its kind.</small></div></div>
+</div>
+    </div></div>
+    <div class="prose" style="font-size:14px">
+      <p><b>Left, today on the copy.</b> This week (Nov 16–22) is empty, so the schedule opens on Nov 23–29, the next week with something in it (rule C3, shipped 2026-10-27). The walk's version was different: this week held the Nov 19 game, so it stayed, and the Reds' practice was the week after.</p>
+      <p><b>Why "the next event" doesn't fix it.</b> The division's next event in the walk <i>was</i> the Nov 19 game, in the week already showing. What the parent wanted was the <b>child's team's</b> first practice. The schedule doesn't know which child the call is about. Find a child does.</p>
+      <p><b>Right, the answer with 13e.</b> The result row ends with the team's next game or practice. On this copy Reds have no practice yet, so the line names the game. Nothing about the schedule changes, and 13g has nothing to take.</p>
+      <p><b>The alternative (ask 1 B):</b> the schedule opens on the next date that matches the Show filter. That helps only a registrar who knows to set Show to Practices and a team first.</p>
+    </div>
+  </div>
+</section>
+<section data-sec="asks" hidden>
+  <p class="lede">Only what's open. Each ask has a recommendation (A) and the alternatives. Pick, then copy the short answer back into the chat.</p>
+  <div class="asks">
+    <div class="ask" data-q="1"><h3><span class="n">13e-1</span>Where does F-R5-4 go?<span class="ids">F-R5-4 · tab 7</span></h3>
+  <div class="opts"><label><input type="radio" name="q1" value="A" checked><span><b>A · Close it into Find a child (recommended).</b> The result row names the team’s next game or practice; the schedule doesn’t change; 13g takes nothing.</span></label><label><input type="radio" name="q1" value="B"><span><b>B · Keep it in 13e:</b> the schedule opens on the next date that matches the Show filter.</span></label><label><input type="radio" name="q1" value="C"><span><b>C · Hand it to 13g</b> as written, with the phone work.</span></label></div></div>
+    <div class="ask" data-q="2"><h3><span class="n">13e-2</span>"Email these families" on Still owing<span class="ids">F-R3-1 · tab 2</span></h3>
+  <div class="opts"><label><input type="radio" name="q2" value="A" checked><span><b>A · In 13e, through the existing window (recommended).</b> It opens the season’s Email families window with the 12 ticked. No new sender, no new audience, the same guards.</span></label><label><input type="radio" name="q2" value="B"><span><b>B · Rows only.</b> Emailing stays on Registrations’ bulk bar, reached through "Open on Registrations".</span></label></div></div>
+    <div class="ask" data-q="3"><h3><span class="n">13e-3</span>One "who owes" door: link or merge?<span class="ids">F-R3-6 · tab 2</span></h3>
+  <div class="opts"><label><input type="radio" name="q3" value="A" checked><span><b>A · Link both ways, and the filter treats a part-clearing child as Still owing does (recommended).</b> One rule, two lists that can’t drift.</span></label><label><input type="radio" name="q3" value="B"><span><b>B · Link both ways only.</b> A child part-way through a bank debit can still read differently on the two lists.</span></label><label><input type="radio" name="q3" value="C"><span><b>C · Merge them into one list.</b> A redesign of Money or Registrations; not recommended.</span></label></div></div>
+    <div class="ask" data-q="4"><h3><span class="n">13e-4</span>Where does "Find a child or a parent" sit?<span class="ids">F-R5-2 · F-R5-1 · tab 3</span></h3>
+  <div class="opts"><label><input type="radio" name="q4" value="A" checked><span><b>A · House league’s home, across every running season (recommended).</b> It’s where the registrar lands, and a parent’s call doesn’t name the season.</span></label><label><input type="radio" name="q4" value="B"><span><b>B · The season’s Overview, above This morning,</b> as the hub drew it: one season, one tap further in.</span></label></div></div>
+    <div class="ask" data-q="5"><h3><span class="n">13e-5</span>The tournament’s book: which window does its door open?<span class="ids">F-O5-6 · tab 6</span></h3>
+  <div class="opts"><label><input type="radio" name="q5" value="A" checked><span><b>A · All time, from a tournament’s or a season’s book (recommended).</b> The Ledger’s own default stays This month, as ruled. The General book’s row keeps This month.</span></label><label><input type="radio" name="q5" value="B"><span><b>B · The event’s dates.</b> This hides registrations taken before the event (Oct 27 on the copy).</span></label><label><input type="radio" name="q5" value="C"><span><b>C · All time as the Ledger’s default for every book.</b> This reverses the owner rule for the General book too.</span></label></div></div>
+    <div class="ask" data-q="6"><h3><span class="n">13e-6</span>The three known lows: does 13e take them?<span class="ids">theme 4 · tab 5</span></h3>
+  <div class="opts"><label><input type="radio" name="q6" value="A" checked><span><b>A · The first two, and the open year’s board report (recommended).</b> "2026–27 includes …" and "Balance today"; "today, not at the close" on a closed year; the "includes" line in the open year’s board report. The year-end file waits.</span></label><label><input type="radio" name="q6" value="B"><span><b>B · All three, the year-end file too.</b> This adds a field to the closed year’s locked read.</span></label><label><input type="radio" name="q6" value="C"><span><b>C · None; leave them to 13h.</b> </span></label></div></div>
+    <div class="ask" data-q="7"><h3><span class="n">13e-7</span>Rep teams’ Outstanding<span class="ids">F-O6-5 · tab 5</span></h3>
+  <div class="opts"><label><input type="radio" name="q7" value="A" checked><span><b>A · Keep the every-year figure and say what it includes (recommended).</b> "$3,900.00 · includes $600.00 from 2025–26", and the same on the team’s account band and in the Overview’s Owed caption.</span></label><label><input type="radio" name="q7" value="B"><span><b>B · Show the year’s figure with the earlier year as its own line,</b> exactly as Accounting › Teams does. One shape on both lists, but Rep teams’ read changes.</span></label></div></div>
+    <div class="ask" data-q="8"><h3><span class="n">13e-8</span>"Received 8" on Money vs "Received 7" on the filter<span class="ids">found today · tab 2</span></h3>
+  <div class="opts"><label><input type="radio" name="q8" value="A" checked><span><b>A · Take it in 13e: "8 players · 1 in part" (recommended).</b> Theme 4’s rule, on the registrar’s own two screens.</span></label><label><input type="radio" name="q8" value="B"><span><b>B · Leave it.</b> </span></label></div></div>
+  </div>
+  <div class="answers"><textarea id="ans" readonly aria-label="Your answers"></textarea>
+    <div class="copyrow"><button type="button" id="copy">Copy my answers</button><span id="copied">Then paste them into the chat.</span></div></div>
+</section>
+</div>
+<script>
+(function () {
+  var doc = document.getElementById('doc');
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.stabs button'));
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section[data-sec]'));
+  var viewrow = document.getElementById('viewrow');
+  var COMPARE = { owes: 1, find: 1, offplan: 1, which: 1, book: 1 };
+  function show(name, scroll) {
+    if (!secs.some(function (s) { return s.getAttribute('data-sec') === name; })) name = 'overview';
+    secs.forEach(function (s) { s.hidden = s.getAttribute('data-sec') !== name; });
+    tabs.forEach(function (b) {
+      var on = b.getAttribute('data-t') === name;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) { try { b.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {} }
+    });
+    viewrow.hidden = !COMPARE[name];
+    if (location.hash.slice(1) !== name) { try { history.replaceState(null, '', '#' + name); } catch (e) { location.hash = name; } }
+    if (scroll) window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-t'), true); }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1), false); });
+  show(location.hash.slice(1) || 'overview', false);
+  document.querySelectorAll('[data-show]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var v = b.getAttribute('data-show');
+      doc.classList.toggle('show-today', v === 'today'); doc.classList.toggle('show-new', v === 'new');
+      document.querySelectorAll('[data-show]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      var dif = document.querySelector('[data-view="differs"]');
+      if (dif) { dif.disabled = v === 'today'; dif.title = v === 'today' ? 'Works on the With 13e drawings' : ''; }
+      if (v === 'today') { doc.classList.remove('differs'); document.querySelectorAll('[data-view]').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-view') === 'all' ? 'true' : 'false'); }); }
+    });
+  });
+  document.querySelectorAll('[data-view]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      doc.classList.toggle('differs', b.getAttribute('data-view') === 'differs');
+      document.querySelectorAll('[data-view]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    });
+  });
+  function flash(el) { if (!el) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1300); }
+  function inSec(el) { return el.closest('section'); }
+  document.addEventListener('click', function (e) {
+    var pin = e.target.closest('.pin');
+    if (pin) {
+      e.preventDefault();
+      var host = pin.closest('[data-hl]'); if (!host) return;
+      var stage = host.closest('.stage');
+      var note = stage ? stage.querySelector('.nt[data-for="' + host.getAttribute('data-hl') + '"]') : null;
+      if (note) { note.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); flash(note); }
+      return;
+    }
+    var nt = e.target.closest('.nt');
+    if (nt) {
+      var stage2 = nt.closest('.stage');
+      var hl = stage2 ? stage2.querySelector('[data-hl="' + nt.getAttribute('data-for') + '"]') : null;
+      if (hl) {
+        if (doc.classList.contains('show-today')) { var nb = document.querySelector('[data-show="new"]'); if (nb) nb.click(); }
+        hl.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' }); flash(hl);
+      }
+      flash(nt);
+    }
+  });
+  var ans = document.getElementById('ans');
+  function answers() {
+    var parts = [];
+    document.querySelectorAll('.ask[data-q]').forEach(function (a) {
+      var c = a.querySelector('input:checked');
+      parts.push('13e-' + a.getAttribute('data-q') + ' ' + (c ? c.value : '?'));
+    });
+    ans.value = 'Stage 13e asks: ' + parts.join(', ');
+  }
+  document.querySelectorAll('.ask input').forEach(function (i) { i.addEventListener('change', answers); });
+  answers();
+  document.getElementById('copy').addEventListener('click', function () {
+    var done = document.getElementById('copied');
+    try {
+      navigator.clipboard.writeText(ans.value).then(function () { done.textContent = 'Copied. Paste them back into the chat.'; }, function () { ans.select(); done.textContent = 'Select-all is on: copy with your keyboard.'; });
+    } catch (e) { ans.select(); done.textContent = 'Select-all is on: copy with your keyboard.'; }
+  });
+})();
+</script>

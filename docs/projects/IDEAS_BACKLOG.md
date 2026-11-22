@@ -168,8 +168,30 @@ The owner agreed these go to the backlog rather than the board. Each has a plan 
 - **Dependency Update Process** · [DEPENDENCY_UPDATE_PROCESS_PLAN.md](docs/projects/active/DEPENDENCY_UPDATE_PROCESS_PLAN.md)
 - **The Flip — role⇄public navigation** · [PROGRAM_PLATFORM_SURFACES.md](docs/projects/active/PROGRAM_PLATFORM_SURFACES.md)
 
-## From the Stage 9 walk (2026-11-19)
+## From the on-sale pages audience review (2026-11-18): needs product work, so not in that build
 
+Found while judging the public pages by audience for the Club release (`docs/projects/active/CLUB_ON_SALE_PAGES_PLAN.md`,
+section "Audience review, 2026-11-18"). Each is something a marketing page wanted to say and the product cannot yet back.
+Status `New` for all.
+
+- **A house league or club demo.** League Plus and Club are the only plans a buyer cannot walk before adding a payment
+  method. Ruled "not for launch" on 2026-11-18, and the launch definition (2026-11-17) puts the demo after it. The
+  release ships pictures of real screens instead (W67). A demo would replace those pictures as the proof.
+- **Bring an existing house league season in from a spreadsheet.** No import exists on the club or house league side
+  (tournament teams, tournament schedules and a coach's roster can be imported). The pages say so plainly ("the easiest
+  time to switch is your next registration"). An import of registrations and teams would let a league switch mid-season.
+- **A demo link that opens on a chosen screen.** The demo doors take no destination by design, so a page cannot send a
+  treasurer straight to a coach's budget or a registrar to the registrations list. Wanted for "see this screen live" links.
+- **Change a club's owner without writing to us.** Today only our staff can move ownership, so the board's "what happens
+  when the president changes?" is answered with an email address. A hand-over the current owner starts would make it a
+  product answer.
+- **One download of everything a club holds.** Exports are per list. The pages say "download your lists, or ask us for a
+  full copy". Already on the legal backlog as L10 (`docs/agents/legal/`); listed here so the marketing reason is recorded.
+- **A page a president can print for a board meeting.** Price for the year with tax, what is included, the trial, the
+  data promises. Belongs with the board pack project's public version rather than the marketing pages; the on-sale pages
+  only link to /pricing for now.
+- Related, already above: "F4 — Trial checkpoint emails (League + Club)". The new "How the trial works" section promises
+  one email before a trial ends; check-in emails during the trial would strengthen it.
 - **Event settings Save: all or nothing.** One Save on a tournament's settings page sends three writes together (name and dates, scoring, default game length). When the game length is refused by the game-order rule, the other two have already been saved, so the page shows a refusal beside changes that landed. Owner ruled 2026-11-19 (Stage 9 walk call C3) to make it all-or-nothing as its own item.
 - **Move a League Plus organization to Club or Club · Association.** Today League Plus has no plan moves in either direction (Tournament Plus and Club do), so the pricing FAQ says "League Plus can't be moved to another plan yet." A league that adds rep teams would reasonably expect to move up to Club on its existing subscription, and the Club page says Club "combines everything in League Plus". Owner ruled 2026-11-20 (on-sale pages S3 walk call C1): not urgent, do it after the club release; nobody holds League Plus at launch. When built, drop the FAQ's closing sentence and the matching line on the For Leagues page, and re-run `/legal` and `/accounting` (it changes what is charged and prorated).
 - **"Make this parent the coach" on the draft board.** A family that answers the club's "Can a parent help?" with Coach is only a note on the child's card today: the admin locks the child to a team and types the parent's name and email into the team's coaches by hand. One action from the child's answer (lock the child, add the guardian as the team's coach) would close it. Seen while building the Milton demo's house-league walk, 2026-11-21 (MILTON_DEMO_WORLD_PLAN.md §9).

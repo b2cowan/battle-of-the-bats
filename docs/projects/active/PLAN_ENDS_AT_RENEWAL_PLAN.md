@@ -67,6 +67,7 @@ Every outstanding piece of work has a home below. **Where this list and the stag
   line ("Moves to Tournament on {date}.") and the move emails' "kept until {date}" have no past-due variant (F2 was ruled for
   the cancel). Help (Part C) still quotes "Resubscribe" (`coaches.tsx` ~1569, `platform-admin.tsx` ~2026).
   **Progress 2026-11-17 — the help pass (Plan & billing Stage 5 Part C): BUILT; the walk is ledger §535 (https://claude.ai/artifact/L8CcwbCaTHCffCQBTaGUXZ, source `docs/projects/active/PLAN_ENDING_WORDS_WALK.html`, 12 parts, 48 steps, 4 calls).**
+  **Owner walk §535 PASSED 51/51 on 2026-11-17, no failures; walk accounts torn down the same day. Calls ruled: Q1 "card" → "payment method" on the plan card's past-due line (own small change, not built); Q2 old search words stay out; Q3 refund exception into End now's window (own change, not built, text via `/legal`); Q4 tear the walk's accounts down after the walk finishes.**
   Read first: the census (every article in `lib/help-content/*.tsx`, both hubs, the email-log labels, the demo tours) with the cited
   lines opened. **Rewritten to `PLAN_AND_BILLING_COPY.md` §15:** the club's plan-and-billing topics (plan card, change plan, emails,
   cancel), "If your subscription ends" and its FAQs, the online-payments cancel topic; the Coaches Portal's Premium cancel and billing
@@ -98,13 +99,18 @@ Every outstanding piece of work has a home below. **Where this list and the stag
   **Owner rulings 2026-11-16 on Q1–Q6 (+ the Founding email):** Q1 **agreed** — a club Stripe ends with nobody asking gets the
   "ended" email too (build owed: `applyEnding`'s `notify`, with a test). Q2 **agreed** — the paid step-down's emails join the
   Club sale, not this pass. Q3 **agreed** — the stored rows are fixed in the next data migration (`is_customised = false`), no
-  stand-alone migration. Q4 **agreed** — one Terms §8 clause that a plan change waits while a cancel does (`/legal` drafts it in
+  stand-alone migration. **Q3 BUILT 2026-11-17 as migration 495** (data only, eleven rows, only where `is_customised = false`;
+  applied to dev 2026-11-17 and read back: no stored row says "resubscribe" or "Nothing more is charged" any more; prod owed
+  with the promote, recorded in `MANUAL_PROD_STEPS.json`). Not expressible in a stored row, so left to the built-in email:
+  the cancel date, the "at your request" and billing-portal leads, the trial and past-due leads, the archived-tournament
+  count, the "renews as {move}" line and "{n} days left"; a customised row therefore keeps the old limits (it still promises
+  "Everything stays open until {{date}}" when past due). Q4 **agreed** — one Terms §8 clause that a plan change waits while a cancel does (`/legal` drafts it in
   `docs/agents/legal/drafts/TERMS_OF_SERVICE.md`). Q5 **RULED (owner, "I agree with your recommendations")** — an invoice left
   unpaid when a plan ends early is **forgiven by default, not chased**: a standing rule (the live Stripe setting marks a
   past-due invoice uncollectible at 30 days — one account-wide switch, the owner's dashboard step, Stage 5), a returning club
   starts fresh, and an operator may chase one by hand for a reason (abuse, a repeat). Not free: GST/HST is owed on issue and
   reclaimed as a bad debt (`docs/agents/accounting/UNPAID_SUBSCRIPTION_INVOICES.md`). Logged by `/strategy` in
-  `BUSINESS_DECISIONS.md`. Unverified: that Stripe lets such a club start a new subscription without settling the old invoice.
+  `BUSINESS_DECISIONS.md`. **Verified in Stripe TEST mode 2026-11-17** (test clocks, `.probe/q5-uncollectible/probe.mjs`; subscription created with an API call, NOT a Checkout session, so a Checkout-specific block is not ruled out): after a failed renewal and a cancel, the same customer can start a new subscription and it pays and goes active, whether the old invoice is `open` or marked `uncollectible`; the old invoice is untouched and is not swept into the new charge, and still stays unpaid on later renewals. An old invoice left `open` stays open indefinitely, so the 30-day account setting is what closes it. That setting is Dashboard-only (the API can neither read nor set it), so Stage 5's step stays the owner's manual one and nothing in code can check it. Left in Stripe test mode: one archived probe product (Stripe refuses to delete a product that has prices).
   **Q1, Q4 and the review, DONE 2026-11-16 (the Part B review session, before its commit):** **Q1 built** — a club whose plan
   Stripe ends with nobody asking now gets the "ended" email, once per ending; the email follows the waiting row's "tell the
   owner" tick on every path (an operator's unticked cancel stays silent), and the Stripe-ended row is written ticked. Seven

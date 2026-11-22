@@ -1,6 +1,6 @@
 # PM Brief — Board Ready
 
-> Plan: `BOARD_READY_PLAN.md` · Created 2026-11-10 · Status: Planning
+> Plan: `BOARD_READY_PLAN.md` · Created 2026-11-10 · Status: In flight (trued up 2026-11-16)
 
 **What it does:** It answers the eight things a club board asked for after the 2026-11-10 demo:
 - an honest security pack, backed by fixes to the real gaps;
@@ -42,8 +42,20 @@ is the owner's marked priority among the new modules.
 - A sponsor pays through the link with no admin re-keying.
 - A camp fills from the club site.
 
-**Where it stands (2026-11-10):** friend requests are drawn (parent's question, friend code, registrar's queue, draft
-board, after-draft results), with 15 owner asks, all ruled 2026-11-10 as recommended; the build prompt is next (plan §5 Stage 1).
+**Where it stands (2026-11-16):**
+- **Built, walked and released (release of 2026-11-15):** friend requests end to end (the parent's question, the
+  registrar's queue, the draft keeping friends together, the results the club sees); two-step sign-in for everyone,
+  which a club can require for its board and coaches; and the fixes from a full review of who can see what.
+- **Built, waiting for its release:** deleting a club also removes its stored files.
+- **Next, in order:** close the three calls the access review left open; write down what the backups are and rehearse
+  one restore; publish the legal pages, the data terms for clubs and the supplier list; then write the board pack
+  (the security brief, two diagrams, the questionnaire, the public Security page).
+- **The public roadmap** that goes in the pack is drawn and ruled (2026-11-16). It is shown to no one until the legal
+  review of its four data commitments is done.
+- **Not started, none drawn yet:** group email to coaches, volunteers and their documents, custom forms, club events,
+  sponsorships, camps. Each begins with its own drawing session.
+- The board's pen-test question is settled (out of scope for now; the pack states the checks we run ourselves), and the
+  "what if something happens to the owner" question is not raised in the pack; the owner answers it if a board asks.
 
 **The two data pages (planned 2026-11-18).** Two public pages join the Terms and the Privacy Policy: the Data Terms for
 organizations (part of the Terms, changing only with a new Terms version, nothing new to tick) and the list of companies

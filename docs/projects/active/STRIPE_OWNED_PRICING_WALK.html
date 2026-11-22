@@ -86,7 +86,7 @@ table.fig th { color: var(--muted); font-weight: 600; }
     <dl class="kv">
       <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
       <dt>Dev Club Org owner</dt><dd><code>owner@dev.local</code>, password <code>devpass123</code> (walks 1, 3 and 5). Use this owner, not <code>club-owner@dev.local</code>, which asks for a two-step code.</dd>
-      <dt>Milton Bats owner</dt><dd>Jordan Whitfield, your <code>+owner</code> Gmail address from the Milton demo world; the password is <code>MILTON_DEMO_PASSWORD</code> in <code>.env.local</code> (walks 2 and 4).</dd>
+      <dt>Milton Bats owner</dt><dd>Jordan Whitfield, your <code>+owner</code> Gmail address from the Milton demo world; email <code>b2cowan+owner@gmail.com</code>; the password is <code>MILTON_DEMO_PASSWORD</code> in <code>.env.local</code> (walks 2 and 4).</dd>
       <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code>, password <code>UATPassword2026!</code>, at <code>localhost:3000/platform-admin/login</code> (walk 5).</dd>
       <dt>The team and the family</dt><dd>No sign-in. The team pays through the pay links below; the family signs up on the public form. Open both in a private window.</dd>
     </dl>
@@ -98,8 +98,8 @@ table.fig th { color: var(--muted); font-weight: 600; }
     <ul class="plain">
       <li><b>Leave UAT Rep Club alone.</b> Its payout test’s payout steps come first, on or after Nov 25. Nothing in this walk touches it.</li>
       <li><b>Two Stripe listen windows</b> must be running the whole time. Payments, refunds, disputes and the new accounts all arrive through them. In two terminals:
-        <pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre>
-        <pre>C:\tools\stripe\stripe.exe listen --events-from '@self' --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre></li>
+        <pre>$k = ((Get-Content 'C:\Users\b2cow\Documents\tournament-website\.env.local' | Where-Object { $_ -match '^STRIPE_SECRET_KEY=' }) -replace '^STRIPE_SECRET_KEY=','').Trim().Trim('"'); C:\tools\stripe\stripe.exe listen --api-key $k --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre>
+        <pre>$k = ((Get-Content 'C:\Users\b2cow\Documents\tournament-website\.env.local' | Where-Object { $_ -match '^STRIPE_SECRET_KEY=' }) -replace '^STRIPE_SECRET_KEY=','').Trim().Trim('"'); C:\tools\stripe\stripe.exe listen --api-key $k --events-from '@self' --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre></li>
       <li><b>The daily job</b> writes some lines (Stripe’s fee when Stripe wasn’t ready at the payment, and a dispute fee that came in early). Walks 3 and 4 ask you to run it once, in a third terminal in the project folder:
         <pre>node --env-file=.env.local scripts/run-stripe-fees-daily-dev.mjs</pre>It runs every step of the daily job on dev and ends <code>✓ Done</code>.</li>
       <li><b>Stripe’s set-up form (test mode):</b> take every “Use test …” shortcut Stripe offers. Otherwise: Individual, website <code>https://accessible.stripe.com</code>, date of birth 01/01/1901, SIN <code>000000000</code>, any Canadian address, bank transit <code>11000</code>, institution <code>000</code>, account <code>000123456789</code>. If a <b>Billing address</b> window opens before Stripe, fill any Ontario address and save.</li>
@@ -189,7 +189,7 @@ Pay Page Owing   http://localhost:3000/dev-club-org/stripe-walk-invitational/pay
    "forText": "Stage 2 and the club side of Stages 4 and 5. A club on the old account can’t take new payments, so it sets up payouts again on an account where Stripe charges the club directly. Before it does, the window says what it costs, that Stripe takes its extras from the club’s balance (no FieldLogicHQ invoice), and that Stripe’s own terms apply.",
    "passes": "The card offers Set up payouts again; the Before window shows both rates, the worked example, the balance line and Stripe’s terms line; Stripe’s form finishes and the card reads Taking payments with Teams pay it.",
    "notIn": "Changing who pays (walk 3, step 8). The draft terms (no dev preview, see above).",
-   "who": "Dev Club Org owner.",
+   "who": "Dev Club Org owner: <code>owner@dev.local</code> · password <code>devpass123</code> · sign in at <code>localhost:3000/auth/login</code>. (Not <code>club-owner@dev.local</code>: it asks for a two-step code.)",
    "where": "localhost:3000/dev-club-org/admin/org/settings, the Payouts card",
    "steps": [
     { "stop": true, "who": "Owner", "d": "Sign in as <code>owner@dev.local</code> and open <code>localhost:3000/dev-club-org/admin/org/settings</code>. Scroll to Payouts.", "s": "The pill <b>Disconnected</b>, the title “Online payments are off”, and a <b>Set up payouts again</b> button. If it reads Taking payments, stop and tell me." },
@@ -210,7 +210,7 @@ Pay Page Owing   http://localhost:3000/dev-club-org/stripe-walk-invitational/pay
    "forText": "The same Stage 2 door on a second club, this time choosing that the club pays the processing fee, so walk 4’s family pays the season fee alone and the club’s books carry the cost.",
    "passes": "Set up payouts again finishes with The club pays it on the card.",
    "notIn": "The Before window’s words (walk 1 read them).",
-   "who": "Milton Bats owner (Jordan Whitfield).",
+   "who": "Milton Bats owner (Jordan Whitfield): <code>b2cowan+owner@gmail.com</code> · password is <code>MILTON_DEMO_PASSWORD</code> in <code>.env.local</code> (to see it, run <code>Select-String -Path .env.local -Pattern '^MILTON_DEMO_PASSWORD='</code> in the project folder; the password is what follows the <code>=</code>) · sign in at <code>localhost:3000/auth/login</code>.",
    "where": "localhost:3000/milton-bats/admin/org/settings, the Payouts card",
    "steps": [
     { "stop": true, "who": "Owner", "d": "Sign in as the Milton Bats owner and open <code>localhost:3000/milton-bats/admin/org/settings</code>. Scroll to Payouts.", "s": "<b>Disconnected</b>, “Online payments are off” and <b>Set up payouts again</b>. If not, stop and tell me." },
@@ -228,7 +228,7 @@ Pay Page Owing   http://localhost:3000/dev-club-org/stripe-walk-invitational/pay
    "forText": "Stage 3 on a tournament: each payment’s cost reaches the tournament’s own book as Stripe took it. With the team paying the fee there is no cost; given back in a refund, the fee is the club’s cost (neither part comes back); with the club paying, our fee is the cost; a card from outside Canada adds Stripe’s extra; a dispute adds Stripe’s dispute fee. Plus the help answer that explains it.",
    "passes": "Every figure matches the table above, in the tournament’s book, and the help answer names the three extras.",
    "notIn": "Bank debit, the Payouts tab and the answering fee (see “Not in this walk”).",
-   "who": "Dev Club Org owner (ordinary window); the team needs no sign-in (private window).",
+   "who": "Dev Club Org owner (ordinary window): <code>owner@dev.local</code> · password <code>devpass123</code> · sign in at <code>localhost:3000/auth/login</code>. The team needs no sign-in (private window).",
    "where": "The pay links in “Before you start” · " + "the Ledger · localhost:3000/dev-club-org/admin/tournaments/registrations (Stripe Walk Invitational)",
    "steps": [
     { "stop": true, "who": "Team", "d": "In a private window open Pay Page Pay Me’s link.", "s": "“Pay Page Pay Me”, “To pay now”, with “Pay the deposit, $100.00” chosen and a button <b>Pay $105.00 by card</b> that “includes a $5.00 processing fee”. If it says payments aren’t open, walk 1 isn’t finished: stop." },
@@ -258,7 +258,7 @@ Pay Page Owing   http://localhost:3000/dev-club-org/stripe-walk-invitational/pay
    "forText": "Stage 3 on a house-league season, read where a league admin reads it: the season’s Money page, with the club paying the fee and a US card adding Stripe’s extra.",
    "passes": "The Money page shows the club’s $6.75 fee and the $1.20 extra under their names.",
    "notIn": "Refunds and disputes on a season (the same writers as walk 3).",
-   "who": "Milton Bats owner (ordinary window); the family needs no sign-in (private window).",
+   "who": "Milton Bats owner (ordinary window): <code>b2cowan+owner@gmail.com</code> · password is <code>MILTON_DEMO_PASSWORD</code> in <code>.env.local</code> (to see it, run <code>Select-String -Path .env.local -Pattern '^MILTON_DEMO_PASSWORD='</code> in the project folder) · sign in at <code>localhost:3000/auth/login</code>. The family needs no sign-in (private window).",
    "where": "localhost:3000/milton-bats/league/2027-summer-house-league/register · localhost:3000/milton-bats/admin/house-league/seasons/6d1f0a52-3c4e-4b8a-9f2e-27a1b0c0d927/money",
    "steps": [
     { "stop": true, "who": "Family", "d": "In a private window open <code>localhost:3000/milton-bats/league/2027-summer-house-league/register</code>.", "s": "The 2027 Summer House League sign-up form. If it says registration is closed, stop and tell me." },
@@ -276,7 +276,7 @@ Pay Page Owing   http://localhost:3000/dev-club-org/stripe-walk-invitational/pay
    "forText": "Stage 4. Stripe now takes its extras from the club’s own balance, so FieldLogicHQ bills nothing back: the monthly Stripe-fee invoice, its list, its banner and the platform admin’s panel are gone.",
    "passes": "Neither the club’s Plan & billing nor the club’s record in platform admin shows a Stripe fees list or invoice.",
    "notIn": "Bookkeeping’s “Fees billed back to clubs” row in Sales by month, which stays for the history.",
-   "who": "Dev Club Org owner, then the platform admin.",
+   "who": "Dev Club Org owner: <code>owner@dev.local</code> · password <code>devpass123</code> · <code>localhost:3000/auth/login</code>. Then the platform admin: <code>uat-platform@fieldlogichq.ca</code> · password <code>UATPassword2026!</code> · <code>localhost:3000/platform-admin/login</code>.",
    "where": "localhost:3000/dev-club-org/admin/org/billing · localhost:3000/platform-admin",
    "steps": [
     { "who": "Owner", "d": "Open <code>localhost:3000/dev-club-org/admin/org/billing</code>.", "s": "Plan & billing with no Stripe fees list, no fee invoice and no red banner above the page, though walk 3 just made a dispute and a foreign card." },
