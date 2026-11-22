@@ -142,8 +142,14 @@ describe('the other surfaces follow the switch', () => {
     assert.equal(/\/(legal|terms|privacy|data-terms|subprocessors)\b/.test(readCode('next.config.ts')), false);
   });
 
-  it('the legal pages are in no sitemap', () => {
-    assert.equal(/legal|\/terms|\/privacy|data-terms|subprocessors/.test(readCode('app/sitemap.ts')), false);
+  it('the legal pages are in no sitemap; the Security page is, only behind the same switch (owner 2026-11-22)', () => {
+    const sitemap = readCode('app/sitemap.ts');
+    // No legal page's address, and no legal-pages helper other than the one switch the Security entry reads.
+    assert.equal(/['"`]\/(legal|terms|privacy|data-terms|subprocessors)\b|legalPageHref|legalPagePath/.test(sitemap), false);
+    // The Security page is listed, and only while its own switch answers (the page is "not found" otherwise).
+    assert.match(sitemap, /resolveLegalLinks\(\)\s*\?\s*\[\{ url: `\$\{SITE_URL\}\$\{SECURITY_PATH\}`/);
+    // Own-host sitemaps return before it: a club's host never lists FieldLogicHQ's pages.
+    assert.ok(sitemap.indexOf('return clubOwnSitemap') < sitemap.indexOf('SECURITY_PATH}'));
   });
 });
 

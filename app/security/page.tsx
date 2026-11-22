@@ -9,7 +9,7 @@ import { SECURITY_META_DESCRIPTION, SECURITY_META_TITLE } from '@/lib/security-p
 /**
  * /security — how FieldLogicHQ protects a club's information (Board Ready §0c, S3). No data reads. It goes live with the
  * legal pages and is gated on their switch: while `resolveLegalLinks()` is null it is "not found", so there is no "off" version of
- * the page, and nothing on it can say "our published policy" before there is one. Not in the sitemap, as the legal pages are not.
+ * the page, and nothing on it can say "our published policy" before there is one. In the sitemap, behind that same switch (owner 2026-11-22); the legal pages themselves are in none.
  */
 // As the legal pages' own routes: read per request, so this page and the footer's link (resolved per request in the root layout)
 // always answer the switch the same way, even if it is ever back on its preview env vars. No data is read.

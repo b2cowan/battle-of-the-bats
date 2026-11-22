@@ -661,11 +661,11 @@ board's two questions:
     links, and the club pages' "Questions a board asks" pointing to it. Gate it with the legal pages: rendered only
     while they are published (the same switch `BoardQuestions` already follows), so it cannot go live ahead of them.
     `npm run check:spelling` on the copy.
-    **Built 2026-11-21 on dev, to the ruled drawing** (commit: see this item's commit; owner walk §554
-    https://claude.ai/artifact/MsJw2L8YVgvKyxuKZhoWPG, source `BOARD_READY_SECURITY_PAGE_WALK.html`, 33 steps). The page's
+    **Built 2026-11-21 on dev, to the ruled drawing** (committed `f9197cb05`; owner walk §554 **passed 33 of 33,
+    2026-11-22**, https://claude.ai/artifact/MsJw2L8YVgvKyxuKZhoWPG, source `BOARD_READY_SECURITY_PAGE_WALK.html`). The page's
     words have one home, `lib/security-page-words.ts` (the brief is v0.5, a pointer plus its records; the private brief
-    Artifact keeps its own copy, unchanged). "Not found" while the legal pages are off; not in the sitemap, as the legal
-    pages are not; "security" reserved as an organization address. The diagram is both forms copied coordinate for
+    Artifact keeps its own copy, unchanged). "Not found" while the legal pages are off; in the sitemap only while they are
+    on (owner 2026-11-22), the legal pages themselves in none; "security" reserved as an organization address. The diagram is both forms copied coordinate for
     coordinate, with ONE move: "sends email" x 208 → 192 (it crossed its arrow; 192 mirrors "sends an alert"). Below a
     390 screen the diagram panel's side padding gives way so the words stay full size to a 358px screen (at 320 the phone
     form scales to 88%, smallest word 11.8px); the phone form stands at its drawn 310 up to the 768 switch. The roles
@@ -675,8 +675,11 @@ board's two questions:
     global `th` rule): **ruled and built 2026-11-21** (owner: "make the legal pages table head fix"), one rule in
     `LegalPage.module.css`, so the Terms, Privacy, Data Terms and list pages and /security all set column heads in the
     body face; (b) the contents list has no "current section" mark (the drawing shows one on the first item; the legal
-    pages have none): open, not built; (c) the sitemap: the page is left out, as the legal pages are; a board may well
-    search for it, so listing it is a call before the release. `/review` (four lenses, 2026-11-21): no Critical, High
+    pages have none): **ruled 2026-11-22 (owner, "go with your recommendations"): no mark is built; the drawing's mark is
+    dropped so the drawing and the page agree**; (c) the sitemap: **ruled 2026-11-22 (owner, same words): list the
+    page, only while the legal pages are live (the same switch), so it never points search engines at "not found"**;
+    **both built 2026-11-22 on dev** (the sitemap entry reads the page's own switch and sits on our own host only; the
+    drawing's one mark rule is removed; the sitemap guard test now pins the entry behind the switch). `/review` (four lenses, 2026-11-21): no Critical, High
     or Medium left; applied: the route reads per request like the legal routes, answer 4's clause tested in both
     states, three print rules raised to win by specificity (tables on 1in-margin paper, the white ground, no 44px
     lines). **Follow-up recorded, not built (older than S3):** an organization's web address can be RENAMED to a
@@ -696,9 +699,11 @@ board's two questions:
   - [ ] **D1 · The staff "pages opened" promise.** Privacy §5 (published in code 2026-11-17) and the Data Terms §5
     (approved, unpublished) say "every page they open in our own tools is recorded". The record-opens log covers club,
     person and email records only (not list views, feedback, early-access leads or exports), skips a repeat within 10
-    minutes, and on production fails silently (dev now reports a failed write). **Owner call (open):** log the missing
-    record pages (feedback, early-access leads) and say "every club, person or email record they open" in the next
-    privacy version and the Data Terms before they publish (recommended), or keep the sentence and log every page. The
+    minutes, and on production fails silently (dev now reports a failed write). **Owner call ruled 2026-11-22 ("go with your
+    recommendations"):** log the missing record pages (feedback, early-access leads) and say "every club, person or
+    email record they open" in the next privacy version and the Data Terms before they publish; not logging every
+    page. Not built (owner 2026-11-22: D1 later). Recorded with it as an open check, not a ruling: the plan's note that the log can fail silently on
+    production, and `/legal` confirming the final wording before it publishes. The
     brief and the Security page already use the narrower line. Depends on: the call; the Data Terms wording must settle
     before the held Terms version publishes.
   - [x] **D2 · The database's member test.** Until migs 505 and 506 are on production, a pending invitee's or suspended

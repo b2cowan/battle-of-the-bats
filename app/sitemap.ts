@@ -5,6 +5,8 @@ import { bareHost, isOwnHost } from '@/lib/own-hosts';
 import { clubHosts } from '@/lib/club-host';
 import { clubOwnUrl } from '@/lib/club-base';
 import { requestHost } from '@/lib/request-host';
+import { resolveLegalLinks } from '@/lib/legal-links';
+import { SECURITY_PATH } from '@/lib/legal-paths';
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
@@ -107,5 +109,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ]);
 
-  return [...staticEntries, ...tournamentEntries, ...orgEntries, ...clubPageEntries];
+  // The public Security page (Board Ready S3, owner ruling 2026-11-22): a board member searches for it, so it is listed — but
+  // only while the page itself answers (it is "not found" until the legal pages are live), so a search engine is never
+  // pointed at a missing page. The one switch is the page's own: `resolveLegalLinks()` is null while it is off.
+  const securityEntries: MetadataRoute.Sitemap = resolveLegalLinks()
+    ? [{ url: `${SITE_URL}${SECURITY_PATH}`, changeFrequency: 'monthly', priority: 0.5 }]
+    : [];
+
+  return [...staticEntries, ...securityEntries, ...tournamentEntries, ...orgEntries, ...clubPageEntries];
 }

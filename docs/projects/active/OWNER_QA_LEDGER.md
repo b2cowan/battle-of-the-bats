@@ -28658,13 +28658,13 @@ performed over the shared working tree. The original walk result is not claimed 
 **Status:** owed.
 <!-- /§553 -->
 
-## §554 · Board Ready §0c · the public Security page (S3), its two doors and its printout — ⏳ OWED · built 2026-11-21 on dev; commit owed
+## §554 · Board Ready §0c · the public Security page (S3), its two doors and its printout — ✅ PASSED 33 of 33 · built 2026-11-21 on dev, committed `f9197cb05`
 <!-- §554 -->
 **Walk (checkable):** https://claude.ai/artifact/MsJw2L8YVgvKyxuKZhoWPG (source `docs/projects/active/BOARD_READY_SECURITY_PAGE_WALK.html`); parts A to H, 33 steps. Plan `BOARD_READY_PLAN.md` §0c, the public Security page, S3.
 **Sign-in:** signed out (a private window) for everything but part H; part H `league-owner@dev.local` / `devpass123`.
 **Reviews (before hand-off):** `/design` on the built page against the drawing (screenshots 390/768/1080/1440 and print; one fix applied: the table heads in the body face; the "sends email" label moved clear of its arrow; the phone form capped at its drawn 310), `/legal` on the page as built against v0.4 and the drawing (say as is throughout).
 **Not walked (tests hold it):** "not found" while the legal pages are off (the switch is a code constant, not reachable on dev); version B's four held lines and four "Read more" links; the shared full-copy rule; the diagram's labels word for word in both forms.
-**Status:** ⏳ owed.
+**Status:** ✅ **walked and passed 33 of 33 by the owner, 2026-11-22** (A the page on a computer 12/12, B the footer door 2/2, C the page on a phone 6/6, D the tablet switch 1/1, E printing it 4/4, F the door from "Questions a board asks" 5/5, G the link preview 2/2, H signed in, nothing changes 1/1). No flags raised. Committed `f9197cb05`. Nothing owed from the walk; the page ships with the legal pages. Owner calls ruled 2026-11-22 and built (sitemap listing behind the same switch; no "current section" mark): see the plan.
 <!-- /§554 -->
 
 ## §555 · Board Ready 4.P · a club sets its own privacy link — ⏳ OWED · committed `f11841ac8` 2026-11-22
