@@ -28667,7 +28667,7 @@ performed over the shared working tree. The original walk result is not claimed 
 **Status:** ⏳ owed.
 <!-- /§554 -->
 
-## §555 · Board Ready 4.P · a club sets its own privacy link — ⏳ OWED · built 2026-11-22 on dev
+## §555 · Board Ready 4.P · a club sets its own privacy link — ⏳ OWED · committed `f11841ac8` 2026-11-22
 <!-- §555 -->
 **Walk (checkable):** https://claude.ai/artifact/Eyr6PHbhbnZ4GwQ8RUmPED (source `docs/projects/active/BOARD_READY_CLUB_PRIVACY_LINK_WALK.html`); parts A to G, 19 steps, owner calls not in the counter. Plan `BOARD_READY_PLAN.md` §5 Stage 4, 4.P.
 **Sign-in:** owner `league-owner@dev.local`, admin `league-clubadmin@dev.local`, treasurer `league-treasurer@dev.local`, registrar `league-registrar@dev.local` (all `devpass123`, Dev League Org, Walk Summer 2027's sign-up); the tryout door on the owner's own Milton Bats account (u9-a). Restart the dev server first.
