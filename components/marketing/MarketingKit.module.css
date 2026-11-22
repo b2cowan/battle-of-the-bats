@@ -198,6 +198,9 @@
 
 .btnFull { width: 100%; }
 
+/* A note sitting directly above a button (the trial sentence) keeps a clear gap from it. */
+.small + .btn { margin-top: 1rem; }
+
 .link {
   color: var(--home-olive);
   font-weight: 600;

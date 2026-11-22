@@ -53,7 +53,7 @@ const FOOTER_GROUPS = [
   {
     heading: 'Built for',
     links: [
-      ['Tournament organizers', '/for-tournament-organizers'],
+      ['Tournaments', '/for-tournament-organizers'],
       ['House leagues', '/for-leagues'],
       ['Clubs', '/for-clubs'],
       ['Coaches', '/for-coaches'],

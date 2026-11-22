@@ -26,7 +26,7 @@ const { painItems: PAIN_ITEMS, steps: STEPS, features: PORTAL_FEATURES } =
 
 export default async function ForCoachesPage() {
   // The whole page flips with the team checkout gate (Coaches Portal launch): when open,
-  // it's a live "Start free" front door into /coaches/start; when gated, it
+  // it's a live "Start now" front door into /coaches/start; when gated, it
   // stays the express-interest explainer. This keeps /for-coaches coordinated with the launch on
   // each environment. This is a copy/CTA flip only.
   // The live gate, per request (on-sale pages S1).
@@ -49,15 +49,14 @@ export default async function ForCoachesPage() {
             <span className={kit.accent}>Not your inbox.</span>
           </h1>
           <p className={kit.lead}>
-            Every coach on FieldLogicHQ starts with the free Coaches Portal — a companion for the
-            tournaments you enter. The Premium Coaches Portal turns it into your team&apos;s
-            operations HQ: roster, lineups, budget, schedule, and documents for the whole season.
+            The Premium Coaches Portal is your team&apos;s operations HQ: roster, lineups, budget,
+            schedule, and documents for the whole season.
             No org account needed, and if your organization moves to Club, you won&apos;t be charged for the portal again.
           </p>
           <div className={`${kit.row} ${fp.heroRow}`}>
             {checkoutOpen ? (
               <Link href={startHref} className={kit.btn}>
-                Start free
+                Start now
               </Link>
             ) : (
               <EarlyAccessModalTrigger
@@ -81,18 +80,16 @@ export default async function ForCoachesPage() {
           {showSandboxDoor && (
             <p className={kit.small}>No sign-up, no email. Walk a full season — tryout day to season&apos;s end.</p>
           )}
-          <div className={showSandboxDoor ? fp.afterNote : undefined}>
-            <p className={kit.small}>
-              {checkoutOpen ? (
-                <>Start free — no credit card required.</>
-              ) : (
-                <>
-                  <span className={fp.noteStrong}>{gatedPlanTag('team')}</span>
-                  {' '}— it isn&apos;t open for sign-up yet. {GATED_PLAN_INTEREST_LINE}
-                </>
-              )}
-            </p>
-          </div>
+          {/* Open: the price pills below say it, and the old "Start free — no credit card required" line
+              promised what the paid sign-up page does not deliver (the plan has no trial). No line here. */}
+          {!checkoutOpen && (
+            <div className={showSandboxDoor ? fp.afterNote : undefined}>
+              <p className={kit.small}>
+                <span className={fp.noteStrong}>{gatedPlanTag('team')}</span>
+                {' '}— it isn&apos;t open for sign-up yet. {GATED_PLAN_INTEREST_LINE}
+              </p>
+            </div>
+          )}
           <div className={fp.afterNote}>
             <ul className={kit.facts}>
               {[`${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month${checkoutOpen ? ` ${BILLING_TAX_WORDS.plusTax}` : ''}`,`${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} / season — save two months`, 'No org account needed'].map(s => (
@@ -155,9 +152,8 @@ export default async function ForCoachesPage() {
           <p className={kit.eyebrow}>The plan</p>
           <h2 className={kit.heading}>Coaches Portal — your team, your workspace.</h2>
           <p className={`${kit.body} ${fp.measure}`}>
-            Your free portal follows your tournaments. Premium is the operations HQ for the whole
-            season — roster, lineups, budget, schedule, and documents in one place. Standalone,
-            or included with Club when your org joins.
+            Premium is the operations HQ for the whole season — roster, lineups, budget, schedule,
+            and documents in one place. Standalone, or included with Club when your org joins.
           </p>
           <div className={`${fp.planGrid} ${fp.gridTop}`}>
 
@@ -296,13 +292,13 @@ export default async function ForCoachesPage() {
           </h2>
           <p className={kit.lead}>
             {checkoutOpen
-              ? 'Start your Coaches Portal — no credit card required.'
+              ? `Start your Premium Coaches Portal — ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season, ${BILLING_TAX_WORDS.plusTax}.`
               : `${gatedPlanSentence('team')} ${GATED_PLAN_INTEREST_LINE}`}
           </p>
           <div className={kit.row}>
             {checkoutOpen ? (
               <Link href={startHref} className={kit.btn}>
-                Start free
+                Start now
               </Link>
             ) : (
               <EarlyAccessModalTrigger
