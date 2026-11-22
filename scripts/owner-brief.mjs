@@ -80,8 +80,9 @@ function readWalks() {
   // "no result recorded", so a walk that passed but was never written down is visible, not hidden.
   const OWED = /\*\*Result:?\*\*:?\s*(not walked|owed)|NOT YET WALKED/i;
   // The ledger writes a result several ways: "WALKED 2026-11-07 · PASSED 44 of 44", "Walked 2026-11-08, pasted
-  // back…", "Result 2026-11-13 — PASSED 38/38", "SUPERSEDED", "Not owed", "accepted it UNWALKED".
-  const DONE = /\b(?:WALKED|Walked) \d{4}-\d{2}-\d{2}|PASSED|passed \d+ of \d+|SUPERSEDED|Not owed|closed unwalked|UNWALKED on \d{4}/;
+  // back…", "Result 2026-11-13 — PASSED 38/38", "SUPERSEDED", "Not owed", "accepted it UNWALKED",
+  // "Walked ✅ 2026-11-05", "✅ COMPLETE 2026-11-05".
+  const DONE = /\b(?:WALKED|Walked) (?:✅ )?\d{4}-\d{2}-\d{2}|✅ COMPLETE \d{4}-\d{2}-\d{2}|PASSED|passed \d+ of \d+|SUPERSEDED|Not owed|closed unwalked|UNWALKED on \d{4}/;
   const walks = [];
   recent.forEach((h, k) => {
     const end = k + 1 < recent.length ? recent[k + 1].i : lines.length;
@@ -199,7 +200,7 @@ const MAX_NOW = 3;
 // A project's `roadmap` names the roadmap rows that cover its whole scope; a row's Status must fit the phase.
 const ROW_FITS_PHASE = {
   Planning: ['Not started', 'In progress'], Drawing: ['Not started', 'In progress'], 'Asks to rule': ['Not started', 'In progress'],
-  Building: ['In progress', 'Built'], 'Walk owed': ['In progress', 'Built'], 'Ready to release': ['Built'], Live: ['Live'],
+  Building: ['In progress', 'Built'], 'Walk owed': ['In progress', 'Built'], 'Test owed': ['In progress', 'Built'], 'Ready to release': ['Built'], Live: ['Live'],
   Parked: ['Not started', 'In progress'],
 };
 function buildBoard(projects, roadmapRows = []) {
@@ -219,6 +220,9 @@ function buildBoard(projects, roadmapRows = []) {
   if (lanes.now.length > MAX_NOW) warnings.push(`${lanes.now.length} projects are in Now; the board allows ${MAX_NOW}.`);
   for (const p of open) {
     if (!p.phase && p.checked) warnings.push(`${p.name} has no phase.`);
+    if (p.phase && !(p.phase in ROW_FITS_PHASE) && p.phase !== 'Live') warnings.push(`${p.name} has a phase the board does not know: "${p.phase}".`);
+    // "Walk owed" promises a walk to open; the owner's own hands-on test with no walk page is "Test owed".
+    if (p.phase === 'Walk owed' && !p.walksOwed.length) warnings.push(`${p.name} reads Walk owed, but no walk is waiting in the ledger (publish it, record its result, or change the phase).`);
     if (!p.goals.length) warnings.push(`${p.name} serves no goal.`);
     for (const g of p.goals) if (!goalsDef.some((d) => d.id === g)) warnings.push(`${p.name} names an unknown goal "${g}".`);
     for (const w of p.waitsOn) {
@@ -247,7 +251,13 @@ function buildBoard(projects, roadmapRows = []) {
       total: mine.length, done: mine.filter(isDone).length, projects: mine.map((p) => p.id) };
   });
   const youOwe = [];
-  for (const p of open) for (const text of p.youOwe) youOwe.push({ project: p.id, name: p.name, text, lane: laneOf(p) });
+  // A step is a sentence, or { text, url } when there is a real page to act on (a walk, an asks page, a dashboard).
+  for (const p of open) for (const step of p.youOwe) {
+    const text = typeof step === 'string' ? step : step.text;
+    const url = typeof step === 'object' && /^https:\/\//.test(step.url || '') ? step.url : null;
+    if (!text) { warnings.push(`${p.name} has a step with no words.`); continue; }
+    youOwe.push({ project: p.id, name: p.name, text, url, lane: laneOf(p) });
+  }
   const rank = { now: 0, next: 1, later: 2, after: 3 };
   youOwe.sort((a, b) => rank[a.lane] - rank[b.lane]);
   const cards = Object.fromEntries(open.map((p) => [p.id, { blocks: waitedOnBy(p.id) }]));

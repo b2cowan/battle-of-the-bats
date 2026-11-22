@@ -128,6 +128,16 @@ th { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; colo
 td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.i { font-weight: 600; }
 .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 28px 20px; color: var(--muted); }
+
+/* the way to act on a line: Open (a real page) and Copy prompt (a line to paste into a fresh chat) */
+.acts { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 5px; }
+.act { font: inherit; font-size: 0.8rem; font-weight: 600; line-height: 1.2; padding: 6px 12px; min-height: 30px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; }
+.act:hover { border-color: var(--accent); }
+.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a.act.open { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.act.done { color: var(--ok); border-color: var(--ok); background: var(--ok-bg); }
+.prompt-text { font: inherit; font-size: 0.82rem; width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
 </style>
 
 <div class="wrap">
@@ -174,10 +184,40 @@ td.i { font-weight: 600; }
   function isDone(p) { return p && (p.phase === "Live" || p.status === "closed"); }
   var LANE = { now: "Now", next: "Next", later: "Later", after: "After launch" };
   function laneOf(id) { var L = board().lanes || {}; for (var k in LANE) if ((L[k] || []).indexOf(id) >= 0) return k; return null; }
-  var PHASE = { "Planning": "idle", "Drawing": "idle", "Asks to rule": "warn", "Building": "tech", "Walk owed": "warn", "Ready to release": "ok", "Live": "ok", "Parked": "idle" };
+  var PHASE = { "Planning": "idle", "Drawing": "idle", "Asks to rule": "warn", "Building": "tech", "Walk owed": "warn", "Test owed": "warn", "Ready to release": "ok", "Live": "ok", "Parked": "idle" };
+
+  // ---- acting on a line ----
+  // Every step and project carries a ready-made prompt for a fresh chat ("/brief do <project>[: <step>]"), which
+  // shows what is being decided, takes the answer and writes it onto the board. A real page gets an Open button.
+  function promptFor(id, step) { return "/brief do " + id + (step ? ": " + step : ""); }
+  function copyText(text, btn, holder) {
+    var label = btn.textContent;
+    function done(ok) {
+      if (ok) { btn.textContent = "Copied. Paste it into a new chat"; btn.classList.add("done"); setTimeout(function () { btn.textContent = label; btn.classList.remove("done"); }, 2600); return; }
+      // the browser refused the clipboard: show the line, selected, to copy by hand
+      var shown = holder.querySelector(".prompt-text");
+      if (!shown) { shown = h("input", "prompt-text"); shown.readOnly = true; shown.value = text; shown.setAttribute("aria-label", "Prompt to copy"); add(holder, shown); }
+      shown.focus(); shown.select();
+    }
+    function legacy() {
+      var ta = document.createElement("textarea"); ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta); done(ok);
+    }
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(function () { done(true); }, legacy); return; } } catch (e) { /* fall through */ }
+    legacy();
+  }
+  function actions(prompt, url, openLabel) {
+    var row = h("div", "acts");
+    var a = link(url, openLabel || "Open"); if (a) { a.className = "act open"; add(row, a); }
+    var b = h("button", "act", "Copy prompt"); b.type = "button"; b.title = prompt;
+    b.addEventListener("click", function () { copyText(prompt, b, row); });
+    return add(row, b);
+  }
+  function walkLink(section) { var ws = items("walks"); for (var i = 0; i < ws.length; i++) if (ws[i].section === section) return ws[i].link; return null; }
   function phaseTag(p) { if (p && p.phase) return tag(PHASE[p.phase] || "idle", p.phase); return p && p.checked === false ? tag("idle", "Not checked yet") : tag("stop", "No phase"); }
   function openDeps(list) { return (list || []).filter(function (w) { return !isDone(proj(w)); }); }
-  function phasePip(p) { if (!p) return ""; if (p.phase === "Live" || p.status === "closed") return "live"; if (p.phase === "Ready to release") return "built"; if (["Building", "Walk owed", "Asks to rule"].indexOf(p.phase) >= 0) return "prog"; return ""; }
+  function phasePip(p) { if (!p) return ""; if (p.phase === "Live" || p.status === "closed") return "live"; if (p.phase === "Ready to release") return "built"; if (["Building", "Walk owed", "Test owed", "Asks to rule"].indexOf(p.phase) >= 0) return "prog"; return ""; }
 
   var STATUS = { moving: ["ok", "Moving"], waiting: ["warn", "Waiting on you"], quiet: ["stop", "Gone quiet"], parked: ["idle", "Parked"], closed: ["idle", "Closed"] };
   function pipClass(s) { s = (s || "").toLowerCase(); return s === "live" ? "live" : s === "built" ? "built" : s === "in progress" ? "prog" : ""; }
@@ -231,7 +271,13 @@ td.i { font-weight: 600; }
     if (fin.length) add(c, h("div", "dep", "Can finish only after " + fin.map(nameOf).join(", ")));
     var holds = ((board().cards || {})[id] || {}).blocks || [];
     if (holds.length) add(c, h("div", "dep", "Holds up " + holds.map(nameOf).join(", ")));
-    if (p.walksOwed && p.walksOwed.length) add(c, h("div", "dep", plural(p.walksOwed.length, "walk", "walks") + " owed: " + p.walksOwed.map(function (s) { return "§" + s; }).join(" ")));
+    if (p.walksOwed && p.walksOwed.length) {
+      var wo = h("div", "dep", plural(p.walksOwed.length, "walk", "walks") + " owed:");
+      p.walksOwed.forEach(function (s) { wo.appendChild(document.createTextNode(" ")); add(wo, link(walkLink(s), "§" + s) || h("span", "", "§" + s)); });
+      add(c, wo);
+    }
+    var firstWalk = p.walksOwed && p.walksOwed.length ? walkLink(p.walksOwed[0]) : null;
+    add(c, actions(promptFor(id), firstWalk, firstWalk ? "Open walk §" + p.walksOwed[0] : null));
     return c;
   }
 
@@ -244,12 +290,13 @@ td.i { font-weight: 600; }
     return add(b, ol);
   }
 
-  function rowList(ids, sub) {
+  function rowList(ids, sub, withActs) {
     var ul = h("ul", "rows");
     ids.forEach(function (id) {
       var p = proj(id), li = h("li");
       add(li, add(h("div", "t"), h("span", "", nameOf(id)), phaseTag(p)));
       var line = sub(p, id); if (line) add(li, h("div", "s", line));
+      if (withActs) add(li, actions(promptFor(id)));
       add(ul, li);
     });
     return ul;
@@ -262,7 +309,7 @@ td.i { font-weight: 600; }
       if (!p) return "";
       var open = openDeps(p.waitsOn), fin = openDeps(p.finishesAfter);
       return (p.next || p.remains || "") + (open.length ? " · blocked until " + open.map(nameOf).join(", ") + " is done" : "") + (fin.length ? " · finishes after " + fin.map(nameOf).join(", ") : "");
-    }));
+    }, key === "next"));
   }
 
   function waiting() {
@@ -270,7 +317,7 @@ td.i { font-weight: 600; }
     var b = section("Waiting on you", plural(owe.length, "step", "steps") + " only you can take, and " + plural(walks.length, "walk", "walks") + ". Steps on Now projects come first.");
     if (owe.length) {
       var ul = h("ul", "rows");
-      owe.forEach(function (o) { var li = h("li"); add(li, add(h("div", "t"), h("span", "", o.text)), h("div", "s", o.name + " · " + (LANE[o.lane] || ""))); add(ul, li); });
+      owe.forEach(function (o) { var li = h("li"); add(li, add(h("div", "t"), h("span", "", o.text)), h("div", "s", o.name + " · " + (LANE[o.lane] || "")), actions(promptFor(o.project, o.text), o.url)); add(ul, li); });
       add(b, ul);
     }
     if (walks.length) {
@@ -382,7 +429,11 @@ td.i { font-weight: 600; }
       add(row, nameCell, add(h("td"), p.auto ? null : phaseTag(p)), h("td", "n", L ? LANE[L] : "–"),
         h("td", "", p.next || p.remains || ""),
         h("td", "", openDeps((p.waitsOn || []).concat(p.finishesAfter || [])).map(nameOf).join(", ") || "–"),
-        h("td", "n", p.walksOwed && p.walksOwed.length ? p.walksOwed.map(function (s) { return "§" + s; }).join(" ") : "–"),
+        (function () {
+          var td = h("td", "n"); if (!p.walksOwed || !p.walksOwed.length) { td.textContent = "–"; return td; }
+          p.walksOwed.forEach(function (s, k) { if (k) td.appendChild(document.createTextNode(" ")); add(td, link(walkLink(s), "§" + s) || h("span", "", "§" + s)); });
+          return td;
+        })(),
         h("td", "n", p.last ? day(p.last) + (p.quietDays ? " · " + p.quietDays + "d" : "") : "–"));
       add(body, row);
     });

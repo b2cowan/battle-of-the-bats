@@ -28,6 +28,14 @@ tracker points here.
 
 **Republish the page only when its layout changes.** News is a data write, never a republish.
 
+## Acting on a line (2026-11-17)
+
+Every step waiting on the owner, every Now card and every Next row has a **Copy prompt** button. It copies
+`/brief do <project id>[: <step>]` for a fresh chat; that session shows what is being decided, takes the answer, records
+it on the board and refreshes the page (method in `.claude/commands/brief.md`). A step with a real page to act on
+(an asks page, a draft, a dashboard) carries a `url` on the board and shows an **Open** button; a Now card with a walk
+owed opens the walk. If the browser refuses the clipboard, the line appears selected beside the button.
+
 ## Where each fact comes from (fix the source, not the page)
 
 | On the page | Source | To change it |
