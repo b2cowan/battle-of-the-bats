@@ -356,9 +356,14 @@ export const PAYOUTS_WORDS = {
     needs_attention: 'Online payments are paused', disconnected: 'Online payments are off',
   },
   // 12c Part 6, words §4: both rates wherever a rate prints, from the two labels; card only when the account takes no bank debit.
-  notSetUpBody: (rate: string, bankRate: string | null = null) => (bankRate
-    ? `Payments go straight to your bank account through Stripe. A card payment has a processing fee of ${rate} and a bank debit ${bankRate}, and you choose who pays it. Stripe will ask for your legal name, a signing officer and your bank account.`
-    : `Payments go straight to your bank account through Stripe. Each card payment has a processing fee of ${rate}, and you choose who pays it. Stripe will ask for your legal name, a signing officer and your bank account.`),
+  // The not-set-up card reads as one lead sentence and two rows (the record's own idiom), so the fee and what Stripe asks for
+  // can be found at a glance. The fee row's value is `record.feeRates` (both rates while bank debit is offered, card only otherwise).
+  notSetUp: {
+    lead: 'Payments go straight to your bank account through Stripe.',
+    feeWho: 'You choose who pays it.',
+    askLabel: 'Stripe will ask for',
+    askValue: 'Your legal name, a signing officer and your bank account',
+  },
   settingUpBody: (date: string) => `You started on ${date}. Teams keep seeing your “How to pay” text until setup is finished.`,
   takingBody: (clubName: string) => `Payouts go to your bank account on Stripe’s schedule. Receipts go out in the name “${clubName}”.`,
   // Paused: Stripe has switched card payments off, so the pay page shows "How to pay" (`takesPayments` is false).
@@ -383,8 +388,6 @@ export const PAYOUTS_WORDS = {
   // sees it on Stripe's form and can change it there; Stripe reads it for its review of the account.
   stripeProductDescription: (clubName: string) =>
     `${clubName} runs community sports programs. Families and teams pay registration, team and tournament fees online through FieldLogicHQ, and find the club through its members, schools and local sports groups.`,
-  ratesLine: (rate: string, bankRate: string | null = null) =>
-    (bankRate ? `Processing fee: ${rate} per card payment, ${bankRate} per bank debit.` : `Processing fee: ${rate} per card payment.`),
   rareDisconnect: 'Disconnect payouts',
   ownerOnly: (home: PayoutsHome) => `The owner sets this up in ${home === 'club' ? 'Settings › Payouts' : 'Settings & access › Payouts'}.`,
   before: {

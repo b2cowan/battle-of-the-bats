@@ -202,7 +202,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   };
 
   const body =
-    state === 'not_set_up' ? W.notSetUpBody(view.rateLabel, view.bankRateLabel ?? null)
+    state === 'not_set_up' ? W.notSetUp.lead
       : state === 'setting_up' ? W.settingUpBody(formatStoredDate(view.connectedAt, { withYear: false }))
         : state === 'taking_payments' ? W.takingBody(clubName)
           : state === 'needs_attention'
@@ -267,8 +267,21 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         {!payoutRows && <p className={pc.body}>{wind ? `${WD.body} ${LEAVING_WORDS.move.connected}` : body}</p>}
         {windLine && <p className={ck.hint}>{WD.title}. {WD.body}</p>}
         {/* The record's fee row carries the rates, so the line shows only where there is no record yet. */}
-        {state !== 'disconnected' && !view.windDown && !hasRecord && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
-
+        {state === 'not_set_up' && !view.windDown && (
+          <dl className={pc.record}>
+            <div className={pc.recordRow}>
+              <dt>{W.record.feeLabel}</dt>
+              <dd>
+                {W.record.feeRates(view.rateLabel, view.bankRateLabel ?? null)}
+                <span className={`${ck.hint} ${pc.otherFees}`}>{W.notSetUp.feeWho}</span>
+              </dd>
+            </div>
+            <div className={pc.recordRow}>
+              <dt>{W.notSetUp.askLabel}</dt>
+              <dd>{W.notSetUp.askValue}</dd>
+            </div>
+          </dl>
+        )}
         {hasRecord && (
           <PayoutsRecord orgSlug={orgSlug} home={home} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))}
             onTerms={setTermsWindow} clubName={clubName} payoutRows={payoutRows} />

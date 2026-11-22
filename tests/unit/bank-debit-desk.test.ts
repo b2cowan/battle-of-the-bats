@@ -170,11 +170,11 @@ describe('payouts: both rates, and Disconnect counts what is clearing (words §3
     const { onlineFeeRateLabel } = await import('../../lib/plan-config.ts');
     const card = onlineFeeRateLabel('card');
     const bank = onlineFeeRateLabel('bankDebit');
-    assert.equal(W.ratesLine(card, bank), `Processing fee: ${card} per card payment, ${bank} per bank debit.`);
-    assert.equal(W.ratesLine(card), `Processing fee: ${card} per card payment.`);
     assert.equal(W.before.costRate(card, bank), `${card} per card payment · ${bank} per bank debit`);
     assert.equal(W.record.feeRates(card, bank), `${card} per card payment · ${bank} per bank debit`);
-    assert.ok(W.notSetUpBody(card, bank).includes(`a processing fee of ${card} and a bank debit ${bank}`));
+    // The not-set-up card's fee row reads the same two-rate line, from the one function.
+    assert.match(readCode('components/admin/kit/club/PayoutsCard.tsx'), /W\.record\.feeRates\(view\.rateLabel, view\.bankRateLabel \?\? null\)/);
+    assert.ok(W.notSetUp.askValue.includes('signing officer'));
     assert.equal(W.disconnect.clearing(1), '1 bank debit is still clearing. It’ll finish, and its money still reaches you.');
   });
   it('the route prints the bank rate from the constant, and the example is computed, never typed', () => {
