@@ -881,7 +881,7 @@ season whose only document is "I have read" leaves `waiver_accepted_at` empty, b
 **Carried to Part 3:** moved ticks count as ticks on version 1 everywhere a version's ticks are counted (Replace already
 does); "text as the club held it on {date}" uses the move date, never the tick date; retention covers
 `club_form_submissions`; storage objects of a deleted registration's files.
-**Part 2 built 2026-11-20 on dev** (the family side of the sign-up form; QA walk §551 https://claude.ai/artifact/4T7SUVwYi2Fa67tcjsU3VN, 50 steps, owed the owner).
+**Part 2 built 2026-11-20 on dev** (the family side of the sign-up form; QA walk §551 https://claude.ai/artifact/4T7SUVwYi2Fa67tcjsU3VN, 50 steps, **walked and passed 50 of 50 by the owner 2026-11-21**; committed `2b3269da6`).
 Migration 515 applied to dev 2026-11-20 (the placement saves a child's answers, files and ticks in one transaction, a refusal rolls
 the sign-up back; Your sign-up's Change; the sign-up's own answers go with its last child); migration 516 (the six-hourly sweep of
 waiting files) is written, applied nowhere, and waits for the owner's yes and its own commit; both are in `MANUAL_PROD_STEPS.json`.
