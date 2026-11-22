@@ -54,9 +54,9 @@ function AnswerRows({ rows, open, childName }: { rows: readonly RecordAnswer[]; 
     <div className={facts.facts}>
       {rows.map(a => (
         <div key={a.questionId} className={css.answerRow}>
-          <div className={css.answerQ}>
-            {a.label}
-            {a.health && <>{' '}<RepChip tone="warn">{W.health}</RepChip></>}
+          <div className={css.answerHead}>
+            <div className={css.answerQ}>{a.label}</div>
+            {a.health && <span className={css.answerChip}><RepChip tone="warn">{W.health}</RepChip></span>}
           </div>
           <div className={css.answerA}>
             <AnswerValue a={a} open={open} />
@@ -135,9 +135,9 @@ export default function RecordFormSections({ seasonId, regId, orgQuery, childNam
           <div className={facts.facts}>
             {form.documents.map(d => (
               <div key={d.documentId} className={css.answerRow}>
-                <div className={css.answerQ}>
-                  {d.name}
-                  {(d.state === 'again' || d.state === 'none') && <>{' '}<RepChip tone="warn">{W.needsNewTick}</RepChip></>}
+                <div className={css.answerHead}>
+                  <div className={css.answerQ}>{d.name}</div>
+                  {(d.state === 'again' || d.state === 'none') && <span className={css.answerChip}><RepChip tone="warn">{W.needsNewTick}</RepChip></span>}
                 </div>
                 <div className={css.answerA}>
                   {d.state !== 'again' && d.state !== 'none' && <span className={`${css.answerText} ${css.answerSentence}`}>{`“${d.sentence}”`}</span>}

@@ -359,7 +359,10 @@
    every width. The Fee box above keeps the label-left / value-right facts shape, which suits short facts. */
 .answerRow { padding: 0.6rem 0; }
 .answerRow + .answerRow { border-top: 1px solid var(--home-line); }
-.answerQ { color: var(--text-tertiary); overflow-wrap: anywhere; }
+/* The question wraps in its own column; a HEALTH or "Needs a new tick" chip stays at the row's top right (owner 2026-11-21). */
+.answerHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.answerQ { flex: 1 1 auto; min-width: 0; color: var(--text-tertiary); overflow-wrap: anywhere; }
+.answerChip { flex: none; margin-top: 1px; }
 .answerA { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; margin-top: 2px; min-width: 0; font-weight: 650; color: var(--text-primary); overflow-wrap: anywhere; }
 .answerText { white-space: pre-wrap; }
 .answerSentence { font-weight: 400; }
