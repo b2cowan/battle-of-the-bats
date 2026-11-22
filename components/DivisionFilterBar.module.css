@@ -1,0 +1,12 @@
+/* The public pages' division filter (Rules, News): the Schedule's and Teams' Division dropdown, drawn the same way
+   (PublicSchedule.module.css `.division select`) — one line tall however many divisions there are or however long their
+   names. Full width on a phone, capped on a desk so a short list of names does not stretch across the page. */
+.bar { display: block; width: 100%; max-width: 320px; margin-bottom: 1.5rem; }
+.select {
+  width: 100%; min-width: 0; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--club-field); border-radius: 8px;
+  background: var(--club-card); color: var(--club-text); color-scheme: light;
+  font: 400 1rem/1.4 var(--club-text-face);
+}
+.select:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
+@media (max-width: 1023px) { .bar { max-width: none; } }

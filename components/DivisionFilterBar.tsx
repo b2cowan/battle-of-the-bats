@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { setDivisionPref } from '@/lib/division-cookie';
 import type { Division } from '@/lib/types';
+import styles from './DivisionFilterBar.module.css';
 
 interface Props {
   orgSlug: string;
@@ -12,13 +13,20 @@ interface Props {
   backHref: string;
 }
 
+/** The public pages' division filter (Rules, News): the same dropdown as the Schedule's and Teams', with "All divisions"
+ *  first. Picking a division remembers it (the cookie) and narrows the page; "All divisions" shows everything for this
+ *  visit and leaves the remembered division alone, so coming back to a division is one pick. */
 export default function DivisionFilterBar({
   orgSlug, divisions, activeName, isFiltering, viewAllHref, backHref,
 }: Props) {
   const router = useRouter();
 
-  function selectDivision(name: string) {
-    setDivisionPref(orgSlug, name);
+  function choose(value: string) {
+    if (value === '') {
+      if (isFiltering) router.push(viewAllHref);
+      return;
+    }
+    setDivisionPref(orgSlug, value);
     if (isFiltering) {
       router.refresh();
     } else {
@@ -27,39 +35,17 @@ export default function DivisionFilterBar({
   }
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '0.4rem',
-      marginBottom: '1.5rem', fontSize: '0.8rem', flexWrap: 'wrap',
-    }}>
-      <span style={{ color: 'var(--white-40)', marginRight: '0.1rem' }}>Division:</span>
-      {divisions.map(g => {
-        const isActive = g.name === activeName && isFiltering;
-        return (
-          <button
-            key={g.id}
-            onClick={() => selectDivision(g.name)}
-            style={{
-              background: isActive ? 'var(--primary)' : 'transparent',
-              border: `1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`,
-              borderRadius: '99px',
-              padding: '0.15rem 0.6rem',
-              cursor: 'pointer',
-              fontSize: '0.78rem',
-              fontWeight: isActive ? 700 : 400,
-              color: isActive ? 'var(--white)' : 'var(--white-40)',
-              transition: 'all 0.15s',
-            }}
-          >
-            {g.name}
-          </button>
-        );
-      })}
-      <span style={{ color: 'var(--white-20)', margin: '0 0.1rem' }}>·</span>
-      {isFiltering ? (
-        <a href={viewAllHref} style={{ color: 'var(--primary-light)', textDecoration: 'none' }}>View all →</a>
-      ) : (
-        <a href={backHref} style={{ color: 'var(--primary-light)', textDecoration: 'none' }}>Back to {activeName} →</a>
-      )}
-    </div>
+    <label className={styles.bar}>
+      <span className="sr-only">Division</span>
+      <select
+        className={styles.select}
+        aria-label="Division"
+        value={isFiltering ? activeName : ''}
+        onChange={e => choose(e.target.value)}
+      >
+        <option value="">All divisions</option>
+        {divisions.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+      </select>
+    </label>
   );
 }

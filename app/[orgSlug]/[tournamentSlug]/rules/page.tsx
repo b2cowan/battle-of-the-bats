@@ -37,10 +37,14 @@ export default async function RulesPage({
   let divisions: Division[] = [];
   if (pageEnabled) {
     [rules, resources, divisions] = await Promise.all([
-      getRules(tournament.id, { admin: true }),
-      getResources(tournament.id, { admin: true }),
-      getDivisions(tournament.id, { admin: true }),
+      getRules(tournament.id, { admin: true, strict: true }),
+      getResources(tournament.id, { admin: true, strict: true }),
+      getDivisions(tournament.id, { admin: true, strict: true }),
     ]);
+    // ⚠ Strict reads, as the printable copy's: a failed divisions read must not turn into "no divisions" (a held-back
+    // division's section would then read as ordinary and show). A failed read throws to the platform's "Try again"
+    // page (`app/error.tsx`, which `app/[orgSlug]/error.tsx` hands a tournament page to), never to a book that is
+    // quietly wrong (owner ruling 2026-11-18).
     // ⚠ The FULL division list goes to the body. Its shape (`shapePublicRules`, shared with the printable copy) drops a
     // rule section aimed at a held-back division and names only published divisions in the picker; a list cut here
     // would let a held-back section through (Stage 10 Part 1, "as built").
