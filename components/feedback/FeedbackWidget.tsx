@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { usePublicPathname } from '@/lib/use-public-pathname';
 import { CheckCircle } from 'lucide-react';
 import { getLastRequestId } from '@/lib/observability/client-request-id';
-import { FEEDBACK_CATEGORIES, categoryFromRoute, type FeedbackType } from '@/lib/feedback-shared';
+import { categoryFromRoute, type FeedbackType } from '@/lib/feedback-shared';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
 import KitDialog, { DialogCancel, DialogReason } from '@/components/shared/KitDialog';
@@ -49,7 +49,6 @@ export default function FeedbackWidget({
   const pathname = usePublicPathname();
   const typeLabelId = useId();
   const [type, setType] = useState<FeedbackType>('bug');
-  const [category, setCategory] = useState<string>(() => categoryFromRoute(pathname));
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -60,7 +59,6 @@ export default function FeedbackWidget({
 
   function reset() {
     setType('bug');
-    setCategory(categoryFromRoute(pathname));
     setTitle('');
     setBody('');
     setError('');
@@ -87,7 +85,8 @@ export default function FeedbackWidget({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
-          category,
+          // No field for it (owner ruling A4, 2026-11-20): the page the person is on decides it.
+          category: categoryFromRoute(pathname),
           title: title.trim() || null,
           body: body.trim(),
           context: {
@@ -146,15 +145,6 @@ export default function FeedbackWidget({
                 <span className={ck.label} id={typeLabelId}>Type</span>
                 <ChoicePair labelledBy={typeLabelId} value={type} options={TYPES} onChange={setType} disabled={busy} />
               </div>
-
-              <label className={ck.field} htmlFor="feedback-category">
-                <span className={ck.label}>Category</span>
-                <select id="feedback-category" className={ck.select} value={category} onChange={e => setCategory(e.target.value)}>
-                  {FEEDBACK_CATEGORIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </label>
 
               <label className={ck.field} htmlFor="feedback-title">
                 <span className={ck.label}>Title</span>
