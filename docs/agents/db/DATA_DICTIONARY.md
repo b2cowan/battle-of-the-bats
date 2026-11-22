@@ -10237,6 +10237,11 @@ card's cash not deposited yet, as typed; NULL when not typed (always NULL on a c
 <!-- dict:col:bank_check_drafts.marked_keys -->
 **`marked_keys`** (text[], ≤ 500, default `{}`) — the lines marked "Not in the bank yet", in the order marked (gotcha 2).
 
+<!-- dict:col:bank_check_drafts.answered_no_keys -->
+**`answered_no_keys`** (text[], ≤ 500 CHECK `bank_check_drafts_answered_no_count`, default `{}`; mig 524, S7 Part 2, owner
+2026-11-22) — the "Still waiting on {line}?" items answered No on this statement, so the card doesn't ask again on any
+device. Keys only (gotcha 2); a new date clears them with the marks; the API names it `answeredNo` (omitted when empty).
+
 <!-- dict:col:bank_check_drafts.started_date -->
 <!-- dict:col:bank_check_drafts.started_balance_text -->
 <!-- dict:col:bank_check_drafts.started_difference_cents -->

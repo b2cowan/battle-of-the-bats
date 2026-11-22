@@ -12,8 +12,8 @@ export async function moneyFetch<T = Record<string, unknown>>(url: string, init?
   return { ok: res.ok, status: res.status, data };
 }
 
-/** JSON body helper for a PATCH / POST. */
-export const jsonInit = (method: 'POST' | 'PATCH' | 'DELETE', body: unknown): RequestInit => ({
+/** JSON body helper for a PATCH / POST / PUT. */
+export const jsonInit = (method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', body: unknown): RequestInit => ({
   method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
 });
 

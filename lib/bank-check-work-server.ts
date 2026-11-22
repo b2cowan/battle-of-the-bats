@@ -21,14 +21,14 @@ import {
  *   `canSave` no longer passes), a coach season's rollover or close (`discardAccountWork`), and the CASCADEs.
  */
 
-const MY_COLS = 'statement_end_date, balance_text, cash_text, marked_keys, started_date, started_balance_text, started_difference_cents, revision, updated_at, expires_at';
+const MY_COLS = 'statement_end_date, balance_text, cash_text, marked_keys, answered_no_keys, started_date, started_balance_text, started_difference_cents, revision, updated_at, expires_at';
 // ⚠ The colleague's quiet line: who, which date, when it last changed. Never add a column here (pinned by test).
 export const COLLEAGUE_COLS = 'user_id, statement_end_date, updated_at';
 
 const DAY_MS = 86_400_000;
 
 interface MyRow {
-  statement_end_date: string; balance_text: string; cash_text: string | null; marked_keys: string[];
+  statement_end_date: string; balance_text: string; cash_text: string | null; marked_keys: string[]; answered_no_keys: string[] | null;
   started_date: string | null; started_balance_text: string | null; started_difference_cents: number | string | null;
   revision: number; updated_at: string; expires_at: string;
 }
@@ -44,6 +44,7 @@ function savedOf(r: MyRow): SavedWork {
     balance: r.balance_text,
     ...(r.cash_text ? { cash: r.cash_text } : {}),
     marked: [...(r.marked_keys ?? [])],
+    ...(r.answered_no_keys?.length ? { answeredNo: [...r.answered_no_keys] } : {}),
     started: r.started_date && r.started_balance_text !== null && r.started_difference_cents !== null
       ? { date: r.started_date, balance: r.started_balance_text, differenceCents: Number(r.started_difference_cents) }
       : null,
@@ -58,6 +59,7 @@ function rowOf(w: CheckWork, now: Date) {
     statement_end_date: w.date,
     balance_text: w.balance,
     cash_text: w.cash?.trim() ? w.cash : null,
+    answered_no_keys: w.answeredNo ?? [],
     marked_keys: w.marked,
     started_date: w.started?.date ?? null,
     started_balance_text: w.started?.balance ?? null,
@@ -243,9 +245,9 @@ export async function discardTeamWorkOf(teamId: string, userId: string): Promise
 // ── the answers ─────────────────────────────────────────────────────────────────────────────
 
 const WORK_REFUSAL: Record<WorkRefusal, { status: number; error: string }> = {
-  // Words settled by /marketing in Part 2 (the card says its own sentence; these are the API's).
-  bad_work: { status: 400, error: 'That work couldn’t be kept. Check the date and the balance.' },
-  work_changed: { status: 409, error: 'You changed this check on another device. Here it is as you left it there.' },
+  // Settled by /marketing 2026-11-22 (S7 Part 2). The card says its own sentence; these are the API's.
+  bad_work: { status: 400, error: 'This check couldn’t be kept. Check the date and the amounts.' },
+  work_changed: { status: 409, error: 'You changed this check on another device, so this page now shows the latest.' },
 };
 
 export const workRefused = (code: WorkRefusal): Response =>

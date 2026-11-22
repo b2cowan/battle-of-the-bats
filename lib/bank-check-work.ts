@@ -29,6 +29,9 @@ export interface CheckWork {
   cash?: string;
   /** The marked lines' keys, in the order marked. */
   marked: string[];
+  /** The "Still waiting?" items answered No on this statement (owner 2026-11-22, mig 524): keys only; absent when none.
+   *  The card doesn't ask about them again; a new date clears them. */
+  answeredNo?: string[];
   started: StartedAnchor | null;
 }
 
@@ -89,12 +92,43 @@ export function readWorkBody(body: Record<string, unknown>): { work: CheckWork; 
   if (!Array.isArray(w.marked) || w.marked.length > BANK_CHECK_DRAFT_MAX_MARKS) return null;
   if (!w.marked.every(k => typeof k === 'string' && k.length >= KEY_MIN && k.length <= KEY_MAX)) return null;
   if (new Set(w.marked).size !== w.marked.length) return null;
+  const no = w.answeredNo ?? [];
+  if (!Array.isArray(no) || no.length > BANK_CHECK_DRAFT_MAX_MARKS || new Set(no).size !== no.length) return null;
+  if (!no.every(k => typeof k === 'string' && k.length >= KEY_MIN && k.length <= KEY_MAX)) return null;
   const started = readAnchor(w.started);
   if (started === undefined) return null;
   const cash = typeof w.cash === 'string' && w.cash.trim() !== '' ? w.cash : undefined;
   return {
-    work: { date: w.date, balance: w.balance, ...(cash ? { cash } : {}), marked: [...w.marked], started },
+    work: { date: w.date, balance: w.balance, ...(cash ? { cash } : {}), marked: [...w.marked], ...(no.length ? { answeredNo: [...no] } : {}), started },
     revision: revision as number | null,
+  };
+}
+
+/** One canonical text per piece of work: what the card's hook compares to decide a keep is needed (key order fixed, cash
+ *  only when typed). Keys and the typed text only, never a line's figures (lib/hooks/useBankCheckWork.ts). */
+export function workText(w: CheckWork): string {
+  const cash = w.cash?.trim() ? w.cash : undefined;
+  const started = w.started ? { date: w.started.date, balance: w.started.balance, differenceCents: w.started.differenceCents } : null;
+  const answeredNo = w.answeredNo?.length ? w.answeredNo : undefined;
+  return JSON.stringify({ date: w.date, balance: w.balance, ...(cash ? { cash } : {}), marked: w.marked, ...(answeredNo ? { answeredNo } : {}), started });
+}
+
+/** The work as the server holds it, as the card would send it (the seed compares equal, so opening the card keeps nothing). */
+export const workOfSaved = (s: SavedWork): CheckWork =>
+  ({ date: s.date, balance: s.balance, ...(s.cash ? { cash: s.cash } : {}), marked: [...s.marked], ...(s.answeredNo?.length ? { answeredNo: [...s.answeredNo] } : {}), started: s.started });
+
+/** How a card opens (S7, drawing tab 4): straight into the saved work, or before Start on `opening`. "Check this statement
+ *  again" on another date while work is saved opens Change on that date (`swapTo`, ruling 5: never a silent swap). */
+export interface WorkSeed {
+  working: boolean; date: string; balance: string; cash: string; started: StartedAnchor | null; marks: string[]; answeredNo: string[];
+  changedOn: string | null; swapTo: string | null;
+}
+export function seedOfWork(mine: SavedWork | null, opening: string, againDate?: string): WorkSeed {
+  if (!mine) return { working: false, date: opening, balance: '', cash: '', started: null, marks: [], answeredNo: [], changedOn: null, swapTo: null };
+  return {
+    working: true, date: mine.date, balance: mine.balance, cash: mine.cash ?? '', started: mine.started, marks: mine.marked,
+    answeredNo: mine.answeredNo ?? [],
+    changedOn: mine.changedOn, swapTo: againDate && againDate !== mine.date ? againDate : null,
   };
 }
 

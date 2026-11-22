@@ -1,6 +1,6 @@
 'use client';
 /**
- * "CHECK A STATEMENT" — the check, on the Bank tab itself above the saved checks (Bank balance check BC2a; ask 10, drawing
+ * "CHECK YOUR BANK BALANCE" — the check, on the Bank tab itself above the saved checks (Bank balance check BC2a; ask 10, drawing
  * BANK_BALANCE_CHECK_DRAWINGS.html tab 2, plan §6). A treasurer types a statement's DATE and BALANCE; every book line on or
  * before the date counts by itself. The band and the sums read from the server's figure for that day (`GET …?date=`,
  * debounced as the date changes; typing the balance re-figures at once with the engine's `figureCheck`, no round trip).
@@ -12,36 +12,44 @@
  *   line's figures itself (rule 6). "Still waiting on {line}?" (ask 2) asks once per item of the latest earlier check, and
  *   per Waiting-at-the-start line of the start as the chain rules (BC4a, the server's `stillWaitingOn`): Yes marks it, No
  *   drops it for this check. A new date clears both.
- * ⚖ THE TWO DOORS OUT OF THE CHECK (BC3b): "Add the missing entry" (named "Add the missing line" until WD1) opens the LEDGER'S OWN add window (`AddEntryWindow`), filled
+ * ⚖ THE TWO DOORS OUT OF THE CHECK (BC3b): "Add the missing entry" opens the LEDGER'S OWN add window (`AddEntryWindow`), filled
  *   with the gap, the statement's date and the direction (the bank showing more → money in; less → money out), on the
  *   account's own club book; the line is written by the Ledger's route, never by bank code (ask 1). "Waiting at the start"
  *   corrects the starting statement (`PATCH …/setup`). After either, the day's figure is read again (the typed balance stays).
  * Only a writer is given this component (B7): `BankTab` mounts it behind `canMove`.
- * "Check this statement again" (BC2b) re-keys it with `againDate`: the server already replaces a live check of the same
- * date, and the form already says so ("Saving replaces that check").
- * ⚖ WORK IT DOWN TO ZERO (WD1, plan BANK_CHECK_WORKING_DRAFT_PLAN.md, owner asks 1A–6A 2026-11-07; drawings tabs 1–5):
- *   · THE CARD REMEMBERS (`lib/bank-check-draft`): the date, the typed balance, the marked lines' keys and the "Started off
- *     by" anchor, in THIS BROWSER, per club + account + person. Restored at once with "Picked up where you left off" and
- *     Start over (no confirm). FIGURES ARE NEVER RESTORED: the band waits for the day's figure, and a mark comes back only
- *     as a line that figure offers, with its amount; one it doesn't is dropped with the amber callout. Every read of the
- *     figure re-checks the marks the same way (a line deleted in another tab). Save (success) and Start over clear it.
+ * ⚖ START, WORK, SAVE FOR LATER (S7, plan BANK_CHECK_NOVICE_UX_PLAN.md §0 A18 rulings 1–9; drawing
+ *   BANK_CHECK_NOVICE_UX_S7_DRAWINGS.html tabs 1–7; the hook lib/hooks/useBankCheckWork.ts):
+ *   · BEFORE START (tab 1): the date and the balance, and one lime button, "Start checking this statement". Nothing is kept
+ *     and the band, the sums and Find wait for it (ruling 6: a first-time match takes Start, then Save this check).
+ *   · WORKING (tab 2): the strip "Checking {date} · Change" over the shipped band, sums and Find; the foot ends the card with
+ *     the notes, Start over, Save for later and Save this check. KEPT AS YOU GO on our servers (ruling 4), for this person
+ *     and this account: the date, the balance, the marked lines' KEYS and the "Started off by" anchor. Never a line's
+ *     figures: a mark comes back only as a line the day's figure offers, with its amount; one it doesn't is dropped with the
+ *     amber callout (ruling 7). A failed keep says so in place of the resting sentence.
+ *   · CHANGE (tab 3, ruling 5): the strip opens into the fields in place; a new balance keeps every mark; a new date says
+ *     first that it clears them, then does. "Check this statement again" while other work is saved opens here, never a
+ *     silent swap. The work and the foot wait, greyed and inert, until Use these.
+ *   · FOUND AGAIN (tab 4): the card opens straight into the work, with "Picked up where you left off"; in the last 7 days of
+ *     the 30 that line names the end date in warn ink (tab 7). A colleague's work is one quiet line (tab 6, ruling 1).
+ *   · START OVER (ruling 9): in the foot; one line inside the card asks first only when lines are marked.
+ *   · Just started (S1b, `afterStart`): the card opens before Start on the empty end date; work saved before the start stays
+ *     until Start replaces it (never discarded unasked).
  *   · "STARTED OFF BY $X": the difference when this date's balance was last typed; hidden while it equals the live one.
- *   · "+ ADD ENTRY", always there with a date: the Ledger's own window, blank (Money follows the gap, the check's date, no
- *     amount). The gap door ("Add the missing entry") keeps the gap. Nothing here writes a book line.
- *   · THE FIGURE STAYS FRESH: coming back to the browser tab (focus / visible) reads the day again. No polling.
+ *   · "+ ADD ENTRY", once started: the Ledger's own window, blank (Money follows the gap, the check's date, no amount).
+ *   · THE FIGURE STAYS FRESH: coming back to the browser tab reads the day again. No polling.
  */
 import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { checkingStartsOn, figureCheck, waitingOnCheck, type BankLine, type WaitingItem } from '@/lib/bank-check';
-import {
-  anchorStarted, browserDraftStore, canKeepDrafts, clearDraft, draftKey, isWorthKeeping, keepOffered, offeredItems, readDraft, startedOffCents,
-  sweepIdleDrafts, writeDraft, type DraftContent, type StartedAnchor,
-} from '@/lib/bank-check-draft';
+import { anchorStarted, keepOffered, offeredItems, startedOffCents, type StartedAnchor } from '@/lib/bank-check-draft';
+import { inLastWeek, seedOfWork, workText, type CheckWork, type ColleagueWork, type WorkElsewhere } from '@/lib/bank-check-work';
+import { useBankCheckWork, type BankCheckWork } from '@/lib/hooks/useBankCheckWork';
 import type { LedgerKind } from '@/lib/club-ledger';
 import { AddEntryWindow, useBudgetWords } from '../LedgerWindows';
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { doorFill, doorFootLine, sameGapAs, type PlatformWordRef } from '@/lib/bank-gap-doors';
+import { dayShort } from '@/lib/bank-screen';
 import { tournamentToday } from '@/lib/timezone';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useDeskPicker } from '@/lib/hooks/useDeskPicker';
@@ -63,11 +71,9 @@ const BALANCE_ID = 'bank-check-balance';
 const DATE_ID = 'bank-check-date';
 const AFTER_START_ID = 'bank-check-after-start';
 
-export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChanged, onStale, againDate, afterStart }: {
+type Props = {
   orgSlug: string;
   view: AccountView;
-  /** The signed-in person: the draft is theirs (null until it is known, and then no draft is read or kept). */
-  personId: string | null;
   /** The account read again after a save, and what to tell the treasurer about it. */
   onSaved: (view: AccountView, text: string) => void;
   /** Something outside this check changed (a line added to the books, the start corrected): the account in hand (or, when
@@ -75,51 +81,86 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   onChanged: (view: AccountView | null, text: string) => void;
   /** The server said the view is stale: the tab re-reads, then says the sentence. */
   onStale: (text: string) => void;
+  /** The page notice, nothing else changed (Save for later, ruling 9). */
+  onNotice: (text: string) => void;
+  /** The club's other accounts holding this person's work: the Account pill's sub-line at 2+ (tab 4). */
+  onElsewhere?: (elsewhere: WorkElsewhere[]) => void;
   /**
    * "Check this statement again" (BC2b): the saved check's date, handed in from its window. The tab re-keys the form
-   * with it, so the form starts on that day with the balance empty, scrolled to and the cursor in the balance.
+   * with it, so the form starts on that day with the balance empty, scrolled to and the cursor in the balance. With other
+   * work saved, it opens Change on that day instead (ruling 5).
    */
   againDate?: string;
   /**
    * Just started (A17, owner 2026-11-08; drawing BANK_CHECK_S1B_DRAWINGS.html tab 2): the day checking starts. The start
-   * was the first statement's opening balance, so the form opens on that same statement: no draft, the date empty, and
-   * the line that says what to type. The tab drops it at the first save.
+   * was the first statement's opening balance, so the form opens on that same statement: the date empty, and the line
+   * that says what to type. The tab drops it at the first save.
    */
   afterStart?: string;
-}) {
+};
+
+/** The work's read, then the card, seeded from it: again (re-keyed) after another device's keep (`seed`). */
+export default function BankCheckForm(props: Props) {
+  const work = useBankCheckWork(bankUrl(props.orgSlug, `/accounts/${props.view.account.id}/work`), W.workKeepFailed);
+  const { onElsewhere } = props;
+  useEffect(() => { onElsewhere?.(work.elsewhere); }, [onElsewhere, work.elsewhere]);
+  if (work.read === 'loading') {
+    return (
+      <section className={s.checkCard} aria-labelledby="bank-check-title" aria-busy="true">
+        <CardHead /><p className={s.checkPurpose}>{W.checkPurpose}</p>
+        <p className={`${ck.hint} ${s.hintLine}`} role="status">{W.workLoading}</p>
+      </section>
+    );
+  }
+  return <CheckCard key={`seed-${work.seed}`} {...props} work={work} />;
+}
+
+/** The heading row (drawing tabs 2 and 5): its title, and "+ Add entry" (outline, the word on a phone too, ask 6 = A); Save
+ *  stays the one green button. Off until there is work and its day's figure (always drawn, so the row never jumps). */
+function CardHead({ onAdd }: { onAdd?: () => void }) {
+  return (
+    <div className={s.checkHead}>
+      <h2 id="bank-check-title" className={s.checkTitle}>{W.checkTitle}</h2>
+      <button type="button" className={`btn btn-outline ${s.addEntry}`} onClick={onAdd} disabled={!onAdd}>
+        <Plus size={15} aria-hidden />{W.addEntry}
+      </button>
+    </div>
+  );
+}
+
+function CheckCard({ orgSlug, view, onSaved, onChanged, onStale, onNotice, againDate, afterStart, work }: Props & { work: BankCheckWork }) {
   const today = tournamentToday();
   // On a phone the date and the balance sit side by side (drawn; owner 2026-11-06, BC4b): the balance takes the short word.
   const isPhone = useIsPhone();
   // Our calendar (a desk) or the device's own picker: only the desk field can take the cursor usefully (/design S1b).
   const desk = useDeskPicker();
   const accountId = view.account.id;
-  // The working draft (WD1): this browser's, this person's, this account's. "Check this statement again" starts that day
-  // fresh instead (its first keystroke replaces the draft). The card mounts after the account is read, never on the server.
-  const draftAt = personId ? draftKey({ club: orgSlug, account: accountId, person: personId }) : null;
-  const [restored] = useState(() => (draftAt && !againDate && !afterStart ? readDraft(browserDraftStore(), draftAt, Date.now()) : null));
-  // Owner ask B (S1b): after a start the end date is empty, never a guessed month-end (statements don't all run by month).
-  const opening = afterStart ? '' : againDate ?? restored?.date ?? today;
-  const [date, setDate] = useState(opening);
-  const [asOf, setAsOf] = useState(opening); // the date the figure is read for: `date`, after it stops changing
-  const [balance, setBalance] = useState(restored?.balance ?? '');
-  const [started, setStarted] = useState<StartedAnchor | null>(restored?.started ?? null);
-  // "Picked up where you left off": the day the restored draft was last worked on (null when nothing was restored).
-  const [restoredOn, setRestoredOn] = useState<string | null>(restored?.savedOn ?? null);
-  // The restored marks' keys, until the day's figure says which it still offers (the band waits for them).
-  const [pending, setPending] = useState<string[] | null>(restored?.marked.length ? restored.marked : null);
+  // Just started (S1b): before Start on the empty end date; work saved before the start stays until Start replaces it.
+  const [seed] = useState(() => seedOfWork(afterStart ? null : work.mine, afterStart ? '' : againDate ?? today, againDate));
+  const [working, setWorking] = useState(seed.working);
+  const [date, setDate] = useState(seed.date);
+  const [asOf, setAsOf] = useState(seed.date); // the date the figure is read for: `date`, after it stops changing
+  const [balance, setBalance] = useState(seed.balance);
+  const [started, setStarted] = useState<StartedAnchor | null>(seed.started);
+  // "Picked up where you left off": the day the saved work was last changed (null when the card opened before Start).
+  const [restoredOn, setRestoredOn] = useState<string | null>(seed.changedOn);
+  // The saved marks' keys, until the day's figure says which it still offers (the band waits for them).
+  const [pending, setPending] = useState<string[] | null>(seed.marks.length ? seed.marks : null);
   const [droppedMarks, setDroppedMarks] = useState(0);
-  // This browser will keep a draft ("Kept in this browser only…" says so only then: never over blocked storage).
-  const [canKeep] = useState(() => !!draftAt && canKeepDrafts(browserDraftStore()));
+  // Change (ruling 5): the strip's fields, open; nothing figures or is kept from them until Use these.
+  const [edit, setEdit] = useState<{ date: string; balance: string } | null>(seed.swapTo ? { date: seed.swapTo, balance: '' } : null);
+  const [askOver, setAskOver] = useState(false); // Start over's one-line question (ruling 9)
   const [figure, setFigure] = useState<Figure | null>(null);
   // The figure the marks were last checked against (each new read checks them again).
   const [checkedFor, setCheckedFor] = useState<Figure | null>(null);
   const [readError, setReadError] = useState('');
   const [again, setAgain] = useState(0); // "Try again" on a figure Stripe couldn't give
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<null | 'start' | 'save' | 'later' | 'over' | 'door'>(null);
   const [error, setError] = useState('');
   // Find (BC3a): the lines marked Not in the bank yet (in the order marked), and the Still-waiting items answered No.
   const [marked, setMarked] = useState<ReadonlyMap<string, WaitingItem>>(new Map());
-  const [dropped, setDropped] = useState<ReadonlySet<string>>(new Set());
+  // A No is kept with the work (owner 2026-11-22): the card doesn't ask again, on any device; a new date clears them.
+  const [dropped, setDropped] = useState<ReadonlySet<string>>(() => new Set(seed.answeredNo));
   // "Add the missing entry": the Ledger's add window, filled with what the screen said when it opened (the gap, the day, the
   // direction), so a figure read again meanwhile never moves or closes it; the budget words read when it opens.
   // "+ Add entry" opens it blank (no amount: a statement line is rarely the gap, drawing tab 3).
@@ -133,9 +174,9 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   const words = useBudgetWords(q, adding !== null);
 
   // The form opened on purpose: bring it into view with the cursor where the next thing is typed, once per opening (a
-  // resize across the desk line never moves it again). Handed a date ("Check this date again") → the balance. Just started
-  // → the end date, at a desk only: a phone's own picker can't be opened for them and an iPhone ignores the focus, so the
-  // line above says it there (/design S1b).
+  // resize across the desk line never moves it again). Handed a date ("Check this date again") → the balance (Change's,
+  // when other work is saved). Just started → the end date, at a desk only: a phone's own picker can't be opened for them
+  // and an iPhone ignores the focus, so the line above says it there (/design S1b).
   const arrivedFor = useRef<string | null>(null);
   useEffect(() => {
     const why = againDate ?? afterStart ?? null;
@@ -181,13 +222,10 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
     };
   }, []);
 
-  // A draft idle 14 days goes, this account's or any other's (ask 4 = A).
-  useEffect(() => { sweepIdleDrafts(browserDraftStore(), Date.now()); }, []);
-
-  // The marks, as the books read NOW (WD1), on each new figure for this day: each one the day still offers, with its
-  // amount as the books have it; one it doesn't is dropped and said, never kept (a restored draft's, or a line deleted in
-  // another tab). Adjusted while rendering, so the band never draws with marks the figure hasn't checked. A refused day
-  // keeps restored marks waiting (another date clears them, as a new day does).
+  // The marks, as the books read NOW (WD1, ruling 7), on each new figure for this day: each one the day still offers, with
+  // its amount as the books have it (an edited line keeps its mark at its new amount); one it doesn't is dropped and said,
+  // never kept. Adjusted while rendering, so the band never draws with marks the figure hasn't checked. A refused day keeps
+  // saved marks waiting (a new date clears them, as a new day does).
   if (figure && figure !== checkedFor && figure.date === date && !figure.refused) {
     setCheckedFor(figure);
     const keys = pending ?? [...marked.keys()];
@@ -198,7 +236,7 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
     }
     if (pending) setPending(null);
   }
-  // While restored marks wait for the day's figure, there is no figure to draw (figures are never restored).
+  // While saved marks wait for the day's figure, there is no figure to draw (figures are never kept).
   const fresh = figure !== null && figure.date === date && !figure.refused && pending === null ? figure : null;
   const typed = parseCents(balance, { positive: false });
   const items = [...marked.values()];
@@ -214,52 +252,84 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   if (anchor !== started) setStarted(anchor);
   const startedOff = startedOffCents(anchor, liveDifference);
 
-  // Keep the work in this browser whenever it changes (never merely for opening the card): written when worth keeping,
-  // removed when the card is emptied. Restored marks still waiting on the figure are kept as they came.
-  // A date cleared from the calendar is not a day a draft can come back to (it would be refused whole, balance and all):
-  // it is kept as today until another is picked.
-  // ⚠ Just started (S1b /review): the date is empty ON PURPOSE (owner ask B), so nothing is kept until a day is picked (kept
-  // as today, a balance typed first would come back as a guessed date), and a draft from before the start goes.
-  const dateless = !!afterStart && !ISO_DAY.test(date);
-  const draft: DraftContent = { date: ISO_DAY.test(date) ? date : today, balance, marked: pending ?? [...marked.keys()], started: anchor };
-  const worthKeeping = !dateless && isWorthKeeping(draft);
-  const draftText = JSON.stringify(draft);
-  const lastKept = useRef(draftText);
-  useEffect(() => {
-    if (!draftAt || dateless || draftText === lastKept.current) return;
-    lastKept.current = draftText;
-    writeDraft(browserDraftStore(), draftAt, JSON.parse(draftText) as DraftContent, today);
-  }, [draftAt, draftText, today, dateless]);
-  useEffect(() => {
-    if (afterStart && draftAt) clearDraft(browserDraftStore(), draftAt);
-  }, [afterStart, draftAt]);
-  const hasDraft = canKeep && worthKeeping;
-  // Emptied: what was picked up is gone, so the next thing typed is new work, not "where you left off".
-  if (restoredOn && !worthKeeping) setRestoredOn(null);
+  // Kept as you go, from Start (ruling 4): the hook sends it after a short pause when it differs from what is kept. Saved
+  // marks still waiting on the figure are kept as they came. Before Start nothing is kept (ruling 6).
+  const markCount = pending?.length ?? marked.size;
+  const current: CheckWork = { date, balance, marked: pending ?? [...marked.keys()], ...(dropped.size ? { answeredNo: [...dropped] } : {}), started: anchor };
+  const currentText = workText(current);
+  const { keep } = work;
+  useEffect(() => { if (working) keep(currentText); }, [working, currentText, keep]);
+  // The last 7 days of the 30 (ruling 2): the end date, said again.
+  const endsSoonOn = working && work.endsOn && inLastWeek(work.endsOn, today) ? work.endsOn : null;
 
-  const mark = (w: WaitingItem) => { setMarked(m => new Map(m).set(w.key, w)); setError(''); };
-  const unmark = (key: string) => { setMarked(m => { const n = new Map(m); n.delete(key); return n; }); setError(''); };
+  const touch = () => { setError(''); work.clearChanged(); };
+  const mark = (w: WaitingItem) => { setMarked(m => new Map(m).set(w.key, w)); touch(); };
+  const unmark = (key: string) => { setMarked(m => { const n = new Map(m); n.delete(key); return n; }); touch(); };
   /** A new day is a new check: its marks and answers go (the lines and the earlier check's items are that day's). */
-  const pickDate = (v: string) => {
-    setDate(v); setError(''); setMarked(new Map()); setDropped(new Set()); setPending(null); setDroppedMarks(0);
+  const newDay = (v: string) => {
+    setDate(v); setMarked(new Map()); setDropped(new Set()); setPending(null); setDroppedMarks(0);
   };
-  /** Start over (no confirm, the owner's call in the drawings): only a typed balance and marks are lost. */
-  function startOver() {
-    if (draftAt) clearDraft(browserDraftStore(), draftAt);
-    setBalance(''); pickDate(today); setAsOf(today); setStarted(null); setRestoredOn(null); setError('');
+  /** Back to before Start: today, empty (Start over, and a saved check). */
+  function reset() {
+    setWorking(false); setBalance(''); newDay(today); setAsOf(today); setStarted(null); setRestoredOn(null);
+    setEdit(null); setAskOver(false); setError('');
   }
   const waitingRows = items.map(w => ({ key: w.key, what: nameOf(w), amount: moved(waitingOnCheck(w)), onUndo: () => unmark(w.key) }));
   const askingRows = (fresh?.stillWaiting ?? []).filter(w => !marked.has(w.key) && !dropped.has(w.key)).map(w => ({
     key: w.key, what: nameOf(w), amount: cents(w.amountCents),
-    onYes: () => mark(w), onNo: () => setDropped(d => new Set(d).add(w.key)),
+    onYes: () => mark(w), onNo: () => { setDropped(d => new Set(d).add(w.key)); touch(); },
   }));
+
+  /** Start checking this statement (ruling 6): the first keep. */
+  async function start() {
+    if (busy || !ISO_DAY.test(date)) return;
+    if (typed === null) { setError(W.balanceMissing); return; }
+    setBusy('start'); touch();
+    const r = await work.keepNow(current);
+    setBusy(null);
+    if (r.ok) { setWorking(true); setAsOf(date); } else if (r.error !== null) setError(r.error);
+  }
+
+  /** Change → Use these (ruling 5): a new date clears the marks (said first, in the amber line); a new balance keeps them. */
+  function useThese() {
+    if (!edit || !ISO_DAY.test(edit.date)) return;
+    if (parseCents(edit.balance, { positive: false }) === null) { setError(W.balanceMissing); return; }
+    if (edit.date !== date) { newDay(edit.date); setAsOf(edit.date); }
+    setBalance(edit.balance); setEdit(null); touch();
+  }
+  function openChange() {
+    setEdit({ date, balance }); setAskOver(false); touch();
+    if (desk) window.setTimeout(() => document.getElementById(DATE_ID)?.focus(), 0);
+  }
+
+  /** Start over (ruling 9): asks in one line only when lines are marked; at once otherwise. */
+  async function startOver() {
+    if (busy) return;
+    setBusy('over'); setError('');
+    const r = await work.startOver();
+    setBusy(null);
+    if (!r.ok) { setAskOver(false); setError(W.startOverFailed); return; }
+    reset();
+  }
+  const askStartOver = () => { if (markCount > 0) setAskOver(true); else void startOver(); };
+
+  /** Save for later (ruling 4): what is on the card, kept now; the notice names the end date (the 30 days start again). */
+  async function saveForLater() {
+    if (busy) return;
+    setBusy('later'); setError('');
+    const r = await work.keepNow(current);
+    setBusy(null);
+    if (r.ok && r.endsOn) onNotice(W.savedForLater(dayYear(r.endsOn)));
+    // Another device kept newer work (`error: null`): the hook reads again and the card says so; nothing to add here.
+    else if (!r.ok && r.error !== null) setError(W.saveForLaterFailed);
+  }
 
   /** "Waiting at the start" (Q2): the line goes on the starting statement; the account and the day are read again. */
   async function atStart(line: BankLine) {
     if (busy) return;
-    setBusy(true); setError('');
+    setBusy('door'); setError('');
     const r = await patchStart(orgSlug, accountId, { add: line.key });
-    setBusy(false);
+    setBusy(null);
     if (!r.ok) { if (isStaleView(r.code)) onStale(r.error); else setError(r.error); return; }
     // The figure on screen counted the line as one of the books' own: it goes until the day is read again (/review).
     setFigure(null);
@@ -276,14 +346,16 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   async function save() {
     if (busy || !fresh) return;
     if (typed === null) { setError(W.balanceMissing); return; }
-    setBusy(true); setError('');
+    setBusy('save'); setError('');
+    // Anything still waiting to be kept lands first, so it never lands after the check took the work (S7).
+    await work.flush();
     // `anyway`: the figure on screen is the one without online payments, so saving it is the treasurer's choice. A figure
     // shown counted that Stripe can't count at the save is refused (`not_counted_*`): read again, so they see what saves.
     const anyway = fresh.onItsWay.state === 'not_counted';
     // The marked lines go up as KEYS only: their figures are the server's read of the books (rule 6).
     const r = await bankWrite(bankUrl(orgSlug, `/accounts/${accountId}/checks`), 'POST',
       { date, bankCents: typed, anyway, waiting: [...marked.keys()] }, W.saveFailed);
-    setBusy(false);
+    setBusy(null);
     if (!r.ok) {
       if (notCountedOf(r.code)) { setError(r.error); setAgain(n => n + 1); }
       else if (isStaleView(r.code)) onStale(r.error); else setError(r.error);
@@ -293,95 +365,165 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
     onSaved(r.view, saved
       ? saved.figure.result === 'matches' ? W.savedMatches(dayYear(date)) : W.savedOff(dayYear(date), cents(saved.figure.offByCents))
       : W.saved);
-    // Saved: the check is the record now, so the draft goes (WD1).
-    startOver();
+    // Saved: the check is the record now, and the server took the work with it (S7).
+    work.forget();
+    reset();
   }
 
-  // "+ Add entry" (ask 3 = A): the Ledger's window, blank, the check's date; Money follows the gap when there is one.
-  const canAdd = !!fresh && fresh.booksCents !== null && !!ownBook && !busy;
+  // "+ Add entry" (ask 3 = A): the Ledger's window, blank, the check's date; Money follows the gap when there is one. Once
+  // started, and not while Change is open (tab 3: it waits with the rest).
+  const canAdd = working && !edit && !!fresh && fresh.booksCents !== null && !!ownBook && !busy;
   const addEntry = () => setAdding({
     date,
     ...(band && typed !== null && band.direction ? { entryType: band.direction === 'bank_more' ? 'income' as const : 'expense' as const } : {}),
   });
 
-  // Save and what saving it means: inline after the fields at a desk, the card's last thing on a phone (drawn).
-  const saveButton = (
-    <div className={s.checkSave}>
-      <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={busy || !fresh}>
-        {busy ? W.saving : W.saveCheck}
-      </button>
-    </div>
+  const head = <CardHead onAdd={canAdd ? addEntry : undefined} />;
+  // What the card is for (S1, A4), always.
+  const purpose = <p className={s.checkPurpose}>{W.checkPurpose}</p>;
+
+  const colleagues = work.colleagues.map((c, i) => <ColleagueLine key={i} c={c} />);
+  const newer = work.changed && (
+    <p className={`${s.statusNote} ${s.afterStart}`} role="status">{work.changed === 'there' ? W.workNewerHere : W.workNewerGone}</p>
   );
-  // ONE note line (Bank check novice UX S1, row 10): which balance to type until one is typed; then that an off check
-  // saves and leaves the books alone, and the draft's resting sentence (S7 rewrites that one; it stays as WD1 wrote it).
-  // "{date} is checked already" (row 21) either way. Where it sits is unchanged (after the fields at a desk, under Save on
-  // a phone).
-  const notes = [
-    replaces ? W.replacesNote(dayYear(date)) : null,
-    // Owner ask C (S1b): not while the after-start line shows (a statement's ending balance, not a banking app's).
-    typed === null && !afterStart ? W.balanceHint : null,
-    band && band.result === 'off' && typed !== null ? W.saveOffNote : null,
-    // The resting sentence while a draft exists (drawing tab 2, note 3): it is what says leaving is safe.
-    hasDraft ? W.draftKept : null,
-  ].filter((t): t is string => !!t);
-  const saveNotes = notes.length > 0 ? <p className={ck.hint}>{notes.join(' ')}</p> : null;
+
+  // ── before Start (tab 1) ──
+  if (!working) {
+    const startButton = (
+      <div className={s.checkSave}>
+        <button type="button" className="btn btn-lime" onClick={() => void start()} disabled={!!busy || !ISO_DAY.test(date)}>
+          {busy === 'start' ? W.saving : W.startChecking}
+        </button>
+      </div>
+    );
+    // The shipped note line: "{date} is checked already" (row 21) and which balance to type (not while the after-start
+    // line shows: a statement's ending balance, not a banking app's, owner ask C).
+    const notes = [replaces ? W.replacesNote(dayYear(date)) : null, !afterStart ? W.balanceHint : null].filter((t): t is string => !!t);
+    return (
+      <section className={s.checkCard} aria-labelledby="bank-check-title">
+        {head}{purpose}
+        {colleagues}
+        {newer}
+        {work.read === 'failed' && (
+          <p className={`${s.statusNote} ${s.afterStart}`} role="alert">{W.workLoadFailed}{' '}
+            <button type="button" className={s.link} onClick={work.retryRead}>{W.tryAgain}</button>
+          </p>
+        )}
+        {/* Just started (A17): the restore line's place, the card's status-line weight. */}
+        {afterStart && <p id={AFTER_START_ID} className={`${s.statusNote} ${s.afterStart}`} role="status">{W.afterStart(dayYear(afterStart))}</p>}
+        {!isPhone && <FormError inPlace>{error}</FormError>}
+        <div className={s.checkRow}>
+          <DayField id={DATE_ID} label={W.checkDate} value={date} onChange={v => { newDay(v); touch(); }} max={today}
+            describedBy={afterStart ? AFTER_START_ID : undefined} />
+          <BankMoneyField id={BALANCE_ID} label={isPhone ? W.checkBalancePhone : W.checkBalance} value={balance} onChange={v => { setBalance(v); touch(); }} />
+          {!isPhone && startButton}
+        </div>
+        {notes.length > 0 && <p className={ck.hint}>{notes.join(' ')}</p>}
+        {/* A day the server won't take shows its own sentence now, not after Start; the band itself waits for Start. */}
+        <StatusLine figure={figure} date={date} readError={readError} fresh={!!fresh} quiet onRetry={() => setAgain(n => n + 1)} />
+        {isPhone && <FormError inPlace>{error}</FormError>}
+        {isPhone && startButton}
+      </section>
+    );
+  }
+
+  // ── working (tabs 2–7) ──
+  const off = !!band && band.result === 'off' && typed !== null;
+  const notes = [replaces ? W.replacesNote(dayYear(date)) : null, off ? W.saveOffNote : null].filter((t): t is string => !!t);
+  const laterButton = (
+    <button key="later" type="button" className="btn btn-outline" onClick={() => void saveForLater()} disabled={!!busy}>
+      {busy === 'later' ? W.saving : W.saveForLater}
+    </button>
+  );
+  const checkButton = (
+    <button key="check" type="button" className="btn btn-lime" onClick={() => void save()} disabled={!!busy || !fresh}>
+      {busy === 'save' ? W.saving : W.saveCheck}
+    </button>
+  );
+  const dateChanges = !!edit && edit.date !== date;
 
   return (
     <section className={s.checkCard} aria-labelledby="bank-check-title">
-      {/* The heading row's action (drawing tabs 2 and 5): outline, the word on a phone too (ask 6 = A); Save stays the one
-          green button. Disabled until there is a date and its figure is read (always drawn, so the row never jumps). */}
-      <div className={s.checkHead}>
-        <h2 id="bank-check-title" className={s.checkTitle}>{W.checkTitle}</h2>
-        <button type="button" className={`btn btn-outline ${s.addEntry}`} onClick={addEntry} disabled={!canAdd}>
-          <Plus size={15} aria-hidden />{W.addEntry}
-        </button>
-      </div>
-      {/* What the card is for (S1, A4), always. */}
-      <p className={s.checkPurpose}>{W.checkPurpose}</p>
-      {restoredOn && hasDraft && (
+      {head}{purpose}
+      {colleagues}
+      {(restoredOn || endsSoonOn) && (
         <p className={`${ck.hint} ${s.restoreLine}`} role="status">
-          <span>{restoredOn < today ? W.draftPickedUpOn(dayYear(restoredOn)) : W.draftPickedUp}</span>
-          <button type="button" className={s.link} onClick={startOver}>{W.startOver}</button>
+          {restoredOn && <span>{restoredOn < today ? W.draftPickedUpOn(dayYear(restoredOn)) : W.draftPickedUp}</span>}
+          {endsSoonOn && <span className={s.endsSoon}>{W.workEndsSoon(dayYear(endsSoonOn))}</span>}
         </p>
       )}
-      {/* Just started (A17): the restore line's place (a start never restores a draft), the card's status-line weight. */}
-      {afterStart && <p id={AFTER_START_ID} className={`${s.statusNote} ${s.afterStart}`} role="status">{W.afterStart(dayYear(afterStart))}</p>}
+      {newer}
       {droppedMarks > 0 && <div className={s.droppedNote}><Callout tone="warn" role="status" flush>{W.draftDropped(droppedMarks)}</Callout></div>}
-      {/* What went wrong sits by Save: at the card's top at a desk (Save is inline there), above Save on a phone (/review). */}
-      {!isPhone && <FormError inPlace>{error}</FormError>}
-      <div className={s.checkRow}>
-        <DayField id={DATE_ID} label={W.checkDate} value={date} onChange={pickDate} max={today}
-          describedBy={afterStart ? AFTER_START_ID : undefined} />
-        <BankMoneyField id={BALANCE_ID} label={isPhone ? W.checkBalancePhone : W.checkBalance} value={balance} onChange={v => { setBalance(v); setError(''); }} />
-        {!isPhone && saveButton}
-      </div>
-      {!isPhone && saveNotes}
 
-      <StatusLine figure={figure} date={date} readError={readError} fresh={!!fresh} onRetry={() => setAgain(n => n + 1)} />
-
-      {fresh && fresh.booksCents !== null && band && (
-        <>
-          <BankBand date={date} figure={band} typed={typed !== null} startedOn={view.start ? checkingStartsOn(view.start.date) : undefined} />
-          {startedOff !== null && <p className={`${ck.hint} ${s.hintLine}`}>{W.startedOffBy(cents(startedOff))}</p>}
-          <BankSums date={date} bookNames={view.account.books.map(b => b.name)} booksCents={fresh.booksCents}
-            shouldBeCents={band.shouldBeCents} onItsWay={fresh.onItsWay} payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
-            onRetry={() => setAgain(n => n + 1)} waiting={waitingRows} asking={askingRows} />
-          <BankFind key={date} figure={fresh} band={band} typed={typed !== null} marked={marked} busy={busy} onMark={mark} onUndo={unmark}
-            payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
-            repeatOf={typed !== null ? sameGapAs(view.checks, date, band.differenceCents) : null}
-            onAtStart={l => void atStart(l)} onAddLine={door => setAdding({
-              // The gap, the statement's day, and the way it must go to close it: the bank holding more is money in.
-              entryType: band.direction === 'bank_more' ? 'income' : 'expense', date, amount: fieldAmount(band.offByCents),
-              ...(door ? { ...doorFill('club', door), footLine: doorFootLine(door) } : {}),
-            })} />
-        </>
+      {edit ? (
+        // Change (tab 3): the shipped fields, in place; Use these the one lime button while it is open.
+        <div className={`${s.strip} ${s.stripEdit}`} role="group" aria-label={W.stripChange}>
+          <div className={s.checkRow}>
+            <DayField id={DATE_ID} label={W.checkDate} value={edit.date} max={today} onChange={v => { setEdit(e => e && { ...e, date: v }); setError(''); }} />
+            <BankMoneyField id={BALANCE_ID} label={isPhone ? W.checkBalancePhone : W.checkBalance} value={edit.balance}
+              onChange={v => { setEdit(e => e && { ...e, balance: v }); setError(''); }} />
+            <div className={s.stripActs}>
+              <button type="button" className="btn btn-lime" onClick={useThese} disabled={!ISO_DAY.test(edit.date)}>{W.changeUse}</button>
+              <button type="button" className={s.link} onClick={() => { setEdit(null); setError(''); }}>{W.changeKeep(dayShort(date))}</button>
+            </div>
+          </div>
+          {dateChanges && markCount > 0 && <p className={s.warnLine} role="status">{W.changeClears(markCount, false)}</p>}
+          <FormError inPlace>{error}</FormError>
+        </div>
+      ) : (
+        // The strip (tab 2): the date only; the balance is the band's first figure right under it (ruling 9).
+        <div className={s.strip}>
+          <span className={s.stripLabel}>{W.stripChecking}</span>
+          <span className={s.stripValue}><b>{dayYear(date)}</b></span>
+          <button type="button" className={`${s.link} ${s.stripChange}`} onClick={openChange} disabled={!!busy}>{W.stripChange}</button>
+        </div>
       )}
-      {/* On a phone Save is the card's last thing, its notes under it (drawing tabs 1 and 3, /design BC4b): type, read,
-          fix in Find, then save, with no scroll back up past the band. */}
-      {isPhone && <FormError inPlace>{error}</FormError>}
-      {isPhone && saveButton}
-      {isPhone && saveNotes}
-      {/* After Add: the page notice, the day read again; the typed balance, the date and the marks stay. */}
+
+      {/* While Change is open the work and the foot wait, greyed and inert (tab 3). */}
+      <div className={edit ? s.waiting : undefined} inert={!!edit}>
+        <StatusLine figure={figure} date={date} readError={readError} fresh={!!fresh} onRetry={() => setAgain(n => n + 1)} />
+        {fresh && fresh.booksCents !== null && band && (
+          <>
+            <BankBand date={date} figure={band} typed={typed !== null} startedOn={view.start ? checkingStartsOn(view.start.date) : undefined} />
+            {startedOff !== null && <p className={`${ck.hint} ${s.hintLine}`}>{W.startedOffBy(cents(startedOff))}</p>}
+            <BankSums date={date} bookNames={view.account.books.map(b => b.name)} booksCents={fresh.booksCents}
+              shouldBeCents={band.shouldBeCents} onItsWay={fresh.onItsWay} payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
+              onRetry={() => setAgain(n => n + 1)} waiting={waitingRows} asking={askingRows} />
+            <BankFind key={date} figure={fresh} band={band} typed={typed !== null} marked={marked} busy={!!busy} onMark={mark} onUndo={unmark}
+              payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
+              repeatOf={typed !== null ? sameGapAs(view.checks, date, band.differenceCents) : null}
+              onAtStart={l => void atStart(l)} onAddLine={door => setAdding({
+                // The gap, the statement's day, and the way it must go to close it: the bank holding more is money in.
+                entryType: band.direction === 'bank_more' ? 'income' : 'expense', date, amount: fieldAmount(band.offByCents),
+                ...(door ? { ...doorFill('club', door), footLine: doorFootLine(door) } : {}),
+              })} />
+          </>
+        )}
+        {/* The card ends here (tab 2): the notes and Start over at the left, the two saves at the right; on a phone the
+            saves stack, Save this check first, the notes under them. */}
+        {!edit && <FormError inPlace>{error}</FormError>}
+        <div className={s.foot}>
+          <div className={s.footNotes}>
+            <p className={ck.hint}>
+              {notes.length > 0 && `${notes.join(' ')} `}
+              {work.keepFailed
+                ? <>{W.workKeepFailed}{' '}<button type="button" className={s.link} onClick={() => void work.flush()}>{W.tryAgain}</button></>
+                : W.workKept}
+            </p>
+            {askOver ? (
+              <span className={s.overAsk} role="group" aria-label={W.startOver}>
+                <span>{W.startOverAsk(markCount, false)}</span>
+                <button type="button" className={s.link} onClick={() => void startOver()} disabled={!!busy}>{W.startOver}</button>
+                <button type="button" className={s.link} onClick={() => setAskOver(false)}>{W.keepWorking}</button>
+              </span>
+            ) : (
+              <button type="button" className={s.link} onClick={askStartOver} disabled={!!busy}>{W.startOver}</button>
+            )}
+          </div>
+          <div className={s.footBtns}>{isPhone ? [checkButton, laterButton] : [laterButton, checkButton]}</div>
+        </div>
+      </div>
+      {/* After Add: the page notice, the day read again; the date, the balance and the marks stay. */}
       {adding && ownBook && (
         <AddEntryWindow book={{ id: ownBook.id, name: ownBook.name, kind: ownBook.kind as LedgerKind, entityId: ownBook.entityId }}
           // The club's fiscal years, as the Ledger hands them: a date in a closed year is said under the field (/review).
@@ -393,9 +535,15 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   );
 }
 
-/** What stands in for the band while there isn't one: reading, a refusal the server gave for this day, or a failed read. */
-function StatusLine({ figure, date, readError, fresh, onRetry }: {
-  figure: Figure | null; date: string; readError: string; fresh: boolean; onRetry: () => void;
+/** A colleague's work on this account (ruling 1, tab 6): who, which date, the day it last changed. Never the work. */
+function ColleagueLine({ c }: { c: ColleagueWork }) {
+  return <p className={s.colleague}><b>{W.colleagueWho(c.name)}</b>{W.colleagueWork(dayYear(c.date), dayShort(c.changedOn))}</p>;
+}
+
+/** What stands in for the band while there isn't one: reading, a refusal the server gave for this day, or a failed read.
+ *  `quiet` (before Start): only a refusal or a failed read; "Figuring this day…" waits for the band itself. */
+function StatusLine({ figure, date, readError, fresh, quiet = false, onRetry }: {
+  figure: Figure | null; date: string; readError: string; fresh: boolean; quiet?: boolean; onRetry: () => void;
 }) {
   if (fresh || !ISO_DAY.test(date)) return null;
   if (readError) {
@@ -407,5 +555,6 @@ function StatusLine({ figure, date, readError, fresh, onRetry }: {
   }
   // A day the server won't take a check for (before checking started, after today): its own sentence.
   if (figure && figure.date === date && figure.refused) return <p className={s.statusNote} role="status">{BANK_REFUSAL[figure.refused]}</p>;
+  if (quiet) return null;
   return <p className={`${ck.hint} ${s.hintLine}`} role="status">{W.figuring}</p>;
 }

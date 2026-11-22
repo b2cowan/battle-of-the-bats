@@ -317,3 +317,48 @@ p.afterStart { margin: 0 0 0.75rem; }
 
 /* Stripe-owned pricing Stage 3: one line per Stripe fee to record by hand, above the callout's hint. */
 .feeToRecord { display: block; margin-bottom: 0.3rem; }
+
+/* ── S7 (Bank check novice UX, plan §0 A18; drawing BANK_CHECK_NOVICE_UX_S7_DRAWINGS.html tabs 1–7): start, work, save
+   for later. ── */
+/* A colleague's work on the same account (ruling 1, tab 6): one quiet line, the name in ink. */
+p.colleague { margin: 0 0 0.75rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+p.colleague b { color: var(--text-primary); font-weight: 600; }
+/* The last 7 days of the 30 (ruling 2, tab 7): the restore line names the end date again, in warn ink. */
+.endsSoon { color: var(--badge-warning-ink); font-weight: 600; }
+/* The strip (tab 2): the house status form, white with the olive edge (tinted panels are retired, 2026-11-19). */
+.strip { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; margin: 0 0 0.75rem; padding: 0.6rem 0.9rem;
+  border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; background: var(--home-card);
+  font-size: var(--type-body); }
+.stripLabel { font-size: var(--type-label); font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-olive); } /* type-ok: eyebrow — the strip's "Checking" (drawing tab 2) */
+.stripValue { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.5rem; color: var(--text-secondary); }
+.stripValue b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+.stripChange { margin-left: auto; }
+/* Change (tab 3): the strip opens into the shipped fields, in place; Use these is the one lime button while it is open. */
+.stripEdit { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+.stripActs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.9rem; margin: 0 0 0.9rem; }
+.warnLine { margin: 0; padding: 0.5rem 0.75rem; border-left: 3px solid var(--warning); border-radius: 6px;
+  background: rgba(var(--warning-rgb), 0.08); color: var(--badge-warning-ink); font-size: var(--type-support); line-height: 1.45; }
+/* While Change is open the work and the foot wait, greyed (and inert), so a figure about to change can't be saved. */
+.waiting { opacity: 0.45; }
+/* The card's foot (tab 2): a rule, the notes and Start over at the left, Save for later and Save this check at the right. */
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem 1.25rem; margin-top: 1rem; padding-top: 0.9rem;
+  border-top: 1px solid var(--home-line); }
+.footNotes { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; max-width: 40rem; }
+.footNotes > p { margin: 0; }
+.footBtns { display: flex; flex: none; gap: 0.6rem; }
+.overAsk { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; font-size: var(--type-support); color: var(--text-primary); }
+@media (max-width: 768px) {
+  .overAsk { align-items: center; }
+}
+@media (max-width: 640px) {
+  /* The foot stacks, Save this check first (tab 2, phone); the notes under the buttons. */
+  .foot { flex-direction: column; align-items: stretch; }
+  .footBtns { flex-direction: column; }
+  .footBtns > :global(.btn) { width: 100%; justify-content: center; }
+  .footNotes { order: 2; }
+  .strip { padding: 0.5rem 0.75rem; }
+  .checkRow > .stripActs { grid-column: 1 / -1; margin: 0.25rem 0 0; }
+  .stripActs > :global(.btn) { width: 100%; justify-content: center; }
+  /* Change keeps its 44px tap box (.link above) without growing the strip: the box overhangs the strip's padding. */
+  .stripChange { margin-block: -0.5rem; }
+}

@@ -29,12 +29,13 @@ import { Plus } from 'lucide-react';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import pill from '@/components/shared/FilterPill.module.css';
 import LoadingState from '@/components/shared/LoadingState';
-import { useOrg } from '@/lib/org-context';
 import PageNotice, { useNotice } from '../../PageNotice';
 import { Callout, LoadFailed, useDeferredLoad, useLatestRead } from '../../RepKit';
 import { moneyFetch } from '../MoneyKit';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { checkingStartsOn } from '@/lib/bank-check';
+import type { WorkElsewhere } from '@/lib/bank-check-work';
+import { dayShort } from '@/lib/bank-screen';
 import { bankUrl, throughWords, type AccountView, type Overview } from './BankShared';
 import BankSetup from './BankSetup';
 import BankStatements from './BankStatements';
@@ -63,7 +64,9 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     setAfterStart(v.start ? { account: v.account.id, day: checkingStartsOn(v.start.date) } : null);
   };
   const [notice, setNotice] = useNotice();
-  const personId = useOrg().user?.id ?? null;
+  // The person's saved work on the club's OTHER accounts (S7, drawing tab 4), as the check card's own read says: the Account
+  // pill's second sub-line at 2+ accounts. Only a writer has a card, and only a writer can keep work.
+  const [elsewhere, setElsewhere] = useState<WorkElsewhere[]>([]);
   // The door's account and check, as the address named them on arrival (read once; see the header).
   const search = useSearchParams();
   const router = useRouter();
@@ -211,7 +214,10 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   // "Add ledger" is on the Book pill. One account: its name in the line, and the door to add one.
   const accountLine = accounts.length > 1 ? (
     <SingleSelectDropdown lead shrink label={W.accountPill} value={view.account.id} onChange={pickAccount}
-      options={accounts.map(a => ({ id: a.id, label: a.name, sub: throughWords(a.checkedThrough) }))}
+      options={accounts.map(a => {
+        const mine = a.id !== view.account.id ? elsewhere.find(e => e.accountId === a.id) : undefined;
+        return { id: a.id, label: a.name, sub: throughWords(a.checkedThrough), note: mine ? W.workElsewhere(dayShort(mine.date)) : undefined };
+      })}
       foot={canMove ? (
         <button type="button" className={`${pill.multiSelectOption} ${pill.multiSelectPick}`} onClick={() => setWin({ kind: 'addAccount' })}>
           <Plus size={14} aria-hidden /> {W.addAccount}
@@ -238,10 +244,10 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null}
         onOpen={id => setWin({ kind: 'check', id })}
         form={canMove ? (
-          // Keyed by the person too: their working draft (WD1) is read when the card mounts, and the signed-in person
-          // reaches the org context just after the page does.
-          <BankCheckForm key={`${again?.n ?? 0}:${personId ?? ''}`} againDate={again?.date} afterStart={afterStart?.account === view.account.id ? afterStart.day : undefined} orgSlug={orgSlug} view={view} personId={personId}
+          // The work is the signed-in person's on our servers (S7): the card reads it as it mounts, so no person in the key.
+          <BankCheckForm key={again?.n ?? 0} againDate={again?.date} afterStart={afterStart?.account === view.account.id ? afterStart.day : undefined} orgSlug={orgSlug} view={view}
             onStale={t => void staleRefresh(t)}
+            onNotice={text => setNotice({ tone: 'good', text })} onElsewhere={setElsewhere}
             onSaved={(v, text) => { setView(v); setAfterStart(null); setNotice({ tone: 'good', text }); }}
             // A line added through the Ledger's window (no account in hand: read it again) or the start corrected.
             onChanged={(v, text) => { if (v) setView(v); else void loadView(view.account.id); setNotice({ tone: 'good', text }); }} />

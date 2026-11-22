@@ -837,6 +837,15 @@
     "ordinal_position": 14
   },
   {
+    "table_name": "bank_check_drafts",
+    "column_name": "answered_no_keys",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "NO",
+    "column_default": "'{}'::text[]",
+    "ordinal_position": 15
+  },
+  {
     "table_name": "bank_check_waiting",
     "column_name": "id",
     "data_type": "uuid",

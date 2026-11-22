@@ -172,6 +172,8 @@
 .multiSelectPickText { display: flex; flex-direction: column; min-width: 0; }
 .multiSelectPickName { font-weight: 600; color: var(--text-primary); }
 .multiSelectPickSub { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); margin-top: 0.05rem; }
+/* `note`: the second sub-line, in the olive ink (the club Bank's Account pill, the account holding your saved work, S7). */
+.multiSelectPickNote { color: var(--home-olive); font-weight: 600; }
 /* A chip at the row's end, on the NAME's line (the season switcher's state pill; drawing 2026-11-11): it lines up with the
    chosen row's dot, never sits on a line of its own, and is never the part that gets cut. */
 .multiSelectPickTrail { display: flex; flex: none; align-self: flex-start; margin-left: auto; padding-left: 0.75rem; margin-top: 1px; }

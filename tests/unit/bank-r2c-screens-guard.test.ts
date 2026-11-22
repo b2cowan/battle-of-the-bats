@@ -8,7 +8,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { filesUnder, readCode, readSource } from './_source-code.ts';
+import { filesUnder, functionBody, readCode, readSource, splitPhoneCss } from './_source-code.ts';
 import { accountingTabs, accountingTabFor } from '../../lib/admin-kit-nav.ts';
 import { BANK_WORDS } from '../../lib/bank-tab-words.ts';
 
@@ -140,7 +140,7 @@ describe('5 · the check form: a balance, not a tick-off', () => {
   });
   it('Save works while off: no $0.00 gate on the button (ruling 3)', () => {
     const form = code('BankCheckForm.tsx');
-    assert.match(form, /disabled=\{busy \|\| !fresh\}/);
+    assert.match(form, /className="btn btn-lime" onClick=\{\(\) => void save\(\)\} disabled=\{!!busy \|\| !fresh\}/);
     assert.doesNotMatch(form, /result === 'matches'[^;]*disabled|disabled=\{[^}]*(band|offBy|differenceCents)/);
   });
   it('the form is a writer\'s: the tab mounts it behind canMove, and it asks for a CHECK (the start\'s own day reads before_start)', () => {
@@ -235,12 +235,12 @@ describe('9 · Find: the hints, the lines, Not in the bank yet, Still waiting?',
     assert.match(form, /figureCheck\(\{ bankCents: typed \?\? 0, booksCents: fresh\.booksCents, onItsWayCents: fresh\.onItsWay\.cents, waiting: items, cashCents: null \}\)/);
     assert.match(form, /amount: moved\(waitingOnCheck\(w\)\)/);
     // WD1: and the restored marks still waiting on the figure, and the dropped-mark callout.
-    assert.match(form, /const pickDate = \(v: string\) => \{\s*setDate\(v\); setError\(''\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\); setPending\(null\); setDroppedMarks\(0\);\s*\};/, 'a new date clears the marks and the answers');
+    assert.match(form, /const newDay = \(v: string\) => \{\s*setDate\(v\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\); setPending\(null\); setDroppedMarks\(0\);\s*\};/, 'a new date clears the marks and the answers');
   });
   it('Still waiting? asks each of the earlier check\'s items once: Yes marks it, No drops it', () => {
     const form = code('BankCheckForm.tsx');
     assert.match(form, /\(fresh\?\.stillWaiting \?\? \[\]\)\.filter\(w => !marked\.has\(w\.key\) && !dropped\.has\(w\.key\)\)/);
-    assert.match(form, /onYes: \(\) => mark\(w\), onNo: \(\) => setDropped\(d => new Set\(d\)\.add\(w\.key\)\)/);
+    assert.match(form, /onYes: \(\) => mark\(w\), onNo: \(\) => \{ setDropped\(d => new Set\(d\)\.add\(w\.key\)\); touch\(\); \}/);
     // BC4a (owner 2026-11-06): the check on which a line is put on the start doesn't ask about it, after the start took it.
     assert.match(form, /setFigure\(null\);\n(?:\s*\/\/[^\n]*\n)*\s*setDropped\(d => new Set\(d\)\.add\(line\.key\)\);\n\s*onChanged\(r\.view, W\.atStartDone/);
     // The start's lines arrive as Still-waiting rows: the same sentence, no start-only words.
@@ -360,12 +360,16 @@ describe('8 · a saved check, opened', () => {
     assert.doesNotMatch(win + code('BankStatements.tsx'), /toLocale(Time|Date)?String|getHours|getMinutes/);
   });
   it('Check this statement again re-keys the form with the date; the form focuses the balance', () => {
-    // Keyed by the signed-in person too (WD1: their working draft is read as the card mounts).
-    assert.match(code('BankTab.tsx'), /<BankCheckForm key=\{`\$\{again\?\.n \?\? 0\}:\$\{personId \?\? ''\}`\} againDate=\{again\?\.date\}/);
-    // The handed date wins over a working draft's (WD1), which wins over today.
-    assert.match(code('BankCheckForm.tsx'), /const opening = afterStart \? '' : againDate \?\? restored\?\.date \?\? today;/);
-    assert.match(code('BankCheckForm.tsx'), /useState\(opening\)/);
-    assert.match(code('BankCheckForm.tsx'), /field\?\.focus\(\{ preventScroll: true \}\)/);
+    // S7: the work follows the person on the server (the card reads it as it opens), so the form is keyed on the count
+    // alone: no person in the key, no useOrg.
+    assert.match(code('BankTab.tsx'), /<BankCheckForm key=\{again\?\.n \?\? 0\} againDate=\{again\?\.date\}/);
+    assert.doesNotMatch(code('BankTab.tsx') + code('BankCheckForm.tsx'), /personId|useOrg\(\)/);
+    // The handed date is the card's day when no work is saved; with other work saved it opens Change on that day instead
+    // (ruling 5: never a silent swap).
+    const form = code('BankCheckForm.tsx');
+    assert.match(form, /seedOfWork\(afterStart \? null : work\.mine, afterStart \? '' : againDate \?\? today, againDate\)/);
+    assert.match(form, /seed\.swapTo \? \{ date: seed\.swapTo, balance: '' \} : null/);
+    assert.match(form, /field\?\.focus\(\{ preventScroll: true \}\)/);
   });
   it('the top line says "Checked through {date}" and an amber chip when the latest check is off (ask 4)', () => {
     const list = code('BankStatements.tsx');
@@ -422,11 +426,14 @@ describe('11 · the phone: Find as row cards, the callout\'s row, the two phone 
     // Never the kit's `muted` opacity on a Find card: it took the caption under the contrast floor (/review BC4b).
     assert.doesNotMatch(code('BankFind.tsx'), /<ClubRow muted\b|<ClubRow[^>]*\bmuted\b/);
     // A failed save's sentence sits by Save on a phone, where Save is the card's last thing.
-    assert.match(code('BankCheckForm.tsx'), /\{isPhone && <FormError inPlace>\{error\}<\/FormError>\}\s*\{isPhone && saveButton\}/);
+    // (Before Start the button is Start; the check's own Save is the foot's, its sentence just above it.)
+    assert.match(code('BankCheckForm.tsx'), /\{isPhone && <FormError inPlace>\{error\}<\/FormError>\}\s*\{isPhone && startButton\}/);
+    assert.match(code('BankCheckForm.tsx'), /\{!edit && <FormError inPlace>\{error\}<\/FormError>\}\s*<div className=\{s\.foot\}>/);
+    assert.match(code('BankCheckForm.tsx'), /\{isPhone \? \[checkButton, laterButton\] : \[laterButton, checkButton\]\}/, 'Save this check first on a phone');
   });
   it('the callout\'s answers are each a full-width row on a phone, equal widths', () => {
     const css = readSource(CSS);
-    const phone = css.slice(css.lastIndexOf('@media (max-width: 640px)'));
+    const phone = splitPhoneCss(css).phone;
     // Each its own full-width row, one line (/design BC4b: side by side they broke mid-phrase at 390 and 361).
     assert.match(phone, /\.calloutActs \{ display: flex; flex-direction: column; align-items: stretch; flex: 1 1 100%; gap: 0\.5rem; \}/);
     assert.match(phone, /\.calloutActs > :global\(\.btn\) \{ width: 100%; justify-content: center; \}/);
@@ -445,7 +452,7 @@ describe('11 · the phone: Find as row cards, the callout\'s row, the two phone 
     assert.match(code('BankFind.tsx'), /<ClubRowBand>\{sinceHead\}<\/ClubRowBand>/);
     assert.match(code('BankCheckForm.tsx'), /label=\{isPhone \? W\.checkBalancePhone : W\.checkBalance\}/);
     const css = readSource(CSS);
-    const phone = css.slice(css.lastIndexOf('@media (max-width: 640px)'));
+    const phone = splitPhoneCss(css).phone;
     assert.match(phone, /\.checkRow \{ grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
   });
   it('no pinned strip or dock, and no tick vocabulary, on any bank screen', () => {
@@ -630,10 +637,14 @@ describe('14. through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_CH
     assert.match(form, /<DayField id=\{DATE_ID\} label=\{W\.checkDate\}/);
   });
   it('rows 6 + 10 + 21: one note line, where the notes always sat', () => {
-    assert.match(form, /typed === null && !afterStart \? W\.balanceHint : null,/);
-    assert.match(form, /band && band\.result === 'off' && typed !== null \? W\.saveOffNote : null,/);
-    assert.match(form, /replaces \? W\.replacesNote\(dayYear\(date\)\) : null,/);
-    assert.match(form, /hasDraft \? W\.draftKept : null,/);
+    // Before Start: "{date} is checked already" and which balance to type; working: that, the off note, and the resting
+    // sentence the server's keep makes true (S7: W.workKept, replaced by W.workKeepFailed + Try again when a keep failed).
+    assert.match(form, /!afterStart \? W\.balanceHint : null/);
+    assert.match(form, /off \? W\.saveOffNote : null/);
+    assert.match(form, /replaces \? W\.replacesNote\(dayYear\(date\)\) : null/);
+    assert.match(form, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{s\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: W\.workKept\}/);
+    assert.doesNotMatch(form, /draftKept|hasDraft/);
+    assert.equal(BANK_WORDS.workKept, 'Kept as you go, on any device you sign in on, until you save this check.');
     assert.equal(BANK_WORDS.saveOffNote, 'You can save this check while it’s off and check again later. Saving changes nothing in your books.');
   });
   it('row 19: the Add an entry window the Bank tab opens says which status a bank fee takes; the Ledger\'s own says nothing', () => {
@@ -658,21 +669,29 @@ describe('S1b: the start is a statement\'s opening balance, as drawn and ruled (
     assert.ok(!('statementDate' in BANK_WORDS), 'the start card was its last reader');
   });
   it('ask B: after a start the date is EMPTY, never a guessed month-end', () => {
-    assert.match(form, /const opening = afterStart \? '' : againDate \?\? restored\?\.date \?\? today;/);
+    assert.match(form, /seedOfWork\(afterStart \? null : work\.mine, afterStart \? '' : againDate \?\? today, againDate\)/);
   });
   it('ask C: the banking-app hint waits while the after-start line shows', () => {
-    assert.match(form, /typed === null && !afterStart \? W\.balanceHint : null,/);
+    assert.match(form, /const notes = \[replaces \? W\.replacesNote\(dayYear\(date\)\) : null, !afterStart \? W\.balanceHint : null\]/);
   });
   it('/design: the cursor goes in the date at a desk only; the line describes the date for a screen reader', () => {
     assert.match(form, /const at = againDate \? BALANCE_ID : desk \? DATE_ID : null;/);
-    // Once per opening (/simplify, /review): recorded before the desk test, so a resize never moves the cursor mid-typing.
+    // Once per opening (/simplify, /review): recorded before the desk test, so a resize never moves the cursor mid-typing
+    // (S7: the card mounts only after the work is read, so there is no `loading` to wait on here).
     assert.match(form, /if \(!why \|\| arrivedFor\.current === why\) return;\s*arrivedFor\.current = why;/);
   });
-  it('/review: after a start nothing is kept as a draft until a day is picked, and an older draft goes', () => {
-    assert.match(form, /const dateless = !!afterStart && !ISO_DAY\.test\(date\);/);
-    assert.match(form, /const worthKeeping = !dateless && isWorthKeeping\(draft\);/);
-    assert.match(form, /if \(!draftAt \|\| dateless \|\| draftText === lastKept\.current\) return;/);
-    assert.match(form, /if \(afterStart && draftAt\) clearDraft\(browserDraftStore\(\), draftAt\);/);
+  it('/review (S7): after a start the card opens BEFORE Start with the date empty, nothing is kept until Start, and saved work is never discarded unasked', () => {
+    // The work is read as the card mounts (the hook) and the card seeded from it; just started shows the empty-date start,
+    // not the saved work.
+    assert.match(form, /const work = useBankCheckWork\(bankUrl\(props\.orgSlug, `\/accounts\/\$\{props\.view\.account\.id\}\/work`\), W\.workKeepFailed\);/);
+    assert.match(form, /seedOfWork\(afterStart \? null : work\.mine, afterStart \? '' : againDate \?\? today, againDate\)/, 'with afterStart the saved work is not opened, and the date is empty');
+    // Nothing is kept before Start (the guard is `working`); the first keep is Start itself, which needs a day.
+    assert.match(form, /if \(working\) keep\(currentText\);/);
+    assert.match(functionBody(form, 'start'), /if \(busy \|\| !ISO_DAY\.test\(date\)\) return;/, 'no day picked, no start');
+    // Never discarded unasked: the only call that deletes the work is Start over's, and afterStart never reaches it.
+    assert.equal((form.match(/work\.startOver\(\)/g) ?? []).length, 1);
+    assert.doesNotMatch(form, /if \(afterStart[^)]*\)[^;{]*(startOver|forget|clearLegacy)/);
+    assert.doesNotMatch(form, /clearDraft|browserDraftStore|draftKey|readDraft|writeDraft/);
   });
   it('/review: a statement can\'t start after today (the server sees the day before), and the line keeps to its account', () => {
     assert.match(code('BankSetup.tsx'), /if \(firstDay > today\) \{ setError\(W\.startAfterToday\); return; \}/);

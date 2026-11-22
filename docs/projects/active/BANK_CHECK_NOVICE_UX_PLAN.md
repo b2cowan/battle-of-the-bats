@@ -209,6 +209,23 @@ sentence; the walked working-draft cards change shape and their walks are redone
   raise:** a "No" to "Still waiting?" is not kept (WD2). Committed `96e2135ea` (the record) and `e5dc36ad1` (the
   nightly sweep, its own commit) 2026-11-22. **Part 2 build prompt written 2026-11-22:**
   `BANK_CHECK_NOVICE_UX_S7_PART2_BUILD_PROMPT.md`.
+- **Part 2 (the two cards, to the drawing) BUILT and committed 2026-11-22.** Both cards take tabs 1–7 through ONE hook
+  (`lib/hooks/useBankCheckWork.ts`: read on mount, kept as you go after a 600 ms pause, one keep at a time naming its
+  revision, `keepalive` flush on leaving, a `work_changed` re-reads and re-seeds the card and says so, a failed keep says so
+  in place of the resting sentence); the shared opening rule `seedOfWork` and `workText` live in `lib/bank-check-work.ts`.
+  The browser store is retired: sign-out only deletes the old v1 browser keys (`clearLegacyDrafts`), it no longer clears
+  the work. Club Account pill: the shared dropdown's new `note` line. Words settled by `/marketing` (S7 block in
+  `lib/bank-tab-words.ts`, and the API's two refusals). **Owner ruling 2026-11-22: a "No" to "Still waiting?" is kept with
+  the work** (WD2's open question): `answered_no_keys`, mig 524, keys only, cleared by a new date; **applied to dev and to
+  production 2026-11-22** on the owner's word (additive; parity 0). **Where the code overrode the prompt, said out loud:**
+  a just-started club account (S1b) opens before Start and never discards saved work unasked (Start replaces it); the
+  pill's note is fed by the card's own read, so an account not started yet shows none for the others. Checks: `/design`
+  at 1440/390 (two coach fixes applied: the stranded strip dot on a phone, Change's actions in the fields' row),
+  `/simplify` (4 angles, applied), the bank suites 552/552, typecheck clean, `check:layout` on both bank screens clean,
+  the cards proved in a real browser on dev by `.probe/bank-ux-s7/cards.mjs` (both portals, 1440 + 390: Start, keep,
+  Save for later, found again on another device, a colleague's line, Change's warning, Start over's question, another
+  device's newer work, the pill, the No kept). **Part 3 next** (help, `/review` on the whole S7 diff, the two walks):
+  `BANK_CHECK_NOVICE_UX_S7_PART3_BUILD_PROMPT.md`.
 
 **Order:** S1 → S1b → S2 → S3 → S7 (drawing session, then build). S4 may run any time after S1. S5 is decided after S3.
 

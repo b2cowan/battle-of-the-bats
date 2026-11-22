@@ -83,8 +83,9 @@ export default function SingleSelectDropdown({
    *  beneath, a hairline between rows) — the club Bank's Account pill, each account's latest check (owner 2026-11-07).
    *  A sub-line is words, `detail` a figure: a sentence squeezed to the row's end read as a stray column. `trail` is a
    *  CHIP at the row's end, on the NAME's line (only on a `sub` row; the season switcher's state pill, never cut when
-   *  the name is). All opt-in; no portal strip passes one. */
-  options: readonly { id: string; label: string; detail?: ReactNode; sub?: string; trail?: ReactNode; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
+   *  the name is). `note` is a SECOND sub-line in the olive ink, under `sub` (only on a `sub` row): the club Bank's Account
+   *  pill, "Your check of Oct 31 is saved for later" (bank check S7, drawing tab 4). All opt-in; no portal strip passes one. */
+  options: readonly { id: string; label: string; detail?: ReactNode; sub?: string; note?: string; trail?: ReactNode; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
   value: string;
   onChange: (next: string) => void;
   /**
@@ -222,6 +223,7 @@ export default function SingleSelectDropdown({
           <span className={styles.multiSelectPickText}>
             <span className={styles.multiSelectPickName}>{o.label}{o.mark}{o.rowMark}</span>
             <span className={styles.multiSelectPickSub}>{o.sub}</span>
+            {o.note != null && <span className={`${styles.multiSelectPickSub} ${styles.multiSelectPickNote}`}>{o.note}</span>}
           </span>
           {o.trail != null && <span className={styles.multiSelectPickTrail}>{o.trail}</span>}
         </>

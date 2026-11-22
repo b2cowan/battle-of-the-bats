@@ -228,7 +228,43 @@ export const BANK_WORDS = {
   draftPickedUpOn: (date: string) => `Picked up where you left off · last worked on ${date}`,
   startOver: 'Start over',
   startedOffBy: (amount: string) => `Started off by ${amount}`,
-  draftKept: 'Kept in this browser only, until you save this check or sign out.',
+  // ── S7 (plan BANK_CHECK_NOVICE_UX_PLAN.md §0 A18 ruling 9; drawing BANK_CHECK_NOVICE_UX_S7_DRAWINGS.html; settled with
+  // /marketing 2026-11-22). The work is kept on our servers for its person, from Start, as they go, 30 days from the last
+  // change. The resting sentence replaces WD's "Kept in this browser only…"; a failed keep replaces the resting sentence
+  // (it must never promise what didn't happen, ruling 4). ──
+  workKept: 'Kept as you go, on any device you sign in on, until you save this check.',
+  workKeepFailed: 'Your latest changes aren’t kept yet.',
+  startChecking: 'Start checking this statement',
+  saveForLater: 'Save for later',
+  savedForLater: (date: string) => `Saved for later. Pick it up here, on any device you sign in on, until ${date}.`,
+  saveForLaterFailed: 'This couldn’t be saved for later.',
+  // The strip: the date only (the band's first figure is the balance, ruling 9); the coach's cash joins it when typed.
+  stripChecking: 'Checking',
+  stripChange: 'Change',
+  stripCash: 'Cash not deposited yet',
+  // Change (ruling 5): a new balance (or the coach's cash) keeps every mark; a new date asks once, then clears them.
+  changeUse: 'Use these',
+  changeKeep: (shortDate: string) => `Keep ${shortDate}`,
+  changeClears: (n: number, coach: boolean) => `A new date clears the ${plural(n, 'line')} you marked. Changing only the ${coach ? 'balance or the cash' : 'balance'} keeps ${n === 1 ? 'it' : 'them'}.`,
+  // Start over (ruling 9): confirms in one line only when lines are marked; at once otherwise.
+  startOverAsk: (n: number, cash: boolean) => (cash
+    ? `Start over? The ${plural(n, 'line')} you marked, the balance and the cash go.`
+    : `Start over? The ${plural(n, 'line')} you marked and the balance go.`),
+  keepWorking: 'Keep working',
+  startOverFailed: 'Start over didn’t go through. Your check is still here.',
+  // A colleague on the same account (ruling 1): who, which date, the day it last changed. Never the work itself.
+  // The name is said in ink, the rest quiet (drawing tab 6): two pieces, one sentence.
+  colleagueWho: (name: string | null) => name ?? 'Someone',
+  colleagueWork: (date: string, changedShort: string) => ` has a check of ${date} saved for later (${changedShort}).`,
+  // The last 7 days of the 30 (ruling 2), after the restore line, in warn ink.
+  workEndsSoon: (date: string) => `Kept until ${date}. Any change, or Save for later, keeps it 30 more days.`,
+  // The club's Account pill at 2+ accounts (ruling 3, drawing tab 4): the account holding your saved work.
+  workElsewhere: (shortDate: string) => `Your check of ${shortDate} is saved for later`,
+  // Another device kept newer work (`work_changed`): the card read again and shows what is there now.
+  workNewerHere: 'Updated from another device. This is the check as you left it there.',
+  workNewerGone: 'This check was saved or cleared on another device, so you’re back at the start.',
+  workLoading: 'Loading your check…',
+  workLoadFailed: 'Your check in progress couldn’t be loaded.',
   // A restored mark the books no longer offer: dropped, never silently kept.
   draftDropped: (n: number) => (n === 1
     ? 'One line you marked isn’t in your books any more, so we took it off.'

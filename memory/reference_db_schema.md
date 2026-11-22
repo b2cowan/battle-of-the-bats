@@ -768,7 +768,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, owner_kind NOT NULL, tea
 - Indexes: bank_accounts_club_name, bank_accounts_created_by_idx, bank_accounts_one_per_team, bank_accounts_org_idx
 
 ### bank_check_drafts
-id (uuid), bank_account_id (uuid) → bank_accounts.id NOT NULL, user_id (uuid) NOT NULL, statement_end_date NOT NULL, balance_text, cash_text, marked_keys, started_date, started_balance_text, started_difference_cents (bigint), revision (integer), created_at, updated_at, expires_at NOT NULL
+id (uuid), bank_account_id (uuid) → bank_accounts.id NOT NULL, user_id (uuid) NOT NULL, statement_end_date NOT NULL, balance_text, cash_text, marked_keys, started_date, started_balance_text, started_difference_cents (bigint), revision (integer), created_at, updated_at, expires_at NOT NULL, answered_no_keys
 - Indexes: bank_check_drafts_expires_idx, bank_check_drafts_one_per_person, bank_check_drafts_user_idx
 
 ### bank_check_waiting

@@ -292,3 +292,37 @@ describe('3. where the work goes', () => {
     assert.match(between(roll, 'export async function closeOpenSeason(', '\nexport '), /if \(data\) \{\s+await discardTeamWork\(teamId\)\.catch\(/);
   });
 });
+
+describe('4. a "No" to "Still waiting?" is kept with the work (owner 2026-11-22, mig 524)', () => {
+  it('a keep may carry the No answers: keys only, the marks\' rules; none is absent, never an empty list', async () => {
+    const { workText, workOfSaved, seedOfWork } = await import('../../lib/bank-check-work.ts');
+    const withNo = { ...WORK, answeredNo: ['check:cccc-3'] };
+    assert.deepEqual(readWorkBody({ work: withNo })?.work, withNo);
+    assert.equal('answeredNo' in (readWorkBody({ work: { ...WORK, answeredNo: [] } })?.work ?? {}), false);
+    for (const answeredNo of [['x'], ['check:a', 'check:a'], 'check:a', [7], Array.from({ length: BANK_CHECK_DRAFT_MAX_MARKS + 1 }, (_, i) => `check:${i}`)]) {
+      assert.equal(readWorkBody({ work: { ...WORK, answeredNo } }), null, JSON.stringify(answeredNo).slice(0, 40));
+    }
+    // The canonical text: unchanged when there are none (a card without a No sends what it sent before).
+    assert.equal(workText({ ...WORK, answeredNo: [] }), workText(WORK));
+    assert.deepEqual(Object.keys(JSON.parse(workText(withNo))), ['date', 'balance', 'marked', 'answeredNo', 'started']);
+    const saved = { ...withNo, revision: 2, changedOn: '2026-11-20', endsOn: '2026-12-20' };
+    assert.equal(workText(workOfSaved(saved)), workText(withNo));
+    // The card opens with them answered; a swap to another date waits for Use these (which clears them with the marks).
+    assert.deepEqual(seedOfWork(saved, '2026-11-22').answeredNo, ['check:cccc-3']);
+    assert.deepEqual(seedOfWork(null, '2026-11-22').answeredNo, []);
+  });
+  it('the server stores and returns them; both cards seed their answered set from the work and keep it, and a new day clears it', () => {
+    const server = readCode('lib/bank-check-work-server.ts');
+    assert.match(server, /MY_COLS = '[^']*answered_no_keys/);
+    assert.match(server, /answered_no_keys: w\.answeredNo \?\? \[\]/);
+    assert.match(server, /r\.answered_no_keys\?\.length \? \{ answeredNo: \[\.\.\.r\.answered_no_keys\] \}/);
+    // The colleague's quiet line never learns it.
+    assert.doesNotMatch(server.match(/COLLEAGUE_COLS = '[^']*'/)?.[0] ?? '', /answered/);
+    for (const f of ['components/admin/kit/club/money/bank/BankCheckForm.tsx', 'components/coaches/bank/CoachBankCheck.tsx']) {
+      const card = readCode(f);
+      assert.match(card, /useState<ReadonlySet<string>>\(\(\) => new Set\(seed\.answeredNo\)\)/, f);
+      assert.match(card, /\.\.\.\(dropped\.size \? \{ answeredNo: \[\.\.\.dropped\] \} : \{\}\), started: anchor \}/, f);
+      assert.match(card, /const newDay = \(v: string\) => \{[^}]*setDropped\(new Set\(\)\)/, f);
+    }
+  });
+});

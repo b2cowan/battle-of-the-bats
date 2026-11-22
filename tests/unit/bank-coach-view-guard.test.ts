@@ -83,15 +83,22 @@ describe('3 · rule 6: intent in, the server\'s numbers out', () => {
     assert.match(form, /date, bankCents: typed, \.\.\.\(cashCents \? \{ cashCents \} : \{\}\), waiting: \[\.\.\.marked\.keys\(\)\],/);
   });
   it('after a save the form starts fresh WITHOUT clearing the notice it just gave (/review BC7a)', () => {
-    // WD2: the fresh card is Start over's (it clears the draft too), and Start over never touches the notice.
-    assert.match(functionBody(form, 'save'), /\n {4}startOver\(\);\n/);
-    const fresh = functionBody(form, 'startOver');
+    // S7: a saved check is the record and the server took the work with it, so the card forgets the work (no delete call)
+    // and starts fresh through `reset`; neither Start over nor `reset` ever touches the notice.
+    assert.match(functionBody(form, 'save'), /\n {4}work\.forget\(\);\n {4}reset\(\);\n/);
+    assert.doesNotMatch(functionBody(form, 'save'), /work\.startOver/, 'the save never deletes the work itself');
+    const fresh = functionBody(form, 'reset');
     // S1 (A8): the cash field closes behind its link again.
     assert.match(fresh, /setBalance\(''\); setCash\(''\); setCashAsked\(false\); newDay\(today\); setAsOf\(today\);/);
     assert.match(form, /const newDay = \(v: string\) => \{ setDate\(v\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\);/);
-    assert.doesNotMatch(fresh, /touch\(\)|onTouched|pickDate/);
+    assert.doesNotMatch(fresh + functionBody(form, 'startOver'), /touch\(\)|onTouched|pickDate/);
     assert.doesNotMatch(form, /pickDate\(today\)/);
     assert.match(form, /if \(!active \|\| !ISO_DAY\.test\(asOf\)\) return;/, 'the hidden Ledger reads nothing');
+    // Start over (S7 ruling 9) goes through the hook, which deletes the work on the server, and asks in one line only when
+    // lines are marked; a failure says the check is still here and leaves the card as it was.
+    assert.match(functionBody(form, 'startOver'), /const r = await work\.startOver\(\);\s*setBusy\(null\);\s*if \(!r\.ok\) \{ setAskOver\(false\); setError\(W\.startOverFailed\); return; \}\s*reset\(\);/);
+    assert.match(form, /const askStartOver = \(\) => \{ if \(markCount > 0\) setAskOver\(true\); else void startOver\(\); \};/);
+    assert.match(form, /<span>\{W\.startOverAsk\(markCount, cashCents !== null\)\}<\/span>/);
   });
   it('a refused day says the server\'s sentence (O5), never prose of its own', () => {
     assert.match(form, /figure\.refused\) return <p className=\{b\.status\} role="status">\{BANK_REFUSAL\[figure\.refused\]\}<\/p>/);
@@ -148,9 +155,12 @@ describe('5 · one look-free module shared, each portal its own look', () => {
 describe('6 · the phone (BC7b: drawing tab 2, the club\'s BC4b recipe in the portal\'s own list)', () => {
   it('Save is inline at a desk and the card\'s last thing on a phone; the one note line sits under the fields on both (S1, D1/D2)', () => {
     const check = code('CoachBankCheck.tsx');
-    assert.match(check, /\{!isPhone && saveButton\}\s*<\/div>\s*\{!isPhone && errorLine\}\s*\{noteLine\}/);
-    assert.match(check, /\{isPhone && errorLine\}\s*\{isPhone && saveButton\}\s*<\/section>/);
-    assert.match(check, /const notes = \[[\s\S]*?typed === null \? W\.coachSince\(dayYear\(view\.season\.start\)\) : null,/);
+    // S7: before Start the button is Start (inline at a desk, last on a phone); the check's Save lives in the working foot,
+    // which stacks on a phone with Save this check first. The one note line sits under the fields on both.
+    assert.match(check, /\}, !isPhone \? startButton : null\)\}\s*\{!isPhone && errorLine\}\s*<p className=\{`\$\{styles\.formHint\} \$\{b\.note\}`\}>/);
+    assert.match(check, /\{isPhone && errorLine\}\s*\{isPhone && startButton\}\s*<\/section>/);
+    assert.match(check, /const notes = \[fresh\?\.replaces \? W\.replacesNote\(dayYear\(date\)\) : null, W\.coachSince\(dayYear\(view\.season\.start\)\), W\.balanceHint\]/);
+    assert.match(check, /\{isPhone \? \[checkButton, laterButton\] : \[laterButton, checkButton\]\}/, 'Save this check first on a phone');
   });
   it('the phone band says "Your Ledger, less $X not deposited" when the cash is all that is taken off, in the coach view only', () => {
     assert.equal(BANK_WORDS.coachShouldCashPhone('$180.00'), 'Your Ledger, less $180.00 not deposited');
@@ -298,8 +308,10 @@ describe('9 · through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_C
   });
   it('A8: the cash field waits behind "Holding cash you haven\'t deposited?"; open once asked for or with cash in it', () => {
     assert.match(check, /const cashOpen = cashAsked \|\| cash !== '';/);
-    assert.match(check, /\{cashOpen && \(\s*<div className=\{styles\.field\}>\s*<label className=\{styles\.label\} htmlFor=\{CASH_ID\}>\{W\.coachCash\}<\/label>/);
-    assert.match(check, /\{!cashOpen && \([\s\S]*?\{W\.coachCashOpen\}<\/button>/);
+    // The fields are one helper (before Start, and in Change): the cash field only where `cashOpen` says; the link otherwise.
+    assert.match(check, /\{f\.cashOpen && \(\s*<div className=\{styles\.field\}>\s*<label className=\{styles\.label\} htmlFor=\{CASH_ID\}>\{W\.coachCash\}<\/label>/);
+    assert.match(check, /\{!cashOpen && <>\{' '\}\{cashLink\(\(\) => setCashAsked\(true\)\)\}<\/>\}/);
+    assert.match(check, /const cashLink = [\s\S]*?\{W\.coachCashOpen\}\s*<\/button>/);
     assert.equal(BANK_WORDS.coachCashOpen, 'Holding cash you haven’t deposited?');
   });
   it('row 8: the coach card names the figure "your Ledger"; the club\'s shared words keep "your books"', () => {
@@ -312,12 +324,16 @@ describe('9 · through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_C
     assert.equal(BANK_WORDS.bandBankLess('$4.50'), 'The bank shows $4.50 less than your books.');
   });
   it('rows 10 + 21 + 6: one note line; the balance hint and the season\'s days until a balance is typed', () => {
-    assert.match(check, /typed === null \? W\.balanceHint : null,/);
-    assert.match(check, /off \? W\.coachSaveOffNote : null,/);
-    assert.match(check, /fresh\?\.replaces \? W\.replacesNote\(dayYear\(date\)\) : null,/);
+    // Before Start: the day's "checked already", the season's days and which balance to type; working: that, the off note, and
+    // the resting sentence (S7: W.workKept, in place of which a failed keep says so).
+    assert.match(check, /const notes = \[fresh\?\.replaces \? W\.replacesNote\(dayYear\(date\)\) : null, W\.coachSince\(dayYear\(view\.season\.start\)\), W\.balanceHint\]/);
+    assert.match(check, /off \? W\.coachSaveOffNote : null/);
+    assert.match(check, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{b\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: W\.workKept\}/);
+    assert.doesNotMatch(check, /draftKept|hasDraft/);
     assert.equal(BANK_WORDS.replacesNote('Nov 8, 2026'), 'Nov 8, 2026 is checked already. Saving again replaces that check.');
-    // S7 replaces the draft's resting sentence; S1 leaves it exactly as WD2 wrote it.
-    assert.equal(BANK_WORDS.draftKept, 'Kept in this browser only, until you save this check or sign out.');
+    // S7 (2026-11-22) replaced WD2's browser sentence with the server's promise; the old one is gone from the words.
+    assert.equal(BANK_WORDS.workKept, 'Kept as you go, on any device you sign in on, until you save this check.');
+    assert.equal('draftKept' in BANK_WORDS, false);
   });
   it('rows 13 + 25: the list\'s names, and a view-only coach is told who can check', () => {
     assert.equal(BANK_WORDS.listTitle, 'Balance checks');

@@ -281,3 +281,56 @@ tr.divider > td {
   /* Only a hinted row carries a chip: its action line starts below the chip's tap box, not under it (/review). */
   .findCards .hitCard + * { margin-top: 0.3rem; }
 }
+
+/* ── S7 (Bank check novice UX, plan §0 A18; drawing BANK_CHECK_NOVICE_UX_S7_DRAWINGS.html tabs 1–7, the coach frames): start,
+   work, save for later. The club card's recipe (`Bank.module.css`), in the coach kit. ── */
+/* A colleague's work on the same team's account (ruling 1, tab 6): one quiet line, the name in ink. */
+p.colleague { margin: 0 0 0.75rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+p.colleague b { color: var(--text-primary); font-weight: 600; }
+p.statusLine { margin: 0 0 0.75rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+/* The last 7 days of the 30 (ruling 2, tab 7): the restore line names the end date again, in warn ink. */
+.endsSoon { color: var(--badge-warning-ink); font-weight: 600; }
+/* The strip (tab 2): the house status form, white with the olive edge; the cash joins it when typed (ruling 3). */
+.strip { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; margin: 0 0 0.75rem; padding: 0.6rem 0.9rem;
+  border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; background: var(--home-card);
+  font-size: var(--type-body); }
+.stripLabel { font-size: var(--type-label); font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-olive); }
+.stripValue { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.5rem; color: var(--text-secondary); }
+.stripValue b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+.stripDot { color: var(--text-tertiary); }
+.stripChange { margin-left: auto; }
+/* Change (tab 3): the strip opens into the shipped fields in place; Use these the one filled button while it is open. */
+.stripEdit { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+/* In the fields' row, its last cell, level with the inputs (drawing tab 3); under the fields on a narrow screen. */
+.stripActs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.9rem; align-self: end; min-height: 2.5rem; }
+.warnLine { margin: 0; padding: 0.5rem 0.75rem; border-left: 3px solid var(--warning); border-radius: 6px;
+  background: rgba(var(--warning-rgb), 0.08); color: var(--badge-warning-ink); font-size: var(--type-support); line-height: 1.45; }
+/* While Change is open the work and the foot wait, greyed (and inert). */
+.waiting { opacity: 0.45; }
+/* The card's foot (tab 2): a rule, the notes and Start over at the left, Save for later and Save this check at the right. */
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem 1.25rem; margin-top: 1rem; padding-top: 0.9rem;
+  border-top: 1px solid var(--home-line); }
+.footNotes { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; max-width: 40rem; }
+.footNotes > p { margin: 0; }
+.footBtns { display: flex; flex: none; gap: 0.6rem; }
+.overAsk { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; font-size: var(--type-support); color: var(--text-primary); }
+@media (max-width: 768px) {
+  .overAsk { align-items: center; }
+  .footBtns button, .stripActs button { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  /* The foot stacks, Save this check first (tab 2, phone); the notes under the buttons. */
+  .foot { flex-direction: column; align-items: stretch; }
+  .footBtns { flex-direction: column; }
+  .footBtns button { width: 100%; justify-content: center; text-align: center; }
+  .footNotes { order: 2; }
+  .strip { padding: 0.5rem 0.75rem; }
+  .stripActs > button:first-child { width: 100%; justify-content: center; }
+  /* Change keeps its 44px tap box (.link above) without growing the strip: the box overhangs the strip's padding. */
+  .stripChange { margin-block: -0.5rem; }
+  /* The strip wraps between the date and the cash here: the gap parts them, never a dot left at a line's end (/design). */
+  .stripDot { display: none; }
+}
+@media (max-width: 760px) {
+  .fields > .stripActs { grid-column: 1 / -1; }
+}
