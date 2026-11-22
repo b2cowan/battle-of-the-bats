@@ -155,6 +155,7 @@ desk; the session settles the three open questions in §0. Then the build: a ser
 something new about a person's work), replacing the working draft's browser storage on both portals and its resting
 sentence; the walked working-draft cards change shape and their walks are redone. Likely two or three sessions.
 - **Depends on:** S1, S1b, S3. **Asks:** A18. **Risk:** high.
+- **Drawing-session prompt written 2026-11-22:** `BANK_CHECK_NOVICE_UX_S7_DRAWING_PROMPT.md`.
 
 **Order:** S1 → S1b → S2 → S3 → S7 (drawing session, then build). S4 may run any time after S1. S5 is decided after S3.
 

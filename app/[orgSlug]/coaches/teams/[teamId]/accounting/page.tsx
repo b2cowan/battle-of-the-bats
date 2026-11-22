@@ -65,6 +65,9 @@ type PanelProps = {
    *  itself as "on screen" — otherwise its unsaved-changes guard keeps intercepting
    *  clicks on whatever tab the coach is actually looking at. */
   tabActive?: boolean;
+  /** The Ledger alone uses this: it says whether its Balance check view is on screen, so this page's "?" can open the bank
+   *  guide there (owner 2026-11-22: the page's own link to the guide is gone — one door, the drawer). */
+  onBankView?: (on: boolean) => void;
 };
 const ORG_ONLY_SECTIONS = new Set<SectionId>(['club']);
 const PANELS: { id: SectionId; Component: ComponentType<PanelProps> }[] = [
@@ -272,6 +275,8 @@ export default function CoachesAccountingPage({
      chooser's live hints read data this page already loaded — never a fresh per-open probe.
      ⚠ Above the loading/access early returns with the rest of the hooks (rules-of-hooks). */
   const [recordNonce, setRecordNonce] = useState(0);
+  /** The Ledger's Balance check view is on screen: the "?" then opens the bank guide, not the Ledger's. */
+  const [ledgerOnBank, setLedgerOnBank] = useState(false);
   const [recordIntent, setRecordIntent] = useState<RecordMoneyIntent | null>(null);
   /**
    * The one way in, for every door (P2). The header button calls it with a tab-shaped guess; the
@@ -569,7 +574,9 @@ export default function CoachesAccountingPage({
         actionsPhoneHidden={!canWrite}
         actionsPhoneInTitleRow
         helpLabel="Money"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: HELP_SUBTOPIC_BY_SECTION[effectiveSection], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={effectiveSection === 'ledger' && ledgerOnBank
+          ? { module: 'coaches', sectionIds: ['premium-money-bank'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money-bank` }
+          : { module: 'coaches', sectionIds: ['premium-money'], subtopicId: HELP_SUBTOPIC_BY_SECTION[effectiveSection], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {/* What the header's data menus have to say — an import result, or why an export couldn't be
@@ -641,7 +648,7 @@ export default function CoachesAccountingPage({
             if (!visited.has(id)) return null;
             return (
               <div key={id} style={{ display: effectiveSection === id ? 'block' : 'none' }}>
-                <Component params={paramsPromise} tabActive={effectiveSection === id} />
+                <Component params={paramsPromise} tabActive={effectiveSection === id} onBankView={id === 'ledger' ? setLedgerOnBank : undefined} />
               </div>
             );
           })}

@@ -22,10 +22,6 @@
 @media (max-width: 640px) {
   .head > b { flex-basis: 100%; }
   .headLead > .dot { display: none; }
-  /* The help link ends the line (bank check S2, row 20): on a phone it takes the line's last row to itself, so no dot is left
-     to start a row or to float between two phrases (/review S2). */
-  .headHelp > .dot { display: none; }
-  .headHelp { flex-basis: 100%; min-height: var(--tap-min, 44px); }
 }
 .notice { margin: 0 0 1rem; font-size: var(--type-body); color: var(--text-primary); }
 

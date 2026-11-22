@@ -275,8 +275,6 @@ export const BANK_WORDS = {
   // their count ("1 of 3 not checked yet"): an invitation would hide it.
   inviteLead: 'Check your bank balance',
   inviteNote: 'Type what the bank shows to see if you’re in step.',
-  // Row 20 (S2): a quiet link at the end of the Bank view's head line, both portals, opening the bank help article.
-  helpLink: 'How the bank check works',
   // Several accounts are ONE line (owner 2026-11-09): "Bank: oldest check Nov 5, 2026 ›" · "Bank: 1 of 3 not checked yet ›",
   // and the chip counts when more than one check is off ("2 off"). One account keeps the wording above.
   overviewOldest: 'oldest check',

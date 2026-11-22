@@ -952,6 +952,8 @@ interface MoneyPanelProps {
   params: Promise<{ orgSlug: string; teamId: string }>;
   /** Is this panel the tab currently on screen? See UnsavedChangesGuard's `interceptClicks`. */
   tabActive?: boolean;
+  /** Tells the Money page whether the Balance check view is showing, so its "?" opens the bank guide there. */
+  onBankView?: (on: boolean) => void;
 }
 
 /** The one Ledger tab — the whole money book (Payables→Ledger fold, 2026-08-28). Three views of
@@ -964,6 +966,7 @@ export function LedgerPanel(props: MoneyPanelProps) {
 function MoneyRecordsPanel({
   params: paramsPromise,
   tabActive = true,
+  onBankView,
 }: MoneyPanelProps) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -990,6 +993,8 @@ function MoneyRecordsPanel({
      strip and the list (`onBank` below), so nothing of the owed views shows either. */
   const onPayables = view !== 'timeline';
   const onBank = view === 'bank';
+  // The Money page's "?" follows this view: on the Balance check it opens the bank guide (no link out of the page).
+  useEffect(() => { onBankView?.(onBank); }, [onBank, onBankView]);
 
   const [expenses, setExpenses] = useState<RepTeamExpense[]>([]);
   const [loading, setLoading] = useState(true);

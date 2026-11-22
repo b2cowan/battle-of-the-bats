@@ -407,7 +407,7 @@ const accountingHelp: HelpPageContent = {
           title: 'Saved checks, and what changed since',
           content: (
             <>
-              <p>The top of the tab says how far the account is checked: <strong>Checked through {'{date}'}</strong>, with an amber <strong>Off by $X</strong> chip that opens the latest check when it was off. A quiet link at the end of that line, <strong>How the bank check works</strong>, opens this article. Below the form, <strong>Balance checks</strong> lists every saved check (Date · The bank said · Should have been · Result · Checked by), down to the <strong>Starting balance</strong>, dated the day checking started. Click one to open it: its window is <strong>The check for {'{date}'}</strong>.</p>
+              <p>The top of the tab says how far the account is checked: <strong>Checked through {'{date}'}</strong>, with an amber <strong>Off by $X</strong> chip that opens the latest check when it was off. The page’s <strong>?</strong> opens this article. Below the form, <strong>Balance checks</strong> lists every saved check (Date · The bank said · Should have been · Result · Checked by), down to the <strong>Starting balance</strong>, dated the day checking started. Click one to open it: its window is <strong>The check for {'{date}'}</strong>.</p>
               <ul>
                 <li>An opened check shows its figures exactly as saved, and who checked it and when.</li>
                 <li><strong>Books now say $X</strong> appears when a line dated on or before the statement changed after the check was saved, or the starting balance was corrected. The check’s own figures stay as they were; <strong>Check this date again</strong> to bring it up to date.</li>

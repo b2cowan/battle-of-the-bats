@@ -344,9 +344,13 @@ describe('8 · S2, the door (bank check novice UX: asks A3 and A16, words rows 2
     const css = readCode(`${DIR}/CoachBank.module.css`);
     assert.match(css, /\.overviewHold \{ min-height: calc\(var\(--tap-min, 44px\) \+ 1\.1rem\); \}/);
   });
-  it('row 20: "How the bank check works" ends the head line and opens the coach bank article, which exists', () => {
-    assert.match(code('CoachBankView.tsx'), /<DotPart help>\s*<Link href=\{`\/\$\{orgSlug\}\/coaches\/help#premium-money-bank`\} className=\{b\.link\}>\{W\.helpLink\}<\/Link>\s*<\/DotPart>/);
-    assert.equal(BANK_WORDS.helpLink, 'How the bank check works');
+  it('the head line has no "How the bank check works" link (owner 2026-11-22): the Money page’s "?" opens the bank guide while the Balance check view shows', () => {
+    assert.doesNotMatch(code('CoachBankView.tsx'), /helpLink|next\/link|help#premium-money-bank/);
+    // The Ledger tells the page when its Balance check view is on screen, and the page's "?" follows it, on the Ledger tab only.
+    assert.match(ledger, /useEffect\(\(\) => \{ onBankView\?\.\(onBank\); \}, \[onBank, onBankView\]\);/);
+    const page = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx');
+    assert.match(page, /effectiveSection === 'ledger' && ledgerOnBank\s*\?\s*\{ module: 'coaches', sectionIds: \['premium-money-bank'\]/);
+    assert.match(page, /onBankView=\{id === 'ledger' \? setLedgerOnBank : undefined\}/);
     assert.match(readCode('lib/help-content/coaches.tsx'), /id: 'premium-money-bank',/);
   });
   it('A16: the View pill writes the chosen view into the address — from the press, only while the Ledger is on screen', () => {
