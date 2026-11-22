@@ -64,6 +64,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
 
   // A slow read for the player just left must not overwrite the one now open.
   const latestLoad = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   async function load() {
     const mine = ++latestLoad.current;
     setLoading(true);
@@ -327,13 +328,27 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor={`${ids}-file`}>File <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '0.75rem' }}>(PDF, JPG, PNG, DOCX — max 10 MB)</span></label>
+            {/* The browser's own grey "Choose File" button is hidden; the portal's button opens the picker and the
+                chosen name is shown beside it (same recipe as the import sheets). */}
             <input
               id={`${ids}-file`}
+              ref={fileInputRef}
               type="file"
               accept=".pdf,.jpg,.jpeg,.png,.docx"
-              className={styles.input}
+              hidden
               onChange={e => { setUploadFile(e.target.files?.[0] ?? null); setUploadError(''); }}
             />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button type="button" className={styles.btnSecondary} disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Upload size={14} aria-hidden /> {uploadFile ? 'Change file' : 'Choose file'}
+              </button>
+              <span aria-live="polite" style={{ fontSize: '0.875rem', minWidth: 0, overflowWrap: 'anywhere',
+                color: uploadFile ? 'var(--text-primary, inherit)' : 'var(--home-dim)' }}>
+                {uploadFile ? uploadFile.name : 'No file chosen'}
+              </span>
+            </div>
           </div>
 
           <QuestionReason className={styles.errorText}>{uploadError}</QuestionReason>

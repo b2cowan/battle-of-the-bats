@@ -213,6 +213,22 @@ button.row:hover, a.row:hover { background: var(--home-olive-soft); }
   font-size: var(--type-body);
 }
 .textarea { min-height: 5rem; resize: vertical; }
+/* A file field: its "Choose File" is the portal's secondary button (card ground, strong hairline), not the browser's
+   grey one. The input stays a real, focusable control; only the button inside it is dressed. */
+.input[type='file'] { padding: 0.2rem 0.4rem; cursor: pointer; }
+.input[type='file']::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
+  background: var(--home-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 650;
+  cursor: pointer;
+}
+.input[type='file']:hover::file-selector-button { background: var(--home-olive-soft); }
 /* A one-line field is 36px EXACTLY, not at least (2026-10-18). As a floor alone, each control sized to its own
    insides and none of them landed on 36: a dropdown came out 39, a text box 40 and a date box 42 (the browser's own
    date parts add height), so a date never sat level with the dropdown beside it (New allocation's Pay by). The tap
