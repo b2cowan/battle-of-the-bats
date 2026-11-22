@@ -84,7 +84,7 @@ export default function SingleSelectDropdown({
    *  A sub-line is words, `detail` a figure: a sentence squeezed to the row's end read as a stray column. `trail` is a
    *  CHIP at the row's end, on the NAME's line (only on a `sub` row; the season switcher's state pill, never cut when
    *  the name is). All opt-in; no portal strip passes one. */
-  options: readonly { id: string; label: string; detail?: string; sub?: string; trail?: ReactNode; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
+  options: readonly { id: string; label: string; detail?: ReactNode; sub?: string; trail?: ReactNode; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
   value: string;
   onChange: (next: string) => void;
   /**

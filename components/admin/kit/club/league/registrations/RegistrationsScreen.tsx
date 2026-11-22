@@ -39,7 +39,7 @@ import ck from '../../ClubKit.module.css';
 import { Callout, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
 import { NotYours } from '../../NotYours';
 import { moneyFetch } from '../../money/MoneyKit';
-import ViewSwitch from '@/components/coaches/kit/ViewSwitch';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import FilterMenu, { FilterLine, pickedLabels } from '@/components/admin/tournament/FilterMenu';
 import { useToolbarSearch } from '@/components/admin/tournament/useToolbarSearch';
@@ -755,42 +755,53 @@ export default function RegistrationsScreen() {
   }
 
   // ── The views ──────────────────────────────────────────────────────────────────────────────────
-  // ⚖ THE VIEW SWITCH, NOT A SECOND TAB ROW (Club Tier Stage 13i, Ask 6 = A, owner 2026-11-06): To review · Active ·
-  // Waitlist · Ended are four views of one list, so they are the toolbar's left-hand view choice under the season's own tab
-  // row. Only To review's count is amber; the others are the lighter ink. Each view keeps its own address (`?tab=`), so
-  // Back, a bookmark and a notification's link land on the same view.
+  // ⚖ THE VIEW IS THE OLIVE "VIEW" PILL, NOT A SWITCH (owner 2026-11-18, option D of REGISTRATIONS_TOOLBAR_OPTIONS.html;
+  // it supersedes the 2026-11-06 Ask 6 switch). To review · Active · Waitlist · Ended · Friend requests are five views of
+  // one list, and the written rule (2026-10-10, ONE CALENDAR) is a switch for up to three views, the olive View pill for
+  // four or more. The five-view switch was also the widest thing on the line (~473px), which pushed Export and Add
+  // registration onto a second line on a laptop. Each view keeps its own address (`?tab=`), so Back, a bookmark and a
+  // notification's link land on the same view.
+  // THE QUEUE STAYS ON THE FACE: To review's amber count rides beside whichever view is chosen (`pillMark` on every
+  // option), so the number people act on is never hidden behind a closed menu. In the menu To review and Friend requests
+  // carry their amber count at the row's end (`detail`), the others the quiet one. A zero is not drawn.
   // Board Ready Stage 1 Part 2 (A13): Friend requests carries its own amber count (the rows still to confirm, in the
-  // division picked, as the other counts are). A zero is not drawn. Absent at None or off the plan.
+  // division picked, as the other counts are). Absent at None or off the plan.
   const friendsWaiting = toConfirmCount(scope ? queue.filter(r => r.asker.divisionId === scope) : queue);
-  const views: { id: string; label: string; mark?: ReactNode }[] = [
+  const reviewChip = (n: number) => <span className={frame.count} aria-label={REGS_WORDS.reviewAria(n)}>{kitCountText(n)}</span>;
+  const queueMark = !searching && counts.review > 0 ? reviewChip(counts.review) : undefined;
+  const viewOptions = [
     ...REG_TABS.map(id => ({
       id,
       label: REGS_WORDS.tab[id],
-      mark: searching
+      detail: searching
+        ? <span aria-label={REGS_WORDS.matchesAria(matchCounts[id])}>{matchCounts[id]}</span>
+        : counts[id] > 0 ? (id === 'review' ? reviewChip(counts[id]) : String(counts[id])) : undefined,
+      pillMark: searching
         ? <span className={css.tabCount} aria-label={REGS_WORDS.matchesAria(matchCounts[id])}>{matchCounts[id]}</span>
-        : counts[id] > 0
-        ? (id === 'review'
-          ? <span className={frame.count} aria-label={REGS_WORDS.reviewAria(counts[id])}>{kitCountText(counts[id])}</span>
-          : <span className={css.tabCount}>{counts[id]}</span>)
-        : undefined,
+        : queueMark,
     })),
     ...(friendsOn ? [{
       id: 'friends',
       label: FRIEND_QUEUE_WORDS.view,
-      mark: friendsWaiting > 0 ? <span className={frame.count} aria-label={FRIEND_QUEUE_WORDS.viewAria(friendsWaiting)}>{kitCountText(friendsWaiting)}</span> : undefined,
+      detail: friendsWaiting > 0 ? <span className={frame.count} aria-label={FRIEND_QUEUE_WORDS.viewAria(friendsWaiting)}>{kitCountText(friendsWaiting)}</span> : undefined,
+      pillMark: searching ? undefined : queueMark,
     }] : []),
   ];
-  const viewSwitch = (
-    <div className={css.views}>
-      <ViewSwitch views={views} value={friendsView ? 'friends' : tab} label={REGS_WORDS.tabsLabel} onChange={id => router.push(`${base}?tab=${id}`, { scroll: false })} />
-    </div>
+  const viewPill = (
+    <SingleSelectDropdown
+      lead
+      label={REGS_WORDS.viewLabel}
+      options={viewOptions}
+      value={friendsView ? 'friends' : tab}
+      onChange={id => router.push(`${base}?tab=${id}`, { scroll: false })}
+    />
   );
 
   if (friendsView) {
     return (
-      <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`}>
+      <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`} data-fills-when-folded>
         <FriendRequestsView
-          viewSwitch={viewSwitch}
+          viewPill={viewPill}
           rows={queue}
           divisions={divisions}
           scope={scope}
@@ -912,9 +923,14 @@ export default function RegistrationsScreen() {
   const newLinkFor = act?.kind === 'newLink' ? signupKids(act.reg, read?.registrations ?? []) : null;
 
   return (
-    <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`} data-selecting={picked > 0 || undefined}>
+    <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`} data-selecting={picked > 0 || undefined} data-fills-when-folded>
+      {/* THE LINE FITS BY STEPS, NOT BY WRAPPING (owner 2026-11-18, option D): the box is a container (`data-toolbar-fit`), so the shrinking
+          below is decided by the toolbar's OWN width (the sidebar can be 240 or 64). Under ~1,150px Export and Add registration
+          lose their words; at tablet width (~900px) Search tucks into its square and the division picker narrows. Search is
+          the last thing to give way. Only screens that sit inside a `data-toolbar-fit` container take these steps. */}
+      <div className={css.toolbarBox} data-toolbar-fit>
       <div className={`${tb.toolbar} ${css.toolbarWrap}`}>
-        {viewSwitch}
+        {/* A scope that does not depend on the view leads and the view follows (ONE CALENDAR, 2026-10-10). */}
         <DivisionPicker
           divisions={[{ id: '', name: REGS_WORDS.scopeAll, waiting: 0 }, ...divisions.map(d => ({ id: d.id, name: d.name, waiting: reviewByDivision.get(d.id) ?? 0 }))]}
           value={scope}
@@ -922,6 +938,7 @@ export default function RegistrationsScreen() {
           onChange={id => { setScope(id); setPicks(prev => ({ ...prev, team: new Set([...prev.team].filter(k => k === NOT_PLACED)) })); setShown(PAGE); clearSelection(); }}
           words={{ waiting: REGS_WORDS.scopeToReview, waitingElsewhere: REGS_WORDS.scopeElsewhere }}
         />
+        {viewPill}
         <span className={tb.toolbarSpacer} aria-hidden />
         <div className={tb.deskFilters}>{searchField.field}</div>
         {searchField.toggle}
@@ -962,12 +979,13 @@ export default function RegistrationsScreen() {
           </CoachToolbarMenu>
         )}
         {access?.register && (
-          <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-label={REGS_WORDS.add} onClick={() => setAct({ kind: 'add' })}>
-            <Plus size={14} aria-hidden /><span className={ck.btnWord}>{REGS_WORDS.add}</span>
+          <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone} ${css.addBtn}`} aria-label={REGS_WORDS.add} title={REGS_WORDS.add} onClick={() => setAct({ kind: 'add' })}>
+            <Plus size={14} aria-hidden /><span className={`${ck.btnWord} ${css.addWord}`}>{REGS_WORDS.add}</span>
           </button>
         )}
       </div>
       {searchField.row}
+      </div>
       <FilterLine picks={pickedLabels(groups)} label={REGS_WORDS.filter} />
       {twinLine}
 

@@ -120,6 +120,25 @@
   margin: 0.25rem 0;
 }
 
+/* ── The icon form in a tight toolbar (owner 2026-11-18): a screen that wraps its toolbar in a container marked
+   `data-toolbar-fit` (the house-league Registrations line) gets the worded button's icon form under ~1,150px of toolbar,
+   before the phone width. Inert everywhere else: the selector needs that marked ancestor, and the query reads the
+   nearest container, which is that box. ── */
+@container (max-width: 1148px) {
+  :global([data-toolbar-fit]) .trigger {
+    min-width: var(--admin-control-h);
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0;
+  }
+  :global([data-toolbar-fit]) .triggerLabel { display: none; }
+}
+@media (max-width: 768px) {
+  @container (max-width: 1148px) {
+    :global([data-toolbar-fit]) .trigger { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+  }
+}
+
 @media (max-width: 760px) {
   /* A 44px icon on a phone — the title band's worded buttons' form. It was two 32px halves, the
      shortfall Stage 1 reported on every admin screen that exports. */

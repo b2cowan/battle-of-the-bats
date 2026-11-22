@@ -58,11 +58,11 @@ type Act =
   | { kind: 'delete'; row: QueueRow; index: number };
 
 export default function FriendRequestsView({
-  viewSwitch, rows, divisions, scope, onScope, regs, placement, divisionName, teamName, today, canDecide, isPhone,
+  viewPill, rows, divisions, scope, onScope, regs, placement, divisionName, teamName, today, canDecide, isPhone,
   orgQuery, seasonId, orgSlug, planId, onChanged, onOpenRegistration, say,
 }: {
   /** The Registrations view switch, drawn first in this view's toolbar. */
-  viewSwitch: ReactNode;
+  viewPill: ReactNode;
   rows: readonly QueueRow[];
   divisions: readonly { id: string; name: string }[];
   /** The division picked (shared with the other views): '' is every division. */
@@ -512,14 +512,15 @@ export default function FriendRequestsView({
 
   return (
     <>
+      <div className={css.toolbarBox} data-toolbar-fit>
       <div className={`${tb.toolbar} ${css.toolbarWrap}`}>
-        {viewSwitch}
         <DivisionPicker
           divisions={[{ id: '', name: REGS_WORDS.scopeAll, waiting: 0 }, ...divisions.map(d => ({ id: d.id, name: d.name, waiting: waitingByDivision.get(d.id) ?? 0 }))]}
           value={scope}
           onChange={id => { onScope(id); setSelected(new Set()); }}
           words={{ waiting: W.viewAria, waitingElsewhere: W.scopeElsewhere }}
         />
+        {viewPill}
         <span className={tb.toolbarSpacer} aria-hidden />
         <div className={tb.deskFilters}>{searchField.field}</div>
         {searchField.toggle}
@@ -533,6 +534,7 @@ export default function FriendRequestsView({
         />
       </div>
       {searchField.row}
+      </div>
       <FilterLine picks={pickedLabels(groups)} label={REGS_WORDS.filter} />
 
       {result && (

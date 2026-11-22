@@ -90,7 +90,13 @@ describe('2 · each place draws THE shared tab row, from the model', () => {
     const regs = readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx');
     assert.doesNotMatch(regs, /HubTabBar/);
     // Board Ready Stage 1 Part 2: the fifth view (Friend requests) is not a registration status, so it is named beside the tab.
-    assert.match(regs, /<ViewSwitch views=\{views\} value=\{(friendsView \? 'friends' : )?tab\}/);
+    // 2026-11-18 (REGISTRATIONS_TOOLBAR_OPTIONS.html, option D): five views are the olive View pill, not a switch — the written
+    // rule is a switch for up to three views and the pill for four or more (ONE CALENDAR, 2026-10-10).
+    assert.match(regs, /<SingleSelectDropdown\s+lead\s+label=\{REGS_WORDS\.viewLabel\}\s+options=\{viewOptions\}\s+value=\{friendsView \? 'friends' : tab\}/);
+    assert.doesNotMatch(regs, /<ViewSwitch\b/, 'no switch for four or more views');
+    assert.ok(regs.indexOf('<DivisionPicker') < regs.indexOf('{viewPill}\n        <span className={tb.toolbarSpacer}'), 'a scope that does not depend on the view leads; the view follows');
+    assert.match(regs, /data-toolbar-fit/, 'the toolbar line is the container its shrinking steps read');
+    assert.doesNotMatch(readCode('components/admin/kit/club/league/registrations/FriendRequestsView.tsx'), /viewSwitch|<ViewSwitch/, 'the friend requests view wears the same pill');
     assert.match(regs, /router\.push\(`\$\{base\}\?tab=\$\{id\}`/, 'each view keeps its own address');
     const teams = readCode('components/admin/kit/club/league/teams/TeamsScreen.tsx');
     assert.doesNotMatch(teams, /HubTabBar/);

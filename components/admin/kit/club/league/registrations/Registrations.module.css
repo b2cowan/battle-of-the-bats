@@ -12,17 +12,26 @@
 /* ── A tab's quiet count (the amber waiting count is the rail's own, drawn by the tab row) ── */
 .tabCount { margin-left: 0.35rem; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 
-/* ── The four views (13i, Ask 6): the switch is wider than a phone's toolbar line (it is not in the kit's own `.toolbar`,
-   whose equal-column rules never reach the admin one), so on a phone the toolbar wraps and the switch takes the first row
-   whole, scrolling sideways inside itself if a count grows. Its counts sit a word-space after the label.
-   ⚠ Not a phone-only rule (13i Session C's layout sweep): the toolbar's one line needs ~1,000px, so at 768 Export and Add
-   registration sat past the edge with no scroller (a spill of 252px). The toolbar wraps at every width — one line when it
-   fits — and below 900 (no sidebar: the phone bar's width, where the tab row scrolls too) the switch takes its own row. ── */
-.views button > span { margin-left: 0.35rem; }
+/* ── The toolbar line (owner 2026-11-18, option D of REGISTRATIONS_TOOLBAR_OPTIONS.html). The five views are the olive View
+   pill (it was a ~473px switch, which is what pushed Export and Add registration onto a second line on a laptop), so the
+   line needs ~1,140px. It fits by STEPS, not by wrapping: `.toolbarBox` is a container (marked `data-toolbar-fit`), so the steps
+   read the toolbar's own width, whatever the sidebar is doing. The rules that act on it live beside the parts they shrink
+   (ExportMenu.module.css, AdminToolbar.module.css) and are scoped to `[data-toolbar-fit]` and inert on any screen without this box.
+   (Deliberately NOT a named container: CSS modules may rename a name per file, which would silently break the match.)
+     under ~1,150px  Export and Add registration lose their words (Add keeps its lime fill and plus)
+     at ~900px       Search tucks into its square, the division picker narrows (AdminToolbar.module.css)
+   ⚠ Inline-size containment also makes this box a containing block for absolutely positioned descendants: the menus below
+   anchor to their own triggers, and a fixed sheet is portalled out, so none is affected. The wrap stays as the last resort. ── */
+.toolbarBox { container-type: inline-size; }
 .toolbarWrap { flex-wrap: wrap; }
-@media (max-width: 900px) {
-  .views { flex: 1 1 100%; min-width: 0; overflow-x: auto; }
-  .views > div { width: max-content; }
+@container (max-width: 1148px) {
+  .toolbarBox .addBtn { min-width: var(--admin-control-h); justify-content: center; padding-left: 0; padding-right: 0; }
+  .toolbarBox .addBtn .addWord { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (max-width: 768px) {
+  @container (max-width: 1148px) {
+    .toolbarBox .addBtn { min-width: var(--tap-min, 44px); }
+  }
 }
 
 /* A partial batch result's second line */

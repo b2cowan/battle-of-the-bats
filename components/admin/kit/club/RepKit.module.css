@@ -32,6 +32,12 @@
    column never jumps between a tab and the page it opens, and a new Accounting page cannot forget it. */
 .moneyFrame, .page.moneyFrame { max-width: 1200px; min-width: 0; margin-inline: auto; }
 .moneyFrame .page { max-width: none; }
+/* A WIDE TABLE FILLS THE WINDOW WHEN THE PERSON FOLDED THE NAV TO ITS STRIP (owner 2026-11-21: "when I collapse the nav can you
+   make the table fit more of the window?"). Folding is the person asking for room, so a screen that marks itself
+   `data-fills-when-folded` (today: a house-league season's Registrations) lets the frame stop at the window instead of 1200.
+   Only while folded, only for a marked screen: the open nav, and every other place page, keep the portal's two widths. The
+   frame is the box that is capped, so the screen cannot do this itself — `:has` reads the mark from the frame. */
+:global(html[data-sidebar='strip']) .moneyFrame:has([data-fills-when-folded]) { max-width: none; }
 /* The touch floor on these screens' own buttons (the layout sweep's R2, ≤768): the shared `.btn`
    renders a few px short, a debt the older admin carries in its baseline; the Stage 2 screens
    clear it rather than add to it. Icon-only header actions already are 44px squares. */

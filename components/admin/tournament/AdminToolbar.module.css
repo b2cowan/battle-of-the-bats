@@ -91,6 +91,19 @@
   .phoneSearchRow { display: flex; margin: 0 0 0.75rem; }
 }
 
+/* ── A toolbar inside a container marked `data-toolbar-fit` takes the phone's Search form at TABLET width (owner 2026-11-18,
+   the house-league Registrations line, option D): the field tucks into the 44px square that opens it full-width under the
+   line, and the division picker narrows to 13rem, so the line still fits one row at ~900px of toolbar. Search is the last
+   thing to give way, which is why this is a tablet step and not a laptop one. Inert on every other screen: the marked
+   container is absent, so no rule below matches. Same pieces as the ≤640 phone block above; nothing here is a new look.
+   (Unnamed container + a marker attribute on purpose: CSS modules may rename a container NAME per file.) ── */
+@container (max-width: 900px) {
+  :global([data-toolbar-fit]) .deskFilters { display: none; }
+  :global([data-toolbar-fit]) .toolbar .phoneTool { display: inline-flex; width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); padding: 0; flex: none; }
+  :global([data-toolbar-fit]) .phoneSearchRow { display: flex; margin: 0 0 0.75rem; }
+  :global([data-toolbar-fit]) .divisionField { width: 13rem; }
+}
+
 /* ── The desk's filter menus (status and payment are filters, not a lens — the formatting check, 6) ── */
 .regFilterRoot { position: relative; }
 .regFilterButton {
