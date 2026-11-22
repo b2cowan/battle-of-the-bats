@@ -195,6 +195,34 @@ Checked against the code (`lib/score-notice.ts`, `lib/score-notice-server.ts`, `
   the scorekeeper's address). No change to its rating or its `/plan` route.
 - **Lawyer's eye:** no.
 
+## Reviewed 2026-11-17 — Add time as its own part, Session 3 (commit `839645c5c`): the separate-bill email, a part-way send
+
+Checked against the code: `lib/club-schedule-words.ts` (`changesEmail`, `PART_WORDS.emailBillTitle` / `emailBillsOutro` / `sentPartWay`),
+`lib/club-schedule-money-audience.ts` (`emailForPerson`, `teamBells`), `lib/club-schedule-family-send.ts`, `lib/club-schedule-send.ts` (~1141-1180).
+Statute not re-fetched (finding 1's reading, verified 2026-11-13, unchanged). **Verdict: nothing blocks; one wording gap closed; two optional notes.**
+- **CASL: same class as the late bill, not owed.** The email gains a titled bill list ("A separate bill, {schedule} · {label}: {amount} in N
+  payments") and a plain explanatory sentence. No offer, price list, promotion or link beyond the team's own schedule and Money tab, so the
+  "most likely not a CEM" reading holds. Keep it that way: the outro must stay a statement of what was billed, never a prompt to pay online
+  or to add time.
+- **Does it say why the bill is separate? Yes.** "The added time is billed on its own, so it is a separate charge on your Money › Club tab.
+  Nothing already billed changes." says why (billed on its own), where it lands, and the thing a coach worries about (earlier payments).
+  True as built: the part's bill is its own allocation, the parent's is untouched (fixture, case 2). The list title was reworded today from
+  "{name}, a bill of its own: …" to "A separate bill, {name}: …", so the word the outro uses is the word the title uses (wording only).
+- **Who reads it: the need-to-know rule holds.** `changesEmail` receives `partBills` only for a person who can open Money; others get the
+  slots email without the bill list or the "your Money › Club tab" sentence, and the bell goes to the money group only (`billBell(g.money, …)`).
+  So the sentence is never put in front of someone who cannot see that tab.
+- **A send refused part-way: the notice is accurate, and now says so.** Only the members that landed tell their families (`teamsFor(landed)`),
+  so no family is told of practices or a bill that did not land. The admin's notice used to append the refusal text bare after "Sent to …";
+  it now reads "Only part of it went out. {refusal} The rest is still waiting to be sent." (`PART_WORDS.sentPartWay`, wording only). Nothing
+  in a customer-facing policy promises all-or-nothing.
+- **Privacy: no new data kind.** First name, team name, club charge — as the late bill email. Service-provider role unchanged; Resend already listed.
+- **Optional (owner), not law:** (a) the late bill email ends "Questions about the bill? Reply to this email; it goes to the person at the club who
+  sent it" (owner ruling 2026-11-13, late bill only). The part's bill rides in the changes email without that line, though the Reply-To is set the same
+  way. A coach opening a brand-new bill with no stated way to ask is the one soft spot; adding the sentence is a one-line wording build if the owner wants it.
+  (b) "{label} was sent without a bill" in Needs attention shows to people who cannot open Money; it names no figure, so it is not a privacy point,
+  only a row they cannot act on (the owner call already open in the build prompt).
+- **Lawyer's eye:** no, for what shipped.
+
 ## Sources
 - [Canada's Anti-Spam Legislation (S.C. 2010, c. 23) — ss.1(2), 6(1)–(3), 6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-13
 - [Electronic Commerce Protection Regulations (SOR/2013-221) — s.3](https://laws-lois.justice.gc.ca/eng/regulations/SOR-2013-221/page-1.html) — accessed 2026-11-13

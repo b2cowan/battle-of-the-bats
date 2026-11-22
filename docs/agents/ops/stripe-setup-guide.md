@@ -300,8 +300,8 @@ Before the first live sale, check each of these in both modes:
 - [ ] **No coupons or promotion codes exist in Stripe** (promotions are record-only; none is ever created there).
 - [ ] **The customer portal's settings exist in Live** (the first open creates them; Step 10 covers it).
 - [ ] **Customer emails, retry rules and invoice settings** match the accounting review (`/accounting`).
-- [ ] **Family payments (Connect):** the live Connect endpoint and platform settings are created when online payments go
-      live, using the test sandbox's 12-event endpoint as the template. Live has none today, by design.
+- [ ] **Family payments (Connect):** when online payments go live, work through **"Live — what to set"** under the Connect
+      section below (the two live notifications and the short platform-settings list). Live has none today, by design.
 
 ### Step 10 — The first live purchase
 
@@ -384,6 +384,39 @@ Developers → Webhooks), create two. The form first asks where events come from
 
 Then redeploy. The build copies both secrets in (`amplify.yml`). Production keeps online payments switched off, so it
 needs neither yet.
+
+### Live — what to set (written 2026-11-17 from the code; replaces "copy the sandbox across")
+
+Stripe dashboard with the **Live** switch on. **Settings → Connect** has many sections; the code depends on almost none of
+them, because the choices that matter are sent with each API call (the club's account is created as an Express
+Dashboard account, with FieldLogicHQ setting the price and Stripe covering losses, in `lib/stripe-connect.ts`). Do only
+this list. **Everything not named here stays at Stripe's default — do not copy the sandbox's values across.**
+
+1. **Connect is turned on for the Live account**, for Canada. If Live Connect isn't active yet, Stripe walks you through
+   activating it. ⚠ Not recorded as done anywhere.
+2. **Accounts v1 support: OFF.** Owner ruling. New platforms start with it off; the Connect settings page has no
+   toggle for it that we could find, so there is nothing to do if you don't see one.
+3. **The two live notifications** (Workbench → Webhooks → Create an event destination, Live): same two as in "Staging"
+   above, with Live's own signing secrets going to `STRIPE_CONNECT_WEBHOOK_SECRET` and
+   `STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET` in the production environment. Use the `www` address.
+4. **Platform profile** (Connect → Platform profile): fill it in so a club sees FieldLogicHQ's name, support email and
+   website when it connects. Nothing in the code reads it; it's what a club's treasurer sees.
+5. **Emails** (Connect → Emails): leave Stripe's emails to connected accounts **on**. For a bank debit, Stripe sends the
+   club's payer the debit agreement and each debit's notice itself, and the product relies on that.
+6. **Payment methods, Payouts, Disputes, Onboarding interface/options, Adaptive Pricing, SMS, Platform pricing tool,
+   Terminal:** leave at the default. The code names its payment method on every payment (card or bank debit), sets its own
+   price, sends its own onboarding link, and reads payouts and disputes rather than configuring them.
+
+**Check on the first live club, then record the answer here** (the sandbox cannot tell us):
+- A live Canadian club's account shows **bank debit** as available (the sandbox granted it at once; Stripe may review it in Live).
+- The Express Dashboard with Stripe-covered losses is a Stripe **preview** feature: confirm it works for the Live account
+  when the first club connects.
+- A card dispute's fee: in the sandbox, Stripe took a card dispute's CA$15 from the club's balance, not ours. Confirm Live
+  behaves the same (`CLUB_TIER_STAGE12_PAYMENTS_PLAN.md` §0c).
+- Live's billing notification may still lack the invoice and credit-note events listed in the owner's-step table above
+  (`BUSINESS_DECISIONS.md`, 2026-11-06). Check it carries them.
+- Whether Adaptive Pricing on the platform changes a foreign card's payment. The plan assumes it cannot (a CAD charge on a
+  CAD account); that was reasoned, not tried.
 
 ### ⚑ Owner's step — the events Stages 12c and 12d-1 added (one list)
 

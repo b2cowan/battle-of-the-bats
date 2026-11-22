@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-19 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-22 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-19
+# DB Schema Reference — 2026-11-22
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -166,7 +166,7 @@ season_id (uuid) → league_seasons.id NOT NULL, org_id (uuid) → organizations
 - Indexes: league_season_time_asks_org_idx
 
 ### league_seasons
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at, twice_in_a_day_allowed (boolean), home_away_tolerance, started_from (jsonb), friend_requests_max
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at, twice_in_a_day_allowed (boolean), home_away_tolerance, started_from (jsonb), friend_requests_max, reopened_at
 - Indexes: league_seasons_org_id_slug_key
 
 ### league_slot_uses
@@ -595,7 +595,7 @@ id (uuid), org_member_id (uuid) → organization_members.id NOT NULL, tournament
 - Indexes: idx_omta_org_member, idx_omta_tournament, org_member_tournament_assignmen_org_member_id_tournament_id_key
 
 ### org_overrides
-id (uuid), org_id (uuid) → organizations.id NOT NULL, type NOT NULL, value, expires_at, reason NOT NULL, created_by NOT NULL, created_at, revoked_at, revoked_by, target (jsonb), starts_at, suppress_billing (boolean)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, type NOT NULL, value, expires_at, reason NOT NULL, created_by NOT NULL, created_at, revoked_at, revoked_by, target (jsonb), starts_at, suppress_billing (boolean), ending_reminded_14_for, ending_reminded_3_for
 - Indexes: idx_org_overrides_org, idx_org_overrides_org_active, org_overrides_one_plan_grant_at_a_time
 
 ### org_public_site_content
@@ -767,6 +767,10 @@ ledger_id (uuid) → accounting_ledgers.id NOT NULL, bank_account_id (uuid) → 
 id (uuid), org_id (uuid) → organizations.id NOT NULL, owner_kind NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, created_by (uuid), created_at, archived_at
 - Indexes: bank_accounts_club_name, bank_accounts_created_by_idx, bank_accounts_one_per_team, bank_accounts_org_idx
 
+### bank_check_drafts
+id (uuid), bank_account_id (uuid) → bank_accounts.id NOT NULL, user_id (uuid) NOT NULL, statement_end_date NOT NULL, balance_text, cash_text, marked_keys, started_date, started_balance_text, started_difference_cents (bigint), revision (integer), created_at, updated_at, expires_at NOT NULL
+- Indexes: bank_check_drafts_expires_idx, bank_check_drafts_one_per_person, bank_check_drafts_user_idx
+
 ### bank_check_waiting
 id (uuid), check_id (uuid) → bank_checks.id NOT NULL, line_key NOT NULL, line_date NOT NULL, label, amount_cents (bigint) NOT NULL, direction NOT NULL, at_start (boolean), added_by (uuid), added_at
 - Indexes: bank_check_waiting_added_by_idx, bank_check_waiting_once
@@ -826,6 +830,46 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, surface NOT NULL, ref_id
 ### child_match_rejections
 id (uuid), child_a_id (uuid) → org_children.id NOT NULL, child_b_id (uuid) → org_children.id NOT NULL, door NOT NULL, rejected_by (uuid), rejected_at
 - Indexes: child_match_rejections_child_b_idx, child_match_rejections_pair_uniq
+
+### club_form_answer_clears
+id (uuid), org_id (uuid) → organizations.id NOT NULL, form_id (uuid) → club_forms.id NOT NULL, question_id (uuid) → club_form_questions.id NOT NULL, submission_id (uuid) → club_form_submissions.id, subject_table, subject_id (uuid), cleared_at
+- Indexes: club_form_answer_clears_form_idx, club_form_answer_clears_org_idx, club_form_answer_clears_subject_idx, club_form_answer_clears_subject_uniq, club_form_answer_clears_submission_idx, club_form_answer_clears_submission_uniq
+
+### club_form_answers
+id (uuid), org_id (uuid) → organizations.id NOT NULL, form_id (uuid) → club_forms.id NOT NULL, question_id (uuid) → club_form_questions.id NOT NULL, submission_id (uuid) → club_form_submissions.id, subject_table, subject_id (uuid), value_text, value_choice_ids, value_bool (boolean), value_date, file_id (uuid) → club_form_files.id, removed_at, created_at, updated_at
+- Indexes: club_form_answers_file_idx, club_form_answers_form_idx, club_form_answers_org_idx, club_form_answers_subject_idx, club_form_answers_subject_uniq, club_form_answers_submission_idx, club_form_answers_submission_uniq
+
+### club_form_document_versions
+id (uuid), org_id (uuid) → organizations.id NOT NULL, document_id (uuid) → club_form_documents.id NOT NULL, version_no (integer) NOT NULL, body_text, file_path, file_name, file_size (integer), fingerprint NOT NULL, reason, ticks_stand (boolean), moved_in (boolean), created_by (uuid), created_at
+- Indexes: club_form_document_versions_created_by_idx, club_form_document_versions_no_uniq, club_form_document_versions_org_idx
+
+### club_form_documents
+id (uuid), org_id (uuid) → organizations.id NOT NULL, form_id (uuid) → club_forms.id NOT NULL, name NOT NULL, source_kind NOT NULL, tick_kind NOT NULL, sort_order (integer), archived_at, created_by (uuid), created_at, updated_at
+- Indexes: club_form_documents_created_by_idx, club_form_documents_form_idx, club_form_documents_org_idx
+
+### club_form_files
+id (uuid), org_id (uuid) → organizations.id NOT NULL, form_id (uuid) → club_forms.id NOT NULL, question_id (uuid) → club_form_questions.id NOT NULL, submission_id (uuid) → club_form_submissions.id, subject_table, subject_id (uuid), path NOT NULL, file_name NOT NULL, size_bytes (integer) NOT NULL, content_type NOT NULL, status, created_at, attached_at, removed_at
+- Indexes: club_form_files_form_idx, club_form_files_org_idx, club_form_files_path_key, club_form_files_pending_idx, club_form_files_question_idx, club_form_files_subject_idx, club_form_files_submission_idx
+
+### club_form_questions
+id (uuid), org_id (uuid) → organizations.id NOT NULL, form_id (uuid) → club_forms.id NOT NULL, question_type NOT NULL, label NOT NULL, help_text, choices (jsonb), required (boolean), asked, health (boolean), on_board (boolean), sort_order (integer), archived_at, created_by (uuid), created_at, updated_at
+- Indexes: club_form_questions_created_by_idx, club_form_questions_form_idx, club_form_questions_org_idx
+
+### club_form_storage_removals
+path NOT NULL, org_id (uuid) NOT NULL, created_at
+- Indexes: club_form_storage_removals_created_idx
+
+### club_form_submissions
+id (uuid), org_id (uuid) → organizations.id NOT NULL, form_id (uuid) → club_forms.id NOT NULL, ref NOT NULL, guardian_email NOT NULL, created_at
+- Indexes: club_form_submissions_org_idx, club_form_submissions_ref_uniq
+
+### club_form_ticks
+id (uuid), org_id (uuid) → organizations.id NOT NULL, form_id (uuid) → club_forms.id NOT NULL, document_id (uuid) → club_form_documents.id NOT NULL, version_id (uuid) → club_form_document_versions.id, submission_id (uuid) → club_form_submissions.id, subject_table NOT NULL, subject_id (uuid) NOT NULL, guardian_email NOT NULL, user_id (uuid), sentence NOT NULL, fingerprint, handed_over_at, ticked_at, moved (boolean), consent_id (uuid) → family_consents.id, created_at
+- Indexes: club_form_ticks_consent_idx, club_form_ticks_document_idx, club_form_ticks_form_idx, club_form_ticks_org_idx, club_form_ticks_subject_idx, club_form_ticks_submission_idx, club_form_ticks_user_idx, club_form_ticks_version_idx
+
+### club_forms
+id (uuid), org_id (uuid) → organizations.id NOT NULL, owner_table NOT NULL, owner_id (uuid) NOT NULL, subject_kind NOT NULL, created_at, updated_at
+- Indexes: club_forms_org_idx, club_forms_owner_uniq
 
 ### club_group_email_bodies
 send_id (uuid) → club_group_email_sends.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, subject NOT NULL, body NOT NULL, created_at
@@ -1017,6 +1061,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, first_name NOT NULL, las
 id (uuid), org_id (uuid) → organizations.id NOT NULL, full_name NOT NULL, domain NOT NULL, prefix NOT NULL, status, host_status, host_branch, record1_name NOT NULL, record1_value NOT NULL, record2_name NOT NULL, record2_value NOT NULL, record2_host_target, last_checked_at, last_check (jsonb), waiting_since, connected_at, needs_attention_since, not_working_since, padlock_expires_at, live_email_sent_at, padlock_email_sent_at, padlock_reminder_sent_at, gave_up_email_sent_at, not_working_email_sent_at, created_by_user_id (uuid), created_at, updated_at
 - Indexes: org_custom_domains_domain_uidx, org_custom_domains_full_name_uidx, org_custom_domains_org_uidx, org_custom_domains_status_idx
 
+### org_deletion_requests
+id (uuid), org_id (uuid) → organizations.id, org_name NOT NULL, org_slug NOT NULL, requested_by (uuid), requester_email NOT NULL, reason, status, created_at, closed_at, closed_by
+- Indexes: org_deletion_requests_one_open, org_deletion_requests_org_idx
+
 ### org_fiscal_year_reopenings
 id (uuid), fiscal_year_id (uuid) → org_fiscal_years.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, reopened_at, reopened_by (uuid), reason NOT NULL, was_closed_at NOT NULL, was_closed_by (uuid), was_closing_balance (numeric) NOT NULL, was_closing_snapshot (jsonb)
 - Indexes: org_fiscal_year_reopenings_by_idx, org_fiscal_year_reopenings_org_idx, org_fiscal_year_reopenings_was_by_idx, org_fiscal_year_reopenings_year_idx
@@ -1078,8 +1126,8 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org
 - Indexes: org_time_dates_off_once, org_time_dates_off_org_idx, org_time_dates_off_schedule_once
 
 ### organization_billing_facts
-org_id (uuid) → organizations.id NOT NULL, card_on_file_at, card_on_file_brand, card_on_file_last4, next_season_plan_id, next_season_billing_cycle, next_season_chosen_at, next_season_subscription_id, created_at, updated_at
-- Indexes: idx_org_billing_facts_no_card, idx_org_billing_facts_no_next_season_choice
+org_id (uuid) → organizations.id NOT NULL, card_on_file_at, card_on_file_brand, card_on_file_last4, created_at, updated_at
+- Indexes: idx_org_billing_facts_no_card
 
 ### payments_terms_agreements
 id (uuid), org_id (uuid) NOT NULL, org_name NOT NULL, user_id (uuid), user_email NOT NULL, terms_version NOT NULL, box_text NOT NULL, action NOT NULL, agreed_at
@@ -1156,13 +1204,13 @@ user_id (uuid) NOT NULL, opted_out_at
 user_id (uuid) NOT NULL, notifications_paused_at, updated_at
 
 ### user_preferences
-user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at, coach_setup_hints_off (boolean)
+user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at, coach_setup_hints_off (boolean), registration_answer_columns (jsonb)
 
 ---
 
 ## Tables by count
 
-Total: **285 tables** across 10 modules.
+Total: **297 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 25 tables
@@ -1173,4 +1221,4 @@ Total: **285 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 30 tables
 - CRM / Leads: 6 tables
-- Other: 103 tables
+- Other: 115 tables

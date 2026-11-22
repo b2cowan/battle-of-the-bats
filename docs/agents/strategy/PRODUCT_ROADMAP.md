@@ -1,8 +1,8 @@
 # Product Roadmap (living record)
 
 **Status: Draft v0.2, 2026-11-16. Not yet shown to anyone outside the business.** The owner ruled the 13 asks, the
-8 tool rows and every conflict they raised on 2026-11-16 (§6). The board's version is the next step; what is still
-open is in §4.
+8 tool rows and every conflict they raised on 2026-11-16 (§6), and the same day ruled the public version's thirteen
+asks (§6, last entry). The public version is drawn and ruled; what is owed before it is shown is in §4.
 
 This is the one home for the product roadmap: the current version, every version shown to someone, and what changed
 between them. It is a living reference and is never archived.
@@ -22,9 +22,11 @@ between them. It is a living reference and is never archived.
 Ruled 2026-11-16: confidence by horizon (rest of 2026 committed, Q1 planned, Q2 targeted, H2 2027 goals), and the
 board pack carries the joined page with the product and technology pages behind it as detail.
 
-Proposed, not yet ruled by the owner:
-- Three tracks: trust and resilience, the board's asks, product depth.
-- Items from the internal review are worded as commitments, not gaps, when shown to a prospect.
+Ruled 2026-11-16 for the public version (§6, last entry):
+- The front page groups its rows as New tools for your club · Moving your club over, and your data · Security and
+  reliability (this settles the "three tracks" proposal). §2 keeps its seven lanes; the groups are a view of them.
+- Items are worded as commitments, not gaps, with the guard: nothing that isn't on production is in the present
+  tense, and no line claims more than its §2 row.
 
 ## 2. The current roadmap
 
@@ -40,18 +42,18 @@ column names, keep one item per row, and change a row's **Status** in the same u
 
 | Track | Lane | Item | Size | Status | Ruled |
 |---|---|---|---|---|---|
-| Product | What the board asked for | Friend requests in the draft, live | Small | Built | |
+| Product | What the board asked for | Friend requests in the draft, live | Small | Live | |
 | Product | What the board asked for | Group email to coaches | Small | In progress | |
-| Product | The Club product | One release of everything built since 5 November | Medium | In progress | |
-| Technology | Security | Two-step sign-in, live | Small | Built | |
-| Technology | Security | Access review fixes, live | Small | Built | |
+| Product | The Club product | One release of everything built since 5 November | Medium | Live | |
+| Technology | Security | Two-step sign-in, live | Small | Live | |
+| Technology | Security | Access review fixes, live | Small | Live | |
 | Technology | Security | Public Security page | Small | Not started | |
 | Technology | Reliability | Backups documented, first restore rehearsed | Small | Not started | |
 | Technology | Reliability | Uptime monitoring and a public status page | Small | Not started | |
-| Technology | Quality and infrastructure | The whole-product layout check, back in every release | Small | Not started | |
+| Technology | Quality and infrastructure | The whole-product layout check, back in every release | Small | In progress | |
 | Technology | Privacy, data ownership, continuity | Privacy policy and terms published | Small | Built | |
 | Technology | Privacy, data ownership, continuity | Data terms and the supplier list | Small | Not started | |
-| Technology | Privacy, data ownership, continuity | Deleting a club removes its files | Small | Not started | |
+| Technology | Privacy, data ownership, continuity | Deleting a club removes its files | Small | Built | |
 
 ### Q1 2027 (planned)
 
@@ -61,8 +63,9 @@ column names, keep one item per row, and change a row's **Status** in the same u
 | Product | What the board asked for | Custom sign-up forms | Large | Not started | |
 | Product | What the board asked for | Club events | Medium | Not started | |
 | Product | The Club product | Club plan on sale | Large | In progress | Yes |
-| Product | The Club product | The rest of the journeys stage | Large | In progress | |
-| Product | The Club product | Schedules on several permits | Medium | In progress | Yes |
+| Product | The Club product | Club roles walked job by job | Large | Built | |
+| Product | The Club product | Phone layout and wording polish, after launch | Large | Not started | |
+| Product | The Club product | Schedules on several permits | Medium | Built | Yes |
 | Product | The Club product | Families pay online, switched on | Small | Built | Yes |
 | Product | Switching and growth | Import from a club's current system | Large | Not started | Yes |
 | Technology | Security | Cross-club tests on every change | Medium | Not started | |
@@ -130,12 +133,29 @@ only after the next release.
 
 Every ask on the 2026-11-14 review page and every conflict it raised was ruled by 2026-11-16 (§6). What remains:
 
-1. **Three tracks** (trust and resilience, the board's asks, product depth) and **commitments, not gaps** wording:
-   proposals in §1, not ruled. The v0.2 lanes replaced the tracks in practice; settle this when the board's version
-   is drawn.
+1. ~~**Three tracks** and **commitments, not gaps** wording.~~ Ruled 2026-11-16 with the public version's asks 1 and 4
+   (§1, §6).
 2. **Market claim.** A comparison with what clubs use today comes before any "top of the market" claim (ruled). It
    has no roadmap row or owner yet.
 3. **Q1 review** at the end of January 2027 (ruled). A calendar item, not a decision.
+4. **Owed before the public version is shown to anyone** (its thirteen asks were ruled 2026-11-16, §6):
+   - ~~`/legal` on the four "Your data is yours" commitments.~~ **Done 2026-11-21**
+     (`docs/agents/legal/MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md` §3). All four may be shown, reworded: C1 and C3
+     move out of the present tense (ask 4A's guard: none is on production), C3 gains "unless you ask us to delete it
+     sooner", C4 is true today. The exact slide words are in that file. Owner calls it raises: how the 60 days sits beside
+     Terms §9's 90 days, and whether the Q1 export includes uploaded documents. The public drawing's copy takes these
+     words when it is next published.
+   - ~~The owner's plain line for two product lines ("One Guardians section" and "The rest of the journeys stage", ask 12).~~
+     **Ruled 2026-11-18** (§6; the journeys row is split in two). The public drawing's copy for these two rows still has
+     to be updated to the ruled lines when the public version is next published.
+   - ~~"Group email to coaches" is built, or its row moves to Q1 (ask 11).~~ **Ruled 2026-11-18: it stays in Rest of 2026
+     (Committed)** (§6). This replaces ask 11A's condition, so the row no longer has to be built before first showing.
+     The Q1 review (end of January 2027) is where a miss would be looked at.
+   - A §7 snapshot of the version shown.
+5. **"Every finding fixed"** may be said only after the third access sweep's open owner calls are closed and its small
+   findings confirmed (ask 13). Until then the public line is "with its fixes live".
+6. **The first restore rehearsal.** Until it is done, "restore rehearsed" appears only as the roadmap's commitment;
+   the brief and the Security page do not say it (ask 6).
 
 ## 5. Tool prices (read from each vendor's pricing page 2026-11-14; US dollars unless noted; not independently re-checked)
 
@@ -212,6 +232,81 @@ Every ask on the 2026-11-14 review page and every conflict it raised was ruled b
     Small (was Medium). The bot challenge becomes a trigger row ("if automated sign-ups appear"), off the board's
     version. Board wording: "public forms are rate-limited and screened for automated sign-ups".
   - **Export window on closure: 60 days**, then deleted.
+- 2026-11-16 — **Statuses truthed up against production** (no placement changed): friend requests, two-step sign-in and
+  the access review fixes are **Live** (release 2026-11-15, production `47cc775b4`), and that release was the "one
+  release of everything built since 5 November" (**Live**). Deleting a club removes its files is **Built** (committed
+  `45c134bea` 2026-11-15, after that release was cut; it rides the next one).
+- 2026-11-16 — **The board's version drawn** (round 1, after `/design`): https://claude.ai/artifact/FUnEBQmUoNWojM12zgkvau,
+  source `docs/projects/active/BOARD_READY_ROADMAP_BOARD_VERSION_DRAWINGS.html`. Drawn from §2 and §6 only. Seven asks are
+  owed: A1 grouping and A2 commitments wording (= §4 item 1); A3 the data commitments named "Your data is yours", not
+  "continuity" (the owner ruled on 2026-11-16 that the pack does not raise "if something happens to the owner"); A4 "restore
+  rehearsed" stays a roadmap commitment until the first rehearsal is done; A5 status marks; A6 keep the live release item;
+  A7 "Club plan on sale" names a plan on a pitch surface (design decision 2026-08-21). Not a version shown: §7 stays empty
+  until the owner sends it.
+- 2026-11-16 — **The roadmap is public** (owner: "I want the roadmap to be something that we can present publicly to any
+  customer or prospect, there should be nothing pointing to something a specific club asked of me … for those prospects
+  that I know want certain functionality I can highlight in those meetings"). The shown version carries no "you asked"
+  anywhere: the lane "What the board asked for" is shown as "New for clubs", and its H2 goal as "Every new tool above, live
+  and used through a full season". Drawing v3 at the same link.
+- 2026-11-16 — **The public version redrawn to sell** (round 4, the owner's ask: "review and update the roadmap based on
+  how you think we should be presenting and what would sell the best"; after `/design` and `/marketing` passes). Same
+  link, same source file. **No placement in §2 changed, and nothing below is ruled: all of it is proposal until the
+  thirteen asks come back** (paste-back "Public roadmap asks: …"; they replace round 3's A1–A7, which are folded in).
+  - Front page reads in three blocks: what we've shipped (a release count, 48 release tags from 2026-06-28 to
+    2026-11-15, counted 2026-11-16, recount on every rebuild; six highlights across tournaments, rep teams, house
+    league and security), what comes next (the grid), what we promise ("Your data is yours", full width).
+  - Rows renamed for a customer: New tools for your club · Moving your club over, and your data · Security and
+    reliability. "Ready for every club" (our milestone) is gone as a row.
+  - 29 of the 40 lines on the front page. Five engineering lines sit on the trust detail page only (layout check,
+    cross-club tests, component alerts, public forms, release rhythm); two product lines on the product detail page
+    only, awaiting the owner's words (One Guardians section; the rest of the journeys stage).
+  - Proposed off the public version: "One release of everything built since 5 November", "Smaller open items", and the
+    H2 goals "A club runs a full season end to end" and "Case studies and comparison pages" (each tells a prospect no
+    club has finished a season with us). Rows stay in §2.
+  - **Correction to round 3:** "every finding fixed" claimed more than the row "Access review fixes, live" holds. The
+    third sweep's report still lists owner calls left open (`BOARD_READY_ACCESS_SWEEP_3.md`, "owner calls (not fixed)").
+    Public wording is now "with its fixes live" until those are closed (ask 13).
+  - **Found by the copy pass:** the shipped line for tryouts promised "offers families answer from the email"; tryout
+    decision emails were removed by the owner's ruling of 2026-08-26. Removed from the drawing. The same sentence is
+    still in the live customer release notes (`lib/release-notes.ts`), which is a separate fix for the owner to call.
+  - Open risk raised as ask 11: "Group email to coaches" is the one unstarted product build in the Committed column.
+- 2026-11-16 — **The owner ruled the public version's thirteen asks, every one as recommended** (paste-back "Public
+  roadmap asks: 1A · 2A · 3A · 4A · 5A · 6A · 7A · 8A · 9A · 10A · 11A · 12A · 13A"). The round 4 entry above is
+  therefore ruled as drawn:
+  - 1A the three front-page groups. 2A the customer-visible lines on the front page, the engineering detail on the
+    trust page. 3A shipped work first, with the release count.
+  - 4A commitments wording, with the guard. 5A "Your data is yours", with no "continuity" anywhere on the public
+    version. 6A "restore rehearsed" is the roadmap row only; the brief and the Security page say it only after the
+    first rehearsal. 7A status marks as drawn (Live, Under way, nothing on an item not started).
+  - 8A "One release of everything built since 5 November" and "Smaller open items" are off the public version.
+    9A the Club plan row reads "The club tools out of early access, open to every club". 10A the H2 goals "A club
+    runs a full season end to end" and "Case studies and comparison pages" are off the public version and stay on
+    ours.
+  - 11A "Group email to coaches" stays Committed only if it is built before the roadmap is first shown; otherwise it
+    moves to Q1. 12A the two product lines stay on the detail page until the owner gives a plain line for each.
+    13A the access review line reads "with its fixes live".
+  - No §2 row, placement or status changed. The drawing at the same link is marked ruled.
+- 2026-11-18 — **Ask 12's two plain lines RULED** (owner: "I agree with your recommendations", on options A for both and the
+  split below). Placement of both rows is unchanged (Q1 2027 table, Guardians row where it was); only the words and the
+  split change.
+  - **"One Guardians section" (A):** "One place for a player's guardians: a coach adds a parent once, invites them to the
+    family app from the same row, and sees who has joined." Status stays Not started (not yet drawn or ruled; the family app
+    is still switched off).
+  - **"The rest of the journeys stage" (A), split in two.** The finished part is the row "Club roles walked job by job"
+    (Built, not Live: its walks passed but it is not recorded as on production): "The club app, walked job by job by each
+    role that runs a club: the right home screen, the right menus, clean hand-offs between people, and numbers that open
+    into their detail." The unfinished part (13f messages to families say who they reach, 13g the phone, 13h one name per
+    thing; after the Canadian launch, owner 2026-11-17) becomes "Phone layout and wording polish, after launch", Not
+    started, size Large (three stages, each its own drawing, rulings and walk; the size is the writer's reading of the
+    size rule, not a ruling).
+  - Both plain lines now come off the "detail page only" holding rule (§4 item 4 ticked). A line still names no
+    club's request and no date.
+- 2026-11-18 — **Group email row RULED (owner: "group email can stay this year").** "Group email to coaches" stays in Rest
+  of 2026 (Committed), status In progress. This replaces ask 11A's condition ("stays Committed only if it is built before
+  the roadmap is first shown"). Risk recorded, not ruled on: it is the one unfinished product build in the Committed
+  column, its Session 2 walk is owed and Session 3 is not started, and the roadmap is public; if it has not shipped by
+  the Q1 review (end of January 2027) the row moves to Q1 and the line is corrected. The `/legal` read of the four "Your
+  data is yours" lines is running in another session (2026-11-18).
 
 ## 7. Versions shown
 

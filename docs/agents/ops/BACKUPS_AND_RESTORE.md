@@ -15,6 +15,21 @@ backups must rest on this page. Re-read the host's page before quoting a number 
 - **A database backup holds NO uploaded files** (logos, rules files, player documents): the host's page says Storage objects are not
   included. Production had 7 file records on 2026-11-18; the restored copy had no files, as expected.
 
+## Uploaded files: no backup, no undelete (host's pages read 2026-11-21)
+
+- supabase.com/docs/guides/platform/backups: "Database backups do not include objects you store via the Storage API, as
+  the database only includes metadata about these objects." and "Restoring an old backup does not restore objects you
+  deleted after that backup."
+- supabase.com/docs/guides/storage/s3/compatibility: "S3 versioning is not supported." and "Deleted objects are
+  permanently removed and cannot be restored."
+- supabase.com/security: "your Postgres database, Auth service, and Storage objects are hosted in that region" (ours:
+  US East, Ohio).
+- **Not stated anywhere on the host's pages:** durability, redundancy or replication of stored files. Never write
+  "redundant", "several copies" or a durability figure about uploaded files unless the host's page says it.
+- So: a deleted or replaced file is gone for good; a database restore brings back the file's RECORD, which then points at
+  nothing if the file was deleted since. We keep no copy of our own. Approved wording: the board brief's "Uploaded files
+  are not in those backups" bullet and Data Terms §8 (`docs/agents/legal/drafts/`).
+
 ## First restore rehearsal: PASSED 2026-11-18
 
 | | Production | The copy |

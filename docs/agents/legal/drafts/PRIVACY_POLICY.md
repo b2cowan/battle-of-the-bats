@@ -15,8 +15,9 @@
   adds feedback and early-access lead records), so both places now name those five kinds. No new use or kind of data, a
   narrower promise, so no advance email under §13. §9's sentence on the list of pages our staff visit is unchanged and
   still true. The published text is frozen: this version carries the correction when it publishes with the Payments Terms.
-  **Open for `/legal`:** the same record opened again within ten minutes is recorded once (not stated here); and whether
-  the page-visit list (§9) should be named beside the records log in §5.
+  The same record opened again within ten minutes is recorded once (deliberately not stated here). **Ruled 2026-11-22
+  (owner):** §5 does not also name the page-visit list; §9 discloses it, and it is browser-driven and can miss a visit,
+  so §5 promises only the records log.
 - **Draft 0.5 (2026-11-22, Club Communications as-built review; `CLUB_COMMUNICATIONS_STAGE1.md` "As-built review 2026-11-22")** —
   three sentences made true of what was built, no new use or kind of data, so no advance email under §13. (1) §12 and the
   §5 "Other people's email addresses" paragraph said every group email a club sends has an unsubscribe link: coach and

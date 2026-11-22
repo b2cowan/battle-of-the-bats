@@ -10,6 +10,12 @@
 | **Research** | `BOARD_READY_DATA_TERMS_REVIEW.md` (census, supplier terms, Québec/PIPEDA fit, owner questions, lawyer's eye) |
 
 **Change log**
+- **0.1, 2026-11-21 (owner ask: say what happens to uploaded files) — NEEDS THE OWNER'S RE-APPROVAL of this one bullet.**
+  §8's backups bullet now says we keep no backup copy of uploaded files, that a deleted or replaced file can't be
+  restored, and recommends the organization keep its own copy. It states a limit of the service the old wording already
+  implied and puts no duty on the club ("we recommend", not "you must"), so still not a §18 change. Source: the host's
+  pages read 2026-11-21 ("S3 versioning is not supported", "Deleted objects are permanently removed and cannot be
+  restored": `BACKUPS_AND_RESTORE.md`). No durability claim: the host states none.
 - **0.1, 2026-11-20 (Board Ready Stage 4 Part 3 close-out; `BOARD_READY_STAGE4_PART3_BUILT_REVIEW.md`)** — §12 gains one
   sentence naming answers to the club's own sign-up questions and files a family attaches (never in an email, notification
   or public page; read only through the registrations seats; one-hour link; each opening in the audit log; what to ask
@@ -147,8 +153,9 @@ We will not move where Customer Data is stored without telling you first, as in 
   sign-in-free links are stored only in a scrambled (hashed) form.
 - Information is encrypted in transit, and our database host encrypts everything it stores (AES-256).
 - **Two-step sign-in** is available to everyone, and your organization can require it of its people.
-- **Our database is backed up daily, and each backup is kept for 7 days.** Backups cover the database; uploaded files
-  are not in them.
+- **Our database is backed up daily, and each backup is kept for 7 days.** Backups cover the database only. We keep no
+  backup copy of uploaded files, so a file that is deleted or replaced can't be restored; we recommend you keep your own
+  copy of any document you can't replace.
 - Card and bank details are entered on Stripe's own page and never reach us.
 
 > NOTE — Sources: Privacy §10 (bullets 1–5, word for word where possible); `supabase.com/security` read 2026-11-18 ("All

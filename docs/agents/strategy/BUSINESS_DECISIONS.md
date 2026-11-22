@@ -8,6 +8,75 @@
 
 ---
 
+### 2026-11-21 — Tournament Plus moves UP to League Plus on its own subscription; EVERY move up is refused while the last payment is failing (Decided; on-sale pages S4 calls 39 and 46)
+**Status:** Decided (owner, 2026-11-21: S4's calls 35–46 "accept" as recommended; call 46's scope ruled at the start of the Part 2 build, "every move up"; the window's credit and charge lines ruled "go with your recommendations" the same day). Built and committed `dba4cd104` (S4 Part 2), plan `CLUB_ON_SALE_PAGES_PLAN.md` S4.
+**Decision:**
+1. **Tournament Plus → League Plus is a paid→paid move up** (call 39): the shipped move-up rule of 2026-09-25, unchanged: on the one existing subscription, prorated today from Stripe's own preview (the new plan for the rest of the period less a credit for the unused current plan, with tax), then League Plus's price from renewal; same billing cycle; **no second trial**; a move during a trial charges nothing today and keeps the trial's end. The move window shows Stripe's credit and charge as two lines above the tax and Due today (as a Premium coach's window already did; `/accounting`). **League Plus moves to no other plan at launch** (League Plus → Club after launch, walk §550 C1), so a Tournament Plus organization that moves up has no step back to Tournament Plus — only cancel.
+2. **Every move UP is refused while the last payment is failing** (call 46, scope "every move up"): Tournament Plus → League Plus, Club or Club · Association; Club → Club · Association; Premium → Club as before. Past due on our record OR Stripe's; refused before any figure is shown and before any charge, with the payment-method door. A move DOWN (Club · Association → Club) is not refused — it charges nothing today. Access is unaffected: "past-due keeps working" (2026-08-06, a cancelled subscription stops working) still holds; only a new charge is refused.
+**Rationale:** (1) Without the move, a paying Tournament Plus organization could not buy League Plus by any path (checkout refuses a second subscription; the move table had no row — dev probe 2026-11-20), so the on-sale pages' "start League Plus from Plan & billing" line would have promised a dead end. Reusing the shipped rule keeps one thing to explain and one invoice shape `/accounting` already read. (2) Don't add a charge to a card that is failing; one rule for every move up keeps two rows on one page from behaving differently (the old "Premium only" limit existed only because a portal's flip refuses an unsettled subscription).
+**Affects:** plan config (one move-table row; no price, band, SKU, trial or gate value moves); Plan & billing's Change plan table (a "Move to League Plus" row; "Coming soon" / "Contact us" while closed); the move window's words and figures; `/pricing`'s open-state "Can I change plans later?" answer; help (`lib/help-content/org.tsx`, "Moving between paid plans"); `PLAN_PRICING_FACTS.md` "Paid→paid moves" line (widened in `dba4cd104`).
+**Handoff:**
+HANDOFF → `/marketing` — done in S4 Part 2 (the three first sentences, the hint's "No second trial.", the failing-payment sentence, the `/pricing` answer, the move's legal-pages sentence). Next: W71's "/for-tournament-organizers" line ships in S4 Part 4 behind a test that it cannot render without this move.
+HANDOFF → `/billing` — done (move-table row, the shared failing-payment rule, the move and preview legal-pages refusal). Live-Stripe check before the flip: a `subscription_update` invoice carries our GST/HST number (`STRIPE_TAX_SETUP.md`).
+HANDOFF → `/plan` — none; S4 Parts 3–4 in the plan.
+**Amends:** 2026-09-25 — Moves between PAID plans (its up-move list gains Tournament Plus → League Plus; nothing else changes). **Relates to:** 2026-11-19 free League retired (League Plus is the only league plan).
+
+---
+
+### 2026-11-20 — The Premium Coaches Portal has NO board seats: the team staff page is the one home for people; any existing board member is converted to team staff (Decided)
+**Status:** **Decided** (owner, 2026-11-20, on the three questions put by `/strategy`: board seats **"Withdraw entirely"**;
+existing holders **"Convert them to team staff"**; the seats line **"Yes, line leaves; cap stays unused"**). The *rule* for
+what a converted person keeps is **NOT ruled** (below).
+**Decision:**
+1. **Admin and Staff are no longer offered on a workspace on the Premium Coaches Portal plan (`team`).** No rename and
+   no replacement seat: a renamed seat with nothing to spend it on is the same drawer. People in a Premium workspace are
+   added on the **team staff page**, and the one included tournament is run through its **Run tournaments** switch
+   (all-or-nothing, as ruled 2026-09-13). Applies only to workspaces on the Premium plan; a club-linked team's board
+   roles belong to the club and are untouched.
+2. **A Premium workspace that already has an Admin or Staff member, or later gets one (a platform-admin ownership
+   transfer demotes the old owner to Admin today), has that person CONVERTED to team staff.** Measured 2026-11-20 (counts
+   only): the one production Premium workspace has 1 owner and 5 coaches, all active, no Admin or Staff, no pending
+   invite; nobody is converted today. **Not ruled, owed to `/plan`:** which staff kind each converted person becomes, what
+   they keep, and how the ownership-transfer path behaves. No rule is recorded here on purpose.
+3. **"Seats" leaves the Premium plan's customer surfaces.** The billing page stops showing "N of 3 staff seats" (the
+   owner counted as a seat, so it would read 1 of 3 with nothing to spend). The `team` plan's seat-limit value **stays in
+   the plan settings, unused**; it is not zeroed, and the platform-admin plan editor is untouched.
+4. **No price, plan name, capacity band, SKU, feature key or gate value moves.** Coaching staff stay unlimited and never
+   count as seats (2026-09-13).
+**Rationale:** ruling 1R (2026-11-20, `RETIRE_OLD_TOURNAMENT_ONLY_NAV_PLAN.md`) gives a Premium workspace one home for
+people; keeping a second, board-shaped door to the same tournament is the "2 places to manage users" the owner called bad
+UX. In code, "Run tournaments" already carries scoring, check-in, creating tournaments and branding, which is more than a
+Staff seat, and the 2026-09-13 ruling ("no finer tournament-staff permissions in the coach portal, on purpose") makes the
+seat the one place that rule leaked. The only product that sold seats here was the free tournament plan's shape, inherited
+by Premium on 2026-08-10. **Cost accepted knowingly:** a non-coach helper (a parent running the scoreboard) can no longer
+get a narrow Staff seat; they join the team staff as a Helper with Run tournaments on, which gives them the whole
+tournament bundle and a sign-in on the team (practice plan, players' names and numbers). Nobody pays through Stripe on
+Premium today (the one holder is on free time), so no paying customer loses a thing; this is the cheapest moment to make
+the change.
+**Affects:** the Premium billing page (usage meter), who the invite and role dropdowns offer on a Premium workspace, the
+Facts doc (Premium seats bullet and the free-plan inclusion line that says it "applies to a Premium Coaches Portal's
+included event"), in-app help (below). **No public pricing or marketing copy for Premium mentions seats** (verified by
+census 2026-11-20), so no marketing page loses a line.
+**Handoff:**
+HANDOFF → `/billing`: stop offering Admin and Staff on `team`; drop the staff-seat meter from the Premium billing profile
+(tests pin it: the billing-profile and billing-admin-door tests, the org seat-count test); the seat check remains as a
+backstop for anyone converted late.
+HANDOFF → `/plan`: (a) the conversion rule (kind, what each keeps) and the ownership-transfer path, **owner calls to put
+to him, not defaults**; (b) the one Facts-doc line above, and the 1R build items that follow from this (the people page for
+Premium goes away with the tournament side's Staff & access).
+HANDOFF → `/docs`: the Premium help that sends the owner to "Staff & access" for tournament staff (the Run tournaments FAQ
+and article); the scoring help ("you and up to two staff enter the scores") and the Members help ("paid plans have
+unlimited staff seats", already wrong for Premium) each need a Premium-true wording.
+HANDOFF → `/marketing`: the /pricing seats FAQ says seats are "not on any paid plan" and omits Premium; true it in the next
+wording pass (the free plan's three seats stay as they are).
+HANDOFF → `/legal`, `/accounting`: none; nothing collected, emailed, charged or agreed changes.
+**Supersedes:** 2026-08-10 "Premium Coaches Portal seats clarified" **point 1 only** (the 3-seat cap on `team` "stands", scoped
+to the bundled tournament-admin side; its coaching-staff-unlimited clause and points 2 and 3 are untouched), and, for Premium
+only, the "3 staff seats unchanged" clause of 2026-10-12 "The free Tournament plan is the INVITE-ONLY event" (the free plan keeps its three seats; a
+Premium event no longer mirrors them).
+
+---
+
 ### 2026-11-19 — "Coach a team" opens the PAID Premium Coaches Portal sign-up; "free" comes off every coach marketing door, except the doors that come from a tournament (Decided)
 **Status:** **Decided** (owner, 2026-11-19: *"I agree with A except for the doors from a tournament, so places like public
 tournament pages keep theirs because the 'free coach portal' is the one user set up when they join tournaments"*). One
@@ -217,6 +286,24 @@ flip; it can ship before it or after it**, in line with the owner's 2026-11-17 r
 
 ---
 
+### 2026-11-18 — The accountant question on our payment fee (D1) is taken AFTER online payments switch on (Decided)
+**Status:** **Decided** (owner, 2026-11-18: "I will take the accountant question after"). Amends **R2** of 2026-11-17
+"Stripe-owned pricing" (timing only).
+**Decision:** Whether our online-payment fee is a taxable supply or an exempt financial service (D1) goes to the owner's
+accountant **after** online payments switch on, no longer before. Nothing else in the 2026-11-17 entry moves: **R1 stands**
+(the GST/HST on our fee is included in it and paid out of our share; no tax line at checkout, no tax bill to clubs), the
+family-facing rates are unchanged, and the accountant is still not a gate on building or launching (T6, 2026-10-31).
+**Rationale:** the owner's call; R1 already fixes what teams, families and clubs see whatever the answer is, so the answer
+changes only what we owe ourselves.
+**Noted, not ruled:** until the answer comes, R1 is the working position (we absorb the tax if there is any); an "exempt"
+answer would mean none was ever owed. The per-fee tax record GST/HST Stage 5 builds is not touched by this timing change.
+**Affects:** the board's "Families pay online" owner steps; the R2 line in `STRIPE_OWNED_PRICING_PLAN.md`. No price, gate,
+copy or code.
+**Handoff:** none (no customer-facing surface, gate or build moves).
+**Supersedes:** R2's "before online payments switch on" in 2026-11-17 "Stripe-owned pricing" (R1 and R3 stand).
+
+---
+
 ### 2026-11-18 — The public "Download rules" PDF is on EVERY plan, the free Tournament plan included; it is an attendee's copy, not an organizer's PDF export (Decided)
 **Status:** **Decided** (owner, 2026-11-18, Public tournament pages Stage 10 build session, G1: "Every plan", as recommended).
 **Decision:** The printable rules file a visitor downloads from a tournament's public Rules page (Stage 10) is offered on
@@ -293,7 +380,7 @@ day. Plan of record `docs/projects/active/STRIPE_OWNED_PRICING_PLAN.md` (Stage 1
    no monthly tax bill to clubs. By the club's billing address (T3 stands: the fee is our charge to the club); a US club 0%.
    Revisit tax-on-top later only if Stripe can add it at payment time, with the terms changed then.
 2. **R2 — Whether our fee is a taxable supply or an exempt financial service (D1) goes to the owner's accountant before
-   online payments switch on.** Not a gate on building (no professional is a gate, 2026-10-31 / 2026-11-04).
+   online payments switch on.** *(Timing amended 2026-11-18: after switch-on, see the entry above.)* Not a gate on building (no professional is a gate, 2026-10-31 / 2026-11-04).
 3. **R3 — Move to Stripe-owned pricing before launch.** Every club account is created with Stripe collecting its own fees
    from the club (`fees_collector: stripe`) and Stripe covering losses the club cannot (`losses_collector: stripe`).
    Test-mode trial GO on the evidence: every Stripe cost (processing, $15 card dispute, $5 debit dispute, foreign card)
@@ -338,7 +425,6 @@ family-facing rates stand) and makes the 2026-10-26 / 2026-10-27 riders (returne
 billed by our invoice) redundant once Stage 4 retires them; until then they stand for today's accounts. Sits beside the
 2026-10-31 US rulings U1/U2 (US clubs pay Stripe directly; the US margin amounts are still owed).
 
-
 ### 2026-11-17 — Launch in Canada first, the US after; the Canadian launch = a club can onboard, with marketing and the demo after it (Decided)
 **Status:** **Decided** (owner, 2026-11-17, One Board Session 1; logged on his yes in One Board Session 2 the same day).
 **Decision:**
@@ -355,6 +441,58 @@ saving a bank check to finish later, and each team's own amount across several p
 **Handoff:** none owed now. The board already sorts projects by these goals; marketing and demo work wait for the launch.
 **Supersedes:** nothing. It sequences, and does not reverse, 2026-10-31 "FieldLogicHQ charges its own sales tax…" (US customers
 in scope by design).
+
+### 2026-11-16 — An invoice left unpaid when a plan ends early is FORGIVEN by default, not chased (Decided; the live Stripe setting is owed)
+**Status:** **Decided** (owner, 2026-11-16, Plan & billing Stage 5 Part B session: "i would probably forgive, its no cost to us
+and would be more cost to chase", then "i agree with your recommendations"). **Nothing built or set yet** — the live Stripe
+dashboard setting is the owner's to apply (below).
+**Decision:** The case: a renewal payment fails, Stripe's retries fail, and Stripe ends the subscription (Plans end at renewal
+Stage 3 finding F2; the invoice stays open). That leftover invoice is **forgiven by default, never chased.**
+1. **A standing rule, not case by case.** The live Stripe setting marks a past-due invoice **uncollectible at 30 days**: one
+   account-wide switch, set by the owner in the Stripe dashboard (Billing settings, revenue recovery). **"Cancel the
+   subscription" stays the action after the final retry** (it is what ends the plan; the 2026-08-06 dunning-window rule is
+   unchanged).
+2. **A club that comes back starts fresh.** It does not have to pay the forgiven invoice before reactivating.
+3. **Exception:** an operator may chase one specific invoice by hand when there is a reason (abuse, a repeat). That is a
+   judgment on the one invoice, not a different rule.
+4. **Tax, so the cost is small and not zero** (`docs/agents/accounting/UNPAID_SUBSCRIPTION_INVOICES.md`, `/accounting`
+   2026-11-05): GST/HST is owed on the **invoice date** even if the invoice is never paid. Each uncollectible invoice is a
+   **bad-debt write-off**, with the tax claimed back on **line 107** of that period's return. FieldLogicHQ fronts the tax until
+   that return and does one bookkeeping entry per invoice. **A professional confirms the return method before the first
+   bad-debt adjustment** (flagged, not a gate; owner ruling 2026-11-04).
+5. **Customer words stay neutral.** While retries run, the past-due window says the payment "is still due". **After the end, no
+   sentence claims anything is owed or forgiven**, so the product never promises collection or a waiver it has not decided to
+   keep for every case.
+**Unverified (not decided around):** that Stripe lets a club with an uncollectible invoice start a **new** subscription without
+settling it. The "starts fresh" promise depends on it; check it in **test mode** before it is relied on. If Stripe blocks it,
+this entry's point 2 needs a rework (for example, voiding the invoice at reactivation), brought back to `/strategy`.
+**Rationale:** Chasing a small unpaid renewal costs more than the invoice is worth; the club has already lost the plan, and a
+returning club is worth more than the old amount. The tax cost is real but small and recoverable (point 4). Source and
+numbers: `UNPAID_SUBSCRIPTION_INVOICES.md`; the case and its history: `docs/projects/active/PLAN_ENDS_AT_RENEWAL_PLAN.md`
+(Stage 3 F2; Stage 5 list).
+**Affects:** Stripe live account setting · Terms §8 failed-payment paragraph · the owner's Bookkeeping (a bad-debt line) ·
+customer wording around a past-due or ended plan. **No price, plan, band, SKU or gate change**; `PLAN_PRICING_FACTS.md` and
+`lib/plan-config.ts` untouched (billing policy, not packaging).
+**Handoff:**
+```
+HANDOFF → /plan
+- PLAN_ENDS_AT_RENEWAL_PLAN.md Stage 5: the owner sets the live "mark uncollectible at 30 days" setting (keep "cancel the
+  subscription" after the final retry) and reads it back; add the test-mode check that a club with an uncollectible invoice can
+  start a new subscription. Stage 4's past-due words follow point 5.
+- Owner Bookkeeping's future Stripe-income stage: carry the uncollectible event as a bad-debt line (GST/HST line 107).
+HANDOFF → /legal
+- Check Terms §8's failed-payment paragraph (docs/agents/legal/drafts/TERMS_OF_SERVICE.md) does not promise collection and
+  does not promise forgiveness; it must hold under "forgiven by default, an operator may chase one".
+HANDOFF → /accounting
+- Re-verify UNPAID_SUBSCRIPTION_INVOICES.md before the first bad-debt adjustment; the return method is a professional's call.
+HANDOFF → /marketing
+- Past-due and ended-plan wording: "is still due" while retries run; nothing after the end says owed or forgiven.
+```
+**Supersedes:** nothing. **Relates to:** 2026-08-06 "A cancelled subscription STOPS WORKING, immediately" (the dunning window is
+the only grace; unchanged); 2026-10-31 "A cancel or a downgrade takes effect on the RENEWAL DATE" (the ending this entry
+covers is the involuntary one).
+
+---
 
 ### 2026-11-10 — Board Ready: no new price, band or key; security work is on every plan; Stages 1–7 ride League Plus and both Club bands (Decided; planned, nothing built)
 **Status:** **Decided** (owner, 2026-11-10, "agreed", answering the gate recommendation in `docs/projects/active/BOARD_READY_PLAN.md`
@@ -2969,7 +3107,7 @@ HANDOFF → owner
 
 ### 2026-08-10 — Premium Coaches Portal seats clarified: coaching staff is unlimited, the bundled tournament-admin side keeps the free-tier 3-seat guard; officials exemption extended to the portal; config label aligned to the canonical name
 
-**Status:** Decided (owner, 2026-08-10 — officials flip and label alignment ratified directly; the seat ruling ratified after a clarification pass established exactly who a "seat" is) · **⚠ Point 2 overtaken by scope 2026-10-12** ("The free Tournament plan is the INVITE-ONLY event", point 4): a coach's hosted event follows the free plan, which has no volunteers at the build, so the extended exemption has nothing left to exempt there. Points 1 and 3 stand.
+**Status:** Decided (owner, 2026-08-10 — officials flip and label alignment ratified directly; the seat ruling ratified after a clarification pass established exactly who a "seat" is) · **⚠ Point 2 overtaken by scope 2026-10-12** ("The free Tournament plan is the INVITE-ONLY event", point 4): a coach's hosted event follows the free plan, which has no volunteers at the build, so the extended exemption has nothing left to exempt there. Points 1 and 3 stand. · **⚠ Point 1's 3-seat cap superseded 2026-11-20** ("The Premium Coaches Portal has NO board seats"): Premium offers no board roles; coaching staff stay unlimited.
 
 **Decision:** Three rulings out of the 2026-08-10 docs-audit drift check:
 

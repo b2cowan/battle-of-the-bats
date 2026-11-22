@@ -27,7 +27,7 @@
 - **Button on the reopened-ended-club email: "Choose a plan" → "Open Plan & billing"**, so all four shapes carry the same neutral pointer and the only purchase-flavoured words are the one "To keep" sentence.
 - **Coach no end date:** band text "FieldLogicHQ gave you Premium, with no end date set. Nothing is charged."; cancel refusal "… free from FieldLogicHQ, with no end date set." Keep the title as is.
 - **Hold the line in code:** a build guard that the email's words never carry `$`, a price, "discount", "offer" or a link other than the billing page (the unit test already bars `$|price|lose|cancel`).
-- Owner question (not a legal requirement): should ending free time early, or ending an open-ended one, tell the coach or club by email? Today it does not; nothing promises it.
+- Owner question (not a legal requirement): should ending free time early, or ending an open-ended one, tell the coach or club by email? **RULED 2026-11-20: no** (owner "i agree" to the recommendation; staff end it early only by arrangement with the customer). Nothing promises an email, so nothing needs re-wording.
 
 ## Sources
 - `CASL_LATE_BILL_EMAIL.md` finding 1 (CASL ss.1(2), 6(1), 6(2), 6(6), SOR/2012-36 s.2(1); read on laws-lois.justice.gc.ca 2026-11-13) — the reasoning reused here.

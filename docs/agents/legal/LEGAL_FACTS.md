@@ -29,7 +29,7 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
 ## FieldLogicHQ's two privacy roles
 1. **Its own organization** for account holders' information (owner, coaches, club admins: name, email,
    billing address for sales tax).
-   *(Also, from 2026-11-12: a parent may type another family's child's name, an optional parent name, or a friend code on a house-league sign-up — Board Ready friend requests. Seen only by the seats that open Registrations, used only for team placement, deleted when the season is marked finished or 60 days after its last day. Privacy policy draft v0.2 carries the text (§5, §9) since 2026-11-12, to go live with the Parts 1–3 promote; see `FRIEND_REQUESTS_PRIVACY.md`.)*
+   *(Also, from 2026-11-12: a parent may type another family's child's name, an optional parent name, or a friend code on a house-league sign-up — Board Ready friend requests. Seen only by the seats that open Registrations, used only for team placement, deleted when the season is marked finished or 60 days after its last day. The published Privacy Policy (version 2026-11-17) carries the text (§5, §9); the feature itself has been on production since the 2026-11-15 promote; see `FRIEND_REQUESTS_PRIVACY.md`.)*
 2. **Service provider to each club** for the information the club puts in — rosters, players, families,
    tryout registrants. The club decides what it collects; FieldLogicHQ processes it for the club. The
    documents must say which role applies to what.
@@ -46,8 +46,8 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   id, shown as first name to coaches; a coach shows to a parent only as "Coach"), when, the answer before it, an optional one-line family note (200
   characters) and the coach's own private note; plus a reminder email to the account's own address and an in-app bell line for the coach. Family note
   deleted 30 days after the event; who-set-it and the previous answer removed 60 days after the team's last event of the season; the answer itself
-  stays as the club's attendance record, never deleted by the clean-up (migs 476/477/479/480/482/483/484/485; not on production). Topic: `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`; possibly stale because of it:
-  `drafts/PRIVACY_POLICY.md` §5/§9, `drafts/GUARDIAN_CONSENT_STAGE4.md`.
+  stays as the club's attendance record, never deleted by the clean-up (migs 476/477/479/480/482/483/484/485; applied to production 2026-11-15, but inert while the guardian tier is off). Topic: `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`; possibly stale because of it:
+  the published Privacy Policy §5/§9 (already describes it), `drafts/GUARDIAN_CONSENT_STAGE4.md`.
 - **About a person who has not accepted a club's invitation (built on dev 2026-11-18, Board Ready trust close-out 13 call (b)):**
   name and email (the club typed them), a pending membership, and for a new person an unconfirmed sign-in account the invitation
   created. The invitation runs out 30 days after it was last sent (a Resend restarts it); a nightly sweep removes it 30 days after
@@ -63,6 +63,25 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   is, only an upload triggers it, so the policy must not say "within a day"). A health answer's words never return to Your sign-up (it reads "Answered"); the
   question's health mark cannot come off once answered. No IP is stored with a tick or an upload. Topic: `BOARD_READY_STAGE4_PART2_BUILT_REVIEW.md`; possibly
   stale because of it: the published Privacy Policy §5/§9 and Data Terms §12 (Part 3 owes the sentences).
+- **Re-verified 2026-11-21 against production code (`origin/master` `f12aad4d9`):** no page anyone can open without a link
+  or an account shows a player's name, date of birth or roster (club site and team pages, team calendar feeds, share
+  images, every tournament page incl. champions, house-league pages, the public JSON routes). Private links show names to
+  their holder only: a family's "Your sign-up" link (its own children, first names), a volunteer's tryout-scoring link
+  (full names unless the tryout is anonymous), a pay link (first name on Stripe's page). A club's own free text shows as
+  typed. Topic: `MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md` §0.
+- **The staff tools' two records (read 2026-11-21):** the change log (`platform_audit_log`) is append-only (mig 429 triggers
+  block update, delete, truncate); the log of records opened (`platform_record_opens`, mig 365) is NOT locked (the server
+  may update or delete), covers club, person and sent-email records and, from mig 521 (Board Ready D1, owner 2026-11-22,
+  built on dev 2026-11-22, prod pending), feedback and early-access lead records (not list views, exports or Find
+  results), skips a repeat within 10 minutes, is kept 90 days, and a line that fails to save is NOT silent: it opens an
+  issue in the error feed and, on production, can email an alert (leftover call 18 (a), 2026-11-19; the 2026-11-21 note
+  here said "fails silently" and was out of date). A second, separate list, `platform_admin_visits`, holds the address of
+  every platform-admin page a staff browser visits (browser-driven, so a visit can be missed; no API routes or exports; no
+  set end date), and Privacy §9 already says so. **Wording (D1, read 2026-11-22):** the published Privacy 2026-11-17 §5/§10
+  (frozen) and the Data Terms draft said "every page they open in our own tools is recorded"; Privacy draft 0.6 (§5, §10),
+  the Data Terms draft §5 and the live Security page now say "every club, person, sent email, feedback or early-access
+  lead record they open", which the code does (census guard `tests/unit/records-opened-census-guard.test.ts`). The
+  published 2026-11-17 sentence stays on production until the next privacy version publishes with the Payments Terms.
 - **About coaches and board members, in the club's record of group email (Club Communications Stage 1, built on dev, uncommitted 2026-11-22; migs 492/493/520 dev only):**
   for each email a club sends to its coaches or its board: the sender's account id and name and seat as sent, the group, the
   counts, and each person it went to (source id, name and team line or board seat as sent, why, and whether it reached
