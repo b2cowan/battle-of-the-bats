@@ -169,6 +169,10 @@ describe('the public plan pages, closed (as production) and open (as dev)', () =
     assert.ok(!page.includes('League Plus and Club — what they cover'), 'W13');
     assert.ok(page.includes('How do I buy League Plus, Club, or Club · Association?') && page.includes('Which Club plan do I need?'), 'W15, W20');
     assert.ok(page.includes('Browse all the ways to start'), 'W21');
+    // W17 after S4: each sentence is a start or a move the product makes (Part 1's starts, Part 2's Tournament Plus → League Plus).
+    assert.ok(page.includes('A free Tournament organization can start Tournament Plus, League Plus, Club or Club · Association at any time.'), 'S4 starts');
+    assert.ok(page.includes('Tournament Plus can move up to League Plus, Club or Club · Association, and Club to Club · Association, at any time'), 'S4 Part 2');
+    assert.ok(page.includes('League Plus can\'t be moved to another plan yet.'), 'League Plus → Club is after launch');
     // The trial sentence with the length checkout will use (Ask 9), never the code's.
     assert.ok(page.includes(planTrialLine(LEAGUE_TRIAL_DAYS)) && !page.includes(planTrialLine(PLAN_CONFIG.league.trialDays)));
     // The coaches band is Premium only (BUSINESS_DECISIONS 2026-11-19).

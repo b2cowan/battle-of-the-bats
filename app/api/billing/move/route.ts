@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { demoBillingRefusal } from '@/lib/demo-guard';
-import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription, moveLandedInStripe, moveRefusalBeforeStripe } from '@/lib/plan-move';
+import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription, moveLandedInStripe, moveRefusalBeforeStripe, paymentFailingRefusal } from '@/lib/plan-move';
 import { moveDirection } from '@/lib/plan-move-options';
 import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
 import { writeOrgBillingAudit } from '@/lib/billing-retention';
@@ -11,6 +11,7 @@ import { ownPlanOf } from '@/lib/entitlement-grants';
 import { billingAddressFromBody, requireBillingLocation, withClubAddressOnStripe, type BillingBuyer } from '@/lib/billing-location-server';
 import type { BillingLocation } from '@/lib/billing-location';
 import { requireAcceptance } from '@/lib/legal-acceptance';
+import { legalPagesSaleRefusal } from '@/lib/legal-pages-sale-guard';
 
 /**
  * The move between plans — one subscription, never a second checkout (Ask 4, D7; A06).
@@ -67,12 +68,20 @@ export const POST = withObservability(async (req: Request) => {
   if (!toPlan) return NextResponse.json({ error: 'Choose a plan to move to.', code: 'not_a_move' }, { status: 400 });
   const gated = await refuseIfGated(toPlan);
   if (gated) return gated;
+  // On-sale pages S4 Part 2: the move sells League Plus, Club and Club · Association too, so it refuses them on a live key while
+  // the legal pages are off, before the address work — as checkout does (lib/legal-pages-sale-guard.ts). Only a move UP sells: a
+  // move down (Club · Association → Club) charges nothing today and renews what was bought, so it is never refused here.
+  const unpublished = moveDirection(ownPlanOf(authorized.org), toPlan) === 'down' ? null : legalPagesSaleRefusal(toPlan, 'billing-move', { sale: 'move' });
+  if (unpublished) return unpublished;
 
   // GST/HST Stage 1: a move UP charges today, so the buyer's billing address must be on file (a safety net: every subscription
   // started after this stage already has one). A move up from Premium makes the portal the club, so the buyer is the CLUB: the
   // "Start your club" window sends its address with the name, saved to the club's own row first.
   // Stage 2: a move DOWN charges nothing today but turns tax on for the renewal it schedules, which Stripe refuses for a customer
   // it cannot place, so it asks the same question (the screen opens the Billing address window, not a provider error).
+  // Call 46: a failing payment is refused before the address step (our record; Stripe's is asked again inside the move).
+  const failing = paymentFailingRefusal(org, toPlan);
+  if (failing) return refusalResponse(failing);
   let clubAddress: { buyer: Extract<BillingBuyer, { kind: 'org' }>; location: BillingLocation } | null = null;
   const direction = moveDirection(ownPlanOf(org), toPlan);
   if (direction !== null) {

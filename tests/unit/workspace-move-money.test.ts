@@ -27,7 +27,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import { supabaseAdmin } from '../../lib/supabase-admin.ts';
 import { getStripe } from '../../lib/stripe.ts';
-import { applyMove, applyPlanChangeSideEffects, hasLiveSubscription, moveLandedInStripe, moveRefusalBeforeStripe, previewMove, type MoveOrg, type MovePreview, type MoveRefusal } from '../../lib/plan-move.ts';
+import { applyMove, applyPlanChangeSideEffects, hasLiveSubscription, moveLandedInStripe, moveRefusalBeforeStripe, paymentFailingRefusal, previewMove, type MoveOrg, type MovePreview, type MoveRefusal } from '../../lib/plan-move.ts';
 import { flipWorkspaceIntoClub } from '../../lib/workspace-flip.ts';
 import { moveDirection } from '../../lib/plan-move-options.ts';
 import { trustedPreviewLines, type PreviewInvoiceLike } from '../../lib/plan-move-preview-lines.ts';
@@ -350,11 +350,53 @@ describe('2 · Premium → Club: the move rules', () => {
     }
   });
 
-  it('only Premium is held to it: a past-due Tournament Plus owner is moved as before', async () => {
+  it('every move up is held to it (S4 call 46, owner 2026-11-21): Tournament Plus → League Plus, Club, Club · Association, and Club → Club · Association', async () => {
+    const ups: [MoveOrg['planId'], MoveOrg['planId']][] = [['tournament_plus', 'league'], ['tournament_plus', 'club'], ['tournament_plus', 'club_large'], ['club', 'club_large']];
+    for (const [from, to] of ups) {
+      // Our record alone says past due (Stripe active), or only Stripe does (our record active): either refuses.
+      for (const [recorded, stripeSays] of [['past_due', 'active'], ['active', 'past_due']]) {
+        stubDatabase(PRICES);
+        stubStripe({ sub: subscription({ status: stripeSays }), invoice: invoiceOf([line(5000, NEW_PRICE), line(-2000, OLD_PRICE)]) });
+        const org = premiumOrg({ planId: from, subscriptionStatus: recorded });
+        const preview = await previewMove(org, to);
+        assert.ok(isRefusal(preview) && preview.code === 'payment_failing', `${from} → ${to}: ${JSON.stringify(preview)}`);
+        // The band move's own words, not the Premium window's "…then start your club" or "…then move to Club".
+        assert.equal(isRefusal(preview) ? preview.error : '', 'Your last payment didn’t go through. Update your payment method first, then move.');
+        assert.equal(stripeCalls.createPreview, 0, 'no preview is priced');
+        const applied = await applyMove(org, to, { expectedAmountDue: SHOWN, actor: 'owner@example.com' });
+        assert.ok(isRefusal(applied) && applied.code === 'payment_failing', `${from} → ${to} applied: ${JSON.stringify(applied)}`);
+        assert.equal(stripeCalls.update.length, 0, 'nothing is charged');
+        unstubStripe();
+      }
+    }
+  });
+
+  it('the routes ask it FIRST, on our record, before the billing address step; a coach with no subscription still goes to checkout', () => {
+    for (const path of ['app/api/billing/move/route.ts', 'app/api/billing/move/preview/route.ts']) {
+      const code = readFileSync(path, 'utf8');
+      const asked = code.indexOf('paymentFailingRefusal(org, toPlan)');
+      assert.ok(asked > 0, path);
+      assert.ok(asked < code.indexOf('requireBillingLocation(', code.indexOf('export const POST')), `${path}: before the address step`);
+    }
+    assert.equal(paymentFailingRefusal(premiumOrg({ stripeSubscriptionId: null, subscriptionStatus: 'past_due' }), 'club'), null, 'no subscription: checkout, as before');
+    assert.equal(paymentFailingRefusal(premiumOrg({ planId: 'club_large', subscriptionStatus: 'past_due' }), 'club'), null, 'a move down');
+    assert.equal(paymentFailingRefusal(premiumOrg({ planId: 'tournament_plus', subscriptionStatus: 'past_due' }), 'league')?.code, 'payment_failing');
+  });
+
+  it('a move DOWN is not held to it: Club · Association → Club charges nothing today, so a past-due club may still schedule it', async () => {
+    stubDatabase({ ...PRICES, rep_teams: { count: 5 } });
+    stubStripe({ sub: subscription({ status: 'past_due' }) });
+    const refusal = await moveRefusalBeforeStripe(premiumOrg({ planId: 'club_large', subscriptionStatus: 'past_due' }), 'club', null);
+    assert.equal(refusal, null, JSON.stringify(refusal));
+    unstubStripe();
+  });
+
+  it('a paying Tournament Plus owner previews the move to League Plus as any move up: Stripe’s figure, same subscription', async () => {
     stubDatabase(PRICES);
-    stubStripe({ sub: subscription({ status: 'past_due' }), invoice: invoiceOf([line(5000, NEW_PRICE), line(-2000, OLD_PRICE)]) });
-    const r = await previewMove(premiumOrg({ planId: 'tournament_plus', subscriptionStatus: 'past_due' }), 'club');
-    assert.ok(!isRefusal(r));
+    stubStripe({ sub: subscription(), invoice: invoiceOf([line(5000, NEW_PRICE), line(-2000, OLD_PRICE)]) });
+    const r = await previewMove(premiumOrg({ planId: 'tournament_plus' }), 'league');
+    assert.ok(!isRefusal(r) && r.direction === 'up', JSON.stringify(r));
+    assert.equal(stripeCalls.createPreview, 1);
   });
 
   it('a coach with no subscription is not moved — free days, a stale or dev subscription, a cancelled one — they go to checkout', async () => {

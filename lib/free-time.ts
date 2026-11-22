@@ -33,6 +33,15 @@ export function ownPlanOf(org: Pick<Organization, 'planId' | 'ownPlanId'>): OrgP
   return org.ownPlanId ?? org.planId;
 }
 
+/**
+ * The plan free time gives a club over its own one, or null when none runs (`org.planId` is the door's: the own plan with
+ * any running whole-plan grant applied). The one sanctioned read of the given plan for a billing action — checkout's
+ * "at or below a running free plan" refusal (On-sale pages S4 Part 1).
+ */
+export function givenPlanOf(org: Pick<Organization, 'planId' | 'ownPlanId'>): OrgPlan | null {
+  return org.planId !== ownPlanOf(org) ? org.planId : null;
+}
+
 /** The plans that can be given as free time (owner ruling Q2/T13): League and League Plus are parked. */
 export const GRANTABLE_PLANS: readonly OrgPlan[] = ['tournament_plus', 'club', 'club_large'];
 

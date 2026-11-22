@@ -178,7 +178,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   }
   function refusalText(refusal: Refusal): string {
     switch (refusal.code) {
-      case 'payment_failing': return W.clubUpgrade.paymentFailing;
+      // A band move's own sentence (call 46): "…then start your club" is the Premium window's.
+      case 'payment_failing': return inPlace ? W.clubUpgrade.paymentFailing : W.move.paymentFailing;
       case 'cannot_become_club': return refusal.error || W.clubUpgrade.cannotBecome;
       case 'club_name_invalid':
       case 'club_name_required': return W.clubUpgrade.nameEmpty;
@@ -307,6 +308,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     ? <DialogCancel className={`btn btn-outline ${styles.desktopCancel}`}>{W.move.cancel}</DialogCancel>
     : <button type="button" className="btn btn-outline" onClick={onClose} disabled={working}>{W.move.cancel}</button>;
   const preview = state.status === 'preview' ? state.preview : null;
+  /** A band move up whose preview carries Stripe's trusted credit and charge lines (S4 Part 2): shown line by line. */
+  const bandLines = !inPlace && preview?.direction === 'up' && (preview.lines?.length ?? 0) > 0;
   // The two steps of Start your club. The form (and so the step bar) shows whenever there is a charge to show, or the Québec
   // refusal that keeps the address on screen; step 2 needs a charge (or checkout quote) of its own, so a refusal arriving
   // while on it puts the window back on step 1's body.
@@ -324,7 +327,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   const canNext = clubStep && !clubHold && !regionHold && stepMissing === null;
   const canCheckout = refusal?.code === 'no_live_subscription' && (!inPlace || !!quote);
   // No address on file for a band move: the Billing address window, which comes back here with the figures once saved.
-  const retryable = figures === 'failed' || (refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending', BILLING_REVIEW_HOLD, BILLING_ADDRESS_REQUIRED, BILLING_REGION_CLOSED].includes(refusal.code)));
+  const retryable = figures === 'failed' || (refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending', 'legal_pages_unpublished', BILLING_REVIEW_HOLD, BILLING_ADDRESS_REQUIRED, BILLING_REGION_CLOSED].includes(refusal.code)));
   const payWaits = working || figures !== 'ready';
   // Start your club's step 1 holds no paid button: its foot is Cancel and Next, and step 2's is Back and the paid button (as
   // New tournament does: Cancel on the first step, Back after). Every other window keeps the one foot it always had.
@@ -411,13 +414,15 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
       </div>}
     </>}
     {paidHere && preview?.direction === 'up' && <>
-      {!inPlace && <p>{W.move.up(org.name, target.label, target.teamLimit)}</p>}
+      {!inPlace && <p>{W.move.up(org.name, toPlan)}</p>}
       {figures === 'ready' ? <dl className={styles.figures}>
-        {inPlace && preview.lines?.map((line, index) => <div key={index} className={line.kind === 'credit' ? styles.credit : undefined}><dt>{line.kind === 'charge' ? W.clubUpgrade.charge(PLAN_CONFIG[line.plan].label) : W.clubUpgrade.credit(PLAN_CONFIG[line.plan].label)}</dt><dd>{line.kind === 'credit' ? '−' : ''}{amount(line.amount, preview.currency)}</dd></div>)}
+        {/* S4 Part 2 (`/accounting`, owner 2026-11-21): a band move shows Stripe's credit and charge too, so the figure says it is
+            the new plan less the unused old one — as the Premium window always did. No trusted lines: the one-row figure, as before. */}
+        {(inPlace || bandLines) && preview.lines?.map((line, index) => <div key={index} className={line.kind === 'credit' ? styles.credit : undefined}><dt>{line.kind === 'charge' ? W.clubUpgrade.charge(PLAN_CONFIG[line.plan].label) : W.clubUpgrade.credit(PLAN_CONFIG[line.plan].label)}</dt><dd>{line.kind === 'credit' ? '−' : ''}{amount(line.amount, preview.currency)}</dd></div>)}
         {/* A band move's one figure becomes the amount before tax, then the tax, then Due today (tab 2). No tax (a US buyer) keeps the one row. */}
-        {!inPlace && taxLines.length > 0 && beforeTax !== null && <div><dt>{W.move.today}</dt><dd>{amount(beforeTax, preview.currency)}</dd></div>}
+        {!inPlace && !bandLines && taxLines.length > 0 && beforeTax !== null && <div><dt>{W.move.today}</dt><dd>{amount(beforeTax, preview.currency)}</dd></div>}
         {taxRows(preview.currency)}
-        <div><dt>{inPlace || taxLines.length > 0 ? W.clubUpgrade.dueToday : W.move.today}</dt><dd>{amount(preview.amountDueToday, preview.currency)}</dd></div>
+        <div><dt>{inPlace || bandLines || taxLines.length > 0 ? W.clubUpgrade.dueToday : W.move.today}</dt><dd>{amount(preview.amountDueToday, preview.currency)}</dd></div>
         {renewalRow(W.move.from(preview.renewsAt), preview.nextAmount, preview.billingCycle, preview.currency)}
       </dl> : figureNote}
       <p className={styles.hint}>{inPlace ? W.clubUpgrade.billingKept(preview.billingCycle) : W.move.previewHelp}</p>

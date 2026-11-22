@@ -10,7 +10,8 @@ import { moveDirection } from '@/lib/plan-move-options';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
-import { getStripePriceId } from '@/lib/stripe-prices';
+import { getPlanFromPriceId, getStripePriceId } from '@/lib/stripe-prices';
+import { getStripe } from '@/lib/stripe';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { isRecoveryTransition, writeGrowthEvent, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -20,6 +21,7 @@ import { cancelScheduledEmail } from '@/lib/email-sender';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
+import { givenPlanOf } from '@/lib/free-time';
 import { inPlaceMetadata, inPlaceReturnPath, inPlaceUpgradeOf } from '@/lib/workspace-upgrade';
 import { workspaceCannotBecomeClub } from '@/lib/workspace-upgrade-status';
 import {
@@ -28,8 +30,7 @@ import {
 import type { BillingLocation } from '@/lib/billing-location';
 import { requireAcceptance } from '@/lib/legal-acceptance';
 import { BUYER_USER_META, COMEBACK_META } from '@/lib/plan-growth';
-import { legalPagesMode } from '@/lib/legal-pages-switch';
-import { stripeKeyIsTest } from '@/lib/stripe-mode';
+import { legalPagesSaleRefusal } from '@/lib/legal-pages-sale-guard';
 import { PAID_DOOR_PLANS, paidDoorOf, parseStartPaidPlan, trialDaysAfterHistory, type StartPaidPlan } from '@/lib/start-door';
 import { billingStartSuccessPath, readStartPlan, startPlanCancelPath, startPlanSuccessPath } from '@/lib/start-plan-server';
 
@@ -47,6 +48,14 @@ function isMissingStartupTasksColumn(error: { code?: string; message?: string } 
 
 function isOrgPlan(value: string | undefined): value is OrgPlan {
   return Boolean(value && value in PLAN_CONFIG);
+}
+
+/** The plan a landing subscription is for, read from its price; null when the price is not one of ours. */
+async function landingPlanOf(subscriptionId: string): Promise<OrgPlan | null> {
+  const sub = await getStripe().subscriptions.retrieve(subscriptionId);
+  const priceId = sub.items.data[0]?.price?.id;
+  const plan = priceId ? (await getPlanFromPriceId(priceId))?.planId : undefined;
+  return isOrgPlan(plan) ? plan : null;
 }
 
 async function resetStartupTasksIfAvailable(orgId: string) {
@@ -99,17 +108,10 @@ export const POST = withObservability(async (req: Request) => {
   if (!terms.ok) return terms.response;
 
   const planKey = typeof body.planKey === 'string' ? body.planKey : undefined;
-  // FAIL VISIBLY, NOT QUIETLY (On-sale pages S2, `/legal` review 2026-11-19, docs/agents/legal/ON_SALE_PAGES_S2_REVIEW.md):
-  // with the legal pages off, requireAcceptance passes everyone, so a live sale of Club or League Plus would take money
-  // with no Terms tick and no record. Refused for the three plans the new doors sell, on a live key only (a test key is
-  // dev); Tournament Plus and the Coaches Portal, on sale before the Terms existed, are not stopped by it.
-  if (isStartPaidPlan(planKey) && legalPagesMode() === 'off' && !stripeKeyIsTest(process.env.STRIPE_SECRET_KEY)) {
-    console.error(`[create-checkout] refused ${planKey}: the legal pages are off on a live key`);
-    return new Response(JSON.stringify({
-      error: 'We can’t start a plan right now. Nothing has been charged. Please try again later or email support@fieldlogichq.ca.',
-      code: 'legal_pages_unpublished',
-    }), { status: 503, headers: { 'Content-Type': 'application/json' } });
-  }
+  // FAIL VISIBLY, NOT QUIETLY (On-sale pages S2, `/legal` review 2026-11-19): League Plus, Club and Club · Association are
+  // refused on a live key while the legal pages are off — the one rule every selling route asks (lib/legal-pages-sale-guard.ts).
+  const unpublished = legalPagesSaleRefusal(planKey, 'create-checkout');
+  if (unpublished) return unpublished;
   const returnTo = typeof body.returnTo === 'string' ? body.returnTo : undefined;
   const requestedBillingCycle = body.billingCycle;
   const billingCycle = normalizeBillingCycle(requestedBillingCycle);
@@ -164,7 +166,7 @@ export const POST = withObservability(async (req: Request) => {
   // organization on running whole-plan free time is offered only the plans ranked ABOVE the one it is given; a stale page,
   // or a hand-made request, asking for that plan or one below it is refused here, before any address or Stripe work.
   const ownPlan = ownPlanOf(auth.org);
-  const givenPlan = ownPlan === 'tournament' && auth.org.planId !== ownPlan ? auth.org.planId : null;
+  const givenPlan = ownPlan === 'tournament' ? givenPlanOf(auth.org) : null;
   if (givenPlan && PLAN_RANK[planKey] <= PLAN_RANK[givenPlan]) {
     return new Response(JSON.stringify({
       error: `${auth.org.name} already has ${PLAN_CONFIG[givenPlan].label} as free time. Choose a plan above it, or contact us.`,
@@ -359,9 +361,14 @@ export const POST = withObservability(async (req: Request) => {
     }
     if (landing) {
       console.warn(`[create-checkout] refused a second start for ${auth.org.id}: ${landing} is still landing`);
+      // The wait names the plan that is LANDING, not the one just pressed (S4 Part 1 /review): a Tournament Plus start still on
+      // its way when League Plus is pressed reads "Setting up Tournament Plus". Null when Stripe can't say; the page then names
+      // the pressed plan.
+      const landingPlan = await landingPlanOf(landing).catch(() => null);
       return new Response(JSON.stringify({
         error: 'A payment for this organization is still being set up. Please don’t start another payment.',
         code: 'subscription_landing',
+        plan: landingPlan,
       }), { status: 409, headers: { 'Content-Type': 'application/json' } });
     }
   }

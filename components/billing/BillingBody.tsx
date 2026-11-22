@@ -42,8 +42,8 @@ import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 const ADDRESS_REFUSED = Symbol('address-refused');
 /** What `post` answers when a route stopped on the Terms and the person closed the window: nothing happened, nothing to say. */
 const TERMS_CLOSED = Symbol('terms-closed');
-/** What `post` answers when checkout refused a second start because the first is still landing (On-sale pages S4). */
-const LANDING = Symbol('landing');
+/** `post`'s answer to `subscription_landing`: the plan checkout says is landing, or null when Stripe could not say. */
+class Landing { constructor(readonly plan: OrgPlan | null) {} }
 
 type Registry = Record<string, PlanBillingProfile<string>>;
 /** Consume return flags without discarding an explicitly requested drawer or another query parameter. */
@@ -713,7 +713,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       // GST/HST Stage 1: a paid route with no billing address on file opens the Billing address window, not an error.
       if (isAddressRefusal(data)) return ADDRESS_REFUSED;
       // On-sale pages S4: a paid start still landing — the page shows the wait rather than an error.
-      if (data.code === 'subscription_landing') return LANDING;
+      if (data.code === 'subscription_landing') return new Landing(typeof data.plan === 'string' && Object.hasOwn(PLAN_BILLING_PROFILES, data.plan) ? data.plan as OrgPlan : null);
       throw new Error(data.error ?? W.errors.generic);
     }
     return data;
@@ -737,7 +737,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       const result = await post('/api/billing/create-checkout', { planKey: target, billingCycle: chosen, returnTo: billingBase });
       if (!live.current || result === TERMS_CLOSED) return;
       if (result === ADDRESS_REFUSED) { address.refused(() => void checkout(target, chosen)); return; }
-      if (result === LANDING) { setLanding(target); return; }
+      // The wait names the plan that is landing, which may not be the one just pressed (S4 Part 1 /review).
+      if (result instanceof Landing) { setLanding(result.plan ?? target); return; }
       if (result.applied) { setNotice({ tone: 'good', text: W.notice.updated(PLAN_BILLING_PROFILES[target].config.label, result.restoredCount, result.remainingRetainedCount) }); reloadAfterAction(); }
       else if (result.url) leave(result.url);
       else throw new Error(W.errors.checkout);

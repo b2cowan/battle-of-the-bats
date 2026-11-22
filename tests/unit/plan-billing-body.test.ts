@@ -391,8 +391,8 @@ describe('S4 · the return from Stripe and the second press (decided from the co
   it('a second start is refused while a paid one lands — asked of Stripe before a second page, with a code the screen reads', () => {
     const landing = server.indexOf('landingSubscriptionId(auth.org.stripeCustomerId');
     assert.ok(landing > 0 && landing < server.indexOf('ensureStripeCustomer(auth.org'), 'before the customer work and the session');
-    assert.match(server, /code: 'subscription_landing',\s*\}\), \{ status: 409/);
-    assert.ok(body.includes("if (data.code === 'subscription_landing') return LANDING;"));
+    assert.match(server, /code: 'subscription_landing',\s*plan: landingPlan,\s*\}\), \{ status: 409/);
+    assert.ok(body.includes("if (data.code === 'subscription_landing') return new Landing("));
     assert.ok(body.includes('if (landing) return <BillingStartSetup orgSlug={org.slug} orgName={org.name} plan={landing} sessionId={null}'));
   });
   it('a start at or below a running free plan is refused on the server, before any address or Stripe work', () => {

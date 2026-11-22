@@ -53,4 +53,17 @@ describe('the move window', () => {
     assert.match(dialog, /openOn=\{inPlace \? 'panel' : 'field'\}/);
     assert.match(dialog, /kind=\{inPlace \? 'form' : 'question'\}/);
   });
+
+  it('S4 Part 2: a band move says its own first sentence and failing-payment words; the Premium window keeps its own', () => {
+    // The band move's first sentence is per plan (League Plus names no team limit); the Premium window never shows it.
+    assert.match(dialog, /\{!inPlace && <p>\{W\.move\.up\(org\.name, toPlan\)\}<\/p>\}/);
+    assert.match(dialog, /case 'payment_failing': return inPlace \? W\.clubUpgrade\.paymentFailing : W\.move\.paymentFailing;/);
+    // Owner 2026-11-21 (`/accounting`): a band move up shows Stripe's credit and charge lines, then the tax, then Due today; with no
+    // trusted lines it keeps the one "Today, for the rest of this billing period" figure.
+    assert.match(dialog, /const bandLines = !inPlace && preview\?\.direction === 'up' && \(preview\.lines\?\.length \?\? 0\) > 0;/);
+    assert.match(dialog, /\{\(inPlace \|\| bandLines\) && preview\.lines\?\.map\(/);
+    assert.match(dialog, /\{!inPlace && !bandLines && taxLines\.length > 0 && beforeTax !== null && <div><dt>\{W\.move\.today\}/);
+    // The payment-method door shows for any payment_failing refusal, band move included.
+    assert.match(dialog, /\{refusal\?\.code === 'payment_failing' && <button[^\n]*paymentPortal\(\)/);
+  });
 });

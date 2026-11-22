@@ -117,4 +117,14 @@ describe('shared billing vocabulary', () => {
     assert.equal(W.errors.read('staff seats'), 'We couldn’t load staff seats. Try again.');
     assert.equal(W.change.details('Target'), 'See what Target includes');
   });
+
+  it('the move window, S4 Part 2: each plan’s first sentence, the hint’s "No second trial.", the failing-payment words', () => {
+    assert.equal(W.move.up('UAT Test Org', 'league'), 'UAT Test Org moves to League Plus today. Your events, teams and staff stay where they are.');
+    assert.equal(W.move.up('UAT Test Org', 'club'), 'UAT Test Org moves to Club today and can hold up to 15 teams with a Premium Coaches Portal. Your events, teams and staff stay where they are.');
+    assert.equal(W.move.up('UAT Test Org', 'club_large'), 'UAT Test Org moves to Club · Association today and can hold up to 30 teams with a Premium Coaches Portal. Your events, teams and staff stay where they are.');
+    assert.doesNotMatch(W.move.up('Org', 'league'), /9999|teams with/);
+    assert.equal(W.move.previewHelp, 'Same subscription and payment method, with no second checkout. The prorated amount and its tax come from Stripe before you confirm. No second trial.');
+    assert.equal(W.move.paymentFailing, 'Your last payment didn’t go through. Update your payment method first, then move.');
+    assert.match(W.clubUpgrade.paymentFailing, /then start your club\.$/, 'the Premium window keeps its own');
+  });
 });

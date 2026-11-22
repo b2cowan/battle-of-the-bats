@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
-import { previewMove, type QuotePlace } from '@/lib/plan-move';
+import { paymentFailingRefusal, previewMove, type QuotePlace } from '@/lib/plan-move';
 import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
 import { previewClubCheckout } from '@/lib/workspace-upgrade-preview';
 import { normalizeBillingCycle } from '@/lib/plan-config';
@@ -9,6 +9,7 @@ import { moveDirection } from '@/lib/plan-move-options';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { billingAddressFromBody, regionClosedResponse, requireBillingLocation, usSalesOpen } from '@/lib/billing-location-server';
 import { checkBillingLocation, isClosedRegion, toStripeAddress } from '@/lib/billing-location';
+import { legalPagesSaleRefusal } from '@/lib/legal-pages-sale-guard';
 
 /**
  * POST /api/billing/move/preview — { orgSlug, planKey } → what the move would do, before the owner
@@ -24,7 +25,8 @@ import { checkBillingLocation, isClosedRegion, toStripeAddress } from '@/lib/bil
  *          cannot be trusted; charges minus credits = amountDueToday. Null: show the total alone.
  *
  * Refusals (4xx, `{ code, error, … }`): `not_a_move`, `no_live_subscription` (use checkout),
- * `band_too_small` (+ activeTeams, teamLimit — archive first), `payment_failing` (a Premium coach whose last payment failed),
+ * `band_too_small` (+ activeTeams, teamLimit — archive first), `payment_failing` (any move up while the last payment failed — S4 call 46),
+ * `legal_pages_unpublished` (503: League Plus, Club or Club · Association on a live key while the legal pages are off),
  * `cannot_become_club` (a Premium portal that holds more than one team, or has already moved into another club),
  * `price_missing`, `plan_not_on_sale` (403 while gated), `stripe_error` (502), and for a Premium owner (Stage 4b)
  * `subscription_ending` (the subscription is set to end: keep Premium first).
@@ -47,8 +49,15 @@ export const POST = withObservability(async (req: Request) => {
   if (!toPlan) return NextResponse.json({ error: 'Choose a plan to move to.', code: 'not_a_move' }, { status: 400 });
   const gated = await refuseIfGated(toPlan);
   if (gated) return gated;
+  // On-sale pages S4 Part 2: the window never prices a move the move itself would refuse (lib/legal-pages-sale-guard.ts).
+  // A move down sells nothing (see the move route), so only an up move or a start is refused.
+  const unpublished = moveDirection(ownPlanOf(authorized.org), toPlan) === 'down' ? null : legalPagesSaleRefusal(toPlan, 'billing-move-preview', { sale: 'move' });
+  if (unpublished) return unpublished;
 
   const { org } = authorized;
+  // Call 46: a failing payment is refused before the address step and before any figure (our record; Stripe's is asked in the move).
+  const failing = paymentFailingRefusal(org, toPlan);
+  if (failing) return refusalResponse(failing);
   const inPlace = isPremiumToClub(org.planId, toPlan);
   let place: QuotePlace = { kind: 'customer' };
   if (inPlace) {

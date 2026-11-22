@@ -31,6 +31,8 @@ const keepDoor = (plan: OrgPlanKey) => plan === 'team' ? 'Keep Premium' : `Keep 
 const chooseCount = (count: number) => `Choose ${pluralize(count, 'tournament')} to keep active.`;
 // The team-count ruling (BUSINESS_DECISIONS 2026-11-19; words `/marketing`): a Club band's limit is the teams given a portal.
 const WITH_PORTAL = `with a ${PLAN_CONFIG.team.label}`;
+/** What a move up (and a start's wait) promises stays put. */
+const MOVE_KEEPS = 'Your events, teams and staff stay where they are.';
 const HOUSE_LEAGUE_UNLIMITED = 'House league teams are unlimited.';
 const LOST_KEPT = 'Saved branding is kept; public tournament pages use FieldLogicHQ defaults until you upgrade again.';
 /** "On December 5 the rest move to archive retention for 90 days." — undated, or naming the tournaments once the choice is made. */
@@ -375,10 +377,22 @@ export const PLAN_BILLING_WORDS = {
   move: {
     title: (label: string) => `Move to ${label}?`, loading: 'Loading what the move changes…',
     moving: 'Moving…', close: 'Close', cancel: 'Cancel', repTeams: 'Go to Rep teams', checkout: 'Continue to checkout',
-    up: (org: string, label: string, limit: number) => `${org} moves to ${label} today and can hold up to ${limit} teams.`,
+    /**
+     * A band move up's first sentence (On-sale pages S4 Part 2, drawing tab 5 note 3, /marketing 2026-11-21). A plan with no team
+     * limit (League Plus) names none — it used to read "up to 9999 teams"; a Club band names what it counts. Never a Premium
+     * coach's move (that window has its own words).
+     */
+    up: (org: string, plan: OrgPlanKey) => {
+      const { label, teamLimit } = PLAN_CONFIG[plan];
+      return teamLimit >= NO_LIMIT
+        ? `${org} moves to ${label} today. ${MOVE_KEEPS}`
+        : `${org} moves to ${label} today and can hold up to ${teamLimit} teams ${WITH_PORTAL}. ${MOVE_KEEPS}`;
+    },
     today: 'Today, for the rest of this billing period',
     from: (iso: string | null) => `From ${iso ? day(iso) : 'your next renewal'}`,
-    previewHelp: 'Same subscription and payment method, with no second checkout. The prorated amount and its tax come from Stripe before you confirm.',
+    previewHelp: 'Same subscription and payment method, with no second checkout. The prorated amount and its tax come from Stripe before you confirm. No second trial.',
+    /** Call 46 (owner 2026-11-21, every move up): a failing payment is refused before any figure, with the payment-method door. */
+    paymentFailing: 'Your last payment didn’t go through. Update your payment method first, then move.',
     // GST/HST Stage 2 Part 3 (drawings tabs 2–4, ruled 2026-11-05).
     loadingCharge: 'Loading the charge…',
     chargeWaits: 'The charge shows once the address is complete.',
@@ -442,7 +456,7 @@ export const PLAN_BILLING_WORDS = {
     unconfirmedBody: 'Please don’t pay again. Contact us and we’ll sort it out.',
     // On-sale pages S4 (drawing tab 3): the same wait, for an organization starting League Plus, Club or Club · Association.
     startSettingTitle: (label: string) => `Setting up ${label}`,
-    startSettingBody: (label: string, org: string) => `We’re setting up ${label} for ${org}. Your events, teams and staff stay where they are. Please don’t start another payment.`,
+    startSettingBody: (label: string, org: string) => `We’re setting up ${label} for ${org}. ${MOVE_KEEPS} Please don’t start another payment.`,
     startLongerBody: (label: string) => `${label} isn’t ready yet. Please don’t start another payment. Check again in a minute.`,
     startUnconfirmedTitle: (label: string) => `We couldn’t confirm ${label} is ready`,
     ready: 'Your club is ready',

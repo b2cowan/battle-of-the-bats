@@ -69,7 +69,7 @@ describe('Plan & billing profiles', () => {
       // On-sale pages S4 (call 35): a free Tournament organization starts any of the four by checkout.
       'tournament:checkout:tournament_plus', 'tournament:checkout:league', 'tournament:checkout:club', 'tournament:checkout:club_large',
       'tournament_plus:downgrade:tournament',
-      'tournament_plus:move:club', 'tournament_plus:move:club_large',
+      'tournament_plus:move:club', 'tournament_plus:move:club_large', 'tournament_plus:move:league',
       'club:move:club_large', 'club_large:move:club',
     ].sort());
     for (const p of Object.values(PLAN_BILLING_PROFILES)) {

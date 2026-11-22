@@ -311,7 +311,9 @@ export default async function PricingPage() {
       case 'Can I change plans later?':
         // W17, as `/legal` corrected it (2026-11-20): "Yes, at any time" is false for League Plus, which changes to no
         // other plan yet (lib/plan-move-options.ts has no League Plus row). Each sentence is a move the product makes.
-        return [{ ...faq, a: 'It depends on the plan. A free Tournament organization can start Tournament Plus at any time. Tournament Plus can move up to Club or Club · Association, and Club to Club · Association, at any time: you see the prorated charge before you confirm, and a move doesn\'t start a second trial. Moving from Club · Association down to Club waits for your next renewal, and needs 15 or fewer teams with a Premium Coaches Portal. League Plus can\'t be moved to another plan yet.' }];
+        // On-sale pages S4: a free Tournament organization starts any of the four from Plan & billing (Part 1), and Tournament
+        // Plus moves to League Plus (Part 2). Shown only while all three are open, so naming them is true.
+        return [{ ...faq, a: 'It depends on the plan. A free Tournament organization can start Tournament Plus, League Plus, Club or Club · Association at any time. Tournament Plus can move up to League Plus, Club or Club · Association, and Club to Club · Association, at any time: you see the prorated charge before you confirm, and a move doesn\'t start a second trial. Moving from Club · Association down to Club waits for your next renewal, and needs 15 or fewer teams with a Premium Coaches Portal. League Plus can\'t be moved to another plan yet.' }];
       case 'Do I need a credit card to get started?':
         return [{ ...faq, a: `${faq.a} ${programTrialLines}`.trim() }];
       case 'Is there a setup fee or onboarding cost?':

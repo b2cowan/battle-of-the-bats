@@ -105,12 +105,12 @@ describe('the plan panel offers Upgrade where the Change plan table does', () =>
   it('Tournament → Tournament Plus: the owner gets Upgrade', () => {
     assert.match(panelOnly(html(withDetail('tournament', 'tournament_plus'))), /Upgrade to Tournament Plus/);
   });
-  it('the panel offers Monthly / Yearly only where its Upgrade can commit one', () => {
+  it('the panel leaves Monthly / Yearly to the payment window (On-sale pages S4, call 38): "Upgrade to {plan}…"', () => {
     const open = html(withDetail('tournament', 'tournament_plus'));
-    assert.match(open, /aria-pressed="true"[^>]*>Monthly<\/button>/); assert.match(open, />Yearly<\/button>/);
-    assert.match(open, /Upgrade to Tournament Plus · \$39 \/ month/);
+    assert.doesNotMatch(open, />Yearly<\/button>/, 'no cycle switch in the panel: the window that opens has it');
+    assert.match(panelOnly(open), /Upgrade to Tournament Plus…/);
     const held = withDetail('tournament', 'tournament_plus'); held.snapshot.gating = ready({ tournament: false, tournament_plus: true });
-    assert.doesNotMatch(html(held), />Yearly<\/button>/);
+    assert.doesNotMatch(html(held), /Upgrade to Tournament Plus…/);
   });
   it('no Upgrade when the plan is held back, a staff grant is running, the org is cancelled, or the change is not a checkout', () => {
     const held = withDetail('tournament', 'tournament_plus'); held.snapshot.gating = ready({ tournament: false, tournament_plus: true });
@@ -123,13 +123,22 @@ describe('the plan panel offers Upgrade where the Change plan table does', () =>
     assert.doesNotMatch(html(withDetail('tournament_plus', 'club')), /btn-lime btn-data/);
     assert.doesNotMatch(html(withDetail('club', 'club_large')), /btn-lime btn-data/);
   });
-  it('the panel upgrade closes the panel and runs the table’s own checkout change, in the cycle chosen beside the price', () => {
+  it('a second press while a payment lands: the wait names the plan that is landing, read from Stripe, else the one pressed (S4 /review)', () => {
+    const checkout = readCode('app/api/billing/create-checkout/route.ts');
+    assert.match(checkout, /code: 'subscription_landing',\s*plan: landingPlan,/);
+    assert.match(checkout, /const landingPlan = await landingPlanOf\(landing\)\.catch\(\(\) => null\);/);
     const body = readCode('components/billing/BillingBody.tsx');
-    assert.match(body, /onUpgrade=\{\(\) => \{ onCloseDetail\(\); if \(detailChange\) a\.change\(detailChange, a\.cycle\); \}\}/);
-    assert.match(body, /billingCycle=\{a\.cycle\}/);
-    assert.match(body, /onBillingCycleChange=\{a\.setCycle\}/);
-    // Plans end at renewal (Stage 1 Part B): and never while a cancel waits — the same absent door as the table's.
-    assert.match(body, /canUpgrade=\{Boolean\(detailChange\) && controlsReady && ownBilling && !cancelled && !pending && sale\(detailProfile\.key\)\}/);
+    assert.match(body, /if \(data\.code === 'subscription_landing'\) return new Landing\(/);
+    assert.match(body, /if \(result instanceof Landing\) \{ setLanding\(result\.plan \?\? target\); return; \}/);
+  });
+
+  it('the panel upgrade closes the panel and runs the table’s own checkout change, which opens the payment window (call 38)', () => {
+    const body = readCode('components/billing/BillingBody.tsx');
+    assert.match(body, /onUpgrade=\{\(\) => \{ onCloseDetail\(\); if \(detailChange\) a\.change\(detailChange\); \}\}/);
+    assert.doesNotMatch(body, /onBillingCycleChange=\{a\.setCycle\}/, 'the cycle is chosen in the payment window, not beside the price');
+    // Plans end at renewal (Stage 1 Part B): and never while a cancel waits — the same absent door as the table's. A free-time
+    // organization's own given plan (S4 call 40) upgrades too.
+    assert.match(body, /canUpgrade=\{Boolean\(detailChange\) && controlsReady && \(ownBilling \|\| Boolean\(givenPlan\)\) && !cancelled && !pending && sale\(detailProfile\.key\)\}/);
   });
 });
 

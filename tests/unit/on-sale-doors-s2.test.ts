@@ -249,8 +249,8 @@ describe('no comp on a paid door (Ask 14; the Founding Season itself was removed
 
 describe('a sale without the Terms fails visibly (`/legal` S2 review)', () => {
   it('checkout refuses the three paid-door plans on a live key while the legal pages are off', () => {
-    assert.match(readCode('app/api/billing/create-checkout/route.ts'),
-      /if \(isStartPaidPlan\(planKey\) && legalPagesMode\(\) === 'off' && !stripeKeyIsTest\(process\.env\.STRIPE_SECRET_KEY\)\) \{/);
+    // The rule itself and the census of every route that sells the three plans: tests/unit/legal-pages-sale-guard.test.ts.
+    assert.match(readCode('app/api/billing/create-checkout/route.ts'), /const unpublished = legalPagesSaleRefusal\(planKey, 'create-checkout'\);\s*if \(unpublished\) return unpublished;/);
   });
 
   it('the legal pages cannot be switched off while the paid doors exist', () => {

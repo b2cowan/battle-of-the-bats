@@ -1,0 +1,534 @@
+{
+  "proofs": {
+    "E": {
+      "tag": "E-midperiod-testclock",
+      "setup": {
+        "clock": "clock_1UeQpGFuSuNtbvsQVy4wTz5L",
+        "frozen_time_at_create": 1795315704,
+        "slug": "s4p2-probe-e-1795315704796",
+        "orgId": "3017cf3b-ea90-4cff-8bfa-7dbed3ef74c9",
+        "customer": "cus_VfmOXqTNHmv0su",
+        "subscription": "sub_1UeQpIFuSuNtbvsQgW7POocE",
+        "period_start": 1795315704,
+        "period_end": 1797907704
+      },
+      "clockAfterAdvance": {
+        "status": "ready",
+        "frozen_time": 1796266104,
+        "realNowAtCheck": 1795315712
+      },
+      "subAfterAdvance": {
+        "status": "active",
+        "period_start": 1795315704,
+        "period_end": 1797907704
+      },
+      "preview": {
+        "direction": "up",
+        "toPlan": "league",
+        "billingCycle": "monthly",
+        "amountDueToday": 5650,
+        "currency": "cad",
+        "prorationDate": 1795315713,
+        "nextAmount": 8900,
+        "renewsAt": "2026-12-22T02:48:24.000Z",
+        "lines": [
+          {
+            "kind": "charge",
+            "plan": "league",
+            "amount": 8900
+          },
+          {
+            "kind": "credit",
+            "plan": "tournament_plus",
+            "amount": 3900
+          }
+        ],
+        "tax": {
+          "status": "taxed",
+          "lines": [
+            {
+              "label": "HST 13%",
+              "cents": 650
+            }
+          ],
+          "beforeTax": 5000,
+          "taxedFor": {
+            "country": "CA",
+            "region": "ON"
+          }
+        }
+      },
+      "previewProrationDateVsClock": {
+        "prorationDate": 1795315713,
+        "clockFrozen": 1796266104,
+        "diffSecondsFromClock": -950391,
+        "isRealNow": true
+      },
+      "apply": {
+        "direction": "up",
+        "toPlan": "league",
+        "movedAt": "2026-11-22T02:48:37.115Z"
+      },
+      "after": {
+        "sameSub": true,
+        "price": "price_1TYxp5FuSuNtbvsQpLCHR4bl",
+        "isLeaguePrice": true,
+        "status": "active",
+        "period_end": 1797907704,
+        "period_end_before": 1797907704
+      },
+      "invoices": [
+        {
+          "id": "in_1UeQpQFuSuNtbvsQdE3QkQuq",
+          "status": "paid",
+          "subtotal": 5000,
+          "total": 5650,
+          "amount_due": 5650,
+          "amount_paid": 5650,
+          "subtotal_excluding_tax": 5000,
+          "total_excluding_tax": 5000,
+          "automatic_tax": {
+            "disabled_reason": null,
+            "enabled": true,
+            "liability": {
+              "type": "self"
+            },
+            "provider": "stripe",
+            "status": "complete"
+          },
+          "total_taxes": [
+            {
+              "amount": 650,
+              "tax_behavior": "exclusive",
+              "tax_rate_details": {
+                "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+              },
+              "taxability_reason": "standard_rated",
+              "taxable_amount": 5000,
+              "type": "tax_rate_details"
+            }
+          ],
+          "billing_reason": "subscription_update",
+          "created": 1796266104,
+          "lines": [
+            {
+              "description": "Unused time on Tournament Plus after 22 Nov 2026",
+              "amount": -3900,
+              "proration": true,
+              "price": "price_1TYxmiFuSuNtbvsQYgBjkDv0",
+              "period": {
+                "end": 1797907704,
+                "start": 1795315713
+              },
+              "taxes": [
+                {
+                  "amount": -507,
+                  "tax_behavior": "exclusive",
+                  "tax_rate_details": {
+                    "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+                  },
+                  "taxability_reason": "standard_rated",
+                  "taxable_amount": -3900,
+                  "type": "tax_rate_details"
+                }
+              ],
+              "parent": "subscription_item_details"
+            },
+            {
+              "description": "Remaining time on League Plus after 22 Nov 2026",
+              "amount": 8900,
+              "proration": true,
+              "price": "price_1TYxp5FuSuNtbvsQpLCHR4bl",
+              "period": {
+                "end": 1797907704,
+                "start": 1795315713
+              },
+              "taxes": [
+                {
+                  "amount": 1157,
+                  "tax_behavior": "exclusive",
+                  "tax_rate_details": {
+                    "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+                  },
+                  "taxability_reason": "standard_rated",
+                  "taxable_amount": 8900,
+                  "type": "tax_rate_details"
+                }
+              ],
+              "parent": "subscription_item_details"
+            }
+          ]
+        },
+        {
+          "id": "in_1UeQpIFuSuNtbvsQdqQiATMU",
+          "status": "paid",
+          "subtotal": 3900,
+          "total": 4407,
+          "amount_due": 4407,
+          "amount_paid": 4407,
+          "subtotal_excluding_tax": 3900,
+          "total_excluding_tax": 3900,
+          "automatic_tax": {
+            "disabled_reason": null,
+            "enabled": true,
+            "liability": {
+              "type": "self"
+            },
+            "provider": "stripe",
+            "status": "complete"
+          },
+          "total_taxes": [
+            {
+              "amount": 507,
+              "tax_behavior": "exclusive",
+              "tax_rate_details": {
+                "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+              },
+              "taxability_reason": "standard_rated",
+              "taxable_amount": 3900,
+              "type": "tax_rate_details"
+            }
+          ],
+          "billing_reason": "subscription_create",
+          "created": 1795315704,
+          "lines": [
+            {
+              "description": "1 × Tournament Plus (at $39.00 / month)",
+              "amount": 3900,
+              "proration": false,
+              "price": "price_1TYxmiFuSuNtbvsQYgBjkDv0",
+              "period": {
+                "end": 1797907704,
+                "start": 1795315704
+              },
+              "taxes": [
+                {
+                  "amount": 507,
+                  "tax_behavior": "exclusive",
+                  "tax_rate_details": {
+                    "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+                  },
+                  "taxability_reason": "standard_rated",
+                  "taxable_amount": 3900,
+                  "type": "tax_rate_details"
+                }
+              ],
+              "parent": "subscription_item_details"
+            }
+          ]
+        }
+      ],
+      "moveInvoiceCheck": {
+        "id": "in_1UeQpQFuSuNtbvsQdE3QkQuq",
+        "subtotal": 5000,
+        "total": 5650,
+        "sumLineTaxes": 650,
+        "totalTaxes": 650,
+        "totalEqualsPreview": true,
+        "invoiceCreated": 1796266104,
+        "createdMinusClock": 0
+      }
+    },
+    "F": {
+      "tag": "F-declined",
+      "setup": {
+        "slug": "s4p2-probe-f-1795315704796",
+        "orgId": "af321e3e-8d9f-48d9-bd54-24d18df98809",
+        "customer": "cus_VfmOLExEv6CsH5",
+        "subscription": "sub_1UeQpUFuSuNtbvsQ5LuwAex2",
+        "status": "active"
+      },
+      "badPm": "pm_1UeQpWFuSuNtbvsQzkSR1XXE",
+      "preview": {
+        "direction": "up",
+        "toPlan": "league",
+        "billingCycle": "monthly",
+        "amountDueToday": 5650,
+        "currency": "cad",
+        "prorationDate": 1795315722,
+        "nextAmount": 8900,
+        "renewsAt": "2026-12-22T02:48:36.000Z",
+        "lines": [
+          {
+            "kind": "charge",
+            "plan": "league",
+            "amount": 8900
+          },
+          {
+            "kind": "credit",
+            "plan": "tournament_plus",
+            "amount": 3900
+          }
+        ],
+        "tax": {
+          "status": "taxed",
+          "lines": [
+            {
+              "label": "HST 13%",
+              "cents": 650
+            }
+          ],
+          "beforeTax": 5000,
+          "taxedFor": {
+            "country": "CA",
+            "region": "ON"
+          }
+        }
+      },
+      "apply": {
+        "code": "stripe_error",
+        "error": "The payment provider didn’t accept the change. Nothing was changed — try again in a moment."
+      },
+      "after": {
+        "status": "active",
+        "price": "price_1TYxmiFuSuNtbvsQYgBjkDv0",
+        "priceUnchanged": true,
+        "orgRow": {
+          "plan_id": "tournament_plus",
+          "subscription_status": "active"
+        },
+        "latestInvoice": {
+          "id": "in_1UeQpUFuSuNtbvsQZEWrFsUU",
+          "status": "paid",
+          "reason": "subscription_create"
+        }
+      },
+      "invoices": [
+        {
+          "id": "in_1UeQpUFuSuNtbvsQZEWrFsUU",
+          "status": "paid",
+          "reason": "subscription_create",
+          "total": 4407,
+          "amount_due": 4407,
+          "attempt_count": 1,
+          "created": 1795315716
+        }
+      ],
+      "leftBehind": []
+    },
+    "E2": {
+      "tag": "E2-midperiod-backdated-no-clock",
+      "setup": {
+        "backdate_start": 1794365343,
+        "slug": "s4p2-probe-e2-1795315743226",
+        "orgId": "421790ab-ad07-4cbe-b726-e3f165c60cb4",
+        "customer": "cus_VfmOqVnsR8i25n",
+        "subscription": "sub_1UeQpuFuSuNtbvsQ8n65ICVk",
+        "period_start": 1794365343,
+        "period_end": 1796957343
+      },
+      "subAfterAdvance": {
+        "status": "active",
+        "period_start": 1794365343,
+        "period_end": 1796957343
+      },
+      "preview": {
+        "direction": "up",
+        "toPlan": "league",
+        "billingCycle": "monthly",
+        "amountDueToday": 3579,
+        "currency": "cad",
+        "prorationDate": 1795315759,
+        "nextAmount": 8900,
+        "renewsAt": "2026-12-11T02:49:03.000Z",
+        "lines": [
+          {
+            "kind": "charge",
+            "plan": "league",
+            "amount": 5637
+          },
+          {
+            "kind": "credit",
+            "plan": "tournament_plus",
+            "amount": 2470
+          }
+        ],
+        "tax": {
+          "status": "taxed",
+          "lines": [
+            {
+              "label": "HST 13%",
+              "cents": 412
+            }
+          ],
+          "beforeTax": 3167,
+          "taxedFor": {
+            "country": "CA",
+            "region": "ON"
+          }
+        }
+      },
+      "previewProrationDateVsClock": {
+        "prorationDate": 1795315759,
+        "clockFrozen": 1795315743,
+        "diffSecondsFromClock": 16,
+        "isRealNow": true
+      },
+      "apply": {
+        "direction": "up",
+        "toPlan": "league",
+        "movedAt": "2026-11-22T02:49:22.909Z"
+      },
+      "after": {
+        "sameSub": true,
+        "price": "price_1TYxp5FuSuNtbvsQpLCHR4bl",
+        "isLeaguePrice": true,
+        "status": "active",
+        "period_end": 1796957343,
+        "period_end_before": 1796957343
+      },
+      "invoices": [
+        {
+          "id": "in_1UeQqAFuSuNtbvsQAmJT5rs2",
+          "status": "paid",
+          "subtotal": 3167,
+          "total": 3579,
+          "amount_due": 3579,
+          "amount_paid": 3579,
+          "subtotal_excluding_tax": 3167,
+          "total_excluding_tax": 3167,
+          "automatic_tax": {
+            "disabled_reason": null,
+            "enabled": true,
+            "liability": {
+              "type": "self"
+            },
+            "provider": "stripe",
+            "status": "complete"
+          },
+          "total_taxes": [
+            {
+              "amount": 412,
+              "tax_behavior": "exclusive",
+              "tax_rate_details": {
+                "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+              },
+              "taxability_reason": "standard_rated",
+              "taxable_amount": 3167,
+              "type": "tax_rate_details"
+            }
+          ],
+          "billing_reason": "subscription_update",
+          "created": 1795315758,
+          "lines": [
+            {
+              "description": "Unused time on Tournament Plus after 22 Nov 2026",
+              "amount": -2470,
+              "proration": true,
+              "price": "price_1TYxmiFuSuNtbvsQYgBjkDv0",
+              "period": {
+                "end": 1796957343,
+                "start": 1795315759
+              },
+              "taxes": [
+                {
+                  "amount": -321,
+                  "tax_behavior": "exclusive",
+                  "tax_rate_details": {
+                    "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+                  },
+                  "taxability_reason": "standard_rated",
+                  "taxable_amount": -2470,
+                  "type": "tax_rate_details"
+                }
+              ],
+              "parent": "subscription_item_details"
+            },
+            {
+              "description": "Remaining time on League Plus from 22 Nov 2026 until 11 Dec 2026",
+              "amount": 5637,
+              "proration": true,
+              "price": "price_1TYxp5FuSuNtbvsQpLCHR4bl",
+              "period": {
+                "end": 1796957343,
+                "start": 1795315759
+              },
+              "taxes": [
+                {
+                  "amount": 733,
+                  "tax_behavior": "exclusive",
+                  "tax_rate_details": {
+                    "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+                  },
+                  "taxability_reason": "standard_rated",
+                  "taxable_amount": 5637,
+                  "type": "tax_rate_details"
+                }
+              ],
+              "parent": "subscription_item_details"
+            }
+          ]
+        },
+        {
+          "id": "in_1UeQpuFuSuNtbvsQRTPzYo5p",
+          "status": "paid",
+          "subtotal": 3900,
+          "total": 4407,
+          "amount_due": 4407,
+          "amount_paid": 4407,
+          "subtotal_excluding_tax": 3900,
+          "total_excluding_tax": 3900,
+          "automatic_tax": {
+            "disabled_reason": null,
+            "enabled": true,
+            "liability": {
+              "type": "self"
+            },
+            "provider": "stripe",
+            "status": "complete"
+          },
+          "total_taxes": [
+            {
+              "amount": 507,
+              "tax_behavior": "exclusive",
+              "tax_rate_details": {
+                "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+              },
+              "taxability_reason": "standard_rated",
+              "taxable_amount": 3900,
+              "type": "tax_rate_details"
+            }
+          ],
+          "billing_reason": "subscription_create",
+          "created": 1795315742,
+          "lines": [
+            {
+              "description": "1 × Tournament Plus (at $39.00 / month)",
+              "amount": 3900,
+              "proration": true,
+              "price": "price_1TYxmiFuSuNtbvsQYgBjkDv0",
+              "period": {
+                "end": 1796957343,
+                "start": 1794365343
+              },
+              "taxes": [
+                {
+                  "amount": 507,
+                  "tax_behavior": "exclusive",
+                  "tax_rate_details": {
+                    "tax_rate": "txr_1UYRR9FuSuNtbvsQAKRNss6B"
+                  },
+                  "taxability_reason": "standard_rated",
+                  "taxable_amount": 3900,
+                  "type": "tax_rate_details"
+                }
+              ],
+              "parent": "subscription_item_details"
+            }
+          ]
+        }
+      ],
+      "moveInvoiceCheck": {
+        "id": "in_1UeQqAFuSuNtbvsQAmJT5rs2",
+        "subtotal": 3167,
+        "total": 3579,
+        "sumLineTaxes": 412,
+        "totalTaxes": 412,
+        "totalEqualsPreview": true,
+        "invoiceCreated": 1795315758,
+        "createdMinusClock": 15
+      }
+    }
+  },
+  "at": "2026-11-22T02:49:03.225Z"
+}

@@ -59,7 +59,7 @@ export type MoveRefusal =
   | { code: 'no_live_subscription'; error: string }
   | { code: 'price_missing'; error: string }
   | { code: 'band_too_small'; error: string; activeTeams: number; teamLimit: number }
-  /** A Premium coach whose last payment failed: not moved onto Club until the payment method is fixed (Stage 4b). */
+  /** A move UP while the last payment failed: refused until the payment method is fixed (Stage 4b for Premium; every move up, S4 call 46). */
   | { code: 'payment_failing'; error: string }
   | { code: 'subscription_ending'; error: string; endsAt: string | null }
   /** The portal holds more than one team, or has already moved into another club: the flip would refuse AFTER the charge, so it is refused before (Stage 4b). */
@@ -160,6 +160,23 @@ async function activeTeamCount(orgId: string): Promise<number> {
 }
 
 /**
+ * The one failing-payment rule for a move (call 46, owner 2026-11-21, "every move up"): a move UP while our record or Stripe says
+ * `past_due` is refused; a move down never is. `stripeStatus` is Stripe's when it has been read; the move routes ask with our record
+ * alone FIRST, before the billing address step (`/billing` S4 Part 2: the failing payment is the more basic fact), and
+ * `validateMove` asks again with Stripe's.
+ */
+export function paymentFailingRefusal(org: MoveOrg, toPlan: OrgPlan, stripeStatus?: string | null): MoveRefusal | null {
+  if (moveDirection(ownPlanOf(org), toPlan) !== 'up') return null;
+  // No subscription to move (a coach's free days, a dev or stale one): not a move at all — checkout's question, as before.
+  if (!hasLiveSubscription(org)) return null;
+  if (org.subscriptionStatus !== 'past_due' && stripeStatus !== 'past_due') return null;
+  const error = ownPlanOf(org) === 'team'
+    ? 'Your last payment didn’t go through. Update your payment method first, then move to Club.'
+    : PLAN_BILLING_WORDS.move.paymentFailing;
+  return { code: 'payment_failing', error };
+}
+
+/**
  * `restore`: the plan-ending flow putting back a cheaper move IT released (Keep restoring the move its cancel set aside, or a
  * refused cancel/move undoing its own release). Our waiting row is then that flow's own and does not refuse; Stripe's cancel
  * signal still does (a schedule is never built on a subscription set to cancel). Never set for a move a person asks for.
@@ -193,15 +210,14 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan, { restore = false }: 
     if (answer.answer === 'refuse') return { ok: false, refusal: { code: 'subscription_ending', error: answer.reason, endsAt } };
   }
 
-  // Stage 4b: a Premium coach moves onto Club only on a subscription that is paying. A failing payment is allowed to be MOVED by
-  // the paying set (`past_due` counts as live), but the flip refuses anything not settled — so the swap would charge Club's price
-  // and leave the portal as it was. Refuse it up front, in plain words, before any price is shown or any charge is made.
-  if (ownPlanOf(org) === 'team' && (org.subscriptionStatus === 'past_due' || live.sub.status === 'past_due')) {
-    return {
-      ok: false,
-      refusal: { code: 'payment_failing', error: 'Your last payment didn’t go through. Update your payment method first, then move to Club.' },
-    };
-  }
+  // A move UP adds a charge today, and none is added on a payment that is failing: refused up front, in plain words, before any
+  // price is shown or any charge is made. Our record or Stripe's alone counts (the record can lag).
+  //   · Stage 4b: a Premium coach (the flip also refuses anything not settled, so the swap would charge Club's price and leave the
+  //     portal as it was).
+  //   · On-sale pages S4 Part 2, call 46 (owner 2026-11-21, "every move up"): every other move up too — Tournament Plus → League
+  //     Plus, Club or Club · Association, and Club → Club · Association. A move DOWN charges nothing today and is not refused.
+  const failing = paymentFailingRefusal(org, toPlan, live.sub.status);
+  if (failing) return { ok: false, refusal: failing };
 
   // The flip refuses a portal that holds more than one team or has moved into another club — by name, AFTER the charge. Ask first.
   if (direction === 'up' && ownPlanOf(org) === 'team') {

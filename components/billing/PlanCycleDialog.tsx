@@ -57,7 +57,9 @@ export default function PlanCycleDialog({ orgSlug, planKey, savings, initial, bi
       footer={<>
         <button type="button" className="btn btn-outline" onClick={onClose}>{W.pay.cancel}</button>
         {/* Held for the trial read (about a second): the window never sends a buyer on before it has said what they get. */}
-        <button type="button" className="btn btn-lime" onClick={() => onContinue(pick)} disabled={trial.status === 'loading'} data-autofocus="">{W.pay.continue}</button>
+        {/* No data-autofocus here: a disabled button cannot take focus, so the window opens on the checked billing choice
+            (the dialog's first field) — and a money step never opens on the button that sends the buyer on (`/design`, S4). */}
+        <button type="button" className="btn btn-lime" onClick={() => onContinue(pick)} disabled={trial.status === 'loading'}>{W.pay.continue}</button>
       </>}
     >
       {billedTo && <p className={address.billedTo}>
