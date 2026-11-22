@@ -1,0 +1,264 @@
+<title>Milton Run Sheet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one rehearsal column. Sticky bar holds the count and the summary; each demo is a card with its own clock. */
+:root{
+  --bg:#f6f4f9; --card:#ffffff; --ink:#1d1526; --muted:#5f566b; --line:#ddd6e6;
+  --accent:#47156c; --accent-soft:#efe7f6; --tick:#1f6b3a; --tick-bg:#e3f2e8; --warn:#7a4b00; --warn-bg:#fbefd6; --stop:#962020; --stop-bg:#fbe6e6;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#120d18; --card:#1c1525; --ink:#efe9f5; --muted:#a99db8; --line:#33293f; --accent:#c7a4ec; --accent-soft:#2a1d3a;
+  --tick:#86d6a2; --tick-bg:#14301f; --warn:#f0c477; --warn-bg:#36280d; --stop:#ff9f9f; --stop-bg:#3a1818; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#120d18; --card:#1c1525; --ink:#efe9f5; --muted:#a99db8; --line:#33293f; --accent:#c7a4ec; --accent-soft:#2a1d3a;
+  --tick:#86d6a2; --tick-bg:#14301f; --warn:#f0c477; --warn-bg:#36280d; --stop:#ff9f9f; --stop-bg:#3a1818; color-scheme:dark }
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 64px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:4px}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font:700 36px/1.05 var(--display);margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{margin:0;color:var(--muted);max-width:66ch}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-block:10px}
+.count{font:600 15px var(--mono);font-variant-numeric:tabular-nums}
+.meter{flex:1 1 160px;height:8px;border-radius:4px;background:var(--line);overflow:hidden;min-width:120px}
+.meter i{display:block;height:100%;background:var(--accent);width:0}
+button{font:600 14px var(--body);border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 12px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--card)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+h2{font:600 26px/1.1 var(--display);margin:0;text-wrap:balance}
+h2 small{font:500 13px var(--mono);color:var(--muted);letter-spacing:.04em;margin-left:6px}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px}
+.where{font-size:14px;color:var(--muted);margin:0}
+.where b{color:var(--ink);font-weight:600}
+code{font:500 13px var(--mono);background:var(--accent-soft);color:var(--ink);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.clock{display:flex;align-items:center;gap:8px}
+.clock output{font:600 18px var(--mono);font-variant-numeric:tabular-nums;min-width:4.6ch;text-align:right}
+.clock output.over{color:var(--stop)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;counter-reset:n var(--start,0)}
+ol.steps li{counter-increment:n;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:8px 6px;border-radius:6px}
+ol.steps li:has(input:checked){background:var(--tick-bg)}
+ol.steps input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--tick)}
+.step{display:flex;flex-direction:column;gap:3px;min-width:0}
+.step .do::before{content:counter(n) ". ";font:500 13px var(--mono);color:var(--muted)}
+.step .do{font-weight:500}
+.see{color:var(--muted);font-size:14px}
+.around{font-size:13.5px;color:var(--warn);background:var(--warn-bg);border-radius:4px;padding:3px 8px;align-self:flex-start}
+.around b{font-weight:600}
+.verdict{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.verdict label{display:flex;gap:6px;align-items:center;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer}
+.verdict input{accent-color:var(--accent)}
+textarea{width:100%;box-sizing:border-box;min-height:58px;font:14px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px}
+ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;max-width:72ch}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:0 6px 6px 0;font-size:14px}
+.note.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.today{font:13px var(--mono);color:var(--muted)}
+#summary-box{display:flex;flex-direction:column;gap:8px}
+@media (max-width:560px){h1{font-size:30px} .clock output{font-size:16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Milton Bats · presentation · the five demos · 30 minutes</div>
+  <h1>Run sheet <span>for the room</span></h1>
+  <p class="sub">One action per box, in the Run of show's order. Start each demo's clock as you open it. Tick, note, then copy the summary back to Claude after a rehearsal.</p>
+</header>
+
+<div class="bar" role="region" aria-label="Progress">
+  <span class="count" id="count">0 of 39</span>
+  <span class="meter" aria-hidden="true"><i id="meter"></i></span>
+  <button type="button" id="copy" class="primary">Copy the summary</button>
+  <button type="button" id="clear">Clear ticks</button>
+</div>
+
+<section class="card" aria-labelledby="h-before">
+  <h2 id="h-before">Before you start</h2>
+  <ul class="plain">
+    <li><b>Rebuild that morning</b> on your laptop: <code>npm run demo:milton</code>. Staging reads the same database, so nothing needs pushing for the world. Dates follow the real clock; a world built days earlier drifts. Never rebuild while a window is mid-demo.</li>
+    <li>Read the last four lines it prints: <b>the Sunday part 2 starts</b>, <b>the next dome practice</b>, <b>cash on hand</b>, and <b>the tournament</b>. The steps below use them.</li>
+    <li><b>Owner window</b>: <code>https://dev.fieldlogichq.ca</code>, signed in as <code>b2cowan+owner@gmail.com</code> (Jordan Whitfield, the club's Owner). Only the Owner or an Admin can build and send a schedule.</li>
+    <li><b>Coach window</b> (a second browser profile): signed in as <code>b2cowan+repcoach@gmail.com</code> (Morgan Hale, head coach of Milton Bats U15 A). The assistant is <code>b2cowan+assistant@gmail.com</code> (Priya Nair).</li>
+    <li><b>Password</b> for every Milton account: <code>MILTON_DEMO_PASSWORD</code> in <code>.env.local</code> on your laptop. It is not written here.</li>
+    <li><b>Phone cards</b> page open in a third tab, for the Winter Classic QR code.</li>
+    <li><b>Stop check:</b> in the Coach window, Schedule shows a Sunday <b>Practice</b> at Escarpment Indoor Dome. If it doesn't, rebuild before going further.</li>
+  </ul>
+  <p class="today">Today's build (Nov 21): part 2 from Sun Dec 27 · next dome practice Sun Nov 22 · cash on hand $4,290.50 · Winter Classic Sat Nov 14. These move with each rebuild.</p>
+</section>
+
+<section class="card demo" data-demo="1" data-min="9" style="--start:0" aria-labelledby="h-d1">
+  <div class="head"><h2 id="h-d1">1 · Winter dome <small>Admin Area · 9 min</small></h2>
+    <span class="clock"><output aria-live="off">0:00</output><button type="button" class="go">Start</button></span></div>
+  <p class="where">Owner window. Open by naming where it lives: <b>"This is the Admin Area, where the board works."</b> First ask him how long last winter's dome schedule took.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s1"><label class="step" for="s1"><span class="do">Calendar › Permits › open "Winter dome 2026–27".</span><span class="see">The cost, Field 3 at half price, two Sundays off.</span></label></li>
+    <li><input type="checkbox" id="s2"><label class="step" for="s2"><span class="do">Calendar › Schedules › open "Winter dome · part 1".</span><span class="see">Final. Every team holds one hour each Sunday; one hour stays open.</span></label></li>
+    <li><input type="checkbox" id="s3"><label class="step" for="s3"><span class="do">Open the band's "The bill" tile.</span><span class="see">Each team's share and its three payments. Say: "This went out to the coaches weeks ago. I'll build the rest of the winter now."</span></label></li>
+    <li><input type="checkbox" id="s4"><label class="step" for="s4"><span class="do">Back on the permit: "Hand out this time in a schedule ›", then "Start from the permit".</span><span class="around"><b>Step around:</b> the Permits tick-list and "Find the time across every permit" are not on production yet. Leave only Winter dome ticked.</span></label></li>
+    <li><input type="checkbox" id="s5"><label class="step" for="s5"><span class="do">Change Dates "From" to the Sunday part 2 starts.</span><span class="see">The rebuild printed it. Leave it at the permit's first day and the drafts say they leave out the time already booked.</span></label></li>
+    <li><input type="checkbox" id="s6"><label class="step" for="s6"><span class="do">"Who, and how much": tick all 17 teams, split evenly.</span></label></li>
+    <li><input type="checkbox" id="s7"><label class="step" for="s7"><span class="do">"Rules": at most one a week.</span></label></li>
+    <li><input type="checkbox" id="s8"><label class="step" for="s8"><span class="do">"Generate drafts".</span><span class="see">Three drafts, each scored out of 100. Pick "Best overall".</span></label></li>
+    <li><input type="checkbox" id="s9"><label class="step" for="s9"><span class="do">Switch the view to "By day".</span><span class="see">Each Sunday's grid, field by field.</span></label></li>
+    <li><input type="checkbox" id="s10"><label class="step" for="s10"><span class="do">"Save as a draft".</span><span class="see">The schedule's own page.</span></label></li>
+    <li><input type="checkbox" id="s11"><label class="step" for="s11"><span class="do">"Bill the teams ›": bill from the permit, Monthly, then "Add the bill to the schedule".</span><span class="see">Each team's share of the time. Care: a custom amount per team comes after launch.</span></label></li>
+    <li><input type="checkbox" id="s12"><label class="step" for="s12"><span class="do">"Send" › "For review first" › "Send to 17 coaches".</span><span class="see">Say: "When they reply, Finalize and send books it and bills it. Part 1 is what that looks like."</span><span class="around"><b>Step around:</b> "Final now" (it would bill every team a second time in Demo 2). In the side menu, Communications (group email) is not on production yet.</span></label></li>
+  </ol>
+  <div class="verdict" role="radiogroup" aria-label="Demo 1 verdict"><label><input type="radio" name="v1" value="pass">Pass</label><label><input type="radio" name="v1" value="issue">Issue</label><label><input type="radio" name="v1" value="call">Needs a call</label></div>
+  <textarea id="n1" aria-label="Demo 1 notes" placeholder="Notes for Demo 1"></textarea>
+</section>
+
+<section class="card demo" data-demo="2" data-min="6" style="--start:12" aria-labelledby="h-d2">
+  <div class="head"><h2 id="h-d2">2 · A coach's books <small>Coaches Portal · 6 min</small></h2>
+    <span class="clock"><output aria-live="off">0:00</output><button type="button" class="go">Start</button></span></div>
+  <p class="where">Coach window, Milton Bats U15 A. <b>"This is the Coaches Portal. Every rep coach gets it with the club, no per-team charge."</b></p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s13"><label class="step" for="s13"><span class="do">Schedule › open Sunday's dome practice.</span><span class="see">Escarpment Indoor Dome, the field, the hour the club gave.</span></label></li>
+    <li><input type="checkbox" id="s14"><label class="step" for="s14"><span class="do">Money › Club.</span><span class="see">"What the club has billed us": part 1 in three payments, the first sent.</span></label></li>
+    <li><input type="checkbox" id="s15"><label class="step" for="s15"><span class="do">Money › Budget.</span><span class="see">Ten lines, Dome Time among them; one line has no date yet.</span></label></li>
+    <li><input type="checkbox" id="s16"><label class="step" for="s16"><span class="do">Money › Player dues.</span><span class="see">Nora Haddad overdue, Ella Sinclair part-paid, four families paid ahead.</span></label></li>
+    <li><input type="checkbox" id="s17"><label class="step" for="s17"><span class="do">Open Nora Haddad › "Record" $400.00, How: E-Transfer.</span><span class="see">Her row goes to paid.</span><span class="around"><b>Step around:</b> families paying online is switched off on production. "Card" here means a card taken in person.</span></label></li>
+    <li><input type="checkbox" id="s18"><label class="step" for="s18"><span class="do">Fundraising › open Main Street Physio &amp; Sport › "Invoice".</span><span class="see">The sponsor's invoice in the team's name; half of the pledge still to come. The bottle drive above it put half of each family's money on their dues.</span></label></li>
+    <li><input type="checkbox" id="s19"><label class="step" for="s19"><span class="do">Money › Budget vs. Actual.</span><span class="see">Real movement on most lines, the club's dome bill filed under Dome Time.</span></label></li>
+    <li><input type="checkbox" id="s20"><label class="step" for="s20"><span class="do">Ledger › "Balance check": Bank balance = the Overview's cash on hand › "Save this check".</span><span class="see">It matches. Care: it compares balances; it is not a bank feed.</span></label></li>
+    <li><input type="checkbox" id="s21"><label class="step" for="s21"><span class="do">Player dues › "Review settlement".</span><span class="see">What each family would get back if the season ended today.</span></label></li>
+  </ol>
+  <div class="verdict" role="radiogroup" aria-label="Demo 2 verdict"><label><input type="radio" name="v2" value="pass">Pass</label><label><input type="radio" name="v2" value="issue">Issue</label><label><input type="radio" name="v2" value="call">Needs a call</label></div>
+  <textarea id="n2" aria-label="Demo 2 notes" placeholder="Notes for Demo 2"></textarea>
+</section>
+
+<section class="card demo" data-demo="3" data-min="4" style="--start:21" aria-labelledby="h-d3">
+  <div class="head"><h2 id="h-d3">3 · Practice plans <small>Coaches Portal · 4 min</small></h2>
+    <span class="clock"><output aria-live="off">0:00</output><button type="button" class="go">Start</button></span></div>
+  <p class="where">Coach window. <b>Cut this demo first if time runs short.</b></p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s22"><label class="step" for="s22"><span class="do">Schedule › the next dome practice › "Practice plan".</span><span class="see">"No plan yet".</span></label></li>
+    <li><input type="checkbox" id="s23"><label class="step" for="s23"><span class="do">"start this plan from…" › "A previous practice" › last Sunday's.</span><span class="see">Warm-up, the hitting circuit, bunting, base running.</span></label></li>
+    <li><input type="checkbox" id="s24"><label class="step" for="s24"><span class="do">Add "a drill from your library": Milton Bats dynamic warm-up.</span><span class="see">The club's drills sit beside the coach's own twelve.</span><span class="around"><b>Say it truly:</b> the club shares its set with every team; a coach doesn't share up to the club or across to another team.</span></label></li>
+    <li><input type="checkbox" id="s25"><label class="step" for="s25"><span class="do">Open the hitting circuit's "Stations".</span><span class="see">Three stations, groups A to C, rotating every 10 minutes.</span></label></li>
+    <li><input type="checkbox" id="s26"><label class="step" for="s26"><span class="do">⋯ › "Send to staff" › Everyone on staff › "Send to 1".</span><span class="see">Priya Nair has it in her portal.</span></label></li>
+    <li><input type="checkbox" id="s27"><label class="step" for="s27"><span class="do">Owner window: Rep teams › Shared library.</span><span class="see">The club's eight drills, published to every team.</span></label></li>
+  </ol>
+  <div class="verdict" role="radiogroup" aria-label="Demo 3 verdict"><label><input type="radio" name="v3" value="pass">Pass</label><label><input type="radio" name="v3" value="issue">Issue</label><label><input type="radio" name="v3" value="call">Needs a call</label></div>
+  <textarea id="n3" aria-label="Demo 3 notes" placeholder="Notes for Demo 3"></textarea>
+</section>
+
+<section class="card demo" data-demo="4" data-min="5" style="--start:27" aria-labelledby="h-d4">
+  <div class="head"><h2 id="h-d4">4 · Skills and insights <small>Coaches Portal · 5 min</small></h2>
+    <span class="clock"><output aria-live="off">0:00</output><button type="button" class="go">Start</button></span></div>
+  <p class="where">Coach window. <b>Short on time: do only steps 32 and 33.</b></p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s28"><label class="step" for="s28"><span class="do">Skills &amp; goals › Sessions.</span><span class="see">"Fall baseline" and "Winter re-test in the dome": four tests each.</span></label></li>
+    <li><input type="checkbox" id="s29"><label class="step" for="s29"><span class="do">Roster › Ava Mendoza › Skills &amp; goals › Results.</span><span class="see">A Trend on every test since the fall.</span><span class="around"><b>Step around:</b> her "Family &amp; paperwork" tab holds the family-app invitation, not on production yet.</span></label></li>
+    <li><input type="checkbox" id="s30"><label class="step" for="s30"><span class="do">Switch to Goals.</span><span class="see">Her focus area, the coach's note, what was observed on each testing day.</span></label></li>
+    <li><input type="checkbox" id="s31"><label class="step" for="s31"><span class="do">"Preview development handout".</span><span class="see">What the coach hands the family. Care: nothing goes to families by itself during the season, and no ranking against teammates.</span></label></li>
+    <li><input type="checkbox" id="s32"><label class="step" for="s32"><span class="do">Insights › Attendance.</span><span class="see">Eight fall games and eleven practices, each player's record.</span></label></li>
+    <li><input type="checkbox" id="s33"><label class="step" for="s33"><span class="do">Insights › Playing time.</span><span class="see">Innings in the field and on the bench across eight lineups, shared out fairly.</span></label></li>
+  </ol>
+  <div class="verdict" role="radiogroup" aria-label="Demo 4 verdict"><label><input type="radio" name="v4" value="pass">Pass</label><label><input type="radio" name="v4" value="issue">Issue</label><label><input type="radio" name="v4" value="call">Needs a call</label></div>
+  <textarea id="n4" aria-label="Demo 4 notes" placeholder="Notes for Demo 4"></textarea>
+</section>
+
+<section class="card demo" data-demo="5" data-min="6" style="--start:33" aria-labelledby="h-d5">
+  <div class="head"><h2 id="h-d5">5 · The public face <small>Public and family side · 6 min</small></h2>
+    <span class="clock"><output aria-live="off">0:00</output><button type="button" class="go">Start</button></span></div>
+  <p class="where">A private window (signed out): <code>https://dev.fieldlogichq.ca/milton-bats</code>. Then his phone.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s34"><label class="step" for="s34"><span class="do">Open the club's home page.</span><span class="see">Milton purple, the dome notice across the top, Sponsors at the foot. Care: the club site belongs to the club plans (early access).</span></label></li>
+    <li><input type="checkbox" id="s35"><label class="step" for="s35"><span class="do">Teams › Milton Bats U15 A.</span><span class="see">One of the 17 team pages, made by the product, not typed up.</span></label></li>
+    <li><input type="checkbox" id="s36"><label class="step" for="s36"><span class="do">Tryouts.</span><span class="see">U9 A and U9 B taking sign-ups for 2027.</span></label></li>
+    <li><input type="checkbox" id="s37"><label class="step" for="s37"><span class="do">House league › sign up a pretend U9 child › "Sign up".</span><span class="see">Stop at the "To pay" card.</span><span class="around"><b>Step around:</b> "Pay by card" and "Sign in to see it" are not on production yet (online payments, the family app). Say: "coming".</span></label></li>
+    <li><input type="checkbox" id="s38"><label class="step" for="s38"><span class="do">Show him the phone card: he scans the Winter Classic.</span></label></li>
+    <li><input type="checkbox" id="s39"><label class="step" for="s39"><span class="do">On his phone: Standings › Playoffs › Champions.</span><span class="see">Two divisions, every score final, the bracket, the champions.</span></label></li>
+  </ol>
+  <div class="verdict" role="radiogroup" aria-label="Demo 5 verdict"><label><input type="radio" name="v5" value="pass">Pass</label><label><input type="radio" name="v5" value="issue">Issue</label><label><input type="radio" name="v5" value="call">Needs a call</label></div>
+  <textarea id="n5" aria-label="Demo 5 notes" placeholder="Notes for Demo 5"></textarea>
+</section>
+
+<section class="card" aria-labelledby="h-after">
+  <h2 id="h-after">After a rehearsal</h2>
+  <ul class="plain">
+    <li><b>Rebuild</b> (<code>npm run demo:milton</code>). It clears what the rehearsal made: the part-2 schedule, Nora's payment, the balance check, the invoice, the plan you started. Nobody is signed out.</li>
+    <li>Never close a fiscal year in a rehearsal: the rebuild stops on a closed year.</li>
+    <li>Copy the summary above and paste it to Claude.</li>
+  </ul>
+  <div class="note warn">Not in this sheet: the team list and dome permit are placeholders until the club sends theirs (a settings change and a rebuild). Everything shown is built; the club tools are in early access.</div>
+  <div id="summary-box" hidden><textarea id="summary" aria-label="Summary to copy" rows="10"></textarea></div>
+</section>
+</div>
+
+<script>
+(function () {
+  var KEY = 'milton-run-sheet-v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private window: ticks last this visit only */ } }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('ol.steps input[type=checkbox]'));
+  var total = boxes.length;
+  function count() {
+    var n = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById('count').textContent = n + ' of ' + total;
+    document.getElementById('meter').style.width = (total ? (100 * n / total) : 0) + '%';
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!(state.ticks && state.ticks[b.id]);
+    b.addEventListener('change', function () { state.ticks = state.ticks || {}; state.ticks[b.id] = b.checked; save(); count(); });
+  });
+  document.querySelectorAll('.verdict input').forEach(function (r) {
+    if (state.verdicts && state.verdicts[r.name] === r.value) r.checked = true;
+    r.addEventListener('change', function () { state.verdicts = state.verdicts || {}; state.verdicts[r.name] = r.value; save(); });
+  });
+  document.querySelectorAll('.demo textarea').forEach(function (t) {
+    t.value = (state.notes && state.notes[t.id]) || '';
+    t.addEventListener('input', function () { state.notes = state.notes || {}; state.notes[t.id] = t.value; save(); });
+  });
+  // One clock per demo: elapsed against its minutes; turns red when over.
+  var timers = {};
+  function fmt(s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  document.querySelectorAll('.demo').forEach(function (card) {
+    var out = card.querySelector('.clock output'), btn = card.querySelector('.go'), limit = Number(card.dataset.min) * 60, id = card.dataset.demo;
+    var t = { secs: (state.clocks && state.clocks[id]) || 0, run: null };
+    timers[id] = t;
+    function paint() { out.textContent = fmt(t.secs) + ' / ' + card.dataset.min + ':00'; out.classList.toggle('over', t.secs > limit); }
+    paint();
+    btn.addEventListener('click', function () {
+      if (t.run) { clearInterval(t.run); t.run = null; btn.textContent = 'Start'; }
+      else { t.run = setInterval(function () { t.secs++; paint(); state.clocks = state.clocks || {}; state.clocks[id] = t.secs; save(); }, 1000); btn.textContent = 'Stop'; }
+    });
+  });
+  document.getElementById('clear').addEventListener('click', function () {
+    boxes.forEach(function (b) { b.checked = false; });
+    Object.keys(timers).forEach(function (k) { var t = timers[k]; if (t.run) clearInterval(t.run); t.run = null; t.secs = 0; });
+    document.querySelectorAll('.go').forEach(function (b) { b.textContent = 'Start'; });
+    document.querySelectorAll('.demo .clock output').forEach(function (o, i) { var c = o.closest('.demo'); o.textContent = '0:00 / ' + c.dataset.min + ':00'; o.classList.remove('over'); });
+    state.ticks = {}; state.clocks = {}; save(); count();
+  });
+  document.getElementById('copy').addEventListener('click', function () {
+    var lines = ['Milton run sheet — ' + document.getElementById('count').textContent + ' ticked'];
+    document.querySelectorAll('.demo').forEach(function (card) {
+      var id = card.dataset.demo, v = card.querySelector('.verdict input:checked');
+      var t = timers[id];
+      lines.push('');
+      lines.push(card.querySelector('h2').firstChild.textContent.trim() + ' — ' + (v ? v.parentNode.textContent.trim() : 'no verdict') + ' — ' + fmt(t.secs) + ' of ' + card.dataset.min + ':00');
+      card.querySelectorAll('ol.steps li').forEach(function (li) {
+        var b = li.querySelector('input');
+        if (!b.checked) lines.push('  not ticked: ' + b.id.slice(1) + '. ' + li.querySelector('.do').textContent);
+      });
+      var n = card.querySelector('textarea').value.trim();
+      if (n) lines.push('  notes: ' + n);
+    });
+    var text = lines.join('\n');
+    var box = document.getElementById('summary-box'), area = document.getElementById('summary');
+    area.value = text;
+    var done = function () { var b = document.getElementById('copy'); b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy the summary'; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { box.hidden = false; area.focus(); area.select(); });
+    } else { box.hidden = false; area.focus(); area.select(); }
+  });
+  count();
+})();
+</script>

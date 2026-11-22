@@ -77,6 +77,8 @@ const GROUPS = [
     parents: ['Maricel', 'Jun', 'Rowena', 'Ramil', 'Grace', 'Rey', 'Joy', 'Ben'] },
 ];
 const GROUP_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+/** The same name pool, for the rep side's light rosters (scripts/lib/prospect-demo-rep.mjs). */
+export const NAME_GROUPS = GROUPS;
 
 const POS = [null, null, null, null, 'Pitcher', 'Catcher', 'Infield', 'Outfield', 'Shortstop', 'First base', 'Anywhere'];
 const NOTES = ['Asthma. Inhaler stays in the bag.', 'Wants to play with a friend from school.', 'First year playing.', 'Played T-ball last summer.',

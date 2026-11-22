@@ -134,6 +134,14 @@
       <p>What families find before they ever sign in: the season, the schedule, the standings and the way to register.</p>
       <span class="url" data-url="club"></span>
     </article>
+
+    <article class="card">
+      <span class="who">As a visiting family</span>
+      <h2>The Winter Classic</h2>
+      <div class="qr" id="qr-tournament" aria-label="QR code: Milton Bats Winter Classic"></div>
+      <p>The club's own tournament on a phone: every score, the standings, the playoff bracket and the champions.</p>
+      <span class="url" data-url="tournament"></span>
+    </article>
   </section>
 
   <section class="prep" id="prep">
@@ -184,8 +192,9 @@
     signup: BASE + '/milton-bats/league/2027-summer-house-league/register',
     admin: BASE + '/auth/login?next=' + encodeURIComponent('/milton-bats/admin/house-league'),
     club: BASE + '/milton-bats',
+    tournament: BASE + '/milton-bats/winter-classic',
   };
-  const QR_IDS = { signup: 'qr-signup', admin: 'qr-admin', club: 'qr-club' };
+  const QR_IDS = { signup: 'qr-signup', admin: 'qr-admin', club: 'qr-club', tournament: 'qr-tournament' };
 
   for (const [key, id] of Object.entries(QR_IDS)) {
     const el = document.getElementById(id);

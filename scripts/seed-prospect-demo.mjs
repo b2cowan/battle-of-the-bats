@@ -10,6 +10,8 @@
  * ⚖ WHAT THE RESET TOUCHES: rows the Milton organization OWNS in the world — the season(s), their divisions, teams,
  * registrations, money lines, games, scores, sent-email history, notices, team-change state, the club schedule, the
  * children and parents, family links and invitations, notifications — and whatever a live walk created in them.
+ * Phase B (scripts/lib/prospect-demo-rep.mjs, when the config has `repTeams`): the rep teams and everything under them, the
+ * club's schedules, permits, club bills, shared drills, bank checks and tournaments — rebuilt every run (plan §8).
  * ⚖ WHAT IT NEVER TOUCHES: auth users, their passwords, the organization's row (name, plan, theme, logo), its public-site
  * content, its venues, its owner/League admin memberships. An open browser session survives a reset. A password is set
  * ONLY when an account is first created.
@@ -36,6 +38,8 @@ import { ensureFixtureUser, findUserByEmail } from './lib/fixture-user.mjs';
 import {
   addDays, saturdayAfter, onOrAfter, torontoInstant, minutesLater, mulberry32, buildWorld, snakeDraft, tally,
 } from './lib/prospect-demo-world.mjs';
+// Phase B — the rep side (17 teams, the dome, the dressed team, the tournament), when the club config has `repTeams`.
+import { repConfigured, resetRep, buildRep } from './lib/prospect-demo-rep.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DEV_REF = 'npgnrxaitgbtbtvvykto';
@@ -170,6 +174,7 @@ if (DRY) {
   const mine = (s) => regs.filter(r => r.status === s).length;
   console.log(`  ${regs.length} children (${mine('active')} accepted · ${mine('pending')} to review · ${mine('waitlisted')} waitlisted), ${new Set(regs.map(r => r.household)).size} households`);
   console.log(`  money lines: ${regs.filter(r => r.pay).length} receipts + ${previous.length} for the finished season, through club_league_money`);
+  if (repConfigured(cfg)) console.log(`  Phase B (rep side): ${cfg.repTeams.length} rep teams, the dome "${cfg.dome.venue.name}" and its permit, ${cfg.dome.part1.name} sent and billed, ${cfg.dressed.team} dressed, "${cfg.tournament.name}" — rebuilt in full`);
   console.log('  would NOT touch: auth users, passwords, memberships (except a pending/walk-made +registrar one), org row, theme, logo, public-site content, venues.');
   for (const p of [cfg.people.owner, cfg.people.admin, cfg.people.coach]) console.log(`  account ${p.email}: ${(await findUserByEmail(db, p.email)) ? 'exists (password untouched)' : 'would be created (password set once)'}`);
   console.log('\nDry run done. Nothing was written.');
@@ -282,6 +287,9 @@ for (const table of ['online_payment_clear_decisions', 'online_payment_disputes'
 }
 die('delete season books', (await db.from('accounting_ledgers').delete().eq('org_id', ORG).eq('entity_type', 'league_season')).error);
 die('delete seasons', (await db.from('league_seasons').delete().eq('org_id', ORG)).error);
+// 1b. The rep side (Phase B): its schedules, club bills, permits, teams (which take their rosters, events and money),
+//     drills, bank checks and tournaments — before the children, which the rosters hold.
+await resetRep({ db, ORG, die, one });
 // 2. Everything else the world and a live walk create, by organization id.
 for (const [table, col] of RESET_TABLES) die(`delete ${table}`, (await db.from(table).delete().eq(col, ORG)).error);
 // 3. Children and parents — but never one a rep roster or tryout (Phase B) still points at.
@@ -611,6 +619,11 @@ sql(`UPDATE league_divisions SET teams_published_at = ${q(torontoInstant(addDays
      UPDATE league_seasons SET finished_at = ${q(torontoInstant(addDays(pFirst, 7 * P.games + 10), '12:00'))} WHERE id = ${q(pSeason.id)} AND org_id = ${q(ORG)};`);
 ok(`"${P.name}" completed: ${previous.length} registrations (${previous.filter(p => p.returningKey).length} the same children as this season), ${pGames.length} scored games, all paid`);
 
+// ── Phase B: the rep side ────────────────────────────────────────────────────────────────────────────────────────
+const rep = repConfigured(cfg)
+  ? await buildRep({ db, cfg, ORG, OWNER, DEMO_DAY, die, one, ok, head, insertAll, sql, q, account, nowIso })
+  : null;
+
 // ── people, last ─────────────────────────────────────────────────────────────────────────────────────────────────
 die('families attach', (await db.rpc('families_attach_people', { p_org_id: ORG })).error);
 ok('Families: parents and children attached');
@@ -638,4 +651,10 @@ console.log('  totals:', JSON.stringify(totals));
 console.log(`\n  Club:   http://localhost:3000/${SLUG}/admin    public: http://localhost:3000/${SLUG}   league: http://localhost:3000/${SLUG}/league`);
 console.log(`  Sign in: ${cfg.people.owner.email} (Owner) · ${cfg.people.admin.email} (League admin) · ${cfg.people.coach.email} (coach, ${TEAM.U11[0].name}) — the password is ${cfg.passwordEnv ?? 'MILTON_DEMO_PASSWORD'} in .env.local`);
 console.log(`  ${cfg.people.parent.email} is the guardian contact of Ella (U9) and Owen (U11) — no account is made; the family-app invitation creates it.`);
+if (rep) {
+  console.log(`\n  Rep side: ${rep.dressed.name} → http://localhost:3000/${SLUG}/coaches/teams/${rep.dressed.id}  (sign in ${cfg.repPeople.headCoach.email}; assistant ${cfg.repPeople.assistant.email})`);
+  console.log(`  Dome: "${rep.dome.permit}" · part 1 ${rep.dome.part1.join(' – ')} sent and billed (${rep.dome.total.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })}) · Demo 1 builds part 2 from ${rep.dome.part2From} (off ${rep.dome.datesOff.join(', ')}) as ${cfg.people.owner.email}`);
+  console.log(`  Next dome practice (Demo 3 starts its plan): ${rep.dressed.nextDome} · cash on hand about ${rep.dressed.cashEstimate.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })}`);
+  console.log(`  Tournament: http://localhost:3000/${SLUG}/${rep.tournament.slug} (${rep.tournament.day}; ${rep.tournament.champions.join(' · ')})`);
+}
 console.log('  ⚠ Dev-only world. Reset any time: npm run demo:milton:reset');

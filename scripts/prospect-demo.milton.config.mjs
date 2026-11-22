@@ -166,6 +166,77 @@ export default {
     firstSaturdayOffset: -330, games: 6,
   },
 
-  /** Rep teams (Phase B, not built yet): invented names, light rosters. */
-  repTeams: [],
+  /**
+   * ══ PHASE B — the rep side, for the five presentation demos (plan §1, §8). Built by scripts/lib/prospect-demo-rep.mjs. ══
+   * The team list and the dome permit are PLACEHOLDERS until the club sends theirs: replace `repTeams` and `dome`, then
+   * `npm run demo:milton`. Team names are invented in the club's style. A team's id is derived from its slug, so its
+   * Coaches Portal address survives every rebuild (change a slug only together with the run sheet).
+   */
+  repPeople: {
+    /** The dressed team's head coach (Demos 2–4) and its assistant (receives the practice plan in Demo 3). */
+    headCoach: { email: 'b2cowan+repcoach@gmail.com', name: 'Morgan Hale' },
+    assistant: { email: 'b2cowan+assistant@gmail.com', name: 'Priya Nair' },
+  },
+  /** [age group, tier, head coach name (a .local account; the dressed team's is `repPeople.headCoach`)]. Jan 1 cut-off. */
+  repTeams: [
+    ['U9', 'A', 'Dana Whitlock'], ['U9', 'B', 'Sam Achterberg'],
+    ['U11', 'A', 'Lauren Petrakis'], ['U11', 'B', 'Kevin Osei'], ['U11', 'C', 'Rosa Delgado'],
+    ['U13', 'A', 'Brian Kowalczyk'], ['U13', 'B', 'Monique Baptiste'], ['U13', 'C', 'Graham Tennant'],
+    ['U15', 'A', null], ['U15', 'B', 'Aisha Rahimi'], ['U15', 'C', 'Patrick Doucet'],
+    ['U17', 'A', 'Heather McLeod'], ['U17', 'B', 'Victor Lindgren'], ['U17', 'C', 'Simone Arsenault'],
+    ['U19', 'A', 'Darren Fitzpatrick'], ['U19', 'B', 'Nadia Volkova'], ['U19', 'C', 'Owen Gallant'],
+  ],
+  /** Born-in years for the 2027 season, by age group (Jan 1 cut-off). */
+  repBirthYears: { U9: [2018, 2019], U11: [2016, 2017], U13: [2014, 2015], U15: [2012, 2013], U17: [2010, 2011], U19: [2008, 2009] },
+  repSeason: { name: '2027 Season', year: 2027, previousName: '2026 Season', previousYear: 2026 },
+  /** Light rosters for the other sixteen; the dressed team has its own twelve. */
+  repRosterSize: [11, 12],
+  /** Teams with tryouts open on the public site (Demo 5). */
+  repTryoutsOpen: { teams: ['U9 A', 'U9 B'], description: 'Tryouts for the 2027 season, players born 2018 and 2019. Two sessions in the dome; bring a glove, a helmet if you have one, and water.' },
+
+  /**
+   * The dome and its winter permit — PLACEHOLDER until the club sends its permit (dome name, fields and which are half,
+   * days and times, first and last day, dates off, cost). Dates are Sunday COUNTS from the first Sunday on or after
+   * demo day − `firstSundayBefore` days, so the world stays relative; swap in real dates as `startsOn` / `endsOn` /
+   * `datesOff: ['YYYY-MM-DD', …]` when the permit arrives. The permit costs `cost` for the time it holds (dates off
+   * excluded), which is how the product prices an hour.
+   * Part 1 (`sentSundays`) is sent and billed by the seed; Demo 1 builds part 2 live, from the first Sunday after the
+   * dates off (plan §8.1 — the same dates would leave the live drafts empty).
+   */
+  dome: {
+    venue: { name: 'Escarpment Indoor Dome', address: '8 Dome Way, Milton', fields: ['Field 1', 'Field 2', 'Field 3'], halfFields: ['Field 3'] },
+    permit: { name: 'Winter dome 2026–27', issuer: 'Escarpment Indoor Dome', reference: 'ESC-W27-0412', weekday: 7, start: '08:00', end: '14:00', sundays: 20, offAfter: 8, offCount: 2, offNote: 'Dome closed (holiday break)', firstSundayBefore: 35, costPerFullFieldHour: 95 },
+    slotMinutes: 60,
+    part1: { name: 'Winter dome · part 1', sentDaysBefore: 56 },
+    /** The bill's payment dates, as days from the demo day (the product's "On these dates" plan). */
+    billDates: [-42, -7, 10],
+  },
+
+  /** Milton Bats U15 A — the team every Coaches Portal demo runs on (plan §8.6). */
+  dressed: {
+    team: 'U15 A',
+    dues: { total: 1600, installments: 4, dueOffsets: [-60, 12, 52, 110] },
+    fundraiser: { name: 'Fall bottle drive', rebatePercent: 50, startOffset: -74, endOffset: -58 },
+    sponsor: { name: 'Main Street Physio & Sport', pledged: 1500, received: 750, receivedOffset: -30, contact: 'Alana Brooks', email: 'alana@mainstreetphysio.local', address: '210 Main St E, Milton, ON' },
+  },
+
+  /** The public tournament (Demo 5). Name invented — owed by the owner. Free: no fee book, no team payments. */
+  tournament: {
+    name: 'Milton Bats Winter Classic', slug: 'winter-classic',
+    contactEmail: 'b2cowan+milton-contact@gmail.com',
+    divisions: [
+      { name: 'U11', teams: ['Milton Bats U11 A', 'Milton Bats U11 B', 'Kelso Ridge Raptors', 'Twelve Mile Cyclones'] },
+      { name: 'U15', teams: ['Milton Bats U15 A', 'Milton Bats U15 B', 'Harrison Hollow Hornets', 'Cedar Line Storm'] },
+    ],
+  },
+
+  /** Public-site extras (Demo 5): filled only when empty, like the contact details. The notice is re-posted every rebuild. */
+  siteExtras: {
+    sponsors: [
+      { name: 'Main Street Physio & Sport', link: null },
+      { name: 'Escarpment Indoor Dome', link: null },
+      { name: 'Halton Hardware & Supply', link: null },
+    ],
+    notice: { text: 'Winter dome practices run every Sunday until the holiday break.', detail: 'Rep teams: your Sunday hour is on your team schedule. House league registration for 2027 is open now.' },
+  },
 };

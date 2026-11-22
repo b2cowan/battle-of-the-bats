@@ -39,7 +39,7 @@ This file is the **index** of open work: **one line per project**. **A project's
 - [ ] **Feedback window wears the portal that opens it** — status on the board · plan [FEEDBACK_WINDOW_THEME_HUB.html](docs/projects/active/FEEDBACK_WINDOW_THEME_HUB.html)
 - [ ] **Coaches portal tap targets** — status on the board · plan [COACH_TOUCH_TARGET_DEBT_PLAN.md](docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md)
 - [ ] **Signed-in family accounts** — status on the board · plan [SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md](docs/projects/active/SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md)
-- [ ] **Milton demo world** (parked) — status on the board · plan [MILTON_DEMO_WORLD_PLAN.md](docs/projects/active/MILTON_DEMO_WORLD_PLAN.md)
+- [ ] **Milton demo world** — status on the board · plan [MILTON_DEMO_WORLD_PLAN.md](docs/projects/active/MILTON_DEMO_WORLD_PLAN.md)
 - [ ] **US launch** — status on the board · no plan yet
 - [ ] **Club, after launch** — status on the board · plan [CLUB_TIER_PRODUCTION_READINESS_PLAN.md §7](docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md)
 - [ ] **Tryouts from a phone** — status on the board · plan [COACH_TRYOUTS_PHONE_PLAN.md](docs/projects/active/COACH_TRYOUTS_PHONE_PLAN.md)
