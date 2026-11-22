@@ -11,7 +11,8 @@ import { HELPING_WITH } from './volunteer-words';
  * The log records what it records today — member changes, nothing wider (specimen 11: no filters,
  * no search, no logins, money or settings; widening what it logs is a separate decision). One widening
  * was ruled: the two-step switches (Board Ready, owner 2026-11-10), because they decide who may sign in. A second:
- * a team's pay link emailed, replaced or stopped (Board Ready P8c, owner 2026-11-19).
+ * a team's pay link emailed, replaced or stopped (Board Ready P8c, owner 2026-11-19). A third: the club's privacy-policy
+ * link added, changed or removed (Board Ready 4.P, owner 2026-11-21).
  */
 
 /** The member changes the board's log shows (the route's `?scope=members`). */
@@ -49,8 +50,15 @@ export const FORM_AUDIT_ACTIONS = [FILE_OPENED_ACTION, HEALTH_EXPORT_ACTION] as 
 export const isFormAuditAction = (action: string): boolean =>
   (FORM_AUDIT_ACTIONS as readonly string[]).includes(action);
 
-/** Everything the owner's log lists (the route's `?scope=members`): the member changes, the pay-link and the form actions. */
-export const AUDIT_LOG_ACTIONS = [...MEMBER_AUDIT_ACTIONS, ...PAY_LINK_AUDIT_ACTIONS, ...FORM_AUDIT_ACTIONS] as const;
+/**
+ * The club's privacy-policy link added, changed or removed (Board Ready 4.P; owner ruling 2026-11-21, "Show it on the
+ * log"): it decides what families are told at sign-up. The row holds `{ change }` only, never the address; no target.
+ */
+export const PRIVACY_LINK_AUDIT_ACTION = 'privacy_policy_link_changed';
+
+/** Everything the owner's log lists (the route's `?scope=members`): the member changes, the pay-link and the form actions,
+ *  and the club's privacy link. */
+export const AUDIT_LOG_ACTIONS = [...MEMBER_AUDIT_ACTIONS, ...PAY_LINK_AUDIT_ACTIONS, ...FORM_AUDIT_ACTIONS, PRIVACY_LINK_AUDIT_ACTION] as const;
 
 export const isPayLinkAuditAction = (action: string): boolean =>
   (PAY_LINK_AUDIT_ACTIONS as readonly string[]).includes(action);
@@ -168,6 +176,9 @@ export function auditChangeSentence(action: string, payload: Record<string, unkn
       return 'Opened a file a family attached';
     case HEALTH_EXPORT_ACTION:
       return 'Exported registrations with health answers';
+    case PRIVACY_LINK_AUDIT_ACTION:
+      return p.change === 'removed' ? 'Privacy policy link removed'
+        : p.change === 'added' ? 'Privacy policy link added' : 'Privacy policy link changed';
     default:
       return action;
   }

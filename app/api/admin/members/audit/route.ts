@@ -26,6 +26,7 @@ const ACTION_LABELS: Record<string, string> = {
   pay_link_stopped:  'Pay link stopped',
   club_form_file_opened:     'Family file opened',
   club_form_health_exported: 'Health answers exported',
+  privacy_policy_link_changed: 'Privacy policy link',
 };
 
 function summarizePayload(action: string, payload: Record<string, unknown> | null): string {

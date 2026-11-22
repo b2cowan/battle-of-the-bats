@@ -108,6 +108,21 @@
   .cutoffDay { flex: 1 1 0; width: auto; }
 }
 
+/* ── Your privacy policy (Board Ready 4.P): one field, its refusal under it, and the card's own Save ── */
+/* The refusal line is FiscalYear's `.refuse` recipe (why, under the field; the field takes the kit's aria-invalid edge). */
+.fieldRefuse {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-start;
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--danger-light);
+}
+.fieldRefuseIcon { flex: none; margin-top: 2px; }
+.cardSave { display: flex; justify-content: flex-end; }
+@media (max-width: 640px) { .cardSave :global(.btn) { min-height: var(--tap-min, 44px); flex: 1 1 100%; justify-content: center; } }
+
 /* A link inside a notice is a full tap target on touch widths (check:layout @361/768, 2026-11-16). */
 @media (max-width: 768px) {
   .noticeLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }

@@ -532,9 +532,10 @@ export default function ClubHubKit() {
             {canManageBilling && <Link href={`${base}/org/billing`} className={ck.row}>
               <span className={ck.rowMain}><span className={ck.rowTitle}>Plan &amp; billing</span></span>
             </Link>}
-            {/* An admin opens Settings for its two-step card alone, read-only (Board Ready two-step, Part 3, 2026-11-11). */}
+            {/* An admin opens Settings for its two-step card, read-only (Board Ready two-step, Part 3, 2026-11-11), and to set
+                the club's privacy policy link (Board Ready 4.P, 2026-11-21). */}
             {showsLockedRows && <Link href={`${base}/org/settings`} className={ck.row}>
-              <span className={ck.rowMain}><span className={ck.rowTitle}>Settings</span><span className={ck.rowSub}>Two-step sign-in, read-only</span></span>
+              <span className={ck.rowMain}><span className={ck.rowTitle}>Settings</span><span className={ck.rowSub}>Your privacy policy · two-step sign-in, read-only</span></span>
             </Link>}
             {showsLockedRows && !canManageBilling && ['Plan & billing'].map(label => (
               <div key={label} className={`${ck.row} ${ck.rowLocked}`} aria-label={NOT_YOURS_WORDS.lockedRowLabel(label)}>

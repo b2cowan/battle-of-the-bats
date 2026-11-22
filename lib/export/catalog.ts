@@ -982,7 +982,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: true,
     serverSide: false,
-    helpSummary: 'Export the audit log — invites, role and access changes, suspensions, removals, two-step sign-in settings, each time a team’s pay link is emailed, replaced or stopped, each time a family’s file is opened, and each export that carries health answers. Visible to org owners only.',
+    helpSummary: 'Export the audit log — invites, role and access changes, suspensions, removals, two-step sign-in settings, each time a team’s pay link is emailed, replaced or stopped, each time a family’s file is opened, each export that carries health answers, and each change to the club’s privacy policy link. Visible to org owners only.',
   },
   {
     // The id is the entry's key and keeps its name; the list moved to the Permits place (Club Tier 13c, C1 = A).

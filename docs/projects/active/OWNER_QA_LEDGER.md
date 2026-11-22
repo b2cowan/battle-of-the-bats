@@ -28666,3 +28666,12 @@ performed over the shared working tree. The original walk result is not claimed 
 **Not walked (tests hold it):** "not found" while the legal pages are off (the switch is a code constant, not reachable on dev); version B's four held lines and four "Read more" links; the shared full-copy rule; the diagram's labels word for word in both forms.
 **Status:** ⏳ owed.
 <!-- /§554 -->
+
+## §555 · Board Ready 4.P · a club sets its own privacy link — ⏳ OWED · built 2026-11-22 on dev
+<!-- §555 -->
+**Walk (checkable):** https://claude.ai/artifact/Eyr6PHbhbnZ4GwQ8RUmPED (source `docs/projects/active/BOARD_READY_CLUB_PRIVACY_LINK_WALK.html`); parts A to G, 19 steps, owner calls not in the counter. Plan `BOARD_READY_PLAN.md` §5 Stage 4, 4.P.
+**Sign-in:** owner `league-owner@dev.local`, admin `league-clubadmin@dev.local`, treasurer `league-treasurer@dev.local`, registrar `league-registrar@dev.local` (all `devpass123`, Dev League Org, Walk Summer 2027's sign-up); the tryout door on the owner's own Milton Bats account (u9-a). Restart the dev server first.
+**Reviews (before hand-off):** `/legal` (the words; one owner call ruled: the helper carries Terms §4's "outside Canada, mainly in the United States"; the field label became "Link to your privacy policy"), `/review` (three lenses, no Critical, High or Medium left; the Lows applied).
+**Not walked (tests hold it):** the guardian accept page (needs the guardian tier and a real invitation email; same seam).
+**Status:** ⏳ owed.
+<!-- /§555 -->

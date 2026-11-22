@@ -12,7 +12,11 @@
  * the owner who comes here out of habit; and the deletion request.
  *
  * ⚖ TWO-STEP SIGN-IN (Board Ready, Part 3; ruled 2026-11-11): the club's two switches have a card here, and an ADMIN
- * reaches Settings for that card alone, read-only. Every other card stays the owner's.
+ * reads that card, read-only. Every other card stays the owner's, except the privacy link below.
+ *
+ * ⚖ YOUR PRIVACY POLICY (Board Ready 4.P; ruled 2026-11-21, "Owner and admin"): the club's own privacy-policy link, the one
+ * card here an ADMIN can change, with its own Save (PrivacyPolicyCard). The admin's Settings is now that card and the
+ * read-only two-step card.
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -31,6 +35,7 @@ import { ownPlanOf } from '@/lib/free-time';
 import BirthdayCutoffCard, { loadBirthdayCutoffs, type CardData } from './BirthdayCutoffCard';
 import PayoutsCard, { loadPayouts, type PayoutsView } from './PayoutsCard';
 import TwoStepRequirementCard, { loadTwoStepSwitches, type TwoStepSwitches } from './TwoStepRequirementCard';
+import PrivacyPolicyCard, { loadPrivacyPolicy, type PrivacyPolicyView } from './PrivacyPolicyCard';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
@@ -57,6 +62,7 @@ export default function SettingsKit() {
   const [payouts, setPayouts] = useState<PayoutsView | null>(null);
   const [twoStep, setTwoStep] = useState<TwoStepSwitches | null>(null);
   const [twoStepLoaded, setTwoStepLoaded] = useState(false);
+  const [privacy, setPrivacy] = useState<PrivacyPolicyView | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [name, setName] = useState('');
   const [urlSlug, setUrlSlug] = useState('');
@@ -81,9 +87,11 @@ export default function SettingsKit() {
   useEffect(() => {
     if (!orgQuery || !userRole) return;
     let stale = false;
-    // An admin reads only the two-step card (ruled 2026-11-11); nothing else on this page is theirs.
+    // An admin reads the two-step card (ruled 2026-11-11) and changes the privacy link (ruled 2026-11-21); nothing else on
+    // this page is theirs.
     if (userRole === 'admin') {
-      loadTwoStepSwitches(orgQuery).then(t => { if (!stale) { setTwoStep(t); setTwoStepLoaded(true); } });
+      Promise.all([loadTwoStepSwitches(orgQuery), loadPrivacyPolicy(orgQuery)])
+        .then(([t, p]) => { if (!stale) { setTwoStep(t); setPrivacy(p); setTwoStepLoaded(true); } });
       return () => { stale = true; };
     }
     if (userRole !== 'owner') return;
@@ -94,9 +102,10 @@ export default function SettingsKit() {
       loadBirthdayCutoffs(orgQuery),
       loadPayouts(slug),
       loadTwoStepSwitches(orgQuery),
+      loadPrivacyPolicy(orgQuery),
     ])
-      .then(([d, cutoffs, payoutsView, twoStepView]: [OrgSettings, CardData | null, PayoutsView | null, TwoStepSwitches | null]) => {
-        if (!stale) { adopt(d); setCutoffData(cutoffs); setPayouts(payoutsView); setTwoStep(twoStepView); setTwoStepLoaded(true); }
+      .then(([d, cutoffs, payoutsView, twoStepView, privacyView]: [OrgSettings, CardData | null, PayoutsView | null, TwoStepSwitches | null, PrivacyPolicyView | null]) => {
+        if (!stale) { adopt(d); setCutoffData(cutoffs); setPayouts(payoutsView); setTwoStep(twoStepView); setPrivacy(privacyView); setTwoStepLoaded(true); }
       })
       .catch(() => { if (!stale) setLoadFailed(true); });
     return () => { stale = true; };
@@ -180,13 +189,17 @@ export default function SettingsKit() {
     return (
       <div className={`${ck.page} ${styles.narrow}`}>
         <TabPageHeader eyebrow="Organization" title="Settings" />
-        {!twoStepLoaded ? <LoadingState label="Loading the settings…" /> : twoStep ? (
-          <TwoStepRequirementCard orgQuery={orgQuery} initial={twoStep} />
-        ) : (
-          <div className={`${ck.notice} ${ck.noticeBad}`} role="alert">
-            <AlertTriangle size={15} aria-hidden />
-            <div className={ck.noticeBody}>The settings didn’t load. Refresh the page to try again.</div>
-          </div>
+        {!twoStepLoaded ? <LoadingState label="Loading the settings…" /> : (
+          <>
+            {/* The privacy card says so itself when its read fails. */}
+            <PrivacyPolicyCard orgQuery={orgQuery} initial={privacy} />
+            {twoStep ? <TwoStepRequirementCard orgQuery={orgQuery} initial={twoStep} /> : (
+              <div className={`${ck.notice} ${ck.noticeBad}`} role="alert">
+                <AlertTriangle size={15} aria-hidden />
+                <div className={ck.noticeBody}>The settings didn’t load. Refresh the page to try again.</div>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -280,6 +293,9 @@ export default function SettingsKit() {
               {saving ? 'Saving…' : 'Save changes'}
             </button>
           </div>
+
+          {/* ── Your privacy policy (Board Ready 4.P): the club's own link families see; saves by itself ── */}
+          <PrivacyPolicyCard orgQuery={orgQuery} initial={privacy} />
 
           {/* ── When birthdays count from (Club Tier Stage 4c-2): saves by itself through the pill, apart from the Save above ── */}
           <BirthdayCutoffCard orgQuery={orgQuery} initial={cutoffData} />

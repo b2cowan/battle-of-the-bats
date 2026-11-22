@@ -1,0 +1,191 @@
+<title>Club Privacy Link Walk §555</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column; a sticky progress bar; each part a card of one-action steps with its verdict and notes. */
+:root {
+  --bg: #f6f7f2; --card: #ffffff; --ink: #1d2318; --soft: #5b6352; --line: #dfe3d6; --olive: #56702c; --lime: #c9e265;
+  --good: #2f7a3b; --warn: #a1630a; --bad: #b3352a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif; --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141811; --card: #1c2118; --ink: #e8ecdf; --soft: #a5ad98; --line: #313a29; --olive: #a9c86a; --lime: #c9e265;
+  --good: #6fc27b; --warn: #e3a64a; --bad: #ef7d70; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141811; --card: #1c2118; --ink: #e8ecdf; --soft: #a5ad98; --line: #313a29; --olive: #a9c86a; --lime: #c9e265;
+  --good: #6fc27b; --warn: #e3a64a; --bad: #ef7d70; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 24px 64px; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-family: var(--display); font-size: 1.6rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.1rem; margin: 0; }
+.lede { color: var(--soft); margin: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.signin dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.signin dt { color: var(--soft); font-size: .85rem; }
+.signin dd { margin: 0; overflow-wrap: anywhere; }
+code { font-size: .85em; background: color-mix(in srgb, var(--olive) 12%, transparent); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.meter { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--olive); transition: width .2s; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.steps label { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; padding: 6px 4px; border-radius: 6px; cursor: pointer; }
+.steps label:hover { background: color-mix(in srgb, var(--olive) 7%, transparent); }
+.steps input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--olive); }
+.n { font-variant-numeric: tabular-nums; color: var(--soft); font-size: .8rem; margin-right: 4px; }
+.exp { display: block; color: var(--soft); font-size: .9rem; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: inherit; font-size: .85rem; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; min-height: 32px; }
+.verdict button[aria-pressed="true"][data-v="pass"] { border-color: var(--good); color: var(--good); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="issue"] { border-color: var(--bad); color: var(--bad); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="call"] { border-color: var(--warn); color: var(--warn); font-weight: 600; }
+textarea { font: inherit; width: 100%; box-sizing: border-box; min-height: 56px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: var(--bg); color: var(--ink); }
+.calls { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 8px; }
+.btn { font: inherit; font-weight: 600; background: var(--lime); color: #1d2318; border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; min-height: 44px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+#out { min-height: 160px; font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
+:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1>A club sets its own privacy link · §555</h1>
+    <p class="lede">Board Ready 4.P: the club’s owner or an admin puts the club’s own privacy policy on its forms from Settings, and can change or clear it. Tick a box when what it says is true; give each part a verdict, then build the summary and paste it back.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="si">
+    <h2 id="si">Sign in as</h2>
+    <dl>
+      <dt>Club owner</dt><dd><code>http://localhost:3000/login</code> · email <code>league-owner@dev.local</code> · password <code>devpass123</code> (Dev League Org).</dd>
+      <dt>Club admin</dt><dd>email <code>league-clubadmin@dev.local</code> · password <code>devpass123</code>.</dd>
+      <dt>Treasurer</dt><dd>email <code>league-treasurer@dev.local</code> · password <code>devpass123</code>.</dd>
+      <dt>Registrar</dt><dd>email <code>league-registrar@dev.local</code> · password <code>devpass123</code>.</dd>
+      <dt>Tryout door</dt><dd>Your own <code>b2cowan+owner@gmail.com</code> account (Milton Bats Softball Association). Dev League Org has no rep teams, so its tryouts can’t show the link.</dd>
+      <dt>Before you start</dt><dd>Restart the dev server (this build added files and changed shared code). Neither club has a link set today. Use a private window for the signed-out steps.</dd>
+      <dt>When you finish</dt><dd>Part D and part F clear the link again, so nothing needs undoing.</dd>
+    </dl>
+  </section>
+
+  <div class="bar" role="status" aria-live="polite">
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <span class="count" id="count">0 of 0</span>
+  </div>
+
+  <main id="parts" style="display:flex;flex-direction:column;gap:16px"></main>
+
+  <section class="card" aria-labelledby="calls">
+    <h2 id="calls">Your calls (not in the count)</h2>
+    <ol class="calls">
+      <li><strong>The invitation sentence for a new admin.</strong> It still reads “You’d help run the organization: every program on its plan, but not its billing or settings.” An admin has read the two-step card on Settings since 11-11 and now sets the privacy link there too. Keep it, or say “…but not its billing, and only two cards in Settings”?</li>
+      <li><strong>Not walked here.</strong> The guardian accept page shows the same link. It needs the guardian tier switched on and a real invitation email, so the build’s tests cover it instead: it goes through the same safety check as the two pages above.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="sum">
+    <h2 id="sum">Summary to paste back</h2>
+    <div class="row">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn ghost" id="copy" type="button">Copy</button>
+      <button class="btn ghost" id="reset" type="button">Clear my ticks</button>
+      <span id="copied" class="lede" role="status"></span>
+    </div>
+    <label for="out" class="lede">Select all and copy if the Copy button doesn’t work here.</label>
+    <textarea id="out" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+{"id":"A","title":"A · The owner sets it","steps":[
+["Sign in as the club owner and open Organization, then Settings.","Under the Save changes bar, a card “Your privacy policy” with an empty field labelled “Link to your privacy policy”, the helper (“…It is where you tell them how your club uses their information, and that FieldLogicHQ stores it outside Canada, mainly in the United States. Leave it empty for no link.”) and a greyed Save."],
+["Type club.example/privacy and press Save.","The field takes a red edge and “Enter a web address that starts with https:// or http://.” replaces the helper. Nothing is saved."],
+["Replace it with https://example.com/privacy and press Save.","The pill shows “Saving…”, then “Saved”. The field keeps the address and Save greys again."],
+["Reload the page.","The address is still in the field."]]},
+{"id":"B","title":"B · The house-league sign-up shows it","steps":[
+["In a private window, open http://localhost:3000/dev-league-org/league/walk-summer-2027/register.","Under Sign up: “Dev League Org’s privacy policy ↗”."],
+["Press that link.","example.com/privacy opens in a new tab; the form stays where it was."]]},
+{"id":"C","title":"C · An admin changes it, and the log shows both","steps":[
+["Sign in as the club admin and open Organization, then Settings.","Two cards only: “Your privacy policy” with https://example.com/privacy, editable, then Two-step sign-in, read-only. No name, web address, birthdays or Delete."],
+["Change the address to http://example.org/privacy and press Save.","“Saved”. An http address is accepted."],
+["Sign in as the club owner and open Organization, then Audit log.","The newest rows: “Privacy policy link changed” by the admin and “Privacy policy link added” by you, each with a dash under to whom. No address anywhere on the page."]]},
+{"id":"D","title":"D · Clearing it","steps":[
+["As the owner on Settings, empty the field and press Save.","“Saved”; the field is empty."],
+["Reload the house-league sign-up in the private window.","No privacy link under Sign up; the rest of the form is unchanged."],
+["Open the Audit log again.","A new top row: “Privacy policy link removed”."]]},
+{"id":"E","title":"E · The seats that can’t","steps":[
+["Sign in as the treasurer and open http://localhost:3000/dev-league-org/admin/org/settings.","The “not yours” screen: no privacy card, no field."],
+["Sign in as the registrar and open the same address.","The same “not yours” screen."]]},
+{"id":"F","title":"F · The tryout sign-up (Milton)","steps":[
+["Sign in as b2cowan+owner@gmail.com, open Organization, then Settings, enter https://example.com/privacy and press Save.","“Saved”."],
+["In a private window, open http://localhost:3000/milton-bats/teams/u9-a/tryouts/register.","The consent line ends “…keep coaching and development records, as described in their privacy policy”, with “privacy policy” as a link that opens example.com/privacy in a new tab."],
+["Back on Settings, empty the field, press Save, then reload the tryout sign-up.","The consent line ends at “…development records”, with no link."]]},
+{"id":"G","title":"G · At phone width (390 px)","steps":[
+["As the Dev League Org owner, open Settings at 390 px wide.","The privacy card fits the width, Save spans it, and the page doesn’t scroll sideways."],
+["Type privacy and press Save.","The error sentence sits under the field, readable, nothing cut off."]]}
+];
+const KEY = 'club-privacy-link-walk-555';
+let state = { ticks: {}, verdict: {}, notes: {} };
+try { const raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const total = PARTS.reduce((n, p) => n + p.steps.length, 0);
+const root = document.getElementById('parts');
+for (const p of PARTS) {
+  const sec = document.createElement('section'); sec.className = 'card'; sec.setAttribute('aria-labelledby', 'h-' + p.id);
+  const h = document.createElement('h2'); h.id = 'h-' + p.id; h.textContent = p.title; sec.appendChild(h);
+  const ol = document.createElement('ol'); ol.className = 'steps';
+  p.steps.forEach(([act, exp], i) => {
+    const id = p.id + (i + 1); const li = document.createElement('li'); const lab = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', () => { state.ticks[id] = cb.checked; save(); tally(); });
+    const sp = document.createElement('span');
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = id;
+    sp.appendChild(n); sp.appendChild(document.createTextNode(act));
+    const e = document.createElement('span'); e.className = 'exp'; e.textContent = exp; sp.appendChild(e);
+    lab.appendChild(cb); lab.appendChild(sp); li.appendChild(lab); ol.appendChild(li);
+  });
+  sec.appendChild(ol);
+  const v = document.createElement('div'); v.className = 'verdict'; v.setAttribute('role', 'group'); v.setAttribute('aria-label', p.title + ' verdict');
+  for (const [val, txt] of [['pass', 'Passed'], ['issue', 'Issue'], ['call', 'Needs a call']]) {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.v = val; b.textContent = txt;
+    b.setAttribute('aria-pressed', String(state.verdict[p.id] === val));
+    b.addEventListener('click', () => { state.verdict[p.id] = state.verdict[p.id] === val ? '' : val; save();
+      v.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(state.verdict[p.id] === x.dataset.v))); });
+    v.appendChild(b);
+  }
+  sec.appendChild(v);
+  const ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for ' + p.title.split(' · ')[0];
+  ta.setAttribute('aria-label', 'Notes for part ' + p.id); ta.value = state.notes[p.id] || '';
+  ta.addEventListener('input', () => { state.notes[p.id] = ta.value; save(); });
+  sec.appendChild(ta); root.appendChild(sec);
+}
+function tally() {
+  const done = Object.values(state.ticks).filter(Boolean).length;
+  document.getElementById('count').textContent = done + ' of ' + total;
+  document.getElementById('meter').style.width = (100 * done / total) + '%';
+}
+tally();
+const out = document.getElementById('out');
+document.getElementById('build').addEventListener('click', () => {
+  const done = PARTS.reduce((n, p) => n + p.steps.filter((_, i) => state.ticks[p.id + (i + 1)]).length, 0);
+  const lines = ['§555 A club sets its own privacy link (Board Ready 4.P): ' + done + ' of ' + total];
+  for (const p of PARTS) {
+    const got = p.steps.filter((_, i) => state.ticks[p.id + (i + 1)]).length;
+    const missed = p.steps.map((_, i) => p.id + (i + 1)).filter(id => !state.ticks[id]);
+    const vd = { pass: 'PASSED', issue: 'ISSUE', call: 'NEEDS A CALL' }[state.verdict[p.id]] || 'no verdict';
+    lines.push(p.title + ': ' + got + '/' + p.steps.length + ' · ' + vd + (missed.length ? ' · unticked ' + missed.join(', ') : ''));
+    if (state.notes[p.id]) lines.push('  notes: ' + state.notes[p.id].replace(/\s+/g, ' ').trim());
+  }
+  out.value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', () => {
+  const msg = document.getElementById('copied');
+  if (!out.value) document.getElementById('build').click();
+  navigator.clipboard.writeText(out.value).then(() => { msg.textContent = 'Copied.'; }, () => { out.select(); msg.textContent = 'Selected. Press Ctrl+C to copy.'; });
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = { ticks: {}, verdict: {}, notes: {} }; save(); location.reload();
+});
+</script>
