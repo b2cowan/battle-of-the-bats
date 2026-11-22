@@ -121,7 +121,7 @@
       "goals": ["canada"], "lane": "next", "order": 9, "phase": "Walked",
       "stage": "Walked: the printed check names its method, §523 passed 15 of 15 on 22 Nov → Next: one release carrying the balance check",
       "next": "One release carrying the balance check.",
-      "remains": "One release carrying the balance check. Saving a check to finish later is after launch (your ruling, 17 Nov).",
+      "remains": "One release carrying the balance check. Saving a check to finish later is after launch (your ruling, 17 Nov): drawn and ruled 22 Nov; Part 1 of 3 (keeping the work on our servers, per person) built on dev 22 Nov; the two cards (Part 2) and help, reviews and the walk (Part 3) next.",
       "waitsOn": [], "finishesAfter": [],
       "youOwe": [] },
     { "id": "club-communications", "name": "Club Communications", "track": "product", "state": "open", "checked": true,

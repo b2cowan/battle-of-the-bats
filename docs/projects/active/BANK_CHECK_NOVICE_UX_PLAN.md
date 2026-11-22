@@ -58,8 +58,40 @@ check". The draft is kept on the server, per person and per account, so it follo
 **This reverses working-draft ask 1** (this browser only, ruled 2026-11-07, `BANK_CHECK_WORKING_DRAFT_PLAN.md` §5) and
 replaces "Kept in this browser only, until you save this check or sign out." The cheaper middle (keep the browser draft,
 change only the card's look) was turned down: a "save" button must not promise more than one browser keeps.
-**Open for S7's drawing session:** whether a second treasurer or coach sees someone else's draft (WD ruled shared drafts
-out); how long a saved-for-later draft lasts (the browser's: 14 days); both portals (assumed yes, as the working draft is).
+**S7's drawing, ruled 2026-11-22** (owner: "go with your recommendations", every ask of
+https://claude.ai/artifact/9hVJGaufeWfuG8mBjp1Meh, source `BANK_CHECK_NOVICE_UX_S7_DRAWINGS.html`, as recommended):
+1. **A second person: mine only.** Each person's saved work is their own; a colleague who can check the same account
+   sees one quiet line naming who has which date saved for later and when, never the work itself. Saving a date already
+   checked keeps today's replace sentence. (Reading B, the account's one shared open check, turned down: one person's
+   unfinished work becomes something another can overwrite without a lock.)
+2. **Lifespan: 30 days from the last change** (not the browser's 14). The Save for later notice names the end date; in
+   the last 7 days the card's own line names it again in amber; no email. The work also goes when the person loses write
+   access to that account, when the account is deleted, and on a coach's team when the season rolls over or closes.
+3. **Both portals**, each in its own words. Coach: cash not deposited yet is fixed with the statement (in the strip when
+   typed; Change edits it; the cash link sits in the fields before Start and in Change). Club: at 2+ accounts the
+   Account pill marks the account holding your saved work. Who sees Save for later = whoever can save a check today
+   (club: anyone who can open Accounting; coach: money write; a view-only coach still sees no card).
+4. **Kept as you go from Start**, as the browser does today; Save for later confirms it, names the end date and restarts
+   the 30 days.
+5. **Change:** a new balance keeps every mark; a new date asks once ("A new date clears the 1 line you marked. Changing
+   only the balance keeps it." · Use these / Keep {date}), then clears them. "Check this date again" on a saved check
+   while other work is saved asks the same way first.
+6. **A first-time match costs one more press** (Start, then Save this check) — accepted.
+7. **Books moved:** a deleted marked line is taken off and counted in the shipped amber box (it cannot name the line —
+   keys, never figures); an edited line keeps its mark at its new amount without a note; a day the account no longer takes
+   shows that day's shipped refusal.
+8. **Found again on the card itself**, opening straight into the work; the Account pill at 2+ accounts. The Overview's
+   bank line stays one line (S2), no in-progress state.
+9. **Words** (settled with `/marketing` in the build): the notice "Saved for later. Pick it up here, on any device you
+   sign in on, until {date}."; the resting sentence "Kept as you go, on any device you sign in on, until you save this
+   check." (replaces "Kept in this browser only…"); the strip "Checking {date} · Change"; Start over moves to the card's
+   foot. **The strip shows the date only** — a deliberate difference from A18's "date and balance": the balance is the
+   band's first figure directly under it (the owner took the drawing's recommendation). **Start over confirms in one
+   line inside the card** ("Start over? The 1 line you marked and the balance go." · Start over / Keep working), only when
+   lines are marked; with nothing marked it starts over at once, as today. This bends WD's no-confirmation ruling on
+   purpose: the work now lives on every device.
+
+S5 stays parked (both saves remain the card's last thing). Build prompt: `BANK_CHECK_NOVICE_UX_S7_BUILD_PROMPT.md`.
 
 ---
 
@@ -156,6 +188,25 @@ something new about a person's work), replacing the working draft's browser stor
 sentence; the walked working-draft cards change shape and their walks are redone. Likely two or three sessions.
 - **Depends on:** S1, S1b, S3. **Asks:** A18. **Risk:** high.
 - **Drawing-session prompt written 2026-11-22:** `BANK_CHECK_NOVICE_UX_S7_DRAWING_PROMPT.md`.
+- **Drawn and ruled 2026-11-22** (§0, A18's nine rulings): https://claude.ai/artifact/9hVJGaufeWfuG8mBjp1Meh (source
+  `BANK_CHECK_NOVICE_UX_S7_DRAWINGS.html`, `/design` before hand-off). **Build prompt written 2026-11-22:**
+  `BANK_CHECK_NOVICE_UX_S7_BUILD_PROMPT.md`. Sequenced after the release carrying the balance check (owner, 2026-11-17).
+- **Part 1 (the stored record) BUILT on dev 2026-11-22**, commit at the owner's word. Table `bank_check_drafts` (mig 522,
+  `/dba` Finding #54) and the nightly sweep (mig 523, its own commit: watched automation, owner's yes 2026-11-22); both
+  applied to dev, both recorded in MANUAL_PROD_STEPS (prod before the promote that ships S7). Routes in both portals
+  (`…/work`: GET mine + colleagues' quiet lines [+ the club pill's other accounts], PUT keep / Save for later with a
+  compare-and-swap, DELETE Start over); a saved check discards the saver's work in the same request; loss of write
+  access (club members, coach staff, every staff-removal door), a coach season's roll or close, expiry and the cascades
+  take it. **Where the code overrode the prompt, said out loud:** keyed to the bank ACCOUNT, not an `org_id` (a team's
+  account moves with the team into a club; `bank_checks` is keyed the same way); a coach's team account is opened at
+  Start when none exists; a team's work is deleted inside the database (D1: the club side never reads a team's account).
+  Tests: `bank-check-work.test.ts` 26/26, the bank suites 510/510 with their guards widened (not loosened) for S7;
+  proved on dev through the real routes (`.probe/bank-ux-s7/work-routes.mjs` 31 PASS, `view-only.mjs` 5 PASS).
+  `/legal` (light): no blocker, no advance notice owed; **owed:** a §3 row and a §9 line in the next privacy draft (the
+  30-day sentence only once 523 is on production). **Owner ruling 2026-11-22: the GENERAL row** — one "work you save
+  for later" row, worded so it is true of the bank check today, so later saved-work features need no line of their own
+  (carried into the next privacy draft by `/legal`; not the published 2026-11-17 text). **Part 2 owner question still to
+  raise:** a "No" to "Still waiting?" is not kept (WD2).
 
 **Order:** S1 → S1b → S2 → S3 → S7 (drawing session, then build). S4 may run any time after S1. S5 is decided after S3.
 
@@ -344,3 +395,11 @@ sentence; the walked working-draft cards change shape and their walks are redone
   paper and a plus on screen; coach "Books now say" bullet → "Your Ledger now says"; keywords/searchText follow. **Owner walk
   §523:** https://claude.ai/artifact/AMfeuhHejpjsEg9JRSni7e (4 walks, 15 steps, 2 calls; nothing saves), fixture
   `.probe/bank-ux-s4/owner/` (setup + teardown), torn down after he reports.
+- 2026-11-22 — **S7 drawn and ruled.** Drawing https://claude.ai/artifact/9hVJGaufeWfuG8mBjp1Meh: seven states (no saved
+  work, in progress, the Change step, found again, books moved, a second person's, last days) × club and coach × desk 1440 and
+  phone 390, each with today's card under "When". `/design` before hand-off, nine drawing fixes (the strip and the club
+  callout drawn as the house white olive-edged form, not tinted; the strip drops the balance the band already shows; one
+  lime in the Change state with the rest dimmed; phone tags and tap boxes). Owner ruled every ask as recommended (§0). Facts
+  checked in the code first: today's draft is browser-only and keyed by the club's web address (a rename would orphan it);
+  club read = write (no reader seat); coach writes need money write; one coach account per team. Build prompt written;
+  nothing built.

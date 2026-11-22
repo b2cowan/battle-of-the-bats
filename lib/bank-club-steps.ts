@@ -14,6 +14,7 @@ import {
   statusOfRefusal, waitingIdsOf,
 } from './bank-club-rules';
 import { BANK_REFUSAL, type BankRefusalCode } from './bank-check-words';
+import { discardWorkAfterSave } from './bank-check-work-server';
 
 /**
  * THE CLUB'S BANK STEPS (Bank balance check BC1): what each route under app/api/admin/accounting/bank/** does, once its
@@ -222,7 +223,10 @@ export async function saveCheck(ctx: AuthContextWithRole, accountId: string, ask
     p_books_cents: a.booksCents, p_on_its_way_cents: a.onItsWayCents, p_cash_cents: a.cashCents, p_book_ids: a.bookIds,
     p_waiting: a.waiting, p_start: start?.id ?? null, p_start_books: start?.booksCents ?? null, p_actor: ctx.user.id,
   });
-  return r.ok ? { ok: true, id: r.data.id as string } : r;
+  if (!r.ok) return r;
+  // S7: a saved check is the record now, so the saver's work in progress on this account goes in the same request.
+  if (asked === 'check') await discardWorkAfterSave(accountId, ctx.user.id);
+  return { ok: true, id: r.data.id as string };
 }
 
 /**

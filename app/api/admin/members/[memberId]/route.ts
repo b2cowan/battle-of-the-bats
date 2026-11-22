@@ -15,6 +15,7 @@ import { cleanupBasicCoachTeamsForUserDeletion } from '@/lib/basic-coach-teams';
 import { readAccountKeepFacts } from '@/lib/member-account-keep-server';
 import { withObservability } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
+import { discardClubWorkUnlessAllowed } from '@/lib/bank-check-work-server';
 import { FAMILIES_GRANT_REFUSAL } from '@/lib/families-words';
 import { requireFreshCode } from '@/lib/two-step-fresh';
 import { roleChangeStartsGrace, startTwoStepGrace } from '@/lib/two-step-grace';
@@ -206,6 +207,9 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
     if (memberError) {
       return NextResponse.json({ error: memberError.message }, { status: 500 });
     }
+    // Bank check S7 (ruling 2): their saved bank work on the club's accounts goes with the membership. (The account-delete
+    // path below needs nothing: the rows CASCADE from auth.users.)
+    await discardClubWorkUnlessAllowed(org, target.user_id);
 
     await writeOrgAudit(org.id, ctx.user.id, target.user_id, 'member_removed', {
       email: targetEmail,
@@ -552,6 +556,10 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Bank check S7 (ruling 2): a member who can no longer save a bank check (Accounting taken away, a role without it,
+  // suspended) loses their saved bank work on the club's accounts. Best-effort; a no-op when they still can.
+  if (roleChanging || hasCapabilitiesUpdate || hasStatusUpdate) await discardClubWorkUnlessAllowed(org, target.user_id);
 
   // Two-step (Board Ready, Part 3): an ACTIVE member who begins holding a seat the club already requires — moved under a
   // different switch (a coach made treasurer), or reinstated — gets their own 14 days from today. An invited member's

@@ -29,7 +29,9 @@ import { STATUS_OF } from '../../lib/bank-club-rules.ts';
 const ROUTES = filesUnder('app/api/admin/accounting/bank', 'route.ts');
 const SCREENS = filesUnder('components/admin/kit/club/money/bank', '.tsx').concat(filesUnder('components/admin/kit/club/money/bank', '.ts'));
 const BANK_LIBS = ['lib/bank-check.ts', 'lib/bank-club-steps.ts', 'lib/bank-club-rules.ts', 'lib/bank-check-words.ts',
-  'lib/bank-club-read.ts', 'lib/bank-club-map.ts', 'lib/bank-tab-words.ts'];
+  'lib/bank-club-read.ts', 'lib/bank-club-map.ts', 'lib/bank-tab-words.ts',
+  // S7: a check in progress, kept for its person (both portals' shared half; the coach's own half is lib/bank-coach-work.ts).
+  'lib/bank-check-work.ts', 'lib/bank-check-work-server.ts'];
 const sqlCode = (path: string) => readCode(path).split('\n').map(l => l.replace(/--.*$/, '')).join('\n');
 const MIG_447_PATH = 'supabase/migrations/447_the_bank_check_is_a_balance.sql';
 const MIG_447 = sqlCode(MIG_447_PATH);
@@ -39,6 +41,9 @@ const MIG_449 = sqlCode(MIG_449_PATH);
 /** Mig 450 (BC3b /review): the start says when it was corrected; a re-saved start holds its books. Re-makes both. */
 const MIG_450_PATH = 'supabase/migrations/450_the_start_says_when_it_was_corrected.sql';
 const MIG_450 = sqlCode(MIG_450_PATH);
+/** Mig 522 (S7): a check in progress, kept for its person. Its two functions touch only the work in progress. */
+const MIG_522_PATH = 'supabase/migrations/522_a_bank_check_in_progress_is_kept_for_its_person.sql';
+const WORK_FNS = ['bank_check_drafts_discard_team', 'bank_check_drafts_sweep'];
 
 /** The bank functions after mig 447: the balance check's whole database half (a trigger function aside). */
 const LIVE_FNS = ['bank_first_club_account', 'bank_club_account_of_book', 'bank_book_move', 'bank_account_add',
@@ -53,6 +58,8 @@ const bankFnsMade = (sql: string) =>
 /** Every migration that makes a bank function, in number order (436's trigger aside, so 439 is first). */
 const BANK_FN_MIGS = filesUnder('supabase/migrations', '.sql').sort()
   .map(path => ({ path, sql: sqlCode(path) })).map(m => ({ ...m, fns: bankFnsMade(m.sql) })).filter(m => m.fns.length > 0);
+/** The balance check's own steps' migrations: every bank function migration but S7's work in progress (mig 522). */
+const STEP_MIGS = BANK_FN_MIGS.filter(m => m.path !== MIG_522_PATH);
 /** One function's whole definition (plpgsql or sql), from its CREATE to the `$$;` closing its body. */
 const sqlDef = (sql: string, name: string) => {
   const a = sql.search(fnHead(name));
@@ -75,17 +82,20 @@ const stepBody = (name: string) => between(STEPS_CODE, `export async function ${
 
 describe('0. the bank functions: the server\'s only, the live set is the balance check\'s, every code has words', () => {
   it('447, 449 then 450 are the last bank migrations that make a function, and together they make exactly the live set', () => {
-    assert.deepEqual(BANK_FN_MIGS.slice(-3).map(m => m.path), [MIG_447_PATH, MIG_449_PATH, MIG_450_PATH], 'a later bank migration must be added to this guard');
-    assert.deepEqual([...BANK_FN_MIGS.at(-2)!.fns].sort(), ['bank_check_save', 'bank_start_waiting']);
-    assert.deepEqual([...BANK_FN_MIGS.at(-1)!.fns].sort(), ['bank_check_save', 'bank_start_waiting']);
-    assert.deepEqual([...new Set(BANK_FN_MIGS.slice(-3).flatMap(m => m.fns))].sort(), [...LIVE_FNS].sort());
+    // S7 (mig 522) is the one later bank migration: it makes only the work in progress's two, and re-makes no step.
+    assert.deepEqual(BANK_FN_MIGS.at(-1)!.path, MIG_522_PATH, 'a later bank migration must be added to this guard');
+    assert.deepEqual([...BANK_FN_MIGS.at(-1)!.fns].sort(), [...WORK_FNS].sort());
+    assert.deepEqual(STEP_MIGS.slice(-3).map(m => m.path), [MIG_447_PATH, MIG_449_PATH, MIG_450_PATH], 'a later bank migration must be added to this guard');
+    assert.deepEqual([...STEP_MIGS.at(-2)!.fns].sort(), ['bank_check_save', 'bank_start_waiting']);
+    assert.deepEqual([...STEP_MIGS.at(-1)!.fns].sort(), ['bank_check_save', 'bank_start_waiting']);
+    assert.deepEqual([...new Set(STEP_MIGS.slice(-3).flatMap(m => m.fns))].sort(), [...LIVE_FNS].sort());
     // 450 re-makes both with the SAME signatures (no second overload): it drops nothing.
     assert.doesNotMatch(MIG_450, /DROP FUNCTION/);
     // 449 replaces bank_check_save's signature: the 447 one is dropped by signature, never left beside it.
     assert.match(MIG_449, /DROP FUNCTION IF EXISTS public\.bank_check_save\(uuid, uuid, text, date, bigint, bigint, bigint, bigint, uuid\[\], jsonb, uuid\);/);
   });
   it('every function an earlier bank migration made is re-made by 447 or DROPPED by it (by signature, IF EXISTS)', () => {
-    const earlier = new Set(BANK_FN_MIGS.slice(0, -3).flatMap(m => m.fns));
+    const earlier = new Set(STEP_MIGS.slice(0, -3).flatMap(m => m.fns));
     for (const f of earlier) {
       if (LIVE_FNS.includes(f)) continue;
       assert.match(MIG_447, new RegExp(String.raw`DROP FUNCTION IF EXISTS public\.${f}\(`), `${f} is neither live nor dropped`);
@@ -108,6 +118,18 @@ describe('0. the bank functions: the server\'s only, the live set is the balance
       assert.ok(Number.isInteger(STATUS_OF[c as keyof typeof STATUS_OF]), `${c} has no status`);
     }
   });
+  it('S7: the work in progress\'s table is service role only, RLS on, no policy; its functions touch only it', () => {
+    const sql = sqlCode(MIG_522_PATH);
+    assert.match(sql, /ALTER TABLE public\.bank_check_drafts ENABLE ROW LEVEL SECURITY;/);
+    assert.match(sql, /REVOKE ALL ON public\.bank_check_drafts FROM anon, authenticated;/);
+    assert.match(sql, /GRANT SELECT, INSERT, UPDATE, DELETE ON public\.bank_check_drafts TO service_role;/);
+    assert.doesNotMatch(sql, /CREATE POLICY/);
+    for (const f of WORK_FNS) {
+      for (const m of sqlDef(sql, f).matchAll(/\b(?:INSERT INTO|UPDATE|DELETE FROM)\s+(?:public\.)?(\w+)/gi)) {
+        assert.equal(m[1], 'bank_check_drafts', `${f} writes ${m[1]}`);
+      }
+    }
+  });
   it('the new table is service role only, RLS on, no policy (dictionary rule 7)', () => {
     assert.match(MIG_447, /ALTER TABLE public\.bank_check_waiting ENABLE ROW LEVEL SECURITY;/);
     assert.match(MIG_447, /REVOKE ALL ON public\.bank_check_waiting FROM anon, authenticated;/);
@@ -124,6 +146,8 @@ const EXPECTED: Record<string, Record<string, boolean>> = {
   'app/api/admin/accounting/bank/accounts/[accountId]/books/route.ts': { POST: true },
   'app/api/admin/accounting/bank/accounts/[accountId]/checks/route.ts': { POST: true },
   'app/api/admin/accounting/bank/accounts/[accountId]/checks/[checkId]/route.ts': { DELETE: true },
+  // S7: a check in progress. Whoever can save a check, for every handler (the work is a write's, read included).
+  'app/api/admin/accounting/bank/accounts/[accountId]/work/route.ts': { GET: true, PUT: true, DELETE: true },
 };
 
 describe('1. every bank route is gated by the club money gate, with the right write', () => {
@@ -167,7 +191,7 @@ describe('2. no year, no season, no coach reader', () => {
     for (const file of ROUTES) {
       for (const spec of [...readCode(file).matchAll(/from ['"]([^'"]+)['"]/g)].map(m => m[1])) {
         assert.ok(['next/server', '@/lib/observability', '@/lib/club-money-route', '@/lib/bank-club-steps', '@/lib/bank-club-rules',
-          '@/lib/bank-check-words'].includes(spec), `${file} imports ${spec}`);
+          '@/lib/bank-check-words', '@/lib/bank-check-work', '@/lib/bank-check-work-server'].includes(spec), `${file} imports ${spec}`);
       }
     }
   });
@@ -307,7 +331,7 @@ describe('5. ⚖ ask 1 — no bank code writes money', () => {
   // The coach's bank (BC6a) reads the team's register, so it is outside section 2's no-coach-reader list, never outside this.
   // BC6b: the team's steps and routes too (their gates and D1 are bank-coach-routes-guard.test.ts's).
   const COACH_BANK_LIBS = ['lib/bank-coach-map.ts', 'lib/bank-coach-rules.ts', 'lib/bank-coach-read.ts', 'lib/bank-coach-steps.ts',
-    ...filesUnder('app/api/coaches/[orgSlug]/teams/[teamId]/bank', 'route.ts')];
+    'lib/bank-coach-work.ts', ...filesUnder('app/api/coaches/[orgSlug]/teams/[teamId]/bank', 'route.ts')];
   const BANK_CODE = [...BANK_LIBS, ...COACH_BANK_LIBS, ...ROUTES, ...SCREENS];
   it('the walk reaches every bank file', () => {
     assert.ok(SCREENS.some(f => f.endsWith('BankTab.tsx')) && ROUTES.length === Object.keys(EXPECTED).length);

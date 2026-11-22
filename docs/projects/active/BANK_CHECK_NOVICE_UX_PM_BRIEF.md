@@ -22,7 +22,9 @@ over more than one sitting.
    line explains no longer opens a 31-line list (S3).
 5. **The printed check says how it was worked out**, so it doesn't seem to contradict the screen (S4).
 6. **Start, work, save for later.** The person fixes the statement's date and balance at the top, works the difference,
-   and can leave and come back on any device before saving the check for good (S7).
+   and can leave and come back on any device before saving the check for good (S7). Drawn and ruled 2026-11-22: each
+   person's saved work is their own (a colleague sees only who has a date saved), kept 30 days from the last change, on
+   both portals.
 
 ## Why it matters
 Volunteers aren't accountants. A check they don't find, or don't trust, is a check that never happens, and the club's

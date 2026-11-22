@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import {
   sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE, grantsOf, applyOrgGrantPolicy,
+  canWriteMoney,
 } from '@/lib/coach-capabilities';
+import { discardTeamWorkOf } from '@/lib/bank-check-work-server';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { delegationViolation, clampForDelegate, delegationReasonSentence } from '@/lib/coach-staff-delegation';
 import { grantLabel } from '@/lib/coach-staff-labels';
@@ -92,6 +94,10 @@ export const PATCH = withObservability(async (req: Request,
         : NextResponse.json({ error: 'They are no longer on the team’s staff — reload to see the current list.' }, { status: 409 });
     }
     const m = result.membership;
+    // Bank check S7 (ruling 2): a head coach made an assistant without money write loses their saved bank work.
+    if (!canWriteMoney(resolveCoachCapabilities(m.coachRole, m.capabilities))) {
+      await discardTeamWorkOf(teamId, resolved.target.userId);
+    }
     return NextResponse.json({
       ok: true,
       memberId: m.id,
@@ -152,6 +158,10 @@ export const PATCH = withObservability(async (req: Request,
   // A change that takes staff chat away (the helper preset) empties their staff-room seat now, not at the next chat
   // read — which, while chat is paused, would never come (2026-10-18). Best-effort, as on removal.
   await revokeStaleChatMembershipsForCoach(resolved.target.userId).catch(() => {});
+  // Bank check S7 (ruling 2): money write taken away = their saved bank work on the team's account goes (best-effort).
+  if (!canWriteMoney(resolveCoachCapabilities(updated.coachRole, updated.capabilities))) {
+    await discardTeamWorkOf(teamId, resolved.target.userId);
+  }
   return NextResponse.json({
     ok: true,
     memberId: updated.id,

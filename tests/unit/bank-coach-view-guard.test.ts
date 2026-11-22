@@ -213,7 +213,15 @@ describe('7 · the coach\'s touchpoints (BC8a: K6, K7, R0 tab 7; owner BC8a ruli
     // Start next season holds typed answers: the sentence alone, no door out of the form.
     assert.doesNotMatch(START, /view=bank/);
     for (const src of [CLOSE, START]) assert.doesNotMatch(src, /bankWarning[^\n]*disabled|disabled=\{[^}]*bankWarning/, 'warn, never block');
-    assert.doesNotMatch(readCode('lib/rep-season-rollover.ts'), /bank/i);
+    // ⚖ S7 ruling 2 (owner 2026-11-22): a roll or a close takes every person's work in progress on the team's account. That
+    // one import and its two calls are the roll's only bank words: it still reads nothing of the bank and never waits on it.
+    const roll = readCode('lib/rep-season-rollover.ts')
+      .replace("import { discardTeamWork } from './bank-check-work-server';", '')
+      .replace(/^.*\bdiscardTeamWork\(teamId\).*$/gm, '')
+      .replace(/^\s*\/\/.*$/gm, '')
+      .replace(/console\.error\([^)]*\)/g, '');
+    assert.doesNotMatch(roll, /bank/i);
+    assert.equal((readCode('lib/rep-season-rollover.ts').match(/discardTeamWork\(teamId\)/g) ?? []).length, 2, 'the roll and the close');
   });
   it('⚖ off or matching (owner BC8b 2026-11-07): an off check is the amber warning, a match a plain line outside the box', () => {
     assert.match(code('coachBank.ts'), /through\.result === 'off'\s*\? \{ off: true, text: W\.coachSeasonOff\(/);

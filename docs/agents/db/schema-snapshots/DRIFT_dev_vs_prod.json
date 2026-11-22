@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-22",
-  "total": 585,
+  "total": 614,
   "counts": {
-    "tables": 21,
-    "columns": 271,
-    "indexes": 104,
-    "constraints": 85,
-    "rls": 104
+    "tables": 22,
+    "columns": 285,
+    "indexes": 108,
+    "constraints": 89,
+    "rls": 110
   },
   "items": [
     {
@@ -16,6 +16,30 @@
     {
       "key": "check:changed:platform_record_opens.platform_record_opens_record_kind_check",
       "sig": "(record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text, 'feedback'::text, 'lead'::text])) :: (record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text]))"
+    },
+    {
+      "key": "check:only-dev:bank_check_drafts.bank_check_drafts_balance_len",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_drafts.bank_check_drafts_cash_len",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_drafts.bank_check_drafts_expires_after_change",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_drafts.bank_check_drafts_marked_count",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_drafts.bank_check_drafts_revision_positive",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_drafts.bank_check_drafts_started_shape",
+      "sig": ""
     },
     {
       "key": "check:only-dev:club_form_answer_clears.club_form_answer_clears_has_target",
@@ -432,6 +456,62 @@
     {
       "key": "column:changed:family_email_sends.subject",
       "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.balance_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.bank_account_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.cash_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.expires_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.marked_keys",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.revision",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.started_balance_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.started_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.started_difference_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.statement_end_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_drafts.user_id",
+      "sig": ""
     },
     {
       "key": "column:only-dev:club_form_answer_clears.cleared_at",
@@ -1510,6 +1590,22 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:bank_check_drafts.bank_check_drafts_bank_account_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_drafts.bank_check_drafts_one_per_person",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_drafts.bank_check_drafts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_drafts.bank_check_drafts_user_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:club_form_answer_clears.club_form_answer_clears_form_id_fkey",
       "sig": ""
     },
@@ -1847,6 +1943,22 @@
     },
     {
       "key": "constraint:only-prod:platform_stripe_fees.platform_stripe_fees_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_drafts_expires_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_drafts_one_per_person",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_drafts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_drafts_user_idx",
       "sig": ""
     },
     {
@@ -2263,6 +2375,10 @@
     },
     {
       "key": "index:only-prod:platform_stripe_fees_unbilled_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_check_drafts",
       "sig": ""
     },
     {

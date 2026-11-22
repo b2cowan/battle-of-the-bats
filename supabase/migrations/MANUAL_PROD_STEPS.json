@@ -898,6 +898,10 @@
     "521_the_records_opened_trail_learns_feedback_and_leads.sql": {
       "prod": "pending",
       "note": "Board Ready D1 (owner ruling 2026-11-22; plan BOARD_READY_PLAN.md §0c). CONSTRAINT-ONLY, INVISIBLE to check:migrations (no table or column changes): widens platform_record_opens_record_kind_check from club/person/email to club/person/email/feedback/lead so a staff member opening a feedback record or an early-access lead is on the records-opened trail. Existing rows untouched; idempotent. ORDER: apply BEFORE the promote that ships the D1 code (until then every feedback or lead open would fail its insert: reported as an issue, the page still opens, so it is loud but not fatal). Applied to DEV 2026-11-22. Verify on prod: select pg_get_constraintdef(oid) from pg_constraint where conname = 'platform_record_opens_record_kind_check' -> contains 'feedback' and 'lead'."
+    },
+    "522_a_bank_check_in_progress_is_kept_for_its_person.sql": {
+      "prod": "pending",
+      "note": "Bank check S7 Part 1 (owner rulings 2026-11-22, plan BANK_CHECK_NOVICE_UX_PLAN.md §0 A18; /dba Finding #54). New table bank_check_drafts (check:migrations sees it) plus FUNCTIONS public.bank_check_drafts_sweep() and public.bank_check_drafts_discard_team(uuid, uuid) (INVISIBLE to check:migrations; invoker's rights, execute for service_role only). Additive, RLS on, service role only. ORDER: apply BEFORE the promote that ships the S7 code (the S7 routes read and write the table), and before 523. Idempotent. Applied to DEV 2026-11-22. Verify on prod: select count(*) from information_schema.tables where table_name = 'bank_check_drafts' -> 1; select count(*) from pg_proc where proname in ('bank_check_drafts_sweep', 'bank_check_drafts_discard_team') -> 2."
     }
   }
 }

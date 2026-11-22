@@ -28,6 +28,42 @@
 
 ---
 
+### [2026-11-22] — Finding #54: Migrations 522–523 (a bank check in progress, kept on the server per person) designed and reviewed before apply
+**Severity:** Advisory
+**Finding:** S7 (plan `BANK_CHECK_NOVICE_UX_PLAN.md` §0 A18, nine rulings 2026-11-22) moves the bank check's working draft
+from the browser to the server: the first per-person server-side draft in the product, so there was no precedent to copy.
+Design decisions: (1) **Keyed to `bank_account_id`, no `org_id` column**, overriding the build prompt's "key to the org
+id". The prompt's aim was "not the slug" (a rename orphaned the browser key), and the account key meets it. But a team's
+account MOVES with the team into a club (`move_team_into_club` re-keys `bank_accounts.org_id`), so an own `org_id` would
+go stale on a move, or the move function would have to learn the table. `bank_checks` is keyed the same way. The org is
+one hop away, and every read is scoped by an account the route gate has proven is the caller's. Not named in
+`team-move-coverage` (it carries no `org_id`). (2) **Team account opened at Start** when none exists yet (the first save's
+`openTeamAccount`). An account with no check already reads as none (dictionary `bank_accounts` gotcha 6), so there is no
+nullable `team_id` alternative key. (3) **`expires_at` stored, not derived**: it is stamped on every write from one TS
+constant, so the 30-day rule has one home and the sweep is a plain indexed range delete. (4) **Compare-and-swap on
+`revision`** so two devices never overwrite each other's work unseen ("Kept as you go" across devices). (5) **Loss of
+write access** has many paths (member removal, a capability or role change, staff removal, a money-permission change).
+The explicit removal routes delete eagerly. Each read of an account deletes a colleague's row whose owner can no longer
+save a check there. The person's own row is unreachable to them the moment the gate refuses them. Expiry is the backstop.
+(6) **Season rollover/close** deletes the team account's drafts inside `lib/rep-season-rollover.ts`, so both portals'
+callers get it. A team's drafts go through a database step, `bank_check_drafts_discard_team(team, user?)`, so the
+club-side callers (the club's season door, the club's staff removal) never read a team's bank account in app code (D1,
+held by `bank-coach-routes-guard`). (7) **Sweep**: pg_cron, pure SQL, nightly (mig 523, its own file and commit, owner's
+yes 2026-11-22). Checked: named constraints throughout; RLS on with no policies; grants revoked and re-granted to
+`service_role`; both functions invoker's rights like every bank function (the bank guard forbids SECURITY DEFINER), with
+`search_path` set and execute for `service_role` only; FK indexes (the unique leads with
+`bank_account_id`, plus a `user_id` index); `IF NOT EXISTS` guards; no NOT NULL column without a default except
+`expires_at` on a new, empty table.
+**Tables affected:** bank_check_drafts (new)
+**Recommendation:** Apply as written (dev 2026-11-22; prod before the S7 promote, MANUAL_PROD_STEPS 522 then 523).
+Accepted: (a, Low) a marked key's 3–200 length is checked by the route, not the table (no per-element CHECK without a
+function); the count is capped at 500. (b, Low) discard-on-save is a delete after `bank_check_save` succeeds, not in its
+transaction (the step is not re-made for this). A failed delete leaves work whose date is now checked, and the card
+already answers that with the shipped replace sentence. Expiry is the backstop.
+**Status:** Addressed (applied to dev 2026-11-22).
+
+---
+
 ### [2026-11-17] — Finding #53: Migration 497 (the payments-terms agreement record) reviewed before it was applied
 **Severity:** Advisory
 **Finding:** The payments terms §15 promise a record of every agreement, kept six years after the account closes. The record

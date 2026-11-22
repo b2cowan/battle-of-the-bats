@@ -1,0 +1,673 @@
+<title>Save for Later Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: sticky tabs + a View row (When · Device · Show), one section at a time, whole screens at TRUE SIZE (1440 / 390)
+   each in its own scroller; the note bar under the switches says what a tapped tag means. Frames are drawn from the shipped
+   bank cards (Bank.module.css, CoachBank.module.css) and the warm kit's tokens; the portal keeps its light look in both themes. */
+:root {
+  --bg: #F3F0E9; --card: #FFFFFF; --fg: #241E15; --fg-soft: #4A4235; --muted: #615A54; --line: rgba(70,55,30,.14);
+  --accent: #57651E; --accent-soft: rgba(87,101,30,.14); --stage: #E6E1D5;
+  --new: #1F5FBF; --new-bg: #E8F0FC; --restyled: #6B4105; --restyled-bg: #FBF1E1; --unchanged: #4A4235; --unchanged-bg: #EEEAE2;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* the portal's own values (warm kit, app/globals.css) */
+  --p-paper: #F8F4ED; --p-side: #FBF8F2; --p-card: #FFFFFF; --p-ink: #241E15; --p-soft: #4A4235; --p-dim: #615A54;
+  --p-line: rgba(70,55,30,.12); --p-line-strong: rgba(70,55,30,.20); --p-olive: #57651E; --p-olive-soft: rgba(87,101,30,.08);
+  --p-lime: #D9F99D; --p-warn: #835006; --p-warn-ink: #6B4105; --p-warn-bg: rgba(131,80,6,.08); --p-good: #34662A; --p-good-bg: #EEF5E6;
+  --p-field: #F8F4ED; --p-ph: #8D857A;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1B1915; --card: #26231E; --fg: #EDE7DA; --fg-soft: #CFC7B8; --muted: #A49C8F; --line: rgba(255,255,255,.12);
+  --accent: #B5C45A; --accent-soft: rgba(181,196,90,.18); --stage: #11100D;
+  --new: #8DB4F5; --new-bg: rgba(141,180,245,.16); --restyled: #E0B45B; --restyled-bg: rgba(224,180,91,.16); --unchanged: #CFC7B8; --unchanged-bg: rgba(164,156,143,.18);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #1B1915; --card: #26231E; --fg: #EDE7DA; --fg-soft: #CFC7B8; --muted: #A49C8F; --line: rgba(255,255,255,.12);
+  --accent: #B5C45A; --accent-soft: rgba(181,196,90,.18); --stage: #11100D;
+  --new: #8DB4F5; --new-bg: rgba(141,180,245,.16); --restyled: #E0B45B; --restyled-bg: rgba(224,180,91,.16); --unchanged: #CFC7B8; --unchanged-bg: rgba(164,156,143,.18);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); }
+.wrap { max-width: 1490px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 56px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-size: 25px; font-weight: 700; letter-spacing: -.01em; }
+.hdr { padding-block: 22px 10px; display: flex; flex-direction: column; gap: 6px; }
+.hdr p { margin: 0; color: var(--fg-soft); max-width: 80ch; }
+.eyebrow { font: 600 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sticky { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: thin; }
+.tabs button { flex: none; font: 600 14px var(--sans); color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px; min-height: 44px; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.viewrow { display: flex; gap: 8px 18px; flex-wrap: wrap; align-items: center; padding: 8px 0 4px; }
+.viewrow .lbl { font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.seg { display: inline-flex; background: #fff; border: 1px solid rgba(70,55,30,.14); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { font: 600 13px var(--sans); border: 0; background: none; color: #4A4235; padding: 6px 12px; border-radius: 7px; cursor: pointer; min-height: 32px; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,.16); color: #2A3310; }
+.tabs button:focus-visible, .seg button:focus-visible, .tag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.notebar { min-height: 44px; font-size: 13.5px; color: var(--fg-soft); padding: 6px 0 8px; max-width: 120ch; }
+.notebar b { font: 600 11.5px var(--mono); }
+section.panel { padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+section.panel[hidden] { display: none; }
+.why { margin: 0; max-width: 82ch; color: var(--fg-soft); }
+.why b { color: var(--fg); }
+.cap { font: 600 11.5px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 14px 0 0; }
+.cap em { font-style: normal; color: var(--accent); }
+.scroller { overflow-x: auto; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.pair { display: flex; gap: 24px; align-items: flex-start; width: max-content; }
+.pair > div { display: flex; flex-direction: column; gap: 6px; }
+.pair .pcap { font: 600 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.legend { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; }
+.tag { display: inline-block; font: 700 10.5px var(--mono); letter-spacing: .04em; padding: 2px 6px; border-radius: 4px; border: 1px solid; cursor: pointer; line-height: 1.4; vertical-align: middle; }
+.tag.new { color: var(--new); background: var(--new-bg); border-color: var(--new); }
+.tag.restyled { color: var(--restyled); background: var(--restyled-bg); border-color: var(--restyled); }
+.tag.unchanged { color: var(--unchanged); background: var(--unchanged-bg); border-color: var(--unchanged); }
+.tag.today { color: var(--unchanged); background: var(--unchanged-bg); border-color: var(--unchanged); }
+.tag.on { box-shadow: 0 0 0 3px var(--accent-soft); }
+/* tags inside a frame keep the portal's light ground in both themes */
+.frame .tag { position: absolute; top: -11px; right: -6px; z-index: 4; }
+.frame .tag.new { color: #1F5FBF; background: #E8F0FC; border-color: #1F5FBF; }
+.frame .tag.restyled { color: #6B4105; background: #FBF1E1; border-color: #6B4105; }
+.frame .tag.unchanged, .frame .tag.today { color: #4A4235; background: #F1EEE8; border-color: #4A4235; }
+.tg { position: relative; }
+.m .tag { top: -9px; right: 4px; }
+body[data-show="diff"] .frame .same { opacity: .25; filter: grayscale(1); }
+body[data-show="diff"] .frame .tag.unchanged { display: none; }
+
+/* asks */
+.asks { display: flex; flex-direction: column; gap: 12px; max-width: 880px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.ask h3 { font-size: 16px; }
+.ask p, .ask ul { margin: 0; color: var(--fg-soft); }
+.ask ul { padding-left: 20px; }
+.ask li { margin: 2px 0; }
+.ask .rec { font-weight: 600; color: var(--fg); }
+.ask .why2 { font-size: 14px; }
+.flags { border-left: 3px solid var(--accent); }
+
+/* ═════ the portal (true size) ═════ */
+.frame { position: relative; flex: none; background: var(--p-paper); color: var(--p-ink); border: 1px solid var(--p-line); border-radius: 6px; font-family: var(--sans); font-size: 14px; line-height: 1.45; }
+.frame * { box-sizing: border-box; }
+.d { width: 1440px; }
+.m { width: 390px; }
+/* club admin chrome */
+.cd { display: grid; grid-template-columns: 240px 1fr; min-height: 900px; }
+.side { background: var(--p-side); border-right: 1px solid var(--p-line); display: flex; flex-direction: column; }
+.side .brand { height: 47px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--p-line); font-weight: 700; font-size: 15px; }
+.side .brand small { font-size: 11px; letter-spacing: .1em; color: var(--p-dim); font-weight: 600; border-left: 1px solid var(--p-line); padding-left: 10px; }
+.side .org { height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--p-line); font-weight: 600; font-size: 14px; }
+.side .org i { font-style: normal; font-size: 10px; font-weight: 700; background: rgba(87,101,30,.12); border-radius: 5px; padding: 3px 5px; color: var(--p-soft); }
+.side nav { padding: 12px 0; display: grid; gap: 2px; font-size: 14px; }
+.side nav span { padding: 8px 20px; color: var(--p-soft); }
+.side nav span.h { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--p-dim); padding-top: 14px; }
+.side nav span.on { background: rgba(87,101,30,.10); color: var(--p-olive); font-weight: 600; }
+.main { display: flex; flex-direction: column; min-width: 0; }
+.mtop { height: 47px; border-bottom: 1px solid var(--p-line); display: flex; align-items: center; padding: 0 32px; font-size: 16px; font-weight: 600; background: var(--p-side); }
+.mtabs { height: 44px; border-bottom: 1px solid var(--p-line); display: flex; gap: 28px; padding: 0 32px; font-size: 14px; color: var(--p-soft); background: var(--p-side); align-items: stretch; }
+.mtabs span { display: flex; align-items: center; border-bottom: 2px solid transparent; white-space: nowrap; }
+.mtabs span.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.mbody { padding: 22px 32px 32px; display: flex; flex-direction: column; gap: 16px; }
+/* coach chrome */
+.ctop { height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--p-line); background: var(--p-card); font: 700 11px var(--sans); letter-spacing: .08em; color: var(--p-dim); }
+.ctop .r { display: flex; gap: 16px; align-items: center; font: 600 12px var(--sans); letter-spacing: 0; color: var(--p-soft); }
+.ctop .ws { border: 1px solid var(--p-line-strong); border-radius: 999px; padding: 4px 12px; }
+.cg { display: grid; grid-template-columns: 220px 1fr; min-height: 900px; }
+.cside { background: var(--p-side); border-right: 1px solid var(--p-line); padding: 14px 0; display: grid; gap: 2px; align-content: start; font-size: 14px; }
+.cside span { padding: 8px 18px; color: var(--p-soft); }
+.cside span.on { background: rgba(87,101,30,.10); color: var(--p-olive); font-weight: 600; }
+.team { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 28px 10px; border-bottom: 1px solid var(--p-line); background: var(--p-card); }
+.team b { font-size: 16px; display: block; }
+.team small { font-size: 11px; color: var(--p-dim); letter-spacing: .04em; }
+.team .q { width: 20px; height: 20px; border: 1.5px solid var(--p-ink); border-radius: 50%; font-size: 12px; display: grid; place-items: center; font-weight: 700; }
+.ctabs { display: flex; gap: 26px; padding: 0 28px; border-bottom: 1px solid var(--p-line); height: 44px; font-size: 14px; color: var(--p-soft); }
+.ctabs span { display: flex; align-items: center; border-bottom: 2px solid transparent; white-space: nowrap; }
+.ctabs span.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.cbody { padding: 18px 28px 32px; display: flex; flex-direction: column; gap: 14px; }
+.viewpill { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--p-line-strong); border-radius: 999px; background: var(--p-card); font-size: 13px; color: var(--p-dim); width: max-content; }
+.viewpill b { color: var(--p-ink); font-weight: 600; }
+/* phone chrome */
+.ph { min-height: 844px; display: flex; flex-direction: column; }
+.ptop { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 16px; font-weight: 600; background: var(--p-side); border-bottom: 1px solid var(--p-line); }
+.ptop small { font-size: 11px; color: var(--p-dim); font-weight: 600; margin-left: 6px; }
+.ptabs { height: 44px; display: flex; gap: 20px; padding: 0 16px; font-size: 14px; color: var(--p-soft); background: var(--p-side); border-bottom: 1px solid var(--p-line); overflow: hidden; white-space: nowrap; }
+.ptabs span { display: flex; align-items: center; border-bottom: 2px solid transparent; }
+.ptabs span.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.pbody { padding: 14px 16px 20px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.pbar { height: 62px; border-top: 1px solid var(--p-line); background: var(--p-side); display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--p-dim); }
+.pbar b { color: var(--p-olive); }
+.m .viewpill { height: 44px; }
+
+/* the Bank tab / view, around the card */
+.topline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; color: var(--p-soft); position: relative; }
+.topline b { color: var(--p-ink); font-weight: 600; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid rgba(87,101,30,.35); border-radius: 999px; background: rgba(87,101,30,.10); font-size: 13px; color: var(--p-dim); white-space: nowrap; }
+.pill b { color: var(--p-ink); }
+.lk { color: var(--p-olive); text-decoration: underline; text-underline-offset: 2px; font-size: 12px; background: none; border: 0; padding: 0; font-family: inherit; cursor: default; white-space: nowrap; }
+.m .lk.tap { min-height: 44px; display: inline-flex; align-items: center; }
+.m .hint .lk.tap, .m .sums .lk.tap { margin-block: -0.6rem; }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #F6E7C9; color: var(--p-warn-ink); }
+.notice { font-size: 14px; color: var(--p-ink); background: var(--p-good-bg); border: 1px solid rgba(52,102,42,.25); border-left: 3px solid var(--p-good); border-radius: 8px; padding: 10px 14px; }
+.menu { position: absolute; left: 0; top: 38px; z-index: 5; width: 380px; background: var(--p-card); border: 1px solid var(--p-line-strong); border-radius: 10px; box-shadow: 0 12px 30px rgba(36,30,21,.16); padding: 6px; display: grid; gap: 2px; }
+.menu .o { padding: 8px 10px; border-radius: 7px; display: grid; gap: 1px; }
+.menu .o.sel { background: rgba(87,101,30,.10); }
+.menu .o b { font-size: 14px; } .menu .o span { font-size: 12px; color: var(--p-dim); } .menu .o span.mine { color: var(--p-olive); font-weight: 600; }
+.menu .foot { border-top: 1px solid var(--p-line); padding: 9px 10px 4px; font-size: 13px; font-weight: 600; color: var(--p-ink); }
+.listh { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
+.tbl { border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); overflow: hidden; }
+.tbl .tr { display: grid; grid-template-columns: 200px 170px 170px 1fr 260px 30px; align-items: center; padding: 0 16px; min-height: 42px; font-size: 14px; font-variant-numeric: tabular-nums; border-top: 1px solid var(--p-line); }
+.tbl .tr:first-child { border-top: 0; }
+.tbl .th { min-height: 34px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--p-dim); }
+.tbl .n { text-align: right; padding-right: 24px; } .tbl .dt { font-weight: 600; } .tbl .mut { color: var(--p-dim); }
+.rows { border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); overflow: hidden; }
+.rows .r { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--p-line); min-height: 56px; }
+.rows .r:first-child { border-top: 0; }
+.rows .r b { font-size: 14px; font-weight: 600; display: block; } .rows .r span { font-size: 12px; color: var(--p-dim); display: block; }
+.rows .r.mut b { color: var(--p-dim); }
+
+/* the card (Bank.module.css .checkCard / CoachBank.module.css .card) */
+.ck { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 17px 20px 19px; display: flex; flex-direction: column; gap: 12px; position: relative; }
+.m .ck { padding: 16px; }
+.ch { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.ch h3 { font-size: 16px; font-weight: 700; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 6px; font: 700 14px var(--sans); border: 1px solid var(--p-lime); background: var(--p-lime); color: var(--p-ink); white-space: nowrap; }
+.btn.out { background: var(--p-card); border-color: var(--p-line-strong); color: var(--p-soft); font-weight: 600; }
+.btn.dis { opacity: .5; }
+.m .btn { height: 44px; }
+.m .btn.full { width: 100%; }
+.purpose { margin: 0; font-size: 14px; line-height: 1.5; color: var(--p-soft); max-width: 56rem; }
+.hint { margin: 0; font-size: 12px; line-height: 1.45; color: var(--p-dim); }
+.hint .lk { font-size: 12px; }
+.restore { margin: 0; font-size: 12px; color: var(--p-dim); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.restore .warnt { color: var(--p-warn-ink); font-weight: 600; }
+.row3 { display: grid; grid-template-columns: 210px 260px auto; gap: 0 16px; align-items: end; }
+.row3.cash { grid-template-columns: 200px 200px 220px auto; }
+.m .row3 { grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.fld { display: flex; flex-direction: column; gap: 6px; min-width: 0; position: relative; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--p-soft); }
+.fld .i { height: 36px; border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-field); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 14px; color: var(--p-ink); white-space: nowrap; overflow: hidden; }
+.m .fld .i { height: 44px; }
+.fld .i.empty { color: var(--p-ph); }
+.fld .i.focus { outline: 2px solid var(--p-olive); outline-offset: 1px; background: #fff; }
+.fld .i .cal { color: var(--p-dim); font-size: 13px; }
+/* the strip (NEW) */
+.strip { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 10px 14px; border: 1px solid var(--p-line); border-left: 3px solid var(--p-olive); background: var(--p-card); border-radius: 8px; font-size: 14px; position: relative; }
+.strip .sl { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--p-olive); }
+.strip .sv { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; color: var(--p-soft); }
+.strip .sv b { color: var(--p-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.strip .sv i { font-style: normal; color: var(--p-dim); }
+.strip .lk { margin-left: auto; font-size: 13px; }
+.m .strip { padding: 8px 12px; }
+
+.m .strip .lk { min-height: 44px; display: inline-flex; align-items: center; margin-top: -8px; margin-bottom: -8px; }
+.strip.edit { flex-direction: column; align-items: stretch; gap: 10px; }
+.strip.edit .erow { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+.m .strip.edit .erow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.strip.edit .erow .fld { width: 210px; }
+.m .strip.edit .erow .fld { width: auto; }
+.strip.edit .acts { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.m .strip.edit .acts { grid-column: 1 / -1; }
+.warnline { margin: 0; font-size: 13px; color: var(--p-warn-ink); background: var(--p-warn-bg); border-left: 3px solid var(--p-warn); border-radius: 6px; padding: 8px 12px; line-height: 1.45; }
+.waiting { opacity: .45; }
+/* the band (MoneySummaryBand: one joined band) */
+.band { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--p-line); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.m .band { grid-template-columns: 1fr 1fr; }
+.m .band .tile:last-child { grid-column: 1 / -1; }
+.tile { background: var(--p-card); padding: 13px 16px; display: grid; gap: 3px; align-content: start; min-width: 0; }
+.tile .l { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--p-dim); }
+.tile .f { font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.tile .f.warn { color: var(--p-warn-ink); } .tile .f.good { color: var(--p-good); }
+.tile .c { font-size: 12px; line-height: 1.45; color: var(--p-dim); }
+.sums { border: 1px solid var(--p-line); border-radius: 8px; }
+.sums .s { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 14px; border-top: 1px solid var(--p-line); font-size: 14px; font-variant-numeric: tabular-nums; }
+.sums .s:first-child { border-top: 0; }
+.sums .s small { color: var(--p-dim); font-size: 12px; }
+.sums .s.t { font-weight: 700; background: #FBF8F2; border-radius: 0 0 8px 8px; }
+.find { display: flex; flex-direction: column; gap: 10px; }
+.find h4 { margin: 2px 0 0; font-size: 16px; font-weight: 700; }
+.callout { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; border: 1px solid rgba(131,80,6,.32); border-left: 3px solid var(--p-warn); border-radius: 9px; background: var(--p-warn-bg); font-size: 14px; line-height: 1.45; position: relative; }
+.callout .tx { flex: 1 1 320px; min-width: 0; }
+.callout .doors { display: inline-flex; gap: 8px 10px; flex-wrap: wrap; }
+.m .callout { flex-direction: column; align-items: stretch; }
+.m .callout .tx { flex: 0 0 auto; }
+.m .callout .doors { display: flex; flex-direction: column; }
+.m .callout .btn { width: 100%; }
+.callout.plain { display: block; }
+.kitclub .callout { background: var(--p-card); border: 1px solid var(--p-line); border-left: 3px solid var(--p-warn); border-radius: 8px; }
+/* the foot (NEW) */
+.foot { border-top: 1px solid var(--p-line); padding-top: 14px; margin-top: 2px; display: flex; align-items: center; justify-content: space-between; gap: 10px 20px; position: relative; }
+.foot .notes { display: flex; flex-direction: column; gap: 4px; max-width: 640px; }
+.foot .btns { display: flex; gap: 10px; flex: none; }
+.m .foot { flex-direction: column; align-items: stretch; }
+.m .foot .btns { flex-direction: column; }
+.m .foot .btns .btn { width: 100%; }
+.m .foot .notes { order: 2; }
+.saveinline { margin-bottom: 0; }
+.status { margin: 0; font-size: 12px; color: var(--p-soft); }
+.heads { margin: 0; font-size: 13px; color: var(--p-soft); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.heads b { color: var(--p-ink); font-weight: 600; }
+.shared { font-size: 13px; color: var(--p-soft); margin: 0; }
+.shared b { color: var(--p-ink); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="hdr">
+    <span class="eyebrow">Bank check through a volunteer’s eyes · S7 · drawn 2026-11-22</span>
+    <h1>Start, work, save for later</h1>
+    <p>Your A18 ruling, drawn: <b>Start checking this statement</b> fixes the date and balance in a strip at the top of the card, Find works under it, and the card ends with <b>Save for later</b> and <b>Save this check</b>. The work is kept for the person and the account, so it follows them to another device. Whole screens at true size, club and coach, desk and phone. Switch <b>When</b> to see today’s shipped screen for the same moment. Tap any tag for its note. Tab 8 holds the calls.</p>
+    <div class="legend"><button class="tag new" type="button" data-note="NEW · A piece that does not exist today.">NEW</button><button class="tag restyled" type="button" data-note="RESTYLED · A shipped piece that changes place, look or words.">RESTYLED</button><button class="tag unchanged" type="button" data-note="UNCHANGED · Drawn for context, as it ships. The portals’ outer chrome (sidebars, top bars) is an outline, not a capture; the card, the band, the sums and Find are drawn from their shipped styles.">UNCHANGED</button></div>
+  </header>
+
+  <div class="sticky">
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" type="button" data-tab="start">1 · Before you start</button>
+      <button role="tab" type="button" data-tab="work">2 · Working on it</button>
+      <button role="tab" type="button" data-tab="change">3 · Change</button>
+      <button role="tab" type="button" data-tab="saved">4 · Saved for later, found again</button>
+      <button role="tab" type="button" data-tab="moved">5 · The books moved</button>
+      <button role="tab" type="button" data-tab="second">6 · A second person</button>
+      <button role="tab" type="button" data-tab="last">7 · The last days</button>
+      <button role="tab" type="button" data-tab="asks">8 · Asks</button>
+    </div>
+    <div class="viewrow" id="viewrow">
+      <span><span class="lbl">When</span><span class="seg" role="group" aria-label="When"><button type="button" data-when="after" aria-pressed="true">After S7</button><button type="button" data-when="today" aria-pressed="false">Today</button></span></span>
+      <span><span class="lbl">Device</span><span class="seg" role="group" aria-label="Device"><button type="button" data-dev="d" aria-pressed="true">Desk 1440</button><button type="button" data-dev="m" aria-pressed="false">Phone 390</button></span></span>
+      <span><span class="lbl">Show</span><span class="seg" role="group" aria-label="Show"><button type="button" data-show="all" aria-pressed="true">Everything</button><button type="button" data-show="diff" aria-pressed="false">Show only what differs</button></span></span>
+    </div>
+    <div class="notebar" id="notebar" aria-live="polite">Tap a <span class="tag new">NEW</span> <span class="tag restyled">RESTYLED</span> or <span class="tag unchanged">UNCHANGED</span> tag to read its note here.</div>
+  </div>
+
+  <section class="panel" data-tab="start">
+    <h2>1 · Before you start: type the statement, then start</h2>
+    <p class="why">Today the card shows the band, the sums and the line count as soon as it opens, and keeps whatever is typed in this browser. After: the card asks for the two figures on the statement and offers one button, <b>Start checking this statement</b>. Nothing is kept until it is pressed. The band, the sums and Find appear with the strip, one press later.</p>
+    <div class="specs" data-specs="start"></div>
+  </section>
+  <section class="panel" data-tab="work" hidden>
+    <h2>2 · Working on it: the strip, the work, the two buttons</h2>
+    <p class="why">The statement sits in a strip at the top with a <b>Change</b> link: its date, since its balance is the band’s first figure right under it. Under it, the shipped band, the sums and Find, unchanged. The card ends with a rule, the notes, <b>Start over</b>, <b>Save for later</b> and <b>Save this check</b>. Here the treasurer has marked one cheque as not in the bank yet and is $4.50 off: a bank fee, by the look of it.</p>
+    <div class="specs" data-specs="work"></div>
+  </section>
+  <section class="panel" data-tab="change" hidden>
+    <h2>3 · Change: the strip opens back into its fields</h2>
+    <p class="why">Change turns the strip back into the date and balance fields, in place. Fixing only the balance keeps every mark. A new date is a different statement, so the strip says first that it clears the lines marked so far, before <b>Use these</b> is pressed. Today a new date clears the marks without a word.</p>
+    <div class="specs" data-specs="change"></div>
+  </section>
+  <section class="panel" data-tab="saved" hidden>
+    <h2>4 · Saved for later, then found again on another device</h2>
+    <p class="why"><b>Desk</b> shows the moment Save for later is pressed on the laptop: one notice at the top says what was kept and until when. <b>Phone</b> shows the same person the next day: the card opens on their work with the line today’s card already uses, <b>Picked up where you left off</b>. Today, on another device, nothing comes back. At a club with two accounts, the Account pill says which account holds your work (bottom frame).</p>
+    <div class="specs" data-specs="saved"></div>
+  </section>
+  <section class="panel" data-tab="moved" hidden>
+    <h2>5 · The books moved while the work was saved</h2>
+    <p class="why">The work keeps which lines were marked, never their amounts, so every return reads the books fresh. Here a colleague deleted the marked cheque while the work was saved. The card takes the mark off and says so in the shipped amber box, and the band and sums show today’s books. A marked line that was only edited keeps its mark and shows its new amount.</p>
+    <div class="specs" data-specs="moved"></div>
+  </section>
+  <section class="panel" data-tab="second" hidden>
+    <h2>6 · A second treasurer or coach opens the same account</h2>
+    <p class="why">Ask 1. Sam (club) and Riley (coach, an assistant with money access) open the account while Avery or Jordan has work saved for later. <b>Reading A (recommended):</b> the work is the person’s own. The second person sees an ordinary card plus one quiet line saying who has work open. <b>Reading B:</b> the account has one open check that anyone can carry on. Both are drawn.</p>
+    <div class="specs" data-specs="second"></div>
+  </section>
+  <section class="panel" data-tab="last" hidden>
+    <h2>7 · The last days of saved work</h2>
+    <p class="why">Ask 2. Recommended: saved work lasts <b>30 days from the last time it was touched</b>. The date was given when Save for later was pressed. In the last 7 days, the line under the heading says it again, in amber. Any change, or Save for later again, keeps it another 30 days. Today the browser drops a draft after 14 idle days without a word.</p>
+    <div class="specs" data-specs="last"></div>
+  </section>
+
+  <section class="panel" data-tab="asks" hidden>
+    <h2>8 · Asks</h2>
+    <p class="why">Your three open questions from A18 come first, then six things the strip itself raised. Each has a recommendation. Then what the build will need, so you can rule knowing it.</p>
+    <div class="asks">
+      <div class="ask"><h3>1 · Does a second treasurer or coach see someone else’s saved work? (tab 6)</h3>
+        <p>A club treasurer and an assistant treasurer, or a head coach and a team manager, can both write checks on the same account.</p>
+        <ul>
+          <li><b>A · Mine only.</b> Each person’s work is their own. The second person sees a normal card and one quiet line, “Avery Chen has a check of Oct 31, 2026 saved for later (Nov 20).” Either can save the check. The second to save is told “Oct 31, 2026 is checked already. Saving again replaces that check.” That sentence already ships.</li>
+          <li><b>B · The account’s one open check.</b> Anyone who opens the account carries on the same work, with “Started by Avery Chen” on it. Two people can overwrite each other’s marks with no warning unless we build a lock or a who’s-editing rule.</li>
+        </ul>
+        <p class="rec">Recommend A, with the quiet line. The saved check is already the shared record, and the replace warning already handles two people checking the same date. B makes one person’s unfinished work something another person can wreck. It needs a lock to be safe, and the working-draft ruling shut it out for that reason. The quiet line gives the coordination B was after, without the overwrite.</p></div>
+
+      <div class="ask"><h3>2 · How long does saved work last? (tab 7)</h3>
+        <ul>
+          <li>14 days idle, as the browser does today.</li>
+          <li><b>30 days from the last change.</b></li>
+          <li>Until the check is saved or the work is discarded.</li>
+        </ul>
+        <p class="rec">Recommend 30 days from the last change. A statement comes monthly, so a treasurer who saves for later can come back with the next one in hand. 14 days was chosen for a browser on a shared computer, a risk the server removes. “Until discarded” leaves clutter nobody owns.</p>
+        <p class="why2">What the person sees: the notice when they press Save for later names the end date. In the last 7 days the line under the heading names it again in amber. No email is sent. Saved work also goes when the person loses write access to that account, when the account is deleted, and, for a coach, when the season rolls over or closes (it is live-season work).</p></div>
+
+      <div class="ask"><h3>3 · Both portals? (every tab)</h3>
+        <p class="rec">Yes. The same card, the same strip and the same two buttons, in each portal’s own words (books and entries for the club; the Ledger and recording for the coach). Who sees Save for later is whoever can save a check today. At a club that is everyone who can open Accounting, since no read-only seat exists. On a team it is anyone with money write access; a view-only coach still sees no card.</p>
+        <ul>
+          <li><b>Coach only:</b> cash not deposited yet is fixed with the statement. It shows in the strip when typed, and Change edits it. The “Holding cash you haven’t deposited?” link moves into the fields before Start and into Change.</li>
+          <li><b>Club only:</b> with two or more accounts, the Account pill says which account holds your saved work (tab 4). A coach has one account, the team’s, so there is nothing to choose.</li>
+        </ul></div>
+
+      <div class="ask"><h3>4 · Kept as you go, or only when Save for later is pressed?</h3>
+        <p>The ruling names a Save for later button. The question is what happens to someone who leaves without pressing it, for example to fix a line in the Ledger.</p>
+        <p class="rec">Recommend: from the moment Start is pressed, every change is kept as you go, as the browser does today. Save for later confirms it, names the end date and restarts the 30 days. Kept only on a press, a volunteer who opens the Ledger to fix a line loses their marks, which is worse than today. The resting sentence says it honestly: “Kept as you go, on any device you sign in on, until you save this check.”</p></div>
+
+      <div class="ask"><h3>5 · What Change does to marks (tab 3)</h3>
+        <p class="rec">Recommend: a new balance keeps every mark (the marks are about lines, not the balance). A new date is a new statement, so the strip says before you confirm: “A new date clears the 1 line you marked. Changing only the balance keeps it.” <b>Keep Oct 31</b> backs out. The same applies when “Check this date again” is pressed on a saved check while other work is saved: one question first, never a silent swap.</p></div>
+
+      <div class="ask"><h3>6 · A balance that matches first time costs one more press</h3>
+        <p>Today a treasurer whose balance matches can type it and press Save once. With the strip, it is Start, then Save this check.</p>
+        <p class="rec">Recommend accept the extra press. The alternative is to show the band before Start and offer Save there too, which means two filled buttons in one card and a card that changes shape as you type. One press buys a card that always reads the same way: the statement, then the work, then the save.</p></div>
+
+      <div class="ask"><h3>7 · How the card tells the person the books moved (tab 5)</h3>
+        <p class="rec">Recommend as drawn. A mark whose line was deleted is taken off, with the count, in the amber box that already ships. An edited line keeps its mark at its new amount, without a note. A day the account no longer takes (the start deleted, the season rolled over) shows the day’s shipped refusal. The box can’t name the line, because the work keeps which lines were marked, never their amounts or names. Keeping names would mean storing pieces of the books a second time, against your “keys, never figures” rule.</p></div>
+
+      <div class="ask"><h3>8 · Where saved work is found again (tab 4)</h3>
+        <p class="rec">Recommend: on the card itself, where it was left, opening straight into the work. At a club with several accounts, the Account pill marks the account that holds it. The Overview’s bank line stays one line, as you ruled (S2), with no in-progress state of its own. That would be a second place telling the same story, and it would crowd the one-line rule.</p></div>
+
+      <div class="ask"><h3>9 · The words a volunteer reads once (tabs 2 and 4)</h3>
+        <ul>
+          <li>Notice on Save for later: <b>“Saved for later. Pick it up here, on any device you sign in on, until Dec 22, 2026.”</b></li>
+          <li>Resting sentence (replaces “Kept in this browser only, until you save this check or sign out.”): <b>“Kept as you go, on any device you sign in on, until you save this check.”</b></li>
+          <li>Strip: <b>“Checking Oct 31, 2026 · Change”</b>; the Change step’s <b>“Use these”</b> and <b>“Keep Oct 31”</b>. Your ruling put the date <i>and</i> the balance in the strip. The drawing shows only the date there, because the balance is the band’s first figure directly under it. Printed twice, 12px apart, it adds a row on a phone and says nothing new. Change still edits both. If you want the balance in the strip anyway, say so.</li>
+          <li><b>Start over</b> moves from the restore line to the card’s foot, so it is always there once work has started.</li>
+        </ul>
+        <p class="rec">Recommend these as the drawing’s words, settled with /marketing in the build.</p>
+        <p class="why2"><b>One more call, from the design review:</b> you ruled no confirmation on Start over when the work lived in one browser. Now it discards work kept on every device, perhaps an hour of marks. <b>Recommend</b> a one-line confirmation inside the card, “Start over? The 1 line you marked and the balance go.” with <b>Start over</b> / <b>Keep working</b>, and only when lines are marked. A card with nothing marked starts over at once, as today.</p></div>
+
+      <div class="ask flags"><h3>Not settled here, and what the build will need</h3>
+        <ul>
+          <li><b>S5 (a second Save on a phone) stays parked.</b> Both saves are the card’s last thing, as Save is today, so the drawing does not settle it.</li>
+          <li><b>A new stored record, one per person per account</b> → /dba first: the data dictionary and both snapshots in the same unit, and a production step before the promote. Key it to the club itself, not the club’s web address: today’s browser key would orphan work if a club renamed its address.</li>
+          <li><b>A light /legal look.</b> The product will keep something new on its servers: a person’s unfinished check, with their name on it, visible to colleagues under Reading A. Check that the privacy policy’s list of what we keep covers it.</li>
+          <li><b>Sign-out no longer clears the work</b>, by design. Both help articles’ “On a shared computer, press Start over” note changes meaning, and the help is rewritten with the build (/docs).</li>
+          <li><b>The two walked working-draft walks are redone</b> as one new walk per portal.</li>
+          <li>A failed save of the kept work must say so on the card. Otherwise the resting sentence would promise something that didn’t happen.</li>
+        </ul></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  // ── the figures and words, per portal (shipped strings from the bank words file; NEW ones marked in their tags) ──
+  var P = {
+    club: {
+      key: 'club', me: 'Avery Chen', other: 'Sam Patel', add: 'Add entry',
+      purpose: 'Type the balance your bank shows. If it matches your books, you’re in step with the bank. If not, we’ll help you look for the difference. It takes what’s in your books as correct.',
+      bank: '$11,873.20', booksAmt: '$11,690.80', should: '$11,877.70', startedOff: '$182.40', movedBooks: '$11,877.70',
+      markName: 'Cheque 2031 · Umpire fee', markAmt: '+$186.90',
+      sumBooks: 'Your books on Oct 31, 2026', sumSub: 'Riverdale Minor Ball — General',
+      shouldCap: 'Starting balance plus every change in your books since Aug 1, 2026, adjusted for what hasn’t reached the bank yet',
+      shouldCapPhone: 'Your books, adjusted for what’s pending',
+      diffCap: 'The bank shows $4.50 less than your books.',
+      callout: 'The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered.',
+      doors: ['Add a bank fee', 'Add the missing entry'], lines: 30,
+      offNote: 'You can save this check while it’s off and check again later. Saving changes nothing in your books.',
+      todayBooks: '$12,418.35', since: 'Lines since your last match (Sep 30, 2026): 30',
+      account: 'Club chequing'
+    },
+    coach: {
+      key: 'coach', me: 'Jordan Lee', other: 'Riley Okafor', add: 'Record',
+      purpose: 'Type the balance your bank shows. If it matches your Ledger, you’re in step with the bank. If not, we’ll help you look for the difference. It takes what’s in your Ledger as correct.',
+      bank: '$3,060.00', booksAmt: '$2,814.50', should: '$3,064.50', startedOff: '$245.50', movedBooks: '$3,064.50',
+      markName: 'Spring classic entry', markAmt: '+$250.00',
+      sumBooks: 'Your Ledger on Oct 31, 2026', sumSub: 'the Overview’s Cash on hand that day',
+      shouldCap: 'Your Ledger on Oct 31, 2026, adjusted for what hasn’t reached the bank yet',
+      shouldCapPhone: 'Your Ledger, adjusted for what’s pending',
+      diffCap: 'The bank shows $4.50 less than your Ledger.',
+      callout: 'The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded.',
+      doors: ['Record a bank fee', 'Record the missing amount'], lines: 31,
+      offNote: 'You can save this check while it’s off and check again later. Saving changes nothing in your Ledger.',
+      todayBooks: '$3,318.40', since: 'Lines since your last match (Sep 30, 2026): 31',
+      account: 'Team bank account'
+    }
+  };
+  var HINT = 'Use the posted balance your banking app shows, with pending transactions left out.';
+  var KEPT_TODAY = 'Kept in this browser only, until you save this check or sign out.';
+  var KEPT = 'Kept as you go, on any device you sign in on, until you save this check.';
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+  function tag(kind, note) { return '<button type="button" class="tag ' + kind + '" data-note="' + esc(note) + '">' + kind.toUpperCase() + '</button>'; }
+  function T(html, kind, note, cls) { return '<div class="tg ' + (cls || '') + '">' + html + tag(kind, note) + '</div>'; }
+  function same(html) { return '<div class="same">' + html + '</div>'; }
+
+  // ── pieces of the card ──
+  function head(p, enabled) {
+    return '<div class="ch same"><h3>Check your bank balance</h3><span class="btn out' + (enabled ? '' : ' dis') + '">＋ ' + p.add + '</span></div>';
+  }
+  function purpose(p) { return same('<p class="purpose">' + p.purpose + '</p>'); }
+  function field(label, value, o) {
+    o = o || {};
+    return '<div class="fld"><span class="l">' + label + '</span><div class="i' + (o.ph ? ' empty' : '') + (o.focus ? ' focus' : '') + '"><span>' + value + '</span>' + (o.cal ? '<span class="cal">▦</span>' : '') + '</div></div>';
+  }
+  function dateVal(dev, wordy, iso) { return dev === 'm' ? iso : wordy; }
+  function band(p, dev, o) {
+    o = o || {};
+    var phone = dev === 'm';
+    if (o.empty) {
+      return '<div class="band"><div class="tile"><span class="l">The bank says</span><span class="f">—</span><span class="c">' + (phone ? 'On Nov 22' : 'Bank balance on Nov 22, 2026') + '</span></div>' +
+        '<div class="tile"><span class="l">' + (phone ? 'Should be there' : 'Should be in the bank') + '</span><span class="f">' + p.todayBooks + '</span><span class="c">' + (phone ? p.shouldCapPhone : p.shouldCap.replace('Oct 31', 'Nov 22')) + '</span></div>' +
+        '<div class="tile"><span class="l">Difference</span><span class="f">—</span><span class="c">Type the balance to see it</span></div></div>';
+    }
+    return '<div class="band"><div class="tile"><span class="l">The bank says</span><span class="f">' + p.bank + '</span><span class="c">' + (phone ? 'On Oct 31' : 'Bank balance on Oct 31, 2026') + '</span></div>' +
+      '<div class="tile"><span class="l">' + (phone ? 'Should be there' : 'Should be in the bank') + '</span><span class="f">' + p.should + '</span><span class="c">' + (phone ? p.shouldCapPhone : p.shouldCap) + '</span></div>' +
+      '<div class="tile"><span class="l">Difference</span><span class="f warn">Off by $4.50</span><span class="c">' + p.diffCap + '</span></div></div>';
+  }
+  function sums(p, dev, o) {
+    o = o || {};
+    var sub = dev === 'm' ? '' : ' <small>· ' + p.sumSub + '</small>';
+    if (o.empty) return '<div class="sums"><div class="s"><span>' + p.sumBooks.replace('Oct 31', 'Nov 22') + sub + '</span><span>' + p.todayBooks + '</span></div><div class="s t"><span>Should be in the bank</span><span>' + p.todayBooks + '</span></div></div>';
+    if (o.moved) return '<div class="sums"><div class="s"><span>' + p.sumBooks + sub + '</span><span>' + p.movedBooks + '</span></div><div class="s t"><span>Should be in the bank</span><span>' + p.should + '</span></div></div>';
+    return '<div class="sums"><div class="s"><span>' + p.sumBooks + sub + '</span><span>' + p.booksAmt + '</span></div>' +
+      '<div class="s"><span>Not in the bank yet · ' + p.markName + ' <span class="lk tap">Undo</span></span><span>' + p.markAmt + '</span></div>' +
+      '<div class="s t"><span>Should be in the bank</span><span>' + p.should + '</span></div></div>';
+  }
+  function find(p, dev) {
+    var btn = dev === 'm' ? 'btn out full' : 'btn out';
+    return '<div class="find"><h4>Find the $4.50</h4><div class="callout"><span class="tx">' + p.callout + '</span><span class="doors"><span class="' + btn + '">' + p.doors[0] + '</span><span class="' + btn + '">' + p.doors[1] + '</span></span></div>' +
+      '<p class="hint">No line matches $4.50 on its own. <span class="lk tap">Show the ' + p.lines + ' lines</span> to mark any that the bank hasn’t received yet.</p></div>';
+  }
+  function work(p, dev, o) {
+    o = o || {};
+    return same(band(p, dev)) + same('<p class="hint">Started off by ' + p.startedOff + '</p>') + same(sums(p, dev, o)) + same(find(p, dev));
+  }
+  function strip(p, dev, o) {
+    o = o || {};
+    var cash = o.cash ? '<i>·</i>Cash not deposited yet <b>$120.00</b>' : '';
+    var html = '<div class="strip"><span class="sl">Checking</span><span class="sv"><b>Oct 31, 2026</b>' + cash + '</span><span class="lk tap">Change</span></div>';
+    return T(html, o.kind || 'new', o.note || ('NEW · A18. Start checking this statement fixes the statement at the top of the card, with Change at the right. It names the DAY only: the balance typed is the band’s first figure right under it (“The bank says $11,873.20”), so printing it twice, 12px apart, would add a row on a phone and say nothing new (/design). Change edits both. The house form for a status (white, the olive left edge), not a tinted box: tinted panels are retired (design decision 2026-11-19).' + (p.key === 'coach' ? ' Coach: cash not deposited yet joins the strip when it was typed (ask 3).' : '')));
+  }
+  function foot(p, dev, o) {
+    o = o || {};
+    var notes = [];
+    if (o.replaces) notes.push('<p class="hint"><b style="color:var(--p-ink);font-weight:600">Oct 31, 2026 is checked already.</b> Saving again replaces that check.</p>');
+    notes.push('<p class="hint">' + p.offNote + ' ' + KEPT + '</p>');
+    var notesHtml = '<div class="notes">' + notes.join('') + '<span class="lk tap">Start over</span></div>';
+    var btns = dev === 'm'
+      ? '<div class="btns"><span class="btn full">Save this check</span><span class="btn out full">Save for later</span></div>'
+      : '<div class="btns"><span class="btn out">Save for later</span><span class="btn">Save this check</span></div>';
+    var html = '<div class="foot">' + notesHtml + btns + '</div>';
+    return T(html, 'new', 'NEW · A18. The card ends here. Save this check is still the one lime button. Save for later is the portal’s outline button beside it at a desk, and under it on a phone. The notes on the left say what saving means: the shipped off-check sentence, then the new resting sentence (ask 9), which replaces “Kept in this browser only…”. Start over moves down here from the restore line, so it is always there once work has started (still no confirmation, your WD call). Both saves are the card’s last thing, as Save is on a phone today, so S5 stays parked.');
+  }
+  function restore(text, extra) {
+    return '<p class="restore"><span>' + text + '</span>' + (extra || '') + '</p>';
+  }
+
+  // ── today's shipped card ──
+  function todayCard(p, dev, st) {
+    var phone = dev === 'm';
+    if (st === 'none') {
+      var f = '<div class="row3">' + field('Date *', dateVal(dev, 'Nov 22, 2026', '2026-11-22'), { cal: true }) + field(phone ? 'Bank balance *' : 'Bank balance on that date *', '0.00', { ph: true }) + (phone ? '' : '<div class="saveinline"><span class="btn">Save this check</span></div>') + '</div>';
+      var note = p.key === 'coach' ? '<p class="hint">Any day this season, from May 21, 2026 to today. ' + HINT + ' <span class="lk tap">Holding cash you haven’t deposited?</span></p>' : '<p class="hint">' + HINT + '</p>';
+      return '<div class="ck">' + head(p, true) + purpose(p) + f + note + band(p, dev, { empty: true }) + sums(p, dev, { empty: true }) + '<p class="hint">' + p.since + ' · <span class="lk tap">Show them</span></p>' + (phone ? '<span class="btn full">Save this check</span>' : '') + '</div>';
+    }
+    var restoreLine = st === 'moved' ? restore('Picked up where you left off · last worked on Nov 20, 2026', '<span class="lk tap">Start over</span>') : '';
+    var dropped = st === 'moved' ? '<div class="callout plain">One line you marked isn’t in your books any more, so we took it off.</div>' : '';
+    var date = st === 'change' ? field('Date *', dateVal(dev, 'Nov 30, 2026', '2026-11-30'), { cal: true, focus: true }) : field('Date *', dateVal(dev, 'Oct 31, 2026', '2026-10-31'), { cal: true });
+    var fields = '<div class="row3">' + date + field(phone ? 'Bank balance *' : 'Bank balance on that date *', p.bank.replace('$', '')) + (phone ? '' : '<div class="saveinline"><span class="btn">Save this check</span></div>') + '</div>';
+    var noteLine = '<p class="hint">' + p.offNote + ' ' + KEPT_TODAY + '</p>';
+    var notes = T(noteLine, 'today', 'TODAY · the resting sentence A18 replaces. It is true only of this browser, which is why the ruling turned down a Save for later button over it.');
+    var body = st === 'change'
+      ? T('<p class="status">Figuring this day…</p>', 'today', 'TODAY · a new date is a new check: the line marked Not in the bank yet is cleared the moment the date changes, and nothing says so. Ask 5 asks first.')
+      : band(p, dev) + '<p class="hint">Started off by ' + p.startedOff + '</p>' + sums(p, dev, { moved: st === 'moved' }) + find(p, dev);
+    var tail = phone ? '<span class="btn full">Save this check</span>' + noteLine : '';
+    return '<div class="ck">' + head(p, true) + purpose(p) + restoreLine + dropped + fields + (phone ? '' : notes) + body + tail + '</div>';
+  }
+
+  // ── the card after S7 ──
+  function afterCard(p, dev, st) {
+    var phone = dev === 'm';
+    if (st === 'none' || st === 'secondA') {
+      var cashLink = p.key === 'coach' ? ' <span class="lk tap">Holding cash you haven’t deposited?</span>' : '';
+      var start = phone ? '' : '<div class="saveinline"><span class="btn">Start checking this statement</span></div>';
+      var f = '<div class="row3">' + field('Date *', dateVal(dev, st === 'secondA' ? 'Nov 22, 2026' : 'Oct 31, 2026', st === 'secondA' ? '2026-11-22' : '2026-10-31'), { cal: true }) + field(phone ? 'Bank balance *' : 'Bank balance on that date *', st === 'secondA' ? '0.00' : p.bank.replace('$', ''), { ph: st === 'secondA' }) + start + '</div>';
+      var fT = T(f, 'restyled', 'RESTYLED · A18. The shipped fields; the button beside them is now Start checking this statement (the lime one: until it is pressed there is nothing to save). On a phone it is full width under the fields. An empty balance gets today’s Save sentence: “Enter the bank balance on that date.”');
+      var hint = (p.key === 'coach' ? '<p class="hint">Any day this season, from May 21, 2026 to today. ' + HINT + cashLink + '</p>' : '<p class="hint">' + HINT + '</p>');
+      var after = T(same(hint), 'restyled', 'RESTYLED · the shipped note line. Gone from under it until Start: the band, the sums and the line count (ask 6). The coach’s cash link stays here, so cash is fixed with the statement and shows in the strip (ask 3).');
+      var heads = st === 'secondA'
+        ? T('<p class="heads"><span><b>' + p.me + '</b> has a check of Oct 31, 2026 saved for later (Nov 20).</span></p>', 'new', 'NEW · Ask 1, Reading A (recommended). Saved work is the person’s own, so nothing of it shows here: not its balance or its marks. One quiet line says it exists and whose it is, so two people don’t check the same statement twice without knowing. ' + p.other + ' can still start their own. If both save Oct 31, the second is told “Oct 31, 2026 is checked already. Saving again replaces that check.” (shipped).')
+        : '';
+      return '<div class="ck">' + head(p, false) + purpose(p) + heads + fT + after + (phone ? '<span class="btn full">Start checking this statement</span>' : '') + '</div>';
+    }
+    var top = '';
+    if (st === 'found' || st === 'moved') top = T(restore('Picked up where you left off · last worked on Nov 20, 2026'), 'restyled', 'RESTYLED · the shipped restore line, same words. Start over has moved to the card’s foot. On another device this line is what A18 buys: today the phone would show an empty card.');
+    if (st === 'last') top = T(restore('Picked up where you left off · last worked on Oct 26, 2026', '<span class="warnt">Kept until Nov 25, 2026. Any change, or Save for later, keeps it 30 more days.</span>'), 'new', 'NEW · Ask 2. In the last 7 days of the 30, the restore line adds the end date in the amber ink, with what keeps it going. Before that it says nothing about an end: the date was given once, when Save for later was pressed. After Nov 25 the card opens empty, as today’s does after 14 days.');
+    if (st === 'secondB') top = T('<p class="shared"><b>Started by ' + p.me + '</b> on Nov 20, 2026 · last worked on by ' + p.me + ' on Nov 20 · you can carry on this check</p>', 'new', 'NEW · Ask 1, Reading B (not recommended). The account has one open check. ' + p.other + ' sees ' + p.me + '’s strip and marks, and anything they change changes ' + p.me + '’s work. Two people working at once overwrite each other’s marks, so this needs a lock or a who-is-editing rule that nothing in the product has yet.');
+    var dropped = st === 'moved' ? T('<div class="callout plain">One line you marked isn’t in your books any more, so we took it off.</div>', 'unchanged', 'UNCHANGED · the shipped amber box and words. The work keeps which lines were marked, never their amounts or names, so it can count what was taken off but cannot name it (ask 7). The band and sums under it are today’s books: the deleted cheque is back in the books’ figure, and the gap is still the $4.50 fee.') : '';
+    var s;
+    if (st === 'change') {
+      var cash = p.key === 'coach' ? '<span class="lk tap">Holding cash you haven’t deposited?</span>' : '';
+      var edit = '<div class="strip edit"><div class="erow">' + field('Date *', dateVal(dev, 'Nov 30, 2026', '2026-11-30'), { cal: true, focus: true }) + field(phone ? 'Bank balance *' : 'Bank balance on that date *', p.bank.replace('$', '')) +
+        '<div class="acts"><span class="btn">Use these</span><span class="lk tap">Keep Oct 31</span>' + cash + '</div></div>' +
+        '<p class="warnline">A new date clears the 1 line you marked. Changing only the balance keeps it.</p></div>';
+      s = T(edit, 'new', 'NEW · Ask 5. Change opens the strip into the shipped fields, in place, with Use these (the one lime button while the strip is open; Save this check, Save for later and Add entry wait, greyed, so a figure about to change can’t be saved) and Keep Oct 31 (back out). The amber line appears only when the DATE differs and lines are marked; a new balance alone keeps every mark. The work under the strip waits, greyed, until Use these, so nothing figures twice. Coach: the cash field is edited here too.');
+    } else {
+      s = strip(p, dev, { cash: false, kind: st === 'work' || st === 'saved' ? 'new' : 'new', note: st === 'work' || st === 'saved' ? undefined : 'NEW · the strip, as drawn in tab 2.' });
+    }
+    var w = work(p, dev, { moved: st === 'moved' });
+    if (st === 'change') w = '<div class="waiting">' + w + '</div>';
+    var ft = foot(p, dev, { replaces: false });
+    if (st === 'change') ft = '<div class="waiting">' + ft + '</div>';
+    return '<div class="ck">' + head(p, st !== 'change') + purpose(p) + top + dropped + s + w + ft + '</div>';
+  }
+
+  // ── the screens around the card ──
+  var CHECKS = [['Sep 30, 2026', 'Matches', 'Oct 3, 2026'], ['Aug 31, 2026', 'Matches', 'Sep 4, 2026']];
+  function clubList(p, dev) {
+    if (dev === 'm') {
+      return same('<p class="listh">Balance checks</p><div class="rows">' + CHECKS.map(function (c) { return '<div class="r"><span><b>' + c[0] + ' · ' + (p.key === 'club' ? '$12,140.55' : '$3,410.00') + '</b><span>' + c[1] + '</span><span>' + p.me + ' · ' + c[2] + '</span></span><span>›</span></div>'; }).join('') +
+        (p.key === 'club' ? '<div class="r mut"><span><b>Aug 1, 2026 · $10,950.00</b><span>Starting balance</span></span><span>›</span></div>' : '') + '</div>');
+    }
+    return same('<p class="listh">Balance checks</p><div class="tbl"><div class="tr th"><span>Date</span><span class="n">The bank said</span><span class="n">Should have been</span><span>Result</span><span>Checked by</span><span></span></div>' +
+      CHECKS.map(function (c) { return '<div class="tr"><span class="dt">' + c[0] + '</span><span class="n">' + (p.key === 'club' ? '$12,140.55' : '$3,410.00') + '</span><span class="n">' + (p.key === 'club' ? '$12,140.55' : '$3,410.00') + '</span><span>' + c[1] + '</span><span>' + p.me + ' · ' + c[2] + '</span><span>›</span></div>'; }).join('') +
+      (p.key === 'club' ? '<div class="tr mut"><span class="dt mut">Aug 1, 2026</span><span class="n mut">$10,950.00</span><span class="n mut">—</span><span class="mut">Starting balance</span><span class="mut">' + p.me + ' · Aug 3, 2026</span><span class="mut">›</span></div>' : '') + '</div>');
+  }
+  function notice(p, st, when) {
+    if (st === 'saved' && when === 'after') return T('<div class="notice" role="status">Saved for later. Pick it up here, on any device you sign in on, until Dec 22, 2026.</div>', 'new', 'NEW · Ask 9. The shipped page notice (the one that says “Checked Oct 31, 2026…” after a save), with what Save for later kept and the day it ends. The card stays as it is under it; the work is already kept as you go (ask 4), so pressing the button confirms it and restarts the 30 days.');
+    return '';
+  }
+  function clubScreen(dev, when, st) {
+    var p = P.club;
+    var card = when === 'after' ? afterCard(p, dev, st) : todayCard(p, dev, st);
+    var top = same('<div class="topline"><b>Club chequing</b><span>Checked through <b>Sep 30, 2026</b></span><span class="lk">Add an account</span><span class="lk">Name and books</span></div>');
+    var body = notice(p, st, when) + top + card + clubList(p, dev);
+    if (dev === 'm') {
+      return '<div class="frame m ph kitclub"><div class="ptop same">Accounting <span>◎</span></div><div class="ptabs same"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allo…</span></div><div class="pbody">' + body + '</div><div class="pbar same"><span>Overview</span><b>Accounting</b><span>More</span></div></div>';
+    }
+    return '<div class="frame d cd kitclub"><aside class="side same"><div class="brand">FieldLogicHQ <small>ADMIN</small></div><div class="org"><i>RM</i>Riverdale Minor Ball</div><nav><span>Overview</span><span class="h">CLUB</span><span class="on">Accounting</span><span>Organization</span><span>Communications</span><span class="h">PROGRAMS</span><span>House league</span><span>Rep teams</span><span>Tournaments</span></nav></aside>' +
+      '<div class="main"><div class="mtop same">Accounting</div><div class="mtabs same"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div><div class="mbody">' + body + '</div></div></div>';
+  }
+  function coachScreen(dev, when, st) {
+    var p = P.coach;
+    var card = when === 'after' ? afterCard(p, dev, st) : todayCard(p, dev, st);
+    // The shipped head line: on a phone the account takes its own line and the next one starts without a dot.
+    var line = same('<p class="topline"><b' + (dev === 'm' ? ' style="flex-basis:100%"' : '') + '>Team bank account</b><span>' + (dev === 'm' ? '' : '· ') + 'checked through <b>Sep 30, 2026</b></span><span>· Matches</span></p>');
+    var pill = same('<span class="viewpill">View <b>Balance check</b> ⌄</span>');
+    var body = notice(p, st, when) + pill + line + card + clubList(p, dev);
+    if (dev === 'm') {
+      return '<div class="frame m ph"><div class="ptop same">Riverdale Ridge 13U <span>?</span></div><div class="ptabs same"><span>Overview</span><span>Budget</span><span>Dues</span><span class="on">Ledger</span><span>Fundraising</span></div><div class="pbody">' + body + '</div><div class="pbar same"><span>Home</span><span>Schedule</span><b>Money</b><span>Roster</span><span>More</span></div></div>';
+    }
+    return '<div class="frame d"><div class="ctop same"><span>COACHES PORTAL</span><span class="r"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="ws">Workspaces ⌄</span></span></div>' +
+      '<div class="cg"><div class="cside same"><span>Home</span><span>Schedule</span><span>Roster</span><span>Practices</span><span class="on">Money</span><span>Messages</span><span>Documents</span><span>Insights</span><span>Settings</span></div>' +
+      '<div class="main"><div class="team same"><div><b>Riverdale Ridge 13U</b><small>2026 SEASON · 12-4-1</small></div><span class="q">?</span></div><div class="ctabs same"><span>Overview</span><span>Budget</span><span>Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Budget vs. Actual</span></div><div class="cbody">' + body + '</div></div></div></div>';
+  }
+  function pillSpecimen() {
+    var html = '<div class="frame" style="width:760px;padding:20px 24px 230px"><div class="topline"><span class="pill">Account <b>Club chequing</b> ⌄</span><span>Checked through <b>Sep 30, 2026</b></span><span class="lk">Name and books</span>' +
+      '<div class="menu"><div class="o sel"><b>Club chequing</b><span>Checked through Sep 30, 2026 · Matches</span></div><div class="o"><b>Gaming account</b><span>Checked through Sep 30, 2026 · Matches</span><span class="mine">Your check of Oct 31 is saved for later</span></div><div class="foot">＋ Add an account</div></div></div></div>';
+    return T(html, 'new', 'NEW · Ask 8, club only. The shipped Account pill (its options already carry a sub-line saying how far each account is checked). The account that holds your saved work gains a second line in the olive ink. Only yours shows: under Reading A a colleague’s work is not yours to open. A coach has one account, so there is nothing to mark.');
+  }
+
+  // ── which states each tab shows ──
+  var SPECS = {
+    start: [{ st: 'none', cap: 'Nothing typed yet would look the same; here the statement’s two figures are typed and nothing is kept' }],
+    work: [{ st: 'work', cap: 'One cheque marked, $4.50 still off' }],
+    change: [{ st: 'change', cap: 'Change pressed, the date retyped as Nov 30' }],
+    saved: [{ st: 'saved', dev: 'd', cap: 'Desk · Save for later just pressed' }, { st: 'found', dev: 'm', cap: 'Phone · the next day, on another device' }, { pill: true, cap: 'Club with two accounts · the Account pill opened' }],
+    moved: [{ st: 'moved', cap: 'Back on Nov 22: the marked line was deleted meanwhile' }],
+    second: [{ st: 'secondA', cap: 'Reading A · mine only (recommended) · as the second person sees the account' }, { st: 'secondB', cap: 'Reading B · the account’s one open check · as the second person sees it' }],
+    last: [{ st: 'last', cap: 'Last worked on Oct 26, viewed Nov 22: 3 days left' }]
+  };
+  var TODAY_OF = { none: 'none', work: 'work', change: 'change', saved: 'work', found: 'none', moved: 'moved', secondA: 'none', secondB: 'none', last: 'none' };
+  var TODAY_SAYS = {
+    found: 'Today, on another device: nothing comes back. The same browser would show “Picked up where you left off”.',
+    secondA: 'Today: the second person sees an ordinary card. Drafts are already per person.',
+    secondB: 'Today: the second person sees an ordinary card. Drafts are already per person.',
+    last: 'Today: a browser draft idle 14 days is dropped without a word.',
+    saved: 'Today: there is no Save for later. The browser keeps the work as you type.'
+  };
+
+  var state = { tab: 'start', when: 'after', dev: 'd', show: 'all' };
+  function render() {
+    var host = document.querySelector('.specs[data-specs="' + state.tab + '"]');
+    if (!host) return;
+    var out = '';
+    (SPECS[state.tab] || []).forEach(function (sp) {
+      if (sp.pill) { if (state.when === 'after') out += '<div class="cap">' + sp.cap + '</div><div class="scroller">' + pillSpecimen() + '</div>'; return; }
+      if (sp.dev && sp.dev !== state.dev) return;
+      var st = state.when === 'after' ? sp.st : TODAY_OF[sp.st];
+      var whenWord = state.when === 'after' ? '<em>After S7</em>' : 'Today · shipped';
+      var cap = '<div class="cap">' + whenWord + ' · ' + sp.cap + (state.when === 'today' && TODAY_SAYS[sp.st] ? ' · ' + TODAY_SAYS[sp.st] : '') + '</div>';
+      if (state.dev === 'd') {
+        out += cap + '<div class="scroller"><div class="pair"><div><span class="pcap">Club · Accounting › Bank · desk 1440</span>' + clubScreen('d', state.when, st) + '</div></div></div>';
+        out += '<div class="scroller"><div class="pair"><div><span class="pcap">Coach · Money › Ledger › Balance check · desk 1440</span>' + coachScreen('d', state.when, st) + '</div></div></div>';
+      } else {
+        out += cap + '<div class="scroller"><div class="pair"><div><span class="pcap">Club · phone 390</span>' + clubScreen('m', state.when, st) + '</div><div><span class="pcap">Coach · phone 390</span>' + coachScreen('m', state.when, st) + '</div></div></div>';
+      }
+    });
+    host.innerHTML = out;
+  }
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs button'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('section.panel'));
+  function show(name) {
+    if (!panels.some(function (p) { return p.dataset.tab === name; })) name = 'start';
+    state.tab = name;
+    panels.forEach(function (p) { p.hidden = p.dataset.tab !== name; });
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === name)); });
+    document.getElementById('viewrow').style.visibility = name === 'asks' ? 'hidden' : 'visible';
+    render();
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { if (location.hash !== '#' + b.dataset.tab) location.hash = b.dataset.tab; else show(b.dataset.tab); }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  Array.prototype.forEach.call(document.querySelectorAll('.seg'), function (seg) {
+    var btns = Array.prototype.slice.call(seg.querySelectorAll('button'));
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+        if (b.dataset.when) state.when = b.dataset.when;
+        if (b.dataset.dev) state.dev = b.dataset.dev;
+        if (b.dataset.show) { state.show = b.dataset.show; document.body.dataset.show = b.dataset.show; }
+        render();
+      });
+    });
+  });
+  var bar = document.getElementById('notebar');
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('.tag') : null;
+    if (!t || !t.dataset.note) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.tag.on'), function (x) { x.classList.remove('on'); });
+    t.classList.add('on');
+    var note = t.dataset.note;
+    var i = note.indexOf(' · ');
+    bar.innerHTML = i > 0 ? '<b>' + esc(note.slice(0, i)) + '</b> · ' + esc(note.slice(i + 3)) : esc(note);
+  });
+  document.body.dataset.show = 'all';
+  show(location.hash.slice(1));
+})();
+</script>

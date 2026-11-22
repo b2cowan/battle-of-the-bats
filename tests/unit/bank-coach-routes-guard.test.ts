@@ -28,8 +28,12 @@ const EXPECTED: Record<string, Record<string, boolean>> = {
   [`${BANK_ROOT}/route.ts`]: { GET: false },
   [`${BANK_ROOT}/checks/route.ts`]: { POST: true },
   [`${BANK_ROOT}/checks/[checkId]/route.ts`]: { DELETE: true },
+  // S7: a check in progress. Money write for every handler (a view-only coach gets no card, and no work).
+  [`${BANK_ROOT}/work/route.ts`]: { GET: true, PUT: true, DELETE: true },
 };
-const COACH_BANK_LIBS = ['lib/bank-coach-map.ts', 'lib/bank-coach-rules.ts', 'lib/bank-coach-read.ts', 'lib/bank-coach-steps.ts'];
+const COACH_BANK_LIBS = ['lib/bank-coach-map.ts', 'lib/bank-coach-rules.ts', 'lib/bank-coach-read.ts', 'lib/bank-coach-steps.ts',
+  // S7: who on the team may save a check, asked of colleagues (a coach reader, so it lives here).
+  'lib/bank-coach-work.ts'];
 const STEPS = readCode('lib/bank-coach-steps.ts');
 const fnBody = (code: string, name: string) => {
   const a = code.indexOf(`export async function ${name}(`);

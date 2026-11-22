@@ -9,6 +9,7 @@ import { bankRefusedAs, step } from './bank-club-steps';
 import { checkView, readDay } from './bank-club-rules';
 import { readTeamBank, teamAccountOf, teamCheckerRoles, TEAM_BANK_ACCOUNT_NAME, type TeamBankAccount } from './bank-coach-read';
 import { coachSavePlan } from './bank-coach-rules';
+import { discardWorkAfterSave } from './bank-check-work-server';
 import type { RepProgramYear } from './types';
 
 /**
@@ -76,7 +77,7 @@ export async function teamBankAnswer(c: TeamBankCaller, r: Moved<object>, status
  * The team's account, made at its first save (§9 BC6: no setup question, named "Team bank account"). A first save racing
  * another (`bank_accounts_one_per_team`) uses the account the other made, never a 500 (BC6a "For BC6b").
  */
-async function openTeamAccount(c: TeamBankCaller): Promise<TeamBankAccount> {
+export async function openTeamAccount(c: TeamBankCaller): Promise<TeamBankAccount> {
   const { data, error } = await supabaseAdmin.from('bank_accounts')
     .insert({ org_id: c.orgId, owner_kind: 'team', team_id: c.season.teamId, name: TEAM_BANK_ACCOUNT_NAME, created_by: c.actorId })
     .select('id, name').single();
@@ -114,7 +115,10 @@ export async function saveTeamCheck(c: TeamBankCaller, body: Record<string, unkn
     p_books_cents: a.booksCents, p_on_its_way_cents: a.onItsWayCents, p_cash_cents: a.cashCents, p_book_ids: a.bookIds,
     p_waiting: a.waiting, p_start: null, p_start_books: null, p_actor: c.actorId,
   }, { bad_item: 'bad_team_item' });
-  return r.ok ? { ok: true, id: r.data.id as string } : r;
+  if (!r.ok) return r;
+  // S7: the check is the record now, so the saver's work in progress on this account goes in the same request.
+  await discardWorkAfterSave(account.id, c.actorId);
+  return { ok: true, id: r.data.id as string };
 }
 
 /**

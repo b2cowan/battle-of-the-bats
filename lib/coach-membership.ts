@@ -25,6 +25,7 @@ import {
 import { isTeamWorkspaceOrg, getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyTournamentGrant } from './coach-tournament-grant';
 import { clearTryoutContactSetBy } from './coach-tryout-contact-clear';
+import { discardTeamWorkOf } from './bank-check-work-server';
 import type { Organization, RepProgramYear } from './types';
 
 /**
@@ -722,6 +723,8 @@ export async function removeStaffMember(
     .from('rep_team_staff_memberships').select('id').eq('team_id', teamId).eq('user_id', userId).maybeSingle<{ id: string }>()
   ).data?.id;
   if (seatId) await clearTryoutContactOf(teamId, seatId, 'removal');
+  // Bank check S7 (ruling 2): their saved bank work on the team's account goes with the seat (best-effort inside).
+  if (data) await discardTeamWorkOf(teamId, userId);
 
   // Best-effort: the removal itself is complete; a failed guest-row cleanup must not 500 an
   // action that succeeded (it only leaves a capability-less org membership to clean up later).

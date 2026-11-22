@@ -713,6 +713,132 @@
         "column_default": null
       },
       {
+        "table_name": "bank_check_drafts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 2,
+        "column_name": "bank_account_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 3,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 4,
+        "column_name": "statement_end_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 5,
+        "column_name": "balance_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "''::text"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 6,
+        "column_name": "cash_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 7,
+        "column_name": "marked_keys",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "NO",
+        "column_default": "'{}'::text[]"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 8,
+        "column_name": "started_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 9,
+        "column_name": "started_balance_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 10,
+        "column_name": "started_difference_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 11,
+        "column_name": "revision",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 12,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 13,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 14,
+        "column_name": "expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "bank_check_waiting",
         "pos": 1,
         "column_name": "id",
@@ -32933,6 +33059,20 @@
         "constraint_name": "bank_accounts_team_id_fkey"
       },
       {
+        "table_name": "bank_check_drafts",
+        "column_name": "bank_account_id",
+        "foreign_table": "bank_accounts",
+        "foreign_column": "id",
+        "constraint_name": "bank_check_drafts_bank_account_id_fkey"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_check_drafts_user_id_fkey"
+      },
+      {
         "table_name": "bank_check_waiting",
         "column_name": "added_by",
         "foreign_table": null,
@@ -39483,6 +39623,26 @@
         "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
       },
       {
+        "tablename": "bank_check_drafts",
+        "indexname": "bank_check_drafts_expires_idx",
+        "indexdef": "CREATE INDEX bank_check_drafts_expires_idx ON public.bank_check_drafts USING btree (expires_at)"
+      },
+      {
+        "tablename": "bank_check_drafts",
+        "indexname": "bank_check_drafts_one_per_person",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_drafts_one_per_person ON public.bank_check_drafts USING btree (bank_account_id, user_id)"
+      },
+      {
+        "tablename": "bank_check_drafts",
+        "indexname": "bank_check_drafts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_drafts_pkey ON public.bank_check_drafts USING btree (id)"
+      },
+      {
+        "tablename": "bank_check_drafts",
+        "indexname": "bank_check_drafts_user_idx",
+        "indexdef": "CREATE INDEX bank_check_drafts_user_idx ON public.bank_check_drafts USING btree (user_id)"
+      },
+      {
         "tablename": "bank_check_waiting",
         "indexname": "bank_check_waiting_added_by_idx",
         "indexdef": "CREATE INDEX bank_check_waiting_added_by_idx ON public.bank_check_waiting USING btree (added_by) WHERE (added_by IS NOT NULL)"
@@ -46030,6 +46190,48 @@
       {
         "kind": "RLS",
         "table_name": "bank_accounts",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_balance_len",
+        "check_clause": "(length(balance_text) <= 32)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_cash_len",
+        "check_clause": "((cash_text IS NULL) OR ((length(cash_text) >= 1) AND (length(cash_text) <= 32)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_expires_after_change",
+        "check_clause": "(expires_at > updated_at)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_marked_count",
+        "check_clause": "(cardinality(marked_keys) <= 500)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_revision_positive",
+        "check_clause": "(revision >= 1)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_started_shape",
+        "check_clause": "(((started_date IS NULL) = (started_balance_text IS NULL)) AND ((started_date IS NULL) = (started_difference_cents IS NULL)) AND ((started_balance_text IS NULL) OR (length(started_balance_text) <= 32)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_check_drafts",
         "detail": "ENABLED",
         "check_clause": null
       },

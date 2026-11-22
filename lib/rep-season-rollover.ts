@@ -28,6 +28,7 @@ import type { RepDocumentType, RepProgramYear, RepRosterPlayer } from './types';
 import { getRepDocumentTemplates } from './db';
 import { validityForType } from './forms-coverage';
 import { documentsSignedLine, type RollDocuments } from './season-roll-path';
+import { discardTeamWork } from './bank-check-work-server';
 
 /**
  * Coach Premium — Phase 5: "Start next season" for a standalone Premium coach.
@@ -555,6 +556,14 @@ export async function startNextRepSeason(params: {
     console.error('[rep-season-rollover] complete previous season failed:', e);
   }
 
+  // Bank check S7 (ruling 2): every person's saved bank work on the team's account goes when the season rolls over (its
+  // dates belong to the old season). Best-effort: the roll has landed; the 30 days are the backstop.
+  try {
+    await discardTeamWork(teamId);
+  } catch (e) {
+    console.error('[rep-season-rollover] saved bank work not discarded on the roll (it expires on its own):', e);
+  }
+
   // `ok` reflects the DATA carry only — a soft finalize hiccup (completing the old season, re-pointing
   // the active pointer) records a warning but must not mark an otherwise-successful roll as failed.
   summary.ok =
@@ -650,6 +659,12 @@ export async function closeOpenSeason(teamId: string, seasonId: string): Promise
     .select('id, name, year, status')
     .maybeSingle<SeasonRowSummary>();
   if (error) throw error;
+  // Bank check S7 (ruling 2): the close takes every person's saved bank work on the team's account with it. Best-effort.
+  if (data) {
+    await discardTeamWork(teamId).catch(e => {
+      console.error('[rep-season-rollover] saved bank work not discarded on the close (it expires on its own):', e);
+    });
+  }
   return data ?? null;
 }
 

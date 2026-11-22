@@ -10185,6 +10185,75 @@ with its own check (CHECK `bank_check_waiting_added_shape`: both NULL, or a star
 
 ---
 
+## `bank_check_drafts`
+<!-- dict:table:bank_check_drafts -->
+
+**Purpose:** one person's unfinished bank check on one bank account, kept as they go from "Start checking this
+statement" so it follows them to any device they sign in on (Bank check through a volunteer's eyes **S7**, **mig 522**;
+plan `BANK_CHECK_NOVICE_UX_PLAN.md` §0 A18, nine rulings 2026-11-22; `/dba` Finding #54). Replaces the browser-only
+working draft (WD1/WD2's localStorage store). Code: `lib/bank-check-work.ts`.
+
+**Gotchas (read first):**
+1. **MINE ONLY (ruling 1).** One row per (account, person), UNIQUE `bank_check_drafts_one_per_person`. A colleague on the
+   same account is shown **only** who (`user_id` → `resolvePersonNamer`), the date (`statement_end_date`) and when it last
+   changed (`updated_at`). ⚠ The colleagues' read selects those three columns and nothing else — never the balance, cash
+   or marks (pinned by test).
+2. **KEYS, NEVER FIGURES.** `marked_keys` are line keys (`bank_check_waiting.line_key`'s shape); a mark comes back only as
+   a line the books offer NOW, at the books' amount (`keepOffered`). No line's amount or name is stored.
+3. **KEYED TO THE ACCOUNT, NOT THE ORG.** No `org_id`, deliberately (as `bank_checks`): a team's account moves with the
+   team into a club (`move_team_into_club` re-keys `bank_accounts.org_id`), and the draft follows it. The org is one hop
+   away through `bank_accounts.org_id`; every read is scoped by an account the route's gate has proven is the caller's
+   (club: `owner_kind='club'` in the gate's org; coach: the gate's team's account). A coach's team account is opened at
+   Start when none exists yet (the first save's `openTeamAccount`; an account with no check reads as none).
+4. **30 DAYS FROM THE LAST CHANGE (ruling 2).** Every write stamps `updated_at = now()` and `expires_at = now() + 30
+   days` (one constant, `BANK_CHECK_DRAFT_DAYS`); Save for later is a write that changes nothing else. A row past
+   `expires_at` is none: the routes delete it on sight, and `bank_check_drafts_sweep()` deletes the rest nightly (mig 523,
+   pg_cron `bank-check-drafts-sweep`, 08:55 GMT).
+5. **HOW A ROW GOES:** Save this check (the check routes delete it in the same request, after the save step succeeds);
+   Start over; expiry; account / team / org deleted (CASCADE through `bank_accounts`); the person deleted (CASCADE from
+   `auth.users`); the person loses write access (the club member route, the coach staff route and `removeStaffMember`
+   delete their rows, and each read of an account deletes a colleague's row whose owner can no longer save a check
+   there); a coach's season rolls over or closes (`lib/rep-season-rollover.ts`). A team's rows go through
+   `bank_check_drafts_discard_team` (below), never an app read of the team's account (D1).
+6. **One device at a time, compare-and-swap.** `revision` starts at 1 and every write bumps it; a write names the
+   revision it read and is refused (`changed`) when another device wrote since, so a stale tab never overwrites newer work
+   unseen. A first write racing another meets the unique (23505) → `changed`.
+7. **Service role only** (RLS on, no policies, anon/authenticated revoked).
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:bank_check_drafts.bank_account_id -->
+<!-- dict:col:bank_check_drafts.user_id -->
+**`bank_account_id`** (FK → `bank_accounts.id` CASCADE, NOT NULL) / **`user_id`** (FK → `auth.users` CASCADE, NOT NULL;
+index `bank_check_drafts_user_idx`, the club Account pill's "your saved work" read) — whose work, on which account.
+
+<!-- dict:col:bank_check_drafts.statement_end_date -->
+<!-- dict:col:bank_check_drafts.balance_text -->
+<!-- dict:col:bank_check_drafts.cash_text -->
+**`statement_end_date`** (date, NOT NULL) — the statement's date being checked. **`balance_text`** (text ≤ 32, default
+'') — the statement balance AS TYPED (the card restores what was typed). **`cash_text`** (text 1–32, nullable) — the coach
+card's cash not deposited yet, as typed; NULL when not typed (always NULL on a club account).
+
+<!-- dict:col:bank_check_drafts.marked_keys -->
+**`marked_keys`** (text[], ≤ 500, default `{}`) — the lines marked "Not in the bank yet", in the order marked (gotcha 2).
+
+<!-- dict:col:bank_check_drafts.started_date -->
+<!-- dict:col:bank_check_drafts.started_balance_text -->
+<!-- dict:col:bank_check_drafts.started_difference_cents -->
+**`started_date`** / **`started_balance_text`** / **`started_difference_cents`** (bigint) — the "Started off by" anchor
+(`anchorStarted`): all three or none (CHECK `bank_check_drafts_started_shape`).
+
+<!-- dict:col:bank_check_drafts.revision -->
+**`revision`** (integer ≥ 1, default 1) — gotcha 6.
+
+<!-- dict:col:bank_check_drafts.created_at -->
+<!-- dict:col:bank_check_drafts.updated_at -->
+<!-- dict:col:bank_check_drafts.expires_at -->
+**`created_at`** / **`updated_at`** (the last change: the colleague's "changed {date}") / **`expires_at`** (NOT NULL,
+CHECK `> updated_at`; index `bank_check_drafts_expires_idx`, the sweep) — gotcha 4.
+
+---
+
 ### Bank functions (mig 447, 449, 450; all service role only, `RETURNS jsonb {ok, code?}` unless noted)
 
 - **`bank_first_club_account(org)`** (sql, uuid) — the oldest live club-kind account.
@@ -10207,6 +10276,11 @@ with its own check (CHECK `bank_check_waiting_added_shape`: both NULL, or a star
   450, `corrected_at` / `corrected_by`). Codes
   `bad_item`, `bad_figures`, `account_not_found`, `no_start`, `changed`; 23505 on `bank_check_waiting_once` → `bad_item`.
 - **`bank_check_delete(org, account, check, actor)`** — `bank_checks` gotcha 5.
+- **`bank_check_drafts_sweep()`** (mig 522, plpgsql, `RETURNS integer`, invoker's rights, service role only) — deletes
+  every `bank_check_drafts` row past `expires_at`; returns how many. Scheduled nightly by mig 523 (`bank-check-drafts-sweep`).
+- **`bank_check_drafts_discard_team(team, user = NULL)`** (mig 522, plpgsql, `RETURNS integer`, invoker's rights, service
+  role only) — deletes the work in progress on the team's account: everyone's (a season's roll or close) or one person's
+  (they left the team or lost money write). In the database so the club-side callers never read a team's account (D1).
 - Dropped by mig 447 (never re-create): `bank_account_set_up`, `bank_check_start`, `bank_check_refigure`,
   `bank_check_mark`, `bank_check_undo`, `bank_check_add_line`, `bank_tick_rows`, `bank_keep_out_rows`,
   `bank_check_tick`, `bank_check_keep_out`, `bank_club_line_left`, and the tables `bank_check_events`,

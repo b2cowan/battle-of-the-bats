@@ -2,18 +2,19 @@
 
 **Generated:** 2026-11-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 585 divergence(s)** across dev/prod.
+**⚠️ 614 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 19 | 2 | — |
-| Columns | 227 | 42 | 2 |
-| Indexes | 91 | 13 | 0 |
-| Constraints | 78 | 7 | — |
-| RLS / CHECK | 83 | 19 | 0 (RLS state) |
+| Tables | 20 | 2 | — |
+| Columns | 241 | 42 | 2 |
+| Indexes | 95 | 13 | 0 |
+| Constraints | 82 | 7 | — |
+| RLS / CHECK | 89 | 19 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (19)
+### Only in DEV (20)
+- `bank_check_drafts`
 - `club_form_answer_clears`
 - `club_form_answers`
 - `club_form_document_versions`
@@ -39,7 +40,21 @@
 - `platform_stripe_fees`
 
 ## Columns
-### Only in DEV (227)
+### Only in DEV (241)
+- `bank_check_drafts.balance_text`
+- `bank_check_drafts.bank_account_id`
+- `bank_check_drafts.cash_text`
+- `bank_check_drafts.created_at`
+- `bank_check_drafts.expires_at`
+- `bank_check_drafts.id`
+- `bank_check_drafts.marked_keys`
+- `bank_check_drafts.revision`
+- `bank_check_drafts.started_balance_text`
+- `bank_check_drafts.started_date`
+- `bank_check_drafts.started_difference_cents`
+- `bank_check_drafts.statement_end_date`
+- `bank_check_drafts.updated_at`
+- `bank_check_drafts.user_id`
 - `club_form_answer_clears.cleared_at`
 - `club_form_answer_clears.form_id`
 - `club_form_answer_clears.id`
@@ -317,7 +332,11 @@
 - `family_email_sends.subject` — dev: `text|text|YES|` | prod: `text|text|NO|`
 
 ## Indexes
-### Only in DEV (91)
+### Only in DEV (95)
+- `bank_check_drafts_expires_idx`
+- `bank_check_drafts_one_per_person`
+- `bank_check_drafts_pkey`
+- `bank_check_drafts_user_idx`
 - `club_form_answer_clears_form_idx`
 - `club_form_answer_clears_org_idx`
 - `club_form_answer_clears_pkey`
@@ -429,7 +448,11 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (78)
+### Only in DEV (82)
+- `bank_check_drafts.bank_check_drafts_bank_account_id_fkey`
+- `bank_check_drafts.bank_check_drafts_one_per_person`
+- `bank_check_drafts.bank_check_drafts_pkey`
+- `bank_check_drafts.bank_check_drafts_user_id_fkey`
 - `club_form_answer_clears.club_form_answer_clears_form_id_fkey`
 - `club_form_answer_clears.club_form_answer_clears_org_id_fkey`
 - `club_form_answer_clears.club_form_answer_clears_pkey`
@@ -522,7 +545,13 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (83)
+### CHECK only in DEV (89)
+- `bank_check_drafts.bank_check_drafts_balance_len`
+- `bank_check_drafts.bank_check_drafts_cash_len`
+- `bank_check_drafts.bank_check_drafts_expires_after_change`
+- `bank_check_drafts.bank_check_drafts_marked_count`
+- `bank_check_drafts.bank_check_drafts_revision_positive`
+- `bank_check_drafts.bank_check_drafts_started_shape`
 - `club_form_answer_clears.club_form_answer_clears_has_target`
 - `club_form_answer_clears.club_form_answer_clears_subject_pair`
 - `club_form_answer_clears.club_form_answer_clears_subject_table_check`

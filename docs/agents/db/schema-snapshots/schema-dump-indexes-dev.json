@@ -150,6 +150,26 @@
     "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
   },
   {
+    "tablename": "bank_check_drafts",
+    "indexname": "bank_check_drafts_expires_idx",
+    "indexdef": "CREATE INDEX bank_check_drafts_expires_idx ON public.bank_check_drafts USING btree (expires_at)"
+  },
+  {
+    "tablename": "bank_check_drafts",
+    "indexname": "bank_check_drafts_one_per_person",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_drafts_one_per_person ON public.bank_check_drafts USING btree (bank_account_id, user_id)"
+  },
+  {
+    "tablename": "bank_check_drafts",
+    "indexname": "bank_check_drafts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_drafts_pkey ON public.bank_check_drafts USING btree (id)"
+  },
+  {
+    "tablename": "bank_check_drafts",
+    "indexname": "bank_check_drafts_user_idx",
+    "indexdef": "CREATE INDEX bank_check_drafts_user_idx ON public.bank_check_drafts USING btree (user_id)"
+  },
+  {
     "tablename": "bank_check_waiting",
     "indexname": "bank_check_waiting_added_by_idx",
     "indexdef": "CREATE INDEX bank_check_waiting_added_by_idx ON public.bank_check_waiting USING btree (added_by) WHERE (added_by IS NOT NULL)"
