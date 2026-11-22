@@ -69422,42 +69422,6 @@
       },
       {
         "table_name": "organization_billing_facts",
-        "pos": 5,
-        "column_name": "next_season_plan_id",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "organization_billing_facts",
-        "pos": 6,
-        "column_name": "next_season_billing_cycle",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "organization_billing_facts",
-        "pos": 7,
-        "column_name": "next_season_chosen_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "organization_billing_facts",
-        "pos": 8,
-        "column_name": "next_season_subscription_id",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "organization_billing_facts",
         "pos": 9,
         "column_name": "created_at",
         "data_type": "timestamp with time zone",
@@ -69885,15 +69849,6 @@
         "column_name": "email_opt_out_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "organizations",
-        "pos": 33,
-        "column_name": "free_floor",
-        "data_type": "text",
-        "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -95436,11 +95391,6 @@
       },
       {
         "tablename": "organization_billing_facts",
-        "indexname": "idx_org_billing_facts_no_next_season_choice",
-        "indexdef": "CREATE INDEX idx_org_billing_facts_no_next_season_choice ON public.organization_billing_facts USING btree (org_id) WHERE (next_season_plan_id IS NULL)"
-      },
-      {
-        "tablename": "organization_billing_facts",
         "indexname": "organization_billing_facts_pkey",
         "indexdef": "CREATE UNIQUE INDEX organization_billing_facts_pkey ON public.organization_billing_facts USING btree (org_id)"
       },
@@ -102142,18 +102092,6 @@
         "check_clause": null
       },
       {
-        "kind": "CHECK",
-        "table_name": "organization_billing_facts",
-        "detail": "organization_billing_facts_next_season_billing_cycle_check",
-        "check_clause": "(next_season_billing_cycle = ANY (ARRAY['annual'::text, 'monthly'::text]))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "organization_billing_facts",
-        "detail": "organization_billing_facts_next_season_plan_id_check",
-        "check_clause": "((next_season_plan_id IS NULL) OR (length(next_season_plan_id) > 0))"
-      },
-      {
         "kind": "RLS",
         "table_name": "organization_billing_facts",
         "detail": "ENABLED",
@@ -102212,12 +102150,6 @@
         "table_name": "organizations",
         "detail": "organizations_fiscal_first_month_check",
         "check_clause": "((fiscal_first_month >= 1) AND (fiscal_first_month <= 12))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "organizations",
-        "detail": "organizations_free_floor_check",
-        "check_clause": "((free_floor IS NULL) OR (free_floor = 'league_starter'::text))"
       },
       {
         "kind": "CHECK",

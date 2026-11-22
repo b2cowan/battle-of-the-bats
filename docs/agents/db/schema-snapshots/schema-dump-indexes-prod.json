@@ -3356,11 +3356,6 @@
   },
   {
     "tablename": "organization_billing_facts",
-    "indexname": "idx_org_billing_facts_no_next_season_choice",
-    "indexdef": "CREATE INDEX idx_org_billing_facts_no_next_season_choice ON public.organization_billing_facts USING btree (org_id) WHERE (next_season_plan_id IS NULL)"
-  },
-  {
-    "tablename": "organization_billing_facts",
     "indexname": "organization_billing_facts_pkey",
     "indexdef": "CREATE UNIQUE INDEX organization_billing_facts_pkey ON public.organization_billing_facts USING btree (org_id)"
   },

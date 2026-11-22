@@ -1,14 +1,4 @@
 {
   "_comment": "ACCEPTED dev↔prod divergences (scripts/check-schema-parity.mjs). Every entry is debt, not a decision — the target is an empty object. A NEW divergence, or an accepted one whose signature changes, fails the gate. Lower this as items are reconciled; re-init only after refreshing the snapshots.",
-  "accepted": {
-    "check:only-prod:organization_billing_facts.organization_billing_facts_next_season_billing_cycle_check": "",
-    "check:only-prod:organization_billing_facts.organization_billing_facts_next_season_plan_id_check": "",
-    "check:only-prod:organizations.organizations_free_floor_check": "",
-    "column:only-prod:organization_billing_facts.next_season_billing_cycle": "",
-    "column:only-prod:organization_billing_facts.next_season_chosen_at": "",
-    "column:only-prod:organization_billing_facts.next_season_plan_id": "",
-    "column:only-prod:organization_billing_facts.next_season_subscription_id": "",
-    "column:only-prod:organizations.free_floor": "",
-    "index:only-prod:idx_org_billing_facts_no_next_season_choice": ""
-  }
+  "accepted": {}
 }

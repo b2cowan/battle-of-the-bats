@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 9 divergence(s)** across dev/prod.
+**✅ No structural drift** between dev and prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 0 | 5 | 0 |
-| Indexes | 0 | 1 | 0 |
+| Columns | 0 | 0 | 0 |
+| Indexes | 0 | 0 | 0 |
 | Constraints | 0 | 0 | — |
-| RLS / CHECK | 0 | 3 | 0 (RLS state) |
+| RLS / CHECK | 0 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (0)
@@ -23,12 +23,8 @@ _none_
 ### Only in DEV (0)
 _none_
 
-### Only in PROD (5)
-- `organization_billing_facts.next_season_billing_cycle`
-- `organization_billing_facts.next_season_chosen_at`
-- `organization_billing_facts.next_season_plan_id`
-- `organization_billing_facts.next_season_subscription_id`
-- `organizations.free_floor`
+### Only in PROD (0)
+_none_
 
 ### Type/nullability/default changed (0)
 _none_
@@ -37,8 +33,8 @@ _none_
 ### Only in DEV (0)
 _none_
 
-### Only in PROD (1)
-- `idx_org_billing_facts_no_next_season_choice`
+### Only in PROD (0)
+_none_
 
 ### Definition changed (0)
 _none_
@@ -57,8 +53,6 @@ _none_
 ### CHECK only in DEV (0)
 _none_
 
-### CHECK only in PROD (3)
-- `organization_billing_facts.organization_billing_facts_next_season_billing_cycle_check`
-- `organization_billing_facts.organization_billing_facts_next_season_plan_id_check`
-- `organizations.organizations_free_floor_check`
+### CHECK only in PROD (0)
+_none_
 

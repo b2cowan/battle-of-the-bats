@@ -16858,42 +16858,6 @@
   },
   {
     "table_name": "organization_billing_facts",
-    "column_name": "next_season_plan_id",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "organization_billing_facts",
-    "column_name": "next_season_billing_cycle",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "organization_billing_facts",
-    "column_name": "next_season_chosen_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 7
-  },
-  {
-    "table_name": "organization_billing_facts",
-    "column_name": "next_season_subscription_id",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 8
-  },
-  {
-    "table_name": "organization_billing_facts",
     "column_name": "created_at",
     "data_type": "timestamp with time zone",
     "udt_name": "timestamptz",
@@ -17323,15 +17287,6 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 32
-  },
-  {
-    "table_name": "organizations",
-    "column_name": "free_floor",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 33
   },
   {
     "table_name": "organizations",

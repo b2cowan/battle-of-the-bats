@@ -1,49 +1,12 @@
 {
   "generated": "2026-11-22",
-  "total": 9,
+  "total": 0,
   "counts": {
     "tables": 0,
-    "columns": 5,
-    "indexes": 1,
+    "columns": 0,
+    "indexes": 0,
     "constraints": 0,
-    "rls": 3
+    "rls": 0
   },
-  "items": [
-    {
-      "key": "check:only-prod:organization_billing_facts.organization_billing_facts_next_season_billing_cycle_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-prod:organization_billing_facts.organization_billing_facts_next_season_plan_id_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-prod:organizations.organizations_free_floor_check",
-      "sig": ""
-    },
-    {
-      "key": "column:only-prod:organization_billing_facts.next_season_billing_cycle",
-      "sig": ""
-    },
-    {
-      "key": "column:only-prod:organization_billing_facts.next_season_chosen_at",
-      "sig": ""
-    },
-    {
-      "key": "column:only-prod:organization_billing_facts.next_season_plan_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-prod:organization_billing_facts.next_season_subscription_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-prod:organizations.free_floor",
-      "sig": ""
-    },
-    {
-      "key": "index:only-prod:idx_org_billing_facts_no_next_season_choice",
-      "sig": ""
-    }
-  ]
+  "items": []
 }
