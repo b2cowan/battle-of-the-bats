@@ -194,7 +194,7 @@ export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlu
   };
 
   const docTitle = (d: FormDocument) => (
-    <><span className={f.kind}><RepChip tone="info">{d.source === 'pdf' ? 'PDF' : 'Text'}</RepChip></span>{d.name}</>
+    <>{d.name}<span className={f.rowMark}><RepChip tone="info">{d.source === 'pdf' ? 'PDF' : 'Text'}</RepChip></span></>
   );
   const docCaption = (d: FormDocument) => (
     <><span className={f.deskOnly}>{documentCaption(d)}</span><span className={f.phoneOnly}>{documentCaption(d, true)}</span></>

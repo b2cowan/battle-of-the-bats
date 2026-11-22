@@ -138,6 +138,9 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           you run), then Collapse sidebar last. Help is the desktop account menu's (under What's new) — except in the demo
           sandbox, which hides the account menu, so its sidebar keeps Help where Plan & billing would be. */}
       <div className={styles.sidebarSpacer} />
+      {/* ⚠ No doors in the foot (a club-run team's coach with no admin seat) = no hairline and no empty section: the
+          Collapse row carries its own hairline, so drawing this one too left two rules with nothing between them. */}
+      {(inSandbox || billingHref || adminHome || tournamentsHref) && (<>
       <div className={styles.sidebarDivider} />
       <div className={styles.sidebarSection}>
         {inSandbox && (
@@ -170,6 +173,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
             destination — `COACH_ACCOUNT_MENU_PLAN.md`). The phone More sheet keeps its own:
             the strip doesn't exist below 900px. */}
       </div>
+      </>)}
       {/* ⚖ The last row (Sidebar Strip Ask 2), at the rail's foot as drawn: a rare door ends the body. */}
       <CollapseSidebarRow className={`${styles.sidebarItem} ${styles.sidebarFootItem}`} />
       </div>

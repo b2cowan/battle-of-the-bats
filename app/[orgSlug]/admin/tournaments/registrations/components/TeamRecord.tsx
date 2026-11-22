@@ -349,7 +349,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
     <RecordSection title={W.decision}>
       {sentence && <p className={screenParts.recordText}>{sentence}</p>}
       <div className={screenParts.recordActions}>
-        <button type="button" className={`btn btn-lime ${styles.recordGrow}`} onClick={() => void flushThen(() => props.onAccept(t))} disabled={props.busy}>{TEAMS_WORDS.accept}</button>
+        <button type="button" className="btn btn-lime" onClick={() => void flushThen(() => props.onAccept(t))} disabled={props.busy}>{TEAMS_WORDS.accept}</button>
         <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onReject(t))} disabled={props.busy}>{W.reject}</button>
       </div>
       {placeAction && <div className={styles.recordPlace}>{placeAction}</div>}

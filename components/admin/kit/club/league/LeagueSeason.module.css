@@ -203,6 +203,8 @@ td .amberText { display: inline; font-size: inherit; }
 /* The owing threshold's box and its "days" (9b-2, the Registration block). */
 .daysField { display: inline-flex; align-items: center; gap: 0.5rem; }
 .daysField input { width: 6rem; }
+/* A lone date (the early-bird day) is one date wide, the same as the "Form opens" date beside it, not the whole row. */
+.dateOnly { max-width: 18rem; }
 /* Friend requests: three short choices, so the dropdown fits its longest ("None: don't ask") rather than the row.
    `select.` outranks the kit's full-width .select whatever order the two sheets load in. */
 select.fitSelect { width: auto; max-width: 100%; align-self: flex-start; }

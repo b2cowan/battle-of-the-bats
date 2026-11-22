@@ -97,8 +97,7 @@ button.windowRow { width: 100%; border: 0; border-top: 1px solid var(--home-line
    Off-plan's Not filed row (13e B1) wears the same amber — the Off-plan tile's. */
 .draftBillSub,
 .offPlanNotFiled { color: var(--badge-warning-ink); }
-/* "includes house league fees … · {tournament} …" under the Overview's Revenue row (13d-5): a caption, not a row. */
-.revenueIncludes { padding-top: 0 !important; font-size: var(--type-support); }
+/* "includes house league fees … · {tournament} …" is a `.leadNote` inside the Overview's Revenue cell (13d-5). */
 .draftBillDoor { flex: none; font-size: var(--type-support); font-weight: 600; color: var(--home-olive); }
 
 /* The unbilled part, under the allocations, with its one action. */

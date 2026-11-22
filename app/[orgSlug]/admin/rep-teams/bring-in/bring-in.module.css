@@ -123,6 +123,8 @@
 }
 .history > summary::-webkit-details-marker { display: none; }
 .history > summary::marker { content: ''; }
+/* The title's own auto margin would split the free space with the chevron's and strand the count mid-row. */
+.history .title { margin: 0; }
 .chevron { margin-left: auto; color: var(--text-tertiary); transition: transform 0.2s ease; flex-shrink: 0; }
 .history[open] > summary .chevron { transform: rotate(90deg); }
 .history .body { border-top: 1px solid var(--home-line); padding-top: 0.2rem; }

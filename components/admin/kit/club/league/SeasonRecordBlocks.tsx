@@ -293,9 +293,11 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
           </div>
           <label className={ck.field}>
             <span className={ck.label}>Early-bird date</span>
-            <DateInput className={ck.input} value={draft.earlyBirdUntil}
-              onChange={v => setDraft(d => ({ ...d, earlyBirdUntil: v }))}
-              onBlur={() => draft.earlyBirdUntil !== (season.earlyBirdUntil?.slice(0, 10) ?? '') && commit({ earlyBirdUntil: draft.earlyBirdUntil || null })} />
+            <div className={s.dateOnly}>
+              <DateInput className={ck.input} value={draft.earlyBirdUntil}
+                onChange={v => setDraft(d => ({ ...d, earlyBirdUntil: v }))}
+                onBlur={() => draft.earlyBirdUntil !== (season.earlyBirdUntil?.slice(0, 10) ?? '') && commit({ earlyBirdUntil: draft.earlyBirdUntil || null })} />
+            </div>
             <span className={ck.hint}>The last day the early-bird price applies. Each division has its own early-bird amount.</span>
             {draft.earlyBirdUntil && closesDay && draft.earlyBirdUntil > closesDay && (
               <span className={s.amberText}>The early-bird date is after the form closes, so it never applies.</span>

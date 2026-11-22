@@ -27,9 +27,8 @@
 .emptyTitle { margin: 0; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
 .emptyActions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 0.35rem; }
 
-/* The row's marks: HEALTH after the question; TEXT / PDF before a document's name. */
+/* The row's marks, always AFTER the name: HEALTH on a question; TEXT / PDF on a document. */
 .rowMark { margin-left: 0.45rem; vertical-align: 1px; }
-.kind { margin-right: 0.45rem; vertical-align: 1px; }
 
 /* The caption that changes with the width (drawing tab 2: a phone keeps the type and the two marks). */
 .deskOnly { display: inline; }

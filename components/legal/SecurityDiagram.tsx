@@ -26,7 +26,10 @@ interface Form { id: 'desktop' | 'phone'; w: number; h: number; shapes: Shape[];
 const DESKTOP: Form = {
   id: 'desktop', w: 680, h: 492,
   shapes: [
-    { path: 'M90,62 C90,14 590,14 590,60', dash: true, arrow: true },
+    // ⚠ Moved from the drawing's `C90,14 590,14 590,60` (owner, 2026-11-22): that curve only turned vertical in its last pixel, so the
+    // visible line came in at ~45° and the arrowhead (which follows the true end tangent) pointed straight down: they disagreed.
+    // A rounded bracket ends in a straight 16px vertical run, so the line and the head point the same way. Peak stays at y 26.
+    { path: 'M90,62 V44 Q90,26 108,26 H572 Q590,26 590,44 V60', dash: true, arrow: true },
     { rect: [1, 64, 178, 110] },
     { rect: [252, 64, 176, 110], core: true },
     { rect: [501, 64, 178, 110] },

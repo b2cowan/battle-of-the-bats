@@ -338,9 +338,9 @@ export default function AccountingOverviewPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr><td className={moneyKit.what}>Revenue</td><td className={repKit.num}>{money(a.revenue.planned)}</td><td className={repKit.num}>{money(a.revenue.actual)}</td></tr>
-                {/* What Revenue includes from the books beside the General ledger (13d-5): the year's report, never typed. */}
-                {revenueIncludes && <tr><td colSpan={3} className={`${repKit.dim} ${cr.revenueIncludes}`}>{revenueIncludes}</td></tr>}
+                {/* What Revenue includes from the books beside the General ledger (13d-5): the year's report, never typed.
+                    A note under the Revenue name (the way "4 allocations" sits under From the teams), not a row of its own. */}
+                <tr><td className={moneyKit.what}>Revenue{revenueIncludes && <span className={cr.leadNote}>{revenueIncludes}</span>}</td><td className={repKit.num}>{money(a.revenue.planned)}</td><td className={repKit.num}>{money(a.revenue.actual)}</td></tr>
                 <tr><td className={repKit.dim}>From the teams, on allocations</td><td className={repKit.num}>{money(a.fromTheTeams.planned)}</td><td className={repKit.num}>{money(a.fromTheTeams.allocations)}</td></tr>
                 <tr><td className={repKit.dim}>From the teams, on request</td><td className={repKit.num} /><td className={repKit.num}>{money(a.fromTheTeams.onRequest)}</td></tr>
                 <tr><td className={moneyKit.what}>Expenses</td><td className={repKit.num}>{money(a.expenses.planned)}</td><td className={repKit.num}>{money(a.expenses.actual)}</td></tr>

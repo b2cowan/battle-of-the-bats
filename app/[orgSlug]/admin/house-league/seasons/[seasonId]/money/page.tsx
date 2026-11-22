@@ -317,7 +317,7 @@ export default function MoneyPage() {
       ) : shown.length === 0 ? <EmptyCard title={empty.title}>{empty.body}</EmptyCard> : (
         <>
           <div className={`${repKit.tableFrame} ${s.deskTable}`}>
-            <table className={repKit.table}>
+            <table className={`${repKit.table} ${s.ledger}`}>
               <thead><tr><th>{W.col.date}</th><th>{W.col.player}</th><th>{W.col.what}</th><th>{W.col.how}</th><th className={repKit.num}>{W.col.amount}</th></tr></thead>
               <tbody>
                 {shown.map(r => (

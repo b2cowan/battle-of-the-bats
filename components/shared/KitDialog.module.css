@@ -210,6 +210,12 @@
   border-top: 1px solid var(--home-line);
 }
 .footStart { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-right: auto; }
+/* A SENTENCE in the foot's left slot (Email families: "12 families get it. The club has sent 1 of its 3 emails…") is
+   wider than the room beside the buttons, so it took a row of its own with the buttons jammed under it. It now claims the
+   room left of the buttons and wraps inside it; where even that is too narrow (a phone) it takes its own row, with a
+   clear gap above the buttons (owner, 2026-11-20). A door or button alone keeps its natural width. */
+.foot:has(> .footStart > :is(span, p)) { row-gap: 0.85rem; }
+.footStart:has(> :is(span, p)) { flex: 1 1 14rem; min-width: 0; }
 /* `footerAbove`: the foot's own first row, full width, the amber callout's face (never red), the body's size; the
    buttons wrap to the row under it (Bank check S3, D3). */
 .footAbove {

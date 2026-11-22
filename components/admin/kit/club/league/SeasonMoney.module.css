@@ -14,6 +14,8 @@
 .late { color: var(--badge-warning-ink); font-weight: 650; }
 .sub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 .hint { margin: 0.9rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+/* The ledger table: a date and a figure are one unit and never wrap; Player / What / How take the slack. */
+.ledger td:first-child, .ledger td:last-child { white-space: nowrap; }
 .phoneList { display: none; }
 /* 12c words §3: card refunds that never entered the book, under the Refunds list — a dashed row each on a phone. */
 .neverList { display: none; }

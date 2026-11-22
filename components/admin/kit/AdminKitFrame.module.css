@@ -235,6 +235,9 @@
 /* The foot: the rail's quiet doors — Help, the Coaches Portal, Public site where no program row is it (the nav standard's
    N4). Sign out and Send feedback left it for the account menu (2026-10-17), and the red sign-out row's rules with them. */
 .foot { display: flex; flex-direction: column; border-top: 1px solid var(--home-line); padding-top: 0.4rem; }
+/* No doors in the foot (no Plan & billing, no other portal) = no hairline: Collapse sidebar draws its own, and both together were
+   two rules with nothing between them. */
+.foot:empty { display: none; }
 /* The foot's rows ride the ONE scrolling list (owner 2026-11-09: not pinned); the spacer rests them at the bottom on a tall screen. */
 .spacer { flex: 1; min-height: 1rem; }
 .railFoot { flex: none; display: flex; flex-direction: column; padding-bottom: 0.5rem; }
