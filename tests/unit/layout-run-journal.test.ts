@@ -64,7 +64,7 @@ describe('reading a journal', () => {
       '{"kind":"pair","label":"coach-roster @14',
     ].join('\n');
     const { header, done } = parseJournal(text);
-    assert.equal(header.commit, 'abc');
+    assert.equal((header as { commit?: string } | null)?.commit, 'abc');
     assert.deepEqual([...done.keys()], ['coach-roster @361']);
   });
 
