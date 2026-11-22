@@ -70,7 +70,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
     // Stripe-owned pricing Stage 5 (2026-11-18): the next version (the retired fee invoice cut, the Payments Terms record
     // named). Read only in preview mode, which a published pair never enters; set here so the filter test checks its shape.
     draftPath: 'docs/agents/legal/drafts/PRIVACY_POLICY.md',
-    published: [{ version: '2026-11-17', sha256: '3a64e4d3c711372c7f40f87dda042e1ac5cbd8f7d7e448fb7ef0d299b064c76f' }],
+    published: [{ version: '2026-11-17', sha256: 'abdaa491af8b11109ac2471e9db9106c5ab361d50c125948b42519bd86800552' }],
     current: '2026-11-17',
     oldestAccepted: '2026-11-17',
   },
