@@ -67,6 +67,8 @@ const SCOPES = {
       'components/consumer/ConsumerShell.module.css',
       'components/rep-teams/register.module.css',
       'components/league/register.module.css',
+      // The Division dropdown on the public Rules and News pages (PublicRules, NewsContent).
+      'components/DivisionFilterBar.module.css',
     ],
     excludeSegments: new Set(['admin', 'scorekeeper', 'coaches']),
     baseline: 'scripts/.public-token-baseline.json',
