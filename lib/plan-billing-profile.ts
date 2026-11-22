@@ -205,7 +205,9 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     changes: checkoutAndMoves('tournament'),
     cancellationKind: 'organization',
     deletionWorkspace: 'tournament',
-    discoveryPlans: ['team', 'league', 'club'],
+    // On-sale pages S4 (call 35): League Plus and Club are rows in Change plan now; the shelf keeps the coach's workspace,
+    // which is its own sign-up and never a row.
+    discoveryPlans: ['team'],
   },
   team: {
     included: { billing: TEAM_CORE, article: TEAM_ARTICLE, explore: TEAM_EXPLORE },
@@ -225,7 +227,7 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     changes: [...checkoutAndMoves('tournament_plus'), { target: 'tournament', mechanism: 'downgrade' }],
     cancellationKind: 'organization',
     deletionWorkspace: 'tournament',
-    discoveryPlans: ['team', 'league', 'club'],
+    discoveryPlans: ['team'],
     downgradeLosses: [
       'custom tournament branding', 'custom registration controls', 'exports', 'payment reminders',
       'waitlist promotion', 'cloning', 'targeted announcements', 'post-event summaries',

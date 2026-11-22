@@ -6,13 +6,14 @@ import {
   isGrantRunning,
   ownFactsOf,
   customerFreeTime,
+  runningPlanTier,
   type CustomerFreeTime,
   type DoorRow,
   type EffectiveFacts,
   type GrantRow,
   type GrantTarget,
 } from './free-time';
-import type { Organization } from './types';
+import type { Organization, OrgPlan } from './types';
 
 /**
  * THE DOOR: what plan, limits, status and sections a club has right now (Support console Stage 4, owner ruling Q1).
@@ -170,7 +171,17 @@ export async function effectiveOrgFactsForId(orgId: string): Promise<EffectiveFa
  * so it is its own query. Never returns the reason, the giver or the grant (T15).
  */
 export async function getCustomerFreeTime(row: DoorRow, options: { strict?: boolean } = {}): Promise<CustomerFreeTime | null> {
-  if (!grantsEnabled()) return null;
+  return (await getBillingFreeTimeFacts(row, options)).freeTime;
+}
+
+/**
+ * Plan & billing's free-time facts (On-sale pages S4): the customer's state (`customerFreeTime`) and the whole-plan free
+ * time running now (`runningPlanTier`, with or without an end date), from one read of the club's plan grants.
+ */
+export async function getBillingFreeTimeFacts(row: DoorRow, options: { strict?: boolean } = {}): Promise<{
+  freeTime: CustomerFreeTime | null; planGrant: { plan: OrgPlan; lastDay: string | null } | null;
+}> {
+  if (!grantsEnabled()) return { freeTime: null, planGrant: null };
   const { data, error } = await supabaseAdmin
     .from('org_overrides')
     .select('type, value, target, starts_at, expires_at, revoked_at')
@@ -180,5 +191,6 @@ export async function getCustomerFreeTime(row: DoorRow, options: { strict?: bool
     .limit(20);
   // Billing asks for strict: a failed read must say "unavailable", never "no free time".
   if (error && options.strict) throw error;
-  return customerFreeTime(ownFactsOf(row), (data ?? []) as GrantRow[]);
+  const rows = (data ?? []) as GrantRow[];
+  return { freeTime: customerFreeTime(ownFactsOf(row), rows), planGrant: runningPlanTier(rows) };
 }

@@ -9,21 +9,17 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { X, CheckCircle } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
-import ViewSwitch from '@/components/coaches/kit/ViewSwitch';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
-import { PLAN_CONFIG, gatedPlanSentence } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatAnnualSavings, gatedPlanSentence } from '@/lib/plan-config';
+import { PLAN_BILLING_WORDS } from '@/lib/plan-billing-words';
 import type { PanelPlanKey as PlanKey } from '@/lib/plan-upgrade';
 import type { PlanBillingProfile } from '@/lib/plan-billing-profile';
 import styles from './PlanArticlePanel.module.css';
-import PlanTermsLine from '@/components/legal/PlanTermsLine';
 
 interface Props {
   planKey: PlanKey | null;
-  billingCycle: 'monthly' | 'annual';
-  /** Billing's door: the cycle is chosen here, beside the price it changes, because the Upgrade button below commits it. */
-  onBillingCycleChange?: (cycle: 'monthly' | 'annual') => void;
   onClose: () => void;
   onUpgrade: (planKey: PlanKey) => void;
   upgradeLoading: PlanKey | null;
@@ -37,8 +33,6 @@ interface Props {
 
 export default function PlanArticlePanel({
   planKey,
-  billingCycle,
-  onBillingCycleChange,
   onClose,
   onUpgrade,
   upgradeLoading,
@@ -60,15 +54,14 @@ export default function PlanArticlePanel({
 
   if (!planKey && !profile) return null;
 
-  const article = planKey ? PLAN_ARTICLE_CONTENT[planKey] : null;
+  // Club · Association is Club's larger band (On-sale pages S4: the panel opens for it): Club's article, its own name and price.
+  const article = planKey ? PLAN_ARTICLE_CONTENT[planKey === 'club_large' ? 'club' : planKey] : null;
   const config = profile?.config ?? PLAN_CONFIG[planKey!];
-  const price   =
-    config.monthlyPrice === 0
-      ? 'Free'
-      : billingCycle === 'annual'
-        ? `$${config.annualPrice} CAD / year`
-        : `$${config.monthlyPrice} CAD / month`;
-  const picksCycle = Boolean(onBillingCycleChange) && !readOnly && canUpgrade && !isComingSoon && config.monthlyPrice > 0;
+  const eyebrow = planKey === 'club_large' ? config.label : article?.eyebrow ?? config.label;
+  // On-sale pages S4 (call 38, drawing tab 7): the cycle is chosen in the payment window the Upgrade opens, so the panel
+  // reads "From" the monthly price, as the plans shelf does.
+  const price = config.monthlyPrice === 0 ? 'Free' : `From $${config.monthlyPrice} CAD / month`;
+  const savings = planKey && planKey !== 'team' ? formatAnnualSavings(planKey) : null;
 
   return (
     <>
@@ -80,7 +73,7 @@ export default function PlanArticlePanel({
         {/* Header */}
         <div className={styles.panelHeader}>
           <div className={styles.panelHeaderLeft}>
-            <p className={styles.panelEyebrow}>{article?.eyebrow ?? config.label}</p>
+            <p className={styles.panelEyebrow}>{eyebrow}</p>
             <p className={styles.panelHeadline}>{article?.panelHeadline ?? config.label}</p>
           </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
@@ -92,13 +85,6 @@ export default function PlanArticlePanel({
         <div className={styles.priceStrip}>
           {/* GST/HST Stage 2 Part 4 (T4): a price the buyer will be charged says so, quietly; a free price has nothing to tax. */}
           <span className={styles.priceAmount}>{price}{!isComingSoon && config.monthlyPrice > 0 && <> <span className={styles.plusTax}>{BILLING_TAX_WORDS.plusTax}</span></>}</span>
-          {picksCycle && <ViewSwitch label="Billing" value={billingCycle} onChange={onBillingCycleChange!}
-            views={[{ id: 'monthly', label: 'Monthly' }, { id: 'annual', label: 'Yearly' }]} />}
-          {billingCycle === 'annual' && config.monthlyPrice > 0 ? (
-            <span className={styles.priceSavings}>
-              Save ${config.monthlyPrice * 12 - config.annualPrice} — 2 months free
-            </span>
-          ) : null}
         </div>
 
         {/* Scrollable body */}
@@ -162,15 +148,15 @@ export default function PlanArticlePanel({
               Start your Coaches Portal
             </Link>
           ) : canUpgrade && planKey && !readOnly ? (<>
-            {/* §20 (3), read before the button — only when the button shows a price. */}
-            {config.monthlyPrice > 0 && <PlanTermsLine trial={config.trialDays} />}
+            {/* §20 (3) is read in the payment window this opens (On-sale pages S4): the button here shows no price. */}
             <button
               className={`btn btn-lime btn-data ${styles.upgradeBtn}`}
               onClick={() => onUpgrade(planKey)}
               disabled={upgradeLoading === planKey}
             >
-              {upgradeLoading === planKey ? 'Redirecting…' : `Upgrade to ${config.label}${picksCycle ? ` · ${billingCycle === 'annual' ? `$${config.annualPrice} / year` : `$${config.monthlyPrice} / month`}` : ''}`}
+              {upgradeLoading === planKey ? 'Redirecting…' : `Upgrade to ${config.label}${config.monthlyPrice > 0 ? '…' : ''}`}
             </button>
+            {config.monthlyPrice > 0 && savings && <p className={styles.upgradeHint}>{PLAN_BILLING_WORDS.pay.panelHint(savings)}</p>}
           </>) : null}
           <button className={`btn btn-ghost ${styles.cancelBtn}`} onClick={onClose}>
             Not right now

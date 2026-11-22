@@ -66,7 +66,8 @@ describe('Plan & billing profiles', () => {
     const actual = Object.values(PLAN_BILLING_PROFILES).flatMap(p => p.changes.map(c => `${p.key}:${c.mechanism}:${c.target}`)).sort();
     assert.deepEqual(actual, [
       'team:move:club',
-      'tournament:checkout:tournament_plus',
+      // On-sale pages S4 (call 35): a free Tournament organization starts any of the four by checkout.
+      'tournament:checkout:tournament_plus', 'tournament:checkout:league', 'tournament:checkout:club', 'tournament:checkout:club_large',
       'tournament_plus:downgrade:tournament',
       'tournament_plus:move:club', 'tournament_plus:move:club_large',
       'club:move:club_large', 'club_large:move:club',

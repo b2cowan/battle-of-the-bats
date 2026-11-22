@@ -100,9 +100,27 @@ describe('the Upgrade is Plan & billing’s', () => {
     assert.doesNotMatch(drawer, /finally \{/, 'no finally that re-enables Upgrade under a leaving page');
     assert.match(drawer, /e\.persisted\) setLoading\(false\)/, 'Back from checkout through the cache re-enables it');
   });
-  it('only the free Tournament plan is offered Tournament Plus', () => {
-    assert.deepEqual(upgradePlansFor('tournament'), ['tournament_plus']);
-    for (const planId of ['tournament_plus', 'team', 'league', 'club', null]) assert.deepEqual(upgradePlansFor(planId), [], String(planId));
+  it('only the free Tournament plan starts a plan by checkout: all four, in price order (On-sale pages S4, call 35)', () => {
+    assert.deepEqual(upgradePlansFor('tournament'), ['tournament_plus', 'league', 'club', 'club_large']);
+    for (const planId of ['tournament_plus', 'team', 'league', 'club', 'club_large', null]) assert.deepEqual(upgradePlansFor(planId), [], String(planId));
+  });
+  it('free time: only the plans ranked ABOVE the plan given (call 40) — never the given plan or one below it', () => {
+    assert.deepEqual(upgradePlansFor('tournament', 'tournament_plus'), ['league', 'club', 'club_large']);
+    assert.deepEqual(upgradePlansFor('tournament', 'club'), ['club_large']);
+    assert.deepEqual(upgradePlansFor('tournament', 'club_large'), []);
+    assert.deepEqual(upgradePlansFor('tournament', null), upgradePlansFor('tournament'));
+    assert.deepEqual(upgradePlansFor('tournament_plus', 'club'), [], 'a paid plan never starts by checkout');
+  });
+  it('the panel opens for every plan the table starts, Club · Association included', () => {
+    for (const plan of ['tournament_plus', 'league', 'club', 'club_large', 'team']) {
+      assert.equal(planPanelFromHref(`/acme/admin/org/billing?plan=${plan}`), plan);
+    }
+  });
+  it('the panel\'s Upgrade opens the payment window (Monthly or Yearly, the true trial), never a monthly charge', () => {
+    const drawer = read('components', 'billing', 'PlanPanelDrawer.tsx');
+    assert.doesNotMatch(drawer, /billingCycle: 'monthly'|billingCycle="monthly"/);
+    assert.match(drawer, /<PlanCycleDialog orgSlug=\{currentOrg\.slug\} planKey=\{payFor\}[^>]*initial="monthly"/);
+    assert.match(drawer, /onUpgrade=\{key => \{ if \(key !== 'team'\) address\.ensure\(\(\) => setPayFor\(key\)\); \}\}/);
   });
 });
 

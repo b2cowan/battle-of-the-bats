@@ -4,7 +4,8 @@ import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
 import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { normalizeBillingCycle, PLAN_CONFIG } from '@/lib/plan-config';
-import { applyPlanChangeSideEffects, hadSubscriptionBefore, hasLiveSubscription } from '@/lib/plan-move';
+import { applyPlanChangeSideEffects, hadSubscriptionBefore, hasLiveSubscription, landingSubscriptionId } from '@/lib/plan-move';
+import { PLAN_RANK } from '@/lib/plan-features';
 import { moveDirection } from '@/lib/plan-move-options';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
@@ -30,7 +31,7 @@ import { BUYER_USER_META, COMEBACK_META } from '@/lib/plan-growth';
 import { legalPagesMode } from '@/lib/legal-pages-switch';
 import { stripeKeyIsTest } from '@/lib/stripe-mode';
 import { PAID_DOOR_PLANS, paidDoorOf, parseStartPaidPlan, trialDaysAfterHistory, type StartPaidPlan } from '@/lib/start-door';
-import { readStartPlan, startPlanCancelPath, startPlanSuccessPath } from '@/lib/start-plan-server';
+import { billingStartSuccessPath, readStartPlan, startPlanCancelPath, startPlanSuccessPath } from '@/lib/start-plan-server';
 
 const isStartPaidPlan = (plan: unknown): plan is StartPaidPlan => parseStartPaidPlan(plan) !== null;
 
@@ -159,6 +160,18 @@ export const POST = withObservability(async (req: Request) => {
     });
   }
 
+  // FREE TIME IS NEVER BOUGHT OUT OF (On-sale pages S4, call 40; `/billing` must-fix 2026-11-21). A free Tournament
+  // organization on running whole-plan free time is offered only the plans ranked ABOVE the one it is given; a stale page,
+  // or a hand-made request, asking for that plan or one below it is refused here, before any address or Stripe work.
+  const ownPlan = ownPlanOf(auth.org);
+  const givenPlan = ownPlan === 'tournament' && auth.org.planId !== ownPlan ? auth.org.planId : null;
+  if (givenPlan && PLAN_RANK[planKey] <= PLAN_RANK[givenPlan]) {
+    return new Response(JSON.stringify({
+      error: `${auth.org.name} already has ${PLAN_CONFIG[givenPlan].label} as free time. Choose a plan above it, or contact us.`,
+      code: 'below_free_plan',
+    }), { status: 409, headers: { 'Content-Type': 'application/json' } });
+  }
+
   // Stage 4b: a standalone Coaches Portal (free days, or no subscription) buying a Club band becomes the club IN PLACE, on this same
   // organization — no second one. It must say what the club is called (the flip writes it), so the server refuses without a name
   // rather than quietly keeping "{team} Coaches Portal". A paying Premium coach never gets here: the 409 above sends them to the move.
@@ -193,15 +206,21 @@ export const POST = withObservability(async (req: Request) => {
   // A paid door's organization (On-sale pages S2) buying the plan it was made for: Stripe returns to the wait, which holds
   // until the webhook has written the plan (trap A — the page would otherwise read `tournament` and open New tournament),
   // and backing out lands on the same Club or League Plus plan step (an abandoned checkout keeps its plan).
-  const startPlan = !inPlaceClubName && ownPlanOf(auth.org) === 'tournament' && isStartPaidPlan(planKey)
-    ? await readStartPlan(auth.org.id)
-    : null;
+  const isOnboardingPlanSelection = safeReturnTo.includes('/admin/onboarding');
+  // On-sale pages S4 (decided from the code, trap A for an organization that is not a door's): ANY free Tournament
+  // organization starting League Plus, Club or Club · Association changes what it is, and Stripe returns before the webhook
+  // writes the plan. The door's own plan step (it returns to onboarding) keeps the door's wait; every other start — Plan &
+  // billing's table, the panel over any page, the onboarding window's cards — comes back to the organization's Plan & billing
+  // holding "Setting up {plan}", never `success=1` and "Your plan is active". Tournament Plus keeps its notice.
+  const startsWorkspace = !inPlaceClubName && ownPlan === 'tournament' && isStartPaidPlan(planKey);
+  const startPlan = startsWorkspace && isOnboardingPlanSelection ? await readStartPlan(auth.org.id) : null;
   const doorCheckout = !!startPlan && PAID_DOOR_PLANS[paidDoorOf(startPlan)].includes(planKey as StartPaidPlan);
+  const billingStart = startsWorkspace && !doorCheckout;
   const successReturnTo = inPlaceClubName ? inPlaceReturnPath(auth.org.slug)
     : doorCheckout && startPlan ? startPlanSuccessPath(auth.org.slug, paidDoorOf(startPlan))
+    : billingStart ? billingStartSuccessPath(fallbackReturnTo, planKey as StartPaidPlan)
     : safeReturnTo;
   const cancelReturnTo = doorCheckout ? startPlanCancelPath(auth.org.slug) : safeReturnTo;
-  const isOnboardingPlanSelection = safeReturnTo.includes('/admin/onboarding');
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');
 
   // GST/HST Stage 1: a purchase needs the buyer's billing address on file. A portal becoming the club in place sends the CLUB's address with its name; it is saved to the club's own
@@ -327,6 +346,26 @@ export const POST = withObservability(async (req: Request) => {
   const { ensureStripeCustomer } = await import('@/lib/billing-setup');
   const { TAXED_CHECKOUT } = await import('@/lib/billing-tax');
 
+  // NO SECOND START WHILE ONE IS LANDING (On-sale pages S4, `/ux` must-fix). The first press links the organization's Stripe
+  // customer (ensureStripeCustomer, below) before its session exists, so a later press finds it on the record; with none,
+  // nothing can be landing. A paid subscription the record does not follow yet means the first payment went through and
+  // its webhook is on the way: refused before a second Stripe page, and Plan & billing shows the wait instead of the rows.
+  if (auth.org.stripeCustomerId) {
+    let landing: string | null;
+    try {
+      landing = await landingSubscriptionId(auth.org.stripeCustomerId, auth.org.stripeSubscriptionId ?? null);
+    } catch (error) {
+      return captureAndJson(error, { error: 'We couldn’t reach the payment provider. Nothing has been charged. Try again in a moment.' }, 502);
+    }
+    if (landing) {
+      console.warn(`[create-checkout] refused a second start for ${auth.org.id}: ${landing} is still landing`);
+      return new Response(JSON.stringify({
+        error: 'A payment for this organization is still being set up. Please don’t start another payment.',
+        code: 'subscription_landing',
+      }), { status: 409, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
   // The buyer's name for its invoices: the club's (a Premium portal starting its club is buying as that club).
   // ⚠ Backing out of Stripe's page leaves the club's address and name on a Premium coach's customer (recorded, low risk: this
   // path runs only when that customer has no live subscription to charge at them).
@@ -362,7 +401,7 @@ export const POST = withObservability(async (req: Request) => {
     metadata,
     // A door's wait carries Stripe's own session id (its `{CHECKOUT_SESSION_ID}` placeholder), so it can say at once when
     // there is no payment behind the page; every other return keeps its `success=1`.
-    success_url: doorCheckout ? `${appUrl}${successReturnTo}` : appendSuccess(`${appUrl}${successReturnTo}`),
+    success_url: doorCheckout || billingStart ? `${appUrl}${successReturnTo}` : appendSuccess(`${appUrl}${successReturnTo}`),
     cancel_url: `${appUrl}${cancelReturnTo}`,
   });
 

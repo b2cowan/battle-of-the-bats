@@ -349,6 +349,18 @@ export function customerFreeTime(own: OwnFacts, rows: (GrantRow & { created_at?:
   };
 }
 
+/**
+ * The whole-plan free time running now, whatever the club holds of its own (On-sale pages S4, call 40): the plan it gives
+ * and its last free day — `null` for free time with no end date, which `customerFreeTime` does not report. Plan & billing
+ * reads it for the plans a free-time club may start (only those above it) and for what a paid plan falls back to if it
+ * ends. The same grant `foldGrants` lifts the plan with (the first running one).
+ */
+export function runningPlanTier(rows: GrantRow[], now: Date = new Date()): { plan: OrgPlan; lastDay: string | null } | null {
+  const grant = rows.find(r => r.type === 'plan_tier' && isGrantablePlan(r.target?.plan) && isGrantRunning(r, now));
+  if (!grant) return null;
+  return { plan: grant.target!.plan as OrgPlan, lastDay: grant.expires_at ? lastDayOfInstant(grant.expires_at) : null };
+}
+
 // ── Who may be given what: the decision, from facts the server has read ───────────────────────────────────────────
 
 /** The sections the console gives, in the drawn order (mirrors `CLUB_SECTIONS` in lib/platform-labels.ts). */

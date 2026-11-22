@@ -263,14 +263,18 @@ describe('real owner billing action request contracts', () => {
       assert.ok(!elements(h.tree()).some(element => typeof element.props.onContinue === 'function'), 'the payment step closes once checkout is requested');
     } finally { h.dispose(); }
   });
-  it('the details panel carries its own cycle, so its Upgrade goes straight to checkout', async () => {
-    const h = await ownerHarness({ plan: 'tournament', search: 'plan=tournament_plus' });
+  it('the details panel\'s Upgrade opens the payment window on Monthly, as the table\'s does (On-sale pages S4, call 38)', async () => {
+    const h = await ownerHarness({ plan: 'tournament', search: 'plan=club_large' });
     try {
       h.answer('/api/billing/create-checkout', { url: 'https://stripe.test/panel' });
-      const panel = find(h.renderedView(), element => typeof element.props.onBillingCycleChange === 'function');
-      (panel.props.onBillingCycleChange as (cycle: string) => void)('annual'); h.render();
+      assert.ok(!elements(h.renderedView()).some(element => typeof element.props.onBillingCycleChange === 'function'), 'no cycle switch in the panel');
       (find(h.renderedView(), element => typeof element.props.onUpgrade === 'function').props.onUpgrade as () => void)(); await h.settle();
-      assertRequest(h.requests[0], '/api/billing/create-checkout', 'POST', { planKey: 'tournament_plus', billingCycle: 'annual', returnTo: billingBase, orgSlug: h.org.slug });
+      assert.equal(h.requests.filter(r => r.endpoint === '/api/billing/create-checkout').length, 0, 'nothing is charged from the panel itself');
+      const step = find(h.tree(), element => typeof element.props.onContinue === 'function');
+      assert.equal(step.props.initial, 'monthly');
+      assert.equal(step.props.planKey, 'club_large');
+      (step.props.onContinue as (cycle: string) => void)('annual'); await h.settle();
+      assertRequest(h.requests.find(r => r.endpoint === '/api/billing/create-checkout'), '/api/billing/create-checkout', 'POST', { planKey: 'club_large', billingCycle: 'annual', returnTo: billingBase, orgSlug: h.org.slug });
     } finally { h.dispose(); }
   });
   for (const returnTo of [billingBase, '/falcons/coaches/billing']) it(`checkout and reactivation preserve all fields for ${returnTo}`, async () => {

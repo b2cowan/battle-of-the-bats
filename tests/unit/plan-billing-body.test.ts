@@ -45,7 +45,13 @@ describe('the real shared billing body renders every profile', () => {
       for (let i = 1; i < order.length; i++) assert.ok(rendered.indexOf(order[i - 1]) < rendered.indexOf(order[i]), order.join(' → '));
       if (props.profile.changes.length) assert.ok(rendered.indexOf('Change plan') < rendered.indexOf("What's included"));
       if (key === 'club' || key === 'club_large') assert.match(rendered, /9 of 15 teams/);
-      if (key === 'tournament_plus') { assert.match(rendered, /2 staff seats · unlimited/); assert.match(rendered, /Contact us to move/); }
+      // On-sale pages S4 (call 36): a closed move row reads as a closed start — "Coming soon" on the name, "Contact us".
+      if (key === 'tournament_plus') {
+        assert.match(rendered, /2 staff seats · unlimited/);
+        assert.match(rendered, /<strong>Club<\/strong><span class="chip chipQuiet">Coming soon<\/span>/);
+        assert.match(rendered, /moveDoor" href="mailto:support@fieldlogichq\.ca">Contact us<\/a>/);
+        assert.doesNotMatch(rendered, /Contact us to move/);
+      }
     });
     for (const state of ['active', 'canceled', 'past_due', 'trialing'] as const) it(`${key}/${state}: non-owner gets no billing facts or actions`, () => {
       const props = fixture(key); props.snapshot.canManageBilling = false; props.snapshot.org.subscriptionStatus = state;
@@ -126,7 +132,9 @@ describe('billing state distinctions in the rendered body', () => {
     for (const key of ['club', 'tournament_plus', 'tournament'] as const) {
       const props = fixture(key);
       props.snapshot.gating = { status: 'error', error: '503' };
-      assert.match(html(props), /Contact us to move/);
+      // A failed gate read counts as closed (On-sale pages S4): the tag and the contact door, never a start.
+      assert.match(html(props), /Coming soon<\/span>/);
+      assert.match(html(props), /moveDoor" href="mailto:support@fieldlogichq\.ca">Contact us<\/a>/);
       props.snapshot.org.subscriptionStatus = 'canceled';
       assert.match(html(props), /href="mailto:support@fieldlogichq\.ca"[^>]*>Contact us to reactivate/);
       assert.doesNotMatch(html(props), /<button[^>]*id="billing-reactivate-btn"/);
@@ -288,5 +296,117 @@ describe('the coach’s "Part of a club?" card follows the Club sale gate (owner
       assert.ok(!html(closed).includes(W.change.clubTitle), JSON.stringify(gating));
       assert.ok(!html(closed).includes(W.change.clubBody), JSON.stringify(gating));
     }
+  });
+});
+
+// ═══════════════════════════════════════════════════════ On-sale pages S4, Part 1 — the starts on Plan & billing (2026-11-21)
+describe('S4 · the starts on Plan & billing (drawing tabs 2, 4, 6)', () => {
+  const open = ready({ tournament: false, tournament_plus: false, team: false, league: false, club: false, club_large: false });
+  const rowsOf = (rendered: string) => [...rendered.matchAll(/<td data-label="Plan"><span class="planNameLine"><strong>([^<]+)<\/strong>/g)].map(m => m[1]);
+  const freeTimeOrg = (planGrant: { plan: 'tournament_plus'; lastDay: string | null }) => {
+    const props = fixture('tournament');
+    props.profile = PLAN_BILLING_PROFILES.tournament_plus;
+    props.snapshot.org = { ...props.snapshot.org, planId: 'tournament_plus', ownPlanId: 'tournament' } as BillingSnapshot['org'];
+    props.snapshot.freeTime = ready({
+      freeTime: planGrant.lastDay ? { state: 'running', plan: 'tournament_plus', ownPlan: 'tournament', lastDay: planGrant.lastDay, daysLeft: 300 } : null,
+      portal: null, overLimitAfter: false, planGrant,
+    });
+    return props;
+  };
+
+  it('a free Tournament organization: four starts in price order, each "Upgrade to {plan}" while open (call 35)', () => {
+    const props = fixture('tournament'); props.snapshot.gating = open;
+    const rendered = html(props);
+    assert.deepEqual(rowsOf(rendered), ['Tournament', 'Tournament Plus', 'League Plus', 'Club', 'Club · Association']);
+    for (const plan of ['Tournament Plus', 'League Plus', 'Club', 'Club · Association']) assert.ok(rendered.includes(`>Upgrade to ${plan}</button>`), plan);
+    assert.doesNotMatch(rendered, /Coming soon/);
+  });
+  it('closed rows stay, wear "Coming soon" on the name’s first line and read "Contact us" (call 36)', () => {
+    const rendered = html(fixture('tournament'));
+    assert.deepEqual(rowsOf(rendered), ['Tournament', 'Tournament Plus', 'League Plus', 'Club', 'Club · Association']);
+    for (const plan of ['League Plus', 'Club', 'Club · Association']) assert.ok(rendered.includes(`<strong>${plan}</strong><span class="chip chipQuiet">Coming soon</span>`), plan);
+    assert.equal((rendered.match(/moveDoor" href="mailto:support@fieldlogichq\.ca">Contact us<\/a>/g) ?? []).length, 3);
+    assert.ok(rendered.includes('>Upgrade to Tournament Plus</button>'), 'Tournament Plus is on sale either way');
+  });
+  it('while the gate is still read, a row shows neither a start nor the closed tag (no flash)', () => {
+    const props = fixture('tournament'); props.snapshot.gating = { status: 'loading' };
+    assert.doesNotMatch(html(props), /Coming soon|Upgrade to League Plus|moveDoor/);
+  });
+  it('the shelf keeps the Premium Coaches Portal card only, for both Tournament plans (call 35)', () => {
+    for (const key of ['tournament', 'tournament_plus'] as const) {
+      const rendered = html(fixture(key));
+      const shelf = rendered.slice(rendered.indexOf('billing-discovery'));
+      const section = shelf.slice(0, shelf.indexOf('</section>'));
+      assert.match(section, /Premium Coaches Portal/);
+      assert.doesNotMatch(section, /League Plus|>Club</, key);
+    }
+  });
+  it('the team-count line shows only with a Club row, before the tax line, and absorbs "More than 30 teams?" (call 37)', () => {
+    const line = 'Club and Club · Association count the teams you give a Premium Coaches Portal. House league teams are unlimited. More than 30?';
+    for (const key of ['tournament', 'tournament_plus', 'club'] as const) {
+      const rendered = html(fixture(key));
+      assert.ok(rendered.includes(line), key);
+      assert.ok(rendered.indexOf(line) < rendered.indexOf('Prices are plus applicable taxes.'), `${key}: before the tax line`);
+      assert.doesNotMatch(rendered, /More than 30 teams\?/);
+    }
+    assert.ok(!html(fixture('league')).includes(line), 'League Plus has no Club row at launch');
+    assert.match(html(fixture('club')), /Club holds up to 15 teams with a Premium Coaches Portal\. House league teams are unlimited\./);
+  });
+  it('a free-time organization: Change plan returns, its given plan is the "Free through" row, and only the plans above it start (call 40)', () => {
+    const props = freeTimeOrg({ plan: 'tournament_plus', lastDay: '2027-09-30' });
+    props.snapshot.gating = open;
+    const rendered = html(props);
+    assert.deepEqual(rowsOf(rendered), ['Tournament Plus', 'League Plus', 'Club', 'Club · Association']);
+    assert.match(rendered, /<span class="chip chipGood">Free through Sep 30, 2027<\/span>/);
+    assert.doesNotMatch(rendered, /Upgrade to Tournament Plus|Downgrade/);
+    for (const plan of ['League Plus', 'Club', 'Club · Association']) assert.ok(rendered.includes(`>Upgrade to ${plan}</button>`), plan);
+    assert.doesNotMatch(rendered, /billing-cancel/, 'nothing of its own to cancel');
+  });
+  it('free time with no end date reads the same rows (the grant decides, not only the own plan)', () => {
+    const rendered = html(freeTimeOrg({ plan: 'tournament_plus', lastDay: null }));
+    assert.deepEqual(rowsOf(rendered), ['Tournament Plus', 'League Plus', 'Club', 'Club · Association']);
+    assert.doesNotMatch(rendered, /Upgrade to Tournament Plus/);
+  });
+  it('a start left halfway: one line above the table while its plan is open; absent while closed (call 41)', () => {
+    const props = fixture('tournament'); props.snapshot.gating = open; props.leftStart = 'club';
+    const rendered = html(props);
+    assert.ok(rendered.includes('id="billing-left-start">You were starting <strong>Club</strong>. Pick up where you left off with Upgrade to Club below.</p>'));
+    assert.ok(rendered.indexOf('billing-left-start') < rendered.indexOf('<table'));
+    assert.doesNotMatch(html({ ...fixture('tournament'), leftStart: 'club' }), /billing-left-start/, 'closed: the row says Coming soon instead');
+  });
+  it('a Premium coach’s Plan & billing is unchanged: no closed tag, no count line, "Contact us to move" (S4 is not a coach surface)', () => {
+    const rendered = html(fixture('team'));
+    assert.doesNotMatch(rendered, /Coming soon|billing-team-count|count the teams you give/);
+    assert.match(rendered, /Contact us to move/);
+  });
+});
+
+describe('S4 · the return from Stripe and the second press (decided from the code)', () => {
+  const server = readCode('app/api/billing/create-checkout/route.ts');
+  it('any free Tournament organization starting the three plans returns to its Plan & billing wait, never success=1', () => {
+    assert.match(server, /const startsWorkspace = !inPlaceClubName && ownPlan === 'tournament' && isStartPaidPlan\(planKey\);/);
+    assert.match(server, /billingStart \? billingStartSuccessPath\(fallbackReturnTo, planKey as StartPaidPlan\)/);
+    assert.ok(readCode('lib/start-plan-server.ts').includes('${BILLING_START_PARAM}=${plan}&session_id={CHECKOUT_SESSION_ID}'));
+  });
+  it('a second start is refused while a paid one lands — asked of Stripe before a second page, with a code the screen reads', () => {
+    const landing = server.indexOf('landingSubscriptionId(auth.org.stripeCustomerId');
+    assert.ok(landing > 0 && landing < server.indexOf('ensureStripeCustomer(auth.org'), 'before the customer work and the session');
+    assert.match(server, /code: 'subscription_landing',\s*\}\), \{ status: 409/);
+    assert.ok(body.includes("if (data.code === 'subscription_landing') return LANDING;"));
+    assert.ok(body.includes('if (landing) return <BillingStartSetup orgSlug={org.slug} orgName={org.name} plan={landing} sessionId={null}'));
+  });
+  it('a start at or below a running free plan is refused on the server, before any address or Stripe work', () => {
+    const refusal = server.indexOf("code: 'below_free_plan'");
+    assert.ok(refusal > 0 && refusal < server.indexOf('requireBillingLocation(buyer'));
+    assert.ok(server.includes('if (givenPlan && PLAN_RANK[planKey] <= PLAN_RANK[givenPlan]) {'));
+  });
+  it('the payment window reads the TRUE trial from a read that never makes a Stripe customer', () => {
+    const route = readCode('app/api/billing/start-plan/route.ts');
+    const trial = readCode('lib/start-plan-server.ts');
+    assert.ok(route.includes('startTrialFor({ stripeCustomerId: auth.org.stripeCustomerId ?? null }, plan as OrgPlan)'));
+    assert.doesNotMatch(route + trial, /ensureStripeCustomer|customers\.create/);
+    const dialog = readCode('components/billing/PlanCycleDialog.tsx');
+    assert.ok(dialog.includes('/api/billing/start-plan?orgSlug=${encodeURIComponent(orgSlug)}&plan='));
+    assert.ok(dialog.includes('planTrialLine(trialDays)') && dialog.includes('W.clubUpgrade.noTrial'));
   });
 });

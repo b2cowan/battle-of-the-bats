@@ -16,11 +16,14 @@ import { useTournament } from '@/lib/tournament-context';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { isEffectivelyGated } from '@/lib/plan-config';
 import { getBillingHref } from '@/lib/billing-urls';
-import { planUpdatedMessage, requestPlanUpgrade, upgradePlansFor, type PanelPlanKey } from '@/lib/plan-upgrade';
+import { planUpdatedMessage, requestPlanUpgrade, upgradePlansFor, type PanelPlanKey, type UpgradePlanKey } from '@/lib/plan-upgrade';
+import { formatAnnualSavings, type BillingCycle } from '@/lib/plan-config';
+import { formatBilledTo } from '@/lib/billing-location';
 import { ownPlanOf } from '@/lib/free-time';
 import KitDialog from '@/components/shared/KitDialog';
 import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import PlanArticlePanel from './PlanArticlePanel';
+import PlanCycleDialog from './PlanCycleDialog';
 import { useBillingAddressGate } from './BillingAddressDialog';
 import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 
@@ -30,12 +33,17 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
   const { currentOrg, userRole, userCapabilities, refresh: refreshOrg } = useOrg();
   const { refresh: refreshTournaments } = useTournament();
   const gating = usePlanGating();
+  // A free Tournament organization on whole-plan free time is offered only the plans above the one it is given (call 40).
+  const ownPlan = currentOrg ? ownPlanOf(currentOrg) : undefined;
+  const givenPlan = currentOrg && ownPlan === 'tournament' && currentOrg.planId !== ownPlan ? currentOrg.planId : null;
   const [loading, setLoading] = useState(false);
   // Once the Upgrade answers, the panel gives way to what it came to; closing that closes the whole thing.
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const address = useBillingAddressGate(currentOrg ? { orgSlug: currentOrg.slug } : null);
   // A stop on the Terms opens their window over the panel; after the tick the upgrade carries on (step 6.3, C3).
   const terms = useTermsGate();
+  // On-sale pages S4 (call 38): the Upgrade opens the payment window — Monthly or Yearly, the true trial — as Plan & billing's does.
+  const [payFor, setPayFor] = useState<UpgradePlanKey | null>(null);
 
   // Back from Stripe's checkout through the browser's own cache: the page comes back as it was left — loading.
   useEffect(() => {
@@ -44,14 +52,14 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
     return () => window.removeEventListener('pageshow', onShow);
   }, []);
 
-  async function upgrade(key: PanelPlanKey) {
-    if (!currentOrg || key === 'team') return;
+  async function upgrade(key: UpgradePlanKey, billingCycle: BillingCycle) {
+    if (!currentOrg) return;
     setLoading(true);
     let result;
     try {
       result = await requestPlanUpgrade({
         planKey: key,
-        billingCycle: 'monthly',
+        billingCycle,
         orgSlug: currentOrg.slug,
         returnTo: getBillingHref(currentOrg, { host: 'admin' }),
       }, terms.send);
@@ -66,7 +74,7 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
     // server, not here.
     if ('addressRequired' in result) {
       setLoading(false);
-      address.refused(() => void upgrade(key));
+      address.refused(() => setPayFor(key));
       return;
     }
     // Leaving for checkout: Upgrade stays busy while the page unloads, so a second press starts no second checkout.
@@ -89,16 +97,19 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
       {/* The Billing address window takes the panel's place while it is open; Cancel brings the panel back. */}
       {address.dialog}
       <PlanArticlePanel
-        planKey={outcome || address.open ? null : plan}
-        billingCycle="monthly"
+        planKey={outcome || address.open || payFor ? null : plan}
         onClose={onClose}
-        onUpgrade={key => { void upgrade(key); }}
+        onUpgrade={key => { if (key !== 'team') address.ensure(() => setPayFor(key)); }}
         upgradeLoading={loading ? plan : null}
         isComingSoon={gating ? gating[plan] : isEffectivelyGated(plan)}
         // Only the owner may change the plan (the server's 'billing' capability): anyone else reads what the plan
         // includes, with no Upgrade that would only be refused.
-        canUpgrade={hasBillingAccess(userRole, userCapabilities) && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
+        canUpgrade={hasBillingAccess(userRole, userCapabilities) && (upgradePlansFor(ownPlan, givenPlan) as PanelPlanKey[]).includes(plan)}
       />
+      {payFor && currentOrg && <PlanCycleDialog orgSlug={currentOrg.slug} planKey={payFor} savings={formatAnnualSavings(payFor)} initial="monthly"
+        billedTo={address.location ? formatBilledTo(address.location) : null}
+        onChangeAddress={() => { const key = payFor; setPayFor(null); address.edit(() => setPayFor(key)); }}
+        onClose={() => setPayFor(null)} onContinue={cycle => { const key = payFor; setPayFor(null); void upgrade(key, cycle); }} />}
       {terms.window}
       {outcome?.type === 'success' && (
         <NoticePill message={outcome.message} onDone={onClose} news />

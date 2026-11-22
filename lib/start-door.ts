@@ -102,6 +102,18 @@ export function trialDaysAfterHistory(configuredTrialDays: number, returning: bo
   return configuredTrialDays > 0 && !returning ? configuredTrialDays : 0;
 }
 
+/**
+ * PLAN & BILLING'S WAIT (On-sale pages S4, 2026-11-21): an existing organization's start of League Plus, Club or
+ * Club · Association comes back to its own Plan & billing with `?starting={plan}&session_id=…`, and the page holds the
+ * "Setting up {plan}" card until the webhook has written the plan (trap A for an organization that is not a door's). Not
+ * `?plan=`, which opens a plan's panel.
+ */
+export const BILLING_START_PARAM = 'starting';
+/** The plan an address's wait is for, or none (an old or hand-typed value reads as none). */
+export function billingStartOf(params: { get(name: string): string | null }): StartPaidPlan | null {
+  return parseStartPaidPlan(params.get(BILLING_START_PARAM));
+}
+
 /** The wait after Stripe (trap A): what a paid door's return page can say. */
 export type StartPlanSetupState = 'no_payment' | 'setting_up' | 'ready';
 

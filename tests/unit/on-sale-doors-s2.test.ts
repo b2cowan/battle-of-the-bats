@@ -178,7 +178,8 @@ describe('trap A — the return from Stripe waits for the plan, never opens New 
     assert.match(server, /return `\/\$\{orgSlug\}\/admin\/onboarding\?setup=1&door=\$\{door\}&session_id=\{CHECKOUT_SESSION_ID\}`;/);
     assert.match(server, /return `\/\$\{orgSlug\}\/admin\/onboarding\?choosePlan=1`;/);
     const checkout = readCode('app/api/billing/create-checkout/route.ts');
-    assert.match(checkout, /success_url: doorCheckout \? `\$\{appUrl\}\$\{successReturnTo\}` : appendSuccess/, 'no success=1 on a door return');
+    // On-sale pages S4: nor on an existing organization's start of the three plans (Plan & billing's wait).
+    assert.match(checkout, /success_url: doorCheckout \|\| billingStart \? `\$\{appUrl\}\$\{successReturnTo\}` : appendSuccess/, 'no success=1 on a door return');
     assert.match(checkout, /cancel_url: `\$\{appUrl\}\$\{cancelReturnTo\}`/);
   });
 

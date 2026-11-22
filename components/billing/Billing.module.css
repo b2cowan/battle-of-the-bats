@@ -215,6 +215,8 @@
 
 .body { min-width: 0; }
 .details { display: block; margin-top: 0.25rem; text-align: left; }
+/* On-sale pages S4 (call 36): a closed plan's "Coming soon" sits on the name's first line, wrapping under it when narrow. */
+.planNameLine { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .label { composes: fieldLabel from '../shared/FieldLabel.module.css'; }
 .keepPremiumCard { --card-gap: 0.6rem; margin-bottom: 1.75rem; }

@@ -8,13 +8,14 @@ import { ownPlanOf } from '@/lib/free-time';
 import { PLAN_BILLING_PROFILES, type PlanBillingProfile, type BillingPlanChange } from '@/lib/plan-billing-profile';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, gatedPlanTag } from '@/lib/plan-config';
 import { teamWorkspaceReactivatePath, teamWorkspaceDisplayName, COACHES_START_PATH, COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import { ORG_DELETION_WORDS as DW, deletionPaidUntil, deletionPlanName } from '@/lib/org-deletion-words';
 import { DeletionRequestWindow, DeletionSentLine, useDeletionRequest, type DeletionRead } from './DeletionRequest';
 import type { Organization, OrgPlan } from '@/lib/types';
 import type { BillingCycle } from '@/lib/plan-config';
-import type { PanelPlanKey } from '@/lib/plan-upgrade';
+import { upgradePlansFor, type PanelPlanKey, type UpgradePlanKey } from '@/lib/plan-upgrade';
+import { billingStartOf, parseStartPaidPlan, type StartPaidPlan } from '@/lib/start-door';
 import { NO_LIMIT } from '@/lib/platform-labels';
 import type { BillingRead, BillingSnapshot, BillingUsage, BillingCancellation, BillingDowngrade, BillingFreeTime, BillingMove } from '@/lib/plan-billing-data';
 import type { WaitingMoveView } from '@/lib/plan-ending';
@@ -29,7 +30,7 @@ import FreeTimeBand from './FreeTimeBand';
 import PlanArticlePanel from './PlanArticlePanel';
 import PaymentsEndingSection, { moveDateLong } from './PaymentsEndingSection';
 import styles from './Billing.module.css';
-import ClubUpgradeSetup from './ClubUpgradeSetup';
+import ClubUpgradeSetup, { BillingStartSetup } from './ClubUpgradeSetup';
 import { inPlaceReturnPath, isInPlaceReturn } from '@/lib/workspace-upgrade';
 import { BILLING_ADDRESS_FORM_WORDS, formatBilledTo, formatBillingAddress } from '@/lib/billing-location';
 import { NoticePill } from '@/components/admin/kit/club/RepKit';
@@ -41,6 +42,8 @@ import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 const ADDRESS_REFUSED = Symbol('address-refused');
 /** What `post` answers when a route stopped on the Terms and the person closed the window: nothing happened, nothing to say. */
 const TERMS_CLOSED = Symbol('terms-closed');
+/** What `post` answers when checkout refused a second start because the first is still landing (On-sale pages S4). */
+const LANDING = Symbol('landing');
 
 type Registry = Record<string, PlanBillingProfile<string>>;
 /** Consume return flags without discarding an explicitly requested drawer or another query parameter. */
@@ -80,6 +83,8 @@ export type BillingBodyViewProps = {
   billingAddress?: { line: string; onEdit: () => void } | null;
   /** Settings in both workspaces Session 1: the deletion request's read and its door (the plan's `deletionWorkspace`). */
   deletion?: { read: DeletionRead; onRequest: () => void } | null;
+  /** On-sale pages S4, call 41: the plan a door's checkout was left for (the organization's remembered plan), or none. */
+  leftStart?: StartPaidPlan | null;
 };
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
@@ -197,7 +202,7 @@ function PickWindow({ orgName, endsAt, since, pick, busy, onChange, onSave, onCl
 /** The actual billing presentation, also rendered by the isolated profile fixtures. No portal chrome or providers. */
 export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = PLAN_BILLING_PROFILES, actions: a,
   notice, waitNotice = null, detail = null, onCloseDetail = () => {},
-  billingAddress = null, deletion = null,
+  billingAddress = null, deletion = null, leftStart = null,
 }: BillingBodyViewProps) {
   const org = s.org;
   if (!s.canManageBilling) return <LockedCard orgName={org.name} />;
@@ -218,7 +223,14 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // A staff grant is stored cancelled even while running. It has no cancellation or retention intent.
   const endedPortal = portal?.state === 'ended';
   const ownBilling = !staffFree && !endedPortal;
-  const showChanges = !endedPortal && (!staffFree || ownProfile.key === 'team');
+  // On-sale pages S4 (call 40): a free Tournament organization on whole-plan free time (dated or not) is offered the plans
+  // ABOVE the plan it is given, as starts; its "Your plan" row is the given plan. Nothing at or below it can be bought.
+  const givenPlan = ownProfile.key === 'tournament' && ft?.planGrant && ft.planGrant.plan !== 'tournament' ? ft.planGrant.plan : null;
+  const currentKey = givenPlan ?? ownProfile.key;
+  const changes = givenPlan
+    ? ownProfile.changes.filter(change => change.mechanism !== 'checkout' || upgradePlansFor(ownProfile.key, givenPlan).includes(change.target as UpgradePlanKey))
+    : ownProfile.changes;
+  const showChanges = !endedPortal && (!staffFree || ownProfile.key === 'team' || Boolean(givenPlan));
   const cancelled = org.subscriptionStatus === 'canceled' && !portal && !staffFree;
   const controlsReady = s.freeTime.status === 'ready';
   const paid = ownProfile.config.monthlyPrice > 0;
@@ -244,7 +256,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const trialingNow = org.subscriptionStatus === 'trialing';
   // Stage 3 F2: past due — the date is not promised (Stripe's retries can end it sooner).
   const pastDueNow = org.subscriptionStatus === 'past_due';
-  const changes = ownProfile.changes;
   const scheduled = s.move.status === 'ready' ? s.move.data.scheduledMove : null;
   // Plans & pricing Stage 0 (fix 1): what the customer's own subscription charges, when the webhook has recorded it (in
   // CAD, the only currency these words say); otherwise the price list, as before. The price, not the invoice total.
@@ -274,12 +285,12 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // billing view (not staff free time, not cancelled). Only the owner gets here.
   const detailProfile = detail && Object.hasOwn(profiles, detail) ? profiles[detail] : null;
   const detailChange = detailProfile ? changes.find(change => change.target === detailProfile.key && change.mechanism === 'checkout') : undefined;
-  const detailPlan = detailProfile && detailProfile.key in PLAN_ARTICLE_CONTENT ? detailProfile.key as PanelPlanKey : null;
-  const panel = detailProfile ? <PlanArticlePanel planKey={detailPlan} profile={detailProfile} readOnly={!detailChange} billingCycle={a.cycle} onClose={onCloseDetail}
-    onBillingCycleChange={a.setCycle}
-    onUpgrade={() => { onCloseDetail(); if (detailChange) a.change(detailChange, a.cycle); }} upgradeLoading={a.busy === 'checkout' ? detailPlan : null}
+  const detailPlan = detailProfile && (detailProfile.key in PLAN_ARTICLE_CONTENT || detailProfile.key === 'club_large') ? detailProfile.key as PanelPlanKey : null;
+  // On-sale pages S4 (call 38): the panel's Upgrade opens the payment window, as the table's does.
+  const panel = detailProfile ? <PlanArticlePanel planKey={detailPlan} profile={detailProfile} readOnly={!detailChange} onClose={onCloseDetail}
+    onUpgrade={() => { onCloseDetail(); if (detailChange) a.change(detailChange); }} upgradeLoading={a.busy === 'checkout' ? detailPlan : null}
     isComingSoon={s.gating.status === 'ready' && s.gating.data[detailProfile.key as OrgPlan] !== false}
-    canUpgrade={Boolean(detailChange) && controlsReady && ownBilling && !cancelled && !pending && sale(detailProfile.key)} /> : null;
+    canUpgrade={Boolean(detailChange) && controlsReady && (ownBilling || Boolean(givenPlan)) && !cancelled && !pending && sale(detailProfile.key)} /> : null;
   // A failed grant read cannot distinguish an actual cancellation from staff free time.
   // Offer help without asserting cancellation, renewal, a price, or a retention clock.
   if (s.freeTime.status === 'error') return <><div className={styles.body}>
@@ -370,7 +381,13 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   }
 
   const usage = s.usage.status === 'ready' ? s.usage.data : null;
-  const changeKeys = Object.keys(profiles).filter(key => key === ownProfile.key || changes.some(change => change.target === key));
+  const changeKeys = Object.keys(profiles).filter(key => key === currentKey || changes.some(change => change.target === key));
+  // On-sale pages S4, call 37: one line under the table whenever a Club row shows (it absorbs "More than 30 teams?").
+  // A Premium coach's Plan & billing stays exactly as it was (S4 is not a coach surface): no count line, no closed tag.
+  const coachPage = ownProfile.key === 'team';
+  const clubRows = !coachPage && changeKeys.some(key => key === 'club' || key === 'club_large');
+  // Call 41: the plan a door's checkout was left for, while that plan is on sale and still a start here.
+  const leftPlan = leftStart && sale(leftStart) && changes.some(c => c.target === leftStart && c.mechanism === 'checkout') ? leftStart : null;
   const paidChangeKeys = changeKeys.filter(key => profiles[key].config.monthlyPrice > 0);
   // The trial sentence is about a CHECKOUT: only a row whose button goes to checkout can start a trial (a move or a downgrade
   // never does, and neither does the viewer's own row).
@@ -466,27 +483,34 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         {pending && <p className={styles.waitCallout}>{pendingMove
           ? W.downgrade.waitingRefusal(ownProfile.key as OrgPlan, pendingMove.move.targetPlan, pendingMove.endsAt)
           : W.cancel.endingRefusal(ownProfile.key as OrgPlan, pending.endsAt)}</p>}
+        {!pending && leftPlan && controlsReady && <p className={styles.waitCallout} id="billing-left-start">
+          {W.change.leftStart.before} <strong>{PLAN_CONFIG[leftPlan].label}</strong>{W.change.leftStart.after(PLAN_CONFIG[leftPlan].label)}
+        </p>}
         <div className={styles.tableFrame}><table className={styles.table}>
           <thead><tr><th scope="col">{W.change.headings.plan}</th><th scope="col">{W.change.headings.holds}</th><th scope="col" className={styles.num}>{W.change.headings.monthly}</th><th scope="col" className={styles.num}>{W.change.headings.annual}</th><th scope="col"><span className={styles.srOnly}>{W.change.headings.choice}</span></th></tr></thead>
           <tbody>{changeKeys.map(key => {
             const target = profiles[key];
             const change = changes.find(c => c.target === key);
+            // Call 36: a plan that cannot be started or moved to right now wears the one closed tag on its name's first line.
+            // Held while the gate is read, like the button, so neither flashes; a failed read counts as closed.
+            const closed = !coachPage && Boolean(change) && change!.mechanism !== 'downgrade' && s.gating.status !== 'loading' && !sale(key);
             return <tr key={key}>
-              <td data-label={W.change.headings.plan}><strong>{target.config.label}</strong>{key !== ownProfile.key && <button type="button" className={`${styles.link} ${styles.details}`} onClick={() => a.details(key)}>{W.change.details(target.config.label)}</button>}</td>
+              <td data-label={W.change.headings.plan}><span className={styles.planNameLine}><strong>{target.config.label}</strong>{closed && <CoachChip tone="quiet">{gatedPlanTag(key as OrgPlan)}</CoachChip>}</span>{key !== currentKey && <button type="button" className={`${styles.link} ${styles.details}`} onClick={() => a.details(key)}>{W.change.details(target.config.label)}</button>}</td>
               <td data-label={W.change.headings.holds}>{target.usageMeters.includes('teams') ? W.change.upTo(target.config.teamLimit) : W.change.tournamentLimit(target.config.tournamentLimit)}</td>
               <td data-label={W.change.headings.monthly} className={styles.num}>{target.config.monthlyPrice === 0 ? W.plan.free : formatPriceAmount(target.config.monthlyPrice)}</td>
               <td data-label={W.change.headings.annual} className={styles.num}>{target.config.annualPrice === 0 ? W.plan.free : formatPriceAmount(target.config.annualPrice)}</td>
-              <td data-label={W.change.headings.choice}>{key === ownProfile.key ? <CoachChip tone="good">{W.change.current}</CoachChip>
+              <td data-label={W.change.headings.choice}>{key === currentKey ? <CoachChip tone="good">{givenPlan && ft?.planGrant?.lastDay ? W.change.freeThrough(ft.planGrant.lastDay) : W.change.current}</CoachChip>
                 // A waiting cancel or move: the doors are absent, not disabled; the line above the table says why (Stage 0
                 // ruling 3). A waiting move's own plan shows the "From {date}" chip, as a waiting paid move's does.
                 : pending ? key === moveTarget ? <CoachChip tone="warn">{W.plan.scheduledFrom(pending.endsAt)}</CoachChip> : null
                 : scheduled?.toPlan === key ? <CoachChip tone="warn">{W.plan.scheduledFrom(scheduled.effectiveAt)}</CoachChip>
                   : !controlsReady ? null
                   : change && (change.mechanism === 'downgrade' || sale(key)) ? <button type="button" className="btn btn-outline" onClick={() => a.change(change)} disabled={disabled}>{ownProfile.key === 'team' ? W.clubUpgrade.start : change.mechanism === 'downgrade' ? W.change.downgrade(target.config.label) : change.mechanism === 'checkout' ? W.change.upgrade(target.config.label) : W.change.move(target.config.label)}</button>
-                    : s.gating.status !== 'loading' && <a className={`btn btn-outline ${styles.moveDoor}`} href={CONTACT_HREF}>{W.change.contactMove}</a>}</td>
+                    : s.gating.status !== 'loading' && <a className={`btn btn-outline ${styles.moveDoor}`} href={CONTACT_HREF}>{coachPage ? W.change.contactMove : W.change.contact}</a>}</td>
             </tr>;
           })}</tbody>
         </table></div>
+        {clubRows && <p className={`${styles.lede} ${styles.afterTable}`} id="billing-team-count">{W.change.countLine(Math.max(...changeKeys.map(key => profiles[key].config.teamLimit).filter(limit => limit < NO_LIMIT)))} <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a> {W.change.customEnd}</p>}
         {paidChangeKeys.length > 0 && <>
           <p className={`${styles.lede} ${styles.afterTable}`}>{W.change.pricesPlusTax}</p>
           {/* §20 (3): one line under the table serves every row's button, straight after the tax line (step 6.3, drawing tab 5, pin 1);
@@ -495,7 +519,6 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         </>}
         <ReadFailure read={s.gating} section="plan availability" />
         <ReadFailure read={s.move} section="scheduled plan changes" />
-        {profile.usageMeters.includes('teams') && <p className={`${styles.lede} ${styles.afterTable}`}>{W.change.custom(Math.max(...changeKeys.map(key => profiles[key].config.teamLimit)))} <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a> {W.change.customEnd}</p>}
       </>}
       {joinClub}
     </Section>}
@@ -553,6 +576,16 @@ export default function BillingBody({ billingBase, teamsHref }: { billingBase: s
 type BillingOwnerProps = { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string };
 function BillingOwnerBody(props: BillingOwnerProps) {
   const params = useSearchParams();
+  const router = useRouter();
+  // On-sale pages S4: back from Stripe on a start that changes what the organization is. Held until the plan lands; no
+  // payment behind the address shows the page as it is (and drops the marker).
+  const starting = billingStartOf(params);
+  const sessionId = params.get('session_id');
+  const [nothing, setNothing] = useState(false);
+  if (starting && sessionId && !nothing) {
+    return <BillingStartSetup orgSlug={props.org.slug} orgName={props.org.name} plan={starting} sessionId={sessionId}
+      onNothing={() => { setNothing(true); router.replace(props.billingBase, { scroll: false }); }} />;
+  }
   // Keep the marker throughout waiting, on either side of the flip. No ordinary billing reads or payment controls mount.
   return isInPlaceReturn(params)
     ? <ClubUpgradeSetup orgSlug={props.org.slug} /> : <BillingPlanBody {...props} />;
@@ -602,6 +635,12 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const gating = useBillingRead<Partial<Record<OrgPlan, boolean>>>('/api/plan-gating', version);
   const cancellation = useBillingRead<BillingCancellation>(`/api/billing/cancel/preflight?${scope}`, version);
   const move = useBillingRead<BillingMove>(ownProfile.changes.some(c => c.mechanism === 'move') && org.subscriptionStatus !== 'canceled' ? `/api/billing/move?${scope}` : null, version);
+  // On-sale pages S4, call 41: a free organization a paid door made remembers the plan it came for (a door's offer is null for
+  // every other organization, and the read asks Stripe nothing when it has no remembered plan).
+  const offer = useBillingRead<{ offer?: { startPlan?: string } | null }>(ownProfile.key === 'tournament' && org.subscriptionStatus !== 'canceled' ? `/api/billing/start-plan?${scope}` : null, version);
+  const leftStart = offer.status === 'ready' ? parseStartPaidPlan(offer.data.offer?.startPlan) : null;
+  // A second press refused while the first payment lands (`subscription_landing`): the wait takes the page's place.
+  const [landing, setLanding] = useState<OrgPlan | null>(null);
   const pendingEnding = cancellation.status === 'ready' && org.subscriptionStatus !== 'canceled' ? cancellation.data.ending?.pending ?? null : null;
   // Stage 2: the waiting change is a move to the free plan (its band, Change which tournament you keep, the Keep sentence).
   const waitingMove = pendingEnding?.kind === 'downgrade' ? pendingEnding : null;
@@ -673,6 +712,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     if (!response.ok) {
       // GST/HST Stage 1: a paid route with no billing address on file opens the Billing address window, not an error.
       if (isAddressRefusal(data)) return ADDRESS_REFUSED;
+      // On-sale pages S4: a paid start still landing — the page shows the wait rather than an error.
+      if (data.code === 'subscription_landing') return LANDING;
       throw new Error(data.error ?? W.errors.generic);
     }
     return data;
@@ -696,6 +737,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       const result = await post('/api/billing/create-checkout', { planKey: target, billingCycle: chosen, returnTo: billingBase });
       if (!live.current || result === TERMS_CLOSED) return;
       if (result === ADDRESS_REFUSED) { address.refused(() => void checkout(target, chosen)); return; }
+      if (result === LANDING) { setLanding(target); return; }
       if (result.applied) { setNotice({ tone: 'good', text: W.notice.updated(PLAN_BILLING_PROFILES[target].config.label, result.restoredCount, result.remainingRetainedCount) }); reloadAfterAction(); }
       else if (result.url) leave(result.url);
       else throw new Error(W.errors.checkout);
@@ -800,9 +842,12 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       } catch (error) { if (live.current) setKeepError(error instanceof Error ? error.message : W.errors.keep); }
     });
   }
+  // On-sale pages S4: a second press was refused while the first payment lands — the wait, never the rows (no third press).
+  if (landing) return <BillingStartSetup orgSlug={org.slug} orgName={org.name} plan={landing} sessionId={null}
+    onNothing={() => { setLanding(null); reloadAfterAction(); }} />;
   return <>
     <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} detail={detail} onCloseDetail={() => setDetail(null)} billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null}
-      deletion={deletionWorkspace ? { read: deletion.read, onRequest: () => setDeleteOpen(true) } : null} />
+      deletion={deletionWorkspace ? { read: deletion.read, onRequest: () => setDeleteOpen(true) } : null} leftStart={leftStart} />
     {deleteOpen && deletionWorkspace && deletion.read.status === 'ready' && <DeletionRequestWindow orgSlug={org.slug}
       orgName={deletionName(org, deletionWorkspace)} workspace={deletionWorkspace} facts={deletion.read.data}
       paid={deletionPaid ? { plan: deletionPlanName(ownProfile.key as OrgPlan), until: deletionPaid } : null}
@@ -816,8 +861,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
         if (ownProfile.key === 'team') { window.location.replace(inPlaceReturnPath(org.slug)); return; }
         setMoveTo(null); setNotice({ tone: 'good', text }); reloadAfterAction();
       } }} />}
-    {payFor && <PlanCycleDialog key={`${org.id}:${payFor}`} label={PLAN_BILLING_PROFILES[payFor].config.label} monthlyPrice={PLAN_BILLING_PROFILES[payFor].config.monthlyPrice}
-      annualPrice={PLAN_BILLING_PROFILES[payFor].config.annualPrice} trialDays={PLAN_BILLING_PROFILES[payFor].config.trialDays} savings={W.plan.savings(payFor)} initial={cycle} onClose={() => setPayFor(null)}
+    {/* Call 38: opens on Monthly, the saving from the plan config, the TRUE trial read by the window itself. */}
+    {payFor && <PlanCycleDialog key={`${org.id}:${payFor}`} orgSlug={org.slug} planKey={payFor} savings={W.plan.savings(payFor)} initial="monthly" onClose={() => setPayFor(null)}
       billedTo={address.location ? formatBilledTo(address.location) : null}
       onChangeAddress={() => { const plan = payFor; setPayFor(null); address.edit(() => setPayFor(plan)); }}
       onContinue={chosen => { setPayFor(null); setCycle(chosen); void checkout(payFor, chosen); }} />}

@@ -581,6 +581,20 @@ export async function hadSubscriptionBefore(customerId: string): Promise<boolean
 }
 
 /**
+ * NO SECOND START WHILE ONE IS LANDING (On-sale pages S4, the `/ux` must-fix, 2026-11-21). A paying subscription Stripe
+ * holds for this customer that the organization's record does not follow yet — a checkout paid moments ago whose webhook
+ * has not written the plan. Checkout asks before making a second Stripe page, so a buyer who pressed Upgrade again during
+ * the wait is never charged twice. The record keys the org on its customer and holds ONE subscription
+ * (lib/stripe-billing-state.ts); a second would be "ignored" by the webhook and still charged (call 45's alert).
+ */
+export async function landingSubscriptionId(customerId: string, onFileId: string | null): Promise<string | null> {
+  for await (const sub of getStripe().subscriptions.list({ customer: customerId, status: 'all', limit: 100 })) {
+    if (PAYING_STATUSES.has(sub.status) && sub.id !== onFileId) return sub.id;
+  }
+  return null;
+}
+
+/**
  * Has this customer paid, or promised to pay? The question behind GST/HST's "the country changed after paying" flag, and
  * ONLY that flag (owner Part 3 Ask 3, 2026-11-04).
  */

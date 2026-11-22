@@ -335,6 +335,15 @@
   min-height: 48px;
 }
 
+/* On-sale pages S4: what the Upgrade opens (the payment window), quiet under the button. */
+.upgradeHint {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+
 .cancelBtn {
   width: 100%;
   justify-content: center;

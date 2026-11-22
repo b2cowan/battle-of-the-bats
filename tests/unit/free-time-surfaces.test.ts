@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
-import { endInstantForLastDay, foldGrants, type OwnFacts } from '../../lib/free-time';
+import { endInstantForLastDay, foldGrants, runningPlanTier, type OwnFacts } from '../../lib/free-time';
 import { isTournamentTier } from '../../lib/billing-urls';
 import { freeTimeCopy } from '../../lib/free-time-copy';
 
@@ -49,8 +49,19 @@ describe('Today\'s "Free time ending" counts the clubs the list shows (guard 8)'
 describe('the customer is told the plan and the day, never the reason or the giver (guard 9, T15)', () => {
   it('the billing route answers with the free time and the over-limit flag only', () => {
     const route = read('app/api/admin/org/free-time/route.ts');
-    assert.match(route, /return NextResponse\.json\(\{ freeTime, overLimitAfter \}\);/);
+    // On-sale pages S4: Plan & billing's read adds the running whole-plan grant — its plan and last day only (T15).
+    assert.match(route, /return NextResponse\.json\(billingView \? \{ freeTime, overLimitAfter, planGrant \} : \{ freeTime, overLimitAfter \}\);/);
     assert.ok(!/reason|created_by|revoked_by/.test(route.replace(/\/\*[\s\S]*?\*\//g, '')), 'no reason or giver is read for the customer');
+  });
+
+  it('On-sale pages S4: the running whole-plan grant, with or without an end date; an ended or revoked one is none', () => {
+    const now = new Date('2026-11-21T12:00:00Z');
+    const grant = (over: Record<string, unknown>) => ({ type: 'plan_tier', value: null, target: { plan: 'tournament_plus' }, starts_at: '2026-01-01T00:00:00Z', expires_at: null, revoked_at: null, ...over }) as never;
+    assert.deepEqual(runningPlanTier([grant({ expires_at: endInstantForLastDay('2027-09-30') })], now), { plan: 'tournament_plus', lastDay: '2027-09-30' });
+    assert.deepEqual(runningPlanTier([grant({})], now), { plan: 'tournament_plus', lastDay: null }, 'no end date runs too');
+    assert.equal(runningPlanTier([grant({ expires_at: '2026-11-01T00:00:00Z' })], now), null, 'over by date');
+    assert.equal(runningPlanTier([grant({ revoked_at: '2026-11-02T00:00:00Z' })], now), null, 'ended early');
+    assert.equal(runningPlanTier([grant({ type: 'module_addon', target: { addons: ['module_rep_teams'] } })], now), null, 'sections are not a plan');
   });
 
   it('the words: free through the last free day, three states, no price', () => {

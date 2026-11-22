@@ -148,6 +148,12 @@
   background: rgba(var(--success-rgb), 0.07);
   border: 1px solid rgba(var(--success-rgb), 0.25);
 }
+/* Not a verdict, a fact about availability ("Coming soon" on a closed plan, On-sale pages S4 call 36): no colour of its own. */
+.chipQuiet {
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-2);
+}
 
 /* ── Figure: the number a card exists to show (`--type-figure`, a card figure read at a desk).
    The body face, tabular: one numeral on Money, Skills & goals and the team Overview alike — the

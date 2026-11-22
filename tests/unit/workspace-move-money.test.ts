@@ -630,10 +630,11 @@ describe('4 · a coach with no subscription buys Club on the same workspace', ()
     const checkout = readCode('app/api/billing/create-checkout/route.ts');
     // The in-place club return outranks everything. A paid door's checkout (On-sale pages S2) is a different customer — a brand-new
     // organization on the free plan — and its own return and cancel paths are read only when the move is NOT an in-place club.
-    assert.match(checkout, /const successReturnTo = inPlaceClubName \? inPlaceReturnPath\(auth\.org\.slug\)\s*: doorCheckout && startPlan \? startPlanSuccessPath\(auth\.org\.slug, paidDoorOf\(startPlan\)\)\s*: safeReturnTo;/);
-    assert.match(checkout, /const startPlan = !inPlaceClubName && ownPlanOf\(auth\.org\) === 'tournament' && isStartPaidPlan\(planKey\)/, 'a coach moving into the club is never a paid door');
+    // (On-sale pages S4 adds Plan & billing's wait for an existing organization's start, after the door's and before the rest.)
+    assert.match(checkout, /const successReturnTo = inPlaceClubName \? inPlaceReturnPath\(auth\.org\.slug\)\s*: doorCheckout && startPlan \? startPlanSuccessPath\(auth\.org\.slug, paidDoorOf\(startPlan\)\)\s*: billingStart \? billingStartSuccessPath\(fallbackReturnTo, planKey as StartPaidPlan\)\s*: safeReturnTo;/);
+    assert.match(checkout, /const startsWorkspace = !inPlaceClubName && ownPlan === 'tournament' && isStartPaidPlan\(planKey\);\s*const startPlan = startsWorkspace && isOnboardingPlanSelection \?/, 'a coach moving into the club is never a paid door, nor a Plan & billing start');
     assert.match(checkout, /const cancelReturnTo = doorCheckout \? startPlanCancelPath\(auth\.org\.slug\) : safeReturnTo;/, 'cancel is unchanged for everyone but a paid door: the coach keeps what they had');
-    assert.match(checkout, /success_url: doorCheckout \? `\$\{appUrl\}\$\{successReturnTo\}` : appendSuccess\(`\$\{appUrl\}\$\{successReturnTo\}`\),\s*cancel_url: `\$\{appUrl\}\$\{cancelReturnTo\}`,/);
+    assert.match(checkout, /success_url: doorCheckout \|\| billingStart \? `\$\{appUrl\}\$\{successReturnTo\}` : appendSuccess\(`\$\{appUrl\}\$\{successReturnTo\}`\),\s*cancel_url: `\$\{appUrl\}\$\{cancelReturnTo\}`,/);
     assert.match(checkout, /url: appendSuccess\(`\$\{appUrl\}\$\{successReturnTo\}`\),\s*applied: true,\s*planKey,\s*billingCycle,\s*restoredCount/, 'the dev checkout returns the same place');
   });
 

@@ -45,6 +45,8 @@ export type BillingDowngrade = {
 };
 export type BillingFreeTime = {
   freeTime: CustomerFreeTime | null; overLimitAfter: boolean; portal: PortalCustomerFreeTime | null;
+  /** On-sale pages S4: the whole-plan free time running now (no end date: `lastDay` null). Absent on a portal's read. */
+  planGrant?: { plan: OrgPlan; lastDay: string | null } | null;
 };
 export type BillingMove = { live: boolean; scheduledMove: { toPlan: OrgPlan; effectiveAt: string | null } | null };
 export type BillingSnapshot = {

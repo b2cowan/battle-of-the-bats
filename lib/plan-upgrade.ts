@@ -12,20 +12,32 @@
  */
 import type { OrgPlan } from './types';
 import { PLAN_CONFIG } from './plan-config';
+import { PLAN_RANK } from './plan-features';
 import type { TermsSend } from './legal-acceptance-rules';
 import { BILLING_ADDRESS_REQUIRED } from './billing-location';
 
-/** The plans a panel can be opened for. */
-const PANEL_PLANS = ['tournament_plus', 'league', 'club', 'team'] as const;
+/** The plans a panel can be opened for (Club · Association since On-sale pages S4, 2026-11-21). */
+const PANEL_PLANS = ['tournament_plus', 'league', 'club', 'club_large', 'team'] as const;
 export type PanelPlanKey = typeof PANEL_PLANS[number];
 
 /** The plans an organization can be moved onto from the panel (the coach's workspace is its own sign-up). */
 export type UpgradePlanKey = Exclude<PanelPlanKey, 'team'>;
 
-/** The plans a panel's Upgrade is offered for, on this plan — only the free Tournament plan is offered Tournament
- *  Plus. Plan & billing's primary cards and the panel over any page read this one rule. */
-export function upgradePlansFor(planId: OrgPlan | string | null | undefined): UpgradePlanKey[] {
-  return planId === 'tournament' ? ['tournament_plus'] : [];
+/** The plans a free Tournament organization can start by checkout, in the Change plan table's (price) order. */
+const START_ORDER: readonly UpgradePlanKey[] = ['tournament_plus', 'league', 'club', 'club_large'];
+
+/**
+ * The plans a checkout start is offered for, on this plan (On-sale pages S4, call 35, 2026-11-21). Only the free Tournament
+ * plan starts a plan by checkout — every paid plan changes the subscription it has (the move) — and it is offered all four.
+ * `grantedPlan` is a running whole-plan free time (call 40): such an organization is offered only the plans ranked ABOVE
+ * the plan it is given, because free time is never bought out of (the free-time rules) and the server refuses a start at
+ * or below it. Whether a plan is ON SALE is not this rule's question: the rows read the live gate. Plan & billing's table
+ * and the panel over any page read this one rule.
+ */
+export function upgradePlansFor(planId: OrgPlan | string | null | undefined, grantedPlan?: OrgPlan | null): UpgradePlanKey[] {
+  if (planId !== 'tournament') return [];
+  const floor = grantedPlan ? PLAN_RANK[grantedPlan] ?? 0 : PLAN_RANK.tournament;
+  return START_ORDER.filter(plan => PLAN_RANK[plan] > floor);
 }
 
 /** The two homes of Plan & billing (`getBillingHref`): the tournament tiers' and the organization's. */

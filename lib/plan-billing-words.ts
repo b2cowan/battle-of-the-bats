@@ -29,6 +29,9 @@ const retainedUntil = (iso: string, days: number) => new Date(new Date(iso).getT
 const keepDoor = (plan: OrgPlanKey) => plan === 'team' ? 'Keep Premium' : `Keep ${PLAN_CONFIG[plan].label}`;
 /** "Choose 1 tournament to keep active." — the Downgrade window's choice, its dated form, and the server's refusal. */
 const chooseCount = (count: number) => `Choose ${pluralize(count, 'tournament')} to keep active.`;
+// The team-count ruling (BUSINESS_DECISIONS 2026-11-19; words `/marketing`): a Club band's limit is the teams given a portal.
+const WITH_PORTAL = `with a ${PLAN_CONFIG.team.label}`;
+const HOUSE_LEAGUE_UNLIMITED = 'House league teams are unlimited.';
 const LOST_KEPT = 'Saved branding is kept; public tournament pages use FieldLogicHQ defaults until you upgrade again.';
 /** "On December 5 the rest move to archive retention for 90 days." — undated, or naming the tournaments once the choice is made. */
 const W_REST = (days: number, iso: string | null = null, names: readonly string[] = []) =>
@@ -110,6 +113,9 @@ export const PLAN_BILLING_WORDS = {
     title: (label: string) => `How would you like to pay for ${label}?`,
     monthlyHelp: 'Billed every month.', annualHelp: 'Billed once a year.',
     cycleLabel: 'Billing', continue: 'Continue to checkout', cancel: 'Cancel',
+    trialLoading: 'Checking your trial…',
+    // The plan panel's Upgrade opens this window (On-sale pages S4, drawing tab 7).
+    panelHint: (savings: string) => `Opens the payment window: Monthly or Yearly (${savings}).`,
   },
   usage: {
     teams: 'Teams', tournaments: 'Tournament slots', seats: 'Staff seats', unlimited: 'Unlimited', loading: 'Loading…',
@@ -129,18 +135,25 @@ export const PLAN_BILLING_WORDS = {
     customTeams: (limit: number, org: string) => `Your plan holds up to ${limit} teams, a custom limit for ${org}. Archived teams don’t count.`,
     fullTeams: (org: string, limit: number, label: string, target: string) => `${org} holds ${limit} teams on ${label}, its limit. Move to ${target} to add more.`,
     fullContact: (org: string, limit: number, label: string) => `${org} holds ${limit} teams on ${label}, its limit. Contact us to add more.`,
-    growingTeams: (label: string, limit: number, target: string, targetLimit: number) => `${label} holds up to ${limit} teams. Archived teams don’t count. Growing past ${limit}? ${target} holds ${targetLimit}.`,
-    largestTeams: (label: string, limit: number) => `${label} holds up to ${limit} teams. Archived teams don’t count. More than ${limit}? Contact us for a custom plan.`,
+    // On-sale pages S4 (call 37, the 2026-11-19 ruling): a Club band counts the teams given a Premium Coaches Portal.
+    growingTeams: (label: string, limit: number, target: string, targetLimit: number) => `${label} holds up to ${limit} teams ${WITH_PORTAL}. ${HOUSE_LEAGUE_UNLIMITED} Archived teams don’t count. Growing past ${limit}? ${target} holds ${targetLimit}.`,
+    largestTeams: (label: string, limit: number) => `${label} holds up to ${limit} teams ${WITH_PORTAL}. ${HOUSE_LEAGUE_UNLIMITED} Archived teams don’t count. More than ${limit}? Contact us for a custom plan.`,
     freeTeams: (label: string) => `Teams you add while ${label} is free are kept after it ends.`,
   },
   change: {
     headings: { plan: 'Plan', holds: 'Holds', monthly: 'Monthly', annual: 'Yearly', choice: 'Your choice' },
     current: 'Your plan', move: (label: string) => `Move to ${label}`,
+    // On-sale pages S4 (drawing tab 6): a free-time organization's "Your plan" row is the plan it is given.
+    freeThrough: (lastDay: string) => `Free through ${formatStoredDate(lastDay)}`,
     upgrade: (label: string) => `Upgrade to ${label}`, downgrade: (label: string) => `Downgrade to ${label}`,
     details: (label: string) => `See what ${label} includes`, contactMove: 'Contact us to move', contact: 'Contact us',
     upTo: (limit: number) => `Up to ${limit}`, range: (lower: number, upper: number) => `${lower} to ${upper}`,
     tournamentLimit: (limit: number) => limit >= NO_LIMIT ? 'Unlimited' : `${pluralize(limit, 'tournament')} at a time`,
     custom: (limit: number) => `More than ${limit} teams?`, customEnd: 'for a custom plan.',
+    // On-sale pages S4, call 37: the one line under the table whenever a Club row shows; it absorbs "More than 30 teams?".
+    countLine: (limit: number) => `${PLAN_CONFIG.club.label} and ${PLAN_CONFIG.club_large.label} count the teams you give a ${PLAN_CONFIG.team.label}. ${HOUSE_LEAGUE_UNLIMITED} More than ${limit}?`,
+    // Call 41: a start left halfway (an abandoned door checkout), above the table while its plan is on sale.
+    leftStart: { before: 'You were starting', after: (label: string) => `. Pick up where you left off with Upgrade to ${label} below.` },
     pricesPlusTax: PRICES_PLUS_TAX,
     availabilityTag: gatedPlanTag, availabilityNote: gatedPlanNote,
     clubTitle: 'Part of a club?', joinClub: 'Join a club',
@@ -427,6 +440,11 @@ export const PLAN_BILLING_WORDS = {
     longerBody: 'Your club isn’t ready yet. Please don’t start another payment. Check again in a minute.',
     unconfirmedTitle: 'We couldn’t confirm your club is ready',
     unconfirmedBody: 'Please don’t pay again. Contact us and we’ll sort it out.',
+    // On-sale pages S4 (drawing tab 3): the same wait, for an organization starting League Plus, Club or Club · Association.
+    startSettingTitle: (label: string) => `Setting up ${label}`,
+    startSettingBody: (label: string, org: string) => `We’re setting up ${label} for ${org}. Your events, teams and staff stay where they are. Please don’t start another payment.`,
+    startLongerBody: (label: string) => `${label} isn’t ready yet. Please don’t start another payment. Check again in a minute.`,
+    startUnconfirmedTitle: (label: string) => `We couldn’t confirm ${label} is ready`,
     ready: 'Your club is ready',
     readyBody: (club: string) => `You’re the owner of ${club}. Your team is already in it, with you as head coach. A few things to set up first:`,
     setupLabel: 'Set up your club', nameStep: 'Name your club', addressStep: 'Check your web address',

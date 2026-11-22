@@ -1,8 +1,9 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getPlanGatingMap, isPaidDoorOpen } from './plan-gating-server';
-import { getPlanConfigOverrides } from './plan-config-db';
-import { hadSubscriptionBefore } from './plan-move';
+import { getPlanConfigOverride, getPlanConfigOverrides } from './plan-config-db';
+import { hadSubscriptionBefore, landingSubscriptionId } from './plan-move';
+import type { OrgPlan } from './types';
 import { billingUrlOrgFromRow, getBillingHref } from './billing-urls';
 import { isPlatformAdminEmail } from './platform-auth';
 import { userBelongsToOtherRealOrg } from './org-membership-policy';
@@ -11,7 +12,7 @@ import { getActiveOwnedTeamWorkspace } from './team-workspace-owned';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { getAuthDestination } from './auth-destination';
 import {
-  isCompletedCheckoutOf, openPaidDoorPlans, paidDoorOf, parseStartPaidPlan, startPlanSetupDecision, trialDaysAfterHistory,
+  BILLING_START_PARAM, isCompletedCheckoutOf, openPaidDoorPlans, paidDoorOf, parseStartPaidPlan, startPlanSetupDecision, trialDaysAfterHistory,
   type PaidDoor, type StartPaidPlan, type StartPlanOffer, type StartPlanSetupState,
 } from './start-door';
 
@@ -120,6 +121,60 @@ export async function paidDoorRedirect(user: { id: string; email: string }, door
   if (liveInvitation) return '/discover';
   if (portal) return `/${portal.orgSlug}/coaches/billing`;
   return null;
+}
+
+/**
+ * THE TRUE TRIAL, for any start by checkout (On-sale pages S4, call 38): what the payment window says before the press — the
+ * plan's trial (the platform admin's override, as checkout reads it) unless this customer has had a subscription before.
+ * READ-ONLY: it never makes a Stripe customer (an organization with none has no history, so the trial applies). A failed
+ * history read is `null` (unknown), and the window then falls back to "if your plan starts with a trial".
+ */
+export async function startTrialFor(
+  org: { stripeCustomerId?: string | null },
+  plan: OrgPlan,
+): Promise<{ trialDays: number | null; returning: boolean | null }> {
+  const [config, returning] = await Promise.all([
+    getPlanConfigOverride(plan),
+    org.stripeCustomerId
+      ? hadSubscriptionBefore(org.stripeCustomerId).catch((err): null => {
+          console.error('[start-plan] subscription history read failed:', err);
+          return null;
+        })
+      : false,
+  ]);
+  return { trialDays: returning === null ? null : trialDaysAfterHistory(config.trialDays, returning), returning };
+}
+
+/** Where Stripe sends an existing organization's start back: its own Plan & billing, holding the wait (S4). */
+export function billingStartSuccessPath(billingPath: string, plan: StartPaidPlan): string {
+  return `${billingPath}${billingPath.includes('?') ? '&' : '?'}${BILLING_START_PARAM}=${plan}&session_id={CHECKOUT_SESSION_ID}`;
+}
+
+/**
+ * Plan & billing's wait with no Stripe session behind it — a second press refused because a paid start is still landing
+ * (`subscription_landing`). `setting_up` while Stripe holds a paying subscription the record does not follow; `ready` once
+ * the record holds a paid plan; `no_payment` when nothing is landing and the plan is still free (the page shows its rows).
+ * A failed read keeps waiting, as the session wait does.
+ */
+export async function billingLandingState(orgId: string): Promise<StartPlanSetupState> {
+  const { data, error } = await supabaseAdmin
+    .from('organizations')
+    .select('plan_id, stripe_customer_id, stripe_subscription_id')
+    .eq('id', orgId)
+    .maybeSingle<{ plan_id: string | null; stripe_customer_id: string | null; stripe_subscription_id: string | null }>();
+  if (error || !data) {
+    if (error) console.error('[start-plan] organization read failed:', error);
+    return 'setting_up';
+  }
+  if (data.stripe_customer_id) {
+    try {
+      if (await landingSubscriptionId(data.stripe_customer_id, data.stripe_subscription_id)) return 'setting_up';
+    } catch (err) {
+      console.error('[start-plan] landing read failed:', err);
+      return 'setting_up';
+    }
+  }
+  return data.plan_id && data.plan_id !== 'tournament' && data.stripe_subscription_id ? 'ready' : 'no_payment';
 }
 
 /** Where Stripe sends a paid door's buyer back: the wait (with the session, so a page with no payment says so at once). */

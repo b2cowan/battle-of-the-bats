@@ -483,8 +483,10 @@ describe('the line (C2, drawing tab 5): §20 (3), only while the pages are on', 
     assert.match(render(LINKS, { trial: 5 }),/^<p[^>]*>If your plan starts with a trial, it ends on the date shown at checkout, and your payment method is charged then unless you cancel. <span>Your plan renews/);
   });
   it('the line is placed only beside a priced button (no "free" choice remains to leave it off, Stage 2b)', () => {
-    assert.match(sourceOf.get('components/billing/PlanCycleDialog.tsx')!, /\{\(monthlyPrice > 0 \|\| annualPrice > 0\) && <PlanTermsLine trial=/);
-    assert.match(sourceOf.get('components/billing/PlanArticlePanel.tsx')!, /\{config\.monthlyPrice > 0 && <PlanTermsLine trial=/);
+    // On-sale pages S4 (call 38): the payment window states the TRUE trial once it is read, so its line waits for that read;
+    // the plan panel's Upgrade opens that window and shows no price, so the panel carries no line of its own.
+    assert.match(sourceOf.get('components/billing/PlanCycleDialog.tsx')!, /\{trial\.status === 'ready' && \(config\.monthlyPrice > 0 \|\| config\.annualPrice > 0\) && <PlanTermsLine trial=\{planTermsTrial\(trialDays, config\.trialDays\)\} \/>\}/);
+    assert.doesNotMatch(sourceOf.get('components/billing/PlanArticlePanel.tsx')!, /<PlanTermsLine\b/);
     // the plan step's line sits in the Tournament Plus card, above its paid button — never in the free card
     const plan = sourceOf.get('app/[orgSlug]/admin/onboarding/PlanStep.tsx')!;
     assert.match(plan, /<PlanTermsLine place="column" trial=\{PLAN_CONFIG\.tournament_plus\.trialDays\} \/>\s*\{startButton\('tournament_plus', 'Start with Tournament Plus'\)\}/);
@@ -494,7 +496,7 @@ describe('the line (C2, drawing tab 5): §20 (3), only while the pages are on', 
   it('every line beside a plan that may carry a trial says so — a line with no trial sentence is only for a plan without one', () => {
     // Where the plan can have trial days, the line reads the plan's own settings (never a hard-coded "no trial").
     // (the line takes the plan's trial days as a number and says the conditional sentence itself when they are above zero)
-    for (const f of ['components/billing/PlanCycleDialog.tsx', 'components/billing/PlanArticlePanel.tsx', 'components/billing/BillingBody.tsx',
+    for (const f of ['components/billing/PlanCycleDialog.tsx', 'components/billing/BillingBody.tsx',
       'components/PricingSection.tsx', 'app/[orgSlug]/admin/onboarding/PlanStep.tsx', 'app/[orgSlug]/admin/onboarding/PaidPlanStep.tsx', 'app/[orgSlug]/admin/onboarding/AddressStep.tsx',
       'app/team/TeamSignupClient.tsx']) {
       assert.ok(/<PlanTermsLine\b[^>]*trial=\{[^}]*trialDays/i.test(sourceOf.get(f)!),`${f}: the line must say "if your plan starts with a trial" where the plan has trial days`);
@@ -505,7 +507,7 @@ describe('the line (C2, drawing tab 5): §20 (3), only while the pages are on', 
   it('exactly these files render the line', () => {
     assert.deepEqual(filesMatching(/<PlanTermsLine\b/), [
       'app/[orgSlug]/admin/onboarding/AddressStep.tsx', 'app/[orgSlug]/admin/onboarding/PaidPlanStep.tsx', 'app/[orgSlug]/admin/onboarding/PlanStep.tsx', 'app/team/TeamSignupClient.tsx',
-      'components/PricingSection.tsx', 'components/billing/BillingBody.tsx', 'components/billing/PlanArticlePanel.tsx',
+      'components/PricingSection.tsx', 'components/billing/BillingBody.tsx',
       'components/billing/PlanCycleDialog.tsx', 'components/billing/PlanMoveDialog.tsx',
     ]);
   });

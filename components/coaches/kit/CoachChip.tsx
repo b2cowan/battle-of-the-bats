@@ -7,6 +7,6 @@ import kit from './CoachKit.module.css';
  * is recognised, not read. ⚠ Colour never carries the verdict alone (deutan ruling): a danger chip
  * carries a word or an icon the caller passes as children.
  */
-export default function CoachChip({ tone, children }: { tone: 'danger' | 'warn' | 'good'; children: ReactNode }) {
-  return <span className={clsx(kit.chip, tone === 'danger' ? kit.chipDanger : tone === 'warn' ? kit.chipWarn : kit.chipGood)}>{children}</span>;
+export default function CoachChip({ tone, children }: { tone: 'danger' | 'warn' | 'good' | 'quiet'; children: ReactNode }) {
+  return <span className={clsx(kit.chip, tone === 'danger' ? kit.chipDanger : tone === 'warn' ? kit.chipWarn : tone === 'quiet' ? kit.chipQuiet : kit.chipGood)}>{children}</span>;
 }

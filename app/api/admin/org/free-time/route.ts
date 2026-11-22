@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getCustomerFreeTime } from '@/lib/entitlement-grants';
+import { getBillingFreeTimeFacts, type getCustomerFreeTime } from '@/lib/entitlement-grants';
 import { getEffectiveTournamentLimit } from '@/lib/plan-config';
 import { SLOT_STATUSES } from '@/lib/tournament-slot';
 import { withObservability } from '@/lib/observability';
@@ -59,8 +59,11 @@ export const GET = withObservability(async (req: Request) => {
   if (error || !row) return NextResponse.json({ freeTime: null }, { status: billingView ? 503 : 200 });
 
   let freeTime: Awaited<ReturnType<typeof getCustomerFreeTime>>;
+  // On-sale pages S4: Plan & billing also reads the whole-plan free time running now, with or without an end date (the
+  // plans it may start, and what a paid plan falls back to). Its plan and last day only, as `freeTime` says (T15).
+  let planGrant: Awaited<ReturnType<typeof getBillingFreeTimeFacts>>['planGrant'] = null;
   try {
-    freeTime = await getCustomerFreeTime(row, { strict: billingView });
+    ({ freeTime, planGrant } = await getBillingFreeTimeFacts(row, { strict: billingView }));
   } catch {
     return NextResponse.json({ error: 'Free time could not be read. Try again.' }, { status: 503 });
   }
@@ -77,5 +80,5 @@ export const GET = withObservability(async (req: Request) => {
       overLimitAfter = (count ?? 0) > ownLimit;
     }
   }
-  return NextResponse.json({ freeTime, overLimitAfter });
+  return NextResponse.json(billingView ? { freeTime, overLimitAfter, planGrant } : { freeTime, overLimitAfter });
 }, { route: '/api/admin/org/free-time' });
