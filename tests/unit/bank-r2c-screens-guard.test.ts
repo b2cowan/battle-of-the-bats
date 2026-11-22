@@ -517,12 +517,12 @@ describe('12. BC5a: the Overview line and the fiscal-year close row (ask 4, R0 t
     // The pick itself changes the account; the writer above is what puts it in the address.
     assert.match(tab, /const pickAccount = \(id: string\) => \{ setWin\(null\); setAgain\(null\); setAfterStart\(null\); setView\(null\); setAccountId\(id\); \};/);
   });
-  it('S2 (row 20): "How the bank check works" ends the head line, for every role, and opens the club’s bank guide', () => {
+  it('the head line has no "How the bank check works" link (owner 2026-11-22): the page’s "?" drawer opens the bank guide, and a link out made them leave the page', () => {
     const st = code('BankStatements.tsx');
-    assert.match(st, /\{tools\}\s*\{helpHref && <Link href=\{helpHref\} className=\{s\.link\}>\{W\.helpLink\}<\/Link>\}/);
-    assert.match(code('BankTab.tsx'), /helpHref=\{`\/\$\{orgSlug\}\/admin\/help\/accounting#bank-tab`\}/);
-    assert.equal(BANK_WORDS.helpLink, 'How the bank check works');
-    // The anchor exists: the guide has the article this link names.
+    assert.doesNotMatch(st, /helpHref|W\.helpLink|next\/link/);
+    assert.doesNotMatch(code('BankTab.tsx'), /helpHref/);
+    // The "?" drawer is the one door: the Bank tab maps to the bank-tab article, and the article exists.
+    assert.match(readCode('lib/admin-page-help.ts'), /'accounting\/bank': acc\(\['bank-tab'\], 'Bank'\)/);
     assert.match(readCode('lib/help-content/accounting.tsx'), /id: 'bank-tab',/);
   });
   it('the printed check’s items row may break across sheets (a near-page list never jumps whole to sheet two)', () => {

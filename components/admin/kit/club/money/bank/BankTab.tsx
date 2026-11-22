@@ -235,7 +235,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
               onStale={t => void staleRefresh(t)} />
           : <Callout role="status">{W.setupReader}</Callout>}
       </>
-    : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null} helpHref={`/${orgSlug}/admin/help/accounting#bank-tab`}
+    : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null}
         onOpen={id => setWin({ kind: 'check', id })}
         form={canMove ? (
           // Keyed by the person too: their working draft (WD1) is read when the card mounts, and the signed-in person

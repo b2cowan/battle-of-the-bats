@@ -138,7 +138,7 @@ One method line above the items on both portals' printed checks (row 15, D6).
   **Asks:** A6. **Risk:** low. **Build prompt written 2026-11-13:** `BANK_CHECK_NOVICE_UX_S4_BUILD_PROMPT.md` (three calls to
   settle first: the ruled sentence omits online payments and cash; the title and "Bank balance on the statement" still say
   "statement" and D6's after-frame keeps them; the coach's paper says "books" where the coach's screen says "Ledger").
-  **Built and committed `ffaa0500d` 2026-11-13** (§4); owner walk §523 owed.
+  **Built and committed `ffaa0500d` 2026-11-13** (§4); owner walk §523 passed 15 of 15 on 2026-11-22 (call A accepted, call B kept).
 
 ### S5 — The phone's second Save (parked, A9 Not yet)
 After S3, measure Save's distance on a phone with Find open. If it is within a screen once the list waits behind "Show
