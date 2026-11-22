@@ -45,7 +45,19 @@ an Organization tab first would mean moving the tab, its help page and its list 
 **Rulings.** All 12 asks on the evaluation (https://claude.ai/artifact/6wvN7LEUw3mfUEdSXYSryY) ruled as recommended,
 owner 2026-11-16. Plan: `CLUB_COMMUNICATIONS_PLAN.md`.
 
-**Where it stands (2026-11-17).** Session 2, the place, is committed and its walk (§537) is ready for the owner: Communications in the sidebar and the phone's More sheet; one list of family, coach and board emails, each
+**Where it stands (2026-11-22).** The build is complete and walked: the coach and board windows, the place and the engine are
+committed and the owner's two walks passed (35 of 35, 47 of 47). The Close is built: a full review, one words pass, a
+Communications help guide, a database read and a final legal read. What the owner sees differently from the last walk:
+a stopped email can be marked finished when nobody was missed, a second send to a group is held while the first is still
+going out, a finish that gets no answer says it may still be sending, and a pick that included a coach who is also a rep
+staff member cannot be opened by a league admin. Four calls are the owner's: whether to build the three finish rules the
+legal read ruled (a narrower seat refuses to finish a mixed pick, a finish sends the club's inbox copy once, a finish refuses
+when the sender has left), whether the switch also stops the practice reminder and the team-change notice, whether the
+nightly clean-up also reaches old family emails, and renewing the test sign-ins so the two new screens can be swept.
+Nothing reaches production until the database steps (492, 493, 520), the nightly job and a corrected privacy version go
+together.
+
+**Earlier (2026-11-17).** Session 2, the place, is committed and its walk (§537) is ready for the owner: Communications in the sidebar and the phone's More sheet; one list of family, coach and board emails, each
 person seeing only their share; the owner and admins email families without the Families book; Families down to two
 tabs, its old Emails address forwarding; the Communications switch on by default for league admins, registrars and
 treasurers, and off meaning no group email from any screen. The owner ruled two things that session: the club-wide

@@ -1772,10 +1772,17 @@ export const SCREENS = [
   { id: 'admin-family-child-split',    area: 'families', session: 'repClubOwner', ready: 'h1',
     path: (c) => `/${c.clubSlug}/admin/families/children/${c.clubChildId}?from=${c.clubPersonId}`,
     interact: (page) => openKitDialogBy(page, page.getByRole('button', { name: 'Split records', exact: true })), scope: '[data-kit-dialog]' },
-  // Club Tier Stage 7c: the Emails tab, and the Email families window open over it — its one door (Send is never pressed).
-  { id: 'admin-families-emails',       area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/families/emails` },
-  { id: 'admin-families-email-window', area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/families/emails`,
-    interact: (page) => openKitDialogBy(page, page.getByRole('button', { name: 'Email families', exact: true })), scope: '[data-kit-dialog]' },
+  // Club Communications: the place that replaced the Families Emails tab (/admin/club-emails), and its New email menu's
+  // "To families" window open over it — the window's one door (Send is never pressed).
+  { id: 'admin-club-emails',           area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/club-emails` },
+  { id: 'admin-club-email-families-window', area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/club-emails`,
+    interact: async (page) => {
+      // The menu is worded "New email" at a desk and a phone drawer (still role="menu") on a phone; "To families" is its item.
+      await page.locator('button[aria-haspopup="menu"]:visible', { hasText: 'New email' }).first().click();
+      await page.locator('[role="menu"] [role="menuitem"]:visible', { hasText: 'To families' }).first().click();
+      await page.locator('[data-kit-dialog]').first().waitFor({ state: 'attached', timeout: 15_000 });
+      await page.waitForTimeout(300);
+    }, scope: '[data-kit-dialog]' },
 
   // ── Public site builder: five rows that open in place, the club's home beside them at a desk. Only the open row is
   // measured, so each row has its own entry (a collapsed row is invisible to this sweep). The preview is an iframe; its own

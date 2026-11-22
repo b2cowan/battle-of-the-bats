@@ -172,3 +172,17 @@ describe('Send again to these people (coach drawing tab 6; the board’s record)
     assert.match(screen, /canSendAgain=\{open\.kind === 'board' \? !!seat\?\.board && !!boardOffered : !!seat\?\.coaches\}/);
   });
 });
+
+describe('Finishing a stopped email · what the record says when the finish gets no answer', () => {
+  const record = readCode('components/admin/kit/club/communications/ColleagueRecord.tsx');
+  it('a finish with no answer says it may still be sending, never "couldn’t load"', () => {
+    assert.match(RECORD.finishUnsure, /may still be sending/);
+    assert.doesNotMatch(RECORD.finishUnsure, /load/i);
+    assert.match(record, /refusalText\(res\.data, RECORD\.finishUnsure\)/);
+    assert.match(record, /catch \{\s*setError\(RECORD\.finishUnsure\)/);
+  });
+  it('closing an email nobody missed says it sent nothing, in one verb', () => {
+    assert.match(RECORD.finishNoneHint, /Marking it finished sends nothing/);
+    assert.equal(RECORD.finishedNone, 'Marked as finished. Nothing was sent.');
+  });
+});

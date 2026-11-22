@@ -33,6 +33,7 @@ const hl = inGuide('house-league');
 const acc = inGuide('accounting');
 const fam = inGuide('families');
 const org = inGuide('org');
+const comms = inGuide('communications');
 
 /** The dashboard's four boards (A56): the page knows which board it is and hands the matching one up. */
 export const DASHBOARD_HELP = {
@@ -109,8 +110,8 @@ export const CLUB_PLACE_HELP: Readonly<Record<string, PageHelpTopic>> = {
   'org/org/pdf': inGuide('exports')(['pdf-settings'], 'PDF settings'),
   // ── The screens with no tab row ──
   'permits/permits': org(['permits'], 'Permits'),
-  // Communications (Club Communications Stage 1, N12): the emailing article until Close's /docs gives the place its own topic.
-  'club-emails/club-emails': fam(['families-email'], 'Communications'),
+  // Communications (Club Communications Stage 1, N12): the place has its own guide since the Close.
+  'club-emails/club-emails': comms(['comms-new-email', 'comms-list'], 'Communications'),
   calendar: org(['club-calendar'], 'Calendar'),
   schedules: org(['club-schedules'], 'Schedules', 'club-schedules-t-list'),
   schedule: org(['club-schedules'], 'Schedule', 'club-schedules-t-page'),

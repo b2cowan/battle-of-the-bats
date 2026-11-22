@@ -10,7 +10,7 @@
  */
 import { useCallback, useState } from 'react';
 import type { EmailLogRow } from '@/lib/families-emails-log';
-import { RECORD, SAY, type ColleagueKind } from '@/lib/club-group-email-words';
+import { RECORD, type ColleagueKind } from '@/lib/club-group-email-words';
 import type { SendAgain } from './EmailColleaguesWindow';
 import { FAMILY_EMAILS_TAB_WORDS as W } from '@/lib/families-words';
 import LoadingState from '@/components/shared/LoadingState';
@@ -42,7 +42,8 @@ export function ColleagueRecord({ row, eyebrow, q, canSendAgain, onSendAgain, on
   onClose: () => void;
   onFinished: (text: string) => void;
 }) {
-  const url = `/api/admin/club-emails/${encodeURIComponent(row.id)}?${q}`;
+  const path = `/api/admin/club-emails/${encodeURIComponent(row.id)}`;
+  const url = `${path}?${q}`;
   const [detail, setDetail] = useState<Detail | null>(null);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -59,7 +60,8 @@ export function ColleagueRecord({ row, eyebrow, q, canSendAgain, onSendAgain, on
   const count = detail?.count ?? row.counts?.families ?? 0;
   const missed = Math.max(0, count - reached);
   // Words the clock deleted can't be sent again (T25): no button to a refusal.
-  const mayFinish = state === 'stopped' && missed > 0 && !!detail?.finish?.may && !detail.wordsCleared;
+  // Nobody missed (every person has it, only the last mark failed) still closes: the server marks it done and sends nothing.
+  const mayFinish = state === 'stopped' && !!detail?.finish?.may && !detail.wordsCleared;
   const statusWord = (s: Person['status']) => s === 'sent' ? RECORD.statusSent : s === 'failed' ? RECORD.statusFailed
     : state === 'sending' ? RECORD.statusSending : RECORD.statusPending;
 
@@ -67,14 +69,14 @@ export function ColleagueRecord({ row, eyebrow, q, canSendAgain, onSendAgain, on
     if (busy) return;
     setBusy(true); setError('');
     try {
-      const res = await moneyFetch<{ kind?: ColleagueKind; keys?: string[]; dropped?: number; subject?: string | null; error?: string; code?: string }>(`${url.replace('?', '/again?')}`);
+      const res = await moneyFetch<{ kind?: ColleagueKind; keys?: string[]; dropped?: number; subject?: string | null; error?: string; code?: string }>(`${path}/again?${q}`);
       if (res.ok && res.data.kind && res.data.keys) {
         onSendAgain(res.data.kind, { keys: res.data.keys, subject: res.data.subject ?? null, dropped: res.data.dropped ?? 0 });
         return;
       }
-      setError(refusalText(res.data, SAY.failed));
+      setError(refusalText(res.data, RECORD.againFailed));
     } catch {
-      setError(SAY.failed);
+      setError(RECORD.againFailed);
     } finally {
       setBusy(false);
     }
@@ -84,11 +86,13 @@ export function ColleagueRecord({ row, eyebrow, q, canSendAgain, onSendAgain, on
     if (busy) return;
     setBusy(true); setError('');
     try {
-      const res = await moneyFetch<{ reached?: number; failed?: number; error?: string; code?: string }>(url, jsonInit('POST', { action: 'finish' }));
-      if (res.ok) { onFinished(RECORD.finished(res.data.reached ?? 0, res.data.failed ?? 0)); return; }
-      setError(refusalText(res.data, W.loadFailed));
+      const res = await moneyFetch<{ tried?: number; reached?: number; failed?: number; error?: string; code?: string }>(url, jsonInit('POST', { action: 'finish' }));
+      if (res.ok) { onFinished(res.data.tried === 0 ? RECORD.finishedNone : RECORD.finished(res.data.reached ?? 0, res.data.failed ?? 0)); return; }
+      setError(refusalText(res.data, RECORD.finishUnsure));
+      // Someone else took it (or it is no longer stopped): read the record again so it stops offering the finish.
+      if (res.status === 409) void read();
     } catch {
-      setError(W.loadFailed);
+      setError(RECORD.finishUnsure);
     } finally {
       setBusy(false);
     }
@@ -98,13 +102,13 @@ export function ColleagueRecord({ row, eyebrow, q, canSendAgain, onSendAgain, on
   return (
     <KitDialog kind="form" record size="medium" eyebrow={eyebrow} title={subjectText(detail ? { ...row, subject: detail.subject } : row)} onClose={onClose} busy={busy}
       footerStart={error ? <SendStanding>{error}</SendStanding>
-        : mayFinish ? <p className={ck.hint}>{RECORD.finishHint(missed)}</p>
+        : mayFinish ? <p className={ck.hint}>{missed > 0 ? RECORD.finishHint(missed) : RECORD.finishNoneHint}</p>
         : state === 'stopped' && missed > 0 && detail?.finish?.line ? <p className={ck.hint}>{detail.finish.line}</p> : undefined}
       footer={mayFinish ? (
         <>
           <DialogCancel>{W.close}</DialogCancel>
           <button type="button" className="btn btn-lime" onClick={() => void finish()} disabled={busy}>
-            {busy ? RECORD.finishing : RECORD.finish(missed)}
+            {busy ? RECORD.finishing : missed > 0 ? RECORD.finish(missed) : RECORD.finishNone}
           </button>
         </>
       ) : undefined}>

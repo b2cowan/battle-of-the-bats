@@ -112,15 +112,19 @@ async function runningTournament(orgId: string): Promise<{ name: string } | null
 
 export async function colleagueOptions(ctx: AuthContextWithRole, seat: Seat, kind: ColleagueKind): Promise<Out> {
   const sender = { userId: ctx.user.id, email: ctx.user.email ?? null };
-  const [clubContact, name, lastSent] = await Promise.all([
+  // The world this window draws is independent of the three reads above it, so it starts with them, but only for a seat
+  // that is offered it: a refused seat does no extra work. The running-tournament pointer goes with the coach world.
+  const [clubContact, name, lastSent, boardRead, coachRead] = await Promise.all([
     clubPublicContact(ctx.org.id), senderNameOf(ctx.org.id, ctx.user), lastColleagueSend(ctx, seat, kind),
+    kind === 'board' && seat.board ? loadBoardMembers(ctx.org.id) : null,
+    kind === 'coaches' && seat.coaches ? Promise.all([coachWorld(ctx, seat), seat.coaches.rep ? runningTournament(ctx.org.id) : null]) : null,
   ]);
   const replies = replyChoicesFrom(ctx.org.name, clubContact, ctx.user.email);
   const common = { kind, replies, senderNamed: !!name, lastSent };
 
   if (kind === 'board') {
-    if (!seat.board) return refuse(403, 'not_offered', SAY.notOffered);
-    const members = await loadBoardMembers(ctx.org.id);
+    if (!seat.board || !boardRead) return refuse(403, 'not_offered', SAY.notOffered);
+    const members = boardRead;
     const all = chooseBoard(members, { kind: 'board', group: 'board_all' }, seat, sender);
     if (!all.ok) return refuse(all.status, all.code, all.error);
     const pending = members.filter(m => m.status === 'invited' && m.userId !== ctx.user.id);
@@ -132,9 +136,8 @@ export async function colleagueOptions(ctx: AuthContextWithRole, seat: Seat, kin
     });
   }
 
-  if (!seat.coaches) return refuse(403, 'not_offered', SAY.notOffered);
-  // The running-tournament pointer is independent of the coach world, so the two reads go together.
-  const [w, tournament] = await Promise.all([coachWorld(ctx, seat), seat.coaches.rep ? runningTournament(ctx.org.id) : null]);
+  if (!seat.coaches || !coachRead) return refuse(403, 'not_offered', SAY.notOffered);
+  const [w, tournament] = coachRead;
   const count = (group: CoachGroup) => { const r = chooseCoaches(w.people, group, seat, sender, liveSeasonsOf(w)); return r.ok ? r.people.length : 0; };
   return okay({
     ...common,
@@ -203,8 +206,9 @@ function invitedFor(a: Audience, seat: Seat): string[] {
 export async function colleagueCount(ctx: AuthContextWithRole, seat: Seat, body: Record<string, unknown>): Promise<Out> {
   const a = await audienceOf(ctx, seat, body);
   if (isOut(a)) return a;
+  const people = peopleOf(a);
   return okay({
-    kind: a.group.kind, count: peopleOf(a).length, people: peopleOf(a), noAddress: a.noAddress, invited: invitedFor(a, seat),
+    kind: a.group.kind, count: people.length, people, noAddress: a.noAddress, invited: invitedFor(a, seat),
     pending: a.pending.length, pendingNamed: namesPending(seat) ? a.pending.map(shownMember) : null,
   });
 }
@@ -289,6 +293,9 @@ async function deliverOne(sendId: string, to: string, mail: { subject: string; h
   }
 }
 
+/** The transport's kind for a colleague email of this kind (the build guard pins these two names). */
+const mailKindOf = (kind: ColleagueKind): 'club_board_email' | 'club_coach_email' => kind === 'board' ? 'club_board_email' : 'club_coach_email';
+
 async function markRecipient(id: string, status: 'sent' | 'failed') {
   const { error } = await supabaseAdmin.from('club_group_email_recipients').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
   if (error) console.error('[club-group-email] an outcome was not recorded (the send goes on):', error.message);
@@ -327,7 +334,7 @@ export async function sendColleagueEmail(ctx: AuthContextWithRole, seat: Seat, b
   const ids = people.map(() => crypto.randomUUID());
   const claim = await supabaseAdmin.rpc('club_group_email_claim', {
     p_org: ctx.org.id, p_actor: ctx.user.id, p_kind: kind, p_group_kind: a.group.group, p_group_key: groupKey(a.group),
-    p_label: groupLabelOf(a).slice(0, 500), p_params: paramsOf(a.group), p_reaches_rep: people.some(p => !p.houseLeague) && kind === 'coaches',
+    p_label: groupLabelOf(a).slice(0, 500), p_params: paramsOf(a.group), p_reaches_rep: kind === 'coaches' && people.some(p => p.rep),
     p_reaches_house_league: people.some(p => p.houseLeague), p_sender_name: senderName.slice(0, 200), p_sender_role: ctx.role, p_reply_to: mode,
     p_club_copy: wantCopy, p_subject: words.subject, p_body: words.message,
     p_recipients: people.map((p, i) => ({
@@ -343,7 +350,7 @@ export async function sendColleagueEmail(ctx: AuthContextWithRole, seat: Seat, b
   const sends = () => supabaseAdmin.from('club_group_email_sends');
 
   const sender = { name: senderName, role: ctx.role };
-  const mailKind = kind === 'board' ? 'club_board_email' : 'club_coach_email';
+  const mailKind = mailKindOf(kind);
   const outcomes = await inParallel(people, 5, async (p) => {
     const i = people.indexOf(p);
     const mail = renderColleagueEmail({
@@ -405,22 +412,35 @@ export async function finishColleagueEmail(ctx: AuthContextWithRole, seat: Seat,
   if (send.wordsClearedAt) return refuse(409, 'words_gone', SAY.wordsGone); // T25
   if (send.state !== 'stopped') return refuse(409, 'not_stopped', SAY.notStopped);
 
-  // One mode per send (legal addendum 3): the stored mode, the stored sender, the reply target read now.
-  const clubContact = send.replyTo === 'club' ? await clubPublicContact(ctx.org.id) : null;
-  let senderEmail: string | null = null;
-  if (send.replyTo === 'sender' && send.sentBy) {
-    try { senderEmail = (await supabaseAdmin.auth.admin.getUserById(send.sentBy)).data.user?.email ?? null; } catch { senderEmail = null; }
-  }
+  // The reads below are independent, so they go together. One mode per send (legal addendum 3): the stored mode, the stored
+  // sender, the reply target read now. Whom it missed, and where each is NOW — read BEFORE the row is taken (/review
+  // 2026-11-17), so a failed read never leaves a stopped email held for 15 minutes with nothing sent. The second two are
+  // settled rather than thrown, so the checks that follow keep their order: the reply target refuses before any failure. The
+  // words are read here too, before the take: a failed read or deleted words must never leave the email held 15 minutes.
+  const [clubContact, senderEmail, [missedRead, groupRead, wordsRead]] = await Promise.all([
+    send.replyTo === 'club' ? clubPublicContact(ctx.org.id) : null,
+    send.replyTo === 'sender' && send.sentBy
+      ? supabaseAdmin.auth.admin.getUserById(send.sentBy).then(r => r.data.user?.email ?? null).catch(() => null)
+      : null,
+    Promise.allSettled([
+      supabaseAdmin.from('club_group_email_recipients')
+        .select('id, user_id, league_coach_id, name, basis, board_role').eq('send_id', sendId).in('status', ['pending', 'failed']),
+      stillInTheGroup(ctx, seat, send),
+      supabaseAdmin.from('club_group_email_bodies').select('subject, body').eq('send_id', sendId).maybeSingle(),
+    ]),
+  ]);
   const target = replyTargetOf(send.replyTo, senderEmail, clubContact);
   if ('ok' in target) return target;
-
-  // Whom it missed, and where each is NOW — read BEFORE the row is taken (/review 2026-11-17), so a failed read never leaves
-  // a stopped email held for 15 minutes with nothing sent.
-  const { data: missedRows, error: mErr } = await supabaseAdmin.from('club_group_email_recipients')
-    .select('id, user_id, league_coach_id, name, basis, board_role').eq('send_id', sendId).in('status', ['pending', 'failed']);
+  if (missedRead.status === 'rejected') throw missedRead.reason;
+  const { data: missedRows, error: mErr } = missedRead.value;
   if (mErr) throw mErr;
-  const addressOf = await stillInTheGroup(ctx, seat, send);
+  if (groupRead.status === 'rejected') throw groupRead.reason;
+  const addressOf = groupRead.value;
   if ('ok' in addressOf) return addressOf;
+  if (wordsRead.status === 'rejected') throw wordsRead.reason;
+  const { data: words, error: wErr } = wordsRead.value;
+  if (wErr) throw wErr;
+  if (!words) return refuse(409, 'words_gone', SAY.wordsGone); // before the take: nothing is held
 
   // Taking the row is the press's claim: a second press finds it taken, and nothing goes twice. Words the nightly clean-up
   // has just deleted are never sent: the take only matches a send that still has them.
@@ -430,9 +450,6 @@ export async function finishColleagueEmail(ctx: AuthContextWithRole, seat: Seat,
     .or(`retried_at.is.null,retried_at.lt.${cutoff}`).select('id').maybeSingle();
   if (error) throw error;
   if (!taken) return refuse(409, 'not_stopped', SAY.notStopped);
-  const { data: words, error: wErr } = await supabaseAdmin.from('club_group_email_bodies').select('subject, body').eq('send_id', sendId).maybeSingle();
-  if (wErr) throw wErr;
-  if (!words) return refuse(409, 'words_gone', SAY.wordsGone);
 
   const outcomes = await inParallel(missedRows ?? [], 5, async (r) => {
     const key = r.user_id ? `u:${r.user_id}` : `c:${r.league_coach_id}`;
@@ -444,7 +461,7 @@ export async function finishColleagueEmail(ctx: AuthContextWithRole, seat: Seat,
       subject: words.subject as string, body: words.body as string,
       recipient: { firstName: firstName(r.name as string | null), basis: r.basis as ColleagueBasis, boardRole: r.board_role as string | null },
     });
-    const s = await deliverOne(sendId, to, mail, send.kind === 'board' ? 'club_board_email' : 'club_coach_email', target.replyTo);
+    const s = await deliverOne(sendId, to, mail, mailKindOf(send.kind), target.replyTo);
     await markRecipient(r.id as string, s);
     return s;
   });

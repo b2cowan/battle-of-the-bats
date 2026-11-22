@@ -63,6 +63,16 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   is, only an upload triggers it, so the policy must not say "within a day"). A health answer's words never return to Your sign-up (it reads "Answered"); the
   question's health mark cannot come off once answered. No IP is stored with a tick or an upload. Topic: `BOARD_READY_STAGE4_PART2_BUILT_REVIEW.md`; possibly
   stale because of it: the published Privacy Policy §5/§9 and Data Terms §12 (Part 3 owes the sentences).
+- **About coaches and board members, in the club's record of group email (Club Communications Stage 1, built on dev, uncommitted 2026-11-22; migs 492/493/520 dev only):**
+  for each email a club sends to its coaches or its board: the sender's account id and name and seat as sent, the group, the
+  counts, and each person it went to (source id, name and team line or board seat as sent, why, and whether it reached
+  them); the subject and message stored apart. No address in any column (CHECKs reject an "@" in a name or line); a sender
+  can type one into their own message. The subject and message are deleted 12 months after the send and the list of people 24
+  months after, by a nightly job on dev only; the date, sender, group and counts stay while the organization exists; deleting
+  an organization deletes all three tables. A deleted account's name is not removed from these rows before then. Read by the
+  owner and admins; a league admin or registrar reads only house-league coach rows and never a pick that reached a rep staff
+  member; a board email only by its sender, its recipients, the owner and admins. Topic: `CLUB_COMMUNICATIONS_STAGE1.md`
+  (as-built review 2026-11-22); possibly stale because of it: the published Privacy Policy §5/§9/§12 (see the draft 0.5).
 - No public sharing of a child's data (`BUSINESS_DECISIONS.md` ~L2871); no one-to-one adult–minor
   messaging (`docs/projects/active/COACH_PORTAL_CHUNK_D_COUNSEL_PACKET.md` ~L188).
 - **Known gaps on file:** no player-information retention or purge rule (TODO, raised 2026-07-17); the

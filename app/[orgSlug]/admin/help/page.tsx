@@ -1,6 +1,6 @@
 'use client';
 import { useOrg } from '@/lib/org-context';
-import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
+import { hasModuleEntitlement, isClubPlan, isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
@@ -51,6 +51,8 @@ export default function AdminHelpHubPage() {
   const canAccounting   = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting');
   const canFamilies     = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_families');
   const canPublicSite   = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_public_site');
+  // Communications is a club-portal place: any plan that carries something beyond tournaments (the server's own rule).
+  const canCommunications = !!currentOrg && !isTournamentOnlyWorkspace(currentOrg);
   const canOrgAdmin     = userRole === 'owner' || userRole === 'admin';
   const isClub          = !!currentOrg && isClubPlan(currentOrg.planId);
 
@@ -112,6 +114,14 @@ export default function AdminHelpHubPage() {
       topicCount: 6,
       keywords: ['family', 'families', 'household', 'guardian', 'parent', 'duplicates', 'merge', 'opt out', 'export', 'privacy', 'ask the coaches', 'no family on file'],
     }] : []),
+    // Club Communications Stage 1 (Close): the guide for any club-portal plan, whatever the seat; the page itself decides who sees it.
+    ...(canCommunications ? [{
+      title: 'Communications',
+      desc:  'Write to families, coaches and the board, and read the list of every email the club sent: who can write to whom, where replies go, finishing an email that stopped partway.',
+      href:  `${helpBase}/communications`,
+      topicCount: 6,
+      keywords: ['communications', 'email families', 'email coaches', 'email the board', 'new email', 'replies', 'sent emails', 'last sent', 'stopped email', 'send to the ones it missed', 'who can read', 'board email'],
+    }] : []),
     ...(canOrgAdmin ? [{
       title: 'Org admin & setup',
       desc:  'Configure your organization settings, manage members, plan & billing, and venues.',
@@ -141,6 +151,7 @@ export default function AdminHelpHubPage() {
         { label: 'Fix a member access issue', href: `${helpBase}/org#recipe-fix-member-access` },
         { label: 'Require two-step sign-in', href: `${helpBase}/org#two-step-sign-in` },
         { label: 'Turn on included modules', href: `${helpBase}/org#recipe-enable-modules` },
+        ...(canCommunications ? [{ label: 'Email your families, coaches and board', href: `${helpBase}/communications#comms-new-email` }] : []),
         // Club Tier Stage 4c-1: the club runs its own site, where the plan carries it.
         ...(canPublicSite ? [{ label: 'Run your public site', href: `${helpBase}/org#public-site-editor` }] : []),
         ...(isClub ? [{ label: 'Club plan & billing', href: `${helpBase}/org#club-plan-and-billing` }] : []),

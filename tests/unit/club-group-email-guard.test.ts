@@ -506,6 +506,11 @@ describe('T20 · the recount compares the people', () => {
     const send = code.match(/export async function sendColleagueEmail[\s\S]*?\n\}/)?.[0] ?? '';
     assert.ok(send.indexOf('recount(expected') > 0 && send.indexOf('recount(expected') < send.indexOf("rpc('club_group_email_claim'"));
   });
+  it('reaches_rep is "went to at least one rep staff member", so a coach who is rep AND house league still shuts a league seat out', () => {
+    const code = readCode('lib/club-group-email.ts');
+    assert.match(code, /p_reaches_rep: kind === 'coaches' && people\.some\(p => p\.rep\),/);
+    assert.doesNotMatch(code, /p_reaches_rep:[^\n]*houseLeague/);
+  });
 });
 
 describe('T21 · no usable reply target, no send', () => {
@@ -545,8 +550,14 @@ describe('T24 · the clock (owner 2026-11-17: words 12 months, names 24 months, 
 describe('T25 · a stopped email whose words have expired cannot be finished', () => {
   it('colleague and family resends refuse in plain words', () => {
     assert.match(readCode('lib/club-group-email.ts'), /if \(send\.wordsClearedAt\) return refuse\(409, 'words_gone', SAY\.wordsGone\)/);
-    assert.match(readCode('lib/club-group-email.ts'), /\.is\('words_cleared_at', null\)[\s\S]{0,500}if \(!words\) return refuse\(409, 'words_gone', SAY\.wordsGone\)/,
-      'the take only matches a send that still has its words');
+    const finish = readCode('lib/club-group-email.ts').match(/export async function finishColleagueEmail[\s\S]*?\n\}/)?.[0] ?? '';
+    assert.match(finish, /\.is\('words_cleared_at', null\)/, 'the take only matches a send that still has its words');
+    // The words are read BEFORE the take (a failed read or gone words must never leave the email held 15 minutes).
+    assert.ok(finish.indexOf("from('club_group_email_bodies')") > 0 && finish.indexOf("from('club_group_email_bodies')") < finish.indexOf('retried_at: new Date()'),
+      'the words are read before the row is taken');
+    assert.ok(finish.indexOf("if (!words) return refuse(409, 'words_gone', SAY.wordsGone)") > 0
+      && finish.indexOf("if (!words) return refuse(409, 'words_gone', SAY.wordsGone)") < finish.indexOf('retried_at: new Date()'),
+      'gone words are refused before the take');
     assert.match(readCode('lib/families-email.ts'), /return refuse\(409, CW\.wordsGone, 'words_gone'\)/);
     assert.equal(SAY.wordsGone, "Its words were deleted 12 months after it was sent, so it can't be sent again.");
   });

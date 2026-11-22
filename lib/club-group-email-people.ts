@@ -17,9 +17,9 @@ import { seasonGroup } from './house-league-season';
 import { LINES } from './club-group-email-words';
 import type { LeagueRow, RepRow } from './club-group-email-rules';
 
-export interface LiveSeason { id: string; name: string; divisions: { id: string; name: string }[] }
+interface LiveSeason { id: string; name: string; divisions: { id: string; name: string }[] }
 /** An invitation not accepted yet: left out of every send and named by team (coach ask 8). `head`: a head-coach invitation. */
-export interface InvitedSlot { line: string; head: boolean }
+interface InvitedSlot { line: string; head: boolean }
 export interface CoachRows { rep: RepRow[]; league: LeagueRow[]; invited: InvitedSlot[]; seasons: LiveSeason[] }
 
 const personName = (first: string | null, last: string | null, whole: string | null) =>

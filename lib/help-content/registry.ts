@@ -9,6 +9,7 @@ import orgHelp from './org';
 import exportsHelp from './exports';
 import houseLeagueHelp from './house-league';
 import familiesHelp from './families';
+import communicationsHelp from './communications';
 
 /**
  * Central registry mapping a module key to its help content. There is no other
@@ -27,7 +28,8 @@ export type HelpModuleKey =
   | 'org'
   | 'exports'
   | 'house-league'
-  | 'families';
+  | 'families'
+  | 'communications';
 
 export const helpModules: Record<HelpModuleKey, HelpPageContent> = {
   tournaments: tournamentsHelp,
@@ -39,6 +41,7 @@ export const helpModules: Record<HelpModuleKey, HelpPageContent> = {
   exports: exportsHelp,
   'house-league': houseLeagueHelp,
   families: familiesHelp,
+  communications: communicationsHelp,
 };
 
 export interface ResolvedHelpSection {

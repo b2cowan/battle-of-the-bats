@@ -26,7 +26,7 @@ const clock = (iso: string) => formatTime(utcToZonedInputs(iso).time);
 
 /** When the next message can go, said as the time it opens (a rolling day can open later today, not only tomorrow). */
 /** Whether a stored instant falls in the club's current year (a log says the year only when it is not this one). */
-const inThisYear = (iso: string) => orgDayKey(iso).slice(0, 4) === tournamentToday().slice(0, 4);
+export const inThisYear = (iso: string) => orgDayKey(iso).slice(0, 4) === tournamentToday().slice(0, 4);
 
 /** A sentence ends once: a clock time already ends in its own period ("1:42 p.m."). */
 const closed = (s: string) => (s.endsWith('.') ? s : `${s}.`);

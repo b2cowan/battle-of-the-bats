@@ -7375,8 +7375,10 @@ address** — not the sender's, the club's contact or a recipient's. **Service-r
 **Gotchas:**
 
 1. **Inserted only by `club_group_email_claim(…)`** (mig 492): a per-club-and-kind advisory lock, then the **just-sent
-   check** — the same `group_key` within 60 seconds is refused `just_sent` — then the send and its `club_group_email_bodies`
-   row, in one transaction. ⚖ **No daily allowance** (coach ask 12): the 60 seconds is the only check.
+   check** — the same `group_key` within 60 seconds is refused `just_sent`, and so is the same group while a send of it is
+   **still going** (`status = 'sending'`, last touched under 15 minutes ago — `greatest(sent_at, retried_at)`; **mig 520**) —
+   then the send, its `club_group_email_bodies` row **and its `club_group_email_recipients` rows**, all in one transaction.
+   ⚖ **No daily allowance** (coach ask 12): these two holds are the only checks.
 2. **Who may read a row is decided in the app reader** (`lib/club-group-email-read.ts` → `canReadSend`, legal §2c), never by
    a screen: owner and admins every row; a league admin or registrar `coaches_all`, `league_*`, and a `coaches_picked` with
    `reaches_rep = false`; **a `board` row only its sender, a recipient (by `club_group_email_recipients.user_id`), the owner
@@ -7409,8 +7411,9 @@ in words, frozen ("All coaches", "House-league coaches · 2026 Fall House League
 
 <!-- dict:col:club_group_email_sends.reaches_rep -->
 <!-- dict:col:club_group_email_sends.reaches_house_league -->
-**`reaches_rep`** (boolean NOT NULL, default false) — a coach email reached someone who is not a house-league coach; a
-league seat never reads such a pick (gotcha 2). **`reaches_house_league`** (boolean NOT NULL, default false) — it reached at
+**`reaches_rep`** (boolean NOT NULL, default false) — a coach email went to at least one rep team staff member (a coach
+who is rep staff AND a house-league coach counts: `club_group_email_recipients.rep`); a league seat never reads such a pick
+(gotcha 2). **`reaches_house_league`** (boolean NOT NULL, default false) — it reached at
 least one house-league coach.
 
 <!-- dict:col:club_group_email_sends.sent_by -->

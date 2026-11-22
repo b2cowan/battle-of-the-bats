@@ -36,12 +36,12 @@ export interface PlaceFacts {
   seat: Seat;
 }
 
-export type FamilyDoor = 'club' | 'season' | null;
+type FamilyDoor = 'club' | 'season' | null;
 
 const LEAGUE_DESK: readonly OrgRole[] = ['owner', 'admin', 'league_admin', 'league_registrar'];
 
 /** The person's group-email switch, as every door reads it: on, and not limited to some rep team groups. */
-export function emailSwitchOn(f: Pick<PlaceFacts, 'switchOn' | 'teamLimited' | 'tournamentOnly'>): boolean {
+function emailSwitchOn(f: Pick<PlaceFacts, 'switchOn' | 'teamLimited' | 'tournamentOnly'>): boolean {
   return f.switchOn && !f.teamLimited && !f.tournamentOnly;
 }
 

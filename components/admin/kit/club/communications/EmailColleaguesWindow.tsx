@@ -15,7 +15,7 @@
  * goes, the foot says who changed, and the lime takes the new count to be pressed again (coach ask 11). A press that lost to
  * "just sent" says so in the lime's place.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import KitDialog, { DialogCancel } from '../KitDialog';
 import ck from '../ClubKit.module.css';
@@ -26,9 +26,9 @@ import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit'
 import LoadingState from '@/components/shared/LoadingState';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { FAMILY_EMAIL_WORDS as W, SEND_VIEW_WORDS as VW } from '@/lib/families-words';
+import { FAMILY_EMAIL_WORDS as W, SEND_VIEW_WORDS as VW, inThisYear } from '@/lib/families-words';
 import { GROUP, RECORD, SAY, WINDOW as CW, type ColleagueKind, type ReplyChoices } from '@/lib/club-group-email-words';
-import { formatStoredDate, orgDayKey, tournamentToday } from '@/lib/timezone';
+import { formatStoredDate } from '@/lib/timezone';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { ReplyChoice, useReplyChoice } from './ReplyParts';
 
@@ -43,18 +43,13 @@ interface Options {
   copy: boolean;
   // coaches
   groups?: { all: { count: number } | null; rep: { count: number; headCount: number } | null; league: LeagueSeason[] | null };
-  invited?: string[];
-  invitedHead?: string[];
   tournament?: { name: string } | null;
   // board
   offered?: boolean;
   count?: number;
-  noAddress?: number;
-  pending?: number;
-  pendingNamed?: Person[] | null;
 }
 interface Audience {
-  kind: ColleagueKind; count: number; people: Person[]; noAddress: number; invited: string[]; pending: number; pendingNamed: Person[] | null;
+  count: number; people: Person[]; noAddress: number; invited: string[]; pending: number; pendingNamed: Person[] | null;
 }
 type Choice = 'all' | 'rep' | 'league' | 'picked' | 'board_all' | 'board_picked';
 
@@ -140,14 +135,18 @@ export default function EmailColleaguesWindow({ kind, q, slug, eyebrow, again, o
   // ── Who it reaches: read again on every change of Who, never summed in the browser. A tick waits a moment. ──
   const beginCount = useLatestRead();
   const count = useCallback(async () => {
-    if (!groupBody) return;
+    // Begun first, so a response still on its way for a group the sender has since left can never land.
     const current = beginCount();
+    if (!groupBody) return;
     setCountFailed(false);
     const r = await moneyFetch<Audience>(base, jsonInit('POST', { action: 'count', ...groupBody })).catch(() => null);
     if (!current()) return;
     if (!r?.ok) { setCountFailed(true); return; }
     setAudience({ key: whoKey, a: r.data });
   }, [groupBody, base, whoKey, beginCount]);
+  // A press that comes back "changed" re-counts with the LATEST count, not the one its closure was made with.
+  const countNow = useRef(count);
+  useEffect(() => { countNow.current = count; }, [count]);
   useEffect(() => {
     const t = window.setTimeout(() => { void count(); }, picking ? 250 : 0);
     return () => window.clearTimeout(t);
@@ -200,8 +199,8 @@ export default function EmailColleaguesWindow({ kind, q, slug, eyebrow, again, o
         // The people changed while the sender wrote: nothing went; the new people replace the old, and the lime takes them.
         setChanged({ text: refusalText(r.data, SAY.failed), who: whoKey });
         if (r.data.people) setAudience({ key: whoKey, a: { ...a, count: r.data.count ?? r.data.people.length, people: r.data.people } });
-        void count();
-      } else { setError(refusalText(r.data, SAY.failed)); if (code === 'nobody') void count(); }
+        void countNow.current();
+      } else { setError(refusalText(r.data, SAY.failed)); if (code === 'nobody') void countNow.current(); }
     } catch {
       // No answer: it may have gone. Say so, rather than inviting a second press.
       setError(W.unknown);
@@ -231,7 +230,7 @@ export default function EmailColleaguesWindow({ kind, q, slug, eyebrow, again, o
     : phone ? CW.coachStatementPhone(reply.mode) : CW.coachStatement(reply.mode, clubName, address);
 
   const last = options?.lastSent ?? null;
-  const lastDate = last ? formatStoredDate(last.at, { withYear: orgDayKey(last.at).slice(0, 4) !== tournamentToday().slice(0, 4) }) : '';
+  const lastDate = last ? formatStoredDate(last.at, { withYear: !inThisYear(last.at) }) : '';
   const title = board ? CW.boardTitle : CW.coachTitle;
   const toggleKey = (key: string) => { setPickKeys(ks => ks.includes(key) ? ks.filter(k => k !== key) : [...ks, key]); setStanding(null); setError(''); };
   const pickOf = (c: Choice) => { setChoice(c); setStanding(null); setError(''); };
@@ -296,13 +295,13 @@ export default function EmailColleaguesWindow({ kind, q, slug, eyebrow, again, o
           <label className={ck.field} htmlFor="email-colleagues-subject" style={{ marginTop: '0.9rem' }}>
             <span className={ck.label}>{W.subject}<span className={ck.required} aria-hidden>*</span></span>
             <input id="email-colleagues-subject" className={ck.input} value={subject} maxLength={200}
-              onChange={e => { setSubject(e.target.value); setError(''); }} aria-required data-autofocus="" />
+              onChange={e => { setSubject(e.target.value); setError(''); setStanding(null); }} aria-required data-autofocus="" />
           </label>
           <label className={ck.field} htmlFor="email-colleagues-body">
             <span className={ck.label}>{W.message}<span className={ck.required} aria-hidden>*</span></span>
             <textarea id="email-colleagues-body" className={ck.textarea} value={message} maxLength={5000} rows={7}
               placeholder={W.messagePlaceholder}
-              onChange={e => { setMessage(e.target.value); setError(''); }} aria-required />
+              onChange={e => { setMessage(e.target.value); setError(''); setStanding(null); }} aria-required />
           </label>
           {/* Who can read this afterwards, and what it is not for (legal C7; Stage 1 ask 11). */}
           <p className={ck.hint}>{board ? CW.boardReaders : CW.readers}</p>
@@ -346,9 +345,9 @@ export default function EmailColleaguesWindow({ kind, q, slug, eyebrow, again, o
         {chosen === 'rep' && g.rep && (
           <SendRows group={{ radio: true, label: GROUP.repStaff }}>
             <SendRow title={<>{GROUP.repEveryone}{GROUP.count(g.rep.count)}</>}
-              pick={{ checked: !repHead, onChange: on => on && setRepHead(false), radio: 'email-colleagues-rep' }} />
+              pick={{ checked: !repHead, onChange: on => { if (on) { setRepHead(false); setStanding(null); } }, radio: 'email-colleagues-rep' }} />
             <SendRow title={<>{GROUP.repHeadOnly}{GROUP.count(g.rep.headCount)}</>}
-              pick={{ checked: repHead, onChange: on => on && setRepHead(true), radio: 'email-colleagues-rep' }} />
+              pick={{ checked: repHead, onChange: on => { if (on) { setRepHead(true); setStanding(null); } }, radio: 'email-colleagues-rep' }} />
           </SendRows>
         )}
         {chosen === 'league' && season && (

@@ -28,7 +28,7 @@ import { jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import { SendStanding } from '../SendParts';
 import fam from './Families.module.css';
 
-export const reachedText = (r: EmailLogRow) => {
+const reachedText = (r: EmailLogRow) => {
   if (r.kind === 'earlier') return r.oldReached ?? '';
   if (!r.counts) return W.oneFamily;
   if (r.state === 'sending') return W.sending;

@@ -19,7 +19,8 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { PLACE, type ColleagueKind } from '@/lib/club-group-email-words';
-import { familyDoor, placeFacts } from '@/lib/club-communications-place';
+import { familyDoor } from '@/lib/club-communications-place';
+import { useCommunicationsFacts } from '../../useCommunicationsFacts';
 import { FINISHED_LEAGUE_SEASON_STATUSES } from '@/lib/house-league-access';
 import type { CommsPage, CommsRow } from '@/lib/club-communications-log';
 import type { CommsKind } from '@/lib/club-communications-place';
@@ -42,13 +43,13 @@ type Writing =
 const KIND_WORD: Record<CommsKind, string> = { families: PLACE.filterFamilies, coaches: PLACE.filterCoaches, board: PLACE.filterBoard };
 
 export default function CommunicationsScreen() {
-  const { currentOrg, userRole, userCapabilities, limitedToTeamGroups, loading: orgLoading } = useOrg();
+  const { currentOrg, loading: orgLoading } = useOrg();
   const router = useRouter();
   const isPhone = useIsPhone();
   usePageTitle(PLACE.name);
   const slug = currentOrg?.slug ?? '';
   const q = `orgSlug=${encodeURIComponent(slug)}`;
-  const facts = currentOrg && userRole ? placeFacts({ role: userRole, capabilities: userCapabilities, limited: limitedToTeamGroups }, currentOrg) : null;
+  const facts = useCommunicationsFacts();
   const door = facts ? familyDoor(facts) : null;
   const seat = facts?.seat ?? null;
   // Pending until the options read answers; a seat with no board seat never asks.
@@ -144,25 +145,29 @@ export default function CommunicationsScreen() {
   const onlyBoard = !!seat?.board && !seat.coaches && door === null;
 
   const seasonHref = (id: string) => `/${slug}/admin/house-league/seasons/${id}`;
+  // After a send or a finish: close the window or the record (the caller says which), show the notice, read the list again.
+  const doneAfter = (close: () => void) => (text: string) => { close(); setSaid(text); void load(); };
+  const sentDone = doneAfter(() => setWriting(null));
+  const openDone = doneAfter(() => setOpen(null));
   const windows = (
     <>
       {writing?.door === 'club' && (
         <EmailFamiliesWindow q={q} eyebrow={PLACE.eyebrow}
           onClose={() => setWriting(null)}
           onShowNoFamily={() => { setWriting(null); router.push(`/${slug}/admin/families?show=nofamily`); }}
-          onSent={text => { setWriting(null); setSaid(text); void load(); }} />
+          onSent={sentDone} />
       )}
       {writing?.door === 'season' && (
         <EmailFamiliesWindow q={q}
           season={{ id: writing.id, name: writing.name, registrationsHref: `${seasonHref(writing.id)}/registrations`, teamsHref: `${seasonHref(writing.id)}/teams` }}
           onClose={() => setWriting(null)}
           onShowNoFamily={() => { const to = `${seasonHref(writing.id)}/registrations`; setWriting(null); router.push(to); }}
-          onSent={text => { setWriting(null); setSaid(text); void load(); }} />
+          onSent={sentDone} />
       )}
       {(writing?.door === 'coaches' || writing?.door === 'board') && (
         <EmailColleaguesWindow kind={writing.door} q={q} slug={slug} eyebrow={PLACE.eyebrow} again={writing.again}
           onClose={() => setWriting(null)}
-          onSent={text => { setWriting(null); setSaid(text); void load(); }} />
+          onSent={sentDone} />
       )}
       {said && <NoticePill key={said} message={said} onDone={() => setSaid(null)} />}
     </>
@@ -224,14 +229,14 @@ export default function CommunicationsScreen() {
           canSendAgain={open.kind === 'board' ? !!seat?.board && !!boardOffered : !!seat?.coaches}
           onSendAgain={(kind, again) => { setOpen(null); setWriting({ door: kind, again }); }}
           onClose={() => setOpen(null)}
-          onFinished={text => { setOpen(null); setSaid(text); void load(); }} />
+          onFinished={openDone} />
       ) : open && (
         <EmailRecord row={open} eyebrow={PLACE.eyebrow}
           detailUrl={`/api/admin/club-emails/family/${encodeURIComponent(open.id)}?${q}`}
           resend={finishOf(open)}
           finishLine={open.finish && 'line' in open.finish ? open.finish.line : undefined}
           onClose={() => setOpen(null)}
-          onResent={text => { setOpen(null); setSaid(text); void load(); }} />
+          onResent={openDone} />
       )}
       {windows}
     </>

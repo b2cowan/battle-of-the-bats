@@ -8,6 +8,7 @@ import 'server-only';
  * Session 2 merges these rows with the family log into Communications' one list; it calls these, never the tables.
  */
 import { supabaseAdmin } from './supabase-admin';
+import { fetchAllIn } from './supabase-paging';
 import type { AuthContextWithRole } from './api-auth';
 import { RECORD, SAY, type ColleagueKind, type ReplyMode } from './club-group-email-words';
 import { canFinish, canReadSend, shapeRecipients, type Seat, type SendFacts, type StoredRecipient } from './club-group-email-rules';
@@ -44,10 +45,10 @@ function toSend(r: Row, subject: string | null): ReadableSend {
 /** Which of these sends the viewer was a recipient of (the board's read rule asks it). */
 async function recipientOf(viewerId: string, sendIds: readonly string[]): Promise<Set<string>> {
   if (sendIds.length === 0) return new Set();
-  const { data, error } = await supabaseAdmin.from('club_group_email_recipients').select('send_id')
-    .eq('user_id', viewerId).in('send_id', [...sendIds]);
-  if (error) throw error;
-  return new Set((data ?? []).map(r => r.send_id as string));
+  // The ids ride in the URL, so they go in chunks (and the chunks together), never as one long list.
+  const rows = await fetchAllIn<{ send_id: string }>(sendIds, (chunk, from, to) =>
+    supabaseAdmin.from('club_group_email_recipients').select('send_id').eq('user_id', viewerId).in('send_id', chunk).range(from, to));
+  return new Set(rows.map(r => r.send_id));
 }
 
 async function subjectsOf(sendIds: readonly string[]): Promise<Map<string, string>> {
@@ -88,7 +89,7 @@ export async function loadReadableSend(ctx: AuthContextWithRole, seat: Seat, sen
   return (await readable(ctx, seat, [data as unknown as Row]))[0] ?? null;
 }
 
-export const COLLEAGUE_PAGE = 50;
+const COLLEAGUE_PAGE = 50;
 const SLICE = 100;
 
 /** A row as a list or a Last sent line may show it: never the sender's account id or the group's raw parameters. */

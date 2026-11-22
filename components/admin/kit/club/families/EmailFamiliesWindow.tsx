@@ -137,10 +137,13 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
       : kind === 'list' ? `&kind=list&list=${encodeURIComponent(list)}` : '&kind=every';
 
   const beginRead = useLatestRead();
+  // The opener passes a fresh `season` object every render; the read only needs to know whether there is one (`base` and
+  // `seasonPick` carry what is in it), so the effect below does not re-fire on every parent render.
+  const inSeason = !!season;
   const load = useCallback(async () => {
     const current = beginRead();
     setFailed(false);
-    if (season) {
+    if (inSeason) {
       const r = await moneyFetch<SeasonEmailPreview>(base, jsonInit('POST', JSON.parse(seasonPick))).catch(() => null);
       if (!current()) return;
       if (!r?.ok) { setFailed(true); return; }
@@ -155,7 +158,7 @@ export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, o
     if (!current()) return;
     if (!r?.ok) { setFailed(true); return; }
     setPreview(r.data);
-  }, [base, scopeQuery, seasonPick, beginRead, season]);
+  }, [base, scopeQuery, seasonPick, beginRead, inSeason]);
   // Every change of Who re-reads the count (the server's one audience — never a sum in the browser: two teams can
   // share a family). A tick waits a moment, so a run of ticks is one read.
   const ticking = season ? sKind !== 'season' && sKind !== 'season_families' : kind === 'teams';

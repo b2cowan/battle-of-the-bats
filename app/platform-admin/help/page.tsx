@@ -57,6 +57,13 @@ export default function PlatformAdminHelpPage() {
       keywords: ['customer', 'family', 'families', 'household', 'guardian', 'duplicates', 'merge', 'opt out', 'export', 'privacy'],
     },
     {
+      title: 'Communications',
+      desc: 'Customer-facing guide for the club’s group email: writing to families, coaches and the board, where replies go, the list of what was sent and who can read it, and finishing an email that stopped partway.',
+      href: '/platform-admin/help/communications',
+      topicCount: 6,
+      keywords: ['customer', 'communications', 'email families', 'email coaches', 'email the board', 'new email', 'replies', 'sent emails', 'board email'],
+    },
+    {
       title: 'Org admin & setup',
       desc: 'Customer-facing guide for members, roles, plan & billing, settings, modules, and org setup — including Club plan & billing and the Club setup checklist.',
       href: '/platform-admin/help/org',

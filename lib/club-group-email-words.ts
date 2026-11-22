@@ -13,9 +13,9 @@
  */
 import { warmEmailDocument } from './email-envelope-warm';
 import { familySenderName, platformLineWords } from './email-club-identity';
-import { roleWithArticle } from './board-people';
+import { BOARD_ROLES, roleWithArticle } from './board-people';
 import { ROLE_LABEL } from './member-access';
-import { possessive } from './utils';
+import { pluralize, possessive } from './utils';
 import type { OrgRole } from './types';
 
 export type ColleagueKind = 'coaches' | 'board';
@@ -24,12 +24,11 @@ export type ReplyMode = 'club' | 'sender';
 /** Why a person got it, from their OWN role (legal C8) — never from the group label. */
 export type ColleagueBasis = 'rep_staff' | 'house_league' | 'picked' | 'board';
 
-export const BOARD_SEATS = ['owner', 'admin', 'league_admin', 'league_registrar', 'treasurer'] as const satisfies readonly OrgRole[];
+export const BOARD_SEATS = BOARD_ROLES;
 export type BoardSeat = (typeof BOARD_SEATS)[number];
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 /** "3 coaches" / "1 board member": the people a colleague email reaches, said for its kind. */
-const whoWord = (kind: ColleagueKind, n: number) => kind === 'board' ? plural(n, 'board member', 'board members') : plural(n, 'coach', 'coaches');
+const whoWord = (kind: ColleagueKind, n: number) => kind === 'board' ? pluralize(n, 'board member', 'board members') : pluralize(n, 'coach', 'coaches');
 
 // ── The email itself (pinned) ─────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -66,7 +65,7 @@ export interface ReplyChoices {
   default: ReplyMode;
 }
 
-export interface ColleagueMailInput {
+interface ColleagueMailInput {
   club: string;
   mode: ReplyMode;
   sender: { name: string; role: OrgRole };
@@ -126,8 +125,8 @@ export function renderInboxCopy(i: { club: string; mode: ReplyMode; senderName: 
 export const INBOX_COPY = {
   subject: (s: string) => `Copy: ${s}`,
   subjectLabel: 'Subject',
-  coachLead: (club: string, n: number, label: string) => `${club} emailed ${plural(n, 'coach', 'coaches')} (${label}). This is the copy for the club's inbox.`,
-  familyLead: (club: string, n: number, label: string) => `${club} emailed ${plural(n, 'family', 'families')} (${label}). This is the copy for the club's inbox.`,
+  coachLead: (club: string, n: number, label: string) => `${club} emailed ${pluralize(n, 'coach', 'coaches')} (${label}). This is the copy for the club's inbox.`,
+  familyLead: (club: string, n: number, label: string) => `${club} emailed ${pluralize(n, 'family', 'families')} (${label}). This is the copy for the club's inbox.`,
 };
 
 // ── Groups, lines and names ───────────────────────────────────────────────────────────────────────────────────────────────
@@ -146,13 +145,13 @@ export const GROUP = {
   picked: 'Coaches you pick',
   pickedSub: 'Tick the people',
   pickNote: "For this email only. The pick isn't saved.",
-  pickedLabel: (n: number) => `${plural(n, 'coach', 'coaches')} you picked`,
+  pickedLabel: (n: number) => `${pluralize(n, 'coach', 'coaches')} you picked`,
   boardAll: 'Everyone on the board',
   boardAllSub: 'Everyone on Organization › The board: owner, admins, league admins, league registrars and treasurer. People with an account only.',
   boardPicked: 'Board members you pick',
   boardPickedSub: 'Pick from the people on Organization › The board',
   boardLabel: 'The board',
-  boardPickedLabel: (n: number) => `${plural(n, 'board member', 'board members')} you picked`,
+  boardPickedLabel: (n: number) => `${pluralize(n, 'board member', 'board members')} you picked`,
   noCoachesYet: 'No coaches yet',
   seasonLabel: 'Season',
   divisionLabel: 'Division',
@@ -190,8 +189,8 @@ export const WINDOW = {
   /** The readers line, corrected per legal C7: it promises no names to a registrar. */
   readers: "The club's owner and admins can read this in Communications and see who it reached. League admins and registrars can read it too when it reaches house-league families or coaches.",
   boardReaders: "Everyone you send this to, and the club's owner and admins, can read it afterwards. Leave out a child's or a family's details unless everyone on the board should see them.",
-  coachFoot: (n: number) => `${plural(n, 'coach gets', 'coaches get')} it.`,
-  boardFoot: (n: number) => `${plural(n, 'board member gets', 'board members get')} it. You aren't counted.`,
+  coachFoot: (n: number) => `${pluralize(n, 'coach gets', 'coaches get')} it.`,
+  boardFoot: (n: number) => `${pluralize(n, 'board member gets', 'board members get')} it. You aren't counted.`,
   invitedCoaches: (m: number) => m === 1 ? "1 invited coach hasn't accepted yet and won't." : `${m} invited coaches haven't accepted yet and won't.`,
   invitedMembers: (m: number) => m === 1 ? "1 invited member hasn't accepted yet and won't." : `${m} invited members haven't accepted yet and won't.`,
   noAddressCoaches: (m: number) => m === 1 ? "1 coach has no email on file and won't get it." : `${m} coaches have no email on file and won't get it.`,
@@ -222,7 +221,7 @@ export const WINDOW = {
     `${at}${by ? ` by ${by}` : ''}${subject ? ` · “${subject}”` : ''} · ${whoWord(kind, n)}`,
   /** The press: sent, and what it didn't reach. */
   sent: (kind: ColleagueKind, reached: number, of: number) => `Sent. Reached ${reached} of ${whoWord(kind, of)}.`,
-  missed: (n: number, named: string | null) => named ? `${n} didn’t go: ${named}.` : `${plural(n, 'person', 'people')} didn’t get it.`,
+  missed: (n: number, named: string | null) => named ? `${n} didn’t go: ${named}.` : `${pluralize(n, 'person', 'people')} didn’t get it.`,
   /** The pointer line (coach drawing tab 2): only while a tournament is running; tournament teams are not a coach group. */
   tournamentPointer: (tournament: string) => `Coaches of the teams in ${tournament} are emailed from the tournament.`,
   tournamentPointerLink: 'Open Communications',
@@ -251,9 +250,9 @@ export const SAY = {
   nobodyCoaches: 'Nobody to send to. Pick a group with coaches.',
   nobodyBoard: 'Nobody else is on the board yet, so there is nobody to send this to.',
   noSenderAddress: "Your account has no email address a reply could reach, so this can't be sent.",
-  noClubContact: "The club has no contact email on its public site, so replies can't go to the club. Choose Replies come to me, or add the address on the public site.",
+  noClubContact: "The club has no contact email on its public site, so replies can't go to the club. Choose “Replies come to me”, or add the address on the public site.",
   bothPaths: 'Families and coaches are emailed from their own windows. Send this to one group at a time.',
-  justSent: 'This was just sent. Check Last sent before sending it again.',
+  justSent: 'An email to this group was sent a moment ago or is still going out. Check Last sent before you send another.',
   lostRight: 'You can no longer send this. Nothing was sent.',
   notDelivered: "It wasn't sent: the mail service didn't accept it for anyone. Try again in a few minutes.",
   /** The recount (coach ask 11): nothing is sent when anyone was added or taken off, even at the same total. */
@@ -281,7 +280,7 @@ export const SAY = {
 
 export const RECORD = {
   note: "Sent means the mail service accepted it. It can't tell whether it was read. People are named as they were when it went.",
-  outsideRep: (n: number) => plural(n, 'rep coach', 'rep coaches'),
+  outsideRep: (n: number) => pluralize(n, 'rep coach', 'rep coaches'),
   outsideRepSub: 'Names are shown only to people who send to rep coaches',
   copySent: "A copy went to the club's inbox.",
   copyFailed: "A copy to the club's inbox didn't go.",
@@ -297,10 +296,18 @@ export const RECORD = {
   statusPending: 'Not sent',
   statusSending: 'Sending…',
   finish: (n: number) => `Send to the ${n} it missed`,
-  finishHint: (n: number) => `Sends the same email to the ${plural(n, 'person', 'people')} it missed, and nobody else.`,
+  finishHint: (n: number) => `Sends the same email to the ${pluralize(n, 'person', 'people')} it missed, and nobody else.`,
   finishing: 'Sending…',
+  /** A stopped email whose every person already has it (only the last mark failed): closing it sends nothing. */
+  finishNone: 'Mark it finished',
+  finishNoneHint: 'Everyone it was sent to already has it. Marking it finished sends nothing.',
+  finishedNone: 'Marked as finished. Nothing was sent.',
+  /** The finish got no answer (a timeout or a dropped connection): it may still be going, so it never reads as "couldn't load". */
+  finishUnsure: "We couldn't confirm how it went. It may still be sending. Check this email in a few minutes before you try again.",
+  /** Opening a stopped email's people to send again failed: nothing was sent. */
+  againFailed: "We couldn't open it to send again. Nothing was sent. Try again.",
   finished: (reached: number, failed: number) => failed > 0
-    ? `Sent to ${reached} it missed. ${plural(failed, 'person', 'people')} still didn’t get it.`
+    ? `Sent to ${reached} it missed. ${pluralize(failed, 'person', 'people')} still didn’t get it.`
     : `Sent to the ${reached} it missed.`,
   othersFailed: (n: number) => `${n} didn’t go`,
 };
@@ -348,7 +355,7 @@ export const PLACE = {
   /** The small line above a window's title when opened here (ask 9; a season's window keeps the season's name). */
   eyebrow: 'Communications',
   /** The member window's one line for the switch (tab 4, ask 5). */
-  switchLine: 'Group email and the list of what was sent. Off: none from any screen; board email still arrives.',
+  switchLine: 'Writes group email and reads what was sent. If it’s off, no group email from any screen; board email sent to them still arrives.',
   /** The "not yours" screen's middle sentence (tab 4). */
   notYoursWhat: 'It’s where the club’s emails to families and coaches are written, and what was sent.',
 };

@@ -37,7 +37,7 @@ export interface Seat {
 }
 
 const LEAGUE_SEATS: readonly OrgRole[] = ['league_admin', 'league_registrar'];
-export const isBoardSeat = (role: string): role is BoardSeat => (BOARD_SEATS as readonly string[]).includes(role);
+const isBoardSeat = (role: string): role is BoardSeat => (BOARD_SEATS as readonly string[]).includes(role);
 
 /** Coach ask 1 + board ask 16 + legal §2c's common refusals (switch, limited, plan). */
 export function seatOf(f: SeatFacts): Seat {
@@ -62,7 +62,7 @@ export type CoachGroup =
   | { kind: 'coaches'; group: 'coaches_picked'; keys: string[] };
 export type BoardGroup = { kind: 'board'; group: 'board_all' } | { kind: 'board'; group: 'board_picked'; keys: string[] };
 export type ColleagueGroup = CoachGroup | BoardGroup;
-export type GroupKind = ColleagueGroup['group'];
+type GroupKind = ColleagueGroup['group'];
 
 /** May this seat send to this kind of group at all? (The audience then checks the group's own parameters.) */
 export function groupOffered(seat: Seat, group: GroupKind): boolean {
@@ -335,8 +335,8 @@ export interface StoredRecipient {
   rep: boolean;
   status: 'pending' | 'sent' | 'failed';
 }
-export interface RecordPerson { name: string; line: string | null; status: StoredRecipient['status'] }
-export interface RecordOthers { label: string; sub: string; sent: number; failed: number; pending: number }
+interface RecordPerson { name: string; line: string | null; status: StoredRecipient['status'] }
+interface RecordOthers { label: string; sub: string; sent: number; failed: number; pending: number }
 
 /** The name a reader sees: as sent, or the nameless word — never an address (T17). */
 export function displayName(r: Pick<StoredRecipient, 'name' | 'boardRole'>, kind: ColleagueKind): string {

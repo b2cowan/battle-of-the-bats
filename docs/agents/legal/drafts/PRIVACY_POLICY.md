@@ -5,7 +5,7 @@
 | **Version** | next after 2026-11-17 (posted with a new effective date under §13; no new use and no new kind of company, so no advance email is owed: what we collect does not change, one purpose narrows, one email and one invoice kind are gone, and one existing record is named in two rows) |
 | **Status** | draft — held to publish on the same day as the Payments Terms (owner call (b), recommended); not published |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
-| **Last reviewed** | 2026-11-22 (0.6: Board Ready D1, the staff-records sentences in §5 and §10; before that 2026-11-20, 0.4: Board Ready Stage 4 Part 3 §5 edits; before that 2026-11-18, 0.2: Board Ready data terms, with its follow-through) |
+| **Last reviewed** | 2026-11-22 (0.6: Board Ready D1, the staff-records sentences in §5 and §10; 0.5: Club Communications as-built, three sentences; before that 2026-11-20, 0.4: Board Ready Stage 4 Part 3 §5 edits; 2026-11-18, 0.2: Board Ready data terms, with its follow-through) |
 | **Starts from** | `lib/legal-documents/privacy/2026-11-17.md`, word for word, with the changes in the log |
 
 **Change log**
@@ -17,6 +17,14 @@
   still true. The published text is frozen: this version carries the correction when it publishes with the Payments Terms.
   **Open for `/legal`:** the same record opened again within ten minutes is recorded once (not stated here); and whether
   the page-visit list (§9) should be named beside the records log in §5.
+- **Draft 0.5 (2026-11-22, Club Communications as-built review; `CLUB_COMMUNICATIONS_STAGE1.md` "As-built review 2026-11-22")** —
+  three sentences made true of what was built, no new use or kind of data, so no advance email under §13. (1) §12 and the
+  §5 "Other people's email addresses" paragraph said every group email a club sends has an unsubscribe link: coach and
+  board email deliberately carry none (their way off is the removal line), so both now say "to its families" and §12 adds
+  one sentence for coach and board email. (2) §5 "does not hold anyone's email address" becomes "does not keep the addresses
+  an email was sent to; the message is kept as the sender wrote it" (a sender can type an address into their own message).
+  The published 2026-11-17 text has the same first two sentences and is frozen: this version must be live before or with
+  the promote that makes coach and board email reachable.
 - **Draft 0.4 (2026-11-20, Board Ready Stage 4 Part 3 close-out; `BOARD_READY_STAGE4_PART3_BUILT_REVIEW.md`)** — two §5
   edits, no new use and no new kind of company, so no advance email under §13. (1) A new §5 bullet names answers to a
   club's own sign-up questions, files a family attaches, and the record of each document ticked (words, version, who,
@@ -163,8 +171,8 @@ us (§11).
 
 **Other people's email addresses.** A parent can type another person's email address on a sign-up — for example the
 other parent's — and that person has not given it to us or to the club themselves. Every email we send to that address
-about the sign-up carries a **Stop these emails** link at the bottom (the club's group emails carry their own unsubscribe
-link instead), and the first email says who added them. The link opens a page with one button and needs no sign-in.
+about the sign-up carries a **Stop these emails** link at the bottom (a club's group emails to families carry their own
+unsubscribe link instead), and the first email says who added them. The link opens a page with one button and needs no sign-in.
 Pressing it takes the address off every sign-up that club has, for every season, and the club can no longer add it again.
 To keep it stopped we keep that address on a short list for that club for as long as the club's account exists. Nobody is
 emailed about the stop; the club's registrar can see that the address was stopped and when. Receipts and refunds go to the
@@ -186,8 +194,8 @@ written out is the Friend requests list the club can download.
 FieldLogicHQ, we keep a record of the email in the club's account: who sent it, when, which group it went to, its subject and
 message, and how many people it reached. For an email to coaches or to the board the record also keeps the name and role (or
 team) of each person it went to, as they were when it was sent; for an email to families it keeps the last name of each
-family it was sent to and whether it reached them or they had opted out. The record does not hold anyone's email address (our email provider holds
-addresses to deliver the email: §6). Only the club's people the club has allowed to use Communications can read it, and what
+family it was sent to and whether it reached them or they had opted out. The record does not keep the addresses an email was sent to (our email provider holds
+addresses to deliver the email: §6); the message is kept as the sender wrote it. Only the club's people the club has allowed to use Communications can read it, and what
 each can read depends on their role: someone who runs one program sees only the emails that reached that program's people,
 and an email to the board can be read only by the person who sent it, the people it went to, and the club's owner and admins.
 
@@ -381,9 +389,11 @@ For information **a club** holds about you or your child, see §5 — contact th
 
 ## 12. Unsubscribing from emails
 
-Every promotional email from us, and every non-essential email a club sends through FieldLogicHQ, has an unsubscribe
-link. You can unsubscribe from one organization's emails or from all of them. Emails needed to run your account or a
-registration you made (sign-in links, receipts, schedule changes for your team) are sent regardless.
+Every promotional email from us, and every non-essential email a club sends to its families through FieldLogicHQ, has an
+unsubscribe link. You can unsubscribe from one organization's emails or from all of them. Emails needed to run your account or a
+registration you made (sign-in links, receipts, schedule changes for your team) are sent regardless. An email a club
+sends to its own coaches or board has no unsubscribe link: it says who sent it and why you got it, and you can reply to
+tell them it isn't right for you.
 A second parent whose address a parent typed on a sign-up has a **Stop these emails** link at the bottom of every sign-up
 email instead; it works for that club for every season (see §5).
 

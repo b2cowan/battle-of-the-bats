@@ -2,7 +2,6 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, type AuthContextWithRole } from './api-auth';
 import { familyDoor, familyReader, placeFacts, seasonDoorOpen, type FamilyReader, type PlaceFacts } from './club-communications-place';
-import { seatFor } from './club-group-email';
 import type { Seat } from './club-group-email-rules';
 import { SAY } from './club-group-email-words';
 
@@ -17,7 +16,7 @@ import { SAY } from './club-group-email-words';
  *   · `seasonEmailSwitch` — the season door asks the switch too (ask 5: off = no group email from any screen).
  */
 
-export function placeFactsFor(ctx: AuthContextWithRole): PlaceFacts {
+function placeFactsFor(ctx: AuthContextWithRole): PlaceFacts {
   return placeFacts({ role: ctx.role, capabilities: ctx.capabilities, limited: !!ctx.repGroupIds }, ctx.org);
 }
 
@@ -43,7 +42,7 @@ export async function requireCommunications(req: Request): Promise<Communication
   const ctx = await contextOf(req);
   if (!ctx) return { failure: unauthorized() };
   const facts = placeFactsFor(ctx);
-  const seat = seatFor(ctx);
+  const { seat } = facts;
   const families = familyReader(facts);
   if (!families && !seat.any) return { failure: refused() };
   return { ctx, facts, seat, families };
