@@ -57,8 +57,9 @@ describe('the words under a field and in the error box (tab 5)', () => {
   test('the box counts and names the first', () => {
     assert.equal(W.errorsMissing(2, 'T-shirt size for Leo'), '2 answers are missing. The first is T-shirt size for Leo.');
   });
-  test('the notice and the health line are /legal\'s words', () => {
-    assert.match(W.notice.rest, /FieldLogicHQ stores them for the club, in the United States, and uses them for nothing else\./);
+  test('the club\'s privacy link and the health line', () => {
+    assert.equal(W.privacyLink('Riverdale Minor Ball'), 'Riverdale Minor Ball’s privacy policy');
+    assert.equal('notice' in W, false, 'the fixed notice was removed (owner, 2026-11-21)');
     assert.equal(W.healthLine('Riverdale Minor Ball', 'Maya'), 'Only answer what Riverdale Minor Ball needs to keep Maya safe.');
   });
   test('a reload says what it did not keep (call C3)', () => {

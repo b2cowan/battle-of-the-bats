@@ -18,7 +18,7 @@ import FriendFields, { FriendCodeRow, friendsToSend, type FriendDraft } from './
 import { FRIEND_WORDS as FW } from '@/lib/league-friends';
 import { answerError, answerName, onceQuestions, perChildQuestions, type AnswerIn, type SignupFormView } from '@/lib/club-form-signup';
 import { FAMILY_FORM_WORDS as QW } from '@/lib/club-form-family-words';
-import { DocumentBlock, FormNotice, QuestionField, anyAnswer, anyFile, anyUploading, errorAttrs, firstFileFieldId, toAnswerIn, type AnswerDraft } from './SignupFormFields';
+import { ClubPrivacyLink, DocumentBlock, QuestionField, anyAnswer, anyFile, anyUploading, errorAttrs, firstFileFieldId, toAnswerIn, type AnswerDraft } from './SignupFormFields';
 
 /**
  * THE FAMILY'S SIGN-UP FORM (Club Tier Stage 9b-1, Part 5; drawing §4, words HOUSE_LEAGUE_STAGE9B1_COPY.md §7–§8; owner Q5,
@@ -35,8 +35,8 @@ import { DocumentBlock, FormNotice, QuestionField, anyAnswer, anyFile, anyUpload
  *
  * Board Ready Stage 4 Part 2 (drawing tab 5): THE CLUB'S QUESTIONS AND DOCUMENTS. The per-child questions sit under the
  * division and friends once a child has a spot or waitlist line (kept while hidden, never sent for a child not signed up);
- * the sign-up's own follow the parent's details under "Questions from {club}"; the fixed notice sits once above the first
- * of them. "Documents and agreement": typed text ticks in place, a PDF only after the family opens it through our server.
+ * the sign-up's own follow the parent's details under "Questions from {club}" (the fixed notice above them was removed,
+ * owner 2026-11-21; the club's privacy link sits under Sign up). "Documents and agreement": typed text ticks in place, a PDF only after the family opens it through our server.
  * Pressing Sign up with mistakes: the box says how many and names the first, focus moves to it, "Go to it" goes to the
  * field. A form the club changed meanwhile comes back with everything typed kept. Typed answers are kept for the browser
  * tab across a reload; health answers and files are NEVER kept (call C3), and the page says so.
@@ -74,7 +74,7 @@ interface Props {
   seasonDates: string | null;
   /** Board Ready Stage 4: the season's sign-up form as a family meets it (the club's questions and documents). */
   form: SignupFormView;
-  /** The club's own privacy policy, for the fixed notice (only when the club has set one). */
+  /** The club's own privacy policy, linked under Sign up (only when the club has set one). */
   privacyUrl: string | null;
   askEmailConsent: boolean;
   divisions: FormDivision[];
@@ -345,9 +345,6 @@ export default function RegisterForm({
   const sum = Math.round(spots.reduce((s, c) => s + c.amount, 0) * 100) / 100;
   const review = !season.autoApproveUnderCapacity;
 
-  // The fixed notice sits once, just above the first of the club's questions the page shows (tab 5).
-  const firstAsking = perChild.length ? forecast.findIndex(f => asksFriends(f.kind)) : -1;
-  const noticeAt: number | 'once' | null = form.questions.length === 0 ? null : firstAsking >= 0 ? firstAsking : onceQs.length && going > 0 ? 'once' : null;
   const errorCount = Object.keys(errors).length;
   const allMissing = errorCount > 0 && Object.keys(errors).every(k => missing.includes(k));
   const goTo = () => {
@@ -480,7 +477,6 @@ export default function RegisterForm({
                 the child has a spot or waitlist line (the friends block's rule). */}
             {perChild.length > 0 && asksFriends(f.kind) && (
               <div className={styles.clubBlock}>
-                {noticeAt === i && <FormNotice club={orgName} privacyUrl={privacyUrl} />}
                 <p className={styles.capLabel}>{QW.fromClub(orgName)}</p>
                 {perChild.map(q => (
                   <QuestionField key={q.id} q={q} idBase={`c${c.key}`} value={c.answers[q.id]} onChange={next => setAnswer(c.key, q.id, next)}
@@ -583,7 +579,6 @@ export default function RegisterForm({
       {onceQs.length > 0 && going > 0 && (
         <div className={formKit.section}>
           <h2 className={formKit.sectionTitle}>{QW.questionsFrom(orgName)}</h2>
-          {noticeAt === 'once' && <FormNotice club={orgName} privacyUrl={privacyUrl} />}
           {onceQs.map(q => (
             <QuestionField key={q.id} q={q} idBase="once" value={once[q.id]} onChange={next => setOnceAnswer(q.id, next)}
               error={errors[`once.q.${q.id}`]} who={children.length === 1 ? (children[0].firstName.trim() || 'your child') : 'your children'}
@@ -652,6 +647,7 @@ export default function RegisterForm({
             {uploading ? QW.uploadingButton : submitting ? 'Signing up…' : going === 1 ? 'Sign up' : `Sign up ${going} children`}
           </button>
         )}
+        <ClubPrivacyLink club={orgName} privacyUrl={privacyUrl} />
       </div>
     </form>
   );

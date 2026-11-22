@@ -130,7 +130,7 @@ export const FORM_WORDS = {
   docText: 'The text',
   docChoose: 'Choose a PDF',
   docChooseAnother: 'Choose another file',
-  docPdfHint: 'A PDF up to 8 MB.',
+  docPdfHint: 'A PDF up to 8 MB. Have a Word file? Choose File → Save as PDF.',
   docTick: 'The tick',
   docTickOther: (name: string, kind: TickKind) => `Or “${tickSentence(name || 'Document', kind === 'read' ? 'read_agree' : 'read')}”`,
   docPdfFoot: 'Families must open a PDF before they can tick it.',

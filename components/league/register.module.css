@@ -111,6 +111,11 @@
 p.checkError {
   margin: -0.25rem 0 0;
 }
+/* A tick with a second line under it ("Open it first to tick.") or the "won't open" line fills the 44px row, so there
+   is no slack to pull into: give the error real air instead. */
+p.checkError.checkErrorAfterLine {
+  margin-top: 0.5rem;
+}
 /* Each document is its own block (text, tick, its error); the next block or the email tick starts a clear gap below
    it, so a document's error sits with its own tick and not with whatever follows. */
 .docItem + .docItem,
@@ -194,9 +199,8 @@ p.checkError {
    notice sits once above the first of them. Type steps only (12 · 14 · 16 px); every tap target 44 px. */
 .clubBlock { display: flex; flex-direction: column; gap: 0.25rem; margin: 0.5rem 0; padding-top: 0.85rem; border-top: 1px solid var(--club-line); }
 .capLabel { margin: 0 0 0.25rem; font: 600 0.75rem var(--club-text-face); letter-spacing: 0.04em; text-transform: uppercase; color: var(--club-soft); }
-.formNotice { margin: 0.5rem 0; padding: 0.75rem 1rem; border-radius: 8px; background: var(--club-ground); border: 1px solid var(--club-line); font: 400 0.875rem/1.5 var(--club-text-face); color: var(--club-soft); }
-.formNotice strong { color: var(--club-text); }
-.formNotice a { color: var(--club-ink); }
+.privacyLink { margin: 0.75rem 0 0; font: 400 0.875rem/1.5 var(--club-text-face); }
+.privacyLink a { color: var(--club-ink); }
 .healthLine { margin: 0.35rem 0 0; font-size: 0.875rem; color: var(--club-soft); font-style: italic; }
 .choiceSet { border: none; padding: 0; margin-left: 0; margin-right: 0; min-width: 0; }
 .choiceList { display: flex; flex-direction: column; }

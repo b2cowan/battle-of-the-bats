@@ -1,18 +1,17 @@
 /**
  * THE CLUB'S SIGN-UP FORM — every word the FAMILY reads (Board Ready Stage 4 Part 2; drawing tabs 5 and 7). Drawn words
  * are drafts until the /marketing pass confirms them (ruling 19). The family side never says "form": "From {club}",
- * "Questions from {club}", "Documents and agreement". The notice is /legal's and may be tuned, never narrowed.
+ * "Questions from {club}", "Documents and agreement". The health line is /legal's.
  */
 import { docInSentence, type TickKind } from './club-form';
 import { joinWithAnd, possessive } from './utils';
 
 export const FAMILY_FORM_WORDS = {
-  // ── The fixed notice (tab 5; /legal: verbatim, shown once above the first club question, never editable) ──
-  notice: {
-    lead: 'These questions come from',
-    rest: 'The club decides what to ask and what to do with your answers. FieldLogicHQ stores them for the club, in the United States, and uses them for nothing else. Questions about your answers go to the club first.',
-    privacy: 'The club’s privacy policy',
-  },
+  // ── The club's privacy link, at the foot of the form when the club has one (published Terms §4: "you can link your own
+  //    privacy policy on your forms"). The fixed notice that once sat above the club's questions was removed on the
+  //    owner's ask, 2026-11-21 (/legal `CLUB_FORM_NOTICE_REMOVAL.md`): telling families where data is stored is the club's
+  //    notice to give, as Terms §4 says, and the default fields never carried one. ──
+  privacyLink: (club: string) => `${possessive(club)} privacy policy`,
   fromClub: (club: string) => `From ${club}`,
   questionsFrom: (club: string) => `Questions from ${club}`,
   documentsTitle: 'Documents and agreement',

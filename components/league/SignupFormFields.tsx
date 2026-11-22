@@ -19,7 +19,7 @@ import { FAMILY_FORM_WORDS as W } from '@/lib/club-form-family-words';
  *   DocumentBlock   typed text ticks in place; a PDF's tick stays faded (still focusable, with the reason) until the
  *                   family opens it through our server; "Opened. You can now tick." is announced; "Download it instead"
  *                   and the club's contact when a PDF won't open.
- *   FormNotice      the fixed notice (/legal), shown once above the first of the club's questions.
+ *   ClubPrivacyLink the club's privacy link at the foot of the form, when the club has one.
  */
 
 /** A file as the page holds it. Never kept across a reload (call C3): it lives in memory only. */
@@ -292,17 +292,17 @@ export function DocumentBlock({ d, ticked, onTick, opened, onOpened, error, orgS
           {W.wontOpen} <a href={openHref(orgSlug, seasonSlug, d, true)}>{W.downloadInstead}</a>, {W.orContact(club)}{contact ? <>: <a href={`mailto:${contact}`}>{contact}</a></> : ''}.
         </p>
       )}
-      {error && <p id={`${id}-err`} className={`${formKit.errorMsg} ${styles.checkError}`}>{error}</p>}
+      {error && <p id={`${id}-err`} className={`${formKit.errorMsg} ${styles.checkError}${locked || forLine || (pdf && opened) ? ` ${styles.checkErrorAfterLine}` : ''}`}>{error}</p>}
     </div>
   );
 }
 
-/** The fixed notice (/legal; tab 5): who is asking, who stores the answers and where. The club can't edit or hide it. */
-export function FormNotice({ club, privacyUrl }: { club: string; privacyUrl: string | null }) {
+/** The club's privacy link at the foot of the form, only when the club has one (published Terms §4). */
+export function ClubPrivacyLink({ club, privacyUrl }: { club: string; privacyUrl: string | null }) {
+  if (!privacyUrl) return null;
   return (
-    <p className={styles.formNotice}>
-      {W.notice.lead} <strong>{club}</strong>. {W.notice.rest}
-      {privacyUrl && <> <a href={privacyUrl} target="_blank" rel="noopener">{W.notice.privacy} <span aria-hidden="true">↗</span></a></>}
+    <p className={styles.privacyLink}>
+      <a href={privacyUrl} target="_blank" rel="noopener">{W.privacyLink(club)} <span aria-hidden="true">↗</span></a>
     </p>
   );
 }
