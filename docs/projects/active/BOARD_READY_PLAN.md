@@ -584,14 +584,103 @@ board's two questions:
   - backups and the breach procedure;
   - the club owns its data and can export and delete it;
   - sub-processors and what each does, with only the certifications stated on each supplier's page.
-- [ ] The **privacy policy published** (it is the promise "we don't sell your data" in writing), via the legal-pages
-  work already tied to `GST_HST_STAGE6_TERMS_PLAN.md`.
-- [ ] Architecture diagram and data-flow diagram (what a family's sign-up touches, end to end).
+- [x] The **privacy policy published** (it is the promise "we don't sell your data" in writing), via the legal-pages
+  work already tied to `GST_HST_STAGE6_TERMS_PLAN.md`. **Done 2026-11-17** with the Terms (the 0a box above). Ticked 2026-11-19.
+  **Read this as "published in code".** Production reaches it with the promote that carries the legal-pages switch (the
+  release history holds the day); on 2026-11-21 production was still `f12aad4d9` and the live pages answered "not found"
+  (`/legal`, `docs/agents/legal/MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md` §0). Until then nothing says "our published policy".
+- [ ] **Security & privacy brief: WRITTEN 2026-11-21** (`/legal`), `docs/agents/legal/drafts/SECURITY_BRIEF.md`,
+  published privately for the owner to share: https://claude.ai/artifact/2qBeedXuyYTRPs1MEo8TUR. Every line true on
+  production today; its "Revise when" list names the releases that let it say more. The box above it ("Does our data leak")
+  stays open until the owner has sent it.
+  **v0.2 2026-11-21 (owner: "go ahead with both"): made generic for any prospect, with the checked diagram** (same link;
+  the source file renamed from `MILTON_BOARD_SECURITY_BRIEF.md`).
+- [ ] Architecture diagram and data-flow diagram (what a family's sign-up touches, end to end). **The architecture half is
+  DONE 2026-11-21:** the "where your information lives" diagram, checked label by label (`/legal` review rows 1–10), is in
+  the brief. **Left:** the data-flow diagram, drawn from today's sign-up (not from the custom-form parts until they are on
+  production).
 - [ ] A filled-in vendor security questionnaire (the common short form), so the next board gets it on request.
 - [ ] A public **Security** page on the marketing site, drawn from the brief (`/marketing` words, `/legal` review).
-- [ ] Optional (owner Q5): an independent penetration test, with a summary letter for boards.
+  **Scoped 2026-11-21 (owner ruling: the brief becomes the public Security page, for any prospect).** Recorded, not built.
+
+  **PM brief.** *What it does:* puts the security brief at fieldlogichq.ca/security, open to anyone, with the diagram.
+  *Why it matters:* every club board asks "does our data leak, and is it sold?"; one public page answers it before the
+  first meeting, and the owner stops rewriting it per prospect. *Who benefits:* prospects' boards and presidents
+  (no sign-in); the owner in sales. Not plan-gated. *Expected impact:* a link to send instead of a document to write; the
+  club pages' board questions point at it. *Priority:* High while the club tools are being sold (it is the pack's first
+  page). *Success:* the page is live with the legal pages, every line traces to a `/legal` row, and it is re-checked at
+  every promote with no line ever untrue on production.
+
+  **Depends on (in order):** the legal-pages switch reaching production (the page is built to ship in **that same
+  release**, so it can link Privacy and Terms; until then nothing on it may say "our published policy"); the brief text
+  as it stands then (`docs/agents/legal/drafts/SECURITY_BRIEF.md`, its "Revise when" list applied for whatever that
+  release carries). The Data Terms and supplier-list links join when those two pages publish.
+
+  **Steps:**
+  - [x] S1 · Words: `/marketing` pass on the brief text as page copy (one pass; no prices, plan names or offers; never
+    "Canadian" hosting, a certification of our own, or the owner-continuity question, ruling 0d). **Prompt written
+    2026-11-21:** `BOARD_READY_SECURITY_PAGE_S1_WORDS_PROMPT.md` (edits the brief in place, so the private brief and the
+    page stay one text; settles "date of birth" vs "birth date" with "Questions a board asks").
+    **Done 2026-11-21 (`/marketing`, `/legal` on every moved sentence):** the brief is v0.4, the page copy; the private
+    page republished at the same link (version 5), diagram unchanged. Moved: the opening ("Two questions come first…"),
+    the never-sell bullets folded into the short answer, "What's never on a public page" as its own section, headings,
+    the year on the restore. Written for S2/S3: page title "Security and your club's information", the search
+    description, eyebrow and footer link "Security", "Read more" with and without the Data Terms, the "as of" line (moved
+    only by a full re-read at a promote). Four held lines (W2, W8, W9, the 30-day full copy) wait for the Data Terms.
+    **`/legal` finding:** the full-copy line follows the club pages' rule on the public page (Data Terms published, or
+    the owner confirms the by-hand procedure, club on-sale plan Ask 29); the private brief keeps it on review row 38.
+    **Tasks this leaves for S3:**
+    - [ ] `BoardQuestions.tsx` answer 3: "birth date" → "date of birth" (the product's field labels say "Date of birth",
+      15 to 2).
+    - [ ] `BoardQuestions.tsx` answer 3: a second link, "See how we protect it" → `/security`, after "Read the Privacy
+      Policy".
+    - [ ] The full-copy line and answer 4's "or ask us for a full copy" on one rule (above), switched together.
+    - [ ] The held lines and "Read more" version B switch on together with the Data Terms and the list of companies.
+    - Noted, not S3: the wider "birth date" / "date of birth" drift in help articles and the duplicates cards (a spelling
+      chore; the gate does not hold the pair today).
+  - [ ] S2 · Drawing: `/design` on the page (the marketing site's own layout and the diagram as an inline drawing in the
+    site's kit, both themes, phone width) before the build.
+  - [ ] S3 · Build `/security` as a public marketing page (static, no data reads), with a footer link beside the legal
+    links, and the club pages' "Questions a board asks" pointing to it. Gate it with the legal pages: rendered only
+    while they are published (the same switch `BoardQuestions` already follows), so it cannot go live ahead of them.
+    `npm run check:spelling` on the copy.
+  - [ ] S4 · `/legal` reads the page as built against production at the promote (every line still true that day; the
+    Data Terms lines only if those pages are live).
+  - [ ] S5 · A `/release` checklist line, so the page is re-checked at every promote against the brief's "Revise when"
+    list: family payments switched on, `45c134bea` (club deletion removes files), the Data Terms lines (72 hours, 30
+    days' notice, a full copy in 30 days), the access follow-ups on production ("every finding resolved" per sweep call
+    22), a supplier change, the production-rows AI rule. (A change to `.claude/commands/release.md`; made in its own
+    commit when this is built.)
+
+  **Two product findings from the same `/legal` read**
+  (`docs/agents/legal/MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md` §4), recorded here:
+  - [ ] **D1 · The staff "pages opened" promise.** Privacy §5 (published in code 2026-11-17) and the Data Terms §5
+    (approved, unpublished) say "every page they open in our own tools is recorded". The record-opens log covers club,
+    person and email records only (not list views, feedback, early-access leads or exports), skips a repeat within 10
+    minutes, and on production fails silently (dev now reports a failed write). **Owner call (open):** log the missing
+    record pages (feedback, early-access leads) and say "every club, person or email record they open" in the next
+    privacy version and the Data Terms before they publish (recommended), or keep the sentence and log every page. The
+    brief and the Security page already use the narrower line. Depends on: the call; the Data Terms wording must settle
+    before the held Terms version publishes.
+  - [x] **D2 · The database's member test.** Until migs 505 and 506 are on production, a pending invitee's or suspended
+    member's own browser can read the club's venues and teams. **Already queued**, no new work:
+    `BOARD_READY_TRUST_FIX_PROMPTS.md` hand-off (505 and 506 either side of the promote). The Security page says nothing
+    about suspended members until they are applied.
+- [ ] **The public roadmap** (owner 2026-11-14: the pack carries a product roadmap; 2026-11-16: it is public, for any
+  customer or prospect, and names no club's asks). The record is `docs/agents/strategy/PRODUCT_ROADMAP.md`; this plan
+  does not restate it. **Drawn and all thirteen asks ruled 2026-11-16:**
+  https://claude.ai/artifact/FUnEBQmUoNWojM12zgkvau (source `BOARD_READY_ROADMAP_BOARD_VERSION_DRAWINGS.html`). Owed
+  before it is shown to anyone (the record's §4): `/legal` on the four "Your data is yours" commitments, the owner's
+  plain line for two product lines, and a snapshot of the version shown.
+- **Two wording rules the roadmap rulings set for the brief and the Security page** (2026-11-16): "restore rehearsed"
+  is said only after the first rehearsal is done; "every finding fixed" only after the third sweep's open owner calls
+  are closed.
+- ~~Optional (owner Q5): an independent penetration test, with a summary letter for boards.~~ **Ruled out of scope 2026-11-15.**
+  Instead the brief and the Security page state the checks we run ourselves.
 
 **0d · "What if something happens to the owner?"** (board concern 2026-11-10; the owner plans it **later**)
+**RULED 2026-11-16 (owner): not in the board pack.** The pack, the brief and the Security page do not raise it; the owner
+answers it himself if a board asks. The items below are not started unless he calls them.
 - [ ] Quick message points for the board, to use until the full write-up exists.
 - [ ] A `/legal` session: what the terms promise on continuity (notice before the service stops, data export window,
   the club's data handed back), and whether anything needs a legal instrument.
@@ -1128,4 +1217,4 @@ tax. CRA sources were read 2026-11-10.
 
 ## Words for /marketing
 > Customer-visible wording written during the build, settled in ONE `/marketing` pass per stage, before the walk.
-- [ ] (none yet; the Stage 0c brief and Security page will be the first)
+- [x] The Stage 0c brief as the Security page copy: settled 2026-11-21 (S1), the words and their `/legal` verdicts in `docs/agents/legal/drafts/SECURITY_BRIEF.md` v0.4

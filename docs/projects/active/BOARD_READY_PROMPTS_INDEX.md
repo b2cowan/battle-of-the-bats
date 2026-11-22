@@ -34,6 +34,13 @@ actually shipped. The order is set by dependency and rework risk, never by calen
 
 If B and D both need a migration, each checks the latest migration number at commit time.
 
+### Stage 0c — the board pack's public Security page (written 2026-11-21, owner ruling of that day; plan §0c steps S1–S5)
+
+| Step | What | Kind | Prompt | State |
+|---|---|---|---|---|
+| S1 | The words: the security brief edited in place into the page copy (one text for the private brief and the public page), every claim locked to the `/legal` review of 2026-11-21, the page's own links and labels, the held Data Terms sentences, one spelling shared with "Questions a board asks" | `/marketing` + `/legal` on any changed claim; no code | `BOARD_READY_SECURITY_PAGE_S1_WORDS_PROMPT.md` | **done 2026-11-21**: the brief is v0.4, the page copy; republished at the same link; S3 tasks in the plan |
+| S2–S5 | The drawing (`/design`), the build in the release that carries the legal pages, `/legal` on the page as built, the release check line | later prompts, each written after the step before it lands | — | not written |
+
 The three Wave 1 prompts can run at the same time. Only step 1 runs probes, on dev only, and none of them writes product code. The
 builds for steps 2 and 3 come as later prompts. If both need a migration, each checks the latest migration number at
 commit time.
