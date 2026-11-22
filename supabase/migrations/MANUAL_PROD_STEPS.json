@@ -902,6 +902,10 @@
     "522_a_bank_check_in_progress_is_kept_for_its_person.sql": {
       "prod": "pending",
       "note": "Bank check S7 Part 1 (owner rulings 2026-11-22, plan BANK_CHECK_NOVICE_UX_PLAN.md §0 A18; /dba Finding #54). New table bank_check_drafts (check:migrations sees it) plus FUNCTIONS public.bank_check_drafts_sweep() and public.bank_check_drafts_discard_team(uuid, uuid) (INVISIBLE to check:migrations; invoker's rights, execute for service_role only). Additive, RLS on, service role only. ORDER: apply BEFORE the promote that ships the S7 code (the S7 routes read and write the table), and before 523. Idempotent. Applied to DEV 2026-11-22. Verify on prod: select count(*) from information_schema.tables where table_name = 'bank_check_drafts' -> 1; select count(*) from pg_proc where proname in ('bank_check_drafts_sweep', 'bank_check_drafts_discard_team') -> 2."
+    },
+    "523_a_bank_check_in_progress_is_swept_nightly.sql": {
+      "prod": "pending",
+      "note": "Bank check S7 Part 1, WATCHED AUTOMATION (owner's yes 2026-11-22, 'Yes, nightly job'). CRON-ONLY, INVISIBLE to check:migrations: schedules pg_cron job 'bank-check-drafts-sweep' at 55 8 * * * (4:55 a.m. Toronto summer) calling public.bank_check_drafts_sweep(), which deletes bank_check_drafts rows past expires_at. ORDER: after 522; with the promote that ships the S7 code. Idempotent (cron.schedule upserts by name). Applied to DEV 2026-11-22. Verify on prod: select schedule, command from cron.job where jobname = 'bank-check-drafts-sweep' -> one row, '55 8 * * *'."
     }
   }
 }
