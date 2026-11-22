@@ -150,6 +150,26 @@
     "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
   },
   {
+    "tablename": "bank_check_drafts",
+    "indexname": "bank_check_drafts_expires_idx",
+    "indexdef": "CREATE INDEX bank_check_drafts_expires_idx ON public.bank_check_drafts USING btree (expires_at)"
+  },
+  {
+    "tablename": "bank_check_drafts",
+    "indexname": "bank_check_drafts_one_per_person",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_drafts_one_per_person ON public.bank_check_drafts USING btree (bank_account_id, user_id)"
+  },
+  {
+    "tablename": "bank_check_drafts",
+    "indexname": "bank_check_drafts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_drafts_pkey ON public.bank_check_drafts USING btree (id)"
+  },
+  {
+    "tablename": "bank_check_drafts",
+    "indexname": "bank_check_drafts_user_idx",
+    "indexdef": "CREATE INDEX bank_check_drafts_user_idx ON public.bank_check_drafts USING btree (user_id)"
+  },
+  {
     "tablename": "bank_check_waiting",
     "indexname": "bank_check_waiting_added_by_idx",
     "indexdef": "CREATE INDEX bank_check_waiting_added_by_idx ON public.bank_check_waiting USING btree (added_by) WHERE (added_by IS NOT NULL)"
@@ -550,6 +570,346 @@
     "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
   },
   {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_form_idx",
+    "indexdef": "CREATE INDEX club_form_answer_clears_form_idx ON public.club_form_answer_clears USING btree (form_id)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_org_idx",
+    "indexdef": "CREATE INDEX club_form_answer_clears_org_idx ON public.club_form_answer_clears USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_pkey ON public.club_form_answer_clears USING btree (id)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_subject_idx",
+    "indexdef": "CREATE INDEX club_form_answer_clears_subject_idx ON public.club_form_answer_clears USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_subject_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_subject_uniq ON public.club_form_answer_clears USING btree (question_id, subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_submission_idx",
+    "indexdef": "CREATE INDEX club_form_answer_clears_submission_idx ON public.club_form_answer_clears USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answer_clears",
+    "indexname": "club_form_answer_clears_submission_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_submission_uniq ON public.club_form_answer_clears USING btree (question_id, submission_id) WHERE (subject_id IS NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_file_idx",
+    "indexdef": "CREATE INDEX club_form_answers_file_idx ON public.club_form_answers USING btree (file_id) WHERE (file_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_form_idx",
+    "indexdef": "CREATE INDEX club_form_answers_form_idx ON public.club_form_answers USING btree (form_id)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_org_idx",
+    "indexdef": "CREATE INDEX club_form_answers_org_idx ON public.club_form_answers USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answers_pkey ON public.club_form_answers USING btree (id)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_subject_idx",
+    "indexdef": "CREATE INDEX club_form_answers_subject_idx ON public.club_form_answers USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_subject_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answers_subject_uniq ON public.club_form_answers USING btree (question_id, subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_submission_idx",
+    "indexdef": "CREATE INDEX club_form_answers_submission_idx ON public.club_form_answers USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_answers",
+    "indexname": "club_form_answers_submission_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_answers_submission_uniq ON public.club_form_answers USING btree (question_id, submission_id) WHERE (subject_id IS NULL)"
+  },
+  {
+    "tablename": "club_form_document_versions",
+    "indexname": "club_form_document_versions_created_by_idx",
+    "indexdef": "CREATE INDEX club_form_document_versions_created_by_idx ON public.club_form_document_versions USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_document_versions",
+    "indexname": "club_form_document_versions_no_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_document_versions_no_uniq ON public.club_form_document_versions USING btree (document_id, version_no)"
+  },
+  {
+    "tablename": "club_form_document_versions",
+    "indexname": "club_form_document_versions_org_idx",
+    "indexdef": "CREATE INDEX club_form_document_versions_org_idx ON public.club_form_document_versions USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_document_versions",
+    "indexname": "club_form_document_versions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_document_versions_pkey ON public.club_form_document_versions USING btree (id)"
+  },
+  {
+    "tablename": "club_form_documents",
+    "indexname": "club_form_documents_created_by_idx",
+    "indexdef": "CREATE INDEX club_form_documents_created_by_idx ON public.club_form_documents USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_documents",
+    "indexname": "club_form_documents_form_idx",
+    "indexdef": "CREATE INDEX club_form_documents_form_idx ON public.club_form_documents USING btree (form_id, sort_order)"
+  },
+  {
+    "tablename": "club_form_documents",
+    "indexname": "club_form_documents_org_idx",
+    "indexdef": "CREATE INDEX club_form_documents_org_idx ON public.club_form_documents USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_documents",
+    "indexname": "club_form_documents_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_documents_pkey ON public.club_form_documents USING btree (id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_form_idx",
+    "indexdef": "CREATE INDEX club_form_files_form_idx ON public.club_form_files USING btree (form_id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_org_idx",
+    "indexdef": "CREATE INDEX club_form_files_org_idx ON public.club_form_files USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_path_key",
+    "indexdef": "CREATE UNIQUE INDEX club_form_files_path_key ON public.club_form_files USING btree (path)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_pending_idx",
+    "indexdef": "CREATE INDEX club_form_files_pending_idx ON public.club_form_files USING btree (created_at) WHERE (status = 'pending'::text)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_files_pkey ON public.club_form_files USING btree (id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_question_idx",
+    "indexdef": "CREATE INDEX club_form_files_question_idx ON public.club_form_files USING btree (question_id)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_subject_idx",
+    "indexdef": "CREATE INDEX club_form_files_subject_idx ON public.club_form_files USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_files",
+    "indexname": "club_form_files_submission_idx",
+    "indexdef": "CREATE INDEX club_form_files_submission_idx ON public.club_form_files USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_questions",
+    "indexname": "club_form_questions_created_by_idx",
+    "indexdef": "CREATE INDEX club_form_questions_created_by_idx ON public.club_form_questions USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_questions",
+    "indexname": "club_form_questions_form_idx",
+    "indexdef": "CREATE INDEX club_form_questions_form_idx ON public.club_form_questions USING btree (form_id, sort_order)"
+  },
+  {
+    "tablename": "club_form_questions",
+    "indexname": "club_form_questions_org_idx",
+    "indexdef": "CREATE INDEX club_form_questions_org_idx ON public.club_form_questions USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_questions",
+    "indexname": "club_form_questions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_questions_pkey ON public.club_form_questions USING btree (id)"
+  },
+  {
+    "tablename": "club_form_storage_removals",
+    "indexname": "club_form_storage_removals_created_idx",
+    "indexdef": "CREATE INDEX club_form_storage_removals_created_idx ON public.club_form_storage_removals USING btree (created_at)"
+  },
+  {
+    "tablename": "club_form_storage_removals",
+    "indexname": "club_form_storage_removals_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_storage_removals_pkey ON public.club_form_storage_removals USING btree (path)"
+  },
+  {
+    "tablename": "club_form_submissions",
+    "indexname": "club_form_submissions_org_idx",
+    "indexdef": "CREATE INDEX club_form_submissions_org_idx ON public.club_form_submissions USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_submissions",
+    "indexname": "club_form_submissions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_submissions_pkey ON public.club_form_submissions USING btree (id)"
+  },
+  {
+    "tablename": "club_form_submissions",
+    "indexname": "club_form_submissions_ref_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_form_submissions_ref_uniq ON public.club_form_submissions USING btree (form_id, ref)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_consent_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_consent_idx ON public.club_form_ticks USING btree (consent_id) WHERE (consent_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_document_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_document_idx ON public.club_form_ticks USING btree (document_id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_form_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_form_idx ON public.club_form_ticks USING btree (form_id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_org_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_org_idx ON public.club_form_ticks USING btree (org_id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_form_ticks_pkey ON public.club_form_ticks USING btree (id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_subject_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_subject_idx ON public.club_form_ticks USING btree (subject_table, subject_id)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_submission_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_submission_idx ON public.club_form_ticks USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_user_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_user_idx ON public.club_form_ticks USING btree (user_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_form_ticks",
+    "indexname": "club_form_ticks_version_idx",
+    "indexdef": "CREATE INDEX club_form_ticks_version_idx ON public.club_form_ticks USING btree (version_id) WHERE (version_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_forms",
+    "indexname": "club_forms_org_idx",
+    "indexdef": "CREATE INDEX club_forms_org_idx ON public.club_forms USING btree (org_id)"
+  },
+  {
+    "tablename": "club_forms",
+    "indexname": "club_forms_owner_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_forms_owner_uniq ON public.club_forms USING btree (owner_table, owner_id)"
+  },
+  {
+    "tablename": "club_forms",
+    "indexname": "club_forms_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_forms_pkey ON public.club_forms USING btree (id)"
+  },
+  {
+    "tablename": "club_group_email_bodies",
+    "indexname": "club_group_email_bodies_org_idx",
+    "indexdef": "CREATE INDEX club_group_email_bodies_org_idx ON public.club_group_email_bodies USING btree (org_id)"
+  },
+  {
+    "tablename": "club_group_email_bodies",
+    "indexname": "club_group_email_bodies_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_group_email_bodies_pkey ON public.club_group_email_bodies USING btree (send_id)"
+  },
+  {
+    "tablename": "club_group_email_recipients",
+    "indexname": "club_group_email_recipients_org_idx",
+    "indexdef": "CREATE INDEX club_group_email_recipients_org_idx ON public.club_group_email_recipients USING btree (org_id)"
+  },
+  {
+    "tablename": "club_group_email_recipients",
+    "indexname": "club_group_email_recipients_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_group_email_recipients_pkey ON public.club_group_email_recipients USING btree (id)"
+  },
+  {
+    "tablename": "club_group_email_recipients",
+    "indexname": "club_group_email_recipients_send_idx",
+    "indexdef": "CREATE INDEX club_group_email_recipients_send_idx ON public.club_group_email_recipients USING btree (send_id, status)"
+  },
+  {
+    "tablename": "club_group_email_recipients",
+    "indexname": "club_group_email_recipients_user_idx",
+    "indexdef": "CREATE INDEX club_group_email_recipients_user_idx ON public.club_group_email_recipients USING btree (user_id, send_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_group_idx",
+    "indexdef": "CREATE INDEX club_group_email_sends_group_idx ON public.club_group_email_sends USING btree (org_id, kind, group_key, sent_at DESC)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_names_due_idx",
+    "indexdef": "CREATE INDEX club_group_email_sends_names_due_idx ON public.club_group_email_sends USING btree (sent_at) WHERE (names_cleared_at IS NULL)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_org_sent_idx",
+    "indexdef": "CREATE INDEX club_group_email_sends_org_sent_idx ON public.club_group_email_sends USING btree (org_id, sent_at DESC)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_group_email_sends_pkey ON public.club_group_email_sends USING btree (id)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_words_due_idx",
+    "indexdef": "CREATE INDEX club_group_email_sends_words_due_idx ON public.club_group_email_sends USING btree (sent_at) WHERE (words_cleared_at IS NULL)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_org_idx",
+    "indexdef": "CREATE INDEX club_schedule_bill_rates_org_idx ON public.club_schedule_bill_rates USING btree (org_id)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_permit_idx",
+    "indexdef": "CREATE INDEX club_schedule_bill_rates_permit_idx ON public.club_schedule_bill_rates USING btree (permit_id) WHERE (permit_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_bill_rates_pkey ON public.club_schedule_bill_rates USING btree (id)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_schedule_permit_key",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_bill_rates_schedule_permit_key ON public.club_schedule_bill_rates USING btree (schedule_id, permit_id)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_send_idx",
+    "indexdef": "CREATE INDEX club_schedule_bill_rates_send_idx ON public.club_schedule_bill_rates USING btree (first_billed_send_id) WHERE (first_billed_send_id IS NOT NULL)"
+  },
+  {
     "tablename": "club_schedule_hand_back_slots",
     "indexname": "club_schedule_hand_back_slots_hand_back_idx",
     "indexdef": "CREATE INDEX club_schedule_hand_back_slots_hand_back_idx ON public.club_schedule_hand_back_slots USING btree (hand_back_id)"
@@ -706,6 +1066,11 @@
   },
   {
     "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_family_place_start",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_family_place_start ON public.club_schedule_slots USING btree (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+  },
+  {
+    "tablename": "club_schedule_slots",
     "indexname": "club_schedule_slots_handed_back_by_idx",
     "indexdef": "CREATE INDEX club_schedule_slots_handed_back_by_idx ON public.club_schedule_slots USING btree (handed_back_by) WHERE (handed_back_by IS NOT NULL)"
   },
@@ -723,11 +1088,6 @@
     "tablename": "club_schedule_slots",
     "indexname": "club_schedule_slots_pkey",
     "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_pkey ON public.club_schedule_slots USING btree (id)"
-  },
-  {
-    "tablename": "club_schedule_slots",
-    "indexname": "club_schedule_slots_place_start",
-    "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_place_start ON public.club_schedule_slots USING btree (schedule_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
   },
   {
     "tablename": "club_schedule_slots",
@@ -771,6 +1131,16 @@
   },
   {
     "tablename": "club_schedules",
+    "indexname": "club_schedules_part_label_once",
+    "indexdef": "CREATE UNIQUE INDEX club_schedules_part_label_once ON public.club_schedules USING btree (part_of_schedule_id, part_label) WHERE (part_of_schedule_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_part_of_idx",
+    "indexdef": "CREATE INDEX club_schedules_part_of_idx ON public.club_schedules USING btree (part_of_schedule_id) WHERE (part_of_schedule_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
     "indexname": "club_schedules_permit_idx",
     "indexdef": "CREATE INDEX club_schedules_permit_idx ON public.club_schedules USING btree (started_from_permit_id) WHERE (started_from_permit_id IS NOT NULL)"
   },
@@ -788,6 +1158,16 @@
     "tablename": "club_schedules",
     "indexname": "club_schedules_updated_by_idx",
     "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
+  },
+  {
+    "tablename": "cron_call_receipts",
+    "indexname": "cron_call_receipts_job_issued_idx",
+    "indexdef": "CREATE INDEX cron_call_receipts_job_issued_idx ON public.cron_call_receipts USING btree (job_name, issued_at)"
+  },
+  {
+    "tablename": "cron_call_receipts",
+    "indexname": "cron_call_receipts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX cron_call_receipts_pkey ON public.cron_call_receipts USING btree (id)"
   },
   {
     "tablename": "diamonds",
@@ -1081,6 +1461,11 @@
   },
   {
     "tablename": "family_email_sends",
+    "indexname": "family_email_sends_names_due_idx",
+    "indexdef": "CREATE INDEX family_email_sends_names_due_idx ON public.family_email_sends USING btree (sent_at) WHERE (names_cleared_at IS NULL)"
+  },
+  {
+    "tablename": "family_email_sends",
     "indexname": "family_email_sends_org_sent_idx",
     "indexdef": "CREATE INDEX family_email_sends_org_sent_idx ON public.family_email_sends USING btree (org_id, sent_at DESC)"
   },
@@ -1093,6 +1478,11 @@
     "tablename": "family_email_sends",
     "indexname": "family_email_sends_season_sent_idx",
     "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_email_sends",
+    "indexname": "family_email_sends_words_due_idx",
+    "indexdef": "CREATE INDEX family_email_sends_words_due_idx ON public.family_email_sends USING btree (sent_at) WHERE (words_cleared_at IS NULL)"
   },
   {
     "tablename": "family_invitations",
@@ -2290,6 +2680,31 @@
     "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_child_key ON public.online_payment_refunds USING btree (stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT WHERE (stripe_refund_id IS NOT NULL)"
   },
   {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_entry_idx",
+    "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_entry_idx ON public.online_payment_stripe_fee_lines USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_org_idx",
+    "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_org_idx ON public.online_payment_stripe_fee_lines USING btree (org_id, stripe_created_at DESC)"
+  },
+  {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_payment_idx",
+    "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_payment_idx ON public.online_payment_stripe_fee_lines USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_stripe_fee_lines_pkey ON public.online_payment_stripe_fee_lines USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_stripe_fee_lines",
+    "indexname": "online_payment_stripe_fee_lines_txn_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_stripe_fee_lines_txn_key ON public.online_payment_stripe_fee_lines USING btree (stripe_txn_id)"
+  },
+  {
     "tablename": "online_payments",
     "indexname": "online_payments_clearing_idx",
     "indexdef": "CREATE INDEX online_payments_clearing_idx ON public.online_payments USING btree (org_id) WHERE (status = 'clearing'::text)"
@@ -2301,8 +2716,18 @@
   },
   {
     "tablename": "online_payments",
+    "indexname": "online_payments_dispute_fee_entry_idx",
+    "indexdef": "CREATE INDEX online_payments_dispute_fee_entry_idx ON public.online_payments USING btree (dispute_fee_entry_id) WHERE (dispute_fee_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
     "indexname": "online_payments_dispute_key",
     "indexdef": "CREATE UNIQUE INDEX online_payments_dispute_key ON public.online_payments USING btree (stripe_dispute_id) WHERE (stripe_dispute_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_extra_entry_idx",
+    "indexdef": "CREATE INDEX online_payments_extra_entry_idx ON public.online_payments USING btree (stripe_extra_entry_id) WHERE (stripe_extra_entry_id IS NOT NULL)"
   },
   {
     "tablename": "online_payments",
@@ -2348,6 +2773,11 @@
     "tablename": "online_payments",
     "indexname": "online_payments_receipt_key",
     "indexdef": "CREATE UNIQUE INDEX online_payments_receipt_key ON public.online_payments USING btree (receipt_no) WHERE (receipt_no IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_reversal_fee_entry_idx",
+    "indexdef": "CREATE INDEX online_payments_reversal_fee_entry_idx ON public.online_payments USING btree (reversal_fee_entry_id) WHERE (reversal_fee_entry_id IS NOT NULL)"
   },
   {
     "tablename": "online_payments",
@@ -2478,6 +2908,21 @@
     "tablename": "org_custom_domains",
     "indexname": "org_custom_domains_status_idx",
     "indexdef": "CREATE INDEX org_custom_domains_status_idx ON public.org_custom_domains USING btree (status, last_checked_at)"
+  },
+  {
+    "tablename": "org_deletion_requests",
+    "indexname": "org_deletion_requests_one_open",
+    "indexdef": "CREATE UNIQUE INDEX org_deletion_requests_one_open ON public.org_deletion_requests USING btree (org_id) WHERE (status = 'sent'::text)"
+  },
+  {
+    "tablename": "org_deletion_requests",
+    "indexname": "org_deletion_requests_org_idx",
+    "indexdef": "CREATE INDEX org_deletion_requests_org_idx ON public.org_deletion_requests USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "org_deletion_requests",
+    "indexname": "org_deletion_requests_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_deletion_requests_pkey ON public.org_deletion_requests USING btree (id)"
   },
   {
     "tablename": "org_fiscal_year_reopenings",
@@ -2845,6 +3290,21 @@
     "indexdef": "CREATE INDEX org_time_blocks_venue_idx ON public.org_time_blocks USING btree (org_id, org_venue_id)"
   },
   {
+    "tablename": "org_time_date_off_venues",
+    "indexname": "org_time_date_off_venues_org_idx",
+    "indexdef": "CREATE INDEX org_time_date_off_venues_org_idx ON public.org_time_date_off_venues USING btree (org_id)"
+  },
+  {
+    "tablename": "org_time_date_off_venues",
+    "indexname": "org_time_date_off_venues_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_time_date_off_venues_pkey ON public.org_time_date_off_venues USING btree (date_off_id, org_venue_id)"
+  },
+  {
+    "tablename": "org_time_date_off_venues",
+    "indexname": "org_time_date_off_venues_venue_idx",
+    "indexdef": "CREATE INDEX org_time_date_off_venues_venue_idx ON public.org_time_date_off_venues USING btree (org_venue_id)"
+  },
+  {
     "tablename": "org_time_dates_off",
     "indexname": "org_time_dates_off_once",
     "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_once ON public.org_time_dates_off USING btree (permit_id, day)"
@@ -2933,6 +3393,16 @@
     "tablename": "organizations",
     "indexname": "organizations_slug_key",
     "indexdef": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
+  },
+  {
+    "tablename": "payments_terms_agreements",
+    "indexname": "payments_terms_agreements_org_idx",
+    "indexdef": "CREATE INDEX payments_terms_agreements_org_idx ON public.payments_terms_agreements USING btree (org_id, agreed_at DESC)"
+  },
+  {
+    "tablename": "payments_terms_agreements",
+    "indexname": "payments_terms_agreements_pkey",
+    "indexdef": "CREATE UNIQUE INDEX payments_terms_agreements_pkey ON public.payments_terms_agreements USING btree (id)"
   },
   {
     "tablename": "pitch_decks",
@@ -3235,26 +3705,6 @@
     "indexdef": "CREATE UNIQUE INDEX platform_events_pkey ON public.platform_events USING btree (id)"
   },
   {
-    "tablename": "platform_fee_invoices",
-    "indexname": "platform_fee_invoices_period_key",
-    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_period_key ON public.platform_fee_invoices USING btree (org_id, livemode, period_start)"
-  },
-  {
-    "tablename": "platform_fee_invoices",
-    "indexname": "platform_fee_invoices_pkey",
-    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_pkey ON public.platform_fee_invoices USING btree (id)"
-  },
-  {
-    "tablename": "platform_fee_invoices",
-    "indexname": "platform_fee_invoices_stripe_key",
-    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_stripe_key ON public.platform_fee_invoices USING btree (stripe_invoice_id) WHERE (stripe_invoice_id IS NOT NULL)"
-  },
-  {
-    "tablename": "platform_fee_invoices",
-    "indexname": "platform_fee_invoices_unpaid_idx",
-    "indexdef": "CREATE INDEX platform_fee_invoices_unpaid_idx ON public.platform_fee_invoices USING btree (org_id) WHERE (status = 'open'::text)"
-  },
-  {
     "tablename": "platform_feedback_replies",
     "indexname": "platform_feedback_replies_feedback_idx",
     "indexdef": "CREATE INDEX platform_feedback_replies_feedback_idx ON public.platform_feedback_replies USING btree (feedback_id, created_at)"
@@ -3363,41 +3813,6 @@
     "tablename": "platform_status_reading",
     "indexname": "platform_status_reading_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_status_reading_pkey ON public.platform_status_reading USING btree (id)"
-  },
-  {
-    "tablename": "platform_stripe_fees",
-    "indexname": "platform_stripe_fees_credit_note_key",
-    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_credit_note_key ON public.platform_stripe_fees USING btree (stripe_credit_note_id) WHERE (stripe_credit_note_id IS NOT NULL)"
-  },
-  {
-    "tablename": "platform_stripe_fees",
-    "indexname": "platform_stripe_fees_dispute_idx",
-    "indexdef": "CREATE INDEX platform_stripe_fees_dispute_idx ON public.platform_stripe_fees USING btree (dispute_id) WHERE (dispute_id IS NOT NULL)"
-  },
-  {
-    "tablename": "platform_stripe_fees",
-    "indexname": "platform_stripe_fees_invoice_idx",
-    "indexdef": "CREATE INDEX platform_stripe_fees_invoice_idx ON public.platform_stripe_fees USING btree (fee_invoice_id) WHERE (fee_invoice_id IS NOT NULL)"
-  },
-  {
-    "tablename": "platform_stripe_fees",
-    "indexname": "platform_stripe_fees_key",
-    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_key ON public.platform_stripe_fees USING btree (online_payment_id, kind, dispute_id) NULLS NOT DISTINCT"
-  },
-  {
-    "tablename": "platform_stripe_fees",
-    "indexname": "platform_stripe_fees_org_idx",
-    "indexdef": "CREATE INDEX platform_stripe_fees_org_idx ON public.platform_stripe_fees USING btree (org_id)"
-  },
-  {
-    "tablename": "platform_stripe_fees",
-    "indexname": "platform_stripe_fees_pkey",
-    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_pkey ON public.platform_stripe_fees USING btree (id)"
-  },
-  {
-    "tablename": "platform_stripe_fees",
-    "indexname": "platform_stripe_fees_unbilled_idx",
-    "indexdef": "CREATE INDEX platform_stripe_fees_unbilled_idx ON public.platform_stripe_fees USING btree (org_id) WHERE ((billed_at IS NULL) AND (exempt_reason IS NULL))"
   },
   {
     "tablename": "platform_user_notes",

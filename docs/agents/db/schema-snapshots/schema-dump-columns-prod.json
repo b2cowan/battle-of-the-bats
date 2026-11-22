@@ -711,6 +711,132 @@
     "ordinal_position": 12
   },
   {
+    "table_name": "bank_check_drafts",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "bank_account_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "statement_end_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "balance_text",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "''::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "cash_text",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "marked_keys",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "NO",
+    "column_default": "'{}'::text[]",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "started_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "started_balance_text",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "started_difference_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "revision",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "1",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "bank_check_drafts",
+    "column_name": "expires_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
     "table_name": "bank_check_waiting",
     "column_name": "id",
     "data_type": "uuid",
@@ -2916,6 +3042,1455 @@
     "ordinal_position": 6
   },
   {
+    "table_name": "club_form_answer_clears",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "form_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "question_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "submission_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "subject_table",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "subject_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_form_answer_clears",
+    "column_name": "cleared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "form_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "question_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "submission_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "subject_table",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "subject_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "value_text",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "value_choice_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "value_bool",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "value_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "file_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "removed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_form_answers",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "document_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "version_no",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "body_text",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "file_path",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "file_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "file_size",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "fingerprint",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "ticks_stand",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "moved_in",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_form_document_versions",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "form_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "source_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "tick_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "sort_order",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "archived_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_form_documents",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "form_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "question_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "submission_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "subject_table",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "subject_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "path",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "file_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "size_bytes",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "content_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'pending'::text",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "attached_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_form_files",
+    "column_name": "removed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "form_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "question_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "help_text",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "choices",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "required",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "asked",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'per_subject'::text",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "health",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "on_board",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "sort_order",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "archived_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "club_form_questions",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "club_form_storage_removals",
+    "column_name": "path",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_storage_removals",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_storage_removals",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_submissions",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_submissions",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_submissions",
+    "column_name": "form_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_submissions",
+    "column_name": "ref",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_submissions",
+    "column_name": "guardian_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_submissions",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "form_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "document_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "version_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "submission_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "subject_table",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "subject_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "guardian_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "sentence",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "fingerprint",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "handed_over_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "ticked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "moved",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "consent_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "club_form_ticks",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "club_forms",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_forms",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_forms",
+    "column_name": "owner_table",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_forms",
+    "column_name": "owner_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_forms",
+    "column_name": "subject_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_forms",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_forms",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_group_email_bodies",
+    "column_name": "send_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_group_email_bodies",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_group_email_bodies",
+    "column_name": "subject",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_group_email_bodies",
+    "column_name": "body",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_group_email_bodies",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "send_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "league_coach_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "line",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "basis",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "board_role",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "rep",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "house_league",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'pending'::text",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_group_email_recipients",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "group_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "group_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "group_label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "group_params",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "reaches_rep",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "reaches_house_league",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "sent_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "sender_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "sender_role",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "reply_to",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "club_copy",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "retried_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "recipient_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "left_out_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "reached_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "failed_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'sending'::text",
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "words_cleared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "club_group_email_sends",
+    "column_name": "names_cleared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "schedule_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "permit_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "permit_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "scale",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "first_billed_send_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
     "table_name": "club_schedule_hand_back_slots",
     "column_name": "id",
     "data_type": "uuid",
@@ -3618,6 +5193,15 @@
     "ordinal_position": 16
   },
   {
+    "table_name": "club_schedule_slots",
+    "column_name": "family_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
     "table_name": "club_schedules",
     "column_name": "id",
     "data_type": "uuid",
@@ -3868,6 +5452,96 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 28
+  },
+  {
+    "table_name": "club_schedules",
+    "column_name": "bill_price_mode",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'each_permit'::text",
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "club_schedules",
+    "column_name": "part_of_schedule_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "club_schedules",
+    "column_name": "part_label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "club_schedules",
+    "column_name": "bill_dismissed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
+    "table_name": "club_schedules",
+    "column_name": "bill_dismissed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
+    "table_name": "cron_call_receipts",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "cron_call_receipts",
+    "column_name": "job_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "cron_call_receipts",
+    "column_name": "path",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "cron_call_receipts",
+    "column_name": "issued_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "cron_call_receipts",
+    "column_name": "used_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
   },
   {
     "table_name": "diamonds",
@@ -5683,7 +7357,7 @@
     "column_name": "subject",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 5
   },
@@ -5692,7 +7366,7 @@
     "column_name": "body",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 6
   },
@@ -5794,6 +7468,42 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 17
+  },
+  {
+    "table_name": "family_email_sends",
+    "column_name": "reply_to",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'sender'::text",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "family_email_sends",
+    "column_name": "club_copy",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "family_email_sends",
+    "column_name": "words_cleared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "family_email_sends",
+    "column_name": "names_cleared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
   },
   {
     "table_name": "family_invitations",
@@ -10260,6 +11970,15 @@
     "ordinal_position": 30
   },
   {
+    "table_name": "league_seasons",
+    "column_name": "reopened_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
+  },
+  {
     "table_name": "league_slot_uses",
     "column_name": "slot_id",
     "data_type": "uuid",
@@ -11682,6 +13401,132 @@
     "ordinal_position": 29
   },
   {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "stripe_account_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "stripe_txn_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "livemode",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "description",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "stripe_created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "online_payment_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "booked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "unmatched_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "online_payment_stripe_fee_lines",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 14
+  },
+  {
     "table_name": "online_payments",
     "column_name": "id",
     "data_type": "uuid",
@@ -12112,6 +13957,51 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 48
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "application_fee_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 49
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "stripe_fee_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 50
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "stripe_extra_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 51
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "dispute_fee_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 52
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "reversal_fee_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 53
   },
   {
     "table_name": "online_refunds_unassigned",
@@ -12771,6 +14661,105 @@
     "ordinal_position": 28
   },
   {
+    "table_name": "org_deletion_requests",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "org_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "org_slug",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "requested_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "requester_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'sent'::text",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "closed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "org_deletion_requests",
+    "column_name": "closed_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
     "table_name": "org_fiscal_year_reopenings",
     "column_name": "id",
     "data_type": "uuid",
@@ -13212,6 +15201,24 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "org_overrides",
+    "column_name": "ending_reminded_14_for",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "org_overrides",
+    "column_name": "ending_reminded_3_for",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
     "table_name": "org_payees",
     "column_name": "id",
     "data_type": "uuid",
@@ -13552,6 +15559,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 32
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "fees_collector",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 33
   },
   {
     "table_name": "org_people",
@@ -14571,6 +16587,33 @@
     "ordinal_position": 14
   },
   {
+    "table_name": "org_time_date_off_venues",
+    "column_name": "date_off_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_time_date_off_venues",
+    "column_name": "org_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_time_date_off_venues",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
     "table_name": "org_time_dates_off",
     "column_name": "id",
     "data_type": "uuid",
@@ -14965,6 +17008,33 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 11
+  },
+  {
+    "table_name": "organization_members",
+    "column_name": "pending_role",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "organization_members",
+    "column_name": "pending_capabilities",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "organization_members",
+    "column_name": "pending_invited_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
   },
   {
     "table_name": "organizations",
@@ -15406,6 +17476,96 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 49
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "start_plan",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 50
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "org_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "user_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "terms_version",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "box_text",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "action",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "payments_terms_agreements",
+    "column_name": "agreed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
   },
   {
     "table_name": "pitch_decks",
@@ -17685,186 +19845,6 @@
     "ordinal_position": 14
   },
   {
-    "table_name": "platform_fee_invoices",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "org_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "livemode",
-    "data_type": "boolean",
-    "udt_name": "bool",
-    "is_nullable": "NO",
-    "column_default": "false",
-    "ordinal_position": 3
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "period_start",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "stripe_customer_id",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "stripe_invoice_id",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "invoice_number",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 7
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "status",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": "'draft'::text",
-    "ordinal_position": 8
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "amount_due",
-    "data_type": "numeric",
-    "udt_name": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 9
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "hosted_invoice_url",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 10
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "due_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 11
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "finalized_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 12
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "emailed_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 13
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "reminded_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 14
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "paid_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 15
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "send_error",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 16
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "created_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "ordinal_position": 17
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "updated_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "ordinal_position": 18
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "total",
-    "data_type": "numeric",
-    "udt_name": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 19
-  },
-  {
-    "table_name": "platform_fee_invoices",
-    "column_name": "tax_lines",
-    "data_type": "jsonb",
-    "udt_name": "jsonb",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 20
-  },
-  {
     "table_name": "platform_feedback_replies",
     "column_name": "id",
     "data_type": "uuid",
@@ -18511,159 +20491,6 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 4
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "org_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "online_payment_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 3
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "kind",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "amount",
-    "data_type": "numeric",
-    "udt_name": "numeric",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "livemode",
-    "data_type": "boolean",
-    "udt_name": "bool",
-    "is_nullable": "NO",
-    "column_default": "false",
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "exempt_reason",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 7
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "stripe_invoice_item_id",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 8
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "billed_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 9
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "bill_error",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 10
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "created_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "ordinal_position": 11
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "dispute_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 12
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "amount_source",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": "'rate'::text",
-    "ordinal_position": 13
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "billed_on",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 14
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "fee_invoice_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 15
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "bill_attempts",
-    "data_type": "integer",
-    "udt_name": "int4",
-    "is_nullable": "NO",
-    "column_default": "0",
-    "ordinal_position": 16
-  },
-  {
-    "table_name": "platform_stripe_fees",
-    "column_name": "stripe_credit_note_id",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 17
   },
   {
     "table_name": "platform_user_notes",
@@ -31039,6 +32866,15 @@
     "is_nullable": "NO",
     "column_default": "false",
     "ordinal_position": 6
+  },
+  {
+    "table_name": "user_preferences",
+    "column_name": "registration_answer_columns",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 7
   },
   {
     "table_name": "venue_facilities",

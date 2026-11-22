@@ -53275,6 +53275,132 @@
         "column_default": null
       },
       {
+        "table_name": "bank_check_drafts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 2,
+        "column_name": "bank_account_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 3,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 4,
+        "column_name": "statement_end_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 5,
+        "column_name": "balance_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "''::text"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 6,
+        "column_name": "cash_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 7,
+        "column_name": "marked_keys",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "NO",
+        "column_default": "'{}'::text[]"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 8,
+        "column_name": "started_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 9,
+        "column_name": "started_balance_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 10,
+        "column_name": "started_difference_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 11,
+        "column_name": "revision",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 12,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 13,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "pos": 14,
+        "column_name": "expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "bank_check_waiting",
         "pos": 1,
         "column_name": "id",
@@ -55480,6 +55606,1455 @@
         "column_default": "now()"
       },
       {
+        "table_name": "club_form_answer_clears",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 3,
+        "column_name": "form_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 4,
+        "column_name": "question_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 5,
+        "column_name": "submission_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 6,
+        "column_name": "subject_table",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 7,
+        "column_name": "subject_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "pos": 8,
+        "column_name": "cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 3,
+        "column_name": "form_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 4,
+        "column_name": "question_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 5,
+        "column_name": "submission_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 6,
+        "column_name": "subject_table",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 7,
+        "column_name": "subject_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 8,
+        "column_name": "value_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 9,
+        "column_name": "value_choice_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 10,
+        "column_name": "value_bool",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 11,
+        "column_name": "value_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 12,
+        "column_name": "file_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 13,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 14,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_answers",
+        "pos": 15,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 3,
+        "column_name": "document_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 4,
+        "column_name": "version_no",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 5,
+        "column_name": "body_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 6,
+        "column_name": "file_path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 7,
+        "column_name": "file_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 8,
+        "column_name": "file_size",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 9,
+        "column_name": "fingerprint",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 10,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 11,
+        "column_name": "ticks_stand",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 12,
+        "column_name": "moved_in",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 13,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "pos": 14,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 3,
+        "column_name": "form_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 4,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 5,
+        "column_name": "source_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 6,
+        "column_name": "tick_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 7,
+        "column_name": "sort_order",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 8,
+        "column_name": "archived_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 9,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_documents",
+        "pos": 11,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 3,
+        "column_name": "form_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 4,
+        "column_name": "question_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 5,
+        "column_name": "submission_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 6,
+        "column_name": "subject_table",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 7,
+        "column_name": "subject_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 8,
+        "column_name": "path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 9,
+        "column_name": "file_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 10,
+        "column_name": "size_bytes",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 11,
+        "column_name": "content_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 12,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 13,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 14,
+        "column_name": "attached_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_files",
+        "pos": 15,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 3,
+        "column_name": "form_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 4,
+        "column_name": "question_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 5,
+        "column_name": "label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 6,
+        "column_name": "help_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 7,
+        "column_name": "choices",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 8,
+        "column_name": "required",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 9,
+        "column_name": "asked",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'per_subject'::text"
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 10,
+        "column_name": "health",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 11,
+        "column_name": "on_board",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 12,
+        "column_name": "sort_order",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 13,
+        "column_name": "archived_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 14,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_questions",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_storage_removals",
+        "pos": 1,
+        "column_name": "path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_storage_removals",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_storage_removals",
+        "pos": 3,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_submissions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_submissions",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_submissions",
+        "pos": 3,
+        "column_name": "form_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_submissions",
+        "pos": 4,
+        "column_name": "ref",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_submissions",
+        "pos": 5,
+        "column_name": "guardian_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_submissions",
+        "pos": 6,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 3,
+        "column_name": "form_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 4,
+        "column_name": "document_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 5,
+        "column_name": "version_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 6,
+        "column_name": "submission_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 7,
+        "column_name": "subject_table",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 8,
+        "column_name": "subject_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 9,
+        "column_name": "guardian_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 10,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 11,
+        "column_name": "sentence",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 12,
+        "column_name": "fingerprint",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 13,
+        "column_name": "handed_over_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 14,
+        "column_name": "ticked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 15,
+        "column_name": "moved",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 16,
+        "column_name": "consent_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_form_ticks",
+        "pos": 17,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_forms",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_forms",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_forms",
+        "pos": 3,
+        "column_name": "owner_table",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_forms",
+        "pos": 4,
+        "column_name": "owner_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_forms",
+        "pos": 5,
+        "column_name": "subject_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_forms",
+        "pos": 6,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_forms",
+        "pos": 7,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 1,
+        "column_name": "send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 3,
+        "column_name": "subject",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 4,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 2,
+        "column_name": "send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 4,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 5,
+        "column_name": "league_coach_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 6,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 7,
+        "column_name": "line",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 8,
+        "column_name": "basis",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 9,
+        "column_name": "board_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 10,
+        "column_name": "rep",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 11,
+        "column_name": "house_league",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 12,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 13,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 3,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 4,
+        "column_name": "group_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 5,
+        "column_name": "group_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 6,
+        "column_name": "group_label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 7,
+        "column_name": "group_params",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 8,
+        "column_name": "reaches_rep",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 9,
+        "column_name": "reaches_house_league",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 10,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 11,
+        "column_name": "sender_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 12,
+        "column_name": "sender_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 13,
+        "column_name": "reply_to",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 14,
+        "column_name": "club_copy",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 15,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 16,
+        "column_name": "retried_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 17,
+        "column_name": "recipient_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 18,
+        "column_name": "left_out_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 19,
+        "column_name": "reached_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 20,
+        "column_name": "failed_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 21,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sending'::text"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 22,
+        "column_name": "words_cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 23,
+        "column_name": "names_cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "pos": 3,
+        "column_name": "schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "pos": 4,
+        "column_name": "permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "pos": 5,
+        "column_name": "permit_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "pos": 6,
+        "column_name": "scale",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "pos": 7,
+        "column_name": "first_billed_send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "club_schedule_hand_back_slots",
         "pos": 1,
         "column_name": "id",
@@ -56182,6 +57757,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "club_schedule_slots",
+        "pos": 17,
+        "column_name": "family_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "club_schedules",
         "pos": 1,
         "column_name": "id",
@@ -56432,6 +58016,96 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 29,
+        "column_name": "bill_price_mode",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'each_permit'::text"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 30,
+        "column_name": "part_of_schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 31,
+        "column_name": "part_label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 32,
+        "column_name": "bill_dismissed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 33,
+        "column_name": "bill_dismissed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 2,
+        "column_name": "job_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 3,
+        "column_name": "path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 4,
+        "column_name": "issued_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 5,
+        "column_name": "used_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "diamonds",
@@ -58248,7 +59922,7 @@
         "column_name": "subject",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -58257,7 +59931,7 @@
         "column_name": "body",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -58354,6 +60028,42 @@
         "table_name": "family_email_sends",
         "pos": 17,
         "column_name": "retried_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 18,
+        "column_name": "reply_to",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sender'::text"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 19,
+        "column_name": "club_copy",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 20,
+        "column_name": "words_cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 21,
+        "column_name": "names_cleared_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
@@ -62824,6 +64534,15 @@
         "column_default": "2"
       },
       {
+        "table_name": "league_seasons",
+        "pos": 31,
+        "column_name": "reopened_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_slot_uses",
         "pos": 1,
         "column_name": "slot_id",
@@ -64246,6 +65965,132 @@
         "column_default": null
       },
       {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 3,
+        "column_name": "stripe_account_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 4,
+        "column_name": "stripe_txn_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 5,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 6,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 7,
+        "column_name": "description",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 8,
+        "column_name": "stripe_created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 9,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 10,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 11,
+        "column_name": "entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 12,
+        "column_name": "booked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 13,
+        "column_name": "unmatched_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "pos": 14,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "online_payments",
         "pos": 1,
         "column_name": "id",
@@ -64674,6 +66519,51 @@
         "column_name": "over_kept_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 49,
+        "column_name": "application_fee_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 50,
+        "column_name": "stripe_fee_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 51,
+        "column_name": "stripe_extra_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 52,
+        "column_name": "dispute_fee_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 53,
+        "column_name": "reversal_fee_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -65335,6 +67225,105 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_deletion_requests",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 3,
+        "column_name": "org_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 4,
+        "column_name": "org_slug",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 5,
+        "column_name": "requested_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 6,
+        "column_name": "requester_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 7,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sent'::text"
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 10,
+        "column_name": "closed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "pos": 11,
+        "column_name": "closed_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_fiscal_year_reopenings",
         "pos": 1,
         "column_name": "id",
@@ -65776,6 +67765,24 @@
         "column_default": "false"
       },
       {
+        "table_name": "org_overrides",
+        "pos": 14,
+        "column_name": "ending_reminded_14_for",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_overrides",
+        "pos": 15,
+        "column_name": "ending_reminded_3_for",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_payees",
         "pos": 1,
         "column_name": "id",
@@ -66115,6 +68122,15 @@
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 33,
+        "column_name": "fees_collector",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
         "column_default": null
       },
       {
@@ -67135,6 +69151,33 @@
         "column_default": null
       },
       {
+        "table_name": "org_time_date_off_venues",
+        "pos": 1,
+        "column_name": "date_off_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_date_off_venues",
+        "pos": 2,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_date_off_venues",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "org_time_dates_off",
         "pos": 1,
         "column_name": "id",
@@ -67527,6 +69570,33 @@
         "column_name": "invited_email",
         "data_type": "text",
         "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_members",
+        "pos": 12,
+        "column_name": "pending_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_members",
+        "pos": 13,
+        "column_name": "pending_capabilities",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_members",
+        "pos": 14,
+        "column_name": "pending_invited_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -67970,6 +70040,96 @@
         "udt_name": "float4",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 50,
+        "column_name": "start_plan",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 3,
+        "column_name": "org_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 4,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 5,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 6,
+        "column_name": "terms_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 7,
+        "column_name": "box_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 8,
+        "column_name": "action",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "payments_terms_agreements",
+        "pos": 9,
+        "column_name": "agreed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "pitch_decks",
@@ -70249,186 +72409,6 @@
         "column_default": "now()"
       },
       {
-        "table_name": "platform_fee_invoices",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 2,
-        "column_name": "org_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 3,
-        "column_name": "livemode",
-        "data_type": "boolean",
-        "udt_name": "bool",
-        "is_nullable": "NO",
-        "column_default": "false"
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 4,
-        "column_name": "period_start",
-        "data_type": "date",
-        "udt_name": "date",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 5,
-        "column_name": "stripe_customer_id",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 6,
-        "column_name": "stripe_invoice_id",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 7,
-        "column_name": "invoice_number",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 8,
-        "column_name": "status",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": "'draft'::text"
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 9,
-        "column_name": "amount_due",
-        "data_type": "numeric",
-        "udt_name": "numeric",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 10,
-        "column_name": "hosted_invoice_url",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 11,
-        "column_name": "due_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 12,
-        "column_name": "finalized_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 13,
-        "column_name": "emailed_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 14,
-        "column_name": "reminded_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 15,
-        "column_name": "paid_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 16,
-        "column_name": "send_error",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 17,
-        "column_name": "created_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 18,
-        "column_name": "updated_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 19,
-        "column_name": "total",
-        "data_type": "numeric",
-        "udt_name": "numeric",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_fee_invoices",
-        "pos": 20,
-        "column_name": "tax_lines",
-        "data_type": "jsonb",
-        "udt_name": "jsonb",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
         "table_name": "platform_feedback_replies",
         "pos": 1,
         "column_name": "id",
@@ -71073,159 +73053,6 @@
         "column_name": "claimed_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 2,
-        "column_name": "org_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 3,
-        "column_name": "online_payment_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 4,
-        "column_name": "kind",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 5,
-        "column_name": "amount",
-        "data_type": "numeric",
-        "udt_name": "numeric",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 6,
-        "column_name": "livemode",
-        "data_type": "boolean",
-        "udt_name": "bool",
-        "is_nullable": "NO",
-        "column_default": "false"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 7,
-        "column_name": "exempt_reason",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 8,
-        "column_name": "stripe_invoice_item_id",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 9,
-        "column_name": "billed_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 10,
-        "column_name": "bill_error",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 11,
-        "column_name": "created_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 12,
-        "column_name": "dispute_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 13,
-        "column_name": "amount_source",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": "'rate'::text"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 14,
-        "column_name": "billed_on",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 15,
-        "column_name": "fee_invoice_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 16,
-        "column_name": "bill_attempts",
-        "data_type": "integer",
-        "udt_name": "int4",
-        "is_nullable": "NO",
-        "column_default": "0"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "pos": 17,
-        "column_name": "stripe_credit_note_id",
-        "data_type": "text",
-        "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -83605,6 +85432,15 @@
         "column_default": "false"
       },
       {
+        "table_name": "user_preferences",
+        "pos": 7,
+        "column_name": "registration_answer_columns",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",
@@ -83828,6 +85664,20 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "bank_accounts_team_id_fkey"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "column_name": "bank_account_id",
+        "foreign_table": "bank_accounts",
+        "foreign_column": "id",
+        "constraint_name": "bank_check_drafts_bank_account_id_fkey"
+      },
+      {
+        "table_name": "bank_check_drafts",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_check_drafts_user_id_fkey"
       },
       {
         "table_name": "bank_check_waiting",
@@ -84180,6 +86030,293 @@
         "constraint_name": "child_match_rejections_rejected_by_fkey"
       },
       {
+        "table_name": "club_form_answer_clears",
+        "column_name": "form_id",
+        "foreign_table": "club_forms",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answer_clears_form_id_fkey"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answer_clears_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "column_name": "question_id",
+        "foreign_table": "club_form_questions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answer_clears_question_id_fkey"
+      },
+      {
+        "table_name": "club_form_answer_clears",
+        "column_name": "submission_id",
+        "foreign_table": "club_form_submissions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answer_clears_submission_id_fkey"
+      },
+      {
+        "table_name": "club_form_answers",
+        "column_name": "file_id",
+        "foreign_table": "club_form_files",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answers_file_id_fkey"
+      },
+      {
+        "table_name": "club_form_answers",
+        "column_name": "form_id",
+        "foreign_table": "club_forms",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answers_form_id_fkey"
+      },
+      {
+        "table_name": "club_form_answers",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answers_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_answers",
+        "column_name": "question_id",
+        "foreign_table": "club_form_questions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answers_question_id_fkey"
+      },
+      {
+        "table_name": "club_form_answers",
+        "column_name": "submission_id",
+        "foreign_table": "club_form_submissions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_answers_submission_id_fkey"
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_form_document_versions_created_by_fkey"
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "column_name": "document_id",
+        "foreign_table": "club_form_documents",
+        "foreign_column": "id",
+        "constraint_name": "club_form_document_versions_document_id_fkey"
+      },
+      {
+        "table_name": "club_form_document_versions",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_document_versions_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_documents",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_form_documents_created_by_fkey"
+      },
+      {
+        "table_name": "club_form_documents",
+        "column_name": "form_id",
+        "foreign_table": "club_forms",
+        "foreign_column": "id",
+        "constraint_name": "club_form_documents_form_id_fkey"
+      },
+      {
+        "table_name": "club_form_documents",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_documents_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_files",
+        "column_name": "form_id",
+        "foreign_table": "club_forms",
+        "foreign_column": "id",
+        "constraint_name": "club_form_files_form_id_fkey"
+      },
+      {
+        "table_name": "club_form_files",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_files_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_files",
+        "column_name": "question_id",
+        "foreign_table": "club_form_questions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_files_question_id_fkey"
+      },
+      {
+        "table_name": "club_form_files",
+        "column_name": "submission_id",
+        "foreign_table": "club_form_submissions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_files_submission_id_fkey"
+      },
+      {
+        "table_name": "club_form_questions",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_form_questions_created_by_fkey"
+      },
+      {
+        "table_name": "club_form_questions",
+        "column_name": "form_id",
+        "foreign_table": "club_forms",
+        "foreign_column": "id",
+        "constraint_name": "club_form_questions_form_id_fkey"
+      },
+      {
+        "table_name": "club_form_questions",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_questions_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_submissions",
+        "column_name": "form_id",
+        "foreign_table": "club_forms",
+        "foreign_column": "id",
+        "constraint_name": "club_form_submissions_form_id_fkey"
+      },
+      {
+        "table_name": "club_form_submissions",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_submissions_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "column_name": "consent_id",
+        "foreign_table": "family_consents",
+        "foreign_column": "id",
+        "constraint_name": "club_form_ticks_consent_id_fkey"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "column_name": "document_id",
+        "foreign_table": "club_form_documents",
+        "foreign_column": "id",
+        "constraint_name": "club_form_ticks_document_id_fkey"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "column_name": "form_id",
+        "foreign_table": "club_forms",
+        "foreign_column": "id",
+        "constraint_name": "club_form_ticks_form_id_fkey"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_form_ticks_org_id_fkey"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "column_name": "submission_id",
+        "foreign_table": "club_form_submissions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_ticks_submission_id_fkey"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_form_ticks_user_id_fkey"
+      },
+      {
+        "table_name": "club_form_ticks",
+        "column_name": "version_id",
+        "foreign_table": "club_form_document_versions",
+        "foreign_column": "id",
+        "constraint_name": "club_form_ticks_version_id_fkey"
+      },
+      {
+        "table_name": "club_forms",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_forms_org_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_bodies_org_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "column_name": "send_id",
+        "foreign_table": "club_group_email_sends",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_bodies_send_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_recipients_org_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "column_name": "send_id",
+        "foreign_table": "club_group_email_sends",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_recipients_send_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_sends_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "column_name": "first_billed_send_id",
+        "foreign_table": "club_schedule_sends",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_bill_rates_first_billed_send_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_bill_rates_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "column_name": "permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_bill_rates_permit_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_bill_rates",
+        "column_name": "schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_bill_rates_schedule_id_fkey"
+      },
+      {
         "table_name": "club_schedule_hand_back_slots",
         "column_name": "hand_back_id",
         "foreign_table": "club_schedule_hand_backs",
@@ -84398,6 +86535,13 @@
       },
       {
         "table_name": "club_schedules",
+        "column_name": "bill_dismissed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedules_bill_dismissed_by_fkey"
+      },
+      {
+        "table_name": "club_schedules",
         "column_name": "bill_line_id",
         "foreign_table": "org_budget_lines",
         "foreign_column": "id",
@@ -84430,6 +86574,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "club_schedules_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "part_of_schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "club_schedules_part_of_schedule_id_fkey"
       },
       {
         "table_name": "club_schedules",
@@ -85958,11 +88109,46 @@
         "constraint_name": "online_payment_refunds_resolved_by_fk"
       },
       {
+        "table_name": "online_payment_stripe_fee_lines",
+        "column_name": "entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_stripe_fee_lines_entry_id_fkey"
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_stripe_fee_lines_online_payment_id_fkey"
+      },
+      {
+        "table_name": "online_payment_stripe_fee_lines",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_stripe_fee_lines_org_id_fkey"
+      },
+      {
         "table_name": "online_payments",
         "column_name": "processing_cost_entry_id",
         "foreign_table": "accounting_entries",
         "foreign_column": "id",
         "constraint_name": "online_payments_cost_entry_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "dispute_fee_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_dispute_fee_entry_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "stripe_extra_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_extra_entry_fk"
       },
       {
         "table_name": "online_payments",
@@ -85977,6 +88163,13 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "online_payments_over_kept_by_fkey"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "reversal_fee_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_reversal_fee_entry_fk"
       },
       {
         "table_name": "online_payments",
@@ -86075,6 +88268,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "org_custom_domains_org_fk"
+      },
+      {
+        "table_name": "org_deletion_requests",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_deletion_requests_org_id_fkey"
       },
       {
         "table_name": "org_fiscal_year_reopenings",
@@ -86441,6 +88641,27 @@
         "constraint_name": "org_time_blocks_schedule_id_fkey"
       },
       {
+        "table_name": "org_time_date_off_venues",
+        "column_name": "date_off_id",
+        "foreign_table": "org_time_dates_off",
+        "foreign_column": "id",
+        "constraint_name": "org_time_date_off_venues_date_off_id_fkey"
+      },
+      {
+        "table_name": "org_time_date_off_venues",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_time_date_off_venues_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_date_off_venues",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "org_time_date_off_venues_org_venue_id_fkey"
+      },
+      {
         "table_name": "org_time_dates_off",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -86567,13 +88788,6 @@
         "constraint_name": "platform_events_org_id_fkey"
       },
       {
-        "table_name": "platform_fee_invoices",
-        "column_name": "org_id",
-        "foreign_table": "organizations",
-        "foreign_column": "id",
-        "constraint_name": "platform_fee_invoices_org_id_fkey"
-      },
-      {
         "table_name": "platform_feedback_replies",
         "column_name": "account_email_id",
         "foreign_table": "platform_account_emails",
@@ -86593,34 +88807,6 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "platform_refunds_org_id_fkey"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "column_name": "dispute_id",
-        "foreign_table": "online_payment_disputes",
-        "foreign_column": "id",
-        "constraint_name": "platform_stripe_fees_dispute_id_fkey"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "column_name": "fee_invoice_id",
-        "foreign_table": "platform_fee_invoices",
-        "foreign_column": "id",
-        "constraint_name": "platform_stripe_fees_invoice_fk"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "column_name": "online_payment_id",
-        "foreign_table": "online_payments",
-        "foreign_column": "id",
-        "constraint_name": "platform_stripe_fees_online_payment_id_fkey"
-      },
-      {
-        "table_name": "platform_stripe_fees",
-        "column_name": "org_id",
-        "foreign_table": "organizations",
-        "foreign_column": "id",
-        "constraint_name": "platform_stripe_fees_org_id_fkey"
       },
       {
         "table_name": "platform_user_notes",
@@ -90044,6 +92230,26 @@
         "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
       },
       {
+        "tablename": "bank_check_drafts",
+        "indexname": "bank_check_drafts_expires_idx",
+        "indexdef": "CREATE INDEX bank_check_drafts_expires_idx ON public.bank_check_drafts USING btree (expires_at)"
+      },
+      {
+        "tablename": "bank_check_drafts",
+        "indexname": "bank_check_drafts_one_per_person",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_drafts_one_per_person ON public.bank_check_drafts USING btree (bank_account_id, user_id)"
+      },
+      {
+        "tablename": "bank_check_drafts",
+        "indexname": "bank_check_drafts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_drafts_pkey ON public.bank_check_drafts USING btree (id)"
+      },
+      {
+        "tablename": "bank_check_drafts",
+        "indexname": "bank_check_drafts_user_idx",
+        "indexdef": "CREATE INDEX bank_check_drafts_user_idx ON public.bank_check_drafts USING btree (user_id)"
+      },
+      {
         "tablename": "bank_check_waiting",
         "indexname": "bank_check_waiting_added_by_idx",
         "indexdef": "CREATE INDEX bank_check_waiting_added_by_idx ON public.bank_check_waiting USING btree (added_by) WHERE (added_by IS NOT NULL)"
@@ -90444,6 +92650,346 @@
         "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
       },
       {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_form_idx",
+        "indexdef": "CREATE INDEX club_form_answer_clears_form_idx ON public.club_form_answer_clears USING btree (form_id)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_org_idx",
+        "indexdef": "CREATE INDEX club_form_answer_clears_org_idx ON public.club_form_answer_clears USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_pkey ON public.club_form_answer_clears USING btree (id)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_subject_idx",
+        "indexdef": "CREATE INDEX club_form_answer_clears_subject_idx ON public.club_form_answer_clears USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_subject_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_subject_uniq ON public.club_form_answer_clears USING btree (question_id, subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_submission_idx",
+        "indexdef": "CREATE INDEX club_form_answer_clears_submission_idx ON public.club_form_answer_clears USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answer_clears",
+        "indexname": "club_form_answer_clears_submission_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answer_clears_submission_uniq ON public.club_form_answer_clears USING btree (question_id, submission_id) WHERE (subject_id IS NULL)"
+      },
+      {
+        "tablename": "club_form_answers",
+        "indexname": "club_form_answers_file_idx",
+        "indexdef": "CREATE INDEX club_form_answers_file_idx ON public.club_form_answers USING btree (file_id) WHERE (file_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answers",
+        "indexname": "club_form_answers_form_idx",
+        "indexdef": "CREATE INDEX club_form_answers_form_idx ON public.club_form_answers USING btree (form_id)"
+      },
+      {
+        "tablename": "club_form_answers",
+        "indexname": "club_form_answers_org_idx",
+        "indexdef": "CREATE INDEX club_form_answers_org_idx ON public.club_form_answers USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_answers",
+        "indexname": "club_form_answers_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answers_pkey ON public.club_form_answers USING btree (id)"
+      },
+      {
+        "tablename": "club_form_answers",
+        "indexname": "club_form_answers_subject_idx",
+        "indexdef": "CREATE INDEX club_form_answers_subject_idx ON public.club_form_answers USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answers",
+        "indexname": "club_form_answers_subject_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answers_subject_uniq ON public.club_form_answers USING btree (question_id, subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answers",
+        "indexname": "club_form_answers_submission_idx",
+        "indexdef": "CREATE INDEX club_form_answers_submission_idx ON public.club_form_answers USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_answers",
+        "indexname": "club_form_answers_submission_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_form_answers_submission_uniq ON public.club_form_answers USING btree (question_id, submission_id) WHERE (subject_id IS NULL)"
+      },
+      {
+        "tablename": "club_form_document_versions",
+        "indexname": "club_form_document_versions_created_by_idx",
+        "indexdef": "CREATE INDEX club_form_document_versions_created_by_idx ON public.club_form_document_versions USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_document_versions",
+        "indexname": "club_form_document_versions_no_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_form_document_versions_no_uniq ON public.club_form_document_versions USING btree (document_id, version_no)"
+      },
+      {
+        "tablename": "club_form_document_versions",
+        "indexname": "club_form_document_versions_org_idx",
+        "indexdef": "CREATE INDEX club_form_document_versions_org_idx ON public.club_form_document_versions USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_document_versions",
+        "indexname": "club_form_document_versions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_document_versions_pkey ON public.club_form_document_versions USING btree (id)"
+      },
+      {
+        "tablename": "club_form_documents",
+        "indexname": "club_form_documents_created_by_idx",
+        "indexdef": "CREATE INDEX club_form_documents_created_by_idx ON public.club_form_documents USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_documents",
+        "indexname": "club_form_documents_form_idx",
+        "indexdef": "CREATE INDEX club_form_documents_form_idx ON public.club_form_documents USING btree (form_id, sort_order)"
+      },
+      {
+        "tablename": "club_form_documents",
+        "indexname": "club_form_documents_org_idx",
+        "indexdef": "CREATE INDEX club_form_documents_org_idx ON public.club_form_documents USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_documents",
+        "indexname": "club_form_documents_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_documents_pkey ON public.club_form_documents USING btree (id)"
+      },
+      {
+        "tablename": "club_form_files",
+        "indexname": "club_form_files_form_idx",
+        "indexdef": "CREATE INDEX club_form_files_form_idx ON public.club_form_files USING btree (form_id)"
+      },
+      {
+        "tablename": "club_form_files",
+        "indexname": "club_form_files_org_idx",
+        "indexdef": "CREATE INDEX club_form_files_org_idx ON public.club_form_files USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_files",
+        "indexname": "club_form_files_path_key",
+        "indexdef": "CREATE UNIQUE INDEX club_form_files_path_key ON public.club_form_files USING btree (path)"
+      },
+      {
+        "tablename": "club_form_files",
+        "indexname": "club_form_files_pending_idx",
+        "indexdef": "CREATE INDEX club_form_files_pending_idx ON public.club_form_files USING btree (created_at) WHERE (status = 'pending'::text)"
+      },
+      {
+        "tablename": "club_form_files",
+        "indexname": "club_form_files_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_files_pkey ON public.club_form_files USING btree (id)"
+      },
+      {
+        "tablename": "club_form_files",
+        "indexname": "club_form_files_question_idx",
+        "indexdef": "CREATE INDEX club_form_files_question_idx ON public.club_form_files USING btree (question_id)"
+      },
+      {
+        "tablename": "club_form_files",
+        "indexname": "club_form_files_subject_idx",
+        "indexdef": "CREATE INDEX club_form_files_subject_idx ON public.club_form_files USING btree (subject_table, subject_id) WHERE (subject_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_files",
+        "indexname": "club_form_files_submission_idx",
+        "indexdef": "CREATE INDEX club_form_files_submission_idx ON public.club_form_files USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_questions",
+        "indexname": "club_form_questions_created_by_idx",
+        "indexdef": "CREATE INDEX club_form_questions_created_by_idx ON public.club_form_questions USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_questions",
+        "indexname": "club_form_questions_form_idx",
+        "indexdef": "CREATE INDEX club_form_questions_form_idx ON public.club_form_questions USING btree (form_id, sort_order)"
+      },
+      {
+        "tablename": "club_form_questions",
+        "indexname": "club_form_questions_org_idx",
+        "indexdef": "CREATE INDEX club_form_questions_org_idx ON public.club_form_questions USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_questions",
+        "indexname": "club_form_questions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_questions_pkey ON public.club_form_questions USING btree (id)"
+      },
+      {
+        "tablename": "club_form_storage_removals",
+        "indexname": "club_form_storage_removals_created_idx",
+        "indexdef": "CREATE INDEX club_form_storage_removals_created_idx ON public.club_form_storage_removals USING btree (created_at)"
+      },
+      {
+        "tablename": "club_form_storage_removals",
+        "indexname": "club_form_storage_removals_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_storage_removals_pkey ON public.club_form_storage_removals USING btree (path)"
+      },
+      {
+        "tablename": "club_form_submissions",
+        "indexname": "club_form_submissions_org_idx",
+        "indexdef": "CREATE INDEX club_form_submissions_org_idx ON public.club_form_submissions USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_submissions",
+        "indexname": "club_form_submissions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_submissions_pkey ON public.club_form_submissions USING btree (id)"
+      },
+      {
+        "tablename": "club_form_submissions",
+        "indexname": "club_form_submissions_ref_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_form_submissions_ref_uniq ON public.club_form_submissions USING btree (form_id, ref)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_consent_idx",
+        "indexdef": "CREATE INDEX club_form_ticks_consent_idx ON public.club_form_ticks USING btree (consent_id) WHERE (consent_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_document_idx",
+        "indexdef": "CREATE INDEX club_form_ticks_document_idx ON public.club_form_ticks USING btree (document_id)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_form_idx",
+        "indexdef": "CREATE INDEX club_form_ticks_form_idx ON public.club_form_ticks USING btree (form_id)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_org_idx",
+        "indexdef": "CREATE INDEX club_form_ticks_org_idx ON public.club_form_ticks USING btree (org_id)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_form_ticks_pkey ON public.club_form_ticks USING btree (id)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_subject_idx",
+        "indexdef": "CREATE INDEX club_form_ticks_subject_idx ON public.club_form_ticks USING btree (subject_table, subject_id)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_submission_idx",
+        "indexdef": "CREATE INDEX club_form_ticks_submission_idx ON public.club_form_ticks USING btree (submission_id) WHERE (submission_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_user_idx",
+        "indexdef": "CREATE INDEX club_form_ticks_user_idx ON public.club_form_ticks USING btree (user_id) WHERE (user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_form_ticks",
+        "indexname": "club_form_ticks_version_idx",
+        "indexdef": "CREATE INDEX club_form_ticks_version_idx ON public.club_form_ticks USING btree (version_id) WHERE (version_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_forms",
+        "indexname": "club_forms_org_idx",
+        "indexdef": "CREATE INDEX club_forms_org_idx ON public.club_forms USING btree (org_id)"
+      },
+      {
+        "tablename": "club_forms",
+        "indexname": "club_forms_owner_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_forms_owner_uniq ON public.club_forms USING btree (owner_table, owner_id)"
+      },
+      {
+        "tablename": "club_forms",
+        "indexname": "club_forms_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_forms_pkey ON public.club_forms USING btree (id)"
+      },
+      {
+        "tablename": "club_group_email_bodies",
+        "indexname": "club_group_email_bodies_org_idx",
+        "indexdef": "CREATE INDEX club_group_email_bodies_org_idx ON public.club_group_email_bodies USING btree (org_id)"
+      },
+      {
+        "tablename": "club_group_email_bodies",
+        "indexname": "club_group_email_bodies_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_group_email_bodies_pkey ON public.club_group_email_bodies USING btree (send_id)"
+      },
+      {
+        "tablename": "club_group_email_recipients",
+        "indexname": "club_group_email_recipients_org_idx",
+        "indexdef": "CREATE INDEX club_group_email_recipients_org_idx ON public.club_group_email_recipients USING btree (org_id)"
+      },
+      {
+        "tablename": "club_group_email_recipients",
+        "indexname": "club_group_email_recipients_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_group_email_recipients_pkey ON public.club_group_email_recipients USING btree (id)"
+      },
+      {
+        "tablename": "club_group_email_recipients",
+        "indexname": "club_group_email_recipients_send_idx",
+        "indexdef": "CREATE INDEX club_group_email_recipients_send_idx ON public.club_group_email_recipients USING btree (send_id, status)"
+      },
+      {
+        "tablename": "club_group_email_recipients",
+        "indexname": "club_group_email_recipients_user_idx",
+        "indexdef": "CREATE INDEX club_group_email_recipients_user_idx ON public.club_group_email_recipients USING btree (user_id, send_id) WHERE (user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_group_idx",
+        "indexdef": "CREATE INDEX club_group_email_sends_group_idx ON public.club_group_email_sends USING btree (org_id, kind, group_key, sent_at DESC)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_names_due_idx",
+        "indexdef": "CREATE INDEX club_group_email_sends_names_due_idx ON public.club_group_email_sends USING btree (sent_at) WHERE (names_cleared_at IS NULL)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_org_sent_idx",
+        "indexdef": "CREATE INDEX club_group_email_sends_org_sent_idx ON public.club_group_email_sends USING btree (org_id, sent_at DESC)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_group_email_sends_pkey ON public.club_group_email_sends USING btree (id)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_words_due_idx",
+        "indexdef": "CREATE INDEX club_group_email_sends_words_due_idx ON public.club_group_email_sends USING btree (sent_at) WHERE (words_cleared_at IS NULL)"
+      },
+      {
+        "tablename": "club_schedule_bill_rates",
+        "indexname": "club_schedule_bill_rates_org_idx",
+        "indexdef": "CREATE INDEX club_schedule_bill_rates_org_idx ON public.club_schedule_bill_rates USING btree (org_id)"
+      },
+      {
+        "tablename": "club_schedule_bill_rates",
+        "indexname": "club_schedule_bill_rates_permit_idx",
+        "indexdef": "CREATE INDEX club_schedule_bill_rates_permit_idx ON public.club_schedule_bill_rates USING btree (permit_id) WHERE (permit_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_bill_rates",
+        "indexname": "club_schedule_bill_rates_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_bill_rates_pkey ON public.club_schedule_bill_rates USING btree (id)"
+      },
+      {
+        "tablename": "club_schedule_bill_rates",
+        "indexname": "club_schedule_bill_rates_schedule_permit_key",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_bill_rates_schedule_permit_key ON public.club_schedule_bill_rates USING btree (schedule_id, permit_id)"
+      },
+      {
+        "tablename": "club_schedule_bill_rates",
+        "indexname": "club_schedule_bill_rates_send_idx",
+        "indexdef": "CREATE INDEX club_schedule_bill_rates_send_idx ON public.club_schedule_bill_rates USING btree (first_billed_send_id) WHERE (first_billed_send_id IS NOT NULL)"
+      },
+      {
         "tablename": "club_schedule_hand_back_slots",
         "indexname": "club_schedule_hand_back_slots_hand_back_idx",
         "indexdef": "CREATE INDEX club_schedule_hand_back_slots_hand_back_idx ON public.club_schedule_hand_back_slots USING btree (hand_back_id)"
@@ -90600,6 +93146,11 @@
       },
       {
         "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_family_place_start",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_family_place_start ON public.club_schedule_slots USING btree (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+      },
+      {
+        "tablename": "club_schedule_slots",
         "indexname": "club_schedule_slots_handed_back_by_idx",
         "indexdef": "CREATE INDEX club_schedule_slots_handed_back_by_idx ON public.club_schedule_slots USING btree (handed_back_by) WHERE (handed_back_by IS NOT NULL)"
       },
@@ -90617,11 +93168,6 @@
         "tablename": "club_schedule_slots",
         "indexname": "club_schedule_slots_pkey",
         "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_pkey ON public.club_schedule_slots USING btree (id)"
-      },
-      {
-        "tablename": "club_schedule_slots",
-        "indexname": "club_schedule_slots_place_start",
-        "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_place_start ON public.club_schedule_slots USING btree (schedule_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
       },
       {
         "tablename": "club_schedule_slots",
@@ -90665,6 +93211,16 @@
       },
       {
         "tablename": "club_schedules",
+        "indexname": "club_schedules_part_label_once",
+        "indexdef": "CREATE UNIQUE INDEX club_schedules_part_label_once ON public.club_schedules USING btree (part_of_schedule_id, part_label) WHERE (part_of_schedule_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_part_of_idx",
+        "indexdef": "CREATE INDEX club_schedules_part_of_idx ON public.club_schedules USING btree (part_of_schedule_id) WHERE (part_of_schedule_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
         "indexname": "club_schedules_permit_idx",
         "indexdef": "CREATE INDEX club_schedules_permit_idx ON public.club_schedules USING btree (started_from_permit_id) WHERE (started_from_permit_id IS NOT NULL)"
       },
@@ -90682,6 +93238,16 @@
         "tablename": "club_schedules",
         "indexname": "club_schedules_updated_by_idx",
         "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
+      },
+      {
+        "tablename": "cron_call_receipts",
+        "indexname": "cron_call_receipts_job_issued_idx",
+        "indexdef": "CREATE INDEX cron_call_receipts_job_issued_idx ON public.cron_call_receipts USING btree (job_name, issued_at)"
+      },
+      {
+        "tablename": "cron_call_receipts",
+        "indexname": "cron_call_receipts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX cron_call_receipts_pkey ON public.cron_call_receipts USING btree (id)"
       },
       {
         "tablename": "diamonds",
@@ -90975,6 +93541,11 @@
       },
       {
         "tablename": "family_email_sends",
+        "indexname": "family_email_sends_names_due_idx",
+        "indexdef": "CREATE INDEX family_email_sends_names_due_idx ON public.family_email_sends USING btree (sent_at) WHERE (names_cleared_at IS NULL)"
+      },
+      {
+        "tablename": "family_email_sends",
         "indexname": "family_email_sends_org_sent_idx",
         "indexdef": "CREATE INDEX family_email_sends_org_sent_idx ON public.family_email_sends USING btree (org_id, sent_at DESC)"
       },
@@ -90987,6 +93558,11 @@
         "tablename": "family_email_sends",
         "indexname": "family_email_sends_season_sent_idx",
         "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
+      },
+      {
+        "tablename": "family_email_sends",
+        "indexname": "family_email_sends_words_due_idx",
+        "indexdef": "CREATE INDEX family_email_sends_words_due_idx ON public.family_email_sends USING btree (sent_at) WHERE (words_cleared_at IS NULL)"
       },
       {
         "tablename": "family_invitations",
@@ -92184,6 +94760,31 @@
         "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_child_key ON public.online_payment_refunds USING btree (stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT WHERE (stripe_refund_id IS NOT NULL)"
       },
       {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_entry_idx",
+        "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_entry_idx ON public.online_payment_stripe_fee_lines USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_org_idx",
+        "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_org_idx ON public.online_payment_stripe_fee_lines USING btree (org_id, stripe_created_at DESC)"
+      },
+      {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_payment_idx",
+        "indexdef": "CREATE INDEX online_payment_stripe_fee_lines_payment_idx ON public.online_payment_stripe_fee_lines USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_pkey",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_stripe_fee_lines_pkey ON public.online_payment_stripe_fee_lines USING btree (id)"
+      },
+      {
+        "tablename": "online_payment_stripe_fee_lines",
+        "indexname": "online_payment_stripe_fee_lines_txn_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_stripe_fee_lines_txn_key ON public.online_payment_stripe_fee_lines USING btree (stripe_txn_id)"
+      },
+      {
         "tablename": "online_payments",
         "indexname": "online_payments_clearing_idx",
         "indexdef": "CREATE INDEX online_payments_clearing_idx ON public.online_payments USING btree (org_id) WHERE (status = 'clearing'::text)"
@@ -92195,8 +94796,18 @@
       },
       {
         "tablename": "online_payments",
+        "indexname": "online_payments_dispute_fee_entry_idx",
+        "indexdef": "CREATE INDEX online_payments_dispute_fee_entry_idx ON public.online_payments USING btree (dispute_fee_entry_id) WHERE (dispute_fee_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
         "indexname": "online_payments_dispute_key",
         "indexdef": "CREATE UNIQUE INDEX online_payments_dispute_key ON public.online_payments USING btree (stripe_dispute_id) WHERE (stripe_dispute_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_extra_entry_idx",
+        "indexdef": "CREATE INDEX online_payments_extra_entry_idx ON public.online_payments USING btree (stripe_extra_entry_id) WHERE (stripe_extra_entry_id IS NOT NULL)"
       },
       {
         "tablename": "online_payments",
@@ -92242,6 +94853,11 @@
         "tablename": "online_payments",
         "indexname": "online_payments_receipt_key",
         "indexdef": "CREATE UNIQUE INDEX online_payments_receipt_key ON public.online_payments USING btree (receipt_no) WHERE (receipt_no IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_reversal_fee_entry_idx",
+        "indexdef": "CREATE INDEX online_payments_reversal_fee_entry_idx ON public.online_payments USING btree (reversal_fee_entry_id) WHERE (reversal_fee_entry_id IS NOT NULL)"
       },
       {
         "tablename": "online_payments",
@@ -92372,6 +94988,21 @@
         "tablename": "org_custom_domains",
         "indexname": "org_custom_domains_status_idx",
         "indexdef": "CREATE INDEX org_custom_domains_status_idx ON public.org_custom_domains USING btree (status, last_checked_at)"
+      },
+      {
+        "tablename": "org_deletion_requests",
+        "indexname": "org_deletion_requests_one_open",
+        "indexdef": "CREATE UNIQUE INDEX org_deletion_requests_one_open ON public.org_deletion_requests USING btree (org_id) WHERE (status = 'sent'::text)"
+      },
+      {
+        "tablename": "org_deletion_requests",
+        "indexname": "org_deletion_requests_org_idx",
+        "indexdef": "CREATE INDEX org_deletion_requests_org_idx ON public.org_deletion_requests USING btree (org_id, created_at DESC)"
+      },
+      {
+        "tablename": "org_deletion_requests",
+        "indexname": "org_deletion_requests_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_deletion_requests_pkey ON public.org_deletion_requests USING btree (id)"
       },
       {
         "tablename": "org_fiscal_year_reopenings",
@@ -92739,6 +95370,21 @@
         "indexdef": "CREATE INDEX org_time_blocks_venue_idx ON public.org_time_blocks USING btree (org_id, org_venue_id)"
       },
       {
+        "tablename": "org_time_date_off_venues",
+        "indexname": "org_time_date_off_venues_org_idx",
+        "indexdef": "CREATE INDEX org_time_date_off_venues_org_idx ON public.org_time_date_off_venues USING btree (org_id)"
+      },
+      {
+        "tablename": "org_time_date_off_venues",
+        "indexname": "org_time_date_off_venues_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_time_date_off_venues_pkey ON public.org_time_date_off_venues USING btree (date_off_id, org_venue_id)"
+      },
+      {
+        "tablename": "org_time_date_off_venues",
+        "indexname": "org_time_date_off_venues_venue_idx",
+        "indexdef": "CREATE INDEX org_time_date_off_venues_venue_idx ON public.org_time_date_off_venues USING btree (org_venue_id)"
+      },
+      {
         "tablename": "org_time_dates_off",
         "indexname": "org_time_dates_off_once",
         "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_once ON public.org_time_dates_off USING btree (permit_id, day)"
@@ -92827,6 +95473,16 @@
         "tablename": "organizations",
         "indexname": "organizations_slug_key",
         "indexdef": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
+      },
+      {
+        "tablename": "payments_terms_agreements",
+        "indexname": "payments_terms_agreements_org_idx",
+        "indexdef": "CREATE INDEX payments_terms_agreements_org_idx ON public.payments_terms_agreements USING btree (org_id, agreed_at DESC)"
+      },
+      {
+        "tablename": "payments_terms_agreements",
+        "indexname": "payments_terms_agreements_pkey",
+        "indexdef": "CREATE UNIQUE INDEX payments_terms_agreements_pkey ON public.payments_terms_agreements USING btree (id)"
       },
       {
         "tablename": "pitch_decks",
@@ -93129,26 +95785,6 @@
         "indexdef": "CREATE UNIQUE INDEX platform_events_pkey ON public.platform_events USING btree (id)"
       },
       {
-        "tablename": "platform_fee_invoices",
-        "indexname": "platform_fee_invoices_period_key",
-        "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_period_key ON public.platform_fee_invoices USING btree (org_id, livemode, period_start)"
-      },
-      {
-        "tablename": "platform_fee_invoices",
-        "indexname": "platform_fee_invoices_pkey",
-        "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_pkey ON public.platform_fee_invoices USING btree (id)"
-      },
-      {
-        "tablename": "platform_fee_invoices",
-        "indexname": "platform_fee_invoices_stripe_key",
-        "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_stripe_key ON public.platform_fee_invoices USING btree (stripe_invoice_id) WHERE (stripe_invoice_id IS NOT NULL)"
-      },
-      {
-        "tablename": "platform_fee_invoices",
-        "indexname": "platform_fee_invoices_unpaid_idx",
-        "indexdef": "CREATE INDEX platform_fee_invoices_unpaid_idx ON public.platform_fee_invoices USING btree (org_id) WHERE (status = 'open'::text)"
-      },
-      {
         "tablename": "platform_feedback_replies",
         "indexname": "platform_feedback_replies_feedback_idx",
         "indexdef": "CREATE INDEX platform_feedback_replies_feedback_idx ON public.platform_feedback_replies USING btree (feedback_id, created_at)"
@@ -93257,41 +95893,6 @@
         "tablename": "platform_status_reading",
         "indexname": "platform_status_reading_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_status_reading_pkey ON public.platform_status_reading USING btree (id)"
-      },
-      {
-        "tablename": "platform_stripe_fees",
-        "indexname": "platform_stripe_fees_credit_note_key",
-        "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_credit_note_key ON public.platform_stripe_fees USING btree (stripe_credit_note_id) WHERE (stripe_credit_note_id IS NOT NULL)"
-      },
-      {
-        "tablename": "platform_stripe_fees",
-        "indexname": "platform_stripe_fees_dispute_idx",
-        "indexdef": "CREATE INDEX platform_stripe_fees_dispute_idx ON public.platform_stripe_fees USING btree (dispute_id) WHERE (dispute_id IS NOT NULL)"
-      },
-      {
-        "tablename": "platform_stripe_fees",
-        "indexname": "platform_stripe_fees_invoice_idx",
-        "indexdef": "CREATE INDEX platform_stripe_fees_invoice_idx ON public.platform_stripe_fees USING btree (fee_invoice_id) WHERE (fee_invoice_id IS NOT NULL)"
-      },
-      {
-        "tablename": "platform_stripe_fees",
-        "indexname": "platform_stripe_fees_key",
-        "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_key ON public.platform_stripe_fees USING btree (online_payment_id, kind, dispute_id) NULLS NOT DISTINCT"
-      },
-      {
-        "tablename": "platform_stripe_fees",
-        "indexname": "platform_stripe_fees_org_idx",
-        "indexdef": "CREATE INDEX platform_stripe_fees_org_idx ON public.platform_stripe_fees USING btree (org_id)"
-      },
-      {
-        "tablename": "platform_stripe_fees",
-        "indexname": "platform_stripe_fees_pkey",
-        "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_pkey ON public.platform_stripe_fees USING btree (id)"
-      },
-      {
-        "tablename": "platform_stripe_fees",
-        "indexname": "platform_stripe_fees_unbilled_idx",
-        "indexdef": "CREATE INDEX platform_stripe_fees_unbilled_idx ON public.platform_stripe_fees USING btree (org_id) WHERE ((billed_at IS NULL) AND (exempt_reason IS NULL))"
       },
       {
         "tablename": "platform_user_notes",
@@ -96206,6 +98807,48 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_balance_len",
+        "check_clause": "(length(balance_text) <= 32)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_cash_len",
+        "check_clause": "((cash_text IS NULL) OR ((length(cash_text) >= 1) AND (length(cash_text) <= 32)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_expires_after_change",
+        "check_clause": "(expires_at > updated_at)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_marked_count",
+        "check_clause": "(cardinality(marked_keys) <= 500)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_revision_positive",
+        "check_clause": "(revision >= 1)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_drafts",
+        "detail": "bank_check_drafts_started_shape",
+        "check_clause": "(((started_date IS NULL) = (started_balance_text IS NULL)) AND ((started_date IS NULL) = (started_difference_cents IS NULL)) AND ((started_balance_text IS NULL) OR (length(started_balance_text) <= 32)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_check_drafts",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "bank_check_waiting",
         "detail": "bank_check_waiting_added_shape",
         "check_clause": "(((added_at IS NULL) AND (added_by IS NULL)) OR (at_start AND (added_at IS NOT NULL)))"
@@ -96644,6 +99287,474 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "club_form_answer_clears",
+        "detail": "club_form_answer_clears_has_target",
+        "check_clause": "((subject_id IS NOT NULL) OR (submission_id IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_answer_clears",
+        "detail": "club_form_answer_clears_subject_pair",
+        "check_clause": "((subject_table IS NULL) = (subject_id IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_answer_clears",
+        "detail": "club_form_answer_clears_subject_table_check",
+        "check_clause": "((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_answer_clears",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_answers",
+        "detail": "club_form_answers_has_target",
+        "check_clause": "((subject_id IS NOT NULL) OR (submission_id IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_answers",
+        "detail": "club_form_answers_subject_pair",
+        "check_clause": "((subject_table IS NULL) = (subject_id IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_answers",
+        "detail": "club_form_answers_subject_table_check",
+        "check_clause": "((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_answers",
+        "detail": "club_form_answers_value_text_check",
+        "check_clause": "((value_text IS NULL) OR (char_length(value_text) <= 5000))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_answers",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_again_reason",
+        "check_clause": "((ticks_stand IS DISTINCT FROM false) OR (reason IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_body_text_check",
+        "check_clause": "((body_text IS NULL) OR ((char_length(body_text) >= 1) AND (char_length(body_text) <= 100000)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_file_name_check",
+        "check_clause": "((file_name IS NULL) OR ((char_length(file_name) >= 1) AND (char_length(file_name) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_file_named",
+        "check_clause": "((file_path IS NULL) OR ((file_name IS NOT NULL) AND (file_size IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_file_size_check",
+        "check_clause": "((file_size IS NULL) OR ((file_size >= 1) AND (file_size <= 8388608)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_fingerprint_check",
+        "check_clause": "(fingerprint ~ '^[0-9a-f]{64}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_one_source",
+        "check_clause": "((body_text IS NULL) <> (file_path IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_reason_check",
+        "check_clause": "((reason IS NULL) OR ((char_length(reason) >= 1) AND (char_length(reason) <= 300)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_ticks_said",
+        "check_clause": "((version_no = 1) = (ticks_stand IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_document_versions",
+        "detail": "club_form_document_versions_version_no_check",
+        "check_clause": "(version_no >= 1)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_document_versions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_documents",
+        "detail": "club_form_documents_name_check",
+        "check_clause": "((char_length(name) >= 1) AND (char_length(name) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_documents",
+        "detail": "club_form_documents_source_kind_check",
+        "check_clause": "(source_kind = ANY (ARRAY['pdf'::text, 'text'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_documents",
+        "detail": "club_form_documents_tick_kind_check",
+        "check_clause": "(tick_kind = ANY (ARRAY['read'::text, 'read_agree'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_documents",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_files",
+        "detail": "club_form_files_content_type_check",
+        "check_clause": "(content_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text, 'image/heic'::text, 'image/heif'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_files",
+        "detail": "club_form_files_file_name_check",
+        "check_clause": "((char_length(file_name) >= 1) AND (char_length(file_name) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_files",
+        "detail": "club_form_files_size_bytes_check",
+        "check_clause": "((size_bytes >= 1) AND (size_bytes <= 8388608))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_files",
+        "detail": "club_form_files_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'attached'::text, 'removed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_files",
+        "detail": "club_form_files_subject_pair",
+        "check_clause": "((subject_table IS NULL) = (subject_id IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_files",
+        "detail": "club_form_files_subject_table_check",
+        "check_clause": "((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_files",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_questions",
+        "detail": "club_form_questions_asked_check",
+        "check_clause": "(asked = ANY (ARRAY['per_subject'::text, 'once'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_questions",
+        "detail": "club_form_questions_choices_check",
+        "check_clause": "(jsonb_typeof(choices) = 'array'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_questions",
+        "detail": "club_form_questions_file_not_required",
+        "check_clause": "(NOT ((question_type = 'file'::text) AND required))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_questions",
+        "detail": "club_form_questions_health_not_on_board",
+        "check_clause": "(NOT (health AND on_board))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_questions",
+        "detail": "club_form_questions_help_text_check",
+        "check_clause": "((help_text IS NULL) OR ((char_length(help_text) >= 1) AND (char_length(help_text) <= 500)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_questions",
+        "detail": "club_form_questions_label_check",
+        "check_clause": "((char_length(label) >= 1) AND (char_length(label) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_questions",
+        "detail": "club_form_questions_question_type_check",
+        "check_clause": "(question_type = ANY (ARRAY['short_answer'::text, 'long_answer'::text, 'one_choice'::text, 'many_choices'::text, 'yes_no'::text, 'date'::text, 'file'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_questions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_storage_removals",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_submissions",
+        "detail": "club_form_submissions_ref_check",
+        "check_clause": "((char_length(ref) >= 1) AND (char_length(ref) <= 40))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_submissions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_ticks",
+        "detail": "club_form_ticks_fingerprint_check",
+        "check_clause": "((fingerprint IS NULL) OR (fingerprint ~ '^[0-9a-f]{64}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_ticks",
+        "detail": "club_form_ticks_moved_bare",
+        "check_clause": "((NOT moved) OR ((version_id IS NULL) AND (fingerprint IS NULL) AND (handed_over_at IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_ticks",
+        "detail": "club_form_ticks_sentence_check",
+        "check_clause": "((char_length(sentence) >= 1) AND (char_length(sentence) <= 300))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_ticks",
+        "detail": "club_form_ticks_subject_table_check",
+        "check_clause": "(subject_table = 'league_registrations'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_form_ticks",
+        "detail": "club_form_ticks_versioned",
+        "check_clause": "(moved OR ((version_id IS NOT NULL) AND (fingerprint IS NOT NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_form_ticks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_forms",
+        "detail": "club_forms_owner_table_check",
+        "check_clause": "(owner_table = 'league_seasons'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_forms",
+        "detail": "club_forms_subject_kind_check",
+        "check_clause": "(subject_kind = ANY (ARRAY['child_signup'::text, 'business'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_forms",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_bodies",
+        "detail": "club_group_email_bodies_body_check",
+        "check_clause": "((char_length(body) >= 1) AND (char_length(body) <= 5000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_bodies",
+        "detail": "club_group_email_bodies_subject_check",
+        "check_clause": "((char_length(subject) >= 1) AND (char_length(subject) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_group_email_bodies",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_basis_check",
+        "check_clause": "(basis = ANY (ARRAY['rep_staff'::text, 'house_league'::text, 'picked'::text, 'board'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_board_role",
+        "check_clause": "((basis = 'board'::text) = (board_role IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_board_role_check",
+        "check_clause": "(board_role = ANY (ARRAY['owner'::text, 'admin'::text, 'league_admin'::text, 'league_registrar'::text, 'treasurer'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_line_check",
+        "check_clause": "((line IS NULL) OR (((char_length(line) >= 1) AND (char_length(line) <= 300)) AND (POSITION(('@'::text) IN (line)) = 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_name_check",
+        "check_clause": "((name IS NULL) OR (((char_length(name) >= 1) AND (char_length(name) <= 200)) AND (POSITION(('@'::text) IN (name)) = 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_source",
+        "check_clause": "((user_id IS NOT NULL) OR (league_coach_id IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_group_email_recipients",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_club_copy_check",
+        "check_clause": "(club_copy = ANY (ARRAY['asked'::text, 'sent'::text, 'failed'::text, 'already_listed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_failed_count_check",
+        "check_clause": "(failed_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_group_key_check",
+        "check_clause": "((char_length(group_key) >= 1) AND (char_length(group_key) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_group_kind_check",
+        "check_clause": "((char_length(group_kind) >= 1) AND (char_length(group_kind) <= 40))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_group_label_check",
+        "check_clause": "((char_length(group_label) >= 1) AND (char_length(group_label) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['coaches'::text, 'board'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_left_out_count_check",
+        "check_clause": "(left_out_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_reached_count_check",
+        "check_clause": "(reached_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_recipient_count_check",
+        "check_clause": "(recipient_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_reply_to_check",
+        "check_clause": "(reply_to = ANY (ARRAY['club'::text, 'sender'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_sender_name_check",
+        "check_clause": "((sender_name IS NULL) OR (((char_length(sender_name) >= 1) AND (char_length(sender_name) <= 200)) AND (POSITION(('@'::text) IN (sender_name)) = 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_sender_role_check",
+        "check_clause": "((sender_role IS NULL) OR (sender_role = ANY (ARRAY['owner'::text, 'admin'::text, 'league_admin'::text, 'league_registrar'::text, 'treasurer'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_status_check",
+        "check_clause": "(status = ANY (ARRAY['sending'::text, 'done'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_group_email_sends",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_bill_rates",
+        "detail": "club_schedule_bill_rates_scale_check",
+        "check_clause": "(scale > (0)::numeric)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedule_bill_rates",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "club_schedule_hand_back_slots",
         "detail": "club_schedule_hand_back_slots_cents_check",
         "check_clause": "(cents >= 0)"
@@ -96813,6 +99924,12 @@
       {
         "kind": "CHECK",
         "table_name": "club_schedules",
+        "detail": "club_schedules_bill_price_mode_check",
+        "check_clause": "(bill_price_mode = ANY (ARRAY['each_permit'::text, 'one_rate'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
         "detail": "club_schedules_bill_priced",
         "check_clause": "((bill_plan IS NULL) OR (bill_permit_id IS NOT NULL) OR (bill_amount IS NOT NULL))"
       },
@@ -96843,6 +99960,24 @@
       {
         "kind": "CHECK",
         "table_name": "club_schedules",
+        "detail": "club_schedules_part_label_length",
+        "check_clause": "((part_label IS NULL) OR ((length(btrim(part_label)) >= 1) AND (length(btrim(part_label)) <= 60)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_part_label_pairs",
+        "check_clause": "((part_of_schedule_id IS NULL) = (part_label IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_part_never_in_review",
+        "check_clause": "((part_of_schedule_id IS NULL) OR (state <> 'in_review'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
         "detail": "club_schedules_settings_check",
         "check_clause": "(jsonb_typeof(settings) = 'object'::text)"
       },
@@ -96861,6 +99996,12 @@
       {
         "kind": "RLS",
         "table_name": "club_schedules",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "cron_call_receipts",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -97179,6 +100320,12 @@
       {
         "kind": "CHECK",
         "table_name": "family_email_sends",
+        "detail": "family_email_sends_club_copy_check",
+        "check_clause": "(club_copy = ANY (ARRAY['asked'::text, 'sent'::text, 'failed'::text, 'already_listed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
         "detail": "family_email_sends_coach_count_check",
         "check_clause": "(coach_count >= 0)"
       },
@@ -97205,6 +100352,12 @@
         "table_name": "family_email_sends",
         "detail": "family_email_sends_reached_count_check",
         "check_clause": "(reached_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_reply_to_check",
+        "check_clause": "(reply_to = ANY (ARRAY['club'::text, 'sender'::text]))"
       },
       {
         "kind": "CHECK",
@@ -98294,6 +101447,30 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "online_payment_stripe_fee_lines",
+        "detail": "online_payment_stripe_fee_lines_kind_chk",
+        "check_clause": "(kind = ANY (ARRAY['debit_failure'::text, 'dispute_countered'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_stripe_fee_lines",
+        "detail": "online_payment_stripe_fee_lines_unmatched_chk",
+        "check_clause": "((unmatched_reason IS NULL) OR (unmatched_reason = ANY (ARRAY['no_payment'::text, 'several_payments'::text, 'not_a_charge'::text, 'unknown_kind'::text, 'refused'::text])))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "online_payment_stripe_fee_lines",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_application_fee_chk",
+        "check_clause": "((application_fee_amount >= (0)::numeric) AND (application_fee_amount <= fee_amount))"
+      },
+      {
+        "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_arithmetic_chk",
         "check_clause": "(((fee_payer = 'family'::text) AND (total_amount = (base_amount + fee_amount))) OR ((fee_payer = 'club'::text) AND (total_amount = base_amount)))"
@@ -98397,6 +101574,12 @@
       {
         "kind": "CHECK",
         "table_name": "online_payments",
+        "detail": "online_payments_stripe_fee_chk",
+        "check_clause": "(stripe_fee_amount >= (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
         "detail": "online_payments_total_chk",
         "check_clause": "(total_amount > (0)::numeric)"
       },
@@ -98475,6 +101658,30 @@
       {
         "kind": "RLS",
         "table_name": "org_custom_domains",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_deletion_requests",
+        "detail": "org_deletion_requests_closed_chk",
+        "check_clause": "((status = 'sent'::text) = (closed_at IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_deletion_requests",
+        "detail": "org_deletion_requests_reason_check",
+        "check_clause": "((reason IS NULL) OR (char_length(reason) <= 1000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_deletion_requests",
+        "detail": "org_deletion_requests_status_check",
+        "check_clause": "(status = ANY (ARRAY['sent'::text, 'answered'::text, 'withdrawn'::text, 'deleted'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_deletion_requests",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -98595,6 +101802,12 @@
       {
         "kind": "CHECK",
         "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_fees_collector_chk",
+        "check_clause": "(fees_collector = ANY (ARRAY['application'::text, 'stripe'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
         "detail": "org_payment_accounts_refund_policy_chk",
         "check_clause": "((refund_policy IS NULL) OR (char_length(refund_policy) <= 300))"
       },
@@ -98668,7 +101881,7 @@
         "kind": "CHECK",
         "table_name": "org_permits",
         "detail": "org_permits_document_type_check",
-        "check_clause": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text])))"
+        "check_clause": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'::text])))"
       },
       {
         "kind": "CHECK",
@@ -98881,6 +102094,12 @@
         "check_clause": null
       },
       {
+        "kind": "RLS",
+        "table_name": "org_time_date_off_venues",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
         "table_name": "org_time_dates_off",
         "detail": "org_time_dates_off_note_check",
@@ -98955,6 +102174,12 @@
       {
         "kind": "CHECK",
         "table_name": "organization_members",
+        "detail": "organization_members_pending_role_check",
+        "check_clause": "((pending_role IS NULL) OR ((role = 'coach'::text) AND (pending_role <> ALL (ARRAY['coach'::text, 'owner'::text])) AND (pending_invited_at IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_members",
         "detail": "organization_members_status_check",
         "check_clause": "(status = ANY (ARRAY['invited'::text, 'active'::text, 'suspended'::text]))"
       },
@@ -98997,6 +102222,12 @@
       {
         "kind": "CHECK",
         "table_name": "organizations",
+        "detail": "organizations_start_plan_check",
+        "check_clause": "((start_plan IS NULL) OR (start_plan = ANY (ARRAY['league'::text, 'club'::text, 'club_large'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
         "detail": "organizations_subscription_amount_cents_check",
         "check_clause": "((subscription_amount_cents IS NULL) OR (subscription_amount_cents >= 0))"
       },
@@ -99027,6 +102258,30 @@
       {
         "kind": "RLS",
         "table_name": "organizations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "payments_terms_agreements",
+        "detail": "payments_terms_agreements_action_check",
+        "check_clause": "(action = ANY (ARRAY['set_up'::text, 'reconnect'::text, 'agree_again'::text, 'backfill'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "payments_terms_agreements",
+        "detail": "payments_terms_agreements_text_shape",
+        "check_clause": "((char_length(btrim(org_name)) >= 1) AND ((char_length(btrim(user_email)) >= 1) AND (char_length(btrim(user_email)) <= 320)) AND (char_length(btrim(box_text)) >= 1))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "payments_terms_agreements",
+        "detail": "payments_terms_agreements_version_shape",
+        "check_clause": "((terms_version = 'placeholder-counsel-pending'::text) OR (terms_version ~ '^\\d{4}-\\d{2}-\\d{2}$'::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "payments_terms_agreements",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -99626,48 +102881,6 @@
       },
       {
         "kind": "CHECK",
-        "table_name": "platform_fee_invoices",
-        "detail": "platform_fee_invoices_final_chk",
-        "check_clause": "((status = 'draft'::text) OR ((stripe_invoice_id IS NOT NULL) AND (finalized_at IS NOT NULL)))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_fee_invoices",
-        "detail": "platform_fee_invoices_paid_chk",
-        "check_clause": "((status = 'paid'::text) = (paid_at IS NOT NULL))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_fee_invoices",
-        "detail": "platform_fee_invoices_period_start_check",
-        "check_clause": "(EXTRACT(day FROM period_start) = (1)::numeric)"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_fee_invoices",
-        "detail": "platform_fee_invoices_send_error_check",
-        "check_clause": "((send_error IS NULL) OR (char_length(send_error) <= 500))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_fee_invoices",
-        "detail": "platform_fee_invoices_status_check",
-        "check_clause": "(status = ANY (ARRAY['draft'::text, 'open'::text, 'paid'::text, 'void'::text, 'uncollectible'::text]))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_fee_invoices",
-        "detail": "platform_fee_invoices_tax_lines_chk",
-        "check_clause": "((tax_lines IS NULL) OR (jsonb_typeof(tax_lines) = 'array'::text))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "platform_fee_invoices",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
         "table_name": "platform_feedback_replies",
         "detail": "platform_feedback_replies_attempt_check",
         "check_clause": "((attempt >= 1) AND (attempt <= 20))"
@@ -99742,7 +102955,7 @@
         "kind": "CHECK",
         "table_name": "platform_record_opens",
         "detail": "platform_record_opens_record_kind_check",
-        "check_clause": "(record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text]))"
+        "check_clause": "(record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text, 'feedback'::text, 'lead'::text]))"
       },
       {
         "kind": "RLS",
@@ -99861,72 +103074,6 @@
       {
         "kind": "RLS",
         "table_name": "platform_status_reading",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_amount_chk",
-        "check_clause": "(amount > (0)::numeric)"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_bill_error_chk",
-        "check_clause": "((bill_error IS NULL) OR (char_length(bill_error) <= 500))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_billed_chk",
-        "check_clause": "((billed_at IS NULL) = ((stripe_invoice_item_id IS NULL) AND (stripe_credit_note_id IS NULL)))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_billed_on_chk",
-        "check_clause": "(((billed_at IS NULL) = (billed_on IS NULL)) AND ((billed_on IS NULL) OR (billed_on = ANY (ARRAY['subscription'::text, 'own_invoice'::text, 'credit_note'::text]))) AND ((billed_on IS DISTINCT FROM 'subscription'::text) OR (fee_invoice_id IS NULL)) AND ((billed_on IS DISTINCT FROM 'own_invoice'::text) OR (fee_invoice_id IS NOT NULL)) AND ((billed_on IS DISTINCT FROM 'credit_note'::text) OR ((stripe_credit_note_id IS NOT NULL) AND (stripe_invoice_item_id IS NULL) AND (fee_invoice_id IS NULL))) AND ((stripe_credit_note_id IS NULL) OR (billed_on = 'credit_note'::text)))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_credit_note_chk",
-        "check_clause": "((stripe_credit_note_id IS NULL) OR (kind = 'dispute_answer_returned'::text))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_dispute_chk",
-        "check_clause": "((kind = ANY (ARRAY['dispute'::text, 'dispute_answer'::text, 'dispute_answer_returned'::text])) = (dispute_id IS NOT NULL))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_exempt_chk",
-        "check_clause": "((exempt_reason IS NULL) OR (billed_at IS NULL))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_exempt_reason_chk",
-        "check_clause": "((exempt_reason IS NULL) OR (exempt_reason = ANY (ARRAY['comped'::text, 'no_subscription'::text, 'test_mode'::text])))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_kind_chk",
-        "check_clause": "(kind = ANY (ARRAY['returned'::text, 'reversed'::text, 'dispute'::text, 'dispute_answer'::text, 'dispute_answer_returned'::text, 'foreign_card'::text]))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_stripe_fees",
-        "detail": "platform_stripe_fees_source_chk",
-        "check_clause": "(amount_source = ANY (ARRAY['stripe'::text, 'rate'::text]))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "platform_stripe_fees",
         "detail": "ENABLED",
         "check_clause": null
       },
