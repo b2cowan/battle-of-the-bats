@@ -4,6 +4,9 @@
 History (not kept current): Phase A built and run on dev 2026-11-10 (committed 9ca8c679d; sign-ups auto-approve under capacity; password only in .env.local) · Parent: `PROSPECT_DEMO_PROGRAM_PLAN.md` (P1, P4c) · Brief: `MILTON_DEMO_WORLD_PM_BRIEF.md`
 Playbook (walkthrough): the "House League Demo Playbook" Artifact (republished from this plan's §6).
 Presentation run sheet (Phase B, the five demos): https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W (`MILTON_DEMO_RUN_SHEET.html`).
+Presentation deck (14 slides, everything outside the demos; built 2026-11-21 from the prep page's outline, /design and /marketing
+passes applied): https://claude.ai/artifact/6z6xGQsVATLw8uRnQCsuc3, source `MILTON_PRESENTATION_DECK/` (publish from a copy of that
+folder; the speaker notes are readable by anyone with the link, so the never-say lists stay on the prep page's Security tab).
 Prospect handout (only what he sees — no reset, scripts, gaps or staging steps): `MILTON_DEMO_PROSPECT_WALK.html`, published as
 https://claude.ai/artifact/NqFaetSngvqWEdJQ6u5A4T. Keep it in step with the playbook's five walks + four on-call. It links straight
 into the season's admin tabs: the season is rebuilt under a FIXED id (`season.id` in the config, 2026-11-10), so those links survive

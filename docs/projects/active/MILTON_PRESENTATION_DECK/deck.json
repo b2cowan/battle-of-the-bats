@@ -1,0 +1,22 @@
+{
+  "v": 5,
+  "createdOnFiles": { "v": 1, "at": "2026-11-21T21:40:00-10:00" },
+  "lists": "css",
+  "format": { "v": 1, "shared": ["project/deck.css"] },
+  "title": "FieldLogicHQ for Milton Bats",
+  "order": ["cover", "since", "today", "oneplace", "built", "demos", "more", "where", "promises", "roadmap", "roadmap2", "yourdata", "moving", "next"],
+  "sections": {
+    "open": { "description": "Why we are here, and what has shipped since the board's November 10 session.", "start": "cover" },
+    "picture": { "description": "The club's tools today, the same club in one place, and what is built.", "start": "today" },
+    "live": { "description": "Five live demos on a Milton Bats club.", "start": "demos" },
+    "trust": { "description": "The rest of the product, and where the club's information lives.", "start": "more" },
+    "ahead": { "description": "What is coming, and how the club moves over.", "start": "roadmap" },
+    "close": { "description": "Questions and next steps.", "start": "next" }
+  },
+  "faces": {
+    "barlow-condensed": { "family": "Barlow Condensed", "href": "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap" },
+    "inter": { "family": "Inter", "href": "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap" },
+    "ibm-plex-mono": { "family": "IBM Plex Mono", "href": "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap" }
+  },
+  "designSystems": []
+}
