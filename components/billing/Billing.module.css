@@ -315,6 +315,10 @@
 .table .actions { text-align: right; white-space: nowrap; }
 .cellTitle { color: var(--text-primary); font-weight: 650; }
 .cellSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+/* Change-plan "At a glance": a sentence, so it gets a readable line height and an even wrap; the Club rows' fit line is
+   the table's own .cellSub, spaced like the plan-name cell's details link beside it (0.25rem). /design 2026-11-22. */
+.glanceCell { line-height: 1.4; text-wrap: pretty; }
+.glanceCell .cellSub { margin-top: 0.25rem; }
 
 /* The approved phone cards retain the table's complete data and under-name details door. */
 @media (max-width: 640px) {
@@ -329,6 +333,11 @@
   .table td:first-child::before, .table td:last-child::before { content: none; }
   .table td:last-child { justify-content: flex-end; }
   .table .num { text-align: left; }
+  /* The glance cell is a sentence, not a figure: on a phone it reads as the plan's description under its name, whole width,
+     with its fit line stacked below — not a label-left / value-right row, which would squeeze it and set the fit line
+     beside it as a second flex item. */
+  .table td.glanceCell { display: block; }
+  .table td.glanceCell::before { content: none; }
 }
 
 /* Plans end at the renewal date (Stage 0 design pass): a wait is the white callout with an amber left edge, the recipe the

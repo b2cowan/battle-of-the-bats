@@ -504,7 +504,10 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
             const closed = !coachPage && Boolean(change) && change!.mechanism !== 'downgrade' && s.gating.status !== 'loading' && !sale(key);
             return <tr key={key}>
               <td data-label={W.change.headings.plan}><span className={styles.planNameLine}><strong>{target.config.label}</strong>{closed && <CoachChip tone="quiet">{gatedPlanTag(key as OrgPlan)}</CoachChip>}</span>{key !== currentKey && <button type="button" className={`${styles.link} ${styles.details}`} onClick={() => a.details(key)}>{W.change.details(target.config.label)}</button>}</td>
-              <td data-label={W.change.headings.holds}>{target.usageMeters.includes('teams') ? W.change.upTo(target.config.teamLimit) : W.change.tournamentLimit(target.config.tournamentLimit)}</td>
+              <td data-label={W.change.headings.holds} className={styles.glanceCell}>{(() => {
+                const glance = W.change.glance(key, target.config.tournamentLimit, { lower: PLAN_CONFIG.club.teamLimit + 1, upper: key === 'club' ? PLAN_CONFIG.club.teamLimit : PLAN_CONFIG.club_large.teamLimit });
+                return <>{glance.main}{glance.fit && <span className={styles.cellSub}>{glance.fit}</span>}</>;
+              })()}</td>
               <td data-label={W.change.headings.monthly} className={styles.num}>{target.config.monthlyPrice === 0 ? W.plan.free : formatPriceAmount(target.config.monthlyPrice)}</td>
               <td data-label={W.change.headings.annual} className={styles.num}>{target.config.annualPrice === 0 ? W.plan.free : formatPriceAmount(target.config.annualPrice)}</td>
               <td data-label={W.change.headings.choice}>{key === currentKey ? <CoachChip tone="good">{givenPlan && ft?.planGrant?.lastDay ? W.change.freeThrough(ft.planGrant.lastDay) : W.change.current}</CoachChip>

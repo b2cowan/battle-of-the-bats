@@ -154,10 +154,18 @@ describe('billing state distinctions in the rendered body', () => {
     props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, overLimitAfter: false });
     assert.ok(html(props).includes(W.usage.freeTeams(PLAN_CONFIG.club.label)));
   });
-  it('the Holds column describes capacity rather than repeating a usage count', () => {
+  it('the "At a glance" column says what each plan gives rather than repeating a usage count', () => {
     const rendered = html(fixture('tournament_plus'));
-    assert.match(rendered, /data-label="Holds">1 tournament at a time<\/td>/);
-    assert.doesNotMatch(rendered, /data-label="Holds">1 of 1/);
+    assert.match(rendered, /data-label="At a glance"[^>]*>1 tournament at a time<\/td>/);
+    assert.doesNotMatch(rendered, /data-label="At a glance"[^>]*>1 of 1/);
+    // Owner 2026-11-22 (/marketing): the column is "At a glance"; the Club rows lead with what they include, and the team
+    // count is a "for clubs with…" fit line, never a bare "Up to N".
+    const club = html(fixture('tournament'));
+    assert.match(club, /data-label="At a glance"[^>]*>Unlimited tournaments<\/td>/);
+    assert.match(club, /data-label="At a glance"[^>]*>Unlimited tournaments, plus house league seasons<\/td>/);
+    assert.match(club, /Everything in League Plus, plus rep teams and accounting<span[^>]*>For clubs with up to 15 teams<\/span>/);
+    assert.match(club, /Everything in Club<span[^>]*>For clubs with 16 to 30 teams<\/span>/);
+    assert.doesNotMatch(club, /data-label="At a glance"[^>]*>(Unlimited|Up to \d+)(?: coached teams)?<\/td>/);
   });
   it('Stripe return flags consume once, preserve the drawer and use either host return base', () => {
     assert.equal(billingReturnState('success=1&inPlace=club', '/billing').destination, '/billing?inPlace=club');

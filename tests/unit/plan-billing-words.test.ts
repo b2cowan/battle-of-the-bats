@@ -40,7 +40,7 @@ describe('shared billing vocabulary', () => {
     assert.equal(W.plan.fromPrice(0), 'Free');
     assert.equal(W.plan.billed('annual'), 'billed yearly');
     assert.equal(W.plan.billed('monthly'), 'billed monthly');
-    assert.equal(W.change.headings.holds, 'Holds');
+    assert.equal(W.change.headings.holds, 'At a glance');
     assert.equal(W.plan.renews('2026-11-03'), 'Renews November 3, 2026');
     assert.equal(W.plan.trialEnds('2026-11-03'), 'Trial ends November 3, 2026');
     assert.equal(W.plan.scheduled('Target', null), 'Moves to Target at renewal.');

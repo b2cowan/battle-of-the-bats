@@ -146,14 +146,22 @@ export const PLAN_BILLING_WORDS = {
     freeTeams: (label: string) => `Teams you add while ${label} is free are kept after it ends.`,
   },
   change: {
-    headings: { plan: 'Plan', holds: 'Holds', monthly: 'Monthly', annual: 'Yearly', choice: 'Your choice' },
+    headings: { plan: 'Plan', holds: 'At a glance', monthly: 'Monthly', annual: 'Yearly', choice: 'Your choice' },
     current: 'Your plan', move: (label: string) => `Move to ${label}`,
     // On-sale pages S4 (drawing tab 6): a free-time organization's "Your plan" row is the plan it is given.
     freeThrough: (lastDay: string) => `Free through ${formatStoredDate(lastDay)}`,
     upgrade: (label: string) => `Upgrade to ${label}`, downgrade: (label: string) => `Downgrade to ${label}`,
     details: (label: string) => `See what ${label} includes`, contactMove: 'Contact us to move', contact: 'Contact us',
-    upTo: (limit: number) => `Up to ${limit}`, range: (lower: number, upper: number) => `${lower} to ${upper}`,
-    tournamentLimit: (limit: number) => limit >= NO_LIMIT ? 'Unlimited' : `${pluralize(limit, 'tournament')} at a time`,
+    // Change-plan table, "At a glance" (owner 2026-11-22, /marketing): every cell says what the plan gives, in the same kind
+    // of words. The team count is a fit line under the two Club rows ("for clubs with…"), never a headline cap, so Club
+    // never reads as more limited than the plans above it.
+    glance: (key: string, tournamentLimit: number, club: { lower: number; upper: number | null }): { main: string; fit?: string } => {
+      const unlimited = tournamentLimit >= NO_LIMIT;
+      if (key === 'league') return { main: 'Unlimited tournaments, plus house league seasons' };
+      if (key === 'club') return { main: `Everything in ${PLAN_CONFIG.league.label}, plus rep teams and accounting`, fit: `For clubs with up to ${club.upper} teams` };
+      if (key === 'club_large') return { main: `Everything in ${PLAN_CONFIG.club.label}`, fit: `For clubs with ${club.lower} to ${club.upper} teams` };
+      return { main: unlimited ? 'Unlimited tournaments' : `${pluralize(tournamentLimit, 'tournament')} at a time` };
+    },
     custom: (limit: number) => `More than ${limit} teams?`, customEnd: 'for a custom plan.',
     // On-sale pages S4, call 37: the one line under the table whenever a Club row shows; it absorbs "More than 30 teams?".
     countLine: (limit: number) => `${PLAN_CONFIG.club.label} and ${PLAN_CONFIG.club_large.label} count the teams you give a ${PLAN_CONFIG.team.label}. ${HOUSE_LEAGUE_UNLIMITED} More than ${limit}?`,
