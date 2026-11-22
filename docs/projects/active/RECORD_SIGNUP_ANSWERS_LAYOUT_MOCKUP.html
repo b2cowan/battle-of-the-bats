@@ -1,0 +1,384 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Sign-up Answers Layout</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the registration record's "Sign-up answers" box, drawn before and after at true dialog width.
+   The page chrome is a cool grey; every product frame is the warm paper kit, so frames read as specimens. */
+:root {
+  --bg: #E8E6E1; --fg: #1F1C17; --fg-soft: #5B554C; --line: rgba(40,32,20,.16);
+  --bar: #F1EFEA; --track: #FFFFFF; --pick: rgba(87,101,30,.14); --pick-fg: #3F4A12;
+  --accent: #57651E; --mark: #B3261E; --note: #FFFFFF;
+  /* the product's warm paper kit (frames only; they stay light in both page themes) */
+  --paper: #F8F4ED; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54;
+  --hline: rgba(70,55,30,.12); --olive: #57651E; --amber: #835006; --amber-rgb: 131,80,6; --page: #FFFFFF;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'Inter', system-ui, sans-serif;
+  --f-data: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1B1D1A; --fg: #ECEAE4; --fg-soft: #A9A59B; --line: rgba(255,255,255,.16);
+  --bar: #232622; --track: #2C302A; --pick: rgba(180,200,90,.2); --pick-fg: #D8E7A0;
+  --accent: #B7CC63; --mark: #FF8A80; --note: #262925; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #1B1D1A; --fg: #ECEAE4; --fg-soft: #A9A59B; --line: rgba(255,255,255,.16);
+  --bar: #232622; --track: #2C302A; --pick: rgba(180,200,90,.2); --pick-fg: #D8E7A0;
+  --accent: #B7CC63; --mark: #FF8A80; --note: #262925; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bar); }
+.wrap { max-width: 1040px; margin: 0 auto; }
+
+/* sticky tabs + view row */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bar); margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 10px max(16px, env(safe-area-inset-left, 0px)) 0; border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1040px; margin: 0 auto; }
+.eyebrow { font-family: var(--f-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-soft); }
+h1 { font-family: var(--f-display); font-size: 26px; line-height: 1.1; margin: 2px 0 8px; font-weight: 700; letter-spacing: .01em; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.tab { appearance: none; background: none; border: 0; border-bottom: 3px solid transparent; color: var(--fg-soft); font: 600 14px var(--f-body);
+  padding: 8px 12px; cursor: pointer; white-space: nowrap; min-height: 40px; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab:focus-visible, .seg button:focus-visible, .mk:focus-visible, .file:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+.viewrow[hidden] { display: none !important; }
+.viewrow span { font-size: 13px; color: var(--fg-soft); }
+.seg { display: inline-flex; background: var(--track); border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
+.seg button { appearance: none; border: 0; background: none; color: var(--fg-soft); font: 600 13px var(--f-body); padding: 5px 12px; border-radius: 8px; cursor: pointer; min-height: 30px; }
+.seg button[aria-pressed="true"] { background: var(--pick); color: var(--pick-fg); }
+
+/* page body */
+section.pane { padding-top: 22px; }
+section.pane[hidden] { display: none; }
+.lede { max-width: 66ch; margin: 0 0 18px; }
+.lede b { font-weight: 600; }
+.pair { display: flex; flex-direction: column; gap: 26px; }
+.spec-label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 8px; }
+.tag { font-family: var(--f-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg-soft); }
+.tag.new { color: var(--pick-fg); background: var(--pick); border-color: transparent; }
+.spec-label h2 { font: 700 19px var(--f-display); letter-spacing: .02em; margin: 0; text-transform: uppercase; }
+.scroller { overflow-x: auto; padding-bottom: 6px; }
+.size { font-family: var(--f-data); font-size: 11.5px; color: var(--fg-soft); margin: 6px 0 0; }
+
+/* ===== the product frame: the registration record dialog, true width ===== */
+.dlg { width: 800px; background: var(--page); border-radius: 16px; color: var(--ink); font-size: 14px; line-height: 1.45;
+  box-shadow: 0 1px 0 var(--line), 0 12px 30px rgba(0,0,0,.14); overflow: hidden; position: relative; }
+.dlg.phone { width: 390px; }
+.dlg-head { padding: 20px 46px 14px; border-bottom: 1px solid var(--hline); position: relative; }
+.dlg-head .eb { font-family: var(--f-data); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; }
+.dlg-head .nm { font-size: 20px; font-weight: 600; margin: 2px 0 6px; }
+.dlg-head .st { color: var(--dim); }
+.dlg-body { padding: 18px 30px 22px; background: var(--page); }
+.dlg.phone .dlg-body { padding: 16px 16px 20px; }
+.fade { height: 22px; background: linear-gradient(var(--page), rgba(255,255,255,0)); margin: -18px -30px 6px; }
+.sec { margin: 0 0 20px; }
+.sec h3 { font: 700 12px var(--f-display); letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 6px; }
+.sec h4 { font: 650 12px var(--f-body); color: var(--ink-soft); margin: 14px 0 6px; }
+.box { border: 1px solid var(--hline); border-radius: 10px; background: var(--paper); padding: 8px 13px; }
+.chip { display: inline-block; font-family: var(--f-data); font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--amber);
+  background: rgba(var(--amber-rgb), .09); border: 1px solid rgba(var(--amber-rgb), .3); border-radius: 999px; padding: 1px 9px; line-height: 1.5; vertical-align: 1px; white-space: nowrap; }
+.sub { font-weight: 400; font-size: 12px; color: var(--dim); }
+.lnk { color: var(--olive); font-weight: 650; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.hint { font-size: 12px; color: var(--dim); margin: 8px 2px 0; }
+
+/* BEFORE: the shipped rows (label left, value right, wrapping when the question is long) */
+.b-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; padding: 3.2px 0; }
+.b-label { color: var(--dim); flex: none; }
+.b-val { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; max-width: 100%; font-weight: 650; text-align: right; color: var(--ink); overflow-wrap: anywhere; }
+.phone .b-row { flex-direction: column; align-items: flex-start; }
+.phone .b-val { align-items: flex-start; text-align: left; }
+
+/* AFTER: every row stacks, one left edge */
+.a-row { padding: 10px 0; position: relative; }
+.a-row + .a-row { border-top: 1px solid var(--hline); }
+.a-q { color: var(--dim); }
+.a-q .chip { margin-left: 6px; }
+.a-v { font-weight: 650; color: var(--ink); margin-top: 2px; overflow-wrap: anywhere; }
+.a-v.none { font-weight: 400; color: var(--dim); }
+.a-row .sub { display: block; margin-top: 1px; }
+.file { display: inline-flex; align-items: baseline; gap: 6px; }
+.file svg { width: 14px; height: 14px; align-self: center; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.fileline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin-top: 2px; }
+
+/* numbered markers (clickable) */
+.mk { position: absolute; z-index: 2; width: 22px; height: 22px; border-radius: 50%; background: var(--mark); color: #fff; border: 2px solid #fff;
+  font: 700 12px var(--f-body); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.mk.on { outline: 3px solid color-mix(in srgb, var(--mark) 35%, transparent); }
+.notes { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; max-width: 760px; }
+.notes li { background: var(--note); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: flex; gap: 12px; cursor: pointer; }
+.notes li.on { border-color: var(--mark); }
+.notes .n { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--mark); color: #fff; font: 700 12px var(--f-body); display: grid; place-items: center; margin-top: 1px; }
+.notes b { font-weight: 600; }
+
+/* view-differs toggle */
+[data-view="diff"] .same { opacity: .22; filter: grayscale(1); }
+
+/* option cards (tab 2) */
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; align-items: start; }
+.opt { background: var(--note); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.opt h2 { font: 700 18px var(--f-display); letter-spacing: .02em; text-transform: uppercase; margin: 0 0 4px; }
+.opt p { margin: 0 0 12px; color: var(--fg-soft); font-size: 14px; }
+.opt .box { background: var(--paper); color: var(--ink); font-size: 14px; }
+.rec { color: var(--pick-fg); background: var(--pick); border-radius: 999px; padding: 1px 9px; font: 600 11px var(--f-data); letter-spacing: .05em; text-transform: uppercase; margin-left: 6px; }
+
+.asks { max-width: 760px; display: grid; gap: 12px; padding: 0; margin: 0; list-style: none; counter-reset: ask; }
+.asks li { background: var(--note); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.asks b { font-weight: 600; }
+.asks .rc { color: var(--pick-fg); font-weight: 600; }
+@media (max-width: 520px) { .opts { grid-template-columns: 1fr; } .opt { padding: 12px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="clip" viewBox="0 0 16 16"><path d="M13.2 7.6 8.1 12.7a3.2 3.2 0 0 1-4.5-4.5l5.4-5.4a2.1 2.1 0 0 1 3 3L6.5 11.1a1 1 0 0 1-1.5-1.5l4.7-4.7"/></symbol>
+</svg>
+
+<div class="wrap" id="app" data-view="all">
+  <div class="top">
+    <div class="top-in">
+      <div class="eyebrow">Club registrations · the registration record</div>
+      <h1>Sign-up answers, redrawn</h1>
+      <div class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab" role="tab" id="t-answers" aria-selected="true" aria-controls="p-answers">1 · The answers</button>
+        <button class="tab" role="tab" id="t-file" aria-selected="false" aria-controls="p-file">2 · The file</button>
+        <button class="tab" role="tab" id="t-record" aria-selected="false" aria-controls="p-record">3 · Whole record</button>
+        <button class="tab" role="tab" id="t-phone" aria-selected="false" aria-controls="p-phone">4 · On a phone</button>
+        <button class="tab" role="tab" id="t-asks" aria-selected="false" aria-controls="p-asks">5 · Asks</button>
+      </div>
+      <div class="viewrow" id="viewrow" hidden>
+        <span>View</span>
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" id="v-all" aria-pressed="true">Everything</button>
+          <button type="button" id="v-diff" aria-pressed="false">Show only what differs</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 1 · THE ANSWERS ============ -->
+  <section class="pane" id="p-answers" role="tabpanel" aria-labelledby="t-answers">
+    <p class="lede">The same Sign-up answers box, drawn at the real dialog width (800px). <b>Before</b> is what you flagged. <b>After</b> stacks every question over its answer, so everything reads down one left edge. Tap the red numbers on the After drawing.</p>
+    <div class="pair">
+      <div>
+        <div class="spec-label"><span class="tag">Today</span><h2>Before</h2></div>
+        <div class="scroller"><div class="dlg">
+          <div class="dlg-body"><div class="sec">
+            <h3>Sign-up answers</h3>
+            <div class="box">
+              <div class="b-row"><span class="b-label">Does your child have any allergies or medical needs we should know about? <span class="chip">Health</span></span>
+                <span class="b-val">Peanut allergy. She carries an EpiPen in her bag.</span></div>
+              <div class="b-row"><span class="b-label">T-shirt size</span><span class="b-val">Not asked</span></div>
+              <div class="b-row"><span class="b-label">Your child’s medical form, if you have one <span class="chip">Health</span></span>
+                <span class="b-val"><span class="lnk">medical-form.pdf ↗</span><span class="sub" style="text-align:left;align-self:stretch">1 KB · The link lasts an hour. Each opening is recorded in the audit log.</span></span></div>
+              <div class="b-row"><span class="b-label">Can a parent help?</span>
+                <span class="b-val">Coach, Field set-up<span class="sub">For the whole sign-up (Kai)</span></span></div>
+            </div>
+          </div></div>
+        </div></div>
+        <p class="size">800px dialog · rows are label-left / value-right, so a long question pushes its answer to a second line</p>
+      </div>
+
+      <div>
+        <div class="spec-label"><span class="tag new">Proposed</span><h2>After</h2></div>
+        <div class="scroller"><div class="dlg" id="after1">
+          <div class="dlg-body"><div class="sec">
+            <h3>Sign-up answers</h3>
+            <div class="box" style="position:relative">
+              <div class="a-row"><button class="mk" data-n="1" style="left:-12px;top:10px" aria-label="Note 1">1</button><div class="a-q">Does your child have any allergies or medical needs we should know about? <span class="chip">Health</span><button class="mk" data-n="2" style="position:static;display:inline-grid;margin-left:6px;vertical-align:middle" aria-label="Note 2">2</button></div>
+                <div class="a-v">Peanut allergy. She carries an EpiPen in her bag.</div></div>
+              <div class="a-row"><div class="a-q">T-shirt size</div><div class="a-v none">Not asked</div></div>
+              <div class="a-row"><button class="mk" data-n="3" style="left:-12px;top:10px" aria-label="Note 3">3</button><div class="a-q">Your child’s medical form, if you have one <span class="chip">Health</span></div>
+                <div class="fileline"><span class="lnk file">medical-form.pdf ↗</span><span class="sub" style="display:inline;margin:0">1 KB</span></div></div>
+              <div class="a-row"><button class="mk" data-n="4" style="left:-12px;top:10px" aria-label="Note 4">4</button><div class="a-q">Can a parent help?</div><div class="a-v">Coach, Field set-up</div><span class="sub">For the whole sign-up (Kai)</span></div>
+            </div>
+            <p class="hint" style="position:relative"><button class="mk" data-n="5" style="left:-12px;top:-2px" aria-label="Note 5">5</button><span style="padding-left:14px">File links last an hour. Each opening is recorded in the audit log.</span></p>
+          </div></div>
+        </div></div>
+        <p class="size">800px dialog · same box, same words (one line moved)</p>
+        <ol class="notes" id="notes1">
+          <li data-n="1"><span class="n">1</span><span><b>Question over answer, always.</b> The question is small and muted; the answer is bold under it. Short and long questions now look the same, so your eye never switches edges.</span></li>
+          <li data-n="2"><span class="n">2</span><span><b>The HEALTH chip trails the question,</b> as it does today, so it still marks the rows that carry health information.</span></li>
+          <li data-n="3"><span class="n">3</span><span><b>A file is one line:</b> the file name with its ↗ (still the link you press), then its size. Nothing floats on the right. No new icon: the ↗ already says “opens elsewhere”.</span></li>
+          <li data-n="4"><span class="n">4</span><span><b>Notes stay under their answer,</b> on the same left edge (“For the whole sign-up (Kai)”).</span></li>
+          <li data-n="5"><span class="n">5</span><span><b>The audit line is said once,</b> under the box, and only when a file is in it. It no longer repeats under each file. This is the one wording move; the sentence is unchanged. Tab 2 compares the two places it could live.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2 · THE FILE ============ -->
+  <section class="pane" id="p-file" role="tabpanel" aria-labelledby="t-file" hidden>
+    <p class="lede">The file link is the part you highlighted, so it gets its own decision: <b>where does “The link lasts an hour. Each opening is recorded in the audit log.” live?</b> Both options fix the stranded link.</p>
+    <div class="opts">
+      <div class="opt">
+        <h2>A · Said once, under the box <span class="rec">Recommended</span></h2>
+        <p>The line sits under the Sign-up answers box and only shows when a file is in it. Each file row is just the link and its size.</p>
+        <div class="box" style="padding-top:2px;padding-bottom:2px">
+          <div class="a-row"><div class="a-q">Your child’s medical form, if you have one <span class="chip">Health</span></div>
+            <div class="fileline"><span class="lnk file">medical-form.pdf ↗</span><span class="sub" style="display:inline;margin:0">1 KB</span></div></div>
+          <div class="a-row"><div class="a-q">Vaccination record</div>
+            <div class="fileline"><span class="lnk file">immunization-2026.pdf ↗</span><span class="sub" style="display:inline;margin:0">212 KB</span></div></div>
+        </div>
+        <p class="hint" style="color:var(--fg-soft)">File links last an hour. Each opening is recorded in the audit log.</p>
+      </div>
+      <div class="opt">
+        <h2>B · Kept under every file</h2>
+        <p>The line stays where it is today but left-aligned under the link. Nothing is moved, and it repeats for each file the form asks for.</p>
+        <div class="box" style="padding-top:2px;padding-bottom:2px">
+          <div class="a-row"><div class="a-q">Your child’s medical form, if you have one <span class="chip">Health</span></div>
+            <div class="fileline"><span class="lnk file">medical-form.pdf ↗</span><span class="sub" style="display:inline;margin:0">1 KB</span></div>
+            <span class="sub">The link lasts an hour. Each opening is recorded in the audit log.</span></div>
+          <div class="a-row"><div class="a-q">Vaccination record</div>
+            <div class="fileline"><span class="lnk file">immunization-2026.pdf ↗</span><span class="sub" style="display:inline;margin:0">212 KB</span></div>
+            <span class="sub">The link lasts an hour. Each opening is recorded in the audit log.</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="size" style="margin:14px 0 22px">The second file is only here to show the repeat; the real form decides how many there are.</p>
+    <div class="spec-label"><span class="tag new">Proposed</span><h2>The other file states</h2></div>
+    <p class="lede">Three states the box can be in besides “a file you can open”. All stay on the same left edge, and the explanation sits under the answer where it is today.</p>
+    <div class="dlg" style="width:min(800px,100%)"><div class="dlg-body"><div class="box" style="padding-top:2px;padding-bottom:2px">
+      <div class="a-row"><div class="a-q">Your child’s medical form, if you have one <span class="chip">Health</span></div>
+        <div class="fileline"><span class="lnk file">Opening…</span></div></div>
+      <div class="a-row"><div class="a-q">Your child’s medical form, if you have one <span class="chip">Health</span></div>
+        <div class="fileline"><span class="lnk file">medical-form.pdf ↗</span><span class="sub" style="display:inline;margin:0">1 KB</span></div>
+        <span class="sub" style="color:#A3261E">The file didn’t open. Try again.</span></div>
+      <div class="a-row"><div class="a-q">Your child’s medical form, if you have one <span class="chip">Health</span></div>
+        <div class="a-v none">File removed Nov 3, 2026</div><span class="sub">Family files are removed once a season is over.</span></div>
+    </div></div></div>
+    <p class="size">In order: while the link is being made · when it fails · after the season’s clean-up. The removed-file wording is the product’s own (“File removed” and the date).</p>
+  </section>
+
+  <!-- ============ 3 · WHOLE RECORD ============ -->
+  <section class="pane" id="p-record" role="tabpanel" aria-labelledby="t-record" hidden>
+    <p class="lede">The whole scrolled record, before and after, so you can judge the cumulative height. Switch the View row to <b>Show only what differs</b> to dim the parts that did not change.</p>
+    <div class="pair">
+      <div>
+        <div class="spec-label"><span class="tag">Today</span><h2>Before</h2></div>
+        <div class="scroller"><div class="dlg">
+          <div class="dlg-head same"><div class="eb">Walk Summer 2027 · U8</div><div class="nm">Kai Kim</div><div class="st">Active</div></div>
+          <div class="dlg-body">
+            <div class="sec same"><div class="box"><div class="b-row"><span class="b-label">Price</span><span class="b-val">$165</span></div><div class="b-row"><span class="b-label">Still owing</span><span class="b-val">$165</span></div></div></div>
+            <div class="sec"><h3>Sign-up answers</h3>
+              <div class="box">
+                <div class="b-row"><span class="b-label">Does your child have any allergies or medical needs we should know about? <span class="chip">Health</span></span><span class="b-val">Peanut allergy. She carries an EpiPen in her bag.</span></div>
+                <div class="b-row"><span class="b-label">T-shirt size</span><span class="b-val">Not asked</span></div>
+                <div class="b-row"><span class="b-label">Your child’s medical form, if you have one <span class="chip">Health</span></span><span class="b-val"><span class="lnk">medical-form.pdf ↗</span><span class="sub" style="text-align:left;align-self:stretch">1 KB · The link lasts an hour. Each opening is recorded in the audit log.</span></span></div>
+                <div class="b-row"><span class="b-label">Can a parent help?</span><span class="b-val">Coach, Field set-up<span class="sub">For the whole sign-up (Kai)</span></span></div>
+              </div>
+              <h4>No longer asked</h4>
+              <div class="box"><div class="b-row"><span class="b-label">Preferred practice night</span><span class="b-val">Tuesday<span class="sub">Archived Nov 11, 2026. Kept because Kai’s family answered it.</span></span></div></div>
+            </div>
+            <div class="sec"><h3>Documents</h3>
+              <div class="box">
+                <div class="b-row"><span class="b-label">Waiver</span><span class="b-val"><span class="chip">Needs a new tick</span><span class="sub" style="text-align:right">Ticked Nov 11, 2026 · recorded before documents had versions; text as the club had it on Nov 11.</span></span></div>
+                <div class="b-row"><span class="b-label">Photo release</span><span class="b-val" style="font-weight:400">“I agree that photos of my child may be used in the club’s newsletter and on its public page.”<span class="sub">Ticked Nov 11, 2026 · the wording the family saw</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <div>
+        <div class="spec-label"><span class="tag new">Proposed</span><h2>After</h2></div>
+        <div class="scroller"><div class="dlg">
+          <div class="dlg-head same"><div class="eb">Walk Summer 2027 · U8</div><div class="nm">Kai Kim</div><div class="st">Active</div></div>
+          <div class="dlg-body">
+            <div class="sec same"><div class="box"><div class="b-row"><span class="b-label">Price</span><span class="b-val">$165</span></div><div class="b-row"><span class="b-label">Still owing</span><span class="b-val">$165</span></div></div></div>
+            <div class="sec"><h3>Sign-up answers</h3>
+              <div class="box">
+                <div class="a-row"><div class="a-q">Does your child have any allergies or medical needs we should know about? <span class="chip">Health</span></div><div class="a-v">Peanut allergy. She carries an EpiPen in her bag.</div></div>
+                <div class="a-row"><div class="a-q">T-shirt size</div><div class="a-v none">Not asked</div></div>
+                <div class="a-row"><div class="a-q">Your child’s medical form, if you have one <span class="chip">Health</span></div><div class="fileline"><span class="lnk file">medical-form.pdf ↗</span><span class="sub" style="display:inline;margin:0">1 KB</span></div></div>
+                <div class="a-row"><div class="a-q">Can a parent help?</div><div class="a-v">Coach, Field set-up</div><span class="sub">For the whole sign-up (Kai)</span></div>
+              </div>
+              <h4>No longer asked</h4>
+              <div class="box"><div class="a-row"><div class="a-q">Preferred practice night</div><div class="a-v">Tuesday</div><span class="sub">Archived Nov 11, 2026. Kept because Kai’s family answered it.</span></div></div>
+              <p class="hint">File links last an hour. Each opening is recorded in the audit log.</p>
+            </div>
+            <div class="sec"><h3>Documents</h3>
+              <div class="box">
+                <div class="a-row"><div class="a-q">Waiver <span class="chip">Needs a new tick</span></div><span class="sub">Ticked Nov 11, 2026 · recorded before documents had versions; text as the club had it on Nov 11.</span></div>
+                <div class="a-row"><div class="a-q">Photo release</div><div class="a-v" style="font-weight:400;white-space:pre-wrap">“I agree that photos of my child may be used in the club’s newsletter and on its public page.”</div><span class="sub">Ticked Nov 11, 2026 · the wording the family saw</span></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <ol class="notes">
+          <li><span class="n">!</span><span><b>Cost:</b> the After record is taller, because each answer gets its own line. The money box at the top and the actions are unchanged, and Sign-up answers still sits after the money so nothing you act on moves down.</span></li>
+          <li><span class="n">!</span><span><b>Documents get the same treatment</b> (the Waiver’s “needs a new tick” chip trails its name like HEALTH does). Its long note was the second place the old layout broke.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · PHONE ============ -->
+  <section class="pane" id="p-phone" role="tabpanel" aria-labelledby="t-phone" hidden>
+    <p class="lede">On a phone the shipped box already stacks the answer under the question, left-aligned. So this change mostly brings the desktop up to what the phone does. What changes on a phone: the file line, the dividers, and the muted “Not asked”.</p>
+    <div class="spec-label"><span class="tag new">Proposed</span><h2>After · 390px</h2></div>
+    <div class="scroller"><div class="dlg phone">
+      <div class="dlg-body"><div class="sec">
+        <h3>Sign-up answers</h3>
+        <div class="box">
+          <div class="a-row"><div class="a-q">Does your child have any allergies or medical needs we should know about? <span class="chip">Health</span></div><div class="a-v">Peanut allergy. She carries an EpiPen in her bag.</div></div>
+          <div class="a-row"><div class="a-q">T-shirt size</div><div class="a-v none">Not asked</div></div>
+          <div class="a-row"><div class="a-q">Your child’s medical form, if you have one <span class="chip">Health</span></div><div class="fileline"><span class="lnk file" style="min-height:44px;align-items:center">medical-form.pdf ↗</span><span class="sub" style="display:inline;margin:0">1 KB</span></div></div>
+          <div class="a-row"><div class="a-q">Can a parent help?</div><div class="a-v">Coach, Field set-up</div><span class="sub">For the whole sign-up (Kai)</span></div>
+        </div>
+        <p class="hint">File links last an hour. Each opening is recorded in the audit log.</p>
+      </div></div>
+    </div></div>
+    <p class="size">Drawn at 390px. The file name is a 44px-tall press target. Open this page on your phone to judge it at real size.</p>
+  </section>
+
+  <!-- ============ 5 · ASKS ============ -->
+  <section class="pane" id="p-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+    <p class="lede">Four calls for you. My recommendation is first in each.</p>
+    <ol class="asks">
+      <li><b>1 · Stack every answer under its question, on desktop too?</b> <span class="rc">Yes.</span> The other way to fix it is to keep label-left and only change the file row, but long questions would still push answers to the second line, so you would be back here with the next long question.</li>
+      <li><b>2 · Where does the audit line live?</b> <span class="rc">Under the box, once (A).</span> B keeps it under each file, left-aligned. Either way the sentence stays as written.</li>
+      <li><b>3 · “Not asked” muted?</b> <span class="rc">Yes, plain muted, no italic.</span> Today an empty answer is bold like a real one, but the product already shows these states in the muted “dim” ink, and italic is kept for placeholders and waiting slots. The same muted ink would cover the “removed” states in tab 2.</li>
+      <li><b>4 · Documents box gets the same stacked layout?</b> <span class="rc">Yes,</span> in the same change. Its long tick note breaks the old layout in the same way. The shared Fee box (Price, Still owing) is left alone because short facts suit label-left.</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function () {
+  var app = document.getElementById('app');
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var names = ['answers', 'file', 'record', 'phone', 'asks'];
+  function show(name) {
+    if (names.indexOf(name) < 0) name = 'answers';
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.id === 't-' + name)); });
+    names.forEach(function (n) { document.getElementById('p-' + n).hidden = n !== name; });
+    document.getElementById('viewrow').hidden = name !== 'record';
+    try { history.replaceState(null, '', '#' + name); } catch (e) { location.hash = name; }
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.id.slice(2)); }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1) || 'answers');
+
+  function setView(v) {
+    app.setAttribute('data-view', v);
+    document.getElementById('v-all').setAttribute('aria-pressed', String(v === 'all'));
+    document.getElementById('v-diff').setAttribute('aria-pressed', String(v === 'diff'));
+  }
+  document.getElementById('v-all').addEventListener('click', function () { setView('all'); });
+  document.getElementById('v-diff').addEventListener('click', function () { setView('diff'); });
+
+  // clickable markers <-> notes
+  function pick(n) {
+    document.querySelectorAll('.mk').forEach(function (m) { m.classList.toggle('on', m.dataset.n === n && !m.classList.contains('on')); });
+    document.querySelectorAll('#notes1 li').forEach(function (l) {
+      var on = l.dataset.n === n && !l.classList.contains('on');
+      l.classList.toggle('on', on);
+      if (on) l.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  }
+  document.querySelectorAll('.mk').forEach(function (m) { m.addEventListener('click', function () { pick(m.dataset.n); }); });
+  document.querySelectorAll('#notes1 li').forEach(function (l) { l.addEventListener('click', function () { pick(l.dataset.n); }); });
+})();
+</script>

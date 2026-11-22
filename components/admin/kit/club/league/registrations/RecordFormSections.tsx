@@ -32,15 +32,18 @@ function AnswerValue({ a, open }: { a: RecordAnswer; open: (fileId: string) => P
     <>
       {a.file ? (
         <>
-          <button type="button" className={`${ck.link} ${css.answerFile}`} disabled={opening}
-            aria-label={W.fileOpenName(a.file.name)}
-            onClick={async () => { setOpening(true); setFailed(false); try { await open(a.file!.id); } catch { setFailed(true); } setOpening(false); }}>
-            {opening ? W.fileOpening : `${a.file.name} ↗`}
-          </button>
-          <span className={css.answerSub}>{sizeLine(a.file.size)} · {W.fileNote}</span>
+          {/* The name and its size on one line; the hour-long link and audit-log sentence is said once, under the section. */}
+          <span className={css.answerFileLine}>
+            <button type="button" className={`${ck.link} ${css.answerFile}`} disabled={opening}
+              aria-label={W.fileOpenName(a.file.name)}
+              onClick={async () => { setOpening(true); setFailed(false); try { await open(a.file!.id); } catch { setFailed(true); } setOpening(false); }}>
+              {opening ? W.fileOpening : `${a.file.name} ↗`}
+            </button>
+            <span className={css.answerSub}>{sizeLine(a.file.size)}</span>
+          </span>
           {failed && <span className={repKit.formError} role="alert">{W.fileFailed}</span>}
         </>
-      ) : <span className={dim ? repKit.dim : css.answerText}>{cellWords(c, a.type)}</span>}
+      ) : <span className={dim ? css.answerNone : css.answerText}>{cellWords(c, a.type)}</span>}
       {sub.map((s, i) => <span key={i} className={css.answerSub}>{s}</span>)}
     </>
   );
@@ -50,15 +53,15 @@ function AnswerRows({ rows, open, childName }: { rows: readonly RecordAnswer[]; 
   return (
     <div className={facts.facts}>
       {rows.map(a => (
-        <div key={a.questionId} className={`${facts.factRow} ${css.answerRow}`}>
-          <span className={facts.factLabel}>
+        <div key={a.questionId} className={css.answerRow}>
+          <div className={css.answerQ}>
             {a.label}
             {a.health && <>{' '}<RepChip tone="warn">{W.health}</RepChip></>}
-          </span>
-          <span className={`${facts.factValue} ${css.answerValue}`}>
+          </div>
+          <div className={css.answerA}>
             <AnswerValue a={a} open={open} />
             {a.archivedAt && childName && <span className={css.answerSub}>{W.archivedLine(a.archivedAt, childName)}</span>}
-          </span>
+          </div>
         </div>
       ))}
     </div>
@@ -108,6 +111,9 @@ export default function RecordFormSections({ seasonId, regId, orgQuery, childNam
   // A season with no form, or a form with nothing on it, adds nothing to the record.
   if (!form || (form.answers.length === 0 && form.archived.length === 0 && form.documents.length === 0)) return null;
 
+  // The link's one-hour life and the audit log are said once, and only when a file can be opened.
+  const hasFile = [...form.answers, ...form.archived].some(a => a.file);
+
   return (
     <>
       {(form.answers.length > 0 || form.archived.length > 0) && (
@@ -120,6 +126,7 @@ export default function RecordFormSections({ seasonId, regId, orgQuery, childNam
               <AnswerRows rows={form.archived} open={open} childName={childName} />
             </>
           )}
+          {hasFile && <p className={ck.hint}>{W.fileNote}</p>}
         </section>
       )}
       {form.documents.length > 0 && (
@@ -127,14 +134,15 @@ export default function RecordFormSections({ seasonId, regId, orgQuery, childNam
           <h3 className={css.recordHead}>{W.documentsHead}</h3>
           <div className={facts.facts}>
             {form.documents.map(d => (
-              <div key={d.documentId} className={`${facts.factRow} ${css.answerRow}`}>
-                <span className={facts.factLabel}>{d.name}</span>
-                <span className={`${facts.factValue} ${css.answerValue}`}>
-                  {d.state === 'again' || d.state === 'none'
-                    ? <RepChip tone="warn">{W.needsNewTick}</RepChip>
-                    : <span className={css.answerText}>{`“${d.sentence}”`}</span>}
+              <div key={d.documentId} className={css.answerRow}>
+                <div className={css.answerQ}>
+                  {d.name}
+                  {(d.state === 'again' || d.state === 'none') && <>{' '}<RepChip tone="warn">{W.needsNewTick}</RepChip></>}
+                </div>
+                <div className={css.answerA}>
+                  {d.state !== 'again' && d.state !== 'none' && <span className={`${css.answerText} ${css.answerSentence}`}>{`“${d.sentence}”`}</span>}
                   <span className={css.answerSub}>{W.tickLine(d)}</span>
-                </span>
+                </div>
               </div>
             ))}
           </div>
