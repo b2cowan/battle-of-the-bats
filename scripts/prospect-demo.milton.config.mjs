@@ -98,6 +98,26 @@ export default {
       ] },
   ],
 
+  /**
+   * The club's own sign-up questions (Demo 5, plan §9; scripts/lib/prospect-demo-signup-form.mjs). "Can a parent help?" is
+   * the dev test club's question, asked once per sign-up and shown on the draft board. In `division`, `helpers` families
+   * answer it (the Coach ones are the parent-coaches the admin places by hand); the live sign-up is the fourth Coach.
+   * `liveFriendCode` is the first five characters of the friend code the live sign-up names (its check letter is worked
+   * out): FIXED, so the run sheet prints it once — "MLT9B" makes MLT 9BV. Change it only together with the run sheet.
+   */
+  signupForm: {
+    division: 'U9',
+    questions: [
+      { key: 'allergies', type: 'long_answer', label: 'Does your child have any allergies or medical needs we should know about?', health: true },
+      { key: 'tee', type: 'one_choice', label: 'T-shirt size', choices: ['YS', 'YM', 'YL', 'AS', 'AM'] },
+      { key: 'help', type: 'many_choices', label: 'Can a parent help?', choices: ['Coach', 'Assistant coach', 'Field set-up'], asked: 'once', board: true },
+    ],
+    helpers: { coach: 3, assistant: 3, fieldSetup: 3 },
+    liveFriendCode: 'MLT9B',
+    tShirtByDivision: { U7: ['YS', 'YS', 'YM'], U9: ['YS', 'YM', 'YM', 'YL'], U11: ['YM', 'YL', 'YL'], U13: ['YL', 'AS', 'AS'], U15: ['AS', 'AM', 'AM'] },
+    allergyNotes: ['Peanut allergy, carries an EpiPen in the bag', 'Asthma, inhaler in the bag', 'Allergic to bee stings'],
+  },
+
   /** Sibling households that cross or share divisions (the first U9 + U11 one is the +parent household). */
   siblings: [
     ['U9', 'U11', { parent: true }],

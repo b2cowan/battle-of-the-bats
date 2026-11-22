@@ -40,6 +40,8 @@ import {
 } from './lib/prospect-demo-world.mjs';
 // Phase B — the rep side (17 teams, the dome, the dressed team, the tournament), when the club config has `repTeams`.
 import { repConfigured, resetRep, buildRep } from './lib/prospect-demo-rep.mjs';
+// Demo 5 — the club's own sign-up questions and the U9 friend requests, when the club config has `signupForm`.
+import { planSignupForm, writeSignupForm } from './lib/prospect-demo-signup-form.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DEV_REF = 'npgnrxaitgbtbtvvykto';
@@ -121,6 +123,9 @@ function sql(text) {
 const SAT0 = saturdayAfter(DEMO_DAY); // the coming Saturday: the first one strictly after the demo day
 const world = buildWorld(cfg, DEMO_DAY);
 const { regs, previous, prevDivs } = world;
+// Demo 5: picked before anything is written, so a config the world cannot carry stops the build before the reset.
+// Sets the live friend's fixed friend code on her registration (everyone else: null, and the trigger makes one).
+const formPlan = planSignupForm(cfg, regs);
 const divCfg = Object.fromEntries(cfg.divisions.map(d => [d.code, d]));
 
 head(`Prospect demo · ${cfg.name} (${SLUG}) · demo day ${DEMO_DAY} · coming Saturday ${SAT0}${DRY ? ' · DRY RUN (nothing is written)' : ''}`);
@@ -361,6 +366,7 @@ const draft = {};
 for (const code of ['U11', 'U15']) draft[code] = snakeDraft(regs.filter(r => r.div === code && r.status === 'active'), TEAM[code].length);
 for (const r of regs) r.id = crypto.randomUUID();
 await insertAll('league_registrations', regs.map(r => ({
+  friend_code: r.friendCode ?? null,
   id: r.id, season_id: SEASON, org_id: ORG, division_id: DIV[r.div],
   player_first_name: r.first, player_last_name: r.last, player_date_of_birth: r.dob, player_position_pref: r.pos, player_notes: r.notes,
   guardian_first_name: r.guardian.first, guardian_last_name: r.guardian.last, guardian_email: r.guardian.email, guardian_phone: r.guardian.phone,
@@ -381,6 +387,11 @@ await insertAll('league_player_ratings', ratings, 'registration_id');
 const mix = (code) => { const m = regs.filter(r => r.div === code); return `${m.length} (${m.filter(r => r.status === 'active').length} accepted · ${m.filter(r => r.status === 'pending').length} to review · ${m.filter(r => r.status === 'waitlisted').length} waitlisted)`; };
 ok(cfg.divisions.map(d => `${d.code} ${mix(d.code)}`).join('\n    '));
 ok(`${ratings.length} ratings (U9 about three quarters; U11 and U15 all)`);
+let form = null;
+if (formPlan) {
+  head('Sign-up questions and friend requests');
+  form = await writeSignupForm({ db, one, insertAll, cfg, ORG, SEASON, ADMIN, regs, ok }, formPlan);
+}
 
 // ── money: through the one money writer ──────────────────────────────────────────────────────────────────────────
 head('Money (club_league_money)');
@@ -656,5 +667,9 @@ if (rep) {
   console.log(`  Dome: "${rep.dome.permit}" · part 1 ${rep.dome.part1.join(' – ')} sent and billed (${rep.dome.total.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })}) · Demo 1 builds part 2 from ${rep.dome.part2From} (off ${rep.dome.datesOff.join(', ')}) as ${cfg.people.owner.email}`);
   console.log(`  Next dome practice (Demo 3 starts its plan): ${rep.dressed.nextDome} · cash on hand about ${rep.dressed.cashEstimate.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })}`);
   console.log(`  Tournament: http://localhost:3000/${SLUG}/${rep.tournament.slug} (${rep.tournament.day}; ${rep.tournament.champions.join(' · ')})`);
+}
+if (form) {
+  console.log(`\n  Demo 5 (U9 › Teams): parent-coaches ${form.coaches.map(c => `${c.child} (${c.parent})`).join(' · ')}`);
+  console.log(`  The live sign-up names ${form.liveFriend.child} by the friend code ${form.liveFriend.code}`);
 }
 console.log('  ⚠ Dev-only world. Reset any time: npm run demo:milton:reset');

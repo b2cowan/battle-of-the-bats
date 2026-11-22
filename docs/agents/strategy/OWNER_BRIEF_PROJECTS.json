@@ -195,7 +195,7 @@
     { "id": "milton-demo", "name": "Milton demo world", "track": "product", "state": "open", "checked": true,
       "files": ["MILTON_DEMO_WORLD_PLAN.md", "PROSPECT_DEMO_PROGRAM_PLAN.md"], "ledger": ["Milton", "Prospect demo"],
       "goals": ["after"], "lane": "later", "order": 31, "phase": "Building",
-      "stage": "Now: Phase B, one club that carries all five presentation demos (rep teams, the dome, a dressed team, a tournament) → Next: you rehearse against the run sheet",
+      "stage": "Now: Phase B, one club that carries all five presentation demos (rep teams, the dome, a dressed team, a tournament); Demo 5 is now house league end to end (a sign-up with the club's questions, parent coaches, the draft keeping friends together) → Next: you rehearse against the run sheet",
       "next": "Rehearse the five demos against the run sheet on staging.",
       "remains": "The club's dome permit and team list, logos, real fees, the tournament name, the meeting date for the morning-of rebuild, the push to staging.",
       "waitsOn": [], "finishesAfter": [], "youOwe": ["The club's dome permit and team list", "The meeting date"] },

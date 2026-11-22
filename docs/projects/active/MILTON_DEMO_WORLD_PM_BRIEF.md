@@ -3,7 +3,7 @@
 **What it is.** A pretend Milton Bats Softball Association on our staging system, so the club's president sees his own club, in its
 purple, running in our product for the whole hour, with made-up families and teams.
 
-**Why it matters.** The president decides whether Milton becomes our first club. Thirty minutes of the meeting are five live demos.
+**Why it matters.** The president decides whether Milton becomes our first club. Thirty-one minutes of the meeting are five live demos.
 Before Phase B, no single club could carry them: the dome schedule lived in a test club, and the coach demos in the read-only sandbox.
 
 **What he sees (Phase A, house league).** A public sign-up page in Milton purple. Five divisions, each at a different moment of the
@@ -18,8 +18,10 @@ season (opening, ready to draft, mid-season with scores to check, full with a wa
    and the club's standard drill set.
 4. **Skills and insights.** Four tests over two testing days (trends show), observed skills, goals and a handout; fall-ball games with
    lineups, so attendance and playing time read.
-5. **The public face.** The club site with rep team pages, tryouts, a notice and sponsors; the house-league sign-up; the Milton Bats
-   Winter Classic on a phone (schedule, standings, bracket, champions).
+5. **House league, end to end** (replaced the public-page demo 2026-11-21). A parent signs up a U9 child, answers the club's own
+   questions ("Can a parent help?" → Coach) and names a friend by code. On the draft board the admin filters to the parent-coaches'
+   children, puts one on each team, adds the coach, runs the draft: every family and every friend pair lands together, the new child
+   with her friend on her parent's team. The Winter Classic phone card is left behind instead of demoed.
 
 **What you can do.** Rebuild the whole club with one command, any time; the morning of the meeting, rebuild it for that day. Logins and
 branding survive. When the club sends its real permit and team list, they go into one settings file and a rebuild.

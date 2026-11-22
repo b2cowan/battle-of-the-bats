@@ -180,10 +180,10 @@ Checked against the code's labels 2026-11-21 (the run sheet carries each as a "s
 | Demo 1 · "Start from the permit" | The **Permits** tick-list and **"Find the time across every permit"** (schedules across several permits: built, not yet on production) | Leave only the one permit ticked |
 | Demo 2 · recording a payment | "How" offers E-Transfer, Cash, Cheque, Card, Other. "Card" is a card taken in person, not online; nothing here pays online | Record an e-transfer |
 | Demo 4 · a player's "Family & paperwork" tab | **Guardians › Invite a guardian** (signed-in family app; renders only while it is switched on) | Stay on Skills & goals |
-| Demo 5 · after "Sign up" | **"Pay $X by card"** under "To pay now" (online payments). The club's own questions (custom forms) are not seeded, so none show | Stop at the "To pay" card |
+| Demo 5 · after "Sign up" | **"Pay $X by card"** under "To pay now" (online payments) | Stop at the "To pay" card |
 | Demo 5 · the sign-up's status page | "Sign in to see it" / "Email me an invitation" (signed-in family app; only once a child is placed) | Not reached |
-The run sheet: `MILTON_DEMO_RUN_SHEET.html`, published as https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W (39 boxes). The phone
-cards page (`MILTON_DEMO_QR_CARDS.html`) now carries the Winter Classic's QR code.
+The run sheet: `MILTON_DEMO_RUN_SHEET.html`, published as https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W (45 boxes since §9). The phone
+cards page (`MILTON_DEMO_QR_CARDS.html`) carries the Winter Classic's QR code — since §9 a leave-behind, no demo time.
 
 **8.8 Verified 2026-11-21** (demo day 2026-11-21): built four times. Two builds in a row match table for table (3,201 rows in 69
 tables). A simulated rehearsal through the real coach routes (an e-transfer recorded, a balance check saved, the sponsor invoice
@@ -196,3 +196,44 @@ Winter Classic and its playoffs. Still owned after a reset, as before Phase B: t
 sign-up form's file sweep keep (`billing_locations`, `club_form_storage_removals`, `stripe_connect_events`).
 - Seed lesson: a sponsor with a cheque in is stored "received" (the product flips it on the first cheque and works out "part
   received" from the money); stored "pledged" with an arrival, the register counts none of the cheque.
+
+## 9. Demo 5 replaced: house league end to end (owner 2026-11-21, "go with your recommendations")
+The public-page demo (club home, a team page, tryouts, a sign-up, the Winter Classic on his phone) is replaced by one U9 child
+followed from the sign-up to a team. Owner rulings, all as recommended: the Winter Classic phone card stays as a **leave-behind**
+(no demo time); **one** parent-coach is added live ("same for the other three"); Demo 5 runs **7 minutes**, the meeting 31.
+The owner: the sign-up questions, friend requests and board answers will be **on production by the demo**, so the run sheet
+carries no "not on production" note for them (it keeps the "Pay by card" step-around, worded as "leave it").
+- **The story (run sheet steps 34–45):** a parent (Sam Porter, `b2cowan+newfamily@gmail.com`, child Lily Porter born 2018) signs
+  up on the public page, answers the club's three questions (allergies, T-shirt size, **"Can a parent help?" → Coach**) and names
+  a friend by the code **MLT 9BV** (Tomas Volkov, seeded). Owner window, U9 › Teams: Filter › Can a parent help? › Coach gives four
+  children (three seeded + Lily); each is moved to its own team and **locked**; Stingers gets Sam Porter as coach; Run the draft
+  with families and friends together; the Together column and Registrations › Friend requests show every pair kept.
+- **The questions** copy the dev test club's (dev-league-org, "Walk Summer 2027", made by the Stage 4 Part 3 walk fixture):
+  "Can a parent help?" is many-choices (Coach · Assistant coach · Field set-up), asked once per sign-up, shown on the draft
+  board. Written by `scripts/lib/prospect-demo-signup-form.mjs` when the config has `signupForm`; the form through the product's
+  own `club_form_for_season`, one submission per family-made sign-up (`ref` = the registration id, as the screens read it),
+  questions dated before the season opened so nothing reads "Not asked". 122 sign-ups answered, 235 answers.
+- **Who answers "Can a parent help?":** only one-child households (a once-per-sign-up answer reaches one child); in U9 three Coach,
+  three Assistant coach, three Field set-up; a few offers in the other divisions so the question reads as the club's.
+- **Friend requests:** six confirmed U9 requests, five links — one pair both asked (by code), two more by code, two by name (confirmed
+  by the League admin); one friend joining the Hargrove twins (a group of 3, the cap), one following a parent-coach's locked child. The
+  live friend's code is **fixed** (`signupForm.liveFriendCode`, check letter worked out), so the run sheet prints it once.
+- **Known product gap, said truly in the room:** a parent's "Coach" answer does not carry them onto the team; the admin locks the
+  child and types the coach in. A "make this parent the coach" action is an idea, not built (IDEAS_BACKLOG).
+- **Care:** moved but not locked, the draft deals a child again. Teams are not published (publishing emails the families).
+- **Known limit (/review 2026-11-21):** the form is made after the seeded sign-ups exist, so the product's own first-need step
+  records each seeded family's waiver as "recorded before documents had versions" on its Documents row, as any season reads whose
+  form was made after families signed up (it did before §9 too, on the first sign-up). Demo 5 opens no seeded record; Lily's live
+  sign-up writes a normal tick. Twins read as two sign-ups (the seed's registrations carry no shared sign-up reference).
+- **The rebuild clears** Lily's sign-up, the locks, the draft and the coach. It also removed the Stage 4 Part 3 walk fixture's
+  three questions on Milton's finished 2026 season (that walk passed 2026-11-21); the fixture's dev-league-org half is untouched.
+- **Verified on dev 2026-11-21:** two rebuilds in a row each reset 3,671 rows in 72 tables with the same picks; the product's own
+  `runDraft` with the three parent-coach children locked kept every household and every friend link together in 20 of 20 draws
+  (teams 8/8/8/9 before Lily); the U9 board read as `+owner` returns the board question, nine answers, "Coach" → the three
+  seeded children, five links, none waiting; the public sign-up page shows the three questions and the friend field. Probes:
+  `.probe/milton-demo5-draft-check.mjs`, `.probe/milton-demo5-board-check.mjs`. Owed: the owner's rehearsal in a browser.
+- **Papers:** run sheet Demo 5 rewritten (45 boxes; stored ticks reset). Deck slide `demos.html` ("The house league"; 31
+  minutes) republished 2026-11-21 (deck version 7); the prep page republished the same day (version 3): Run of show (Demo 5 at 7
+  minutes, questions 9), the agenda email's item 5, the feature menu (custom forms no longer "development site only"; top-20 #1 is
+  now the club site), the value case, Demo prep and Start here (custom forms reach production before the meeting, owner's word).
+
