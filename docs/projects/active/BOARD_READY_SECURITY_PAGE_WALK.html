@@ -1,0 +1,250 @@
+<title>Security Page Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk shell). */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; margin: 0; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+q { quotes: "“" "”"; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.before { font-size: 14px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul.plain { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · §554 · Board Ready, the public Security page</span>
+    <h1>The Security page, its two doors, and its printout</h1>
+    <p class="sub">Built 2026-11-21 on the dev server (Board Ready §0c, Security page S3), to the drawing you ruled the same day. One purpose: the page reads and prints as drawn, and the two links that lead to it work.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>fieldlogichq.ca/security answers a club board’s first two questions (does our information leak, and is it sold?) before the first meeting. You read it on a computer and on a phone, print it, and follow the two links that lead to it: the footer’s <q>Security</q> and <q>See how we protect it</q> under <q>Questions a board asks</q>.</p>
+    <p><strong>It passes when</strong> every step reads as written and nothing on the page scrolls sideways at phone width.</p>
+    <p><strong>Not in this walk</strong> (automated tests cover them): the page being <q>not found</q> while the legal pages are off (the switch is a line of code, not something dev can turn off); the four held lines, the four <q>Read more</q> links and the two linked words in them appearing once the Data Terms and the companies list are both published; the full-copy line and answer 4’s <q>or ask us for a full copy</q> following one rule; the diagram saying the checked labels word for word in both its forms.</p>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server, restarted for this build.</dd>
+      <dt>Signed out</dt><dd>Every part except H. Use a private window, so you are a visitor.</dd>
+      <dt>Signed in (part H)</dt><dd><code>league-owner@dev.local</code>, password <code>devpass123</code>.</dd>
+      <dt>Phone width</dt><dd>In Chrome, press F12, then the phone-and-tablet button (Ctrl+Shift+M). Pick <q>iPhone 12 Pro</q> (390 wide) unless a step names another width. To type a width, choose <q>Responsive</q> and type it in the width box.</dd>
+      <dt>Keep private</dt><dd>A dev-only test account; this page carries its password.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <ul class="plain">
+      <li>On dev, the Terms and the Privacy Policy are published and the Data Terms and the companies list are not, so the page shows its first version: two <q>Read more</q> links, today’s breach line, and no full-copy line.</li>
+      <li>On dev, the links point at <code>localhost:3000</code>, so a printed address reads <code>localhost:3000/legal/terms</code>. On production it reads <code>www.fieldlogichq.ca/legal/terms</code>.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'board-ready-security-page-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'The page on a computer',
+      steps: [
+        { who: 'Visitor', do: 'In a private window at full width, open <code>/security</code>.', see: 'The site’s usual bar. Then a small olive <q>Security</q>, the title <q>How FieldLogicHQ protects your club’s information</q>, the opening paragraph, and <q>This page describes how FieldLogicHQ works as of November 21, 2026.</q> A thin line runs under them.' },
+        { who: 'Visitor', do: 'Look at the first screen without scrolling.', see: '<q>The short answer</q> as one white card of three rows, all three visible: never sold, stored in Ohio, people see only what their role allows.' },
+        { who: 'Visitor', do: 'Look to the right of the text.', see: '<q>Contents</q> with eleven headings, no numbers, from <q>The short answer</q> to <q>Read more</q>.' },
+        { who: 'Visitor', do: 'Click <q>Who can see what</q> in the contents list.', see: 'The page jumps there, and the heading sits just under the bar, not hidden behind it.' },
+        { who: 'Visitor', do: 'Scroll to <q>Where your information lives</q>.', see: 'A white panel with three boxes across the top (people, the app with the one dark edge, the database), three boxes along the bottom (email, payments, phone alerts), and a dashed line over the top. The caption sits under the panel.' },
+        { who: 'Visitor', do: 'Drag across a few words inside the diagram.', see: 'They highlight like ordinary text: the diagram is real words, not a picture.' },
+        { who: 'Visitor', do: 'Read <q>Who handles it</q>.', see: 'Five companies in five columns, ending with <q>Its certifications</q>. The sentence <q>These are each company’s own certifications … not ours …</q> sits directly under the table, then the paragraph about Canadian privacy law. No line about six companies or 30 days’ notice.' },
+        { who: 'Visitor', do: 'Read <q>Who can see what</q>.', see: 'Eight roles in two columns, Owner to Coach, then <q>What the club sees of a team.</q> and <q>Our own staff.</q>' },
+        { who: 'Visitor', do: 'Read the last bullet of <q>Backups, and if something goes wrong</q>.', see: '<q>… tell your club’s owners straight away with what we know …</q>, with no 72 hours.' },
+        { who: 'Visitor', do: 'Read <q>Your information stays yours</q>.', see: 'Three bullets: downloading records, asking us to delete, and no long contract. No line about a full copy.' },
+        { who: 'Visitor', do: 'Under <q>Questions</q>, click <code>privacy@fieldlogichq.ca</code>.', see: 'Your email program opens a new message to that address.' },
+        { who: 'Visitor', do: 'Under <q>Read more</q>, click each of the two links.', see: '<q>Terms of Service</q> opens the Terms and <q>Privacy Policy</q> opens the Privacy Policy.' }
+      ] },
+    { id: 'B', title: 'The footer door',
+      steps: [
+        { who: 'Visitor', do: 'Scroll to the foot of <code>/security</code>.', see: 'The site’s footer. Its bottom row reads <q>Security</q>, <q>Terms of Service</q>, <q>Privacy Policy</q>, with Security first and in the same size and ink as the others.' },
+        { who: 'Visitor', do: 'Open <code>/pricing</code> and click <q>Security</q> in its footer.', see: 'The Security page opens.' }
+      ] },
+    { id: 'C', title: 'The page on a phone',
+      steps: [
+        { who: 'Visitor', do: 'Switch to phone width (iPhone 12 Pro) and reload <code>/security</code>.', see: 'The same head, then the short answer card. No contents list, and the phone’s bottom bar along the foot of the screen.' },
+        { who: 'Visitor', do: 'Scroll to the diagram.', see: 'The stacked form: people, then the app, then the database, each with its lines of detail, then email, payments and phone alerts down a line on the left. The dashed sign-in line runs down the right.' },
+        { who: 'Visitor', do: 'Try to drag the page sideways anywhere from top to bottom.', see: 'Nothing moves sideways.' },
+        { who: 'Visitor', do: 'Read <q>Who handles it</q>.', see: 'Each company is its own card with small labels over each fact, <q>Its certifications</q> as each card’s last line, and the <q>not ours</q> sentence under the last card.' },
+        { who: 'Visitor', do: 'Read <q>Who can see what</q>.', see: 'Still a two-column table, Role and Can open, not cards.' },
+        { who: 'Visitor', do: 'Choose <q>Responsive</q>, type 360 as the width, and look at the diagram again.', see: 'The words are the same size as at 390 and nothing is cut off. The white margin inside the panel is narrower.' }
+      ] },
+    { id: 'D', title: 'The tablet switch',
+      steps: [
+        { who: 'Visitor', do: 'Type 768 as the width.', see: 'The diagram switches back to the wide form, with three boxes across.' }
+      ] },
+    { id: 'E', title: 'Printing it',
+      before: 'Close the phone view (Ctrl+Shift+M) first, so the page is at full width.',
+      steps: [
+        { who: 'Visitor', do: 'On <code>/security</code>, press Ctrl+P.', see: 'The preview starts with the eyebrow and the title. No site bar, no footer, no contents list and no phone bar.' },
+        { who: 'Visitor', do: 'Page through to the diagram.', see: 'The wide form, whole on one page, in a thin outlined panel. The short answer card has no shadow, and the page is white.' },
+        { who: 'Visitor', do: 'Look at <q>Who handles it</q> in the preview.', see: 'A table with its five columns, not cards.' },
+        { who: 'Visitor', do: 'Look at <q>Read more</q> in the preview.', see: 'Each link is followed by its address in brackets, such as <code>(localhost:3000/legal/terms)</code> on dev.' }
+      ] },
+    { id: 'F', title: 'The door from “Questions a board asks”',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/for-clubs</code>, scroll to <q>Questions a board asks</q>, and open <q>What do you do with our families’ information?</q>', see: '<q>… never shows a player’s name, date of birth or roster on a public page.</q>, then <q>Read the Privacy Policy</q> and <q>See how we protect it</q>, each on its own line.' },
+        { who: 'Visitor', do: 'Click <q>See how we protect it</q>.', see: 'The Security page opens.' },
+        { who: 'Visitor', do: 'On <code>/for-clubs</code>, open <q>What if we decide to stop?</q>', see: 'It ends <q>You can download your lists as Excel, CSV or PDF.</q> with nothing about a full copy, the same as the Security page.' },
+        { who: 'Visitor', do: 'Open <code>/for-leagues</code> and the same families’ question.', see: 'The same answer, with <q>date of birth</q> and both links.' },
+        { who: 'Visitor', do: 'Open <code>/pricing</code> and the same families’ question in its questions.', see: 'The same answer, with both links.' }
+      ] },
+    { id: 'G', title: 'The link preview',
+      steps: [
+        { who: 'Visitor', do: 'Look at the browser tab for <code>/security</code>.', see: '<q>Security and your club’s information | FieldLogicHQ</q>.' },
+        { who: 'Visitor', do: 'Open <code>view-source:http://localhost:3000/security</code> and search (Ctrl+F) for <code>og:</code>.', see: 'og:title <q>Security and your club’s information | FieldLogicHQ</q>, og:description <q>Where your club’s information is stored (the United States, Ohio) …</q>, and og:image <code>/share-card.png</code>, the site’s own card.' }
+      ] },
+    { id: 'H', title: 'Signed in, nothing changes',
+      steps: [
+        { who: 'Owner', do: 'Signed in as <code>league-owner@dev.local</code>, open <code>/security</code>.', see: 'The same page. Only the bar differs: it shows your account instead of Sign in.' }
+      ] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    if (p.before) body.appendChild(el('p', 'before', '<strong>Before this part:</strong> ' + p.before));
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['Security page walk §554 (built 2026-11-21)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      var open = mine.filter(function (b) { return !b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (open.length ? ' (not ticked: ' + open.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

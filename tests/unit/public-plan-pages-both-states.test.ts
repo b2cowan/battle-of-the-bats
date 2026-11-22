@@ -32,7 +32,7 @@ const TP_TRIAL_DAYS = 14;
 /** The legal pages as production will serve them with S3b: Terms and Privacy published, the data terms not yet. */
 const LEGAL_LIVE = {
   termsHref: 'https://www.fieldlogichq.ca/legal/terms', privacyHref: 'https://www.fieldlogichq.ca/legal/privacy',
-  termsVersion: '2026-11-17', dataTermsHref: null, subprocessorsHref: null,
+  termsVersion: '2026-11-17', dataTermsHref: null, subprocessorsHref: null, securityHref: 'https://www.fieldlogichq.ca/security',
 };
 
 function loaderFor(gating: Gating, legal: typeof LEGAL_LIVE | { dataTermsHref: string } | null = LEGAL_LIVE) {

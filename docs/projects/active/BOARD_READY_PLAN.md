@@ -630,20 +630,59 @@ board's two questions:
     **`/legal` finding:** the full-copy line follows the club pages' rule on the public page (Data Terms published, or
     the owner confirms the by-hand procedure, club on-sale plan Ask 29); the private brief keeps it on review row 38.
     **Tasks this leaves for S3:**
-    - [ ] `BoardQuestions.tsx` answer 3: "birth date" → "date of birth" (the product's field labels say "Date of birth",
-      15 to 2).
-    - [ ] `BoardQuestions.tsx` answer 3: a second link, "See how we protect it" → `/security`, after "Read the Privacy
-      Policy".
-    - [ ] The full-copy line and answer 4's "or ask us for a full copy" on one rule (above), switched together.
-    - [ ] The held lines and "Read more" version B switch on together with the Data Terms and the list of companies.
+    - [x] `BoardQuestions.tsx` answer 3: "birth date" → "date of birth" (the product's field labels say "Date of birth",
+      15 to 2). Built in S3, 2026-11-21.
+    - [x] `BoardQuestions.tsx` answer 3: a second link, "See how we protect it" → `/security`, after "Read the Privacy
+      Policy". Built in S3, 2026-11-21.
+    - [x] The full-copy line and answer 4's "or ask us for a full copy" on one rule (above), switched together: both ask
+      `fullCopyOffered()` (`lib/full-copy-promise.ts`); the owner's Ask 29 confirmation is its one constant. Built in S3.
+    - [x] The held lines and "Read more" version B switch on together with the Data Terms and the list of companies.
+      Built in S3 (both pages published = version B; tests hold it).
     - Noted, not S3: the wider "birth date" / "date of birth" drift in help articles and the duplicates cards (a spelling
       chore; the gate does not hold the pair today).
-  - [ ] S2 · Drawing: `/design` on the page (the marketing site's own layout and the diagram as an inline drawing in the
-    site's kit, both themes, phone width) before the build.
-  - [ ] S3 · Build `/security` as a public marketing page (static, no data reads), with a footer link beside the legal
+  - [x] S2 · Drawing: `/design` on the page (the marketing site's own layout and the diagram as an inline drawing in the
+    site's kit, both themes, phone width) before the build. **Prompt written 2026-11-21:**
+    `BOARD_READY_SECURITY_PAGE_S2_DRAWING_PROMPT.md` (nine questions: the frame, the short answer, the diagram's phone
+    form with its ten labels unchanged, the two tables on a phone, before and after the Data Terms publish, the "as of"
+    line and contact, the two doors in, print, the share card).
+    **Drawn 2026-11-21:** https://claude.ai/artifact/9yp7PVd33SjyRQrSBqXZmv (source
+    `BOARD_READY_SECURITY_PAGE_DRAWINGS.html`; `/design` pass on the render: no word past a box, no sideways scroll at
+    390px). Eleven asks, ranked, each recommended: (1) the legal pages' document head, not the 64px headline (the
+    2026-11-09 legal-pages ruling; with the headline the third short answer leaves a laptop's first screen); (2) the
+    diagram redrawn in real text at true size, a desktop form from 768px and a stacked phone form below, every label and
+    the accessible description word for word, the on-sale panel and inks but not their sketch style; (3) the short answer
+    as one white card; (4) suppliers as labelled cards on a phone, roles kept a two-column table (an exception to the legal
+    table rule); (5) the "as of" line under the opening, once; (6) version B links "Our public list" and "The Data Terms";
+    (7) the footer and answer-3 doors as drawn; (8) a minimal print view; (9) the site's share card; (10) no Dark version
+    (marketing is always warm, Ask 5 B, so the prompt's Dark frames are not drawn); (11) the privacy address as a link, no
+    copy button. `/legal` on the six moves: all say as is (hrefs from the legal-links helper; the brief's "Revise when"
+    now names the diagram's accessible description). No new word. **RULED 2026-11-21 (owner: "i agree with your recommendations, go ahead"): all eleven as recommended.** S3 build prompt written the same day: `BOARD_READY_SECURITY_PAGE_S3_BUILD_PROMPT.md`.
+  - [x] S3 · Build `/security` as a public marketing page (static, no data reads), with a footer link beside the legal
     links, and the club pages' "Questions a board asks" pointing to it. Gate it with the legal pages: rendered only
     while they are published (the same switch `BoardQuestions` already follows), so it cannot go live ahead of them.
     `npm run check:spelling` on the copy.
+    **Built 2026-11-21 on dev, to the ruled drawing** (commit: see this item's commit; owner walk §554
+    https://claude.ai/artifact/MsJw2L8YVgvKyxuKZhoWPG, source `BOARD_READY_SECURITY_PAGE_WALK.html`, 33 steps). The page's
+    words have one home, `lib/security-page-words.ts` (the brief is v0.5, a pointer plus its records; the private brief
+    Artifact keeps its own copy, unchanged). "Not found" while the legal pages are off; not in the sitemap, as the legal
+    pages are not; "security" reserved as an organization address. The diagram is both forms copied coordinate for
+    coordinate, with ONE move: "sends email" x 208 → 192 (it crossed its arrow; 192 mirrors "sends an alert"). Below a
+    390 screen the diagram panel's side padding gives way so the words stay full size to a 358px screen (at 320 the phone
+    form scales to 88%, smallest word 11.8px); the phone form stands at its drawn 310 up to the 768 switch. The roles
+    table's exception is TABLE_EXCEPTION_REGISTER K-32. Reviews: `/design` (one fix: the table heads in the body face;
+    the label move; the 310 cap), `/legal` (say as is throughout; version B needing both pages confirmed).
+    **Owner calls from the reviews:** (a) the legal pages' table heads set in the display face (`.text th` inherited the
+    global `th` rule): **ruled and built 2026-11-21** (owner: "make the legal pages table head fix"), one rule in
+    `LegalPage.module.css`, so the Terms, Privacy, Data Terms and list pages and /security all set column heads in the
+    body face; (b) the contents list has no "current section" mark (the drawing shows one on the first item; the legal
+    pages have none): open, not built; (c) the sitemap: the page is left out, as the legal pages are; a board may well
+    search for it, so listing it is a call before the release. `/review` (four lenses, 2026-11-21): no Critical, High
+    or Medium left; applied: the route reads per request like the legal routes, answer 4's clause tested in both
+    states, three print rules raised to win by specificity (tables on 1in-margin paper, the white ground, no 44px
+    lines). **Follow-up recorded, not built (older than S3):** an organization's web address can be RENAMED to a
+    reserved word ("security", "legal", "pricing"…): the two rename paths (the org's own settings and the platform
+    admin's identity edit) check only the pattern and uniqueness, not `isReservedOrgSlug`; org create does. No
+    organization holds "security" on dev or production (counted 2026-11-21).
   - [ ] S4 · `/legal` reads the page as built against production at the promote (every line still true that day; the
     Data Terms lines only if those pages are live).
   - [ ] S5 · A `/release` checklist line, so the page is re-checked at every promote against the brief's "Revise when"

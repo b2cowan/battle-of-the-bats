@@ -1976,6 +1976,10 @@ export const SCREENS = [
   { id: 'mkt-legal-privacy',     session: 'anon', path: () => '/legal/privacy',                      ready: 'h1', widths: ['320'], route: 'app/legal/privacy/page',
     onlyWhereServed: 'the legal pages are dark until GST/HST Stage 6 step 6.7 switches them on; the dev server shows them with LEGAL_PAGES_PREVIEW=true',
     skip: ['tap-floor'], note: 'Long-form prose: same reason as the Terms page.' },
+  // The public Security page (Board Ready §0c, S3): the legal pages' frame, live only with them.
+  { id: 'mkt-security',          session: 'anon', path: () => '/security',                           ready: 'h1', widths: ['320'], route: 'app/security/page',
+    onlyWhereServed: 'live only with the legal pages (the same switch); "not found" wherever they are off',
+    skip: ['tap-floor'], note: 'Long-form prose like the Terms page: its inline links (the privacy contact, the two held lines) sit in running sentences, which WCAG 2.5.8 exempts. "Read more" is one 44px line per link.' },
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════

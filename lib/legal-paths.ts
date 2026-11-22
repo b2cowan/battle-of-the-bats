@@ -9,5 +9,8 @@ import type { LegalPageKey } from './legal-documents';
 export const legalPagePath = (doc: LegalPageKey, version?: string): string =>
   version ? `/legal/${doc}/${version}` : `/legal/${doc}`;
 
+/** The public Security page (Board Ready §0c, S3): not a legal document, but it goes live only with them, so its address lives here. */
+export const SECURITY_PATH = '/security';
+
 /** Is this pathname one of the legal pages? (The marketing bar and footer treat them as marketing ground.) */
 export const isLegalPath = (pathname: string): boolean => pathname === '/legal' || pathname.startsWith('/legal/');

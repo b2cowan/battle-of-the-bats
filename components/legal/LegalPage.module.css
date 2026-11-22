@@ -135,6 +135,8 @@
 /* Tables: one markup. Below 640px each row is a labelled card (the cells carry their column's name in data-label). */
 .text table { width: 100%; border-collapse: collapse; margin: 0.25rem 0 1.25rem; }
 .text th {
+  /* The body face, as drawn: the global `th` rule would set column heads in the display face (owner, 2026-11-21). */
+  font-family: var(--font-sans), system-ui, sans-serif;
   text-align: left;
   vertical-align: bottom;
   padding: 0 0.875rem 0.625rem 0;

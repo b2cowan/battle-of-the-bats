@@ -9,6 +9,7 @@ import styles from './Footer.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
 import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
 import { DATA_TERMS_LINK, PRIVACY_TITLE, SUBPROCESSORS_LINK, TERMS_TITLE } from '@/lib/legal-words';
+import { SECURITY_LINK } from '@/lib/security-page-words';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
@@ -25,6 +26,8 @@ const STATIC_ROOTS = new Set([
   'demos',
   // The legal pages (GST/HST Stage 6.2): marketing ground, "not found" while they are off.
   'legal',
+  // The public Security page (Board Ready §0c, S3): live only with the legal pages, on the same ground.
+  'security',
 ]);
 
 // Footer link columns. Each group renders as a labelled column; the link for the
@@ -209,6 +212,8 @@ export default function Footer() {
               (Board Ready 0a-5) each appear only once their page has a published text; the sign-in doors never show them. */}
           {legal && (
             <div className={styles.legal}>
+              {/* The Security page first (Board Ready §0c, S3), so the three or five links read as one group. */}
+              <a href={legal.securityHref} className={styles.legalLink}>{SECURITY_LINK}</a>
               <a href={legal.termsHref} className={styles.legalLink}>{TERMS_TITLE}</a>
               <a href={legal.privacyHref} className={styles.legalLink}>{PRIVACY_TITLE}</a>
               {legal.dataTermsHref && <a href={legal.dataTermsHref} className={styles.legalLink}>{DATA_TERMS_LINK}</a>}

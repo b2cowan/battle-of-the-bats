@@ -15,13 +15,16 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { readCode, filesUnder } from './_source-code.ts';
 import { marketingMetadata, SITE_DESCRIPTION, MARKETING_SHARE_CARD } from '../../lib/marketing-metadata.ts';
+import { SECURITY_META_DESCRIPTION, SECURITY_META_TITLE } from '../../lib/security-page-words.ts';
 
 const REPO = path.join(import.meta.dirname, '..', '..');
 const exists = (rel: string) => existsSync(path.join(REPO, rel));
 
 /** Every marketing page and the pieces only they wear, read whole. */
 const PAGE_DIRS = ['app/pricing', 'app/for-clubs', 'app/for-coaches', 'app/for-leagues', 'app/for-tournament-organizers',
-  'app/changelog', 'app/demos', 'app/pitch', 'app/see-it-live/switch', 'app/see-it-live/coaches/switch'];
+  'app/changelog', 'app/demos', 'app/pitch', 'app/see-it-live/switch', 'app/see-it-live/coaches/switch',
+  // The public Security page (Board Ready §0c, S3): the legal pages' frame on the kit's ground.
+  'app/security'];
 const MARKETING_FILES = [
   'app/page.tsx', 'app/page.module.css',
   ...PAGE_DIRS.flatMap((d) => [...filesUnder(d, '.tsx'), ...filesUnder(d, '.css')]),
@@ -33,6 +36,7 @@ const MARKETING_FILES = [
   'components/marketing/WalkthroughPage.tsx', 'components/marketing/WalkthroughPage.module.css',
   'components/marketing/ProspectDeckPage.tsx',
   'components/PricingSection.tsx', 'components/PricingSection.module.css',
+  'components/legal/SecurityPage.tsx', 'components/legal/SecurityPage.module.css', 'components/legal/SecurityDiagram.tsx',
 ].filter(exists);
 
 /** The marketing bar is all Navbar draws (Public tournament pages Stage 8 Part 3d deleted its tournament bar; every other
@@ -85,7 +89,8 @@ describe('S4 — the marketing set is warm, with no dark island', () => {
     assert.match(kit, /\.page\s*\{\s*composes:\s*warmVars warm from '\.\.\/consumer\/warmTheme\.module\.css'/,
       'the kit composes the first look\'s ALWAYS-warm class (never .warmTab, which follows the Dark setting)');
     const pages = ['app/page.tsx', ...PAGE_DIRS.flatMap((d) => filesUnder(d, '.tsx')).filter((f) => f.endsWith('/page.tsx'))];
-    const viaComponent = ['app/for-coaches/walkthrough/page.tsx', 'app/for-tournament-organizers/walkthrough/page.tsx', 'app/pitch/[slug]/page.tsx'];
+    const viaComponent = ['app/for-coaches/walkthrough/page.tsx', 'app/for-tournament-organizers/walkthrough/page.tsx', 'app/pitch/[slug]/page.tsx',
+      'app/security/page.tsx'];
     for (const f of pages) {
       const code = readCode(f);
       const wears = /kit\.page|MarketingKit/.test(code) || viaComponent.includes(f);
@@ -93,6 +98,7 @@ describe('S4 — the marketing set is warm, with no dark island', () => {
     }
     assert.match(readCode('components/marketing/WalkthroughPage.tsx'), /MarketingKit/);
     assert.match(readCode('components/marketing/ProspectDeckPage.tsx'), /MarketingKit/);
+    assert.match(readCode('components/legal/SecurityPage.tsx'), /kit\.page/);
   });
 
   it('the bar is warm under every setting, and so are the phone bar and the page base', () => {
@@ -165,6 +171,28 @@ describe('S4 — every marketing page says what it is when shared (P7)', () => {
   it('the share card is the marketing set\'s alone, never a root opengraph-image that every top-level route inherits', () => {
     assert.ok(exists('app/share-card.png/route.tsx'), 'the marketing share card route');
     assert.ok(!exists('app/opengraph-image.tsx') && !exists('app/opengraph-image.png'), 'a root card reaches pages that are not marketing');
+  });
+});
+
+describe('the public Security page (Board Ready §0c, S3) is a marketing page', () => {
+  it('always warm: the kit\'s page, no Dark branch, and the bar and footer treat its address as marketing ground', () => {
+    const page = readCode('components/legal/SecurityPage.tsx');
+    assert.match(page, /cn\(kit\.page, legal\.wrap, styles\.root\)/, 'the kit\'s always-warm ground (S2 ruling 10: no Dark version)');
+    assert.match(readCode('components/Navbar.tsx'), /pathname === SECURITY_PATH/);
+    assert.match(readCode('components/Footer.tsx'), /'security',\n\]\);/);
+  });
+
+  it('its title, description and card come from the helper, with S1\'s words, and it is indexed', () => {
+    const route = readCode('app/security/page.tsx');
+    assert.match(route, /marketingMetadata\(\{ title: SECURITY_META_TITLE, description: SECURITY_META_DESCRIPTION, path: SECURITY_PATH \}\)/);
+    assert.doesNotMatch(route, /noindex/);
+    const m = marketingMetadata({ title: SECURITY_META_TITLE, description: SECURITY_META_DESCRIPTION, path: '/security' });
+    assert.equal(m.title, "Security and your club's information");
+    assert.deepEqual(m.alternates, { canonical: '/security' });
+    assert.equal(m.robots, undefined);
+    assert.deepEqual((m.openGraph as { images: unknown[] }).images, [MARKETING_SHARE_CARD]);
+    assert.doesNotMatch(SECURITY_META_TITLE, /FieldLogicHQ|—|\|/);
+    assert.ok(SECURITY_META_DESCRIPTION.length <= 160, 'a search result shows about 155 characters');
   });
 });
 

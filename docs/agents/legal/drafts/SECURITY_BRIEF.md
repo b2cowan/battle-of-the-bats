@@ -2,22 +2,22 @@
 
 | | |
 |---|---|
-| **Version** | 0.4 |
-| **Status** | `/legal`-reviewed 2026-11-21 · `/marketing` page-copy pass 2026-11-21 (Security page S1) · **not reviewed by a lawyer** · published as a private Artifact for the owner to share with any prospect: https://claude.ai/artifact/2qBeedXuyYTRPs1MEo8TUR · **its public home is the marketing site's Security page** (Board Ready plan §0c, steps S2–S5; built in the release that carries the legal pages). When S3 builds the page, the product's copy becomes the home and this file is replaced by a pointer (the `/legal` one-home rule) |
+| **Version** | 0.5 |
+| **Status** | `/legal`-reviewed 2026-11-21 · `/marketing` page-copy pass 2026-11-21 (Security page S1) · **not reviewed by a lawyer** · published as a private Artifact for the owner to share with any prospect: https://claude.ai/artifact/2qBeedXuyYTRPs1MEo8TUR · **its public home is the marketing site's Security page** (Board Ready plan §0c, steps S2–S5; built in the release that carries the legal pages). **Since S3 (2026-11-21) the page's words live in `lib/security-page-words.ts` and this file holds a pointer plus the records (the `/legal` one-home rule); the private Artifact above keeps its own v0.4 copy** |
 | **Effective date** | — (a description of what the product does, not a contract) |
 | **Last reviewed** | 2026-11-21 |
-| **Research** | `MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md` (every sentence below maps to a row there; all are true on production `f12aad4d9` with no condition, except the lines marked **held** and the one marked **page condition**) |
-| **Change log** | 0.1 · 2026-11-21 · first version, written from W1–W10 and the 2026-11-21 code read · 0.1 (same day, owner ask) · the backups bullet splits in two: uploaded files get their own bullet saying what happens to them (no backup copy, a deleted or replaced file can't come back, keep your own copy, and nothing lingers in a backup). Source: the host's own pages, read 2026-11-21 (`BACKUPS_AND_RESTORE.md` "Uploaded files"). Deliberately NOT said: that files are stored redundantly or durably — the host's pages state no such thing · **0.2 · 2026-11-21 (owner: "go ahead with both")** · made generic for any prospect (eyebrow, opening, file renamed from `MILTON_BOARD_SECURITY_BRIEF.md`); the checked "where your information lives" diagram added as "The picture" (labels = review rows 1–10, as on the prep page); the supplier table renamed "Who handles it". No claim changed · **0.3 · 2026-11-21 (owner: "go ahead with the three changes")** · "Who handles it" gains an "Its certifications" column (AWS added: Amplify confirmed in AWS's SOC and ISO 27001 scope; Stripe's SOC 2 added; "Type 2" spelled one way), the "theirs, not ours; no certification or independent audit of our own" sentence sits directly under the table, and the certifications bullet leaves "The checks we run ourselves" (it is not a check we run). Research: `SUPPLIER_CERTIFICATIONS_AND_SOC2.md`. Not said, deliberately: that a supplier's report can be handed over (Supabase's needs a Team plan; production is on Pro). Republished to the same link · **0.4 · 2026-11-21 (Security page S1, `/marketing` with `/legal` on every moved sentence)** · the brief becomes the page copy; see "v0.4: what moved" below. Republished to the same link |
+| **Research** | `MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md` (every sentence in the words file maps to a row there; all are true on production `f12aad4d9` with no condition, except the lines marked **held** and the one marked **page condition**, recorded below) |
+| **Change log** | 0.1 · 2026-11-21 · first version, written from W1–W10 and the 2026-11-21 code read · 0.1 (same day, owner ask) · the backups bullet splits in two: uploaded files get their own bullet saying what happens to them (no backup copy, a deleted or replaced file can't come back, keep your own copy, and nothing lingers in a backup). Source: the host's own pages, read 2026-11-21 (`BACKUPS_AND_RESTORE.md` "Uploaded files"). Deliberately NOT said: that files are stored redundantly or durably — the host's pages state no such thing · **0.2 · 2026-11-21 (owner: "go ahead with both")** · made generic for any prospect (eyebrow, opening, file renamed from `MILTON_BOARD_SECURITY_BRIEF.md`); the checked "where your information lives" diagram added as "The picture" (labels = review rows 1–10, as on the prep page); the supplier table renamed "Who handles it". No claim changed · **0.3 · 2026-11-21 (owner: "go ahead with the three changes")** · "Who handles it" gains an "Its certifications" column (AWS added: Amplify confirmed in AWS's SOC and ISO 27001 scope; Stripe's SOC 2 added; "Type 2" spelled one way), the "theirs, not ours; no certification or independent audit of our own" sentence sits directly under the table, and the certifications bullet leaves "The checks we run ourselves" (it is not a check we run). Research: `SUPPLIER_CERTIFICATIONS_AND_SOC2.md`. Not said, deliberately: that a supplier's report can be handed over (Supabase's needs a Team plan; production is on Pro). Republished to the same link · **0.4 · 2026-11-21 (Security page S1, `/marketing` with `/legal` on every moved sentence)** · the brief becomes the page copy; see "v0.4: what moved" below. Republished to the same link · **0.5 · 2026-11-21 (Security page S3, built)** · the page-copy section is replaced by a pointer to `lib/security-page-words.ts`, the words' one home; the records stay here (held lines and page condition, furniture, "what moved", "Revise when", "Never add", "For a lawyer's eye"). `/legal` read the built page against v0.4 and the drawing: no word differs; findings in `LEGAL_INDEX.md`'s row. No claim changed. The private Artifact is not changed |
 
 **Revise when** (S5's release check reads this list at every promote; the "as of" date moves only after that read):
 - **The legal pages are on production** → the page may be built and go live (S3, the same release), with "Read more" version A. Nothing on it says "our published policy" before then.
-- **The Data Terms and the list of companies publish** → switch on the four **held** lines below (W2, W8, W9, the 30 days) and "Read more" version B, in the same change.
+- **The Data Terms and the list of companies publish** → switch on the four **held** lines (W2, W8, W9, the 30 days; recorded below, words in the words file) and "Read more" version B, in the same change.
 - **The owner confirms the by-hand full-copy procedure (club on-sale plan Ask 29), or the Data Terms publish** → the page may show the full-copy line (its **page condition**); `BoardQuestions` answer 4's "or ask us for a full copy" follows the same rule.
 - **`45c134bea` is on production** → add review row 33's line ("When your club is deleted, its information and the files uploaded to it are deleted, and backup copies are gone within 7 days.") under "Your information stays yours", with `/legal`.
 - **Family payments are switched on** → the Stripe bullet and the diagram's caption to the present tense (row 18).
 - **The access follow-ups are on production** → "every finding resolved" may be said (sweep call 22). Never "every finding fixed".
 - **Migs 505 and 506 are on production** → only then may anything be said about suspended members (plan §0c D2).
-- **A supplier changes** (incl. the Gmail inbox moving, `BUSINESS_EMAIL_ADDRESSES`) → the table, the diagram and the held W2 count.
+- **A supplier changes** (incl. the Gmail inbox moving, `BUSINESS_EMAIL_ADDRESSES`) → the table, the diagram (both its desktop and phone forms, and its accessible description, which names Resend and Stripe) and the held W2 count.
 - **The AGENCY_RULES production-rows rule changes** → the AI line falls back to "FieldLogicHQ sends nothing to an AI service" (W3), everywhere it appears (short answer, caption).
 - **The staff record-opens log changes** (plan §0c D1) → re-read "Our own staff".
 
@@ -25,160 +25,38 @@
 
 ---
 
-# How FieldLogicHQ protects your club's information
+# The page copy now lives in the product (Security page S3, 2026-11-21)
 
-*Security*
+**Where the words are.** `lib/security-page-words.ts` is their one home: the opening, every section's sentences, the
+roles and supplier tables, the diagram's labels, its accessible description and caption, the "as of" sentence and its
+date, the furniture strings below, and both forms of every held line. It was copied from this draft's v0.4 text and the ruled
+drawing (`docs/projects/active/BOARD_READY_SECURITY_PAGE_DRAWINGS.html` v2), never retyped; a script confirmed every string
+equals the drawing's. The page is `components/legal/SecurityPage.tsx` and `SecurityDiagram.tsx`, route `app/security/page.tsx`
+("not found" while `resolveLegalLinks()` is null); `tests/unit/security-page.test.ts` pins the words, the conditions and the
+two surfaces that follow them.
 
-Two questions come first: does our information leak, and is it sold? This page answers both. It says exactly where your
-club's information is kept, who can see it, and which checks we run ourselves.
+**To change a word:** a `/legal` pass (against `MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md`, the "Revise when" list and
+"Never add" below), then one edit in the words file. Do not edit a sentence here; this file no longer holds one.
 
-## The short answer
+**The private brief Artifact** (https://claude.ai/artifact/2qBeedXuyYTRPs1MEo8TUR) keeps its own v0.4 copy and was not changed
+by S3. It is a leave-behind, so it can drift from the page; when its text next changes, republish it from the words file.
 
-- **We never sell your club's information, use it to advertise, or share it with advertisers.** We don't use advertising
-  trackers, third-party analytics or an outside error-monitoring service, and your club's information is never given to
-  an AI service.
-- **It is stored in the United States (Ohio)**, with our database host, Supabase, on Amazon Web Services.
-- **Your people see only what their role allows**, and our server checks that on every request.
+## The held lines and the page condition (the records; the words are in the words file)
 
-## What's never on a public page
+| Line | Constant | Switches on when | Replaces / sits |
+|---|---|---|---|
+| W2 "Six companies help us run FieldLogicHQ. **Our public list** names each one…" | `SECURITY_HELD_W2` | Data Terms **and** the list both published (`securityVersionB(links)`) | A new paragraph under "Who handles it"'s "not ours" sentence, before the cross-border paragraph; "Our public list" links the list |
+| W9 "Before a new company starts handling your club's information, we email your club's owners at least 30 days ahead. **The Data Terms** say what happens if one must be replaced urgently." | `SECURITY_HELD_W9` | Same | Directly after W2; "The Data Terms" links the Data Terms |
+| W8 breach line with "within 72 hours of confirming" (Data Terms §9) | `SECURITY_BREACH_HELD` | Same | Replaces the breach bullet (`SECURITY_BREACH`); keeps "straight away" beside the 72 hours |
+| Full copy "in writing… within 30 days" (Data Terms §11) | `SECURITY_YOURS_FULL_COPY_HELD` | Same | Replaces the plain full-copy bullet |
+| **Page condition:** the plain full-copy bullet "…we will put it together for you." | `SECURITY_YOURS_FULL_COPY` | `fullCopyOffered(links)` in `lib/full-copy-promise.ts`: the Data Terms published, **or** `FULL_COPY_BY_HAND_CONFIRMED` (the owner's club on-sale plan Ask 29; currently false) | The bullet is absent otherwise. `BoardQuestions` answer 4's "or ask us for a full copy" asks the same predicate; the Ask 29 confirmation is one edit in that file and flips both |
 
-FieldLogicHQ never shows a player's name, date of birth or roster on a public page. Your club decides what it publishes:
-schedules, standings, team names, and the names of coaches who choose to show theirs. A link we email to a family shows
-only that family's own sign-up.
-
-## Where your information lives
-
-*(The checked diagram, unchanged. Its labels, each checked in the review file, rows 1–10:)*
-- **Board, coaches, families** · a phone or a computer · two-step sign-in for every account → *encrypted* →
-  **FieldLogicHQ app** · Amazon Web Services · Ohio, United States → *checked* → **Database, sign-in, files** · Supabase on
-  AWS · Ohio, United States. A dashed line from people straight to the database: *sign-in and live score updates*.
-- Under the app: "Every request: signed in, second step where on, belongs to this club, allowed for this role".
-- Under the database: "Encrypted at rest by the host · Database backed up daily, kept 7 days · Player documents open by
-  1-hour links".
-- From the app: *sends email* → **Email delivery** · Resend, United States · Receives: names, addresses, the message
-  itself; *hands off checkout* → **Payments** · Stripe · Card numbers are typed on Stripe's own page and never reach us;
-  *sends an alert* → **Phone alerts** · the browser's own push service · Receives: a device address, and the alert,
-  sealed for that device.
-- Caption: "Where a club's information lives and who it passes through. Nothing goes to advertisers or analytics
-  companies, and your club's information is never given to an AI service. Families can't pay online through FieldLogicHQ
-  yet."
-
-## Who handles it
-
-| Company | What it does for us | What it receives | Where | Its certifications |
-|---|---|---|---|---|
-| **Supabase** | Our database, sign-in and file storage | Everything your club keeps in FieldLogicHQ | United States (Ohio) | SOC 2 Type 2, ISO 27001 |
-| **Amazon Web Services** | Runs our website and its server | Every page and form passes through it | United States (Ohio) | SOC 2, ISO 27001, for the hosting service we use |
-| **Resend** | Sends every email FieldLogicHQ sends | The name and address of each person emailed, and the message | United States | SOC 2 Type 2 |
-| **Stripe** | Card payments | The payer's details and what is being paid for. Card numbers go to Stripe, never to us | Canada, the United States and other countries | PCI Service Provider Level 1, SOC 2 Type 2 |
-| **ImprovMX** and **Google (Gmail)** | Deliver email that people send to our own addresses | Only what people write to us | France (until delivered), the United States | None stated |
-
-These are each company's own certifications, as each states them, not ours. FieldLogicHQ has no certification or
-independent audit of its own.
-
-> **Held until the Data Terms and the list of companies publish** (W2, W9; switch on with "Read more" version B):
-> "Six companies help us run FieldLogicHQ. Our public list names each one, what it receives, where, and links its own
-> security pages." · "Before a new company starts handling your club's information, we email your club's owners at least
-> 30 days ahead. The Data Terms say what happens if one must be replaced urgently."
-
-Canadian privacy law lets an organization use service providers outside Canada. We stay responsible for your
-information while they handle it, and each company that stores or sends your club's information is bound by
-data-processing terms with us. While information is in the United States, that country's courts and authorities can
-sometimes obtain it.
-
-## Who can see what
-
-Each person at your club gets a role. These are the defaults, and your club's owner can widen or narrow each person's
-access.
-
-| Role | Can open |
-|---|---|
-| **Owner** | Everything, including billing and the club's settings |
-| **Admin** | Every program on your plan, except billing, settings and the Families area unless the owner grants it |
-| **Treasurer** | The club's books and its member list |
-| **League admin** | The house league and the member list |
-| **League registrar** | The house league |
-| **Staff** | Game-day help: schedule updates, scores, check-in and announcements |
-| **Volunteer** | Scores and check-in, as a scorekeeper or at the gate |
-| **Coach** | Their own team in the Coaches Portal, and nothing club-wide |
-
-**What the club sees of a team.** The club sees each of its teams' roster, schedule, results and cash on hand. A coach's
-lineups and private notes stay with the coach.
-
-**Our own staff.** Our support staff can open your club's records only to help when you ask, investigate a problem, or
-keep the service running. Our support tools log each club and person record our staff open, and keep a permanent record of
-every change they make. We have no way to sign in as one of your people.
-
-## How it is protected
-
-- **Signing in.** Passwords are kept by our sign-in service, Supabase, only in scrambled form. FieldLogicHQ never sees or
-  stores them. Two-step sign-in is available to everyone, and your club can require it for its board and coaches;
-  FieldLogicHQ staff always use it.
-- **Checked on our server.** On every request our server checks who the person is, that they belong to your club, and
-  what their role allows. This is enforced on our server, not in the browser.
-- **Encryption.** Information is encrypted in transit, and our database host encrypts everything it stores (AES-256).
-- **Player documents** are stored privately and open only through links that expire after one hour.
-- **Card numbers and bank details never reach us.** When you pay for FieldLogicHQ, you pay on Stripe's own page. Stripe
-  states it is certified PCI Service Provider Level 1. Families can't pay online through FieldLogicHQ yet; when your club
-  turns that on, they will pay on Stripe's page into your club's own Stripe account.
-- **Phone alerts** are sealed so that only the receiving device can read them.
-
-## Backups, and if something goes wrong
-
-- **Our database is backed up daily, and each backup is kept 7 days.** We rehearsed a restore from a backup on
-  November 18, 2026.
-- **Uploaded files are not in those backups.** Player documents, logos and rules files are kept separately, with the
-  same host in the same place, and we keep no backup copy of them. A file that is deleted or replaced can't be brought
-  back, so keep your own copy of any document you can't do without. It also means a deleted file doesn't linger in a
-  backup of ours.
-- **If something goes wrong** with your club's information, we follow a written breach procedure: we contain it, tell
-  your club's owners straight away with what we know, help you tell your families, and fix what caused it.
-
-> **Held until the Data Terms publish** (W8; replaces the bullet above): "**If something goes wrong** with your club's
-> information, we follow a written breach procedure: we contain it, tell your club's owners straight away, and within
-> 72 hours of confirming it touches your information, with what we know, help you tell your families, and fix what
-> caused it."
-
-## Your information stays yours
-
-- You can download your records from the lists that offer it, such as members, registrations, payments and your books,
-  in Excel, CSV or PDF.
-- Your club's owner can ask us for a full copy of your club's information, and we will put it together for you.
-  *(**Page condition:** on the public page this line shows only once the owner has confirmed the by-hand procedure,
-  Ask 29, or the Data Terms publish; the same rule as `BoardQuestions` answer 4. The private brief carries it today, on
-  review row 38.)*
-- Your club's owner can ask us to delete your club's information.
-- There is no long contract. A cancelled plan ends at its renewal date, and nothing more is charged.
-
-> **Held until the Data Terms publish** (Data Terms §11; replaces the full-copy line above): "Your club's owner can ask
-> us in writing for a full copy of your club's information, and we will put it together for you within 30 days."
-
-## The checks we run ourselves
-
-We have not commissioned an independent penetration test. These are the checks we run ourselves:
-- **Reviews of who can see and change what in every club**: two in October 2026 and one on November 10, 2026. The
-  November review found nothing that lets one club see another club's people. Its serious and medium findings are fixed
-  in the live product.
-- **A rehearsed restore** from backup, on November 18, 2026.
-
-## Questions
-
-Write to our privacy contact: **privacy@fieldlogichq.ca**
-
-## Read more *(the public page only)*
-
-- **Version A** (the page goes live with the legal pages, so it always has these): Terms of Service · Privacy Policy
-- **Version B** (once the Data Terms and the list of companies publish): Terms of Service · Privacy Policy · Data Terms ·
-  Companies that handle your information
-
-*(Link words are the footer's own, from `lib/legal-words.ts`, in the footer's order. Hrefs through the legal-links helper,
-so a page that isn't live is never linked.)*
-
----
-
-*This page describes how FieldLogicHQ works as of {date}.* (Today: November 21, 2026. The date is set by the person who
-re-reads every line against production at a promote — S4 for the first, S5's release check after — and by nobody else;
-an edit that does not re-read every line does not move it.)
+"Read more" is Terms of Service and Privacy Policy always (the page exists only while the legal pages do), and grows to four
+links (Data Terms, Companies that handle your information) in the same version B; hrefs come from the legal-links helper, so a
+page that is not live is never linked. `/legal` on version B requiring both pages (2026-11-21, S3 review): right for the four
+held lines, which cite the list and the Data Terms together and are planned to publish together (Board Ready 0a-5); with only
+the Data Terms live the page shows the plain full-copy line, which is true and promises less than the contract, the safe
+direction.
 
 ---
 
@@ -191,7 +69,7 @@ an edit that does not re-read every line does not move it.)
 | Eyebrow over the headline | **Security** | One word, so it reads the same on the public page and the private brief |
 | Footer link (beside the legal links) | **Security** | Before Terms of Service, so the three or five links read as one group |
 | `BoardQuestions` answer 3 link (S3) | **See how we protect it** | Second link, after "Read the Privacy Policy". Safe: both render only while the legal pages are published |
-| "As of" line | "This page describes how FieldLogicHQ works as of {date}." | See above for who moves it |
+| "As of" line | "This page describes how FieldLogicHQ works as of {date}." | `SECURITY_AS_OF` in the words file; its header says who moves it (a full re-read at a promote, never a build) |
 
 ## v0.4: what moved, and `/legal`'s verdict (2026-11-21)
 

@@ -78,9 +78,18 @@ describe('the other surfaces follow the switch', () => {
     assert.match(readCode('lib/legal-links.ts'), /legalPageLive\(page, env\) \? legalPageHref\(page\) : null/);
   });
 
-  it('the sign-in doors keep the two links a person accepts there — never the Data Terms or the list (ruling 2026-11-19)', () => {
+  it('the footer links the Security page first, only inside the legal block (Board Ready §0c, S3)', () => {
+    const code = readCode('components/Footer.tsx');
+    const block = code.slice(code.indexOf('{legal && ('));
+    assert.ok(block.indexOf('legal.securityHref') > 0 && block.indexOf('legal.securityHref') < block.indexOf('legal.termsHref'),
+      'Security sits first in the legal row, rendered only while the legal pages are on');
+    assert.equal(code.slice(0, code.indexOf('{legal && (')).includes('securityHref'), false);
+    assert.match(readCode('lib/legal-links.ts'), /securityHref: `\$\{canonicalAppOrigin\(\)\}\$\{SECURITY_PATH\}`/);
+  });
+
+  it('the sign-in doors keep the two links a person accepts there — never the Data Terms, the list or the Security page (rulings 2026-11-19, 2026-11-21)', () => {
     for (const f of ['components/legal/LegalFootLinks.tsx', ...FOOT_DOORS.map(([file]) => file)]) {
-      assert.equal(/dataTermsHref|subprocessorsHref|DATA_TERMS_|SUBPROCESSORS_/.test(readCode(f)), false, f);
+      assert.equal(/dataTermsHref|subprocessorsHref|securityHref|DATA_TERMS_|SUBPROCESSORS_|SECURITY_LINK/.test(readCode(f)), false, f);
     }
   });
 

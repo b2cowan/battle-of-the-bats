@@ -1,0 +1,615 @@
+<title>Security Page Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a drawings sheet in the house layout — sticky numbered tabs, one decision per tab, true-size fixed frames of the
+   product on its own warm ground, set on a cool grey document ground so every frame reads as a specimen. */
+:root{
+  /* Document chrome (cool, theme-aware) */
+  --c-bg:#eceff3; --c-panel:#ffffff; --c-ink:#1b2230; --c-dim:#556070; --c-line:#d3d9e1; --c-accent:#2b59c3; --c-accent-ink:#ffffff; --c-soft:#e1e7f2;
+  /* The product's warm tokens (components/consumer/warmTheme.module.css .warmVars). The marketing site is always warm,
+     so these are the same in both themes of this sheet. */
+  --home-paper:#F8F4ED; --home-card:#FFFFFF; --home-ink:#241E15; --home-ink-soft:#4A4235; --home-dim:#615A54;
+  --home-line:rgba(70,55,30,.12); --home-line-strong:rgba(70,55,30,.20); --home-olive:#57651E; --home-fill:rgba(70,55,30,.08);
+  --home-lime:#C6F432; --home-lime-ink:#241E15; --home-radius:14px; --home-radius-sm:9px;
+  --home-shadow-sm:0 1px 2px rgba(70,55,30,.06);
+  --font-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --c-bg:#11151b; --c-panel:#1a2029; --c-ink:#e5e9ef; --c-dim:#9aa5b4; --c-line:#2c3440; --c-accent:#8eaefc; --c-accent-ink:#0d1320; --c-soft:#222b3a; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --c-bg:#11151b; --c-panel:#1a2029; --c-ink:#e5e9ef; --c-dim:#9aa5b4; --c-line:#2c3440; --c-accent:#8eaefc; --c-accent-ink:#0d1320; --c-soft:#222b3a; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--c-bg);color:var(--c-ink);font-family:var(--font-sans);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--c-panel)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{background:var(--c-panel);border-bottom:1px solid var(--c-line);padding-block:18px 14px}
+.top h1{font-family:var(--font-display);font-size:30px;line-height:1.1;margin:0 0 4px;text-wrap:balance}
+.top p{margin:0;color:var(--c-dim);max-width:90ch;font-size:14px}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--c-panel);border-bottom:1px solid var(--c-line)}
+.tabs .row{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:thin}
+.tabs button{flex:none;font:600 13.5px var(--font-sans);color:var(--c-dim);background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--c-ink);background:var(--c-soft);border-color:var(--c-line)}
+.tabs button:focus-visible,.seg button:focus-visible,.mk:focus-visible,.btn:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px}
+.viewrow{display:flex;align-items:center;gap:10px;padding-block:0 9px;font-size:13px;color:var(--c-dim)}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--c-line);border-radius:999px;padding:3px}
+.seg button{font:600 13px var(--font-sans);border:0;background:transparent;color:#4a5260;border-radius:999px;padding:5px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:rgba(87,101,30,.14);color:#3b4514}
+main{padding-block:22px 80px}
+.intro{max-width:78ch;margin:0 0 18px}
+.intro h2{font-family:var(--font-display);font-size:26px;line-height:1.1;margin:0 0 8px}
+.intro p{margin:0 0 8px}
+.intro .k{color:var(--c-dim);font-size:14px}
+.cap{font:600 12px var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--c-dim);margin:22px 0 8px}
+.cap b{color:var(--c-accent);font-weight:700}
+.scroller{overflow-x:auto;padding-bottom:8px;max-width:100%}
+.pair{display:flex;gap:28px;align-items:flex-start;width:max-content}
+.pair > div{flex:none}
+.note{background:var(--c-panel);border:1px solid var(--c-line);border-radius:10px;padding:14px 16px;max-width:78ch;margin:14px 0}
+.note p{margin:0 0 6px}.note p:last-child{margin:0}
+.note ul{margin:4px 0 0;padding-left:20px}
+.tag{display:inline-block;font:700 11px var(--font-sans);letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:2px 6px;margin-right:6px;vertical-align:1px}
+.tag.new{background:#dfe9ff;color:#1d3f8f}.tag.same{background:#e6e8ec;color:#3c4350}.tag.rest{background:#fbe8c8;color:#6b4300}
+table.chk{border-collapse:collapse;width:100%;max-width:1100px;font-size:13.5px;background:var(--c-panel);border:1px solid var(--c-line);border-radius:10px;overflow:hidden}
+table.chk th,table.chk td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--c-line)}
+table.chk th{font-size:12px;color:var(--c-dim);text-transform:uppercase;letter-spacing:.05em}
+table.chk td:first-child{font-variant-numeric:tabular-nums;font-weight:700;color:var(--c-accent)}
+table.chk td:nth-child(n+3){white-space:nowrap}
+
+/* Markers: every one opens its note */
+.mk{position:absolute;z-index:3;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:#2b59c3;color:#fff;font:700 12px/20px var(--font-sans);text-align:center;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.mkhost{position:relative}
+.mkhost > .mk{left:-42px;top:0}
+.ovl{position:relative}
+.ovl .mk{width:22px;height:22px;font-size:11px;line-height:18px}
+
+/* Show only what differs */
+.differs .same{opacity:.22}
+.differs .chg{outline:2px solid #2b59c3;outline-offset:4px;border-radius:4px}
+.slot{border:1.5px dashed #2b59c3;border-radius:8px;color:#2b59c3;font:600 13px var(--font-sans);padding:10px 12px;margin:0 0 14px;background:rgba(43,89,195,.04)}
+
+/* Frames */
+.flabel{font:600 12.5px var(--font-sans);color:var(--c-dim);margin:0 0 6px}
+.flabel b{color:var(--c-ink)}
+.frame{position:relative;border:1px solid var(--c-line);border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(20,30,50,.08);background:var(--home-paper)}
+.frame.ph{border-radius:26px}
+.fold{position:absolute;left:0;right:0;border-top:2px dashed #2b59c3;z-index:4;pointer-events:none}
+.fold span{position:absolute;right:8px;top:-22px;background:#2b59c3;color:#fff;font:600 11px var(--font-sans);padding:2px 7px;border-radius:5px}
+
+/* ============ THE SPECIMEN: the product's marketing ground, drawn from LegalPage, MarketingKit, Footer, Navbar ============ */
+.spx{font-family:var(--font-sans);font-size:16px;line-height:1.55;color:var(--home-ink-soft);background:var(--home-paper);position:relative}
+.spx *{box-sizing:border-box}
+.spx a{text-decoration:none}
+.sp-bar{position:absolute;top:0;left:0;right:0;height:64px;background:var(--home-paper);border-bottom:1px solid var(--home-line);z-index:2}
+.sp-barin{max-width:1200px;margin:0 auto;height:100%;padding:0 24px;display:flex;align-items:center;gap:28px}
+.lk{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:17px;color:var(--home-ink);letter-spacing:-.01em}
+.lk svg{width:22px;height:22px}
+.lk i{font-style:normal;color:var(--home-olive);font-weight:600}
+.sp-nav{display:flex;gap:22px;font-size:14px;color:var(--home-ink-soft);font-weight:500}
+.sp-barin .sp-signin{margin-left:auto;font-size:14px;font-weight:600;color:var(--home-ink)}
+.sp-btn{display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:10px;background:var(--home-lime);color:var(--home-lime-ink);font-weight:700;font-size:14px}
+.ph .sp-barin{gap:12px;padding:0 16px}.ph .sp-btn{height:36px;padding:0 12px;font-size:13.5px}
+.sp-wrap{padding:calc(64px + 72px) 0 56px}
+.ph .sp-wrap{padding:calc(64px + 36px) 0 36px}
+.sp-cont{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:flex-start;gap:64px}
+.sp-prose{width:100%;max-width:720px;min-width:0}
+.sp-head{margin:0 0 28px;padding-bottom:20px;border-bottom:1px solid var(--home-line)}
+.sp-eyebrow{font-size:12px;font-weight:600;line-height:1.3;letter-spacing:.06em;text-transform:uppercase;color:var(--home-olive);margin:0 0 10px}
+.sp-title{font-family:var(--font-display);font-weight:700;font-size:32px;line-height:1.1;color:var(--home-ink);margin:0 0 10px;text-wrap:balance;letter-spacing:normal}
+.sp-headline{font-family:var(--font-display);font-weight:700;font-size:64px;line-height:1.02;letter-spacing:-.005em;color:var(--home-ink);margin:0 0 18px;text-wrap:balance}
+.ph .sp-headline{font-size:40px}
+.sp-lead{font-size:16px;line-height:1.6;color:var(--home-ink-soft);margin:0 0 10px}
+.hl .sp-lead{max-width:60ch;margin-bottom:16px}
+.sp-asof{font-size:14px;line-height:1.5;color:var(--home-dim);margin:0}
+.sp-text h2{font-family:var(--font-sans);letter-spacing:normal;font-size:20px;font-weight:700;line-height:1.3;color:var(--home-ink);margin:40px 0 12px}
+.sp-text > section:first-child h2{margin-top:0}
+.sp-text p,.sp-text li{font-size:16px;line-height:1.6;color:var(--home-ink-soft)}
+.sp-text p{margin:0 0 14px}
+.sp-text ul{margin:0 0 14px;padding-left:22px}
+.sp-text li{margin-bottom:6px}
+.sp-text li::marker{color:var(--home-olive)}
+.sp-text strong{color:var(--home-ink);font-weight:600}
+.sp-text a{color:var(--home-olive);font-weight:600}
+.sp-sa{background:var(--home-card);border:1px solid var(--home-line);border-radius:var(--home-radius);box-shadow:var(--home-shadow-sm);margin:0 0 14px}
+.sp-sa p{margin:0;padding:16px 20px}
+.sp-sa p + p{border-top:1px solid var(--home-line)}
+.sp-fig{margin:4px 0 18px}
+.sp-panel{background:var(--home-card);border-radius:var(--home-radius);padding:20px}
+.ph .sp-panel{padding:16px}
+.sp-panel svg{display:block}
+.sp-fig figcaption{font-size:14px;line-height:1.5;color:var(--home-dim);margin-top:10px}
+.sp-note{font-size:14px !important;line-height:1.5 !important;color:var(--home-dim) !important}
+.sp-text table{width:100%;border-collapse:collapse;margin:4px 0 14px}
+.sp-text th{text-align:left;vertical-align:bottom;padding:0 14px 10px 0;border-bottom:1px solid var(--home-line-strong);font-size:12px;font-weight:600;line-height:1.3;letter-spacing:.06em;text-transform:uppercase;color:var(--home-dim)}
+.sp-text td{vertical-align:top;padding:12px 14px 12px 0;border-bottom:1px solid var(--home-line);font-size:14px;line-height:1.5;color:var(--home-ink-soft)}
+.sp-text td:first-child{color:var(--home-ink);font-weight:600}
+.sp-text td:last-child,.sp-text th:last-child{padding-right:0}
+/* Below 640px the shipped legal rule: each row a labelled card (data-label). `.keep` = the recommended exception. */
+.ph .sp-text table:not(.keep),.ph .sp-text table:not(.keep) tbody,.ph .sp-text table:not(.keep) tr,.ph .sp-text table:not(.keep) td{display:block;width:100%}
+.ph .sp-text table:not(.keep) thead{display:none}
+.ph .sp-text table:not(.keep) tr{margin-bottom:10px;padding:16px;background:var(--home-card);border:1px solid var(--home-line);border-radius:var(--home-radius)}
+.ph .sp-text table:not(.keep) td{padding:0;border:0}
+.ph .sp-text table:not(.keep) td + td{margin-top:10px}
+.ph .sp-text table:not(.keep) td::before{content:attr(data-label);display:block;font-size:12px;font-weight:600;color:var(--home-dim)}
+.ph .sp-text table.keep td:first-child{width:34%}
+.sp-read{list-style:none;padding:0 !important}
+.sp-read li{margin:0}
+.sp-read a{display:inline-flex;align-items:center;min-height:44px}
+.sp-rail{width:240px;flex:none}
+.sp-railcap{margin:0 0 10px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--home-dim)}
+.sp-rail ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--home-line)}
+.sp-rail a{display:block;padding:4px 0 4px 12px;margin-left:-1px;border-left:2px solid transparent;font-size:14px;line-height:1.35;color:var(--home-ink-soft)}
+.sp-rail li:first-child a{border-left-color:var(--home-olive);color:var(--home-ink)}
+/* Footer (components/Footer.tsx + Footer.module.css) */
+.sp-foot{border-top:1px solid var(--home-line);background:var(--home-paper);margin-top:0;color:var(--home-ink-soft)}
+.sp-footin{max-width:1152px;margin:0 auto;padding:48px 24px 28px}
+.sp-fgrid{display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr auto;gap:32px;margin-bottom:32px}
+.sp-blurb{font-size:14px;line-height:1.5;color:var(--home-dim);margin:10px 0 0;max-width:30ch}
+.sp-colhead{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--home-dim);margin:0 0 10px}
+.sp-fl{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px}
+.sp-fl a{color:var(--home-ink-soft)}
+.sp-qr{width:96px;height:96px;border-radius:8px;background:repeating-conic-gradient(var(--home-ink) 0 25%,var(--home-card) 0 50%) 0 0/12px 12px;border:6px solid var(--home-card);outline:1px solid var(--home-line)}
+.sp-base{border-top:1px solid var(--home-line);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 24px}
+.sp-copy{font-size:12px;color:var(--home-dim)}
+.sp-legal{display:flex;flex-wrap:wrap;gap:0 20px}
+.sp-legal a{font-size:12px;color:var(--home-ink-soft)}
+.ph .sp-fgrid{grid-template-columns:1fr 1fr;gap:24px}
+.ph .sp-fgrid .bc{grid-column:1/-1}
+.ph .sp-fgrid .qc{display:none}
+.ph .sp-base{flex-direction:column;align-items:flex-start;gap:4px}
+.ph .sp-legal{flex-direction:column;gap:0}
+.ph .sp-legal a{display:inline-flex;align-items:center;min-height:44px}
+.sp-bnav{position:absolute;left:0;right:0;height:58px;background:var(--home-card);border-top:1px solid var(--home-line);display:flex;justify-content:space-around;align-items:center;font-size:12px;font-weight:600;color:var(--home-ink-soft);z-index:3}
+/* FAQ card (components/marketing/Faq.module.css) */
+.fq{background:var(--home-card);border:1px solid var(--home-line);border-radius:var(--home-radius);overflow:hidden}
+.fq .q{display:flex;gap:12px;padding:16px 20px;font-size:16px;font-weight:700;line-height:1.4;color:var(--home-ink)}
+.fq .q::after{content:"\2212";margin-left:auto;font-size:20px;line-height:1.2;color:var(--home-dim)}
+.fq .a{padding:0 20px 20px;max-width:72ch;color:var(--home-ink-soft);line-height:1.7;font-size:14px;margin:0}
+.fq .a a{display:flex;align-items:center;width:fit-content;min-height:44px;color:var(--home-olive);font-weight:600}
+.fq .other{border-top:1px solid var(--home-line);padding:16px 20px;font-weight:700;color:var(--home-ink);display:flex}
+.fq .other::after{content:"+";margin-left:auto;color:var(--home-dim);font-size:20px;line-height:1.2}
+
+/* The diagram (inline SVG; real text, true size) */
+.dg-box{fill:var(--home-paper);stroke:var(--home-dim);stroke-width:1.5}
+.dg-core{fill:var(--home-paper);stroke:var(--home-ink);stroke-width:2.25}
+.dg-ln{stroke:var(--home-dim);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.dg-dash{stroke-dasharray:5 5}
+.dg-head{fill:var(--home-dim)}
+.dg text{font-family:var(--font-sans)}
+.dg .h{font-size:14px;font-weight:600;fill:var(--home-ink)}
+.dg .m{font-size:13px;fill:var(--home-dim)}
+.dg .l{font-size:12.5px;font-weight:500;fill:var(--home-ink-soft)}
+.dgP .h{font-size:15px}.dgP .m{font-size:13.5px}.dgP .l{font-size:13.5px}
+
+/* Print sheet */
+.sheet{width:816px;height:1056px;background:#fff;box-shadow:0 2px 12px rgba(20,30,50,.15);padding:58px;position:relative;overflow:hidden}
+.sheet .spx{background:#fff}
+.sheet .sp-sa{box-shadow:none}
+.sheet .sp-panel{padding:10px;border:1px solid var(--home-line)}
+.sheet .pgno{position:absolute;bottom:22px;left:58px;right:58px;display:flex;justify-content:space-between;font:11px var(--font-sans);color:#777}
+/* Share card */
+.unf{width:500px;background:var(--c-panel);border:1px solid var(--c-line);border-left:4px solid #c9ced6;border-radius:8px;padding:12px 14px}
+.unf .dom{font-size:12.5px;color:var(--c-dim);margin:0 0 2px}
+.unf .tt{font-weight:700;color:var(--c-accent);margin:0 0 4px;font-size:15px}
+.unf .ds{font-size:14px;margin:0 0 10px;color:var(--c-ink)}
+.card{width:1200px;height:630px;background:var(--home-paper);color:var(--home-ink);padding:72px 80px;position:relative;font-family:var(--font-sans);transform:scale(.39);transform-origin:0 0}
+.cardbox{width:468px;height:246px;overflow:hidden;border-radius:8px;border:1px solid var(--c-line)}
+.card .nm{display:flex;align-items:center;gap:14px;font-size:34px;font-weight:700;letter-spacing:-.6px}
+.card .nm i{font-style:normal;color:var(--home-olive);font-weight:500}
+.card .big{margin-top:96px;font-family:var(--font-display);font-size:124px;font-weight:700;line-height:1}
+.card .big span{display:block}.card .big span + span{color:var(--home-olive)}
+.card .tile{position:absolute;right:80px;bottom:72px;width:176px;height:176px;border-radius:36px;background:var(--home-olive);display:flex;align-items:center;justify-content:center}
+/* Asks */
+.ask{background:var(--c-panel);border:1px solid var(--c-line);border-radius:12px;padding:16px 18px;margin:0 0 14px;max-width:900px}
+.ask h3{margin:0 0 6px;font-size:16.5px;line-height:1.35}
+.ask h3 .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:#2b59c3;color:#fff;text-align:center;font:700 13px/26px var(--font-sans);margin-right:8px}
+.ask .chg{outline:0}
+.ask p{margin:0 0 8px;max-width:80ch}
+.ask .rank{font-size:12.5px;color:var(--c-dim);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.opts{display:grid;gap:6px;margin:8px 0 6px}
+.opts label{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--c-line);border-radius:8px;cursor:pointer;font-size:14px}
+.opts input{margin-top:3px}
+.opts .rec{font-weight:700;color:var(--c-accent)}
+.paste{background:var(--c-panel);border:2px solid var(--c-accent);border-radius:12px;padding:16px;max-width:900px}
+.paste pre{white-space:pre-wrap;font:13.5px/1.5 ui-monospace,Consolas,monospace;background:var(--c-bg);border:1px solid var(--c-line);border-radius:8px;padding:12px;margin:8px 0;user-select:all}
+.paste textarea{width:100%;min-height:70px;font:14px var(--font-sans);border:1px solid var(--c-line);border-radius:8px;padding:8px;background:var(--c-panel);color:var(--c-ink)}
+.btn{font:600 14px var(--font-sans);background:var(--c-accent);color:var(--c-accent-ink);border:0;border-radius:8px;padding:9px 14px;cursor:pointer}
+dialog{border:1px solid var(--c-line);border-radius:12px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--c-panel);color:var(--c-ink);box-shadow:0 10px 40px rgba(0,0,0,.3)}
+dialog .dh{padding:14px 16px 0;font-weight:700;font-size:16px}
+dialog .db{padding:8px 16px 4px;font-size:14.5px}
+dialog .db p{margin:0 0 8px}
+dialog .df{display:flex;gap:8px;justify-content:flex-end;padding:10px 16px 14px}
+dialog .ghost{background:transparent;color:var(--c-ink);border:1px solid var(--c-line)}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0.5 L10,5 L0,9.5 z" fill="#615A54"/></marker>
+  </defs>
+</svg>
+
+<div class="top gut">
+  <h1>The public Security page: the drawing</h1>
+  <p>Board Ready §0c, Security page step S2. The page at fieldlogichq.ca/security, drawn on the marketing site's own kit at true size, from the words S1 locked (v0.4). Nothing here changes a sentence, a table cell or a diagram label. Drawn 2026-11-21. <strong>Ruled 2026-11-21: all eleven asks as recommended.</strong></p>
+</div>
+<nav class="tabs gut" aria-label="Sections">
+  <div class="row" role="tablist" id="tabrow"></div>
+  <div class="viewrow" id="viewrow" hidden>View
+    <span class="seg" role="group" aria-label="View">
+      <button type="button" id="v-all" aria-pressed="true">Everything</button>
+      <button type="button" id="v-diff" aria-pressed="false">Show only what differs</button>
+    </span>
+  </div>
+</nav>
+<main class="gut" id="main"></main>
+
+<dialog id="dlg"><div class="dh" id="dlg-h"></div><div class="db" id="dlg-b"></div><div class="df"><button type="button" class="btn ghost" id="dlg-x">Close</button><button type="button" class="btn" id="dlg-go">Read the ask</button></div></dialog>
+
+<script>
+(function(){
+/* ---------------- The locked words (docs/agents/legal/drafts/SECURITY_BRIEF.md v0.4) ---------------- */
+var T = {
+  title: "How FieldLogicHQ protects your club's information",
+  lead: "Two questions come first: does our information leak, and is it sold? This page answers both. It says exactly where your club's information is kept, who can see it, and which checks we run ourselves.",
+  asof: "This page describes how FieldLogicHQ works as of November 21, 2026.",
+  never: "FieldLogicHQ never shows a player's name, date of birth or roster on a public page. Your club decides what it publishes: schedules, standings, team names, and the names of coaches who choose to show theirs. A link we email to a family shows only that family's own sign-up.",
+  certNote: "These are each company's own certifications, as each states them, not ours. FieldLogicHQ has no certification or independent audit of its own.",
+  w2: "Six companies help us run FieldLogicHQ. <a href='#'>Our public list</a> names each one, what it receives, where, and links its own security pages.",
+  w9: "Before a new company starts handling your club's information, we email your club's owners at least 30 days ahead. <a href='#'>The Data Terms</a> say what happens if one must be replaced urgently.",
+  cross: "Canadian privacy law lets an organization use service providers outside Canada. We stay responsible for your information while they handle it, and each company that stores or sends your club's information is bound by data-processing terms with us. While information is in the United States, that country's courts and authorities can sometimes obtain it.",
+  rolesIntro: "Each person at your club gets a role. These are the defaults, and your club's owner can widen or narrow each person's access.",
+  clubSees: "<strong>What the club sees of a team.</strong> The club sees each of its teams' roster, schedule, results and cash on hand. A coach's lineups and private notes stay with the coach.",
+  staff: "<strong>Our own staff.</strong> Our support staff can open your club's records only to help when you ask, investigate a problem, or keep the service running. Our support tools log each club and person record our staff open, and keep a permanent record of every change they make. We have no way to sign in as one of your people.",
+  checksIntro: "We have not commissioned an independent penetration test. These are the checks we run ourselves:"
+};
+var SA = [
+  "<strong>We never sell your club's information, use it to advertise, or share it with advertisers.</strong> We don't use advertising trackers, third-party analytics or an outside error-monitoring service, and your club's information is never given to an AI service.",
+  "<strong>It is stored in the United States (Ohio)</strong>, with our database host, Supabase, on Amazon Web Services.",
+  "<strong>Your people see only what their role allows</strong>, and our server checks that on every request."
+];
+var H = { short:"The short answer", never:"What's never on a public page", lives:"Where your information lives", handles:"Who handles it", roles:"Who can see what", protect:"How it is protected", backups:"Backups, and if something goes wrong", yours:"Your information stays yours", checks:"The checks we run ourselves", questions:"Questions", readmore:"Read more" };
+var ORDER = ["short","never","lives","handles","roles","protect","backups","yours","checks","questions","readmore"];
+var HCOLS = ["Company","What it does for us","What it receives","Where","Its certifications"];
+var HROWS = [
+  ["Supabase","Our database, sign-in and file storage","Everything your club keeps in FieldLogicHQ","United States (Ohio)","SOC 2 Type 2, ISO 27001"],
+  ["Amazon Web Services","Runs our website and its server","Every page and form passes through it","United States (Ohio)","SOC 2, ISO 27001, for the hosting service we use"],
+  ["Resend","Sends every email FieldLogicHQ sends","The name and address of each person emailed, and the message","United States","SOC 2 Type 2"],
+  ["Stripe","Card payments","The payer's details and what is being paid for. Card numbers go to Stripe, never to us","Canada, the United States and other countries","PCI Service Provider Level 1, SOC 2 Type 2"],
+  ["ImprovMX and Google (Gmail)","Deliver email that people send to our own addresses","Only what people write to us","France (until delivered), the United States","None stated"]
+];
+var RROWS = [
+  ["Owner","Everything, including billing and the club's settings"],
+  ["Admin","Every program on your plan, except billing, settings and the Families area unless the owner grants it"],
+  ["Treasurer","The club's books and its member list"],
+  ["League admin","The house league and the member list"],
+  ["League registrar","The house league"],
+  ["Staff","Game-day help: schedule updates, scores, check-in and announcements"],
+  ["Volunteer","Scores and check-in, as a scorekeeper or at the gate"],
+  ["Coach","Their own team in the Coaches Portal, and nothing club-wide"]
+];
+var PROTECT = [
+  "<strong>Signing in.</strong> Passwords are kept by our sign-in service, Supabase, only in scrambled form. FieldLogicHQ never sees or stores them. Two-step sign-in is available to everyone, and your club can require it for its board and coaches; FieldLogicHQ staff always use it.",
+  "<strong>Checked on our server.</strong> On every request our server checks who the person is, that they belong to your club, and what their role allows. This is enforced on our server, not in the browser.",
+  "<strong>Encryption.</strong> Information is encrypted in transit, and our database host encrypts everything it stores (AES-256).",
+  "<strong>Player documents</strong> are stored privately and open only through links that expire after one hour.",
+  "<strong>Card numbers and bank details never reach us.</strong> When you pay for FieldLogicHQ, you pay on Stripe's own page. Stripe states it is certified PCI Service Provider Level 1. Families can't pay online through FieldLogicHQ yet; when your club turns that on, they will pay on Stripe's page into your club's own Stripe account.",
+  "<strong>Phone alerts</strong> are sealed so that only the receiving device can read them."
+];
+var BK1 = "<strong>Our database is backed up daily, and each backup is kept 7 days.</strong> We rehearsed a restore from a backup on November 18, 2026.";
+var BK2 = "<strong>Uploaded files are not in those backups.</strong> Player documents, logos and rules files are kept separately, with the same host in the same place, and we keep no backup copy of them. A file that is deleted or replaced can't be brought back, so keep your own copy of any document you can't do without. It also means a deleted file doesn't linger in a backup of ours.";
+var BK3A = "<strong>If something goes wrong</strong> with your club's information, we follow a written breach procedure: we contain it, tell your club's owners straight away with what we know, help you tell your families, and fix what caused it.";
+var BK3B = "<strong>If something goes wrong</strong> with your club's information, we follow a written breach procedure: we contain it, tell your club's owners straight away, and within 72 hours of confirming it touches your information, with what we know, help you tell your families, and fix what caused it.";
+var Y1 = "You can download your records from the lists that offer it, such as members, registrations, payments and your books, in Excel, CSV or PDF.";
+var YFULL = "Your club's owner can ask us for a full copy of your club's information, and we will put it together for you.";
+var YFULLB = "Your club's owner can ask us in writing for a full copy of your club's information, and we will put it together for you within 30 days.";
+var Y3 = "Your club's owner can ask us to delete your club's information.";
+var Y4 = "There is no long contract. A cancelled plan ends at its renewal date, and nothing more is charged.";
+var CHECKS = [
+  "<strong>Reviews of who can see and change what in every club</strong>: two in October 2026 and one on November 10, 2026. The November review found nothing that lets one club see another club's people. Its serious and medium findings are fixed in the live product.",
+  "<strong>A rehearsed restore</strong> from backup, on November 18, 2026."
+];
+var READ_A = [["Terms of Service","fieldlogichq.ca/legal/terms"],["Privacy Policy","fieldlogichq.ca/legal/privacy"]];
+var READ_B = READ_A.concat([["Data Terms","fieldlogichq.ca/legal/data-terms"],["Companies that handle your information","fieldlogichq.ca/legal/subprocessors"]]);
+var ALT = "Where a club's information lives. People sign in from a phone or computer and connect over an encrypted link to the FieldLogicHQ app, run on Amazon Web Services in Ohio. The app checks every request before it reads the database, sign-in and file storage, run by Supabase on Amazon Web Services in Ohio. From the app, email goes out through Resend, payments are handed off to Stripe's own page, and phone alerts go through the browser's push service, sealed for the receiving device.";
+var CAP = "Where a club's information lives and who it passes through. Nothing goes to advertisers or analytics companies, and your club's information is never given to an AI service. Families can't pay online through FieldLogicHQ yet.";
+var MARK = "M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z";
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
+function tx(x,y,c,s,a){return '<text class="'+c+'" x="'+x+'" y="'+y+'" text-anchor="'+(a||"middle")+'">'+esc(s)+'</text>';}
+
+/* ---------------- The diagram, desktop form: 680 wide, drawn 1:1 inside a 720 panel (20 padding) ---------------- */
+function diagD(){
+  var s='<svg class="dg dgD" viewBox="0 0 680 492" width="680" height="492" role="img" aria-label="'+esc(ALT)+'">';
+  s+='<path class="dg-ln dg-dash" d="M90,62 C90,14 590,14 590,60" marker-end="url(#ah)"/>'+tx(340,16,"l","sign-in and live score updates");
+  s+='<rect class="dg-box" x="1" y="64" width="178" height="110" rx="9"/>'+tx(90,92,"h","Board, coaches, families")+tx(90,114,"m","a phone or a computer")+tx(90,133,"m","two-step sign-in")+tx(90,151,"m","for every account");
+  s+='<rect class="dg-core" x="252" y="64" width="176" height="110" rx="9"/>'+tx(340,102,"h","FieldLogicHQ app")+tx(340,124,"m","Amazon Web Services")+tx(340,143,"m","Ohio, United States");
+  s+='<rect class="dg-box" x="501" y="64" width="178" height="110" rx="9"/>'+tx(590,102,"h","Database, sign-in, files")+tx(590,124,"m","Supabase on AWS")+tx(590,143,"m","Ohio, United States");
+  s+='<line class="dg-ln" x1="182" y1="119" x2="249" y2="119" marker-end="url(#ah)"/>'+tx(215.5,109,"l","encrypted");
+  s+='<line class="dg-ln" x1="431" y1="119" x2="498" y2="119" marker-end="url(#ah)"/>'+tx(464.5,109,"l","checked");
+  s+=tx(340,200,"m","Every request: signed in,")+tx(340,218,"m","second step where on, belongs")+tx(340,236,"m","to this club, allowed for this role");
+  s+=tx(590,200,"m","Encrypted at rest by the host")+tx(590,224,"m","Database backed up daily,")+tx(590,242,"m","kept 7 days")+tx(590,266,"m","Player documents open")+tx(590,284,"m","by 1-hour links");
+  s+='<path class="dg-ln" d="M340,252 L106,361" marker-end="url(#ah)"/><path class="dg-ln" d="M340,252 L340,361" marker-end="url(#ah)"/><path class="dg-ln" d="M340,252 L574,361" marker-end="url(#ah)"/>';
+  s+=tx(208,316,"l","sends email","end")+tx(348,344,"l","hands off checkout","start")+tx(488,316,"l","sends an alert","start");
+  s+='<rect class="dg-box" x="1" y="364" width="209" height="124" rx="9"/>'+tx(105.5,392,"h","Email delivery")+tx(105.5,414,"m","Resend, United States")+tx(105.5,437,"m","Receives: names, addresses,")+tx(105.5,455,"m","the message itself");
+  s+='<rect class="dg-box" x="235" y="364" width="210" height="124" rx="9"/>'+tx(340,392,"h","Payments")+tx(340,414,"m","Stripe")+tx(340,437,"m","Card numbers are typed on")+tx(340,455,"m","Stripe's own page and")+tx(340,473,"m","never reach us");
+  s+='<rect class="dg-box" x="470" y="364" width="209" height="124" rx="9"/>'+tx(574.5,392,"h","Phone alerts")+tx(574.5,414,"m","the browser's own push service")+tx(574.5,437,"m","Receives: a device address,")+tx(574.5,455,"m","and the alert, sealed")+tx(574.5,473,"m","for that device");
+  return s+'</svg>';
+}
+/* ---------------- The diagram, phone form: 310 wide, 1:1 inside a 342 panel (16 padding) at 390 ---------------- */
+function diagP(){
+  var s='<svg class="dg dgP" viewBox="0 0 310 966" width="310" height="966" role="img" aria-label="'+esc(ALT)+'">';
+  s+='<rect class="dg-box" x="20" y="1" width="270" height="91" rx="9"/>'+tx(155,28,"h","Board, coaches, families")+tx(155,50,"m","a phone or a computer")+tx(155,70,"m","two-step sign-in for every account");
+  s+='<path class="dg-ln dg-dash" d="M291,46 H304 V418 H293" marker-end="url(#ah)"/>'+tx(298,118,"l","sign-in and live","end")+tx(298,136,"l","score updates","end");
+  s+='<line class="dg-ln" x1="155" y1="94" x2="155" y2="154" marker-end="url(#ah)"/>'+tx(145,128,"l","encrypted","end");
+  s+='<rect class="dg-core" x="20" y="156" width="270" height="92" rx="9"/>'+tx(155,183,"h","FieldLogicHQ app")+tx(155,205,"m","Amazon Web Services")+tx(155,225,"m","Ohio, United States");
+  s+=tx(155,272,"m","Every request: signed in, second step")+tx(155,290,"m","where on, belongs to this club,")+tx(155,308,"m","allowed for this role");
+  s+='<line class="dg-ln" x1="155" y1="318" x2="155" y2="370" marker-end="url(#ah)"/>'+tx(145,349,"l","checked","end");
+  s+='<rect class="dg-box" x="20" y="372" width="270" height="92" rx="9"/>'+tx(155,399,"h","Database, sign-in, files")+tx(155,421,"m","Supabase on AWS")+tx(155,441,"m","Ohio, United States");
+  s+=tx(155,488,"m","Encrypted at rest by the host")+tx(155,506,"m","Database backed up daily, kept 7 days")+tx(155,524,"m","Player documents open by 1-hour links");
+  s+='<path class="dg-ln" d="M19,202 H6 V910 H18" marker-end="url(#ah)"/><path class="dg-ln" d="M6,623 H18" marker-end="url(#ah)"/><path class="dg-ln" d="M6,766 H18" marker-end="url(#ah)"/>';
+  s+=tx(24,561,"l","sends email","start");
+  s+='<rect class="dg-box" x="20" y="572" width="270" height="102" rx="9"/>'+tx(155,599,"h","Email delivery")+tx(155,621,"m","Resend, United States")+tx(155,641,"m","Receives: names, addresses,")+tx(155,659,"m","the message itself");
+  s+=tx(24,703,"l","hands off checkout","start");
+  s+='<rect class="dg-box" x="20" y="714" width="270" height="104" rx="9"/>'+tx(155,741,"h","Payments")+tx(155,763,"m","Stripe")+tx(155,783,"m","Card numbers are typed on Stripe's")+tx(155,801,"m","own page and never reach us");
+  s+=tx(24,847,"l","sends an alert","start");
+  s+='<rect class="dg-box" x="20" y="858" width="270" height="104" rx="9"/>'+tx(155,885,"h","Phone alerts")+tx(155,907,"m","the browser's own push service")+tx(155,927,"m","Receives: a device address, and")+tx(155,945,"m","the alert, sealed for that device");
+  return s+'</svg>';
+}
+function lockup(){return '<span class="lk"><svg viewBox="10 10 44 44" aria-hidden="true"><path d="'+MARK+'" fill="#57651E"/></svg><span>FieldLogic<i>HQ</i></span></span>';}
+
+/* ---------------- The page body (LegalPage's prose column). o: options ---------------- */
+function page(o){
+  o=Object.assign({phone:false,state:"A",fullcopy:false,markers:false,print:false,head:"legal",only:null,cmp:false,rolesTable:true},o);
+  var B=o.state==="B";
+  function c(ch){return o.cmp?(ch?" chg":" same"):"";}
+  function mk(n){return o.markers?'<button type="button" class="mk" data-m="'+n+'" aria-label="Note '+n+'">'+n+'</button>':"";}
+  function want(k){return !o.only||o.only.indexOf(k)>=0;}
+  function ul(items){return "<ul>"+items.map(function(i){return "<li"+(i.c?' class="'+i.c.trim()+'"':"")+">"+i.t+"</li>";}).join("")+"</ul>";}
+  var out="";
+  if(want("head")){
+    var hl=o.head==="headline";
+    out+='<header class="sp-head mkhost'+(hl?" hl":"")+'">'+mk(1)+'<p class="sp-eyebrow">Security</p><h1 class="'+(hl?"sp-headline":"sp-title")+'">'+T.title+'</h1><p class="sp-lead">'+T.lead+'</p><p class="sp-asof mkhost">'+mk(5)+T.asof+'</p></header>';
+  }
+  var secs="";
+  function sec(k,inner,m){ if(!want(k)) return; secs+='<section class="mkhost'+(o.cmp?"":"")+'" data-k="'+k+'">'+(m?mk(m):"")+'<h2'+(o.cmp?' class="same"':"")+'>'+H[k]+'</h2>'+inner+'</section>'; }
+  sec("short",'<div class="sp-sa">'+SA.map(function(s){return "<p>"+s+"</p>";}).join("")+'</div>',3);
+  sec("never","<p>"+T.never+"</p>");
+  sec("lives",'<figure class="sp-fig"><div class="sp-panel">'+(o.phone?diagP():diagD())+'</div><figcaption>'+CAP+'</figcaption></figure>',2);
+  var ht='<div class="mkhost'+c(false)+'">'+mk(4)+'<table><thead><tr>'+HCOLS.map(function(h){return "<th>"+h+"</th>";}).join("")+'</tr></thead><tbody>'+HROWS.map(function(r){return "<tr>"+r.map(function(v,i){return '<td data-label="'+HCOLS[i]+'">'+v+'</td>';}).join("")+"</tr>";}).join("")+'</tbody></table></div>';
+  var held = B ? '<p class="'+c(true).trim()+'">'+T.w2+'</p><p class="'+c(true).trim()+'">'+T.w9+'</p>' : (o.cmp?'<div class="slot chg">Version A: the two held lines are not on the page.</div>':"");
+  sec("handles", ht+'<p class="sp-note mkhost'+c(false)+'">'+mk(6)+T.certNote+'</p>'+held+'<p class="'+c(false).trim()+'">'+T.cross+'</p>');
+  var rt='<table class="'+(o.rolesTable?"keep":"")+'"><thead><tr><th>Role</th><th>Can open</th></tr></thead><tbody>'+RROWS.map(function(r){return '<tr><td data-label="Role">'+r[0]+'</td><td data-label="Can open">'+r[1]+'</td></tr>';}).join("")+'</tbody></table>';
+  sec("roles","<p>"+T.rolesIntro+"</p>"+rt+"<p>"+T.clubSees+"</p><p>"+T.staff+"</p>");
+  sec("protect",ul(PROTECT.map(function(t){return {t:t};})));
+  sec("backups",ul([{t:BK1,c:c(false)},{t:BK2,c:c(false)},{t:B?BK3B:BK3A,c:c(true)}]));
+  var yi=[{t:Y1,c:c(false)}];
+  if(B) yi.push({t:YFULLB,c:c(true)}); else if(o.fullcopy) yi.push({t:YFULL,c:c(true)});
+  yi.push({t:Y3,c:c(false)},{t:Y4,c:c(false)});
+  var yslot=(o.cmp&&!B&&!o.fullcopy)?'<div class="slot chg">Version A: no full-copy line (its page condition is not met).</div>':"";
+  sec("yours",ul(yi)+yslot);
+  sec("checks","<p>"+T.checksIntro+"</p>"+ul(CHECKS.map(function(t){return {t:t};})));
+  sec("questions",'<p>Write to our privacy contact: <a href="#">privacy@fieldlogichq.ca</a></p>',11);
+  var rl=B?READ_B:READ_A;
+  sec("readmore",'<ul class="sp-read'+c(true)+'">'+rl.map(function(l){return '<li><a href="#">'+l[0]+'</a>'+(o.print?' <span style="color:#615A54;font-weight:400;font-size:14px">('+l[1]+')</span>':"")+'</li>';}).join("")+'</ul>');
+  return out+'<div class="sp-text">'+secs+'</div>';
+}
+function rail(){return '<nav class="sp-rail" aria-label="Contents"><p class="sp-railcap">Contents</p><ol>'+ORDER.map(function(k){return '<li><a href="#">'+H[k]+'</a></li>';}).join("")+'</ol></nav>';}
+function bar(phone){
+  if(phone) return '<div class="sp-bar"><div class="sp-barin">'+lockup()+'<span class="sp-signin" style="margin-left:auto;font-size:14px;font-weight:600;color:#241E15">Sign in</span><span class="sp-btn">Get started</span></div></div>';
+  return '<div class="sp-bar"><div class="sp-barin">'+lockup()+'<span class="sp-nav"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></span><span class="sp-signin">Sign in</span><span class="sp-btn">Get started</span></div></div>';
+}
+function legalLinks(state,withSec,markers){
+  var l=(withSec?['<span class="mkhost" style="display:inline-flex">'+(markers?'<button type="button" class="mk" data-m="7" aria-label="Note 7" style="left:auto;right:-30px;top:-6px">7</button>':"")+'<a href="#">Security</a></span>']:[]).concat(['<a href="#">Terms of Service</a>','<a href="#">Privacy Policy</a>']);
+  if(state==="B") l=l.concat(['<a href="#">Data Terms</a>','<a href="#">Companies that handle your information</a>']);
+  return '<div class="sp-legal">'+l.join("")+'</div>';
+}
+function footer(phone,state,markers,withSec){
+  if(withSec===undefined) withSec=true;
+  return '<footer class="sp-foot"><div class="sp-footin"><div class="sp-fgrid"><div class="bc">'+lockup()+'<p class="sp-blurb">From first registration to final standings — built for the people running community sport.</p></div>'+
+   '<div><p class="sp-colhead">Product</p><ul class="sp-fl"><li><a href="#">Discover</a></li><li><a href="#">Pricing</a></li><li><a href="#">What’s new</a></li></ul></div>'+
+   '<div><p class="sp-colhead">Built for</p><ul class="sp-fl"><li><a href="#">Tournaments</a></li><li><a href="#">House leagues</a></li><li><a href="#">Clubs</a></li><li><a href="#">Coaches</a></li></ul></div>'+
+   '<div><p class="sp-colhead">Account</p><ul class="sp-fl"><li><a href="#">Get started</a></li><li><a href="#">Sign in</a></li></ul></div>'+
+   '<div class="qc"><div class="sp-qr"></div></div></div>'+
+   '<div class="sp-base"><div class="sp-copy">© 2026 FieldLogicHQ. All rights reserved.</div>'+legalLinks(state,withSec,markers)+'</div></div></footer>';
+}
+function deskFrame(o){
+  o=o||{};
+  return '<div class="frame" style="width:1280px"><div class="spx">'+bar(false)+'<div class="sp-wrap"><div class="sp-cont"><article class="sp-prose">'+page(o)+'</article>'+rail()+'</div></div>'+footer(false,o.state||"A",o.markers)+'</div>'+(o.fold?'<div class="fold" style="top:720px"><span>First screen of a 1280 × 800 laptop (about 720px after the browser’s bars)</span></div>':"")+'</div>';
+}
+function phoneFrame(o){
+  o=o||{};
+  return '<div class="frame ph" style="width:390px"><div class="spx ph">'+bar(true)+'<div class="sp-wrap"><div class="sp-cont"><article class="sp-prose">'+page(Object.assign({phone:true},o))+'</article></div></div>'+footer(true,o.state||"A",false)+'</div>'+
+    (o.fold?'<div class="sp-bnav" style="top:682px"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></div><div class="fold" style="top:740px"><span>First screen, about 740px</span></div>':"")+'</div>';
+}
+
+/* ---------------- Notes behind the numbered markers ---------------- */
+var NOTES={
+ 1:["The head: the legal pages' document head","Eyebrow “Security”, the title on the section-heading step (the size the Terms and Privacy titles use), S1’s opening paragraph, the “as of” line, then a hairline. No 64px marketing headline and no hero air: the legal pages were ruled “read and quoted, not sold” (2026-11-09), and this page’s own rule is “answer, not sell”. The site’s bar and footer are unchanged, as on the legal pages.",1],
+ 2:["The diagram, redrawn for the page","The same boxes, arrows and words as the checked drawing, laid out for a 720px column and drawn at true size: 14px names, 13px detail, nothing under 12px. A white panel on the paper ground, no outline; paper-coloured boxes; the app has the one heavy edge. Below 768px the page switches to the stacked phone form (tab 4).",2],
+ 3:["The short answer: one white card","The three bullets as one card of three rows divided by hairlines: the first thing under the head, and the only card on the page. Every other list is plain. On a 1280 × 800 laptop the whole card is inside the first screen, so a screenshot of the top carries all three answers. On a phone the first answer is on the first screen and the other two at the first swipe.",3],
+ 4:["The supplier table","Five columns in the 720 column on a wide screen. Below 640px each company becomes a labelled card (the legal pages’ shipped rule), with “Its certifications” as the card’s last line and the “not ours” sentence directly under the last card (tab 5).",4],
+ 5:["The “as of” line moves to the head","S1 put it at the foot. Drawn here in the slot the legal pages give their “Effective {date}” line: under the opening, where a board member checks how current the page is before reading on. It appears once, and nobody but the promote re-read moves it.",5],
+ 6:["Where the held lines join","When the Data Terms and the companies list publish, the two held lines (six companies; 30 days’ notice) appear here, between the “not ours” sentence and the cross-border paragraph, as S1 placed them (tab 6).",6],
+ 7:["The footer door","“Security” joins the footer’s bottom row as the first legal link, before Terms of Service (S1’s furniture). Same size and ink as the others (tab 7).",7],
+ 11:["The privacy contact","The address is the link and is shown in full, so it can be read, copied or printed. No copy button: that would be new words, and the page does not need a control.",11]
+};
+
+/* ---------------- Review rows 1–10 (MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md) ---------------- */
+var ROWS={
+ 1:["Box: people","“Board, coaches, families · a phone or a computer · two-step sign-in for every account”","Reworded at review (was “Families, coaches, board … two-step sign-in available”). Drawn word for word; desktop breaks the last line after “sign-in”."],
+ 2:["Box: the app","“FieldLogicHQ app · Amazon Web Services · Ohio, United States”","Said as is. Unchanged."],
+ 3:["Box: the database","“Database, sign-in, files · Supabase on AWS · Ohio, United States”","Said as is. Unchanged."],
+ 4:["Arrow labels","“encrypted”, “checked”, “sign-in and live score updates”","Said as is. The phone form breaks the dashed line’s label after “live”, beside its line on the right."],
+ 5:["Under the app","“Every request: signed in, second step where on, belongs to this club, allowed for this role”","Reworded at review. Word for word; line breaks only."],
+ 6:["Under the database","“Encrypted at rest by the host · Database backed up daily, kept 7 days · Player documents open by 1-hour links”","Reworded at review. Word for word; the three facts stand as three groups, the middle dots dropped as line breaks."],
+ 7:["Email box","“Resend, United States · Receives: names, addresses, the message itself” (title “Email delivery”, arrow “sends email”)","Said as is. Unchanged."],
+ 8:["Payments box","“Stripe · Card numbers are typed on Stripe’s own page and never reach us” (title “Payments”, arrow “hands off checkout”)","Reworded at review (“card numbers”, not “card details”). Unchanged."],
+ 9:["Phone-alert box","“the browser’s own push service · Receives: a device address, and the alert, sealed for that device” (title “Phone alerts”, arrow “sends an alert”)","Reworded at review. Unchanged; line breaks only."],
+ 10:["Caption","“Where a club’s information lives and who it passes through. Nothing goes to advertisers or analytics companies, and your club’s information is never given to an AI service. Families can’t pay online through FieldLogicHQ yet.”","Reworded at review. Unchanged, under the panel in both forms."]
+};
+function ovl(list,pad){return list.map(function(m){return '<button type="button" class="mk rowmk" data-row="'+m[0]+'" style="left:'+(m[1]+pad-11)+'px;top:'+(m[2]+pad-11)+'px" aria-label="Review row '+m[0]+'">'+m[0]+'</button>';}).join("");}
+var MD=[[1,1,64],[2,252,64],[3,501,64],[4,215,86],[4,464,86],[4,220,4],[5,226,190],[6,484,196],[7,1,364],[8,235,364],[9,470,364]];
+var MP=[[1,20,1],[2,20,156],[3,20,372],[4,72,124],[4,80,344],[4,178,114],[5,26,252],[6,30,476],[7,20,572],[8,20,714],[9,20,858]];
+
+/* ---------------- The asks ---------------- */
+var ASKS=[
+ {n:1,t:"The page’s head: a document, or a marketing headline?",ch:"Changes how the whole page reads",
+  body:"The prompt leaned to the legal pages’ frame <em>with</em> the 64px marketing headline. The evidence points the other way. The legal pages were ruled on 2026-11-09 to read as a document (“read and quoted, not sold”), so they borrow no headline and no hero air, and this page’s own rule is “answer, not sell”. Measured on the drawing (tab 1, bottom): with the headline, the third short-answer bullet drops below the first screen of a laptop; with the document head, all three fit. I keep S1’s one-word eyebrow “Security”: it is a label, not a pitch, and it is the word the footer link uses. The site’s bar (with its own Get started button) stays as it is on every marketing and legal page; the page adds no button.",
+  opts:[["A","The legal pages’ head: eyebrow, title on the section-heading step, opening, “as of” line, hairline; the contents list beside it on a wide screen",1],["B","The legal frame with the marketing headline (64px desktop, 40px phone) and hero air",0],["C","A: but drop the eyebrow too, exactly like Terms and Privacy",0]]},
+ {n:2,t:"The diagram: redrawn for the page, desktop and phone",ch:"Replaces the brief’s wide picture",
+  body:"The brief’s drawing is an 880-wide picture in a sideways-scroll box; scaled into the 720 column its words fall to about 10px, and on a phone to about 5px. Drawn instead in real text at true size: a desktop form for 768px and up, and a stacked phone form below that (people, then the app, then the database, then the three outward services), with no sideways scroll. Every label and the accessible description are word for word (tab 4 marks all ten review rows). It takes the on-sale drawings’ panel and inks, but not their sketch style: those drawings are tilted, two-word, typewriter-captioned “old way → answer” pictures, and a checked diagram whose labels are whole sentences is a record, not a pitch. Text stays in Inter (the public type rule keeps the typewriter face for data) at 12px or more.",
+  opts:[["A","Redraw it as drawn: desktop form 768px and up, stacked phone form below, real text at true size",1],["B","Keep the brief’s wide picture in a sideways-scroll box",0],["C","One picture scaled to fit every width",0]]},
+ {n:3,t:"The short answer: one white card",ch:"The one emphasis on the page",
+  body:"The brief’s tinted chips are not the site’s idiom (tinted panels were retired; the white card is). Drawn as one white card of three rows divided by hairlines, bold lead in ink, the rest in running ink. It is the only card on the page, so it reads first. It sits inside a laptop’s first screen and a screenshot of the top; on a phone the first answer is on the first screen (tab 2).",
+  opts:[["A","One white card, three rows",1],["B","Three plain bullets, like the page’s other lists",0]]},
+ {n:4,t:"The two tables on a phone",ch:"One shipped rule, one exception",
+  body:"“Who handles it” (five columns) becomes labelled cards below 640px, the legal pages’ shipped rule; its certifications stay each card’s last line and the “not ours” sentence sits directly under the last card. “Who can see what” has two columns that fit a 390px phone as a table, and as cards it repeats “Role” and “Can open” eight times. So I recommend it stays a table: a small exception the build adds to the legal table rule (tab 5 shows both).",
+  opts:[["A","Suppliers as cards; roles stay a two-column table",1],["B","Both as cards (the shipped rule, no exception)",0]]},
+ {n:5,t:"Where the “as of” line sits",ch:"Moves one S1 line",
+  body:"S1 placed it at the foot. Drawn under the opening, in the slot the legal pages give their date line, where a board member checks currency before reading and a screenshot of the top carries it. Once only. It is a move, not a change, and /legal read it (below).",
+  opts:[["A","Under the opening, once",1],["B","At the foot, as S1 placed it",0],["C","Both places",0]]},
+ {n:6,t:"Once the Data Terms publish: link the two held lines",ch:"Version B only",
+  body:"Version B switches on the four held lines, “Read more” with four links, and the footer’s two extra links, all in one change (tab 6). Two held lines name a page the reader will want: “Our public list names each one…” and “The Data Terms say what happens…”. I recommend those words become links to the companies list and the Data Terms. No word changes; /legal read it.",
+  opts:[["A","Link “Our public list” and “The Data Terms” in version B",1],["B","No links in the held lines; “Read more” carries them",0]]},
+ {n:7,t:"The two doors in",ch:"Confirm",
+  body:"The footer’s bottom row gains “Security” as its first legal link (later followed by Data Terms and the companies list). “Questions a board asks” answer 3 gets its second link, “See how we protect it”, on its own 44px line under “Read the Privacy Policy”, and says “date of birth” (S1’s spelling), in the same S3 change (tab 7).",
+  opts:[["A","As drawn",1],["B","Something else (say what in the notes)",0]]},
+ {n:8,t:"Print",ch:"A print view, minimal",
+  body:"A board member prints this for a meeting. The print view drops the site’s bar, the footer, the contents list and the phone’s bottom bar; prints on white; keeps the desktop diagram whole on one page; keeps both tables as tables; never splits a section across a page where it can avoid it; and prints each “Read more” link’s address after it, because a printed link goes nowhere (tab 8). It adds no words.",
+  opts:[["A","Yes, minimal, as drawn",1],["B","No print view: the browser’s default",0]]},
+ {n:9,t:"The share card",ch:"Confirm",
+  body:"A link pasted into an email or a chat shows the site’s existing card with S1’s title and description (tab 9). A page-specific card would put a sales line (“Less admin. More sport.”) aside for a security one, but it is a new drawing with new words to read; not worth it now.",
+  opts:[["A","The site’s card, S1’s title and description",1],["B","A card of its own (a new drawing and words)",0]]},
+ {n:10,t:"No Dark version",ch:"Confirm a standing rule",
+  body:"The prompt asked for Dark frames. The marketing site is always warm (owner, 2026-10-23, Ask 5 B), and a test holds every marketing page to it, the legal pages included. A Dark drawing would show a page that will never exist, so tab 3 records this instead.",
+  opts:[["A","Confirmed: always warm, like every marketing page",1],["B","Reopen Dark for the marketing site (a separate project)",0]]},
+ {n:11,t:"The privacy contact",ch:"Confirm",
+  body:"The address is the link and is shown in full, in the page’s link colour. No “Copy address” button as the private brief has: that is new words and a control on a page that only answers.",
+  opts:[["A","As drawn",1],["B","Add a copy button (new words to /marketing and /legal)",0]]}
+];
+
+/* ---------------- Tabs ---------------- */
+var TABS=[
+ ["page","1 · The page",false],["phone","2 · On a phone",false],["dark","3 · Dark",false],["diagram","4 · The diagram",false],
+ ["tables","5 · Tables on a phone",true],["dataterms","6 · Data Terms on",true],["doors","7 · Doors in",true],["print","8 · Print",false],["share","9 · Share card",false],["asks","10 · Asks",false]
+];
+var C={};
+C.page='<div class="intro"><h2>The whole page as it ships</h2><p>Desktop, 1280px, true size. Version A: the legal pages are live, the Data Terms are not, so the four held lines and the full-copy line are absent and “Read more” has two links. The blue markers open a note and match the asks.</p><p class="k">Frame and kit as shipped: the marketing bar and footer, the legal page’s 720px column and its contents list beside it from 1080px. <span class="tag same">Unchanged</span> bar, footer columns, type ladder. <span class="tag new">New</span> the page itself, the redrawn diagram, “Security” in the footer row. <span class="tag rest">Moved</span> the “as of” line.</p></div>'+
+ '<p class="flabel"><b>fieldlogichq.ca/security</b> · desktop 1280px · Warm (the only theme)</p><div class="scroller" style="padding-left:2px">'+deskFrame({markers:true,fold:true})+'</div>'+
+ '<div class="intro" style="margin-top:28px"><h2>Ask 1 · the two heads, true size</h2><p>Left, recommended: the legal pages’ head. Right, the prompt’s lean: the 64px marketing headline with its hero air. The dashed line is a laptop’s first screen. With the headline, the short answer’s third bullet falls below it.</p></div>'+
+ '<div class="scroller"><div class="pair">'+
+ '<div><p class="flabel"><b>A · recommended</b> · document head</p><div class="frame" style="width:768px;height:800px"><div class="spx">'+bar(false).replace('sp-nav"','sp-nav" style="display:none"')+'<div class="sp-wrap"><div class="sp-cont"><article class="sp-prose">'+page({only:["head","short"]})+'</article></div></div></div><div class="fold" style="top:720px"><span>First screen</span></div></div></div>'+
+ '<div><p class="flabel"><b>B · the prompt’s lean</b> · marketing headline</p><div class="frame" style="width:768px;height:800px"><div class="spx">'+bar(false).replace('sp-nav"','sp-nav" style="display:none"')+'<div class="sp-wrap"><div class="sp-cont"><article class="sp-prose">'+page({only:["head","short"],head:"headline"})+'</article></div></div></div><div class="fold" style="top:720px"><span>First screen</span></div></div></div>'+
+ '</div></div>';
+C.phone='<div class="intro"><h2>The same page on a phone</h2><p>390px, true size, version A. The site’s phone bar at the top and its fixed bottom bar are drawn where they sit on the first screen (dashed line). The head and the first of the three short answers are on the first screen (the site’s fixed bottom bar covers the rest); the other two come with the first swipe. Nothing else sits above them; the diagram is the stacked phone form; the supplier table is labelled cards; the roles table stays a table (ask 4). Nothing scrolls sideways.</p><p class="k">Open this page on your phone too: a frame on a laptop is only a picture of a phone.</p></div>'+
+ '<p class="flabel"><b>fieldlogichq.ca/security</b> · phone 390px · Warm</p><div class="scroller">'+phoneFrame({fold:true})+'</div>';
+C.dark='<div class="intro"><h2>Dark: none, by a standing rule</h2><p>The prompt asked for both themes. The marketing site has only one: <strong>the marketing pages are always warm</strong>, whatever the visitor’s Warm / Dark setting (owner, 2026-10-23, Ask 5 B, written in the visual identity §2). The marketing kit composes the warm palette with no Dark gate, the footer does the same, and a test holds every marketing page and its chrome to it. The legal pages, this page’s neighbours in the footer, are warm for the same reason.</p><p>So there is no Dark frame to draw, and drawing one would show a page that will never exist. A visitor who chose Dark in the app sees exactly tab 1 and tab 2. Ask 10 confirms it.</p><p class="k">What does carry over: P6 (complete when it loads: no scroll-reveal, no collapsed section hiding a claim; every section is open) and P8 (no system words). Both hold on the drawing.</p></div>';
+C.diagram='<div class="intro"><h2>The diagram, desktop and phone</h2><p>Each blue number is the label’s row in the security review; click it to read the row. Both forms carry the ten checked labels, the three box titles and three arrow words from the brief, and the same accessible description, word for word. Only line breaks differ. Drawn 1:1: the desktop form fills the 720 column from 768px up; below 768px the phone form stands at its own width (up to 400px), so no word is ever drawn smaller than here.</p><p class="k">House style taken from the on-sale drawings: no outline on the panel, paper against white, the dim and ink inks, round line ends. Not taken: the tilt, the typewriter captions and the two-word rule, which belong to “old way → answer” pictures. Smallest word: 12.5px on desktop; 13.5px on a 390 phone, about 12px on a 360 phone.</p></div>'+
+ '<div class="scroller"><div class="pair">'+
+ '<div><p class="flabel"><b>Desktop form</b> · 768px and up · panel 720px</p><div class="spx" style="background:var(--home-paper);padding:16px;border-radius:12px"><figure class="sp-fig" style="margin:0;width:720px"><div class="sp-panel ovl">'+diagD()+ovl(MD,20)+'</div><figcaption class="ovl" style="padding-left:30px"><button type="button" class="mk rowmk" data-row="10" style="left:0;top:0" aria-label="Review row 10">10</button>'+CAP+'</figcaption></figure></div></div>'+
+ '<div><p class="flabel"><b>Phone form</b> · below 768px · panel 342px at 390</p><div class="spx ph" style="background:var(--home-paper);padding:16px 24px;border-radius:12px;width:390px"><figure class="sp-fig" style="margin:0"><div class="sp-panel ovl">'+diagP()+ovl(MP,16)+'</div><figcaption class="ovl" style="padding-left:30px"><button type="button" class="mk rowmk" data-row="10" style="left:0;top:0" aria-label="Review row 10">10</button>'+CAP+'</figcaption></figure></div></div>'+
+ '</div></div>'+
+ '<p class="cap">The labels, checked against the review</p><table class="chk"><thead><tr><th>Row</th><th>Label as checked</th><th>Desktop</th><th>Phone</th></tr></thead><tbody>'+
+ [1,2,3,4,5,6,7,8,9,10].map(function(n){return '<tr><td>'+n+'</td><td>'+ROWS[n][1]+'</td><td>Word for word</td><td>Word for word</td></tr>';}).join("")+
+ '<tr><td>—</td><td>Accessible description (the brief’s, read by a screen reader)</td><td>Word for word</td><td>Word for word</td></tr></tbody></table>';
+C.tables='<div class="intro"><h2>The two tables on a phone</h2><p>390px, true size. “Who handles it” uses the legal pages’ shipped rule below 640px: each company a labelled card, every cell kept, “Its certifications” the card’s last line and the “not ours” sentence directly under the last card. “Who can see what” is the question (ask 4): left, it stays a two-column table; right, the shipped cards.</p><p class="k">“Show only what differs” dims the supplier cards, which are the same on both.</p></div>'+
+ '<div class="scroller"><div class="pair">'+
+ ['A · recommended: roles stay a table','B · the shipped rule: roles as cards'].map(function(lbl,i){
+   var html=page({phone:true,only:["handles","roles"],rolesTable:i===0});
+   html=html.replace('<section class="mkhost" data-k="handles">','<section class="mkhost same" data-k="handles">').replace('<section class="mkhost" data-k="roles">','<section class="mkhost chg" data-k="roles">');
+   return '<div><p class="flabel"><b>'+lbl+'</b></p><div class="frame ph" style="width:390px"><div class="spx ph" style="padding:28px 0"><div class="sp-cont"><article class="sp-prose">'+html+'</article></div></div></div></div>';
+ }).join("")+'</div></div>';
+C.dataterms='<div class="intro"><h2>Before and after the Data Terms publish</h2><p>Only the sections that change, desktop column, true size. Left, version A (the page as it ships). Right, version B: the Data Terms and the companies list are published, so in one change the four held lines switch on, “Read more” grows to four links, and the footer gains its two links. Ask 6: the two held lines’ “Our public list” and “The Data Terms” become links.</p><p class="k">Use “Show only what differs”. The full-copy line has a third state, drawn under the pair: version A after you confirm the by-hand full copy (club on-sale Ask 29).</p></div>'+
+ '<div class="scroller"><div class="pair">'+
+ [["A","Version A · as it ships"],["B","Version B · Data Terms published"]].map(function(v){
+   return '<div><p class="flabel"><b>'+v[1]+'</b></p><div class="frame" style="width:768px"><div class="spx" style="padding:36px 0"><div class="sp-cont"><article class="sp-prose">'+page({state:v[0],cmp:true,only:["handles","backups","yours","readmore"]})+'</article></div><div style="margin-top:28px">'+
+   '<div class="sp-foot" style="margin:0"><div class="sp-footin" style="padding:0 24px 20px"><div class="sp-base">'+'<div class="sp-copy same">© 2026 FieldLogicHQ. All rights reserved.</div>'+(v[0]==="B"?legalLinks("B",true,false).replace('class="sp-legal"','class="sp-legal chg"'):legalLinks("A",true,false).replace('class="sp-legal"','class="sp-legal chg"'))+'</div></div></div></div></div></div></div>';
+ }).join("")+'</div></div>'+
+ '<p class="cap">The third state · version A once you confirm the by-hand full copy (Ask 29)</p><div class="scroller"><div class="frame" style="width:768px"><div class="spx" style="padding:28px 0"><div class="sp-cont"><article class="sp-prose">'+page({fullcopy:true,cmp:true,only:["yours"]})+'</article></div></div></div></div>'+
+ '<div class="note"><p><strong>What switches, and when</strong> (S1 “Revise when”):</p><ul><li>Data Terms and companies list publish → both held lines under the supplier table, the 72-hour breach line, the 30-day full-copy line, “Read more” version B, the footer’s two links. One change.</li><li>You confirm the by-hand full copy first → only the plain full-copy line, and “Questions a board asks” answer 4’s “or ask us for a full copy”, together.</li></ul></div>';
+function faq(after){
+  var a3= after
+   ? 'We never sell your club’s information or use it to advertise. FieldLogicHQ never shows a player’s name, <span class="chg">date of birth</span> or roster on a public page. Your club’s information is stored in the United States (Ohio), with our database host, Supabase, on Amazon Web Services. <a href="#" class="same">Read the Privacy Policy</a><a href="#" class="chg">See how we protect it</a>'
+   : 'We never sell your club’s information or use it to advertise. FieldLogicHQ never shows a player’s name, <span class="chg">birth date</span> or roster on a public page. Your club’s information is stored in the United States (Ohio), with our database host, Supabase, on Amazon Web Services. <a href="#" class="same">Read the Privacy Policy</a>';
+  return '<div class="fq"><div class="other same">What happens when our treasurer or registrar changes?</div><div style="border-top:1px solid var(--home-line)"><div class="q">What do you do with our families’ information?</div><p class="a">'+a3+'</p></div><div class="other same">What if we decide to stop?</div></div>';
+}
+C.doors='<div class="intro"><h2>The two doors in</h2><p>Small specimens of the shipped pieces, before and after S3. The footer’s bottom row (desktop and phone) gains “Security” first; answer 3 of “Questions a board asks” on /for-clubs and /for-leagues gains its second link on its own 44px line, and the S1 spelling “date of birth”. Both render only while the legal pages are published, so neither can point at a missing page.</p></div>'+
+ '<p class="cap">Footer bottom row · desktop</p><div class="scroller"><div class="pair" style="flex-direction:column;gap:14px">'+
+ ['Before','After'].map(function(w,i){return '<div><p class="flabel"><b>'+w+'</b></p><div class="frame" style="width:1180px"><div class="spx"><div class="sp-foot" style="border-top:0"><div class="sp-footin" style="padding:20px 24px"><div class="sp-base"><div class="sp-copy same">© 2026 FieldLogicHQ. All rights reserved.</div>'+(i? legalLinks("A",true,false).replace('<span class="mkhost" style="display:inline-flex">','<span class="mkhost chg" style="display:inline-flex">') : legalLinks("A",false,false))+'</div></div></div></div></div></div>';}).join("")+
+ '</div></div>'+
+ '<p class="cap">Footer bottom row · phone</p><div class="scroller"><div class="pair">'+
+ ['Before','After','Later · Data Terms published'].map(function(w,i){return '<div><p class="flabel"><b>'+w+'</b></p><div class="frame ph" style="width:390px"><div class="spx ph"><div class="sp-foot" style="border-top:0"><div class="sp-footin" style="padding:16px 24px 20px"><div class="sp-base" style="border-top:0;padding-top:0"><div class="sp-copy same">© 2026 FieldLogicHQ. All rights reserved.</div>'+(i===0? legalLinks("A",false,false) : legalLinks(i===2?"B":"A",true,false).replace('<span class="mkhost" style="display:inline-flex">','<span class="mkhost chg" style="display:inline-flex">'))+'</div></div></div></div></div></div>';}).join("")+
+ '</div></div>'+
+ '<p class="cap">“Questions a board asks”, answer 3 open · /for-clubs, desktop</p><div class="scroller"><div class="pair">'+
+ ['Before','After'].map(function(w,i){return '<div><p class="flabel"><b>'+w+'</b></p><div class="frame" style="width:760px"><div class="spx" style="padding:24px">'+faq(i===1)+'</div></div></div>';}).join("")+'</div></div>';
+function sheet(n,inner){return '<div class="sheet"><div class="spx">'+inner+'</div><div class="pgno"><span>fieldlogichq.ca/security</span><span>Page '+n+'</span></div></div>';}
+C.print='<div class="intro"><h2>Print: yes, minimal</h2><p>US Letter at true size (8.5 × 11 in at 96px per inch), 0.6 in margins. Dropped: the site’s bar, the footer, the contents list, the phone’s bottom bar, card shadows and the paper ground (it prints on white). Kept: every word, the desktop diagram whole on one page, both tables as tables at any paper width, and each section kept off a page break where it can be. “Read more” prints each link’s address after it. The browser adds its own address and page number line (shown grey).</p></div>'+
+ '<div class="scroller"><div class="pair">'+
+ sheet(1,'<div style="width:700px">'+page({print:true,only:["head","short","never"]})+'</div>')+
+ sheet(2,'<div style="width:700px">'+page({print:true,only:["lives"]}).replace('<section class="mkhost" data-k="lives">','<section class="mkhost" data-k="lives" style="margin-top:0">')+'</div>')+
+ '</div></div><div class="note"><p>Page 3 onward carries “Who handles it” through “Read more” in the same order (as tab 1); both tables print as tables, a table row never splits across pages, on white, with “Read more” printed as:</p><p style="font-family:var(--font-sans)">Terms of Service (fieldlogichq.ca/legal/terms)<br>Privacy Policy (fieldlogichq.ca/legal/privacy)</p></div>';
+C.share='<div class="intro"><h2>The share card</h2><p>What a link to the page shows when pasted into an email or a chat (P7): the site’s existing card, with S1’s title and description. The card says nothing that can go stale, so it needs no re-check at a promote.</p></div>'+
+ '<p class="cap">A chat or email preview</p><div class="unf"><p class="dom">fieldlogichq.ca</p><p class="tt">Security and your club’s information | FieldLogicHQ</p><p class="ds">Where your club’s information is stored (the United States, Ohio), who can see it, and the checks we run ourselves. We never sell it or use it to advertise.</p>'+
+ '<div class="cardbox"><div class="card"><div class="nm"><svg width="40" height="40" viewBox="10 10 44 44"><path d="'+MARK+'" fill="#57651E"/></svg><span>FieldLogic<i>HQ</i></span></div><div class="big"><span>Less admin.</span><span>More sport.</span></div><div class="tile"><svg width="176" height="176" viewBox="0 0 64 64"><g transform="translate(1.5 0)"><path d="'+MARK+'" fill="#F8F4ED"/></g></svg></div></div></div></div>'+
+ '<div class="note"><p>The browser tab reads “Security and your club’s information | FieldLogicHQ”; the search result shows the same title and description. A preview app that cuts the description short still shows the title, which names the page by itself.</p></div>';
+C.asks='<div class="intro"><h2>The asks</h2><p>Ranked by how much each changes. Each starts on my recommendation; change any, add a note, then copy the block at the bottom and paste it back into the chat.</p></div>'+
+ ASKS.map(function(a){return '<div class="ask" id="ask-'+a.n+'"><p class="rank">'+a.ch+'</p><h3><span class="n">'+a.n+'</span>'+a.t+'</h3><p>'+a.body+'</p><div class="opts">'+a.opts.map(function(o){return '<label><input type="radio" name="a'+a.n+'" id="a'+a.n+o[0]+'" value="'+o[0]+'"'+(o[2]?" checked":"")+'><span><b>'+o[0]+'</b> · '+o[1]+(o[2]?' <span class="rec">(recommended)</span>':"")+'</span></label>';}).join("")+'</div></div>';}).join("")+
+ '<div class="note"><p><strong>/legal and /marketing on the words.</strong> No sentence, table cell or diagram label changed; line breaks only. No new word was needed: “Contents” is the legal pages’ own shipped label. /legal read the moves: the “as of” line under the opening (ask 5), links on two held lines’ own words (ask 6), and the printed addresses (ask 8). <strong>Verdict, 2026-11-21: all six say as is.</strong> Conditions for the build: the version-B links and the printed addresses come from the site’s legal-link helper, never typed, so nothing ever points at a page that is not live; the “as of” date still moves only with a full re-read at a promote; and a supplier change now re-checks the diagram’s accessible description as well as its labels (added to the brief’s “Revise when”).</p></div>'+
+ '<div class="paste"><p style="margin:0 0 4px;font-weight:700">Paste-back block</p><label for="pnotes" style="font-size:13.5px;color:var(--c-dim)">Notes (optional)</label><textarea id="pnotes"></textarea><pre id="pblock"></pre><button type="button" class="btn" id="pcopy">Copy the block</button> <span id="pdone" style="font-size:13.5px;color:var(--c-dim)"></span></div>';
+
+/* ---------------- Mount ---------------- */
+var main=document.getElementById("main"), row=document.getElementById("tabrow"), vr=document.getElementById("viewrow");
+TABS.forEach(function(t){
+  var b=document.createElement("button"); b.type="button"; b.role="tab"; b.id="tb-"+t[0]; b.textContent=t[1]; b.setAttribute("aria-selected","false"); b.setAttribute("aria-controls","t-"+t[0]);
+  b.addEventListener("click",function(){ show(t[0],true); }); row.appendChild(b);
+  var s=document.createElement("section"); s.id="t-"+t[0]; s.setAttribute("role","tabpanel"); s.hidden=true; s.innerHTML=C[t[0]]; main.appendChild(s);
+});
+function show(id,push){
+  var t=TABS.filter(function(x){return x[0]===id;})[0]||TABS[0];
+  TABS.forEach(function(x){ document.getElementById("t-"+x[0]).hidden = x[0]!==t[0]; document.getElementById("tb-"+x[0]).setAttribute("aria-selected", x[0]===t[0]?"true":"false"); });
+  vr.hidden=!t[2];
+  if(push && location.hash!=="#"+t[0]) history.replaceState(null,"","#"+t[0]);
+  try{ localStorage.setItem("secS2tab",t[0]); }catch(e){}
+}
+var start=(location.hash||"").slice(1); if(!start){ try{ start=localStorage.getItem("secS2tab")||""; }catch(e){} }
+show(start||"page",false);
+window.addEventListener("hashchange",function(){ show(location.hash.slice(1),false); });
+function setView(diff){ document.body.classList.toggle("differs",diff); document.getElementById("v-all").setAttribute("aria-pressed",diff?"false":"true"); document.getElementById("v-diff").setAttribute("aria-pressed",diff?"true":"false"); }
+document.getElementById("v-all").addEventListener("click",function(){setView(false);});
+document.getElementById("v-diff").addEventListener("click",function(){setView(true);});
+
+/* Markers → dialog */
+var dlg=document.getElementById("dlg"), dh=document.getElementById("dlg-h"), dbd=document.getElementById("dlg-b"), go=document.getElementById("dlg-go"), goAsk=null;
+document.addEventListener("click",function(e){
+  var m=e.target.closest(".mk"); if(!m) return; e.preventDefault(); e.stopPropagation();
+  if(m.dataset.row){ var r=ROWS[m.dataset.row]; dh.textContent="Review row "+m.dataset.row+" · "+r[0]; dbd.innerHTML="<p><strong>Label as checked:</strong> "+r[1]+"</p><p>"+r[2]+"</p>"; goAsk=2; }
+  else { var n=NOTES[m.dataset.m]; dh.textContent=m.dataset.m+" · "+n[0]; dbd.innerHTML="<p>"+n[1]+"</p>"; goAsk=n[2]; }
+  go.textContent="Read ask "+goAsk;
+  if(dlg.showModal) dlg.showModal(); else dlg.setAttribute("open","");
+},true);
+document.getElementById("dlg-x").addEventListener("click",function(){dlg.close();});
+go.addEventListener("click",function(){ dlg.close(); show("asks",true); var el=document.getElementById("ask-"+goAsk); if(el) el.scrollIntoView({block:"start"}); });
+document.querySelectorAll(".spx a").forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();});});
+
+/* Paste-back */
+function block(){
+  var lines=["Security page S2 (drawing) — my calls:"];
+  ASKS.forEach(function(a){ var sel=document.querySelector('input[name="a'+a.n+'"]:checked'); var v=sel?sel.value:"?"; var rec=a.opts.filter(function(o){return o[2];})[0][0];
+    lines.push(a.n+" · "+a.t.replace(/[“”]/g,'"')+" — "+v+(v===rec?" (recommended)":" (not the recommendation)")); });
+  var n=document.getElementById("pnotes").value.trim(); if(n) lines.push("Notes: "+n);
+  document.getElementById("pblock").textContent=lines.join("\n");
+}
+document.getElementById("t-asks").addEventListener("change",block);
+document.getElementById("pnotes").addEventListener("input",block);
+block();
+document.getElementById("pcopy").addEventListener("click",function(){
+  var txt=document.getElementById("pblock").textContent, done=document.getElementById("pdone");
+  function sel(){var r=document.createRange();r.selectNodeContents(document.getElementById("pblock"));var s=window.getSelection();s.removeAllRanges();s.addRange(r);done.textContent="Selected. Press Ctrl+C.";}
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){done.textContent="Copied.";},sel);} else sel(); }catch(e){sel();}
+});
+})();
+</script>

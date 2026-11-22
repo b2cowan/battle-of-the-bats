@@ -113,6 +113,11 @@ const FILES = [
   'components/consumer/CoachJourneyChrome.tsx',
   'components/shared/BrandLockup.tsx',
   'components/shared/BrandLockup.module.css',
+  // The public Security page (Board Ready §0c, S3). Its frame is the legal pages' (components/legal, not yet in scope here).
+  'app/security/page.tsx',
+  'components/legal/SecurityPage.tsx',
+  'components/legal/SecurityPage.module.css',
+  'components/legal/SecurityDiagram.tsx',
   // Stylesheets the files above import, found by following their imports (review 2026-10-23). Where one is
   // shared with the admin it is also in `check-admin-type.mjs`'s baseline: the two checks count it separately.
   'components/EarlyAccessModalTrigger.module.css', // the /for-* pages and /start/club

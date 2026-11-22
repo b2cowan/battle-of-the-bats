@@ -1,0 +1,150 @@
+/* THE PUBLIC SECURITY PAGE (Board Ready §0c, S3; drawn and ruled 2026-11-21, `BOARD_READY_SECURITY_PAGE_DRAWINGS.html` v2). It wears
+   the legal pages' frame, head, 720 column, contents list and tables (`LegalPage.module.css`) and the kit's ground and type
+   (`MarketingKit.module.css`); this file holds only what the page adds: the head's opening and spacing, the one card, the figure, the
+   roles table's exception, "Read more", and print. No colour of its own: every one is a `--home-*` token, arrowheads included. */
+
+/* ── The head: eyebrow, title, opening, the "as of" line, then LegalPage's hairline ───────────────────────────────── */
+.root .eyebrow { margin: 0 0 0.625rem; }
+.root .title { margin: 0 0 0.625rem; text-wrap: balance; }
+.lead {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--home-ink-soft);
+  margin: 0 0 0.625rem;
+}
+
+/* ── The sections. LegalPage's `.text h2:first-child` takes every heading's top margin off, because each sits first in its own
+   section here; the 40px between sections is put back. ──────────────────────────────────────────────────────────────── */
+.root .sections > section + section > h2 { margin-top: 2.5rem; }
+.sections > section > h2 { scroll-margin-top: calc(var(--marketing-bar-h) + 1.5rem); }
+
+/* The short answer: the page's only card, three rows divided by hairlines. */
+.card {
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
+  margin: 0 0 0.875rem;
+}
+.root .card > p { margin: 0; padding: 1rem 1.25rem; }
+.root .card > p + p { border-top: 1px solid var(--home-line); }
+
+/* The line under the supplier table. */
+.root .note { font-size: var(--type-body); line-height: 1.5; color: var(--home-dim); }
+
+.root .sections td:last-child,
+.root .sections th:last-child { padding-right: 0; }
+
+/* "Who can see what" stays a two-column table at every width (TABLE_EXCEPTION_REGISTER K-32): LegalPage's card rule below 640px is
+   undone for this one table. Every other axis (heading face, hairlines, cell type) stays the legal table's. */
+@media (max-width: 639px) {
+  .root .keep { display: table; }
+  .root .keep thead { display: table-header-group; }
+  .root .keep tbody { display: table-row-group; }
+  .root .keep tr {
+    display: table-row;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .root .keep th, .root .keep td { display: table-cell; width: auto; }
+  .root .keep td {
+    padding: 0.75rem 0.875rem 0.75rem 0;
+    border-bottom: 1px solid var(--home-line);
+  }
+  .root .keep td:last-child { padding-right: 0; }
+  .root .keep td::before { content: none; }
+  .root .keep td:first-child { width: 34%; }
+}
+
+/* "Read more": one link per 44px line. */
+.root .read { list-style: none; padding: 0; margin: 0; }
+.root .read li { margin: 0; }
+.root .read a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+/* The address after each link exists for print only. */
+.printAddress { display: none; }
+
+/* ── The figure: a white panel, no outline, holding the two forms; one switch at 768px ──────────────────────────────────── */
+.figure { margin: 0.25rem 0 1.125rem; }
+.panel {
+  background: var(--home-card);
+  border-radius: var(--home-radius);
+  padding: 1.25rem;
+  /* The desktop form is drawn 680 wide for a 720 panel. Where a scrollbar takes the column under 720, the side padding gives way
+     first, so the drawing keeps its size. */
+  padding-inline: clamp(0px, calc((100% - 680px) / 2), 1.25rem);
+}
+.caption {
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--home-dim);
+  margin-top: 0.625rem;
+}
+.dg { display: block; height: auto; margin: 0 auto; }
+.dgDesktop { width: 100%; max-width: 680px; }
+/* The phone form stands at its own width up to the 768px switch (never wider than drawn, so a tablet in portrait is not handed a
+   1,200px-tall figure); it only gives way below a 358px screen. */
+.dgPhone { display: none; width: 100%; max-width: 310px; }
+
+@media (max-width: 767px) {
+  .dgDesktop { display: none; }
+  .dgPhone { display: block; }
+  /* The phone form is drawn 310 wide for a 342 panel (a 390 phone). On a narrower phone the panel's side padding gives way first
+     (its own rails keep 6px of air inside the drawing), so the words stay the size drawn down to a 358px screen. */
+  .panel {
+    padding: 1rem;
+    padding-inline: clamp(0px, calc((100% - 310px) / 2), 1rem);
+  }
+}
+
+/* The diagram's inks: paper boxes, dim lines, the app the one heavy edge. True size: the drawing's own steps, never scaled down. */
+.dgBox { fill: var(--home-paper); stroke: var(--home-dim); stroke-width: 1.5; }
+.dgCore { fill: var(--home-paper); stroke: var(--home-ink); stroke-width: 2.25; }
+.dgLine { stroke: var(--home-dim); stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.dgDash { stroke-dasharray: 5 5; }
+.dgHead { fill: var(--home-dim); }
+.dg text { font-family: var(--font-sans), system-ui, sans-serif; }
+.dgName { font-size: 14px; font-weight: 600; fill: var(--home-ink); } /* type-ok: a drawing's own steps, at true size (S2 ruling 2) */
+.dgDetail { font-size: 13px; fill: var(--home-dim); } /* type-ok: a drawing's own steps, at true size (S2 ruling 2) */
+.dgLabel { font-size: 12.5px; font-weight: 500; fill: var(--home-ink-soft); } /* type-ok: a drawing's own steps, at true size (S2 ruling 2) */
+.dgPhone .dgName { font-size: 15px; } /* type-ok: the phone form's own steps (S2 ruling 2) */
+.dgPhone .dgDetail, .dgPhone .dgLabel { font-size: 13.5px; } /* type-ok: the phone form's own steps (S2 ruling 2) */
+
+/* ── Print (S2 ruling 8): the text alone on white ────────────────────────────────────────────────────────────────────────
+   The site's bar, phone bar and footer mount in the root layout, outside this page, so the rule that drops them is scoped to a
+   document holding this page: everything that is neither this page, inside it, nor on the way to it is not printed. */
+@media print {
+  :global(body):has(.root) :global(*):not(:has(.root)):not(.root):not(.root *) { display: none !important; }
+  /* Doubled to outrank the kit's ground (`.warm`, composed into `kit.page`) and LegalPage's `.wrap` padding by specificity. */
+  .root.root { background: var(--home-card); padding: 0; }
+  .root .rail { display: none; }
+  .card { box-shadow: none; }
+  .root .sections > section, .figure { break-inside: avoid; }
+
+  /* A Letter page is about 700px wide, under the 768px switch, so print takes the desktop form explicitly. */
+  .root .dgDesktop { display: block; }
+  .root .dgPhone { display: none; }
+  .root .panel { padding: 10px; border: 1px solid var(--home-line); }
+
+  /* Tables stay tables: the card rule is a screen rule. (A page with 1in margins is ~624px wide, under the 640px card rule, so
+     these must outrank LegalPage's `.text table …` by specificity, not by load order.) */
+  .root .sections table { display: table; }
+  .root .sections thead { display: table-header-group; }
+  .root .sections tbody { display: table-row-group; }
+  .root .sections tr { display: table-row; margin: 0; padding: 0; background: none; border: 0; border-radius: 0; }
+  .root .sections th, .root .sections td { display: table-cell; width: auto; }
+  .root .sections td { padding: 0.5rem 0.875rem 0.5rem 0; border-bottom: 1px solid var(--home-line); }
+  .root .sections td::before { content: none; }
+
+  /* The 44px tap line is a screen rule. */
+  .root .read a { min-height: 0; }
+
+  .printAddress {
+    display: inline;
+    font-size: var(--type-body);
+    font-weight: 400;
+    color: var(--home-dim);
+  }
+}

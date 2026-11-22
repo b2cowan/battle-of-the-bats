@@ -3,6 +3,8 @@ import kit from '@/components/marketing/MarketingKit.module.css';
 import faq from '@/components/marketing/Faq.module.css';
 import { resolveLegalLinks } from '@/lib/legal-links';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
+import { fullCopyOffered } from '@/lib/full-copy-promise';
+import { SECURITY_BOARD_LINK } from '@/lib/security-page-words';
 
 /**
  * "QUESTIONS A BOARD ASKS" (on-sale pages S3b, W70; words in PRICING_PAGE_COPY.md's S3b section and CLUB_ON_SALE_COPY.md W70).
@@ -11,8 +13,9 @@ import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
  *
  * ⚖ /legal (S3b Part 1, 2026-11-20): answer 3 links to the Privacy Policy, so NOTHING here renders unless the legal pages are
  * published — `boardQuestions()` returns null while `resolveLegalLinks()` does, and the section never points at a "not found"
- * page. Answer 4's "or ask us for a full copy" is a promise written only in the data terms, so the clause joins only once the
- * data terms page is live (`dataTermsHref`). Never "export everything".
+ * page. Answer 4's "or ask us for a full copy" is a promise written only in the data terms, so the clause joins only when
+ * `fullCopyOffered()` says so (the data terms page live, or the owner's Ask 29 confirmation) — the same predicate as the Security
+ * page's full-copy line, so one edit flips both. Never "export everything".
  */
 export interface BoardQuestion { q: string; a: ReactNode }
 
@@ -33,16 +36,18 @@ export function boardQuestions({ club }: { club: boolean }): BoardQuestion[] | n
       a: (
         <>
           We never sell your club&apos;s information or use it to advertise. FieldLogicHQ never shows a player&apos;s name,
-          birth date or roster on a public page. Your club&apos;s information is stored in the United States (Ohio), with our
+          date of birth or roster on a public page. Your club&apos;s information is stored in the United States (Ohio), with our
           database host, Supabase, on Amazon Web Services.{' '}
           <a href={legal.privacyHref} className={`${kit.link} ${faq.answerLink}`}>Read the Privacy Policy</a>
+          {/* The Security page (Board Ready §0c, S3): live whenever these links are, on its own 44px line. */}
+          <a href={legal.securityHref} className={`${kit.link} ${faq.answerLink}`}>{SECURITY_BOARD_LINK}</a>
         </>
       ),
     },
     {
       q: 'What if we decide to stop?',
       // `/legal` 2026-11-20: "if you cancel" — the Terms refund the unused part when WE end a plan.
-      a: `Cancel any time in Plan & billing; an owner of the club does it. Your plan runs to the end of the period you have paid for, and if you cancel, we don't refund the unused part. We keep your information for 90 days after a plan ends, so you can come back. You can download your lists as Excel, CSV or PDF${legal.dataTermsHref ? ', or ask us for a full copy' : ''}.`,
+      a: `Cancel any time in Plan & billing; an owner of the club does it. Your plan runs to the end of the period you have paid for, and if you cancel, we don't refund the unused part. We keep your information for 90 days after a plan ends, so you can come back. You can download your lists as Excel, CSV or PDF${fullCopyOffered(legal) ? ', or ask us for a full copy' : ''}.`,
     },
     {
       q: 'Do our volunteers need training?',

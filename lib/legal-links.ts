@@ -1,7 +1,7 @@
 import 'server-only';
 import { canonicalAppOrigin } from './app-origin';
 import { currentVersion, legalPageLive, type LegalPageKey } from './legal-documents';
-import { legalPagePath } from './legal-paths';
+import { legalPagePath, SECURITY_PATH } from './legal-paths';
 import { legalPagesOn } from './legal-pages-switch';
 
 /**
@@ -27,6 +27,9 @@ export interface LegalLinks {
    *  footer shows no link to a "not found" page. The sign-in doors never read these — they keep the two things accepted there. */
   dataTermsHref: string | null;
   subprocessorsHref: string | null;
+  /** The public Security page (Board Ready §0c, S3): it goes live with the legal pages, so it exists whenever these links do. The
+   *  marketing footer and "Questions a board asks" link it; the sign-in doors never do. */
+  securityHref: string;
 }
 
 const hrefWhenLive = (page: LegalPageKey, env: Record<string, string | undefined>): string | null =>
@@ -38,5 +41,6 @@ export function resolveLegalLinks(env: Record<string, string | undefined> = proc
   return {
     termsHref: legalPageHref('terms'), privacyHref: legalPageHref('privacy'), termsVersion,
     dataTermsHref: hrefWhenLive('data-terms', env), subprocessorsHref: hrefWhenLive('subprocessors', env),
+    securityHref: `${canonicalAppOrigin()}${SECURITY_PATH}`,
   };
 }

@@ -9,7 +9,7 @@ import AccountMenu from '@/components/shared/AccountMenu';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import BrandLockup from '@/components/shared/BrandLockup';
 import { DEMOS_PATH } from '@/lib/sandbox-door';
-import { isLegalPath } from '@/lib/legal-paths';
+import { isLegalPath, SECURITY_PATH } from '@/lib/legal-paths';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { PROGRAM_PLANS, allProgramPlansOpen, isEffectivelyGated } from '@/lib/plan-config';
 import styles from './Navbar.module.css';
@@ -51,6 +51,7 @@ function isMarketingPath(pathname: string) {
     pathname.startsWith('/pricing') ||
     pathname.startsWith('/changelog') ||
     isLegalPath(pathname) ||
+    pathname === SECURITY_PATH ||
     pathname.startsWith(DEMOS_PATH) ||
     pathname.startsWith('/my')
   );
