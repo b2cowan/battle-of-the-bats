@@ -139,7 +139,10 @@ describe('the other surfaces follow the switch', () => {
   });
 
   it('the redirects are page-level — next.config.ts announces no legal address', () => {
-    assert.equal(/\/(legal|terms|privacy|data-terms|subprocessors)\b/.test(readCode('next.config.ts')), false);
+    // The one legal mention allowed is the file-packaging block (outputFileTracingIncludes: which legal pages need the frozen text
+    // files in the deployed package, tests/unit/legal-documents-trace-guard.test.ts); it is not a redirect, a rewrite or a link.
+    const config = readCode('next.config.ts').replace(/outputFileTracingIncludes:\s*\{[^}]*\}/, '');
+    assert.equal(/\/(legal|terms|privacy|data-terms|subprocessors)\b/.test(config), false);
   });
 
   it('the legal pages are in no sitemap; the Security page is, only behind the same switch (owner 2026-11-22)', () => {

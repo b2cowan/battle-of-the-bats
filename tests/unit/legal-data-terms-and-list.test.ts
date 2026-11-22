@@ -302,7 +302,8 @@ describe('the guards fire', () => {
   });
 
   it('a company the Privacy Policy does not name fails (ImprovMX before the privacy version that names it)', () => {
-    const privacyToday = readSource(publishedFilePath('privacy', '2026-11-17'));
+    // The first published privacy version (never a hardcoded date: the version is renamed to its release day at the promote).
+    const privacyToday = readSource(publishedFilePath('privacy', LEGAL_DOCUMENTS.privacy.published[0].version));
     assert.deepEqual(companiesMissingFromPrivacy(listCopy([], ['Supabase', 'Amazon Web Services (AWS)', 'ImprovMX']), privacyToday), ['ImprovMX']);
     assert.deepEqual(companiesMissingFromPrivacy(listCopy([], ['Supabase', 'Resend', 'Stripe']), privacyToday), []);
   });

@@ -6,7 +6,7 @@
 | **Status** | draft — for the owner's approval; held to publish on the same day as the Payments Terms (0.2's T1–T4 carry the owner-approved Data Terms) |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
 | **Last reviewed** | 2026-11-18 |
-| **Starts from** | `lib/legal-documents/terms/2026-11-17.md`, word for word, with the changes in the log |
+| **Starts from** | `lib/legal-documents/terms/2026-11-22.md`, word for word, with the changes in the log |
 
 **Change log**
 - **Draft 0.1 (2026-11-17)** — three edits, all to point at the Payments Terms (backlog L3, `drafts/PAYMENTS_TERMS.md`):

@@ -6,7 +6,7 @@
 | **Status** | draft — held to publish on the same day as the Payments Terms (owner call (b), recommended); not published |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
 | **Last reviewed** | 2026-11-22 (0.6: Board Ready D1, the staff-records sentences in §5 and §10; 0.5: Club Communications as-built, three sentences; before that 2026-11-20, 0.4: Board Ready Stage 4 Part 3 §5 edits; 2026-11-18, 0.2: Board Ready data terms, with its follow-through) |
-| **Starts from** | `lib/legal-documents/privacy/2026-11-17.md`, word for word, with the changes in the log |
+| **Starts from** | `lib/legal-documents/privacy/2026-11-22.md`, word for word, with the changes in the log |
 
 **Change log**
 - **Draft 0.6 (2026-11-22, Board Ready D1; owner ruling 2026-11-22, `BOARD_READY_PLAN.md` §0c D1)** — the promise about what

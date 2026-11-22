@@ -62,17 +62,17 @@ export interface LegalDocument {
 export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
   terms: {
     draftPath: null,
-    published: [{ version: '2026-11-17', sha256: 'b5f8e3d6428cc4709908b4bb199c95ea4ee47df993300589dfc29a5cca877eba' }],
-    current: '2026-11-17',
-    oldestAccepted: '2026-11-17',
+    published: [{ version: '2026-11-22', sha256: 'b5f8e3d6428cc4709908b4bb199c95ea4ee47df993300589dfc29a5cca877eba' }],
+    current: '2026-11-22',
+    oldestAccepted: '2026-11-22',
   },
   privacy: {
     // Stripe-owned pricing Stage 5 (2026-11-18): the next version (the retired fee invoice cut, the Payments Terms record
     // named). Read only in preview mode, which a published pair never enters; set here so the filter test checks its shape.
     draftPath: 'docs/agents/legal/drafts/PRIVACY_POLICY.md',
-    published: [{ version: '2026-11-17', sha256: 'abdaa491af8b11109ac2471e9db9106c5ab361d50c125948b42519bd86800552' }],
-    current: '2026-11-17',
-    oldestAccepted: '2026-11-17',
+    published: [{ version: '2026-11-22', sha256: 'abdaa491af8b11109ac2471e9db9106c5ab361d50c125948b42519bd86800552' }],
+    current: '2026-11-22',
+    oldestAccepted: '2026-11-22',
   },
 };
 
