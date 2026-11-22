@@ -11,7 +11,7 @@ import { endingSection } from '@/lib/online-payment-endings';
 import { runningPortalFreeTime } from '@/lib/portal-free-time-server';
 import { staffCancelRefusal } from '@/lib/portal-free-time';
 import { applyEnding, hasRealSubscription, keepEnding, scheduleEnding, stripeIdToStopNow, upcomingDate, type EndingAccount } from '@/lib/plan-ending';
-import { endingDeps, readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
+import { endingDeps, fallBackFor, readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 
 /**
@@ -91,6 +91,13 @@ export const GET = withObservability(async (_req: NextRequest,
 
   const org = mapOrgRow(orgRow);
   const [preflight, account, pending, onlinePayments] = await Promise.all([buildCancellationPreflight(org), readEndingAccount(id), readPendingEnding(id), endingSection(id)]);
+  const renewsOn = account && hasRealSubscription(account) ? upcomingDate(orgRow.current_period_end, new Date()) : null;
+  // On-sale pages S4 Part 3: whole-plan free time catches an ending it still covers — the club goes back to its free plan
+  // instead of being suspended. Staff read the same answer the ending makes: at the period end (Cancel) and today (End now).
+  const now = new Date().toISOString();
+  const [fallBackAtEnd, fallBackNow] = account
+    ? await Promise.all([renewsOn ? fallBackFor(account, pending?.effectiveAt ?? renewsOn) : null, fallBackFor(account, now)])
+    : [null, null];
 
   return NextResponse.json({
     subscriptionStatus: orgRow.subscription_status,
@@ -102,7 +109,9 @@ export const GET = withObservability(async (_req: NextRequest,
     // recorded); with none (comped, a dev mock) the cancel ends now and there is no date to promise.
     waitsForRenewal: !!account && hasRealSubscription(account),
     // A stored date already past (a missed invoice webhook) is no end date to promise: it reads as missing (Part C, a).
-    renewsOn: account && hasRealSubscription(account) ? upcomingDate(orgRow.current_period_end, new Date()) : null,
+    renewsOn,
+    fallBackAtEnd: fallBackAtEnd && { ...fallBackAtEnd, planLabel: PLAN_CONFIG[fallBackAtEnd.plan].label },
+    fallBackNow: fallBackNow && { ...fallBackNow, planLabel: PLAN_CONFIG[fallBackNow.plan].label },
     pending: pending ? { endsAt: pending.effectiveAt, reason: pending.reason, requestedBy: pending.createdByEmail, heldMovePlan: pending.heldMovePlan } : null,
     // 12d-2 (words §4.3): the operator sees what the owner would — what stops, what is owed and clearing.
     onlinePayments,
@@ -156,11 +165,11 @@ export const POST = withObservability(async (req: NextRequest,
     ? await writeAuditBeforeChange(auth.user.email!, id, 'end_subscription_now', 'subscription_status', orgRow.subscription_status, change, { reason })
     : await writeAuditBeforeChange(auth.user.email!, id, 'cancel_subscription', 'subscription_status', orgRow.subscription_status, change, { reason });
 
-  let outcome: { kind: 'scheduled'; endsAt: string | null; recorded: boolean } | { kind: 'ended'; retentionUntil: string | null; retainedTournamentIds: string[] };
+  let outcome: { kind: 'scheduled'; endsAt: string | null; recorded: boolean } | { kind: 'ended'; retentionUntil: string | null; retainedTournamentIds: string[]; fellBackTo?: OrgPlan };
   try {
     if (endNow) {
       const ended = await applyEnding(account, { actor, reason, notifyOwner, origin: 'request' }, endingDeps);
-      outcome = { kind: 'ended', retentionUntil: ended.retentionUntil, retainedTournamentIds: ended.retainedTournamentIds };
+      outcome = { kind: 'ended', retentionUntil: ended.retentionUntil, retainedTournamentIds: ended.retainedTournamentIds, fellBackTo: ended.fellBackTo };
     } else {
       const scheduled = await scheduleEnding(account, actor, { reason, notifyOwner }, endingDeps);
       if (scheduled.outcome === 'refused') {
@@ -170,7 +179,7 @@ export const POST = withObservability(async (req: NextRequest,
       }
       outcome = scheduled.outcome === 'scheduled'
         ? { kind: 'scheduled', endsAt: scheduled.endsAt, recorded: scheduled.recorded }
-        : { kind: 'ended', retentionUntil: scheduled.ended.retentionUntil, retainedTournamentIds: scheduled.ended.retainedTournamentIds };
+        : { kind: 'ended', retentionUntil: scheduled.ended.retentionUntil, retainedTournamentIds: scheduled.ended.retainedTournamentIds, fellBackTo: scheduled.ended.fellBackTo };
     }
   } catch (error) {
     // Not "not made": the ending may have archived tournaments by now. The cancel's row stays and a second one says it
@@ -214,6 +223,8 @@ export const POST = withObservability(async (req: NextRequest,
     outcome: 'ended',
     retainedCount: outcome.retainedTournamentIds.length + 1,
     retentionUntil: outcome.retentionUntil,
+    // S4 Part 3: free time caught it — the club is back on this free plan, open.
+    fellBackTo: outcome.fellBackTo ?? null,
     stripeWarning,
   });
 }, { route: '/api/platform-admin/orgs/[id]/cancel-subscription' });

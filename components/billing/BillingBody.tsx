@@ -4,7 +4,8 @@ import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, ChevronRight, CreditCard } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { ownPlanOf } from '@/lib/free-time';
+import { freeTimeCatchesEnd, moveLandsAt, ownPlanOf } from '@/lib/free-time';
+import { PLAN_RANK } from '@/lib/plan-features';
 import { PLAN_BILLING_PROFILES, type PlanBillingProfile, type BillingPlanChange } from '@/lib/plan-billing-profile';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
@@ -227,9 +228,16 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // ABOVE the plan it is given, as starts; its "Your plan" row is the given plan. Nothing at or below it can be bought.
   const givenPlan = ownProfile.key === 'tournament' && ft?.planGrant && ft.planGrant.plan !== 'tournament' ? ft.planGrant.plan : null;
   const currentKey = givenPlan ?? ownProfile.key;
+  // S4 Part 3 (owner 2026-11-21, "Cancel is the one door"): a PAYING club whose running free plan would catch it is offered
+  // no move to that plan or below it — Cancel already goes back to the free plan with nothing archived, and a move there
+  // pays for nothing new. The server refuses those moves too (`below_free_plan`).
+  // Asked at the renewal a move down would land on (/review 2026-11-21): free time ending before then catches nothing.
+  const catchingGrant = !givenPlan && ownProfile.key !== 'team' && ft?.planGrant && freeTimeCatchesEnd(ft.planGrant, moveLandsAt(org.currentPeriodEnd)) ? ft.planGrant : null;
   const changes = givenPlan
     ? ownProfile.changes.filter(change => change.mechanism !== 'checkout' || upgradePlansFor(ownProfile.key, givenPlan).includes(change.target as UpgradePlanKey))
-    : ownProfile.changes;
+    : catchingGrant
+      ? ownProfile.changes.filter(change => change.mechanism === 'checkout' || PLAN_RANK[change.target as OrgPlan] > PLAN_RANK[catchingGrant.plan])
+      : ownProfile.changes;
   const showChanges = !endedPortal && (!staffFree || ownProfile.key === 'team' || Boolean(givenPlan));
   const cancelled = org.subscriptionStatus === 'canceled' && !portal && !staffFree;
   const controlsReady = s.freeTime.status === 'ready';
@@ -510,7 +518,10 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
             </tr>;
           })}</tbody>
         </table></div>
-        {clubRows && <p className={`${styles.lede} ${styles.afterTable}`} id="billing-team-count">{W.change.countLine(Math.max(...changeKeys.map(key => profiles[key].config.teamLimit).filter(limit => limit < NO_LIMIT)))} <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a> {W.change.customEnd}</p>}
+        {/* S4 Part 3 (drawing tab 6; owner 2026-11-21, "while your free time runs"): buying does not end free time, and a
+            paid plan that ends while it runs falls back to it. Only beside a start a free-time club can make. */}
+        {givenPlan && ft?.planGrant && changes.some(change => change.mechanism === 'checkout') && <p className={`${styles.lede} ${styles.afterTable}`} id="billing-free-time-stays">{W.fallBack.tableLine(org.name, ft.planGrant.plan, ft.planGrant.lastDay)}</p>}
+        {clubRows &&<p className={`${styles.lede} ${styles.afterTable}`} id="billing-team-count">{W.change.countLine(Math.max(...changeKeys.map(key => profiles[key].config.teamLimit).filter(limit => limit < NO_LIMIT)))} <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a> {W.change.customEnd}</p>}
         {paidChangeKeys.length > 0 && <>
           <p className={`${styles.lede} ${styles.afterTable}`}>{W.change.pricesPlusTax}</p>
           {/* §20 (3): one line under the table serves every row's button, straight after the tax line (step 6.3, drawing tab 5, pin 1);
@@ -538,10 +549,15 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       {/* A subscription that waits for a date it can't name: no door that would promise one, or wrongly say "now". */}
       {preflight?.ending?.waits && !preflight.ending.endsOn ? <><p role="alert" className={styles.hint}>{W.errors.read('the renewal date')}</p>{retry}</>
         : preflight ? <>
-        <p className={styles.cancelCopy}>{preflight.ending?.endsOn
+        {/* S4 Part 3: free time covers the day this cancel would end, so the club goes back to it — never "goes offline". */}
+        <p className={styles.cancelCopy}>{preflight.fallBack && !premium
+          ? preflight.ending?.endsOn
+            ? W.fallBack.waitBody(org.name, preflight.ending.endsOn, preflight.fallBack.plan, preflight.fallBack.lastDay, trialingNow, pastDueNow)
+            : W.fallBack.nowBody(org.name, preflight.fallBack.plan, preflight.fallBack.lastDay)
+          : preflight.ending?.endsOn
           ? premium ? W.cancel.premiumWaitBody(preflight.ending.endsOn, preflight.retentionDays, trialingNow, pastDueNow) : W.cancel.waitBody(org.name, preflight.shortShutsDown, preflight.ending.endsOn, preflight.retentionDays, trialingNow, pastDueNow)
           : premium ? W.cancel.premiumBody(preflight.retentionDays) : W.cancel.orgBody(org.name, preflight.shortShutsDown, preflight.retentionDays)}</p>
-        <button type="button" className={`btn btn-outline ${styles.dangerText}`} id="billing-cancel-btn" onClick={a.cancel} disabled={disabled}>{premium ? W.cancel.premiumDoor : preflight.ending?.endsOn ? W.cancel.waitDoor(ownProfile.config.label) : W.cancel.orgDoor(org.name)}</button>
+        <button type="button" className={`btn btn-outline ${styles.dangerText}`} id="billing-cancel-btn" onClick={a.cancel} disabled={disabled}>{premium ? W.cancel.premiumDoor : preflight.ending?.endsOn ? W.cancel.waitDoor(ownProfile.config.label) : preflight.fallBack ? W.fallBack.door(ownProfile.config.label) : W.cancel.orgDoor(org.name)}</button>
       </> : s.cancellation.status === 'loading' ? <LoadingState inline label="Loading cancellation details…" /> : <ReadFailure read={s.cancellation} section="cancellation details" />}
     </Section>}
     {deletionSection}
@@ -784,6 +800,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   // Plans end at the renewal date (Stage 1): a real subscription's cancel waits for its date; with none it ends at the click.
   const ending = cancel?.ending ?? null;
   const endsOn = ending?.waits ? ending.endsOn : null;
+  // S4 Part 3: the server's answer (the ending's own rule) — free time covers the day this cancel ends. Never a portal's.
+  const fallBack = !premium ? cancel?.fallBack ?? null : null;
   const trialing = org.subscriptionStatus === 'trialing';
   // Stage 3 F2: a past-due account's date can come sooner, so the windows do not promise it.
   const pastDue = org.subscriptionStatus === 'past_due';
@@ -824,7 +842,11 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       // A move to the free plan that waits for its date: the notice says when, never "your plan is now" (Stage 2).
       } else if (downgrade && result.outcome === 'scheduled') {
         setNotice({ tone: 'good', text: W.move.scheduled(org.name, target!.config.label, result.movesAt ?? null) });
-      } else setNotice({ tone: 'good', text: cancel ? premium ? W.notice.premiumCancelled(cancel.retentionDays) : W.notice.cancelled(org.name, cancel.retentionDays)
+      } else setNotice({ tone: 'good', text: cancel ? premium ? W.notice.premiumCancelled(cancel.retentionDays)
+        // S4 Part 3: what the ending did (the server's answer), never the window's guess.
+        : typeof result.fellBackTo === 'string' ? W.fallBack.done(ownProfile.config.label, org.name, result.fellBackTo as OrgPlan,
+          fallBack?.lastDay ?? (freeTime.status === 'ready' ? freeTime.data.planGrant?.lastDay ?? null : null))
+        : W.notice.cancelled(org.name, cancel.retentionDays)
         : W.notice.downgraded(target!.config.label, result.retainedCount ?? 0, downgrade!.retentionDays) });
       reloadAfterAction();
     });
@@ -886,10 +908,10 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     {pick && waitingMove && <PickWindow orgName={org.name} endsAt={waitingMove.endsAt} since={waitingMove.move.since} pick={pick} busy={busy !== null}
       onChange={ids => setPick(p => p && { ...p, error: null, ids })}
       onSave={() => void savePick()} onClose={() => setPick(null)} />}
-    {review && <KitDialog kind="form" title={review.kind === 'cancel' ? endsOn && !premium ? W.cancel.waitTitle(ownProfile.config.label) : premium ? W.cancel.premiumTitle : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}
+    {review && <KitDialog kind="form" title={review.kind === 'cancel' ? endsOn && !premium ? W.cancel.waitTitle(ownProfile.config.label) : premium ? W.cancel.premiumTitle : fallBack ? W.fallBack.title(ownProfile.config.label) : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}
       footerStart={cancel ? (!endsOn && premium ? <span>{W.cancel.footer(cancel.retentionDays)}</span> : undefined) : downgradeFoot ? <span>{downgradeFoot}</span> : undefined}
       footer={<><DialogCancel>{keepLabel}</DialogCancel>
-        {(cancel || downgrade) && <button type="button" className={cancel ? 'btn btn-danger' : 'btn btn-lime'} onClick={() => void confirmReview()} disabled={busy !== null || moveDateMissing || Boolean(downgrade?.requiresTournamentChoice && keepIds.length !== downgrade.allowedKeepCount)}>{busy === 'confirm' ? cancel ? W.cancel.working : W.downgrade.applying : cancel ? endsOn ? W.cancel.waitConfirm(endsOn) : premium ? W.cancel.premiumConfirm : W.cancel.confirm : movesOn ? W.downgrade.confirmOn(movesOn) : W.downgrade.confirm(target!.config.label)}</button>}</>}
+        {(cancel || downgrade) && <button type="button" className={cancel ? 'btn btn-danger' : 'btn btn-lime'} onClick={() => void confirmReview()} disabled={busy !== null || moveDateMissing || Boolean(downgrade?.requiresTournamentChoice && keepIds.length !== downgrade.allowedKeepCount)}>{busy === 'confirm' ? cancel ? W.cancel.working : W.downgrade.applying : cancel ? endsOn ? W.cancel.waitConfirm(endsOn) : premium ? W.cancel.premiumConfirm : fallBack ? W.fallBack.confirm(ownProfile.config.label) : W.cancel.confirm : movesOn ? W.downgrade.confirmOn(movesOn) : W.downgrade.confirm(target!.config.label)}</button>}</>}
     >
       <DialogReason className={styles.dangerText}>{reviewError}</DialogReason>
       {review.kind === 'downgrade' && review.read.status === 'loading' && <LoadingState inline label="Loading plan-change review…" />}
@@ -904,12 +926,33 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
         {heldMove && <p className={styles.waitCallout}>{W.cancel.moveSetAside(PLAN_CONFIG[heldMove.toPlan].label, heldMove.effectiveAt, keepLabel)}</p>}
         {/* Stage 2 ruling 4: a cancel over a waiting move to the free plan replaces it; a later Keep returns the full plan. */}
         {waitingMove && <p className={styles.waitCallout}>{W.cancel.replacesMove(PLAN_CONFIG[waitingMove.move.targetPlan].label, waitingMove.endsAt, ownProfile.config.label)}</p>}
-        <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{premium ? W.cancel.premiumOfflineOn(endsOn) : W.cancel.offlineOn(endsOn)}</h3>
-        <ul className={styles.offlineList}>{cancel.shutsDown.map(line => <li key={line}>{line}</li>)}</ul>
-        <p className={`${styles.hint} ${styles.afterList}`}>{premium ? W.cancel.premiumKeptThen(endsOn, cancel.retentionDays, !pastDue) : W.cancel.suspendedThen(org.name, endsOn, cancel.retentionDays, !pastDue)}</p>
+        {/* S4 Part 3: free time covers the date — the club goes back to it; only what the paid plan alone carried stops. */}
+        {fallBack ? <>
+          {fallBack.stops.length > 0 && <>
+            <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{W.fallBack.stopsOn(endsOn)}</h3>
+            <ul className={styles.offlineList}>{fallBack.stops.map(line => <li key={line}>{line}</li>)}</ul>
+          </>}
+          <p className={`${styles.hint} ${styles.afterList}`}>{W.fallBack.goesBack(org.name, fallBack.plan, fallBack.lastDay)}</p>
+        </> : <>
+          <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{premium ? W.cancel.premiumOfflineOn(endsOn) : W.cancel.offlineOn(endsOn)}</h3>
+          <ul className={styles.offlineList}>{cancel.shutsDown.map(line => <li key={line}>{line}</li>)}</ul>
+          <p className={`${styles.hint} ${styles.afterList}`}>{premium ? W.cancel.premiumKeptThen(endsOn, cancel.retentionDays, !pastDue) : W.cancel.suspendedThen(org.name, endsOn, cancel.retentionDays, !pastDue)}</p>
+        </>}
         <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancelOn', dateLong: moveDateLong(endsOn), plan: premium ? 'Premium' : ownProfile.config.label }} />
       </>}
-      {cancel && !endsOn && !premium && <>
+      {cancel && !endsOn && !premium && fallBack && <>
+        {/* S4 Part 3: no paid period to wait for, and free time running — it ends at the click and goes back to free time. */}
+        <div className={`${styles.waitCallout} ${styles.calloutLines}`}>
+          {ending && !ending.waits && <p>{W.cancel.noPeriod(org.name)}</p>}
+          <p>{W.fallBack.goesBack(org.name, fallBack.plan, fallBack.lastDay)}</p>
+        </div>
+        {fallBack.stops.length > 0 && <>
+          <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{W.fallBack.stopsNow}</h3>
+          <ul className={styles.offlineList}>{fallBack.stops.map(line => <li key={line}>{line}</li>)}</ul>
+        </>}
+        <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancel' }} />
+      </>}
+      {cancel && !endsOn && !premium && !fallBack && <>
         {/* No paid period to wait for (comped, a dev mock): the cancel happens at the click, so the lead is the one red
             line, and says why it does not wait. */}
         <div className={`${styles.waitCallout} ${styles.calloutDanger} ${styles.calloutLines}`}>

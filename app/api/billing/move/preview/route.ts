@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { paymentFailingRefusal, previewMove, type QuotePlace } from '@/lib/plan-move';
-import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
+import { authorizeMove, parseTargetPlan, refuseBelowFreePlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
 import { previewClubCheckout } from '@/lib/workspace-upgrade-preview';
 import { normalizeBillingCycle } from '@/lib/plan-config';
 import { isPremiumToClub } from '@/lib/workspace-upgrade';
@@ -49,6 +49,9 @@ export const POST = withObservability(async (req: Request) => {
   if (!toPlan) return NextResponse.json({ error: 'Choose a plan to move to.', code: 'not_a_move' }, { status: 400 });
   const gated = await refuseIfGated(toPlan);
   if (gated) return gated;
+  // On-sale pages S4 Part 3 (carried item 2): the window never prices a move to a running free plan or below it.
+  const belowFree = await refuseBelowFreePlan({ id: authorized.org.id, name: authorized.org.name, ownPlan: ownPlanOf(authorized.org), subscriptionStatus: authorized.org.subscriptionStatus ?? null, currentPeriodEnd: authorized.org.currentPeriodEnd }, toPlan);
+  if (belowFree) return belowFree;
   // On-sale pages S4 Part 2: the window never prices a move the move itself would refuse (lib/legal-pages-sale-guard.ts).
   // A move down sells nothing (see the move route), so only an up move or a start is refused.
   const unpublished = moveDirection(ownPlanOf(authorized.org), toPlan) === 'down' ? null : legalPagesSaleRefusal(toPlan, 'billing-move-preview', { sale: 'move' });

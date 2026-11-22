@@ -1,0 +1,437 @@
+{
+  "deleted": {
+    "cust cus_Vfo6Nc6UwrNLyr": true,
+    "cust cus_Vfo6Wd83nSVsG6": true,
+    "cust cus_Vfo77gdTGEXbG6": true,
+    "cust cus_Vfo77rxYwVurHP": true,
+    "cust cus_Vfo8DcDtB4rCUW": true,
+    "cust cus_VfoBCkSgwR54FQ": true,
+    "cust cus_VfoCHMdgDsulLp": true,
+    "cust cus_VfoEeF81lnbh5S": true,
+    "cust cus_VfoFjvLgWwuy98": true,
+    "cust cus_VfoFZiKOeAbNZc": true,
+    "cust cus_VfoJu16VqjvRr5": true,
+    "cust cus_VfoJlQ7TMadUho": true,
+    "cust cus_VfoKgs1ZlZP4Bp": true,
+    "cust cus_VfoOqYLe1YKUxr": true,
+    "cust cus_VfoPfeNv6UD7LG": true,
+    "cust cus_VfoQKQhKQHipbF": true,
+    "cust cus_VfoRKgwttox6jE": true,
+    "cust cus_VfoRtnv8Y8JD6w": true,
+    "cust cus_VfoSthETWgOWiM": true,
+    "sub-cancel cus_synth_1795322736953none": "No such customer: 'cus_synth_1795322736953none'",
+    "cust cus_synth_1795322736953none": "No such customer: 'cus_synth_1795322736953none'",
+    "sub-cancel cus_synth_1795322745609pendingQuiet": "No such customer: 'cus_synth_1795322745609pendingQuiet'",
+    "cust cus_synth_1795322745609pendingQuiet": "No such customer: 'cus_synth_1795322745609pendingQuiet'",
+    "sub-cancel cus_synth_1795322751230pendingNotify": "No such customer: 'cus_synth_1795322751230pendingNotify'",
+    "cust cus_synth_1795322751230pendingNotify": "No such customer: 'cus_synth_1795322751230pendingNotify'",
+    "sub-cancel cus_synth_1795322996976noneDated": "No such customer: 'cus_synth_1795322996976noneDated'",
+    "cust cus_synth_1795322996976noneDated": "No such customer: 'cus_synth_1795322996976noneDated'",
+    "sub-cancel cus_synth_1795323002719pendingNotifyDated": "No such customer: 'cus_synth_1795323002719pendingNotifyDated'",
+    "cust cus_synth_1795323002719pendingNotifyDated": "No such customer: 'cus_synth_1795323002719pendingNotifyDated'",
+    "clock clock_1UeSU2FuSuNtbvsQowS66Ojf": true,
+    "clock clock_1UeSUKFuSuNtbvsQ1tAuYFhS": true,
+    "clock clock_1UeSV9FuSuNtbvsQoDPCQxpJ": true,
+    "clock clock_1UeSVdFuSuNtbvsQLTwTtj6J": true,
+    "clock clock_1UeSW1FuSuNtbvsQSnJnLPRr": true,
+    "clock clock_1UeSZSFuSuNtbvsQuzyva0ZO": true,
+    "clock clock_1UeSaOFuSuNtbvsQ6IcNugbZ": true,
+    "clock clock_1UeScDFuSuNtbvsQUP3EDzBV": true,
+    "clock clock_1UeScqFuSuNtbvsQ7UhCTfkc": true,
+    "clock clock_1UeSdBFuSuNtbvsQKJVmTmX7": true,
+    "clock clock_1UeSgfFuSuNtbvsQUK7TdVFS": true,
+    "clock clock_1UeShEFuSuNtbvsQczqvtGEQ": true,
+    "clock clock_1UeSiFFuSuNtbvsQwAcQlXvx": true,
+    "clock clock_1UeSlkFuSuNtbvsQmMeVzyYP": true,
+    "clock clock_1UeSmgFuSuNtbvsQnKVKJCce": true,
+    "clock clock_1UeSnWFuSuNtbvsQQGj92Fx0": true,
+    "clock clock_1UeSoFFuSuNtbvsQvdQjSGUB": true,
+    "clock clock_1UeSonFuSuNtbvsQ8Py5G9pC": true,
+    "clock clock_1UeSpuFuSuNtbvsQPbtLdsor": true,
+    "stripe_billing_events.customer_id": 231,
+    "platform_charge_tax_records.stripe_customer_id": 23,
+    "platform_credit_note_tax_records.stripe_customer_id": 0,
+    "platform_refunds.stripe_customer_id": 0,
+    "stripe_billing_events probe ids": 0,
+    "platform_events.org_id": 48,
+    "platform_audit_log.org_id": 0,
+    "platform_account_emails.org_id": 0,
+    "platform_refunds.org_id": 0,
+    "error_events.org_id": 0,
+    "email_sends.recipient_org_id": 0,
+    "billing_retained_records.org_id": 42,
+    "billing_retention_intents.org_id": 26,
+    "org_overrides.org_id": 22,
+    "tournaments.org_id": 48,
+    "organizations": 24
+  },
+  "proof": {
+    "clocks": {
+      "clock_1UeSU2FuSuNtbvsQowS66Ojf": "gone resource_missing",
+      "clock_1UeSUKFuSuNtbvsQ1tAuYFhS": "gone resource_missing",
+      "clock_1UeSV9FuSuNtbvsQoDPCQxpJ": "gone resource_missing",
+      "clock_1UeSVdFuSuNtbvsQLTwTtj6J": "gone resource_missing",
+      "clock_1UeSW1FuSuNtbvsQSnJnLPRr": "gone resource_missing",
+      "clock_1UeSZSFuSuNtbvsQuzyva0ZO": "gone resource_missing",
+      "clock_1UeSaOFuSuNtbvsQ6IcNugbZ": "gone resource_missing",
+      "clock_1UeScDFuSuNtbvsQUP3EDzBV": "gone resource_missing",
+      "clock_1UeScqFuSuNtbvsQ7UhCTfkc": "gone resource_missing",
+      "clock_1UeSdBFuSuNtbvsQKJVmTmX7": "gone resource_missing",
+      "clock_1UeSgfFuSuNtbvsQUK7TdVFS": "gone resource_missing",
+      "clock_1UeShEFuSuNtbvsQczqvtGEQ": "gone resource_missing",
+      "clock_1UeSiFFuSuNtbvsQwAcQlXvx": "gone resource_missing",
+      "clock_1UeSlkFuSuNtbvsQmMeVzyYP": "gone resource_missing",
+      "clock_1UeSmgFuSuNtbvsQnKVKJCce": "gone resource_missing",
+      "clock_1UeSnWFuSuNtbvsQQGj92Fx0": "gone resource_missing",
+      "clock_1UeSoFFuSuNtbvsQvdQjSGUB": "gone resource_missing",
+      "clock_1UeSonFuSuNtbvsQ8Py5G9pC": "gone resource_missing",
+      "clock_1UeSpuFuSuNtbvsQPbtLdsor": "gone resource_missing"
+    },
+    "customers": {
+      "cus_Vfo6Nc6UwrNLyr": {
+        "deleted": true,
+        "subscriptions": [],
+        "invoices": []
+      },
+      "cus_Vfo6Wd83nSVsG6": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSULFuSuNtbvsQGwX2130f:canceled"
+        ],
+        "invoices": [
+          "in_1UeSULFuSuNtbvsQerRdJfku:paid"
+        ]
+      },
+      "cus_Vfo77gdTGEXbG6": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSVAFuSuNtbvsQvsThU951:canceled"
+        ],
+        "invoices": [
+          "in_1UeSVBFuSuNtbvsQ97Zosx9X:paid"
+        ]
+      },
+      "cus_Vfo77rxYwVurHP": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSVeFuSuNtbvsQhQRunbKm:canceled"
+        ],
+        "invoices": [
+          "in_1UeSVfFuSuNtbvsQsZvDNbxS:paid"
+        ]
+      },
+      "cus_Vfo8DcDtB4rCUW": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSW2FuSuNtbvsQAR4raezb:canceled"
+        ],
+        "invoices": [
+          "in_1UeSW2FuSuNtbvsQ6wysxBIV:paid"
+        ]
+      },
+      "cus_VfoBCkSgwR54FQ": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSZzFuSuNtbvsQxpcl4AZf:canceled",
+          "sub_1UeSZUFuSuNtbvsQLd68BMGu:canceled"
+        ],
+        "invoices": [
+          "in_1UeSZzFuSuNtbvsQzs42W5fQ:paid",
+          "in_1UeSZUFuSuNtbvsQOmP3ET7I:paid"
+        ]
+      },
+      "cus_VfoCHMdgDsulLp": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSawFuSuNtbvsQ8WRdAv9o:canceled",
+          "sub_1UeSaQFuSuNtbvsQ0aWuawUK:canceled"
+        ],
+        "invoices": [
+          "in_1UeSaxFuSuNtbvsQZglfO79E:paid",
+          "in_1UeSaQFuSuNtbvsQfs0llDo7:paid"
+        ]
+      },
+      "cus_VfoEeF81lnbh5S": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeScEFuSuNtbvsQ3Hz3z8gz:canceled"
+        ],
+        "invoices": [
+          "in_1UeScEFuSuNtbvsQyCOmqyV1:paid"
+        ]
+      },
+      "cus_VfoFjvLgWwuy98": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeScrFuSuNtbvsQbRlEypoC:canceled"
+        ],
+        "invoices": [
+          "in_1UeScrFuSuNtbvsQfis6NiQK:paid"
+        ]
+      },
+      "cus_VfoFZiKOeAbNZc": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSdCFuSuNtbvsQ2428jYNb:canceled"
+        ],
+        "invoices": [
+          "in_1UeSdCFuSuNtbvsQZxQ2dHeA:paid"
+        ]
+      },
+      "cus_VfoJu16VqjvRr5": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSggFuSuNtbvsQ7ur2Fm8d:canceled"
+        ],
+        "invoices": [
+          "in_1UeSggFuSuNtbvsQSlS0Edhe:paid"
+        ]
+      },
+      "cus_VfoJlQ7TMadUho": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeShhFuSuNtbvsQLjMnGBpF:canceled",
+          "sub_1UeShFFuSuNtbvsQ4UUdTnt2:canceled"
+        ],
+        "invoices": [
+          "in_1UeShhFuSuNtbvsQ0ecEM5Fb:paid",
+          "in_1UeShFFuSuNtbvsQVEsfYD22:paid"
+        ]
+      },
+      "cus_VfoKgs1ZlZP4Bp": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSiHFuSuNtbvsQ40x2qPBm:canceled"
+        ],
+        "invoices": [
+          "in_1UeSiHFuSuNtbvsQAAffwAN2:paid"
+        ]
+      },
+      "cus_VfoOqYLe1YKUxr": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSllFuSuNtbvsQ0j6DcZz0:canceled"
+        ],
+        "invoices": [
+          "in_1UeSllFuSuNtbvsQHspUYEA0:paid"
+        ]
+      },
+      "cus_VfoPfeNv6UD7LG": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSmhFuSuNtbvsQvkl4Q98m:canceled"
+        ],
+        "invoices": [
+          "in_1UeSmhFuSuNtbvsQ0EZqrR6j:paid"
+        ]
+      },
+      "cus_VfoQKQhKQHipbF": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSnXFuSuNtbvsQlQrpm8N2:canceled"
+        ],
+        "invoices": [
+          "in_1UeSnYFuSuNtbvsQeRjCZQzI:paid"
+        ]
+      },
+      "cus_VfoRKgwttox6jE": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSoGFuSuNtbvsQZUcFyY3Y:canceled"
+        ],
+        "invoices": [
+          "in_1UeSoGFuSuNtbvsQcW6z9HM4:paid"
+        ]
+      },
+      "cus_VfoRtnv8Y8JD6w": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSpWFuSuNtbvsQmHYTIXm8:canceled",
+          "sub_1UeSopFuSuNtbvsQgAlyFgDy:canceled"
+        ],
+        "invoices": [
+          "in_1UeSpWFuSuNtbvsQWa1NemFp:paid",
+          "in_1UeSopFuSuNtbvsQlQFa9swj:paid"
+        ]
+      },
+      "cus_VfoSthETWgOWiM": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeSpvFuSuNtbvsQO4czuOKp:canceled"
+        ],
+        "invoices": [
+          "in_1UeSqMFuSuNtbvsQxX3JRaoA:open",
+          "in_1UeSpvFuSuNtbvsQHoAp3sIL:paid"
+        ]
+      },
+      "cus_synth_1795322736953none": {
+        "deleted": true,
+        "subscriptions": [],
+        "subsListErr": "No such customer: 'cus_synth_1795322736953none'",
+        "invoices": []
+      },
+      "cus_synth_1795322745609pendingQuiet": {
+        "deleted": true,
+        "subscriptions": [],
+        "subsListErr": "No such customer: 'cus_synth_1795322745609pendingQuiet'",
+        "invoices": []
+      },
+      "cus_synth_1795322751230pendingNotify": {
+        "deleted": true,
+        "subscriptions": [],
+        "subsListErr": "No such customer: 'cus_synth_1795322751230pendingNotify'",
+        "invoices": []
+      },
+      "cus_synth_1795322996976noneDated": {
+        "deleted": true,
+        "subscriptions": [],
+        "subsListErr": "No such customer: 'cus_synth_1795322996976noneDated'",
+        "invoices": []
+      },
+      "cus_synth_1795323002719pendingNotifyDated": {
+        "deleted": true,
+        "subscriptions": [],
+        "subsListErr": "No such customer: 'cus_synth_1795323002719pendingNotifyDated'",
+        "invoices": []
+      }
+    },
+    "subsRetrieved": {
+      "sub_1UeSULFuSuNtbvsQGwX2130f": "canceled",
+      "sub_1UeSVAFuSuNtbvsQvsThU951": "canceled",
+      "sub_1UeSVeFuSuNtbvsQhQRunbKm": "canceled",
+      "sub_1UeSW2FuSuNtbvsQAR4raezb": "canceled",
+      "sub_1UeSZUFuSuNtbvsQLd68BMGu": "canceled",
+      "sub_1UeSZzFuSuNtbvsQxpcl4AZf": "canceled",
+      "sub_1UeSaQFuSuNtbvsQ0aWuawUK": "canceled",
+      "sub_1UeSawFuSuNtbvsQ8WRdAv9o": "canceled",
+      "sub_1UeScEFuSuNtbvsQ3Hz3z8gz": "canceled",
+      "sub_1UeScrFuSuNtbvsQbRlEypoC": "canceled",
+      "sub_1UeSdCFuSuNtbvsQ2428jYNb": "canceled",
+      "sub_1UeSggFuSuNtbvsQ7ur2Fm8d": "canceled",
+      "sub_1UeShFFuSuNtbvsQ4UUdTnt2": "canceled",
+      "sub_1UeShhFuSuNtbvsQLjMnGBpF": "canceled",
+      "sub_1UeSiHFuSuNtbvsQ40x2qPBm": "canceled",
+      "sub_1UeSllFuSuNtbvsQ0j6DcZz0": "canceled",
+      "sub_1UeSmhFuSuNtbvsQvkl4Q98m": "canceled",
+      "sub_1UeSnXFuSuNtbvsQlQrpm8N2": "canceled",
+      "sub_1UeSoGFuSuNtbvsQZUcFyY3Y": "canceled",
+      "sub_1UeSopFuSuNtbvsQgAlyFgDy": "canceled",
+      "sub_1UeSpWFuSuNtbvsQmHYTIXm8": "canceled",
+      "sub_1UeSpvFuSuNtbvsQO4czuOKp": "canceled"
+    },
+    "db": {
+      "orgsWithProbeSlug": 0,
+      "orgsById": 0,
+      "tournamentsByOrg": 0,
+      "tournamentsById": 0,
+      "overridesByOrg": 0,
+      "overridesById": 0,
+      "platformEventsByOrg": 0,
+      "intentsByOrg": 0,
+      "retainedByOrg": 0,
+      "billingEventsByCustomer": 0,
+      "billingEventsProbeIds": 0,
+      "taxRecordsByCustomer": 0,
+      "auditByOrg": 0
+    }
+  },
+  "ids": {
+    "orgs": [
+      "c9ae6b8b-1e0d-4e89-a436-9afcec2730cc",
+      "f343e922-7540-460c-aca3-d03194874de6",
+      "9728651c-fe72-4c73-8541-2dd11c1445c4",
+      "20b8935d-6b19-4c3f-8038-ab37ff19a371",
+      "265a1b80-5f6a-4ebb-b617-1a489e8974b4",
+      "d18bb0e2-29d0-4934-8311-97b3ec4405bf",
+      "c9843cb3-ffbc-4177-95e7-bad1b591e3e0",
+      "49574ea5-e129-4fc8-a07d-e2ea7183c524",
+      "fc6c43f6-d224-4edc-a789-de40ad9ada4b",
+      "5afee6b6-33f0-4dbd-bb87-1f9c86c7332c",
+      "861fbc39-a3e4-47ad-a1cc-a3faaccbdbfc",
+      "f864f0fb-7a7c-42ea-ba55-731669381830",
+      "685355e3-1b01-4705-82e3-5949f281db0a",
+      "817c1ef6-67ba-4383-9674-2a522e610943",
+      "5d5dd0c5-a723-4bb7-92c6-4cd8c3b27e02",
+      "f41102f9-8d95-414b-a96d-7d56894b00b8",
+      "0793e4c5-be40-4ed5-9797-a970acd506be",
+      "d341b8b0-231f-4089-adbd-1c66649de461",
+      "53669555-e8ce-480d-813f-3977ea8dd827",
+      "b49d3a3b-9a12-459b-9e7c-58e2928c9cdd",
+      "6dfc492a-3a8e-4e92-b933-cb3563cf7939",
+      "71ffaa86-40d0-46d9-b549-b6071658722a",
+      "1f2d370c-8ad7-4f4c-8853-6d40753ae6cb",
+      "2cd95ad1-a570-4f02-ace5-77c5762a0a74"
+    ],
+    "customers": [
+      "cus_Vfo6Nc6UwrNLyr",
+      "cus_Vfo6Wd83nSVsG6",
+      "cus_Vfo77gdTGEXbG6",
+      "cus_Vfo77rxYwVurHP",
+      "cus_Vfo8DcDtB4rCUW",
+      "cus_VfoBCkSgwR54FQ",
+      "cus_VfoCHMdgDsulLp",
+      "cus_VfoEeF81lnbh5S",
+      "cus_VfoFjvLgWwuy98",
+      "cus_VfoFZiKOeAbNZc",
+      "cus_VfoJu16VqjvRr5",
+      "cus_VfoJlQ7TMadUho",
+      "cus_VfoKgs1ZlZP4Bp",
+      "cus_VfoOqYLe1YKUxr",
+      "cus_VfoPfeNv6UD7LG",
+      "cus_VfoQKQhKQHipbF",
+      "cus_VfoRKgwttox6jE",
+      "cus_VfoRtnv8Y8JD6w",
+      "cus_VfoSthETWgOWiM",
+      "cus_synth_1795322736953none",
+      "cus_synth_1795322745609pendingQuiet",
+      "cus_synth_1795322751230pendingNotify",
+      "cus_synth_1795322996976noneDated",
+      "cus_synth_1795323002719pendingNotifyDated"
+    ],
+    "clocks": [
+      "clock_1UeSU2FuSuNtbvsQowS66Ojf",
+      "clock_1UeSUKFuSuNtbvsQ1tAuYFhS",
+      "clock_1UeSV9FuSuNtbvsQoDPCQxpJ",
+      "clock_1UeSVdFuSuNtbvsQLTwTtj6J",
+      "clock_1UeSW1FuSuNtbvsQSnJnLPRr",
+      "clock_1UeSZSFuSuNtbvsQuzyva0ZO",
+      "clock_1UeSaOFuSuNtbvsQ6IcNugbZ",
+      "clock_1UeScDFuSuNtbvsQUP3EDzBV",
+      "clock_1UeScqFuSuNtbvsQ7UhCTfkc",
+      "clock_1UeSdBFuSuNtbvsQKJVmTmX7",
+      "clock_1UeSgfFuSuNtbvsQUK7TdVFS",
+      "clock_1UeShEFuSuNtbvsQczqvtGEQ",
+      "clock_1UeSiFFuSuNtbvsQwAcQlXvx",
+      "clock_1UeSlkFuSuNtbvsQmMeVzyYP",
+      "clock_1UeSmgFuSuNtbvsQnKVKJCce",
+      "clock_1UeSnWFuSuNtbvsQQGj92Fx0",
+      "clock_1UeSoFFuSuNtbvsQvdQjSGUB",
+      "clock_1UeSonFuSuNtbvsQ8Py5G9pC",
+      "clock_1UeSpuFuSuNtbvsQPbtLdsor"
+    ],
+    "subs": [
+      "sub_1UeSULFuSuNtbvsQGwX2130f",
+      "sub_1UeSVAFuSuNtbvsQvsThU951",
+      "sub_1UeSVeFuSuNtbvsQhQRunbKm",
+      "sub_1UeSW2FuSuNtbvsQAR4raezb",
+      "sub_1UeSZUFuSuNtbvsQLd68BMGu",
+      "sub_1UeSZzFuSuNtbvsQxpcl4AZf",
+      "sub_1UeSaQFuSuNtbvsQ0aWuawUK",
+      "sub_1UeSawFuSuNtbvsQ8WRdAv9o",
+      "sub_1UeScEFuSuNtbvsQ3Hz3z8gz",
+      "sub_1UeScrFuSuNtbvsQbRlEypoC",
+      "sub_1UeSdCFuSuNtbvsQ2428jYNb",
+      "sub_1UeSggFuSuNtbvsQ7ur2Fm8d",
+      "sub_1UeShFFuSuNtbvsQ4UUdTnt2",
+      "sub_1UeShhFuSuNtbvsQLjMnGBpF",
+      "sub_1UeSiHFuSuNtbvsQ40x2qPBm",
+      "sub_1UeSllFuSuNtbvsQ0j6DcZz0",
+      "sub_1UeSmhFuSuNtbvsQvkl4Q98m",
+      "sub_1UeSnXFuSuNtbvsQlQrpm8N2",
+      "sub_1UeSoGFuSuNtbvsQZUcFyY3Y",
+      "sub_1UeSopFuSuNtbvsQgAlyFgDy",
+      "sub_1UeSpWFuSuNtbvsQmHYTIXm8",
+      "sub_1UeSpvFuSuNtbvsQO4czuOKp"
+    ]
+  }
+}

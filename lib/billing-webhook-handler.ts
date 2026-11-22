@@ -44,7 +44,7 @@ import { clearSettled } from '@/lib/needs-attention';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
 import {
-  invoiceFailureIsCurrent, isTheRecordsSubscription, recordFollowsSubscription, statusAfterInvoicePaid, subscriptionAmount,
+  invoiceFailureIsCurrent, isEndedSubscriptionStatus, isTheRecordsSubscription, recordFollowsSubscription, statusAfterInvoicePaid, subscriptionAmount,
   subscriptionEventIsStale, subscriptionIsPaying,
 } from '@/lib/stripe-billing-state';
 import type { BillingEventOutcome } from '@/lib/stripe-billing-events';
@@ -524,6 +524,16 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
         // ⚠⚠ A SECOND SUBSCRIPTION DOES NOT TAKE THE RECORD OVER (see recordFollowsSubscription). Asked of Stripe
         // only when a different one is on file; a failed ask throws, so Stripe retries rather than guessing.
         const onFileId = currentOrg?.stripe_subscription_id ?? null;
+        // On-sale pages S4 Part 3: a subscription Stripe has ENDED never takes the record over. Its deletion runs the ending
+        // and clears the record (a free-time club stores its free plan and stays active), so a late `updated` whose own
+        // status is already "canceled" would otherwise write the lapsed paid plan and "canceled" back over it — even the
+        // subscription still on file, in the moments between the ending and the deletion arm's clear (/review 2026-11-21):
+        // a "canceled" one is always followed by its deletion, which speaks for it. An `incomplete_expired` one on file
+        // still writes its status (its first payment never landed, and no deletion follows to say so).
+        if (sub.status === 'canceled' || (isEndedSubscriptionStatus(sub.status) && onFileId !== sub.id)) {
+          console.warn(`[billing webhook] ignored ${event.id}: ${sub.id} has ended and is not the subscription on file`);
+          break;
+        }
         if (onFileId && onFileId !== sub.id && !onFileId.startsWith('mock_')
           && !recordFollowsSubscription({ onFileId, incomingId: sub.id, onFileIsPaying: await subscriptionIsPaying(onFileId, currentOrg?.subscription_status ?? null, id => stripe.subscriptions.retrieve(id)) })) {
           console.warn(`[billing webhook] ignored ${sub.id}: ${currentOrg?.id} already follows live subscription ${onFileId}`);

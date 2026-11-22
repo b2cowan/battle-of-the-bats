@@ -59,6 +59,7 @@ export const POST = withObservability(async (req: Request) => {
         fromPlan: account.ownPlan,
         retainedTournamentIds: result.ended.retainedTournamentIds,
         retentionUntil: result.ended.retentionUntil,
+        ...(result.ended.fellBackTo ? { fellBackTo: result.ended.fellBackTo } : {}),
         ...(portal ? { teamWorkspaceId: account.teamWorkspaceId } : {}),
       });
       // Ended at once because the subscription is not paying: Stripe still holds it open, so stop it (as the cancel always did).
@@ -79,6 +80,8 @@ export const POST = withObservability(async (req: Request) => {
         outcome: 'ended',
         retainedCount: result.ended.retainedTournamentIds.length + 1,
         retentionUntil: result.ended.retentionUntil,
+        // S4 Part 3: free time caught it — the club is back on this free plan, open (the notice says so).
+        fellBackTo: result.ended.fellBackTo ?? null,
       });
     }
 

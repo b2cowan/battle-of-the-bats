@@ -35,6 +35,7 @@ import type { BillingTournamentSummary } from './billing-retention-types';
 import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
 import { PLAN_CONFIG } from './plan-config';
 import { formatStoredDate } from './timezone';
+import { FREE_OWN_PLAN, freeTimeCatchesEnd } from './free-time';
 
 /** Stripe retries a failed webhook for up to three days; a waiting cancel still pending after that has been missed (G3). */
 export const OVERDUE_GRACE_DAYS = 3;
@@ -113,6 +114,9 @@ export type EndingAccount = {
 
 export type EndingActor = { door: EndingDoor; userId: string | null; email: string | null };
 
+/** A running whole-plan grant (On-sale pages S4 Part 3): the plan it gives and its last free day (null: no end date). */
+export type FreePlanGrant = { plan: OrgPlan; lastDay: string | null };
+
 export type RetainedRecordRow = {
   intentId: string;
   orgId: string;
@@ -155,7 +159,13 @@ export interface EndingDeps {
   suspend(account: EndingAccount, p: { endedAt: string; reason: string | null }): Promise<void>;
   closePayPages(orgId: string, where: PayPagesWhere): Promise<void>;
   writeEndedEvent(p: EndedEvent): Promise<void>;
-  sendEndedEmail(p: { account: EndingAccount; intentId: string; retentionUntil: string; retainedTournaments: number; askedBy: string | null }): Promise<void>;
+  /** `fellBackTo`: the plan ended while free time ran, so the club is back on it (no suspension, no data clock). */
+  sendEndedEmail(p: { account: EndingAccount; intentId: string; retentionUntil: string; retainedTournaments: number; askedBy: string | null; fellBackTo?: FreePlanGrant }): Promise<void>;
+  /**
+   * The whole-plan free time running NOW (S4 Part 3), or null: a Coaches Portal, the switch off, none running. Throws when
+   * it cannot be read — an ending must never close a club because a read failed (Stripe sends the event again).
+   */
+  freePlanGrant(account: EndingAccount): Promise<FreePlanGrant | null>;
 
   /**
    * The once-only claim of a Part C email (G6): stamps it only while it is unstamped and the row's status is one of
@@ -238,6 +248,8 @@ export type EndedEvent = {
   sourceEventId: string;
   /** A club closed AGAIN when free time that reopened it ran out (lib/free-time-reclose.ts): not a second churn. */
   freeTimeEnded?: boolean;
+  /** S4 Part 3: the paid plan ended while free time ran, so the club went back to this free plan and stays open. */
+  fellBackTo?: OrgPlan;
 };
 
 // ── Pure rules ───────────────────────────────────────────────────────────────────────────────────
@@ -838,6 +850,8 @@ export type ApplyResult = {
   emailed: boolean;
   /** When the plan ended — the data clock's start. */
   endedAt: string | null;
+  /** S4 Part 3: free time caught the ending — the club is back on this free plan, open, with no data clock (`retentionUntil` null). */
+  fellBackTo?: OrgPlan;
 };
 
 /**
@@ -894,6 +908,11 @@ export async function applyEnding(
   } else if (p.notifyOwner !== intent.notifyOwner && p.actor.door === 'operator') {
     intent = { ...intent, notifyOwner: p.notifyOwner };
   }
+
+  // S4 Part 3 (call 40, option A): free time still running catches the ending — the club falls back to its free plan and
+  // stays open. Asked at the END, of the grant as it is now: free time ended early (by staff, by arrangement) catches nothing.
+  const grant = account.isCoachesPortal ? null : await deps.freePlanGrant(account);
+  if (grant && freeTimeCatchesEnd(grant, now.toISOString())) return applyFallBack(account, intent, grant, { ...p, endedAt }, deps);
 
   const isRequest = p.origin === 'request';
   const reason = intent.reason ?? p.reason;
@@ -957,6 +976,77 @@ export async function applyEnding(
   }, ['pending']);
 
   return { applied: true, intentId: intent.id, retentionUntil, retainedTournamentIds: allRetained, emailed, endedAt };
+}
+
+/**
+ * FREE TIME CATCHES THE ENDING (On-sale pages S4 Part 3; call 40 option A, owner 2026-11-21). The paid plan ended while a
+ * whole-plan grant above the free plan still runs: the club stores its free own plan and stays active — NOT suspended, its
+ * site left as it is, nothing archived but what the granted plan cannot hold, and no data clock. The grant lifts the free
+ * plan again at once (`foldGrants` applies a grant only above the plan the club holds), so the club is on free {plan}
+ * through its last free day; when that free time later ends unpaid, the shipped free-time ending applies (back to free
+ * Tournament). Storing the free plan, never the lapsed paid one, is also what keeps checkout's "at or below your free plan"
+ * refusal and the comeback rule honest afterwards (the club is stored `active`, so its next purchase is not a "welcome back").
+ *
+ * The shared teardown's order and its replay rule (G7, G11): records for anything archived FIRST (under the downgrade's
+ * reason, so a later purchase restores them), then the archive, then the plan, then the one `subscription_canceled` event
+ * (the paid plan did end: one churn, marked `fellBackTo` so it never reads as a closed club), then the pay pages, the
+ * email, and the row's flip to applied LAST. Every step is safe to run again.
+ */
+async function applyFallBack(
+  account: EndingAccount,
+  intent: EndingIntent,
+  grant: FreePlanGrant,
+  p: { actor: EndingActor; reason: string | null; origin: 'request' | 'stripe'; note?: string; freeTimeEnded?: boolean; endedAt: string },
+  deps: EndingDeps,
+): Promise<ApplyResult> {
+  const now = deps.now();
+  const { endedAt } = p;
+  const fromPlan = (intent.fromPlan ?? account.ownPlan) as OrgPlan;
+  // The event and the email name the plan that ENDED: a replay after step 3 reads the account already on the free plan.
+  const paid: EndingAccount = { ...account, ownPlan: fromPlan };
+  // Only what the granted plan cannot hold is archived (today every grantable plan is unlimited, so nothing), kept for
+  // the downgrade's window: a club that buys again before then gets it back.
+  const keptFor = retentionUntilFrom(endedAt, deps.retentionDays(account));
+  const limit = Math.max(PLAN_CONFIG[grant.plan].tournamentLimit, PLAN_CONFIG[FREE_OWN_PLAN].tournamentLimit);
+  const { archive } = keptOnTheDate(await deps.slotHolders(account.orgId), [], limit);
+  const recorded = await deps.recordedFor(intent.id);
+  const retained = await recordTournaments(account, intent.id, archive, recorded, keptFor,
+    { retentionReason: 'plan_downgrade', fromPlan, targetPlan: FREE_OWN_PLAN, fellBackTo: grant.plan }, deps);
+  if (archive.length > 0) await deps.archive(account.orgId, archive.map(t => t.id));
+
+  // The free own plan, active: never suspended, and the public site is not touched.
+  await deps.setPlan(account.orgId, FREE_OWN_PLAN);
+
+  await deps.writeEndedEvent({
+    account: paid, intentId: intent.id, source: p.origin === 'request' ? 'app' : 'stripe', requestedBy: p.actor.door,
+    actorUserId: p.actor.userId ?? intent.createdBy, actorEmail: p.actor.email ?? intent.createdByEmail, reason: intent.reason ?? p.reason,
+    endedAt, retentionUntil: keptFor, retainedTournamentIds: retained, sourceEventId: `intent:${intent.id}:subscription_canceled`,
+    fellBackTo: grant.plan, ...(p.freeTimeEnded ? { freeTimeEnded: true } : {}),
+  });
+
+  // The pay pages close only when the plan the club now has (the granted one, through the door) takes no payments.
+  await deps.closePayPagesIfPlanHasNone(account.orgId);
+
+  // The "has ended" email, once, as the row's tick says — in the fall-back's words (owner 2026-11-21: the same email, the
+  // fall-back sentence in place of the suspension, no data-kept line).
+  let endedEmailSentAt = intent.endedEmailSentAt;
+  const emailed = intent.notifyOwner && !endedEmailSentAt;
+  if (emailed) {
+    await deps.sendEndedEmail({
+      account: paid, intentId: intent.id, retentionUntil: keptFor, retainedTournaments: retained.length,
+      askedBy: p.actor.userId ?? intent.createdBy, fellBackTo: grant,
+    });
+    endedEmailSentAt = deps.now().toISOString();
+    await deps.updateIntent(intent.id, { endedEmailSentAt }, ['pending']);
+  }
+
+  const back = `Free time was running, so the club went back to free ${PLAN_CONFIG[grant.plan].label} instead of closing.`;
+  await deps.updateIntent(intent.id, {
+    status: 'applied', appliedAt: now.toISOString(), effectiveAt: endedAt, retentionUntil: keptFor, notifyOwner: intent.notifyOwner,
+    endedEmailSentAt, log: [endedEntry(now, p.actor, fromPlan, intent.heldMovePlan, [p.note, back])],
+  }, ['pending']);
+
+  return { applied: true, intentId: intent.id, retentionUntil: null, retainedTournamentIds: retained, emailed, endedAt, fellBackTo: grant.plan };
 }
 
 // ── A move to the free plan (Stage 2) ─────────────────────────────────────────────────────────────
@@ -1187,8 +1277,14 @@ export async function applyDowngrade(
   const retentionUntil = retentionUntilFrom(movedAt, deps.retentionDays(account));
 
   // 1 · restore records for every slot holder not kept, before anything is archived (only what this intent has not recorded).
+  // S4 Part 3 (owner 2026-11-21): a move to the free plan made while free time runs (one scheduled before the moves were
+  // refused) archives only what the free time cannot hold — the grant lifts the free plan the moment the move lands.
+  const grant = target === FREE_OWN_PLAN && !account.isCoachesPortal ? await deps.freePlanGrant(account) : null;
+  const limit = grant && freeTimeCatchesEnd(grant, now.toISOString())
+    ? Math.max(PLAN_CONFIG[grant.plan].tournamentLimit, PLAN_CONFIG[target].tournamentLimit)
+    : PLAN_CONFIG[target].tournamentLimit;
   const holders = await deps.slotHolders(account.orgId);
-  const { kept, archive, fellBack } = keptOnTheDate(holders, intent.keepTournamentIds, PLAN_CONFIG[target].tournamentLimit);
+  const { kept, archive, fellBack } = keptOnTheDate(holders, intent.keepTournamentIds, limit);
   // The downgrade's own reason: the upgrade path restores by it (restoreRetainedDowngradeTournaments).
   const recorded = await deps.recordedFor(intent.id);
   const retained = await recordTournaments(account, intent.id, archive, recorded, retentionUntil,
@@ -1386,7 +1482,7 @@ export type OverdueEnding = {
 
 export type FinishResult =
   /** `moved`: the waiting change was a move to the free plan, so the club moved (the date's move), never suspended. */
-  | { outcome: 'finished'; moved: boolean; endedAt: string | null; retentionUntil: string | null; retainedTournaments: number; emailed: boolean }
+  | { outcome: 'finished'; moved: boolean; endedAt: string | null; retentionUntil: string | null; retainedTournaments: number; emailed: boolean; fellBackTo?: OrgPlan }
   /** Stripe still bills it: the account is untouched. `nextDate` is its renewal, or the date it is set to end when
    *  `cancelScheduled`; `record` is what became of our waiting row (made to agree with Stripe, or left when it already did). */
   | { outcome: 'live'; status: string; nextDate: string | null; cancelScheduled: boolean; record: 'withdrawn' | 'rescheduled' | 'unchanged' }
@@ -1455,5 +1551,7 @@ export async function finishOverdueEnding(account: EndingAccount, actor: EndingA
     retentionUntil: result?.retentionUntil ?? null,
     retainedTournaments: result?.retainedTournamentIds.length ?? 0,
     emailed: result?.emailed ?? false,
+    // S4 Part 3: free time caught it — the staff notice says the club went back to it (never "is suspended").
+    ...(result?.fellBackTo ? { fellBackTo: result.fellBackTo } : {}),
   };
 }

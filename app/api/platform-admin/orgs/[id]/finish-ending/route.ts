@@ -56,6 +56,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: { par
         tone: 'good', lead: W.cancel.finish.finishedLead,
         text: result.moved
           ? W.cancel.finish.moved(account.name, PLAN_CONFIG.tournament.label, result.endedAt, result.retainedTournaments, result.retentionUntil)
+          : result.fellBackTo ? W.cancel.finish.fellBack(account.name, result.endedAt, result.fellBackTo, result.emailed)
           : W.cancel.finish.finished(account.name, result.endedAt, result.retainedTournaments, result.retentionUntil, result.emailed),
       },
     });

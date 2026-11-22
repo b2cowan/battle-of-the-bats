@@ -1,0 +1,821 @@
+{
+  "D": {
+    "at": "2026-11-22T04:54:44.590Z",
+    "checks": [
+      {
+        "label": "after created event: org plan_id = club, status active, sub on file",
+        "pass": true,
+        "observed": {
+          "plan": "club",
+          "status": "active",
+          "sub": "sub_1UeSnXFuSuNtbvsQlQrpm8N2",
+          "stripeStatus": "active"
+        }
+      },
+      {
+        "label": "org plan_id = tournament",
+        "pass": true,
+        "observed": "tournament"
+      },
+      {
+        "label": "org tournament_limit = 1",
+        "pass": true,
+        "observed": 1
+      },
+      {
+        "label": "org subscription_status = active",
+        "pass": true,
+        "observed": "active"
+      },
+      {
+        "label": "billing_suspended_at null",
+        "pass": true,
+        "observed": null
+      },
+      {
+        "label": "is_public still true",
+        "pass": true,
+        "observed": true
+      },
+      {
+        "label": "no tournament archived",
+        "pass": true,
+        "observed": {
+          "statuses": [
+            "active",
+            "active"
+          ]
+        }
+      },
+      {
+        "label": "exactly one subscription_canceled event",
+        "pass": true,
+        "observed": 1
+      },
+      {
+        "label": "event plan_id=tournament, status=active, fellBackToFreeTime=tournament_plus",
+        "pass": true,
+        "observed": {
+          "plan_id": "tournament",
+          "status": "active",
+          "previous_plan_id": "club",
+          "fell": "tournament_plus",
+          "retentionUntil": null
+        }
+      },
+      {
+        "label": "cancellation intent applied",
+        "pass": true,
+        "observed": [
+          "applied"
+        ]
+      },
+      {
+        "label": "change_log 'ended' note says went back to free Tournament Plus",
+        "pass": true,
+        "observed": "[{\"at\":\"2026-11-22T04:55:09.998Z\",\"by\":\"stripe-webhook\",\"door\":\"stripe\",\"note\":\"Free time was running, so the club went back to free Tournament Plus instead of closing.\",\"action\":\"ended\"}]"
+      },
+      {
+        "label": "no account retained record",
+        "pass": true,
+        "observed": []
+      },
+      {
+        "label": "stripe_subscription_id null",
+        "pass": true,
+        "observed": null
+      },
+      {
+        "label": "late customer.subscription.updated changed nothing (plan tournament, active, sub id null)",
+        "pass": true,
+        "observed": {
+          "before": {
+            "plan": "tournament",
+            "status": "active",
+            "sub": null
+          },
+          "after": {
+            "plan": "tournament",
+            "status": "active",
+            "sub": null,
+            "suspended": null
+          },
+          "http": 200
+        }
+      },
+      {
+        "label": "still exactly one subscription_canceled event",
+        "pass": true,
+        "observed": 1
+      }
+    ],
+    "notes": {
+      "setup": {
+        "org": "6dfc492a-3a8e-4e92-b933-cb3563cf7939",
+        "slug": "s4p3-probe-d-1795323284590",
+        "customer": "cus_VfoQKQhKQHipbF",
+        "clock": "clock_1UeSnWFuSuNtbvsQQGj92Fx0",
+        "ovId": "9cff8d20-44f1-4020-8d1f-0cd7ca142594"
+      },
+      "subscription": "sub_1UeSnXFuSuNtbvsQlQrpm8N2",
+      "deliveredCreate": [
+        "invoice.created:200",
+        "invoice.finalized:200",
+        "invoice.paid:200",
+        "invoice.payment_succeeded:200",
+        "customer.subscription.created:200"
+      ],
+      "stripeCancel": "canceled",
+      "deliveredAfterCancel": [
+        "customer.subscription.deleted:200"
+      ],
+      "afterEnding": {
+        "org": {
+          "id": "6dfc492a-3a8e-4e92-b933-cb3563cf7939",
+          "slug": "s4p3-probe-d-1795323284590",
+          "plan_id": "tournament",
+          "tournament_limit": 1,
+          "subscription_status": "active",
+          "billing_suspended_at": null,
+          "is_public": true,
+          "stripe_subscription_id": null,
+          "stripe_customer_id": null,
+          "subscription_period": null,
+          "current_period_end": null
+        },
+        "events": [
+          {
+            "t": "subscription_started",
+            "p": "club",
+            "s": "active",
+            "m": {
+              "priceId": "price_1TlXGjFuSuNtbvsQINrpqL6E",
+              "billingCycle": "monthly",
+              "stripeSubscriptionId": "sub_1UeSnXFuSuNtbvsQlQrpm8N2"
+            }
+          },
+          {
+            "t": "subscription_canceled",
+            "p": "tournament",
+            "s": "active",
+            "m": {
+              "reason": "Stripe subscription deleted",
+              "endedAt": "2026-11-22T04:54:44.000Z",
+              "intentId": "3f4575bf-df8c-483e-a754-e7f30e55ef26",
+              "requestedBy": "stripe",
+              "retentionUntil": null,
+              "fellBackToFreeTime": "tournament_plus",
+              "retainedTournamentIds": []
+            }
+          }
+        ],
+        "intents": [
+          {
+            "id": "3f4575bf-df8c-483e-a754-e7f30e55ef26",
+            "intent_type": "cancellation",
+            "status": "applied",
+            "from_plan": "club",
+            "change_log": [
+              {
+                "at": "2026-11-22T04:55:09.998Z",
+                "by": "stripe-webhook",
+                "door": "stripe",
+                "note": "Free time was running, so the club went back to free Tournament Plus instead of closing.",
+                "action": "ended"
+              }
+            ],
+            "applied_at": "2026-11-22T04:55:09.998+00:00",
+            "reason": "Stripe subscription deleted"
+          }
+        ]
+      },
+      "lateUpdated": {
+        "httpStatus": 200,
+        "stripeSubStatus": "canceled"
+      }
+    }
+  },
+  "E": {
+    "at": "2026-11-22T04:55:28.673Z",
+    "checks": [
+      {
+        "label": "no running plan-tier grant (expired a minute ago)",
+        "pass": true,
+        "observed": {
+          "running": 0,
+          "expires_at": "2026-11-22T04:54:28.674+00:00"
+        }
+      },
+      {
+        "label": "own plan tournament, status active, not suspended, public -> fold gives free Tournament, active",
+        "pass": true,
+        "observed": {
+          "plan": "tournament",
+          "status": "active",
+          "suspended": null,
+          "is_public": true,
+          "archived": 0
+        }
+      }
+    ],
+    "notes": {
+      "grants": [
+        {
+          "type": "plan_tier",
+          "target": {
+            "plan": "tournament_plus"
+          },
+          "starts_at": "2026-11-21T04:54:45.998+00:00",
+          "expires_at": "2026-11-22T04:54:28.674+00:00",
+          "revoked_at": null
+        }
+      ],
+      "org": {
+        "id": "6dfc492a-3a8e-4e92-b933-cb3563cf7939",
+        "slug": "s4p3-probe-d-1795323284590",
+        "plan_id": "tournament",
+        "tournament_limit": 1,
+        "subscription_status": "active",
+        "billing_suspended_at": null,
+        "is_public": true,
+        "stripe_subscription_id": null,
+        "stripe_customer_id": null,
+        "subscription_period": null,
+        "current_period_end": null
+      }
+    }
+  },
+  "F": {
+    "at": "2026-11-22T04:55:29.300Z",
+    "checks": [
+      {
+        "label": "after created event: org plan_id = club, status active, sub on file",
+        "pass": true,
+        "observed": {
+          "plan": "club",
+          "status": "active",
+          "sub": "sub_1UeSoGFuSuNtbvsQZUcFyY3Y",
+          "stripeStatus": "active"
+        }
+      },
+      {
+        "label": "status 'canceled'",
+        "pass": true,
+        "observed": "canceled"
+      },
+      {
+        "label": "billing_suspended_at set",
+        "pass": true,
+        "observed": "2026-11-22T04:55:29+00:00"
+      },
+      {
+        "label": "is_public false",
+        "pass": true,
+        "observed": false
+      },
+      {
+        "label": "2 tournaments archived",
+        "pass": true,
+        "observed": [
+          "archived",
+          "archived"
+        ]
+      },
+      {
+        "label": "one subscription_canceled event, no fellBackToFreeTime",
+        "pass": true,
+        "observed": [
+          {
+            "p": "club",
+            "s": "canceled",
+            "m": null
+          }
+        ]
+      },
+      {
+        "label": "account retained record exists (as before)",
+        "pass": true,
+        "observed": [
+          "tournament",
+          "tournament",
+          "account"
+        ]
+      }
+    ],
+    "notes": {
+      "setup": {
+        "org": "71ffaa86-40d0-46d9-b549-b6071658722a",
+        "slug": "s4p3-probe-f-1795323329300",
+        "customer": "cus_VfoRKgwttox6jE",
+        "clock": "clock_1UeSoFFuSuNtbvsQvdQjSGUB"
+      },
+      "subscription": "sub_1UeSoGFuSuNtbvsQZUcFyY3Y",
+      "deliveredCreate": [
+        "invoice.created:200",
+        "invoice.finalized:200",
+        "invoice.paid:200",
+        "invoice.payment_succeeded:200",
+        "customer.subscription.created:200"
+      ],
+      "deliveredAfterCancel": [
+        "customer.subscription.deleted:200"
+      ],
+      "afterEnding": {
+        "org": {
+          "id": "71ffaa86-40d0-46d9-b549-b6071658722a",
+          "slug": "s4p3-probe-f-1795323329300",
+          "plan_id": "club",
+          "tournament_limit": 9999,
+          "subscription_status": "canceled",
+          "billing_suspended_at": "2026-11-22T04:55:29+00:00",
+          "is_public": false,
+          "stripe_subscription_id": null,
+          "stripe_customer_id": null,
+          "subscription_period": null,
+          "current_period_end": null
+        },
+        "events": [
+          {
+            "t": "subscription_started",
+            "p": "club",
+            "s": "active",
+            "m": {
+              "priceId": "price_1TlXGjFuSuNtbvsQINrpqL6E",
+              "billingCycle": "monthly",
+              "stripeSubscriptionId": "sub_1UeSoGFuSuNtbvsQZUcFyY3Y"
+            }
+          },
+          {
+            "t": "subscription_canceled",
+            "p": "club",
+            "s": "canceled",
+            "m": {
+              "reason": "Stripe subscription deleted",
+              "endedAt": "2026-11-22T04:55:29.000Z",
+              "intentId": "a9cdda90-22e8-4190-ab4b-626c03542900",
+              "requestedBy": "stripe",
+              "retentionUntil": "2027-02-20T04:55:29.000Z",
+              "retainedTournamentIds": [
+                "b501121c-1b16-406c-be55-e6c8ff6d6ed2",
+                "a5ce5cfd-8e0d-4a4d-8499-5f1c8493ca47"
+              ]
+            }
+          }
+        ],
+        "intents": [
+          {
+            "type": "cancellation",
+            "status": "applied"
+          }
+        ],
+        "records": [
+          {
+            "id": "0353a88f-e318-4008-9eff-ab1f6f95cbb9",
+            "record_type": "tournament"
+          },
+          {
+            "id": "bf06aec8-169a-420e-b64a-e6fa2a8f430e",
+            "record_type": "tournament"
+          },
+          {
+            "id": "8ca54a4c-4fbc-4ef1-b3dc-a2be4d219fdc",
+            "record_type": "account"
+          }
+        ]
+      }
+    }
+  },
+  "B": {
+    "at": "2026-11-22T04:59:40.070Z",
+    "blocked": true,
+    "checks": [],
+    "notes": {
+      "reason": "POST /api/platform-admin/orgs/<id>/cancel-subscription refused: platform staff always need two-step on this dev server (401 two_step_set_up). uat-platform has no authenticator and TWO_STEP_STAFF_REQUIRED is not off. Not worked around."
+    }
+  },
+  "A": {
+    "at": "2026-11-22T04:56:03.960Z",
+    "checks": [
+      {
+        "label": "after created event: org plan_id = club, status active, sub on file",
+        "pass": true,
+        "observed": {
+          "plan": "club",
+          "status": "active",
+          "sub": "sub_1UeSopFuSuNtbvsQgAlyFgDy",
+          "stripeStatus": "active"
+        }
+      },
+      {
+        "label": "pending cancellation intent written",
+        "pass": true,
+        "observed": [
+          "pending"
+        ]
+      },
+      {
+        "label": "org plan_id = tournament",
+        "pass": true,
+        "observed": "tournament"
+      },
+      {
+        "label": "org tournament_limit = 1",
+        "pass": true,
+        "observed": 1
+      },
+      {
+        "label": "org subscription_status = active",
+        "pass": true,
+        "observed": "active"
+      },
+      {
+        "label": "billing_suspended_at null",
+        "pass": true,
+        "observed": null
+      },
+      {
+        "label": "is_public still true",
+        "pass": true,
+        "observed": true
+      },
+      {
+        "label": "no tournament archived",
+        "pass": true,
+        "observed": {
+          "statuses": [
+            "active",
+            "active"
+          ]
+        }
+      },
+      {
+        "label": "exactly one subscription_canceled event",
+        "pass": true,
+        "observed": 1
+      },
+      {
+        "label": "event plan_id=tournament, status=active, fellBackToFreeTime=tournament_plus",
+        "pass": true,
+        "observed": {
+          "plan_id": "tournament",
+          "status": "active",
+          "previous_plan_id": "club",
+          "fell": "tournament_plus",
+          "retentionUntil": null
+        }
+      },
+      {
+        "label": "cancellation intent applied",
+        "pass": true,
+        "observed": [
+          "applied"
+        ]
+      },
+      {
+        "label": "change_log 'ended' note says went back to free Tournament Plus",
+        "pass": true,
+        "observed": "[{\"at\":\"2026-11-22T04:56:29.195Z\",\"by\":\"stripe-webhook\",\"door\":\"stripe_portal\",\"action\":\"scheduled\"},{\"at\":\"2026-11-22T04:56:43.211Z\",\"by\":null,\"door\":\"stripe_portal\",\"note\":\"Free time was running, so the club went back to free Tournament Plus instead of closing.\",\"action\":\"ended\"}]"
+      },
+      {
+        "label": "no account retained record",
+        "pass": true,
+        "observed": []
+      },
+      {
+        "label": "org stripe_subscription_id cleared",
+        "pass": true,
+        "observed": null
+      },
+      {
+        "label": "NO subscription_recovered event after the new subscription",
+        "pass": true,
+        "observed": [
+          "subscription_started",
+          "subscription_canceled",
+          "subscription_started"
+        ]
+      },
+      {
+        "label": "billing_suspended_at still null after the new subscription",
+        "pass": true,
+        "observed": null
+      }
+    ],
+    "notes": {
+      "setup": {
+        "org": "1f2d370c-8ad7-4f4c-8853-6d40753ae6cb",
+        "slug": "s4p3-probe-a-1795323363960",
+        "customer": "cus_VfoRtnv8Y8JD6w",
+        "clock": "clock_1UeSonFuSuNtbvsQ8Py5G9pC"
+      },
+      "subscription": "sub_1UeSopFuSuNtbvsQgAlyFgDy",
+      "deliveredCreate": [
+        "invoice.created:200",
+        "invoice.finalized:200",
+        "invoice.paid:200",
+        "invoice.payment_succeeded:200",
+        "customer.subscription.created:200"
+      ],
+      "deliveredCancelFlag": [
+        "customer.subscription.updated:200"
+      ],
+      "periodEnd": 1797915363,
+      "clockAfter": {
+        "status": "ready",
+        "frozen": 1798088163
+      },
+      "stripeSubStatusAfterAdvance": "canceled",
+      "deliveredAfterAdvance": [
+        "customer.subscription.deleted:200"
+      ],
+      "afterEnding": {
+        "org": {
+          "id": "1f2d370c-8ad7-4f4c-8853-6d40753ae6cb",
+          "slug": "s4p3-probe-a-1795323363960",
+          "plan_id": "tournament",
+          "tournament_limit": 1,
+          "subscription_status": "active",
+          "billing_suspended_at": null,
+          "is_public": true,
+          "stripe_subscription_id": null,
+          "stripe_customer_id": null,
+          "subscription_period": null,
+          "current_period_end": null
+        },
+        "archived": 0,
+        "events": [
+          {
+            "t": "subscription_started",
+            "p": "club",
+            "s": "active",
+            "m": {
+              "priceId": "price_1TlXGjFuSuNtbvsQINrpqL6E",
+              "billingCycle": "monthly",
+              "stripeSubscriptionId": "sub_1UeSopFuSuNtbvsQgAlyFgDy"
+            }
+          },
+          {
+            "t": "subscription_canceled",
+            "p": "tournament",
+            "s": "active",
+            "m": {
+              "reason": "Cancelled in the billing portal",
+              "endedAt": "2026-12-22T04:56:03.000Z",
+              "intentId": "dcb31dc1-f9a4-43eb-bb78-7abcac45c61a",
+              "requestedBy": "stripe_portal",
+              "retentionUntil": null,
+              "fellBackToFreeTime": "tournament_plus",
+              "retainedTournamentIds": []
+            }
+          }
+        ],
+        "intents": [
+          {
+            "id": "dcb31dc1-f9a4-43eb-bb78-7abcac45c61a",
+            "intent_type": "cancellation",
+            "status": "applied",
+            "from_plan": "club",
+            "change_log": [
+              {
+                "at": "2026-11-22T04:56:29.195Z",
+                "by": "stripe-webhook",
+                "door": "stripe_portal",
+                "action": "scheduled"
+              },
+              {
+                "at": "2026-11-22T04:56:43.211Z",
+                "by": null,
+                "door": "stripe_portal",
+                "note": "Free time was running, so the club went back to free Tournament Plus instead of closing.",
+                "action": "ended"
+              }
+            ],
+            "applied_at": "2026-11-22T04:56:43.211+00:00",
+            "reason": "Cancelled in the billing portal"
+          }
+        ]
+      },
+      "newSub": "sub_1UeSpWFuSuNtbvsQmHYTIXm8",
+      "deliveredNewSub": [
+        "invoice.created:200",
+        "invoice.finalized:200",
+        "invoice.paid:200",
+        "invoice.payment_succeeded:200",
+        "customer.subscription.created:200"
+      ],
+      "afterNewSub": {
+        "plan": "club",
+        "status": "active",
+        "sub": "sub_1UeSpWFuSuNtbvsQmHYTIXm8",
+        "is_public": true
+      }
+    }
+  },
+  "C": {
+    "at": "2026-11-22T04:57:12.142Z",
+    "checks": [
+      {
+        "label": "after created event: org plan_id = club, status active, sub on file",
+        "pass": true,
+        "observed": {
+          "plan": "club",
+          "status": "active",
+          "sub": "sub_1UeSpvFuSuNtbvsQO4czuOKp",
+          "stripeStatus": "active"
+        }
+      },
+      {
+        "label": "org plan_id = tournament",
+        "pass": true,
+        "observed": "tournament"
+      },
+      {
+        "label": "org tournament_limit = 1",
+        "pass": true,
+        "observed": 1
+      },
+      {
+        "label": "org subscription_status = active",
+        "pass": true,
+        "observed": "active"
+      },
+      {
+        "label": "billing_suspended_at null",
+        "pass": true,
+        "observed": null
+      },
+      {
+        "label": "is_public still true",
+        "pass": true,
+        "observed": true
+      },
+      {
+        "label": "no tournament archived",
+        "pass": true,
+        "observed": {
+          "statuses": [
+            "active",
+            "active"
+          ]
+        }
+      },
+      {
+        "label": "exactly one subscription_canceled event",
+        "pass": true,
+        "observed": 1
+      },
+      {
+        "label": "event plan_id=tournament, status=active, fellBackToFreeTime=tournament_plus",
+        "pass": true,
+        "observed": {
+          "plan_id": "tournament",
+          "status": "active",
+          "previous_plan_id": "club",
+          "fell": "tournament_plus",
+          "retentionUntil": null
+        }
+      },
+      {
+        "label": "cancellation intent applied",
+        "pass": true,
+        "observed": [
+          "applied"
+        ]
+      },
+      {
+        "label": "change_log 'ended' note says went back to free Tournament Plus",
+        "pass": true,
+        "observed": "[{\"at\":\"2026-11-22T04:59:16.488Z\",\"by\":\"stripe-webhook\",\"door\":\"stripe\",\"note\":\"Free time was running, so the club went back to free Tournament Plus instead of closing.\",\"action\":\"ended\"}]"
+      },
+      {
+        "label": "no account retained record",
+        "pass": true,
+        "observed": []
+      }
+    ],
+    "notes": {
+      "setup": {
+        "org": "2cd95ad1-a570-4f02-ace5-77c5762a0a74",
+        "slug": "s4p3-probe-c-1795323432142",
+        "customer": "cus_VfoSthETWgOWiM",
+        "clock": "clock_1UeSpuFuSuNtbvsQPbtLdsor"
+      },
+      "subscription": "sub_1UeSpvFuSuNtbvsQO4czuOKp",
+      "deliveredCreate": [
+        "invoice.created:200",
+        "invoice.finalized:200",
+        "invoice.paid:200",
+        "invoice.payment_succeeded:200",
+        "customer.subscription.created:200"
+      ],
+      "badPm": "pm_1UeSqFFuSuNtbvsQoxrNyy5s",
+      "steps": [
+        {
+          "plusDays": 32,
+          "stripeStatus": "past_due",
+          "invoices": [
+            "open:attempts=2:next=1798082487",
+            "paid:attempts=1:next=-"
+          ],
+          "delivered": 10,
+          "orgStatus": "past_due",
+          "orgPlan": "club"
+        },
+        {
+          "plusDays": 40,
+          "stripeStatus": "past_due",
+          "invoices": [
+            "open:attempts=3:next=1798248908",
+            "paid:attempts=1:next=-"
+          ],
+          "delivered": 3,
+          "orgStatus": "past_due",
+          "orgPlan": "club"
+        },
+        {
+          "plusDays": 48,
+          "stripeStatus": "canceled",
+          "invoices": [
+            "open:attempts=4:next=-",
+            "paid:attempts=1:next=-"
+          ],
+          "delivered": 6,
+          "orgStatus": "active",
+          "orgPlan": "tournament"
+        }
+      ],
+      "finalStripeStatus": "canceled",
+      "finalOrg": {
+        "org": {
+          "id": "2cd95ad1-a570-4f02-ace5-77c5762a0a74",
+          "slug": "s4p3-probe-c-1795323432142",
+          "plan_id": "tournament",
+          "tournament_limit": 1,
+          "subscription_status": "active",
+          "billing_suspended_at": null,
+          "is_public": true,
+          "stripe_subscription_id": null,
+          "stripe_customer_id": null,
+          "subscription_period": null,
+          "current_period_end": null
+        },
+        "events": [
+          {
+            "t": "subscription_started",
+            "p": "club",
+            "s": "active",
+            "m": {
+              "priceId": "price_1TlXGjFuSuNtbvsQINrpqL6E",
+              "billingCycle": "monthly",
+              "stripeSubscriptionId": "sub_1UeSpvFuSuNtbvsQO4czuOKp"
+            }
+          },
+          {
+            "t": "subscription_past_due",
+            "p": "club",
+            "s": "past_due",
+            "m": {
+              "priceId": "price_1TlXGjFuSuNtbvsQINrpqL6E",
+              "billingCycle": "monthly",
+              "stripeSubscriptionId": "sub_1UeSpvFuSuNtbvsQO4czuOKp"
+            }
+          },
+          {
+            "t": "subscription_canceled",
+            "p": "tournament",
+            "s": "active",
+            "m": {
+              "reason": "Stripe subscription deleted",
+              "endedAt": "2027-01-02T00:00:10.000Z",
+              "intentId": "e80e2d51-2ddb-4341-b98e-dd66a611ee60",
+              "requestedBy": "stripe",
+              "retentionUntil": null,
+              "fellBackToFreeTime": "tournament_plus",
+              "retainedTournamentIds": []
+            }
+          }
+        ],
+        "intents": [
+          {
+            "type": "cancellation",
+            "status": "applied"
+          }
+        ]
+      }
+    }
+  },
+  "_harness": {
+    "droppedDiagnosticRuns": [
+      "G",
+      "H",
+      "H2",
+      "I",
+      "S-none",
+      "S-pendingQuiet",
+      "S-pendingNotify",
+      "S-noneDated",
+      "S-pendingNotifyDated"
+    ],
+    "stagingRace": "Stripe also pushes every test event to https://dev.fieldlogichq.ca/api/billing/webhook (same dev DB, older code). Probe orgs hide stripe_customer_id/stripe_subscription_id except while the probe posts clones (new event ids) of the real events, after staging has finished with the real copies."
+  }
+}

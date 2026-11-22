@@ -38,6 +38,9 @@ const LOST_KEPT = 'Saved branding is kept; public tournament pages use FieldLogi
 /** "On December 5 the rest move to archive retention for 90 days." — undated, or naming the tournaments once the choice is made. */
 const W_REST = (days: number, iso: string | null = null, names: readonly string[] = []) =>
   `${iso ? `On ${dayOnly(iso)} the rest` : 'The rest'} move to archive retention for ${days} days${names.length ? `: ${joinWithAnd(names)}` : ''}.`;
+/** S4 Part 3: "goes back to free Tournament Plus through September 30, 2027" (no end date: "…goes back to free Tournament Plus"). */
+const goesBackTo = (plan: OrgPlanKey, lastDay: string | null) =>
+  `goes back to free ${PLAN_CONFIG[plan].label}${lastDay ? ` through ${day(lastDay)}` : ''}`;
 const cycle = (value: BillingCycle) => value === 'annual' ? 'yearly' : 'monthly';
 const period = (value: BillingCycle) => value === 'annual' ? 'year' : 'month';
 const price = (amount: number, billing: BillingCycle) => amount === 0 ? formatPriceAmount(amount) : `${formatPriceAmount(amount)} CAD / ${period(billing)}`;
@@ -163,6 +166,32 @@ export const PLAN_BILLING_WORDS = {
     // One spelling with the Keep {Plan} door (Stage 0 ruling 2): both mean "stay on Premium", and never share a screen.
     keepPremium: keepDoor('team'), keepPremiumHelp: KEEP_PREMIUM_LINE, hostingExcluded: PORTAL_FREE_TIME_HOSTING_LINE,
   },
+  /**
+   * FREE TIME CATCHES THE ENDING (On-sale pages S4 Part 3; call 40 option A, owner 2026-11-21). A paid plan that ends while
+   * whole-plan free time still runs falls back to the free plan: the club stays open, nothing is suspended, nothing is
+   * counted down. Said only where it is TRUE for that end date (`freeTimeCatchesEnd`): the table line says "while your
+   * free time runs" (owner 2026-11-21: a yearly plan can outlast it), the cancel window, its section and the emails say it
+   * only when free time covers the date they name. No end date: "…goes back to free Tournament Plus." /legal reads these.
+   */
+  fallBack: {
+    goesBack: (org: string, plan: OrgPlanKey, lastDay: string | null) => `${org} ${goesBackTo(plan, lastDay)}.`,
+    tableLine: (org: string, plan: OrgPlanKey, lastDay: string | null) =>
+      `Starting a plan doesn’t end your free time. If the plan ends while your free time runs, ${org} ${goesBackTo(plan, lastDay)}.`,
+    /** Reduce or cancel, for a cancel that waits for its date. */
+    waitBody: (org: string, iso: string, plan: OrgPlanKey, lastDay: string | null, trialing = false, pastDue = false) =>
+      `Cancelling ends ${possessive(org)} plan on ${day(iso)}, ${trialing ? 'when your trial ends' : pastDue ? SOONER : 'the end of the period you paid for'}. Then ${org} ${goesBackTo(plan, lastDay)}.`,
+    /** Reduce or cancel, for an account with no paid period (it ends when the owner confirms). */
+    nowBody: (org: string, plan: OrgPlanKey, lastDay: string | null) =>
+      `Cancelling ends ${possessive(org)} plan when you confirm. Then ${org} ${goesBackTo(plan, lastDay)}.`,
+    /** The door and the window's title and confirm: nothing is suspended, so they never say "suspend". */
+    door: (label: string) => `Cancel ${label}…`, title: (label: string) => `Cancel ${label}?`, confirm: (label: string) => `Cancel ${label}`,
+    /** The window's list of what the paid plan alone carried (the tournaments and the site stay). */
+    stopsOn: (iso: string) => `What stops on ${dayOnly(iso)}`, stopsNow: 'What stops',
+    /** Checkout's and the moves' refusal of a plan at or below a running free plan (`below_free_plan`). */
+    belowFreePlan: (org: string, plan: OrgPlanKey) => `${org} already has ${PLAN_CONFIG[plan].label} as free time. Choose a plan above it, or contact us.`,
+    /** The notice after a cancel that ended at once and fell back. */
+    done: (label: string, org: string, plan: OrgPlanKey, lastDay: string | null) => `${label} has ended. ${org} ${goesBackTo(plan, lastDay)}.`,
+  },
   cancel: {
     orgBody: (org: string, offline: readonly string[], days: number) => `Cancelling suspends ${org}: ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days. Reactivate within that time to restore the tools and records your plan allows.`,
     premiumBody: (days: number) => `Cancelling turns off Premium tools. Basic tournament records stay available. Premium team data is kept for ${days} days and comes back if you reactivate within that time.`,
@@ -238,6 +267,12 @@ export const PLAN_BILLING_WORDS = {
       otherSubscription: 'This ending is for a subscription the club no longer pays on — it pays on another now. Nothing was changed. Check the Money tab.',
       // The two outcomes (Stage 0 Tab 6, "After"): done, and a wait that is nobody's fault.
       finishedLead: 'Finished.',
+      /** S4 Part 3: free time was running, so the club went back to it instead of being suspended. */
+      fellBack: (org: string, endedAt: string | null, plan: OrgPlanKey, emailed: boolean) => [
+        `Stripe ended this subscription${endedAt ? ` on ${day(endedAt)}` : ''}.`,
+        `Its free time was still running, so ${org} went back to free ${PLAN_CONFIG[plan].label} instead of being suspended.`,
+        emailed ? 'The owner was emailed.' : '',
+      ].filter(Boolean).join(' '),
       finished: (org: string, endedAt: string | null, tournaments: number, until: string | null, emailed: boolean) => [
         `Stripe ended this subscription${endedAt ? ` on ${day(endedAt)}` : ''}.`,
         tournaments > 0

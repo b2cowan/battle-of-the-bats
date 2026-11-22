@@ -22,6 +22,7 @@ import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { givenPlanOf } from '@/lib/free-time';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { inPlaceMetadata, inPlaceReturnPath, inPlaceUpgradeOf } from '@/lib/workspace-upgrade';
 import { workspaceCannotBecomeClub } from '@/lib/workspace-upgrade-status';
 import {
@@ -165,11 +166,16 @@ export const POST = withObservability(async (req: Request) => {
   // FREE TIME IS NEVER BOUGHT OUT OF (On-sale pages S4, call 40; `/billing` must-fix 2026-11-21). A free Tournament
   // organization on running whole-plan free time is offered only the plans ranked ABOVE the one it is given; a stale page,
   // or a hand-made request, asking for that plan or one below it is refused here, before any address or Stripe work.
+  // S4 Part 3 (carried item 1): whatever plan the club holds of its own — a paid plan that lapsed before the fall-back
+  // existed (or before its free time was given) stores that plan, and must not open a start at or below the free one. A
+  // paying club never reaches here (the live-subscription refusal above).
+  // An ENDED club (the door still reads it cancelled: plan free time does not let it back in) is buying its way back, never
+  // out of free time, so it is not refused (/review 2026-11-21).
   const ownPlan = ownPlanOf(auth.org);
-  const givenPlan = ownPlan === 'tournament' ? givenPlanOf(auth.org) : null;
+  const givenPlan = auth.org.subscriptionStatus === 'canceled' ? null : givenPlanOf(auth.org);
   if (givenPlan && PLAN_RANK[planKey] <= PLAN_RANK[givenPlan]) {
     return new Response(JSON.stringify({
-      error: `${auth.org.name} already has ${PLAN_CONFIG[givenPlan].label} as free time. Choose a plan above it, or contact us.`,
+      error: W.fallBack.belowFreePlan(auth.org.name, givenPlan),
       code: 'below_free_plan',
     }), { status: 409, headers: { 'Content-Type': 'application/json' } });
   }

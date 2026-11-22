@@ -27,9 +27,10 @@ import {
   askingDoor, endingEmailTiming, endsOnEmailOwed, reminderDue, sendDueEndingEmails, stripeIdToStopNow, upcomingDate,
   isOverdueEnding, keepEnding, pickAppliedEnding, recordStripeSignal, retentionUntilFrom, scheduleEnding, stripeCancelSignal,
   waitingMoveOf, waitingMoveView, changeKeptTournaments, operatorPlanChangeRefusal, type EndedEvent, type EndingAccount, type EndingActor, type EndingDeps, type EndingEmail, type EndingIntent,
-  type RetainedRecordRow, type DowngradedEvent, type SlotHolder,
+  type RetainedRecordRow, type DowngradedEvent, type SlotHolder, type FreePlanGrant,
 } from '../../lib/plan-ending.ts';
 import { formatStoredDate } from '../../lib/timezone.ts';
+import { freeTimeCatchesEnd } from '../../lib/free-time.ts';
 import { endingEmail, type EndingEmailFacts } from '../../lib/plan-ending-emails.ts';
 import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
 import { functionBody, readCode } from './_source-code.ts';
@@ -76,7 +77,11 @@ function world(opts: { sub?: Stripe.Subscription; tournaments?: string[]; intent
   const moves: string[] = [];
   let sub = opts.sub ?? subscription();
   let seq = intents.size;
-  const state = { stripeLies: false, failAt: null as string | null, stripeFails: null as string | null, moveFails: false, now: NOW, mailFails: false, mailMaybeWent: false, mailDiesAfterClaim: false, duringMove: null as null | (() => Promise<unknown>) };
+  const state = { stripeLies: false, failAt: null as string | null, stripeFails: null as string | null, moveFails: false, now: NOW, mailFails: false, mailMaybeWent: false, mailDiesAfterClaim: false, duringMove: null as null | (() => Promise<unknown>),
+    /** S4 Part 3: the whole-plan free time running now (null: none). `grantFails`: its read throws. */
+    grant: null as FreePlanGrant | null, grantFails: false };
+  /** The "has ended" email's fall-back, per send (S4 Part 3). */
+  const endedEmails: Array<{ intentId: string; fellBackTo: FreePlanGrant | null }> = [];
   /** Every Part C email that went, in order. */
   const mail: Array<{ kind: string; intentId: string; door: string | null; email: EndingEmail }> = [];
   const cleared: string[] = [];
@@ -141,7 +146,12 @@ function world(opts: { sub?: Stripe.Subscription; tournaments?: string[]; intent
     async suspend(_a, p) { step('suspend'); suspensions.push(p); },
     async closePayPages(_orgId, where) { step('payPages'); payPages.push(where); },
     async writeEndedEvent(e) { step('event'); if (!events.has(e.sourceEventId)) events.set(e.sourceEventId, e); },
-    async sendEndedEmail(p) { step('email'); const key = `intent:${p.intentId}:ended_email`; emails.set(key, (emails.get(key) ?? 0) + 1); },
+    async sendEndedEmail(p) { step('email'); const key = `intent:${p.intentId}:ended_email`; emails.set(key, (emails.get(key) ?? 0) + 1); endedEmails.push({ intentId: p.intentId, fellBackTo: p.fellBackTo ?? null }); },
+    async freePlanGrant(a) {
+      calls.push('freeTime');
+      if (state.grantFails) throw new Error('free time could not be read');
+      return a.isCoachesPortal ? null : state.grant;
+    },
     async claimEmail(intentId, stamp, onlyIf) {
       calls.push(`claim:${stamp}`);
       const current = intents.get(intentId);
@@ -186,7 +196,7 @@ function world(opts: { sub?: Stripe.Subscription; tournaments?: string[]; intent
     },
   };
   return {
-    deps, calls, intents, records, live, archived, events, emails, suspensions, payPages, moves, state, mail, cleared, created, plans, moveEvents,
+    deps, calls, intents, records, live, archived, events, emails, suspensions, payPages, moves, state, mail, cleared, created, plans, moveEvents, endedEmails,
     get sub() { return sub; },
     set sub(next: Stripe.Subscription) { sub = next; },
     pending: () => [...intents.values()].find(i => i.status === 'pending') ?? null,
@@ -1823,5 +1833,198 @@ describe('10 · a move’s emails, the log as an append, the operator’s plan c
   it('wiring: the confirm route sends no email of its own — the move sends "now on"', () => {
     assert.doesNotMatch(readCode('app/api/billing/downgrade/confirm/route.ts'), /sendTransactionalEmail/);
     assert.match(functionBody(readCode('lib/plan-ending.ts'), 'applyDowngrade'), /kind: 'moved'/);
+  });
+});
+
+// ── 11 · On-sale pages S4 Part 3: free time catches the ending (call 40 A, owner 2026-11-21) ──────────────────────
+
+describe('11 · free time catches a paid plan that ends while it runs (S4 Part 3)', () => {
+  const DATED: FreePlanGrant = { plan: 'tournament_plus', lastDay: '2027-09-30' };
+  const UNDATED: FreePlanGrant = { plan: 'tournament_plus', lastDay: null };
+  const club = (over: Partial<EndingAccount> = {}) => account({ ownPlan: 'club', ...over });
+  const deletedAtRenewal = () => subscription({ status: 'canceled', ended_at: unix(RENEWAL), cancel_at_period_end: true });
+  type Applied = { fellBackTo?: string; retentionUntil: string | null; applied: boolean };
+  /** What a fall-back must look like: the free plan stored (active), nothing suspended or archived, the row applied. */
+  function assertFellBack(w: World, result: Applied) {
+    assert.equal(result.applied, true);
+    assert.equal(result.fellBackTo, 'tournament_plus');
+    assert.equal(result.retentionUntil, null, 'no data clock');
+    assert.deepEqual(w.plans, ['tournament'], 'the free own plan is stored, never the lapsed paid one');
+    assert.deepEqual(w.suspensions, [], 'never suspended (the site is not taken off)');
+    assert.deepEqual([...w.archived], [], 'nothing archived: the granted plan holds every tournament');
+    assert.equal(w.records.filter(r => r.recordType === 'account').length, 0, 'no account record, so nothing is ever purged');
+    const row = w.only();
+    assert.equal(row.status, 'applied');
+    const event = w.events.get(`intent:${row.id}:subscription_canceled`);
+    assert.equal(event?.fellBackTo, 'tournament_plus', 'one churn event, marked as a fall-back');
+    assert.deepEqual(w.payPages, ['owner downgrade'], 'pay pages close only if the plan it has now takes no payments');
+    assert.ok(w.calls.indexOf('plan') < w.calls.indexOf('event') && w.calls.indexOf('event') < w.calls.lastIndexOf('db:flip'), 'the flip LAST');
+  }
+
+  it('cancel at period end: on the date it falls back to the free plan instead of closing', async () => {
+    const w = world({ account: club() });
+    w.state.grant = DATED;
+    await scheduleEnding(club(), OWNER, { reason: 'Season over', notifyOwner: true }, w.deps);
+    w.state.now = new Date('2027-01-15T02:00:05.000Z');
+    const ended = await endingForDeletedSubscription(club(), deletedAtRenewal(), w.deps);
+    assert.equal(ended.kind, 'ended');
+    assertFellBack(w, (ended as { result: Applied }).result);
+    assert.deepEqual(w.endedEmails.map(e => e.fellBackTo), [DATED], 'the "has ended" email, once, in the fall-back words');
+  });
+
+  it('End now (a platform admin): the same fall-back', async () => {
+    const w = world({ account: club() });
+    w.state.grant = DATED;
+    assertFellBack(w, await applyEnding(club(), { actor: OPERATOR, reason: 'Asked to stop', notifyOwner: true, origin: 'request' }, w.deps));
+  });
+
+  it('Stripe giving up on a card (nobody asked): the same fall-back', async () => {
+    const w = world({ account: club() });
+    w.state.grant = DATED;
+    const ended = await endingForDeletedSubscription(club({ subscriptionStatus: 'past_due' }), deletedAtRenewal(), w.deps);
+    assert.equal(ended.kind, 'ended');
+    assertFellBack(w, (ended as { result: Applied }).result);
+  });
+
+  it('a cancel with no paid period to wait for ends at the click and falls back', async () => {
+    const w = world({ account: club({ subscriptionId: 'mock_1' }) });
+    w.state.grant = DATED;
+    const out = await scheduleEnding(club({ subscriptionId: 'mock_1' }), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    assert.equal(out.outcome, 'ended');
+    assertFellBack(w, (out as { ended: Applied }).ended);
+  });
+
+  it('free time with no end date catches it the same way', async () => {
+    const w = world({ account: club() });
+    w.state.grant = UNDATED;
+    assertFellBack(w, await applyEnding(club(), { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps));
+    assert.deepEqual(w.endedEmails.map(e => e.fellBackTo), [UNDATED]);
+  });
+
+  it('no free time running: the ending closes the club exactly as before', async () => {
+    const w = world({ account: club() });
+    const result = await applyEnding(club(), { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps);
+    assert.equal(result.fellBackTo, undefined);
+    assert.deepEqual(tornDown(w), TEARDOWN);
+    assert.equal(w.suspensions.length, 1);
+    assert.deepEqual(w.plans, [], 'the plan is not touched by a closing ending');
+  });
+
+  it('free time whose last day is already past catches nothing (the plan outlasted it)', async () => {
+    const w = world({ account: club() });
+    w.state.grant = { plan: 'tournament_plus', lastDay: '2026-10-15' }; // before NOW
+    const result = await applyEnding(club(), { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps);
+    assert.equal(result.fellBackTo, undefined);
+    assert.equal(w.suspensions.length, 1);
+  });
+
+  it('a free-time read that fails stops the ending before anything is torn down (Stripe sends the event again)', async () => {
+    const w = world({ account: club() });
+    w.state.grantFails = true;
+    await assert.rejects(applyEnding(club(), { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps));
+    assert.deepEqual(tornDown(w), []);
+    assert.deepEqual(w.plans, []);
+  });
+
+  it('a Coaches Portal never falls back (a Premium coach’s ending is unchanged)', async () => {
+    const portal = account({ isCoachesPortal: true, accountKind: 'team_workspace', ownPlan: 'team', teamWorkspaceId: 'ws-1' });
+    const w = world({ account: portal });
+    w.state.grant = DATED;
+    const result = await applyEnding(portal, { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps);
+    assert.equal(result.fellBackTo, undefined);
+    assert.equal(w.suspensions.length, 1);
+    assert.ok(!w.calls.includes('freeTime'), 'not even asked');
+  });
+
+  for (const crashAt of ['plan', 'event', 'payPages', 'email', 'db:flip']) {
+    it(`a crash at "${crashAt}" then a replay leaves one of everything, still a fall-back`, async () => {
+      const w = world({ account: club() });
+      w.state.grant = DATED;
+      w.state.failAt = crashAt;
+      await assert.rejects(applyEnding(club(), { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps));
+      await applyEnding(club(), { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps);
+      assert.equal(w.only().status, 'applied');
+      assert.equal(w.events.size, 1);
+      assert.ok(w.endedEmails.length <= 1, 'the email at most once');
+      assert.deepEqual(w.suspensions, []);
+    });
+  }
+
+  it('a replay that reads the club already on the free plan still names the plan that ENDED (event and email)', async () => {
+    const w = world({ account: club() });
+    w.state.grant = DATED;
+    w.state.failAt = 'event';
+    await assert.rejects(applyEnding(club(), { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps));
+    // Stripe resends the event; the account is re-read, and step 3 already stored the free plan.
+    await applyEnding(club({ ownPlan: 'tournament' }), { actor: OPERATOR, reason: null, notifyOwner: true, origin: 'request' }, w.deps);
+    const event = [...w.events.values()][0];
+    assert.equal(event.account.ownPlan, 'club', 'the churn event is about Club, not Tournament');
+    assert.equal(w.only().status, 'applied');
+  });
+
+  it('a move to the free plan made while free time runs archives only what the free time cannot hold', async () => {
+    const w = world({ account: club(), tournaments: ['t-1', 't-2', 't-3'] });
+    w.state.grant = DATED;
+    const moved = await scheduleDowngrade(club({ subscriptionId: 'mock_1' }), OWNER, { targetPlan: 'tournament', keepTournamentIds: [], reason: null }, w.deps);
+    assert.equal(moved.outcome, 'moved');
+    assert.deepEqual([...w.archived], [], 'Tournament Plus holds them all');
+  });
+
+  it('the rule: a dated grant covers an end before the first moment of the day after its last free day (Eastern)', () => {
+    assert.equal(freeTimeCatchesEnd(DATED, '2027-10-01T03:59:59.000Z'), true, '11:59 p.m. Sep 30 in Toronto');
+    assert.equal(freeTimeCatchesEnd(DATED, '2027-10-01T04:00:00.000Z'), false, 'midnight Oct 1 in Toronto');
+    assert.equal(freeTimeCatchesEnd(UNDATED, '2099-01-01T00:00:00.000Z'), true);
+    assert.equal(freeTimeCatchesEnd({ plan: 'tournament', lastDay: null }, NOW.toISOString()), false, 'never the free plan itself');
+    assert.equal(freeTimeCatchesEnd(null, NOW.toISOString()), false);
+  });
+});
+
+describe('11b · the fall-back’s words (S4 Part 3; owner 2026-11-21)', () => {
+  const facts = (over: Partial<EndingEmailFacts> = {}): EndingEmailFacts => ({
+    kind: 'ends_on', move: null, portal: false, orgName: 'Riverside', plan: 'club', planLabel: 'Club', door: 'owner',
+    clickedAt: '2026-11-01T15:00:00.000Z', date: RENEWAL, retentionUntil: '2027-04-15T02:00:00.000Z', tournaments: 3,
+    trialing: false, pastDue: false, remindLater: true, daysLeft: 75, renewsAs: null, price: '$219 CAD / month',
+    keepUrl: 'https://x/keep', billingUrl: 'https://x/billing', ...over,
+  });
+
+  it('the ends-on and reminder emails say the fall-back in place of the suspension, with no data-kept line', () => {
+    for (const kind of ['ends_on', 'reminder'] as const) {
+      const out = endingEmail(facts({ kind, fallBack: { orgName: 'Riverside', plan: 'tournament_plus', lastDay: '2027-09-30' } }));
+      assert.match(out.html, /Riverside goes back to free Tournament Plus through September 30, 2027\./);
+      assert.doesNotMatch(out.html, /suspended|is kept until|archived/);
+      assert.equal(out.fallsBack, true, 'built-in words: a customised template would say "suspended"');
+    }
+    const tools = endingEmail(facts({ fallBack: { orgName: 'Riverside', plan: 'tournament_plus', lastDay: null, toolsStop: true } }));
+    assert.match(tools.html, /Riverside goes back to free Tournament Plus\. Tools that come only with Club turn off\./, '/legal: what stops is said');
+    const plain = endingEmail(facts());
+    assert.match(plain.html, /is suspended/);
+    assert.equal(plain.fallsBack, undefined);
+  });
+
+  it('the table line says "while your free time runs", dated and undated', () => {
+    assert.equal(W.fallBack.tableLine('Riverside', 'tournament_plus', '2027-09-30'),
+      'Starting a plan doesn’t end your free time. If the plan ends while your free time runs, Riverside goes back to free Tournament Plus through September 30, 2027.');
+    assert.equal(W.fallBack.tableLine('Riverside', 'tournament_plus', null),
+      'Starting a plan doesn’t end your free time. If the plan ends while your free time runs, Riverside goes back to free Tournament Plus.');
+  });
+
+  it('the cancel window and Reduce or cancel never say "offline", "suspend" or "kept for" when free time catches it', () => {
+    const lines = [
+      W.fallBack.waitBody('Riverside', RENEWAL, 'tournament_plus', '2027-09-30'),
+      W.fallBack.nowBody('Riverside', 'tournament_plus', null),
+      W.fallBack.door('Club'), W.fallBack.title('Club'), W.fallBack.confirm('Club'),
+      W.fallBack.done('Club', 'Riverside', 'tournament_plus', '2027-09-30'),
+    ];
+    for (const line of lines) assert.doesNotMatch(line, /offline|suspend|kept for|90 days/i, line);
+    assert.match(lines[0], /^Cancelling ends Riverside’s plan on January 1[45], 2027, the end of the period you paid for\. Then Riverside goes back to free Tournament Plus through September 30, 2027\.$/);
+  });
+
+  it('wiring: the ending asks free time before any teardown, and the fall-back emails go in built-in words', () => {
+    const body = functionBody(readCode('lib/plan-ending.ts'), 'applyEnding');
+    assert.ok(body.indexOf('freePlanGrant(account)') > 0 && body.indexOf('freePlanGrant(account)') < body.indexOf('deps.preflight(account)'), 'asked before the records, archive and suspension');
+    const server = readCode('lib/plan-ending-server.ts');
+    assert.match(server, /fellBackTo \? \{ builtInOnly: true \} : \{\}/);
+    assert.match(server, /out\.fallsBack \? \{ builtInOnly: true \} : \{\}/);
+    assert.match(server, /\{ strict: true \}/, 'a failed free-time read throws, never reads as "none"');
   });
 });

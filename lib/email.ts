@@ -1977,10 +1977,20 @@ export function cancellationConfirmationHtml(p: {
   retentionUntil: string;
   retainedTournaments: number;
   resubscribeUrl: string;
+  /** S4 Part 3: free time caught the end — this sentence ("{org} goes back to free Tournament Plus through {date}.") in
+   *  place of the suspension, and no data panel (nothing is suspended or counted down). */
+  fellBack?: string | null;
 }) {
   // Plans end at renewal Stage 4: this goes on the END date (or End now), so it says the plan has ended, in the windows' words
   // ("suspended", "kept until"), with the billing page's own door, Reactivate {Plan}. /legal 2026-11-16 (CASL): after the end there
   // is no subscription left, so this stays a DATA NOTICE — the date and where to restore it; never a price or an offer.
+  if (p.fellBack) {
+    // The same notice, transactional: what ended and what the club is on now. No offer, no price, no door to buy.
+    return wrap(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">${escapeHtml(p.planLabel)} has ended</h2>
+    <p style="margin:0 0 1rem;"><strong>${escapeHtml(p.planLabel)}</strong> for <strong>${escapeHtml(p.orgName)}</strong> has ended. ${escapeHtml(p.fellBack)}</p>
+  `);
+  }
   const archived = p.retainedTournaments === 0 ? ''
     : p.retainedTournaments === 1 ? ' Its tournament is archived.' : ` Its ${p.retainedTournaments} tournaments are archived.`;
 

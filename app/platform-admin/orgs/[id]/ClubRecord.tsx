@@ -1184,7 +1184,16 @@ type CancelPreflight = {
   waitsForRenewal?: boolean; renewsOn?: string | null;
   /** The route's own read of the record's status: past due (Stage 3 F2) means the date is not a promise. */
   subscriptionStatus?: string | null;
+  /** On-sale pages S4 Part 3: whole-plan free time covers the period end (Cancel) or today (End now), so the ending sends the
+   *  club back to free {plan} instead of suspending it. `stops`: what only the paid plan carried. */
+  fallBackAtEnd?: FallBackRead | null; fallBackNow?: FallBackRead | null;
 };
+type FallBackRead = { planLabel: string; lastDay: string | null; stops: string[] };
+
+/** "Its free time is still running, so it goes back to free Tournament Plus through Sep 30, 2027 instead: …" */
+function fallBackLine(f: FallBackRead) {
+  return <>Its free time is still running, so it goes back to free {f.planLabel}{f.lastDay ? <> through {formatShortDay(f.lastDay)}</> : null} instead: nothing is suspended or archived, and its site stays as it is.</>;
+}
 
 /** The cancel window's read; a refusal (free time, already cancelled) is the window's sentence and holds the confirm. */
 function useCancelPreflight(orgId: string) {
@@ -1216,10 +1225,12 @@ function CancelWindow({ orgId, orgName, onEndNow, onDone, onClose }: {
   const endsOn = pre?.waitsForRenewal ? pre.renewsOn ?? null : null;
   // A subscription that waits for a date we don't hold can't be promised one, nor said to end now.
   const dateMissing = !!pre?.waitsForRenewal && !endsOn;
-  const stops = pre?.shutsDown && pre.shutsDown.length > 0 && (
+  // S4 Part 3: a fall-back stops only what the paid plan alone carried.
+  const stopping = (endsOn ? pre?.fallBackAtEnd : pre?.fallBackNow)?.stops ?? pre?.shutsDown;
+  const stops = stopping && stopping.length > 0 && (
     <div className={kit.fieldGroup}>
       <span className={kit.label}>{endsOn ? `What stops on ${consoleDay(endsOn)}` : 'What stops'}</span>
-      <ul className={kit.caption}>{pre.shutsDown.map(s => <li key={s}>{s}</li>)}</ul>
+      <ul className={kit.caption}>{stopping.map(s => <li key={s}>{s}</li>)}</ul>
     </div>
   );
   return (
@@ -1232,11 +1243,12 @@ function CancelWindow({ orgId, orgName, onEndNow, onDone, onClose }: {
           {pre.subscriptionStatus === 'past_due'
             ? <>{possessive(orgName)} last payment failed. If Stripe collects it, the plan ends on {consoleDate(endsOn)}; if Stripe’s retries fail first, it ends sooner, on the day Stripe stops trying. Until then everything stays open.</>
             : <>Stripe stops charging {orgName} after {consoleDate(endsOn)}, the end of the period it paid for. Until then everything stays open.</>}
-          {pre.activeTournamentCount ? <> On that day its {pre.activeTournamentCount} tournament{pre.activeTournamentCount === 1 ? ' is' : 's are'} archived and kept for {pre.retentionDays} days.</> : null}
+          {pre.fallBackAtEnd ? <> {fallBackLine(pre.fallBackAtEnd)}</>
+            : pre.activeTournamentCount ? <> On that day its {pre.activeTournamentCount} tournament{pre.activeTournamentCount === 1 ? ' is' : 's are'} archived and kept for {pre.retentionDays} days.</> : null}
           {' '}The owner can keep the plan until then, and so can you.
         </> : <>
           {possessive(orgName)} subscription ends here: there is no paid period to wait for. <strong>This cannot be put back</strong>: the owner would have to buy again.
-          {archivedLine(pre)}
+          {pre.fallBackNow ? <> {fallBackLine(pre.fallBackNow)}</> : archivedLine(pre)}
         </>}
       whyPlaceholder="Why are you cancelling?"
       footNote={endsOn ? `Reaches Stripe. Can be kept until ${consoleDay(endsOn)}.` : 'Never offered as Put it back.'}
@@ -1289,7 +1301,10 @@ function EndPlanNowWindow({ orgId, orgName, hasStripe, ending, onDone, onClose }
       title={`End the plan for ${orgName} today`}
       sentence={failed ? <>{failed}</> : <>
         This ends the plan today{daysLost > 0 ? <>, {daysLost} day{daysLost === 1 ? '' : 's'} before the period it paid for is over</> : null}. Ending it refunds nothing by itself: fraud, abuse and disputed charges get no refund. If the club did nothing wrong, refund the unused part afterwards with Refund this charge on its Money tab, never from Stripe’s own dashboard, so a credit note is issued.
-        {' '}{orgName} is suspended now.{archivedLine(pre)} <strong>This cannot be put back</strong>: the owner would have to buy again.
+        {' '}{pre?.fallBackNow
+          // S4 Part 3: free time catches End now too. To close a club for fraud or abuse, its free time is ended first.
+          ? <>{fallBackLine(pre.fallBackNow)} To close it, end its free time first.</>
+          : <>{orgName} is suspended now.{archivedLine(pre)}</>} <strong>This cannot be put back</strong>: the owner would have to buy again.
       </>}
       whyPlaceholder="Fraud, abuse, a chargeback…"
       footNote={`Ends immediately. Refunds nothing by itself; a refund when it is not the club’s doing goes through its Money tab. This cannot be put back.${hasStripe ? ' Reaches Stripe.' : ''}`}
@@ -1308,10 +1323,10 @@ function EndPlanNowWindow({ orgId, orgName, hasStripe, ending, onDone, onClose }
       {ending && <p className={kit.caption}>{ending.movesTo
         ? <>It was set to move to {ending.movesTo} on {consoleDate(ending.endsAt)}. Ending it now replaces that move.</>
         : <>It was already set to end on {consoleDate(ending.endsAt)}. This finishes it today instead.</>}</p>}
-      {pre?.shutsDown && pre.shutsDown.length > 0 && (
+      {(pre?.fallBackNow?.stops ?? pre?.shutsDown ?? []).length > 0 && (
         <div className={kit.fieldGroup}>
           <span className={kit.label}>What stops now</span>
-          <ul className={kit.caption}>{pre.shutsDown.map(s => <li key={s}>{s}</li>)}</ul>
+          <ul className={kit.caption}>{(pre?.fallBackNow?.stops ?? pre?.shutsDown ?? []).map(s => <li key={s}>{s}</li>)}</ul>
         </div>
       )}
       {pre?.onlinePayments && <p className={kit.caption}>{LEAVING_WORDS.operator(pre.onlinePayments.outstanding, 'now')}</p>}

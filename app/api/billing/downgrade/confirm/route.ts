@@ -13,6 +13,7 @@ import { ownPlanOf } from '@/lib/entitlement-grants';
 import { normalizeKeepIds, scheduleDowngrade, stripeIdToStopNow } from '@/lib/plan-ending';
 import { endingDeps, readEndingAccount } from '@/lib/plan-ending-server';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
+import { refuseBelowFreePlan } from '@/lib/plan-move-route';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -58,6 +59,10 @@ export const POST = withObservability(async (req: Request) => {
   if (!isLowerPlan(fromPlan, targetPlan)) {
     return Response.json({ error: 'You can only confirm a downgrade to a lower plan.' }, { status: 400 });
   }
+  // On-sale pages S4 Part 3 (owner 2026-11-21, "Cancel is the one door"): while running free time would catch the club,
+  // a move to the free plan is refused — Cancel goes back to the free plan with nothing archived.
+  const belowFree = await refuseBelowFreePlan({ id: ctx.org.id, name: ctx.org.name, ownPlan: fromPlan, subscriptionStatus: ctx.org.subscriptionStatus ?? null, currentPeriodEnd: ctx.org.currentPeriodEnd ?? null }, targetPlan);
+  if (belowFree) return belowFree;
 
   try {
     const [account, preflight] = await Promise.all([readEndingAccount(ctx.org.id), buildDowngradePreflight(ctx.org, targetPlan)]);

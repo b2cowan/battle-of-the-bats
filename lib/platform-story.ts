@@ -396,7 +396,9 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     }
     const title = e.event_type === 'plan_downgraded' ? `Downgraded: ${planName(e.previous_plan_id)} → ${planName(e.plan_id)}`
       : e.event_type === 'subscription_canceled'
-        ? (obj(e.metadata)?.freeTimeEnded === true ? 'Closed again: free time ended, still unpaid'
+        // S4 Part 3: a paid plan that free time caught — it ended, and the club stayed open on the free plan.
+        ? (typeof obj(e.metadata)?.fellBackToFreeTime === 'string' ? `${planName(e.previous_plan_id)} ended: back on free ${planName(obj(e.metadata)!.fellBackToFreeTime as string)}`
+          : obj(e.metadata)?.freeTimeEnded === true ? 'Closed again: free time ended, still unpaid'
           : e.source === 'stripe' ? 'Subscription ended in Stripe' : 'Subscription cancelled by the customer')
       : e.event_type === 'subscription_past_due' ? 'A payment was missed'
       : 'Payment recovered';

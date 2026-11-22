@@ -3,7 +3,7 @@ import { withObservability } from '@/lib/observability';
 import { demoBillingRefusal } from '@/lib/demo-guard';
 import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription, moveLandedInStripe, moveRefusalBeforeStripe, paymentFailingRefusal } from '@/lib/plan-move';
 import { moveDirection } from '@/lib/plan-move-options';
-import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
+import { authorizeMove, parseTargetPlan, refuseBelowFreePlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
 import { writeOrgBillingAudit } from '@/lib/billing-retention';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
@@ -68,6 +68,9 @@ export const POST = withObservability(async (req: Request) => {
   if (!toPlan) return NextResponse.json({ error: 'Choose a plan to move to.', code: 'not_a_move' }, { status: 400 });
   const gated = await refuseIfGated(toPlan);
   if (gated) return gated;
+  // On-sale pages S4 Part 3 (carried item 2): never a move to a running free plan or below it — Cancel goes back to it.
+  const belowFree = await refuseBelowFreePlan({ id: authorized.org.id, name: authorized.org.name, ownPlan: ownPlanOf(authorized.org), subscriptionStatus: authorized.org.subscriptionStatus ?? null, currentPeriodEnd: authorized.org.currentPeriodEnd }, toPlan);
+  if (belowFree) return belowFree;
   // On-sale pages S4 Part 2: the move sells League Plus, Club and Club · Association too, so it refuses them on a live key while
   // the legal pages are off, before the address work — as checkout does (lib/legal-pages-sale-guard.ts). Only a move UP sells: a
   // move down (Club · Association → Club) charges nothing today and renews what was bought, so it is never refused here.

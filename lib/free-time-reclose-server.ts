@@ -57,7 +57,9 @@ export const reopenDeps: ReopenDeps = {
       freeTimeEnded: true,
       note: 'Free time ended and the club had not paid',
     }, endingDeps);
-    return { applied: ended.applied, retentionUntil: ended.retentionUntil };
+    // S4 Part 3: whole-plan free time still running catches this ending too — the club goes back to that free plan,
+    // stored active, so it is not "closed again" (and is never a candidate again).
+    return { applied: ended.applied && !ended.fellBackTo, retentionUntil: ended.retentionUntil };
   },
 
   async extendKept(orgId, retentionUntil) {

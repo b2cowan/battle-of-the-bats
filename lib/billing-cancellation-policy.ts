@@ -40,6 +40,18 @@ export function organizationShutdownAreas(plan: Pick<PlanConfig, 'moduleEntitlem
   ];
 }
 
+/**
+ * On-sale pages S4 Part 3: what a FALL-BACK turns off — a paid plan that ends while free time runs goes back to the free
+ * plan, so only the areas the paid plan carries and the free plan does not stop (the tournaments, the site and add-ons the
+ * club holds stay). Empty when the free plan carries everything the paid one did.
+ */
+export function fallBackShutdownAreas(
+  paid: Pick<PlanConfig, 'moduleEntitlements'> | undefined, free: Pick<PlanConfig, 'moduleEntitlements'> | undefined, enabledAddons: readonly string[] = [],
+): string[] {
+  const stays = new Set<string>([...(free?.moduleEntitlements ?? []), ...enabledAddons]);
+  return shutdownModules(paid, []).filter(([cap]) => !stays.has(cap)).map(([, copy]) => copy.full);
+}
+
 /** The enabled modules (plan entitlements plus add-ons) that have shutdown copy, in the server's order. */
 function shutdownModules(plan: Pick<PlanConfig, 'moduleEntitlements'> | undefined, enabledAddons: readonly string[]) {
   const enabled = new Set<string>([...(plan?.moduleEntitlements ?? []), ...enabledAddons]);

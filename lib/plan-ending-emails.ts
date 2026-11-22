@@ -75,9 +75,16 @@ export type EndingEmailFacts = {
   price: string | null;
   keepUrl: string;
   billingUrl: string;
+  /**
+   * S4 Part 3 (call 40 A): a cancel whose end date free time still covers — on the day the club goes back to the free plan
+   * and stays open, so the ends-on and reminder emails say that in place of the suspension and the data clock (owner
+   * 2026-11-21). Null (or absent) for every other ending.
+   */
+  fallBack?: { orgName: string; plan: OrgPlanKey; lastDay: string | null; toolsStop?: boolean } | null;
 };
 
-export type EndingEmailOut = { key: EmailKind; subject: string; html: string; vars: Record<string, string> };
+/** `fallsBack`: the fall-back's words, which a customised template cannot carry, so the built-in email is sent. */
+export type EndingEmailOut = { key: EmailKind; subject: string; html: string; vars: Record<string, string>; fallsBack?: boolean };
 
 const KEYS: Record<Exclude<EndingEmailFacts['kind'], 'moved'>, { club: EmailKind; portal: EmailKind }> = {
   ends_on: { club: 'plan_ends_on', portal: 'team_workspace_ends_on' },
@@ -115,6 +122,12 @@ function panel(title: string, body: string): string {
 /** The end date, in the account's words: suspended (or Premium stopping), the tournaments archived, the data kept until the date.
  *  Past due (F2) the end can come sooner, so the kept-until date becomes "for N days after that". */
 function onTheDay(f: EndingEmailFacts, withComeBack: boolean): string {
+  // S4 Part 3: free time covers the end date — nothing is suspended, archived or counted down (owner 2026-11-21).
+  // /legal 2026-11-21: and what stops, in the move email's words, when the paid plan carried tools the free one does not.
+  if (f.fallBack && !f.portal) {
+    return sentences(escapeHtml(W.fallBack.goesBack(f.fallBack.orgName, f.fallBack.plan, f.fallBack.lastDay)),
+      f.fallBack.toolsStop ? `Tools that come only with ${escapeHtml(f.planLabel)} turn off.` : '');
+  }
   // The page's own door word (Reactivate {Plan}), one spelling with the billing page and the "ended" email.
   // /legal 2026-11-16: "comes back", never "everything comes back" — the windows restore what the plan allows.
   const comeBack = withComeBack ? `, and it comes back if you reactivate ${f.pastDue ? 'within that time' : 'before then'}` : '';
@@ -306,5 +319,6 @@ export function endingEmail(f: EndingEmailFacts): EndingEmailOut {
         keptTournaments: joinWithAnd(m.kept), archivedTournaments: joinWithAnd(m.archived),
       } : {}),
     },
+    ...(f.fallBack && !f.portal && !m && f.kind !== 'kept' ? { fallsBack: true } : {}),
   };
 }

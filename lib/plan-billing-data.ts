@@ -21,6 +21,12 @@ export type BillingCancellation = {
   cancelled: { at: string | null; keptUntil: string | null } | null; onlinePayments?: EndingSection | null;
   /** Plans end at the renewal date (Stage 1). Null while the account is cancelled (the reactivate card reads `cancelled`). */
   ending?: BillingEnding | null;
+  /**
+   * On-sale pages S4 Part 3 (call 40 A): whole-plan free time covers the day a cancel made now would end, so the club goes
+   * back to `plan` (through `lastDay`; null: no end date) instead of closing — decided on the server by the ending's own
+   * rule (`freeTimeCatchesEnd`). `stops`: the areas only the paid plan carried. Null when free time would not catch it.
+   */
+  fallBack?: { plan: OrgPlan; lastDay: string | null; stops: string[] } | null;
 };
 export type BillingEnding = {
   /** A real Stripe subscription: a cancel waits for its date. False: no paid period to wait for, so it ends at the click. */

@@ -156,6 +156,12 @@ period or a "free through…" line for new customers.
   6 months, all measured from the first give. Customers read only "Free through {day}". No price, name, band, SKU or gate
   value moved. Drift check run 2026-10-30 (S4b walks done): `lib/plan-config.ts` and `lib/plan-features.ts` untouched by
   4b; the Keep Premium checkout skips the plan's trial; no pricing or `/for-*` surface mentions free time.
+  **Buying above free time does not end it; a paid plan that ends while it runs falls back to it** (On-sale pages S4,
+  call 40 option A, owner 2026-11-21; Part 3 built on dev). A free-time club may start only a plan ranked above its free
+  plan (a start, move or move to free at or below it is refused, judged at the date it would land). If that paid plan ends
+  (cancel at period end, staff End now, Stripe giving up) while the free time still covers the day it ends, the club goes
+  back to free {plan} through its last free day: not suspended, nothing archived, no data clock. A plan that outlasts the
+  free time closes as any ended plan does. No price, name, band, SKU or gate value moved.
 - **Club Shared Book = Club only** (Decided 2026-08-04, `BUSINESS_DECISIONS.md`; **BUILT on dev 2026-08-05**). A club's teams can opt in to read each other's opponent scouting books — book line, observations, and each team's own record against a shared opponent, labelled by team and writer, read-only across team lines. Gated by the feature key **`club_shared_book` → `club`** (so Club and Club · Association; League Plus and below get nothing). **Explicitly excluded from the standalone Premium Coaches Portal (`team`)**: the feature's value is a club with several teams, and the ruling is **absent, not upsold** — a single-team customer sees no switch, no layer and no locked tease anywhere in the app. **No new SKU, no price change, no per-team fee, no capacity implication.** Two opt-ins guard it: the club admin enables it for the org, then each head coach opts their own team in, and a team reads the club's books only while sharing its own.
 
 ## Email / communications split (ratified 2026-06-22; table corrected to the product 2026-10-16)

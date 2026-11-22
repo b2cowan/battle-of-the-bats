@@ -4,8 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { endingSection } from '@/lib/online-payment-endings';
 import { waitingDate, waitingMoveView } from '@/lib/plan-ending';
-import { readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
-import type { BillingEnding } from '@/lib/plan-billing-data';
+import { fallBackFor, readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
+import { hasPlanFeature } from '@/lib/plan-features';
+import type { BillingCancellation, BillingEnding } from '@/lib/plan-billing-data';
 
 /**
  * GET /api/billing/cancel/preflight — what cancelling would do. Owner-only.
@@ -67,6 +68,16 @@ export const GET = withObservability(async (req: Request) => {
     };
   }
 
+  // On-sale pages S4 Part 3 (call 40 A): free time that covers the day this cancel would end catches it — the club goes
+  // back to its free plan instead of closing. Decided by the ending's own read and rule (`fallBackFor`), at the date the
+  // window names (or now, when nothing waits).
+  let fallBack: BillingCancellation['fallBack'] = null;
+  if (endingRead?.[0] && ending && (!ending.waits || ending.endsOn)) {
+    fallBack = await fallBackFor(endingRead[0], ending.waits ? ending.endsOn! : new Date().toISOString());
+  }
+
   // 12d-2 (words §4.3): what stops now, what is still owed and clearing, and that the Stripe account stays the club's.
-  return Response.json({ ...preflight, cancelled, ending, onlinePayments });
+  // A fall-back to a plan that takes payments online closes no pay page, so the payments part is not said.
+  const payments = fallBack && hasPlanFeature(fallBack.plan, 'online_payments') ? null : onlinePayments;
+  return Response.json({ ...preflight, cancelled, ending, onlinePayments: payments, fallBack });
 }, { route: '/api/billing/cancel/preflight' });

@@ -10,11 +10,14 @@ import { orgOwnerEmails, type OwnerRecipient } from './notify-recipients';
 import { sendToOwners } from './owners-send-outcome';
 import { buildCancellationPreflight, getNonArchivedTournaments, getSlotHoldingTournaments, retentionDateLabel, retentionDaysFor } from './billing-retention';
 import { closePagesIfPaymentsEnded } from './online-payment-endings';
+import { fallBackShutdownAreas } from './billing-cancellation-policy';
 import { writePlatformEvent } from './platform-events';
 import { sendTransactionalEmail } from './platform-email-templates';
 import { cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SITE_URL } from './email';
 import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from './coaches-portal-routes';
 import { getBillingHref, billingUrlOrgFromRow } from './billing-urls';
+import { getBillingFreeTimeFacts } from './entitlement-grants';
+import { FREE_OWN_PLAN, freeTimeCatchesEnd } from './free-time';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { PLAN_CONFIG, type BillingCycle } from './plan-config';
 import { moveDirection } from './plan-move-options';
@@ -144,7 +147,15 @@ async function endingEmailFacts(email: EndingEmail): Promise<EndingEmailFacts> {
   const date = email.kind === 'kept' ? email.renewsOn : email.kind === 'moved' ? email.movedAt : intent.effectiveAt;
   // A move names the plan it moves FROM: on the date (or a replay after it) the account's own plan is already the free one.
   const fromPlan = (move ? intent.fromPlan ?? account.ownPlan : account.ownPlan) as OrgPlan;
+  // S4 Part 3: a cancel whose end date free time still covers — the club goes back to the free plan on the day, not closed.
+  // Asked of the grant as it is when the email goes (strict: a failed read sends nothing now, and the daily job retries).
+  const grant = !move && !account.isCoachesPortal && email.kind !== 'kept' ? await endingDeps.freePlanGrant(account) : null;
+  const fallBack = grant && freeTimeCatchesEnd(grant, intent.effectiveAt) ? grant : null;
   return {
+    fallBack: fallBack ? {
+      orgName: account.name, plan: fallBack.plan, lastDay: fallBack.lastDay,
+      toolsStop: fallBackShutdownAreas(PLAN_CONFIG[fromPlan], PLAN_CONFIG[fallBack.plan], account.enabledAddons).length > 0,
+    } : null,
     kind: email.kind,
     move,
     portal: account.isCoachesPortal,
@@ -164,6 +175,20 @@ async function endingEmailFacts(email: EndingEmail): Promise<EndingEmailFacts> {
     price,
     keepUrl: `${billingUrl}?keep_plan=1`,
     billingUrl,
+  };
+}
+
+/**
+ * On-sale pages S4 Part 3: would free time catch a plan ending at `endIso`? The cancel windows' one answer (the owner's
+ * and the platform admin's), asked through the ending's own read and rule so a window can never promise a fall-back the
+ * ending would not make. Throws when the free time cannot be read (the window then shows its read failure, never a guess).
+ */
+export async function fallBackFor(account: EndingAccount, endIso: string): Promise<{ plan: OrgPlan; lastDay: string | null; stops: string[] } | null> {
+  const grant = await endingDeps.freePlanGrant(account);
+  if (!grant || !freeTimeCatchesEnd(grant, endIso)) return null;
+  return {
+    plan: grant.plan, lastDay: grant.lastDay,
+    stops: fallBackShutdownAreas(PLAN_CONFIG[account.ownPlan], PLAN_CONFIG[grant.plan], account.enabledAddons),
   };
 }
 
@@ -308,7 +333,9 @@ export const endingDeps: EndingDeps = {
     // The move to the free plan, on its date: the plan and its limit; the account stays active (never suspended).
     const { error } = await supabaseAdmin
       .from('organizations')
-      .update({ plan_id: plan, tournament_limit: PLAN_CONFIG[plan].tournamentLimit, subscription_status: 'active' })
+      // `team_limit` back to the plan's own (/review 2026-11-21): a custom limit set for the ended Club band would otherwise
+      // outlive it — the door only ever RAISES a plan's team limit by the stored one (free time included).
+      .update({ plan_id: plan, tournament_limit: PLAN_CONFIG[plan].tournamentLimit, team_limit: null, subscription_status: 'active' })
       .eq('id', orgId);
     if (error) throw new Error(`Couldn't move the plan: ${error.message}`);
   },
@@ -381,23 +408,35 @@ export const endingDeps: EndingDeps = {
       actorUserId: e.actorUserId,
       actorEmail: e.actorEmail,
       previousPlanId: e.account.ownPlan,
-      planId: e.account.ownPlan,
+      // S4 Part 3: a paid plan that free time caught — the club holds the free plan and stays active, not cancelled.
+      planId: e.fellBackTo ? FREE_OWN_PLAN : e.account.ownPlan,
       previousSubscriptionStatus: e.account.subscriptionStatus,
-      subscriptionStatus: 'canceled',
+      subscriptionStatus: e.fellBackTo ? 'active' : 'canceled',
       metadata: {
         requestedBy: e.requestedBy,
         reason: e.reason,
         endedAt: e.endedAt,
-        retentionUntil: e.retentionUntil,
+        // A fall-back starts no data clock: only an archived tournament (none today) would have a kept-until date.
+        retentionUntil: e.fellBackTo && e.retainedTournamentIds.length === 0 ? null : e.retentionUntil,
         retainedTournamentIds: e.retainedTournamentIds,
         intentId: e.intentId,
         ...(e.freeTimeEnded ? { freeTimeEnded: true } : {}),
+        ...(e.fellBackTo ? { fellBackToFreeTime: e.fellBackTo } : {}),
         ...(e.account.isCoachesPortal ? { scope: 'coaches_portal', teamWorkspaceId: e.account.teamWorkspaceId } : {}),
       },
     });
   },
 
-  async sendEndedEmail({ account, intentId, retentionUntil, retainedTournaments, askedBy }) {
+  async freePlanGrant(account) {
+    if (account.isCoachesPortal) return null;
+    // Strict: a failed read throws, so the ending stops before it can close a club free time would have caught.
+    const { planGrant } = await getBillingFreeTimeFacts({
+      id: account.orgId, plan_id: account.ownPlan, subscription_status: account.subscriptionStatus, enabled_addons: account.enabledAddons,
+    }, { strict: true });
+    return planGrant;
+  },
+
+  async sendEndedEmail({ account, intentId, retentionUntil, retainedTournaments, askedBy, fellBackTo }) {
     // Every active owner (GST/HST 6.4 ruling Q4); each its own once-only key (the mail service refuses one key for two addresses).
     const recipients = await orgOwnerEmails(account.orgId);
     if (!recipients.length) return;
@@ -427,7 +466,18 @@ export const endingDeps: EndingDeps = {
       to,
       vars: { orgName: account.name, planLabel, retentionUntil: kept, resubscribeUrl },
       defaultSubject: `${planLabel} for ${account.name} has ended`,
-      defaultHtml: cancellationConfirmationHtml({ orgName: account.name, planLabel, retentionUntil: kept, retainedTournaments, resubscribeUrl }),
+      // S4 Part 3: free time caught the ending — the fall-back sentence in place of the suspension, no data-kept line.
+      defaultHtml: cancellationConfirmationHtml({
+        orgName: account.name, planLabel, retentionUntil: kept, retainedTournaments, resubscribeUrl,
+        // /legal 2026-11-21: and what stopped, in the move email's words, when the paid plan carried tools the free one does not.
+        fellBack: fellBackTo ? [
+          W.fallBack.goesBack(account.name, fellBackTo.plan, fellBackTo.lastDay),
+          fallBackShutdownAreas(PLAN_CONFIG[account.ownPlan], PLAN_CONFIG[fellBackTo.plan], account.enabledAddons).length > 0
+            ? `Tools that came only with ${planLabel} are off.` : '',
+        ].filter(Boolean).join(' ') : null,
+      }),
+      // A customised template carries the suspension's words, which are false here: the built-in words go instead.
+      ...(fellBackTo ? { builtInOnly: true } : {}),
       orgId: account.orgId,
       askedBy,
       idempotencyKey: keyFor(userId),
@@ -473,6 +523,8 @@ export const endingDeps: EndingDeps = {
     // 'skipped': no email service here (dev) — nothing to retry. Only a definite refusal of every one is "not sent" (lib/email.ts).
     return sendToOwners(recipients, ({ userId, email: to }) => sendTransactionalEmail({
       key: out.key, to, vars: out.vars, defaultSubject: out.subject, defaultHtml: out.html,
+      // S4 Part 3: a customised template says "suspended", which is false when free time catches the end.
+      ...(out.fallsBack ? { builtInOnly: true } : {}),
       orgId: email.account.orgId, askedBy: email.intent.createdBy,
       // The email service's own guard for a retry inside a day; the row's stamp is the real one.
       idempotencyKey: `intent:${email.intent.id}:${email.kind}_email:${userId}`,

@@ -370,6 +370,38 @@ export function runningPlanTier(rows: GrantRow[], now: Date = new Date()): { pla
   return { plan: grant.target!.plan as OrgPlan, lastDay: grant.expires_at ? lastDayOfInstant(grant.expires_at) : null };
 }
 
+/** The plan a club holds when it pays for nothing: what an ended paid plan stores when free time catches it. */
+export const FREE_OWN_PLAN: OrgPlan = 'tournament';
+
+/**
+ * FREE TIME CATCHES AN ENDING PAID PLAN (On-sale pages S4 Part 3, call 40 option A, owner 2026-11-21). Buying a plan does
+ * not end free time: while the paid plan runs it outranks the grant (`foldGrants`). If the paid plan then ends while a
+ * whole-plan grant above the free plan still runs, the club falls back to that free plan instead of closing — so the
+ * ending, the cancel window and the emails all ask THIS: does the grant still run at the instant the plan ends? A dated
+ * grant runs until the first moment of the day after its last free day (Eastern); one with no end date always does. A
+ * plan whose end comes after the last free day closes as it always has (owner 2026-11-21: the words say "while your free
+ * time runs", never a promise past it).
+ */
+export function freeTimeCatchesEnd(
+  grant: { plan: OrgPlan; lastDay: string | null } | null | undefined,
+  endIso: string | null | undefined,
+): boolean {
+  if (!grant || !isGrantablePlan(grant.plan) || PLAN_RANK[grant.plan] <= PLAN_RANK[FREE_OWN_PLAN]) return false;
+  if (!grant.lastDay) return true;
+  const end = endInstantForLastDay(grant.lastDay);
+  const at = endIso ? Date.parse(endIso) : NaN;
+  return !!end && Number.isFinite(at) && at < Date.parse(end);
+}
+
+/**
+ * When a move down (or to the free plan) would land: the stored renewal while it is still ahead, else now (no paid period
+ * to wait for). The page and the server ask free time at THIS date, never today (/review 2026-11-21): free time that ends
+ * before the renewal catches nothing, so that club keeps its move down.
+ */
+export function moveLandsAt(currentPeriodEnd: string | null | undefined, now: Date = new Date()): string {
+  return currentPeriodEnd && Date.parse(currentPeriodEnd) > now.getTime() ? currentPeriodEnd : now.toISOString();
+}
+
 // ── Who may be given what: the decision, from facts the server has read ───────────────────────────────────────────
 
 /** The sections the console gives, in the drawn order (mirrors `CLUB_SECTIONS` in lib/platform-labels.ts). */
