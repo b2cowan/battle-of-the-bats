@@ -234,6 +234,29 @@ describe('the public plan pages, closed (as production) and open (as dev)', () =
     assert.ok((await render('app/for-tournament-organizers/page.tsx', PRODUCTION)).includes(interestButtonLabel(['league'])));
   });
 
+  it('/for-tournament-organizers: W71, each "Already running tournaments here?" line only while ITS plan is open (S4 Part 4, call 44)', async () => {
+    const LEAGUE_LINE = 'Already running tournaments here? Start League Plus from Plan & billing. Your events, teams and staff stay where they are.';
+    const CLUB_LINE = 'Already running tournaments here? Start Club from Plan & billing. Your events, teams and staff stay where they are.';
+    const states: Array<[string, Gating, boolean, boolean]> = [
+      ['production (both closed)', PRODUCTION, false, false],
+      ['League Plus only', LEAGUE_ONLY, true, false],
+      ['Club only', { ...PRODUCTION, club: false }, false, true],
+      ['both open', ALL_OPEN, true, true],
+    ];
+    for (const [name, gating, league, club] of states) {
+      // `text` puts a space where each tag was: the link's closing tag sits right before the full stop.
+      const page = (await render('app/for-tournament-organizers/page.tsx', gating)).replaceAll(' Plan & billing .', ' Plan & billing.');
+      assert.equal(page.includes(LEAGUE_LINE), league, `${name}: the League Plus line`);
+      assert.equal(page.includes(CLUB_LINE), club, `${name}: the Club line`);
+    }
+    // "Plan & billing" goes through each plan's own start door, never a second link nested inside the card's own.
+    const page = (loaderFor(ALL_OPEN)('app/for-tournament-organizers/page.tsx') as { default: () => Promise<ReactElement> }).default;
+    const html = decode(renderToStaticMarkup(await page()));
+    assert.match(html, /<a href="\/start\/league"[^>]*>Plan & billing<\/a>/);
+    assert.match(html, /<a href="\/start\/club"[^>]*>Plan & billing<\/a>/);
+    assert.ok(!/<a\b(?:(?!<\/a>)[\s\S])*<a\b/.test(html), 'no link holds another link');
+  });
+
   it('/for-coaches: no tag over Premium when it is on sale; its own tag when closed (W73)', async () => {
     const open = await render('app/for-coaches/page.tsx', PRODUCTION);
     assert.ok(!open.includes('Coming soon'));

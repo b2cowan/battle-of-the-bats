@@ -132,6 +132,8 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     supabaseAdmin.from('platform_events').select('id, event_type, source, actor_email, previous_plan_id, plan_id, occurred_at, metadata')
       .eq('org_id', orgId)
       .in('event_type', ['plan_downgraded', 'subscription_canceled', 'subscription_past_due', 'subscription_recovered',
+        // S4 Part 4 (call 45, owner 2026-11-22): a stray second subscription, for every role; its price only in the money view.
+        'second_subscription',
         // Stage 0 Part 4: disputes and refunds on the subscription's charges carry amounts, so they are money-only too.
         ...(opts.money ? ['subscription_started', ...CHARGE_STORY_EVENTS] : [])])
       .order('occurred_at', { ascending: false }).limit(SOURCE_CAP),
@@ -387,6 +389,18 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     const who = e.source === 'stripe' && e.event_type !== 'subscription_started' ? 'Stripe' : e.actor_email ?? 'The customer';
     if ((CHARGE_STORY_EVENTS as readonly string[]).includes(e.event_type)) {
       entries.push({ key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', who, why: null, ...chargeStoryEntry(e.event_type, obj(e.metadata)) });
+      continue;
+    }
+    if (e.event_type === 'second_subscription') {
+      // S4 Part 4 (call 45): told to the owner by email at the same moment; nothing cancelled or refunded it.
+      const m = obj(e.metadata);
+      const price = opts.money ? str(m?.price) : null;
+      entries.push({
+        key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', who, why: null,
+        title: `A second subscription slipped through: ${planName(e.plan_id)}`,
+        sub: [str(m?.straySubscriptionId), price, `the club stays on ${str(m?.onFileSubscriptionId) ?? 'its first subscription'}`,
+          'cancel it in Stripe, then refund its charge from Money'].filter(Boolean).join(' · '),
+      });
       continue;
     }
     if (e.event_type === 'subscription_started') {

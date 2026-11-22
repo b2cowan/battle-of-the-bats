@@ -1,0 +1,296 @@
+<title>On-Sale Pages S4 Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds (the S1, S2 and S3b walks’ shell). */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; margin: 0; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+q { quotes: "“" "”"; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul, ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.calls li { min-width: 0; }
+.call-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.call-row select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · on-sale pages · session S4 · §556</span>
+    <h1>Buying from inside the product</h1>
+    <p class="sub">All four parts of S4, built 2026-11-21 and 2026-11-22. One purpose: an organization that already runs tournaments here can buy or move to a bigger plan from its own Plan &amp; billing, and nothing it has is lost on the way.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>A free Tournament organization’s Change plan now offers every plan above it, with the true trial before it pays. A paying Tournament Plus organization moves to League Plus on the subscription it already has. A paid plan bought on top of free time no longer ends the free time: when the paid plan ends, the organization goes back to its free plan instead of closing. Part 4 adds the line under For Tournament Organizers’ League Plus and Club cards, the gap under the free-time line, and an email to you when a second subscription slips through.</p>
+    <p><strong>It passes when</strong> every step reads as written. Unit tests hold every gate state. Stripe test-mode proofs ran on throwaway organizations for the starts, the move, the fall-back and the second-subscription alert, and every test customer was deleted afterwards. <code>/review</code>, <code>/billing</code>, <code>/accounting</code>, <code>/legal</code>, <code>/marketing</code>, <code>/design</code> and <code>/docs</code> ran, and their fixes are in.</p>
+    <p><strong>Not in this walk:</strong> the onboarding window’s new sentence. Today that window opens only for a League Plus organization, which by your ruling reads today’s words unchanged; tests hold the other cases. Making a real second subscription (two tabs paying in the same seconds) is also left out: the proof made one twice, and part G checks the emails it sent you.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <ul>
+      <li><strong>Commit Part 4, then push <code>dev</code> so staging rebuilds.</strong> Stripe’s test events go to staging, which writes the same dev database. Until staging carries S4, it runs the old rule, and buying Club on the free-time club in part D would end the free time.</li>
+      <li>Restart the dev server (Part 4 adds files).</li>
+      <li>Platform admin on dev asks for two-step: have the authenticator for <code>uat-platform@fieldlogichq.ca</code> ready, or switch staff two-step off on dev for the walk.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Where and as whom</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, the dev server.</dd>
+      <dt>Free Tournament owner</dt><dd><code>free-owner@dev.local</code> · <code>devpass123</code> (Free Test Org, <code>free-test-org</code>)</dd>
+      <dt>Paying Tournament Plus owner</dt><dd><code>uat-owner@uat-test-org.local</code> · <code>UATPassword2026!</code> (UAT Test Org, <code>uat-test-org</code>; this person also owns <code>uat-plus-org</code>, so use the addresses as written)</dd>
+      <dt>Free-time owner</dt><dd><code>owner@dev.local</code> · <code>devpass123</code> (Dev Tournament+ Org, <code>dev-tplus-org</code>, Tournament Plus free through September 30, 2027)</dd>
+      <dt>Premium coach</dt><dd><code>uat-paying-coach@uat-free-coach.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code></dd>
+      <dt>Visitor</dt><dd>A private window, signed out.</dd>
+      <dt>Test card</dt><dd><code>4242 4242 4242 4242</code>, any future date, any CVC.</dd>
+      <dt>Phone width</dt><dd>Narrow the window below 600px, or use the browser’s phone view, where a step says so.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Your calls (not in the count)</h2>
+    <p class="sub">Each has a recommendation. Pick one; it is copied with the summary.</p>
+    <ol class="calls" id="calls"></ol>
+  </section>
+
+  <section class="card">
+    <h2>Owner steps (not in the count)</h2>
+    <ul>
+      <li>After the walk, tell me, and I put Dev Tournament+ Org back to clean free time: its test Club subscription cancelled, its free Tournament Plus through September 30, 2027 as before.</li>
+      <li>Production, counts only (Part 3): how many free-time organizations are stored <code>canceled</code>.</li>
+      <li>S2’s migration 508 reaches production before the promote (already a promote condition). Part 4 adds no production step.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var KEY = 'club-on-sale-s4-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'Set up',
+      steps: [
+        { who: 'Platform admin', do: 'Open <code>/platform-admin/dev-tools</code> and, under Plan gates, press <q>Dev’s rows</q>.', see: 'League Plus, Club and Club · Association read open.' },
+        { who: 'Free Tournament owner', do: 'Sign in and open <code>/free-test-org/admin/tournaments/settings/subscription</code>. If the Terms window shows, tick it and accept.', see: 'Plan &amp; billing for Free Test Org.' }
+      ] },
+    { id: 'B', title: 'A free Tournament organization starts a plan (Part 1)',
+      steps: [
+        { who: 'Free Tournament owner', do: 'Read the Change plan table.', see: 'Tournament with <q>Your plan</q>, then Tournament Plus, League Plus, Club and Club · Association, each with <q>Upgrade to {plan}</q>. Holds reads <q>Up to 15</q> and <q>Up to 30</q> on the Club rows.' },
+        { who: 'Free Tournament owner', do: 'Read the line under the table.', see: '<q>Club and Club · Association count the teams you give a Premium Coaches Portal. House league teams are unlimited. More than 30? Contact us for a custom plan.</q>' },
+        { who: 'Free Tournament owner', do: 'Scroll to <q>Managing more than tournaments?</q>', see: 'One card: Premium Coaches Portal, from $29 CAD / month plus applicable taxes.' },
+        { who: 'Free Tournament owner', do: 'Press <q>Upgrade to Club</q>.', see: '<q>How would you like to pay for Club?</q> on Monthly, $219 CAD / month, and a trial line: <q>90-day trial — …</q>, or <q>You’ve had a subscription before, so there’s no second trial…</q> if this organization has paid before.' },
+        { who: 'Free Tournament owner', do: 'Press <q>Continue to checkout</q>.', see: 'Stripe’s test checkout page for Club.' },
+        { who: 'Free Tournament owner', do: 'Leave Stripe’s page with its back arrow, without paying.', see: 'Plan &amp; billing again, still on Tournament, with the same rows. Nothing was charged.' }
+      ] },
+    { id: 'C', title: 'A paying Tournament Plus organization moves (Part 2)',
+      steps: [
+        { who: 'Paying Tournament Plus owner', do: 'Sign in and open <code>/uat-test-org/admin/tournaments/settings/subscription</code>.', see: 'Change plan has <q>Move to League Plus</q> between Tournament Plus and Club.' },
+        { who: 'Paying Tournament Plus owner', do: 'Press <q>Move to League Plus</q>.', see: '<q>Move to League Plus?</q> and <q>UAT Test Org moves to League Plus today. Your events, teams and staff stay where they are.</q>' },
+        { who: 'Paying Tournament Plus owner', do: 'Read the hint.', see: 'It ends <q>The prorated amount and its tax come from Stripe before you confirm. No second trial.</q>' },
+        { who: 'Paying Tournament Plus owner', do: 'Read the figures.', see: '<q>Credit for unused Tournament Plus time</q> as a minus, <q>League Plus for the rest of this period</q>, a tax line, <q>Due today</q>, and <q>From {date}</q> $89.00 CAD / month.' },
+        { who: 'Paying Tournament Plus owner', do: 'Close the window without moving.', see: 'Still Tournament Plus. Nothing was charged.' }
+      ] },
+    { id: 'D', title: 'A free-time club buys Club, cancels, and goes back to its free plan (Parts 1 and 3)',
+      steps: [
+        { who: 'Free-time owner', do: 'Sign in and open <code>/dev-tplus-org/admin/tournaments/settings/subscription</code>.', see: 'The band <q>Tournament Plus is free through September 30, 2027.</q> and under it <q>No billing action needed: your free time runs through September 30, 2027.</q>' },
+        { who: 'Free-time owner', do: 'Look between that line and <q>Change plan</q>.', see: 'A clear gap; the line no longer sits on the heading.' },
+        { who: 'Free-time owner', do: 'Read the Change plan table and the line under it.', see: 'Your row reads <q>Free through Sep 30, 2027</q>; only League Plus, Club and Club · Association are offered; under it <q>Starting a plan doesn’t end your free time. If the plan ends while your free time runs, Dev Tournament+ Org goes back to free Tournament Plus through September 30, 2027.</q>' },
+        { who: 'Free-time owner', do: 'Narrow to phone width and scroll down to that line.', see: 'It reads whole under the plan rows, nothing cut off.' },
+        { who: 'Free-time owner', do: 'Back at full width, press <q>Upgrade to Club</q>.', see: 'The payment window says there is no second trial (this club paid before), and the full charge is due today.' },
+        { who: 'Free-time owner', do: 'Press <q>Continue to checkout</q> and pay with the test card.', see: 'Back on Plan &amp; billing: <q>Setting up Club</q> and <q>We’re setting up Club for Dev Tournament+ Org. Your events, teams and staff stay where they are. Please don’t start another payment.</q>' },
+        { who: 'Free-time owner', do: 'Wait without pressing anything.', see: 'The page becomes Club’s Plan &amp; billing.' },
+        { who: 'Platform admin', do: 'Open Dev Tournament+ Org’s record and its Access tab.', see: 'Free time is still there, Tournament Plus through Sep 30, 2027. Buying Club did not end it.' },
+        { who: 'Free-time owner', do: 'On Plan &amp; billing, read the cancel section.', see: '<q>Cancelling ends Dev Tournament+ Org’s plan on {date}, the end of the period you paid for. Then Dev Tournament+ Org goes back to free Tournament Plus through September 30, 2027.</q>' },
+        { who: 'Free-time owner', do: 'Press <q>Cancel Club…</q>', see: 'The window lists what stops under <q>What stops on {date}</q>, then <q>Dev Tournament+ Org goes back to free Tournament Plus through September 30, 2027.</q>' },
+        { who: 'Free-time owner', do: 'Press <q>Cancel on {date}</q>.', see: 'The window closes; the page says Club ends on that date and you can keep it until then.' },
+        { who: 'Platform admin', do: 'Reload the club’s record. In the amber <q>Ending.</q> callout, press <q>End now…</q>', see: '<q>End the plan for Dev Tournament+ Org today</q>, and <q>Its free time is still running, so it goes back to free Tournament Plus through Sep 30, 2027 instead: nothing is suspended or archived, and its site stays as it is. To close it, end its free time first.</q>' },
+        { who: 'Platform admin', do: 'Type a reason in <q>Why</q> and press <q>End the plan now</q>.', see: 'The window closes; the record reads Tournament Plus, free through Sep 30, 2027.' },
+        { who: 'Platform admin', do: 'Open the Story tab.', see: 'At the top: Club ended, back on free Tournament Plus.' },
+        { who: 'Free-time owner', do: 'Reload Plan &amp; billing.', see: 'The free-time band again, Tournament Plus free through September 30, 2027. No suspension, no “Reactivate”.' },
+        { who: 'Free-time owner', do: 'Open the tournaments list.', see: 'Dev Tournament 2026 is still there, not archived.' }
+      ] },
+    { id: 'E', title: 'For Tournament Organizers: the line (Part 4)',
+      steps: [
+        { who: 'Visitor', do: 'Open <code>/for-tournament-organizers</code> and scroll to <q>More from FieldLogicHQ</q>.', see: 'The League Plus card ends <q>Already running tournaments here? Start League Plus from Plan &amp; billing. Your events, teams and staff stay where they are.</q>; the Club card says the same with Club. The Coaches Portal card has no such line.' },
+        { who: 'Visitor', do: 'Press <q>Plan &amp; billing</q> on the League Plus card.', see: 'The League Plus start page, with <q>Already have an account? Sign in</q>.' },
+        { who: 'Visitor', do: 'Go back and press the plain words of that line (not the link).', see: 'The League Plus page opens, as a press anywhere else on the card does.' },
+        { who: 'Visitor', do: 'Narrow to phone width and read the two lines.', see: 'Each wraps under its card’s link; <q>Plan &amp; billing</q> never splits across two lines.' },
+        { who: 'Free Tournament owner', do: 'Signed in, open <code>/for-tournament-organizers</code> and press <q>Plan &amp; billing</q> on the Club card.', see: 'Free Test Org’s own Plan &amp; billing, not a sign-up form.' },
+        { who: 'Platform admin', do: 'In Dev tools, Plan gates, press <q>Show as closed</q>.', see: 'League Plus, Club and Club · Association read closed.' },
+        { who: 'Visitor', do: 'Reload <code>/for-tournament-organizers</code>.', see: 'Neither line; the League Plus card offers to express interest, as before S4.' },
+        { who: 'Platform admin', do: 'Press <q>Dev’s rows</q>.', see: 'The plans read open again.' }
+      ] },
+    { id: 'F', title: 'A Premium coach is unchanged',
+      steps: [
+        { who: 'Premium coach', do: 'Sign in and open the portal’s Plan &amp; billing.', see: 'The Premium plan card and its own choices as before S4. No organization plan rows and no free-time line.' }
+      ] },
+    { id: 'G', title: 'The second-subscription email (Part 4)',
+      steps: [
+        { who: 'You', do: 'In fieldlogichq@gmail.com, search for <q>A second subscription slipped through</q>.', see: 'Two emails from 22 Nov, one per test-mode proof run, each naming <q>S4P4 Probe A</q>, both subscriptions, the plan (Club), what it charges and what was paid, the two steps, and links to the club’s record and to Stripe. One email per run, no repeats.' }
+      ] }
+  ];
+
+  var CALLS = [
+    { id: 'C1', q: '/design: on For Tournament Organizers, the League Plus and Club cards now end on the new line, so their “See what … includes” links sit about two lines higher than the Coaches Portal card’s. This follows the drawing. Line them up?', options: ['Keep as drawn (Recommended)', 'Line up the three links'] },
+    { id: 'C2', q: '/billing: while a stray second subscription is still active, a club owner who presses to start a plan sees “Setting up”, then “This is taking longer than usual … Check again in a minute.” with a Contact us button. It does not say staff already know. Change the words for that case?', options: ['Keep (Recommended: rare, the Contact us button is there, and staff are emailed)', 'Add a sentence for this case (a /marketing pass)'] },
+    { id: 'C3', q: '/legal: a double-charged club hears nothing from us until staff act, and a silent double charge is how bank disputes start. Set a working target?', options: ['Cancel and refund within one business day of the alert, and a short personal email to the club when it is done (Recommended)', 'Within one business day, no email', 'No target'] },
+    { id: 'C4', q: '/billing: two first payments whose Stripe messages land in the same instant can both find no plan on file, and the second one wins without an alert until the stray one’s next message (often its first renewal). Build a guard now?', options: ['Record it for /plan, not now (Recommended: milliseconds wide, and a second press is already refused)', 'Build the guard in S4'] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var li = el('li');
+    li.appendChild(el('span', null, '<strong>' + c.id + '</strong> · ' + c.q));
+    var row = el('div', 'call-row');
+    var sel = document.createElement('select'); sel.id = 'call-' + c.id;
+    sel.appendChild(new Option('Choose…', ''));
+    c.options.forEach(function (o) { sel.appendChild(new Option(o, o)); });
+    sel.value = state.calls[c.id] || '';
+    sel.addEventListener('change', function () { state.calls[c.id] = sel.value; save(); });
+    row.appendChild(sel); li.appendChild(row); callHost.appendChild(li);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['On-sale pages S4 walk §556: buying from inside the product (2026-11-22)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      var open = mine.filter(function (b) { return !b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (open.length ? ' (not ticked: ' + open.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    lines.push('Calls:');
+    CALLS.forEach(function (c) { lines.push('  ' + c.id + ': ' + (state.calls[c.id] || 'not chosen')); });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('call-' + c.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

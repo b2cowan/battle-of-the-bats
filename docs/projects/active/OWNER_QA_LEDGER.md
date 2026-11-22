@@ -28676,3 +28676,13 @@ performed over the shared working tree. The original walk result is not claimed 
 **Not walked (tests hold it):** the guardian accept page (needs the guardian tier and a real invitation email; same seam).
 **Status:** ⏳ owed.
 <!-- /§555 -->
+
+## §556 · On-sale pages · S4, buying from inside the product (Parts 1–4, the one walk) — **Parts 1–3 committed (`28df8d79b`, `dba4cd104`, `e1ba46287`); Part 4 committed 2026-11-22; owed the owner's walk**
+<!-- §556 -->
+**Walk (checkable):** https://claude.ai/artifact/CsE6aQt8kngPhaVDXHSe2G (source `docs/projects/active/CLUB_ON_SALE_S4_WALK.html`); parts A to G, 39 steps, four owner calls C1 to C4 (not in the counter). Plan `CLUB_ON_SALE_PAGES_PLAN.md` S4.
+**Before it:** commit Part 4 and push `dev` so staging carries S4 (Stripe's test events run on staging against the dev database; on older code, buying Club on the free-time club would end its free time). Restart the dev server. Platform admin needs its authenticator on dev (or staff two-step off for the walk).
+**Sign-in:** free Tournament owner `free-owner@dev.local` · `devpass123` (`free-test-org`, tick the Terms first); paying Tournament Plus owner `uat-owner@uat-test-org.local` · `UATPassword2026!` (`uat-test-org`); free-time owner `owner@dev.local` · `devpass123` (`dev-tplus-org`); Premium coach `uat-paying-coach@uat-free-coach.local` · `UATPassword2026!`; platform admin `uat-platform@fieldlogichq.ca` · `UATPassword2026!`; test card 4242 4242 4242 4242.
+**Reviews (before hand-off):** Part 4 `/review` high-risk, `/billing`, `/accounting`, `/legal`, `/marketing`, `/design`, `/docs` (Parts 1–3 reviewed in their own sessions). No Critical or High; fixes applied (see the plan's Part 4 entry).
+**Not walked (tests and proofs hold it):** the onboarding window's sentence (opens only for a League Plus organization, which reads today's words by the owner's re-ruling 2026-11-22); a real second subscription (proved twice in test mode; step G1 checks the inbox).
+**After the walk:** restore `dev-tplus-org` to clean free time (its test Club subscription cancelled).
+<!-- /§556 -->

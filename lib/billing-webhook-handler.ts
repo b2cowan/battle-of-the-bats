@@ -51,6 +51,7 @@ import type { BillingEventOutcome } from '@/lib/stripe-billing-events';
 import { customerSenders, type RunOptions } from '@/lib/billing-event-customer-messages';
 import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
 import { sendPurchaseEmailOrReport } from '@/lib/purchase-details-server';
+import { tellOwnerOfStraySubscription, type StraySubscriptionDeps } from '@/lib/stray-subscription-alert';
 
 /** The events that mean an invoice is paid (test mode 2026-11-13: a trial's $0 first invoice fires both, like any other). */
 const PURCHASE_EMAIL_EVENTS = ['invoice.paid', 'invoice.payment_succeeded'] as const;
@@ -146,6 +147,42 @@ async function alertOwner(kind: 'subscription_charge_alert' | 'unrecognised_pric
   const result = await sendEmail(ADMIN_EMAIL, subject, html, { kind, idempotencyKey })
     .catch(error => { console.error('[billing webhook] the owner alert could not be sent:', error); return null; });
   if (result && result.status === 'provider_error') console.error('[billing webhook] the owner alert was refused:', subject);
+}
+
+/**
+ * S4 Part 4 (call 45): what the stray-subscription alert reads and writes. Unlike `alertOwner` a failed send is FAILED, not
+ * logged and dropped: the alert throws and Stripe sends the event again (lib/stray-subscription-alert.ts).
+ */
+function straySubscriptionDeps(): StraySubscriptionDeps {
+  return {
+    async alreadyTold(key) {
+      const { data, error } = await supabaseAdmin.from('platform_events').select('id')
+        .eq('source', 'stripe').eq('source_event_id', key).maybeSingle();
+      if (error) throw new Error(`Couldn't read whether the stray subscription was told: ${error.message}`);
+      return !!data;
+    },
+    async current(sub) {
+      try {
+        return await stripe.subscriptions.retrieve(sub.id);
+      } catch (error) {
+        if ((error as { code?: string })?.code === 'resource_missing') return null;
+        throw error;
+      }
+    },
+    async latestInvoice(sub) {
+      const id = stripeId(sub.latest_invoice ?? null);
+      if (!id) return null;
+      const inv = await stripe.invoices.retrieve(id);
+      return { number: inv.number ?? null, amountPaidCents: inv.amount_paid ?? 0, totalCents: inv.total ?? 0, currency: inv.currency, status: inv.status ?? null };
+    },
+    async send({ subject, html, key }) {
+      const result = await sendEmail(ADMIN_EMAIL, subject, html, { kind: 'second_subscription_alert', idempotencyKey: key });
+      return result.status === 'provider_error' || result.status === 'no_answer' ? 'failed' : result.status === 'skipped' ? 'skipped' : 'sent';
+    },
+    record: writePlatformEvent,
+    live: () => stripeKeyIsLive(),
+    siteUrl: SITE_URL,
+  };
 }
 
 /**
@@ -517,7 +554,7 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
         const currentPeriodEnd = toIso(sub.items?.data?.[0]?.current_period_end);
         const { data: currentOrg } = await supabaseAdmin
           .from('organizations')
-          .select('id, plan_id, subscription_status, stripe_subscription_id')
+          .select('id, name, plan_id, subscription_status, stripe_subscription_id')
           .eq('stripe_customer_id', customerId)
           .maybeSingle();
 
@@ -531,12 +568,21 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
         // a "canceled" one is always followed by its deletion, which speaks for it. An `incomplete_expired` one on file
         // still writes its status (its first payment never landed, and no deletion follows to say so).
         if (sub.status === 'canceled' || (isEndedSubscriptionStatus(sub.status) && onFileId !== sub.id)) {
-          console.warn(`[billing webhook] ignored ${event.id}: ${sub.id} has ended and is not the subscription on file`);
+          // Not a stray second subscription (a late message about an ended one): no owner alert.
+          console.warn(`[billing webhook] ignored ${event.id}: ${sub.id} has ended (${sub.status}${onFileId === sub.id ? ', the subscription on file; its deletion clears the record' : ', not the subscription on file'})`);
           break;
         }
         if (onFileId && onFileId !== sub.id && !onFileId.startsWith('mock_')
           && !recordFollowsSubscription({ onFileId, incomingId: sub.id, onFileIsPaying: await subscriptionIsPaying(onFileId, currentOrg?.subscription_status ?? null, id => stripe.subscriptions.retrieve(id)) })) {
           console.warn(`[billing webhook] ignored ${sub.id}: ${currentOrg?.id} already follows live subscription ${onFileId}`);
+          // S4 Part 4 (call 45): the owner hears of it once, and refunds it by hand. Throws only when the alarm could not go,
+          // so Stripe sends the event again; the record is not touched either way.
+          if (currentOrg) {
+            await tellOwnerOfStraySubscription(
+              { sub, org: { id: currentOrg.id, name: currentOrg.name ?? 'A club' }, onFileId, planId: planKey, customerId },
+              straySubscriptionDeps(),
+            );
+          }
           break;
         }
 

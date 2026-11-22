@@ -16,6 +16,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { moreThanTournamentsSentence } from '@/lib/plan-cross-sell-words';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import type { OrgPlan } from '@/lib/types';
@@ -996,6 +997,7 @@ function OnboardingPageLegacy() {
     const disabledPlans: OrgPlan[] = !isFirstRunPlanEditable()
       ? PLAN_ORDER.filter(k => PLAN_ORDER.indexOf(k) < PLAN_ORDER.indexOf(activePlanId))
       : [];
+    const moreThanTournaments = gatingMap ? moreThanTournamentsSentence(gatingMap, activePlanId) : null;
 
     return (
       <div className={styles.planModal} role="dialog" aria-modal="true" aria-labelledby="onboarding-plan-title">
@@ -1004,6 +1006,9 @@ function OnboardingPageLegacy() {
             <h2 id="onboarding-plan-title" className={styles.modalTitle}>Start free or choose an upgrade</h2>
             <p className={styles.modalSub}>
               Start free with an invite-only event, where you add the teams, or choose Tournament Plus for public registration, payment tracking, automation, branding, and repeat-event tools.
+              {/* On-sale pages S4 Part 4 (call 43, re-ruled 2026-11-22): only open plans this organization can reach; nothing
+                  while none is, or the gate is unread. */}
+              {moreThanTournaments ? ` ${moreThanTournaments}` : null}
             </p>
           </div>
           <button

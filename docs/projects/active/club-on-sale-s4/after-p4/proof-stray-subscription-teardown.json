@@ -1,0 +1,74 @@
+{
+  "deleted": {
+    "cust cus_VfwQBarbapKFYj": true,
+    "clock clock_1UeaXCFuSuNtbvsQyPJbxbyK": true,
+    "stripe_billing_events.customer_id": 25,
+    "platform_charge_tax_records.stripe_customer_id": 2,
+    "platform_credit_note_tax_records.stripe_customer_id": 0,
+    "platform_refunds.stripe_customer_id": 0,
+    "stripe_billing_events probe ids": 0,
+    "platform_events.org_id": 2,
+    "platform_audit_log.org_id": 0,
+    "platform_account_emails.org_id": 0,
+    "platform_refunds.org_id": 0,
+    "error_events.org_id": 0,
+    "email_sends.recipient_org_id": 0,
+    "billing_retained_records.org_id": 0,
+    "billing_retention_intents.org_id": 0,
+    "org_overrides.org_id": 0,
+    "tournaments.org_id": 2,
+    "organizations": 1
+  },
+  "proof": {
+    "clocks": {
+      "clock_1UeaXCFuSuNtbvsQyPJbxbyK": "gone resource_missing"
+    },
+    "customers": {
+      "cus_VfwQBarbapKFYj": {
+        "deleted": true,
+        "subscriptions": [
+          "sub_1UeaXcFuSuNtbvsQ6mtscwQc:canceled",
+          "sub_1UeaXDFuSuNtbvsQih1K1ou5:canceled"
+        ],
+        "invoices": [
+          "in_1UeaXDFuSuNtbvsQcFNZ3n63:paid",
+          "in_1UeaXcFuSuNtbvsQcuoxiEro:paid"
+        ]
+      }
+    },
+    "subsRetrieved": {
+      "sub_1UeaXDFuSuNtbvsQih1K1ou5": "canceled",
+      "sub_1UeaXcFuSuNtbvsQ6mtscwQc": "canceled"
+    },
+    "db": {
+      "orgsWithProbeSlug": 0,
+      "orgsById": 0,
+      "tournamentsByOrg": 0,
+      "tournamentsById": 0,
+      "overridesByOrg": 0,
+      "overridesById": 0,
+      "platformEventsByOrg": 0,
+      "intentsByOrg": 0,
+      "retainedByOrg": 0,
+      "billingEventsByCustomer": 0,
+      "billingEventsProbeIds": 0,
+      "taxRecordsByCustomer": 0,
+      "auditByOrg": 0
+    }
+  },
+  "ids": {
+    "orgs": [
+      "34798010-cebe-44d8-9822-abf47a9720b7"
+    ],
+    "customers": [
+      "cus_VfwQBarbapKFYj"
+    ],
+    "clocks": [
+      "clock_1UeaXCFuSuNtbvsQyPJbxbyK"
+    ],
+    "subs": [
+      "sub_1UeaXDFuSuNtbvsQih1K1ou5",
+      "sub_1UeaXcFuSuNtbvsQ6mtscwQc"
+    ]
+  }
+}

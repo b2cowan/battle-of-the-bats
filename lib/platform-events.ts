@@ -22,6 +22,9 @@ export type PlatformEventType =
   // GST/HST Stage 2 Part 6b Part 3: the club's name could not be put back on its Stripe customer after Checkout (keyed on the
   // session). Nothing later repairs it, so it is told; nothing acts on it.
   | 'buyer_name_not_restored'
+  // On-sale pages S4 Part 4 (call 45): a second paying subscription on a customer whose record follows another (keyed on the
+  // stray subscription, once). Told to the owner and shown on the club's Story; nothing cancels or refunds it.
+  | 'second_subscription'
   | 'tournament_plus_upgrade_gate_viewed'
   | 'tournament_plus_upgrade_gate_clicked'
   | 'tournament_plus_acquisition_cta_viewed'

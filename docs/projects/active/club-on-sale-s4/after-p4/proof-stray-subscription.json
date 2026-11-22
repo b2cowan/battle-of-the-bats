@@ -1,0 +1,126 @@
+{
+  "stray-subscription": {
+    "at": "2026-11-22T13:10:21.953Z",
+    "checks": [
+      {
+        "label": "the record follows the first subscription, on Tournament Plus",
+        "pass": true,
+        "observed": {
+          "plan": "tournament_plus",
+          "sub": "sub_1UeaXDFuSuNtbvsQih1K1ou5",
+          "status": "active"
+        }
+      },
+      {
+        "label": "the record keeps the first subscription",
+        "pass": true,
+        "observed": {
+          "plan": "tournament_plus",
+          "sub": "sub_1UeaXDFuSuNtbvsQih1K1ou5"
+        }
+      },
+      {
+        "label": "ONE second_subscription event, naming both subscriptions and the plan",
+        "pass": true,
+        "observed": [
+          {
+            "id": "c7201de8-cfdc-46a8-aa12-ccd8307bcd91",
+            "event_type": "second_subscription",
+            "source_event_id": "sub_1UeaXcFuSuNtbvsQ6mtscwQc:second_subscription",
+            "plan_id": "club",
+            "metadata": {
+              "price": "$219.00 a month before tax",
+              "currency": "cad",
+              "amountPaidCents": 21900,
+              "stripeCustomerId": "cus_VfwQBarbapKFYj",
+              "straySubscriptionId": "sub_1UeaXcFuSuNtbvsQ6mtscwQc",
+              "onFileSubscriptionId": "sub_1UeaXDFuSuNtbvsQih1K1ou5"
+            }
+          }
+        ]
+      },
+      {
+        "label": "still ONE second_subscription event after three replays",
+        "pass": true,
+        "observed": 1
+      },
+      {
+        "label": "ONE alert email to the admin inbox",
+        "pass": false,
+        "observed": {
+          "error": 401
+        }
+      },
+      {
+        "label": "while the stray pays, the landing rule holds \"Setting up\"",
+        "pass": true,
+        "observed": "sub_1UeaXcFuSuNtbvsQ6mtscwQc"
+      },
+      {
+        "label": "after the stray is cancelled the record is untouched (first subscription, Tournament Plus, active)",
+        "pass": true,
+        "observed": {
+          "plan": "tournament_plus",
+          "sub": "sub_1UeaXDFuSuNtbvsQih1K1ou5",
+          "status": "active"
+        }
+      },
+      {
+        "label": "the landing rule clears once the stray is cancelled",
+        "pass": true,
+        "observed": null
+      },
+      {
+        "label": "still ONE second_subscription event",
+        "pass": true,
+        "observed": 1
+      },
+      {
+        "label": "the refund went through",
+        "pass": true,
+        "observed": "succeeded"
+      }
+    ],
+    "notes": {
+      "org": {
+        "id": "34798010-cebe-44d8-9822-abf47a9720b7",
+        "slug": "s4p4-probe-a-1795353021953",
+        "name": "S4P4 Probe A",
+        "customer": "cus_VfwQBarbapKFYj"
+      },
+      "deliverA": [
+        "invoice.created:200",
+        "invoice.finalized:200",
+        "invoice.paid:200",
+        "invoice.payment_succeeded:200",
+        "customer.subscription.created:200"
+      ],
+      "stray": {
+        "id": "sub_1UeaXcFuSuNtbvsQ6mtscwQc",
+        "status": "active"
+      },
+      "deliverB": [
+        "invoice.created:200",
+        "invoice.finalized:200",
+        "invoice.paid:200",
+        "invoice.payment_succeeded:200",
+        "customer.subscription.created:200"
+      ],
+      "replays": [
+        "same clone id:200",
+        "new id, created:200",
+        "new id, updated:200"
+      ],
+      "fix": {
+        "invoice": "in_1UeaXcFuSuNtbvsQcuoxiEro",
+        "amountPaid": 21900,
+        "refund": "re_3UeaXcFuSuNtbvsQ0xPVivpP",
+        "refundStatus": "succeeded",
+        "amount": 21900
+      },
+      "deliverFix": [
+        "customer.subscription.deleted:200"
+      ]
+    }
+  }
+}

@@ -182,3 +182,50 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* W71 (On-sale pages S4 Part 4): a card that closes on "Already running tournaments here? … Plan & billing …". A link cannot
+   hold a link, so the card is a box: its own press is a link whose ::after is stretched over the whole card, and the line
+   sits above that layer with "Plan & billing" as a second link. The look is the linked card's. */
+.crossCardBox { position: relative; cursor: default; }
+.crossCardPress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+.crossCardPress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--home-radius);
+}
+.crossCardPress:focus-visible { outline: none; }
+.crossCardPress:focus-visible::after {
+  outline: 3px solid var(--home-olive);
+  outline-offset: 2px;
+}
+/* The sentence lets a tap through to the card's own press; only "Plan & billing" takes it (/design 2026-11-22). */
+.crossAlready {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  margin: 0.375rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--home-dim);
+}
+/* A link inside a sentence still clears the 44px tap floor: the padding grows the press, the equal negative margin keeps
+   the line where it was. It never wraps (a two-line press would be two short ones). */
+.crossAlreadyLink {
+  display: inline-block;
+  padding-block: 14px;
+  margin-block: -14px;
+  white-space: nowrap;
+  pointer-events: auto;
+  color: var(--home-olive);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

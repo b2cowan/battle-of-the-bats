@@ -481,7 +481,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     </CoachCard>
     {pendingMove && <MoveBand move={pendingMove.move} movesAt={pendingMove.endsAt} retentionDays={preflight?.retentionDays ?? ownProfile.retentionDays} onChange={a.changePick} disabled={disabled} />}
     {band && <FreeTimeBand band={band} action={endingContact ? { label: W.change.contact, href: CONTACT_HREF } : undefined} />}
-    {freeCopy?.billingCard && <p className={styles.hint}>{freeCopy.billingCard}{endingContact && <> <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a></>}</p>}
+    {freeCopy?.billingCard && <p className={`${styles.hint} ${styles.freeTimeHint}`}>{freeCopy.billingCard}{endingContact && <> <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a></>}</p>}
     {portalCopy?.billingCard && <p className={styles.hint}>{portalCopy.billingCard}</p>}
     {keepPremium}
     {(showChanges && changes.length > 0 || showJoinClub) && <Section id="billing-change" title={W.page.sections.change}>

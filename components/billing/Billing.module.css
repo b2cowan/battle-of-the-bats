@@ -212,6 +212,8 @@
 .textarea { min-height: 5rem; resize: vertical; }
 
 .hint { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+/* On-sale pages S4 Part 4 (drawing tab 6, note 3): the free-time line under the band gets the section gap before Change plan. */
+.freeTimeHint { margin-bottom: 1.75rem; }
 
 .body { min-width: 0; }
 .details { display: block; margin-top: 0.25rem; text-align: left; }

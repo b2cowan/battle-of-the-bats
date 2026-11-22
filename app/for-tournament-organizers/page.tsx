@@ -14,6 +14,7 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
+import { alreadyRunningTournamentsLine, type AlreadyRunningPlan } from '@/lib/plan-cross-sell-words';
 
 export const metadata = marketingMetadata({
   title: 'For tournament organizers',
@@ -55,6 +56,8 @@ const CROSS_SELLS: Array<{
   alwaysHref?: string;
   initialPlanInterest: string[];
   initialFeaturesInterested: string[];
+  /** W71 (S4 Part 4): the plan whose "Already running tournaments here?" line closes the card while that plan is open. */
+  alreadyRunning?: AlreadyRunningPlan;
 }> = [
   {
     label: 'League Plus',
@@ -67,6 +70,7 @@ const CROSS_SELLS: Array<{
     livePlan: 'league',
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
+    alreadyRunning: 'league',
   },
   {
     label: 'Club',
@@ -79,6 +83,7 @@ const CROSS_SELLS: Array<{
     alwaysHref: '/for-clubs',
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
+    alreadyRunning: 'club',
   },
   {
     label: 'Coaches Portal',
@@ -301,6 +306,20 @@ export default async function ForTournamentOrganizersPage() {
                   <span className={fp.crossCta}>{(isLive ? cs.liveCta : undefined) ?? cs.cta}</span>
                 </>
               );
+              // W71 (S4 Part 4, call 44): the card's last line, only while ITS plan is open and the move onto it exists. The
+              // whole card is a link, and a link cannot hold one, so a card with the line is a box: its own press is a link
+              // stretched over the card, and "Plan & billing" sits above that layer as a second link.
+              const already = cs.alreadyRunning ? alreadyRunningTournamentsLine(cs.alreadyRunning, gatingMap) : null;
+              if (linkHref && already) {
+                return (
+                  <div key={cs.label} className={`${kit.card} ${fp.crossCard} ${fp.crossCardBox}`}>
+                    <Link href={linkHref} className={fp.crossCardPress}>{content}</Link>
+                    <p className={fp.crossAlready}>
+                      {already.before}<Link href={already.href} className={fp.crossAlreadyLink}>{already.link}</Link>{already.after}
+                    </p>
+                  </div>
+                );
+              }
               if (linkHref) {
                 return (
                   <Link key={cs.label} href={linkHref} className={`${kit.card} ${fp.crossCard}`}>

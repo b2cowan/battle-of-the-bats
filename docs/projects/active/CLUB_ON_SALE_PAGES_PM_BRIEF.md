@@ -79,7 +79,23 @@ Five sessions, ordered by dependency and rework risk:
 4. **S3b:** the selling sections (the pictures, the board section, the board's questions, the rebalanced Clubs page, the
    paths between audiences). **It does not hold the flip**: your 17 Nov ruling puts marketing after the launch, so it can
    ship before the flip or after it.
-5. **S4:** buying from inside the product. It gets its own drawings first.
+5. **S4:** buying from inside the product. It gets its own drawings first. **Drawn 21 Nov**
+   (https://claude.ai/artifact/5axLqJjfLTuT42Hm589H2y). What changes for a customer: a free Tournament organization can
+   start League Plus, Club or Club · Association from Plan & billing (three more rows in the table it already has, each
+   only while its plan is on sale, "Coming soon" otherwise); a paying Tournament Plus organization can move to League
+   Plus (proved impossible today); a free-time organization can start the plans above its gift; every start offers
+   monthly or yearly and says its true trial; coming back from Stripe waits until the plan has really changed; someone
+   who left Stripe halfway finds their start waiting. **Why it matters:** at the flip the public pages send every
+   signed-in owner to their Plan & billing, so without S4 our existing customers meet a dead end; it is recommended as a
+   launch item (call 42). **Success:** each start and move proved with a Stripe test purchase; nobody can pay twice for
+   one start; a closed plan never shows a start. **Calls 35–46 ruled 21 Nov, all as recommended**: a free-time
+   organization that stops a paid plan falls back to its free plan while its free time runs (call 40 A), and S4 is a
+   launch item (call 42). **Built in four parts:** Parts 1–3 committed 21–22 Nov (the starts and the wait; the move to
+   League Plus; free time falls back); Part 4 committed 22 Nov: if two tabs pay at once and a second
+   subscription slips through, you get one email naming the club, both subscriptions and the charge, and staff cancel
+   and refund it by hand; For Tournament Organizers' League Plus and Club cards end "Already running tournaments here?
+   Start {plan} from Plan & billing." while that plan is on sale; the onboarding window names only plans an
+   organization can reach (your re-ruling 22 Nov). Next: push dev so staging carries S4, then the one walk, §556.
 
 Each session ships with the plans still closed. The flip itself is the runbook's job.
 
