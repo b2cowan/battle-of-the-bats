@@ -44,6 +44,56 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-11-22',
+    title: "Terms of Service and Privacy Policy, a game-order check and printable rules for tournaments, and clearer plan-ending words on Plan & billing",
+    highlights: [
+      {
+        category: 'new',
+        text: "Our Terms of Service and Privacy Policy are now published on the website and linked from the website footer and the sign-up page. You agree with a tick when you sign up, and people with existing accounts are asked once before they carry on.",
+      },
+      {
+        category: 'improved',
+        text: "A game can no longer be saved to start before a game it waits for has ended. A Final cannot come before its Semifinals, and a playoff game cannot come before pool play ends. When a save is refused, it says which game to move first. Games already out of order are marked \"Out of order\" on the schedule and listed in Schedule health.",
+      },
+      {
+        category: 'new',
+        text: "The public Rules page has a Download rules button that gives a printable PDF with numbered sections and a QR code. It is on every plan, including the free Tournament plan.",
+      },
+      {
+        category: 'fixed',
+        text: "The tournament page header now matches what is happening. A tournament shows \"Live now\", not Finished, while a game is still on the schedule after a champion is crowned. The Register card says \"First game Sat\" when the first game is on a later day. The team-spots count includes every team that is not rejected, and an invite-only event with a public Teams page shows its team count.",
+      },
+      {
+        category: 'improved',
+        text: "Registration forms show each mistake in red under its own question and scroll you to it. Archived registration questions keep their answers on the team's record and in the export.",
+      },
+      {
+        category: 'improved',
+        text: "Notifications open as short labelled rows. \"Score submitted\" names the game, the score, whether it is final or waiting, and who entered it, and it goes only to people who can open Results.",
+      },
+      {
+        category: 'fixed',
+        text: "A coach's weekly week-in-review goes only to a team that had a game or practice that week, and it is sent once. A tournament shows as \"Next up\" only within 30 days, and it no longer hides the season-end prompt.",
+      },
+      {
+        category: 'improved',
+        text: "Plan & billing says more clearly when things end. Cancelling or moving to a lower plan takes effect on your renewal date. The words now read \"payment method\" and \"Reactivate\". If a payment keeps failing, you are told the plan may end sooner, and you are emailed when it does. The Change plan table has an \"At a glance\" column, and the yearly renewal reminder always shows the date, the amount and how to cancel.",
+      },
+      {
+        category: 'new',
+        text: "An owner of a Tournament or Tournament Plus organization can rename it from Settings & access. A Premium coach can rename the team and change its web address from Team settings.",
+      },
+      {
+        category: 'new',
+        text: "Plan & billing now ends with a Delete request. An owner can ask us to delete the organization, every owner gets a confirmation email, and Plan & billing shows \"Request sent\". Nothing is deleted until an owner confirms.",
+      },
+      {
+        category: 'improved',
+        text: "Billing, plan windows and registration emails now show support@fieldlogichq.ca for questions. Resetting a forgotten password now sends a \"Your password was changed\" email and signs your other devices out.",
+      },
+    ],
+  },
+  {
     date: '2026-11-15',
     title: "Two-step sign-in, a bank balance check for coaches, and a clearer layout across the admin and Coaches Portal",
     highlights: [
