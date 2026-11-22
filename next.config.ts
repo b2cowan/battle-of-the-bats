@@ -46,6 +46,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimisticRouting: false,
   },
+  // The legal pages read their frozen text (lib/legal-documents/<doc>/<date>.md) with a path built at request time
+  // (lib/legal-page-data.ts), which the build's file tracing cannot follow. Without these includes the deployed pages fail
+  // with "no such file" (staging, 2026-11-22: /legal/terms and /legal/privacy answered 500) while every local run works,
+  // because the whole repo is there. `/legal/*` is the five pages; `/legal/*/*` the dated "[version]" pages under them.
+  // Guarded by tests/unit/legal-documents-trace-guard.test.ts.
+  outputFileTracingIncludes: {
+    '/legal/*': ['./lib/legal-documents/**/*.md'],
+    '/legal/*/*': ['./lib/legal-documents/**/*.md'],
+  },
   // Amplify's build machine is a fixed 8GB, and this app's webpack production build was
   // OOM-killing the build worker even at a 7GB Node heap. Webpack's persistent filesystem
   // cache (serializing the whole compiled module graph to .next/cache after every build)
