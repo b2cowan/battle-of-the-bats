@@ -10608,7 +10608,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 ### `platform_record_opens`
 <!-- dict:table:platform_record_opens -->
 
-**Purpose:** the support console's **trail of records opened** (mig 365, Support console Stage 2, owner ruling A3 2026-10-25) — one row each time a staff member opens a club record (`/platform-admin/orgs/[id]`) or a person record (`/platform-admin/customer-users/[id]`): who, when, which record, and whether Find opened it. Super admin reads it in the Audit log under "Records opened".
+**Purpose:** the support console's **trail of records opened** (mig 365, Support console Stage 2, owner ruling A3 2026-10-25) — one row each time a staff member opens a club record (`/platform-admin/orgs/[id]`), a person record (`/platform-admin/customer-users/[id]`), a sent email, a feedback record or an early-access lead: who, when, which record, and whether Find opened it (the same record again within ten minutes writes nothing). Super admin reads it in the Audit log under "Records opened".
 
 **Gotchas (read first):**
 1. **Never the words typed.** Find's search words are not stored anywhere (owner A3; threat T6/T14). A row names the record, not how it was searched for.
@@ -10625,7 +10625,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`actor_email`** (text, NOT NULL) — the staff member's email, lowercased on write; what the Audit log's "Records opened" view shows.
 
 <!-- dict:col:platform_record_opens.record_kind -->
-**`record_kind`** (text, NOT NULL, CHECK `club` | `person` | `email`) — `club` = an `organizations` row (clubs, tournament hosts, coaches portals); `person` = an `auth.users` account; `email` = a `platform_account_emails` row opened from Health › Sent emails (mig 389, Stage 5, T17).
+**`record_kind`** (text, NOT NULL, CHECK `club` | `person` | `email` | `feedback` | `lead`) — `club` = an `organizations` row (clubs, tournament hosts, coaches portals); `person` = an `auth.users` account; `email` = a `platform_account_emails` row opened from Health › Sent emails (mig 389, Stage 5, T17); `feedback` = a `feedback_submissions` row (`/platform-admin/feedback/[id]`) and `lead` = an `early_access_leads` row (`/platform-admin/early-access/[leadId]`), both added by mig 521 (Board Ready D1, owner 2026-11-22) so the privacy policy's "records our staff open are recorded" names every record page. A list view, an export and a non-record page are not in the trail. `tests/unit/records-opened-census-guard.test.ts` pins the five doors.
 
 <!-- dict:col:platform_record_opens.record_id -->
 **`record_id`** (uuid, NOT NULL, no FK) — the organization id or the account id. No FK on purpose: a deleted club or person keeps its trail rows until they age out.

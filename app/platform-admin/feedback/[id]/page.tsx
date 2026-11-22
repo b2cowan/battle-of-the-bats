@@ -10,6 +10,7 @@ import {
 import { personHref } from '@/lib/observability/sample-who';
 import { SENT_STATES, isSentState, type SentState } from '@/lib/sent-log-words';
 import { isUuid } from '@/lib/utils';
+import { recordOpened } from '@/lib/platform-record-opens';
 import FeedbackRecord, { type ConversationTurn, type FeedbackRecordProps } from './FeedbackRecord';
 
 /**
@@ -82,6 +83,9 @@ export default async function FeedbackRecordPage({ params }: { params: Promise<{
     .eq('id', id)
     .maybeSingle<FeedbackRow>();
   if (!fb) notFound();
+  // Opening a feedback record is on the records-opened trail (Board Ready D1, mig 521). After the not-found check, so a
+  // bad address writes no row; best effort, never a gate.
+  await recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'feedback', recordId: id, viaFind: false });
 
   const canReply = hasPlatformPower(auth.role, 'reply');
   const canTriage = hasPlatformPower(auth.role, 'feedback_triage');

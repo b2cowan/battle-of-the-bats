@@ -5,10 +5,18 @@
 | **Version** | next after 2026-11-17 (posted with a new effective date under §13; no new use and no new kind of company, so no advance email is owed: what we collect does not change, one purpose narrows, one email and one invoice kind are gone, and one existing record is named in two rows) |
 | **Status** | draft — held to publish on the same day as the Payments Terms (owner call (b), recommended); not published |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
-| **Last reviewed** | 2026-11-20 (0.4: Board Ready Stage 4 Part 3 §5 edits; before that 2026-11-18, 0.2: Board Ready data terms, with its follow-through) |
+| **Last reviewed** | 2026-11-22 (0.6: Board Ready D1, the staff-records sentences in §5 and §10; before that 2026-11-20, 0.4: Board Ready Stage 4 Part 3 §5 edits; before that 2026-11-18, 0.2: Board Ready data terms, with its follow-through) |
 | **Starts from** | `lib/legal-documents/privacy/2026-11-17.md`, word for word, with the changes in the log |
 
 **Change log**
+- **Draft 0.6 (2026-11-22, Board Ready D1; owner ruling 2026-11-22, `BOARD_READY_PLAN.md` §0c D1)** — the promise about what
+  our staff open is narrowed to what the product records, in §5 and §10. The published 2026-11-17 text says "every page they
+  open in our own tools is recorded"; the records-opened log held club, person and sent-email records only (migration 521
+  adds feedback and early-access lead records), so both places now name those five kinds. No new use or kind of data, a
+  narrower promise, so no advance email under §13. §9's sentence on the list of pages our staff visit is unchanged and
+  still true. The published text is frozen: this version carries the correction when it publishes with the Payments Terms.
+  **Open for `/legal`:** the same record opened again within ten minutes is recorded once (not stated here); and whether
+  the page-visit list (§9) should be named beside the records log in §5.
 - **Draft 0.4 (2026-11-20, Board Ready Stage 4 Part 3 close-out; `BOARD_READY_STAGE4_PART3_BUILT_REVIEW.md`)** — two §5
   edits, no new use and no new kind of company, so no advance email under §13. (1) A new §5 bullet names answers to a
   club's own sign-up questions, files a family attaches, and the record of each document ticked (words, version, who,
@@ -217,8 +225,8 @@ publish its schedules, standings, team names, and the names of coaches who choos
 **Who can see it.** The club controls which of its people can see which records. A small number of FieldLogicHQ support
 staff can view a club's records when it is needed to support the club, investigate a problem or a payment dispute, or
 keep the platform safe. Our staff can also see which clubs and Coaches Portals have a plan coming up for renewal or a bill
-unpaid, to run billing. Every change our staff make is permanently recorded, every page they open in our own tools is
-recorded, and every download of a billing list is recorded. We have no way to sign in as a customer.
+unpaid, to run billing. Every change our staff make is permanently recorded, every club, person, sent email, feedback
+or early-access lead record they open in our own tools is recorded, and every download of a billing list is recorded. We have no way to sign in as a customer.
 
 **If you are a parent, guardian or member** and have a question about information a club holds about you or your child —
 including asking to see, correct or delete it — **please contact the club first.** It decides what is collected and kept.
@@ -338,7 +346,8 @@ and email addresses.
 - Links in our emails (unsubscribe, calendar feeds, pay links) are signed so they can't be guessed or altered, and
   sign-in-free links are stored only in a scrambled (hashed) form.
 - Information is encrypted in transit (TLS), and our database provider encrypts all stored data at rest (AES-256).
-- Our staff's changes are permanently recorded, and the pages they open are recorded too.
+- Our staff's changes are permanently recorded, and so is each club, person, sent email, feedback or early-access lead
+  record they open.
 - **Two-step sign-in.** You can protect your account with a second step, a code from an authenticator app; an organization
   can require it for its members. Backup codes are stored only in a one-way (hashed) form, not as readable codes. We email
   you when two-step sign-in is turned on or off, or when your password is changed, so a change you did not make is noticed.

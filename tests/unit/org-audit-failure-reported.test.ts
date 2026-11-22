@@ -211,7 +211,7 @@ describe('the other records report a failed line too (leftover call 18)', () => 
   const ctx = (c: Captured) => c.opts.requestContext as { record: string; action: string; orgId: unknown; cause: string };
 
   describe('(a) the records-opened trail', () => {
-    type Opened = (o: { actorUserId: string; actorEmail: string | null; kind: 'club' | 'person' | 'email'; recordId: string; viaFind: boolean }) => Promise<void>;
+    type Opened = (o: { actorUserId: string; actorEmail: string | null; kind: 'club' | 'person' | 'email' | 'feedback' | 'lead'; recordId: string; viaFind: boolean }) => Promise<void>;
     const open = (db: Db, captured: Captured[]) => (loaderWith(db, captured)('lib/platform-record-opens.ts') as { recordOpened: Opened }).recordOpened;
     const args = { actorUserId: 'staff-1', actorEmail: 'staff@example.com', kind: 'person' as const, recordId: 'person-1', viaFind: true };
 

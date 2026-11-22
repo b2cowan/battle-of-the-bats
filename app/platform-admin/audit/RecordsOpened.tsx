@@ -12,7 +12,7 @@ export const RECORDS_OPENED = 'records_opened';
 const PAGE = 100;
 
 /**
- * "Records opened" — the trail of club and person records, and sent emails, staff opened (Support console Stage 2, owner ruling A3). Super
+ * "Records opened" — the trail of club, person, feedback and early-access-lead records, and sent emails, staff opened (Support console Stage 2, owner ruling A3; feedback and leads: Board Ready D1). Super
  * admin only (the `records_opened` power). Who, when, which record, and whether Find opened it — never the words typed.
  * 90 days, pruned on write. Never shown on a customer's Story.
  */
@@ -21,12 +21,19 @@ export default async function RecordsOpened({ offset, pageHref }: { offset: numb
   const clubIds = rows.filter(r => r.kind === 'club').map(r => r.recordId);
   const personIds = rows.filter(r => r.kind === 'person').map(r => r.recordId);
   const emailIds = rows.filter(r => r.kind === 'email').map(r => r.recordId);
-  const [clubsRes, people, emailsRes] = await Promise.all([
+  const feedbackIds = rows.filter(r => r.kind === 'feedback').map(r => r.recordId);
+  const leadIds = rows.filter(r => r.kind === 'lead').map(r => r.recordId);
+  const [clubsRes, people, emailsRes, feedbackRes, leadsRes] = await Promise.all([
     clubIds.length ? supabaseAdmin.from('organizations').select('id, name').in('id', clubIds) : Promise.resolve({ data: [] }),
     peopleByIds(personIds).catch(() => new Map()),
     // A sent email opened from Sent emails (Stage 5): named by its kind and address, read now; one older than 90 days is gone.
     emailIds.length ? supabaseAdmin.from('platform_account_emails').select('id, kind, recipient_email').in('id', emailIds) : Promise.resolve({ data: [] }),
+    // A feedback record and an early-access lead (Board Ready D1, mig 521): named by the title / the organization or address, read now.
+    feedbackIds.length ? supabaseAdmin.from('feedback_submissions').select('id, title').in('id', feedbackIds) : Promise.resolve({ data: [] }),
+    leadIds.length ? supabaseAdmin.from('early_access_leads').select('id, organization_name, email').in('id', leadIds) : Promise.resolve({ data: [] }),
   ]);
+  const feedbackTitles = new Map(((feedbackRes.data ?? []) as Array<{ id: string; title: string | null }>).map(f => [f.id, f.title || 'Feedback']));
+  const leadNames = new Map(((leadsRes.data ?? []) as Array<{ id: string; organization_name: string | null; email: string | null }>).map(l => [l.id, l.organization_name || l.email || 'Lead']));
   const emails = new Map(((emailsRes.data ?? []) as Array<{ id: string; kind: string; recipient_email: string }>).map(e => [e.id, e]));
   const clubNames = new Map(((clubsRes.data ?? []) as Array<{ id: string; name: string }>).map(c => [c.id, c.name]));
 
@@ -43,16 +50,28 @@ export default async function RecordsOpened({ offset, pageHref }: { offset: numb
             {rows.length === 0 && <tr><td colSpan={5} className={kit.empty}>Nobody has opened a record yet.</td></tr>}
             {rows.map(r => {
               const sent = r.kind === 'email' ? emails.get(r.recordId) : undefined;
-              const name = r.kind === 'club' ? clubNames.get(r.recordId) : r.kind === 'email' ? (sent ? emailKindLabel(sent.kind) : undefined) : people.get(r.recordId)?.email;
+              const name = r.kind === 'club' ? clubNames.get(r.recordId)
+                : r.kind === 'email' ? (sent ? emailKindLabel(sent.kind) : undefined)
+                : r.kind === 'feedback' ? feedbackTitles.get(r.recordId)
+                : r.kind === 'lead' ? leadNames.get(r.recordId)
+                : people.get(r.recordId)?.email;
               const href = r.kind === 'club' ? `/platform-admin/orgs/${r.recordId}`
-                : r.kind === 'email' ? `/platform-admin/sent-emails?email=${r.recordId}` : `/platform-admin/customer-users/${r.recordId}`;
+                : r.kind === 'email' ? `/platform-admin/sent-emails?email=${r.recordId}`
+                : r.kind === 'feedback' ? `/platform-admin/feedback/${r.recordId}`
+                : r.kind === 'lead' ? `/platform-admin/early-access/${r.recordId}`
+                : `/platform-admin/customer-users/${r.recordId}`;
+              const kindLine = r.kind === 'club' ? 'Club record'
+                : r.kind === 'email' ? `Sent email to ${sent?.recipient_email ?? 'an address'}`
+                : r.kind === 'feedback' ? 'Feedback record'
+                : r.kind === 'lead' ? 'Early-access lead'
+                : 'Person record';
               const cells = (
                 <>
                   <td className={`${kit.nowrap} table-cards-title`}>{consoleDate(r.openedAt)}<span className={kit.sub}>{consoleClock(r.openedAt)}</span></td>
                   <td data-label="Who">{r.actorEmail}</td>
                   <td data-label="Record">
                     {name ? <Link href={href} className={kit.nameLink}>{name}</Link> : <span className={kit.muted}>Deleted since</span>}
-                    <span className={kit.sub}>{r.kind === 'club' ? 'Club record' : r.kind === 'email' ? `Sent email to ${sent?.recipient_email ?? 'an address'}` : 'Person record'}</span>
+                    <span className={kit.sub}>{kindLine}</span>
                   </td>
                   <td data-label="How">{r.viaFind ? 'From Find' : 'From a list or a link'}</td>
                   <td className={kit.rowDoor}>

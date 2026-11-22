@@ -890,6 +890,10 @@
     "516_waiting_family_files_are_swept_every_six_hours.sql": {
       "prod": "pending",
       "note": "WATCHED AUTOMATION; the owner's yes 2026-11-20 (Part 3 call 1), applied nowhere yet (Board Ready Stage 4 Part 2; ruling 9: a family file never attached to a sign-up is deleted within a day). One cron.schedule: 'club-form-files-sweep' at 37 */6 * * * calling public.app_cron_http_tick('club_form_files_sweep', '/api/platform-admin/club-form-files-sweep') (mig 183/502). INVISIBLE to check:migrations. Since Part 3 the same run also removes family files and health answers on the retention clock (mig 518/519) and deletes the stored files on mig 518's removal list; it is a PROMOTE CONDITION for Parts 1–3 (/legal). ORDER: only AFTER the Parts 1–3 code is serving on production (the tick is a harmless 404 before). Idempotent (cron.schedule upserts by name). Verify: select schedule, command from cron.job where jobname='club-form-files-sweep' -> 37 */6 * * * and the tick command."
+    },
+    "521_the_records_opened_trail_learns_feedback_and_leads.sql": {
+      "prod": "pending",
+      "note": "Board Ready D1 (owner ruling 2026-11-22; plan BOARD_READY_PLAN.md §0c). CONSTRAINT-ONLY, INVISIBLE to check:migrations (no table or column changes): widens platform_record_opens_record_kind_check from club/person/email to club/person/email/feedback/lead so a staff member opening a feedback record or an early-access lead is on the records-opened trail. Existing rows untouched; idempotent. ORDER: apply BEFORE the promote that ships the D1 code (until then every feedback or lead open would fail its insert: reported as an issue, the page still opens, so it is loud but not fatal). Applied to DEV 2026-11-22. Verify on prod: select pg_get_constraintdef(oid) from pg_constraint where conname = 'platform_record_opens_record_kind_check' -> contains 'feedback' and 'lead'."
     }
   }
 }

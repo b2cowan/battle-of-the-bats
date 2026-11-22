@@ -50123,7 +50123,7 @@
         "kind": "CHECK",
         "table_name": "platform_record_opens",
         "detail": "platform_record_opens_record_kind_check",
-        "check_clause": "(record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text]))"
+        "check_clause": "(record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text, 'feedback'::text, 'lead'::text]))"
       },
       {
         "kind": "RLS",

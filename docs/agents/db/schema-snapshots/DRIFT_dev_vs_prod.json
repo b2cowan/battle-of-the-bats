@@ -1,17 +1,21 @@
 {
-  "generated": "2026-11-21",
-  "total": 584,
+  "generated": "2026-11-22",
+  "total": 585,
   "counts": {
     "tables": 21,
     "columns": 271,
     "indexes": 104,
     "constraints": 85,
-    "rls": 103
+    "rls": 104
   },
   "items": [
     {
       "key": "check:changed:org_permits.org_permits_document_type_check",
       "sig": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'::text]))) :: ((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text])))"
+    },
+    {
+      "key": "check:changed:platform_record_opens.platform_record_opens_record_kind_check",
+      "sig": "(record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text, 'feedback'::text, 'lead'::text])) :: (record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text]))"
     },
     {
       "key": "check:only-dev:club_form_answer_clears.club_form_answer_clears_has_target",

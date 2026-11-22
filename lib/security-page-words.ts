@@ -133,7 +133,7 @@ export const SECURITY_ROLES_ROWS = [
 export const SECURITY_CLUB_SEES =
   "**What the club sees of a team.** The club sees each of its teams' roster, schedule, results and cash on hand. A coach's lineups and private notes stay with the coach.";
 export const SECURITY_OUR_STAFF =
-  "**Our own staff.** Our support staff can open your club's records only to help when you ask, investigate a problem, or keep the service running. Our support tools log each club and person record our staff open, and keep a permanent record of every change they make. We have no way to sign in as one of your people.";
+  "**Our own staff.** Our support staff can open your club's records only to help when you ask, investigate a problem, or keep the service running. Our support tools log each club, person, sent email, feedback or early-access lead record our staff open, and keep a permanent record of every change they make. We have no way to sign in as one of your people.";
 
 export const SECURITY_PROTECT = [
   '**Signing in.** Passwords are kept by our sign-in service, Supabase, only in scrambled form. FieldLogicHQ never sees or stores them. Two-step sign-in is available to everyone, and your club can require it for its board and coaches; FieldLogicHQ staff always use it.',

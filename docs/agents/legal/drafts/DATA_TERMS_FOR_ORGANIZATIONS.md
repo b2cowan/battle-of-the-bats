@@ -96,7 +96,8 @@ We keep Customer Data confidential. Only FieldLogicHQ staff who need it can reac
 organization when you ask, investigate a problem or a payment dispute, or keep the service safe and running. Anyone who
 works for us is bound to keep it confidential before they get access.
 
-In our own support tools, every change our staff make is permanently recorded, and every page they open is recorded.
+In our own support tools, every change our staff make is permanently recorded, and every club, person, sent email, feedback or early-access lead
+record they open is recorded.
 We have no way to sign in as one of your people. Direct access to the database, outside those tools, is kept for running
 and repairing the service.
 

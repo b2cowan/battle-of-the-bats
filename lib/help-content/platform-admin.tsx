@@ -1546,7 +1546,7 @@ const platformAdminHelp: HelpPageContent = {
           title: 'Who looked: Records opened',
           content: (
             <>
-              <p>Every time staff open a club or person record, one row is kept: who, when, which record, and whether Find opened it (<em>From Find</em>) or a list or link did (<em>From a list or a link</em>). The words typed into Find are never kept. Rows are kept for 90 days, and they never appear on a customer&rsquo;s Story.</p>
+              <p>Every time staff open a club, person, feedback or early-access lead record, or a sent email, one row is kept (the same record opened again within ten minutes is not a second row): who, when, which record, and whether Find opened it (<em>From Find</em>) or a list or link did (<em>From a list or a link</em>). The words typed into Find are never kept. Rows are kept for 90 days, and they never appear on a customer&rsquo;s Story.</p>
               <p>Only a <strong>Super admin</strong> sees it: choose <strong>Records opened</strong> in the <strong>Action</strong> dropdown of the Audit log, and use <strong>&lsaquo; All changes</strong> to come back. A record that has been deleted since reads <em>Deleted since</em>.</p>
             </>
           ),

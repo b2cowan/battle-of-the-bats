@@ -250,7 +250,7 @@ describe('4 · an email opened from Sent emails writes a records-opened row', ()
   });
 
   it('the record kind is widened and the Audit log names an email row', () => {
-    assert.match(readCode('lib/platform-record-opens.ts'), /export type RecordKind = 'club' \| 'person' \| 'email';/);
+    assert.match(readCode('lib/platform-record-opens.ts'), /export type RecordKind = 'club' \| 'person' \| 'email' \| 'feedback' \| 'lead';/);
     const audit = readCode('app/platform-admin/audit/RecordsOpened.tsx');
     assert.match(audit, /r\.kind === 'email'/);
     assert.match(audit, /platform_account_emails/);

@@ -103,8 +103,8 @@ export default async function ClubRecordPage({ params, searchParams }: {
   );
 
   // Every read at once; the members' sign-in facts chain straight off the members read. Opening the record is the read
-  // that matters after a complaint (A3): its trail row is written alongside, best effort, never a gate.
-  const [orgRes, { memberRows, people }, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story, , doorFacts] = await Promise.all([
+  // that matters after a complaint (A3): its trail row is written right after the club is found, below.
+  const [orgRes, { memberRows, people }, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story, doorFacts] = await Promise.all([
     supabaseAdmin
       .from('organizations')
       .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind, billing_suspended_at')
@@ -121,11 +121,13 @@ export default async function ClubRecordPage({ params, searchParams }: {
     clubDomainStore.getByOrg(id).catch(() => null),
     getTeamMoves(id),
     buildClubStory(id, { money: readsStripe, leads: hasPlatformPower(auth.role, 'growth') }),
-    recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'club', recordId: id, viaFind: via === 'find' }),
     hasPlatformPower(auth.role, 'club_billing') ? freeTimeDoorFacts(id, { id: auth.user.id, email: auth.user.email ?? '' }) : Promise.resolve(null),
   ]);
   const org = orgRes.data;
   if (!org) notFound();
+  // The trail row (A3) is written once the club is known to exist, so an address with no club writes none (Board Ready D1).
+  // Best effort, never a gate.
+  await recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'club', recordId: id, viaFind: via === 'find' });
   // A Coaches Portal's free time (Stage 4b) is its own kind: its chip, band, Access row and windows, never a club's.
   const isPortal = org.account_kind === 'team_workspace';
   const canGivePortal = hasPlatformPower(auth.role, 'portal_free_time');

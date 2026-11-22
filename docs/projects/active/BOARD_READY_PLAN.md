@@ -696,16 +696,21 @@ board's two questions:
 
   **Two product findings from the same `/legal` read**
   (`docs/agents/legal/MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md` §4), recorded here:
-  - [ ] **D1 · The staff "pages opened" promise.** Privacy §5 (published in code 2026-11-17) and the Data Terms §5
-    (approved, unpublished) say "every page they open in our own tools is recorded". The record-opens log covers club,
-    person and email records only (not list views, feedback, early-access leads or exports), skips a repeat within 10
-    minutes, and on production fails silently (dev now reports a failed write). **Owner call ruled 2026-11-22 ("go with your
-    recommendations"):** log the missing record pages (feedback, early-access leads) and say "every club, person or
-    email record they open" in the next privacy version and the Data Terms before they publish; not logging every
-    page. Not built (owner 2026-11-22: D1 later). Recorded with it as an open check, not a ruling: the plan's note that the log can fail silently on
-    production, and `/legal` confirming the final wording before it publishes. The
-    brief and the Security page already use the narrower line. Depends on: the call; the Data Terms wording must settle
-    before the held Terms version publishes.
+  - [x] **D1 · The staff "pages opened" promise.** Privacy §5 (published in code 2026-11-17) and the Data Terms §5
+    (approved, unpublished) said "every page they open in our own tools is recorded"; the record-opens log held club,
+    person and sent-email records only. **Owner call ruled 2026-11-22 ("go with your recommendations"), built on dev
+    2026-11-22 on his "go with your recommendations" to the build list:** feedback and early-access lead records are now
+    logged (mig 521 widens the table's allowed kinds; `tests/unit/records-opened-census-guard.test.ts` pins exactly five
+    record doors, each written after the record is found; the club page no longer writes a row for an address with no
+    club); the sentence is narrowed to "every club, person, sent email, feedback or early-access lead record they open"
+    in the Privacy draft 0.6 (§5, §10), the Data Terms draft §5 and the live Security page. Not logging every page.
+    **Read by `/legal` 2026-11-22:** every sentence true of the code once mig 521 is on production; no advance notice
+    owed (a narrower promise, no new use of data); `LEGAL_FACTS.md` corrected (a failed write to the log is NOT silent:
+    it opens an issue and can email an alert, leftover call 18 (a), so the earlier "fails silently" note here was out of
+    date). **Owed:** mig 521 on production BEFORE the promote (`MANUAL_PROD_STEPS.json`, pending); the Privacy draft 0.6
+    and the Data Terms publish later with the Payments Terms (the published 2026-11-17 text is frozen). **One call left
+    for the owner,** flagged in the draft's change log: whether §5 should also name the page-visit list beside the
+    records log (§9 already discloses it).
   - [x] **D2 · The database's member test.** Until migs 505 and 506 are on production, a pending invitee's or suspended
     member's own browser can read the club's venues and teams. **Already queued**, no new work:
     `BOARD_READY_TRUST_FIX_PROMPTS.md` hand-off (505 and 506 either side of the promote). The Security page says nothing

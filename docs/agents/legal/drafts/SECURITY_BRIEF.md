@@ -19,7 +19,7 @@
 - **Migs 505 and 506 are on production** → only then may anything be said about suspended members (plan §0c D2).
 - **A supplier changes** (incl. the Gmail inbox moving, `BUSINESS_EMAIL_ADDRESSES`) → the table, the diagram (both its desktop and phone forms, and its accessible description, which names Resend and Stripe) and the held W2 count.
 - **The AGENCY_RULES production-rows rule changes** → the AI line falls back to "FieldLogicHQ sends nothing to an AI service" (W3), everywhere it appears (short answer, caption).
-- **The staff record-opens log changes** (plan §0c D1) → re-read "Our own staff".
+- **The staff record-opens log changes** (plan §0c D1) → re-read "Our own staff". (Re-read 2026-11-22 with mig 521: feedback and early-access lead records joined the log; the page's sentence now names club, person, sent email, feedback and early-access lead records.)
 
 **Never add:** anything about what happens if the owner can't run the business, softened or not ("we're built to last" included; ruling 0d, 2026-11-16); "Canadian" hosting or Canada as a selling point (ruling 0b, 2026-11-10); a certification, audit or penetration test of our own (pen test ruled out of scope 2026-11-15); "every finding fixed"; "full restore"; "your files are backed up"; "export everything"; "end-to-end encrypted"; "that log cannot be edited"; a price, a plan name or an offer (pitch ruling 2026-08-21: this page is about security, not a plan).
 

@@ -12,6 +12,7 @@ import { daysBetweenDateStrings, orgDayKey, tournamentToday } from '@/lib/timezo
 import { EARLY_ACCESS_STATUS_LABELS, isEarlyAccessStatus, leadPageLabel, type EarlyAccessStatus } from '@/lib/early-access-admin';
 import { planName } from '@/lib/platform-story-view';
 import { isUuid } from '@/lib/utils';
+import { recordOpened } from '@/lib/platform-record-opens';
 import kit from '../../console.module.css';
 import LeadRecord, { type LeadRecordProps } from './LeadRecord';
 
@@ -58,6 +59,9 @@ export default async function LeadPage({ params }: { params: Promise<{ leadId: s
     );
   }
   if (!data) notFound();
+  // Opening a lead is on the records-opened trail (Board Ready D1, mig 521). After the not-found check, so a bad address
+  // writes no row; best effort, never a gate.
+  await recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'lead', recordId: leadId, viaFind: false });
   const lead = data as unknown as LeadRow;
   const step: EarlyAccessStatus = isEarlyAccessStatus(lead.internal_status) ? lead.internal_status : 'new';
   const now = new Date();

@@ -1,7 +1,9 @@
 /**
  * The trail of records opened (Support console Stage 2, owner ruling A3 2026-10-25; migration 365 `platform_record_opens`).
  *
- * One quiet row each time a staff member opens a club or person record: who, when, which, and whether Find opened it.
+ * One quiet row each time a staff member opens a club, person, sent-email, feedback or early-access-lead record: who, when,
+ * which, and whether Find opened it. (Feedback and lead join it in mig 521, Board Ready D1, owner 2026-11-22: the privacy
+ * policy's promise names these five kinds. A list view, an export and a console page that is not a record are NOT in it.)
  * ⚠ NEVER the words typed — they are usually the same email or name again, and keeping them for 90 days would make the
  * trail a second store of personal data (threat T14). Never shown on a customer's Story. Super admin reads it in the
  * Audit log under "Records opened".
@@ -16,7 +18,7 @@ import { reportUnwritten, writeOrReport } from './observability/report-unwritten
 export const RECORD_OPENS_KEEP_DAYS = 90;
 const REPEAT_WINDOW_MS = 10 * 60_000;
 
-export type RecordKind = 'club' | 'person' | 'email';
+export type RecordKind = 'club' | 'person' | 'email' | 'feedback' | 'lead';
 
 export async function recordOpened(opts: {
   actorUserId: string;
