@@ -8,6 +8,7 @@ import { resolveSameHostOrigin } from '@/lib/app-origin';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { captureError } from '@/lib/observability';
 import { COACH_CONFIRM_PATH } from '@/lib/sandbox-door';
+import { demoDoorNotAPress } from '@/lib/sandbox-exit';
 
 /**
  * `/see-it-live/coaches` — THE door into the coach sandbox.
@@ -44,6 +45,10 @@ let unseededAlreadyReported = false;
 
 export async function GET(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('See-it-live coach demo door');
+
+  // Only a person going here is a press: a link prefetched as it scrolled into view signs nobody in (lib/sandbox-exit.ts).
+  const notAPress = demoDoorNotAPress(request);
+  if (notAPress) return notAPress;
 
   const origin = resolveSameHostOrigin(request);
   const demo = getDemoOrgByKind('coach');
