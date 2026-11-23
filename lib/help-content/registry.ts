@@ -6,6 +6,7 @@ import registrationsHelp from './registrations';
 import repTeamsHelp from './rep-teams';
 import accountingHelp from './accounting';
 import orgHelp from './org';
+import { withoutHeldHelp } from './held';
 import exportsHelp from './exports';
 import houseLeagueHelp from './house-league';
 import familiesHelp from './families';
@@ -37,7 +38,7 @@ export const helpModules: Record<HelpModuleKey, HelpPageContent> = {
   registrations: registrationsHelp,
   'rep-teams': repTeamsHelp,
   accounting: accountingHelp,
-  org: orgHelp,
+  org: withoutHeldHelp(orgHelp),
   exports: exportsHelp,
   'house-league': houseLeagueHelp,
   families: familiesHelp,

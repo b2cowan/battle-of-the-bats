@@ -1,3 +1,4 @@
+import './_sponsorships-open-for-test.ts';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { ALL_CAPABILITY_KEYS, hasCapability, type Capability } from '../../lib/roles.ts';

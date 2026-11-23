@@ -9,6 +9,7 @@
  *   4. the tile sets and their gates (N8);
  *   5. headings are 11px in the rails and the sheet, in the sidebar's face (N1).
  */
+import './_sponsorships-open-for-test.ts';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {

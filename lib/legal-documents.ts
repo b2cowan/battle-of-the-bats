@@ -62,16 +62,20 @@ export interface LegalDocument {
 export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
   terms: {
     draftPath: null,
-    published: [{ version: '2026-11-22', sha256: 'b5f8e3d6428cc4709908b4bb199c95ea4ee47df993300589dfc29a5cca877eba' }],
-    current: '2026-11-22',
+    published: [
+      { version: '2026-11-22', sha256: 'b5f8e3d6428cc4709908b4bb199c95ea4ee47df993300589dfc29a5cca877eba' },
+      { version: '2026-11-23', sha256: 'e322a101cf5b1b33618858dc68a25e556c8c268e3a3bcd29159a447a4bf46cfe' },
+    ],
+    current: '2026-11-23',
     oldestAccepted: '2026-11-22',
   },
   privacy: {
-    // Stripe-owned pricing Stage 5 (2026-11-18): the next version (the retired fee invoice cut, the Payments Terms record
-    // named). Read only in preview mode, which a published pair never enters; set here so the filter test checks its shape.
-    draftPath: 'docs/agents/legal/drafts/PRIVACY_POLICY.md',
-    published: [{ version: '2026-11-22', sha256: 'abdaa491af8b11109ac2471e9db9106c5ab361d50c125948b42519bd86800552' }],
-    current: '2026-11-22',
+    draftPath: null,
+    published: [
+      { version: '2026-11-22', sha256: 'abdaa491af8b11109ac2471e9db9106c5ab361d50c125948b42519bd86800552' },
+      { version: '2026-11-23', sha256: '013c2bca8c15ce6f3fb7507449412ee75c41e46e4dbf40e068e74c8abf6b4423' },
+    ],
+    current: '2026-11-23',
     oldestAccepted: '2026-11-22',
   },
 };
@@ -91,13 +95,18 @@ export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
  *     2026"), to its "Changes to this list" table and changes no earlier row. The newest copy is the page; the older copies are
  *     the record of what the list said on each date (no route serves them). A copy whose companies the Privacy Policy in force
  *     does not name fails the build.
- *   · Both lists are EMPTY until the Payments Terms day: both pages answer "not found" and no link to them renders.
+ *   · Both lists were EMPTY until the Club release (2026-11-23, the Terms version that names the Data Terms): until a text is
+ *     registered, the page answers "not found" and no link to it renders.
  *   · A frozen text starts at its first section: the page draws the title, so the file carries no title heading of its own.
  */
 export type LegalPageKey = LegalDocKey | 'data-terms' | 'subprocessors';
 
-export const DATA_TERMS_VERSIONS: PublishedVersion[] = [];
-export const SUBPROCESSOR_LIST_VERSIONS: PublishedVersion[] = [];
+export const DATA_TERMS_VERSIONS: PublishedVersion[] = [
+  { version: '2026-11-23', sha256: '23d88e4ae12c751b9513dffb7d31f01953ca3923998afb9f1d096af24e4af358' },
+];
+export const SUBPROCESSOR_LIST_VERSIONS: PublishedVersion[] = [
+  { version: '2026-11-23', sha256: '45de07d8b2a178bbb17bde58bca2235878490b979be74e116233fc04368078e8' },
+];
 
 /** Is this one of the two documents a door records (rather than a page that is only read)? */
 export const isDoorDocument = (page: LegalPageKey): page is LegalDocKey => (LEGAL_DOC_KEYS as readonly string[]).includes(page);

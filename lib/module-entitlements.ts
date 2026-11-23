@@ -1,4 +1,5 @@
 import { PLAN_CONFIG } from './plan-config';
+import { sponsorshipsOpen } from './sponsorships-open';
 import { isOrgBillingSuspended } from './org-billing-access';
 import type { Capability } from './roles';
 import type { Organization } from './types';
@@ -44,6 +45,8 @@ export function hasModuleEntitlement(org: EntitlementOrg, cap: Capability): bool
  * Never use this to decide whether someone may open a screen.
  */
 export function planCarriesModule(org: EntitlementOrg, cap: Capability): boolean {
+  // ⚖ HELD (owner 2026-11-22): no plan carries the Sponsorships place until walk §560 passes — lib/sponsorships-open.ts.
+  if (cap === 'module_sponsorships' && !sponsorshipsOpen()) return false;
   const plan = PLAN_CONFIG[org.planId];
   if (plan?.moduleEntitlements.includes(cap)) return true;
   return org.enabledAddons.includes(cap);

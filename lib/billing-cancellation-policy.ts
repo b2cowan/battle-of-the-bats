@@ -1,6 +1,7 @@
 import type { Capability } from './roles';
 import type { PlanConfig } from './plan-config';
 import { pluralize } from './utils';
+import { sponsorshipsOpen } from './sponsorships-open';
 
 /** Shared with server retention and the billing profile; values are unchanged by the presentation migration. */
 export const BILLING_RETENTION_DAYS = 90;
@@ -56,7 +57,9 @@ export function fallBackShutdownAreas(
 /** The enabled modules (plan entitlements plus add-ons) that have shutdown copy, in the server's order. */
 function shutdownModules(plan: Pick<PlanConfig, 'moduleEntitlements'> | undefined, enabledAddons: readonly string[]) {
   const enabled = new Set<string>([...(plan?.moduleEntitlements ?? []), ...enabledAddons]);
-  return (Object.entries(ORGANIZATION_MODULE_SHUTDOWN_COPY) as [Capability, ModuleShutdownCopy][]).filter(([cap]) => enabled.has(cap));
+  // ⚖ HELD (owner 2026-11-22): a place no customer can open is not listed as something that stops — lib/sponsorships-open.ts.
+  return (Object.entries(ORGANIZATION_MODULE_SHUTDOWN_COPY) as [Capability, ModuleShutdownCopy][])
+    .filter(([cap]) => enabled.has(cap) && (cap !== 'module_sponsorships' || sponsorshipsOpen()));
 }
 
 /** D25: the Club summary is another projection of the SAME selected server areas, with real active-team count. */

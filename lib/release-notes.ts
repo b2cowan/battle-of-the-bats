@@ -44,6 +44,16 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-11-23',
+    title: "Save a bank check and finish it later",
+    highlights: [
+      {
+        category: 'improved',
+        text: "The bank check now keeps your work as you go. Start checking a statement, choose Save for later, and pick it up on any device for 30 days after your last change. Signing out no longer clears it.",
+      },
+    ],
+  },
+  {
     date: '2026-11-22',
     title: "Terms of Service and Privacy Policy, a game-order check and printable rules for tournaments, and clearer plan-ending words on Plan & billing",
     highlights: [
