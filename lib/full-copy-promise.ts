@@ -9,8 +9,11 @@
  * No `server-only` import, so the unit tests can load it; both callers are server components.
  */
 
-/** Ask 29: flip to true, alone, when the owner confirms the by-hand full-copy procedure. */
-export const FULL_COPY_BY_HAND_CONFIRMED: boolean = false;
+/**
+ * Ask 29: CONFIRMED by the owner 2026-11-22 ("I am fine doing that part myself until the application has a real export"; the real
+ * export is planned before year end). While true the promise no longer waits for the Data Terms page.
+ */
+export const FULL_COPY_BY_HAND_CONFIRMED: boolean = true;
 
 export const fullCopyOffered = (legal: { dataTermsHref: string | null }): boolean =>
   FULL_COPY_BY_HAND_CONFIRMED || legal.dataTermsHref !== null;

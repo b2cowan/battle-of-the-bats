@@ -137,11 +137,12 @@ describe('the page is live only with the legal pages', () => {
 describe('version A and version B', () => {
   const heldLines = [SECURITY_HELD_W2.link, SECURITY_HELD_W9.link, 'within 72 hours', 'within 30 days', 'Six companies'];
 
-  it('A (Terms and Privacy only): no held line, today\'s breach line, no full-copy line, two links to read', () => {
+  it('A (Terms and Privacy only): no held line, today\'s breach line, the plain full-copy line only by the owner\'s confirmation, two links to read', () => {
     const text = textOf(renderPage(A));
     for (const s of heldLines) assert.ok(!text.includes(s), s);
     assert.ok(text.includes(textOf(SECURITY_BREACH.replace(/\*\*/g, ''))));
-    assert.ok(!text.includes(SECURITY_YOURS_FULL_COPY) && !text.includes('full copy'), 'the page condition is not met');
+    assert.equal(text.includes(SECURITY_YOURS_FULL_COPY), FULL_COPY_BY_HAND_CONFIRMED, 'the plain line follows Ask 29');
+    assert.equal(text.includes('full copy'), FULL_COPY_BY_HAND_CONFIRMED, 'and nothing else says "full copy"');
     assert.ok(text.includes('Read more Terms of Service (www.fieldlogichq.ca/legal/terms) Privacy Policy (www.fieldlogichq.ca/legal/privacy) Contents'));
   });
 
@@ -182,7 +183,7 @@ describe('one full-copy rule for the Security page and answer 4', () => {
   });
 
   it('answer 4 renders the clause exactly when the Security page renders its full-copy line', () => {
-    for (const [links, offered] of [[A, false], [{ ...A, dataTermsHref: B.dataTermsHref }, true], [B, true]] as const) {
+    for (const [links, offered] of [[A, FULL_COPY_BY_HAND_CONFIRMED], [{ ...A, dataTermsHref: B.dataTermsHref }, true], [B, true]] as const) {
       const mod = loaderWith(links)('components/marketing/BoardQuestions.tsx') as {
         boardQuestions: (o: { club: boolean }) => Array<{ q: string; a: unknown }> | null;
       };
@@ -192,9 +193,9 @@ describe('one full-copy rule for the Security page and answer 4', () => {
     }
   });
 
-  it('today it follows the Data Terms; the owner\'s Ask 29 confirmation is one constant', () => {
-    assert.equal(FULL_COPY_BY_HAND_CONFIRMED, false);
-    assert.equal(fullCopyOffered({ dataTermsHref: null }), false);
+  it('the owner\'s Ask 29 confirmation (2026-11-22) is one constant, and it offers the copy before the Data Terms publish', () => {
+    assert.equal(FULL_COPY_BY_HAND_CONFIRMED, true);
+    assert.equal(fullCopyOffered({ dataTermsHref: null }), true);
     assert.equal(fullCopyOffered({ dataTermsHref: B.dataTermsHref }), true);
   });
 });

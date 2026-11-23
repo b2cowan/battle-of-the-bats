@@ -16,6 +16,7 @@ import {
   closedPlansGroupTag, availableNowSentence, allProgramPlansOpen, anyProgramPlanOpen, formatPriceAmount,
 } from '../../lib/plan-config.ts';
 import { BILLING_TAX_WORDS } from '../../lib/billing-tax.ts';
+import { FULL_COPY_BY_HAND_CONFIRMED } from '../../lib/full-copy-promise.ts';
 import { planTrialLine, clubTrialLine } from '../../lib/plan-trial-line.ts';
 import type { OrgPlan } from '../../lib/types.ts';
 
@@ -347,7 +348,7 @@ describe('S3b, in both states', () => {
       assert.ok(clubs.includes('Coaches can paste or upload a roster.'), 'the club answer');
       assert.ok(!clubs.includes('What does a year cost?'), `/for-clubs (${name}): no closed price`);
       assert.ok(clubs.includes("if you cancel, we don't refund the unused part"), '/legal: if you cancel');
-      assert.ok(!clubs.includes('ask us for a full copy'), 'the full copy waits for the data terms');
+      assert.equal(clubs.includes('ask us for a full copy'), FULL_COPY_BY_HAND_CONFIRMED, 'the full copy waits for the data terms or the owner\'s Ask 29 confirmation');
     }
     const open = await render('app/for-clubs/page.tsx', ALL_OPEN);
     assert.ok(open.includes(`Club is ${formatPriceAmount(PLAN_CONFIG.club.annualPrice)} a year or ${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)} a month, ${BILLING_TAX_WORDS.plusTax}.`), 'answer 6 from PLAN_CONFIG');

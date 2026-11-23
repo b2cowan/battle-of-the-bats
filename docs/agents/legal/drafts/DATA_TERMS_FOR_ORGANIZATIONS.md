@@ -3,13 +3,21 @@
 | | |
 |---|---|
 | **Version** | 0.1 — has no version of its own once published: it is part of the Terms of Service and changes only with a new Terms version (`DATA_TERMS_ACCEPTANCE_NOTE.md`) |
-| **Status** | **owner-approved 2026-11-18** — not published, **not reviewed by a lawyer** |
+| **Status** | **owner-approved 2026-11-18; the 2026-11-21 §8 uploaded-files bullet re-approved and the §11 Payments Terms words trimmed, owner 2026-11-22** — not published (publishes with the Club release's Terms version), **not reviewed by a lawyer** |
 | **Effective date** | — (the effective date of the Terms version that first includes it) |
-| **Last reviewed** | 2026-11-18 |
+| **Last reviewed** | 2026-11-22 |
 | **Backlog item** | `LEGAL_INDEX.md` Documents row "Data-processing terms for clubs"; Board Ready plan §0a/§0c |
 | **Research** | `BOARD_READY_DATA_TERMS_REVIEW.md` (census, supplier terms, Québec/PIPEDA fit, owner questions, lawyer's eye) |
 
 **Change log**
+- **0.1, 2026-11-22 (owner rulings, Club release)** — (1) **§11 trimmed:** "the record of the Terms and Payments Terms your
+  owners agreed to" now reads "the record of the Terms your owners agreed to", because the Payments Terms do not publish with
+  the Club release (the owner ruled 2026-11-22 that the flip does not wait for online payments); the words are kept under
+  "Held for the Payments Terms version" at the foot and come back with that version. Removes a duty from nobody (it
+  is a list of what we keep), so still not a §18 change. (2) **The §8 uploaded-files bullet of 2026-11-21 is RE-APPROVED.**
+  (3) **Owner question 9 answered (confirmed 2026-11-22): the full copy within 30 days is produced by hand** until the product
+  has a real export. In the owner's words: "I am fine doing that part myself until the application has a real export. we will
+  be building that real export before year end anyways which should be before a user has data and wants to leave."
 - **0.1, 2026-11-21 (owner ask: say what happens to uploaded files) — NEEDS THE OWNER'S RE-APPROVAL of this one bullet.**
   §8's backups bullet now says we keep no backup copy of uploaded files, that a deleted or replaced file can't be
   restored, and recommends the organization keep its own copy. It states a limit of the service the old wording already
@@ -209,13 +217,13 @@ of a failure in our safeguards or a company on our list:
   owner asks.
 - **When your organization is deleted**, its information and the files uploaded to it are deleted with it. Copies in our
   database backups are gone within 7 days.
-- **What we keep after that:** our own tax records of what you bought; the record of the Terms and Payments Terms your
+- **What we keep after that:** our own tax records of what you bought; the record of the Terms your
   owners agreed to; and a record that the deletion happened (the organization's name and web address, who deleted it,
   when and why). None of these holds your members' information.
 - **Our server's technical logs**, which can hold internet (IP) addresses, are deleted after 90 days.
 
 > NOTE — "Within 30 days" for a full copy: no complete export exists in the product (backlog L10: the club export's
-> "everything" statement is untrue), so the owner produces it by hand; owner question 9. "Gone within 7 days": daily
+> "everything" statement is untrue), so the owner produces it by hand; **owner question 9 ANSWERED 2026-11-22 (confirmed, by hand, until a real export is built)**. "The Terms" in the keep-list reads without "and Payments Terms" until that version publishes (owner 2026-11-22). "Gone within 7 days": daily
 > backups kept 7 days (`BACKUPS_AND_RESTORE.md`). The keep-list equals Privacy §9 (next-version draft, which adds the
 > Payments Terms record). Org deletion removing files: `45c134bea`, shipped with the 2026-11-17 legal-pages release
 > (`PUBLICATION_HANDOFF_REVIEW_6_7.md`); confirm in the release-history record before publishing. "None of these holds your
@@ -261,14 +269,21 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
    force no later. Both pages are a `/plan` build (Board Ready plan 0a-5): they go live the day the held Terms version
    publishes, or this text waits for the Terms version after (the Terms draft's publishing note).
 2. The Terms edits T1–T4 are in the Terms version that carries these Data Terms (the acceptance note).
-3. Two-step sign-in is on production (the §8 bullet), or the bullet is cut.
-4. Org deletion removes files on production (`45c134bea`; the release-history record).
-5. The owner has a by-hand procedure for §10 (a child's record and its files) and §11 (a full copy within 30 days).
+3. ~~Two-step sign-in is on production (the §8 bullet)~~ **Met: on production since the 2026-11-22 promote.**
+4. ~~Org deletion removes files on production (`45c134bea`)~~ **Met: `45c134bea` is in the 2026-11-22 promote.**
+5. ~~The owner has a by-hand procedure for §10 and §11~~ **§11 confirmed 2026-11-22 (full copy by hand; Q9 answered).** §10 (a child's record and its files) stays by hand with the procedure note in `BOARD_READY_DATA_TERMS_REVIEW.md`.
 6. **(2026-11-20, Board Ready Stage 4 Part 3)** The §12 sentence about sign-up answers and files is true once Parts 1–3
    of the club sign-up form are on production. **No retention or "within a day" sentence about those files and health
    answers goes into §10, §11 or §12 until migration 516 (the six-hourly sweep schedule; the owner's yes) has been applied
    on production and one run has succeeded.** Then add: family files and health answers collected by a club's sign-up
    form are removed 90 days after the season is marked finished, or 120 days after its last day if it never is.
+
+**Out of this release (owner 2026-11-22):** the 90/120-day retention sentence of item 6 stays out unless one run of the
+sweep (migration 516, scheduled on production 2026-11-22) is confirmed on release day.
+
+**Held for the Payments Terms version (restore with it):** §11, the keep-list bullet "What we keep after that": "the record of
+the Terms and Payments Terms your owners agreed to" (today: "the record of the Terms your owners agreed to"). Data Terms change
+only with a Terms version, so this rides the Terms version that adds the Payments Terms.
 
 **Publishing steps** — as the Terms' (Stage 6 plan §6.7 shape): frozen as part of the Terms version, served beside it,
 this draft deleted and the index pointed at the product's copy.

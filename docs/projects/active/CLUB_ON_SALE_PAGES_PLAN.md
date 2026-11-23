@@ -490,6 +490,13 @@ prerequisite: it can ship closed-safe before the flip, or after it. Every sectio
   FAQ heading, "org-wide financials") all ruled as recommended** — C1–C5 keep what was built; C6 changed the For Leagues
   Club card's "org-wide financials" to "the club's books". **Owner steps still owed:** a name search for Kestrel Bay, the by-hand owner change (W70
   answer 2), the by-hand full copy before the data terms publish.
+  > ⚖ **All three answered 2026-11-22 (owner).** The drawings on the For Clubs and For Leagues cards: *"drawings look good"*
+  > (the browser look owed since 2026-11-21). The by-hand owner change: *"i know i can change an owner"* (platform admin › the
+  > club › Make owner, on a request from the current owner's address). **Ask 29, the by-hand full copy, CONFIRMED:** *"I am
+  > fine doing that part myself until the application has a real export. we will be building that real export before year
+  > end anyways which should be before a user has data and wants to leave."* The code's one switch is flipped, so answer 4's
+  > "or ask us for a full copy" and the Security page's plain full-copy line no longer wait for the data terms (their tests
+  > follow the switch). The Kestrel Bay name search was already retired (line 441).
 
 ### S4 — Buying from inside the product (depends on S1; after S3 because both touch the plan cards)
 

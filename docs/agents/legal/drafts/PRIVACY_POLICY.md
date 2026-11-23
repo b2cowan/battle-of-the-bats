@@ -1,20 +1,30 @@
-# DRAFT — FieldLogicHQ Privacy Policy, the version after 2026-11-17
+# DRAFT — FieldLogicHQ Privacy Policy, the version after 2026-11-22
 
 | | |
 |---|---|
-| **Version** | next after 2026-11-17 (posted with a new effective date under §13; no new use and no new kind of company, so no advance email is owed: what we collect does not change, one purpose narrows, one email and one invoice kind are gone, and one existing record is named in two rows) |
-| **Status** | draft — held to publish on the same day as the Payments Terms (owner call (b), recommended); not published |
-| **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
-| **Last reviewed** | 2026-11-22 (0.6: Board Ready D1, the staff-records sentences in §5 and §10; 0.5: Club Communications as-built, three sentences; before that 2026-11-20, 0.4: Board Ready Stage 4 Part 3 §5 edits; 2026-11-18, 0.2: Board Ready data terms, with its follow-through) |
+| **Version** | next after 2026-11-22, **draft 0.7** (the Club release version; posted with a new effective date under §13; no new use and no new kind of data: what we collect does not change, one purpose narrows, one email and one invoice kind are gone, one existing record is named, and one saved-work kind is described; no advance email is owed) |
+| **Status** | draft — owner rulings of 2026-11-22 apply it (the split below); publishes with the Club release, the same day and the same date as the Terms of Service, the Data Terms and the list of companies; **not published**; the Payments Terms mentions are HELD OUT (foot of the draft) |
+| **Effective date** | — (the Club release's promote day, the same date as the Terms version; later than 2026-11-22, which the published version already holds) |
+| **Last reviewed** | 2026-11-22 (0.7: the Payments Terms split, the deletion-request clause, the saved-work row; before that 0.6, 0.5, 0.4, 0.2) |
 | **Starts from** | `lib/legal-documents/privacy/2026-11-22.md`, word for word, with the changes in the log |
 
 **Change log**
+- **Draft 0.7 (2026-11-22, Club release; owner rulings of 2026-11-22: "do the split now")** — three things. (1) **The Payments
+  Terms mentions are taken out** (the §3 acceptance row, the §9 acceptance-record bullet, the §9 organization-deleted bullet),
+  because the owner ruled 2026-11-22 that the Club flip does not wait for online payments, so the Payments Terms do not
+  publish with this version. The three places read as the published 2026-11-22 text does; the added words are kept word for
+  word under "Held for the Payments Terms version" at the foot. The rest of 0.1 (the retired fee invoice, §3 and §6) stays: it
+  is true with payments on or off. (2) **§9 gains the deletion-request clause** (carry-forward A10, `ORG_DELETION_REQUEST_WINDOW.md`
+  item 4; the request record, migration 514, is on production). (3) **§3 and §9 gain one row on work you save for later**
+  (carry-forward, owner ruling 2026-11-22, Bank check S7; the sweep, migration 523, is on production; the feature that saves
+  the work is not, so the row publishes only with the promote that carries it: release-day step). No new use or kind of
+  data, so no advance email under §13. Draft 0.6 below now says "the Club release", not "the Payments Terms".
 - **Draft 0.6 (2026-11-22, Board Ready D1; owner ruling 2026-11-22, `BOARD_READY_PLAN.md` §0c D1)** — the promise about what
   our staff open is narrowed to what the product records, in §5 and §10. The published 2026-11-17 text says "every page they
   open in our own tools is recorded"; the records-opened log held club, person and sent-email records only (migration 521
   adds feedback and early-access lead records), so both places now name those five kinds. No new use or kind of data, a
   narrower promise, so no advance email under §13. §9's sentence on the list of pages our staff visit is unchanged and
-  still true. The published text is frozen: this version carries the correction when it publishes with the Payments Terms.
+  still true. The published text is frozen: this version carries the correction when it publishes with the Club release.
   The same record opened again within ten minutes is recorded once (deliberately not stated here). **Ruled 2026-11-22
   (owner):** §5 does not also name the page-visit list; §9 discloses it, and it is browser-driven and can miss a visit,
   so §5 promises only the records log.
@@ -50,7 +60,7 @@
   4. §3, the acceptance row (~L32), and 5. §9, the acceptance-record retention bullet (~L222): both name the Payments
      Terms agreement, which keeps an owner's email for six years after the account closes (Payments Terms §15; mig 497;
      the Payments Terms draft's Before list item 7).
-  Fixes the `LEGAL_INDEX.md` carry-forward row (`STRIPE_FEE_INVOICE_RETIREMENT.md`): MUST-FIX before the first production
+  **0.7: items 4 and 5 (the Payments Terms record) are held out; see the foot.** Fixes the `LEGAL_INDEX.md` carry-forward row (`STRIPE_FEE_INVOICE_RETIREMENT.md`): MUST-FIX before the first production
   club sets up payouts. Nothing else changes.
 - **Draft 0.2 (2026-11-18, Board Ready data terms; owner Q11 "fold them in now")** — edits P1–P6, P8, P9 of
   `BOARD_READY_DATA_TERMS_REVIEW.md` §3: §6 gains an **ImprovMX** row (forwards mail to our addresses; France until
@@ -102,7 +112,7 @@ officials, treasurers, volunteers), and people who buy a plan. Everyone who hold
 | What we collect | Why |
 |---|---|
 | Name, email address and password | To create your account, sign you in and contact you about it. Your password is stored by our sign-in provider in a protected (hashed) form; we never see it. |
-| Which version of our Terms of Service and this policy you accepted (and, for an owner who sets up online payments for a club, which version of our Payments Terms you agreed to for it), the exact words you ticked, the email address you used, when, and where (for example at sign-up or at checkout) | To show what you agreed to. We keep it for at least six years after your account closes (§9). We don't record your internet (IP) address for this. |
+| Which version of our Terms of Service and this policy you accepted, the exact words you ticked, the email address you used, when, and where (for example at sign-up or at checkout) | To show what you agreed to. We keep it for at least six years after your account closes (§9). We don't record your internet (IP) address for this. |
 | The organizations and teams you belong to, your role and title | To show you the right screens and let the club control who sees what. |
 | For the account owner who buys a plan, or who turns on online payments for a club: the billing address, and (when a card is used) the card's brand, last four digits and country | To bill you for your plan, to work out the sales tax that applies to your plan and, where it applies, to the fee FieldLogicHQ takes from a club's online payments, and to show you which card is on file. Your full card number goes to Stripe, never to us. |
 | **For each sale, our tax record of it:** the name on the invoice, the full billing address it was taxed on (including the postal code — **for a coach buying as a person, that is usually a home address**), the card's country, the country of a club's payout account, and, where a buyer declares where they are, which version of that declaration they gave and when | The tax law requires us to keep evidence of where each sale was taxed. It is kept apart from your account, so closing the account does not remove it (§9). Our staff can see it to answer tax questions, and can add a note to a sale that needs a second look. |
@@ -111,6 +121,7 @@ officials, treasurers, volunteers), and people who buy a plan. Everyone who hold
 | If an organization **requires** two-step sign-in for your role: the time your set-up period started in that organization, and the dates we last emailed you about it | To give you your set-up time, and to send each email only once. |
 | If you ask us to **reset your two-step sign-in**: the request — which of our staff made it, how you asked, a note of why, when each step happened (you confirming, the reset running, being held or cancelled) — and a one-way (hashed) form of the confirmation link | To confirm it is you, to carry out the reset, and to keep a record in case it is questioned later. |
 | Settings you choose (for example light or dark display, reminders you have dismissed) | To remember your preferences. |
+| Work you save for later (for example, a bank check you haven't finished): what you typed and which lines you marked, kept for you alone; someone else who can do the same work sees only your name (or email), the date it's for and the day you last changed it | So you can leave and come back to it. |
 | What you send us — support emails, feedback you submit in the product, a request to delete your organization | To answer you and improve FieldLogicHQ. Feedback submitted in the product is stored with your name, email address, role and organization, the page you were on, your internet (IP) address and your browser type, so we can find and fix the problem. Email addresses you type into the message itself are removed. |
 
 **Your use of the product.** We keep records of changes made in an organization's space (for example, who changed a
@@ -304,17 +315,20 @@ and email addresses.
   after the end of the tax year they relate to. They include, for each sale, the name, billing address and card country it
   was taxed on. Closing your account, deleting an organization, or asking us to delete your information does not remove
   these records before that period ends.
-- **The record of which version of our Terms of Service you accepted**, and of which version of our Payments Terms an
-  owner agreed to for a club (§3), is kept for **at least six years** after your
+- **The record of which version of our Terms of Service you accepted** (§3) is kept for **at least six years** after your
   account closes, so we can show what was agreed if a question about it comes up later. It keeps the email address you used at the
   time; closing your account does not remove it before that period ends.
 - **Information a club keeps** stays while its organization exists; the club decides how long to keep its members'
   information. A club can remove a player from a team, but a child's record (§5) is kept until we delete it at the club's
   or a parent's request, or the organization is deleted. **When an organization is deleted, its information and the files
-  uploaded to it are deleted with it**, except our own tax records (above), the record of the Payments Terms its owners
-  agreed to (above), and our record that the deletion happened (the
+  uploaded to it are deleted with it**, except our own tax records (above) and our record that the deletion happened (the
   organization's name and web address, who deleted it, when and why). Copies in our routine database backups are gone within
   7 days.
+- **A request to delete an organization.** If you ask us to delete an organization, we keep your request (the email address
+  you used, the reason you gave if any, when you asked, and when and how we answered) with the organization. After the
+  organization is deleted we keep it as part of our record that the deletion happened. Closing your account does not remove it.
+- **Work you save for later** (§3) is kept until the end of the 30th day after your last change, then deleted automatically,
+  and sooner when you finish it, start over, or lose access to that work.
 - **Invitations nobody accepts.** A club's invitation to join its organization stays open for 30 days from the day it
   was last sent (the club can send it again, which starts the 30 days again). After that it has run out: it can no longer be
   accepted, and the club sees it marked as run out. Thirty days after that, we remove it. If the invitation created a
@@ -417,52 +431,71 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
 > NOTE — Owner material from here to the end; the preview drops it.
 
 **Owner decisions**
-- **(b)** When it publishes — **AGREED by the owner 2026-11-18:** on the same day as the Payments Terms (v0.2, approved
-  O4), at switch-on. The
-  published 2026-11-17 version over-describes (it names a fee invoice we no longer send), which is the safe direction
-  while online payments are off in production; it **must** be replaced before the first production club sets up payouts
-  (`STRIPE_FEE_INVOICE_RETIREMENT.md`).
+- **(b)** When it publishes — **RE-RULED 2026-11-22 (owner, "do the split now"):** with the Club release, the same day and the
+  same date as the Terms, the Data Terms and the list of companies; no longer with the Payments Terms (online payments
+  stays on the Canadian launch goal, not on the Club flip). The published 2026-11-22 version over-describes (it names a fee
+  invoice we no longer send), which is the safe direction while online payments are off in production.
+- **Out of this version (owner 2026-11-22):** the 90/120-day retention sentence for a club's sign-up files and health
+  answers (item 8) stays out unless a sweep run is confirmed on release day.
+
+**Release-day steps for this document** (the full order, with the Terms, Data Terms and list, is in `LEGAL_INDEX.md`)
+1. Confirm one run of the invitation sweep succeeded on production (item 7). If not, cut the "Invitations nobody accepts" bullet.
+2. Confirm the promote carries the save-for-later work (Bank check S7). If not, cut the §3 row and the §9 bullet "Work you save for later".
+3. Confirm the sign-up form's Parts 1–3 are on production (item 8; they are as of 2026-11-22).
+4. Confirm one run of the sign-up form's file sweep (migration 516) if the retention sentence is to be added; otherwise leave it out.
+5. Freeze the text and register it (publishing steps below). The date equals the Terms version's date.
 
 **Things that must be true first**
-1. The Payments Terms publish the same day (this version names them in §3 and §9).
-2. **This version is live before the first Payments Terms agreement is recorded on production** (the tick writes that
-   record; the 2026-11-17 version does not name it).
-3. The billing address is still asked for before payouts (Stage 4 owner call (a), built: `hasBillingLocation`). If that
+1. **The Terms version publishes the same day.** The Data Terms and the list of companies, which this policy's §5 and §6 point at, go with it.
+2. The billing address is still asked for before payouts (Stage 4 owner call (a), built: `hasBillingLocation`). If that
    step is ever dropped, the §3 purpose changes again.
-4. **(0.2)** ~~ImprovMX's pre-signed DPA is countersigned (owner Q4).~~ **Met 2026-11-18: the owner countersigned it**, so
+3. **(0.2)** ~~ImprovMX's pre-signed DPA is countersigned (owner Q4).~~ **Met 2026-11-18: the owner countersigned it**, so
    §6 "How we hold them to it" keeps its ImprovMX sentence.
-5. **(0.2)** The sub-processor list (`drafts/SUBPROCESSOR_LIST.md`) is live at /legal/subprocessors, the address §6 now
-   names (a `/plan` build, Board Ready plan 0a-5). **If the list is not published by this version's day, cut that one sentence** — this version
-   must not wait for the list (it is the must-fix before the first production payout); the ImprovMX row stays either way.
-6. **(0.2)** The §5 Data Terms sentence stays only if the Data Terms publish the same day (they ride in the next Terms
-   version, owner Q6); otherwise cut it.
-
-7. **(0.3, 2026-11-18, Board Ready trust close-out 13 call (b), owner "as recommended")** The §9 bullet "Invitations nobody
+4. **(0.2)** The sub-processor list (`drafts/SUBPROCESSOR_LIST.md`) is live at /legal/subprocessors, the address §6
+   names. **If the list is not published by this version's day, cut that one sentence**; the ImprovMX row stays either way
+   (the build also refuses a list naming a company this policy does not).
+5. **(0.2)** The §5 Data Terms sentence stays only if the Data Terms publish the same day; otherwise cut it.
+6. **(0.3, 2026-11-18, Board Ready trust close-out 13 call (b), owner "as recommended")** The §9 bullet "Invitations nobody
    accepts" stays ONLY IF, on the day this version publishes, (i) the run-out rule (30 days, a Resend restarts it) and the
-   removal sweep (`lib/invitation-lapse.ts`, `lib/invitation-sweep.ts`) are on production, AND (ii) the nightly schedule
-   for `POST /api/platform-admin/invitation-sweep-nightly` is switched ON in production (built and proved on dev, not
-   scheduled as of 2026-11-18, owner's go owed), AND (iii) one nightly run has succeeded. If not, cut the whole bullet (the
+   removal sweep (`lib/invitation-lapse.ts`, `lib/invitation-sweep.ts`) are on production (they are), AND (ii) the nightly
+   schedule for `POST /api/platform-admin/invitation-sweep-nightly` is ON in production (migration 504, applied 2026-11-22
+   after job 289), AND (iii) **one nightly run has succeeded: a release-day check**. If not, cut the whole bullet (the
    published text says nothing about invitations, so it is silent, not false). Soften "Thirty days after that" to "About
    thirty days after that" if the owner will not hold the sweep to the day (the sweep takes 200 rows a run, so a backlog
    can slip a night). Re-read the bullet against the sweep's keep rule if `lib/member-account-keep.ts` changes.
-
-8. **(0.4, 2026-11-20, Board Ready Stage 4 Part 3)** The new §5 bullet about a club's own sign-up questions, files and
-   ticks publishes no earlier than the day the club's side of the sign-up form (Parts 1–3 together) is on production,
-   and it is true as soon as Part 2 collects an answer. **The §9 retention sentence and any "within a day" sentence are
-   NOT in this draft. Add them only once migration 516 (the six-hourly sweep schedule, a watched-automation change that
-   needs the owner's yes) has been applied on production AND one run has succeeded.** The sentence then says: family
+7. **(0.4, 2026-11-20, Board Ready Stage 4 Part 3)** The new §5 bullet about a club's own sign-up questions, files and
+   ticks publishes no earlier than the day the club's side of the sign-up form (Parts 1–3 together) is on production
+   (it is, 2026-11-22), and it is true as soon as Part 2 collects an answer. **The §9 retention sentence and any "within
+   a day" sentence are NOT in this draft, and stay out of this release unless a run of the six-hourly sweep (migration 516,
+   scheduled on production 2026-11-22) is confirmed (owner 2026-11-22).** If confirmed, the sentence then says: family
    files and health answers a club's sign-up form collected are removed 90 days after the season is marked finished, or
    120 days after its last day if it is never marked finished, and a file a family chose but never sent in with a
-   sign-up is deleted within about 18 hours. Until the schedule runs, nothing is removed by the clock (the sweep also
-   runs by hand and a few files at a time when a family uploads one), so the sentence would be false. Cut the 120-day
-   half only if the finish-or-backstop rule changes. The sentence about the audit log in the new §5 bullet is true once
-   Part 3 is on production (the log lists a file opening; `lib/member-audit.ts` `AUDIT_LOG_ACTIONS`).
+   sign-up is deleted within about 18 hours. Cut the 120-day half only if the finish-or-backstop rule changes. The
+   sentence about the audit log in the §5 bullet is true now that Part 3 is on production (the log lists a file opening;
+   `lib/member-audit.ts` `AUDIT_LOG_ACTIONS`).
+8. **(0.7)** The §3 row and §9 bullet "Work you save for later" publish only with the promote that carries the save-for-later
+   work (Bank check S7: committed on dev, not on production on 2026-11-22). Source: the carry-forward row in `LEGAL_INDEX.md`
+   and the S7 Part 3 review (the work lasts through the whole of the day its card names; the person's name shown to others is
+   the display name, or their email when they have none, hence "your name (or email)"). The sweep (migration 523) is on production.
+9. **(0.7)** The "A request to delete an organization" bullet in §9 is true on production (migration 514 applied 2026-11-22).
 
 **Publishing steps**
 1. Freeze the text as `lib/legal-documents/privacy/<date>.md` (the filter's output), add `{ version, sha256 }` to
    `lib/legal-documents.ts`, set `current`, keep `oldestAccepted` (a minor change: no one accepts again), set `draftPath`
-   back to null and delete this draft.
-2. Delete the `LEGAL_INDEX.md` carry-forward row for the fee invoice.
+   back to null and delete this draft. `<date>` is the Terms version's date, later than 2026-11-22.
+2. Delete the `LEGAL_INDEX.md` carry-forward rows for the fee invoice, the recorded deletion request and work you save for
+   later (the Payments Terms record rows stay until the Payments version).
+
+### Held for the Payments Terms version (word for word from 0.1; do not lose; restore when the Payments Terms publish)
+- **Publishing condition then:** this restoration needs a Privacy version live **before the first Payments Terms agreement is
+  recorded on production** (the tick writes that record; the version without these words does not name it).
+- §3, acceptance row: after "which version of our Terms of Service and this policy you accepted" add " (and, for an owner who
+  sets up online payments for a club, which version of our Payments Terms you agreed to for it)".
+- §9, the acceptance-record bullet: "The record of which version of our Terms of Service you accepted, and of which version of
+  our Payments Terms an owner agreed to for a club (§3), is kept for at least six years after your account closes, …" (the rest
+  of the bullet unchanged).
+- §9, the organization-deleted bullet: after "except our own tax records (above)," add " the record of the Payments Terms its
+  owners agreed to (above),".
 
 ## For a lawyer's eye
 

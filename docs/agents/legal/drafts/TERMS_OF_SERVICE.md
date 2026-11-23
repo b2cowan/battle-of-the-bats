@@ -1,14 +1,26 @@
-# DRAFT — FieldLogicHQ Terms of Service, the version after 2026-11-17
+# DRAFT — FieldLogicHQ Terms of Service, the version after 2026-11-22
 
 | | |
 |---|---|
-| **Version** | next after 2026-11-17, draft 0.4 (0.4's T5 needs the owner's §18 call: see its note in §8; 0.1 to 0.3 are minor changes under §18) |
-| **Status** | draft — for the owner's approval; held to publish on the same day as the Payments Terms (0.2's T1–T4 carry the owner-approved Data Terms) |
-| **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
-| **Last reviewed** | 2026-11-18 |
+| **Version** | next after 2026-11-22, **draft 0.5** (the Club release version: T1–T4 the Data Terms, 0.3 the dropped example, T5 the team-move sentence, T6 the free-time sentence in §9; the Payments Terms edits of 0.1 are held out; T5 wording approved and ruled a minor change, owner 2026-11-22, on a release-day condition) |
+| **Status** | draft — owner-approved 2026-11-22 (T5 wording, T5 minor under §18, T6 added); publishes with the Club release, the same day and date as the Data Terms page, the list of companies and the new Privacy Policy version; not published; not reviewed by a lawyer |
+| **Effective date** | — (the promote day of the Club release; the file is named by that date, which must be later than 2026-11-22: the published version already holds that name) |
+| **Last reviewed** | 2026-11-22 |
 | **Starts from** | `lib/legal-documents/terms/2026-11-22.md`, word for word, with the changes in the log |
 
 **Change log**
+- **Draft 0.5 (2026-11-22, Club release; owner ask "write up the new terms")** — rebased on the published 2026-11-22 text
+  (the file the promote of 2026-11-22 serves). **The Payments Terms edits of 0.1 are taken out** (§1's sentence and
+  its link, §13's clause, §19's clause): the owner ruled 2026-11-22 that the Club flip does not wait for online payments,
+  so the Payments Terms do not publish with this version and a sentence pointing at them would link to nothing. The three
+  edits are kept word for word under "Held for the Payments Terms version" at the foot and ride that later version.
+  Everything else in 0.4 stays: T1–T4 (Data Terms; the pages are built and hidden, they go live with this version), 0.3 (the
+  dropped example), T5 (the team-move sentence).
+- **Draft 0.5, owner rulings of 2026-11-22** — (1) **T5's wording approved as drafted.** (2) **T5 ships as a MINOR change under
+  §18, on one condition: the count of paying subscriptions on production is still 0 on publish day** (a release-day step
+  below; if it is not 0 and a move is possible, T5 is significant: 30 days' email, then accept again). (3) **T6 added: one
+  sentence at the end of §9** for the free-time fall-back (`ON_SALE_PAGES_S4_PART3_REVIEW.md` recommendation 2), as `/legal`
+  worded it. It gives the customer more, not less. Nothing else was added.
 - **Draft 0.1 (2026-11-17)** — three edits, all to point at the Payments Terms (backlog L3, `drafts/PAYMENTS_TERMS.md`):
   §1 gains the sentence cut from v1.0 (Stage 6 plan §2 row 1: "add it back with L3"); §13 names the Payments Terms
   beside Stripe's own terms; §19 "Whole agreement" names them. Nothing else changes.
@@ -48,11 +60,7 @@ These Terms of Service ("Terms") are the agreement between us and you when you c
 buy a plan. "You" means the person accepting these Terms and, if you accept them for a club, league, association or
 other organization, that organization too. If you accept for an organization, you confirm you are allowed to bind it.
 
-Our [Privacy Policy](/privacy) explains how we handle personal information. If your organization takes payments online
-through FieldLogicHQ, our [Payments Terms](/legal/payments) also apply to it.
-
-> NOTE — The sentence cut from v1.0. `/legal/payments` does not exist yet: the Payments Terms publish build adds the route
-> beside `/legal/terms` and `/legal/privacy` (the two links above use the product's own paths; match them at publishing).
+Our [Privacy Policy](/privacy) explains how we handle personal information.
 
 ## 2. What FieldLogicHQ is
 
@@ -191,13 +199,17 @@ the day you agree, because the club’s plan then covers the team. We do not ref
 you paid for, and you will not be charged for your own plan again. Before you agree, we show you this and, where we have
 it, the date your plan would have run to. This is different from cancelling, where your plan runs to the end of the period.
 
-> NOTE — T5 (owner ruling (b), 2026-11-19; `/legal` text). It is a carve-out from the last paragraph of this section ("we
-> will refund the unused part") for one case, so against §18 it removes a refund a coach could claim. `/legal` recommends
-> publishing it **before any club can receive a team on production** (no club is on sale there, so nobody has yet had the
-> right to lose) and bundling it with this version, so it arrives as an ordinary new version and the accept-again question
-> is the one this version already answers. If a coach purchase exists and a move is possible first, treat it as a
-> significant change (30 days' email, then accept again). The confirm-screen sentence must not reach production before
-> this version does.
+> NOTE — T5 (owner ruling (b), 2026-11-19; `/legal` text, `ON_SALE_PAGES_S2_REVIEW.md` §4). **OWNER APPROVED the wording as drafted and ruled it
+> a MINOR change, 2026-11-22, on the condition that the paying-subscription count is still 0 on publish day (release-day step 2).** It is a carve-out from the last paragraph of this section ("we will refund the unused part") for one case, so
+> against §18 it removes a refund a coach could claim. **Read against production on 2026-11-22:** no coach holds a
+> subscription (0 subscriptions of any kind; the one team workspace has free time given by staff), so nobody holds the right
+> this removes, and this version can publish as an ordinary minor change (`current` moves, `oldestAccepted` stays: nobody
+> is asked to accept again). **Recheck the count of paying coach subscriptions on the publishing day**; if one exists and a
+> move is possible, treat T5 as significant (30 days' email, then accept again). **Ordering gap:** the confirm-screen
+> sentence (`lib/team-move-carve-out.ts`, `731fc586d`) is ALREADY on production (the 2026-11-22 promote), before this
+> version. Harmless today for the reason above, but publish this version before any paying coach can move a team. The
+> sentence also covers only a coach moving INTO a club; a team leaving a club for a standalone coach was not part of ruling
+> (b) and has no plan consequence for the coach (they start their own plan, if any).
 
 **While a cancel or a move to a free plan is waiting,** your plan cannot be changed to another plan, higher or lower,
 until that date. To change it, keep your current plan first (from the billing page), then make the change. You can
@@ -221,6 +233,9 @@ you can come back** and pick up where you left off:
 We will try to email the owner a warning before that period ends. If you reactivate within that period, everything comes
 back. **After that period we may permanently delete it.** If there is anything you want to keep, download or print it
 before your plan ends.
+
+If free time we gave your organization is still running when a paid plan ends, your organization goes back to that free plan
+instead, and this section does not apply.
 
 ## 10. Our intellectual property
 
@@ -252,7 +267,7 @@ is regularly wiped. Do not enter real personal information in a demo.
 
 FieldLogicHQ relies on other companies — for example Stripe for payments and the companies on our
 [list of the companies that handle your information](/subprocessors). Your use of Stripe's checkout and, if you take payments online, your Stripe account, is also governed by
-Stripe's own terms; taking payments online is also covered by our Payments Terms (§1). We are not responsible for another company's service outside our control, but we choose them
+Stripe's own terms. We are not responsible for another company's service outside our control, but we choose them
 carefully and hold them to protect your information (our Data Terms §6).
 
 ## 14. Disclaimers and limits on our responsibility
@@ -315,8 +330,8 @@ starts handling Customer Data, we tell account owners as our Data Terms (§6) sa
   Except where consumer protection law lets you bring a claim where you live, the courts of Ontario decide any dispute.
 - **Talk to us first.** If you have a problem, email support@fieldlogichq.ca and give us 30 days to try to fix it before
   starting a legal claim. This does not stop either of us seeking urgent relief.
-- **Whole agreement.** These Terms (including our Data Terms) and the Privacy Policy, together with the Payments Terms for
-  an organization that takes payments online, are the whole agreement between us about FieldLogicHQ.
+- **Whole agreement.** These Terms (including our Data Terms) and the Privacy Policy are the whole agreement between us
+  about FieldLogicHQ.
 - **If part is invalid,** the rest still applies.
 - **Not giving up rights.** If we do not enforce a term straight away, we can still enforce it later.
 - **Transfer.** You may not transfer your account or these Terms without our agreement. We may transfer them to a business
@@ -332,30 +347,41 @@ you accepted and when, for at least six years after your account closes.
 
 ## Before this can be published
 
-1. **The Payments Terms are approved and publish the same day.** This version points at them; published alone, §1 links to
-   a page that does not exist.
-2. **The 2026-11-17 version is on production first.** It ships with the next promote. If that promote renames 2026-11-17
-   to the promote day, rebase this draft on the renamed file (the text does not change).
-3. **Minor change, no fresh acceptance, unless T5 is called significant** (T5: see the note in §8; §18: it names a further document that an organization accepts separately by its own
-   tick; nothing in T1 to T4 reduces a right or raises a price. **T5 is the one edit that arguably does**, which is why it
-   waits on the owner's §18 call above). So `current` moves to the new date and `oldestAccepted` stays.
-4. **Publishing steps:** freeze the customer text as `lib/legal-documents/terms/<date>.md` with its sha256, add it to
-   `published`, move `current`; delete this draft.
-   ⚠ Do not set `draftPath` to this file before then without bringing back the "§20 words" subsection the earlier draft
-   carried (`git show b891e6bbb:docs/agents/legal/drafts/TERMS_OF_SERVICE.md`): two unit tests read §20 from any draft that
-   `draftPath` names, and this draft holds only customer text. The dev preview is unaffected either way (dev runs the
-   published pages).
-5. **(0.2) The two Data Terms pages go live the same day** — the Data Terms at /legal/data-terms (short link /data-terms),
-   frozen as part of this version with a Data Terms file dated with it, and the list at /legal/subprocessors (short link
-   /subprocessors) — a `/plan` build (Board Ready plan 0a-5). **Same-day fallback (`/plan` 2026-11-18):** if that build
-   is not done on the day, this version publishes **without** T1–T4 (§4's "Our Data Terms" paragraph out; §13, §18 and
-   §19 back to the 0.1 words, kept in git), and T1–T4 with both pages ride the Terms version after. The Payments Terms
-   day is never held for them. Decided on the day, not before.
+1. ~~Owner approves the T5 wording and the §18 call~~ **Done 2026-11-22:** approved as drafted; minor change, on the publish-day count in step 2 of the release-day steps.
+2. **Same day, same promote:** the Data Terms page (frozen as `lib/legal-documents/data-terms/<this version's date>.md`, registered in
+   `DATA_TERMS_VERSIONS`), the list of companies (`lib/legal-documents/subprocessors/<date>.md`, registered in
+   `SUBPROCESSOR_LIST_VERSIONS`), and a **new Privacy Policy version that names ImprovMX** (the build fails if the list in
+   force names a company the Privacy Policy in force does not: `tests/unit/legal-data-terms-and-list.test.ts`). The pages are built and answer
+   "not found" until those files exist. If any of the three is not ready that day, publish this version WITHOUT T1–T4 (§4's
+   "Our Data Terms" paragraph out; §13, §18 and §19 back to the published words); T5 and 0.3 still go; T1–T4 ride the next version.
+3. **The version date is later than 2026-11-22** (the published version holds that name). Never rename it once production serves it.
+4. **Minor change, no fresh acceptance** (unless T5 is called significant): `current` moves to the new date, `oldestAccepted` stays
+   2026-11-22. T1–T4 add duties to us only (`DATA_TERMS_ACCEPTANCE_NOTE.md`). Keep it that way: any Data Terms clause that puts a new
+   duty on a club makes this a §18 change.
+5. **Publishing steps:** freeze the customer text as `lib/legal-documents/terms/<date>.md` with its sha256, add it to `published`,
+   move `current`; delete this draft. ⚠ Do not set `draftPath` to this file before then without bringing back the "§20 words"
+   subsection the earlier draft carried (`git show b891e6bbb:docs/agents/legal/drafts/TERMS_OF_SERVICE.md`): two unit tests read
+   §20 from any draft that `draftPath` names, and this draft holds only customer text.
+6. ~~Optional §9 free-time sentence~~ **Added 2026-11-22 (owner): T6, the last paragraph of §9.**
+
+### Release-day steps for this document (in order; the full cross-document order is in `LEGAL_INDEX.md`)
+1. The version date is the promote day and later than 2026-11-22; the Data Terms file, the list copy and the Privacy file carry the same date.
+2. **Count the paying subscriptions on production (a count only).** 0: T5 ships as a minor change. Not 0 and a move is possible: stop; T5 is significant (30 days' email to the owners, then accept again); do not publish T5 as minor: ask the owner.
+3. Freeze the customer text, register the sha256, move `current`, keep `oldestAccepted`.
+
+### Held for the Payments Terms version (word for word from 0.1; do not lose)
+- §1, after the Privacy Policy sentence: "If your organization takes payments online through FieldLogicHQ, our
+  [Payments Terms](/legal/payments) also apply to it." (the route does not exist until the Payments Terms publish).
+- §13, after "Stripe's own terms": "; taking payments online is also covered by our Payments Terms (§1)".
+- §19 Whole agreement: "These Terms (including our Data Terms) and the Privacy Policy, together with the Payments Terms for an
+  organization that takes payments online, are the whole agreement between us about FieldLogicHQ."
 
 ## For a lawyer's eye
 
-- §19's whole-agreement clause now spans three documents, one accepted only by organizations that take payments. Check
-  that the Payments Terms' "these win where they differ" (Payments Terms §1) works with it.
+- (0.5) T5 removes a refund a coach could otherwise claim under §8's last paragraph, by a minor-change version with no fresh
+  acceptance. Nobody holds a subscription today, so nobody loses it; whether a unilateral change under §18 binds a coach who
+  bought under the earlier text is the question if a paying coach ever exists first. The Payments Terms' own "these win where
+  they differ" (Payments Terms §1) is for the later version that adds them to §19.
 - (0.2) The Data Terms come in by reference through the existing tick, with no signature (`DATA_TERMS_ACCEPTANCE_NOTE.md`
   § Lawyer's eye): the norm, and the record shows who ticked which version; worth a read for a club that is a non-profit
   corporation with a board. The Data Terms' own "For a lawyer's eye" list covers the cap (§14) over their §6 and §9.
