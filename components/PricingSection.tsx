@@ -546,7 +546,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
         {demoDoorsOpen && !isGated && !onChoosePlan && DEMO_DOORS[plan.key] && (
           <p className={`${kit.small} ${styles.planDemoLine}`}>
             Not ready?{' '}
-            <Link href={DEMO_DOORS[plan.key]!.href} className={`${kit.link} ${styles.planDemoLink}`}>
+            <Link href={DEMO_DOORS[plan.key]!.href} prefetch={false} className={`${kit.link} ${styles.planDemoLink}`}>
               {DEMO_DOORS[plan.key]!.label}
             </Link>
           </p>

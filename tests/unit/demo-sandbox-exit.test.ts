@@ -235,11 +235,8 @@ describe('a demo door opens only for a person going there, never for a prefetch'
   test('both doors answer anything but a navigation before they meter, read or sign in', async () => {
     const exit = await readFile(new URL('../../lib/sandbox-exit.ts', import.meta.url), 'utf8');
     const notAPress = exit.slice(exit.indexOf('export function demoDoorNotAPress'), exit.indexOf('export async function currentSessionUser'));
-    // a Next prefetch, a browser prefetch/prerender (Sec-Purpose), the app's in-page RSC fetch, a non-document fetch
-    assert.match(notAPress, /isPrefetchRequest\(request\)/);
-    assert.match(notAPress, /request\.headers\.get\('rsc'\)/);
-    assert.match(notAPress, /!!dest && dest !== 'document'/);
-    assert.match(notAPress, /new NextResponse\(null, \{ status: 204, headers: \{ 'Cache-Control': 'no-store' \} \}\)/);
+    // a Next prefetch or a browser prefetch/prerender (Sec-Purpose) — and NOT the app's in-page fetch for a click
+    assert.match(notAPress, /return isPrefetchRequest\(request\) \? new NextResponse\(null, \{ status: 204, headers: \{ 'Cache-Control': 'no-store' \} \}\) : null;/);
     for (const door of ['../../app/see-it-live/route.ts', '../../app/see-it-live/coaches/route.ts']) {
       const src = await readFile(new URL(door, import.meta.url), 'utf8');
       const get = src.slice(src.indexOf('export async function GET'));
@@ -259,18 +256,37 @@ describe('a demo door opens only for a person going there, never for a prefetch'
   });
 });
 
-test('demoDoorNotAPress: a background fetch is answered 204; a person going there (or a client that says nothing) is let in', async () => {
+test('demoDoorNotAPress: a prefetch is answered 204; a click (page load or the app\'s in-page fetch) is let in', async () => {
   const { NextRequest } = await import('next/server');
   const { demoDoorNotAPress } = await import('../../lib/sandbox-exit.ts');
   const at = (headers: Record<string, string>) => demoDoorNotAPress(new NextRequest('https://www.fieldlogichq.ca/see-it-live/coaches', { headers }));
-  // Next <Link> prefetch, the in-page fetch for a click, a fetch() of the page, a browser prerender
+  // Next <Link> prefetch (any value: its segment cache sends 1, 2 and 3), a browser prerender
   for (const headers of <Record<string, string>[]>[
-    { rsc: '1', 'next-router-prefetch': '1' },
-    { rsc: '1', 'sec-fetch-dest': 'empty' },
-    { 'sec-fetch-dest': 'empty' },
+    { rsc: '1', 'next-router-prefetch': '1', 'sec-fetch-dest': 'empty' },
+    { rsc: '1', 'next-router-prefetch': '2' },
     { 'sec-fetch-dest': 'document', 'sec-purpose': 'prefetch;prerender' },
   ]) assert.equal(at(headers)?.status, 204, JSON.stringify(headers));
+  // ⚠ the production router's fetch for a CLICK must go through (job 291: refusing it killed every demo button on prod)
+  assert.equal(at({ rsc: '1', 'sec-fetch-dest': 'empty', 'sec-fetch-mode': 'cors' }), null);
   // a real page load, and a client that sends none of the signs (never dead-ended)
   assert.equal(at({ 'sec-fetch-dest': 'document', accept: 'text/html' }), null);
   assert.equal(at({}), null);
+});
+
+test('every marketing link to a demo door is never prefetched', async () => {
+  const sites: Array<[string, RegExp, number]> = [
+    ['../../components/PricingSection.tsx', /<Link href=\{DEMO_DOORS\[plan\.key\]!\.href\} prefetch=\{false\}/g, 1],
+    ['../../app/for-clubs/page.tsx', /<Link href=\{SEE_IT_LIVE(_COACHES)?_PATH\} prefetch=\{false\}/g, 4],
+    ['../../app/for-coaches/page.tsx', /<Link href=\{SEE_IT_LIVE_COACHES_PATH\} prefetch=\{false\}/g, 2],
+    ['../../app/for-tournament-organizers/page.tsx', /<Link href=\{SEE_IT_LIVE_PATH\} prefetch=\{false\}/g, 2],
+    ['../../app/page.tsx', /<Link href=\{doorPath\} prefetch=\{false\}/g, 1],
+    ['../../app/demos/page.tsx', /href=\{demo\.door\}\s*prefetch=\{false\}/g, 1],
+    ['../../components/marketing/WalkthroughPage.tsx', /<Link href=\{w\.door\.path\} prefetch=\{false\}/g, 1],
+  ];
+  for (const [file, re, count] of sites) {
+    const src = await readFile(new URL(file, import.meta.url), 'utf8');
+    assert.equal(src.match(re)?.length ?? 0, count, file);
+    // no other <Link> to a door left prefetching
+    assert.doesNotMatch(src, /<Link href=\{(SEE_IT_LIVE(_COACHES)?_PATH|DEMO_DOORS\[[^\]]+\]!\.href|doorPath|w\.door\.path)\} className=/, file);
+  }
 });

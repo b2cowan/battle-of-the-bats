@@ -421,7 +421,7 @@ export default async function HomePage({
             </Link>
             {/* One label for both worlds — the card's own title says which "it" you'll
                 see. Product-specific wording was considered and parked (2026-08-10). */}
-            <Link href={doorPath} className={`${linkClass} ${kit.live} ${styles.secondary}`}>
+            <Link href={doorPath} prefetch={false} className={`${linkClass} ${kit.live} ${styles.secondary}`}>
               See it live — no sign-up
             </Link>
           </div>

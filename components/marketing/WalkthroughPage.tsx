@@ -123,7 +123,7 @@ export default function WalkthroughPage({
         Start free
       </Link>
       {showSandboxDoor && (
-        <Link href={w.door.path} className={cn(kit.btn, kit.btnSecondary, kit.live)}>
+        <Link href={w.door.path} prefetch={false} className={cn(kit.btn, kit.btnSecondary, kit.live)}>
           {w.door.label}
         </Link>
       )}

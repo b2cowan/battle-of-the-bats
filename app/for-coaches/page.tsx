@@ -68,7 +68,7 @@ export default async function ForCoachesPage() {
               </EarlyAccessModalTrigger>
             )}
             {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
+              <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
                 See a coach&apos;s season
               </Link>
             )}
@@ -310,7 +310,7 @@ export default async function ForCoachesPage() {
               </EarlyAccessModalTrigger>
             )}
             {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
+              <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
                 See a coach&apos;s season
               </Link>
             )}
