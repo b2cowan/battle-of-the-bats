@@ -153,7 +153,9 @@ function CheckCard({ orgSlug, teamId, view, active = true, againDate, onAddLine,
   // The saved marks' keys, until the day's figure says which it still offers (the band waits for them).
   const [pending, setPending] = useState<string[] | null>(seed.marks.length ? seed.marks : null);
   const [droppedMarks, setDroppedMarks] = useState(0);
-  const [edit, setEdit] = useState<Edit | null>(seed.swapTo ? { date: seed.swapTo, balance: '', cash: seed.cash, cashAsked: !!seed.cash } : null);
+  // "Check this date again" over other saved work: another statement, so its balance AND its cash start empty (ruling 3:
+  // the cash is fixed with its statement; /review S7 Part 3). Keep {date} leaves the saved work's own cash where it was.
+  const [edit, setEdit] = useState<Edit | null>(seed.swapTo ? { date: seed.swapTo, balance: '', cash: '', cashAsked: false } : null);
   const [askOver, setAskOver] = useState(false);
   const [figure, setFigure] = useState<TeamFigure | null>(null);
   // The figure the marks were last checked against (each new read checks them again).
@@ -553,7 +555,7 @@ function CheckCard({ orgSlug, teamId, view, active = true, againDate, onAddLine,
               {notes.length > 0 && `${notes.join(' ')} `}
               {work.keepFailed
                 ? <>{W.workKeepFailed}{' '}<button type="button" className={b.link} onClick={() => void work.flush()}>{W.tryAgain}</button></>
-                : W.workKept}
+                : work.sandboxNote ?? W.workKept}
             </p>
             {askOver ? (
               <span className={b.overAsk} role="group" aria-label={W.startOver}>

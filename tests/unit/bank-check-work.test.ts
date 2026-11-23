@@ -196,8 +196,13 @@ describe('2. the server half', () => {
     const first = await s.keepWork({ accountId: 'acct-1', me: 'me', work: WORK, revision: null });
     assert.ok(first.ok && first.saved);
     assert.equal(first.saved.revision, 1);
+    // Kept through the WHOLE of the day the card names (/review S7 Part 3): the 30th day from today, ending at the start of
+    // the next org day — never partway through the day "until {date}" promised.
     const ms = Date.parse(String(db.rows[0].expires_at)) - Date.parse(String(db.rows[0].updated_at));
-    assert.equal(ms, BANK_CHECK_DRAFT_DAYS * 86_400_000);
+    assert.ok(ms >= BANK_CHECK_DRAFT_DAYS * 86_400_000 && ms <= (BANK_CHECK_DRAFT_DAYS + 1) * 86_400_000 + 3_600_000, `30 to 31 days, ${ms}`);
+    const { addCalendarDays, tournamentToday } = await import('../../lib/timezone.ts');
+    assert.equal(first.saved.endsOn, addCalendarDays(tournamentToday(), BANK_CHECK_DRAFT_DAYS), 'the card names the 30th day from today');
+    assert.equal(tournamentToday(new Date(String(db.rows[0].expires_at))), addCalendarDays(tournamentToday(), BANK_CHECK_DRAFT_DAYS + 1), 'it goes as that day ends');
     db.rows[0].expires_at = day(2); // near its end…
     const next = await s.keepWork({ accountId: 'acct-1', me: 'me', work: { ...WORK, marked: [] , balance: '5400' }, revision: 1 });
     assert.ok(next.ok && next.saved);

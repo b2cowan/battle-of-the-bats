@@ -226,6 +226,40 @@ sentence; the walked working-draft cards change shape and their walks are redone
   Save for later, found again on another device, a colleague's line, Change's warning, Start over's question, another
   device's newer work, the pill, the No kept). **Part 3 next** (help, `/review` on the whole S7 diff, the two walks):
   `BANK_CHECK_NOVICE_UX_S7_PART3_BUILD_PROMPT.md`.
+- **Part 3 (help, the review, the two walks) BUILT 2026-11-22**, commit at the owner's word. **Help** (`/docs`): both
+  articles say what the card does (Start; kept as you go on any device until the check is saved; the end of the 30th day
+  after the last change, named by Save for later and again in the last 7 days; Change and a new date; Start over asks; a
+  No is remembered; yours alone, a colleague sees name · date · day; signing out doesn't clear it), quoting the S7 words;
+  a new sub-topic each, "Change the statement, or start over" (`bank-tab-change`, `premium-money-bank-change`); the
+  shared-computer warning goes (the work is the signed-in person's), replaced by "Your work is yours alone"; search terms
+  follow. **`/review`** (high-risk, 5 lenses) over `96e2135ea`, `e5dc36ad1`, `6a037f582` and the help: no isolation,
+  leak or removal-door defect. **Applied:** the hook (`useBankCheckWork`) runs every request one at a time (a loop wait;
+  Start, Save for later and Start over queue like a keep), no longer re-sends a failed keep every 600 ms, never says the
+  work is "gone" on a re-read that failed, clears the failed line when the card is back to what is kept, and treats a
+  server "nothing kept" answer as held (no re-send loop); **the coach demo** (no-login sandbox) printed the code name
+  "SandboxReadOnly" under Start and could not get past it: a sandbox refusal now lets the card carry on in the visit and
+  the resting line says the sandbox's own sentence; **the end date** said "until {date}" while the row went at the
+  change's time of day ON that date: `expires_at` is now the start of the day after the 30th day (org time zone,
+  `workExpiresAt`), `endsOn` the day before (dictionary gotcha 4 updated; no migration: the column and its check are
+  unchanged); **the coach's "Check this date again" over other saved work** carried the old statement's cash onto the
+  new one: it now opens with the balance AND the cash empty (said out loud: Part 2 pinned "the cash with it"; it
+  disagreed with the same button's no-work path and with ruling 3). Guards pin each fix (bank suites 553/553).
+  **Reported, not changed:** a stale device's Start over (DELETE) and a "not worth keeping" keep skip the
+  compare-and-swap (the UI can't blank a started balance; Start over is a deliberate discard); a lost response to a keep
+  that landed reads as another device's on retry; edits during Save this check's POST can draw "saved or cleared on
+  another device"; Start stays enabled on a day the account refuses; the dropped-marks count is replaced, not added; the
+  "after start" line survives Start over; the colleague line falls back to the person's email when no name is set (same
+  namer as "Checked by"; `/legal` puts "your name (or email)" in the policy row); a GET's colleague clean-up deletes on a
+  transient `canSave` miss; the second removal click skips the discard (backstopped). Migration 523 (watched): nothing.
+  **Refuted:** the team move does not revoke staff seats (it ends free time), so no removal door is missed. **`/legal`:**
+  the general "work you save for later" row and its 30-day sentence are carried into the next privacy version
+  (`LEGAL_INDEX.md` carry-forward); the No answers need nothing more. **Walks:** §558 (club) and §559 (coach), one page
+  https://claude.ai/artifact/NJdcGRTzkLnybFnfKEcQVo (source `BANK_CHECK_S7_WALK.html`); §490 and §491 marked replaced.
+  **Where the code overrode the prompt:** the second money-write coach and the club's second account already exist on
+  dev, so nothing is set up or torn down for them; the coach walk records the cheque it marks (no team line after Nov 6).
+  Checks: typecheck clean; eslint clean on every S7 file; `check:layout` on both bank screens clean; `verify:changed` 33
+  failures (the recorded baseline; none in a bank file; it stopped before its lint step); `cards.mjs` 35/35 and
+  `work-routes.mjs` 31/31 on dev (the card probe's "yesterday" fixed to Toronto's calendar).
 
 **Order:** S1 → S1b → S2 → S3 → S7 (drawing session, then build). S4 may run any time after S1. S5 is decided after S3.
 

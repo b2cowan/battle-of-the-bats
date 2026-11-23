@@ -1,0 +1,545 @@
+<title>Save For Later Walks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Bank check through a volunteer’s eyes · S7, start, work, save for later · Owner QA Ledger §558 (club) and §559 (coach)</span>
+    <h1>Save a check for later, and pick it up anywhere</h1>
+    <p class="lead">Two walks, one per portal. The bank check now keeps your work for you on our servers, from the moment you press Start: it follows you to any device you sign in on, for 30 days from your last change, and it’s yours alone. These walks replace the two browser-era walks (§490 club, §491 coach), which promised “this browser only”.</p>
+    <p class="lead">Written Nov 22, 2026 against the dev site. Each walk saves one Nov 20, 2026 check and records two coach lines named “Walk: …”; I remove them after you report. Figures in dollars come from the dev fixture as of Nov 22; the pass condition is how much each one MOVES, which the calendar can’t change.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> (dev; the dev server must be running)</dd>
+      <dt>Club treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · password <code>UATPassword2026!</code> (shows as <b>Avery Chen</b>)<br>Club link: <code>http://localhost:3000/uat-rep-club/admin/accounting/bank?account=3ebc6dde-954f-43ca-bcce-2f70e0ee6971</code></dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code> (Morgan Ellis; walk C part 3 only)</dd>
+      <dt>Head coach</dt><dd><code>uat-coach@uat-test-org.local</code> · password <code>UATPassword2026!</code> (shows as <b>UAT Coach</b>), team <b>UAT Test Team</b><br>Coach link: <code>http://localhost:3000/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe/accounting?section=ledger&view=bank</code></dd>
+      <dt>Assistant, money edit</dt><dd><code>uat-asst-treasurer@uat-test-org.local</code> · password <code>UATPassword2026!</code></dd>
+      <dt>Assistant, view only</dt><dd><code>uat-asst-money-read@uat-test-org.local</code> · password <code>UATPassword2026!</code></dd>
+      <dt>Phone</dt><dd>A private window with the browser’s device toolbar at <b>390 px</b> wide. Nothing carries over from your usual window, so it proves the work lives on our servers.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. <b>Each login may meet the Terms screen once on dev</b> (“We’ve updated our Terms”): accept it and carry on.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>Checked Nov 22, 2026:</b> nobody has work saved on Walk chequing or on UAT Test Team’s account, and neither has a check for Nov 20, 2026. Walk chequing’s last check is Nov 5 with Cheque 1042 waiting; the team’s is Nov 6 with two deposits waiting.</li>
+      <li>Walk C, then walk K, or either alone. Each needs about ten minutes.</li>
+      <li>Nothing needs setting up. The second money coach and the club’s second account were already there.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>The routes, in 31 checks: only you see your work; a colleague gets a name, a date and a day; a view-only coach and a person outside the team are refused; a saved check, Start over, the nightly clean-up and loss of access all take the work.</li>
+      <li>Both cards in a real browser at desk and phone widths (35 checks), including “Updated from another device”, which never overwrites newer work.</li>
+      <li>The bank tests (553) and the type check pass. Today’s review fixed six things you won’t see unless the network misbehaves, plus the coach demo; they’re listed in the ledger.</li>
+      <li>Both help articles now say what the card does (any device, 30 days, yours alone, signing out doesn’t clear it).</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "s7-save-for-later-walk-v1";
+  var PAGE = "Bank check through a volunteer’s eyes · S7, start, work, save for later · Owner QA Ledger §558 (club) and §559 (coach)";
+  var WALKS = [
+ {
+  "id": "C",
+  "title": "Club: a check that waits for you, on any device",
+  "job": "UAT Rep Club · Walk chequing · Nov 20, 2026 · desk, then a phone-sized private window",
+  "forText": "A treasurer starts checking a statement, marks an uncashed cheque, answers one “Still waiting?” No, and saves the work for later. On another device, the work is waiting, and the No is not asked again. A new date warns before it clears the marked line. The club owner sees only that the work exists, never its figures. Start over asks first, Save this check takes the work, and the Account pill shows which account holds it.",
+  "passes": "The work comes back in the private window exactly as left, without the answered question. Change warns before clearing. The owner sees one quiet line and no figures. Start over asks first. Saving the check leaves nothing to pick up. The Account pill marks Walk chequing while you are on Gaming account.",
+  "notIn": "The last 7 days’ amber line and the 30th day itself (they need the calendar to move; tests cover them). “Updated from another device” (proved in the browser by my own pass). The coach (walk K).",
+  "who": "Avery Chen, the treasurer, then Morgan Ellis, the owner, for part 3 only (card at the top).",
+  "where": "Admin → Accounting → Bank, account <b>Walk chequing<\/b>. Window A is your usual browser at desk width. Window B is a private (incognito) window with the device toolbar at <b>390 px<\/b>. Nothing carries over between the two, so Window B stands in for your phone.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Window A: sign in as the treasurer and open the club link (card at the top).",
+    "s": "The Bank tab on <b>Walk chequing<\/b>, with an <b>Account<\/b> pill (two accounts). The card <b>Check your bank balance<\/b> shows a Date field, a Bank balance on that date field, and one lime button, <b>Start checking this statement<\/b>. No figures yet. If the card opens on “Picked up where you left off”, stop and tell me."
+   },
+   {
+    "d": "Set <b>Date<\/b> to <b>Nov 20, 2026<\/b>.",
+    "s": "Nothing else appears: no band, no Find. (The figures wait for Start.)"
+   },
+   {
+    "d": "Type <b>8000.00<\/b> in <b>Bank balance on that date<\/b>.",
+    "s": "Still no figures. Nothing is kept yet."
+   },
+   {
+    "d": "Press <b>Start checking this statement<\/b>.",
+    "s": "A strip at the top reads <b>Checking Nov 20, 2026 · Change<\/b>. Under it: <b>The bank says<\/b> <span class=\"amt\">$8,000.00<\/span>, <b>Should be in the bank<\/b>, and an amber <b>Off by<\/b>. The foot reads <b>Kept as you go, on any device you sign in on, until you save this check.<\/b>, with <b>Start over<\/b>, <b>Save for later<\/b> and <b>Save this check<\/b>."
+   },
+   {
+    "d": "Find <b>Still waiting on Cheque 1042 · Diamond groundskeeping?<\/b> and press <b>No<\/b>.",
+    "s": "The question goes. Should be in the bank does not move (an unanswered line isn’t counted either)."
+   },
+   {
+    "d": "Under Find, press <b>Show the 30 lines<\/b> (if the lines already show, tick this and go on).",
+    "s": "The lines since the last check that matched (Nov 5), with a <b>Find an amount or a name<\/b> box."
+   },
+   {
+    "d": "In <b>Find an amount or a name<\/b>, type <b>2001<\/b>.",
+    "s": "One line: <b>Cheque 2001 · Umpire fee<\/b>, Nov 6, money out <span class=\"amt\">$10.00<\/span>."
+   },
+   {
+    "d": "Press <b>Not in the bank yet<\/b> on that line.",
+    "s": "The line is marked, with <b>Undo<\/b>. <b>Should be in the bank<\/b> goes up by exactly <span class=\"amt\">$10.00<\/span>, and <b>Started off by $X<\/b> appears, where $X is the Off by you saw at step 4."
+   },
+   {
+    "d": "Press <b>Save for later<\/b>.",
+    "s": "A green notice at the top: <b>Saved for later. Pick it up here, on any device you sign in on, until {date}.<\/b> The date is <b>30 days from today<\/b> (walking on Nov 23, it says Dec 23, 2026). The card stays open on the work."
+   },
+   {
+    "stop": true,
+    "d": "Window B: open a private window, set the device toolbar to 390 px, sign in as the treasurer, and open the club link. Accept the Terms screen if dev shows it.",
+    "s": "The card opens straight into the work: <b>Picked up where you left off<\/b>, the strip <b>Checking Nov 20, 2026 · Change<\/b>, and the bank says $8,000.00."
+   },
+   {
+    "d": "Look for the Cheque 1042 question.",
+    "s": "It isn’t there. Your No was kept with the work."
+   },
+   {
+    "d": "Read <b>Should be in the bank<\/b> and the lines counted under it.",
+    "s": "The same figure as in Window A, with <b>Cheque 2001 · Umpire fee<\/b> among the lines marked not in the bank yet."
+   },
+   {
+    "d": "Scroll to the foot of the card.",
+    "s": "On a phone the saves stack: <b>Save this check<\/b> first, then <b>Save for later<\/b>, with the resting sentence and <b>Start over<\/b> under them."
+   },
+   {
+    "d": "Press <b>Change<\/b> in the strip.",
+    "s": "The date and the balance open where the strip was. The rest of the card greys and won’t take a tap. There’s a lime <b>Use these<\/b>, and <b>Keep Nov 20<\/b>."
+   },
+   {
+    "d": "Set the date to <b>Nov 21, 2026<\/b>.",
+    "s": "An amber line: <b>A new date clears the 1 line you marked. Changing only the balance keeps it.<\/b> Nothing has changed yet."
+   },
+   {
+    "d": "Press <b>Keep Nov 20<\/b>.",
+    "s": "The strip is back to <b>Checking Nov 20, 2026<\/b>. Cheque 2001 is still marked."
+   },
+   {
+    "d": "Sign out in Window B.",
+    "s": "You are signed out. (Signing out no longer clears the work; part 4 shows it is still there.)"
+   },
+   {
+    "stop": true,
+    "who": "Owner",
+    "d": "Window B: sign in as the owner, Morgan Ellis, and open the club link.",
+    "s": "Above the fields, one quiet line: <b>Avery Chen<\/b> has a check of Nov 20, 2026 saved for later (<b>today’s date<\/b>). The owner’s own card is before Start, with empty fields."
+   },
+   {
+    "who": "Owner",
+    "d": "Read the card for the treasurer’s figures.",
+    "s": "None: no $8,000.00, no Off by, no marked cheque. Only the name, the date and the day it last changed."
+   },
+   {
+    "who": "Owner",
+    "d": "Sign out and close Window B.",
+    "s": "Window B is closed."
+   },
+   {
+    "stop": true,
+    "d": "Window A (the treasurer, still signed in): reload the page.",
+    "s": "Still the work: <b>Picked up where you left off<\/b>, Checking Nov 20, 2026, Cheque 2001 marked."
+   },
+   {
+    "d": "Pick <b>Gaming account<\/b> in the Account pill.",
+    "s": "Gaming account’s own card, before Start."
+   },
+   {
+    "d": "Open the Account pill again.",
+    "s": "Under <b>Walk chequing<\/b>, a second line in olive: <b>Your check of Nov 20 is saved for later<\/b>. Gaming account has no such line."
+   },
+   {
+    "d": "Pick <b>Walk chequing<\/b>.",
+    "s": "Straight back into the work."
+   },
+   {
+    "d": "Press <b>Start over<\/b>.",
+    "s": "One line in the foot asks first: <b>Start over? The 1 line you marked and the balance go.<\/b>, with <b>Start over<\/b> and <b>Keep working<\/b>. Nothing has gone yet."
+   },
+   {
+    "d": "Press <b>Keep working<\/b>.",
+    "s": "The question goes. The work is as it was."
+   },
+   {
+    "d": "Press <b>Save this check<\/b>.",
+    "s": "A notice: <b>Checked Nov 20, 2026. It saved as off by $X.<\/b> The card goes back to before Start (empty fields, one Start button). <b>Balance checks<\/b> has a Nov 20, 2026 row, checked by Avery Chen."
+   },
+   {
+    "d": "Reload the page.",
+    "s": "No “Picked up where you left off”. The card is before Start. The work went with the saved check."
+   }
+  ]
+ },
+ {
+  "id": "K",
+  "title": "Coach: the check follows the coach from desk to phone",
+  "job": "UAT Test Team · Money → Ledger → Balance check · Nov 20, 2026 · desk, then a phone-sized private window",
+  "forText": "A head coach starts checking with cash in hand, records a cheque that hasn’t cleared, marks it, leaves for the Roster and comes back to the card as left. On the phone, the work is waiting, and changing only the cash keeps the mark. Back at the desk, the fee door closes the gap and Save this check takes the work. A coach with money edit access sees only that the work exists; a view-only assistant sees no card at all.",
+  "passes": "The cash rides in the strip. The work survives the Roster and a second device. Change on cash alone keeps the mark. The figures move by exactly what each step says. The second money coach sees one quiet line and no figures. The view-only assistant sees no card. Saving leaves nothing to pick up.",
+  "notIn": "The last 7 days and the 30th day (calendar). “Updated from another device” (proved by my own pass). The club (walk C).",
+  "who": "The head coach, then the assistant with money edit access, then the view-only assistant (card at the top).",
+  "where": "Money → Ledger → View: <b>Balance check<\/b> on UAT Test Team. Window A at desk width, Window B a private window at 390 px.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Window A: sign in as the head coach and open the coach link.",
+    "s": "The <b>Balance check<\/b> view with <b>Check your bank balance<\/b>: Date, Bank balance on that date, the link <b>Holding cash you haven’t deposited?<\/b>, and one button, <b>Start checking this statement<\/b>. If it opens on “Picked up where you left off”, stop and tell me."
+   },
+   {
+    "d": "Set <b>Date<\/b> to <b>Nov 20, 2026<\/b>.",
+    "s": "No figures yet."
+   },
+   {
+    "d": "Type <b>2940.00<\/b> in <b>Bank balance on that date<\/b>.",
+    "s": "Still no figures."
+   },
+   {
+    "d": "Press <b>Holding cash you haven’t deposited?<\/b>",
+    "s": "A <b>Cash not deposited yet<\/b> field opens."
+   },
+   {
+    "d": "Type <b>25.00<\/b> in it.",
+    "s": "Still no figures."
+   },
+   {
+    "d": "Press <b>Start checking this statement<\/b>.",
+    "s": "The strip reads <b>Checking Nov 20, 2026 · Cash not deposited yet <span class=\"amt\">$25.00<\/span> · Change<\/b>. Under it, an amber Off by: the bank shows <span class=\"amt\">$30.00<\/span> less than your Ledger. Two “Still waiting?” questions (Bottle drive deposit, Concession float 1 of 25): leave them unanswered."
+   },
+   {
+    "d": "Press <b>+ Record<\/b> beside the card’s heading.",
+    "s": "Money’s <b>Record money<\/b> window, dated Nov 20, 2026, with no amount."
+   },
+   {
+    "d": "Record money out: <b>Walk: cheque 301 · referee fees<\/b>, <b>60.00<\/b>, under any budget line, and press <b>Save<\/b>.",
+    "s": "Back on the card. The bank now shows <span class=\"amt\">$30.00<\/span> more than your Ledger, and Find lists <b>Walk: cheque 301 · referee fees<\/b>."
+   },
+   {
+    "d": "Press <b>Not in the bank yet<\/b> on that line.",
+    "s": "Marked, with <b>Undo<\/b>. Off by flips back: the bank shows <span class=\"amt\">$30.00<\/span> less."
+   },
+   {
+    "d": "Open <b>Roster<\/b> from the sidebar.",
+    "s": "The Roster."
+   },
+   {
+    "d": "Go back to Money → Ledger → <b>Balance check<\/b>.",
+    "s": "The card as you left it: <b>Picked up where you left off<\/b>, the strip with $25.00 cash, the cheque marked, $30.00 less."
+   },
+   {
+    "stop": true,
+    "d": "Window B (private, 390 px): sign in as the head coach and open the coach link. Accept the Terms screen if dev shows it.",
+    "s": "Straight into the work: <b>Picked up where you left off<\/b>, the strip with <b>Cash not deposited yet $25.00<\/b>, the cheque marked."
+   },
+   {
+    "d": "Press <b>Change<\/b>.",
+    "s": "The date, the balance and <b>Cash not deposited yet<\/b> open in place. The rest greys. The Change link is a comfortable tap target."
+   },
+   {
+    "d": "Change the cash to <b>40.00<\/b>.",
+    "s": "No amber line (the date hasn’t changed)."
+   },
+   {
+    "d": "Press <b>Use these<\/b>.",
+    "s": "The strip reads <b>Cash not deposited yet <span class=\"amt\">$40.00<\/span><\/b>. The cheque is still marked. Off by is now <span class=\"amt\">$15.00<\/span> (the bank shows less), and a <b>Record a bank fee<\/b> button sits beside it."
+   },
+   {
+    "d": "Sign out in Window B.",
+    "s": "Signed out."
+   },
+   {
+    "stop": true,
+    "who": "Assistant · money edit",
+    "d": "Window B: sign in as the assistant with money edit access and open the coach link.",
+    "s": "One quiet line above the fields: <b>UAT Coach<\/b> has a check of Nov 20, 2026 saved for later (<b>today’s date<\/b>). Their own card is before Start, with empty fields."
+   },
+   {
+    "who": "Assistant · money edit",
+    "d": "Read the card for the head coach’s figures.",
+    "s": "None: no $2,940.00, no cash, no cheque marked."
+   },
+   {
+    "who": "Assistant · money edit",
+    "d": "Sign out in Window B.",
+    "s": "Signed out."
+   },
+   {
+    "stop": true,
+    "who": "Assistant · view only",
+    "d": "Window B: sign in as the view-only assistant and open the coach link.",
+    "s": "No card at all: no fields, no Start, no quiet line. The saved checks list is there to read."
+   },
+   {
+    "who": "Assistant · view only",
+    "d": "Sign out and close Window B.",
+    "s": "Window B is closed."
+   },
+   {
+    "stop": true,
+    "d": "Window A (the head coach): reload the page.",
+    "s": "The work as the phone left it: cash <b>$40.00<\/b> in the strip, the cheque marked, $15.00 less."
+   },
+   {
+    "d": "Press <b>Record a bank fee<\/b>.",
+    "s": "Record money, filled: <span class=\"amt\">$15.00<\/span>, Nov 20, 2026, money out, filed under <b>League &amp; Fees · Bank &amp; payment fees<\/b>, described <b>Bank fee<\/b>."
+   },
+   {
+    "d": "Press <b>Save<\/b>.",
+    "s": "Back on the card: <b>Matches<\/b>."
+   },
+   {
+    "d": "Press <b>Save this check<\/b>.",
+    "s": "A notice: <b>Checked Nov 20, 2026. The bank and your Ledger agree.<\/b> The card goes back to before Start, and the saved checks list has a Nov 20, 2026 row."
+   },
+   {
+    "d": "Reload the page.",
+    "s": "No “Picked up where you left off”. The card is before Start."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "C" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "C"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      if (w.choices) {
+        w.choices.forEach(function (c) {
+          var box = el("div", "card"); box.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); box.appendChild(el("p", null, c.why));
+          var o = el("div", "opts");
+          c.opts.forEach(function (op) {
+            var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "ch-" + c.id; r.checked = state.choice[c.id] === op[0];
+            r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+            lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+          });
+          box.appendChild(o); sec.appendChild(box);
+        });
+      }
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    if (w.choices) w.choices.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "C" }; save(); render();
+  });
+  render();
+})();
+</script>

@@ -10205,8 +10205,12 @@ working draft (WD1/WD2's localStorage store). Code: `lib/bank-check-work.ts`.
    away through `bank_accounts.org_id`; every read is scoped by an account the route's gate has proven is the caller's
    (club: `owner_kind='club'` in the gate's org; coach: the gate's team's account). A coach's team account is opened at
    Start when none exists yet (the first save's `openTeamAccount`; an account with no check reads as none).
-4. **30 DAYS FROM THE LAST CHANGE (ruling 2).** Every write stamps `updated_at = now()` and `expires_at = now() + 30
-   days` (one constant, `BANK_CHECK_DRAFT_DAYS`); Save for later is a write that changes nothing else. A row past
+4. **30 DAYS FROM THE LAST CHANGE (ruling 2), THROUGH THE WHOLE OF THE DAY THE CARD NAMES.** Every write, from the app
+   server's clock (no trigger), stamps `updated_at` = the moment of the change and `expires_at` = **the start of the day
+   after the 30th day from it, in the org time zone** (`workExpiresAt`, one constant `BANK_CHECK_DRAFT_DAYS`; /review S7
+   Part 3: an instant at the change's time of day went partway through the day the card's "until {date}" promised).
+   The `endsOn` the routes answer is the day just before that instant. Save for later is a write that changes nothing
+   else. A row past
    `expires_at` is none: the routes delete it on sight, and `bank_check_drafts_sweep()` deletes the rest nightly (mig 523,
    pg_cron `bank-check-drafts-sweep`, 08:55 GMT).
 5. **HOW A ROW GOES:** Save this check (the check routes delete it in the same request, after the save step succeeds);

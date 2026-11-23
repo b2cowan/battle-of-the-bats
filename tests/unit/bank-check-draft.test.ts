@@ -256,6 +256,25 @@ describe('8 · the work reaches our servers through ONE hook, keys only; the car
     assert.match(hook, /r\.data\.code === 'work_changed'/, 'another device\'s newer work is read again, never re-sent');
     assert.doesNotMatch(hook, /setInterval/);
   });
+  it('/review S7 Part 3: every request waits its turn, a failed keep is not re-sent on a timer, a failed read is never "gone"', () => {
+    // Two waiters on one keep must not both go with the same revision: settle is a LOOP, and Start, Save for later and
+    // Start over run as the one on its way, like a keep.
+    assert.match(hook, /const settle = useCallback\(async \(\) => \{ while \(inFlight\.current\) await inFlight\.current; \}, \[\]\);/);
+    assert.doesNotMatch(hook, /if \(inFlight\.current\) await inFlight\.current/, 'a single wait lets two waiters through together');
+    for (const fn of ['flush', 'keepNow', 'startOver']) assert.match(hook, new RegExp(`const ${fn} = useCallback\\(async[\\s\\S]*?await exclusive\\(async`), fn);
+    // Re-armed only after a keep that landed: offline or refused, a timer would ask every 0.6 s for as long as the card is open.
+    assert.match(hook, /if \(landedOk && live\.current && latest\.current/);
+    // The server holds what it answered, row or none: the same text is never sent again.
+    assert.match(hook, /keptText\.current = text;/);
+    assert.doesNotMatch(hook, /keptText\.current = saved \? text : null/);
+    // A re-read that failed keeps the card as it is and says the keep failed; it never adopts "no work".
+    assert.match(hook, /if \(!d\) \{ setKeepFailed\(true\); return; \}/);
+    // Back to what the server holds: the failed line goes.
+    assert.match(hook, /if \(text === keptText\.current\) \{ cancelPause\(\); setKeepFailed\(false\); return; \}/);
+    // The demo refusing is the demo working: the card carries on and says the sandbox's own sentence, never its code name.
+    assert.match(hook, /if \(r\.status !== 403 \|\| d\?\.sandbox !== true\) return null;/);
+    assert.match(hook, /if \(sandbox\) \{ setSandboxNote\(sandbox\); return \{ ok: true, saved: null \}; \}/);
+  });
   it('the helper has no network, no route and no server import; its one browser touch is deleting the old keys', () => {
     const src = readCode(HELPER);
     assert.doesNotMatch(src, /\bfetch\(|bankUrl|bankWrite|moneyFetch|readFigure|\/api\/|supabase|import (?!type)[^;]*from '\.\/(db|supabase)/);
@@ -321,7 +340,7 @@ describe('9 · the club card wires it as ruled (S7)', () => {
     assert.match(form, /<Callout tone="warn" role="status" flush>\{W\.draftDropped\(droppedMarks\)\}<\/Callout>/);
   });
   it('the resting sentence is the server\'s promise; a failed keep says so in its place, with Try again', () => {
-    assert.match(form, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{s\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: W\.workKept\}/);
+    assert.match(form, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{s\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: work\.sandboxNote \?\? W\.workKept\}/);
     assert.doesNotMatch(form, /draftKept|hasDraft|canKeep\b/, 'no browser-storage promise is left on the card');
   });
   it('Save settles what waits, then saves the check, and forgets the work only once the check saved; a refusal keeps it', () => {
@@ -455,9 +474,9 @@ describe('12 · the coach card wires it as the club card does (S7)', () => {
     const before = card.slice(card.indexOf('if (!working) {'), card.indexOf('const off = '));
     assert.doesNotMatch(before, /MoneySummaryBand|CoachBankFind|saveCheck|saveForLater/);
   });
-  it('"Check this statement again" with other work saved opens Change on that day (the cash with it), never a silent swap', () => {
+  it('"Check this statement again" with other work saved opens Change on that day, its balance and cash empty (another statement), never a silent swap', () => {
     assert.match(card, /const \[seed\] = useState\(\(\) => seedOfWork\(work\.mine, againDate \?\? today, againDate\)\);/);
-    assert.match(card, /useState<Edit \| null>\(seed\.swapTo \? \{ date: seed\.swapTo, balance: '', cash: seed\.cash, cashAsked: !!seed\.cash \} : null\);/);
+    assert.match(card, /useState<Edit \| null>\(seed\.swapTo \? \{ date: seed\.swapTo, balance: '', cash: '', cashAsked: false \} : null\);/);
     assert.doesNotMatch(card, /function seedOf\(/, 'one seeding rule, in lib/bank-check-work.ts');
     assert.equal((card.match(/work\.startOver\(\)/g) ?? []).length, 1);
   });
@@ -470,7 +489,7 @@ describe('12 · the coach card wires it as the club card does (S7)', () => {
     assert.match(card, /\{cashCents !== null && <><span className=\{b\.stripDot\} aria-hidden>·<\/span><span>\{W\.stripCash\} <b>\{cents\(cashCents\)\}<\/b><\/span><\/>\}/);
   });
   it('the resting sentence is one of the card\'s note line\'s sentences, replaced by the failed keep\'s when a keep failed', () => {
-    assert.match(card, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{b\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: W\.workKept\}/);
+    assert.match(card, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{b\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: work\.sandboxNote \?\? W\.workKept\}/);
     assert.doesNotMatch(card, /draftKept|hasDraft|canKeep\b/);
   });
   it('Save settles, saves, and forgets only once the check saved; Start over asks only when lines are marked and never touches the notice', () => {

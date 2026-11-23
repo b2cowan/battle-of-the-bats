@@ -2,7 +2,7 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from './supabase-admin';
 import { resolvePersonNamer } from './db';
-import { tournamentToday } from './timezone';
+import { addCalendarDays, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { canMoveClubMoney } from './member-access';
 import type { EntitlementOrg } from './module-entitlements';
 import {
@@ -27,6 +27,17 @@ export const COLLEAGUE_COLS = 'user_id, statement_end_date, updated_at';
 
 const DAY_MS = 86_400_000;
 
+/**
+ * THE END OF THE DAY THE CARD NAMES (/review S7 Part 3). The card says "until {date}", so the work lasts the whole of that
+ * day: `expires_at` is the start of the day after the 30th day from the change, in the org's time zone (an instant at the
+ * change's time of day would go partway through the day the card promised). `endsOn` is the day just before that instant.
+ */
+export function workExpiresAt(now: Date): string {
+  const after = addCalendarDays(tournamentToday(now), BANK_CHECK_DRAFT_DAYS + 1);
+  return zonedWallClockToUtc(after, '00:00') ?? new Date(now.getTime() + (BANK_CHECK_DRAFT_DAYS + 1) * DAY_MS).toISOString();
+}
+const endsOnOf = (expiresAt: string) => tournamentToday(new Date(Date.parse(expiresAt) - 1));
+
 interface MyRow {
   statement_end_date: string; balance_text: string; cash_text: string | null; marked_keys: string[]; answered_no_keys: string[] | null;
   started_date: string | null; started_balance_text: string | null; started_difference_cents: number | string | null;
@@ -50,7 +61,7 @@ function savedOf(r: MyRow): SavedWork {
       : null,
     revision: r.revision,
     changedOn: dayOf(r.updated_at),
-    endsOn: dayOf(r.expires_at),
+    endsOn: endsOnOf(r.expires_at),
   };
 }
 
@@ -65,7 +76,7 @@ function rowOf(w: CheckWork, now: Date) {
     started_balance_text: w.started?.balance ?? null,
     started_difference_cents: w.started?.differenceCents ?? null,
     updated_at: now.toISOString(),
-    expires_at: new Date(now.getTime() + BANK_CHECK_DRAFT_DAYS * DAY_MS).toISOString(),
+    expires_at: workExpiresAt(now),
   };
 }
 

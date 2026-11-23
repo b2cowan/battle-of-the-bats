@@ -328,7 +328,7 @@ describe('9 · through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_C
     // the resting sentence (S7: W.workKept, in place of which a failed keep says so).
     assert.match(check, /const notes = \[fresh\?\.replaces \? W\.replacesNote\(dayYear\(date\)\) : null, W\.coachSince\(dayYear\(view\.season\.start\)\), W\.balanceHint\]/);
     assert.match(check, /off \? W\.coachSaveOffNote : null/);
-    assert.match(check, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{b\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: W\.workKept\}/);
+    assert.match(check, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{b\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: work\.sandboxNote \?\? W\.workKept\}/);
     assert.doesNotMatch(check, /draftKept|hasDraft/);
     assert.equal(BANK_WORDS.replacesNote('Nov 8, 2026'), 'Nov 8, 2026 is checked already. Saving again replaces that check.');
     // S7 (2026-11-22) replaced WD2's browser sentence with the server's promise; the old one is gone from the words.
