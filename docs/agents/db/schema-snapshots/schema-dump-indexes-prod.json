@@ -1160,6 +1160,51 @@
     "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
   },
   {
+    "tablename": "club_sponsor_places",
+    "indexname": "club_sponsor_places_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_places_pkey ON public.club_sponsor_places USING btree (id)"
+  },
+  {
+    "tablename": "club_sponsor_places",
+    "indexname": "club_sponsor_places_sponsor_idx",
+    "indexdef": "CREATE INDEX club_sponsor_places_sponsor_idx ON public.club_sponsor_places USING btree (sponsor_id)"
+  },
+  {
+    "tablename": "club_sponsor_places",
+    "indexname": "club_sponsor_places_target_idx",
+    "indexdef": "CREATE INDEX club_sponsor_places_target_idx ON public.club_sponsor_places USING btree (org_id, kind, target_id)"
+  },
+  {
+    "tablename": "club_sponsor_places",
+    "indexname": "club_sponsor_places_typed_once",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_places_typed_once ON public.club_sponsor_places USING btree (sponsor_id, kind, COALESCE(target_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (source = 'typed'::text)"
+  },
+  {
+    "tablename": "club_sponsors",
+    "indexname": "club_sponsors_org_idx",
+    "indexdef": "CREATE INDEX club_sponsors_org_idx ON public.club_sponsors USING btree (org_id, \"position\")"
+  },
+  {
+    "tablename": "club_sponsors",
+    "indexname": "club_sponsors_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsors_pkey ON public.club_sponsors USING btree (id)"
+  },
+  {
+    "tablename": "club_sponsorship_packages",
+    "indexname": "club_sponsorship_packages_org_idx",
+    "indexdef": "CREATE INDEX club_sponsorship_packages_org_idx ON public.club_sponsorship_packages USING btree (org_id, created_at)"
+  },
+  {
+    "tablename": "club_sponsorship_packages",
+    "indexname": "club_sponsorship_packages_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsorship_packages_pkey ON public.club_sponsorship_packages USING btree (id)"
+  },
+  {
+    "tablename": "club_sponsorship_settings",
+    "indexname": "club_sponsorship_settings_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsorship_settings_pkey ON public.club_sponsorship_settings USING btree (org_id)"
+  },
+  {
     "tablename": "cron_call_receipts",
     "indexname": "cron_call_receipts_job_issued_idx",
     "indexdef": "CREATE INDEX cron_call_receipts_job_issued_idx ON public.cron_call_receipts USING btree (job_name, issued_at)"

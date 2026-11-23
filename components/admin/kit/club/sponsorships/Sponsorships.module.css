@@ -139,3 +139,30 @@
 /* The public "Sponsored by" line under a division's name (ask 1): quiet, a hairline frame. */
 .sponsoredBy { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; }
 .clickRow { cursor: pointer; }
+
+/* ── Part 2: Deals, the Offer window and one deal (round 1 tabs 3 and 5) ── */
+.foldCount { color: var(--text-tertiary); font-weight: 400; }
+.pickerSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); font-weight: 400; }
+.pickerBarred { display: block; font-size: var(--type-support); color: var(--home-live); font-weight: 400; }
+.rule { margin: 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.5; }
+.footLine { font-size: var(--type-support); color: var(--text-tertiary); }
+.dealHead { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.dealTitle { margin: 0; font-size: var(--type-title, 1.35rem); font-weight: 800; color: var(--text-primary); }
+.dealSub { margin: 0.15rem 0 0.9rem; color: var(--text-tertiary); font-size: var(--type-support); }
+.backLink { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--home-olive); font-weight: 700; text-decoration: none; font-size: var(--type-support); margin-bottom: 0.5rem; }
+.backLink:hover { text-decoration: underline; }
+.dealGrid { display: grid; gap: 1rem; }
+.card { border: 1px solid var(--home-line); border-radius: 10px; background: var(--home-card); padding: 0.9rem 1rem; }
+.cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.6rem; }
+.cardTitle { margin: 0; font-size: var(--type-body); font-weight: 800; color: var(--text-primary); }
+.cardMeta { font-size: var(--type-support); color: var(--text-tertiary); }
+.checkRow { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.45rem 0; border-top: 1px solid var(--home-line); }
+.checkRow:first-of-type { border-top: 0; }
+.checkRow input { margin-top: 0.2rem; width: 18px; height: 18px; flex: none; }
+.checkMain { flex: 1; min-width: 0; display: grid; gap: 0.1rem; }
+.checkWhen { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+.recordActions { display: grid; gap: 0.35rem; justify-items: start; margin-top: 0.25rem; }
+.historyLine { font-size: var(--type-support); color: var(--text-tertiary); }
+@media (max-width: 640px) {
+  .checkRow input { width: 22px; height: 22px; }
+}

@@ -1,0 +1,52 @@
+/* A business's sponsorship page (Board Ready Stage 6 Part 2; round 1 tab 4). The family form's kit (ClubForm.module.css)
+   and the pay link's eyebrow and title (TeamPay.module.css) carry the fields and the head; these are the page's own parts:
+   the package box, the logo row, the pay table and the thank-you's invoice card. Club colours only (the frame's vars). */
+
+.head { margin: 0 0 1.25rem; }
+.sub { margin: -0.25rem 0 0; font: 400 0.9375rem/1.45 var(--club-text-face); color: var(--club-soft); }
+
+.package { margin: 0 0 1.5rem; padding: 1rem 1.125rem; border: 1px solid var(--club-line, var(--border-2)); border-radius: 12px; background: var(--club-card); }
+.price { margin: 0; font: 700 1.375rem/1.2 var(--club-text-face); color: var(--club-text); }
+.priceNote { margin-left: 0.5rem; font: 400 0.875rem var(--club-text-face); color: var(--club-soft); }
+.bullets { margin: 0.75rem 0 0; padding-left: 1.25rem; font: 400 0.9375rem/1.5 var(--club-text-face); color: var(--club-text); }
+.bullets li + li { margin-top: 0.25rem; }
+.pdf { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; margin-top: 0.5rem; font: 600 0.9375rem var(--club-text-face); color: var(--club-ink); text-decoration: underline; text-underline-offset: 3px; }
+.tag { display: inline-block; padding: 0.1rem 0.35rem; border-radius: 4px; background: var(--club-fill-soft, color-mix(in srgb, currentColor 10%, transparent)); font: 700 0.6875rem var(--font-data); letter-spacing: 0.06em; color: var(--club-text); text-decoration: none; }
+
+.address { display: grid; gap: 0.5rem; }
+.addressRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+
+.logoRow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; min-height: 44px; }
+.logoBox { display: grid; place-items: center; width: 120px; height: 54px; border: 1px solid var(--club-line, var(--border-2)); border-radius: 8px; background: var(--logo-tile-ground); overflow: hidden; }
+.logoBox img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.logoInput { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.logoButton { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.875rem; border: 1px solid var(--club-ink); border-radius: 8px; background: none; font: 600 0.9375rem var(--club-text-face); color: var(--club-ink); cursor: pointer; }
+.logoButton:focus-within, .logoButton:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; }
+
+.payTable { width: 100%; margin: 0 0 1rem; border-collapse: collapse; font: 400 0.9375rem var(--club-text-face); color: var(--club-text); }
+.payTable td { padding: 0.5rem 0; border-bottom: 1px solid var(--club-line, var(--border-2)); }
+.payTable td:last-child { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.payTable tr:last-child td { border-bottom: 0; font-weight: 700; }
+.payLine { margin: 0 0 1rem; font: 400 0.9375rem/1.5 var(--club-text-face); color: var(--club-text); }
+.payNote { margin: 0.5rem 0 0; font: 400 0.875rem/1.45 var(--club-text-face); color: var(--club-soft); }
+.payNotePhone { display: none; }
+@media (max-width: 640px) {
+  .payNoteDesk { display: none; }
+  .payNotePhone { display: inline; }
+}
+
+.invoice { margin: 0 0 1.25rem; padding: 1rem 1.125rem; border: 1px solid var(--club-line, var(--border-2)); border-radius: 12px; background: var(--club-card); }
+.invoiceTitle { margin: 0; font: 700 1.0625rem var(--club-text-face); color: var(--club-text); }
+.invoiceMeta { margin: 0.25rem 0 0; font: 400 0.875rem/1.45 var(--club-text-face); color: var(--club-soft); }
+.howTitle { margin: 1rem 0 0.25rem; font: 700 0.9375rem var(--club-text-face); color: var(--club-text); }
+.howLine { margin: 0.25rem 0 0; font: 400 0.9375rem/1.5 var(--club-text-face); color: var(--club-text); overflow-wrap: anywhere; }
+.revisit { margin: 1rem 0 1.25rem; font: 400 0.875rem/1.5 var(--club-text-face); color: var(--club-soft); }
+
+.foot { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--club-line, var(--border-2)); font: 400 0.875rem/1.5 var(--club-text-face); color: var(--club-text); }
+.footRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0 0.5rem; }
+.footMail { display: inline-flex; align-items: center; min-height: 44px; color: var(--club-ink); overflow-wrap: anywhere; }
+.footRow .copyBtn { min-width: 44px; min-height: 44px; }
+
+.closed { padding: 2.5rem 0.5rem; text-align: center; font: 400 1rem/1.5 var(--club-text-face); color: var(--club-text); }
+.closed p { margin: 0; }
+.closed p + p { margin-top: 0.5rem; }

@@ -94,7 +94,7 @@ export default function SponsorsScreen() {
       <p className={css.note}>{W.sponsors.homeCount(homePlacesShowing(data.sponsors, today))}</p>
       {atCap && <p className={css.note}>{W.sponsors.atCap}</p>}
       {open === 'new' && <SponsorWindow slug={slug} sponsor={null} targets={data.targets} onChanged={() => void reload()} onClose={() => setOpen(null)} />}
-      {openSponsor && <SponsorWindow key={openSponsor.id} slug={slug} sponsor={openSponsor} targets={data.targets} onChanged={() => void reload()} onClose={() => setOpen(null)} />}
+      {openSponsor && <SponsorWindow key={openSponsor.id} slug={slug} sponsor={openSponsor} targets={data.targets} deals={data.sponsorDeals?.[openSponsor.id] ?? []} onChanged={() => void reload()} onClose={() => setOpen(null)} />}
     </>
   );
 }

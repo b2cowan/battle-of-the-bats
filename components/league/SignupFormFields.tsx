@@ -63,6 +63,9 @@ type FieldProps = {
   errorName: string;
   orgSlug: string;
   seasonSlug: string;
+  /** Where a file question uploads (POST) and removes (DELETE {url}/{id}). Omitted: this season's sign-up files. The
+   *  sponsorship link passes its own (Board Ready Stage 6 Part 2), so a business's file never touches a season's door. */
+  filesUrl?: string;
 };
 
 const fieldId = (idBase: string, questionId: string) => `${idBase}-${questionId.slice(0, 8)}`;
@@ -72,7 +75,7 @@ const fieldId = (idBase: string, questionId: string) => `${idBase}-${questionId.
 export const errorAttrs = (on: unknown, name: string, target: string) =>
   (on ? { 'data-field-error': 'true', 'data-field-name': name, 'data-field-target': target } : {});
 
-export function QuestionField({ q, idBase, value, onChange, error, club, who, errorName, orgSlug, seasonSlug }: FieldProps) {
+export function QuestionField({ q, idBase, value, onChange, error, club, who, errorName, orgSlug, seasonSlug, filesUrl }: FieldProps) {
   const id = fieldId(idBase, q.id);
   const helpId = `${id}-help`;
   const errId = `${id}-err`;
@@ -125,7 +128,7 @@ export function QuestionField({ q, idBase, value, onChange, error, club, who, er
     );
   } else {
     control = <FileField id={id} value={value?.file ?? null} onChange={file => onChange({ file })} orgSlug={orgSlug} seasonSlug={seasonSlug}
-      questionId={q.id} describedBy={describedBy} />;
+      questionId={q.id} describedBy={describedBy} filesUrl={filesUrl} />;
   }
 
   const Wrap = grouped ? 'fieldset' : 'div';
@@ -143,12 +146,13 @@ export function QuestionField({ q, idBase, value, onChange, error, club, who, er
 }
 
 /** One file, uploaded on choose (ruling 9). The XHR gives progress and Cancel, which fetch can't. */
-function FileField({ id, value, onChange, orgSlug, seasonSlug, questionId, describedBy }: {
+function FileField({ id, value, onChange, orgSlug, seasonSlug, questionId, describedBy, filesUrl }: {
   id: string; value: FileDraft | null; onChange: (f: FileDraft | null) => void; orgSlug: string; seasonSlug: string; questionId: string; describedBy?: string;
+  filesUrl?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const xhr = useRef<XMLHttpRequest | null>(null);
-  const base = `/api/league/${orgSlug}/${seasonSlug}/form/files`;
+  const base = filesUrl ?? `/api/league/${orgSlug}/${seasonSlug}/form/files`;
   // A file still travelling when the field leaves the page is stopped (a removed child, a reload).
   useEffect(() => () => xhr.current?.abort(), []);
 
@@ -237,12 +241,15 @@ const openHref = (orgSlug: string, seasonSlug: string, d: Pick<SignupDocument, '
  * One document: typed text in its box with the tick enabled; a PDF with Open, its tick faded until opened. `opened` is
  * the page's own memory that the family pressed Open (the server holds the proof, the receipt it handed over).
  */
-export function DocumentBlock({ d, ticked, onTick, opened, onOpened, error, orgSlug, seasonSlug, club, contact, idBase, forLine, busy }: {
+export function DocumentBlock({ d, ticked, onTick, opened, onOpened, error, orgSlug, seasonSlug, club, contact, idBase, forLine, busy, docHref }: {
   d: SignupDocument; ticked: boolean; onTick: (on: boolean) => void; opened: boolean; onOpened: () => void; error?: string;
   orgSlug: string; seasonSlug: string; club: string; contact: string | null; idBase: string;
   /** Your sign-up: "For Maya and Leo." before the reason. */
   forLine?: string; busy?: boolean;
+  /** Where Open and "Download it instead" go. Omitted: this season's document door. The sponsorship link passes its own. */
+  docHref?: (d: Pick<SignupDocument, 'id' | 'versionId'>, download: boolean) => string;
 }) {
+  const hrefOf = (download = false) => (docHref ? docHref(d, download) : openHref(orgSlug, seasonSlug, d, download));
   const id = `${idBase}-doc-${d.id.slice(0, 8)}`;
   const reasonId = `${id}-why`;
   const pdf = d.source === 'pdf';
@@ -268,7 +275,7 @@ export function DocumentBlock({ d, ticked, onTick, opened, onOpened, error, orgS
       <p className={styles.docName}><span className={styles.fileTag}>{pdf ? 'PDF' : 'TEXT'}</span> {d.name}</p>
       {pdf ? (
         <p className={styles.docOpenRow}>
-          <a className={styles.docOpen} href={openHref(orgSlug, seasonSlug, d)} target="_blank" rel="noopener" aria-label={W.openName(d.name, size)} onClick={open} onAuxClick={e => { if (e.button === 1) open(); }}>
+          <a className={styles.docOpen} href={hrefOf()} target="_blank" rel="noopener" aria-label={W.openName(d.name, size)} onClick={open} onAuxClick={e => { if (e.button === 1) open(); }}>
             {W.open(d.name)} <span aria-hidden="true">↗</span>
           </a>
           <span className={styles.fitDim} style={{ margin: 0 }}>{W.pdfMeta(size)}</span>
@@ -289,7 +296,7 @@ export function DocumentBlock({ d, ticked, onTick, opened, onOpened, error, orgS
       <p className={styles.srOnly} aria-live="polite">{said}</p>
       {pdf && opened && (
         <p className={styles.fitDim}>
-          {W.wontOpen} <a href={openHref(orgSlug, seasonSlug, d, true)}>{W.downloadInstead}</a>, {W.orContact(club)}{contact ? <>: <a href={`mailto:${contact}`}>{contact}</a></> : ''}.
+          {W.wontOpen} <a href={hrefOf(true)}>{W.downloadInstead}</a>, {W.orContact(club)}{contact ? <>: <a href={`mailto:${contact}`}>{contact}</a></> : ''}.
         </p>
       )}
       {error && <p id={`${id}-err`} className={`${formKit.errorMsg} ${styles.checkError}${locked || forLine || (pdf && opened) ? ` ${styles.checkErrorAfterLine}` : ''}`}>{error}</p>}

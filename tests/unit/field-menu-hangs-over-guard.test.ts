@@ -42,6 +42,8 @@ const pick = readCode('components/admin/kit/club/PermitWindows.tsx');
 /** Every caller of the hook → the stylesheet and rule of the list it places. */
 const ROLL: Record<string, [css: string, rule: string]> = {
   'components/accounting/PayeeCombobox.tsx': ['components/accounting/PayeeCombobox.module.css', '.dropdown'],
+  // Sponsorships › Offer a deal's Business field (Board Ready Stage 6 Part 2): the payee picker's own list rule.
+  'components/admin/kit/club/sponsorships/BusinessPicker.tsx': ['components/accounting/PayeeCombobox.module.css', '.dropdown'],
   'components/accounting/PaymentMethodCombobox.tsx': ['components/accounting/PayeeCombobox.module.css', '.dropdown'],
   'components/venue/WhereField.tsx': ['components/venue/WhereField.module.css', '.list'],
   'components/coaches/TagSearchCombobox.tsx': ['app/[orgSlug]/coaches/coaches.module.css', '.tagComboDropdown'],

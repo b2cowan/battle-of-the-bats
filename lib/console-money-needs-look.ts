@@ -16,37 +16,10 @@
 import { regionName } from './billing-location';
 import { isCanadianGstHst, isRatedTaxReason, type GstHstPositionWhy } from './charge-tax-record';
 import { NEEDS_LOOK_WORDS, beforeRegistration, saleCents, type SaleNoteRecord, type SaleRecord } from './console-money-sales';
-import { orgDayKey } from './timezone';
 
-// ── The GST/HST rate for a province (check 4) ─────────────────────────────────────────────────────
-
-/**
- * Where the rates below come from: the /accounting agent's research (CRA "GST/HST rates by province", the page dated
- * 2025-04-01, accessed 2026-10-31, file last verified 2026-11-05). A guard test names these dates; a rate change is a change
- * to that file first, then here.
- */
-export const GST_HST_RATES_SOURCE = {
-  doc: 'docs/agents/accounting/GST_HST_ON_SUBSCRIPTIONS_CANADA.md',
-  ratesAsOf: '2025-04-01',
-  verified: '2026-11-05',
-} as const;
-
-const HST_RATES: Readonly<Record<string, number>> = { ON: 13, NB: 15, NL: 15, PE: 15, NS: 14 };
-/** BC, MB, SK and QC charge their own PST/RST/QST beside it: that is not GST/HST and is never compared here. */
-const GST_ONLY = new Set(['AB', 'BC', 'MB', 'SK', 'QC', 'NT', 'NU', 'YT']);
-/** Nova Scotia's HST fell from 15% to 14% on this day. */
-const NS_CUT = '2025-04-01';
-
-type GstHstRate = { kind: 'GST' | 'HST'; rate: number };
-
-/** The GST/HST a sale to this Canadian province owed on its issue day; null for a code we do not know. */
-export function gstHstRateFor(region: string | null | undefined, issuedAt: string): GstHstRate | null {
-  const code = (region ?? '').trim().toUpperCase();
-  if (code === 'NS') return { kind: 'HST', rate: orgDayKey(issuedAt) < NS_CUT ? 15 : 14 };
-  if (HST_RATES[code] != null) return { kind: 'HST', rate: HST_RATES[code] };
-  if (GST_ONLY.has(code)) return { kind: 'GST', rate: 5 };
-  return null;
-}
+// ── The GST/HST rate for a province (check 4): the one table, shared since Board Ready Stage 6 Part 2 ────────────────
+import { gstHstRateFor } from './gst-hst-rates';
+export { GST_HST_RATES_SOURCE, gstHstRateFor } from './gst-hst-rates';
 
 // ── The checks ──────────────────────────────────────────────────────────────────────────────────
 

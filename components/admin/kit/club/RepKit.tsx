@@ -31,7 +31,7 @@ export { styles as repKit };
 
 /** A section in the portal's shape: a card with its heading inside, a count beside it, actions right. */
 export function ClubSection({
-  id, title, meta, actions, list = false, children, className,
+  id, title, meta, actions, list = false, even = false, children, className,
 }: {
   id?: string;
   title?: ReactNode;
@@ -40,6 +40,9 @@ export function ClubSection({
   actions?: ReactNode;
   /** The body is a row list: rows run edge to edge and the section paints their ground. */
   list?: boolean;
+  /** An untitled body holding one short note (an empty state): equal padding top and bottom, since the default
+   *  body is tuned to sit under a heading. */
+  even?: boolean;
   children: ReactNode;
   className?: string;
 }) {
@@ -53,7 +56,7 @@ export function ClubSection({
           {actions != null && <div className={styles.sectionActions}>{actions}</div>}
         </div>
       )}
-      <div className={list ? styles.sectionBodyList : styles.sectionBody}>{children}</div>
+      <div className={list ? styles.sectionBodyList : even ? styles.sectionBodyEven : styles.sectionBody}>{children}</div>
     </section>
   );
 }

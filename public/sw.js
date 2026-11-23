@@ -44,7 +44,9 @@
 //      offline page from every installed phone's saved shell.
 // v13: Public tournament pages Stage 7 step 0 (2026-11-01) — a team's pay page (/{org}/{tournament}/pay/{token},
 //      with its ?paid= / ?left=1 returns) joined the never-cache rule; the bump drops every copy already stored.
-const CACHE_VERSION = 'v13';
+// v14: Board Ready Stage 6 Part 2 (2026-11-23) — a business's sponsorship page (/{org}/sponsorship/{token}, with its invoice
+//      address and amounts) joined the never-cache rule; the bump drops every copy already stored.
+const CACHE_VERSION = 'v14';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
@@ -100,6 +102,9 @@ function isNeverCache(pathname) {
   // browser's path has no org segment (/{tournament}/pay/{token}; the host rewrite adds it on the server only), so
   // the section is one place earlier there. A tournament slugged "pay" loses its offline copy: harmless.
   if (seg.length >= 3 && (seg[2] === 'pay' || seg[1] === 'pay')) return true;
+  // A business's sponsorship page (/{org}/sponsorship/{token}; /sponsorship/{token} on a club's own address): a bearer link whose
+  // page carries the business's invoice address and amounts — never a stored copy on a shared device (/review 2026-11-23).
+  if ((seg.length >= 3 && seg[1] === 'sponsorship') || (seg.length >= 2 && seg[0] === 'sponsorship')) return true;
   return false;
 }
 

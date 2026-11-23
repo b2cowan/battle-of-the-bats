@@ -20,7 +20,7 @@ import type { Organization } from './types';
  */
 
 /** Which kind of club page is asking. `teams` covers the team page, its calendar and every tryout address. */
-export type PublicClubPage = 'home' | 'teams' | 'league' | 'tournaments' | 'archives' | 'about';
+export type PublicClubPage = 'home' | 'teams' | 'league' | 'tournaments' | 'archives' | 'about' | 'sponsorship';
 
 /**
  * What each page needs the plan to carry. The home needs nothing beyond the switch: a tournament-only org without the
@@ -35,6 +35,9 @@ const PAGE_MODULE: Record<PublicClubPage, Capability | null> = {
   archives: 'module_tournaments',
   // The About page (Stage 4c-1) is the public site's own page: a plan without the module has no editor to fill it.
   about: 'module_public_site',
+  // A business's sponsorship link (Board Ready Stage 6 Part 2): the plan's Sponsorships, never the public site's switch —
+  // it is a bearer link to one deal's offer and invoice, like a pay link, not a page of the club's site.
+  sponsorship: 'module_sponsorships',
 };
 
 export type PublicClubAccessOrg = Pick<Organization,
@@ -71,7 +74,9 @@ export function clubTeamsAddress(org: PublicClubAccessOrg): 'teams-page' | 'shor
 
 export function publicClubRefusal(org: PublicClubAccessOrg | null, page: PublicClubPage): PublicClubRefusal | null {
   if (!org) return 'no-club';
-  if (!isPublicClubSiteOpen(org)) return 'site-closed';
+  // A sponsorship link answers to the club being cancelled only: the site's own switch never stops an invoice reaching its
+  // business (the link is not a page of the site; it carries no site chrome of its own).
+  if (page === 'sponsorship' ? isOrgBillingSuspended(org) : !isPublicClubSiteOpen(org)) return 'site-closed';
   // A standalone Coaches-Portal team (the `team` plan) carries its rep team PER TEAM (team_entitlements), never through
   // the plan's modules — its team page and feed stay up, and the schedule on them is gated per team downstream
   // (getPublicTeamSchedule → isFamilyLayerEnabled), exactly as before 4a.

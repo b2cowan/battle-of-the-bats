@@ -1,0 +1,770 @@
+<title>Sponsorships Link Only</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ─── Stage 6 additions ─── */
+/* the portal's joined money band (MoneySummaryBand): one frame, a hairline between figures */
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.mband > div { padding: 11px 16px; display: grid; gap: 2px; }
+.mband > div + div { border-left: 1px solid var(--home-line); }
+.mband .ml { font-size: 12px; color: var(--home-dim); }
+.mband .mv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-ink); }
+.mband .mc { font-size: 12px; color: var(--home-dim); }
+/* on a phone: figure ROWS, never tiles */
+.frows { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto 14px; gap: 10px; align-items: center; padding: 11px 14px; min-height: 52px; }
+.frow + .frow { border-top: 1px solid var(--home-line); }
+.frow .fl1 { font-size: 14px; font-weight: 600; } .frow .fc { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.frow .fv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl th.num { text-align: right; }
+.ptabs { display: flex; gap: 22px; border-bottom: 1px solid var(--home-line); font-size: 14px; }
+.ptabs span { padding: 8px 0 9px; color: var(--home-ink-soft); }
+.ptabs span.on { color: var(--home-ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--home-olive); }
+.stP { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(70,55,30,0.08); color: var(--home-ink-soft); white-space: nowrap; }
+.stP.paid { background: var(--good-bg); color: var(--good); }
+.stP.inv { background: var(--warn-bg); color: var(--warn); }
+.stP.off { background: var(--home-olive-soft); color: var(--home-olive); }
+.callout { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callout .ct { flex: 1 1 260px; display: grid; gap: 2px; }
+.callout .ct b { font-size: 15px; }
+.callout .ct span { font-size: 13px; color: var(--home-ink-soft); }
+.ck { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; }
+.ck + .ck { border-top: 1px solid var(--home-line); }
+.ck .t { font-size: 14px; font-weight: 600; } .ck .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.ck .when { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.logoT { width: 64px; height: 32px; border: 1px solid var(--home-line); border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; background: #fff; color: var(--home-ink); flex: 0 0 auto; text-align: center; line-height: 1.1; padding: 0 3px; }
+.logoT.none { border-style: dashed; color: var(--home-faint); font-weight: 600; }
+.lg1 { color: #1F5E8C; } .lg2 { color: #8A3B12; } .lg3 { color: #2E6B2F; } .lg4 { color: #6B2E7A; }
+.srow { display: grid; grid-template-columns: 64px minmax(0,1fr) auto 22px; gap: 12px; align-items: center; padding: 10px 14px; min-height: 56px; background: var(--home-card); }
+.srow + .srow { border-top: 1px solid var(--home-line); }
+.srow .nm { font-size: 14px; font-weight: 650; } .srow .cap { display: block; font-size: 12px; color: var(--home-dim); }
+.srow.ended { opacity: 0.55; }
+.place { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--home-ink-soft); }
+.place::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); }
+/* the business's page */
+.pub { box-sizing: content-box; width: 640px; padding: 0 0 28px; }
+.pubBand { background: #2B3A1C; color: #F4F1E6; padding: 14px 40px; display: flex; gap: 12px; align-items: center; border-radius: 8px 8px 0 0; }
+.pubBand .crest { width: 34px; height: 34px; border-radius: 50%; background: #D9F99D; color: #2B3A1C; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.pubBand b { font-size: 16px; }
+.pubIn { padding: 22px 40px 0; display: grid; gap: 18px; }
+.phone .pubBand { padding: 12px 16px; border-radius: 0; }
+.phone .pubIn { padding: 16px 16px 0; }
+.pkg { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 10px; }
+.pkg .pr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pkg ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sumT { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sumT td { padding: 6px 0; border-top: 1px solid var(--home-line); }
+.sumT tr:first-child td { border-top: 0; }
+.sumT tr.tot td { font-weight: 700; border-top: 1px solid var(--home-line-strong); }
+.payOpt { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.payOpt.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.payOpt .t { font-size: 15px; font-weight: 650; } .payOpt .h { font-size: 13px; color: var(--home-dim); }
+.receipt { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 8px; }
+.receipt .rt { font-size: 18px; font-weight: 700; margin: 0; }
+/* email */
+.mail { width: 600px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; color: #241E15; }
+.mailHd { padding: 12px 18px; border-bottom: 1px solid var(--home-line); font-size: 13px; display: grid; gap: 2px; background: #FBF9F5; }
+.mailHd span { color: var(--home-dim); }
+.mailBd { padding: 22px 28px; display: grid; gap: 12px; font-size: 15px; line-height: 1.55; }
+.mailBd p { margin: 0; }
+.mailBtn { justify-self: start; background: #2B3A1C; color: #F4F1E6; font-weight: 700; padding: 11px 18px; border-radius: 8px; font-size: 15px; }
+.mailFt { padding: 14px 28px 20px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-dim); display: grid; gap: 4px; }
+/* invoice paper: Letter at 96 dpi is 816 px wide */
+.paper { width: 816px; background: #fff; color: #1d1d1d; font-family: Helvetica, Arial, sans-serif; border: 1px solid #d6d2ca; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.paper .acc { height: 8px; background: #2B3A1C; }
+.paper .pin { padding: 34px 56px 40px; display: grid; gap: 18px; font-size: 13px; }
+.paper .idb { display: flex; justify-content: space-between; gap: 20px; }
+.paper .idb b { font-size: 16px; display: block; }
+.paper h4 { font-size: 26px; margin: 0; letter-spacing: 0.01em; }
+.paper .subl { color: #555; margin-top: 2px; }
+.paper .pfig { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #d6d2ca; border-radius: 4px; }
+.paper .pfig > div { padding: 10px 14px; } .paper .pfig > div + div { border-left: 1px solid #d6d2ca; }
+.paper .pfig span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+.paper .pfig b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.paper .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 4px; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #bbb; padding: 6px 0; }
+.paper td { padding: 8px 0; border-bottom: 1px solid #e3e0da; vertical-align: top; }
+.paper td.r, .paper th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .inc { margin: 4px 0 0; padding-left: 16px; color: #444; }
+.paper .tt td { border-bottom: 0; padding: 4px 0; }
+.paper .tt tr.big td { font-weight: 700; font-size: 15px; border-top: 1px solid #bbb; padding-top: 8px; }
+.paper .stamp { display: inline-block; border: 2px solid #2E6B2F; color: #2E6B2F; font-weight: 800; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; font-size: 13px; }
+.paper .foot { color: #777; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e3e0da; padding-top: 8px; }
+.paper.mini { width: 816px; }
+/* public club site */
+.site { box-sizing: content-box; width: 960px; padding: 0 0 22px; }
+.siteBar { background: #2B3A1C; color: #F4F1E6; padding: 12px 28px; display: flex; gap: 22px; align-items: center; font-size: 14px; border-radius: 8px 8px 0 0; }
+.siteBar b { font-size: 16px; margin-right: auto; }
+.siteIn { padding: 20px 28px 0; display: grid; gap: 14px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, 184px); gap: 12px; }
+.strip > div { min-height: 72px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; text-align: center; padding: 6px; }
+.byLine { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--home-dim); border: 1px solid var(--home-line); background: #fff; border-radius: 8px; padding: 6px 10px; }
+.pcard { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 4px 8px; }
+.pcard .nm { font-size: 15px; font-weight: 650; } .pcard .s { font-size: 13px; color: var(--home-dim); grid-column: 1; }
+.pcard .chev { grid-row: 1 / span 3; grid-column: 2; align-self: start; }
+.pband { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); display: flex; gap: 8px; padding-top: 4px; }
+.lockedRow { opacity: 0.6; }
+.planTbl td.y { color: var(--tag-new); font-weight: 700; }
+.planTbl td.n { color: var(--doc-soft); }
+.chip.q { background: rgba(70,55,30,0.08); color: var(--home-dim); }
+.phone .btnLime, .phone .btnOut { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.phone .ptabs span { padding: 12px 0; }
+.phone .ck { min-height: 44px; align-items: center; }
+.tap44 { min-width: 44px; min-height: 44px; padding: 0 10px; }
+.bandBtn { display: flex; gap: 8px; align-items: center; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stage 6 · sponsorships · Part 2 addendum · drawn Nov 22, 2026 · one undrawn button and four drafted refusals</span>
+    <h1>Make the link only: a deal the club hands over in person, with nothing emailed</h1>
+    <p class="lead">Round 1 says “give them the link in person” three times (the offer rule, a referral, a lapsed business in Offer again), but Copy the link only existed on a deal that had already been emailed. You ruled on Nov 22 to add a way to make the deal and its link without sending anything. This page draws that one button, where it leads, and the Offer window’s refused states you allowed as drafted words. Everything else in the window is round 1 tab 3, unchanged. Click any tag to read the build rule behind it. Words marked DRAFT go through the /marketing pass.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · The window’s foot</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · After Make the link only</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · When Send can’t go</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">4 · The reason’s date</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">5 · Asks</button>
+  </nav>
+
+  <!-- 1 · THE FOOT, BEFORE AND AFTER -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p1"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>The Offer a deal window gains one button, and the reason it asks becomes required only for Send</h2>
+    <p>Left: the window as ruled in round 1. Right: the same window with <b>Make the link only</b> between Cancel and Send the offer. Pressing it makes the deal, in Offered, and its link, and sends nothing. Because nothing is sent, nothing has to be proved, so “Why you can email them” is asked only when Send is pressed.</p>
+    <div class="pair">
+      <div class="spec same-part">
+        <div class="specHead"><b>Before · round 1 tab 3, as ruled</b><span class="chrome">window · 600</span><button class="tag same" type="button" data-note="UNCHANGED. Round 1 tab 3's window, as ruled on Nov 22 (asks 1, 9, 13), with the Charge HST hint the owner ruled the same day in place of the drawn one.">AS RULED</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Deals</div><p class="wtitle">Offer a deal</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Business <span class="req">*</span></span><div class="inp sel">Harbour Dental <span>▾</span></div><span class="hint">Frank Osei · frank@harbourdental.ca</span></div>
+            <div class="two">
+              <div class="fld"><span class="l">Package <span class="req">*</span></span><div class="inp sel">Division sponsor · 1 left <span>▾</span></div></div>
+              <div class="fld"><span class="l">Shows on <span class="req">*</span></span><div class="inp sel">U9 division <span>▾</span></div><span class="hint">U11 and U13 already have a sponsor.</span></div>
+            </div>
+            <div class="two">
+              <div class="fld"><span class="l">Amount <span class="req">*</span></span><div class="inp">$1,000.00</div><span class="hint">The package price. Change it for this business.</span></div>
+              <div class="fld"><span class="l">Shows until</span><div class="inp sel">Aug 31, 2027 <span>📅</span></div></div>
+            </div>
+            <div class="sw"><span class="t">Charge HST<span class="h">13% for an Ontario address, added to the amount. A sponsorship that shows a name or logo is usually not charged tax. Turn this on only if your accountant says this deal is taxable.</span></span><span class="tog on"></span></div>
+            <div class="sec"><p class="secH">The email</p>
+              <div class="fld"><span class="l">Why you can email them <span class="req">*</span></span><div class="inp sel">They asked us about sponsoring (in the last 6 months) <span>▾</span></div><span class="hint">Kept with the offer, with today’s date.</span></div>
+              <p class="small" style="font-size:13px;color:var(--home-ink-soft)">Send this only to a business that has paid you in the last two years, asked you about sponsoring in the last six months, gave you this address, or published it for business use and a sponsorship is relevant to what they do. Don’t send it to a business you have never dealt with. If you have spoken to them, give them the link in person instead.</p>
+              <div class="fld"><span class="l">A note from you</span><div class="inp ta">Frank, thanks for talking with us at the clinic. Here’s the U9 package we discussed.</div><span class="hint">Optional. It opens the email. Everything else is written for you.</span></div>
+            </div>
+          </div>
+          <div class="wfoot"><span class="fs">Emails frank@harbourdental.ca</span><span class="btnOut">Cancel</span><span class="btnLime">Send the offer</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>After · with Make the link only</b><span class="chrome">window · 600</span><button class="tag new" type="button" data-note="NEW BUTTON, in the shipped KitDialog foot: the foot holds buttons only on the right (Cancel, then the primary), and its one sentence sits far left (footerStart, guarded). Make the link only is an outline button between Cancel and the lime Send the offer. It makes the deal in Offered with its own signed link (the team pay link's scheme, the sponsor link's own prefix), records who made it and when, sends nothing, and opens the deal's page with Copy the link (tab 2). The Why-you-can-email-them field is required only for Send: no email goes out, so no reason has to be kept. The note field is only for the email, so Make the link only ignores it.">NEW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Deals</div><p class="wtitle">Offer a deal</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fld same-part"><span class="l">Business <span class="req">*</span></span><div class="inp sel">Harbour Dental <span>▾</span></div><span class="hint">Frank Osei · frank@harbourdental.ca</span></div>
+            <div class="two same-part">
+              <div class="fld"><span class="l">Package <span class="req">*</span></span><div class="inp sel">Division sponsor · 1 left <span>▾</span></div></div>
+              <div class="fld"><span class="l">Shows on <span class="req">*</span></span><div class="inp sel">U9 division <span>▾</span></div><span class="hint">U11 and U13 already have a sponsor.</span></div>
+            </div>
+            <div class="two same-part">
+              <div class="fld"><span class="l">Amount <span class="req">*</span></span><div class="inp">$1,000.00</div><span class="hint">The package price. Change it for this business.</span></div>
+              <div class="fld"><span class="l">Shows until</span><div class="inp sel">Aug 31, 2027 <span>📅</span></div></div>
+            </div>
+            <div class="sw same-part"><span class="t">Charge HST<span class="h">13% for an Ontario address, added to the amount. A sponsorship that shows a name or logo is usually not charged tax. Turn this on only if your accountant says this deal is taxable.</span></span><span class="tog on"></span></div>
+            <div class="sec"><p class="secH">The email</p>
+              <div class="fld"><span class="l">Why you can email them <span class="req">*</span><button class="tag new" type="button" data-note="CHANGED RULE, SAME FIELD. The asterisk stays, because Send still needs it. Leaving it empty and pressing Make the link only is fine. Leaving it empty and pressing Send the offer names it in the foot's reason slot (KitDialog's refusal line), as every required field does.">REQUIRED FOR SEND</button></span><div class="inp sel" style="color:var(--home-faint)">Pick one <span>▾</span></div><span class="hint">Kept with the offer, with today’s date.</span></div>
+              <p class="small same-part" style="font-size:13px;color:var(--home-ink-soft)">Send this only to a business that has paid you in the last two years, asked you about sponsoring in the last six months, gave you this address, or published it for business use and a sponsorship is relevant to what they do. Don’t send it to a business you have never dealt with. If you have spoken to them, give them the link in person instead.</p>
+              <div class="fld same-part"><span class="l">A note from you</span><div class="inp ta">Frank, thanks for talking with us at the clinic. Here’s the U9 package we discussed.</div><span class="hint">Optional. It opens the email. Everything else is written for you.</span></div>
+            </div>
+          </div>
+          <div class="wfoot"><span class="fs">Emails frank@harbourdental.ca</span><span class="btnOut">Cancel</span><span class="btnOut">Make the link only</span><span class="btnLime">Send the offer</span></div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Phone · the full-screen window, its pinned foot</b><span class="chrome">390</span><button class="tag new" type="button" data-note="THE SHIPPED PHONE FOOT (KitDialog form on a phone: it fills the screen, the head and foot stay pinned, the buttons sit right-aligned in one row and never grow). Round 1 drew Send at the end of the body; the shipped window pins it, so this drawing follows the window. Three buttons need about 374 px and the foot has about 350 at 390, so on a phone the foot holds Make the link only and Send the offer, and Cancel is the head's ← (which asks first when anything is typed). That bends the 2026-10-09 rule that a create form keeps Cancel beside its button: ask 2.">NEW</button><button class="mark" type="button" data-ask="2">2</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>←</span><span>Offer a deal</span></div>
+          <div class="pbody">
+            <div class="fld"><span class="l">Amount <span class="req">*</span></span><div class="inp">$1,000.00</div></div>
+            <div class="sw"><span class="t">Charge HST<span class="h">13%, added to the amount</span></span><span class="tog on"></span></div>
+            <div class="fld"><span class="l">Why you can email them <span class="req">*</span></span><div class="inp sel" style="color:var(--home-faint)">Pick one <span>▾</span></div></div>
+          </div>
+          <div class="wfoot" style="padding:12px 20px"><span class="btnOut">Make the link only</span><span class="btnLime">Send the offer</span></div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>What Make the link only does</h3>
+        <ul>
+          <li><b>It makes the same deal Send makes:</b> Offered, holding its place (ask 7), with its one signed link. The only difference is that no email goes out.</li>
+          <li><b>No reason is kept, because none is needed.</b> CASL is about messages sent. A link the club hands over in person, or reads out on the phone, isn’t one. What is kept: who made the link and when, in the deal’s history.</li>
+          <li><b>The foot’s sentence stays “Emails frank@…”</b> because it describes Send, the main act. It changes only when Send can’t go (tab 3).</li>
+          <li><b>The note is for the email.</b> Make the link only doesn’t keep it. A club that typed one and then made the link sees it again if it emails the offer later from the deal’s page.</li>
+          <li><b>It doesn’t check the package is full any differently.</b> A full package can’t be picked in either case; a taken place warns and never blocks (asks 6 and 7).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · AFTER MAKE THE LINK ONLY -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <h2>The deal’s page opens with the link ready to copy, and Deals says the link was not emailed</h2>
+    <p>No new window: the press closes Offer a deal and opens the deal’s own page (round 1 tab 5), in Offered, with Copy the link as its lime. The Offered callout gets one more sentence for this case. The deal can still be emailed later, once the club has a reason, from the same page.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>One deal · Lakeview Pizza, link made</b><span class="chrome">one level down · desktop · 960</span><button class="tag new" type="button" data-note="THE DEAL PAGE, round 1 tab 5, in Offered. NEW: the callout's sentence for a link that was never emailed (DRAFT), and Copy the link as the lime, because handing it over is the one thing to do next. Once the business opens the link, the callout falls back to round 1's Offered words: 'Waiting for Lakeview Pizza. They opened the link Mar 4.'">NEW CALLOUT</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><span class="back">← Deals</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Lakeview Pizza <span class="stP">Offered</span></p><span class="ico">✎</span></div><span class="sub">Tournament sponsor · Spring Classic 2027 · 2027</span></div>
+          <div class="callout"><div class="ct"><b>Waiting for Lakeview Pizza</b><span>The link was made, not emailed. Copy it and give it to them in person. <button class="tag re" type="button" data-note="DRAFT WORDS. The Offered callout's extra sentence for a link that was never emailed. /marketing confirms it at the build.">DRAFT</button></span></div><span class="btnLime">Copy the link</span></div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">The deal</p></div>
+            <dl class="facts">
+              <dt>Package</dt><dd>Tournament sponsor</dd>
+              <dt>Shows on</dt><dd>Spring Classic 2027 <span class="s">Its pages, until May 31, 2027</span></dd>
+              <dt>Amount</dt><dd>$750.00</dd>
+            </dl>
+          </div>
+          <div class="collapsedSec">History · link made Mar 2 by Dana Ruiz, not emailed <span class="door">Show</span></div>
+          <div style="display:grid;gap:8px">
+            <span class="recAct">⧉ Copy the link</span>
+            <span class="recAct">✉ Email the offer <button class="tag new" type="button" data-note="NEW RECORD ACTION, link-made deals only (DRAFT words). It opens the email half of Offer a deal: Why you can email them (required), the fixed rule sentence, A note from you, and Send the offer. The reason, its date and who sent it are kept then, as for any offer. Absent when the address is unsubscribed, opted out of family email, or marked Do not offer again (tab 3), with the reason said where the action would be.">NEW</button></span>
+            <span class="recAct">↻ Make a new link (the old link stops working) <button class="tag new" type="button" data-note="RENAMED FOR THIS CASE (DRAFT). On an emailed deal round 1's words stay: 'Send the link again (the old link stops working)'. On a link-made deal nothing was ever sent, so the action makes a new link and opens Copy the link; it sends nothing.">DRAFT</button></span>
+            <span class="recAct">⊘ Do not offer again</span>
+            <span class="recAct" style="color:var(--danger-ink)">✕ Withdraw this offer</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Deals · the row under Offered</b><span class="chrome">desktop · 1200, the rows only</span><button class="tag new" type="button" data-note="ROUND 1 TAB 5's TABLE, one row changed: the grey line under the name says the link was made, not emailed (DRAFT), where an emailed offer says 'Sent Mar 9 · not opened'. Once opened: 'Link made Mar 2 · opened Mar 4'. No chip and no new column: the band names the state once.">NEW LINE</button></div>
+        <div class="scroll"><div class="frame adm">
+          <table class="tbl">
+            <thead><tr><th>Business</th><th>Package</th><th>Shows on</th><th class="num">Amount</th><th>Items done</th><th></th></tr></thead>
+            <tbody>
+              <tr><td colspan="6" class="band" style="padding:6px 12px">Offered <span class="bc">3</span></td></tr>
+              <tr><td class="nm">Riverside Hardware<span class="s">Sent Mar 9 · not opened</span></td><td>Club partner</td><td>The club</td><td class="num">$2,500.00</td><td>—</td><td class="chev">›</td></tr>
+              <tr><td class="nm">Lakeview Pizza<span class="s">Link made Mar 2, not emailed</span></td><td>Tournament sponsor</td><td>Spring Classic 2027</td><td class="num">$750.00</td><td>—</td><td class="chev">›</td></tr>
+              <tr><td class="nm">Fenwick Insurance<span class="s">Sent Feb 26 · opened Feb 27</span></td><td>Team sponsor</td><td>U11 Lions</td><td class="num">$400.00</td><td>—</td><td class="chev">›</td></tr>
+            </tbody>
+          </table>
+        </div></div>
+        <div class="specHead" style="margin-top:6px"><b>Phone · the same row</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>Sponsorships<span class="sm">Deals · 2027</span></span></div>
+          <div class="pbody"><div class="rlist">
+            <div class="band">Offered <span class="bc">3</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) 18px"><span><span class="nm">Riverside Hardware</span><span class="cap">Club partner · The club · $2,500.00</span></span><span class="chev">›</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) 18px"><span><span class="nm">Lakeview Pizza</span><span class="cap">Link made, not emailed · Spring Classic 2027 · $750.00</span></span><span class="chev">›</span></div>
+          </div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · WHEN SEND CAN'T GO -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>When Send can’t go, the business is still listed, Send is absent with its reason, and Make the link only stays</h2>
+    <p>Four cases stop the email: no mailing address yet, an address that unsubscribed from this club’s sponsorship offers, an address on the club’s family opt-out, and a business the club marked Do not offer again. In each the window keeps working for an in-person link. The three about the address are said in the Business menu before it is picked, so nobody fills the window for nothing.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Business ▾ open · three addresses that can’t be emailed</b><span class="chrome">field menu</span><button class="tag new" type="button" data-note="ROUND 1's PICKER, three rows added (words DRAFT, the first is /legal's tab 9 line). They stay pickable: picking one makes an in-person link possible. Their grey line says why there will be no email. A family opt-out is found through every address of the person who opted out, the way family mail already checks it.">DRAFT ROWS</button></div>
+        <div class="scroll"><div class="frame adm w520">
+          <div class="fld"><span class="l">Business <span class="req">*</span></span><div class="inp sel" style="border-color:var(--home-olive)">Business name <span>▾</span></div></div>
+          <div class="menu" style="position:static;width:100%">
+            <div class="mi">Harbour Dental<span class="h">Frank Osei · no deals yet</span></div>
+            <div class="mi">Oakridge Physio<span class="h">Unsubscribed from your sponsorship emails on Nov 2, 2027. We won’t email them again.</span></div>
+            <div class="mi">Ferreira family<span class="h">This address has asked Riverdale Minor Ball not to email it. Give them the link in person instead.</span></div>
+            <div class="mi">Northside Auto<span class="h">You marked them Do not offer again on Mar 1, 2027.</span></div>
+            <div class="mdiv"></div>
+            <div class="mi"><span class="door">+ New business</span><span class="h">A name and an email. They fill in the rest.</span></div>
+          </div>
+          <p class="small">A new business typed with one of these addresses is told the same thing as soon as the email is entered.</p>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>One of them picked · Oakridge Physio</b><span class="chrome">window · 600</span><button class="tag new" type="button" data-note="THE WINDOW WHEN SEND CAN'T GO. Send the offer is ABSENT, not greyed out, as round 1 drew it for the missing mailing address. The foot's far-left sentence (footerStart) names why. The email section is replaced by one line (DRAFT), since a reason and a note mean nothing without an email. Make the link only stays: /legal's review (section 1) says a club cannot clear an unsubscribe, only the business can, and that a business that asks again is handed the link in person. So the link is for a business that came back to the club, not a way around the unsubscribe. /legal re-checks this line at Part 2's close.">NEW STATE</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Deals</div><p class="wtitle">Offer a deal</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Business <span class="req">*</span></span><div class="inp sel">Oakridge Physio <span>▾</span></div><span class="hint">Priya Shah · priya@oakridgephysio.ca</span></div>
+            <div class="two">
+              <div class="fld"><span class="l">Package <span class="req">*</span></span><div class="inp sel">Team sponsor <span>▾</span></div></div>
+              <div class="fld"><span class="l">Shows on <span class="req">*</span></span><div class="inp sel">U11 Hawks <span>▾</span></div></div>
+            </div>
+            <div class="fld"><span class="l">Amount <span class="req">*</span></span><div class="inp">$400.00</div></div>
+            <div class="sec"><p class="secH">The email</p>
+              <p class="small" style="font-size:13px;color:var(--home-ink-soft)">If they asked you about sponsoring again, make the link and give it to them yourself. <button class="tag re" type="button" data-note="DRAFT WORDS. One line in place of the email section, because a reason and a note mean nothing without an email. The reason itself is said once, in the foot. /marketing confirms it at the build.">DRAFT</button></p>
+            </div>
+          </div>
+          <div class="wfoot"><span class="fs">Unsubscribed from your sponsorship emails on Nov 2, 2027.</span><span class="btnOut">Cancel</span><span class="btnLime">Make the link only</span></div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>No mailing address yet · any business</b><span class="chrome">window · 600, the foot only</span><button class="tag new" type="button" data-note="ROUND 1's FOOT FOR A MISSING ADDRESS ('Add your mailing address in Setup first', Send absent), with Make the link only kept. The mailing address is for the email's legal foot; a link handed over in person carries no foot, so it doesn't wait. The email section stays as drawn, so a club can fill it in while someone adds the address.">ROUND 1 + ONE BUTTON</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="wfoot"><span class="fs">Add your mailing address in Setup first</span><span class="btnOut">Cancel</span><span class="btnLime">Make the link only</span></div>
+        </div></div></div>
+        <div class="specHead" style="margin-top:6px"><b>Phone · Send can’t go</b><span class="chrome">390</span><button class="tag new" type="button" data-note="THE SHIPPED PHONE FOOT WITH A SENTENCE: the foot's left sentence takes its own line above the buttons on a phone (footerStart wraps at 14rem), and the one remaining act is the lime.">NEW</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>←</span><span>Offer a deal</span></div>
+          <div class="pbody">
+            <div class="fld"><span class="l">Amount <span class="req">*</span></span><div class="inp">$400.00</div></div>
+            <p class="small" style="font-size:13px;color:var(--home-ink-soft)">If they asked you about sponsoring again, make the link and give it to them yourself.</p>
+          </div>
+          <div class="wfoot" style="padding:12px 20px;flex-wrap:wrap;row-gap:10px"><span class="fs" style="flex:1 1 100%">Unsubscribed from your sponsorship emails on Nov 2, 2027.</span><span class="btnLime">Make the link only</span></div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>The rules this tab keeps</h3>
+        <ul>
+          <li><b>Absent, not disabled.</b> Send isn’t there when it can’t go, and the foot’s left sentence says why (round 1’s rule for the mailing address, applied to all four cases).</li>
+          <li><b>Nobody at the club can clear an unsubscribe, a family opt-out or Do not offer again</b> (ask 13). The menu says each one plainly and nothing in the window undoes it.</li>
+          <li><b>Do not offer again is the club’s own stop</b> for a business that said so by reply or phone. Its line names the date it was set. It stops email from every seat, the same as an unsubscribe.</li>
+          <li><b>It becomes the lime.</b> With Send absent it is the window’s one act, so it takes the one lime, as every screen’s main act does.</li>
+          <li><b>Make the link only stays in all four.</b> It sends nothing, so none of the four rules is about it. For an unsubscribed business it is the in-person route /legal describes for a business that comes back to the club. /legal re-checks this at Part 2’s close.</li>
+          <li><b>Withdraw stays on any offer,</b> however it was made.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · THE REASON'S DATE (owner call (e), 2026-11-22) -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <h2>Two of the four reasons run out, so they ask for their own date, and a reason that has run out can’t send</h2>
+    <p>Ruled Nov 22 (call e, from /legal’s re-check): “paid us in the last 2 years” and “asked us in the last 6 months” are only true for a while, so the offer keeps the day it rests on, not only the day the offer went. Picking either shows a required <b>When?</b> date directly under the reason. The other two reasons (they gave you the address, they published it) don’t run out and ask for no date. Everything else in the window is tab 1’s.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Asked about sponsoring · the date under the reason</b><span class="chrome">window · 600, The email only</span><button class="mark" type="button" data-ask="3">3</button><button class="tag new" type="button" data-note="NEW FIELD, the shipped DateInput (the one date field: on a desk a typeable box reading 'Feb 20, 2027' with our calendar under it; on a phone the device's own date control). It appears directly under 'Why you can email them' only when the reason runs out (paid, asked), and is required for Send. It never takes a day after today. Kept with the offer beside the reason, the day the offer went and who sent it. Make the link only ignores it, as it ignores the reason.">NEW FIELD</button></div>
+        <div class="scroll"><div class="frame adm w620">
+          <div class="sec"><p class="secH">The email</p>
+            <div class="fld"><span class="l">Why you can email them <span class="req">*</span></span><div class="inp sel">They asked us about sponsoring (in the last 6 months) <span>▾</span></div></div>
+            <div class="fld"><span class="l">When? <span class="req">*</span><button class="tag new" type="button" data-note="ONE HINT, NOT TWO. With When? showing, the reason's own hint ('Kept with the offer, with today's date.') steps aside: the date hint says what is kept, and 'today's date' beside a date field would read as the field's answer. The two reasons with no date keep the reason's hint as round 1 drew it.">ONE HINT</button></span><div class="inp sel" style="max-width:220px">Feb 20, 2027 <span>📅</span></div><span class="hint">The day they asked. Kept with the offer. <button class="tag re" type="button" data-note="DRAFT WORDS (owner call e). /marketing confirms them at the build.">DRAFT</button></span></div>
+            <p class="small" style="font-size:13px;color:var(--home-ink-soft)">Send this only to a business that has paid you in the last two years, asked you about sponsoring in the last six months, gave you this address, or published it for business use and a sponsorship is relevant to what they do. Don’t send it to a business you have never dealt with. If you have spoken to them, give them the link in person instead.</p>
+          </div>
+        </div></div>
+        <div class="specHead" style="margin-top:6px"><b>Why you can email them ▾ open · which reasons ask When?</b><span class="chrome">field menu</span></div>
+        <div class="scroll"><div class="frame adm w520">
+          <div class="menu" style="position:static;width:100%">
+            <div class="mi">They paid us in the last 2 years</div>
+            <div class="mi">They asked us about sponsoring (in the last 6 months)</div>
+            <div class="mi">They gave us this address</div>
+            <div class="mi">They published it for business use</div>
+          </div>
+          <p class="small">The first two show When? under the reason. The last two show nothing more. <button class="tag re" type="button" data-note="DRAFT. The last two reasons' labels were not drawn in round 1 (only the 'asked' one was): 'They gave us this address' and 'They published it for business use' are draft words for /marketing, from /legal's four bases.">DRAFT</button></p>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Paid, but too long ago · the line under the field</b><span class="chrome">window · 600, The email + foot</span><button class="tag new" type="button" data-note="THE REFUSAL IS THE RED LINE UNDER THE FIELD THAT IS WRONG (the 2026-11-18 ruling), shown as soon as the date is entered, so it replaces the hint. The field takes the error edge. Send the offer stays: a wrong date is fixed in the field, a moment and not a standing state of the window (2026-10-12: absent is for a standing reason). Pressing Send now points at this field. Make the link only stays and is the way the line itself names. The day counts back from today in the club's time zone: more than two years for paid, more than six months for asked.">NEW LINE</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="wbody">
+            <div class="sec"><p class="secH">The email</p>
+              <div class="fld"><span class="l">Why you can email them <span class="req">*</span></span><div class="inp sel">They paid us in the last 2 years <span>▾</span></div></div>
+              <div class="fld"><span class="l">When? <span class="req">*</span></span><div class="inp sel err" style="max-width:220px">Jan 15, 2025 <span>📅</span></div><span class="errL">That’s more than two years ago, so this reason no longer applies. Give them the link in person instead. <button class="tag re" type="button" data-note="DRAFT WORDS (owner call e). The asked reason's line: 'That's more than six months ago, so this reason no longer applies. Give them the link in person instead.' /marketing confirms both at the build.">DRAFT</button></span></div>
+            </div>
+          </div>
+          <div class="wfoot"><span class="fs">Emails frank@harbourdental.ca</span><span class="btnOut">Cancel</span><span class="btnOut">Make the link only</span><span class="btnLime">Send the offer</span></div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Phone · the date, and the line</b><span class="chrome">390 · two states</span><button class="tag new" type="button" data-note="THE PHONE: the same field in the same place, the device's own date control (DateInput at 768 px and narrower). The hint or the red line sits under it, at the phone's 13 px. The pinned foot is tab 1's (ask 2).">PHONE</button></div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div class="scroll"><div class="frame phone">
+            <div class="pbar"><span>←</span><span>Offer a deal</span></div>
+            <div class="pbody">
+              <div class="fld"><span class="l">Why you can email them <span class="req">*</span></span><div class="inp sel">They asked us about sponsoring <span>▾</span></div></div>
+              <div class="fld"><span class="l">When? <span class="req">*</span></span><div class="inp sel">Feb 20, 2027 <span>📅</span></div><span class="hint">The day they asked. Kept with the offer.</span></div>
+            </div>
+            <div class="wfoot" style="padding:12px 20px"><span class="btnOut">Make the link only</span><span class="btnLime">Send the offer</span></div>
+          </div></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbar"><span>←</span><span>Offer a deal</span></div>
+            <div class="pbody">
+              <div class="fld"><span class="l">Why you can email them <span class="req">*</span></span><div class="inp sel">They asked us about sponsoring <span>▾</span></div></div>
+              <div class="fld"><span class="l">When? <span class="req">*</span></span><div class="inp sel err">Aug 4, 2026 <span>📅</span></div><span class="errL">That’s more than six months ago, so this reason no longer applies. Give them the link in person instead.</span></div>
+            </div>
+            <div class="wfoot" style="padding:12px 20px"><span class="btnOut">Make the link only</span><span class="btnLime">Send the offer</span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Send the link again, after the reason has run out</b><span class="chrome">one level down · desktop · 960, the top of the deal</span><button class="tag new" type="button" data-note="THE SHIPPED NOTICE LINE (PageNotice, tone good: the olive-soft line with its tick, said once, fading on its own) at the top of the deal's page. Send the link again on an emailed deal checks the reason kept with its offer against today. Still good: a new link and the email, as round 1 drew it. Run out (asked more than six months ago, or paid more than two years ago): the new link is made and the old one stops, nothing is emailed, and the notice says why. The deal's history records 'new link made, not emailed'. The action keeps its words: whether it may email is the day's fact, not a different action.">NOTICE</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><span class="back">← Deals</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Riverside Hardware <span class="stP">Offered</span></p><span class="ico">✎</span></div><span class="sub">Club partner · The club · 2027</span></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--home-ink);background:var(--home-olive-soft);border:1px solid var(--home-line-strong);border-radius:8px;padding:10px 13px;line-height:1.45"><span aria-hidden="true" style="color:var(--home-olive);font-weight:700">✓</span><span>The new link is made. Their reason to be emailed has run out, so nothing was emailed. Give it to them in person. <button class="tag re" type="button" data-note="DRAFT WORDS (owner call e). /marketing confirms them at the build.">DRAFT</button></span></div>
+          <div class="callout"><div class="ct"><b>Waiting for Riverside Hardware</b><span>They haven’t opened the link yet.</span></div></div>
+          <div class="collapsedSec">History · offered Sep 9, 2026 by Dana Ruiz (asked us Sep 2, 2026) · new link made Mar 9, 2027, not emailed <span class="door">Show</span></div>
+          <div style="display:grid;gap:8px">
+            <span class="recAct">⧉ Copy the link</span>
+            <span class="recAct">↻ Send the link again (the old link stops working)</span>
+            <span class="recAct">⊘ Do not offer again</span>
+            <span class="recAct" style="color:var(--danger-ink)">✕ Withdraw this offer</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>The rules this tab keeps</h3>
+        <ul>
+          <li><b>The date is the reason’s, not the offer’s.</b> “Kept with today’s date” still records the day the offer went; When? records the day the reason rests on. Both are kept, with who sent it.</li>
+          <li><b>Only the two that run out ask.</b> Paid in two years and asked in six months have a clock. A given or published address doesn’t.</li>
+          <li><b>The line says the way forward.</b> It never just refuses: the in-person link is the next step, and Make the link only is in the same foot.</li>
+          <li><b>No day after today.</b> The calendar refuses it, the way DateInput refuses any day outside its range.</li>
+          <li><b>A later email checks again.</b> Send the link again and Email the offer read the kept date against the day they are pressed, so an offer can’t keep emailing on a reason that has run out.</li>
+          <li><b>Offer again reads it too</b> (Part 4): a business whose kept reason has run out is listed but can’t be ticked, as round 1 tab 9 drew for the lapsed one.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · ASKS -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <h2>Your asks</h2>
+    <p>Three asks: whether this is the way to build the button you ruled on Nov 22, how the phone’s foot fits it (raised by /design), and the reason’s own date you ruled the same day (tab 4). The first answer to each is my recommendation and is already selected. Add a note if you want something changed, then press Build the summary and paste it into the chat. Your picks are kept in this browser only.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var ASKS = [
+  {n:1, t:"Make the link only, and the refused states", why:"Ruled Nov 22 to add a way to make a deal's link without emailing it. This is how it would look and behave before it is built.", o:[
+    "Build as drawn: an outline Make the link only between Cancel and Send the offer; the reason is required only for Send; the deal's page opens with Copy the link; the row says Link made, not emailed; when Send can't go it is absent with its reason and Make the link only stays, in all four cases",
+    "Change it (say what in the note)"]},
+  {n:2, t:"Cancel on the phone's Offer a deal foot", why:"The shipped phone window pins its foot with the buttons in one row. Cancel, Make the link only and Send the offer need about 374 px; the foot has about 350 at 390. The 2026-10-09 rule keeps Cancel beside a create form's button.", o:[
+    "On a phone the foot holds Make the link only and Send the offer; Cancel is the head's ←, which asks first when anything is typed. The computer keeps all three",
+    "Keep Cancel on the phone too, and let the foot wrap: Cancel alone on the first row, the two acts on the second",
+    "Shorten the phone label to fit three (say which words in the note)"]},
+  {n:3, t:"The reason keeps its own date", why:"Ruled Nov 22 (call e, from /legal's re-check): the paid and asked reasons run out, so the offer keeps the day each rests on. This is how it would look before it is built.", o:[
+    "Build as drawn: a required When? (the shipped date field) directly under the reason, for paid and asked only; the drafted hints; the red line under the field when the day is too long ago, with Send still there; Send the link again on a run-out reason makes the new link, emails nothing, and the notice says so",
+    "Change it (say what in the note)"]}
+];
+var KEY = "br-stage6-p2-linkonly-v1";
+var S = { pick:{}, note:{}, tab:"p1", seg:{} };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+var host = document.getElementById("asks");
+function pickOf(a){ return S.pick[a.n] != null ? S.pick[a.n] : 0; }
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + a.t + "</h3><p class=\"why\">" + a.why + "</p>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + o + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var r = document.getElementById("a" + a.n + "o" + pickOf(a)); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+function build(){
+  var L = ["Board Ready Stage 6 Part 2, Make the link only (drawn Nov 22, 2026)", ""];
+  ASKS.forEach(function(a){
+    var p = pickOf(a);
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var txt = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(txt).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+Array.prototype.forEach.call(document.querySelectorAll(".seg"), function(seg){
+  var pane = document.getElementById(seg.getAttribute("data-seg"));
+  function set(v){ Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-v") === v ? "true" : "false"); }); pane.classList.toggle("diffs", v === "diff"); S.seg[seg.getAttribute("data-seg")] = v; save(); }
+  seg.addEventListener("click", function(ev){ var b = ev.target.closest("button"); if (b) set(b.getAttribute("data-v")); });
+  set(S.seg[seg.getAttribute("data-seg")] || "all");
+});
+var dlg = document.getElementById("note");
+function open(title, paras){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); var a = ASKS.filter(function(x){ return x.n === n; })[0]; if (a) { show("p4"); var el = document.getElementById("ask" + n); if (el) el.scrollIntoView({ block: "start" }); } return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")]); }
+});
+})();
+</script>

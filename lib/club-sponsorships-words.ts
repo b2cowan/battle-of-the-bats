@@ -164,6 +164,8 @@ export const SPONSORSHIPS_WORDS = {
     fromDealShort: 'From a deal. Change the place or the last day on the deal.',
     dealDoor: 'Deal',
     noRemove: 'Remove isn’t offered while a deal shows this sponsor. Withdraw or end the deal first.',
+    // Part 2 (DRAFT): a business with any deal, withdrawn ones too, stays (its offers and invoices are on record).
+    noRemoveDeals: 'Remove isn’t offered for a business with a deal, even a withdrawn one. Its offers and invoices stay on record.',
     remove: 'Remove sponsor',
     removeAsk: (name: string) => `Remove ${name}?`,
     removeBody: 'They leave every page they show on. Their logo is deleted.', // DRAFT

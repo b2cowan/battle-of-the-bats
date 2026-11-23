@@ -3,6 +3,7 @@ import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
 import { refused, requireSponsorships } from '@/lib/club-sponsorships-auth';
 import { deleteSponsor, homePlacesShowingNow, readSponsor, removeLogoFile, targetsBelong, updateSponsor } from '@/lib/club-sponsorships-server';
+import { sponsorHasAnyDeal } from '@/lib/club-sponsorship-deals-server';
 import { isOwnSponsorLogo } from '@/lib/sponsor-logo';
 import { HOME_STRIP_MAX, parseSponsorInput, placeShowing, sponsorHasDeal } from '@/lib/club-sponsorships';
 import { SPONSORSHIPS_WORDS as W } from '@/lib/club-sponsorships-words';
@@ -57,7 +58,8 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   if (!isUuid(sponsorId)) return notFound();
   const current = await readSponsor(org.id, sponsorId);
   if (!current) return notFound();
-  if (sponsorHasDeal(current)) return refused(W.sponsor.noRemove, 409, 'deal');
+  // Part 2: any deal, withdrawn ones too — its offers (the CASL record) and invoice numbers stay on record with the business.
+  if (sponsorHasDeal(current) || (await sponsorHasAnyDeal(org.id, sponsorId))) return refused(W.sponsor.noRemoveDeals, 409, 'deal');
   await deleteSponsor(org.id, sponsorId);
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/sponsorships/sponsors/[sponsorId]' });

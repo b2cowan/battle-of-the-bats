@@ -1,7 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
-import { readChoices, seasonFormId, CLUB_FORM_BUCKET } from './club-form-server';
+import { readChoices, seasonFormId, sponsorshipFormId, CLUB_FORM_BUCKET } from './club-form-server';
 import { tickSentence, type QuestionAsked, type QuestionChoice, type QuestionType, type TickKind } from './club-form';
 import { tickState, needsTick } from './club-form-signup';
 import { liveRow } from './club-form-family';
@@ -22,6 +22,8 @@ import { writeOrgAuditFirst } from './org-audit';
  *                          "No longer asked", and each document's tick
  *   readBoardAnswers       the draft board's note line: only questions turned "Show on the draft board", never health
  *   openFamilyFile         a one-hour DOWNLOAD link to a family's file, each opening in the club's audit log
+ *   readDealAnswers        a sponsorship deal's "Their answers" (Board Ready Stage 6 Part 2): a BUSINESS's answers, read only
+ *                          by the deal's own route behind `requireSponsorships` (the guard test names it)
  *
  * ⚖ WHO (ruling 6, A8): every caller sits behind `houseLeagueRefusal(ctx, 'read')` — the seats that open Registrations.
  * The guard test `tests/unit/club-form-staff-guard.test.ts` holds the callers to that list. Nothing here reaches a push,
@@ -344,4 +346,26 @@ export async function runRetentionSweep(): Promise<number> {
   const { data, error } = await supabaseAdmin.rpc('club_form_retention_sweep');
   if (error) throw error;
   return Number(data ?? 0);
+}
+
+/**
+ * A SPONSORSHIP DEAL'S ANSWERS (Board Ready Stage 6, Part 2; round 1 tab 5 "Their answers"): every live question of the club's
+ * sponsorship form in its order, answered or "Not answered", and an archived one only where it was answered. A business form
+ * has no health questions (mig 525). Read only by `app/api/admin/sponsorships/deals/[dealId]/route.ts`, behind
+ * `requireSponsorships` — the guard test holds it to that one caller.
+ */
+export async function readDealAnswers(orgId: string, dealId: string): Promise<{ questionId: string; label: string; type: QuestionType; display: string | null }[]> {
+  const formId = await sponsorshipFormId(orgId);
+  if (!formId) return [];
+  const [qs, rows] = await Promise.all([
+    formQuestions(formId),
+    supabaseAdmin.from('club_form_answers').select(A_COLS).eq('form_id', formId).eq('subject_table', 'club_sponsor_deals').eq('subject_id', dealId),
+  ]);
+  if (rows.error) throw rows.error;
+  const by = new Map(((rows.data ?? []) as ARow[]).map(a => [a.question_id, a]));
+  // A business is asked every live question when it opens its link, so nothing reads "not asked" (an old registered-at).
+  return qs.filter(q => !q.archived_at || by.has(q.id)).map(q => {
+    const c = cellOf(q, by.get(q.id), '9999-12-31', false);
+    return { questionId: q.id, label: q.label, type: q.question_type, display: c.state === 'answered' ? c.text : null };
+  });
 }

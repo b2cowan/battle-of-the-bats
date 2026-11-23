@@ -919,9 +919,27 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → c
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, starts_on NOT NULL, ends_on NOT NULL, settings (jsonb), version (integer), started_from_permit_id (uuid) → org_permits.id, started_from_schedule_id (uuid) → club_schedules.id, reply_by, sent_at, sent_by (uuid), finalized_at, finalized_by (uuid), changed_since_sent (boolean), bill_line_id (uuid) → org_budget_lines.id, bill_permit_id (uuid) → org_permits.id, bill_amount (numeric), bill_plan, bill_first_due, bill_dates, bill_scale (numeric), allocation_id (uuid) → rep_cost_allocations.id, created_by (uuid), updated_by (uuid), created_at, updated_at, bill_price_mode, part_of_schedule_id (uuid) → club_schedules.id, part_label, bill_dismissed_at, bill_dismissed_by (uuid)
 - Indexes: club_schedules_allocation_idx, club_schedules_bill_line_idx, club_schedules_bill_permit_idx, club_schedules_created_by_idx, club_schedules_finalized_by_idx, club_schedules_from_schedule_idx, club_schedules_org_idx, club_schedules_part_label_once, club_schedules_part_of_idx, club_schedules_permit_idx, club_schedules_sent_by_idx, club_schedules_updated_by_idx
 
+### club_sponsor_deal_items
+deal_id (uuid) → club_sponsor_deals.id NOT NULL, item_id NOT NULL, org_id (uuid) → organizations.id NOT NULL, done_at, done_by (uuid), done_by_name NOT NULL
+- Indexes: club_sponsor_deal_items_org_idx
+
+### club_sponsor_deals
+id (uuid), org_id (uuid) → organizations.id NOT NULL, sponsor_id (uuid) → club_sponsors.id NOT NULL, package_id (uuid) → club_sponsorship_packages.id NOT NULL, package_name NOT NULL, package_items (jsonb), logo_on_site (boolean) NOT NULL, place_kind NOT NULL, target_id (uuid), target_name, ends_on, amount (numeric) NOT NULL, charge_tax (boolean), state, link_version (integer), offered_on NOT NULL, offered_at, offered_by (uuid), offered_by_name NOT NULL, offered_to, emailed_at, opened_at, form_at, business_name, contact_name, contact_email, phone, website, invoice_street, invoice_city, invoice_province, invoice_postal, logo_path, logo_sent_at, pay_method, invoice_year (integer), invoice_seq (integer), invoiced_at, invoiced_on, due_on, tax_kind, tax_rate (numeric), tax_amount (numeric), total (numeric), withdrawn_at, withdrawn_by (uuid), withdrawn_by_name, withdrawn_reason, created_at, updated_at, link_unsent_at
+- Indexes: club_sponsor_deals_invoice_uniq, club_sponsor_deals_org_idx, club_sponsor_deals_package_idx, club_sponsor_deals_sponsor_idx, club_sponsor_deals_target_idx
+
+### club_sponsor_invoice_counters
+org_id (uuid) → organizations.id NOT NULL, year (integer) NOT NULL, last_seq (integer) NOT NULL
+
+### club_sponsor_offer_stops
+org_id (uuid) → organizations.id NOT NULL, email NOT NULL, source NOT NULL, stopped_at, stopped_by (uuid), stopped_by_name
+
+### club_sponsor_offers
+id (uuid), org_id (uuid) → organizations.id NOT NULL, deal_id (uuid) → club_sponsor_deals.id, business_name NOT NULL, email NOT NULL, reason NOT NULL, reason_on NOT NULL, kind, sent_at, sent_by (uuid), sent_by_name NOT NULL
+- Indexes: club_sponsor_offers_deal_idx, club_sponsor_offers_org_idx
+
 ### club_sponsor_places
-id (uuid), org_id (uuid) → organizations.id NOT NULL, sponsor_id (uuid) → club_sponsors.id NOT NULL, kind NOT NULL, target_id (uuid), ends_on, source, deal_id (uuid), created_at, updated_at
-- Indexes: club_sponsor_places_sponsor_idx, club_sponsor_places_target_idx, club_sponsor_places_typed_once
+id (uuid), org_id (uuid) → organizations.id NOT NULL, sponsor_id (uuid) → club_sponsors.id NOT NULL, kind NOT NULL, target_id (uuid), ends_on, source, deal_id (uuid) → club_sponsor_deals.id, created_at, updated_at
+- Indexes: club_sponsor_places_one_per_deal, club_sponsor_places_sponsor_idx, club_sponsor_places_target_idx, club_sponsor_places_typed_once
 
 ### club_sponsors
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, logo_url, link, contact_name, contact_email, phone, invoice_street, invoice_city, invoice_province, invoice_postal, position (integer), created_by (uuid), created_at, updated_at
@@ -1225,7 +1243,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **301 tables** across 10 modules.
+Total: **306 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 25 tables
@@ -1236,4 +1254,4 @@ Total: **301 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 30 tables
 - CRM / Leads: 6 tables
-- Other: 119 tables
+- Other: 124 tables

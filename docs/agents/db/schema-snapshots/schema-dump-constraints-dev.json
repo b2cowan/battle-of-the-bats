@@ -2290,6 +2290,236 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "club_sponsor_deal_items",
+    "constraint_name": "club_sponsor_deal_items_deal_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "deal_id",
+    "foreign_table": "club_sponsor_deals",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "constraint_name": "club_sponsor_deal_items_done_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "done_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "constraint_name": "club_sponsor_deal_items_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "constraint_name": "club_sponsor_deal_items_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "deal_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "constraint_name": "club_sponsor_deal_items_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "item_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "constraint_name": "club_sponsor_deals_offered_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "offered_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "constraint_name": "club_sponsor_deals_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "constraint_name": "club_sponsor_deals_package_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "package_id",
+    "foreign_table": "club_sponsorship_packages",
+    "foreign_column": "id",
+    "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "constraint_name": "club_sponsor_deals_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "constraint_name": "club_sponsor_deals_sponsor_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sponsor_id",
+    "foreign_table": "club_sponsors",
+    "foreign_column": "id",
+    "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "constraint_name": "club_sponsor_deals_withdrawn_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "withdrawn_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_invoice_counters",
+    "constraint_name": "club_sponsor_invoice_counters_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_invoice_counters",
+    "constraint_name": "club_sponsor_invoice_counters_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_invoice_counters",
+    "constraint_name": "club_sponsor_invoice_counters_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "year",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "constraint_name": "club_sponsor_offer_stops_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "constraint_name": "club_sponsor_offer_stops_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "constraint_name": "club_sponsor_offer_stops_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "email",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "constraint_name": "club_sponsor_offer_stops_stopped_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "stopped_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "constraint_name": "club_sponsor_offers_deal_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "deal_id",
+    "foreign_table": "club_sponsor_deals",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "constraint_name": "club_sponsor_offers_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "constraint_name": "club_sponsor_offers_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "constraint_name": "club_sponsor_offers_sent_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sent_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_places",
+    "constraint_name": "club_sponsor_places_deal_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "deal_id",
+    "foreign_table": "club_sponsor_deals",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "club_sponsor_places",
     "constraint_name": "club_sponsor_places_org_id_fkey",
     "constraint_type": "FOREIGN KEY",

@@ -219,6 +219,8 @@ const CLUB_PAGES: { route: string; component: string; branches: number; form?: t
   { route: `${CLUB}/tournaments/page.tsx`, component: `${CLUB}/tournaments/page.tsx`, branches: 1 },
   { route: `${CLUB}/about/page.tsx`, component: `${CLUB}/about/page.tsx`, branches: 1 },
   { route: `${CLUB}/archives/[archiveId]/page.tsx`, component: `${CLUB}/archives/[archiveId]/page.tsx`, branches: 1 },
+  // The business's sponsorship page (Board Ready Stage 6 Part 2): one form a business reads from its link, no login.
+  { route: `${CLUB}/sponsorship/[token]/page.tsx`, component: `${CLUB}/sponsorship/[token]/page.tsx`, branches: 1, form: true },
 ];
 
 /** Routes under the club's address that are not a club public page, each with its reason. (The admin, the coaches
@@ -248,6 +250,7 @@ const CLUB_SHEETS = [
   `${CLUB}/league/league-column.module.css`,
   `${CLUB}/tournaments/ClubTournaments.module.css`,
   'components/public/ClubAbout.module.css',
+  'components/public/SponsorDeal.module.css',
 ];
 
 describe('Public page layout standard, club round — every club public page is one page on one column', () => {

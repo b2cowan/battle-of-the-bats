@@ -19,15 +19,17 @@ const FILE = 'app/api/admin/house-league/seasons/[seasonId]/registrations/[regId
 const EXPORT = 'app/api/admin/house-league/seasons/[seasonId]/registrations/answers/route.ts';
 const BOARD = 'app/api/admin/house-league/seasons/[seasonId]/teams-board/route.ts';
 const SWEEP = 'app/api/platform-admin/club-form-files-sweep/route.ts';
+// Board Ready Stage 6 Part 2: a sponsorship deal's answers (a business's), read on the deal's page behind requireSponsorships.
+const DEAL = 'app/api/admin/sponsorships/deals/[dealId]/route.ts';
 
-const READERS = ['readSeasonAnswerGrid', 'readRegistrationForm', 'openFamilyFile', 'readAnswerColumns', 'saveAnswerColumns', 'readBoardAnswers'];
-const ALLOWED = new Set([LIST, RECORD, FILE, EXPORT, BOARD]);
+const READERS = ['readSeasonAnswerGrid', 'readRegistrationForm', 'openFamilyFile', 'readAnswerColumns', 'saveAnswerColumns', 'readBoardAnswers', 'readDealAnswers'];
+const ALLOWED = new Set([LIST, RECORD, FILE, EXPORT, BOARD, DEAL]);
 
 const code = (dir: string) => [...filesUnder(dir, '.ts'), ...filesUnder(dir, '.tsx')];
 const actionOf = (src: string) => /houseLeagueRefusal\(ctx, '(\w+)'\)/.exec(src)?.[1];
 
 describe('1 · the staff readers have a fixed list of callers', () => {
-  it('only the five routes call a staff reader', () => {
+  it('only the five routes (and the deal’s page, for a business) call a staff reader', () => {
     const callers = [...code('app'), ...code('lib'), ...code('components')]
       .filter(f => f !== STAFF && READERS.some(r => new RegExp(`\\b${r}\\(`).test(readCode(f))));
     assert.deepEqual(callers.filter(f => !ALLOWED.has(f)), [], 'a new caller of the staff answer readers');
@@ -37,6 +39,16 @@ describe('1 · the staff readers have a fixed list of callers', () => {
     assert.ok(!READERS.some(r => src.includes(r)));
     assert.match(src, /runRetentionSweep\(\)/);
     assert.match(src, /clearStorageRemovals\(\)/);
+  });
+});
+
+describe('1b · a business’s answers are read only behind Sponsorships (Board Ready Stage 6 Part 2)', () => {
+  it('the deal route is the one caller of readDealAnswers, and every handler asks requireSponsorships first', () => {
+    const callers = [...code('app'), ...code('lib'), ...code('components')].filter(f => f !== STAFF && /\breadDealAnswers\(/.test(readCode(f)));
+    assert.deepEqual(callers, [DEAL]);
+    const src = readCode(DEAL);
+    const gates = src.match(/const gate = await requireSponsorships\(req\);\s*if \('failure' in gate\) return gate\.failure;/g) ?? [];
+    assert.equal(gates.length, (src.match(/withObservability\(/g) ?? []).length, 'a deal handler without the Sponsorships gate in front');
   });
 });
 

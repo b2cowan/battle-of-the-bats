@@ -18,4 +18,6 @@ export const UNSUBSCRIBE_WORDS = {
   user: 'Press the button to stop emails like the one you received from FieldLogicHQ to your account.',
   /** One family address in one club ("Email families" footer). `email` arrives masked (maskEmail). */
   guardian: (club: string, email: string) => `Press the button to stop emails like the one you received from ${club} to ${email}.`,
+  // Board Ready Stage 6 (mig 526): a club's sponsorship offers only. DRAFT for the /marketing pass.
+  sponsor: (club: string, email: string) => `Press the button to stop sponsorship offers from ${club} to ${email}. Invoices and receipts for a sponsorship you have already agreed to still come.`,
 } as const;

@@ -1,0 +1,383 @@
+'use client';
+/**
+ * A BUSINESS'S SPONSORSHIP PAGE (Board Ready Stage 6 Part 2; round 1 tab 4; round 2 tab 1's pay block). One page, no
+ * account, on the club's frame: the package, About your business (the fixed fields the club can't remove, ask 8), Your
+ * logo (with /legal's permission sentence), Questions from {club} (the Stage 4 form, the family form's own fields), and How
+ * you'll pay. Owner call (b): until Part 3 builds card payment the card button is ABSENT, not disabled — the one button
+ * sends the details and asks for the invoice ("Send, and pay $X by cheque or e-transfer"), which is issued at once (ask 4).
+ * The tax row shows only when the club is registered AND the deal's switch is on, at the rate of the province typed
+ * (ask 9). After sending: the thank-you with the invoice and how to pay. A withdrawn offer shows only "This offer was
+ * withdrawn. Contact {club}."; a replaced link its own sentence (owner call (f)); neither shows any business details. The Stage 4 error box: the count, the first named, focus to it, Go to it.
+ */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import formKit from '@/components/public/ClubForm.module.css';
+import pay from '@/components/public/TeamPay.module.css';
+import reg from '@/components/league/register.module.css';
+import { ClubPrivacyLink, DocumentBlock, QuestionField, anyUploading, errorAttrs, toAnswerIn, type AnswerDraft } from '@/components/league/SignupFormFields';
+import { answerName, sizeLine, type AnswerIn } from '@/lib/club-form-signup';
+import { FAMILY_FORM_WORDS as QW } from '@/lib/club-form-family-words';
+import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
+import { SPONSOR_LINK_WORDS as L } from '@/lib/sponsor-link-words';
+import { dealFigures, type BusinessField } from '@/lib/club-sponsorship-deals';
+import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
+import { ORG_IMAGE_TYPES, ORG_LOGO_MAX_BYTES } from '@/lib/org-image-limits';
+import { money } from '@/lib/online-payment-words';
+import type { SponsorPageView, SponsorBusinessPrefill } from '@/lib/sponsor-deal-view';
+import css from './SponsorDeal.module.css';
+
+const P = DEAL_WORDS.page;
+type Open = Extract<SponsorPageView, { state: 'form' | 'done' }>;
+
+const draftsFrom = (saved: Open['saved']): Record<string, AnswerDraft> => {
+  const out: Record<string, AnswerDraft> = {};
+  for (const a of saved.answers) {
+    if (a.file) out[a.questionId] = { file: { state: 'done', name: a.file.name, size: a.file.size, type: a.file.type, id: a.file.id } };
+    else if (a.text !== undefined) out[a.questionId] = { text: a.text };
+    else if (a.choiceIds) out[a.questionId] = { choiceIds: a.choiceIds };
+    else if (a.bool !== undefined) out[a.questionId] = { bool: a.bool };
+    else if (a.date) out[a.questionId] = { date: a.date };
+  }
+  return out;
+};
+
+export default function SponsorDealContent({ initial }: { initial: SponsorPageView }) {
+  const [view, setView] = useState<SponsorPageView>(initial);
+  if (view.state === 'notFound') return <div className={css.closed}><p>{P.notFound}</p></div>;
+  if (view.state === 'closed') {
+    return (
+      <div className={css.closed}>
+        {/* The club's address is in the frame's own foot below: one place, not two. */}
+        <p>{view.replaced ? P.replaced(view.club.name) : P.withdrawn(view.club.name)}</p>
+      </div>
+    );
+  }
+  return <OpenDeal key={`${view.state}:${view.invoice?.number ?? ''}`} view={view} onView={setView} />;
+}
+
+function OpenDeal({ view, onView }: { view: Open; onView: (v: SponsorPageView) => void }) {
+  const { club, deal, token } = view;
+  const base = `/api/public/sponsorship/${token}`;
+  const title = DEAL_WORDS.email.title(deal.packageName, deal.placeName);
+  const [province, setProvince] = useState(view.business.province);
+  const fig = dealFigures({ amount: deal.amount, chargeTax: deal.taxed, registered: true, province: province || null, on: view.today });
+  const until = deal.endsOn ? P.until(deal.endsOn) : null;
+  const priceNote = [deal.taxed && fig.rate ? P.plusTax(fig.rate.kind) : null, until].filter(Boolean).join(' · ');
+
+  return (
+    <div>
+      <div className={css.head}>
+        <p className={pay.eyebrow}>{P.eyebrow}</p>
+        <h1 className={`${pay.title} ${pay.titleFocused}`}>{view.state === 'done' ? P.thanksTitle(view.business.name || deal.offeredTo) : title}</h1>
+        <p className={css.sub}>{view.state === 'done' ? (view.logoUrl ? P.thanksSub(club.name) : P.thanksSubNoLogo(club.name)) : P.offeredTo(deal.offeredTo)}</p>
+      </div>
+
+      {view.state === 'form' ? (
+        <>
+          <div className={css.package}>
+            <p className={css.price}>{money(deal.amount)}{priceNote && <span className={css.priceNote}>{priceNote}</span>}</p>
+            {deal.bullets.length > 0 && <ul className={css.bullets}>{deal.bullets.map((b, i) => <li key={i}>{b}</li>)}</ul>}
+            {deal.hasDocument && (
+              <a className={css.pdf} href={`${base}/package-document`} target="_blank" rel="noopener">
+                <span className={css.tag}>PDF</span>{P.pdf(sizeLine(deal.documentSize ?? 0))} <span aria-hidden="true">↗</span>
+              </a>
+            )}
+          </div>
+          <SponsorForm view={view} onView={onView} province={province} setProvince={setProvince} total={fig.total} taxRow={deal.taxed && fig.rate ? { kind: fig.rate.kind, rate: fig.rate.rate, tax: fig.tax } : null} />
+        </>
+      ) : (
+        <Thanks view={view} />
+      )}
+
+      <Foot club={club} />
+    </div>
+  );
+}
+
+// ── The form ──────────────────────────────────────────────────────────────────────────────────────
+
+function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
+  view: Open; onView: (v: SponsorPageView) => void; province: string; setProvince: (p: string) => void; total: number;
+  taxRow: { kind: 'GST' | 'HST'; rate: number; tax: number } | null;
+}) {
+  const { club, deal, token } = view;
+  const base = `/api/public/sponsorship/${token}`;
+  const form = view.form;
+  const [biz, setBiz] = useState<SponsorBusinessPrefill>(view.business);
+  const [answers, setAnswers] = useState<Record<string, AnswerDraft>>(() => draftsFrom(view.saved));
+  const tickedBefore = useMemo(() => new Set(view.saved.tickedVersions), [view.saved.tickedVersions]);
+  const [ticked, setTicked] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries((form?.documents ?? []).map(d => [d.id, tickedBefore.has(d.versionId)])));
+  const [opened, setOpened] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [missing, setMissing] = useState<string[]>([]);
+  const [firstError, setFirstError] = useState<{ name: string; target: string } | null>(null);
+  const [refusals, setRefusals] = useState(0);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const errorBox = useRef<HTMLDivElement>(null);
+  const uploading = anyUploading(answers);
+
+  useEffect(() => {
+    if (Object.keys(errors).length === 0) { setFirstError(null); return; }
+    const el = formRef.current?.querySelector<HTMLElement>('[data-field-error]');
+    setFirstError(el ? { name: el.dataset.fieldName ?? '', target: el.dataset.fieldTarget ?? '' } : null);
+  }, [errors]);
+  useEffect(() => { if (refusals > 0) errorBox.current?.focus(); }, [refusals]);
+
+  const setField = (k: BusinessField, v: string) => {
+    setBiz(b => ({ ...b, [k]: v }));
+    if (k === 'province') setProvince(v);
+    if (errors[`business.${k}`]) setErrors(e => { const n = { ...e }; delete n[`business.${k}`]; return n; });
+  };
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (uploading || submitting) return;
+    setSubmitting(true);
+    setGlobalError(null);
+    try {
+      const sent = (form?.questions ?? []).map(q => toAnswerIn(q.id, answers[q.id])).filter((x): x is AnswerIn => !!x);
+      const res = await fetch(base, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business: { ...biz, province },
+          answers: sent,
+          documents: (form?.documents ?? []).filter(d => ticked[d.id] && (d.source === 'text' || opened[d.id] || tickedBefore.has(d.versionId)))
+            .map(d => ({ id: d.id, versionId: d.versionId })),
+          formStamp: form?.stamp ?? null,
+          expectedTotal: total,
+        }),
+      });
+      const data = await res.json().catch(() => ({})) as { view?: SponsorPageView; errors?: Record<string, string>; missing?: string[]; error?: string };
+      if (res.ok && data.view) { onView(data.view); window.scrollTo({ top: 0 }); return; }
+      if (res.status === 400 && data.errors) { setErrors(data.errors); setMissing(data.missing ?? []); setRefusals(n => n + 1); return; }
+      if (res.status === 409 && data.view) {
+        // A document the club changed is read and ticked again: a tick never carries over to a version the business has not seen.
+        const now = data.view.state === 'form' ? (data.view.form?.documents ?? []) : [];
+        const was = new Map((form?.documents ?? []).map(d => [d.id, d.versionId]));
+        const same = (id: string) => now.some(d => d.id === id && was.get(id) === d.versionId);
+        const keep = (m: Record<string, boolean>) => Object.fromEntries(Object.entries(m).map(([id, v]) => [id, v && same(id)]));
+        setTicked(keep); setOpened(keep);
+        onView(data.view); setGlobalError(data.error ?? P.errClosed); return;
+      }
+      setGlobalError(data.error ?? P.errFailed);
+    } catch {
+      setGlobalError(P.errFailed);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const errorCount = Object.keys(errors).length;
+  const allMissing = errorCount > 0 && Object.keys(errors).every(k => missing.includes(k));
+  const goTo = () => {
+    if (!firstError) return;
+    const el = document.getElementById(firstError.target);
+    el?.scrollIntoView({ block: 'center' });
+    el?.focus();
+  };
+
+  const field = (k: BusinessField, label: string, opts: { required?: boolean; hint?: string; type?: string; autoComplete?: string } = {}) => {
+    const id = `biz-${k}`;
+    const err = errors[`business.${k}`];
+    return (
+      <div className={formKit.field} {...errorAttrs(err, L.fieldName[k], id)}>
+        <label className={formKit.label} htmlFor={id}>{label}{opts.required && <> <span className={formKit.required}>*</span></>}</label>
+        <input id={id} className={`${formKit.input}${err ? ` ${formKit.inputError}` : ''}`} type={opts.type ?? 'text'} value={biz[k]}
+          autoComplete={opts.autoComplete} aria-invalid={!!err} aria-describedby={[opts.hint ? `${id}-hint` : null, err ? `${id}-err` : null].filter(Boolean).join(' ') || undefined}
+          onChange={e => setField(k, e.target.value)} />
+        {opts.hint && <p id={`${id}-hint`} className={formKit.hint}>{opts.hint}</p>}
+        {err && <p id={`${id}-err`} className={formKit.errorMsg}>{err}</p>}
+      </div>
+    );
+  };
+  const provinceErr = errors['business.province'];
+  const fieldProps = { club: club.name, orgSlug: '', seasonSlug: '', filesUrl: `${base}/files` };
+
+  return (
+    <form ref={formRef} className={formKit.form} onSubmit={submit} noValidate>
+      <section className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>{P.about}</h2>
+        {field('name', P.name, { required: true, hint: P.nameHint, autoComplete: 'organization' })}
+        <div className={formKit.fieldRow}>
+          {field('contactName', P.contactName, { required: true, autoComplete: 'name' })}
+          {field('phone', P.phone, { type: 'tel', autoComplete: 'tel' })}
+        </div>
+        {field('email', P.email, { required: true, hint: P.emailHint, type: 'email', autoComplete: 'email' })}
+        <fieldset className={`${formKit.field} ${reg.choiceSet}`}>
+          <legend className={formKit.label}>{P.address} <span className={formKit.required}>*</span></legend>
+          <div className={css.address}>
+            {field('street', P.street, { autoComplete: 'street-address' })}
+            {field('city', P.city, { autoComplete: 'address-level2' })}
+            <div className={css.addressRow}>
+              <div className={formKit.field} {...errorAttrs(provinceErr, L.fieldName.province, 'biz-province')}>
+                <label className={formKit.label} htmlFor="biz-province">{P.province}</label>
+                <select id="biz-province" className={`${formKit.input}${provinceErr ? ` ${formKit.inputError}` : ''}`} value={province}
+                  aria-invalid={!!provinceErr} onChange={e => setField('province', e.target.value)}>
+                  <option value="">{L.pickProvince}</option>
+                  {CANADIAN_PROVINCES.map(p => <option key={p.code} value={p.code}>{p.code}</option>)}
+                </select>
+                {provinceErr && <p className={formKit.errorMsg}>{provinceErr}</p>}
+              </div>
+              {field('postal', P.postal, { autoComplete: 'postal-code' })}
+            </div>
+          </div>
+        </fieldset>
+        {field('website', P.website, { hint: P.websiteHint, type: 'url', autoComplete: 'url' })}
+      </section>
+
+      <section className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>{P.logo}</h2>
+        <LogoControl token={token} club={club.name} initialUrl={view.logoUrl} />
+      </section>
+
+      {form && (form.questions.length > 0 || form.documents.length > 0) && (
+        <section className={formKit.section}>
+          <h2 className={formKit.sectionTitle}>{QW.questionsFrom(club.name)}</h2>
+          {form.questions.map(q => (
+            <QuestionField key={q.id} q={q} idBase="biz-q" value={answers[q.id]} onChange={next => {
+              setAnswers(a => ({ ...a, [q.id]: next }));
+              if (errors[`q.${q.id}`]) setErrors(e => { const n = { ...e }; delete n[`q.${q.id}`]; return n; });
+            }} error={errors[`q.${q.id}`]} who="" errorName={answerName(q, null)} {...fieldProps} />
+          ))}
+          {errors.files && <p className={formKit.errorMsg} role="alert">{errors.files}</p>}
+          {form.documents.map(d => (
+            <DocumentBlock key={d.id} d={d} idBase="biz" ticked={!!ticked[d.id]} opened={!!opened[d.id] || tickedBefore.has(d.versionId)}
+              onTick={on => setTicked(t => ({ ...t, [d.id]: on }))} onOpened={() => setOpened(o => ({ ...o, [d.id]: true }))}
+              error={errors[`documents.${d.id}`]} orgSlug="" seasonSlug="" club={club.name} contact={club.contactEmail}
+              docHref={(doc, download) => `${base}/documents/${doc.id}/open?v=${doc.versionId}${download ? '&download=1' : ''}`} />
+          ))}
+        </section>
+      )}
+
+      <section className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>{P.howYoullPay}</h2>
+        <table className={css.payTable}>
+          <tbody>
+            <tr><td>{DEAL_WORDS.email.title(deal.packageName, deal.placeName)}</td><td>{money(deal.amount)}</td></tr>
+            {taxRow && <tr><td>{P.taxLine(taxRow.kind, taxRow.rate)}</td><td>{money(taxRow.tax)}</td></tr>}
+            <tr><td>{P.yourInvoice}</td><td>{money(total)}</td></tr>
+          </tbody>
+        </table>
+        <p className={css.payLine}>{P.cardOffLine}</p>
+        {errorCount > 0 && (
+          <div ref={errorBox} tabIndex={-1} className={`${formKit.globalError} ${reg.errorBox}`} role="group" aria-labelledby="sponsor-errors-text">
+            <span id="sponsor-errors-text">{(allMissing ? QW.errorsMissing : QW.errorsMixed)(errorCount, firstError?.name ?? 'above')}</span>
+            {firstError && <button type="button" className={reg.linkButton} onClick={goTo}>{QW.goToIt}</button>}
+          </div>
+        )}
+        {globalError && <div className={formKit.globalError} role="alert">{globalError}</div>}
+        <button type="submit" className={formKit.submitBtn} disabled={submitting || uploading}>
+          {uploading ? QW.uploadingButton : submitting ? P.sending : P.sendCheque(total)}
+        </button>
+        <p className={css.payNote}>
+          <span className={css.payNoteDesk}>{P.sendChequeNote}</span>
+          <span className={css.payNotePhone}>{P.sendChequeNotePhone}</span>
+        </p>
+      </section>
+    </form>
+  );
+}
+
+// ── The logo ──────────────────────────────────────────────────────────────────────────────────────
+
+function LogoControl({ token, club, initialUrl }: { token: string; club: string; initialUrl: string | null }) {
+  const [url, setUrl] = useState<string | null>(initialUrl);
+  const [name, setName] = useState<string | null>(null);
+  const [state, setState] = useState<'idle' | 'uploading' | 'failed' | 'refused'>('idle');
+  const input = useRef<HTMLInputElement>(null);
+  const pick = async (file: File) => {
+    if (file.size > ORG_LOGO_MAX_BYTES || !(ORG_IMAGE_TYPES as readonly string[]).includes(file.type)) { setState('refused'); return; }
+    setState('uploading');
+    const body = new FormData();
+    body.set('file', file);
+    try {
+      const res = await fetch(`/api/public/sponsorship/${token}/logo`, { method: 'POST', body });
+      const data = await res.json().catch(() => ({})) as { url?: string | null };
+      if (res.status === 201) { setUrl(data.url ?? null); setName(file.name); setState('idle'); }
+      else setState(res.status === 413 || res.status === 415 ? 'refused' : 'failed');
+    } catch {
+      setState('failed');
+    } finally {
+      if (input.current) input.current.value = '';
+    }
+  };
+  return (
+    <div className={formKit.field}>
+      <div className={css.logoRow}>
+        {/* A one-hour signed link or the club's public logo: next/image would cache a link that expires. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {url && <span className={css.logoBox}><img src={url} alt="" /></span>}
+        {name && <span>{name}</span>}
+        <label className={css.logoButton}>
+          {state === 'uploading' ? P.logoUploading : url ? P.logoReplace : P.logoAdd}
+          <input ref={input} type="file" className={css.logoInput} accept="image/jpeg,image/png,image/webp" disabled={state === 'uploading'}
+            onChange={e => { const f = e.target.files?.[0]; if (f) void pick(f); }} />
+        </label>
+      </div>
+      <p className={formKit.hint}>{P.logoHint}</p>
+      <p className={formKit.hint}>{P.logoPermission(club)}</p>
+      {state === 'failed' && <p className={formKit.errorMsg} role="alert">{P.logoFailed}</p>}
+      {state === 'refused' && <p className={formKit.errorMsg} role="alert">{P.logoRefused}</p>}
+    </div>
+  );
+}
+
+// ── After sending ─────────────────────────────────────────────────────────────────────────────────
+
+function Thanks({ view }: { view: Open }) {
+  const inv = view.invoice;
+  const how = view.howToPay;
+  return (
+    <>
+      {inv && (
+        <div className={css.invoice}>
+          <p className={css.invoiceTitle}>{P.invoiceLine(inv.number, inv.total)}</p>
+          <p className={css.invoiceMeta}>{P.issuedLineNoEmail(inv.issuedOn, inv.dueOn)}</p>
+          {!view.paid && (
+            <>
+              <p className={css.howTitle}>{P.howToPay}</p>
+              {how.etransferTo && <p className={css.howLine}>{P.byEtransfer(how.etransferTo)}</p>}
+              {how.chequesPayableTo && <p className={css.howLine}>{P.byCheque(how.chequesPayableTo, how.mailingAddress)}</p>}
+              <p className={css.howLine}>{P.quote(inv.number)}</p>
+            </>
+          )}
+        </div>
+      )}
+      {!view.paid && (
+        <section className={formKit.section}>
+          <h2 className={formKit.sectionTitle}>{L.logoLaterTitle}</h2>
+          <LogoControl token={view.token} club={view.club.name} initialUrl={view.logoUrl} />
+        </section>
+      )}
+      <p className={css.revisit}>{P.revisit}</p>
+    </>
+  );
+}
+
+// ── The foot ──────────────────────────────────────────────────────────────────────────────────────
+
+function Foot({ club }: { club: Open['club'] }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    if (!club.contactEmail) return;
+    try { await navigator.clipboard.writeText(club.contactEmail); setCopied(true); window.setTimeout(() => setCopied(false), 2000); } catch { /* the address is on screen */ }
+  };
+  return (
+    <div className={css.foot}>
+      <ClubPrivacyLink club={club.name} privacyUrl={club.privacyUrl} />
+      <p className={css.footRow}>
+        <span>{P.footQuestions}</span>
+        {club.contactEmail ? (
+          <>
+            <a className={css.footMail} href={`mailto:${club.contactEmail}`}>{club.contactEmail}</a>
+            <button type="button" className={`${reg.linkButton} ${css.copyBtn}`} onClick={() => void copy()}>{copied ? P.copied : P.copy}</button>
+          </>
+        ) : <span>{L.footNoContact(club.name)}</span>}
+      </p>
+    </div>
+  );
+}
+

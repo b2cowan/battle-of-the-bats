@@ -1,0 +1,33 @@
+import { NextResponse } from 'next/server';
+import { withObservability } from '@/lib/observability';
+import { isUuid } from '@/lib/utils';
+import { refused, requireSponsorships } from '@/lib/club-sponsorships-auth';
+import { readDeal, withdrawDeal } from '@/lib/club-sponsorship-deals-server';
+import { actorOf } from '@/lib/club-sponsorship-deal-actions';
+import { canWithdraw } from '@/lib/club-sponsorship-deals';
+import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
+import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
+
+/**
+ * WITHDRAW A DEAL (Board Ready Stage 6, Part 2; ask 4: until it is paid), with the reason, kept with who withdrew it. Its
+ * link stops showing the offer, its place comes down and is freed. An issued invoice is voided with it (Part 3 prints the
+ * void); its number is never given again (mig 526's counter).
+ */
+export const dynamic = 'force-dynamic';
+
+type Params = { params: Promise<{ dealId: string }> };
+
+export const POST = withObservability(async (req: Request, { params }: Params) => {
+  const gate = await requireSponsorships(req);
+  if ('failure' in gate) return gate.failure;
+  const { org } = gate.ctx;
+  const { dealId } = await params;
+  const deal = isUuid(dealId) ? await readDeal(org.id, dealId) : null;
+  if (!deal) return NextResponse.json({ error: SPONSORSHIPS_WORDS.say.notFound, code: 'not_found' }, { status: 404 });
+  if (!canWithdraw(deal)) return refused(DEAL_WORDS.deal.errPaid, 409, 'paid');
+  const b = (await req.json().catch(() => null) ?? {}) as Record<string, unknown>;
+  const reason = typeof b.reason === 'string' ? b.reason.trim() : '';
+  if (!reason || reason.length > 300) return refused(DEAL_WORDS.deal.errReason);
+  if (!(await withdrawDeal(org.id, dealId, await actorOf(gate.ctx), reason))) return refused(DEAL_WORDS.deal.errPaid, 409, 'paid');
+  return NextResponse.json({ ok: true });
+}, { route: '/api/admin/sponsorships/deals/[dealId]/withdraw' });

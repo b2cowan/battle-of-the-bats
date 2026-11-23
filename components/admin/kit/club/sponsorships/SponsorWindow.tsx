@@ -7,6 +7,7 @@
  * isn't offered while a deal shows the sponsor.
  */
 import { useState } from 'react';
+import Link from 'next/link';
 import { Plus, X } from 'lucide-react';
 import KitDialog, { DialogCancel } from '../KitDialog';
 import { ClubRow, ClubRowList, SavePill } from '../RepKit';
@@ -15,7 +16,7 @@ import SponsorLogoField from '@/app/[orgSlug]/admin/public-site/SponsorLogoField
 import { SPONSORSHIPS_WORDS as W } from '@/lib/club-sponsorships-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { sponsorHasDeal, type ClubSponsor } from '@/lib/club-sponsorships';
-import { send, sponsorshipsApi, type PlaceTargets } from './api';
+import { send, sponsorshipsApi, type PlaceTargets, type SponsorDeal } from './api';
 import { placeFromKey, placeKey, placeName, placeOptions } from './places';
 import DateInput from '@/components/shared/DateInput';
 import css from './Sponsorships.module.css';
@@ -23,10 +24,12 @@ import css from './Sponsorships.module.css';
 interface TypedRow { key: number; id?: string; place: string; endsOn: string }
 const day = (d: string) => formatStoredDate(d, { withYear: true });
 
-export default function SponsorWindow({ slug, sponsor, targets, onChanged, onClose }: {
+export default function SponsorWindow({ slug, sponsor, targets, deals = [], onChanged, onClose }: {
   slug: string;
   sponsor: ClubSponsor | null;
   targets: PlaceTargets;
+  /** Its deals (Part 2): the "From the deal" line names the deal's package and invoice, and its Deal door opens it. */
+  deals?: SponsorDeal[];
   onChanged: () => void;
   onClose: () => void;
 }) {
@@ -46,6 +49,16 @@ export default function SponsorWindow({ slug, sponsor, targets, onChanged, onClo
   const [removing, setRemoving] = useState(false);
   const [uploaded, setUploaded] = useState<string[]>([]);
   const dealPlaces = sponsor?.places.filter(p => p.source === 'deal') ?? [];
+  // A business with any deal stays (its offers and invoices are on record), withdrawn deals too (Part 2).
+  const keeps = !!sponsor && (sponsorHasDeal(sponsor) || deals.length > 0);
+  /** "From the deal · Division sponsor, invoice 2027-014. Change the place or the last day on the deal." */
+  const fromDeal = (dealId: string | null) => {
+    const d = deals.find(x => x.id === dealId);
+    return d ? W.sponsor.fromDeal(d.packageName, d.invoice) : W.sponsor.fromDealShort;
+  };
+  const dealDoor = (dealId: string | null) => (dealId
+    ? <Link className={ck.link} href={`/${slug}/admin/sponsorships/${dealId}`}>{W.sponsor.dealDoor}</Link>
+    : undefined);
   const current = (n = name, l = link, g = logo, r = rows) => JSON.stringify({ name: n, link: l, logo: g, rows: r });
   const dirty = current() !== saved;
   const options = placeOptions(targets, rows.map(r => r.place));
@@ -125,7 +138,7 @@ export default function SponsorWindow({ slug, sponsor, targets, onChanged, onClo
     <ClubRowList inset label={W.sponsor.showsOn}>
       {dealPlaces.map(p => (
         <ClubRow key={p.id} title={`${placeName(p, targets)} · ${p.endsOn ? W.sponsors.until(day(p.endsOn)) : W.sponsors.noLastDay}`}
-          caption={W.sponsor.fromDealShort} />
+          caption={fromDeal(p.dealId)} trail={dealDoor(p.dealId)} />
       ))}
     </ClubRowList>
   );
@@ -168,8 +181,8 @@ export default function SponsorWindow({ slug, sponsor, targets, onChanged, onClo
       {error && <p className={css.error} role="alert">{error}</p>}
       {!creating && (
         <div className={css.rareDoor}>
-          {sponsorHasDeal(sponsor!)
-            ? <p className={ck.hint}>{W.sponsor.noRemove}</p>
+          {keeps
+            ? <p className={ck.hint}>{W.sponsor.noRemoveDeals}</p>
             : <button type="button" className={css.dangerLink} onClick={() => setRemoving(true)}><X size={14} aria-hidden />{W.sponsor.remove}</button>}
         </div>
       )}
@@ -191,11 +204,11 @@ export default function SponsorWindow({ slug, sponsor, targets, onChanged, onClo
         <ClubRowList inset label={W.sponsor.showsOn}>
           {sponsor.places.map(p => (
             <ClubRow key={p.id} title={`${placeName(p, targets)} · ${p.endsOn ? W.sponsors.until(day(p.endsOn)) : W.sponsors.noLastDay}`}
-              caption={p.source === 'deal' ? W.sponsor.fromDealShort : undefined} />
+              caption={p.source === 'deal' ? fromDeal(p.dealId) : undefined} trail={p.source === 'deal' ? dealDoor(p.dealId) : undefined} />
           ))}
         </ClubRowList>
       )}
-      {sponsorHasDeal(sponsor) && <p className={ck.hint}>{W.sponsor.noRemove}</p>}
+      {keeps && <p className={ck.hint}>{W.sponsor.noRemoveDeals}</p>}
     </>
   );
 

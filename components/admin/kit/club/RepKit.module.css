@@ -87,6 +87,7 @@
 }
 .sectionActions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .sectionBody { padding: 0.4rem 1.1rem 1.05rem; }
+.sectionBodyEven { padding: 0.8rem 1.1rem; }
 /* A row list inside a section: the section paints the ground (never two painters); rows run edge to
    edge so their hover tint meets the card's border, and their text lines up with the heading. */
 .sectionBodyList { padding: 0.15rem 0 0.35rem; }

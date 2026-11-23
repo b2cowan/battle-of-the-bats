@@ -1,0 +1,581 @@
+<title>Sponsorships Part 2 Walks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready Stage 6 · Part 2 · Offering a deal and the business’s page · Owner QA Ledger §561</span>
+    <h1>Sponsorships, Part 2: offer a deal</h1>
+    <p class="lead">Four walks, 50 steps. A club offers a package to a business by email, or makes the link and hands it over; the business opens its own page with no account, fills in its details and sees its invoice; and either side can stop it. Paying by card, the invoice PDF and its email, and recording a payment are Part 3, so no card button is on the business’s page and the invoice appears on the page, not in an email.</p>
+    <p class="lead">Written Nov 23, 2026 against the dev site. Everything runs on UAT Rep Club. Each walk adds rows named “Walk …”; I remove them after you report. <b>Two owner calls</b> sit at the foot of walks C and D, outside the count.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> (dev; the dev server must be running, restarted after this build)</dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code> (shows as <b>Morgan Ellis</b>) · UAT Rep Club. Every walk but B.</dd>
+      <dt>The business</dt><dd>Nobody: walk B (and two steps elsewhere) use a window where you are <b>signed out</b>, or a private window. The page needs no account.</dd>
+      <dt>Your inbox</dt><dd>One address you can read for the next half hour. You type it in as the business’s email in walk A; walks A, B and D use that email.</dd>
+      <dt>Phone</dt><dd>The browser’s device toolbar at <b>390 px</b> wide, in walk B.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. <b>The login may meet the Terms screen once on dev</b>: accept it and carry on. The email is sent for real, from the dev site, so it can land in junk.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>What I set up on UAT Rep Club (Nov 23, 2026), through the Setup screen’s own save:</b> mailing address <b>1 Walk Street, Toronto ON M1M 1M1</b>; contact for sponsors <b>Walk Sponsorship Contact</b>, <b>sponsors@uat-rep-club.local</b>; e-transfer to <b>pay@uat-rep-club.local</b>; cheques payable to <b>UAT Rep Club</b>; GST/HST already registered (walk A leaves the tax switch off). One package: <b>Walk club partner</b>, $500.00, for the club, with the line “A thank-you at the banquet”. It has two sponsors from the earlier walk (<b>Walk Dental</b>, <b>Walk Hardware</b>) and no deals.</li>
+      <li>I did not touch UAT Rep Only. Walk A to D in order; each takes five to ten minutes. B needs the email from A; D needs the deals from A, B and C.</li>
+      <li>Walk C clears the mailing address and puts it back (its last two steps). If you stop in the middle of C, put it back before anything else.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>The deal rules: the four reasons and their clocks (two years, six months), the refusal of a stopped or family-opted-out address, one tax rule in whole cents, and a stale tab can’t invoice a place that was deleted or a price the page didn’t show (63 checks).</li>
+      <li>The link-only, new-link and reason-day paths, signed in on the dev server (no browser, no email): the four Send refusals, Make a new link and the “replaced” page.</li>
+      <li>The business’s page at 390 px in a real browser: no sideways scroll, every control the page itself draws at least 44 px tall, the error box, the thank-you, withdrawn and replaced.</li>
+      <li>The club’s list of stopped addresses is now read in full (a club with more than a thousand would have missed some).</li>
+      <li>The type check, lint and spelling are clean on everything this part touched.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "stage6-p2-deals-walk-v1";
+  var PAGE = "Board Ready Stage 6 · Part 2 · Offering a deal · Owner QA Ledger §561";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Offer a deal, and email it",
+  "job": "UAT Rep Club · club owner · desk · one inbox you read",
+  "forText": "The club offers its package to a business and emails it. Before the email goes, the window asks why the club may email that business, and refuses a reason that has run out. The email that arrives carries that reason, the club's mailing address and an unsubscribe link.",
+  "passes": "Send is refused for a missing reason, a missing day, a day too long ago and a day not yet come; with a reason that holds, the deal appears as Offered and the email arrives with its four foot lines.",
+  "notIn": "The business's own page (walk B). Making a link without emailing (walk C). Unsubscribing (walk D). A package that shows on a division or team (same window, one more field).",
+  "who": "Morgan Ellis, the club owner.",
+  "where": "Admin → <b>Sponsorships</b> → <b>Deals</b>. Start at <code>http://localhost:3000/uat-rep-club/admin/sponsorships</code>. On a computer at normal width.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in as the club owner and open <code>/uat-rep-club/admin/sponsorships</code>.",
+    "s": "<b>Deals</b> says there are no deals for this year yet and has a green <b>+ Offer a deal</b> button. <b>Stop if a deal named Walk Pizza is already listed</b>: a leftover from an earlier run. Tell me and I will clear it."
+   },
+   {
+    "d": "Press <b>+ Offer a deal</b>.",
+    "s": "A window titled <b>Offer a deal</b> (small <b>Deals</b> above it). Its foot holds <b>Cancel</b>, an outline <b>Make the link only</b> and a green <b>Send the offer</b>. Nothing in the foot says the club is missing an address."
+   },
+   {
+    "d": "In <b>Business</b> type <b>Walk Pizza</b>, then press the line <b>New business “Walk Pizza”</b>.",
+    "s": "An <b>Email</b> field appears under Business, with the hint <b>Where the offer and the invoice go.</b>"
+   },
+   {
+    "d": "In <b>Email</b> type the address of an inbox you can open in the next few minutes.",
+    "s": "The email is accepted as typed. This is where the walk's email will go."
+   },
+   {
+    "d": "Look at the middle of the window.",
+    "s": "<b>Package</b> reads <b>Walk club partner</b>; <b>Shows on</b> reads <b>The club</b>; <b>Amount</b> reads <b>500.00</b>; <b>Shows until</b> is empty; a <b>Charge HST</b> switch is off. Under <b>THE EMAIL</b> is <b>Why you can email them</b> with nothing picked."
+   },
+   {
+    "d": "Without picking a reason, press <b>Send the offer</b>.",
+    "s": "A red line under the reason: <b>Pick why you can email them.</b> The window stays open; nothing was sent."
+   },
+   {
+    "d": "Open <b>Why you can email them</b> and pick <b>They paid us in the last 2 years</b>.",
+    "s": "A <b>When?</b> date field appears with the hint <b>The day they last paid. Kept with the offer.</b> The other three reasons have no day (look at them, then come back to this one)."
+   },
+   {
+    "d": "Leave <b>When?</b> empty and press <b>Send the offer</b>.",
+    "s": "Red under When?: <b>Pick the day.</b>"
+   },
+   {
+    "d": "Set <b>When?</b> to <b>Jan 15, 2024</b> and press <b>Send the offer</b>.",
+    "s": "Red under When?: <b>That’s more than two years ago, so this reason no longer applies. Give them the link in person instead.</b> Nothing was sent."
+   },
+   {
+    "d": "Set <b>When?</b> to any day next year and press <b>Send the offer</b>.",
+    "s": "Red under When?: <b>Pick a day that has already come.</b>"
+   },
+   {
+    "d": "Change the reason to <b>They gave us this address</b>, then press <b>Send the offer</b>.",
+    "s": "The When? field goes away. The window closes and <b>Walk Pizza’s deal page</b> opens: package <b>Walk club partner</b>, state Offered, and a line <b>Waiting for Walk Pizza. They haven’t opened the link yet.</b>"
+   },
+   {
+    "stop": true,
+    "d": "Open the inbox you typed in step 4.",
+    "s": "Within a couple of minutes an email with the subject <b>Sponsorship with UAT Rep Club: Walk club partner</b>: the package and <b>$500.00</b>, a <b>See the package</b> button, and <b>Questions? Reply to this email, or contact Walk Sponsorship Contact at sponsors@uat-rep-club.local.</b> <b>Stop if nothing arrives after five minutes</b> and tell me (junk folder first)."
+   },
+   {
+    "d": "Read the foot of the email. Do not press Unsubscribe yet.",
+    "s": "Four lines: <b>You get this because you gave UAT Rep Club this address.</b> · <b>Sent by UAT Rep Club, 1 Walk Street, Toronto ON M1M 1M1.</b> · <b>Don’t want sponsorship offers from UAT Rep Club? Unsubscribe</b> · <b>Sent through FieldLogicHQ, the software UAT Rep Club uses.</b>"
+   },
+   {
+    "d": "Back on the club's <b>Deals</b> tab, find Walk Pizza's row.",
+    "s": "Business <b>Walk Pizza</b>, package <b>Walk club partner</b>, <b>$500.00</b>, in the <b>Offered</b> group, with the grey line <b>Sent Nov 23 · not opened</b>."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The business's page, on a phone",
+  "job": "A business · no sign-in · a phone-width window",
+  "forText": "The business opens its link from the email and, with no account, reads the offer, fills in its details and presses one button. It then sees its invoice and how to pay, on the page, and can come back to the same page.",
+  "passes": "The page fits at 390 px with no sideways scroll; the pay block promises the invoice on the page (not by email); a half-empty form is refused with a count and a way to the first gap; sending shows the thank-you with an invoice number, the due date and how to pay; a reload shows the same thank-you.",
+  "notIn": "Paying by card (not built yet: the card button is absent on purpose). An emailed invoice. Uploading a logo (same control as the family form's).",
+  "who": "Nobody. This walk is the business: do not sign in. Open the link in a window where you are signed out, or a private window.",
+  "where": "The <b>See the package</b> button in the walk A email. At the start, open your browser's device toolbar and set the width to <b>390</b>.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Check that walk A finished: on the club's Deals tab, Walk Pizza is in the <b>Offered</b> group.",
+    "s": "It is. <b>Stop if it is not</b>: this walk needs that deal and its email."
+   },
+   {
+    "d": "In the email press <b>See the package</b>, then make the window <b>390 px</b> wide.",
+    "s": "UAT Rep Club's bar at the top, then a small <b>SPONSORSHIP</b>, the title <b>Walk club partner</b>, <b>Offered to Walk Pizza</b>, and a box with <b>$500.00</b> and two lines: <b>Your logo on our website’s home page</b> and <b>A thank-you at the banquet</b>. The page does not scroll sideways."
+   },
+   {
+    "d": "Scroll down the form.",
+    "s": "Three sections: <b>ABOUT YOUR BUSINESS</b> (<b>Business name</b> already reads Walk Pizza), <b>YOUR LOGO</b> and <b>HOW YOU’LL PAY</b>. Under Your logo: an <b>Add your logo</b> button and <b>You confirm you may use this logo, and you allow UAT Rep Club to show it and your business name as this package says.</b>"
+   },
+   {
+    "d": "Read <b>How you’ll pay</b> and the button under it.",
+    "s": "A table: <b>Walk club partner $500.00</b>, <b>Your invoice $500.00</b>. <b>Once you send, your invoice appears on this page with how to pay by cheque or e-transfer. You won’t be charged on this page.</b> One button, <b>Send, and pay $500.00 by cheque or e-transfer</b>, and under it <b>Your invoice appears on the next page.</b> There is no card button."
+   },
+   {
+    "d": "Press the button with <b>Contact name</b>, the address and the other fields empty.",
+    "s": "A red box above the button counts what is missing and names the first (<b>The first is Contact name.</b>) with a <b>Go to it</b> link. The empty fields are red with a line each. Nothing is sent."
+   },
+   {
+    "d": "Press <b>Go to it</b>.",
+    "s": "The page scrolls to <b>Contact name</b> and the cursor is in it."
+   },
+   {
+    "d": "Fill <b>Contact name</b> (Pat Probe), <b>Phone</b> (4165550100), <b>Street</b> (1 Probe Street), <b>Town or city</b> (Toronto), <b>Province</b> ON, <b>Postal code</b> (M1M 1M1). Leave <b>Website</b> and the logo empty.",
+    "s": "The red lines clear as you type. <b>Email</b> already holds the address the club typed (the one you read the email in)."
+   },
+   {
+    "d": "Press <b>Send, and pay $500.00 by cheque or e-transfer</b>.",
+    "s": "The page changes to <b>Thank you, Walk Pizza</b> with <b>UAT Rep Club has your details.</b> A card: <b>Invoice 2026-00…</b> and <b>· $500.00</b>, <b>Issued Nov 23, 2026 · due Dec 23, 2026</b>, <b>How to pay</b> with <b>By e-transfer to pay@uat-rep-club.local</b>, <b>By cheque payable to UAT Rep Club, 1 Walk Street, Toronto ON M1M 1M1</b>, and <b>Please quote invoice 2026-00…</b>"
+   },
+   {
+    "d": "Scroll under the invoice card.",
+    "s": "A <b>YOUR LOGO</b> card with <b>Add your logo</b> and <b>Don’t have it handy? Send it later from this page.</b> A closing line about this page showing the invoice any time the link is opened, with space between it and the card above."
+   },
+   {
+    "d": "Reload the page.",
+    "s": "The same <b>Thank you, Walk Pizza</b> page with the same invoice number, not the form again."
+   },
+   {
+    "d": "Sign in as the club owner at normal width and open Walk Pizza's deal.",
+    "s": "In the Deals list Walk Pizza is now under <b>Invoiced</b> with <b>2026-00… · due Dec 23</b>. The deal page says <b>Invoice 2026-00… for $500.00 was issued Nov 23 and is due Dec 23.</b> and shows the business's details from its link."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Make the link only, and when the email can’t go",
+  "job": "UAT Rep Club · club owner · desk · a signed-out window",
+  "forText": "A club that has spoken to a business makes its link without emailing anything, hands it over, and can later email it, replace it or find that the email can't go. No reason is asked for a link that is only handed over.",
+  "passes": "Make the link only asks no reason and emails nothing; Email the offer refuses a reason that has run out; Make a new link replaces the old one, which then says it was replaced; with no mailing address the window drops Send and says why, and Send returns once it is set again.",
+  "notIn": "A business on a family's opt-out list (covered by tests; it needs a family row). Send the link again once a reason has run out (covered by tests). Contact for sponsors left blank (the club's public contact stands in).",
+  "who": "Morgan Ellis, the club owner. One step opens a link in a signed-out window.",
+  "where": "Admin → <b>Sponsorships</b> → <b>Deals</b> and <b>Setup</b>, on a computer at normal width.",
+  "steps": [
+   {
+    "d": "On <b>Deals</b> press <b>+ Offer a deal</b>. In <b>Business</b> type <b>Walk Bakery</b> and pick <b>New business “Walk Bakery”</b>. In <b>Email</b> type <b>walk-bakery@example.com</b> (not a real inbox: nothing will be sent to it).",
+    "s": "The window as in walk A. Leave <b>Why you can email them</b> empty."
+   },
+   {
+    "d": "Press <b>Make the link only</b> (the outline button).",
+    "s": "No reason is asked for. The window closes and Walk Bakery's deal page opens with <b>The link was made, not emailed. Copy it and give it to them in person.</b> The history lists <b>link made Nov 23 by Morgan Ellis</b> and no email."
+   },
+   {
+    "d": "Look at the buttons along the foot of the deal page.",
+    "s": "<b>Copy the link</b> · <b>Email the offer</b> · <b>Make a new link (the old link stops working)</b> · <b>Do not offer again</b> · <b>Withdraw this deal</b>."
+   },
+   {
+    "d": "Press <b>Copy the link</b>, then open a private window and paste it in.",
+    "s": "The button reads <b>Copied</b>. The private window shows the business's page: <b>Offered to Walk Bakery</b>. Leave it open."
+   },
+   {
+    "d": "Back on the deals list, find Walk Bakery's row.",
+    "s": "The grey line reads <b>Link made Nov 23 · opened Nov 23</b>, not “Sent”."
+   },
+   {
+    "d": "On the deal page press <b>Email the offer</b>. Pick <b>They asked us about sponsoring (in the last 6 months)</b>, set <b>When?</b> to <b>Jan 15, 2026</b> and press the window's <b>Email the offer</b>.",
+    "s": "Red under When?: <b>That’s more than six months ago, so this reason no longer applies. Give them the link in person instead.</b> Nothing is sent. Press <b>Cancel</b>."
+   },
+   {
+    "d": "Press <b>Make a new link (the old link stops working)</b>, then the window's <b>Make a new link</b>.",
+    "s": "A question reads <b>Make a new link?</b> with <b>The old link stops working. Nothing is emailed.</b> After it, a notice: <b>The new link is made. Nothing was emailed. Copy it and give it to them in person.</b> The history gains <b>new link made Nov 23, not emailed</b>."
+   },
+   {
+    "d": "Reload the old link in the private window.",
+    "s": "<b>This link has been replaced. Look for the club’s newer email, or contact UAT Rep Club.</b> Nothing about Walk Bakery, and the club's address appears once."
+   },
+   {
+    "d": "Go to <b>Setup</b> → <b>Invoice details</b>, press the pencil, clear <b>Mailing address</b> and click outside it.",
+    "s": "A <b>Saved</b> pill."
+   },
+   {
+    "d": "Open <b>Deals</b> → <b>+ Offer a deal</b> and pick <b>Walk Dental</b>.",
+    "s": "The foot reads <b>Add your mailing address in Setup first</b>. <b>Send the offer</b> is gone; <b>Make the link only</b> is now the one green button. Press <b>Cancel</b>."
+   },
+   {
+    "d": "Put it back: in <b>Setup</b> → <b>Invoice details</b> type <b>1 Walk Street, Toronto ON M1M 1M1</b> in <b>Mailing address</b> and click outside it. Then open <b>+ Offer a deal</b> again.",
+    "s": "<b>Saved</b>. The foot line is gone and <b>Send the offer</b> is back. Press <b>Cancel</b>."
+   },
+   {
+    "d": "Check the put-back landed: open <b>Setup</b> → <b>Invoice details</b>.",
+    "s": "<b>Mailing address</b> reads <b>1 Walk Street, Toronto ON M1M 1M1</b>."
+   }
+  ],
+  "choices": [
+   {
+    "id": "1",
+    "q": "A hint beside Copy the link",
+    "why": "The deal page tells the club to give the link “in person”. A club could still paste it into its own email or text, which is then its own message to justify. The help says so now. Should the deal page say it too, next to Copy the link?",
+    "opts": [
+     [
+      "add",
+      "Add a line beside Copy the link: send it only to a business you have a reason to email"
+     ],
+     [
+      "leave",
+      "Leave it to the help article"
+     ],
+     [
+      "other",
+      "Something else (say what, in the notes)"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "A business says stop, and withdrawing a deal",
+  "job": "UAT Rep Club · club owner · desk · the walk A email",
+  "forText": "A business can stop a club's sponsorship offers from the email, and the club can mark a business Do not offer again. Either way the club can no longer email an offer to that address, but can still make a link and hand it over. A deal can be withdrawn, and its link then shows nothing about the business.",
+  "passes": "Opening the unsubscribe page changes nothing until its button is pressed; after it, Offer a deal says so and drops Send; Do not offer again says it cannot be undone and then drops Send; a withdrawn deal's link says only that it was withdrawn.",
+  "notIn": "A family's opt-out (separate list). The club's other emails: unsubscribing here stops sponsorship offers only.",
+  "who": "Morgan Ellis, the club owner, plus the walk A email in your inbox.",
+  "where": "The <b>Unsubscribe</b> link in the walk A email, then Admin → <b>Sponsorships</b> → <b>Deals</b>.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Check that walks A and C are done: Deals lists <b>Walk Pizza</b> (Invoiced) and <b>Walk Bakery</b> (Offered), and the walk A email is open.",
+    "s": "Both rows are there. <b>Stop if not</b>."
+   },
+   {
+    "d": "In the email press <b>Unsubscribe</b>. Do not press anything on the page that opens.",
+    "s": "A page titled <b>Unsubscribe from these emails?</b> reading <b>Press the button to stop sponsorship offers from UAT Rep Club to</b> your address with some letters hidden, then <b>Invoices and receipts for a sponsorship you have already agreed to still come.</b> and a button <b>Unsubscribe</b>. Under it: nothing changes until you press the button."
+   },
+   {
+    "d": "Without pressing it, open <b>+ Offer a deal</b> on the club's Deals tab and pick <b>Walk Pizza</b>.",
+    "s": "No stop sentence: <b>Send the offer</b> is still there. Merely opening the page unsubscribed nobody. Press <b>Cancel</b>."
+   },
+   {
+    "d": "Back on the unsubscribe page press <b>Unsubscribe</b>.",
+    "s": "<b>You’re unsubscribed</b> and <b>You won’t get these emails again.</b>"
+   },
+   {
+    "d": "Open <b>+ Offer a deal</b> and pick <b>Walk Pizza</b> again.",
+    "s": "The foot reads <b>Unsubscribed from your sponsorship emails on Nov 23, 2026. We won’t email them again.</b> <b>Send the offer</b> is gone and <b>Make the link only</b> is the one green button. Under THE EMAIL: <b>If they asked you about sponsoring again, make the link and give it to them yourself.</b> Press <b>Cancel</b>."
+   },
+   {
+    "d": "Open Walk Pizza's deal page.",
+    "s": "Still <b>Invoiced</b>, the invoice unchanged. Unsubscribing stops offers; it never cancels a deal."
+   },
+   {
+    "d": "Open Walk Bakery's deal page and press <b>Do not offer again</b>.",
+    "s": "A question <b>Never offer walk-bakery@example.com a sponsorship again?</b> with <b>For a business that asked you to stop, by reply or by phone. Nobody at the club can undo it. Invoices and receipts for a deal they’ve agreed to still go.</b>"
+   },
+   {
+    "d": "Press the window's <b>Do not offer again</b>.",
+    "s": "In place of the button the page reads <b>Not offered again since Nov 23, 2026</b>."
+   },
+   {
+    "d": "Open <b>+ Offer a deal</b> and pick <b>Walk Bakery</b>.",
+    "s": "The foot reads <b>You marked them Do not offer again on Nov 23, 2026.</b> <b>Send the offer</b> is gone. Press <b>Cancel</b>."
+   },
+   {
+    "d": "On Walk Bakery's deal page press <b>Withdraw this deal</b>. Leave <b>Reason</b> empty and press <b>Withdraw</b>.",
+    "s": "A question <b>Withdraw Walk Bakery’s deal?</b> with <b>Their link stops showing the offer and the place is freed. Give the reason; it’s kept with the deal.</b> The empty reason is refused (<b>Give a reason.</b>)."
+   },
+   {
+    "d": "Type <b>Walk test</b> as the reason and press <b>Withdraw</b>.",
+    "s": "The deal reads <b>Withdrawn Nov 23 by Morgan Ellis: Walk test</b>, and sits in the <b>Withdrawn</b> group."
+   },
+   {
+    "d": "Open Walk Bakery's newest link in the private window from walk C (reload it).",
+    "s": "Only <b>This offer was withdrawn. Contact UAT Rep Club.</b> No business name, no package, no form."
+   },
+   {
+    "d": "Open Walk Pizza's deal and press <b>Withdraw this deal (voids invoice 2026-00…, with your reason)</b>. Type <b>Walk test</b> and press <b>Withdraw</b>.",
+    "s": "The deal is <b>Withdrawn</b> and the invoice is voided. That clears the walk's deals; the sponsors stay for the next run."
+   }
+  ],
+  "choices": [
+   {
+    "id": "2",
+    "q": "Send the link again on a deal that is already invoiced or paid",
+    "why": "It replaces the link, so the business's invoice link stops working (a confirm box says the old link stops). Is the confirm enough, or should the button be absent once a deal is invoiced?",
+    "opts": [
+     [
+      "keep",
+      "The confirm is enough"
+     ],
+     [
+      "block",
+      "Hide it once the deal is invoiced"
+     ],
+     [
+      "other",
+      "Something else (say what, in the notes)"
+     ]
+    ]
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      if (w.choices) {
+        w.choices.forEach(function (c) {
+          var box = el("div", "card"); box.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); box.appendChild(el("p", null, c.why));
+          var o = el("div", "opts");
+          c.opts.forEach(function (op) {
+            var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "ch-" + c.id; r.checked = state.choice[c.id] === op[0];
+            r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+            lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+          });
+          box.appendChild(o); sec.appendChild(box);
+        });
+      }
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    if (w.choices) w.choices.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save(); render();
+  });
+  render();
+})();
+</script>

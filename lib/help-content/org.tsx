@@ -2178,8 +2178,11 @@ const orgHelp: HelpPageContent = {
         'shows until', 'what’s included', 'your logo on our website', 'sponsorship document', 'archive a package', 'price before gst/hst',
         'registered for gst/hst', 'gst/hst number', 'by e-transfer to', 'cheques payable to', 'payment due', 'contact for sponsors',
         'mailing address', 'show it somewhere else too', 'who can open sponsorships', 'manage member sponsorships',
+        'offer a deal', 'offering a deal', 'make the link only', 'send the offer', 'email the offer', 'why you can email them', 'when', 'the reason',
+        'do not offer again', 'unsubscribe', 'unsubscribed', 'send the link again', 'make a new link', 'the old link stops working',
+        'give them the link in person', 'link only', 'not emailed', 'casl', 'sponsorship email', 'sponsor’s page', 'the business’s page', 'invoice appears on the page',
       ],
-      searchText: 'sponsorships place club group sidebar after communications before public site more sheet phone four tabs deals packages sponsors setup get ready to sell sponsorships three steps your invoice details make your first package your sponsorship form offering deals comes later package name price before gst/hst for the club a house league division a house league team a tournament how many empty means no limit shows until what’s included your logo on our website switch other items sponsorship document pdf up to 8 mb taken counts open offers so nothing is promised twice full when every place is taken archived never deleted bring it back sponsors one list every business showing not showing shows on home page strip at most 20 a division sponsored by line on that division’s schedule and standings a team shown on the about page only a tournament last day inclusive leaves by itself list holds 100 sponsors show it somewhere else too remove sponsor logo deleted existing sponsors moved over untouched site editor sponsors line door invoice details mailing address registered for gst/hst and number by e-transfer to cheques payable to payment due contact for sponsors owner admins treasurer change read by others the form business details first then your own questions and documents who can open sponsorships manage member access on by default owner admins treasurer off for others registrar league plus club plan',
+      searchText: 'sponsorships place club group sidebar after communications before public site more sheet phone four tabs deals packages sponsors setup get ready to sell sponsorships three steps your invoice details make your first package your sponsorship form package name price before gst/hst for the club a house league division a house league team a tournament how many empty means no limit shows until what’s included your logo on our website switch other items sponsorship document pdf up to 8 mb taken counts open offers so nothing is promised twice full when every place is taken archived never deleted bring it back sponsors one list every business showing not showing shows on home page strip at most 20 a division sponsored by line on that division’s schedule and standings a team shown on the about page only a tournament last day inclusive leaves by itself list holds 100 sponsors show it somewhere else too remove sponsor logo deleted existing sponsors moved over untouched site editor sponsors line door invoice details mailing address registered for gst/hst and number by e-transfer to cheques payable to payment due contact for sponsors owner admins treasurer change read by others the form business details first then your own questions and documents who can open sponsorships manage member access on by default owner admins treasurer off for others registrar league plus club plan offer a deal offering a deal business package shows on amount shows until charge hst gst tax switch make the link only send the offer new business a name and an email they fill in the rest the business’s page its own link no account needed about your business your logo how you’ll pay send and pay by cheque or e-transfer your invoice appears on the page keep your link to come back to it states offered form received invoiced paid delivered withdrawn copy the link email the offer send the link again make a new link the old link stops working withdraw this deal give a reason why you can email them paid us in the last two years asked us about sponsoring in the last six months gave us this address publish this address for business when the day they paid the day they asked kept with the offer ran out give them the link in person mailing address contact email in setup first the email names why they got it the club’s address and an unsubscribe link a note from you do not offer again unsubscribe page stop sponsorship offers invoices and receipts still come family opted out of club email casl consent',
       content: (
         <p><strong>Sponsorships</strong> is the place for the businesses that back your club. It keeps your <strong>packages</strong> (what a business gets, what it costs and how many you have), every <strong>sponsor</strong> and where each one shows on your public site, and the invoice details and form you sell with. It sits in the Club group of the sidebar, after <strong>Communications</strong> and before <strong>Public site</strong>, and on a phone it is a row in the <strong>More</strong> sheet. It has four tabs: <strong>Deals</strong>, <strong>Packages</strong>, <strong>Sponsors</strong> and <strong>Setup</strong>.</p>
       ),
@@ -2251,6 +2254,56 @@ const orgHelp: HelpPageContent = {
               </ul>
               <p>Only the owner, admins and the treasurer change them. Anyone else who opens Sponsorships can read them. Whether GST/HST applies to a sponsorship depends on what the business gets and on your club, so ask your accountant.</p>
               <p>The <strong>Sponsorship form</strong> is what a business answers. Every business is first asked for the business details (name, contact name, email, address for the invoice, phone, website and a logo), and you can&rsquo;t remove those. After them come your own questions and documents.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-offer',
+          title: 'Offering a deal to a business',
+          content: (
+            <>
+              <p>On <strong>Deals</strong>, press <strong>Offer a deal</strong>. A deal is one package offered to one business, with its own link.</p>
+              <ol>
+                <li>Pick the <strong>Business</strong> from your sponsors, or type a new name. A new business also needs an email; the business fills in the rest.</li>
+                <li>Pick the <strong>Package</strong>, and for a division, team or tournament package, where it <strong>Shows on</strong>. A place that already has a sponsor warns you but never stops you.</li>
+                <li>Check the <strong>Amount</strong> (it starts at the package price, and you can change it for this business) and <strong>Shows until</strong>.</li>
+                <li>Turn on <strong>Charge GST</strong> or <strong>HST</strong> only if your accountant says this deal is taxable. The rate follows the business&rsquo;s invoice address.</li>
+                <li>Press <strong>Send the offer</strong> to email it (see <a href="#club-sponsorships-t-email">Emailing the offer</a>), or <strong>Make the link only</strong> to make the link without sending anything.</li>
+              </ol>
+              <p><strong>Make the link only</strong> is for a business you have spoken to. Nothing is emailed; the deal reads <strong>Link made, not emailed</strong> and you copy the link and give it to them yourself. A link you hand over in person is not an email, so FieldLogicHQ asks for no reason and no mailing address. If you paste it into your own email or text message, that message is yours to justify: send it only to a business you have a reason to email.</p>
+              <p>The link opens the business&rsquo;s own page on your club&rsquo;s site, with no account: the package, your form (its business details and logo, then your questions) and <strong>How you&rsquo;ll pay</strong>. When the business presses <strong>Send</strong>, the deal moves to <strong>Invoiced</strong> and its page shows the invoice number, the amount, the due date and how to pay by cheque or e-transfer. The invoice appears on that page; it is not emailed, so tell the business to keep its link.</p>
+              <p>Open a deal for its states (<strong>Offered</strong>, <strong>Form received</strong>, <strong>Invoiced</strong>, <strong>Paid</strong>, <strong>Delivered</strong>, <strong>Withdrawn</strong>), its history and the business&rsquo;s answers. <strong>Copy the link</strong> is there too, and <strong>Withdraw this deal</strong> takes the offer down with a reason that is kept; a paid deal can&rsquo;t be withdrawn.</p>
+              <HelpNote variant="info" title="A new link replaces the old one">On a deal that is still open, <strong>Send the link again</strong> emails a new link and <strong>Make a new link</strong> makes one without emailing. Either way the old link stops working and shows the business that it has been replaced.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-email',
+          title: 'Emailing the offer: why you can email them',
+          content: (
+            <>
+              <p>Send the offer only to a business you have a reason to email. <strong>Send the offer</strong> asks <strong>Why you can email them</strong>, and the reason is kept with the offer, with today&rsquo;s date:</p>
+              <HelpDefs>
+                <HelpDef term="They paid us in the last 2 years">Asks <strong>When?</strong>: the day they last paid.</HelpDef>
+                <HelpDef term="They asked us about sponsoring (in the last 6 months)">Asks <strong>When?</strong>: the day they asked.</HelpDef>
+                <HelpDef term="They gave us this address">No day needed.</HelpDef>
+                <HelpDef term="They publish this address for business">Only when a sponsorship is relevant to what they do.</HelpDef>
+              </HelpDefs>
+              <p>If the day is more than two years (or six months) ago, <strong>When?</strong> turns red and says the reason no longer applies. Give that business the link in person instead. A day that hasn&rsquo;t come yet is refused too.</p>
+              <p>Sending also waits for two things in <strong>Setup</strong>: your <strong>Mailing address</strong> and a <strong>Contact for sponsors</strong> email. The foot of the window says which one is missing, and <strong>Make the link only</strong> still works meanwhile.</p>
+              <p>The email opens with your optional <strong>note</strong>, then the package, its price and a <strong>See the package</strong> button. It tells the business why it got the email, names the club and its mailing address, and ends with an <strong>Unsubscribe</strong> link. You can&rsquo;t remove any of that.</p>
+              <p>If you made the link only and later want to email it, open the deal and press <strong>Email the offer</strong>; it asks the same reason. An offer is emailed once. After that, use <strong>Send the link again</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-stop',
+          title: 'A business that asks you to stop: Unsubscribe and Do not offer again',
+          content: (
+            <>
+              <p>Every offer email ends with an <strong>Unsubscribe</strong> link. It opens a page that says it stops sponsorship offers from your club to that address; the business presses one button. <strong>Invoices and receipts for a sponsorship it has already agreed to still come.</strong> This stops sponsorship offers only, not the club&rsquo;s other emails.</p>
+              <p>When a business has unsubscribed, the <strong>Offer a deal</strong> window says so with the date, and <strong>Send the offer</strong> is gone. You can still <strong>Make the link only</strong> and give it to them if they ask you about sponsoring again. An address a family has asked the club not to email works the same way.</p>
+              <p>If a business tells you by reply or by phone to stop, open its deal and press <strong>Do not offer again</strong>. Nobody at the club can undo it. It stops the address a business typed on its form as well as the one you offered to.</p>
             </>
           ),
         },

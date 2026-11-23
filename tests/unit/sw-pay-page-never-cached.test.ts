@@ -36,6 +36,13 @@ describe('Stage 7 step 0 — a pay page never enters the shared page cache', () 
     }
   });
 
+  it('a business’s sponsorship page (a bearer link carrying its invoice) is never cached, on either address', () => {
+    for (const p of ['/riverdale/sponsorship/abc.def', '/riverdale/sponsorship/abc.def/', '/sponsorship/abc.def']) {
+      assert.equal(sw.isNeverCache(p), true, `${p} must be never-cache`);
+      assert.equal(sw.isPublicTournamentPage(p), false, `${p} must not be kept for offline`);
+    }
+  });
+
   it('the rest of the event is still kept for offline last scores', () => {
     for (const p of ['/riverdale/spring-classic', '/riverdale/spring-classic/schedule', '/riverdale/spring-classic/teams/9']) {
       assert.equal(sw.isNeverCache(p), false, p);
@@ -46,8 +53,8 @@ describe('Stage 7 step 0 — a pay page never enters the shared page cache', () 
     assert.equal(sw.isPublicTournamentPage('/riverdale/spring-classic/teams/pay'), true);
   });
 
-  it('the cache version moved past v12, so copies stored before the rule are dropped', () => {
+  it('the cache version moved past v13, so copies stored before the rule are dropped', () => {
     const v = Number(/CACHE_VERSION = 'v(\d+)'/.exec(SW)?.[1]);
-    assert.ok(v >= 13, 'bump CACHE_VERSION when a page leaves the cache');
+    assert.ok(v >= 14, 'bump CACHE_VERSION when a page leaves the cache');
   });
 });

@@ -28754,3 +28754,8 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Not walked:** offering a deal, "Full" filling, the business's page, invoices and payments (Parts 2–3); a team sponsor (About only, the division's path); a tournament place's public strip (the tournament sponsors drawing).
 <!-- /§560 -->
+
+## §561 · Board Ready Stage 6 · Part 2 · Offering a deal, the business's no-login page, Make the link only, stopping offers — **a club offers its package to a business by email (the window asks why it may email them, and refuses a reason that has run out) or makes the link and hands it over; the business opens its own page with no account, fills in its details and sees its invoice and how to pay on the page; either side can stop it (Unsubscribe, Do not offer again, Withdraw)**
+<!-- §561 -->
+**Walk published 2026-11-23.** [Interactive walk](https://claude.ai/artifact/6kiJA8iXNDWnk31rzPdfkb) (walks A–D, 50 steps; two owner calls outside the count) · [repository HTML](BOARD_READY_STAGE6_P2_WALK.html). Built on dev (migrations 526 and 527 applied to dev). Sign in: `uat-club-owner@uat-rep-club.local` (password `UATPassword2026!`, UAT Rep Club); the business's walk needs no sign-in. Setup I made on UAT Rep Club through the Setup screen's save: mailing address, contact for sponsors, e-transfer and cheque payee, and one package ("Walk club partner", $500.00); UAT Rep Only untouched. The walk's email goes to an inbox the owner types in. Plan: `BOARD_READY_PLAN.md` §5 Stage 6; finish record: `BOARD_READY_STAGE6_P2_FINISH_PROMPT.md`.
+<!-- /§561 -->

@@ -14,9 +14,13 @@ export type { PlaceTargets } from '@/lib/club-sponsorships';
 
 export type PlacePackage = SponsorshipPackage & { taken: PackageTaken; takenBy: { id: string; name: string; caption: string }[] };
 
+/** A sponsor's deals, for its window's "From the deal" line and Deal door (Part 2). A withdrawn one shows nowhere. */
+export type SponsorDeal = { id: string; packageName: string; invoice: string | null; withdrawn: boolean };
+
 export interface SponsorshipsRead {
   packages: PlacePackage[];
   sponsors: ClubSponsor[];
+  sponsorDeals: Record<string, SponsorDeal[]>;
   settings: SponsorshipSettings;
   targets: PlaceTargets;
   formQuestions: number;

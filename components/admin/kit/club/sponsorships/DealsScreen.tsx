@@ -3,8 +3,8 @@
  * SPONSORSHIPS › DEALS (Board Ready Stage 6, Part 1; round 1 tab 1). Before any package exists the tab is three steps —
  * the shipped row list, not a wizard: Your invoice details · Make your first package · Your sponsorship form, each opening
  * its window or page, the first with a green "Done". It goes away for good once a package exists. The sponsors the club
- * already had on its website arrive on the Sponsors tab untouched, and the callout says so. Offering a deal, and the list of
- * deals by state, are Part 2.
+ * already had on its website arrive on the Sponsors tab untouched, and the callout says so. Once a package exists, the tab is
+ * the year's deals by state and "Offer a deal" (Part 2, `DealsList`).
  */
 import { useState } from 'react';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ import { invoiceDetailsDone } from '@/lib/club-sponsorships';
 import { useSponsorships } from './api';
 import InvoiceDetailsWindow from './InvoiceDetailsWindow';
 import PackageWindow from './PackageWindow';
+import DealsList from './DealsList';
 import LoadingState from '@/components/shared/LoadingState';
 import css from './Sponsorships.module.css';
 
@@ -26,9 +27,7 @@ export default function DealsScreen() {
   if (!data) return <LoadingState label={W.loading} />;
 
   const hasPackage = data.packages.length > 0;
-  if (hasPackage) {
-    return <ClubSection><p className={ck.hint}>{W.noDeals}</p></ClubSection>;
-  }
+  if (hasPackage) return <DealsList />;
   const steps = [invoiceDetailsDone(data.settings), false, data.formQuestions > 0];
   const done = steps.filter(Boolean).length;
   const doneChip = <> <span className={`${ck.chip} ${ck.chipGood}`}>{W.ready.doneChip}</span></>;

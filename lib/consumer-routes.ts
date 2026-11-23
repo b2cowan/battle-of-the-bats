@@ -66,6 +66,8 @@ const ORG_OPERATOR_SECTIONS = ['admin', 'check-in', 'coaches', 'official', 'scor
 const ORG_PUBLIC_SECTIONS = [
   'about', 'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams', 'tournaments',
   'tryouts',
+  // A business's sponsorship link (Board Ready Stage 6 Part 2): /{org}/sponsorship/{token}, the club's frame, no-index.
+  'sponsorship',
 ] as const;
 
 const ORG_OPERATOR_SECTION_SET = new Set<string>(ORG_OPERATOR_SECTIONS);

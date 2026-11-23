@@ -197,3 +197,31 @@ export function buildInviteStopUrl(invitationId: string): string | null {
   if (!token) return null;
   return `${base}/invitation-stop?i=${encodeURIComponent(invitationId)}&token=${encodeURIComponent(token)}`;
 }
+
+// ── A club's SPONSORSHIP OFFERS to one address (Board Ready Stage 6 Part 2; /legal review §1) ─────
+// The offer email to a business is a commercial message: its foot's unsubscribe stops THAT club's sponsorship offers to
+// THAT address, and nothing else — a sponsor who is also a parent keeps their family email, and an invoice or receipt for a
+// live deal still goes (not a commercial message). Keyed on (club, normalized address) with its own HMAC suffix, so it is
+// never interchangeable with a guardian's, an org's or a user's token. It writes `club_sponsor_offer_stops` (mig 526), which
+// no seat at the club can clear. On the shared /unsubscribe page, so the one-click headers reach it.
+
+function sponsorKey(orgId: string, email: string): string {
+  return `${orgId}:${email.trim().toLowerCase()}:unsubscribe-sponsor`;
+}
+
+export function generateSponsorUnsubscribeToken(orgId: string, email: string): string | null {
+  return sign(sponsorKey(orgId, email));
+}
+
+export function verifySponsorUnsubscribeToken(orgId: string, email: string, token: string): boolean {
+  if (!orgId || !email || !token) return false;
+  return sameToken(generateSponsorUnsubscribeToken(orgId, email), token);
+}
+
+export function buildSponsorUnsubscribeUrl(orgId: string, email: string): string | null {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+  const normalized = email.trim().toLowerCase();
+  const token = generateSponsorUnsubscribeToken(orgId, normalized);
+  if (!token) return null;
+  return `${base}/unsubscribe?org=${encodeURIComponent(orgId)}&sponsor=${encodeURIComponent(normalized)}&token=${encodeURIComponent(token)}`;
+}

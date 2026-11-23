@@ -20,7 +20,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { verifyUnsubscribeToken, verifyUserUnsubscribeToken, verifyGuardianUnsubscribeToken } from '@/lib/unsubscribe-token';
+import { verifyUnsubscribeToken, verifyUserUnsubscribeToken, verifyGuardianUnsubscribeToken, verifySponsorUnsubscribeToken } from '@/lib/unsubscribe-token';
 import { withObservability } from '@/lib/observability/with-observability';
 
 export const runtime = 'nodejs';
@@ -50,6 +50,7 @@ export const POST = withObservability(async (request: NextRequest) => {
   const orgId = field('org');
   const userId = field('user');
   const guardianEmail = field('guardian').trim().toLowerCase();
+  const sponsorEmail = field('sponsor').trim().toLowerCase();
   const token = field('token');
 
   // ── Per-USER opt-out (coach campaigns) — record the person's own choice ────────
@@ -60,6 +61,21 @@ export const POST = withObservability(async (request: NextRequest) => {
       .upsert({ user_id: userId, opted_out_at: new Date().toISOString() }, { onConflict: 'user_id' });
     if (error) {
       console.error('[unsubscribe] user opt-out update error:', error.code, error.message);
+      return go('?error=db');
+    }
+    return go();
+  }
+
+  // ── One club's SPONSORSHIP OFFERS to one address (Board Ready Stage 6, mig 526) ──────────────
+  // Before the guardian and org branches: a sponsor link carries `org` too. It stops that club's sponsorship offers only
+  // (never family email), and the stop is insert-only — a repeat click finds it already written.
+  if (sponsorEmail) {
+    if (!orgId || !token || !verifySponsorUnsubscribeToken(orgId, sponsorEmail, token)) return go('?error=invalid');
+    const { error } = await supabaseAdmin
+      .from('club_sponsor_offer_stops')
+      .upsert({ org_id: orgId, email: sponsorEmail, source: 'unsubscribe' }, { onConflict: 'org_id,email', ignoreDuplicates: true });
+    if (error) {
+      console.error('[unsubscribe] sponsor offer stop error:', error.code, error.message);
       return go('?error=db');
     }
     return go();

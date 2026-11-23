@@ -408,11 +408,13 @@ export function kitSponsorshipsLink({ base, opens, isCanceled, tournamentTier }:
 }
 
 export type SponsorshipsTabId = 'deals' | 'packages' | 'sponsors' | 'setup';
-/** The place's four tabs (ask 12). Setup holds the sponsorship form one level down, so it lights there too (`views`). */
+/** The place's four tabs (ask 12). Setup holds the sponsorship form one level down, so it lights there too (`views`); one
+ *  deal is a record over Deals at `/sponsorships/{dealId}` (Part 2), so Deals lights one level under its address too — the
+ *  other tabs' own addresses win first. */
 export function sponsorshipsTabs(base: string): (PlaceTab & { id: SponsorshipsTabId; views?: true })[] {
   const s = `${base}/${SPONSORSHIPS_SEGMENT}`;
   return [
-    { id: 'deals', label: 'Deals', href: s },
+    { id: 'deals', label: 'Deals', href: s, views: true },
     { id: 'packages', label: 'Packages', href: `${s}/packages` },
     { id: 'sponsors', label: 'Sponsors', href: `${s}/sponsors` },
     { id: 'setup', label: 'Setup', href: `${s}/setup`, views: true },

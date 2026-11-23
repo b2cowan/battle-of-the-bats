@@ -1221,8 +1221,6 @@ sign-up form article. **Reviews owed at build:** `/legal` (the setting's helper 
 - [ ] Migration first; dictionary + snapshots.
 
 ### Stage 6 — Sponsorships (item 7)
-- [ ] Club **sponsorship packages**: name, price, what's included (a list of deliverables: logo on the site, field banner, jersey
-  crest, named division), how many are available, and an optional sponsorship document (PDF) to send.
 
 **Drawn 2026-11-22 (round 1, after /design, /legal, /accounting) and ALL 15 ASKS RULED 2026-11-22** — 1A · 2A · 3C · 4A ·
 5A · 6A · 7A · 8A · 9A · 10A · 11A · 12A (+ note) · 13A · 14A · 15A, every one as recommended (ask 3 was ruled earlier the
@@ -1319,6 +1317,58 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   club in two years, asked in six months, gave or published the address for business use), not the drawn "no business the
   club has never dealt with"; the Payouts sponsorship row's card-network sentence names the cost ceiling and says "nothing at
   all in Québec" (the drawn "none in Québec" read as no limit).
+- **Part 2's four owner calls, RULED 2026-11-22** (asked at the start of the Part 2 build, each as recommended): (a) **the
+  invoice number is given in Part 2** — choosing a cheque or e-transfer gives the deal its invoice number, issue date and due
+  date at once (the coach scheme: `{year}-{seq}` per club, never reused), so the Invoiced callout and the thank-you page read
+  as drawn; the PDF, the emailed invoice and Record a payment stay in Part 3; (b) **no card button until Part 3** — Part 2's
+  business page shows only the drawn card-off pay block ("Send, and pay … by cheque or e-transfer"); Part 3 adds the card
+  button with the flow behind it; (c) **"Make the link only"** — a quiet second button in the Offer window's foot creates the
+  deal and opens Copy the link, sends no email and asks no reason (nothing is sent, so nothing needs proving), for the drawings'
+  own "give them the link in person" (no reason on record, an unsubscribed address, a referral); undrawn, so it is drawn for
+  the owner's look before it is built; (d) **the Offer window's refusals use drafted words** for the `/marketing` pass: the
+  business stays in the picker but can't be emailed, with its reason — unsubscribed: "Unsubscribed from your sponsorship
+  emails on {date}. We won't email them again." (/legal's tab 9 line); family opt-out: "This address has asked {club} not to
+  email it. Give them the link in person instead."; Do not offer again: "You marked them Do not offer again on {date}."
+  Said out loud at the same start, from the code: the province rate table moves in Part 2 (the Charge switch's hint needs the
+  rate), a "place that has gone" has no drawn words and under ask 7 is only a withdrawn offer, a replaced link or a deleted
+  division/team (all three read the drawn withdrawn sentence), changing an invoiced deal's amount or tax waits for Part 3's
+  revised invoice, and no clock clears a business's answers (unruled; flagged to `/legal` with Privacy §9).
+  **Part 2 code built 2026-11-22** (migration 526 written and held for the dev apply until walk 560 is done, owner's
+  instruction; typecheck clean; Part 2 guard tests 37/37). `/marketing` pass applied; `/legal` re-check applied: sending also
+  waits for a contact email the email names (finding 1), the CASL record of an email that went is retried (finding 2), the
+  barred-address refusals no longer point at the held button (finding 4). "Make the link only" drawn for the owner's look
+  (https://claude.ai/artifact/HtZy3KAvEfbSY9MkqzFaSH, two asks), not built. **Two more calls RULED 2026-11-22, as
+  recommended (from /legal's re-check):** (e) **the reason keeps its own date** — picking "They paid us in the last 2 years"
+  or "They asked us about sponsoring (in the last 6 months)" asks a required "When?" date, refused past 2 years / 6 months,
+  and that date is the one kept; "Send the link again" re-emails only while the reason still holds (else it makes the new
+  link without emailing it); one field added to the drawn window, so drawn for the owner's look before it is built;
+  (f) **a replaced link has its own sentence**: "This link has been replaced. Look for the club’s newer email, or contact
+  {club}." (a withdrawn offer keeps the ruled one; neither shows any business details). Migration 526 applied to dev
+  2026-11-22 at the owner's word (`MANUAL_PROD_STEPS.json`). **The link-only drawing RULED 2026-11-23, all three as
+  recommended (1A · 2A · 3A):** **1A** build as drawn — an outline "Make the link only" between Cancel and Send the offer;
+  the reason is required only for Send; the deal's page opens with Copy the link (the callout's lime); the row says "Link
+  made, not emailed"; when Send can't go it is absent with its reason and Make the link only stays (and takes the lime), in
+  all four cases. On a link-made deal the actions add **Email the offer** (the email half of Offer a deal, its own route;
+  a failed email keeps the deal) and Send the link again reads **"Make a new link"**. **2A** on a phone the Offer window's
+  foot holds Make the link only and Send the offer; Cancel is the head's ←, which asks first when anything is typed; the
+  computer keeps all three — ⚖ a deliberate exception to the 2026-10-09 Cancel-beside rule, for this window only (three
+  buttons don't fit at 390). **3A** a required When? (the shipped date field, no day after today) directly under the two
+  reasons that run out; the drafted hints; the red line under the field when the day is too long ago, with Send still
+  there (pressing it says the same line; the server refuses it too); Send the link again on a run-out reason makes the new
+  link, emails nothing, and the notice at the top of the deal says so (/design's open point: the shipped PageNotice there).
+  **Built 2026-11-23:** migration **527** (`club_sponsor_deals.link_unsent_at`, the history's "new link made, not emailed";
+  the invoice counter's service_role grant taken away, only the SECURITY DEFINER step takes a number) applied to dev; the
+  offer record's `reason_on` is now the reason's own day for the two that run out (today for the other two). Guards fixed
+  on the way: the new tables classified for the team move, the business's page registered as a club form page, the
+  insert-only grants marked, possessives through `possessive()`. Part 2 tests 41/41, typecheck clean. Owner "walk done"
+  2026-11-23: the dev server restarted and the probe (`.probe/stage6-p2-link-only-probe.mjs`) passed end to end on UAT Rep
+  Only. **Part 2 closed out 2026-11-23** (record: `BOARD_READY_STAGE6_P2_FINISH_PROMPT.md`): `/simplify` and `/review` applied
+  (nine fixes; the open `/review` items listed there); `/ux` at 390 (the pay block no longer promises an emailed invoice, 44px
+  Copy and foot address, one address on the withdrawn and replaced pages); `/docs` (three sub-topics in the club guide's
+  Sponsorships section); `/legal` re-read (the club's stop list is now read in full, a link pasted into the club's own email is
+  the club's to justify; two owner questions: a Copy-the-link hint, and Send the link again on an invoiced deal). Walk **§561**
+  (4 walks, 50 steps) published; Part 2's commit is on `dev` (hash in the commit that follows it). Migrations 526 and 527 go to
+  production only with the promote that carries Part 2, and before it (the Part 1 tabs read the deals).
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or
@@ -1331,6 +1381,8 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   gate) on the CASL sender question, the two-year clock and a passed-on fee under Québec law.
 - Unblocked by this ruling (§7b item 2): the public tournament pages' sponsors drawing can start.
 
+- [ ] Club **sponsorship packages**: name, price, what's included (a list of deliverables: logo on the site, field banner, jersey
+  crest, named division), how many are available, and an optional sponsorship document (PDF) to send.
 - [ ] **Sponsors and deals:** a deal is a sponsor + a package + what it's attached to (the club · a house-league division ·
   a house-league team · a club event · a tournament) + an amount. States: Offered · Form received · Invoiced · Paid ·
   Delivered.
@@ -1345,8 +1397,6 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
 - [ ] The paid deal feeds the **one sponsor list** (ruled 2026-10-27), so the logo shows where the deal says.
 - [ ] Money lands in the club books as sponsorship income. Renewal next season: "Offer again" from last year's deals.
 - [ ] Team sponsorships in the Coaches Portal stay the team's (2026-11-06 ruling). They are not merged or moved.
-- [ ] Live card payment waits on Club Tier Stage 12's production switch; everything else can ship first.
-- [ ] Migration first; dictionary + snapshots.
 - [ ] **Who pays the card fee** (ruled 2026-11-22, ask 3, `BUSINESS_DECISIONS.md`): a second club-wide choice on the Payouts
   card, separate from the registration one: "The club pays it" (default; the sponsor pays the invoice to the cent, the fee is
   a Payment processing cost) or "The sponsor pays it" (the fee shows as its own line on the invoice and the pay page before
@@ -1354,6 +1404,8 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   (round 2 finding F13, 2026-11-22):** no gross-up is needed. `onlineFee()` works the fee out on the amount owed, never on
   the charge, and the club receives the charge less that fee; Stripe's extra cents on the larger charge come out of
   FieldLogicHQ's application fee. On the drawing's deal the club receives $1,135.34 and keeps $1,000.00 after $135.34 HST.
+- [ ] Live card payment waits on Club Tier Stage 12's production switch; everything else can ship first.
+- [ ] Migration first; dictionary + snapshots.
 
 ### Stage 7 — Camps and clinics (item 6)
 - [ ] A camp or clinic is a club event (Stage 5) with sessions, a capacity, a price, a waitlist and a sign-up form (Stage 4).

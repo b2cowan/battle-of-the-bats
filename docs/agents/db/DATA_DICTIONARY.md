@@ -7265,7 +7265,7 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_form_answers.submission_id -->
 <!-- dict:col:club_form_answers.subject_table -->
 <!-- dict:col:club_form_answers.subject_id -->
-**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** (no cascade, gotcha 2 of `club_form_questions`) / **`submission_id`** (CASCADE) / **`subject_table`** (CHECK `league_registrations`) + **`subject_id`** (both or neither; deleting the registration deletes the answer through the trigger `club_form_subject_gone`).
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** (no cascade, gotcha 2 of `club_form_questions`) / **`submission_id`** (CASCADE) / **`subject_table`** (CHECK `league_registrations | club_sponsor_deals` — the deal subject since mig 526: a business's answers and ticks are about its deal) + **`subject_id`** (both or neither; deleting the registration deletes the answer through the trigger `club_form_subject_gone`).
 <!-- dict:col:club_form_answers.value_text -->
 <!-- dict:col:club_form_answers.value_choice_ids -->
 <!-- dict:col:club_form_answers.value_bool -->
@@ -7293,7 +7293,7 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_form_answer_clears.subject_table -->
 <!-- dict:col:club_form_answer_clears.subject_id -->
 <!-- dict:col:club_form_answer_clears.cleared_at -->
-**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** (CASCADE) / **`submission_id`** (CASCADE) / **`subject_table`** + **`subject_id`** (the child's registration, or neither for a question asked once per sign-up; one row per question and subject, or per question and sign-up) / **`cleared_at`** (timestamptz, NOT NULL, DEFAULT now(): the latest clear; the record says the later of it and the answer's own change).
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** (CASCADE) / **`submission_id`** (CASCADE) / **`subject_table`** + **`subject_id`** (CHECK `league_registrations | club_sponsor_deals` since mig 526; the child's registration, a sponsorship deal, or neither for a question asked once per sign-up; one row per question and subject, or per question and sign-up) / **`cleared_at`** (timestamptz, NOT NULL, DEFAULT now(): the latest clear; the record says the later of it and the answer's own change).
 
 ## `club_form_storage_removals`
 <!-- dict:table:club_form_storage_removals -->
@@ -7329,7 +7329,7 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_form_ticks.submission_id -->
 <!-- dict:col:club_form_ticks.subject_table -->
 <!-- dict:col:club_form_ticks.subject_id -->
-**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`document_id`** / **`version_id`** (nullable only when moved) / **`submission_id`** (SET NULL) / **`subject_table`** (CHECK `league_registrations`) + **`subject_id`** (NOT NULL).
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`document_id`** / **`version_id`** (nullable only when moved) / **`submission_id`** (SET NULL) / **`subject_table`** (CHECK `league_registrations | club_sponsor_deals` — the deal subject since mig 526: a business's answers and ticks are about its deal) + **`subject_id`** (NOT NULL).
 <!-- dict:col:club_form_ticks.guardian_email -->
 <!-- dict:col:club_form_ticks.user_id -->
 <!-- dict:col:club_form_ticks.sentence -->
@@ -7363,7 +7363,7 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_form_files.created_at -->
 <!-- dict:col:club_form_files.attached_at -->
 <!-- dict:col:club_form_files.removed_at -->
-**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** / **`submission_id`** (SET NULL) / **`subject_table`** + **`subject_id`** (set when attached) / **`path`** (UNIQUE; bucket `club-form-files`, under `{org}/`, purged with the club: `ORG_FILE_BUCKETS`) / **`file_name`** / **`size_bytes`** / **`content_type`** (from the bytes, never the browser) / **`status`** (CHECK `pending | attached | removed`) / **`created_at`** / **`attached_at`** / **`removed_at`**. Opening one goes through a one-hour signed link with `Content-Disposition: attachment`, and each opening is recorded in the club's activity log (Part 3).
+**`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** / **`submission_id`** (SET NULL) / **`subject_table`** + **`subject_id`** (set when attached; CHECK `league_registrations | club_sponsor_deals` since mig 526) / **`path`** (UNIQUE; bucket `club-form-files`, under `{org}/`, purged with the club: `ORG_FILE_BUCKETS`) / **`file_name`** / **`size_bytes`** / **`content_type`** (from the bytes, never the browser) / **`status`** (CHECK `pending | attached | removed`) / **`created_at`** / **`attached_at`** / **`removed_at`**. Opening one goes through a one-hour signed link with `Content-Disposition: attachment`, and each opening is recorded in the club's activity log (Part 3).
 
 ## `club_sponsors`
 <!-- dict:table:club_sponsors -->
@@ -7394,7 +7394,7 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_sponsors.invoice_city -->
 <!-- dict:col:club_sponsors.invoice_province -->
 <!-- dict:col:club_sponsors.invoice_postal -->
-**`contact_name`**, **`contact_email`**, **`phone`**, **`invoice_street`**, **`invoice_city`**, **`invoice_province`** (two capital letters), **`invoice_postal`** (all nullable) — the business details the sponsorship form asks first (ask 8). Empty in Part 1; Stage 6 Part 2 fills them from the business's page. The invoice's GST/HST rate follows `invoice_province` (ask 9, Part 3). Business contact information, the club's to hold (/legal review §2).
+**`contact_name`**, **`contact_email`**, **`phone`**, **`invoice_street`**, **`invoice_city`**, **`invoice_province`** (two capital letters), **`invoice_postal`** (all nullable) — the business details the sponsorship form asks first (ask 8). Written by the business's page (`club_sponsor_deal_receive`, mig 526) each time it sends, until the deal is paid; a business picked in the Offer window with no email keeps the one typed there. The deal keeps its own copy as sent (the invoice's facts). The invoice's GST/HST rate follows `invoice_province` (ask 9, Part 3). Business contact information, the club's to hold (/legal review §2).
 
 ## `club_sponsor_places`
 <!-- dict:table:club_sponsor_places -->
@@ -7403,7 +7403,7 @@ is read as stopped after the grace period (gotcha 4).
 
 **Gotchas (read first):**
 1. **`target_id` is not a foreign key** (the kinds point at three tables): null for `club`, else a `league_divisions`, `league_teams` or `tournaments` id (CHECK `club_sponsor_places_target`). The routes check a target belongs to the club (`targetsBelong`). AFTER DELETE triggers on those three tables (`club_sponsor_places_*_gone`, function `club_sponsor_places_target_gone`) delete a place with its target.
-2. **`source`** — `typed` (set on the Sponsors tab) or `deal` (a paid deal whose package has the logo switch on IS the place, Stage 6 Part 2). CHECK `club_sponsor_places_source`: `deal` ⇔ `deal_id` set. **Part 2 adds the deals table and `deal_id`'s foreign key.** A deal's place is changed on the deal, never on the Sponsors tab, and a sponsor with one can't be removed.
+2. **`source`** — `typed` (set on the Sponsors tab) or `deal` (a paid deal whose package has the logo switch on IS the place, Stage 6 Part 2). CHECK `club_sponsor_places_source`: `deal` ⇔ `deal_id` set. **`deal_id` → `club_sponsor_deals` CASCADE (mig 526, `club_sponsor_places_deal_fk`), one place per deal (partial UNIQUE `club_sponsor_places_one_per_deal`).** A deal's place is written only by `syncDealPlace` (lib/club-sponsorship-deals-server.ts): present exactly while the deal is paid or its logo line is ticked and its package has the logo switch on (ask 5), with the deal's kind, target and last day. It is changed on the deal, never on the Sponsors tab.
 3. **`ends_on`** — the LAST day it shows, inclusive, in the club's day (the shipped `sponsorEnded` rule); null = no last day. It comes down by itself after that day; the Sponsors tab keeps it under "Not showing".
 4. A sponsor is typed onto one spot once (partial UNIQUE `club_sponsor_places_typed_once`).
 
@@ -7417,7 +7417,7 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_sponsor_places.deal_id -->
 <!-- dict:col:club_sponsor_places.created_at -->
 <!-- dict:col:club_sponsor_places.updated_at -->
-**`id`** (uuid PK) / **`org_id`** (FK → `organizations` CASCADE) / **`sponsor_id`** (FK → `club_sponsors` CASCADE) / **`kind`** (CHECK `club | division | team | tournament`) / **`target_id`** (uuid, see gotcha 1) / **`ends_on`** (date, nullable) / **`source`** (CHECK `typed | deal`, default `typed`) / **`deal_id`** (uuid, nullable; FK in Part 2) / **`created_at` / `updated_at`**.
+**`id`** (uuid PK) / **`org_id`** (FK → `organizations` CASCADE) / **`sponsor_id`** (FK → `club_sponsors` CASCADE) / **`kind`** (CHECK `club | division | team | tournament`) / **`target_id`** (uuid, see gotcha 1) / **`ends_on`** (date, nullable) / **`source`** (CHECK `typed | deal`, default `typed`) / **`deal_id`** (uuid, nullable; FK → `club_sponsor_deals` CASCADE, mig 526) / **`created_at` / `updated_at`**.
 
 ## `club_sponsorship_packages`
 <!-- dict:table:club_sponsorship_packages -->
@@ -7471,6 +7471,134 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_sponsorship_settings.updated_by -->
 <!-- dict:col:club_sponsorship_settings.updated_at -->
 **`org_id`** (PK, FK → `organizations` CASCADE) / **`gst_hst_registered`** (bool, default false) / **`gst_hst_number`** (text, nullable) / **`etransfer_to`** (email, nullable — "By e-transfer to") / **`cheques_payable_to`** (text ≤120, nullable) / **`payment_due_days`** (int 0–120, default 30 — "Payment due", 0 = on receipt) / **`sponsor_contact_name` / `sponsor_contact_email`** (nullable — "Contact for sponsors") / **`updated_by`** (FK → auth.users, SET NULL) / **`updated_at`**.
+
+## `club_sponsor_deals`
+<!-- dict:table:club_sponsor_deals -->
+
+**Purpose:** **A club sponsorship deal** (Board Ready Stage 6, **mig 526**; round 1 tabs 3–5, asks 4–7; Part 2's owner calls 2026-11-22). A business (`club_sponsors`) + a package (kept AS OFFERED) + where it shows + an amount. The Deals tab lists a fiscal year's deals by `offered_on`; one deal's page reads it whole; the business reaches it only through its signed link (lib/sponsor-deal-link.ts, the one door `dealFromLinkToken`).
+
+**Gotchas (read first):**
+1. **`state`** follows the money (ask 4): `offered` → `form_received` (an unfinished card payment only, Part 3) → `invoiced` → `paid`, or `withdrawn` (until paid). **Delivered is never stored**: paid + every checklist line ticked (`isDelivered`).
+2. **The package is snapshotted** (`package_name`, `package_items`, `logo_on_site`): an archived or edited package never changes a deal. `package_id` is RESTRICT (packages are archived, never deleted).
+3. **`link_version`** — "Send the link again" bumps it and the old link stops (the HMAC message carries the version; the door compares it).
+4. **`emailed_at` null** = made as a link only (owner call (c), approved 2026-11-23 as 1A): nothing was sent and no reason is recorded. Email the offer, later, sets it and writes the offer row with its reason. Every email that went is a row in `club_sponsor_offers`.
+5. **The business's details** (`business_name` … `invoice_postal`) are what its link sent, as sent — the invoice's facts. The same send writes the one business record (`club_sponsors`). The logo it sent is held PRIVATE at **`logo_path`** (`club-form-files`, `{org}/sponsorships/deals/{deal}/logo/{uuid}.png`) until the deal's place shows, then copied to the public `org-logos` bucket as the sponsor's logo and cleared.
+6. **The invoice** (owner call (a)): `invoice_year` + `invoice_seq` (printed `2027-014`) from `club_sponsor_invoice_counters`, never reused; `invoiced_on`, `due_on` (club days), `tax_kind`/`tax_rate`/`tax_amount` (only when the club is registered AND `charge_tax`; the rate is the province's of `invoice_province`, lib/gst-hst-rates.ts), `total`. Set together (CHECK `club_sponsor_deals_invoice_whole`); `invoiced`/`paid` need a number. The PDF and its email are Part 3.
+7. **`sponsor_id` is RESTRICT**: a business with any deal can't be removed (its offers and invoices stay). The AFTER DELETE trigger `club_sponsor_deal_gone` removes the deal's answers, clears, ticks, files and submission and queues its waiting logo — it runs only on a club's deletion.
+8. Written through `club_sponsor_deal_receive` (the business's send) and lib/club-sponsorship-deals-server.ts; service role only.
+
+<!-- dict:col:club_sponsor_deals.id -->
+<!-- dict:col:club_sponsor_deals.org_id -->
+<!-- dict:col:club_sponsor_deals.sponsor_id -->
+<!-- dict:col:club_sponsor_deals.package_id -->
+<!-- dict:col:club_sponsor_deals.package_name -->
+<!-- dict:col:club_sponsor_deals.package_items -->
+<!-- dict:col:club_sponsor_deals.logo_on_site -->
+<!-- dict:col:club_sponsor_deals.place_kind -->
+<!-- dict:col:club_sponsor_deals.target_id -->
+<!-- dict:col:club_sponsor_deals.target_name -->
+<!-- dict:col:club_sponsor_deals.ends_on -->
+<!-- dict:col:club_sponsor_deals.amount -->
+<!-- dict:col:club_sponsor_deals.charge_tax -->
+<!-- dict:col:club_sponsor_deals.state -->
+<!-- dict:col:club_sponsor_deals.link_version -->
+<!-- dict:col:club_sponsor_deals.offered_on -->
+<!-- dict:col:club_sponsor_deals.offered_at -->
+<!-- dict:col:club_sponsor_deals.offered_by -->
+<!-- dict:col:club_sponsor_deals.offered_by_name -->
+<!-- dict:col:club_sponsor_deals.offered_to -->
+<!-- dict:col:club_sponsor_deals.emailed_at -->
+<!-- dict:col:club_sponsor_deals.opened_at -->
+<!-- dict:col:club_sponsor_deals.link_unsent_at -->
+<!-- dict:col:club_sponsor_deals.form_at -->
+<!-- dict:col:club_sponsor_deals.business_name -->
+<!-- dict:col:club_sponsor_deals.contact_name -->
+<!-- dict:col:club_sponsor_deals.contact_email -->
+<!-- dict:col:club_sponsor_deals.phone -->
+<!-- dict:col:club_sponsor_deals.website -->
+<!-- dict:col:club_sponsor_deals.invoice_street -->
+<!-- dict:col:club_sponsor_deals.invoice_city -->
+<!-- dict:col:club_sponsor_deals.invoice_province -->
+<!-- dict:col:club_sponsor_deals.invoice_postal -->
+<!-- dict:col:club_sponsor_deals.logo_path -->
+<!-- dict:col:club_sponsor_deals.logo_sent_at -->
+<!-- dict:col:club_sponsor_deals.pay_method -->
+<!-- dict:col:club_sponsor_deals.invoice_year -->
+<!-- dict:col:club_sponsor_deals.invoice_seq -->
+<!-- dict:col:club_sponsor_deals.invoiced_at -->
+<!-- dict:col:club_sponsor_deals.invoiced_on -->
+<!-- dict:col:club_sponsor_deals.due_on -->
+<!-- dict:col:club_sponsor_deals.tax_kind -->
+<!-- dict:col:club_sponsor_deals.tax_rate -->
+<!-- dict:col:club_sponsor_deals.tax_amount -->
+<!-- dict:col:club_sponsor_deals.total -->
+<!-- dict:col:club_sponsor_deals.withdrawn_at -->
+<!-- dict:col:club_sponsor_deals.withdrawn_by -->
+<!-- dict:col:club_sponsor_deals.withdrawn_by_name -->
+<!-- dict:col:club_sponsor_deals.withdrawn_reason -->
+<!-- dict:col:club_sponsor_deals.created_at -->
+<!-- dict:col:club_sponsor_deals.updated_at -->
+**`id`** / **`org_id`** (FK CASCADE) / **`sponsor_id`** (FK RESTRICT) / **`package_id`** (FK RESTRICT) / **`package_name`**, **`package_items`** (jsonb ≤20), **`logo_on_site`** (the package as offered) / **`place_kind`** (CHECK `club | division | team | tournament`), **`target_id`** (null ⇔ club), **`target_name`** (the place's name as picked) / **`ends_on`** (last day shown, inclusive) / **`amount`** (numeric(10,2), before tax) / **`charge_tax`** (bool, default false) / **`state`** (CHECK, gotcha 1) / **`link_version`** (int ≥ 0) / **`offered_on`** (club day; its fiscal year), **`offered_at`**, **`offered_by`** (SET NULL), **`offered_by_name`** (a name kept as it was), **`offered_to`** (lowercase address; required once emailed) / **`emailed_at`**, **`opened_at`** (first open), **`link_unsent_at`** (mig 527; the last new link made with nothing emailed: Make a new link on a link made only, or Send the link again after the reason ran out — the history's "new link made, not emailed"), **`form_at`** (last send from the link) / the business's details as sent (gotcha 5) / **`logo_path`**, **`logo_sent_at`** / **`pay_method`** (`cheque_etransfer | card`) / the invoice (gotcha 6) / **`withdrawn_at`**, **`withdrawn_by`**, **`withdrawn_by_name`**, **`withdrawn_reason`** (set together with state `withdrawn`) / **`created_at` / `updated_at`**.
+
+## `club_sponsor_deal_items`
+<!-- dict:table:club_sponsor_deal_items -->
+
+**Purpose:** **A deal's delivery checklist ticks** (mig 526; round 1 tab 5). One row per ticked line: **`item_id`** is the package item's id, or `logo` for the "Your logo on our website" line — ticking it puts the deal's place up before payment (ask 5). The checklist opens once the deal is invoiced.
+
+<!-- dict:col:club_sponsor_deal_items.deal_id -->
+<!-- dict:col:club_sponsor_deal_items.item_id -->
+<!-- dict:col:club_sponsor_deal_items.org_id -->
+<!-- dict:col:club_sponsor_deal_items.done_at -->
+<!-- dict:col:club_sponsor_deal_items.done_by -->
+<!-- dict:col:club_sponsor_deal_items.done_by_name -->
+**`deal_id`** (FK CASCADE) + **`item_id`** (PK) / **`org_id`** (FK CASCADE) / **`done_at`** / **`done_by`** (SET NULL) / **`done_by_name`** ("Ticked by Dana Ruiz", kept as it was).
+
+## `club_sponsor_offers`
+<!-- dict:table:club_sponsor_offers -->
+
+**Purpose:** **Every sponsorship offer email sent — the CASL record** (mig 526; ask 13; `/legal` review §1, CASL s.10(9)–(10): the sender must prove why it could email). The address, the business's name, **`reason`** (`paid_recently | asked_recently | gave_address | published_address`; referral is not offered), **`reason_on`** (the day it was picked), **`kind`** (`offer`, or `again` for "Send the link again"), who sent it (**`sent_by_name`**, a name snapshot so it survives the person leaving the club, round 2), the club.
+
+**Gotchas (read first):**
+1. **Insert-only:** the service role is granted SELECT and INSERT only. It outlives the deal (`deal_id` SET NULL) and the business. A club's deletion removes it.
+2. "Make the link only" writes nothing here (nothing was sent).
+
+<!-- dict:col:club_sponsor_offers.id -->
+<!-- dict:col:club_sponsor_offers.org_id -->
+<!-- dict:col:club_sponsor_offers.deal_id -->
+<!-- dict:col:club_sponsor_offers.business_name -->
+<!-- dict:col:club_sponsor_offers.email -->
+<!-- dict:col:club_sponsor_offers.reason -->
+<!-- dict:col:club_sponsor_offers.reason_on -->
+<!-- dict:col:club_sponsor_offers.kind -->
+<!-- dict:col:club_sponsor_offers.sent_at -->
+<!-- dict:col:club_sponsor_offers.sent_by -->
+<!-- dict:col:club_sponsor_offers.sent_by_name -->
+**`id`** / **`org_id`** (FK CASCADE) / **`deal_id`** (FK SET NULL) / **`business_name`** / **`email`** (lowercase) / **`reason`** (CHECK) / **`reason_on`** (date) / **`kind`** (CHECK `offer | again`) / **`sent_at`** / **`sent_by`** (SET NULL) / **`sent_by_name`** (NOT NULL).
+
+## `club_sponsor_offer_stops`
+<!-- dict:table:club_sponsor_offer_stops -->
+
+**Purpose:** **An address this club never offers a sponsorship again** (mig 526; ask 13). **`source`** `unsubscribe` (the offer email's foot, the `:unsubscribe-sponsor` token family on `/unsubscribe`) or `club` ("Do not offer again" on the deal page, for a stop said by reply or phone, with **`stopped_by_name`**). Per club, per address, **sponsorship offers only**: family email, invoices and receipts are untouched. An address on the club's family opt-out list (`family_email_optouts`, read live) is refused too, without a row here.
+
+**Gotchas (read first):** **Insert-only — no seat at the club can clear one** (the service role holds SELECT and INSERT only). A business that asks again is handed its link in person.
+
+<!-- dict:col:club_sponsor_offer_stops.org_id -->
+<!-- dict:col:club_sponsor_offer_stops.email -->
+<!-- dict:col:club_sponsor_offer_stops.source -->
+<!-- dict:col:club_sponsor_offer_stops.stopped_at -->
+<!-- dict:col:club_sponsor_offer_stops.stopped_by -->
+<!-- dict:col:club_sponsor_offer_stops.stopped_by_name -->
+**`org_id`** (FK CASCADE) + **`email`** (lowercase) (PK) / **`source`** (CHECK) / **`stopped_at`** / **`stopped_by`** (SET NULL) / **`stopped_by_name`** (set ⇔ source `club`).
+
+## `club_sponsor_invoice_counters`
+<!-- dict:table:club_sponsor_invoice_counters -->
+
+**Purpose:** **The last sponsorship invoice number given, per club and calendar year** (mig 526; owner call (a)). `club_sponsor_deal_receive` adds one under the row lock, so a number is never reused, even when the deal holding it is withdrawn (a voided invoice keeps its number). **service_role holds no grant on it** (mig 527): only that SECURITY DEFINER step touches it (a delete would issue a number twice).
+
+<!-- dict:col:club_sponsor_invoice_counters.org_id -->
+<!-- dict:col:club_sponsor_invoice_counters.year -->
+<!-- dict:col:club_sponsor_invoice_counters.last_seq -->
+**`org_id`** (FK CASCADE) + **`year`** (PK) / **`last_seq`** (int > 0).
 
 ## `club_group_email_sends`
 <!-- dict:table:club_group_email_sends -->
