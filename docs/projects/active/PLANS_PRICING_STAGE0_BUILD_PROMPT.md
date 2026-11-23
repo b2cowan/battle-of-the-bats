@@ -730,7 +730,7 @@ anchor (date, commit, walk §), never deletes it.
     (the audit stopped checking them, owner 2026-11-06); test also has a League yearly slot pointing at a monthly price (and one extra, harmless invoice event).
   - [ ] **O12b · Test cleanup done and audited**, then **live matched** (ticks O3), then **end-to-end done** (ticks O6).
     **2026-11-17:** test audited read-only: 0 failures; the two retired products were archived by the owner the same day (re-read,
-    confirmed); their four prices still carry the active flag; the League yearly slot is fixed; tax rows filled. The audit's 17-event list omits the three credit-note events the code acts on (owner
+    confirmed); their four prices still carry the active flag; the League yearly slot is fixed; tax rows filled. The audit's 17-event list omitted the three credit-note events the code acts on (fixed 2026-11-23: the list is 20) (owner
     added them 2026-11-07 per the setup guide), so live's missing-event count is re-read first. Owner checklist (42 boxes) published:
     `https://claude.ai/artifact/NTYToS8ueibVFEqBiaydXm`. The live purchase waits for Terms and Privacy to be public (Q-L1).
     **2026-11-17 · O3 done (evidenced by the owner's live audit paste):** live billing endpoint carries the four dispute/refund events, the

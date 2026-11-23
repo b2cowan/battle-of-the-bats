@@ -281,6 +281,10 @@ yearly plans.** The Terms must say what is actually sent (Q-L5). (c) Q-A4 versus
   day a customer disputes a charge. The registration is a public record. It also makes the Terms' "seller" line true (the owner,
   trading as FieldLogicHQ). Do it with the CRA operating-name check (Q-A1).
 - **Q-L4 — Add a required tick-box at Checkout? (blocks C-L1; recommendation: yes, on every subscription Checkout, not just Premium.)**
+  **✅ RULED by the owner 2026-11-23 (Stripe checklist call R6): NO — drop the Stripe tick-box.** Our own recorded acceptance at the account
+  door and the purchase gate is enough (`/legal` addendum 2026-11-23, `ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md`); it was never built. The
+  rest of C-L1 (the renewal and trial sentences above the Pay button) is a separate item and is not struck by this. The text below is the
+  original recommendation, kept as history.
   Stripe can show a required "I agree to the Terms" box (`consent_collection.terms_of_service`) and records on the session that it was
   accepted. That is the cheapest honest way to give a coach the "express chance to accept or decline" the rule asks for, and it is the
   only acceptance step that exists anywhere in the product (signup has none). Stripe's other setting, the line "by confirming you
@@ -365,7 +369,7 @@ are different screens (D13 is the card-save one).
 | L2 | Settings → Checkout (the Checkout customisation page) → **Legal policies** on; and the setting **Display agreement to legal terms** | **Legal policies: On** once L1 is done, so the two links show on every Checkout. **Display agreement to legal terms: On only as a stop-gap, and Off once C-L1 ships the real tick-box** (Q-L4): that setting only prints "by confirming you agree", which is implied agreement, and Ontario's rule for a coach buying as an individual asks for an express chance to accept. **Look for:** a "Legal policies" link at the foot of the Checkout page that opens the two pages. | /legal | ☐ | ☐ |
 | L3 | Settings → Checkout → **Return and refund policies** | **Off.** Our refund position lives in one place, the Terms (section 8), and Stripe's refund panel is a second copy that would drift. Checkout's own subscription line and our one-sentence submit text (C-L1) say what a buyer needs at the button. **Look for:** no "Returns" or "Refunds" panel on Checkout. | /legal | ☑ | ☑ |
 | L4 | Settings → Checkout → **Contact information** | **On**, showing the support email from M17 and the website from M19. Show a telephone number here only if Q-L2 gives one that also appears on the Terms page; never one on Stripe that the Terms lack. No address (agrees M20): the address belongs on the Terms page and the purchase email (Q-L2). **Look for:** the contact dialog on Checkout shows the email and website, and nothing the Terms do not also say. | /legal | ☑ | ☑ |
-| L5 | **CODE, not a dashboard click (C-L1).** Any subscription Checkout → **just above the Pay button**, and the **checkbox** | Test/Live check after C-L1 ships: a **required, unticked** box reading `I agree to the Terms of Service and have read the Privacy Policy` (both linked), and the renewal sentence above the button (exact words in C-L1). **Look for:** the Pay button cannot be pressed until the box is ticked; the box is absent from the card-save Checkout (no price, no agreement being made). | /legal | ☐ | ☐ |
+| L5 | **DROPPED 2026-11-23 (owner, Q-L4 / call R6): the tick-box is not built.** ~~**CODE, not a dashboard click (C-L1).** Any subscription Checkout → **just above the Pay button**, and the **checkbox** | Test/Live check after C-L1 ships: a **required, unticked** box reading `I agree to the Terms of Service and have read the Privacy Policy` (both linked), and the renewal sentence above the button (exact words in C-L1). **Look for:** the Pay button cannot be pressed until the box is ticked; the box is absent from the card-save Checkout (no price, no agreement being made).~~ | /legal | n/a | n/a |
 
 ## 3. Customer portal ("Payment method & invoices")
 
@@ -563,9 +567,10 @@ are different screens (D13 is the card-save one).
   Privacy pages are live.** The five places that open a Checkout: `app/api/billing/create-checkout/route.ts` (line 410),
   `app/api/billing/create-team-checkout/route.ts` (336), `app/api/billing/choose-next-season/route.ts` (189),
   `lib/team-org-billing.ts` (825), and the card-save in `lib/billing-setup.ts` (138, setup mode: gets the submit sentence only, no tick-box).
-  None sets any consent or custom text today. Add to the four subscription sessions:
-  - `consent_collection: { terms_of_service: 'required' }`
-  - `custom_text.terms_of_service_acceptance.message`: `I agree to the [Terms of Service](https://www.fieldlogichq.ca/terms) and have read the [Privacy Policy](https://www.fieldlogichq.ca/privacy).`
+  None sets any consent or custom text today. **⚠ The Terms tick-box part (the next two bullets, and row L5) is DROPPED by the owner,
+  2026-11-23 (Q-L4, call R6): do not build it.** The submit-text bullets that follow are not struck. Add to the four subscription sessions:
+  - ~~`consent_collection: { terms_of_service: 'required' }`~~ (dropped)
+  - ~~`custom_text.terms_of_service_acceptance.message`:~~ (dropped) `I agree to the [Terms of Service](https://www.fieldlogichq.ca/terms) and have read the [Privacy Policy](https://www.fieldlogichq.ca/privacy).`
   - `custom_text.submit.message` for a **plan with no trial**: `Your plan renews automatically every [month|year] at the price shown above until you cancel. Cancel any time in Plan & billing; your plan then runs to the end of the period you have paid for. We do not refund the unused part of a period. Questions: hello@fieldlogichq.ca.`
   - `custom_text.submit.message` for a **plan with a trial** (Club): `Your free trial ends on the date shown above. Unless you cancel before then, your card is charged the plan price that day and the plan renews automatically every [month|year] until you cancel. Cancel any time in Plan & billing. Questions: hello@fieldlogichq.ca.`
   - Card-save only: `This saves your card for your FieldLogicHQ plan. Nothing is charged today.`

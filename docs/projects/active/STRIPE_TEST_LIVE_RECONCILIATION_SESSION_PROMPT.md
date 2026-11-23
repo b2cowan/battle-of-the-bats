@@ -17,7 +17,7 @@ invoices" press) forward. Nothing is recorded as done after 2026-11-06.
   against `docs/agents/strategy/PLAN_PRICING_FACTS.md`; a disagreement is drift to flag to `/strategy`, never a new number.
 - **First audits ran 2026-11-06** (record: `PLANS_PRICING_STAGE0_BUILD_PROMPT.md` O12a-results): live prices all match; **live still
   needs** ten webhook events (the four dispute/refund events plus `payment_method.attached`/`.detached` and four fee-invoice
-  events — the audit's expected list is now 17 events), the Premium Coaches Portal product renamed, and the four retired prices
+  events — the audit's expected list was 17 events then and is 20 since 2026-11-23, with the three credit-note events), the Premium Coaches Portal product renamed, and the four retired prices
   deleted (owner said they are). **Test has** a League yearly slot pointing at a monthly price and one extra, harmless invoice event.
 - **Claude never changes Stripe settings and never reads LIVE Stripe.** The owner runs the live audit and pastes the result.
   Claude may audit TEST (read-only) and may change OUR database/code only when asked.

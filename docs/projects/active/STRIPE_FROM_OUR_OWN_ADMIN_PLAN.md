@@ -80,7 +80,7 @@ R. **Stripe test ↔ live reconciliation (owner ask 2026-11-03).** Not planned y
    registered, one tax code on every product, prices tax-exclusive) equal the target; the League yearly slot defect of 11-06 is gone.
    Retired plans in test: the owner archived both retired products on 2026-11-17 (re-read the same day, confirmed archived); their
    four prices still carry the active flag, so the audit still warns (archive them, or let the audit treat a price on an archived
-   product as retired). The account logo is empty (ruled empty, Q-D2). **Drift found:** the written list of 17 events omits `credit_note.created/.updated/.voided`, which the code acts on
+   product as retired). The account logo is empty (ruled empty, Q-D2). **Drift found (fixed 2026-11-23: the audit and the written list are now 20 events):** the written list of 17 events omitted `credit_note.created/.updated/.voided`, which the code acts on
    (GST/HST Stage 3) and the setup guide says the owner added to BOTH endpoints on 2026-11-07, so the live "ten events missing" count
    of 11-06 may be stale; the live fix list starts from a fresh live audit (checklist B). The target's own condition that cleanup
    waits for the tax rows is met in test.

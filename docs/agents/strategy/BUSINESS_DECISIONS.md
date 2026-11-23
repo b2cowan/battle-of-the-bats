@@ -8,6 +8,28 @@
 
 ---
 
+### 2026-11-23 — The billing webhook's written event list is 20, not 17 (Decided; Stripe checklist call R2)
+**Status:** **Decided** (owner, 2026-11-23, Stripe checklist call R2, answered "Yes": "update the list to 20 events, drop the stale notes and the logo warning, stop accepting the prefix, and route the 17-to-20 correction to the strategy agent"). This entry records only the 17-to-20 correction; the other parts of R2 are code and ops items (see Handoff).
+**Decision:** The target for the **billing webhook endpoint** (`www.fieldlogichq.ca/api/billing/webhook`) is **20 events**: the 17 the 2026-11-06 entry listed (the original seven; the four dispute and refund events; `payment_method.attached` and `.detached`; `invoice.paid`, `.voided`, `.marked_uncollectible`, `.finalized`) **plus the three credit-note events, `credit_note.created`, `.updated` and `.voided`**. The three were left out of the written list although the code already acts on them (GST/HST Stage 3, the tax record on a credit note); the "Drift found" note in `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md` flagged it on 2026-11-17 and the owner added them to both endpoints on 2026-11-07 per the setup guide.
+**Live state, as the owner's checklist recorded it (not re-read by this session):** the checklist's C2 to C5 added the four dispute and refund events, the two card-on-file events, the four invoice events and the three credit-note events to the live endpoint, and C10 (Claude reads the live paste against the target) is ticked. 7 + 4 + 2 + 4 + 3 = 20. The live audit output itself was not in front of this session.
+**One reason in the 2026-11-06 entry is stale, the count is not:** it says the four `invoice.*` events "carry a club's own Stripe-fees invoice". That invoice was retired 2026-11-18 (Stripe-owned pricing Stage 4). The four events stay because they feed the tax record and the purchase email (the audit script's own comment already says so). The list is still 20.
+**History:** the 2026-11-06 entries ("the 17 events the audit lists", "Webhook event list CORRECTED to 17") are left as written; this entry supersedes the count only.
+**Rationale:** a target that omits events the code acts on makes the audit pass an endpoint that would silently drop credit-note tax records; one number, 20, must match the audit, the setup guide and the live endpoint.
+**Affects:** the audit script's expected list; the Stripe setup guide; the test-to-live reconciliation prompt; the Stage 0 prompt's note. **No price, plan name, band, gate or limit moves.**
+**Handoff:**
+```
+HANDOFF → /plan (or the session the owner names; the audit script and the Stripe checklist are the owner's call, not strategy's)
+- scripts/audit-stripe-billing.mjs: EXPECTED_WEBHOOK_EVENTS to the 20 (add the three credit_note events); R2's other parts are
+  there too: drop the stale notes and the logo warning, stop accepting the "FieldLogicHQ - " product-name prefix. The audit is
+  report-only and runs against live Stripe: check whether it is on the watched-automation list before editing.
+- Say "20 events" in: docs/agents/ops/stripe-setup-guide.md (~L288 says 17), docs/projects/active/STRIPE_TEST_LIVE_RECONCILIATION_SESSION_PROMPT.md (~L20),
+  PLANS_PRICING_STAGE0_BUILD_PROMPT.md (~L733) and STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md (~L83), which already note the omission.
+HANDOFF → /billing, /marketing, /accounting: nothing.
+```
+**Supersedes:** the count "17" in 2026-11-06 "Stripe set-up order" (its webhook target line and its "CORRECTED to 17" result); nothing else in that entry.
+
+---
+
 ### 2026-11-22 — Sponsors on a TOURNAMENT follow the Tournament Plus branding gate (Decided; Board Ready Stage 6 ask 2)
 **Status:** **Decided** (owner, 2026-11-22: Stage 6 drawing round 1, ask 2 = A, as recommended, in the all-15 paste-back).
 **Not built.** Closes the "owed tournament sponsor-display gate" left open in 2026-10-27 (one sponsor list per org) and
@@ -750,7 +772,7 @@ HANDOFF → /strategy (owner conversation, not yet scheduled): the free League f
 
    - **Names a customer reads** (on Checkout, invoices, receipts and the portal) must follow the naming canon: "Premium Coaches Portal", never "Coaches Portal Premium" (the audit's accepted-name list currently allows it), "League Plus" (the audit expects "League"), "Club · Association". The exact product names are `/marketing`'s to write. Any product still named from the old list is renamed, not recreated.
    - **Price slots:** each plan and cycle in `stripe_prices` points at exactly one active price of that amount and interval; the test environment's slots at test prices, production's at live prices; lookup keys are NOT part of the target (owner 2026-11-06: the app never reads them, and Stripe would not keep them when the owner tried to set them; the audit no longer checks them).
-   - **Webhooks (billing endpoint, www host):** the 17 events the audit lists (corrected 2026-11-06 from eleven; see the audit results below), one enabled endpoint, no stale or duplicate endpoints. The two Connect endpoints for family payments get their own written list in the same pass (their events are not in this record).
+   - **Webhooks (billing endpoint, www host):** the 17 events the audit lists (corrected 2026-11-06 from eleven; see the audit results below; **now 20, with the three credit-note events, see 2026-11-23**), one enabled endpoint, no stale or duplicate endpoints. The two Connect endpoints for family payments get their own written list in the same pass (their events are not in this record).
    - **Rows the target OWES, filled in when their own work lands** (owner 2026-11-06: they belong in the target, and this is where they are tracked, not a separate list): tax settings and a tax code on each product (GST/HST Stage 2, `/accounting`); any USD price (none decided); the written event list for the two Connect (family payments) endpoints. The cleanup does not start until the tax rows are filled, which is why it follows the tax work.
    - **One name everywhere (owner 2026-11-06, "the more important thing"):** a plan has one name across the portals, marketing, the help and Stripe. The plan's label in `lib/plan-config.ts` is the source, and the audit script reads the expected Stripe product name from it, so a rename there is caught in Stripe.
 **First audit results, 2026-11-06 (owner ran live; Claude ran the test sandbox, read-only):**

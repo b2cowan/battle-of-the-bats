@@ -285,14 +285,14 @@ Before the first live sale, check each of these in both modes:
 - [ ] Each site uses the key you think it does: production a live key, dev/staging a test key.
 - [ ] Run the read-only audit against production:
       `node scripts/audit-stripe-billing.mjs --env .env.production.local`.
-      The audit's expected prices, product names (the plan labels in the app) and the 17 webhook events were brought to
-      the target on 2026-11-06 (decisions log, "Stripe set-up order"); it also lists leftover active prices and every
+      The audit's expected prices, product names (the plan labels in the app) and the 20 webhook events (the 17 of 2026-11-06 plus the three
+      credit-note events; decisions log 2026-11-23) are the target; it also lists leftover active prices and every
       other webhook endpoint. For the test sandbox add `--environment sandbox --allow-test`.
-- [ ] **Product names are the plan labels, with no "FieldLogicHQ -" prefix** *(proposed 2026-11-06, owner to rule; the audit
-      accepts the prefix until then)*: Tournament Plus, Premium Coaches Portal, League Plus, Club, Club · Association.
+- [ ] **Product names are the plan labels, with no "FieldLogicHQ -" prefix** *(owner 2026-11-23: the audit no longer
+      accepts the prefix)*: Tournament Plus, Premium Coaches Portal, League Plus, Club, Club · Association.
       Our price book's own labels match (they show on the staff Plans & pricing screen).
-- [ ] **Branding and public details (owner 2026-11-06).** The audit only checks that a logo, an icon and a brand colour
-      exist. Also set and LOOK AT: business name, support email and phone, public website, statement descriptor, and how a
+- [ ] **Branding and public details (owner 2026-11-06).** The audit only checks that an icon and a brand colour
+      exist (the logo is empty on purpose, owner ruling Q-D2). Also set and LOOK AT: business name, support email and phone, public website, statement descriptor, and how a
       real Checkout page, an invoice, a receipt email and the customer portal read to a buyer.
 - [ ] **Tax settings in Live: BEFORE the GST/HST Stage 2 promote, not after.** Head office, the GST/HST registration,
       default tax behaviour exclusive, preset category SaaS · business use. The code is refused by Stripe without them

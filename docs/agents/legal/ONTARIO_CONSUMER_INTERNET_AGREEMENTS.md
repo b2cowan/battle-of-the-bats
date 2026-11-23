@@ -127,3 +127,14 @@ removes the gap) or if consumer sales grow.
 ## Lawyer's eye needed?
 Yes, briefly — whether the planned confirmation email satisfies the copy rule, and the auto-renewal / no-refund wording
 once CPA 2023 is in force.
+
+## Addendum 2026-11-23 — Stripe Checkout's "I agree to the Terms" box (owner call R6, Stripe checklist)
+**Question:** is our own acceptance enough that the Stripe tick-box (Q-L4 / C-L1 in `docs/projects/active/STRIPE_BRANDING_PASS.md`) can be dropped?
+**Answer: yes, drop it.** Recommendation, not a legal opinion. Owner's conditional ruling ("drop it if our own acceptance is enough") applies.
+- **Nothing to remove in code.** No Checkout session sets `consent_collection` or `custom_text` (searched the repo 2026-11-23); C-L1's box was planned, never built. Dropping it means striking it from C-L1 and the Stripe branding checklist, not a code change.
+- **Our record is the better record.** Stripe records "accepted" but not which version (the branding pass said so). Ours stores the version, the exact box sentence, the door and the time (no IP), append-only, and every account door and every plan purchase route refuses without the current Terms (`requireAcceptance`, `app/api/billing/create-checkout/route.ts:108`).
+- **Clubs and leagues:** an organization is not a consumer under the CPA; the account holder's tick plus the "allowed to agree on its behalf" sentence is the contract step. No Stripe box needed.
+- **A coach buying as an individual:** the statute asks for "an express opportunity to accept or decline, and to correct errors" immediately before the agreement is made. A Terms tick-box is not what it names. The Checkout page's own Subscribe button, beside the price and the renewal line, is that opportunity. Our "By continuing, you agree to the Terms" line beside the paid button is implied agreement, which is enough for a contract that was already expressly accepted at the account door; it is not what satisfies the CPA step.
+- **Caveats (the real exposure, none of it the tick-box):** (1) the phone number and business address still owed to the Terms (O1'); (2) the primary text of O. Reg. 17/05 for the "express opportunity" item was never read (only s. 32 was) — it rests on a law-firm pointer; (3) CPA 2023, once in force, may add subscription rules. The cost if wrong stays the bounded 7/30-day cancel and refund the owner already accepted.
+- **Do keep:** Stripe's Terms of service URL on Public details pointing at www.fieldlogichq.ca/terms, so Stripe's own "you authorize ... according to the terms" line links somewhere (the branding pass found it linked to nothing before the pages were live; not re-read on the live account this session).
+- **Lawyer's eye (when the owner chooses):** whether Checkout's Subscribe button alone is the "express opportunity" for a consumer coach, and whether an account-door acceptance given months earlier is enough for a later purchase.
