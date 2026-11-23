@@ -47,6 +47,22 @@ import {
 // imported from there directly — a re-export nobody uses is just a second place to look.
 export { isSandboxSurfacePath } from './sandbox-exit-rule';
 
+/**
+ * A demo door's answer to anything that is not a person going there: a link fetched in the background (Next's prefetch, a
+ * browser's own predictive prefetch or prerender, which DO arrive as `Sec-Fetch-Dest: document` but say so in
+ * `Sec-Purpose`) or the app's in-page fetch for a click (`RSC`, or a non-document `Sec-Fetch-Dest`). Nothing is signed in
+ * and the door's allowance is not spent. A 204 is not an app response, so for a real click the app falls back to a full
+ * page load of the same address, and that load is the press.
+ *
+ * It refuses only on a POSITIVE sign (/review 2026-11-22): a client or a network that sends none of these headers is let in
+ * as it always was, so a stripped header can never dead-end a real person at the door.
+ */
+export function demoDoorNotAPress(request: NextRequest): NextResponse | null {
+  const dest = request.headers.get('sec-fetch-dest');
+  const background = isPrefetchRequest(request) || !!request.headers.get('rsc') || (!!dest && dest !== 'document');
+  return background ? new NextResponse(null, { status: 204, headers: { 'Cache-Control': 'no-store' } }) : null;
+}
+
 /** Whoever this request's cookies say is signed in, read WITHOUT the power to write them back. */
 export async function currentSessionUser(
   request: NextRequest,
@@ -105,6 +121,10 @@ function isPrefetchRequest(request: NextRequest): boolean {
  *
  * The `accept` fallback covers a client too old to send Sec-Fetch-Dest. An `iframe` or `embed`
  * dest is not a navigation: something embedding a page is not the visitor walking out.
+ *
+ * The demo DOORS ask the twin question (2026-11-22, `demoDoorNotAPress` above): a `<Link>` to a door is prefetched the
+ * moment it scrolls into view, and a door that took that fetch for a press signed every visitor who scrolled Pricing, Home
+ * or a For-… page into the demo, unseen; Start now then opened the sign-up form as the demo coach.
  */
 function isNavigationRequest(request: NextRequest): boolean {
   const dest = request.headers.get('sec-fetch-dest');

@@ -227,3 +227,50 @@ describe("the demo's start buttons leave by a full page load (The first look 1d,
     assert.doesNotMatch(src, /<Link[^>]*href=\{startHref\}/);
   });
 });
+
+// 2026-11-22 (owner, on production): scrolling Pricing until "See a coach's season first" showed signed the visitor into
+// the demo with no click — the `<Link>` prefetched the door and the door took the fetch for a press. Start now then opened
+// the coach sign-up as the demo coach (Account skipped) and the address save failed. Only a navigation is a press.
+describe('a demo door opens only for a person going there, never for a prefetch', () => {
+  test('both doors answer anything but a navigation before they meter, read or sign in', async () => {
+    const exit = await readFile(new URL('../../lib/sandbox-exit.ts', import.meta.url), 'utf8');
+    const notAPress = exit.slice(exit.indexOf('export function demoDoorNotAPress'), exit.indexOf('export async function currentSessionUser'));
+    // a Next prefetch, a browser prefetch/prerender (Sec-Purpose), the app's in-page RSC fetch, a non-document fetch
+    assert.match(notAPress, /isPrefetchRequest\(request\)/);
+    assert.match(notAPress, /request\.headers\.get\('rsc'\)/);
+    assert.match(notAPress, /!!dest && dest !== 'document'/);
+    assert.match(notAPress, /new NextResponse\(null, \{ status: 204, headers: \{ 'Cache-Control': 'no-store' \} \}\)/);
+    for (const door of ['../../app/see-it-live/route.ts', '../../app/see-it-live/coaches/route.ts']) {
+      const src = await readFile(new URL(door, import.meta.url), 'utf8');
+      const get = src.slice(src.indexOf('export async function GET'));
+      const guard = get.indexOf('demoDoorNotAPress(request)');
+      assert.ok(guard > 0, door);
+      assert.match(get, /const notAPress = demoDoorNotAPress\(request\);\s*if \(notAPress\) return notAPress;/, door);
+      for (const later of ['take(', 'currentSessionUser(', 'attachDemoSession(']) {
+        const at = get.indexOf(later);
+        assert.ok(at < 0 || at > guard, `${door}: ${later} runs before the prefetch guard`);
+      }
+    }
+  });
+  test('the coach sign-up never reads the shared demo account as a buyer', async () => {
+    const page = await readFile(new URL('../../app/coaches/start/page.tsx', import.meta.url), 'utf8');
+    // both branches: the express-interest form (gated) and the sign-up (open)
+    assert.equal(page.match(/const user = sessionUser && !isDemoOrganizerEmail\(sessionUser\.email\) \? sessionUser : null;/g)?.length, 2);
+  });
+});
+
+test('demoDoorNotAPress: a background fetch is answered 204; a person going there (or a client that says nothing) is let in', async () => {
+  const { NextRequest } = await import('next/server');
+  const { demoDoorNotAPress } = await import('../../lib/sandbox-exit.ts');
+  const at = (headers: Record<string, string>) => demoDoorNotAPress(new NextRequest('https://www.fieldlogichq.ca/see-it-live/coaches', { headers }));
+  // Next <Link> prefetch, the in-page fetch for a click, a fetch() of the page, a browser prerender
+  for (const headers of <Record<string, string>[]>[
+    { rsc: '1', 'next-router-prefetch': '1' },
+    { rsc: '1', 'sec-fetch-dest': 'empty' },
+    { 'sec-fetch-dest': 'empty' },
+    { 'sec-fetch-dest': 'document', 'sec-purpose': 'prefetch;prerender' },
+  ]) assert.equal(at(headers)?.status, 204, JSON.stringify(headers));
+  // a real page load, and a client that sends none of the signs (never dead-ended)
+  assert.equal(at({ 'sec-fetch-dest': 'document', accept: 'text/html' }), null);
+  assert.equal(at({}), null);
+});

@@ -67,10 +67,13 @@ export function addressOnFile(info: BillingAddressInfo | null): StoredBillingLoc
 export const isAddressRefusal = (data: unknown): boolean =>
   !!data && typeof data === 'object' && (data as { code?: unknown }).code === BILLING_ADDRESS_REQUIRED;
 
-/** Saves through PUT /api/billing/location. Field errors come back as red lines; anything else is the save-failed sentence. */
+/**
+ * Saves through PUT /api/billing/location. Field errors come back as red lines; a session that ended (401) comes back as
+ * `signedOut`, for a caller that can send the person to sign in again; anything else is the save-failed sentence.
+ */
 export async function saveBillingAddress(target: BillingAddressTarget, body: Record<string, unknown>): Promise<
   | { ok: true; location: StoredBillingLocation }
-  | { ok: false; errors?: Record<string, string>; failed?: true }
+  | { ok: false; errors?: Record<string, string>; failed?: true; signedOut?: true }
 > {
   try {
     const res = await fetch('/api/billing/location', {
@@ -80,6 +83,7 @@ export async function saveBillingAddress(target: BillingAddressTarget, body: Rec
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.location) return { ok: true, location: data.location as StoredBillingLocation };
     if (res.status === 400 && data.errors) return { ok: false, errors: data.errors };
+    if (res.status === 401) return { ok: false, failed: true, signedOut: true };
     return { ok: false, failed: true };
   } catch {
     return { ok: false, failed: true };
@@ -155,6 +159,8 @@ export function useBillingAddressGate(target: BillingAddressTarget | null) {
       const pending: Promise<BillingAddressInfo> = fetchBillingAddress(target).then(next => {
         // A failed read is asked again next time (a blank window for a buyer who has an address is the wrong answer to a blip).
         if (!next) { if (loading.current === pending) loading.current = null; return FALLBACK; }
+        // A read overtaken by a newer one (the target changed, or `forget` dropped the last person's) lands nowhere.
+        if (loading.current !== pending) return next;
         setInfo(next);
         return next;
       });
@@ -212,8 +218,15 @@ export function useBillingAddressGate(target: BillingAddressTarget | null) {
     });
   }, []);
 
+  /** The person changed under the page (the sign-up's "Not you?", or a sign-in as someone else): the last account's address
+   *  is dropped, and the next read is the new person's. */
+  const forget = useCallback(() => {
+    loading.current = null;
+    setInfo(null);
+  }, []);
+
   return {
-    info, location: addressOnFile(info), load, ensure, refused, edit, remember, dialog, open: ask !== null,
+    info, location: addressOnFile(info), load, ensure, refused, edit, remember, forget, dialog, open: ask !== null,
     savedAt, clearSaved: () => setSavedAt(null),
   };
 }

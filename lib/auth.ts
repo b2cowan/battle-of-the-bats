@@ -82,7 +82,12 @@ export async function signIn(
   return { error: message };
 }
 
-export async function signOut(): Promise<void> {
+/**
+ * `scope: 'local'` ends the session in THIS browser only. The default (the service's own, 'global') ends the person's
+ * sessions everywhere, which is right for "Sign out" but wrong for the coach sign-up's "Not you?": that button is pressed by
+ * someone who is NOT the signed-in person, about a sign-in left on a shared computer, and must not reach their phone.
+ */
+export async function signOut(opts: { scope?: 'local' } = {}): Promise<void> {
   const supabase = createClient();
   // The support console's Find keeps the last records opened in this browser; whichever door a staff member signs out
   // through, a shared computer must not show them to the next person (Support console Stage 2, threat T8). A no-op in a
@@ -107,7 +112,7 @@ export async function signOut(): Promise<void> {
   } catch {
     // Push teardown is best-effort; a leftover server row is 410-pruned or re-pointed on next sign-in.
   }
-  await supabase.auth.signOut();
+  await supabase.auth.signOut(opts.scope ? { scope: opts.scope } : undefined);
   // Shared-device follow hygiene (clear account-owned follows + restore parked
   // anonymous pins) runs off the SIGNED_OUT auth event in lib/follow.ts, so every
   // sign-out path is covered without this wrapper depending on the follow layer.

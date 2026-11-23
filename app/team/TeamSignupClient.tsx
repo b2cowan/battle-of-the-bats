@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { OFFERED_SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
-import { signIn } from '@/lib/auth';
+import { signIn, signOut } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { PLAN_CONFIG, formatPlanPeriodPrice, normalizeBillingCycle } from '@/lib/plan-config';
@@ -35,6 +35,15 @@ import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 
 /** The checkout found no home address on file: the page shows the Address step instead of an error. */
 class AddressNeededError extends Error {}
+
+/** The server no longer sees a session (signed out in another tab, or it lapsed): step 1 comes back, in sign-in. */
+class SessionEndedError extends Error {}
+
+/**
+ * Said on step 1 when a session ended mid-form. Everything typed on the later steps is still in the card, so signing in
+ * again returns to the step the person was on. Never "couldn't save, try again": pressing again can never work.
+ */
+const SIGNED_OUT_LINE = 'You’re signed out. Sign in again to continue.';
 
 type BillingCycle = 'monthly' | 'annual';
 type AuthMode = 'signup' | 'signin';
@@ -136,6 +145,10 @@ export default function TeamSignupClient({
   const [lastName, setLastName] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(!!signedInEmail);
   const [startedSignedOut] = useState(!signedInEmail);
+  // Signed in on step 1 during this visit (also after a session ended under the card): that person came through step 1.
+  const [signedInHere, setSignedInHere] = useState(false);
+  // The account whose session ended under the card: a sign-in as anyone else drops what the card held for that account.
+  const [endedAs, setEndedAs] = useState<string | null>(null);
   const [busyLabel, setBusyLabel] = useState('');
   const [error, setError] = useState('');
   // The Terms box (step 6.3, §20 (1)), on the sign-up form only: nothing while the legal pages are off.
@@ -152,7 +165,11 @@ export default function TeamSignupClient({
   // step 2 — the team, the sport and the plan, then checkout. Nothing typed lives in the browser tab (F02).
   const onAccountStep = !isAuthenticated;
   // Step 2 shows the step line to someone who has just come through step 1: by the email link, or in this visit.
-  const cameThroughStep1 = !isReactivation && (confirmed || (isAuthenticated && startedSignedOut));
+  const cameThroughStep1 = !isReactivation && (confirmed || (isAuthenticated && (startedSignedOut || signedInHere)));
+  // Arrived already signed in on a cold start: a sign-in left over in this browser (a shared computer, an earlier test)
+  // would otherwise skip step 1 unseen. Step 2 names the account, with "Not you?". The upgrade and the reactivation are
+  // opened from inside the account, so they are not asked.
+  const arrivedSignedIn = isAuthenticated && !cameThroughStep1 && !isReactivation && !isWarmUpgrade && !!email;
   const returnPath = isReactivation
     ? `${COACHES_START_PATH}?${new URLSearchParams({ reactivateOrgSlug: reactivationOrgSlug ?? '', ...(reactivationTeamName ? { teamName: reactivationTeamName } : {}), ...(isKeepPremium ? { keep: '1' } : {}) })}`
     : `${COACHES_START_PATH}?billing=${billingCycle}`;
@@ -285,6 +302,10 @@ export default function TeamSignupClient({
       }
       // The one set of sign-in words (lib/auth-errors), never a raw code (owner 2026-10-20).
       if (signin.error) throw new Error(signInErrorCopy(signin.error));
+      // After a session ended under the card, a sign-in as SOMEONE ELSE must not inherit that account's address.
+      if (endedAs && email.trim().toLowerCase() !== endedAs) dropAddressState();
+      setEndedAs(null);
+      setSignedInHere(true);
       setIsAuthenticated(true);
       // The page's answers (the offer, the remembered billing) were a signed-out visitor's: ask again for this account,
       // so the price shown is the price the checkout charges.
@@ -322,10 +343,9 @@ export default function TeamSignupClient({
     if (!response) { setBusyLabel(''); return; }
 
     const payload = await readJson(response);
-    if (response.status === 401) {
-      window.location.assign(`/auth/login?next=${encodeURIComponent(COACHES_START_PATH)}`);
-      return;
-    }
+    // In place, not a trip to the sign-in page: that page would lose the team and address typed here (nothing typed
+    // lives in the browser tab, F02).
+    if (response.status === 401) throw new SessionEndedError();
     // No home address on file after all (saved in another tab, then removed, or US sales closed since): the Address step.
     if (!response.ok && isAddressRefusal(payload)) throw new AddressNeededError();
     if (!response.ok) {
@@ -365,7 +385,8 @@ export default function TeamSignupClient({
     const saved = await saveBillingAddress({ scope: 'person' }, addressForm.body);
     if (saved.ok) { billingAddress.remember(saved.location); return true; }
     setBusyLabel('');
-    if (saved.errors) addressForm.setErrors(saved.errors);
+    if (saved.signedOut) sessionEnded();
+    else if (saved.errors) addressForm.setErrors(saved.errors);
     else setError(BILLING_LOCATION_WORDS.saveFailed);
     return false;
   }
@@ -383,9 +404,60 @@ export default function TeamSignupClient({
       await startCheckout();
     } catch (err) {
       if (err instanceof AddressNeededError) { setBusyLabel(''); setAddressStep(true); return; }
+      if (err instanceof SessionEndedError) { setBusyLabel(''); sessionEnded(); return; }
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setBusyLabel('');
     }
+  }
+
+  /**
+   * The session ended under the card: back to step 1 in sign-in, the email kept, one line saying why. The team, the
+   * billing and the address stay in the card, so the sign-in returns to the step the person was on.
+   */
+  function sessionEnded() {
+    setEndedAs((email || signedInEmail || '').trim().toLowerCase() || null);
+    // The address on file is read again for whoever signs in; what was typed in the fields stays (prefilledAddress holds).
+    billingAddress.forget();
+    setIsAuthenticated(false);
+    setAuthMode('signin');
+    setPassword('');
+    setError(SIGNED_OUT_LINE);
+    setFocusEmail(true);
+  }
+
+  /** Everything the card holds about one account's address: dropped when the person changes, and read again for the next. */
+  function dropAddressState() {
+    setAddressStep(false);
+    setChangingAddress(false);
+    billingAddress.forget();
+    addressForm.reset(null);
+    setPrefilledAddress(false);
+  }
+
+  /**
+   * "Not you?" on step 2 for someone who arrived already signed in (a sign-in left over in this browser): sign that
+   * account out and start at step 1, Create account. What was typed on step 2 stays; the account's email and address do not.
+   */
+  async function notYou() {
+    if (busy) return;
+    setBusyLabel('Signing out…');
+    try {
+      // This browser only: the person pressing it is not the account's owner, whose other devices stay signed in.
+      await signOut({ scope: 'local' });
+    } catch {
+      setBusyLabel('');
+      setError('Couldn’t sign out. Try again.');
+      return;
+    }
+    setBusyLabel('');
+    setIsAuthenticated(false);
+    setAuthMode('signup');
+    setEmail('');
+    setPassword('');
+    setError('');
+    dropAddressState();
+    setFocusEmail(true);
+    router.refresh();
   }
 
   /** The in-card sign-in and the account form swap in place; the foot link is the only way between them (R1: no toggle). */
@@ -485,6 +557,12 @@ export default function TeamSignupClient({
         <>
           <form className={accountForm.form} onSubmit={handleSubmit}>
             {confirmed && <p className={accountForm.body}>Your email is confirmed.</p>}
+            {arrivedSignedIn && (
+              <p className={accountForm.hint}>
+                Signed in as <strong>{email}</strong> ·{' '}
+                <button type="button" className={accountForm.footLink} onClick={() => { void notYou(); }} disabled={busy}>Not you?</button>
+              </p>
+            )}
             <Field id="premium-team-name" label="Team name">
               <input
                 id="premium-team-name"

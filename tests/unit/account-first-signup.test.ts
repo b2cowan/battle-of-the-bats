@@ -516,3 +516,35 @@ describe('The first look 1c: every other door that makes an account is the one a
     // checkout complete joined the journey at Stage 3 (Ask 5b, 2026-10-20): first-look-stage3.test.ts holds it
   });
 });
+
+// Owner 2026-11-22: a sign-in left over in an incognito window skipped step 1 unseen, then ended mid-form; the address
+// step answered "We couldn't save your address. Try again." forever, because pressing again can never work signed out.
+describe('Coach Premium sign-up · a session that ends, or was never this person’s', () => {
+  const src = readCode('app/team/TeamSignupClient.tsx');
+  it('a signed-out answer on the address save or the checkout goes back to step 1 in sign-in, in place', () => {
+    assert.match(readCode('components/billing/BillingAddressDialog.tsx'), /res\.status === 401\) return \{ ok: false, failed: true, signedOut: true \}/);
+    assert.match(src, /if \(saved\.signedOut\) sessionEnded\(\);/);
+    assert.match(src, /if \(response\.status === 401\) throw new SessionEndedError\(\);/);
+    assert.match(src, /err instanceof SessionEndedError\) \{ setBusyLabel\(''\); sessionEnded\(\); return; \}/);
+    // never a trip to the sign-in page: it would lose the team and address typed in the card
+    assert.doesNotMatch(src, /auth\/login\?next=\$\{encodeURIComponent\(COACHES_START_PATH\)\}/);
+    const ended = src.slice(src.indexOf('function sessionEnded()'), src.indexOf('async function notYou()'));
+    assert.match(ended, /setIsAuthenticated\(false\);[\s\S]*setAuthMode\('signin'\);[\s\S]*setError\(SIGNED_OUT_LINE\);/);
+  });
+  it('arriving already signed in on a cold start names the account on step 2, with Not you?', () => {
+    assert.match(src, /const arrivedSignedIn = isAuthenticated && !cameThroughStep1 && !isReactivation && !isWarmUpgrade/);
+    assert.match(src, /\{arrivedSignedIn && \(/);
+    assert.match(src, /Signed in as <strong>\{email\}<\/strong>/);
+    const notYou = src.slice(src.indexOf('async function notYou()'));
+    assert.match(notYou, /await signOut\(\{ scope: 'local' \}\);[\s\S]*setAuthMode\('signup'\);[\s\S]*dropAddressState\(\);/);
+    // /review 2026-11-22: the address read for the other account goes too, or the prefill puts it straight back
+    const drop = src.slice(src.indexOf('function dropAddressState()'), src.indexOf('async function notYou()'));
+    assert.match(drop, /billingAddress\.forget\(\);[\s\S]*addressForm\.reset\(null\);[\s\S]*setPrefilledAddress\(false\);/);
+    assert.match(readCode('components/billing/BillingAddressDialog.tsx'), /if \(loading\.current !== pending\) return next;/);
+  });
+  it('after a session ends under the card, a sign-in as someone else starts that person’s address afresh', () => {
+    assert.match(src, /if \(endedAs && email\.trim\(\)\.toLowerCase\(\) !== endedAs\) dropAddressState\(\);/);
+    // signing in again in this visit is coming through step 1: no "Signed in as … Not you?" for the person who just did
+    assert.match(src, /isAuthenticated && \(startedSignedOut \|\| signedInHere\)/);
+  });
+});
