@@ -19,7 +19,6 @@ This file is the **index** of open work: **one line per project**. **A project's
 - [ ] **Club journeys (Stage 13)** — status on the board · plan [CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md](docs/projects/active/CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md)
 - [ ] **A schedule on several permits** — status on the board · plan [CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md](docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md)
 - [ ] **House league** — status on the board · plan [HOUSE_LEAGUE_STAGE9_PLAN.md](docs/projects/active/HOUSE_LEAGUE_STAGE9_PLAN.md)
-- [ ] **Bank check through a volunteer's eyes** — status on the board · plan [BANK_CHECK_NOVICE_UX_PLAN.md](docs/projects/active/BANK_CHECK_NOVICE_UX_PLAN.md)
 - [ ] **Club Communications** — status on the board · plan [CLUB_COMMUNICATIONS_PLAN.md](docs/projects/active/CLUB_COMMUNICATIONS_PLAN.md)
 - [ ] **Board Ready** — status on the board · plan [BOARD_READY_PLAN.md](docs/projects/active/BOARD_READY_PLAN.md)
 - [ ] **Release safety** — status on the board · plan [RELEASE_PROCESS_HARDENING_PLAN.md](docs/projects/active/RELEASE_PROCESS_HARDENING_PLAN.md)
