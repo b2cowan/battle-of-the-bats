@@ -118,6 +118,34 @@ export function invoiceFromRow(r: Record<string, unknown>): SponsorInvoice {
   };
 }
 
+const CA_POSTAL = /\s*\b([A-Za-z]\d[A-Za-z])[\s-]?(\d[A-Za-z]\d)\s*$/;
+
+/**
+ * An address as the lines a person writes on an envelope: street / city and province / postal code.
+ * The address is typed free-form, so lines the club already broke are kept as they are. A one-line address is split
+ * at its LAST comma (so "Unit 4, 1 Walk St, Toronto ON M1M 1M1" keeps the unit with the street) and a Canadian
+ * postal code at the end goes on its own line. Anything it cannot place is left whole rather than guessed at.
+ */
+export function addressLines(address: string | null | undefined): string[] {
+  const typed = (address ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (typed.length !== 1) return typed;
+  let rest = typed[0];
+  let postal: string | null = null;
+  const m = CA_POSTAL.exec(rest);
+  if (m) { postal = `${m[1]} ${m[2]}`.toUpperCase(); rest = rest.slice(0, m.index).replace(/[,\s]+$/, ''); }
+  const segments = rest.split(',').map(s => s.trim()).filter(Boolean);
+  let lines: string[];
+  if (segments.length >= 3 && /^[A-Za-z]{2}$/.test(segments[segments.length - 1])) {
+    // "…, Toronto, ON": the province got its own comma, so city and province stay together.
+    lines = [segments.slice(0, -2).join(', '), `${segments[segments.length - 2]}, ${segments[segments.length - 1]}`];
+  } else if (segments.length >= 2) {
+    lines = [segments.slice(0, -1).join(', '), segments[segments.length - 1]];
+  } else {
+    lines = segments;
+  }
+  return postal ? [...lines, postal] : lines;
+}
+
 /** A multi-line address on one line, for the paper's identity band and the folded window line. */
 export function oneLineAddress(address: string | null | undefined): string {
   return (address ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean).join(', ');

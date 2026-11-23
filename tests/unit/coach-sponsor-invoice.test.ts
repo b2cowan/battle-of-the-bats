@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  addressLines,
   defaultInvoiceDescription,
   formatInvoiceNumber,
   invoiceAmount,
@@ -64,5 +65,17 @@ describe('coach sponsor invoice rules (mig 339)', () => {
   it('folds a typed address onto one line', () => {
     assert.equal(oneLineAddress('c/o Priya Nand, 112 Birch Crescent\r\nRiverdale ON  K0A 2C0\n'), 'c/o Priya Nand, 112 Birch Crescent, Riverdale ON  K0A 2C0');
     assert.equal(oneLineAddress(null), '');
+  });
+
+  it('lays an address out as street / city and province / postal code', () => {
+    assert.deepEqual(addressLines('1 Walk Street, Toronto ON M1M 1M1'), ['1 Walk Street', 'Toronto ON', 'M1M 1M1']);
+    // The unit stays with the street; the province's own comma stays with the city.
+    assert.deepEqual(addressLines('Unit 4, 1 Walk St, Toronto, ON m1m1m1'), ['Unit 4, 1 Walk St', 'Toronto, ON', 'M1M 1M1']);
+    assert.deepEqual(addressLines('200 Park Road, Riverdale ON K0A 1B0'), ['200 Park Road', 'Riverdale ON', 'K0A 1B0']);
+    // Lines the club already broke are theirs; nothing is re-guessed.
+    assert.deepEqual(addressLines('c/o Priya Nand\r\n112 Birch Crescent\nRiverdale ON  K0A 2C0\n'), ['c/o Priya Nand', '112 Birch Crescent', 'Riverdale ON  K0A 2C0']);
+    // Cannot place it: left whole.
+    assert.deepEqual(addressLines('PO Box 12'), ['PO Box 12']);
+    assert.deepEqual(addressLines(null), []);
   });
 });
