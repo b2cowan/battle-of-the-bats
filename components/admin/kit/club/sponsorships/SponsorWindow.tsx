@@ -19,6 +19,8 @@ import { sponsorHasDeal, type ClubSponsor } from '@/lib/club-sponsorships';
 import { send, sponsorshipsApi, type PlaceTargets, type SponsorDeal } from './api';
 import { placeFromKey, placeKey, placeName, placeOptions } from './places';
 import DateInput from '@/components/shared/DateInput';
+import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
+import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './Sponsorships.module.css';
 
 interface TypedRow { key: number; id?: string; place: string; endsOn: string }
@@ -125,13 +127,16 @@ export default function SponsorWindow({ slug, sponsor, targets, deals = [], onCh
   const dropRow = (key: number) => { const next = rows.filter(r => r.key !== key); setRows(next); void persist(name, link, logo, next); };
   const addRow = () => setRows(r => [...r, { key: Math.max(0, ...r.map(x => x.key)) + 1, place: 'club', endsOn: '' }]);
 
+  const placeChoices: SublinedOption<string>[] = [
+    { value: 'club', name: 'The club', sub: '' },
+    ...options.divisions.map(o => ({ value: o.key, name: o.name, sub: o.sub, group: 'Divisions' })),
+    ...options.teams.map(o => ({ value: o.key, name: o.name, sub: o.sub, group: 'Teams' })),
+    ...options.tournaments.map(o => ({ value: o.key, name: o.name, sub: o.sub, group: 'Tournaments' })),
+  ];
   const placeSelect = (r: TypedRow) => (
-    <select id={`sp-place-${r.key}`} className={ck.select} value={r.place} onChange={e => setRow(r.key, { place: e.target.value }, true)}>
-      <option value="club">The club</option>
-      {options.divisions.length > 0 && <optgroup label="Divisions">{options.divisions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}</optgroup>}
-      {options.teams.length > 0 && <optgroup label="Teams">{options.teams.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}</optgroup>}
-      {options.tournaments.length > 0 && <optgroup label="Tournaments">{options.tournaments.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}</optgroup>}
-    </select>
+    <SublinedChoice id={`sp-place-${r.key}`} label={W.sponsor.showsOn} variant="toolbar"
+      triggerClassName={`${ck.select} ${shared.convChoiceToolbarField}`}
+      options={placeChoices} value={r.place} onChange={v => setRow(r.key, { place: v }, true)} />
   );
 
   const dealRows = dealPlaces.length > 0 && (
@@ -199,7 +204,7 @@ export default function SponsorWindow({ slug, sponsor, targets, deals = [], onCh
         <dt>{W.sponsor.link}</dt>
         <dd>{sponsor.link ?? '—'}</dd>
       </dl>
-      <h3 className={css.sectionHeading}>{W.sponsor.showsOn}</h3>
+      <h3 className={`${css.sectionHeading} ${css.readHeading}`}>{W.sponsor.showsOn}</h3>
       {sponsor.places.length === 0 ? <p className={ck.hint}>{W.sponsors.shownNowhere}</p> : (
         <ClubRowList inset label={W.sponsor.showsOn}>
           {sponsor.places.map(p => (

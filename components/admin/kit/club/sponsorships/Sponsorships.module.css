@@ -71,12 +71,8 @@
   .phoneList { display: block; }
 }
 
-/* The add square on a phone's tab head ("+", 44 px). */
-.addSquare { display: none; }
-@media (max-width: 640px) {
-  .addWord { display: none; }
-  .addSquare { display: inline-flex; width: 44px; height: 44px; padding: 0; align-items: center; justify-content: center; }
-}
+/* The phone's figure rows (Deals): their own frame, spaced from the list below as the desk's money band is. */
+.figureRows { margin-bottom: 0.6rem; }
 
 /* Window fields. */
 .form { display: grid; gap: 1rem; }
@@ -91,6 +87,9 @@
   text-transform: uppercase;
   color: var(--text-tertiary);
 }
+/* The same heading in a read view: the facts above and the list or note below don't space it themselves (a form's
+   grid gap does), so it carries the gap both sides. */
+.readHeading { margin: 1.4rem 0 0.5rem; }
 .itemRow { display: flex; align-items: center; gap: 0.5rem; }
 .itemRow input { flex: 1; min-width: 0; }
 .iconBtn { all: unset; cursor: pointer; display: inline-grid; place-items: center; width: 44px; height: 44px; color: var(--text-tertiary); border-radius: 6px; }
@@ -106,6 +105,9 @@
 .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.55rem 1.25rem; margin: 0; }
 .facts dt { color: var(--text-tertiary); font-size: var(--type-support); }
 .facts dd { margin: 0; color: var(--text-primary); }
+/* The notes under the read list: one row-gap below the last fact, and the same gap between the notes. */
+.factsNotes { display: grid; gap: 0.55rem; margin-top: 0.85rem; }
+.facts + .lock { margin-top: 0.85rem; }
 .factSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 @media (max-width: 640px) {
   .facts { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
@@ -129,11 +131,14 @@
 .thumbNone { border-style: dashed; background: var(--home-paper); }
 .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); margin-right: 0.35rem; vertical-align: middle; }
 .dealChip { color: var(--home-olive); }
-.search { width: 16rem; max-width: 100%; border-radius: 999px; }
-@media (max-width: 640px) { .search { width: 100%; } }
 .placeRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.75rem; align-items: end; }
 @media (max-width: 640px) { .placeRow { grid-template-columns: minmax(0, 1fr); } }
-.placeFixed { padding: 0.6rem 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--home-card); display: flex; gap: 0.75rem; align-items: center; }
+/* A fixed answer, not a field: plain text, no box (a bordered box reads as an input you can type in). The top padding keeps
+   it level with the Package select beside it; no bottom padding, so the grey line under it sits right under it and reads
+   as ITS line, not the next field's. */
+.placeFixed { margin: 0; padding: 0.6rem 0 0; display: flex; gap: 0.75rem; align-items: center; color: var(--text-primary); }
+/* The note to a business is a few lines at most (1,000 characters): a fixed box, no drag handle. */
+textarea.noteBox { resize: none; } /* element + class: outranks the kit's `.textarea { resize: vertical }` whatever order the sheets load */
 .placeFixedMain { flex: 1; min-width: 0; display: grid; gap: 0.15rem; }
 
 /* The public "Sponsored by" line under a division's name (ask 1): quiet, a hairline frame. */

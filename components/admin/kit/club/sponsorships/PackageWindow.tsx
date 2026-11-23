@@ -262,7 +262,7 @@ export default function PackageWindow({ slug, pkg, onChanged, onClose }: {
           </>
         )}
       </dl>
-      <h3 className={css.sectionHeading}>{W.pkg.takenBy}</h3>
+      <h3 className={`${css.sectionHeading} ${css.readHeading}`}>{W.pkg.takenBy}</h3>
       {pkg.takenBy.length
         ? <ClubRowList inset>{pkg.takenBy.map(t => <ClubRow key={t.id} title={t.name} caption={t.caption} chevron />)}</ClubRowList>
         : <p className={ck.hint}>{W.pkg.noneTaken}</p>}

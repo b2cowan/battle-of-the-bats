@@ -38,13 +38,12 @@ export default function PackagesScreen() {
   return (
     <>
       <TabActions>
-        <button type="button" className="btn btn-lime" onClick={() => setOpen('new')} aria-label={W.packages.add}>
-          <span className={css.addWord}>+ {W.packages.add}</span>
-          <span className={css.addSquare} aria-hidden><Plus size={18} /></span>
+        <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setOpen('new')} aria-label={W.packages.add}>
+          <Plus size={14} aria-hidden /><span className={ck.btnWord}>{W.packages.add}</span>
         </button>
       </TabActions>
       {data.packages.length === 0 ? (
-        <ClubSection><p className={ck.hint}>{W.packages.empty}</p></ClubSection>
+        <ClubSection even><p className={ck.hint}>{W.packages.empty}</p></ClubSection>
       ) : shown.length === 0 ? null : (
         <>
           <div className={css.deskTable}>

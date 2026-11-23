@@ -184,6 +184,7 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
             <div className={ck.field}>
               <span className={ck.label}>{D.offer.showsOn}</span>
               <p className={css.placeFixed}>{D.list.theClub}</p>
+              <p className={ck.hint}>{D.offer.showsOnClubHint}</p>
             </div>
           )}
         </div>

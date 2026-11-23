@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useOrg } from '@/lib/org-context';
 import { moneyFetch, refusalText } from '@/lib/money-fetch';
 import { SPONSORSHIPS_WORDS as W } from '@/lib/club-sponsorships-words';
+import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import type { ClubDeal, DealBand, DealState, EmailBar, OfferReason } from '@/lib/club-sponsorship-deals';
 import type { PackageTaken, PlaceTargets, SponsorPlaceKind, SponsorshipPackage } from '@/lib/club-sponsorships';
 import type { FiscalYearOption } from '@/lib/club-fiscal-year';
@@ -86,9 +87,9 @@ export function useDeal(dealId: string) {
   return useRead<DealRead>(slug => sponsorshipsApi(slug, `/deals/${dealId}`));
 }
 
-/** "U9 division", "U11 Lions", "Spring Classic 2027", "The club" — how a deal's place reads in the list and on its page. */
+/** "U9 division", "U11 Lions", "Spring Classic 2027", "Your home page" — how a deal's place reads in the list and on its page. */
 export function placeLabel(d: Pick<ClubDeal, 'placeKind' | 'targetName'>): string {
-  if (d.placeKind === 'club') return 'The club';
+  if (d.placeKind === 'club') return DEAL_WORDS.list.theClub;
   if (!d.targetName) return d.placeKind === 'division' ? 'A division' : d.placeKind === 'team' ? 'A team' : 'A tournament';
   return d.placeKind === 'division' ? `${d.targetName} division` : d.targetName;
 }

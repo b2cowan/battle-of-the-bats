@@ -66,7 +66,11 @@ export default function BusinessPicker({ id, sponsors, value, onChange, club, in
     <div className={styles.root} ref={rootRef} data-kit-field>
       <div className={styles.inputWrap}>
         <input id={id} className={styles.input} type="text" value={text} autoComplete="off" aria-invalid={invalid || undefined}
-          onChange={e => { setText(e.target.value); if (!open) setOpen(true); }} onFocus={() => setOpen(true)} />
+          onChange={e => { setText(e.target.value); if (!open) setOpen(true); }}
+          /* Not onFocus: the window focuses its first field the moment it opens, which dropped the list open over the form
+             before anyone asked. A click, typing, or the Down arrow opens it. */
+          onClick={() => setOpen(true)}
+          onKeyDown={e => { if (e.key === 'ArrowDown') setOpen(true); }} />
         <ChevronDown size={14} className={styles.chevron} aria-hidden />
       </div>
       {listShown && (

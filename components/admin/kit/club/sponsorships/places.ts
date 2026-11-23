@@ -24,13 +24,17 @@ export function placeFromKey(key: string): { kind: SponsorPlaceKind; targetId: s
   return { kind, targetId };
 }
 
-/** The pick list: the club, then the live divisions, teams and tournaments (a finished season's stay only on a place that has one). */
+/**
+ * The pick list: the club, then the live divisions, teams and tournaments (a finished season's stay only on a place that
+ * has one). Each is a NAME and a SUB-LINE — the portal's two-line dropdown (`SublinedChoice`) draws the name bold with the
+ * season (and division) quiet beneath it, where a native select had to run them together in one string.
+ */
 export function placeOptions(t: PlaceTargets, keep: readonly string[] = []) {
   const keepSet = new Set(keep);
   const ok = <T extends { id: string; live: boolean }>(kind: SponsorPlaceKind, list: T[]) => list.filter(x => x.live || keepSet.has(`${kind}:${x.id}`));
   return {
-    divisions: ok('division', t.divisions).map(d => ({ key: `division:${d.id}`, label: `${d.name} division · ${d.seasonName}` })),
-    teams: ok('team', t.teams).map(x => ({ key: `team:${x.id}`, label: `${x.name} · ${x.divisionName} · ${x.seasonName}` })),
-    tournaments: ok('tournament', t.tournaments).map(x => ({ key: `tournament:${x.id}`, label: x.name })),
+    divisions: ok('division', t.divisions).map(d => ({ key: `division:${d.id}`, name: `${d.name} division`, sub: d.seasonName })),
+    teams: ok('team', t.teams).map(x => ({ key: `team:${x.id}`, name: x.name, sub: `${x.divisionName} · ${x.seasonName}` })),
+    tournaments: ok('tournament', t.tournaments).map(x => ({ key: `tournament:${x.id}`, name: x.name, sub: '' })),
   };
 }

@@ -69,7 +69,7 @@ export default function OfferReasonFields({ idPrefix, value, onChange, today, er
       <p className={css.rule}>{D.offer.rule}</p>
       <div className={ck.field}>
         <label className={ck.label} htmlFor={`${idPrefix}-note`}>{D.offer.note}</label>
-        <textarea id={`${idPrefix}-note`} className={ck.input} rows={3} maxLength={1000} value={value.note}
+        <textarea id={`${idPrefix}-note`} className={`${ck.textarea} ${css.noteBox}`} rows={3} maxLength={1000} value={value.note}
           onChange={e => onChange({ ...value, note: e.target.value })} />
         <p className={ck.hint}>{D.offer.noteHint}</p>
         {fieldError('note')}

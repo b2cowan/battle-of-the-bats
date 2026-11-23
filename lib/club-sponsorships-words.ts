@@ -267,7 +267,7 @@ export const SPONSORSHIPS_WORDS = {
   // DRAFT: with one division there are no tabs to say which, so the line names it.
   sponsoredByNamed: (division: string) => `${division} · Sponsored by`,
   siteDoor: {
-    caption: 'Kept in Sponsorships, with where each one shows',
+    caption: 'Kept in Sponsorships',
     door: 'Sponsorships',
   },
 

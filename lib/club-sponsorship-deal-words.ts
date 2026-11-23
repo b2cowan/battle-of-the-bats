@@ -54,7 +54,7 @@ export const DEAL_WORDS = {
     withdrawnOn: (on: string) => `Withdrawn ${day(on)}`, // DRAFT
     empty: 'No deals for this year yet. Offer one to a business you’ve dealt with.', // /marketing 2026-11-22
     noMatch: 'No deal matches that search.', // DRAFT
-    theClub: 'The club',
+    theClub: 'Your home page', // where a club-wide deal shows (was "The club", which a reader had to decode)
     phoneBarSub: (year: string) => `Deals · ${year}`,
   },
 
@@ -74,6 +74,8 @@ export const DEAL_WORDS = {
     left: (n: number) => `${n} left`,
     fullReason: 'Full: every place is paid, invoiced or offered.', // DRAFT (tab 2: "listed but can’t be picked, with its reason")
     showsOn: 'Shows on',
+    // A club-wide package has nothing to pick: it always shows on the home page (`list.theClub`).
+    showsOnClubHint: 'Set by the package.', // DRAFT
     taken: (name: string, state: string) => `Taken: ${name}${state ? `, ${state}` : ''}`,
     offeredTo: (name: string) => `Offered to ${name}`,
     takenHint: (names: string) => `${names} already ${names.includes(' and ') ? 'have' : 'has'} a sponsor.`,

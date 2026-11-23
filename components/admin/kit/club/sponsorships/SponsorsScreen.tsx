@@ -17,6 +17,7 @@ import { useSponsorships, type PlaceTargets } from './api';
 import { placeName } from './places';
 import SponsorWindow from './SponsorWindow';
 import LoadingState from '@/components/shared/LoadingState';
+import SearchField from '@/components/shared/SearchField';
 import css from './Sponsorships.module.css';
 
 const day = (d: string) => formatStoredDate(d, { withYear: true });
@@ -64,15 +65,13 @@ export default function SponsorsScreen() {
   return (
     <>
       <TabActions>
-        <input className={`${ck.input} ${css.search}`} type="search" placeholder={W.sponsors.search} aria-label={W.sponsors.search}
-          value={query} onChange={e => setQuery(e.target.value)} />
-        <button type="button" className="btn btn-lime" disabled={atCap} onClick={() => setOpen('new')} aria-label={W.sponsors.add}>
-          <span className={css.addWord}>+ {W.sponsors.add}</span>
-          <span className={css.addSquare} aria-hidden><Plus size={18} /></span>
+        <SearchField value={query} onChange={setQuery} label={W.sponsors.search} />
+        <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} disabled={atCap} onClick={() => setOpen('new')} aria-label={W.sponsors.add}>
+          <Plus size={14} aria-hidden /><span className={ck.btnWord}>{W.sponsors.add}</span>
         </button>
       </TabActions>
       {data.sponsors.length === 0 ? (
-        <ClubSection><p className={ck.hint}>{W.sponsors.empty}</p></ClubSection>
+        <ClubSection even><p className={ck.hint}>{W.sponsors.empty}</p></ClubSection>
       ) : showing.length + notShowing.length === 0 ? (
         <ClubSection><p className={ck.hint}>{W.sponsors.noMatch}</p></ClubSection>
       ) : (

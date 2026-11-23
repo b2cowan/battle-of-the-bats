@@ -13,8 +13,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Plus } from 'lucide-react';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, ClubSection, repKit } from '../RepKit';
-import { TabActions } from '../PlaceFrame';
+import { CoachListToolbar } from '@/components/coaches/kit';
 import ck from '../ClubKit.module.css';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import YearPill, { useClubYear } from '../money/YearPill';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import LoadingState from '@/components/shared/LoadingState';
@@ -86,13 +87,16 @@ export default function DealsList() {
       { key: 'waiting', label: D.list.figWaiting, figure: money(f.waiting.amount), caption: D.list.dealsCount(f.waiting.count) },
     ]} />
   );
-  // Phone figures are ROWS (owner ruling), and the phone draws no "Deals" total row (round 1 tab 5, screen B).
+  // Phone figures are ROWS (owner ruling) in their OWN white frame — not `inset`, which paints no ground outside a
+  // ClubRowFrame — and the phone draws no "Deals" total row (round 1 tab 5, screen B).
   const figuresPhone = (
-    <ClubRowList inset label={data.year.name}>
+    <div className={css.figureRows}>
+    <ClubRowList label={data.year.name}>
       {([['paid', D.list.figPaid, f.paid], ['invoiced', D.list.figInvoiced, f.invoiced], ['waiting', D.list.figWaiting, f.waiting]] as const).map(([k, label, fig]) => (
         <ClubRow key={k} title={label} caption={D.list.dealsCount(fig.count)} trail={<span className={css.money}>{money(fig.amount)}</span>} />
       ))}
     </ClubRowList>
+    </div>
   );
 
   const desk = (
@@ -151,14 +155,22 @@ export default function DealsList() {
 
   return (
     <>
-      <TabActions>
+      {/* The money tabs' toolbar (Toolbar Rules): the Year pill leads at the left; search, then the one lime action, right.
+          On a phone the line keeps the pill and the lime "+", and Search takes its own full-width row under it (as Families). */}
+      <CoachListToolbar
+        filters={isPhone ? undefined : <SearchField value={query} onChange={setQuery} label={D.list.search} />}
+        actions={(
+          <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-haspopup="dialog" onClick={() => setOffering(true)} aria-label={D.list.offer}>
+            <Plus size={14} aria-hidden /><span className={ck.btnWord}>{D.list.offer}</span>
+          </button>
+        )}>
         <YearPill year={data.year.key} years={data.years} onChange={pick} />
-        <SearchField value={query} onChange={setQuery} label={D.list.search} />
-        <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setOffering(true)} aria-label={D.list.offer}>
-          <span className={css.addWord}>+ {D.list.offer}</span>
-          <span className={css.addSquare} aria-hidden><Plus size={18} /></span>
-        </button>
-      </TabActions>
+      </CoachListToolbar>
+      {isPhone && (
+        <div className={tb.phoneSearchRow}>
+          <SearchField value={query} onChange={setQuery} label={D.list.search} layout="fill" />
+        </div>
+      )}
       {data.deals.length > 0 && (isPhone ? figuresPhone : figuresDesk)}
       {data.deals.length === 0 ? (
         <ClubSection even><p className={ck.hint}>{D.list.empty}</p></ClubSection>

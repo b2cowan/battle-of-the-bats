@@ -78,10 +78,10 @@ export default function InvoiceDetailsWindow({ slug, settings, canChange, onSave
       </dl>
       {canChange
         ? (
-          <>
+          <div className={css.factsNotes}>
             <p className={ck.hint}>{W.invoice.taxHint}</p>
             <p className={ck.hint}>{W.invoice.numberHint}</p>
-          </>
+          </div>
         )
         : <p className={css.lock}>{W.invoice.lockLine}</p>}
     </>
