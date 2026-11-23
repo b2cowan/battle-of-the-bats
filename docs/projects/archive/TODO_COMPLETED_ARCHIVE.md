@@ -6,6 +6,10 @@ Everything below was moved out of TODO.md verbatim on 2026-10-26. Add new comple
 
 (Newest additions go here.)
 
+- [x] **Free League retired + Founding removed** — closed by the owner 2026-11-22: live on production since 22 Nov (the free League gone, the three Founding holders on ordinary free time through September 30, 2027, all three database steps applied) and the hosting console cleared · plan [FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md](FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md)
+
+- [x] **Free time: the same rules for clubs and coaches** — closed by the owner 2026-11-22: live on production since 22 Nov, walk §548 passed 25/25 · plan [FREE_TIME_SAME_RULES_PLAN.md](FREE_TIME_SAME_RULES_PLAN.md)
+
 - [x] **Stripe clean-up, and Stripe from our admin** — closed by the owner 2026-11-22 after the live end-to-end test (purchase, cancel, End now and refund) and the early-end settings were confirmed · plan [STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md](../active/STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md) (stays in active/ for its after-launch stages)
 
 - [x] 🆕 **Coach Overview, lighter on game day** — club proposals + arrival card become rows in the bottom list, game card's chips join the time line and the duplicate "Lineup not started" goes (owner approved drawings A1–A9 2026-11-14; reviewed + committed `960394e86` 2026-11-14; owner browser check passed 2026-11-14) (see docs/projects/active/COACH_OVERVIEW_CLUB_PROPOSALS_DRAWINGS.html; rulings in memory/design_decisions.md 2026-11-14)
