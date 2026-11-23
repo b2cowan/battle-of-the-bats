@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { readCode } from './_source-code.ts';
 import { coachDeskTitleAt, coachDrillBack, coachNavGroupsFor } from '../../lib/coach-team-nav.ts';
 import { coachStripFacts, stripRecord } from '../../lib/coach-strip-facts.ts';
+import { coachOffTeamPageName } from '../../lib/coach-off-team-pages.ts';
 import { teamTile, teamTileColor, teamCrestUrl, teamSwitchGroups } from '../../lib/coach-team-tile.ts';
 import { mastheadSeasonLabel } from '../../lib/coach-season-label.ts';
 import { resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
@@ -180,8 +181,9 @@ describe('3. the team’s tile and list (E10, C6, C7)', () => {
 
 describe('4. the chrome', () => {
   const strip = readCode('components/coaches/CoachTopStrip.tsx');
-  it('one split strip, on a team’s pages only, with "Coach" over the sidebar', () => {
-    assert.match(strip, /const split = !wall && !free && !!teamId;/);
+  it('one split strip, on a team’s pages and the three off-team pages that name themselves, with "Coach" over the sidebar', () => {
+    // ⚖ UPDATED IN THE OPEN (owner 2026-11-23, reversing "off a team keeps today's strip" for Notifications, Plan & billing, Join a club).
+    assert.match(strip, /const split = !wall && !free && \(!!teamId \|\| !!offTeam\);/);
     assert.match(strip, /<span className=\{`\$\{styles\.stripLabel\} \$\{own\.lcellWord\}`\}>Coach<\/span>/);
     // The shared left cell reads the sidebar's one width variable; the coach shell hands it its own (240, 64 folded).
     assert.match(readCode('app/[orgSlug]/coaches/coaches.module.css'), /--admin-rail-w: var\(--coach-sidebar-w\);/);
@@ -218,7 +220,7 @@ describe('4. the chrome', () => {
 
   it('exactly one <h1> per width: the strip’s for a named page, the record’s (portaled by its header) one level down; the paper title hides at EVERY width (Phase 5)', () => {
     assert.equal(strip.match(/<h1\b/g)?.length, 1);
-    assert.match(strip, /\{title\?\.kind === 'name' && <h1/);
+    assert.match(strip, /\{pageName && <h1/);
     const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
     // ⚖ Navigation Phase 5 (E8, owner 2026-11-12): the phone's bar names the page too, so the paper title's hide is no longer a
     // computer's only — it stands OUTSIDE any width block, directly before the phone's empty-row rule.
@@ -252,6 +254,27 @@ describe('4. the chrome', () => {
       assert.ok(existsSync(`app/[orgSlug]/coaches/${dir}page.tsx`), `${dir || 'the hub'} is a coaches page`);
       assert.match(readCode(`app/[orgSlug]/coaches/@stripFacts/${dir}page.tsx`), /return null;/, `${dir || 'the hub'}: the slot has its own page, not just the default`);
     }
+  });
+
+  it('the three off-team pages name themselves in the strip (owner 2026-11-23): Notifications, Plan & billing, Join a club — and nothing else', () => {
+    assert.equal(coachOffTeamPageName('/falcons/coaches/billing'), 'Plan & billing');
+    assert.equal(coachOffTeamPageName('/falcons/coaches/notifications/'), 'Notifications');
+    assert.equal(coachOffTeamPageName('/falcons/coaches/link-org'), 'Join a club');
+    // The hub, a team's pages (the team's own rule names those), the guide and a look-alike are not on the list.
+    for (const p of ['/falcons/coaches', '/falcons/coaches/help', '/falcons/coaches/teams/t1/billing', '/falcons/coaches/teams/t1', '/falcons/billing']) {
+      assert.equal(coachOffTeamPageName(p), null, p);
+    }
+    const strip = readCode('components/coaches/CoachTopStrip.tsx');
+    // The name is the strip's <h1> (still one per width), and an off-team page carries NO team facts — not even a stale slot's.
+    assert.match(strip, /const pageName = title\?\.kind === 'name' \? title\.name : !title \? offTeam : null;/);
+    assert.match(strip, /\{pageName && <h1 className=\{`\$\{own\.name\} \$\{own\.pageName\}`\}>\{pageName\}<\/h1>\}/);
+    assert.match(strip, /\{!offTeam && facts\}/);
+    // A computer's only: a phone has no bar on these pages, so the page's own title is hidden above 900 alone, and the desk title
+    // (which hides it at every width) is never set for them.
+    assert.match(readCode('components/coaches/CoachDeskTitle.tsx'), /title: null, recordSlot: null, barSlot: null, offTeam: coachOffTeamPageName\(pathname\)/);
+    assert.match(readCode('components/coaches/CoachPageHeader.tsx'), /data-desk-offteam=\{deskOffTeam \? \(deskRowHas \? 'actions' : 'empty'\) : undefined\}/);
+    const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
+    assert.match(css, /@media \(min-width: 901px\) \{[\s\S]*?\.pageHeaderStd\[data-desk-offteam\] \.pageHeaderLeft \{ display: none; \}[\s\S]*?\.pageHeaderStd\[data-desk-offteam='empty'\] \{ display: none; \}/);
   });
 
   it('the season gate is untouched: decided on the server, from the shared resolvers', () => {

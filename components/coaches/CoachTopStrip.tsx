@@ -60,6 +60,7 @@ import { TEAM_COACH_BELL, orgBell } from '@/lib/notification-bell-scope';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import { useRoleSummary } from '@/lib/use-role-summary';
+import { coachOffTeamPageName } from '@/lib/coach-off-team-pages';
 import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useCoachDeskTitle, useCoachRecordSlotRef } from './CoachDeskTitle';
@@ -73,13 +74,16 @@ import styles from './CoachTopStrip.module.css';
  * the team's facts at the right end (`CoachStripFacts`, rendered on the server by the `@stripFacts` slot).
  */
 function CoachStripPlace({ facts }: { facts: ReactNode }) {
-  const { title } = useCoachDeskTitle();
+  const { title, offTeam } = useCoachDeskTitle();
   const recordSlot = useCoachRecordSlotRef();
   const placeRef = useRef<HTMLDivElement>(null);
   useFactsGiveWay(placeRef, title?.kind === 'back');
+  const pageName = title?.kind === 'name' ? title.name : !title ? offTeam : null;
   return (
     <div ref={placeRef} className={own.place}>
-      {title?.kind === 'name' && <h1 className={`${own.name} ${own.pageName}`}>{title.name}</h1>}
+      {/* ⚖ An off-team page (Notifications, Plan & billing, Join a club — owner 2026-11-23) names itself in the SAME <h1> and carries
+          NO team facts: the page is the workspace's, and the facts slot can still hold the last team's after a soft navigation. */}
+      {pageName && <h1 className={`${own.name} ${own.pageName}`}>{pageName}</h1>}
       {title?.kind === 'back' && (
         <>
           <Link href={title.href} className={own.back} aria-label={`Back to ${title.label}`}>
@@ -95,7 +99,7 @@ function CoachStripPlace({ facts }: { facts: ReactNode }) {
           <span className={`${own.name} ${styles.recordHere}`}>{title.here}</span>
         </>
       )}
-      {facts}
+      {!offTeam && facts}
     </div>
   );
 }
@@ -127,10 +131,10 @@ function useFactsGiveWay(placeRef: RefObject<HTMLDivElement | null>, on: boolean
   }, [placeRef, on]);
 }
 
-/** The paid portal's off-team pages that publish a help topic (navigation Phase 6b, T6·1): their strip holds the "?"'s width.
- *  `admin-page-help.test.ts` keeps this list equal to the pages that publish one. They draw their header only once their data
- *  has loaded (Join a club shows "Loading…" first), so the width is held until the topic lands, up to a few seconds. */
-const OFF_TEAM_HELP_PAGES = /\/coaches\/(notifications|billing|link-org)\/?$/;
+/** The paid portal's off-team pages (`coachOffTeamPageName`, the ONE list) publish a help topic (navigation Phase 6b, T6·1): their
+ *  strip holds the "?"'s width. `admin-page-help.test.ts` keeps that list equal to the pages that publish one. They draw their
+ *  header only once their data has loaded (Join a club shows "Loading…" first), so the width is held until the topic lands, up to
+ *  a few seconds. */
 const OFF_TEAM_HOLD_MS = 4000;
 
 export default function CoachTopStrip({ wall = false, free = false, facts = null }: {
@@ -160,14 +164,15 @@ export default function CoachTopStrip({ wall = false, free = false, facts = null
   // 2026-09-03 this was the one strip door that ejected a coach with no way back (coach-notifications
   // review A3/D2): the mechanism existed three rows away and this link simply never used it.
   const pathname = usePathname() ?? '';
-  const offTeamHelp = OFF_TEAM_HELP_PAGES.test(pathname);
+  const offTeamHelp = coachOffTeamPageName(pathname) !== null;
   const back = encodeURIComponent(pathname);
   // ⚖ SPLIT ON THE SIDEBAR'S EDGE ON A TEAM'S PAGES ONLY (navigation Phase 4, E6/E7/E9): over the 240 sidebar the wordmark and
   // "Coach" (the short word for the sidebar-width cell; "Coaches Portal" stays on every other surface), over the page its
   // name and the team's facts. Never on a wall, never the free portal (E13 — its strip stays exactly as it was), and not
-  // off a team's pages (the hub, notifications, Plan & billing keep today's strip).
-  const { teamId } = useCoachDeskTitle();
-  const split = !wall && !free && !!teamId;
+  // off a team's pages EXCEPT the three that name themselves (Notifications, Plan & billing, Join a club — owner 2026-11-23,
+  // reversing "keep today's strip"; `offTeam`). The hub keeps today's strip.
+  const { teamId, offTeam } = useCoachDeskTitle();
+  const split = !wall && !free && (!!teamId || !!offTeam);
 
   const doors = (
       <div className={styles.doors}>

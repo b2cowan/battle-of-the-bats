@@ -214,7 +214,7 @@ export default function CoachPageHeader({
      but a hook behind the `embedded` early return below is the classic ordering crash. */
   const helpHost = useCoachPageHelp(help && !nested && variant !== 'embedded' ? help : null, helpLabel);
   const helpHosted = helpHost === 'masthead';
-  const { title: desk } = useCoachDeskTitle();
+  const { title: desk, offTeam } = useCoachDeskTitle();
   // The chrome's two slots one level down — each answers only at the widths its bar shows (the split at 900 lives with the chrome),
   // hooks above the early return.
   const barSlot = useCoachBarNameSlot();
@@ -243,6 +243,10 @@ export default function CoachPageHeader({
   // the phone's); `actionsPhoneHidden` drops them only at 640 and below (`.pageHeaderActionsWideOnly`), so a tablet keeps
   // them (/review 2026-11-12: a view-only coach's Money import row went missing at 768). With none, the header draws
   // nothing at that width (`data-phone-row`: 'empty' at 900 and below, 'tablet' at 640 and below).
+  // ⚖ AN OFF-TEAM PAGE IS NAMED BY THE STRIP ABOVE 900 ONLY (owner 2026-11-23; `lib/coach-off-team-pages.ts`): a phone has no bar on
+  // these pages, so the paper title stays there. Above 900 the header keeps its buttons as the page's top row, and nothing at all
+  // when it has none (CSS at 901, so the server's first paint is already right).
+  const deskOffTeam = !nested && !!offTeam;
   const tabletRowHas = !!actions || helpOnRow;
   const phoneRowHas = (!!actions && !actionsPhoneHidden) || helpOnRow;
   // ⚖ ONE TITLE, ONE HOME PER WIDTH (navigation Phase 5b, owner 2026-11-12). One level down the record's title and chips are drawn
@@ -273,6 +277,7 @@ export default function CoachPageHeader({
     <div
       className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}
       data-desk-named={deskNamed ? (deskRowHas ? 'actions' : 'empty') : undefined}
+      data-desk-offteam={deskOffTeam ? (deskRowHas ? 'actions' : 'empty') : undefined}
       data-desk-drill={deskDrill ? (deskRecord || untitled ? (deskRowHas ? 'record' : 'empty') : '') : undefined}
       data-phone-row={deskNamed || barNames || untitled ? (!tabletRowHas ? 'empty' : !phoneRowHas ? 'tablet' : undefined) : undefined}
       data-phone-record={barNames || untitled || undefined}

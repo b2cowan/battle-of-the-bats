@@ -27,10 +27,11 @@
 
 /** The club page's name and its rail entry (drawn; /marketing's to rule on). */
 import { possessive } from './utils.ts';
+import { JOIN_A_CLUB_TITLE } from './join-a-club-title.ts';
 
 export const BRING_IN_PAGE_TITLE = 'Bring in a coach’s team';
-/** The coach's page's name (portal Settings row, billing nudge and the page itself). */
-export const JOIN_A_CLUB_TITLE = 'Join a club';
+/** The coach's page's name (portal Settings row, billing nudge and the page itself) — spelled in its own tiny module so the strip stays light. */
+export { JOIN_A_CLUB_TITLE };
 
 /** What the move carries, in the drawing's words — one sentence both sides read. */
 export const WHAT_COMES_WITH_THE_TEAM =

@@ -1471,6 +1471,11 @@
 }
 @media (min-width: 901px) {
   .pageHeaderStd[data-desk-named='empty'] { display: none; }
+  /* ⚖ AN OFF-TEAM PAGE (Notifications, Plan & billing, Join a club; owner 2026-11-23): the strip names it above 900, so its paper
+     title goes and its buttons stay as the top row — a computer's only, since a phone has no bar on these pages. */
+  .pageHeaderStd[data-desk-offteam] { justify-content: flex-end; }
+  .pageHeaderStd[data-desk-offteam] .pageHeaderLeft { display: none; }
+  .pageHeaderStd[data-desk-offteam='empty'] { display: none; }
   .pageHeaderStd[data-desk-drill] .headerIcon { display: none; }
   /* ⚖ ONE LEVEL DOWN THE STRIP NAMES THE RECORD TOO (owner 2026-11-11, reversing C4's "the page keeps the record's title"):
      once the header has portaled its title and chips into the strip, its own copy goes, and it keeps what the club's record
@@ -15284,6 +15289,9 @@ div.gdRow { cursor: default; }
   min-height: 44px;
 }
 .convWhatOpt:first-of-type { border-top: 0; }
+/* A row with no sub-line: the 44px tap floor is taller than the one line, and baseline alignment would pile all the
+   extra height UNDER the name. Centre it instead (the name and an end chip are both one line, so nothing to line up). */
+.convWhatOptSolo { align-items: center; }
 .convWhatOpt:hover, .convWhatOpt:focus-visible {
   background: color-mix(in srgb, var(--home-olive, var(--logic-lime)) 10%, transparent);
   outline: none;

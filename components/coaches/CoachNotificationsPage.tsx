@@ -10,6 +10,7 @@ import NotificationReader from '@/components/notifications/NotificationReader';
 import { useNotificationFeed } from '@/components/notifications/useNotificationFeed';
 import { orgBell, TEAM_COACH_BELL } from '@/lib/notification-bell-scope';
 import { COACHES_NOTIFICATIONS_PATH } from '@/lib/coaches-portal-routes';
+import { COACH_NOTIFICATIONS_TITLE } from '@/lib/coach-off-team-pages';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -67,7 +68,7 @@ import feedStyles from '@/components/notifications/notifications-page.module.css
  */
 export default function CoachNotificationsPage(props: { orgSlug: string; free?: never } | { free: true; orgSlug?: never }) {
   const { currentOrg } = useOrg();
-  usePageTitle('Notifications');
+  usePageTitle(COACH_NOTIFICATIONS_TITLE);
   const free = props.free === true;
   const feed = useNotificationFeed(free ? TEAM_COACH_BELL : orgBell(currentOrg?.id));
   const { unreadOnly, setUnreadOnly, markSeen } = feed;
@@ -100,7 +101,7 @@ export default function CoachNotificationsPage(props: { orgSlug: string; free?: 
     <div className={feedStyles.page}>
       <CoachPageHeader
         icon={Bell}
-        title="Notifications"
+        title={COACH_NOTIFICATIONS_TITLE}
         actions={
           <Link
             href={settingsHref}

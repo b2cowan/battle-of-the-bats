@@ -16,6 +16,7 @@ import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coache
 import { coachDeskTitleAt, coachNavGroupsFor, type CoachDeskTitle } from '@/lib/coach-team-nav';
 import { mastheadSeasonLabel } from '@/lib/coach-season-label';
 import { coachTeamIdIn } from '@/lib/coach-nav-visibility';
+import { coachOffTeamPageName } from '@/lib/coach-off-team-pages';
 
 type DeskTitle = {
   /** The team in the address — the strip splits on a team's pages only (never a wall, never the free portal). */
@@ -37,9 +38,16 @@ type DeskTitle = {
    * every width (CSS hides one), and one element cannot be two portal targets. Null until the bar mounts it.
    */
   barSlot: HTMLElement | null;
+  /**
+   * ⚖ THE PORTAL'S OFF-TEAM PAGES NAME THEMSELVES IN THE STRIP TOO (owner 2026-11-23; `lib/coach-off-team-pages.ts`): the page's name
+   * on Notifications, Plan & billing and Join a club, null everywhere else. Deliberately NOT a `title` — a `name` title hides the
+   * page's paper title at every width, and a phone has no bar on these pages, so this one is a computer's only (the header
+   * reads it and hides its title above 900 alone). Null outside the provider's frame, so a wall keeps the page's own title.
+   */
+  offTeam: string | null;
 };
 
-const Ctx = createContext<DeskTitle>({ teamId: null, title: null, recordSlot: null, barSlot: null });
+const Ctx = createContext<DeskTitle>({ teamId: null, title: null, recordSlot: null, barSlot: null, offTeam: null });
 /** The strip's ref callback for the slot — a state setter, so it is stable and never re-runs the strip's own effects. */
 const SlotRef = createContext<(el: HTMLElement | null) => void>(() => {});
 /** The team bar's ref callback for its own slot (the phone's), the same way. */
@@ -57,18 +65,18 @@ export function CoachDeskTitleProvider({ orgSlug, children }: { orgSlug: string;
   const [recordSlot, setRecordSlot] = useState<HTMLElement | null>(null);
   const [barSlot, setBarSlot] = useState<HTMLElement | null>(null);
   const value = useMemo<DeskTitle>(() => {
-    if (!teamId) return { teamId: null, title: null, recordSlot: null, barSlot: null };
+    if (!teamId) return { teamId: null, title: null, recordSlot: null, barSlot: null, offTeam: coachOffTeamPageName(pathname) };
     const live = resolveLiveSeason(assignments, teamId);
     const closed = resolveClosedSeason(assignments, closedAssignments, teamId);
     // A team the coach is not on (or not yet loaded) names nothing: the page keeps its own title, and the bar — which draws
     // nothing without the team — never leaves a phone page with no heading at all (/review 2026-11-12).
-    if (!live && !closed) return { teamId, title: null, recordSlot, barSlot };
+    if (!live && !closed) return { teamId, title: null, recordSlot, barSlot, offTeam: null };
     const finished = !live && !!closed;
     const rows = coachNavGroupsFor((live ?? closed)?.capabilities, finished).flatMap(g => g.items);
     const seasonName = finished ? mastheadSeasonLabel(closed?.programYearName, closed?.teamName, closed?.programYearYear ?? null) : null;
     const words: Record<string, string | null> = { return: ret, from, year };
     const title = coachDeskTitleAt(pathname, { get: k => words[k] ?? null }, `/${orgSlug}/coaches/teams/${teamId}`, rows, seasonName);
-    return { teamId, title, recordSlot, barSlot };
+    return { teamId, title, recordSlot, barSlot, offTeam: null };
   }, [teamId, assignments, closedAssignments, pathname, ret, from, year, orgSlug, recordSlot, barSlot]);
   return (
     <SlotRef.Provider value={setRecordSlot}>

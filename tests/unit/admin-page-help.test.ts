@@ -193,8 +193,10 @@ describe('the Coaches Portal (T6·1): the off-team pages publish to the strip; t
     assert.match(readCode('app/[orgSlug]/coaches/coaches.module.css'), /@media \(min-width: 901px\) \{ \.pageHeaderHelp\.pageHeaderHelpPhone \{ display: none; \} \}/);
   });
   it('the strip holds the "?"’s width on exactly the off-team pages that publish one (a list kept honest, not by hand)', () => {
-    const strip = readCode('components/coaches/CoachTopStrip.tsx');
-    const list = new RegExp(/const OFF_TEAM_HELP_PAGES = \/(.+)\/;/.exec(strip)![1].replace(/\\\//g, '/'));
+    // UPDATED IN THE OPEN (owner 2026-11-23): the strip's own copy of this list is gone — it reads `coachOffTeamPageName`, the one list
+    // that also names the page, so a fourth off-team page cannot name itself yet fail to hold its "?"'s width.
+    assert.match(readCode('components/coaches/CoachTopStrip.tsx'), /const offTeamHelp = coachOffTeamPageName\(pathname\) !== null;/);
+    const list = new RegExp(/const OFF_TEAM_PAGE = \/(.+)\/;/.exec(readCode('lib/coach-off-team-pages.ts'))![1].replace(/\\\//g, '/'));
     // An off-team page of the paid portal (not a team's, not the guide) publishes when its header — or the component it mounts — has a topic.
     const ROOT = 'app/[orgSlug]/coaches/';
     const offTeam = filesUnder(ROOT, 'page.tsx').filter(f => !f.startsWith(`${ROOT}teams/`) && !f.startsWith(`${ROOT}help`));

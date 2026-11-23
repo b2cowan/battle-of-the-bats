@@ -235,7 +235,8 @@ describe('desktop: the place in the strip, the bar is the tab band, the club cel
     // — the "pixel-identical portal" of this project's plan, retired on purpose. The coach strip now opts in on a TEAM's
     // pages only: never on a wall, never the free portal (E13 — its strip is exactly as it was).
     const coachStrip = readCode('components/coaches/CoachTopStrip.tsx');
-    assert.match(coachStrip, /const split = !wall && !free && !!teamId;/);
+    // ⚖ UPDATED IN THE OPEN (owner 2026-11-23): plus the three off-team pages that name themselves (`offTeam`).
+    assert.match(coachStrip, /const split = !wall && !free && \(!!teamId \|\| !!offTeam\);/);
     assert.equal(coachStrip.match(/styles\.stripSplit/g)?.length, 1, 'one split strip, behind that one test');
     assert.match(coachStrip, /<header className=\{`\$\{styles\.strip\}\$\{free \? ` \$\{styles\.stripFree\}` : ''\}`\}>\s*<BrandLockup tone="follow" size=\{15\} \/>\s*<span className=\{styles\.stripDivider\} aria-hidden \/>\s*<span className=\{styles\.stripLabel\}>Coaches Portal<\/span>/,
       'the unsplit strip — walls, the free portal, off a team — keeps its words and its order');
