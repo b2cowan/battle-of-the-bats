@@ -1,5 +1,7 @@
 /**
- * IS THE CLUB'S SPONSORSHIPS PLACE OPEN TO CUSTOMERS? — one switch, held (owner ruling 2026-11-22, option A).
+ * IS THE CLUB'S SPONSORSHIPS PLACE OPEN TO CUSTOMERS? — one switch. OPEN: walk §560 passed 46 of 46 (owner, 2026-11-23, commit
+ * 76931fa9b), and the owner ruled Part 1 ships in the 2026-11-23 release ("remove the hiding here and on production; I will finish
+ * the walk, then include Part 1 in the release"). It was held under ruling 2026-11-22 option A; flip back to `false` to hide it again.
  *
  * Board Ready Stage 6 Part 1 (commit ee17f50df) is built but unwalked and cannot yet offer a deal, and the Club and League Plus
  * plans go on sale right after the next production promote. So the place stays HIDDEN FROM EVERY CUSTOMER until its owner walk
@@ -17,7 +19,7 @@
  *
  * No imports, so client components and the unit tests can load it. Callers ask `sponsorshipsOpen()`, never the constant.
  */
-export const SPONSORSHIPS_OPEN: boolean = false;
+export const SPONSORSHIPS_OPEN: boolean = true;
 
 /**
  * The question every entry point asks. TEST SEAM: a unit test that exercises the feature itself (who opens it, what its nav
