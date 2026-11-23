@@ -288,6 +288,7 @@ export const DEAL_WORDS = {
   page: {
     eyebrow: 'Sponsorship',
     offeredTo: (name: string) => `Offered to ${name}`,
+    packageTitle: 'Your package', // DRAFT: the package card's band, like the form's sections below it (owner 2026-11-23)
     plusTax: (kind: 'GST' | 'HST') => `plus ${kind}`,
     until: (d: string) => `until ${dayYear(d)}`,
     pdf: (size: string) => `The full package (${size})`,
@@ -302,7 +303,6 @@ export const DEAL_WORDS = {
     // prints on the invoice; required only when the deal charges GST/HST.
     address: 'Business address',
     addressHintTaxed: 'Needed for the GST/HST on your invoice.', // DRAFT
-    addressHint: 'Shown on your invoice.', // DRAFT
     street: 'Street',
     city: 'Town or city',
     province: 'Province',

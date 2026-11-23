@@ -5,20 +5,31 @@
 .head { margin: 0 0 1.25rem; }
 .sub { margin: -0.25rem 0 0; font: 400 0.9375rem/1.45 var(--club-text-face); color: var(--club-soft); }
 
-.package { margin: 0 0 1.5rem; padding: 1rem 1.125rem; border: 1px solid var(--club-line, var(--border-2)); border-radius: 12px; background: var(--club-card); }
+/* The package card: the form's section card (ClubForm `.section`: padding, 8px corners) with its own band on top, so the
+   page reads as one stack of the same cards (owner 2026-11-23). */
+.package { margin: 0 0 1.5rem; padding: 1.25rem 1.5rem; border: 1px solid var(--club-line, var(--border-2)); border-radius: 8px; background: var(--club-card); }
 .price { margin: 0; font: 700 1.375rem/1.2 var(--club-text-face); color: var(--club-text); }
 .priceNote { margin-left: 0.5rem; font: 400 0.875rem var(--club-text-face); color: var(--club-soft); }
-.bullets { margin: 0.75rem 0 0; padding-left: 1.25rem; font: 400 0.9375rem/1.5 var(--club-text-face); color: var(--club-text); }
+/* The site's base styles drop list markers; without its dot the indent read as a misaligned margin. The dot shows, and
+   sits in the indent, so the dots line up under the price. */
+.bullets { margin: 0.75rem 0 0; padding-left: 1.1rem; list-style: disc outside; font: 400 0.9375rem/1.5 var(--club-text-face); color: var(--club-text); }
 .bullets li + li { margin-top: 0.25rem; }
 .pdf { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; margin-top: 0.5rem; font: 600 0.9375rem var(--club-text-face); color: var(--club-ink); text-decoration: underline; text-underline-offset: 3px; }
 .tag { display: inline-block; padding: 0.1rem 0.35rem; border-radius: 4px; background: var(--club-fill-soft, color-mix(in srgb, currentColor 10%, transparent)); font: 700 0.6875rem var(--font-data); letter-spacing: 0.06em; color: var(--club-text); text-decoration: none; }
 
 .address { display: grid; gap: 0.5rem; }
+/* The hint under "Business address" belongs to that heading, not to Street below it: tight above, a clear gap below.
+   Element + class, so it outranks the kit's `.hint` margin whichever sheet loads first. */
+p.addressHint { margin: 0.1rem 0 0.75rem; }
 .addressRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 
 .logoRow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; min-height: 44px; }
 .logoBox { display: grid; place-items: center; width: 120px; height: 54px; border: 1px solid var(--club-line, var(--border-2)); border-radius: 8px; background: var(--logo-tile-ground); overflow: hidden; }
 .logoBox img { max-width: 100%; max-height: 100%; object-fit: contain; }
+/* The two notes under the logo button: clear of the 44px button, and parted from each other (the kit's hint gap is a
+   hairline, made for a line under a text box, and ran the two paragraphs together). */
+.logoNotes { display: grid; gap: 0.5rem; margin-top: 0.65rem; }
+.logoNotes > p { margin: 0; line-height: 1.45; }
 .logoInput { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .logoButton { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.875rem; border: 1px solid var(--club-ink); border-radius: 8px; background: none; font: 600 0.9375rem var(--club-text-face); color: var(--club-ink); cursor: pointer; }
 .logoButton:focus-within, .logoButton:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; }

@@ -74,6 +74,7 @@ function OpenDeal({ view, onView }: { view: Open; onView: (v: SponsorPageView) =
       {view.state === 'form' ? (
         <>
           <div className={css.package}>
+            <h2 className={formKit.sectionTitle}>{P.packageTitle}</h2>
             <p className={css.price}>{money(deal.amount)}{priceNote && <span className={css.priceNote}>{priceNote}</span>}</p>
             {deal.bullets.length > 0 && <ul className={css.bullets}>{deal.bullets.map((b, i) => <li key={i}>{b}</li>)}</ul>}
             {deal.hasDocument && (
@@ -208,7 +209,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
         {field('email', P.email, { required: true, hint: P.emailHint, type: 'email', autoComplete: 'email' })}
         <fieldset className={`${formKit.field} ${reg.choiceSet}`}>
           <legend className={formKit.label}>{P.address}{view.deal.taxed && <> <span className={formKit.required}>*</span></>}</legend>
-          <p className={formKit.hint}>{view.deal.taxed ? P.addressHintTaxed : P.addressHint}</p>
+          {view.deal.taxed && <p className={`${formKit.hint} ${css.addressHint}`}>{P.addressHintTaxed}</p>}
           <div className={css.address}>
             {field('street', P.street, { autoComplete: 'street-address' })}
             {field('city', P.city, { autoComplete: 'address-level2' })}
@@ -318,8 +319,10 @@ function LogoControl({ token, club, initialUrl }: { token: string; club: string;
             onChange={e => { const f = e.target.files?.[0]; if (f) void pick(f); }} />
         </label>
       </div>
-      <p className={formKit.hint}>{P.logoHint}</p>
-      <p className={formKit.hint}>{P.logoPermission(club)}</p>
+      <div className={css.logoNotes}>
+        <p className={formKit.hint}>{P.logoHint}</p>
+        <p className={formKit.hint}>{P.logoPermission(club)}</p>
+      </div>
       {state === 'failed' && <p className={formKit.errorMsg} role="alert">{P.logoFailed}</p>}
       {state === 'refused' && <p className={formKit.errorMsg} role="alert">{P.logoRefused}</p>}
     </div>
