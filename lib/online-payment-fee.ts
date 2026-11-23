@@ -21,6 +21,14 @@ export type OnlineFeePayer = 'family' | 'club';
 
 export const ONLINE_FEE_PAYERS: readonly OnlineFeePayer[] = ['family', 'club'];
 
+/**
+ * Who pays the card fee on a SPONSORSHIP (Board Ready Stage 6, ask 3, ruled 2026-11-22): its own club-wide choice,
+ * `org_payment_accounts.sponsor_fee_payer` (mig 525), "The club pays it" by default. The registration choice above never
+ * decides it. Part 3 reads it when a sponsor pays by card.
+ */
+export type SponsorFeePayer = 'club' | 'sponsor';
+export const SPONSOR_FEE_PAYERS: readonly SponsorFeePayer[] = ['sponsor', 'club'];
+
 export interface OnlineFee {
   /** What the payment is for — the amount the flow's own writer records (the team's entry fee, the deposit). */
   baseCents: number;

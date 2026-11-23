@@ -1,0 +1,917 @@
+<title>Sponsorships Round 2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ─── Stage 6 additions ─── */
+/* the portal's joined money band (MoneySummaryBand): one frame, a hairline between figures */
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.mband > div { padding: 11px 16px; display: grid; gap: 2px; }
+.mband > div + div { border-left: 1px solid var(--home-line); }
+.mband .ml { font-size: 12px; color: var(--home-dim); }
+.mband .mv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-ink); }
+.mband .mc { font-size: 12px; color: var(--home-dim); }
+/* on a phone: figure ROWS, never tiles */
+.frows { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto 14px; gap: 10px; align-items: center; padding: 11px 14px; min-height: 52px; }
+.frow + .frow { border-top: 1px solid var(--home-line); }
+.frow .fl1 { font-size: 14px; font-weight: 600; } .frow .fc { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.frow .fv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl th.num { text-align: right; }
+.ptabs { display: flex; gap: 22px; border-bottom: 1px solid var(--home-line); font-size: 14px; }
+.ptabs span { padding: 8px 0 9px; color: var(--home-ink-soft); }
+.ptabs span.on { color: var(--home-ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--home-olive); }
+.stP { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(70,55,30,0.08); color: var(--home-ink-soft); white-space: nowrap; }
+.stP.paid { background: var(--good-bg); color: var(--good); }
+.stP.inv { background: var(--warn-bg); color: var(--warn); }
+.stP.off { background: var(--home-olive-soft); color: var(--home-olive); }
+.callout { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callout .ct { flex: 1 1 260px; display: grid; gap: 2px; }
+.callout .ct b { font-size: 15px; }
+.callout .ct span { font-size: 13px; color: var(--home-ink-soft); }
+.ck { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; }
+.ck + .ck { border-top: 1px solid var(--home-line); }
+.ck .t { font-size: 14px; font-weight: 600; } .ck .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.ck .when { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.logoT { width: 64px; height: 32px; border: 1px solid var(--home-line); border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; background: #fff; color: var(--home-ink); flex: 0 0 auto; text-align: center; line-height: 1.1; padding: 0 3px; }
+.logoT.none { border-style: dashed; color: var(--home-faint); font-weight: 600; }
+.lg1 { color: #1F5E8C; } .lg2 { color: #8A3B12; } .lg3 { color: #2E6B2F; } .lg4 { color: #6B2E7A; }
+.srow { display: grid; grid-template-columns: 64px minmax(0,1fr) auto 22px; gap: 12px; align-items: center; padding: 10px 14px; min-height: 56px; background: var(--home-card); }
+.srow + .srow { border-top: 1px solid var(--home-line); }
+.srow .nm { font-size: 14px; font-weight: 650; } .srow .cap { display: block; font-size: 12px; color: var(--home-dim); }
+.srow.ended { opacity: 0.55; }
+.place { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--home-ink-soft); }
+.place::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); }
+/* the business's page */
+.pub { box-sizing: content-box; width: 640px; padding: 0 0 28px; }
+.pubBand { background: #2B3A1C; color: #F4F1E6; padding: 14px 40px; display: flex; gap: 12px; align-items: center; border-radius: 8px 8px 0 0; }
+.pubBand .crest { width: 34px; height: 34px; border-radius: 50%; background: #D9F99D; color: #2B3A1C; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.pubBand b { font-size: 16px; }
+.pubIn { padding: 22px 40px 0; display: grid; gap: 18px; }
+.phone .pubBand { padding: 12px 16px; border-radius: 0; }
+.phone .pubIn { padding: 16px 16px 0; }
+.pkg { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 10px; }
+.pkg .pr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pkg ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sumT { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sumT td { padding: 6px 0; border-top: 1px solid var(--home-line); }
+.sumT tr:first-child td { border-top: 0; }
+.sumT tr.tot td { font-weight: 700; border-top: 1px solid var(--home-line-strong); }
+.payOpt { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.payOpt.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.payOpt .t { font-size: 15px; font-weight: 650; } .payOpt .h { font-size: 13px; color: var(--home-dim); }
+.receipt { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 8px; }
+.receipt .rt { font-size: 18px; font-weight: 700; margin: 0; }
+/* email */
+.mail { width: 600px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; color: #241E15; }
+.mailHd { padding: 12px 18px; border-bottom: 1px solid var(--home-line); font-size: 13px; display: grid; gap: 2px; background: #FBF9F5; }
+.mailHd span { color: var(--home-dim); }
+.mailBd { padding: 22px 28px; display: grid; gap: 12px; font-size: 15px; line-height: 1.55; }
+.mailBd p { margin: 0; }
+.mailBtn { justify-self: start; background: #2B3A1C; color: #F4F1E6; font-weight: 700; padding: 11px 18px; border-radius: 8px; font-size: 15px; }
+.mailFt { padding: 14px 28px 20px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-dim); display: grid; gap: 4px; }
+/* invoice paper: Letter at 96 dpi is 816 px wide */
+.paper { width: 816px; background: #fff; color: #1d1d1d; font-family: Helvetica, Arial, sans-serif; border: 1px solid #d6d2ca; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.paper .acc { height: 8px; background: #2B3A1C; }
+.paper .pin { padding: 34px 56px 40px; display: grid; gap: 18px; font-size: 13px; }
+.paper .idb { display: flex; justify-content: space-between; gap: 20px; }
+.paper .idb b { font-size: 16px; display: block; }
+.paper h4 { font-size: 26px; margin: 0; letter-spacing: 0.01em; }
+.paper .subl { color: #555; margin-top: 2px; }
+.paper .pfig { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #d6d2ca; border-radius: 4px; }
+.paper .pfig > div { padding: 10px 14px; } .paper .pfig > div + div { border-left: 1px solid #d6d2ca; }
+.paper .pfig span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+.paper .pfig b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.paper .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 4px; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #bbb; padding: 6px 0; }
+.paper td { padding: 8px 0; border-bottom: 1px solid #e3e0da; vertical-align: top; }
+.paper td.r, .paper th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .inc { margin: 4px 0 0; padding-left: 16px; color: #444; }
+.paper .tt td { border-bottom: 0; padding: 4px 0; }
+.paper .tt tr.big td { font-weight: 700; font-size: 15px; border-top: 1px solid #bbb; padding-top: 8px; }
+.paper .stamp { display: inline-block; border: 2px solid #2E6B2F; color: #2E6B2F; font-weight: 800; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; font-size: 13px; }
+.paper .foot { color: #777; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e3e0da; padding-top: 8px; }
+.paper.mini { width: 816px; }
+/* public club site */
+.site { box-sizing: content-box; width: 960px; padding: 0 0 22px; }
+.siteBar { background: #2B3A1C; color: #F4F1E6; padding: 12px 28px; display: flex; gap: 22px; align-items: center; font-size: 14px; border-radius: 8px 8px 0 0; }
+.siteBar b { font-size: 16px; margin-right: auto; }
+.siteIn { padding: 20px 28px 0; display: grid; gap: 14px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, 184px); gap: 12px; }
+.strip > div { min-height: 72px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; text-align: center; padding: 6px; }
+.byLine { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--home-dim); border: 1px solid var(--home-line); background: #fff; border-radius: 8px; padding: 6px 10px; }
+.pcard { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 4px 8px; }
+.pcard .nm { font-size: 15px; font-weight: 650; } .pcard .s { font-size: 13px; color: var(--home-dim); grid-column: 1; }
+.pcard .chev { grid-row: 1 / span 3; grid-column: 2; align-self: start; }
+.pband { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); display: flex; gap: 8px; padding-top: 4px; }
+.lockedRow { opacity: 0.6; }
+.planTbl td.y { color: var(--tag-new); font-weight: 700; }
+.planTbl td.n { color: var(--doc-soft); }
+.chip.q { background: rgba(70,55,30,0.08); color: var(--home-dim); }
+.phone .btnLime, .phone .btnOut { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.phone .ptabs span { padding: 12px 0; }
+.phone .ck { min-height: 44px; align-items: center; }
+.tap44 { min-width: 44px; min-height: 44px; padding: 0 10px; }
+.bandBtn { display: flex; gap: 8px; align-items: center; }
+</style>
+<style>
+/* Round 2 additions: the shipped Payouts record rows and plain choice rows, the shipped pay buttons with a note under each, the Manage member table. */
+/* the shipped .record: one top rule, rows apart by margin, no dividers; the label column minmax(8rem,12rem) */
+.rec { display: grid; margin: 4px 0 0; padding: 12px 0 0; border-top: 1px solid var(--home-line); }
+.recRow { display: grid; grid-template-columns: minmax(8rem,12rem) minmax(0,1fr); gap: 3px 16px; margin: 0 0 8px; font-size: 14px; }
+.phone .recRow { grid-template-columns: minmax(0,1fr); }
+.phone .plainChoice { min-height: 44px; }
+.recRow dt { color: var(--home-faint); margin: 0; }
+.recRow dd { margin: 0; color: var(--home-ink); display: grid; gap: 3px; }
+.recRow.newRow { background: rgba(46,107,47,0.05); }
+.plainChoice { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
+.plainChoice .rad { margin-top: 3px; flex: 0 0 auto; }
+.plainChoice b { display: block; font-size: 14px; }
+/* the shipped PayButtons: .payRow align-items:flex-start, auto-width buttons, a left-aligned note; full width only at 640 and below */
+.payBtns { display: grid; gap: 12px; justify-items: start; }
+.payBtn { display: grid; gap: 4px; justify-items: start; }
+.payBtn .btnLime.big, .payBtn .btnOut { width: auto; display: inline-flex; gap: 8px; align-items: center; min-height: 44px; font-size: 16px; padding: 10px 18px; }
+.payBtn .nt { font-size: 13px; color: var(--home-dim); }
+.phone .payBtns, .phone .payBtn { justify-items: stretch; }
+.phone .payBtn .btnLime.big, .phone .payBtn .btnOut { width: 100%; justify-content: center; }
+.phone .payBtn .nt { text-align: center; }
+.cardIco { width: 18px; height: 18px; flex: 0 0 auto; }
+/* the shipped receipt lines: no row rules, one rule above Paid */
+.lines { display: grid; margin: 0; font-size: 14px; }
+.lines > div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; }
+.lines > div.tot { border-top: 1px solid var(--home-line-strong); margin-top: 4px; padding-top: 8px; font-weight: 700; }
+.lines dd { margin: 0; font-variant-numeric: tabular-nums; }
+/* the coach PDF: figures are the number over a lowercase label, unboxed; accent header row; alternate shading */
+.paper .cfig { display: flex; gap: 48px; }
+.paper .cfig b { display: block; font-size: 19px; font-variant-numeric: tabular-nums; }
+.paper .cfig span { font-size: 12px; color: #666; }
+.paper table.acct thead th { background: #2B3A1C; color: #fff; padding: 6px 8px; border-bottom: 0; }
+.paper table.acct td { padding: 8px; }
+.paper table.acct tbody tr:nth-child(even) td { background: #F3F1EC; }
+/* the ledger on a phone: rows, the line over its amount, the category beneath */
+.lrows { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.lrow { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2px 10px; padding: 10px 14px; }
+.lrow + .lrow { border-top: 1px solid var(--home-line); }
+.lrow .ln { font-size: 14px; font-weight: 600; }
+.lrow .la { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.lrow .lc { grid-column: 1 / -1; font-size: 12px; color: var(--home-dim); }
+.lrow.newRow { background: rgba(46,107,47,0.05); }
+.mm { width: 100%; border-collapse: collapse; font-size: 14px; }
+.mm th { text-align: left; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--home-dim); padding: 6px 0; border-bottom: 1px solid var(--home-line); font-family: var(--font-head); }
+.mm td { padding: 9px 0; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.mm td.c { width: 110px; text-align: right; }
+.mm .chg { display: block; font-size: 13px; font-weight: 600; color: var(--home-olive); line-height: 1.35; }
+.mm tr.newRow td { background: rgba(46,107,47,0.05); }
+.mm tr.split td { border-bottom: 0; }
+/* the shipped .sentenceRow: plain warning-colour text at the support size, spanning both columns, a bottom rule */
+.mm tr.sentence td { padding-top: 0; font-size: 13px; color: var(--warn); }
+.mm tr.sentence.plain td { color: var(--home-dim); }
+.selBox { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 5px 10px; background: #fff; font-size: 14px; }
+.chip.grey { background: rgba(70,55,30,0.08); color: var(--home-ink-soft); }
+.ledg { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.ledg th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--home-line); }
+.ledg td { padding: 9px 12px; border-bottom: 1px solid var(--home-line); }
+.ledg th.num, .ledg td.num { text-align: right; }
+.ledg tr.newRow td { background: rgba(46,107,47,0.05); }
+.ledg .s { display: block; font-size: 12px; color: var(--home-dim); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stage 6 · sponsorships · round 2 · drawn Nov 22, 2026, after /design and /legal · round 1’s 15 asks are ruled</span>
+    <h1>Sponsorships, round 2: the fee a sponsor pays, who opens Sponsorships, and the last rule conflicts</h1>
+    <p class="lead">Round 1 (<span style="font-family:var(--font-data)">claude.ai/artifact/1z9y6ctHK3PNLaJ2HR11U8</span>) is ruled. This round draws only what it left open: a club that picks “The sponsor pays it” for the card fee (ruled Nov 22), Sponsorships as an access a club can give to a registrar (your note on ask 12), /design’s four rule conflicts and /legal’s two questions. Same club, same deal: Riverdale Minor Ball, registered for HST, sells Harbour Dental the U9 division sponsorship for $1,000.00 plus HST. Every screen is drawn from its shipped component. The last tab holds 9 asks; the first answer on each is my recommendation and is already selected.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · The sponsor pays the fee</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · Invoice and the books</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · Who opens Sponsorships</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · Conflicts and questions</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · Asks</button>
+  </nav>
+
+  <!-- 1 · THE SPONSOR PAYS THE FEE -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <h2>The club picks who pays the card fee on sponsorships, and the business sees it before it pays</h2>
+    <p>Ruled Nov 22: a second choice on the Payouts card, for sponsorships only, “The club pays it” by default. Here Riverdale has switched it to “The sponsor pays it”. The fee is 3.5% + $1.50 on what the business owes, the same rate as every card payment. The club’s HST applies to it, because the deal charges HST.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The Payouts card · editing</b><span class="chrome">club owner · desktop · 620</span><button class="tag new" type="button" data-note="ONE NEW ROW on the shipped Payouts card, in its edit view: the same record rows, the same plain choice rows (a radio, a bold name, a hint), the same autosave and Saved pill. It shows only on plans that carry Sponsorships (League Plus and both Club bands). The registration row above it is unchanged and never decides for sponsorships.">NEW ROW</button><button class="fl" type="button" data-f="F13">F13</button></div>
+        <div class="scroll"><div class="frame adm w620">
+          <div class="card">
+            <div class="cardTop"><span class="capL" style="flex:1">Payouts</span><span class="chip good">Taking payments</span><span class="ico" title="Done">✓</span></div>
+            <p class="cardH" style="flex:none">Families and teams can pay online</p>
+            <dl class="rec">
+              <div class="recRow"><dt>Payouts go to</dt><dd>Your bank account, on Stripe’s schedule</dd></div>
+              <div class="recRow"><dt>Receipts say</dt><dd>“Riverdale Minor Ball”</dd></div>
+              <div class="recRow"><dt>Processing fee on registrations <button class="tag re" type="button" data-note="RELABELLED. The shipped label is just 'Processing fee'. Beside a second fee row it would read as if it covered everything, so it names what it covers. The choices, their order, the rates and the change note under them are the shipped ones, unchanged.">RELABELLED</button></dt><dd>
+                <label class="plainChoice"><i class="rad on"></i><span><b>Families and teams pay it</b><span class="hint">Added to what the family or team pays. You receive the full fee.</span></span></label>
+                <label class="plainChoice"><i class="rad"></i><span><b>The club pays it</b><span class="hint">Families and teams pay the fee alone. The processing fee comes out of each payment and shows in your books as Payment processing.</span></span></label>
+                <span class="hint">3.5% + $1.50 per card payment · 2.5% + $1.00 per bank debit</span>
+                <span class="hint">A change applies to payments started from now on. Anything already paid stays as it was.</span>
+              </dd></div>
+              <div class="recRow newRow"><dt>Processing fee on sponsorships</dt><dd>
+                <label class="plainChoice"><i class="rad on"></i><span><b>The sponsor pays it</b><span class="hint">Added to what the sponsor pays by card, as its own line, with your GST/HST on it when the deal charges GST/HST. You receive the full invoice.</span></span></label>
+                <label class="plainChoice"><i class="rad"></i><span><b>The club pays it</b><span class="hint">The sponsor pays its invoice to the cent. The processing fee comes out of the payment and shows in your books as Payment processing. This is the default.</span></span></label>
+                <span class="hint">Card networks limit what a business may add to a card payment (2.4% in Canada, and none in Québec). This fee can be more than that. Choosing it is your decision and your responsibility.</span>
+                <span class="hint">If you refund a sponsor, neither part of the processing fee comes back to you. Refund the fee line yourself if you want the sponsor made whole.</span>
+                <span class="hint">Only a card payment carries a fee. A cheque or e-transfer never does.</span>
+              </dd></div>
+              <div class="recRow"><dt>Refund policy</dt><dd><div class="inp ta" style="min-height:56px">Refunded in full, except the processing fee, until the season starts. Not refunded after that.</div><span class="hint">One or two sentences families and teams see beside Pay.</span></dd></div>
+              <div class="recRow"><dt>Payments terms</dt><dd>Agreed by Dana Ruiz, Feb 2, 2027 · <span class="door" style="font-size:14px">Read the terms</span></dd></div>
+            </dl>
+            <p class="small">The processing fee covers Stripe’s charge and FieldLogicHQ’s. Stripe takes more for a card issued outside your country, a currency conversion, a dispute or a returned bank debit. That comes out of your Stripe balance, so you may receive less on those payments.</p>
+          </div>
+          <span class="chip good" style="justify-self:end">✓ Saved</span>
+        </div></div>
+        <p class="small" style="color:var(--doc-soft)">The order of the new row follows the shipped one, the payer’s option first; the default is still “The club pays it”. Read view, after Done: the new row reads “The sponsor pays it: it’s added to what the sponsor pays by card”, or by default “The club pays it: it comes out of each payment”.</p>
+        <div class="specHead" style="margin-top:6px"><b>Phone · the new row</b><span class="chrome">390 · rows stack, 44 px choices</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbody">
+            <dl class="rec" style="margin:0">
+              <div class="recRow newRow"><dt>Processing fee on sponsorships</dt><dd>
+                <label class="plainChoice"><i class="rad on"></i><span><b>The sponsor pays it</b><span class="hint">Added to what the sponsor pays by card, as its own line, with your GST/HST on it when the deal charges GST/HST. You receive the full invoice.</span></span></label>
+                <label class="plainChoice"><i class="rad"></i><span><b>The club pays it</b><span class="hint">The sponsor pays its invoice to the cent. The processing fee comes out of the payment and shows in your books as Payment processing. This is the default.</span></span></label>
+                <span class="hint">Card networks limit what a business may add to a card payment (2.4% in Canada, and none in Québec). This fee can be more than that. Choosing it is your decision and your responsibility.</span>
+                <span class="notDrawn">The refund and cheque hints follow, as on a computer.</span>
+              </dd></div>
+            </dl>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>The figures on this deal</h3>
+        <table class="docTbl">
+          <thead><tr><th></th><th class="num">The club pays it (default)</th><th class="num">The sponsor pays it</th></tr></thead>
+          <tbody>
+            <tr><td>The invoice (with HST 13%)</td><td class="num">$1,130.00</td><td class="num">$1,130.00</td></tr>
+            <tr><td>Processing fee, 3.5% + $1.50 on $1,130.00</td><td class="num">$41.05</td><td class="num">$41.05</td></tr>
+            <tr><td>HST 13% on the fee line</td><td class="num">—</td><td class="num">$5.34</td></tr>
+            <tr><td>The business pays by card</td><td class="num">$1,130.00</td><td class="num">$1,176.39</td></tr>
+            <tr><td>The club receives</td><td class="num">$1,088.95</td><td class="num">$1,135.34</td></tr>
+            <tr><td>The club keeps, after the HST it owes</td><td class="num">$958.95</td><td class="num">$1,000.00</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li><b>No gross-up is needed, so it isn’t an ask.</b> The product works the fee out on what is owed and never on the larger charge, and the club receives the charge less that fee. When Stripe takes a few cents more on the larger charge, they come out of FieldLogicHQ’s share. So the club keeps its full $1,000.00 and passes on the HST it collected. <span class="fl" data-f="F13">F13</span></li>
+          <li><b>The fee is on $1,130.00, tax included,</b> the same as a family’s fee is on everything it owes.</li>
+          <li><b>No HST switch on the deal, or a club that isn’t registered:</b> the invoice is $1,000.00, the fee is $36.50 with no tax on it, and the business pays $1,036.50 by card.</li>
+          <li><b>Surcharge cap:</b> $41.05 is 3.63% of the invoice, over the card networks’ 2.4% cap. Under the Nov 17 ruling, what a club passes on is the club’s own charge. That is why it isn’t the default.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The sponsor link · How you’ll pay · recommended</b><span class="chrome">public · desktop · 640</span><button class="mark" type="button" data-ask="1">1</button><button class="tag re" type="button" data-note="THE SHIPPED PAY BLOCK'S LAYOUT, WITH NEW WORDS. Shipped: one auto-width button per way to pay, left-aligned, the card button with its card icon and its own total, and the fee as a note under it ('Includes a $X processing fee.'). New here: 'Send and' at the front, because the same press sends the business's form and logo; and the second button, a cheque or e-transfer, which no shipped pay page has (the shipped second button is a bank debit). Round 1 drew a radio choice and one Send button. With buttons the selected-choice tint (/design's conflict) is gone, and no total changes when a radio moves. The page never names the payment processor (the 12c words rule), so round 1's 'Your card is handled by Stripe.' is gone.">PAY BLOCK · NEW WORDS</button></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubIn">
+            <div class="fsec" style="border-top:0"><p class="fsecH">How you’ll pay</p>
+              <table class="sumT"><tr><td>Division sponsor, U9</td><td class="num">$1,000.00</td></tr><tr><td>HST 13%</td><td class="num">$130.00</td></tr><tr class="tot"><td>Your invoice</td><td class="num">$1,130.00</td></tr></table>
+              <div class="payBtns">
+                <div class="payBtn"><span class="btnLime big"><svg class="cardIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Send and pay $1,176.39 by card</span><span class="nt">Includes a $41.05 card processing fee and $5.34 HST on it.</span></div>
+                <div class="payBtn"><span class="btnOut">Send, and pay $1,130.00 by cheque or e-transfer</span><span class="nt">Your invoice comes by email, with how to pay.</span></div>
+              </div>
+              <p class="small"><span class="door" style="font-size:12px">Refund policy</span></p>
+            </div>
+          </div>
+        </div></div>
+        <div class="specHead" style="margin-top:6px"><b>The same block when the club pays the fee</b><span class="chrome">public · 640</span></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubIn">
+            <div class="payBtns">
+              <div class="payBtn"><span class="btnLime big"><svg class="cardIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Send and pay $1,130.00 by card</span></div>
+              <div class="payBtn"><span class="btnOut">Send, and pay $1,130.00 by cheque or e-transfer</span><span class="nt">Your invoice comes by email, with how to pay.</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Phone · recommended</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pubIn" style="padding-bottom:16px">
+            <p class="fsecH" style="font-size:17px">How you’ll pay</p>
+            <table class="sumT"><tr><td>Division sponsor, U9</td><td class="num">$1,000.00</td></tr><tr><td>HST 13%</td><td class="num">$130.00</td></tr><tr class="tot"><td>Your invoice</td><td class="num">$1,130.00</td></tr></table>
+            <div class="payBtns">
+              <div class="payBtn"><span class="btnLime big" style="min-height:48px"><svg class="cardIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Send and pay $1,176.39 by card</span><span class="nt">Includes a $41.05 card processing fee and $5.34 HST on it.</span></div>
+              <div class="payBtn"><span class="btnOut" style="min-height:48px">Send, and pay $1,130.00 by cheque or e-transfer</span><span class="nt">Your invoice comes by email.</span></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="specHead" style="margin-top:6px"><b>Round 1’s version, for comparison</b><span class="chrome">public · 640</span><button class="mark" type="button" data-ask="1">1</button></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubIn">
+            <div class="fsec" style="border-top:0"><p class="fsecH">How you’ll pay</p>
+              <table class="sumT"><tr><td>Division sponsor, U9</td><td class="num">$1,000.00</td></tr><tr><td>Processing fee, card</td><td class="num">$41.05</td></tr><tr><td>HST 13%</td><td class="num">$135.34</td></tr><tr class="tot"><td>Total</td><td class="num">$1,176.39</td></tr></table>
+              <div class="payOpt on"><span class="dot"></span><div><div class="t">Pay by card now</div><div class="h">You get your receipt right away.</div></div></div>
+              <div class="payOpt"><span class="dot" style="border:2px solid var(--home-line-strong)"></span><div><div class="t">We’ll send a cheque or e-transfer</div><div class="h">The total drops to $1,130.00.</div></div></div>
+              <span class="btnLime big">Send and pay $1,176.39</span>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>After paying by card · the sponsor paid the fee</b><span class="chrome">public · 640</span><button class="tag same" type="button" data-note="THE PAY LINK'S RECEIPT CARD, unchanged in look: plain lines with one rule above Paid, then 'Processing fee' only when the payer paid it, then 'Paid' last, and the revisit line at the foot. New on it: the HST row before Paid, and the receipt download.">PAY LINK’S RECEIPT</button><button class="tag new" type="button" data-note="NEW on the shipped receipt: the HST 13% row (a taxed deal only) and 'Download your receipt (PDF)', which is the paid invoice (round 1, ask 10).">NEW · HST ROW, PDF</button></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubBand"><span class="crest">RM</span><b>Riverdale Minor Ball</b></div>
+          <div class="pubIn">
+            <div class="receipt">
+              <p class="rt">Paid, thank you</p>
+              <span style="font-size:14px">$1,176.39 to Riverdale Minor Ball</span>
+              <span class="small">Visa ••4242 · Mar 3, 2027, 2:14 p.m. · invoice 2027-014</span>
+              <dl class="lines"><div><dt>Division sponsor, U9</dt><dd>$1,000.00</dd></div><div><dt>Processing fee</dt><dd>$41.05</dd></div><div><dt>HST 13%</dt><dd>$135.34</dd></div><div class="tot"><dt>Paid</dt><dd>$1,176.39</dd></div></dl>
+              <span class="btnOut" style="justify-self:start">Download your receipt (PDF)</span>
+            </div>
+            <p class="small">This page shows your receipt any time you open your pay link.</p>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>The rules this tab keeps</h3>
+        <ul>
+          <li><b>The fee shows before the business pays</b> (the Nov 22 ruling): the card button names the total, and the note under it names the fee and its tax.</li>
+          <li><b>Choosing a cheque or e-transfer issues the invoice at once</b> (ask 4, ruled), with no fee on it. An invoice already issued never gains a fee line afterwards.</li>
+          <li><b>A card payment issues the invoice when it is paid</b>, so its invoice has the fee line from the start (tab 2).</li>
+          <li><b>Until card payment is on in production,</b> the card button isn’t there, and this choice has nothing to decide. The Payouts card itself only exists once payouts are set up.</li>
+          <li><b>The words</b> on the new Payouts row and the two buttons are drafts. /marketing confirms them at the build.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · INVOICE AND THE BOOKS -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <h2>The paid invoice carries the fee as its own line, and the books show it both ways</h2>
+    <p>The coach’s sponsor invoice puts every charge in one Description | Amount table and lets the three figures (Invoiced, Paid, Balance due) carry the total. It has no totals row. Round 1 drew a Subtotal, HST and Total block under the line instead. With a fee line as well, the two recipes look further apart, so this is ask 2. The receipt is the same PDF, its subtitle led by “Paid in full” (ruled, ask 10).</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Paid by card, the sponsor paid the fee · recommended</b><span class="chrome">PDF · Letter · 816</span><button class="mark" type="button" data-ask="2">2</button><button class="tag same" type="button" data-note="THE COACH INVOICE'S RECIPE: every charge is a row of the one table and the three figures carry the total, with no totals row, the figures as a number over a lowercase label, an accent header row, and its closing words. Extended here: the shipped table has one Description row, and this one has three (the sponsorship, the fee, HST 13%). HST is a row of its own, at its rate, so the tax is shown apart from the price. The club's GST/HST number at the top is new.">COACH PDF RECIPE, EXTENDED</button></div>
+        <div class="scroll"><div class="frame" style="padding:14px;background:#E9E5DD"><div class="paper"><div class="acc"></div><div class="pin">
+          <div class="idb"><div><b>Riverdale Minor Ball</b>200 Park Road<br>Riverdale ON K0A 1B0</div><div style="text-align:right">GST/HST no. 81234 5678 RT0001 <span style="font:700 10px system-ui;color:#2E6B2F;background:rgba(46,107,47,0.12);padding:2px 5px;border-radius:4px">NEW</span></div></div>
+          <div><h4>Invoice</h4><div class="subl">Paid in full Mar 3, 2027 · No. 2027-014 · Issued Mar 3, 2027</div></div>
+          <div class="cfig"><div><b>$1,176.39</b><span>invoiced</span></div><div><b>$1,176.39</b><span>paid</span></div><div><b>$0.00</b><span>balance due</span></div></div>
+          <div><div class="lab">Bill to</div><b>Harbour Dental</b><br>Attn: Frank Osei<br>41 Harbour Street, Riverdale ON K0A 1C2<br>frank@harbourdental.ca</div>
+          <table class="acct"><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>
+            <tr><td><b>Sponsorship: Division sponsor, U9</b> · Mar 3 to Aug 31, 2027<ul class="inc"><li>Your logo on the U9 division’s pages on riverdaleminorball.ca</li><li>Named division: “U9 presented by Harbour Dental”</li><li>A field banner at Riverdale Park</li></ul></td><td class="r">$1,000.00</td></tr>
+            <tr><td>Processing fee, card payment</td><td class="r">$41.05</td></tr>
+            <tr><td>HST 13%</td><td class="r">$135.34</td></tr>
+          </tbody></table>
+          <div><div class="lab">Payments received — thank you</div><table class="acct"><thead><tr><th>Date</th><th>How it arrived</th><th class="r">Amount</th></tr></thead><tbody><tr><td>Mar 3, 2027</td><td>Card, Visa ••4242</td><td class="r">$1,176.39</td></tr></tbody></table></div>
+          <div style="font-style:italic;color:#444">Paid in full. Thank you for supporting Riverdale Minor Ball. Questions about this invoice? Contact Dana Ruiz, sponsors@riverdaleminorball.ca.</div>
+          <div class="foot"><span>Riverdale Minor Ball · riverdaleminorball.ca</span><span>Page 1 of 1</span></div>
+        </div></div></div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Round 1’s totals block, for comparison</b><span class="chrome">PDF · the table only</span><button class="mark" type="button" data-ask="2">2</button></div>
+          <div class="scroll"><div class="frame" style="padding:14px;background:#E9E5DD"><div class="paper"><div class="pin">
+            <table class="acct"><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>
+              <tr><td><b>Sponsorship: Division sponsor, U9</b></td><td class="r">$1,000.00</td></tr>
+              <tr><td>Processing fee, card payment</td><td class="r">$41.05</td></tr>
+            </tbody></table>
+            <table class="tt" style="width:300px;margin-left:auto"><tr><td>Subtotal</td><td class="r">$1,041.05</td></tr><tr><td>HST 13%</td><td class="r">$135.34</td></tr><tr class="big"><td>Total</td><td class="r">$1,176.39</td></tr></table>
+          </div></div></div></div>
+        </div>
+        <div class="explain">
+          <h3>Either way</h3>
+          <ul>
+            <li><b>A cheque deal</b> gets the same recipe without the fee row: the sponsorship, HST 13% $130.00, and the figures read $1,130.00.</li>
+            <li><b>A club that isn’t registered</b> shows no tax row, field or word (round 1’s rule, unchanged).</li>
+            <li><b>One HST row</b> covers the sponsorship and the fee: 13% of $1,041.05 is $135.34, the same as $130.00 plus $5.34.</li>
+            <li><b>Our name and number</b> never appear. The fee line is the club’s charge to its sponsor, not FieldLogicHQ’s invoice.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The books · the sponsor paid the fee · recommended</b><span class="chrome">General ledger · the deal’s lines</span><button class="mark" type="button" data-ask="3">3</button><button class="fl" type="button" data-f="F14">F14</button></div>
+        <div class="scroll"><div class="frame adm w700">
+          <table class="ledg">
+            <thead><tr><th>Line</th><th>Category</th><th class="num">In</th><th class="num">Out</th></tr></thead>
+            <tbody>
+              <tr><td>Harbour Dental · Division sponsor, U9<span class="s">Mar 3, 2027 · card</span></td><td>Sponsorship › Club sponsorship</td><td class="num">$1,000.00</td><td class="num"></td></tr>
+              <tr class="newRow"><td>Processing fee charged to Harbour Dental</td><td>Sponsorship › Club sponsorship</td><td class="num">$41.05</td><td class="num"></td></tr>
+              <tr><td>HST on invoice 2027-014</td><td>GST/HST collected</td><td class="num">$135.34</td><td class="num"></td></tr>
+              <tr><td>Card processing</td><td>Payment processing</td><td class="num"></td><td class="num">$41.05</td></tr>
+            </tbody>
+          </table>
+          <p class="small">The Stripe payout of $1,135.34 matches the three lines in, less the one line out. The HST collected is 13% of the $1,041.05 above it.</p>
+        </div></div>
+        <div class="specHead" style="margin-top:6px"><b>Phone · the same lines, as rows</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbody">
+            <div class="lrows">
+              <div class="lrow"><span class="ln">Harbour Dental · Division sponsor, U9</span><span class="la">$1,000.00</span><span class="lc">Sponsorship › Club sponsorship · in</span></div>
+              <div class="lrow newRow"><span class="ln">Processing fee charged to Harbour Dental</span><span class="la">$41.05</span><span class="lc">Sponsorship › Club sponsorship · in</span></div>
+              <div class="lrow"><span class="ln">HST on invoice 2027-014</span><span class="la">$135.34</span><span class="lc">GST/HST collected · in</span></div>
+              <div class="lrow"><span class="ln">Card processing</span><span class="la">−$41.05</span><span class="lc">Payment processing · out</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>The other way · the fee isn’t booked</b><span class="chrome">as a family’s fee is today</span><button class="mark" type="button" data-ask="3">3</button></div>
+        <div class="scroll"><div class="frame adm w700">
+          <table class="ledg">
+            <thead><tr><th>Line</th><th>Category</th><th class="num">In</th><th class="num">Out</th></tr></thead>
+            <tbody>
+              <tr><td>Harbour Dental · Division sponsor, U9</td><td>Sponsorship › Club sponsorship</td><td class="num">$1,000.00</td><td class="num"></td></tr>
+              <tr><td>HST on invoice 2027-014</td><td>GST/HST collected</td><td class="num">$135.34</td><td class="num"></td></tr>
+            </tbody>
+          </table>
+          <p class="small">The payout still matches. But the HST collected is 13.5% of the income beside it, and a treasurer filing the return can’t see which sale the extra $5.34 came from.</p>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · WHO OPENS SPONSORSHIPS -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>Sponsorships is one more line in Manage member, on for the owner, admins and the treasurer, and a club can turn it on for anyone</h2>
+    <p>Your note on ask 12. The shipped Manage member window already lists each program with an On/Off choice, says “Changed for {name}” when a person differs from their role, and says in a sentence what a change gives. Sponsorships becomes one more row in it. Drawn for Priya Shah, Riverdale’s registrar. A registrar has House league and Communications on by default, and everything else off.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Manage member · What Priya can open</b><span class="chrome">club admin · window · 600</span><button class="tag new" type="button" data-note="ONE NEW ROW in the shipped table (Program | For {name}, an On/Off select per row, 'Changed for {name}' under a row that differs from the role, a sentence under a row whose change gives or takes access). It shows only on plans that carry Sponsorships. One Save for everything, and the person is emailed what changed, as today.">NEW ROW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Members · Registrar</div><p class="wtitle">Priya Shah</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div style="display:grid;gap:2px"><p class="subH">What Priya can open</p><span class="hint">Each program starts the way every registrar has it.</span></div>
+            <table class="mm">
+              <thead><tr><th>Program</th><th style="text-align:right">For Priya</th></tr></thead>
+              <tbody>
+                <tr><td>Rep teams</td><td class="c"><span class="selBox">Off ▾</span></td></tr>
+                <tr><td>Accounting</td><td class="c"><span class="selBox">Off ▾</span></td></tr>
+                <tr class="newRow split"><td>Sponsorships <button class="tag new" type="button" data-note="NEW ROW AND ITS PLACE: after Accounting, beside the other money program. The program list's order is fixed in the product, and this row is new to it. It shows only on plans that carry Sponsorships.">NEW</button><span class="chg">Changed for Priya</span></td><td class="c"><span class="selBox">On ▾</span></td></tr>
+                <tr class="newRow sentence"><td colspan="2">Priya will see every sponsor’s contact details and the club’s sponsorship deals and payments, and can send offers in the club’s name. Give this only to someone who knows the offer rule: no business the club has never dealt with.</td></tr>
+                <tr><td>Families</td><td class="c"><span class="selBox">Off ▾</span></td></tr>
+                <tr class="split"><td>Communications</td><td class="c"><span class="selBox">On ▾</span></td></tr>
+                <tr class="sentence plain"><td colspan="2">Writes group email and reads what was sent. If it’s off, no group email from any screen; board email sent to them still arrives.</td></tr>
+                <tr><td>Public site</td><td class="c"><span class="selBox">Off ▾</span></td></tr>
+                <tr><td>House league</td><td class="c"><span class="selBox">On ▾</span></td></tr>
+                <tr><td>Tournaments</td><td class="c"><span class="selBox">Off ▾</span></td></tr>
+                <tr><td>Members</td><td class="c"><span class="selBox">Off ▾</span></td></tr>
+              </tbody>
+            </table>
+            <p class="hint" style="margin:0">Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p>
+          </div>
+          <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Save</span></div>
+        </div></div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Setup › Invoice details, opened by Priya · recommended</b><span class="chrome">record window · 600</span><button class="mark" type="button" data-ask="4">4</button></div>
+          <div class="scroll"><div class="frame dimmer" style="padding:18px"><div class="win" style="width:520px">
+            <div class="whead"><div style="flex:1"><div class="wmeta">Setup</div><p class="wtitle">Invoice details</p></div><span class="ico">✕</span></div>
+            <div class="wbody">
+              <dl class="facts">
+                <dt>Mailing address</dt><dd>200 Park Road, Riverdale ON K0A 1B0</dd>
+                <dt>GST/HST</dt><dd>Registered · 81234 5678 RT0001</dd>
+                <dt>By e-transfer to</dt><dd>treasurer@riverdaleminorball.ca</dd>
+                <dt>Cheques payable to</dt><dd>Riverdale Minor Ball</dd>
+              </dl>
+              <div class="lockLine">The owner, admins and the treasurer change these. They’re on every invoice and offer email. Use an address the club is happy to publish; a PO box works.</div>
+            </div>
+          </div></div></div>
+        </div>
+        <div class="explain">
+          <h3>What the row gives, and what it doesn’t</h3>
+          <ul>
+            <li><b>Defaults:</b> on for the owner, admins and the treasurer (ask 12, ruled). Off for the league admin, the registrar, staff and volunteers until the club turns it on. On a plan without Sponsorships the row isn’t there at all, as with every program.</li>
+            <li><b>Turned on, it opens all four tabs:</b> Deals, Packages, Sponsors, Setup. The person can offer a deal, record a cheque and tick deliverables. Their entries land in the club’s books as the treasurer’s do.</li>
+            <li><b>Except the invoice details</b> (ask 4): the club’s mailing address, GST/HST number and payment instructions are read-only for them. Those are on every invoice, every offer email’s legal footer, and Stage 7 camps read the same registration. Without this, one access would let a volunteer change the club’s tax registration.</li>
+            <li><b>Every offer keeps who sent it</b> (from /legal), beside the reason and the date round 1 already keeps. The name is kept as it was, so it survives the person leaving the club. Under the anti-spam law the sender has to prove the reason, and now a volunteer can send.</li>
+            <li><b>The Payouts card’s fee choice stays the owner’s,</b> as every Payouts change is today.</li>
+            <li><b>“What each role can open”</b> (the role guide) gets a Sponsorships row: owner, admin and treasurer “yes”, the others “if you turn it on”.</li>
+            <li><b>Round 1 said</b> a sponsorship volunteer gets in through one of the three seats until Stage 3’s people groups exist. This row replaces that.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · CONFLICTS AND QUESTIONS -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <h2>The rule conflicts round 1 drew one way, and /legal’s two questions</h2>
+    <p>Round 1 found four places where it had to break a house rule to draw a screen. Two of them are answered above: the selected-choice tint goes away with the shipped pay buttons (ask 1), and the invoice’s totals block is ask 2. The other two are below, with /legal’s two questions.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Packages · a full package</b><span class="chrome">desktop · the row only</span><button class="mark" type="button" data-ask="5">5</button></div>
+        <div class="scroll"><div class="frame adm">
+          <table class="tbl">
+            <thead><tr><th>Package</th><th>For</th><th class="num">Price</th><th>Taken</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="nm">Club partner<span class="s">Grey, recommended</span></td><td>The club</td><td class="num">$2,500.00</td><td><span class="chip grey">Full</span> 2 of 2</td><td class="chev">›</td></tr>
+              <tr><td class="nm">Club partner<span class="s">Amber, as round 1 drew it</span></td><td>The club</td><td class="num">$2,500.00</td><td><span class="chip warn">Full</span> 2 of 2</td><td class="chev">›</td></tr>
+            </tbody>
+          </table>
+          <p class="small">Amber means something is waiting on the club. A full package isn’t waiting. The one thing to do about it, withdrawing a stale offer, is on that offer’s own row in Deals, which is amber there.</p>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>E-transfer is spelled four ways in the product today <button class="mark" type="button" data-ask="6">6</button></h3>
+        <table class="docTbl">
+          <thead><tr><th>Spelling</th><th class="num">On screen</th><th>Where, for example</th></tr></thead>
+          <tbody>
+            <tr><td>e-transfer</td><td class="num">29</td><td class="s">help articles (27), the coach invoice PDF “By e-transfer to”</td></tr>
+            <tr><td>E-Transfer</td><td class="num">16</td><td class="s">the ledger’s payment method list, club bills, the coach club panel</td></tr>
+            <tr><td>E-transfer</td><td class="num">6</td><td class="s">the coach invoice’s “E-transfer email” label, the payment method picker, tournament registrations</td></tr>
+            <tr><td>e-Transfer</td><td class="num">3</td><td class="s">a shared tournament payment window, a house-league season block, one help line</td></tr>
+          </tbody>
+        </table>
+        <p><b>Recommended:</b> “e-transfer” in a sentence and “E-transfer” at the start of a label or a sentence, which is the product’s ordinary sentence case. “E-Transfer” and “e-Transfer” go. The ledger’s method list stores “E-Transfer” as each club’s own method name, so changing it is a data change for existing clubs as well as a wording one. /marketing makes the sweep and the spelling check then holds it.</p>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>/legal’s questions <button class="mark" type="button" data-ask="7">7</button> <button class="mark" type="button" data-ask="8">8</button> <button class="mark" type="button" data-ask="9">9</button></h3>
+      <ul>
+        <li><b>A registered charity (ask 7).</b> /legal treats the offer as a commercial message for every club and doesn’t rely on a charity exception, so the email is the same either way. What a charity changes is the tax side: GST/HST on a sponsorship. The invoice already avoids “donation”, “gift” and “tax receipt”, which is right either way. The product can’t see whether a club is a charity, so a re-check happens only when you tell us one is using it.</li>
+        <li><b>Our mailing address in the email foot (ask 8).</b> The offer email’s foot has the club’s mailing address, an unsubscribe and “Sent through FieldLogicHQ”. The law asks for the sender’s address, and the club is the sender. Whether FieldLogicHQ also counts as a sender is one of the lawyer’s-eye items (no gate). FieldLogicHQ has no mailing address today (you ruled email only on Nov 17), so adding one means getting one first: a PO box or mail-forwarding address, never a home address. Our own marketing emails will need one before any promotional send anyway.</li>
+        <li><b>The same cap line on the registration row (ask 9).</b> The new sponsorship row tells the club the card networks’ limit is its own responsibility. The registration row above it has families paying the fee by default, and families are consumers, so the same line matters more there. It would be a hint only. It doesn’t reopen the ruling.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 · ASKS -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <h2>Your asks</h2>
+    <p>Ranked by how much each one changes, most first. The first answer on each is my recommendation and is already selected. Change any you disagree with, add a note, then press Build the summary and paste it into the chat. Your picks are kept in this browser only.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc" id="noteGo" type="button" hidden>Go to the ask</button><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var LAST = "p5";
+var ASKS = [
+  {n:1, t:"How the business picks how to pay", why:"Round 1 drew a radio choice and one Send button. The shipped pay page families use has one button per way to pay, each with its own total, and the fee as a note under the card button.", o:[
+    "The shipped pay block’s layout: “Send and pay $1,176.39 by card”, with “Includes a $41.05 card processing fee and $5.34 HST on it.” under it, and “Send, and pay $1,130.00 by cheque or e-transfer”. The summary above shows the invoice. No radio, so no tinted selection",
+    "Round 1’s radio choice and one Send button, with the fee and its HST as rows of the summary that appear when the card is picked"]},
+  {n:2, t:"The invoice’s totals", why:"The coach invoice has no totals row: every charge is a row and the three figures carry the total. Round 1 drew a Subtotal, HST and Total block on a taxed invoice.", o:[
+    "The coach invoice’s recipe: the sponsorship, the processing fee (when the sponsor paid it) and HST 13% are each a row of the one table; Invoiced, Paid and Balance due carry the total; no totals block",
+    "Round 1’s Subtotal, HST and Total block under the table on a taxed invoice"]},
+  {n:3, t:"How a passed-on fee lands in the books", why:"The club charges HST on the fee line, so the fee is part of the club’s sale. A family’s fee isn’t booked today, because the club never charges tax on it.", o:[
+    "Booked both ways: the fee charged is income under Club sponsorship (a line of its own), and the same amount is a Payment processing cost. The HST collected then matches the income it was charged on",
+    "Not booked, as a family’s fee isn’t: only the sponsorship and the HST, so the HST reads 13.5% of the income beside it"]},
+  {n:4, t:"Who changes the club’s invoice details", why:"A club can now give Sponsorships to a registrar or volunteer (your note on ask 12). Invoice details holds the mailing address, the GST/HST number and how businesses pay, and camps read the same registration.", o:[
+    "The owner, admins and the treasurer only. Anyone else with Sponsorships reads them, with a line saying who changes them",
+    "Anyone the club gives Sponsorships to",
+    "A sub-line under Sponsorships in Manage member, “Change invoice details”, off unless the club turns it on"]},
+  {n:5, t:"The colour of “Full” on a package", why:"Amber means something is waiting on the club. A full package isn’t waiting; a stale offer that holds a place is amber on its own row in Deals.", o:[
+    "Grey",
+    "Amber, as round 1 drew it"]},
+  {n:6, t:"How e-transfer is spelled", why:"Four spellings on screen today (29, 16, 6 and 3 places). The ledger’s method list stores “E-Transfer” as each club’s method name.", o:[
+    "“e-transfer” in a sentence and “E-transfer” at the start of a label or sentence; the other two spellings go, including the stored method name (a data change for existing clubs). /marketing sweeps it and the spelling check holds it",
+    "“E-Transfer” everywhere, as the ledger has it",
+    "“Interac e-Transfer”, the bank network’s own name, everywhere"]},
+  {n:7, t:"A club that is a registered charity", why:"The offer email is the same for every club (no charity exception is relied on). What a charity changes is the GST/HST on a sponsorship. The product can’t see charity status.", o:[
+    "None that you know of: build for clubs that aren’t charities. /legal and /accounting re-check when you tell us a registered charity is using sponsorships",
+    "Yes, there is one: /accounting looks at the club’s GST/HST position before the build"]},
+  {n:8, t:"FieldLogicHQ’s mailing address in the offer email", why:"The foot has the club’s mailing address, an unsubscribe and “Sent through FieldLogicHQ”. Whether we also count as a sender is a lawyer’s-eye item, not a gate. FieldLogicHQ has no mailing address today.", o:[
+    "The club’s address alone, as drawn in round 1",
+    "Add a FieldLogicHQ mailing address under the club’s (a PO box or mail-forwarding address, never a home address; none exists today, and our own marketing emails need one too)"]},
+  {n:9, t:"The card-network limit line on the registration row", why:"The new sponsorship row says the 2.4% limit is the club’s responsibility. The registration row has families, who are consumers, paying the fee by default.", o:[
+    "Add the same hint to the registration row: the limit, and that passing the fee on is the club’s decision and responsibility. A hint only; the ruling stands",
+    "Leave the registration row as it is"]}
+];
+var NOTES = {
+  1:"Ask 1 · Pay buttons. Recommended: the shipped pay block, one button per way to pay, each with its own total and the fee in a note under the card button.",
+  2:"Ask 2 · Invoice totals. Recommended: the coach invoice’s recipe, every charge a row and the three figures carry the total.",
+  3:"Ask 3 · The books. Recommended: book the passed-on fee as income and the same amount as Payment processing, so the HST matches its income.",
+  4:"Ask 4 · Invoice details. Recommended: only the owner, admins and the treasurer change them.",
+  5:"Ask 5 · Full. Recommended: grey, because nothing is waiting.",
+  6:"Ask 6 · e-transfer. Recommended: sentence case, one spelling, the stored method name included.",
+  7:"Ask 7 · Charity. Recommended: build for clubs that aren’t registered charities; /legal re-checks at the first one.",
+  8:"Ask 8 · Our address. Recommended: the club’s alone.",
+  9:"Ask 9 · The limit line. Recommended: add it to the registration row too, as a hint."
+};
+var FINDINGS = {
+  F13:["F13 · No gross-up is needed", "What the plan left open (Business Decisions Log, Nov 22): whether the fee line is grossed up so the club still nets its full invoice after Stripe’s percentage on the larger charge.", "What the code does: the processing fee is worked out once, on what is owed, and never on the charge. The club receives the charge less that fee, and FieldLogicHQ’s share is the fee less Stripe’s own cost on the whole charge. A larger charge costs a few cents more at Stripe, and those come out of FieldLogicHQ’s share. So the club nets its full invoice without a gross-up, as a club does today when families pay the fee. On this deal: the club receives $1,135.34 and keeps $1,000.00 after the $135.34 HST it owes."],
+  F14:["F14 · A passed-on fee with tax on it is a sale", "What the records say: /accounting (review Nov 22) found that tax follows the underlying supply, so the club’s HST applies to a fee line it passes on, and the Nov 22 ruling put that tax on the line. A family’s fee isn’t booked at all today, because a children’s registration rarely carries tax.", "What this drawing does: ask 3 books the fee as income and the same amount as Payment processing, so the HST collected matches the income it was charged on. The club’s own books are product work, not /accounting’s. A tax professional confirms the treatment when the province rule (round 1, ask 9) is checked."]
+};
+var KEY = "br-stage6-sponsorships-r2-v1";
+var S = { pick:{}, note:{}, tab:"p1" };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var host = document.getElementById("asks");
+function pickOf(a){ return S.pick[a.n] != null ? S.pick[a.n] : 0; }
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + a.t + "</h3><p class=\"why\">" + a.why + "</p>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + o + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var r = document.getElementById("a" + a.n + "o" + pickOf(a)); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+
+function build(){
+  var L = ["Board Ready Stage 6, sponsorships (round 2, Nov 22, 2026)", ""];
+  ASKS.forEach(function(a){
+    var p = pickOf(a);
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  L.push(""); L.push("Short form: " + ASKS.map(function(a){ return a.n + String.fromCharCode(65 + pickOf(a)); }).join(" · "));
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var txt = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(txt).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+
+var dlg = document.getElementById("note"), goBtn = document.getElementById("noteGo"), goTo = null;
+function open(title, paras, ask){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  goTo = ask || null; goBtn.hidden = !ask;
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+goBtn.addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); show(LAST); var el = document.getElementById("ask" + goTo); if (el) el.scrollIntoView({ block: "start" }); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); var a = ASKS.filter(function(x){ return x.n === n; })[0]; open("Ask " + n + " · " + a.t, [NOTES[n] || a.why], n); return; }
+  var f = ev.target.closest(".fl[data-f]");
+  if (f) { var F = FINDINGS[f.getAttribute("data-f")]; if (F) open(F[0], [F[1], F[2]], null); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")], null); }
+});
+})();
+</script>

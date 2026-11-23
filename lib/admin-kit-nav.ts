@@ -29,7 +29,7 @@
  */
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, CalendarClock, Trophy, Building2, IdCard, CreditCard, Settings,
-  MapPin, FileText, ScrollText, ChartGantt, FileCheck, Shield, Users2, Mail,
+  MapPin, FileText, ScrollText, ChartGantt, FileCheck, Shield, Users2, Mail, Handshake,
   type LucideIcon,
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
@@ -390,6 +390,35 @@ export function kitCommunicationsLink({ base, opens, isCanceled, tournamentTier 
     href: `${base}/${COMMUNICATIONS_SEGMENT}`, icon: Mail };
 }
 
+/** Sponsorships' address segment (Board Ready Stage 6). */
+export const SPONSORSHIPS_SEGMENT = 'sponsorships';
+
+/**
+ * ⚖ SPONSORSHIPS IS A CLUB PLACE (Board Ready Stage 6, ask 12, owner 2026-11-22): its own place with four tabs, Deals ·
+ * Packages · Sponsors · Setup, in the Club group between Communications and Public site (the site editor's Sponsors line is
+ * its door), the handshake (N5). Not a program, so it never joins the bar's and tiles' fill order; on a phone it is a row in
+ * the More sheet's Club group. `opens` is `opensSponsorships` (`lib/club-sponsorships-place.ts`), the one answer the layout
+ * and the routes ask too. Hidden, never locked.
+ */
+export function kitSponsorshipsLink({ base, opens, isCanceled, tournamentTier }: {
+  base: string; opens: boolean; isCanceled: boolean; tournamentTier: boolean;
+}): KitLink | null {
+  if (!opens || isCanceled || tournamentTier) return null;
+  return { key: SPONSORSHIPS_SEGMENT, label: 'Sponsorships', href: `${base}/${SPONSORSHIPS_SEGMENT}`, icon: Handshake };
+}
+
+export type SponsorshipsTabId = 'deals' | 'packages' | 'sponsors' | 'setup';
+/** The place's four tabs (ask 12). Setup holds the sponsorship form one level down, so it lights there too (`views`). */
+export function sponsorshipsTabs(base: string): (PlaceTab & { id: SponsorshipsTabId; views?: true })[] {
+  const s = `${base}/${SPONSORSHIPS_SEGMENT}`;
+  return [
+    { id: 'deals', label: 'Deals', href: s },
+    { id: 'packages', label: 'Packages', href: `${s}/packages` },
+    { id: 'sponsors', label: 'Sponsors', href: `${s}/sponsors` },
+    { id: 'setup', label: 'Setup', href: `${s}/setup`, views: true },
+  ];
+}
+
 /** Organization's icon (its sidebar row and its More sheet row share it). */
 export const ORGANIZATION_ICON: LucideIcon = Building2;
 
@@ -523,18 +552,24 @@ export type ClubPlaceGroup<T> = { key: ClubPlaceGroupKey; heading: string; place
  * under the sidebar's names, in the sidebar's order). Programs, then "Also on your plan" (what the plan carries that the club
  * does not run yet, as today), then Club with Organization last. A group with no place is not returned.
  */
-export function clubPlaceGroups<T extends { key: string }>({ programs, alsoOnPlan, organization, communications = null }: {
+export function clubPlaceGroups<T extends { key: string }>({ programs, alsoOnPlan, organization, communications = null, sponsorships = null }: {
   programs: readonly T[];
   alsoOnPlan: readonly T[];
   organization: T | null;
   /** Communications' row (`kitCommunicationsLink`): after Families, before Public site — not a program (ask 6). */
   communications?: T | null;
+  /** Sponsorships' row (`kitSponsorshipsLink`): after Communications, before Public site — not a program (Stage 6, ask 12). */
+  sponsorships?: T | null;
 }): ClubPlaceGroup<T>[] {
   const of = (group: 'programs' | 'club') => programs.filter(p => PLACE_GROUP[p.key as AdminProgramKey] === group);
   const club = of('club');
   if (communications) {
     const at = club.findIndex(p => p.key === 'public-site');
     club.splice(at < 0 ? club.length : at, 0, communications);
+  }
+  if (sponsorships) {
+    const at = club.findIndex(p => p.key === 'public-site');
+    club.splice(at < 0 ? club.length : at, 0, sponsorships);
   }
   const groups: ClubPlaceGroup<T>[] = [
     { key: 'programs', heading: 'Programs', places: of('programs') },
@@ -587,10 +622,12 @@ export function kitOrgPlace({ base, orgLinks, tournamentOnly, showsBoard = false
  * Organization tab (Ask 4 = B): on its page the FOOT row is the lit one, so no place is. Overview, Calendar and Schedules
  * light on their own addresses (`isKitLinkActive`), none of which is under a place.
  */
-export function litClubPlace(pathname: string, base: string, billingLink: KitLink | null): AdminProgramKey | 'org' | typeof COMMUNICATIONS_SEGMENT | null {
+export function litClubPlace(pathname: string, base: string, billingLink: KitLink | null): AdminProgramKey | 'org' | typeof COMMUNICATIONS_SEGMENT | typeof SPONSORSHIPS_SEGMENT | null {
   if (billingLink && isKitLinkActive(pathname, billingLink)) return null;
   const comms = `${base}/${COMMUNICATIONS_SEGMENT}`;
   if (pathname === comms || pathname.startsWith(`${comms}/`)) return COMMUNICATIONS_SEGMENT;
+  const sp = `${base}/${SPONSORSHIPS_SEGMENT}`;
+  if (pathname === sp || pathname.startsWith(`${sp}/`)) return SPONSORSHIPS_SEGMENT;
   return activeKitSection(pathname, base);
 }
 
@@ -816,6 +853,8 @@ export type ClubPlaceAccess = {
   opensPermits?: boolean;
   /** Communications' own gate (`kitCommunicationsLink`): the bar names it exactly where the sidebar lists it. */
   opensCommunications?: boolean;
+  /** Sponsorships' own gate (`kitSponsorshipsLink`, Board Ready Stage 6): the bar names it where the sidebar lists it. */
+  opensSponsorships?: boolean;
   /* Phase 3's named screens, each its page's own refusal rule (absent = no, so the screen keeps the club's name): */
   /** Calendar: not a Tournament-tier org, and at least one of its programs is this person's (`calendarPrograms`, the API's). */
   opensCalendar?: boolean;
@@ -842,7 +881,7 @@ const flatPlace = (key: string, title: string, tabs: readonly PlaceTab[], active
   activeId ? { key, title, facts: [], tabs, activeId, ariaLabel: title } : null;
 
 export function clubPlaceAt(pathname: string, base: string, {
-  canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies, opensPermits = false, opensCommunications = false,
+  canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies, opensPermits = false, opensCommunications = false, opensSponsorships = false,
   opensCalendar = false, opensSchedules = false, opensPublicSite = false, opensBilling = false, tournamentSettingsTabs = null,
 }: ClubPlaceAccess): ClubPlaceAt | null {
   // ⚖ A TOURNAMENT-ONLY ORGANIZATION'S SETTINGS & ACCESS IS A PLACE (navigation Phase 2 Part B, E3 + P1, owner 2026-11-09 /
@@ -868,6 +907,13 @@ export function clubPlaceAt(pathname: string, base: string, {
     return opensCommunications
       ? flatPlace(COMMUNICATIONS_SEGMENT, 'Communications', [{ id: COMMUNICATIONS_SEGMENT, label: 'Communications', href: comms }], COMMUNICATIONS_SEGMENT)
       : null;
+  }
+  // Sponsorships (Board Ready Stage 6, ask 12): four tabs. Not its place = the club's name.
+  const sp = `${base}/${SPONSORSHIPS_SEGMENT}`;
+  if (isAtOrUnder(pathname, sp)) {
+    if (!opensSponsorships) return null;
+    const tabs = sponsorshipsTabs(base);
+    return flatPlace(SPONSORSHIPS_SEGMENT, 'Sponsorships', tabs, placeTabFor(tabs, pathname));
   }
   // ── Phase 3's named screens (round 5): one address each, the page's own gate. ──
   if (pathname === `${base}/calendar`) return opensCalendar ? namedScreen('calendar', 'Calendar') : null;

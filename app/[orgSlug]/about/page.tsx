@@ -6,7 +6,7 @@ import { ExternalLink } from 'lucide-react';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata, getClubSiteContent } from '@/lib/club-page-meta';
 import { clubAboutPageShows, documentBands } from '@/lib/club-about';
-import { sponsorsShowing } from '@/lib/club-sponsors';
+import { publicSponsorsFor } from '@/lib/club-sponsorships-server';
 import ClubAboutContacts from '@/components/public/ClubAboutContacts';
 import { ClubSponsorList } from '@/components/public/ClubSponsors';
 import ClubContactLine from '@/components/public/ClubContactLine';
@@ -50,7 +50,8 @@ export default async function ClubAboutPage({ params }: { params: Promise<{ orgS
   const contacts = content?.contacts ?? [];
   const bands = documentBands(content?.documents);
   const questions = content?.questions ?? [];
-  const sponsors = sponsorsShowing(content?.sponsors);
+  // Board Ready Stage 6 (ask 1): About lists every place in the club — a team's sponsor shows here only (owner 2026-11-22).
+  const sponsors = (await publicSponsorsFor(org.id, org.planId).catch(() => ({ home: [], about: [] }))).about;
 
   // The club page column (club round C2 + C5): on the logo edge (it was a centred 760), 960 at most, the club's words held
   // to 720 inside their box (kit.cardText).

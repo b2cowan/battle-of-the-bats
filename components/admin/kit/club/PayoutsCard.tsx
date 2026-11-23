@@ -18,7 +18,8 @@ import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, PAYMENTS_TERMS_VERSION, PAYOUTS_
 import { BILLING_ADDRESS_FORM_WORDS } from '@/lib/billing-location';
 import { isAddressRefusal, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
 import type { PayoutsState } from '@/lib/online-payment-account';
-import type { OnlineFeePayer } from '@/lib/online-payment-fee';
+import { SPONSOR_FEE_PAYERS, type OnlineFeePayer, type SponsorFeePayer } from '@/lib/online-payment-fee';
+import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import KitDialog from './KitDialog';
 import { askForCodeAgain, CODE_AGAIN_MANUAL_HEADER } from '@/components/shared/CodeAgainProvider';
 import { TWO_STEP_CODE_REFUSAL, TWO_STEP_FRESH_CODE } from '@/lib/code-again';
@@ -37,6 +38,10 @@ export type PayoutsView = {
   bankRateLabel?: string | null;
   example: { baseCents: number; feeCents: number; bankFeeCents?: number | null };
   feePayer: OnlineFeePayer;
+  /** Board Ready Stage 6 (ask 3; round 2 tab 1): the sponsorships row shows only on a plan that carries Sponsorships. */
+  sponsorshipsOnPlan?: boolean;
+  /** Who pays the card fee on a sponsorship: the club by default; the registration choice never decides it. */
+  sponsorFeePayer?: SponsorFeePayer;
   refundPolicy: string;
   requirementsDue: number;
   deadline: string | null;
@@ -381,7 +386,7 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
   // Required (owner 2026-11-17): a blank policy is never sent — the words come back, and the line says why.
   const [blankRefused, setBlankRefused] = useState(false);
 
-  async function save(change: { feePayer?: OnlineFeePayer; refundPolicy?: string }) {
+  async function save(change: { feePayer?: OnlineFeePayer; sponsorFeePayer?: SponsorFeePayer; refundPolicy?: string }) {
     setLastSent(change);
     setSaving(true);
     setError(null);
@@ -394,6 +399,7 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
       if (!res.ok) throw new Error(data.error ?? 'Couldn’t save');
       onSaved({
         ...(change.feePayer ? { feePayer: change.feePayer } : {}),
+        ...(change.sponsorFeePayer ? { sponsorFeePayer: change.sponsorFeePayer } : {}),
         ...(change.refundPolicy !== undefined ? {
           refundPolicy: change.refundPolicy.trim(),
           // Paused for the policy alone means Stripe has payments on and wants nothing: written, the club takes payments again.
@@ -414,6 +420,9 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
   const policyId = useId();
   const policyHintId = useId();
   const rates = W.record.feeRates(view.rateLabel, view.bankRateLabel ?? null);
+  // Board Ready Stage 6 (round 2 tab 1, RELABELLED): beside the sponsorships row the shipped row names what it covers.
+  const SP = SPONSORSHIPS_WORDS.payouts;
+  const feeLabel = view.sponsorshipsOnPlan ? SP.registrationsLabel : W.record.feeLabel;
   const whereRows = payoutRows && (
     <>
       <div className={pc.recordRow}>
@@ -435,12 +444,18 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
         <dl className={pc.record}>
           {whereRows}
           <div className={pc.recordRow}>
-            <dt>{W.record.feeLabel}</dt>
+            <dt>{feeLabel}</dt>
             <dd>
               {W.record.feeRead[view.feePayer]}
               <span className={`${ck.hint} ${pc.otherFees}`}>{rates}</span>
             </dd>
           </div>
+          {view.sponsorshipsOnPlan && (
+            <div className={pc.recordRow}>
+              <dt>{SP.sponsorshipsLabel}</dt>
+              <dd>{SP.read[view.sponsorFeePayer ?? 'club']}</dd>
+            </div>
+          )}
           <div className={pc.recordRow}>
             <dt>{W.record.policyLabel}</dt>
             <dd>{view.refundPolicy ? view.refundPolicy : <span className={ck.hint}>{W.record.policyEmpty}</span>}</dd>
@@ -457,7 +472,7 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
       <dl className={pc.record}>
         {whereRows}
         <div className={pc.recordRow}>
-          <dt>{W.record.feeLabel}</dt>
+          <dt>{feeLabel}</dt>
           <dd>
             <fieldset className={pc.choice}>
               <legend className="sr-only">{W.record.feeEditLabel}</legend>
@@ -479,9 +494,41 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
               ))}
               <p className={ck.hint}>{rates}</p>
               <p className={ck.hint}>{W.record.feeChangeNote}</p>
+              {/* Board Ready Stage 6, round 2 ask 9: the card networks' limit, a hint only (the registration ruling stands). */}
+              <p className={ck.hint}>{SP.registrationCapHint}</p>
             </fieldset>
           </dd>
         </div>
+        {view.sponsorshipsOnPlan && (
+          <div className={pc.recordRow}>
+            <dt>{SP.sponsorshipsLabel}</dt>
+            <dd>
+              <fieldset className={pc.choice}>
+                <legend className="sr-only">{SP.sponsorshipsLabel}</legend>
+                {stale && (
+                  <p className={ck.hint}>
+                    {TERMS_WORDS.refuseFee}{' '}
+                    <button type="button" className={pc.linkButton} onClick={() => onTerms('agree')}>{TERMS_WORDS.readAndAgree}</button>
+                  </p>
+                )}
+                {/* The payer's option first, as the shipped row orders it; "The club pays it" is the default (ask 3). */}
+                {!stale && SPONSOR_FEE_PAYERS.map(p => (
+                  <label key={p} className={pc.choiceRow}>
+                    <input type="radio" name="payouts-sponsor-fee-payer" checked={(view.sponsorFeePayer ?? 'club') === p} disabled={saving}
+                      onChange={() => void save({ sponsorFeePayer: p })} />
+                    <span>
+                      <span className={pc.choiceName}>{p === 'sponsor' ? SP.sponsorPays : SP.clubPays}</span>
+                      <span className={ck.hint}>{p === 'sponsor' ? SP.sponsorPaysHint : SP.clubPaysHint}</span>
+                    </span>
+                  </label>
+                ))}
+                <p className={ck.hint}>{SP.capHint}</p>
+                <p className={ck.hint}>{SP.refundHint}</p>
+                <p className={ck.hint}>{SP.cardOnlyHint}</p>
+              </fieldset>
+            </dd>
+          </div>
+        )}
         <div className={pc.recordRow}>
           <dt id={policyId}>{W.record.policyLabel}</dt>
           <dd>

@@ -1772,6 +1772,12 @@ export const SCREENS = [
   { id: 'admin-family-child-split',    area: 'families', session: 'repClubOwner', ready: 'h1',
     path: (c) => `/${c.clubSlug}/admin/families/children/${c.clubChildId}?from=${c.clubPersonId}`,
     interact: (page) => openKitDialogBy(page, page.getByRole('button', { name: 'Split records', exact: true })), scope: '[data-kit-dialog]' },
+  // Board Ready Stage 6, Part 1: the Sponsorships place — its four tabs and the sponsorship form one level under Setup.
+  { id: 'admin-sponsorships-deals',    area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/sponsorships` },
+  { id: 'admin-sponsorships-packages', area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/sponsorships/packages` },
+  { id: 'admin-sponsorships-sponsors', area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/sponsorships/sponsors` },
+  { id: 'admin-sponsorships-setup',    area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/sponsorships/setup` },
+  { id: 'admin-sponsorships-form',     area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/sponsorships/setup/form` },
   // Club Communications: the place that replaced the Families Emails tab (/admin/club-emails), and its New email menu's
   // "To families" window open over it — the window's one door (Send is never pressed).
   { id: 'admin-club-emails',           area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/club-emails` },

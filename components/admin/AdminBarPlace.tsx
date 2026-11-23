@@ -25,7 +25,7 @@ import { isTournamentTier } from '@/lib/billing-urls';
 import { canOpenClubSchedules } from '@/lib/club-schedule-gate';
 import { canOpenCalendar, clubPlaceAt, type ClubPlaceAt, type PlaceTab } from '@/lib/admin-kit-nav';
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
-import { useCommunicationsLink, useOrgTabs, usePermitsLink, useTournamentSettingsTabs } from '@/components/admin/kit/useAdminKitNav';
+import { useCommunicationsLink, useSponsorshipsLink, useOrgTabs, usePermitsLink, useTournamentSettingsTabs } from '@/components/admin/kit/useAdminKitNav';
 
 /** What the address says (`ClubPlaceAt`: key, title, way up, facts, tabs, lit tab, label) plus the live parts only a frame has.
  *  Both of the admin's headers draw it (`useAdminPlace`): the phone bar and, above 900px, the top strip. */
@@ -48,6 +48,7 @@ export function useClubPlaceAt(): ClubPlaceAt | null {
   const { tabs: orgTabs, isTeamWorkspace } = useOrgTabs();
   const permitsLink = usePermitsLink();
   const communicationsLink = useCommunicationsLink();
+  const sponsorshipsLink = useSponsorshipsLink();
   // A Tournament plan's Settings & access tabs (navigation Phase 2 Part B, E3 + P1): the sidebar's row reads the same list.
   const tournamentSettingsTabs = useTournamentSettingsTabs();
   // A cancelled account has one page and no place (`AdminChrome`'s `suspended`): its bar names the organization and its strip
@@ -66,6 +67,8 @@ export function useClubPlaceAt(): ClubPlaceAt | null {
     opensPermits: !!permitsLink,
     // Communications' row's own gate (Club Communications Stage 1), so the bar names it exactly where the sidebar lists it.
     opensCommunications: !!communicationsLink,
+    // Sponsorships' row's own gate (Board Ready Stage 6), so the bar names it exactly where the sidebar lists it.
+    opensSponsorships: !!sponsorshipsLink,
     // Phase 3 (round 5): each named screen's OWN refusal rule, so the header never names a screen over its refusal (Q5).
     // Calendar: the API's `calendarPrograms` (a program the reader opens) on a club-side plan.
     opensCalendar: canOpenCalendar({ canUse: canOpen, tournamentTier: isTournamentTier(currentOrg.planId) }),

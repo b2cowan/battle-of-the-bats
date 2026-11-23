@@ -1,9 +1,18 @@
 # Public tournament pages · Sponsors — design kickoff prompt
 
-**⏸ ON HOLD (owner, 2026-11-20): waits for Board Ready Stage 6, the club's sponsorships**
-(`BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_PROMPT.md`). That stage decides which plans show sponsors on a tournament and
-what a sponsorship says about where the logo shows. Before running this prompt, update it from those rulings (open
-question 1 and 2 below are replaced by them).
+**▶ UNBLOCKED 2026-11-22: Board Ready Stage 6 is drawn and ruled** (`BOARD_READY_PLAN.md` §5 Stage 6, both rounds). Its
+rulings REPLACE open questions 1 and 2 below; draw from them, do not re-ask them:
+- **Where the logo shows = one record (Stage 6 ask 1A).** A business is kept once and has *places*: a kind (the club, a
+  house-league division, a house-league team, a tournament; later a club event), which one, and a last day. A tournament
+  place joins **that tournament's Overview strip**. A paid deal whose package has "Your logo on our website" on IS a place;
+  a typed place is set on the club's Sponsorships › Sponsors tab.
+- **Which plans (ask 2A, `BUSINESS_DECISIONS.md` 2026-11-22):** the existing Tournament Plus branding gate
+  (`advanced_tournament_branding`, no new key). A free event's editor shows Sponsors locked and names Tournament Plus;
+  Tournament-only organizers get display only (no packages or deals).
+- **Limits (ask 11A):** 20 is the club home strip's limit only; the list holds up to 100.
+- The club's Sponsorships area (deals, packages, the Sponsors tab) is built by the Stage 6 build prompt
+  (`BOARD_READY_STAGE6_SPONSORSHIPS_BUILD_PROMPT.md`); this drawing decides only how sponsors look and are set on the
+  tournament side, including for an organizer with no club.
 
 **Use this to start a NEW chat with `/design`.** This is a drawing session, not a build: no product code changes until
 the drawing is ruled and a build prompt is written from it. Written 2026-11-20.

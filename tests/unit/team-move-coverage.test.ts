@@ -148,6 +148,12 @@ const STAYS: Record<string, string> = {
   club_form_files: 'files a family attaches on a club form (Board Ready Stage 4 mig 513)',
   club_form_answer_clears: 'a health answer a family cleared on a club form, on the season’s registration (Board Ready Stage 4 mig 518)',
   club_form_storage_removals: 'stored club form files still to delete; a path, never moved (Board Ready Stage 4 mig 518)',
+  // The club's sponsorships (Board Ready Stage 6 mig 525) are the CLUB's: a team's own sponsors stay in the Coaches
+  // Portal's books (2026-11-06), and rep teams are never a place (F8). Nothing here belongs to a team.
+  club_sponsors: 'the club’s sponsors, kept once (Board Ready Stage 6 mig 525); a team’s own sponsors are the portal’s',
+  club_sponsor_places: 'where a club sponsor shows: the club, a division, a team or a tournament, never a rep team (Board Ready Stage 6 mig 525)',
+  club_sponsorship_packages: 'the club’s sponsorship packages (Board Ready Stage 6 mig 525)',
+  club_sponsorship_settings: 'the club’s invoice details for sponsorships (Board Ready Stage 6 mig 525)',
   // ── Org-level setup a Coaches Portal does not use ────────────────────────────────────────────
   org_budget_lines: 'the club-side org budget (a Coaches Portal has none); moved rows that pointed at one are cleared',
   org_fiscal_years: 'the club’s fiscal years (mig 318) — the years its own plan and books are closed by; a team’s money runs on seasons, never fiscal years, so a Coaches Portal has none to move',

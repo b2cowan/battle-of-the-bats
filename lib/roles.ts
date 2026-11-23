@@ -35,7 +35,12 @@ export type Capability =
   // short-circuit and an explicit per-member Grant (owner decision 2026-08-17,
   // CLUB_FAMILIES_BOOK_PLAN.md §1.2). Adding this to any role's defaults is a
   // decision for the owner, not a cleanup.
-  | 'module_families';
+  | 'module_families'
+  // ⚖ Board Ready Stage 6, ask 12 + its note (owner 2026-11-22; round 2 tab 3): the club's Sponsorships place. ON by default
+  // for the owner, admins and the treasurer; off for every other role; a club may turn it on for anyone (e.g. a registrar).
+  // Paired with the plan's entitlement (League Plus and both Club bands) like every area. Invoice details inside it are
+  // changed by the owner, admins and the treasurer ONLY (lib/club-sponsorships-place.ts), whoever else holds this.
+  | 'module_sponsorships';
 
 export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
   owner: new Set<Capability>([
@@ -60,6 +65,7 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
     // ⚠ NOT `module_families` (explicit grant only, CLUB_FAMILIES_BOOK_PLAN §1.2) and NEVER
     // `billing` / `org_settings` (owner-only powers, never a default). tests/unit/role-defaults-guard.test.ts pins all three.
     'module_rep_teams', 'module_accounting', 'module_public_site', 'module_house_league',
+    'module_sponsorships',
   ]),
   staff: new Set<Capability>([
     'update_schedule', 'submit_scores', 'check_in_teams', 'post_announcements',
@@ -83,6 +89,8 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
     'module_accounting',
     'module_members',
     'module_communications',
+    // Board Ready Stage 6, ask 12 (owner 2026-11-22): the treasurer opens Sponsorships by default.
+    'module_sponsorships',
   ]),
   coach: new Set<Capability>([
     // Intentionally empty. A coach reaches the Coaches Portal via their
@@ -100,7 +108,7 @@ export const ALL_CAPABILITY_KEYS: Capability[] = [
   'org_settings', 'billing',
   'module_tournaments', 'module_communications', 'module_members',
   'module_public_site', 'module_accounting', 'module_house_league', 'module_rep_teams',
-  'module_families',
+  'module_families', 'module_sponsorships',
 ];
 
 /**

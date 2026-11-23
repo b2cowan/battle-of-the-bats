@@ -1,12 +1,9 @@
-import { NextResponse } from 'next/server';
-import { randomUUID } from 'node:crypto';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { readQuestionInput } from '@/lib/club-form';
-import { badRequest, questionsPlanRefusal, formAuth, seasonNotFound, seasonOf, serverError } from '@/lib/club-form-route';
+import { SEASON_FORM_SHAPE } from '@/lib/club-form';
+import { addQuestion } from '@/lib/club-form-editor';
+import { questionsPlanRefusal, formAuth, seasonNotFound, seasonOf } from '@/lib/club-form-route';
 import { ensureSeasonForm } from '@/lib/club-form-server';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { FORM_WORDS as W } from '@/lib/club-form-words';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,17 +23,5 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const formId = await ensureSeasonForm(season.id);
   const plan = questionsPlanRefusal(ctx);
   if (plan) return plan;
-  const body = await req.json().catch(() => null) as Record<string, unknown> | null;
-  if (!body) return badRequest('Invalid request body');
-  const read = readQuestionInput(body, null, randomUUID, { perSubject: true, healthSwitch: true });
-  if ('error' in read) return badRequest(read.error);
-
-  const { data: last } = await supabaseAdmin.from('club_form_questions').select('sort_order')
-    .eq('form_id', formId).order('sort_order', { ascending: false }).limit(1);
-  const sortOrder = ((last ?? [])[0] as { sort_order: number } | undefined)?.sort_order ?? -1;
-  const { data, error } = await supabaseAdmin.from('club_form_questions').insert({
-    ...read.write, org_id: ctx.org.id, form_id: formId, sort_order: sortOrder + 1, created_by: ctx.user.id,
-  }).select('id').single();
-  if (error) return serverError(W.addFailed);
-  return NextResponse.json({ id: (data as { id: string }).id }, { status: 201 });
+  return addQuestion(ctx, formId, req, SEASON_FORM_SHAPE);
 }, { route: '/api/admin/house-league/seasons/[seasonId]/form/questions' });

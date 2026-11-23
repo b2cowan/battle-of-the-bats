@@ -146,7 +146,8 @@ describe('one cancellation projection, no server imports in the registry', () =>
     assert.equal(planCancellationImpact(PLAN_BILLING_PROFILES.team).retentionDays, COACHES_PORTAL_RETENTION_DAYS);
     assert.equal(planCancellationImpact(PLAN_BILLING_PROFILES.team, ['module_families']).shutsDown.length, 3);
     assert.deepEqual(planCancellationImpact(PLAN_BILLING_PROFILES.club, [], 9).shortShutsDown, [
-      'Rep teams and every team’s coach portal (9 teams)', 'Accounting', 'Families', 'the public site', 'house league', 'tournaments',
+      // Board Ready Stage 6: a cancelled Club plan's short list names Sponsorships too (it shuts down with the plan).
+      'Rep teams and every team’s coach portal (9 teams)', 'Accounting', 'Families', 'the public site', 'house league', 'Sponsorships', 'tournaments',
     ]);
   });
   it('server preflight shares the data and the retention policy, and keeps the owned-plan read', () => {

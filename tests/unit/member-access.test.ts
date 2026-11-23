@@ -107,7 +107,8 @@ describe('describeAccessChange — the J10-020 email says exactly what changed',
     const lines = describeAccessChange({ role: 'staff', capabilities: null }, { role: 'treasurer', capabilities: null }, club);
     assert.equal(lines[0], 'Your role is now Treasurer (it was Staff).');
     // Club Communications Stage 1 (ask 16): a treasurer holds the Communications switch by default (the board).
-    assert.ok(lines.some(l => l === 'You can now open Accounting, Communications and Members.'), lines.join(' | '));
+    // Board Ready Stage 6 (ask 12): a treasurer opens Sponsorships by default, after Accounting in the programs' order.
+    assert.ok(lines.some(l => l === 'You can now open Accounting, Sponsorships, Communications and Members.'), lines.join(' | '));
     assert.ok(lines.some(l => l === 'You can no longer open Tournaments.'), lines.join(' | '));
   });
 

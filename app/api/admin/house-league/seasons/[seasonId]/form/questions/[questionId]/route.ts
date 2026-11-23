@@ -1,12 +1,9 @@
-import { NextResponse } from 'next/server';
-import { randomUUID } from 'node:crypto';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { canDeleteQuestion, readQuestionInput } from '@/lib/club-form';
-import { CLUB_FORM_BUCKET, ensureSeasonForm, readQuestion } from '@/lib/club-form-server';
-import { badRequest, conflict, questionsPlanRefusal, formAuth, seasonNotFound, seasonOf, serverError } from '@/lib/club-form-route';
+import { SEASON_FORM_SHAPE } from '@/lib/club-form';
+import { ensureSeasonForm } from '@/lib/club-form-server';
+import { deleteQuestion, patchQuestion } from '@/lib/club-form-editor';
+import { questionsPlanRefusal, formAuth, seasonNotFound, seasonOf } from '@/lib/club-form-route';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { FORM_WORDS as W } from '@/lib/club-form-words';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,26 +29,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   const plan = questionsPlanRefusal(ctx);
   if (plan) return plan;
   const { questionId } = await params;
-  const existing = await readQuestion(formId, questionId);
-  if (!existing) return NextResponse.json({ error: 'Question not found' }, { status: 404 });
-  const body = await req.json().catch(() => null) as Record<string, unknown> | null;
-  if (!body) return badRequest('Invalid request body');
-  const at = new Date().toISOString();
-
-  if (body.archived === true) {
-    const { error } = await supabaseAdmin.from('club_form_questions').update({ archived_at: existing.archivedAt ?? at, updated_at: at })
-      .eq('id', questionId).eq('form_id', formId);
-    if (error) return serverError(W.archiveFailed);
-    return NextResponse.json({ ok: true });
-  }
-  if (existing.archivedAt) return conflict('This question is archived.');
-
-  const read = readQuestionInput(body, existing, randomUUID, { perSubject: true, healthSwitch: true });
-  if ('error' in read) return badRequest(read.error);
-  const { error } = await supabaseAdmin.from('club_form_questions').update({ ...read.write, updated_at: at })
-    .eq('id', questionId).eq('form_id', formId);
-  if (error) return serverError(W.saveFailed);
-  return NextResponse.json({ ok: true });
+  return patchQuestion(formId, questionId, req, SEASON_FORM_SHAPE);
 }, { route: '/api/admin/house-league/seasons/[seasonId]/form/questions/[questionId]' });
 
 export const DELETE = withObservability(async (req: Request, { params }: Params) => {
@@ -66,17 +44,5 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   const plan = questionsPlanRefusal(ctx);
   if (plan) return plan;
   const { questionId } = await params;
-  const existing = await readQuestion(formId, questionId);
-  if (!existing) return NextResponse.json({ error: 'Question not found' }, { status: 404 });
-  if (!canDeleteQuestion(existing)) return conflict('People have answered it, so it can only be archived.');
-  // A file a family chose but never sent, and the record of one a family replaced or removed (Part 2), hold the question;
-  // they go with it, stored file first. (An attached file has its answer, so the question can't be deleted then.)
-  // Rows first, by status: a file a family attached in the meantime is neither deleted nor stripped of its stored file.
-  const { data: dropped } = await supabaseAdmin.from('club_form_files').delete().eq('question_id', questionId).in('status', ['pending', 'removed']).select('path');
-  const paths = ((dropped ?? []) as { path: string }[]).map(f => f.path);
-  if (paths.length) await supabaseAdmin.storage.from(CLUB_FORM_BUCKET).remove(paths);
-  const { error } = await supabaseAdmin.from('club_form_questions').delete().eq('id', questionId).eq('form_id', formId);
-  // 23503: an answer arrived between the count and the delete; the database kept the question.
-  if (error) return error.code === '23503' ? conflict('People have answered it, so it can only be archived.') : serverError(W.deleteFailed);
-  return NextResponse.json({ ok: true });
+  return deleteQuestion(formId, questionId);
 }, { route: '/api/admin/house-league/seasons/[seasonId]/form/questions/[questionId]' });

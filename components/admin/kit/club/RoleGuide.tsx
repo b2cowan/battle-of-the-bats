@@ -37,6 +37,7 @@ export default function RoleGuide({
   const rows: { key: RoleGuideRow; label: string }[] = [
     ...(carries('module_rep_teams') ? [{ key: 'rep-teams' as const, label: 'Rep teams (teams, tryouts, coaches, allocations)' }] : []),
     ...(carries('module_accounting') ? [{ key: 'accounting' as const, label: 'Accounting' }] : []),
+    ...(carries('module_sponsorships') ? [{ key: 'sponsorships' as const, label: 'Sponsorships' }] : []),
     ...(carries('module_public_site') ? [{ key: 'public-site' as const, label: 'Public site' }] : []),
     { key: 'league-tournaments', label: carries('module_house_league') ? 'House league · Tournaments' : 'Tournaments' },
     ...(carries('module_families') ? [{ key: 'families' as const, label: 'Families (household records)' }] : []),

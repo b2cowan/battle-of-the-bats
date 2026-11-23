@@ -7,10 +7,11 @@ import { hasCapability, type Capability } from '../../lib/roles.ts';
 import type { OrgRole } from '../../lib/types.ts';
 import {
   clubPlaceGroups, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, kitCalendarLink, kitCommunicationsLink, kitOrgLinks, kitOrgPlace, kitPermitsLink, kitPrograms,
-  kitSchedulesLink, personClubShape, personOnlyProgram, showsOrgBoard, type ClubShape, type KitLink,
+  kitSchedulesLink, kitSponsorshipsLink, personClubShape, personOnlyProgram, showsOrgBoard, type ClubShape, type KitLink,
 } from '../../lib/admin-kit-nav.ts';
 import { clubPhoneNav } from '../../lib/nav-tiles.ts';
 import { opensCommunications } from '../../lib/club-communications-place.ts';
+import { opensSponsorships } from '../../lib/club-sponsorships-place.ts';
 import { seatOf } from '../../lib/club-group-email-rules.ts';
 import { canReadVenueLibrary } from '../../lib/venue-library.ts';
 import type { EntitlementOrg } from '../../lib/module-entitlements.ts';
@@ -63,9 +64,14 @@ export function clubNavFor(role: OrgRole, shape: ClubShape, extra: Record<string
       }),
     }),
   });
-  const groups = clubPlaceGroups<KitLink>({ programs, alsoOnPlan, organization: orgPlace, communications });
+  // Sponsorships (Board Ready Stage 6): the hook's own rule, on this Club plan (it carries Sponsorships).
+  const sponsorships = kitSponsorshipsLink({
+    base: CLUB_BASE, isCanceled: false, tournamentTier: false,
+    opens: opensSponsorships({ role, capabilities: extra, limited: false }, CLUB_ORG),
+  });
+  const groups = clubPlaceGroups<KitLink>({ programs, alsoOnPlan, organization: orgPlace, communications, sponsorships });
   // The sidebar's rows, top to bottom: Overview, Calendar, Permits, Schedules (each unheaded — 13c C1), then every group's places.
   const sidebarRows = ['overview', ...(calendar ? ['calendar'] : []), ...(permits ? ['permits'] : []), ...(schedules ? ['schedules'] : []), ...groups.flatMap(g => g.places.map(p => p.key))];
   const phone = clubPhoneNav<KitLink>({ calendar, schedules, programs, alsoOnPlan });
-  return { programs, alsoOnPlan, orgLinks, orgPlace, groups, sidebarRows, phone, permits, tournamentsDoor, communications };
+  return { programs, alsoOnPlan, orgLinks, orgPlace, groups, sidebarRows, phone, permits, tournamentsDoor, communications, sponsorships };
 }

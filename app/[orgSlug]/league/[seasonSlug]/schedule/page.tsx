@@ -26,6 +26,9 @@ import PublicSectionHead from '@/components/public/PublicSectionHead';
 import { ScheduleMatchup, type GameRowState, type MatchupSide } from '@/components/public/PublicGameRow';
 import { sideResult } from '@/lib/public-game-row';
 import kit from '@/components/public/ClubKit.module.css';
+import { ClubSponsoredBy } from '@/components/public/ClubSponsors';
+import { divisionSponsorsFor } from '@/lib/club-sponsorships-server';
+import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import parts from '@/components/public/PublicParts.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -82,6 +85,8 @@ export default async function PublicSchedulePage({
     divisions.find(d => d.id === divisionIdParam) ?? divisions[0] ?? null;
   // A draft division has no public games; one division only and still a draft reads the same.
   const coming = !!activeDivision && !published.has(activeDivision.id);
+  // Board Ready Stage 6 (ask 1): the active division's sponsors, a quiet line under its tab. A failed read draws no line.
+  const sponsoredBy = activeDivision ? (await divisionSponsorsFor(org.id, [activeDivision.id]).catch((): Record<string, never[]> => ({})))[activeDivision.id] ?? [] : [];
 
   const { bookings, needsDate } = seasonCalendar({
     seasonName: season.name,
@@ -127,6 +132,11 @@ export default async function PublicSchedulePage({
             );
           })}
         </div>
+      )}
+
+      {activeDivision && (
+        <ClubSponsoredBy sponsors={sponsoredBy}
+          label={divisions.length > 1 ? SPONSORSHIPS_WORDS.sponsoredBy : SPONSORSHIPS_WORDS.sponsoredByNamed(activeDivision.name)} />
       )}
 
       {coming ? (

@@ -14,6 +14,9 @@ import {
 import type { LeagueDivision } from '@/lib/types';
 import column from '../../league-column.module.css';
 import PublicPage from '@/components/public/PublicPage';
+import { ClubSponsoredBy } from '@/components/public/ClubSponsors';
+import { divisionSponsorsFor } from '@/lib/club-sponsorships-server';
+import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -62,6 +65,8 @@ export default async function PublicStandingsPage({
   const active: LeagueDivision | null = asked ?? kept[0] ?? null;
   const published = !!active?.schedulePublishedAt;
   const standings = active && active.showStandings && published ? await computeStandings(active.id, season.sport) : null;
+  // Board Ready Stage 6 (ask 1): the active division's sponsors, a quiet line under its tab. A failed read draws no line.
+  const sponsoredBy = active ? (await divisionSponsorsFor(org.id, [active.id]).catch((): Record<string, never[]> => ({})))[active.id] ?? [] : [];
   const scheduleHref = (d: LeagueDivision | null) => href(`/league/${seasonSlug}/schedule`) + (d ? `?d=${d.id}` : '');
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
@@ -92,6 +97,11 @@ export default async function PublicStandingsPage({
             </Link>
           ))}
         </div>
+      )}
+
+      {active && (
+        <ClubSponsoredBy sponsors={sponsoredBy}
+          label={kept.length > 1 ? SPONSORSHIPS_WORDS.sponsoredBy : SPONSORSHIPS_WORDS.sponsoredByNamed(active.name)} />
       )}
 
       {divisions.length === 0 ? (

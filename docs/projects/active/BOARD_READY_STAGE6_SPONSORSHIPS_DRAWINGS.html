@@ -1,0 +1,1452 @@
+<title>Club Sponsorships</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ─── Stage 6 additions ─── */
+/* the portal's joined money band (MoneySummaryBand): one frame, a hairline between figures */
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.mband > div { padding: 11px 16px; display: grid; gap: 2px; }
+.mband > div + div { border-left: 1px solid var(--home-line); }
+.mband .ml { font-size: 12px; color: var(--home-dim); }
+.mband .mv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-ink); }
+.mband .mc { font-size: 12px; color: var(--home-dim); }
+/* on a phone: figure ROWS, never tiles */
+.frows { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto 14px; gap: 10px; align-items: center; padding: 11px 14px; min-height: 52px; }
+.frow + .frow { border-top: 1px solid var(--home-line); }
+.frow .fl1 { font-size: 14px; font-weight: 600; } .frow .fc { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.frow .fv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl th.num { text-align: right; }
+.ptabs { display: flex; gap: 22px; border-bottom: 1px solid var(--home-line); font-size: 14px; }
+.ptabs span { padding: 8px 0 9px; color: var(--home-ink-soft); }
+.ptabs span.on { color: var(--home-ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--home-olive); }
+.stP { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(70,55,30,0.08); color: var(--home-ink-soft); white-space: nowrap; }
+.stP.paid { background: var(--good-bg); color: var(--good); }
+.stP.inv { background: var(--warn-bg); color: var(--warn); }
+.stP.off { background: var(--home-olive-soft); color: var(--home-olive); }
+.callout { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callout .ct { flex: 1 1 260px; display: grid; gap: 2px; }
+.callout .ct b { font-size: 15px; }
+.callout .ct span { font-size: 13px; color: var(--home-ink-soft); }
+.ck { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; }
+.ck + .ck { border-top: 1px solid var(--home-line); }
+.ck .t { font-size: 14px; font-weight: 600; } .ck .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.ck .when { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.logoT { width: 64px; height: 32px; border: 1px solid var(--home-line); border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; background: #fff; color: var(--home-ink); flex: 0 0 auto; text-align: center; line-height: 1.1; padding: 0 3px; }
+.logoT.none { border-style: dashed; color: var(--home-faint); font-weight: 600; }
+.lg1 { color: #1F5E8C; } .lg2 { color: #8A3B12; } .lg3 { color: #2E6B2F; } .lg4 { color: #6B2E7A; }
+.srow { display: grid; grid-template-columns: 64px minmax(0,1fr) auto 22px; gap: 12px; align-items: center; padding: 10px 14px; min-height: 56px; background: var(--home-card); }
+.srow + .srow { border-top: 1px solid var(--home-line); }
+.srow .nm { font-size: 14px; font-weight: 650; } .srow .cap { display: block; font-size: 12px; color: var(--home-dim); }
+.srow.ended { opacity: 0.55; }
+.place { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--home-ink-soft); }
+.place::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); }
+/* the business's page */
+.pub { box-sizing: content-box; width: 640px; padding: 0 0 28px; }
+.pubBand { background: #2B3A1C; color: #F4F1E6; padding: 14px 40px; display: flex; gap: 12px; align-items: center; border-radius: 8px 8px 0 0; }
+.pubBand .crest { width: 34px; height: 34px; border-radius: 50%; background: #D9F99D; color: #2B3A1C; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.pubBand b { font-size: 16px; }
+.pubIn { padding: 22px 40px 0; display: grid; gap: 18px; }
+.phone .pubBand { padding: 12px 16px; border-radius: 0; }
+.phone .pubIn { padding: 16px 16px 0; }
+.pkg { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 10px; }
+.pkg .pr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pkg ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sumT { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sumT td { padding: 6px 0; border-top: 1px solid var(--home-line); }
+.sumT tr:first-child td { border-top: 0; }
+.sumT tr.tot td { font-weight: 700; border-top: 1px solid var(--home-line-strong); }
+.payOpt { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.payOpt.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.payOpt .t { font-size: 15px; font-weight: 650; } .payOpt .h { font-size: 13px; color: var(--home-dim); }
+.receipt { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 8px; }
+.receipt .rt { font-size: 18px; font-weight: 700; margin: 0; }
+/* email */
+.mail { width: 600px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; color: #241E15; }
+.mailHd { padding: 12px 18px; border-bottom: 1px solid var(--home-line); font-size: 13px; display: grid; gap: 2px; background: #FBF9F5; }
+.mailHd span { color: var(--home-dim); }
+.mailBd { padding: 22px 28px; display: grid; gap: 12px; font-size: 15px; line-height: 1.55; }
+.mailBd p { margin: 0; }
+.mailBtn { justify-self: start; background: #2B3A1C; color: #F4F1E6; font-weight: 700; padding: 11px 18px; border-radius: 8px; font-size: 15px; }
+.mailFt { padding: 14px 28px 20px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-dim); display: grid; gap: 4px; }
+/* invoice paper: Letter at 96 dpi is 816 px wide */
+.paper { width: 816px; background: #fff; color: #1d1d1d; font-family: Helvetica, Arial, sans-serif; border: 1px solid #d6d2ca; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.paper .acc { height: 8px; background: #2B3A1C; }
+.paper .pin { padding: 34px 56px 40px; display: grid; gap: 18px; font-size: 13px; }
+.paper .idb { display: flex; justify-content: space-between; gap: 20px; }
+.paper .idb b { font-size: 16px; display: block; }
+.paper h4 { font-size: 26px; margin: 0; letter-spacing: 0.01em; }
+.paper .subl { color: #555; margin-top: 2px; }
+.paper .pfig { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #d6d2ca; border-radius: 4px; }
+.paper .pfig > div { padding: 10px 14px; } .paper .pfig > div + div { border-left: 1px solid #d6d2ca; }
+.paper .pfig span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+.paper .pfig b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.paper .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 4px; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #bbb; padding: 6px 0; }
+.paper td { padding: 8px 0; border-bottom: 1px solid #e3e0da; vertical-align: top; }
+.paper td.r, .paper th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .inc { margin: 4px 0 0; padding-left: 16px; color: #444; }
+.paper .tt td { border-bottom: 0; padding: 4px 0; }
+.paper .tt tr.big td { font-weight: 700; font-size: 15px; border-top: 1px solid #bbb; padding-top: 8px; }
+.paper .stamp { display: inline-block; border: 2px solid #2E6B2F; color: #2E6B2F; font-weight: 800; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; font-size: 13px; }
+.paper .foot { color: #777; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e3e0da; padding-top: 8px; }
+.paper.mini { width: 816px; }
+/* public club site */
+.site { box-sizing: content-box; width: 960px; padding: 0 0 22px; }
+.siteBar { background: #2B3A1C; color: #F4F1E6; padding: 12px 28px; display: flex; gap: 22px; align-items: center; font-size: 14px; border-radius: 8px 8px 0 0; }
+.siteBar b { font-size: 16px; margin-right: auto; }
+.siteIn { padding: 20px 28px 0; display: grid; gap: 14px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, 184px); gap: 12px; }
+.strip > div { min-height: 72px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; text-align: center; padding: 6px; }
+.byLine { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--home-dim); border: 1px solid var(--home-line); background: #fff; border-radius: 8px; padding: 6px 10px; }
+.pcard { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 4px 8px; }
+.pcard .nm { font-size: 15px; font-weight: 650; } .pcard .s { font-size: 13px; color: var(--home-dim); grid-column: 1; }
+.pcard .chev { grid-row: 1 / span 3; grid-column: 2; align-self: start; }
+.pband { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); display: flex; gap: 8px; padding-top: 4px; }
+.lockedRow { opacity: 0.6; }
+.planTbl td.y { color: var(--tag-new); font-weight: 700; }
+.planTbl td.n { color: var(--doc-soft); }
+.chip.q { background: rgba(70,55,30,0.08); color: var(--home-dim); }
+.phone .btnLime, .phone .btnOut { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.phone .ptabs span { padding: 12px 0; }
+.phone .ck { min-height: 44px; align-items: center; }
+.tap44 { min-width: 44px; min-height: 44px; padding: 0 10px; }
+.bandBtn { display: flex; gap: 8px; align-items: center; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stage 6 · sponsorships · drawings written Nov 22, 2026 · round 1, after /design, /legal and /accounting · all 15 asks ruled Nov 22</span>
+    <h1>Sponsorships: a club sells a package, the business fills in one link, the logo shows where the deal says</h1>
+    <p class="lead">Drawn on Riverdale Minor Ball in March 2027, its first season selling sponsorships, with a house league, a spring tournament and an HST registration. Built on Stage 4’s form (the sponsor link’s questions), the shipped sponsor list (Club Tier 4d), the team pay link, the coach’s sponsor invoice, the General ledger and online payments (Stage 12). Tabs follow the club’s path: get ready, make a package, offer it, the business’s page, follow the deal, the invoice, a cheque, where the logo shows, and next year. Card payment is drawn as it will be once online payments are on, and also as it must be until then (no card choice at all). Click any number, tag or red flag to read what it refers to. The last tab holds your asks, ranked by how much each changes; the first answer is my recommendation and is already selected.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · Where it lives</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · Packages</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · Offering a deal</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · The sponsor link</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · Deals and their states</button>
+    <button role="tab" id="t6" aria-selected="false" data-pane="p6">6 · Invoice and tax</button>
+    <button role="tab" id="t7" aria-selected="false" data-pane="p7">7 · A cheque, and the books</button>
+    <button role="tab" id="t8" aria-selected="false" data-pane="p8">8 · Where the logo shows</button>
+    <button role="tab" id="t9" aria-selected="false" data-pane="p9">9 · Offer again</button>
+    <button role="tab" id="t10" aria-selected="false" data-pane="p10">10 · Plans · fee · findings</button>
+    <button role="tab" id="t11" aria-selected="false" data-pane="p11">11 · Asks</button>
+  </nav>
+
+  <!-- 1 · WHERE IT LIVES (station I) -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <h2>Sponsorships is a place of its own, and the first thing a club sees is three steps to get ready</h2>
+    <p>A club sidebar lists places and a place’s pages are tabs on its page (ruled 2026-11-06). Sponsorships becomes a place with four tabs: <b>Deals · Packages · Sponsors · Setup</b>. The sponsor list moves here from the site editor, because a sponsor can now show on a division, a team or a tournament, not only the club site. Station I: a club with no packages yet lands on Deals, which says what to do first. Riverdale already typed six sponsors into its website last year; they arrive on the Sponsors tab untouched.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Deals, before any package exists</b><span class="chrome">club admin · desktop · 960</span><button class="mark" type="button" data-ask="12">12</button><button class="tag new" type="button" data-note="NEW PLACE. Sponsorships joins the club sidebar as its own place, with four tabs on its page, the way every club place works since the 2026-11-06 ruling. Ask 12 asks whether it is a place of its own or a tab inside Money.">NEW</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><p class="ttl">Sponsorships</p><span class="sub">Riverdale Minor Ball</span></div>
+          <div class="ptabs"><span class="on">Deals</span><span>Packages</span><span>Sponsors</span><span>Setup</span></div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Get ready to sell sponsorships</p><span class="cardSum">1 of 3 done</span></div>
+            <div class="rlist">
+              <div class="qrow nogrip"><div><div class="qt">Your invoice details <span class="chip good">Done</span></div><div class="qc">Your club’s mailing address, how businesses pay you, and whether you charge GST/HST</div></div><span class="chev">›</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Make your first package</div><div class="qc">What a business gets, what it costs and how many you have</div></div><span class="chev">›</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Your sponsorship form</div><div class="qc">It already asks for the business’s details and logo. Add your own questions.</div></div><span class="chev">›</span></div>
+            </div>
+            <p class="small">Once you have a package, this tab lists your deals.</p>
+          </div>
+          <div class="callout"><div class="ct"><b>You already have 6 sponsors on your website</b><span>They keep showing as they are. They’re on the Sponsors tab.</span></div><span class="door">Sponsors ›</span></div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Phone · the same page</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>Sponsorships<span class="sm">Riverdale Minor Ball</span></span></div>
+          <div class="pbody">
+            <div class="ptabs" style="gap:16px;font-size:13px"><span class="on">Deals</span><span>Packages</span><span>Sponsors</span><span>Setup</span></div>
+            <div class="card"><p class="cardH">Get ready to sell sponsorships</p>
+              <div class="rlist">
+                <div class="qrow nogrip"><div><div class="qt">Your invoice details <span class="chip good">Done</span></div></div><span class="chev">›</span></div>
+                <div class="qrow nogrip"><div><div class="qt">Make your first package</div></div><span class="chev">›</span></div>
+                <div class="qrow nogrip"><div><div class="qt">Your sponsorship form</div><div class="qc">Add your own questions</div></div><span class="chev">›</span></div>
+              </div></div>
+            <div class="callout"><div class="ct"><b>You already have 6 sponsors on your website</b><span>They keep showing as they are.</span></div><span class="btnOut" style="width:100%">Sponsors ›</span></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The site editor’s Sponsors line, after</b><span class="chrome">public site editor · desktop</span><button class="tag re" type="button" data-note="RESTYLED. Today the site editor holds the list itself (one of four folding lines in Contacts, documents and sponsors). With one list per organization and places beyond the club site, the list moves to Sponsorships and this line becomes a door to it. Nothing about how the home strip or About page look changes here.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame adm w620">
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Contacts, documents and sponsors</p></div>
+            <div class="rlist">
+              <div class="qrow nogrip"><div><div class="qt">Contacts</div><div class="qc">3 people</div></div><span class="chev">›</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Documents</div><div class="qc">2 documents</div></div><span class="chev">›</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Sponsors</div><div class="qc">Kept in Sponsorships, with where each one shows</div></div><span class="door" style="font-size:13px">Sponsorships ›</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>Why a place, and why these tabs</h3>
+        <ul>
+          <li><b>Not inside Money:</b> a sponsorship lead works packages, offers and banners, mostly not money. Money already has nine tabs. The deal still lands in the General ledger (tab 7).</li>
+          <li><b>Who opens it:</b> the owner, admins and the treasurer. A sponsorship volunteer gets in through one of those seats until Stage 3’s people groups exist (ask 12).</li>
+          <li><b>Setup</b> holds the sponsorship form (a page one level down, Stage 4’s editor) and the invoice details (tab 6). Done once, so not on the working tabs.</li>
+          <li><b>The checklist</b> is three rows of the shipped row list, not a wizard. Each row opens its window or page. It goes away for good once a package exists.</li>
+          <li><b>Plans:</b> League Plus and both Club bands (ruled 2026-11-10). A Tournament or Tournament Plus organizer never sees this place; its sponsors are the tournament drawing’s (tab 10).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · PACKAGES (station A) -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p2"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>A package says what a business gets, what it costs, what kind of place it is for, and how many there are</h2>
+    <p>Four packages, drawn as of March 12, 2027. One of them, Club partner, is full. Its two places are one paid deal and one open offer. The package window is a create window, so it asks before it saves (“edit autosaves, create asks”). Each package says what kind of place it is for, and each deal picks which one (ask 6). The first item in “What’s included” is the one the product acts on: <b>your logo on our website</b> (ask 1).</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Packages</b><span class="chrome">desktop · 960</span><button class="mark" type="button" data-ask="7">7</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead same-part"><p class="ttl">Sponsorships</p><span class="sub">Riverdale Minor Ball</span></div>
+          <div class="ptabs same-part"><span>Deals</span><span class="on">Packages</span><span>Sponsors</span><span>Setup</span></div>
+          <div class="toolbar same-part"><span class="sp"></span><span class="btnLime">+ Add a package</span></div>
+          <table class="tbl">
+            <thead><tr><th>Package</th><th>For</th><th class="num">Price</th><th>Taken</th><th></th></tr></thead>
+            <tbody>
+              <tr class="same-part"><td class="nm">Division sponsor<span class="s">Logo on the division’s pages · named division · field banner</span></td><td>A house-league division</td><td class="num">$1,000.00</td><td>3 of 4</td><td class="chev">›</td></tr>
+              <tr class="same-part"><td class="nm">Team sponsor<span class="s">Logo on the team’s page · jersey crest</span></td><td>A house-league team</td><td class="num">$400.00</td><td>7 of 24</td><td class="chev">›</td></tr>
+              <tr class="same-part"><td class="nm">Tournament sponsor<span class="s">Logo on the tournament’s page · venue banner</span></td><td>A tournament</td><td class="num">$750.00</td><td>2 of 6</td><td class="chev">›</td></tr>
+              <tr><td class="nm">Club partner<span class="s">Logo on the home page · Riverdale Park banner · logo on the schedule handout</span></td><td>The club</td><td class="num">$2,500.00</td><td><span class="chip warn">Full</span> 2 of 2</td><td class="chev">›</td></tr>
+            </tbody>
+          </table>
+          <p class="small same-part">“Taken” counts open offers too, so nothing is promised twice.</p>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Phone · the same list</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>Sponsorships<span class="sm">Packages</span></span><span style="margin-left:auto" class="btnLime tap44" aria-label="Add a package">+</span></div>
+          <div class="pbody">
+            <div class="rlist">
+              <div class="srow same-part" style="grid-template-columns:minmax(0,1fr) auto 18px"><span><span class="nm">Division sponsor</span><span class="cap">A house-league division · $1,000.00 · 3 of 4 taken</span></span><span></span><span class="chev">›</span></div>
+              <div class="srow same-part" style="grid-template-columns:minmax(0,1fr) auto 18px"><span><span class="nm">Team sponsor</span><span class="cap">A house-league team · $400.00 · 7 of 24 taken</span></span><span></span><span class="chev">›</span></div>
+              <div class="srow same-part" style="grid-template-columns:minmax(0,1fr) auto 18px"><span><span class="nm">Tournament sponsor</span><span class="cap">A tournament · $750.00 · 2 of 6 taken</span></span><span></span><span class="chev">›</span></div>
+              <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 18px"><span><span class="nm">Club partner</span><span class="cap">The club · $2,500.00 · 2 of 2 taken</span></span><span class="chip warn">Full</span><span class="chev">›</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Add a package</b><span class="chrome">window · 600</span><button class="mark" type="button" data-ask="6">6</button><button class="mark" type="button" data-ask="1">1</button><button class="tag new" type="button" data-note="NEW WINDOW, drawn from the kit's form window (KitDialog kind=form): title, fields, foot with Cancel and one lime. The 'What's included' list is the Stage 4 row list (grip, text, chevron) with an add line at its foot. The PDF field is Stage 4's document field (PDF up to 8 MB).">NEW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Packages</div><p class="wtitle">Add a package</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Name <span class="req">*</span></span><div class="inp">Division sponsor</div></div>
+            <div class="two">
+              <div class="fld"><span class="l">Price <span class="req">*</span></span><div class="inp">$1,000.00</div><span class="hint">Before GST/HST.</span></div>
+              <div class="fld"><span class="l">How many</span><div class="inp">4</div><span class="hint">Leave it empty for no limit.</span></div>
+            </div>
+            <div class="two">
+              <div class="fld"><span class="l">For <span class="req">*</span></span><div class="inp sel">A house-league division <span>▾</span></div><span class="hint">Each deal picks which division.</span></div>
+              <div class="fld"><span class="l">Shows until</span><div class="inp sel">Aug 31, 2027 <span>📅</span></div><span class="hint">Each deal starts with this last day.</span></div>
+            </div>
+            <div class="sec"><p class="secH">What’s included</p>
+              <div class="sw"><span class="t">Your logo on our website<span class="h">On the division’s pages, from the day the deal is paid until its last day.</span></span><span class="tog on"></span></div>
+              <div class="rlist">
+                <div class="qrow"><span class="grip">⠿</span><div><div class="qt">Named division: “U9 presented by {sponsor}”</div></div><span class="chev">›</span></div>
+                <div class="qrow"><span class="grip">⠿</span><div><div class="qt">A field banner at Riverdale Park</div></div><span class="chev">›</span></div>
+                <div class="qrow nogrip"><div class="door" style="font-size:14px">+ Add an item</div><span></span></div>
+              </div>
+              <span class="hint">Listed on the offer, the invoice, and the delivery checklist.</span>
+            </div>
+            <div class="sec"><p class="secH">Sponsorship document</p>
+              <div class="fileGot"><span class="pdf">PDF</span> Riverdale sponsorship 2027.pdf <span class="hint">1.4 MB</span><span class="door" style="margin-left:auto;font-size:13px">Replace</span></div>
+              <span class="hint">Optional. The business can open it from their link. A PDF up to 8 MB.</span>
+            </div>
+          </div>
+          <div class="wfoot"><span class="fs"></span><span class="btnOut">Cancel</span><span class="btnLime">Add package</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Club partner, full</b><span class="chrome">record window · 600</span><button class="mark" type="button" data-ask="7">7</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Packages</div><p class="wtitle">Club partner <span class="chip warn">Full</span></p></div><span class="ico">✎</span><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="nudge"><b>Both places are taken.</b> 1 paid, 1 offered. To offer another, withdraw an offer or raise How many.</div>
+            <dl class="facts">
+              <dt>Price</dt><dd>$2,500.00 <span class="s">Before GST/HST</span></dd>
+              <dt>For</dt><dd>The club</dd>
+              <dt>How many</dt><dd>2</dd>
+              <dt>Shows until</dt><dd>Mar 31, 2028</dd>
+              <dt>What’s included</dt><dd>Your logo on our website (the home page)<span class="s">A banner at Riverdale Park · Logo on the season schedule handout</span></dd>
+              <dt>Document</dt><dd><span class="door" style="font-size:14px">Riverdale sponsorship 2027.pdf ↗</span></dd>
+            </dl>
+            <div class="sec"><p class="secH">Taken by</p>
+              <div class="rlist">
+                <div class="qrow nogrip"><div><div class="qt">Bright Smiles Orthodontics</div><div class="qc">Paid · 2 of 3 delivered</div></div><span class="chev">›</span></div>
+                <div class="qrow nogrip"><div><div class="qt">Riverside Hardware</div><div class="qc">Offered Mar 9 · not opened yet</div></div><span class="chev">›</span></div>
+              </div>
+            </div>
+            <span class="recAct">🗄 Archive this package</span>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>What this tab settles</h3>
+      <ul>
+        <li><b>“For” is a kind of place</b> (the club, a house-league division, a house-league team, a tournament). “A club event” joins this list when Stage 5 exists. Nothing else about a package or a deal changes when it does.</li>
+        <li><b>The logo switch is the only item the product acts on.</b> When it is on, a paid deal puts the logo at the deal’s place. Every other item is a line the club ticks by hand (tab 5). Switch it off for a package that is only a banner.</li>
+        <li><b>Full</b> is the amber chip in the row’s one chip place. Open offers count (ask 7), so a business never opens a link for a place that has already gone. In the Offer window a full package is listed but can’t be picked, with its reason.</li>
+        <li><b>No delete:</b> a package with deals is archived (the body’s last line). Deals keep the package as it was when they were offered.</li>
+        <li><b>Price is before tax.</b> Whether a deal adds GST/HST is the deal’s switch (tab 6).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3 · OFFERING A DEAL (station C) -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>Offering a deal: pick the business, the package and the place, then the club’s email goes out with the link</h2>
+    <p>Started from Deals → “Offer a deal” (the tab’s one lime). A business the club has worked with before is picked from the one sponsor list. A new one needs only a name and an email. Everything else comes back from the business on the link. The place list only offers what the package is for.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Offer a deal</b><span class="chrome">window · 600</span><button class="mark" type="button" data-ask="1">1</button><button class="mark" type="button" data-ask="9">9</button><button class="tag new" type="button" data-note="NEW WINDOW (KitDialog kind=form). Business is the shipped payee-style picker with a 'New business' line at its foot. 'Shows on' is the one place choice: the same field the Sponsors tab shows for this business afterwards (ask 1). The tax switch appears only when the club has said it is registered (tab 6).">NEW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Deals</div><p class="wtitle">Offer a deal</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Business <span class="req">*</span></span><div class="inp sel">Harbour Dental <span>▾</span></div><span class="hint">Frank Osei · frank@harbourdental.ca</span></div>
+            <div class="two">
+              <div class="fld"><span class="l">Package <span class="req">*</span></span><div class="inp sel">Division sponsor · 1 left <span>▾</span></div></div>
+              <div class="fld"><span class="l">Shows on <span class="req">*</span></span><div class="inp sel">U9 division <span>▾</span></div><span class="hint">U11 and U13 already have a sponsor.</span></div>
+            </div>
+            <div class="two">
+              <div class="fld"><span class="l">Amount <span class="req">*</span></span><div class="inp">$1,000.00</div><span class="hint">The package price. Change it for this business.</span></div>
+              <div class="fld"><span class="l">Shows until</span><div class="inp sel">Aug 31, 2027 <span>📅</span></div></div>
+            </div>
+            <div class="sw"><span class="t">Charge HST<span class="h">13% for an Ontario address, added to the amount. Your club is registered for GST/HST.</span></span><span class="tog on"></span></div>
+            <div class="sec"><p class="secH">The email <button class="mark" type="button" data-ask="13">13</button></p>
+              <div class="fld"><span class="l">Why you can email them <span class="req">*</span></span><div class="inp sel">They asked us about sponsoring (in the last 6 months) <span>▾</span></div><span class="hint">Kept with the offer, with today’s date.</span></div>
+              <p class="small" style="font-size:13px;color:var(--home-ink-soft)">Send this only to a business that has paid you in the last two years, asked you about sponsoring in the last six months, gave you this address, or published it for business use and a sponsorship is relevant to what they do. Don’t send it to a business you have never dealt with. If you have spoken to them, give them the link in person instead.</p>
+              <div class="fld"><span class="l">A note from you</span><div class="inp ta">Frank, thanks for talking with us at the clinic. Here’s the U9 package we discussed.</div><span class="hint">Optional. It opens the email. Everything else is written for you.</span></div>
+            </div>
+          </div>
+          <div class="wfoot"><span class="fs">Emails frank@harbourdental.ca</span><span class="btnOut">Cancel</span><span class="btnLime">Send the offer</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Business ▾ open · the new-business line</b><span class="chrome">field menu</span></div>
+        <div class="scroll"><div class="frame adm w520">
+          <div class="fld"><span class="l">Business <span class="req">*</span></span><div class="inp sel" style="border-color:var(--home-olive)">Har <span>▾</span></div></div>
+          <div class="menu" style="position:static;width:100%">
+            <div class="mi">Harbour Dental<span class="h">Frank Osei · no deals yet</span></div>
+            <div class="mi">Harborview Marina<span class="h">2026 · Team sponsor, paid</span></div>
+            <div class="mdiv"></div>
+            <div class="mi"><span class="door">+ New business “Har…”</span><span class="h">A name and an email. They fill in the rest.</span></div>
+          </div>
+          <div class="fld"><span class="l">Shows on ▾ for a Team sponsor</span>
+            <div class="menu" style="position:static;width:100%">
+              <div class="mi g">U9</div><div class="mi">U9 Sharks<span class="h">Taken: Kowalski Plumbing, invoiced</span></div><div class="mi">U9 Comets<span class="h">Taken: Brennan’s Bakery</span></div><div class="mi">U9 Owls</div>
+              <div class="mi g">U11</div><div class="mi">U11 Lions<span class="h">Offered to Fenwick Insurance</span></div><div class="mi">U11 Hawks<span class="h">Taken: Oakridge Physio</span></div><div class="mi">U11 Bears</div>
+            </div>
+          </div>
+          <p class="small">A taken place can still be picked. It warns, and never blocks: some clubs sell two team sponsors.</p>
+        </div></div>
+        <div class="specHead" style="margin-top:6px"><b>Phone · Offer a deal, a full screen</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>←</span><span>Offer a deal</span></div>
+          <div class="pbody">
+            <div class="fld"><span class="l">Business <span class="req">*</span></span><div class="inp sel">Harbour Dental <span>▾</span></div></div>
+            <div class="fld"><span class="l">Package <span class="req">*</span></span><div class="inp sel">Division sponsor · 1 left <span>▾</span></div></div>
+            <div class="fld"><span class="l">Shows on <span class="req">*</span></span><div class="inp sel">U9 division <span>▾</span></div></div>
+            <div class="fld"><span class="l">Amount <span class="req">*</span></span><div class="inp">$1,000.00</div></div>
+            <div class="sw"><span class="t">Charge HST<span class="h">13%, added to the amount</span></span><span class="tog on"></span></div>
+            <div class="fld"><span class="l">Why you can email them <span class="req">*</span></span><div class="inp sel">They asked us about sponsoring <span>▾</span></div></div>
+            <span class="btnLime" style="width:100%">Send the offer</span>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The email the business gets</b><span class="chrome">email · 600</span><button class="mark" type="button" data-ask="13">13</button><button class="tag new" type="button" data-note="NEW EMAIL. Sent from the club's name, replies go to the club (the house default, Club Communications). The footer carries what /legal is asked to check under CASL: who it is from, the club's mailing address, and an unsubscribe for sponsorship emails. Draft words; /legal and /marketing confirm.">NEW</button></div>
+        <div class="scroll"><div class="frame" style="padding:14px"><div class="mail">
+          <div class="mailHd"><div><b>Riverdale Minor Ball</b> <span>via FieldLogicHQ · replies go to sponsors@riverdaleminorball.ca</span></div><div><span>To</span> frank@harbourdental.ca</div><div><span>Subject</span> Sponsorship with Riverdale Minor Ball: Division sponsor</div></div>
+          <div class="mailBd">
+            <p>Frank, thanks for talking with us at the clinic. Here’s the U9 package we discussed.</p>
+            <p><b>Division sponsor, U9</b><br>$1,000.00 plus HST, until Aug 31, 2027</p>
+            <p>It includes your logo on the U9 division’s pages on our website, the division named “U9 presented by Harbour Dental”, and a field banner at Riverdale Park.</p>
+            <p>The link below has the full package. You can give us your details and logo there, and say how you’ll pay.</p>
+            <span class="mailBtn">See the package</span>
+            <p style="font-size:13px;color:#615A54">Questions? Reply to this email, or contact Dana Ruiz at sponsors@riverdaleminorball.ca.</p>
+          </div>
+          <div class="mailFt"><span>You get this because you asked Riverdale Minor Ball about sponsoring.</span><span>Sent by Riverdale Minor Ball, 200 Park Road, Riverdale ON K0A 1B0.</span><span>Don’t want sponsorship offers from Riverdale Minor Ball? <u>Unsubscribe</u></span><span>Sent through FieldLogicHQ, the software Riverdale Minor Ball uses.</span></div>
+        </div></div></div>
+      </div>
+      <div class="explain">
+        <h3>What goes out, and what doesn’t</h3>
+        <ul>
+          <li><b>One link per deal,</b> like the team pay link: signed, no account, and replaceable with “Send the link again” from the deal page. That is also where “Copy the link” lives, for a club that hands it over in person.</li>
+          <li><b>The PDF isn’t attached.</b> Attachments get mail filtered. The link page opens it.</li>
+          <li><b>CASL (from /legal):</b> an offer to sell advertising is a commercial message, even to a business. There is no business-to-business exception. The club is the sender. The window requires one of four reasons (paid you in 2 years, asked in 6 months, gave you the address, published it for business), keeps it with its date, and the foot says it back. Referral isn’t offered in the first version. <span class="fl" data-f="F9">F9</span></li>
+          <li><b>The unsubscribe</b> stops that club’s sponsorship offers to that address only. Invoices and receipts for a live deal still go, and so does family email to a sponsor who is also a parent. An address on the club’s family opt-out isn’t offered either. Nobody at the club can clear it. A business that says stop by reply or phone gets the deal page’s “Do not offer again”.</li>
+          <li><b>Send waits for the mailing address.</b> Until Invoice details has one, the window’s foot says “Add your mailing address in Setup first” and the button is absent.</li>
+          <li><b>The club’s note is optional.</b> The rest is written for the club and can’t be edited, so the package, the price and the tax are said once, the same way on the email, the link and the invoice.</li>
+          <li><b>The mailing address</b> comes from the invoice details (tab 6). The product has no club address today <span class="fl" data-f="F2">F2</span>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · THE SPONSOR LINK (station D) -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p4"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>The business’s page: the package, their details, the club’s questions, a logo, and how they’ll pay</h2>
+    <p>One page, no account, on the club’s band. The fixed business details come first and the club can’t remove them (ask 8), then “Questions from {club}” and any document, both from Stage 4’s form. The pay choice is last. Left: once online payments are on in production. Right: until then. The card choice isn’t there at all, so nothing is broken or greyed out (prompt ruling 6).</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>With card payment on</b><span class="chrome">public · desktop · 640</span><button class="mark" type="button" data-ask="8">8</button><button class="mark" type="button" data-ask="3">3</button><button class="tag new" type="button" data-note="NEW PAGE, built from the team pay link (band, eyebrow, title, the pay block, the questions line with Copy) and the Stage 4 family form (fields, Questions from {club}, the document block, the global error box). A business is not a family, so the 2026-10-31 family-links rule doesn't apply.">NEW</button></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubBand same-part"><span class="crest">RM</span><b>Riverdale Minor Ball</b></div>
+          <div class="pubIn">
+            <div class="same-part"><div class="eyebrow" style="color:var(--home-dim)">Sponsorship</div><div class="famH">Division sponsor, U9</div><p class="famSub">Offered to Harbour Dental</p></div>
+            <div class="pkg same-part">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span class="pr">$1,000.00</span><span class="small">plus HST · until Aug 31, 2027</span></div>
+              <ul><li>Your logo on the U9 division’s pages on our website</li><li>Named division: “U9 presented by Harbour Dental”</li><li>A field banner at Riverdale Park</li></ul>
+              <span class="door" style="font-size:14px"><span class="pdf">PDF</span> The full package (1.4 MB) ↗</span>
+            </div>
+            <div class="fsec same-part"><p class="fsecH">About your business</p>
+              <div class="fld"><span class="l">Business name, as it should appear <span class="req">*</span></span><div class="inp">Harbour Dental</div><span class="hint">On our website and your invoice.</span></div>
+              <div class="two"><div class="fld"><span class="l">Contact name <span class="req">*</span></span><div class="inp">Frank Osei</div></div><div class="fld"><span class="l">Phone</span><div class="inp">613-555-0142</div></div></div>
+              <div class="fld"><span class="l">Email <span class="req">*</span></span><div class="inp">frank@harbourdental.ca</div><span class="hint">Your invoice and receipt go here.</span></div>
+              <div class="fld"><span class="l">Address for the invoice <span class="req">*</span></span><div class="inp">41 Harbour Street</div><div class="two"><div class="inp">Riverdale</div><div class="two"><div class="inp sel">ON <span>▾</span></div><div class="inp">K0A 1C2</div></div></div></div>
+              <div class="fld"><span class="l">Website</span><div class="inp">https://harbourdental.ca</div><span class="hint">People who tap your logo go here.</span></div>
+            </div>
+            <div class="fsec same-part"><p class="fsecH">Your logo</p>
+              <div class="fileGot"><span class="logoT lg1">HARBOUR<br>DENTAL</span> harbour-logo.png <span class="hint">180 KB</span><span style="margin-left:auto" class="door">Replace</span></div>
+              <span class="hint">JPG, PNG or WebP, up to 2 MB. Don’t have it handy? Send it later from this page.</span>
+              <span class="hint">You confirm you may use this logo, and you allow Riverdale Minor Ball to show it and your business name as this package says.</span>
+            </div>
+            <div class="fsec same-part"><p class="fsecH">Questions from Riverdale Minor Ball</p>
+              <div class="fld"><span class="l">Banner size you’ll supply</span><div class="choices"><span><i class="rad on"></i>3 × 6 ft</span><span><i class="rad"></i>4 × 8 ft</span><span><i class="rad"></i>Please make one for us</span></div></div>
+              <div class="fld"><span class="l">Anything we should know?</span><div class="inp ta"></div></div>
+            </div>
+            <div class="fsec"><p class="fsecH">How you’ll pay</p>
+              <div class="sumT-wrap"><table class="sumT"><tr><td>Division sponsor, U9</td><td class="num">$1,000.00</td></tr><tr><td>HST 13%</td><td class="num">$130.00</td></tr><tr class="tot"><td>Total</td><td class="num">$1,130.00</td></tr></table></div>
+              <div class="payOpt on"><span class="dot"></span><div><div class="t">Pay by card now</div><div class="h">You get your receipt right away.</div></div></div>
+              <div class="payOpt"><span class="dot" style="border:2px solid var(--home-line-strong)"></span><div><div class="t">We’ll send a cheque or e-transfer</div><div class="h">Your invoice comes by email, with how to pay.</div></div></div>
+              <span class="btnLime big">Send and pay $1,130.00</span>
+              <p class="small">Riverdale Minor Ball receives your payment. Your card is handled by Stripe. <span class="door" style="font-size:12px">Refund policy</span></p>
+            </div>
+            <div class="same-part" style="display:grid;gap:4px"><span class="small">Riverdale Minor Ball’s privacy policy ↗</span><span class="small">Questions about this sponsorship or your information? sponsors@riverdaleminorball.ca <span class="door" style="font-size:12px">Copy</span></span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Until card payment is on · the pay part only</b><span class="chrome">public · desktop · 640</span><button class="tag re" type="button" data-note="THE SAME PAGE before Stage 12 is switched on in production. The card choice is absent (not disabled), so there is one way to pay and no radio. The button names what happens: the club gets the form and the invoice is emailed. The team pay link's 'Pay the organizer directly' panel is the precedent for saying plainly that nothing is charged here.">CARD OFF</button></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubIn">
+            <div class="fsec" style="border-top:0"><p class="fsecH">How you’ll pay</p>
+              <table class="sumT"><tr><td>Division sponsor, U9</td><td class="num">$1,000.00</td></tr><tr><td>HST 13%</td><td class="num">$130.00</td></tr><tr class="tot"><td>Total</td><td class="num">$1,130.00</td></tr></table>
+              <p style="margin:0;font-size:14px">Riverdale Minor Ball will email your invoice with how to pay by cheque or e-transfer. You won’t be charged on this page.</p>
+              <span class="btnLime big">Send to Riverdale Minor Ball</span>
+            </div>
+          </div>
+        </div></div>
+        <div class="specHead" style="margin-top:6px"><b>Phone · the address, then how you’ll pay</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pubIn" style="padding-bottom:16px">
+            <div class="fld"><span class="l">Address for the invoice <span class="req">*</span></span><div class="inp">41 Harbour Street</div><div class="inp">Riverdale</div><div class="two"><div class="inp sel">ON <span>▾</span></div><div class="inp">K0A 1C2</div></div></div>
+            <p class="fsecH" style="font-size:17px">How you’ll pay</p>
+            <table class="sumT"><tr><td>Division sponsor, U9</td><td class="num">$1,000.00</td></tr><tr><td>HST 13%</td><td class="num">$130.00</td></tr><tr class="tot"><td>Total</td><td class="num">$1,130.00</td></tr></table>
+            <div class="payOpt on"><span class="dot"></span><div><div class="t">Pay by card now</div><div class="h">Your receipt comes right away.</div></div></div>
+            <div class="payOpt"><span class="dot" style="border:2px solid var(--home-line-strong)"></span><div><div class="t">We’ll send a cheque or e-transfer</div><div class="h">Your invoice comes by email.</div></div></div>
+            <span class="btnLime big" style="min-height:48px">Send and pay $1,130.00</span>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>After sending · a cheque or e-transfer</b><span class="chrome">public · 640</span><button class="mark" type="button" data-ask="4">4</button></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubBand"><span class="crest">RM</span><b>Riverdale Minor Ball</b></div>
+          <div class="pubIn">
+            <div><div class="eyebrow" style="color:var(--home-dim)">Sponsorship</div><div class="famH">Thank you, Harbour Dental</div><p class="famSub">Riverdale Minor Ball has your details and logo.</p></div>
+            <div class="receipt">
+              <p class="rt">Invoice 2027-014 · $1,130.00</p>
+              <span class="small">Issued Mar 3, 2027 · due Apr 2, 2027 · also sent to frank@harbourdental.ca</span>
+              <span class="btnOut" style="justify-self:start">Download the invoice (PDF)</span>
+              <div class="sec"><p class="secH">How to pay</p><ul style="margin:0;padding-left:18px;font-size:14px;display:grid;gap:3px"><li>By e-transfer to treasurer@riverdaleminorball.ca</li><li>By cheque payable to Riverdale Minor Ball, mailed to 200 Park Road, Riverdale ON K0A 1B0</li><li>Please quote invoice 2027-014.</li></ul></div>
+            </div>
+            <p class="small">This page shows your invoice, and your receipt once you’ve paid, any time you open your link.</p>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>After paying by card</b><span class="chrome">public · 640</span><button class="tag same" type="button" data-note="UNCHANGED LOOK. The team pay link's receipt card (title 'Paid, thank you', the amount to the club, card and receipt line, a small table, the footnote). While Stripe confirms, the same 'Confirming your payment… Don't pay again.' wait the pay link already shows; it never says Paid from the redirect alone.">PAY LINK’S RECEIPT</button></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubBand"><span class="crest">RM</span><b>Riverdale Minor Ball</b></div>
+          <div class="pubIn">
+            <div class="receipt">
+              <p class="rt">Paid, thank you</p>
+              <span style="font-size:14px">$1,130.00 to Riverdale Minor Ball</span>
+              <span class="small">Visa ••4242 · Mar 3, 2027, 2:14 p.m. · invoice 2027-014</span>
+              <table class="sumT"><tr><td>Division sponsor, U9</td><td class="num">$1,000.00</td></tr><tr><td>HST 13%</td><td class="num">$130.00</td></tr><tr class="tot"><td>Paid</td><td class="num">$1,130.00</td></tr></table>
+              <span class="btnOut" style="justify-self:start">Download your receipt (PDF)</span>
+            </div>
+            <p class="small">Your logo goes on the U9 division’s pages today. This page shows your receipt any time you open your link.</p>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>The rules the page keeps</h3>
+      <ul>
+        <li><b>No processing fee line, by default.</b> Ruled Nov 22 (ask 3): sponsorships have their own choice on the Payouts card, and its default is “The club pays it”, so the business pays exactly the invoice, as drawn here. A club that picks “The sponsor pays it” shows the fee as its own line before the business pays, with the club’s GST/HST on that line. That case isn’t drawn yet (round 2). Paying by cheque or e-transfer never carries a fee. <span class="fl" data-f="F10">F10</span></li>
+        <li><b>The logo line</b> (from /legal) says the business may use the logo and lets the club show it as the package says. The card statement must show the club’s name before the page says anything about it.</li>
+        <li><b>“Send the link again” replaces the link.</b> The old one, like a withdrawn offer’s, shows no business details.</li>
+        <li><b>The global error box</b> (Stage 4) counts what is missing and names the first. Not drawn again.</li>
+        <li><b>Name and logo can change until the deal is paid,</b> from this same link. After that the club changes them on the Sponsors tab. A business that comes back sees its answers and Change, as a family does on Your sign-up (Stage 4 ruling 20).</li>
+        <li><b>A full package</b> can’t reach this page: open offers hold their place (ask 7). A withdrawn offer’s link says “This offer was withdrawn. Contact Riverdale Minor Ball.”, with the contact.</li>
+        <li><b>Tax shown is the club’s tax</b> on the deal. A deal with the switch off shows one line, the amount, with no word about tax.</li>
+        <li><b>The club’s privacy link</b> shows when the club has one (Stage 4.P). It collects a named contact and a phone, so <b>/legal</b> reads this page.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 · DEALS AND THEIR STATES (station B) -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <h2>Deals: this year’s list grouped by state, and one deal’s page that says what to do next</h2>
+    <p>Fourteen deals in fiscal year 2027. The list is a table, because a column (amount, delivered) answers the question. It is grouped by state in band rows, and the state is said once, by the band. The money band sits above it as one joined band, before GST/HST. A deal’s page reads first and edits whole. The callout at its top names the state, then the one thing to do next.</p>
+    <div class="spec">
+      <div class="specHead"><b>Deals</b><span class="chrome">desktop · 1200 (a table page)</span><button class="mark" type="button" data-ask="4">4</button><button class="tag new" type="button" data-note="NEW LIST, drawn from the house rules: the Year pill (the club's money tabs' shipped pill), Search, Filter, Export (one button, Excel first) and the screen's one lime. Groups are the shipped band rows with a count. The name is the link and there is one chevron column; no actions in cells.">NEW</button></div>
+      <div class="scroll"><div class="frame adm wide">
+        <div class="phead"><p class="ttl">Sponsorships</p><span class="sub">Riverdale Minor Ball</span></div>
+        <div class="ptabs"><span class="on">Deals</span><span>Packages</span><span>Sponsors</span><span>Setup</span></div>
+        <div class="mband">
+          <div><span class="ml">Deals</span><span class="mv">$12,300.00</span><span class="mc">14 deals</span></div>
+          <div><span class="ml">Paid</span><span class="mv">$6,250.00</span><span class="mc">8 deals</span></div>
+          <div><span class="ml">Invoiced, not paid</span><span class="mv">$1,400.00</span><span class="mc">2 deals</span></div>
+          <div><span class="ml">Waiting on the business</span><span class="mv">$4,650.00</span><span class="mc">4 deals</span></div>
+        </div>
+        <div class="toolbar"><span class="pill olive">2027 ▾</span><span class="search">Search businesses</span><span class="sq">Filter</span><span class="sp"></span><span class="sq">Export</span><span class="btnLime">+ Offer a deal</span></div>
+        <table class="tbl">
+          <thead><tr><th>Business</th><th>Package</th><th>Shows on</th><th class="num">Amount</th><th>Items done</th><th></th></tr></thead>
+          <tbody>
+            <tr><td colspan="6" class="band" style="padding:6px 12px">Offered <span class="bc">3</span></td></tr>
+            <tr><td class="nm">Riverside Hardware<span class="s">Sent Mar 9 · not opened</span></td><td>Club partner</td><td>The club</td><td class="num">$2,500.00</td><td>—</td><td class="chev">›</td></tr>
+            <tr><td class="nm">Lakeview Pizza<span class="s">Sent Mar 2 · opened Mar 4</span></td><td>Tournament sponsor</td><td>Spring Classic 2027</td><td class="num">$750.00</td><td>—</td><td class="chev">›</td></tr>
+            <tr><td class="nm">Fenwick Insurance<span class="s">Sent Feb 26 · opened Feb 27</span></td><td>Team sponsor</td><td>U11 Lions</td><td class="num">$400.00</td><td>—</td><td class="chev">›</td></tr>
+            <tr><td colspan="6" class="band" style="padding:6px 12px">Form received <span class="bc">1</span></td></tr>
+            <tr><td class="nm">Northside Auto<span class="s">Mar 10 · card payment not finished</span></td><td>Division sponsor</td><td>U11 division</td><td class="num">$1,000.00</td><td>—</td><td class="chev">›</td></tr>
+            <tr><td colspan="6" class="band" style="padding:6px 12px">Invoiced <span class="bc">2</span></td></tr>
+            <tr><td class="nm">Harbour Dental<span class="s">2027-014 · due Apr 2</span></td><td>Division sponsor</td><td>U9 division</td><td class="num">$1,000.00</td><td>1 of 3</td><td class="chev">›</td></tr>
+            <tr><td class="nm">Kowalski Plumbing<span class="s">2027-011 · due Mar 20</span></td><td>Team sponsor</td><td>U9 Sharks</td><td class="num">$400.00</td><td>0 of 2</td><td class="chev">›</td></tr>
+            <tr><td colspan="6" class="band" style="padding:6px 12px">Paid <span class="bc">2</span></td></tr>
+            <tr><td class="nm">Bright Smiles Orthodontics<span class="s">Paid Feb 14 · card</span></td><td>Club partner</td><td>The club</td><td class="num">$2,500.00</td><td>2 of 3</td><td class="chev">›</td></tr>
+            <tr><td class="nm">Cedar Vet Clinic<span class="s">Paid Feb 20 · cheque</span></td><td>Team sponsor</td><td>U7 Bees</td><td class="num">$400.00</td><td>1 of 2</td><td class="chev">›</td></tr>
+            <tr><td colspan="6" class="band" style="padding:6px 12px"><span class="bandBtn" role="button" aria-expanded="false">▸ Delivered <span class="bc">6</span></span></td></tr>
+          </tbody>
+        </table>
+        <p class="small">Amounts are before GST/HST. “Items done” counts the package’s items ticked on the deal. The Delivered group starts folded.</p>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Phone · the same list</b><span class="chrome">390</span><button class="tag new" type="button" data-note="THE PHONE FORM OF THE LIST (standard §3.8): the money band becomes figure rows; each group is a band; each deal is one row in one hairlined frame, the business over one line, with a corner chevron. Search gets its own row under the toolbar line; Export and Filter sit behind the toolbar's phone glyphs.">PHONE LIST</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>Sponsorships<span class="sm">Deals · 2027</span></span><span style="margin-left:auto" class="btnLime tap44" aria-label="Offer a deal">+</span></div>
+          <div class="pbody">
+            <div class="frows">
+              <div class="frow"><span class="fl1">Paid<span class="fc">8 deals</span></span><span class="fv">$6,250.00</span><span></span></div>
+              <div class="frow"><span class="fl1">Invoiced, not paid<span class="fc">2 deals</span></span><span class="fv">$1,400.00</span><span></span></div>
+              <div class="frow"><span class="fl1">Waiting on the business<span class="fc">4 deals</span></span><span class="fv">$4,650.00</span><span></span></div>
+            </div>
+            <div class="rlist">
+              <div class="band">Offered <span class="bc">3</span></div>
+              <div class="srow" style="grid-template-columns:minmax(0,1fr) 18px"><span><span class="nm">Riverside Hardware</span><span class="cap">Club partner · The club · $2,500.00</span></span><span class="chev">›</span></div>
+              <div class="srow" style="grid-template-columns:minmax(0,1fr) 18px"><span><span class="nm">Lakeview Pizza</span><span class="cap">Tournament sponsor · Spring Classic 2027 · $750.00</span></span><span class="chev">›</span></div>
+              <div class="band">Invoiced <span class="bc">2</span></div>
+              <div class="srow" style="grid-template-columns:minmax(0,1fr) 18px"><span><span class="nm">Harbour Dental</span><span class="cap">Division sponsor · U9 division · $1,000.00 · 1 of 3 done</span></span><span class="chev">›</span></div>
+              <div class="band">▸ Delivered <span class="bc">6</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>Why the list reads this way</h3>
+        <ul>
+          <li><b>The band names the state once.</b> No state column and no chip in the row.</li>
+          <li><b>“Items done”</b> is a dash until a deal is invoiced, because nothing can be delivered on an open offer.</li>
+          <li><b>The Year pill</b> is the money tabs’ pill. Deals belong to the fiscal year in which they were offered, because their income lands in that year’s books. Packages and Sponsors aren’t year-scoped and carry no pill.</li>
+          <li><b>The money band</b> leaves out GST/HST, so its figures match the Sponsorship line in Budget vs. Actual.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>One deal · Harbour Dental, invoiced</b><span class="chrome">one level down · desktop · 960</span><button class="mark" type="button" data-ask="4">4</button><button class="mark" type="button" data-ask="5">5</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><span class="back">← Deals</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Harbour Dental <span class="stP inv">Invoiced</span></p><span class="ico">✎</span></div><span class="sub">Division sponsor · U9 division · 2027</span></div>
+          <div class="callout"><div class="ct"><b>Waiting for payment</b><span>Invoice 2027-014 for $1,130.00 was emailed Mar 3 and is due Apr 2. Record the cheque or e-transfer when it arrives.</span></div><span class="btnLime">Record a payment</span></div>
+          <div class="mband"><div><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div><div><span class="ml">Paid</span><span class="mv">$0.00</span></div><div><span class="ml">Still owing</span><span class="mv">$1,130.00</span><span class="mc">due Apr 2</span></div></div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">The deal</p></div>
+            <dl class="facts">
+              <dt>Package</dt><dd>Division sponsor</dd>
+              <dt>Shows on</dt><dd>U9 division <span class="s">Its schedule and standings pages, until Aug 31, 2027</span></dd>
+              <dt>Amount</dt><dd>$1,000.00</dd>
+              <dt>Charge HST</dt><dd>Yes, 13% <span class="s">Changing it now sends a revised invoice</span></dd>
+              <dt>Invoice</dt><dd><span class="door" style="font-size:14px">2027-014 ↗</span></dd>
+            </dl>
+          </div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">1 of 3 delivered</span></div>
+            <div>
+              <div class="ck"><span class="box"></span><span class="t">Your logo on our website<span class="h">Goes up on the U9 pages by itself when the deal is paid. Tick it to put it up now.</span></span><span class="when"></span></div>
+              <div class="ck"><span class="box on">✓</span><span class="t">Named division: “U9 presented by Harbour Dental”<span class="h">Ticked by Dana Ruiz</span></span><span class="when">Mar 5</span></div>
+              <div class="ck"><span class="box"></span><span class="t">A field banner at Riverdale Park</span><span class="when"></span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">The business</p><span class="cardSum">From their link, Mar 3</span></div>
+            <dl class="facts">
+              <dt>Shows as</dt><dd><span style="display:inline-flex;gap:10px;align-items:center"><span class="logoT lg1">HARBOUR<br>DENTAL</span> Harbour Dental</span></dd>
+              <dt>Contact</dt><dd>Frank Osei <span class="s">frank@harbourdental.ca · 613-555-0142</span></dd>
+              <dt>Invoice to</dt><dd>41 Harbour Street, Riverdale ON K0A 1C2</dd>
+              <dt>Website</dt><dd>harbourdental.ca</dd>
+            </dl>
+            <div class="sec"><p class="secH">Their answers</p>
+              <div><span class="small">Banner size you’ll supply</span><div style="font-weight:650">3 × 6 ft</div></div>
+              <div><span class="small">Anything we should know?</span><div style="color:var(--home-dim)">Not answered</div></div>
+            </div>
+          </div>
+          <div class="collapsedSec">History · offered Feb 24 by Dana Ruiz · opened Feb 25 · details and logo Mar 3 · invoice emailed Mar 3 <span class="door" style="font-size:13px">Show</span></div>
+          <div style="display:grid;gap:8px"><span class="recAct">⧉ Copy the link</span><span class="recAct">↻ Send the link again (the old link stops working)</span><span class="recAct">⊘ Do not offer again</span><span class="recAct" style="color:var(--danger-ink)">✕ Withdraw this deal (voids invoice 2027-014, with your reason)</span></div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Phone · the same deal</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>←</span><span>Harbour Dental<span class="sm">Division sponsor · U9</span></span></div>
+          <div class="pbody">
+            <div><span class="stP inv">Invoiced</span></div>
+            <div class="callout"><div class="ct"><b>Waiting for payment</b><span>Invoice 2027-014, $1,130.00, due Apr 2.</span></div><span class="btnLime" style="width:100%">Record a payment</span></div>
+            <div class="frows">
+              <div class="frow"><span class="fl1">Invoiced<span class="fc">incl. HST $130.00</span></span><span class="fv">$1,130.00</span><span></span></div>
+              <div class="frow"><span class="fl1">Paid</span><span class="fv">$0.00</span><span></span></div>
+              <div class="frow"><span class="fl1">Still owing<span class="fc">due Apr 2</span></span><span class="fv">$1,130.00</span><span></span></div>
+            </div>
+            <div class="card"><div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">1 of 3</span></div>
+              <div class="ck"><span class="box"></span><span class="t">Your logo on our website</span><span></span></div>
+              <div class="ck"><span class="box on">✓</span><span class="t">Named division<span class="h">Mar 5</span></span><span></span></div>
+              <div class="ck"><span class="box"></span><span class="t">A field banner</span><span></span></div>
+            </div>
+            <div class="collapsedSec">The deal · The business · History</div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="explain">
+        <h3>Each state, in the callout’s words, and what the club does next <button class="mark" type="button" data-ask="4">4</button></h3>
+        <table class="docTbl">
+          <thead><tr><th>State</th><th>The callout says</th><th>The club’s next step</th></tr></thead>
+          <tbody>
+            <tr><td><b>Offered</b></td><td>“Waiting for Fenwick Insurance. They opened the link Feb 27.” (or “haven’t opened the link yet”)</td><td>Nothing, or <i>Send the link again</i>. <i>Withdraw the offer</i> ends the body.</td></tr>
+            <tr><td><b>Form received</b></td><td>“Northside Auto sent their details and started to pay by card, but didn’t finish.”</td><td>Lime <i>Send the invoice</i>: they pay by cheque or e-transfer instead. Their link still lets them pay by card.</td></tr>
+            <tr><td><b>Invoiced</b></td><td>“Waiting for payment. Invoice 2027-014 … due Apr 2.” Past due: “Overdue since Apr 2.”</td><td>Lime <i>Record a payment</i> (tab 7).</td></tr>
+            <tr><td><b>Paid</b></td><td>“Paid Feb 14. 2 of 3 delivered. Tick each one as it happens.”</td><td>Tick the checklist.</td></tr>
+            <tr><td><b>Delivered</b></td><td>“Paid and delivered. Nothing left to do.”</td><td>None. Next year: <i>Offer again</i> (tab 9).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="explain">
+        <h3>Where I disagree with the plan’s list <span class="fl" data-f="F1">F1</span></h3>
+        <ul>
+          <li><b>Payment and delivery don’t happen in a line.</b> A banner can go up before the cheque comes in, and a club can be paid in February for a July banner. A single Offered → Delivered line would force one to wait for the other. So the state follows the money (Offered · Form received · Invoiced · Paid), the checklist counts delivery beside it, and <b>Delivered</b> is reached only when both are done.</li>
+          <li><b>“Form received” is usually skipped.</b> When the business chooses a cheque or e-transfer, the invoice goes out at once, because their accounts payable need one to pay. The deal goes straight to Invoiced, and History still says when the form came in. A deal only waits in Form received when a card payment was started and not finished (ask 4).</li>
+          <li><b>Withdrawn</b> isn’t one of the five. It is how an offer ends without a sale. It leaves the list for a “Withdrawn” fold under Delivered and frees its place.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · INVOICE AND TAX (station E) -->
+  <section class="pane" id="p6" role="tabpanel" aria-labelledby="t6" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p6"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>The club’s invoice: drawn from the coach’s sponsor invoice, with the tax rows only when the club is registered and the deal’s switch is on</h2>
+    <p>Letter size at true width. Left: a club registered for GST/HST, HST on. Right: a club that isn’t registered. It says nothing about tax, as the coach’s invoice says nothing (R2). <b>Show only what differs</b> leaves the tax parts lit. The words “donation”, “gift” and “tax receipt” appear nowhere (§9). The receipt is the same invoice once paid, its subtitle led by “Paid in full”, with no stamp, as the house PDFs have none (ask 10).</p>
+    <div class="spec">
+      <div class="specHead"><b>Setup → Invoice details</b><span class="chrome">record window · 600</span><button class="mark" type="button" data-ask="9">9</button><button class="tag new" type="button" data-note="NEW. The club has no mailing address and no GST/HST setting today (F2). Drawn as one record window opened from the Setup tab: it reads first, one pencil, autosave. 'How businesses pay you' is the coach invoice's 'How sponsors pay the team' section, moved to the club.">NEW</button></div>
+      <div class="scroll"><div class="frame dimmer"><div class="win">
+        <div class="whead"><div style="flex:1"><div class="wmeta">Setup</div><p class="wtitle">Invoice details</p></div><span class="ico">✎</span><span class="ico">✕</span></div>
+        <div class="wbody">
+          <dl class="facts">
+            <dt>Mailing address</dt><dd>200 Park Road, Riverdale ON K0A 1B0 <span class="s">On every invoice and at the foot of every offer email</span></dd>
+            <dt>GST/HST</dt><dd>Registered · 81234 5678 RT0001 <span class="s">Each deal has a “Charge HST” switch, off until you turn it on</span></dd>
+            <dt>By e-transfer to</dt><dd>treasurer@riverdaleminorball.ca</dd>
+            <dt>Cheques payable to</dt><dd>Riverdale Minor Ball</dd>
+            <dt>Payment due</dt><dd>30 days after the invoice</dd>
+            <dt>Contact for sponsors</dt><dd>Dana Ruiz · sponsors@riverdaleminorball.ca</dd>
+          </dl>
+          <p class="hint" style="margin:0">Whether GST/HST applies to a sponsorship depends on what the business gets and on your club. Ask your accountant.</p>
+          <p class="hint" style="margin:0">The number is checked for its form (9 digits, RT, 4 digits). Until a mailing address is set, offers can’t be sent.</p>
+        </div>
+      </div></div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>A registered club · HST on</b><span class="chrome">PDF · Letter · 816</span><button class="mark" type="button" data-ask="9">9</button></div>
+        <div class="scroll"><div class="frame" style="padding:14px;background:#E9E5DD"><div class="paper"><div class="acc"></div><div class="pin">
+          <div class="idb same-part"><div><b>Riverdale Minor Ball</b>200 Park Road<br>Riverdale ON K0A 1B0</div><div style="text-align:right"><span class="tax-part">GST/HST no. 81234 5678 RT0001</span></div></div>
+          <div class="same-part"><h4>Invoice</h4><div class="subl">No. 2027-014 · Issued Mar 3, 2027 · Due Apr 2, 2027</div></div>
+          <div class="pfig same-part"><div><span>Invoiced</span><b>$1,130.00</b></div><div><span>Paid</span><b>$0.00</b></div><div><span>Balance due</span><b>$1,130.00</b></div></div>
+          <div class="same-part"><div class="lab">Bill to</div><b>Harbour Dental</b><br>Attn: Frank Osei<br>41 Harbour Street, Riverdale ON K0A 1C2<br>frank@harbourdental.ca</div>
+          <table><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody><tr class="same-part"><td><b>Sponsorship: Division sponsor, U9</b> · Mar 3 to Aug 31, 2027<ul class="inc"><li>Your logo on the U9 division’s pages on riverdaleminorball.ca</li><li>Named division: “U9 presented by Harbour Dental”</li><li>A field banner at Riverdale Park</li></ul></td><td class="r">$1,000.00</td></tr></tbody></table>
+          <table class="tt" style="width:300px;margin-left:auto"><tr><td>Subtotal</td><td class="r">$1,000.00</td></tr><tr><td>HST 13%</td><td class="r">$130.00</td></tr><tr class="big"><td>Total</td><td class="r">$1,130.00</td></tr></table>
+          <div class="same-part"><div class="lab">How to pay</div>• By e-transfer to treasurer@riverdaleminorball.ca<br>• By cheque payable to Riverdale Minor Ball, mailed to 200 Park Road, Riverdale ON K0A 1B0<br>• Please quote invoice 2027-014 with your payment.</div>
+          <div class="same-part" style="font-style:italic;color:#444">Questions about this invoice? Contact Dana Ruiz, sponsors@riverdaleminorball.ca. Thank you for sponsoring Riverdale Minor Ball.</div>
+          <div class="foot same-part"><span>Riverdale Minor Ball · riverdaleminorball.ca</span><span>Page 1 of 1</span></div>
+        </div></div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>A club that isn’t registered</b><span class="chrome">PDF · Letter · 816</span><button class="tag same" type="button" data-note="THE COACH INVOICE'S RULE (R2) for anyone not registered: no tax field, line or word. No 'No GST/HST charged' line either. A small supplier simply doesn't mention it, and a line would invite the question.">NO TAX WORDS</button></div>
+        <div class="scroll"><div class="frame" style="padding:14px;background:#E9E5DD"><div class="paper"><div class="acc"></div><div class="pin">
+          <div class="idb same-part"><div><b>Riverdale Minor Ball</b>200 Park Road<br>Riverdale ON K0A 1B0</div><div></div></div>
+          <div class="same-part"><h4>Invoice</h4><div class="subl">No. 2027-014 · Issued Mar 3, 2027 · Due Apr 2, 2027</div></div>
+          <div class="pfig same-part"><div><span>Invoiced</span><b>$1,000.00</b></div><div><span>Paid</span><b>$0.00</b></div><div><span>Balance due</span><b>$1,000.00</b></div></div>
+          <div class="same-part"><div class="lab">Bill to</div><b>Harbour Dental</b><br>Attn: Frank Osei<br>41 Harbour Street, Riverdale ON K0A 1C2<br>frank@harbourdental.ca</div>
+          <table><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody><tr class="same-part"><td><b>Sponsorship: Division sponsor, U9</b> · Mar 3 to Aug 31, 2027<ul class="inc"><li>Your logo on the U9 division’s pages on riverdaleminorball.ca</li><li>Named division: “U9 presented by Harbour Dental”</li><li>A field banner at Riverdale Park</li></ul></td><td class="r">$1,000.00</td></tr></tbody></table>
+          <div style="height:8px"></div>
+          <div class="same-part"><div class="lab">How to pay</div>• By e-transfer to treasurer@riverdaleminorball.ca<br>• By cheque payable to Riverdale Minor Ball, mailed to 200 Park Road, Riverdale ON K0A 1B0<br>• Please quote invoice 2027-014 with your payment.</div>
+          <div class="same-part" style="font-style:italic;color:#444">Questions about this invoice? Contact Dana Ruiz, sponsors@riverdaleminorball.ca. Thank you for sponsoring Riverdale Minor Ball.</div>
+          <div class="foot same-part"><span>Riverdale Minor Ball · riverdaleminorball.ca</span><span>Page 1 of 1</span></div>
+        </div></div></div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The receipt · the same invoice, paid</b><span class="chrome">PDF · the top half</span><button class="mark" type="button" data-ask="10">10</button></div>
+        <div class="scroll"><div class="frame" style="padding:14px;background:#E9E5DD"><div class="paper"><div class="acc"></div><div class="pin">
+          <div class="idb"><div><b>Riverdale Minor Ball</b>200 Park Road<br>Riverdale ON K0A 1B0</div><div style="text-align:right">GST/HST no. 81234 5678 RT0001</div></div>
+          <div><h4>Invoice</h4><div class="subl">Paid in full Mar 18, 2027 · No. 2027-014 · Issued Mar 3, 2027</div></div>
+          <div class="pfig"><div><span>Invoiced</span><b>$1,130.00</b></div><div><span>Paid</span><b>$1,130.00</b></div><div><span>Balance due</span><b>$0.00</b></div></div>
+          <div><div class="lab">Payments received, thank you</div><table><thead><tr><th>Date</th><th>How it arrived</th><th class="r">Amount</th></tr></thead><tbody><tr><td>Mar 18, 2027</td><td>Cheque 004417</td><td class="r">$1,130.00</td></tr></tbody></table></div>
+          <div style="font-style:italic;color:#444">Paid in full. Thank you for sponsoring Riverdale Minor Ball.</div>
+        </div></div></div></div>
+      </div>
+      <div class="explain">
+        <h3>The tax shape, as accepted (§9), and the two things it leaves open <button class="mark" type="button" data-ask="9">9</button></h3>
+        <ul>
+          <li><b>The club setting</b> is “Registered for GST/HST” with the number, off by default. It lives in Invoice details here, and Stage 7 camps read the same setting.</li>
+          <li><b>The deal’s switch</b> shows only for a registered club. It is off by default on every deal, even for a registered club, because recognition alone usually isn’t a supply. The club turns it on for a deal that is real advertising.</li>
+          <li><b>The rate is never hard-coded.</b> It comes from the province of the <b>business’s invoice address</b>, since for a service the place of supply generally follows the buyer’s address, and is named as the rate is (“HST 13%”, “GST 5%”). <span class="fl" data-f="F3">F3</span> A professional confirms this rule and the PST provinces. The product isn’t sold in Québec yet.</li>
+          <li><b>The deliverables are listed on the invoice,</b> under the line, so the invoice says what was supplied.</li>
+          <li><b>Tax isn’t income.</b> In the books the HST goes to its own line (tab 7).</li>
+          <li><b>One document:</b> the paid invoice is the receipt, as the coach invoice is. A separate “Receipt” PDF would put the word that sits next to “tax receipt” in a club treasurer’s mind on a sponsorship (ask 10). Stripe’s own card receipt email isn’t turned on as a second document.</li>
+          <li><b>Our name stays off it.</b> FieldLogicHQ’s GST/HST number and name never appear on a sponsor’s invoice, receipt or page. We aren’t the supplier (/accounting).</li>
+          <li><b>Drawn differently from the coach PDF, on purpose, for you to rule:</b> a Subtotal, HST and Total block under the line, where the coach PDF has no totals row. A taxed invoice needs the tax shown against its base.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · A CHEQUE, AND THE BOOKS (station F) -->
+  <section class="pane" id="p7" role="tabpanel" aria-labelledby="t7" hidden>
+    <h2>Recording a cheque or e-transfer, and the two lines it leaves in the General ledger</h2>
+    <p>From the deal’s callout: “Record a payment”. The window is the ledger’s Add an entry, cut down to what a deal needs: the amount, the date, how it came, and its reference. The rest is known from the deal. Paying it posts the sponsorship to the General ledger under Sponsorship, and the HST on its own line.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Record a payment</b><span class="chrome">window · 460</span><button class="tag re" type="button" data-note="FROM THE SHIPPED LEDGER WINDOW (Add an entry): the same Date, 'How it was paid' (E-Transfer, Cash, Cheque, Card, Other) and Reference ('Cheque or E-Transfer number') fields and foot. Money, What, Filed under and Paid by are not asked: the deal already knows them. A part payment is allowed and leaves the balance owing.">FROM ADD AN ENTRY</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win sm">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Harbour Dental · 2027-014</div><p class="wtitle">Record a payment</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div class="two"><div class="fld"><span class="l">Amount received <span class="req">*</span></span><div class="inp">$1,130.00</div><span class="hint">Still owing $1,130.00</span></div><div class="fld"><span class="l">Date received <span class="req">*</span></span><div class="inp sel">Mar 18, 2027 <span>📅</span></div></div></div>
+            <div class="two"><div class="fld"><span class="l">How it was paid <span class="req">*</span></span><div class="inp sel">Cheque <span>▾</span></div></div><div class="fld"><span class="l">Reference</span><div class="inp">004417</div><span class="hint">Cheque or E-Transfer number</span></div></div>
+            <div class="fld"><span class="l">Note</span><div class="inp"></div></div>
+          </div>
+          <div class="wfoot"><span class="fs">Posts to the General ledger</span><span class="btnOut">Cancel</span><span class="btnLime">Record payment</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>The deal, after</b><span class="chrome">the page’s top · 960</span></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><span class="back">← Deals</span><p class="ttl">Harbour Dental <span class="stP paid">Paid</span></p><span class="sub">Division sponsor · U9 division · 2027</span></div>
+          <div class="callout"><div class="ct"><b>Paid Mar 18. 2 of 3 delivered.</b><span>Your logo on our website went up on the U9 pages today. Tick the banner when it’s up.</span></div></div>
+          <div class="mband"><div><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div><div><span class="ml">Paid</span><span class="mv">$1,130.00</span><span class="mc">cheque 004417</span></div><div><span class="ml">Still owing</span><span class="mv">$0.00</span></div></div>
+          <p class="small">The receipt (the invoice, paid in full) is emailed to frank@harbourdental.ca and shows on their link.</p>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The General ledger afterwards</b><span class="chrome">Money › Ledger · 1200</span><button class="mark" type="button" data-ask="9">9</button><button class="tag new" type="button" data-note="TWO NEW LINES, written by the product, not typed. The sponsorship is money in under the library's existing Sponsorship category, with a new item 'Club sponsorship' (the existing 'Team sponsorship' item stays the coaches'). The HST is money in under a new 'GST/HST collected' word, so the Sponsorship figure in Budget vs. Actual is the club's own money. Each line opens the deal.">NEW LINES</button></div>
+        <div class="scroll"><div class="frame adm wide">
+          <table class="tbl">
+            <thead><tr><th>Date</th><th>What</th><th>Filed under</th><th>How</th><th class="num">In</th><th class="num">Out</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>Mar 18, 2027</td><td class="nm">Harbour Dental · Division sponsor, U9<span class="s">Invoice 2027-014 · from Sponsorships</span></td><td>Sponsorship › Club sponsorship</td><td>Cheque 004417</td><td class="num">$1,000.00</td><td class="num"></td><td class="chev">›</td></tr>
+              <tr><td>Mar 18, 2027</td><td class="nm">HST on invoice 2027-014<span class="s">from Sponsorships</span></td><td>GST/HST collected</td><td>Cheque 004417</td><td class="num">$130.00</td><td class="num"></td><td class="chev">›</td></tr>
+              <tr><td>Feb 14, 2027</td><td class="nm">Bright Smiles Orthodontics · Club partner<span class="s">Invoice 2027-006 · paid by card</span></td><td>Sponsorship › Club sponsorship</td><td>Card</td><td class="num">$2,500.00</td><td class="num"></td><td class="chev">›</td></tr>
+              <tr><td>Feb 14, 2027</td><td class="nm">Card fee on invoice 2027-006</td><td>Payment processing</td><td>Card</td><td class="num"></td><td class="num">$89.00</td><td class="chev">›</td></tr>
+            </tbody>
+          </table>
+          <p class="small">A card payment also writes its fee as Payment processing, because Riverdale keeps the sponsorship default, “The club pays it” (ask 3, ruled Nov 22). 3.5% + $1.50 on $2,500.00 = $89.00.</p>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>What the books learn</h3>
+        <ul>
+          <li><b>Club sponsorship</b> is a new item under the library’s existing Sponsorship category, next to the coaches’ Team sponsorship. A team’s sponsorships stay the team’s (ruled 2026-11-06). Nothing moves between them.</li>
+          <li><b>GST/HST collected</b> is a new money-in word. It keeps tax out of the Sponsorship figure. It is the club’s own record. Filing a return is still the club’s job, outside the product.</li>
+          <li><b>Lines from a deal can’t be edited in the ledger.</b> A wrong payment is voided from the deal, which leaves the line marked void with its reason, as bills and requests already do.</li>
+          <li><b>Card payments</b> arrive through Payouts, as online payments already do. The deal goes to Paid only when Stripe confirms, never from the redirect.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · WHERE THE LOGO SHOWS (station G) -->
+  <section class="pane" id="p8" role="tabpanel" aria-labelledby="t8" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p8"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>One sponsor list: a business once, and each place it shows, whether a deal put it there or the club typed it</h2>
+    <p>This is the answer to “where the logo shows, as one choice” (ask 1). A deal’s <b>Shows on</b> and the sponsor list’s place are the same record: the deal <i>is</i> the business’s place for its term. On the Sponsors tab a place that came from a deal shows its deal and can’t be changed there. A place the club typed by hand shows the same field, editable. The four kinds of place each have one spot on the public site.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Sponsors</b><span class="chrome">desktop · 960</span><button class="mark" type="button" data-ask="1">1</button><button class="mark" type="button" data-ask="11">11</button><button class="tag re" type="button" data-note="RESTYLED FROM THE SHIPPED LIST (ClubRowList rows: logo thumbnail, name, a caption, the Ended chip, rows dimmed when ended). What changes: the caption names each place and its last day, and says 'from a deal' when a deal set it. The add stays 'Add a sponsor' for a business with no deal.">FROM THE 4d LIST</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead same-part"><p class="ttl">Sponsorships</p><span class="sub">Riverdale Minor Ball</span></div>
+          <div class="ptabs same-part"><span>Deals</span><span>Packages</span><span class="on">Sponsors</span><span>Setup</span></div>
+          <div class="toolbar same-part"><span class="search">Search sponsors</span><span class="sp"></span><span class="btnLime">+ Add a sponsor</span></div>
+          <div class="rlist">
+            <div class="band">Showing <span class="bc">12</span></div>
+            <div class="srow"><span class="logoT lg3">BRIGHT<br>SMILES</span><span><span class="nm">Bright Smiles Orthodontics</span><span class="cap"><span class="place">The club · until Mar 31, 2028</span></span></span><span class="chip">Deal</span><span class="chev">›</span></div>
+            <div class="srow"><span class="logoT lg1">HARBOUR<br>DENTAL</span><span><span class="nm">Harbour Dental</span><span class="cap"><span class="place">U9 division · until Aug 31, 2027</span></span></span><span class="chip">Deal</span><span class="chev">›</span></div>
+            <div class="srow"><span class="logoT lg2">SUMMIT<br>ROOFING</span><span><span class="nm">Summit Roofing</span><span class="cap"><span class="place">Spring Classic 2027 · until May 31, 2027</span></span></span><span class="chip">Deal</span><span class="chev">›</span></div>
+            <div class="srow same-part"><span class="logoT lg4">MILLER<br>FOODS</span><span><span class="nm">Miller Foods</span><span class="cap"><span class="place">The club · until Dec 31, 2027</span></span></span><span></span><span class="chev">›</span></div>
+            <div class="srow same-part"><span class="logoT none">No logo</span><span><span class="nm">The Ferreira family</span><span class="cap"><span class="place">The club · no last day</span></span></span><span></span><span class="chev">›</span></div>
+            <div class="srow same-part" style="grid-template-columns:1fr"><span class="notDrawn">7 more rows, not drawn</span></div>
+            <div class="band">Not showing <span class="bc">2</span></div>
+            <div class="srow ended same-part"><span class="logoT lg2">TOWN<br>CAFE</span><span><span class="nm">Town Café</span><span class="cap">Last day was Oct 31, 2026</span></span><span class="chip q">Ended</span><span class="chev">›</span></div>
+            <div class="srow"><span class="logoT none">No logo</span><span><span class="nm">Fenwick Insurance</span><span class="cap">An offer is out · U11 Lions</span></span><span></span><span class="chev">›</span></div>
+          </div>
+          <p class="small same-part">Showing 3 of 20 places on your home page.</p>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Harbour Dental · a place from a deal</b><span class="chrome">record window · 600</span></div>
+          <div class="scroll"><div class="frame dimmer"><div class="win">
+            <div class="whead"><div style="flex:1"><div class="wmeta">Sponsors</div><p class="wtitle">Harbour Dental</p></div><span class="ico">✎</span><span class="ico">✕</span></div>
+            <div class="wbody">
+              <dl class="facts same-part"><dt>Logo</dt><dd><span class="logoT lg1">HARBOUR<br>DENTAL</span></dd><dt>Link</dt><dd>https://harbourdental.ca</dd></dl>
+              <div class="sec"><p class="secH">Shows on</p>
+                <div class="rlist"><div class="qrow nogrip"><div><div class="qt">U9 division · until Aug 31, 2027</div><div class="qc">From the deal · Division sponsor, invoice 2027-014. Change the place or the last day on the deal.</div></div><span class="door" style="font-size:13px">Deal ›</span></div></div>
+              </div>
+              <p class="small">Remove isn’t offered while a deal shows this sponsor. Withdraw or end the deal first.</p>
+            </div>
+          </div></div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>Miller Foods · a place typed by hand</b><span class="chrome">editing · 600</span><button class="tag new" type="button" data-note="NEW FIELD on the shipped window: 'Shows on'. It's the same pick list a deal uses. A sponsor typed by hand can show on the club (default), a division, a team or a tournament. 'Last day' is the shipped field. Name, Logo and Link are unchanged.">SHOWS ON, NEW</button></div>
+          <div class="scroll"><div class="frame dimmer"><div class="win">
+            <div class="whead"><div style="flex:1"><div class="wmeta">Sponsors</div><p class="wtitle">Miller Foods</p></div><span class="ico">✓</span></div>
+            <div class="wbody">
+              <div class="fld same-part"><span class="l">Name <span class="req">*</span></span><div class="inp">Miller Foods</div></div>
+              <div class="fld same-part"><span class="l">Logo</span><div class="fileGot"><span class="logoT lg4">MILLER<br>FOODS</span><span class="door" style="font-size:13px">Replace logo</span><span class="door" style="font-size:13px">Remove logo</span></div></div>
+              <div class="fld same-part"><span class="l">Link</span><div class="inp">https://millerfoods.ca</div></div>
+              <div class="two"><div class="fld"><span class="l">Shows on</span><div class="inp sel">The club <span>▾</span></div></div><div class="fld"><span class="l">Last day</span><div class="inp sel">Dec 31, 2027 <span>📅</span></div></div></div>
+              <span class="hint">Families see the sponsor through this day, then it leaves by itself.</span>
+              <span class="door" style="font-size:13px">+ Show it somewhere else too</span>
+              <span class="recAct same-part" style="color:var(--danger-ink)">✕ Remove sponsor</span>
+            </div>
+          </div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The public site: where each kind of place shows</b><span class="chrome">public club site · 960</span><button class="mark" type="button" data-ask="1">1</button></div>
+        <div class="scroll"><div class="frame site">
+          <div class="siteBar"><b>Riverdale Minor Ball</b><span>House league</span><span>Tournaments</span><span>About</span></div>
+          <div class="siteIn">
+            <div class="capL">The club → the home page’s Sponsors strip (unchanged)</div>
+            <div class="strip"><div class="lg3">BRIGHT SMILES</div><div class="lg4">MILLER FOODS</div><div>The Ferreira family</div></div>
+            <div class="capL" style="margin-top:8px">A division → under the division’s name, on its schedule and standings pages</div>
+            <div style="display:grid;gap:6px"><span style="font-family:var(--font-head);font-size:20px;font-weight:700">U9 · Standings</span><span class="byLine">Sponsored by <span class="logoT lg1">HARBOUR<br>DENTAL</span></span></div>
+            <div class="capL" style="margin-top:8px">A team → under the team’s name on its team page</div>
+            <div style="display:grid;gap:6px"><span style="font-family:var(--font-head);font-size:20px;font-weight:700">U13 Rockets</span><span class="byLine">Sponsored by <b style="color:var(--home-ink)">Pinecrest Realty</b></span></div>
+            <div class="capL" style="margin-top:8px">A tournament → the tournament Overview’s Sponsors strip (the tournament drawing draws it)</div>
+            <div class="capL" style="margin-top:8px">The About page → every place in the club, in one list</div>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>Why this is one choice, not two</h3>
+        <ul>
+          <li><b>One record.</b> A business is kept once (the 2026-10-27 ruling). It has <b>places</b>, and each place is a kind (the club · a division · a team · a tournament, later an event), which one, and a last day. A paid deal with the logo switch on <i>is</i> a place. There is no second “where it shows” setting to drift from the deal.</li>
+          <li><b>Each kind has one spot</b> on the public site. The club place fills the home strip, as today. A division or team place puts a quiet “Sponsored by” line under that name. A tournament place joins that tournament’s Overview strip, gated (ask 2). The About page lists everything in the club. <span class="fl" data-f="F6">F6</span></li>
+          <li><b>A place from a deal</b> is changed on the deal, because the invoice names it. A typed place is changed here.</li>
+          <li><b>The 20 limit</b> stays for the home strip, the only spot where too many logos hurt. The whole list can hold more, because 24 team sponsors would break a limit of 20 by themselves (ask 11). <span class="fl" data-f="F4">F4</span></li>
+          <li><b>When it goes up:</b> by itself when the deal is paid, or earlier when the club ticks the logo line on the checklist. It comes down by itself after its last day, as an ended sponsor does today (ask 5).</li>
+          <li><b>Last year’s six typed sponsors</b> each become a business with one place, “The club”, keeping their last day. <span class="fl" data-f="F5">F5</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · OFFER AGAIN (station H) -->
+  <section class="pane" id="p9" role="tabpanel" aria-labelledby="t9" hidden>
+    <h2>Next year: “Offer again” sends last year’s sponsors this year’s package in one window</h2>
+    <p>Drawn on Jan 15, 2028, the first day of fiscal year 2028. Deals is empty for the new year, so its first line is the way back to last year’s sponsors. Each row is one new offer. The package is at this year’s price. A division place carries over by name to the new season. A team has to be picked again, because each season makes new teams.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Deals, 2028 · empty</b><span class="chrome">desktop · 960</span></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><p class="ttl">Sponsorships</p><span class="sub">Riverdale Minor Ball</span></div>
+          <div class="ptabs"><span class="on">Deals</span><span>Packages</span><span>Sponsors</span><span>Setup</span></div>
+          <div class="toolbar"><span class="pill olive">2028 ▾</span><span class="sp"></span><span class="btnLime">+ Offer a deal</span></div>
+          <div class="callout"><div class="ct"><b>14 businesses sponsored you in 2027</b><span>Offer them this year’s packages in one go.</span></div><span class="btnOut">Offer again…</span></div>
+          <div class="empty"><b>No deals in 2028 yet.</b><span class="small">Offer a deal, or offer again to last year’s sponsors.</span></div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Offer again</b><span class="chrome">window · 600 wide form</span><button class="mark" type="button" data-ask="14">14</button><button class="tag new" type="button" data-note="NEW WINDOW. A list of last year's deals with a tick each, in the shipped check-row look. Rows that need something (a team to pick) say so in place, and rows that can't go (unsubscribed) are listed but can't be ticked. The foot counts the emails that will go.">NEW</button></div>
+        <div class="scroll"><div class="frame dimmer"><div class="win">
+          <div class="whead"><div style="flex:1"><div class="wmeta">Deals · 2028</div><p class="wtitle">Offer again to 2027’s sponsors</p></div><span class="ico">✕</span></div>
+          <div class="wbody">
+            <div>
+              <div class="ck"><span class="box on">✓</span><span class="t">Bright Smiles Orthodontics<span class="h">Club partner · The club · $2,500.00</span></span><span></span></div>
+              <div class="ck"><span class="box on">✓</span><span class="t">Harbour Dental<span class="h">Division sponsor · U9, Spring 2028 · $1,000.00</span></span><span></span></div>
+              <div class="ck"><span class="box on">✓</span><span class="t">Allen &amp; Co. Law<span class="h">Division sponsor · U13, Spring 2028 · $1,000.00 · last year $900.00</span></span><span></span></div>
+              <div class="ck"><span class="box on">✓</span><span class="t">Summit Roofing<span class="h">Tournament sponsor · Spring Classic 2028 · $750.00</span></span><span></span></div>
+              <div class="ck"><span class="box off"></span><span class="t">Pinecrest Realty<span class="h">Team sponsor · $400.00 · Spring 2028’s teams aren’t made yet. Offer it once they are.</span></span><span></span></div>
+              <div class="ck" style="opacity:.55"><span class="box off"></span><span class="t">Cedar Vet Clinic<span class="h">Unsubscribed from your sponsorship emails on Nov 2, 2027. We won’t email them again.</span></span><span></span></div>
+              <div class="ck" style="opacity:.55"><span class="box off"></span><span class="t">Lakeview Pizza<span class="h">Offered in 2027, never paid, so there’s no reason on record to email them. Give them the link in person instead.</span></span><span></span></div>
+              <div class="collapsedSec">8 more · <span class="door" style="font-size:13px">Show</span></div>
+            </div>
+          </div>
+          <div class="wfoot"><span class="fs">Sends 4 emails</span><span class="btnOut">Cancel</span><span class="btnLime">Send 4 offers</span></div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>The rules of a renewal</h3>
+      <ul>
+        <li><b>This year’s price,</b> with last year’s amount as a hint when it was different. A club that wants to hold a price changes it on the deal after it is offered. Before it is opened, that sends a corrected offer.</li>
+        <li><b>The place:</b> the club place and a tournament carry over (a tournament by its series, if 2028’s exists, or the row asks for one). A division carries over by name if the new season has one. A team never carries over.</li>
+        <li><b>From one old deal too:</b> a Delivered deal’s page ends with “Offer again”, which opens the Offer window filled in.</li>
+        <li><b>Nothing is sent until the press,</b> and the foot says how many emails go.</li>
+        <li><b>The reason to email carries over only while it holds</b> (from /legal). A business that paid within the last two years can be offered again, and the row says so. An offer that was never paid isn’t a purchase, so it isn’t ticked. An unsubscribed address can’t be ticked and can’t be cleared.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 10 · PLANS · FEE · FINDINGS -->
+  <section class="pane" id="p10" role="tabpanel" aria-labelledby="t10" hidden>
+    <h2>Which plans get what, the card fee in figures, and what the code read found</h2>
+    <p>No prices are restated here. Plan names and gates come from the Facts doc. One gate call goes to <b>/strategy</b> once you rule: which plans show sponsors on a tournament (ask 2). Who pays the card fee (ask 3) was ruled on Nov 22 and is recorded in the Business Decisions Log.</p>
+    <div class="pair">
+      <div class="explain">
+        <h3>What each plan gets <button class="mark" type="button" data-ask="2">2</button></h3>
+        <table class="docTbl planTbl">
+          <thead><tr><th>Plan</th><th>Sponsors on the club site</th><th>Sponsors on a tournament</th><th>Packages, deals, the link, invoices</th><th>Card on the link</th></tr></thead>
+          <tbody>
+            <tr><td><b>Tournament</b></td><td class="n">No club site</td><td class="n">Locked: “Sponsors come with Tournament Plus.”</td><td class="n">No</td><td class="n">No</td></tr>
+            <tr><td><b>Tournament Plus</b></td><td class="n">No club site</td><td class="y">Yes, display only</td><td class="n">No (ruled 11-10)</td><td class="n">No</td></tr>
+            <tr><td><b>League Plus</b></td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td>Once online payments are on</td></tr>
+            <tr><td><b>Club · Club · Association</b></td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td>Once online payments are on</td></tr>
+          </tbody>
+        </table>
+        <p>The tournament column follows the branding gate (Tournament Plus and up). A free event can’t show its own host’s logo, so it shows no sponsor’s either. Where a tournament-only organizer keeps its list is the tournament drawing’s question.</p>
+      </div>
+      <div class="explain">
+        <h3>The card fee on a $1,130.00 invoice <button class="mark" type="button" data-ask="3">3</button></h3>
+        <table class="docTbl">
+          <thead><tr><th></th><th class="num">The club pays it (the default)</th><th class="num">The sponsor pays it (the club’s choice)</th></tr></thead>
+          <tbody>
+            <tr><td>Card fee (3.5% + $1.50)</td><td class="num">$41.05</td><td class="num">$41.05</td></tr>
+            <tr><td>The club’s HST 13% on the fee line</td><td class="num">—</td><td class="num">$5.34</td></tr>
+            <tr><td>The business pays</td><td class="num">$1,130.00</td><td class="num">$1,176.39</td></tr>
+            <tr><td>The club keeps, after the HST it owes</td><td class="num">$1,088.95</td><td class="num">$1,130.00</td></tr>
+          </tbody>
+        </table>
+        <p><b>Ruled Nov 22 (C, with the club paying by default):</b> sponsorships get their own choice on the Payouts card, separate from the registration choice, which stays as it is and never decides for sponsorships. Our fee, its rate and its tax are the same either way. Only who pays it moves.</p>
+        <p><b>Why the club pays by default:</b> an invoice that says $1,130.00 should be paid with $1,130.00. A club that lets families pay the fee on a $150 registration hasn’t decided to add $41 to a business’s invoice. The club can steer a large sponsor to e-transfer at no cost. The fee lands in the books as Payment processing (tab 7).</p>
+        <p><b>Why the club may still pass it on:</b> under the 2026-11-17 ruling, what a club passes on to its payers is the club’s own charge, and so is the card networks’ 2.4% cap (this fee is 3.63% of the total) <span class="fl" data-f="F10">F10</span>. Passed on, the fee is part of the club’s sale, so the club’s HST applies to the line (no tax line when the deal’s HST switch is off). Owed to the build: whether that line is grossed up for the few cents Stripe takes on the larger charge. <b>/accounting</b> reviewed both cases: nothing changes in how we charge or record our fee <span class="fl" data-f="F11">F11</span>.</p>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>Findings from reading the code and the records</h3>
+      <ul>
+        <li><span class="fl" data-f="F1">F1</span> The plan’s five states mix money and delivery (tab 5).</li>
+        <li><span class="fl" data-f="F2">F2</span> The product has no club mailing address and no club GST/HST setting.</li>
+        <li><span class="fl" data-f="F3">F3</span> “The rate by province” doesn’t say whose province.</li>
+        <li><span class="fl" data-f="F4">F4</span> The sponsor list allows 20 in all. Deals would break it.</li>
+        <li><span class="fl" data-f="F5">F5</span> Today’s list is one block on the site content, with no place, no contact and no history.</li>
+        <li><span class="fl" data-f="F6">F6</span> A “Sponsored by” line meets the “public team page = games only” ruling.</li>
+        <li><span class="fl" data-f="F7">F7</span> Stage 4’s form can only belong to a house-league season today.</li>
+        <li><span class="fl" data-f="F8">F8</span> Rep teams are not a place.</li>
+        <li><span class="fl" data-f="F9">F9</span> No CASL review exists for an email that offers a business a sponsorship.</li>
+        <li><span class="fl" data-f="F10">F10</span> Passing the card fee to a business would be a surcharge above the cap.</li>
+        <li><span class="fl" data-f="F11">F11</span> FieldLogicHQ’s application fee on a sponsor payment.</li>
+        <li><span class="fl" data-f="F12">F12</span> The unpublished Payments Terms don’t name sponsorships.</li>
+      </ul>
+    </div>
+    <div class="pair">
+      <div class="explain">
+        <h3>What /legal and /accounting found, and what I applied</h3>
+        <ul>
+          <li><b>Applied (/legal):</b> the offer window’s required “Why you can email them” with its fixed sentence; the email foot’s reason and “Sent through FieldLogicHQ”; sending waits for the club’s mailing address; an unsubscribe scoped to one club’s sponsorship offers, which nobody at the club can clear; “Do not offer again”; a lapsed or never-paid business isn’t ticked in Offer again; the logo permission line; the refund-policy link; a replaced link shows nothing; the tax hint is no longer advice.</li>
+          <li><b>Applied (/accounting):</b> our fee is unchanged and taken the same way as on a family payment. Sponsor payments go through the same per-fee record. No Stripe Tax on a sponsor’s payment. Our name and number stay off the club’s documents.</li>
+          <li><b>Owed in the next policy versions:</b> Privacy §5 names sponsors’ business contacts and logos. §12 says the sponsorship unsubscribe stops one club’s offers only. §9 gives the suppression list’s retention, once built. Terms §4 adds “sponsors” to the club’s data.</li>
+          <li><b>Lawyer’s eye, no gate:</b> whether FieldLogicHQ is a CASL sender or only the club’s service provider; the two-year clock for a lapsed sponsor; a passed-on fee under Québec law. A tax professional should look at whether recognition alone is a supply.</li>
+        </ul>
+      </div>
+      <div class="explain">
+        <h3>Rule contradictions /design found, drawn one way, not ruled</h3>
+        <ul>
+          <li><b>E-transfer’s spelling:</b> the ledger’s method list and help write “E-Transfer”; the coach invoice and this drawing’s prose write “e-transfer”. The product is already split. One spelling needs one pick, so /marketing takes it to you.</li>
+          <li><b>“Full” is amber</b> on Packages. Amber means something is waiting, and a full package isn’t. Drawn amber because the club should notice it. Grey is the alternative.</li>
+          <li><b>A selected pay choice is olive-tinted.</b> Tinted panels are retired, but this is a selection, as the shipped radio rows show it.</li>
+          <li><b>The invoice’s totals block</b> (tab 6) against the coach PDF’s “no totals row”.</li>
+          <li><b>Owner questions from /legal:</b> is any club using this a registered charity (its receipt rules differ)? Should our own mailing address join the foot, or is the club’s enough (recommended)? Is the club’s “Do not offer again” in the first version (drawn yes)?</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · ASKS -->
+  <section class="pane" id="p11" role="tabpanel" aria-labelledby="t11" hidden>
+    <h2>Your asks</h2>
+    <p>Ranked by how much each one changes, most first. Every ask was ruled on Nov 22, 2026, so each answer is fixed. Change any you disagree with, add a note, then press Build the summary and paste it into the chat. Your picks are kept in this browser only.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc" id="noteGo" type="button" hidden>Go to the ask</button><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var LAST = "p11";
+var ASKS = [
+  {n:1, ruled:0, rdate:"Nov 22, 2026", t:"Where the logo shows, as one choice", why:"Owed to the tournament side: a deal’s “attached to” and the sponsor list’s “where it shows” must be the same choice. Today the list only knows the club site.", o:[
+    "One record: a business is kept once and has places. A place is a kind (the club, a house-league division, a house-league team, a tournament; later a club event), which one, and a last day. A paid deal whose package has “Your logo on our website” on IS a place. The club place fills the home strip; a division or team place puts a “Sponsored by” line under its name; a tournament place joins that tournament’s Overview strip; About lists the club’s places. A deal’s place changes on the deal, a typed place on the Sponsors tab",
+    "The deal’s “attached to” is only a label: every paid sponsor shows on the club home strip, and tournaments are ticked on the list separately",
+    "Two settings: the deal’s “attached to”, and the list’s own “where it shows”, set separately"]},
+  {n:2, ruled:0, rdate:"Nov 22, 2026", t:"Which plans show sponsors on a tournament", why:"Owed since 2026-10-27, tied to this stage on 2026-11-10. The tournament plan leans to the branding gate.", o:[
+    "Follow the Tournament Plus branding gate: Tournament Plus and up show sponsors on a tournament. A free event’s editor shows Sponsors locked and names Tournament Plus. Tournament-only organizers get display only (ruled)",
+    "Every plan, the free Tournament too",
+    "Only the plans with the public site (League Plus and the Club bands)"]},
+  {n:3, ruled:2, rdate:"Nov 22, 2026", t:"Who pays the card fee on a sponsor’s card payment", why:"Ruled Nov 22, 2026: C, with the club paying by default. Recorded in the Business Decisions Log. It was open since 2026-11-10, because the families-pay default doesn’t fit a business paying its own invoice.", o:[
+    "The club, always: the business pays exactly its invoice and the fee shows in the books as Payment processing. FieldLogicHQ’s application fee is unchanged; /accounting reviews it",
+    "Follow the club’s one Payouts choice: when families and teams pay it, the business pays a processing fee line too",
+    "A second Payouts choice, for sponsorships only: “The club pays it” by default, or “The sponsor pays it”, which shows the fee as its own line before paying, with the club’s GST/HST on it. The registration choice is unchanged and doesn’t decide for sponsorships"]},
+  {n:4, ruled:0, rdate:"Nov 22, 2026", t:"The states, and what moves a deal between them", why:"The plan lists Offered · Form received · Invoiced · Paid · Delivered as one line. Payment and delivery happen in either order (F1).", o:[
+    "The state follows the money (Offered, Form received, Invoiced, Paid) with delivery counted beside it; Delivered is reached when it is paid and every item is ticked. Choosing a cheque or e-transfer issues the invoice at once, so Form received only waits after an unfinished card payment. An offer can be withdrawn until it is paid. The callout words are tab 5’s table",
+    "One line, in order: each state waits for the club’s press, and the club sends every invoice itself"]},
+  {n:5, ruled:0, rdate:"Nov 22, 2026", t:"When the logo goes up and comes down", why:"The plan says the paid deal feeds the list. A club sometimes hangs a banner and posts a logo before the cheque clears.", o:[
+    "Up by itself when the deal is paid, or earlier when the club ticks the logo line on the checklist; down by itself after the deal’s last day",
+    "Only when the club ticks it",
+    "As soon as the business sends its form"]},
+  {n:6, ruled:0, rdate:"Nov 22, 2026", t:"What a package is for", why:"A jersey crest only makes sense on a team; a home-page partner only on the club.", o:[
+    "A package names its kind of place (the club, a division, a team, a tournament) and each deal picks which one. A taken place warns and never blocks",
+    "Any package can be attached anywhere"]},
+  {n:7, ruled:0, rdate:"Nov 22, 2026", t:"Open offers and “How many”", why:"A club with two Club partner places sends three offers. Someone has to lose.", o:[
+    "An open offer holds its place: a package reads Full when every place is paid, invoiced or offered, and the club withdraws a stale offer to free one. No business opens a link for a place that has gone",
+    "Only invoiced and paid deals count; a link opened after the last place went says the package is full"]},
+  {n:8, ruled:0, rdate:"Nov 22, 2026", t:"The sponsorship form", why:"The sponsor link’s questions are a Stage 4 club form. Stage 4’s model names a package as a possible owner; this drawing proposes the club.", o:[
+    "One form per club (Setup, then Sponsorship form, Stage 4’s editor with no “for each child” groups and no health switch). It starts with fixed business fields the club can’t remove: business name as it should appear, contact name, email and invoice address (required), phone and website (asked, optional), and the logo (can come later)",
+    "One form per package, each starting with the same fixed fields"]},
+  {n:9, ruled:0, rdate:"Nov 22, 2026", t:"Tax on a sponsorship", why:"The §9 shape is accepted; two details aren’t written down: whose province sets the rate, and where the tax lands in the books.", o:[
+    "As drawn: Invoice details holds “Registered for GST/HST” and the number (off by default); each deal’s Charge switch is off by default and shown only to a registered club; the rate comes from the province of the business’s invoice address; deliverables listed on the invoice; the tax posts to its own new ledger word, GST/HST collected. A professional confirms the province rule",
+    "The same, but the rate comes from the club’s own province"]},
+  {n:10, ruled:0, rdate:"Nov 22, 2026", t:"The receipt", why:"The plan says invoice and receipt. The coach invoice has one document that is stamped paid.", o:[
+    "The paid invoice is the receipt: the same PDF, its subtitle led by “Paid in full”, with the payments received, and no stamp, as the coach invoice does",
+    "A separate document titled “Receipt”"]},
+  {n:11, ruled:0, rdate:"Nov 22, 2026", t:"The limit of 20 sponsors", why:"The shipped list holds 20 in all. 24 team sponsors would break it by themselves (F4).", o:[
+    "20 applies to the home page strip only; the list itself holds up to 100",
+    "Keep 20 for the whole list"]},
+  {n:12, ruled:0, rdate:"Nov 22, 2026", t:"Where Sponsorships lives, and who opens it", why:"The sponsor list moves out of the site editor, because a sponsor now shows beyond the club site. Ruled with a note: a club can also give Sponsorships to someone who doesn’t have it by default, such as a registrar.", o:[
+    "Its own club place, Sponsorships, with Deals · Packages · Sponsors · Setup; the owner, admins and the treasurer open it; the site editor’s Sponsors line becomes a door",
+    "A tab inside Money",
+    "Its own place, and the registrar opens it too"]},
+  {n:13, ruled:0, rdate:"Nov 22, 2026", t:"The offer email", why:"An offer to sell advertising is a commercial message under CASL, even to a business (F9).", o:[
+    "Sent in the club’s name, replies to the club, the club’s note optional and the rest written for it. The club must pick why it may email them (paid in 2 years, asked in 6 months, gave the address, published it for business), kept with the date and said back in the foot. The foot has the club’s mailing address, an unsubscribe for that club’s sponsorship offers only, and “Sent through FieldLogicHQ”. An unsubscribed or family-opted-out address can’t be offered again, nobody at the club can clear it, and the club has “Do not offer again” for a stop said by reply or phone. Sending waits for the club’s mailing address",
+    "No email from us: the club copies the link and sends it itself"]},
+  {n:14, ruled:0, rdate:"Nov 22, 2026", t:"Offer again", why:"A club’s sponsors mostly renew. Teams change every season.", o:[
+    "From next year’s empty Deals, one window with last year’s deals ticked: this year’s price (last year’s as a hint); the club and tournament places carry over; a division carries over by name; a team must be picked again, so its row waits until the new teams exist; a business that hasn’t paid in two years, or is unsubscribed, is listed but can’t be ticked",
+    "The same window, but last year’s amounts instead of this year’s price"]},
+  {n:15, ruled:0, rdate:"Nov 22, 2026", t:"The words", why:"Draft words. /marketing confirms them after the ruling, one spelling everywhere.", o:[
+    "Club side: “Sponsorships”, “Deals”, “Packages”, “Sponsors”, “Setup”, “Offer a deal”, “Shows on”, “Record a payment”, “Offer again”, and the five states as written. The business reads “Sponsorship”, “About your business”, “Questions from {club}”, “How you’ll pay”",
+    "“Attached to” instead of “Shows on”"]}
+];
+var NOTES = {
+  1:"Ask 1 · One choice. Recommended: the deal IS the place. A business has places, and a paid deal with the logo switch on is one of them, so there is nothing to keep in step. Each kind of place has one spot on the public site. The tournament drawing builds on this: a tournament is a kind of place.",
+  2:"Ask 2 · Tournament plans. Recommended: the branding gate, Tournament Plus and up. A free event that can’t show its host’s logo shouldn’t show a sponsor’s.",
+  3:"Ask 3 · Card fee. RULED Nov 22: a second Payouts choice for sponsorships, “The club pays it” by default. A club may pick “The sponsor pays it”: the fee shows as its own line before paying, with the club’s GST/HST on it, and the surcharge cap is the club’s own responsibility.",
+  4:"Ask 4 · States. Recommended: the state follows the money, delivery is counted beside it, and Delivered needs both.",
+  5:"Ask 5 · Logo timing. Recommended: up when paid, or earlier by the club’s tick; down after the last day.",
+  6:"Ask 6 · Package kinds. Recommended: a package names its kind of place; a deal picks which.",
+  7:"Ask 7 · Offers hold places. Recommended: yes, so a business never opens a link for a place that has gone.",
+  8:"Ask 8 · The form. Recommended: one per club, with fixed business fields the club can’t remove.",
+  9:"Ask 9 · Tax. Recommended: the §9 shape, with the rate from the business’s invoice address and the tax on its own ledger line.",
+  10:"Ask 10 · Receipt. Recommended: the paid invoice is the receipt, as on the coach side.",
+  11:"Ask 11 · The 20 limit. Recommended: 20 on the home strip, up to 100 in the list.",
+  12:"Ask 12 · Where it lives. Recommended: its own place with four tabs; owner, admins, treasurer.",
+  13:"Ask 13 · The email. Recommended: the club’s email with its address and an unsubscribe; /legal decides who it may go to.",
+  14:"Ask 14 · Offer again. Recommended: one window from last year’s deals, this year’s prices, a team picked again."
+};
+var FINDINGS = {
+  F1:["F1 · Five states in one line mix money and delivery", "What the plan says: a deal moves Offered · Form received · Invoiced · Paid · Delivered. What happens in real clubs: a banner goes up in April and the cheque comes in May, or a club is paid in February for a July banner. A single line forces one to wait for the other, or lies about one of them.", "What this drawing does: the state follows the money, the checklist counts delivery beside it, and Delivered means both are done (ask 4)."],
+  F2:["F2 · No club mailing address, no club GST/HST setting", "What the code does today: an organization has no address or province fields. The only province is the club’s billing address for its own plan’s tax. The only GST/HST registration in the product belongs to the platform admin’s own bookkeeping. The coach invoice prints a cheque address from the team.", "What this drawing does: Setup → Invoice details holds the club’s mailing address, its GST/HST registration and how businesses pay. The offer email’s CASL footer and every invoice read it. Stage 7 camps read the same registration."],
+  F3:["F3 · Whose province sets the rate", "What §9 says: “the rate by province, never a hard-coded 13%”. It doesn’t say whose. For a service, the place of supply generally follows the buyer’s address, so a club in Ontario invoicing a business in Manitoba would charge GST 5%, not HST 13%. This is product research, not /accounting (its charter is our own books).", "What this drawing does: the rate comes from the province of the business’s invoice address, named as the rate is (“HST 13%”). A professional confirms the rule and the PST provinces before the build is promoted. The product isn’t sold in Québec yet."],
+  F4:["F4 · The sponsor list holds 20 in all", "What the code does today: the list is capped at 20 by a database check, because it was built for one strip on the home page.", "What this drawing does: 20 stays as the home strip’s limit (the club place). The list as a whole holds up to 100 (ask 11). The Sponsors tab says “Showing 3 of 20 places on your home page”."],
+  F5:["F5 · Today’s list is one block on the site content", "What the code does today: the sponsors are one list stored with the public site’s content (name, logo, link, last day), with no place, no contact and no history. Ended ones stay in the editor, marked Ended.", "What this drawing does: the build gives a business its own record with its places, and moves each existing sponsor in as a business with one place, “The club”, keeping its last day, logo and link. Counts are taken first. The home strip and About page look the same afterwards. A moved sponsor has no reason on record to be emailed (/legal), so it isn’t ticked in Offer again until the club offers it with a reason. A sponsor who is a person, not a business (“The Ferreira family”), isn’t business contact information under PIPEDA."],
+  F6:["F6 · A “Sponsored by” line and the team page rule", "What is ruled: the public team page shows games only, never practices or team events (owner ruling). That rule is about which events show. A sponsor line is not an event, but it is new content on that page.", "What this drawing does: one quiet line under the team’s name, the same as under a division’s. If you’d rather keep the team page bare, a team place shows on the About page only. Say so in ask 1’s note."],
+  F7:["F7 · Stage 4’s form can only belong to a season", "What the code does today: the club form already knows a business form (no groups, no health switch), but a form’s owner can only be a house-league season, and the delete rules are written for seasons.", "What this drawing does: the build widens who can own a form to the club’s sponsorship setup (ask 8), with its own delete rule. Stage 4’s model comment named a package as the likely owner; ask 8 chooses."],
+  F8:["F8 · Rep teams are not a place", "What is ruled: a team’s sponsorships in the Coaches Portal stay the team’s (2026-11-06), with their own invoice and books.", "What this drawing does: rep teams are left out of “Shows on”, so a club deal and a team’s own sponsor can never double-book a jersey. If a club wants to sell rep-team crests itself, that is a new ask, not part of this stage."],
+  F9:["F9 · CASL for an offer to a business", "What /legal found (review 2026-11-22): an offer to sell a business advertising is a commercial electronic message, and CASL has no business-to-business exception. The club is the sender; FieldLogicHQ causes or permits the send and is named in the foot. The burden of proving consent is on the sender.", "What this drawing does: the window requires one of four reasons and keeps it with its date; the foot says it back, with the club’s mailing address, an unsubscribe for that club’s sponsorship offers only, and “Sent through FieldLogicHQ”. An unsubscribed or family-opted-out address can’t be offered again. Referral isn’t offered in the first version, because it must name the referrer."],
+  F10:["F10 · A passed-on card fee would be a surcharge over the cap", "What the records say: the card networks cap a merchant’s surcharge at 2.4%. On a $1,130.00 invoice our fee is 3.63% of the total. The owner ruled (2026-11-17) that what a club passes on to its payers is the club’s own charge and responsibility.", "What was ruled (Nov 22, ask 3): on sponsorships the club pays the fee by default, so a club that changes nothing stays clear of the cap. A club that picks “The sponsor pays it” takes the cap on as its own charge, under the 2026-11-17 ruling, and the club’s GST/HST applies to the fee line."],
+  F11:["F11 · Our application fee rides a sponsor payment", "What /accounting found (review 2026-11-22): nothing changes for us. Our fee is our charge to the club, its tax is inside it, and its place of supply is the club’s province, so the sponsor’s location doesn’t matter. Taking it on a total that includes the club’s HST is not tax on tax.", "What the build must do: send sponsor payments through the same per-fee record as family payments, so our tax return lines catch them; record the source and who paid the fee; never pass Stripe Tax on a sponsor’s session; keep FieldLogicHQ’s name and GST/HST number off the club’s invoices, receipts and pages."],
+  F12:["F12 · The Payments Terms draft doesn’t name sponsorships", "What /legal found: the unpublished Payments Terms say online payments are for registrations, programs, team fees and tournament entries (§3, §9), and §4 says who pays the fee is the club’s choice.", "What is owed: add sponsorships to §3 and §9, and to §4 that your organization chooses who pays the fee on a sponsorship payment, and that your organization pays it unless it chooses otherwise (ask 3, ruled Nov 22; this replaces the earlier “always paid by your organization”). /legal writes the words. The draft is unpublished, so you re-approve it with the version."]
+};
+var KEY = "br-stage6-sponsorships-v1";
+var S = { pick:{}, note:{}, tab:"p1", seg:{} };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var host = document.getElementById("asks");
+function pickOf(a){ return a.ruled != null ? a.ruled : (S.pick[a.n] != null ? S.pick[a.n] : 0); }
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var isRuled = a.ruled != null;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + a.t + (isRuled ? " <span class=\"rec\" style=\"font-size:11px;font-weight:700;color:var(--tag-new)\">RULED</span>" : "") + "</h3><p class=\"why\">" + a.why + "</p>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    var lab = isRuled ? (i === a.ruled ? "<span class=\"rec\" style=\"color:var(--tag-new)\">RULED " + a.rdate.toUpperCase() + "</span>" : "") : (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "");
+    h += "<label class=\"opt\" for=\"" + id + "\"" + (isRuled ? " style=\"cursor:default\"" : "") + "><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"" + (isRuled ? " disabled" : "") + "><span><b>" + String.fromCharCode(65 + i) + ".</b> " + o + lab + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var pick = pickOf(a);
+  var r = document.getElementById("a" + a.n + "o" + pick); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+
+function build(){
+  var L = ["Board Ready Stage 6, sponsorships (drawings Nov 22, 2026, round 1)", ""];
+  ASKS.forEach(function(a){
+    var p = pickOf(a);
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (a.ruled != null ? " (ruled " + a.rdate + ")" : (p === 0 ? " (recommended)" : "")));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  L.push(""); L.push("Short form: " + ASKS.map(function(a){ return a.n + String.fromCharCode(65 + pickOf(a)); }).join(" · "));
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var txt = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(txt).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+
+Array.prototype.forEach.call(document.querySelectorAll(".seg"), function(seg){
+  var pane = document.getElementById(seg.getAttribute("data-seg"));
+  function set(v){ Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-v") === v ? "true" : "false"); }); pane.classList.toggle("diffs", v === "diff"); S.seg[seg.getAttribute("data-seg")] = v; save(); }
+  seg.addEventListener("click", function(ev){ var b = ev.target.closest("button"); if (b) set(b.getAttribute("data-v")); });
+  set(S.seg[seg.getAttribute("data-seg")] || "all");
+});
+
+var dlg = document.getElementById("note"), goBtn = document.getElementById("noteGo"), goTo = null;
+function open(title, paras, ask){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  goTo = ask || null; goBtn.hidden = !ask;
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+goBtn.addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); show(LAST); var el = document.getElementById("ask" + goTo); if (el) el.scrollIntoView({ block: "start" }); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); var a = ASKS.filter(function(x){ return x.n === n; })[0]; open("Ask " + n + " · " + a.t, [NOTES[n] || a.why], n); return; }
+  var f = ev.target.closest(".fl[data-f]");
+  if (f) { var F = FINDINGS[f.getAttribute("data-f")]; if (F) open(F[0], [F[1], F[2]], null); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")], null); }
+});
+})();
+</script>

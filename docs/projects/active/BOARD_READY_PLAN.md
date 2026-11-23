@@ -1223,6 +1223,114 @@ sign-up form article. **Reviews owed at build:** `/legal` (the setting's helper 
 ### Stage 6 — Sponsorships (item 7)
 - [ ] Club **sponsorship packages**: name, price, what's included (a list of deliverables: logo on the site, field banner, jersey
   crest, named division), how many are available, and an optional sponsorship document (PDF) to send.
+
+**Drawn 2026-11-22 (round 1, after /design, /legal, /accounting) and ALL 15 ASKS RULED 2026-11-22** — 1A · 2A · 3C · 4A ·
+5A · 6A · 7A · 8A · 9A · 10A · 11A · 12A (+ note) · 13A · 14A · 15A, every one as recommended (ask 3 was ruled earlier the
+same day). Drawing: https://claude.ai/artifact/1z9y6ctHK3PNLaJ2HR11U8, source `BOARD_READY_STAGE6_SPONSORSHIPS_DRAWINGS.html`.
+Reviews: `docs/agents/legal/BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_REVIEW.md`,
+`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`. The rulings, as ruled:
+1. **Where the logo shows = one record.** A business is kept once and has places. A place is a kind (the club, a house-league
+   division, a house-league team, a tournament; later a club event), which one, and a last day. A paid deal whose package has
+   "Your logo on our website" on IS a place. Club place → the home strip; division or team place → a "Sponsored by" line
+   under its name; tournament place → that tournament's Overview strip; About lists the club's places. A deal's place
+   changes on the deal; a typed place on the Sponsors tab.
+2. **Tournament sponsors follow the Tournament Plus branding gate:** Tournament Plus and up show sponsors on a tournament; a
+   free event's editor shows Sponsors locked and names Tournament Plus; Tournament-only organizers get display only. *(Logged
+   by `/strategy` 2026-11-22, `BUSINESS_DECISIONS.md` "Sponsors on a TOURNAMENT": the existing Tournament Plus branding
+   key, no new key; the Facts doc's Board Ready line updated.)*
+3. **Card fee** (ruled earlier 2026-11-22): see the "Who pays the card fee" line below.
+4. **States follow the money** (Offered, Form received, Invoiced, Paid) with delivery counted beside it; Delivered = paid and
+   every item ticked. Choosing a cheque or e-transfer issues the invoice at once, so Form received only waits after an
+   unfinished card payment. An offer can be withdrawn until it is paid. Callout words = the drawing's tab 5 table.
+5. **The logo goes up** by itself when the deal is paid, or earlier when the club ticks the logo line on the checklist;
+   **down** by itself after the deal's last day.
+6. **A package names its kind of place** (the club, a division, a team, a tournament); each deal picks which one. A taken
+   place warns and never blocks.
+7. **An open offer holds its place:** a package reads Full when every place is paid, invoiced or offered; the club withdraws
+   a stale offer to free one. No business opens a link for a place that has gone.
+8. **One sponsorship form per club** (Setup › Sponsorship form, Stage 4's editor with no "for each child" groups and no
+   health switch), starting with fixed business fields the club can't remove: business name as it should appear, contact
+   name, email and invoice address (required); phone and website (asked, optional); the logo (can come later).
+9. **Tax as drawn:** Invoice details holds "Registered for GST/HST" and the number (off by default); each deal's Charge
+   switch is off by default and shown only to a registered club; the rate comes from the province of the business's invoice
+   address; deliverables listed on the invoice; the tax posts to its own new ledger word, GST/HST collected. A professional
+   confirms the province rule.
+10. **The paid invoice is the receipt:** the same PDF, its subtitle led by "Paid in full", with the payments received, no
+    stamp, as the coach invoice does.
+11. **20 is the home strip's limit only;** the list holds up to 100.
+12. **Its own club place, Sponsorships** (Deals · Packages · Sponsors · Setup); the owner, admins and the treasurer open it;
+    the site editor's Sponsors line becomes a door. **Owner note:** it is also an access a club can give to someone who
+    doesn't get it by default, such as a registrar. *(Reading of the note, for the build: a new per-member access in the
+    shipped Manage member window, alongside the other areas, default on for owner/admin/treasurer and off for every other
+    role, and paired with the plan's entitlement like every area. This replaces the drawing's "a volunteer gets in through
+    one of those seats until Stage 3".)*
+13. **The offer email** as drawn (F9): sent in the club's name, replies to the club, the club's note optional. The club must
+    pick why it may email them (paid in 2 years, asked in 6 months, gave the address, published it for business), kept with
+    the date and said back in the foot. The foot: the club's mailing address, an unsubscribe for that club's sponsorship
+    offers only, "Sent through FieldLogicHQ". An unsubscribed or family-opted-out address can't be offered again and nobody
+    at the club can clear it; the club has "Do not offer again" for a stop said by reply or phone. Sending waits for the
+    club's mailing address.
+14. **Offer again** from next year's empty Deals: one window, last year's deals ticked; this year's price (last year's as a
+    hint); club and tournament places carry over; a division carries over by name; a team is picked again, so its row waits
+    until the new teams exist; a business that hasn't paid in two years, or is unsubscribed, is listed but can't be ticked.
+15. **The words:** club side "Sponsorships", "Deals", "Packages", "Sponsors", "Setup", "Offer a deal", "Shows on", "Record a
+    payment", "Offer again", the five states as written; the business reads "Sponsorship", "About your business", "Questions
+    from {club}", "How you'll pay". `/marketing` confirms them, one spelling everywhere.
+
+**Round 2 — drawn 2026-11-22 after /design and /legal (https://claude.ai/artifact/Jw44YSkZ6dFFGTmAVW6ScQ, source
+`BOARD_READY_STAGE6_SPONSORSHIPS_ROUND2_DRAWINGS.html`) and ALL 9 ASKS RULED 2026-11-22, each as recommended (A):**
+1. **The sponsor's pay block is the shipped one:** one button per way to pay, each with its own total — "Send and pay
+   $1,176.39 by card" with "Includes a $41.05 card processing fee and $5.34 HST on it." under it, and "Send, and pay
+   $1,130.00 by cheque or e-transfer". The summary above shows the invoice. No radio, no tinted selection.
+2. **The invoice follows the coach invoice's recipe:** the sponsorship, the processing fee (when the sponsor paid it) and
+   HST are each a row of the one table; Invoiced, Paid and Balance due carry the total; no totals block.
+3. **A passed-on fee is booked both ways:** the fee charged is income under Club sponsorship (a line of its own) and the
+   same amount is a Payment processing cost, so the HST collected matches the income it was charged on.
+4. **Invoice details are changed by the owner, admins and the treasurer only;** anyone else with Sponsorships reads them,
+   with a line saying who changes them.
+5. **"Full" on a package is grey.**
+6. **"e-transfer" in a sentence, "E-transfer" at the start of a label or sentence;** the other two spellings go, including
+   the stored ledger method name (a data change for existing clubs). `/marketing` sweeps it and the spelling check holds it.
+7. **No registered charity is known:** build for clubs that aren't charities; `/legal` and `/accounting` re-check when the
+   owner says a registered charity is using sponsorships.
+8. **The offer email's foot carries the club's mailing address alone.**
+9. **The registration fee row gets the same card-network hint** (the limit, and that passing the fee on is the club's
+   decision and responsibility). A hint only; the registration ruling stands.
+
+The gross-up question is answered by the code (F13, see the card-fee line below). Built from /legal round 2: every offer
+keeps who sent it (a name snapshot). /legal's round 2 adds owed policy text: Payments Terms §4 (two fee choices,
+sponsorships default the club), §6 (a sponsorship refund never includes the fee), §9 (the sponsor pays; name sponsorships
+in the card-network sentence); Privacy §5 (who sent an offer is kept with its reason).
+
+**Still open after both rounds (not ruled by them):**
+- ~~The build prompt.~~ **Written 2026-11-22** (owner: "write the build prompt"): `BOARD_READY_STAGE6_SPONSORSHIPS_BUILD_PROMPT.md`,
+  four parts in order. Two code facts it carries for the owner: there may be no public team page for a team's "Sponsored
+  by" line (Part 1 stops and asks), and the mailing-address box is hidden for most clubs today (Invoice details owns it).
+- **Part 1's two owner calls, RULED 2026-11-22** (asked at the start of the Part 1 build): (a) **a team's sponsor shows on the
+  About page only** — the code has no public page for a house-league team (the only team page is the signed-in coach's), so
+  the "Sponsored by" line under a team's name has nowhere to go; the drawing's own F6 fallback. A division's line goes under
+  its name on its public schedule and standings, below the division tabs. (b) **The move of today's sponsor list: yes** —
+  counts first: production 0 clubs / 0 rows, dev 2 clubs / 6 rows; each became a business with one "The club" place, keeping
+  its order, logo, link and last day, with no reason on record for emailing it (migration 525, applied to dev 2026-11-22;
+  production step queued). **Part 1 built on dev 2026-11-22** (migration 525: the four tables, the sponsorship fee column,
+  the club-owned sponsorship form, the module matrix CHECK widened to the catalog it had already outgrown), **committed
+  2026-11-22**, walk §560. **Two words RULED the same day** (owner: "use the legal wording for both", from /legal's re-check
+  of the built words): the Manage member grant sentence ends with the four reasons Part 2's offer window allows (paid the
+  club in two years, asked in six months, gave or published the address for business use), not the drawn "no business the
+  club has never dealt with"; the Payouts sponsorship row's card-network sentence names the cost ceiling and says "nothing at
+  all in Québec" (the drawn "none in Québec" read as no limit).
+- ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
+  the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
+  addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or
+  logo is usually not charged tax. Turn this on only if your accountant says this deal is taxable."** The rate sentence
+  follows the business's province (e.g. "5% for an Alberta address…"); the same words on a phone; static, never reacting to
+  the deliverables (classifying a deal would be tax advice); never call a banner or web placement "advertising" (CRA's
+  advertising test names TV, radio and periodicals). Replaces the drawn hint's "Your club is registered for GST/HST."
+- Policy text owed with the next versions (`/legal` writes): Privacy §5, §9, §12; Terms §4; Payments Terms §3, §4, §9.
+- A tax professional: the province-of-the-buyer rule (ask 9) and whether recognition alone is a supply; a lawyer's eye (no
+  gate) on the CASL sender question, the two-year clock and a passed-on fee under Québec law.
+- Unblocked by this ruling (§7b item 2): the public tournament pages' sponsors drawing can start.
+
 - [ ] **Sponsors and deals:** a deal is a sponsor + a package + what it's attached to (the club · a house-league division ·
   a house-league team · a club event · a tournament) + an amount. States: Offered · Form received · Invoiced · Paid ·
   Delivered.
@@ -1239,6 +1347,13 @@ sign-up form article. **Reviews owed at build:** `/legal` (the setting's helper 
 - [ ] Team sponsorships in the Coaches Portal stay the team's (2026-11-06 ruling). They are not merged or moved.
 - [ ] Live card payment waits on Club Tier Stage 12's production switch; everything else can ship first.
 - [ ] Migration first; dictionary + snapshots.
+- [ ] **Who pays the card fee** (ruled 2026-11-22, ask 3, `BUSINESS_DECISIONS.md`): a second club-wide choice on the Payouts
+  card, separate from the registration one: "The club pays it" (default; the sponsor pays the invoice to the cent, the fee is
+  a Payment processing cost) or "The sponsor pays it" (the fee shows as its own line on the invoice and the pay page before
+  paying, with the club's GST/HST on it). ~~Owed to the build: whether that line is grossed up.~~ **Answered by the code
+  (round 2 finding F13, 2026-11-22):** no gross-up is needed. `onlineFee()` works the fee out on the amount owed, never on
+  the charge, and the club receives the charge less that fee; Stripe's extra cents on the larger charge come out of
+  FieldLogicHQ's application fee. On the drawing's deal the club receives $1,135.34 and keeps $1,000.00 after $135.34 HST.
 
 ### Stage 7 — Camps and clinics (item 6)
 - [ ] A camp or clinic is a club event (Stage 5) with sessions, a capacity, a price, a waitlist and a sign-up form (Stage 4).
@@ -1301,7 +1416,7 @@ parallel.
 | 8 | **Stage 3** The club's people + documents with expiry | 3 | nothing (adds groups to 7) | yes | Not started, not drawn |
 | 9 | **Stage 4** Custom forms (house-league sign-up first) | 3 | nothing | yes | **Drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks ruled 2026-11-20 as recommended** (§5 Stage 4); build prompt `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md` (three parts) and the tournament fixes `BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md` written 2026-11-20; nothing built. **First in the owner's order of 2026-11-20** (prompt `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md`) |
 | 10 | **Stage 5** Club events | 3 | ~~Q7~~ (ruled yes 2026-11-15) | yes | Not started, not drawn |
-| 11 | **Stage 6** Sponsorships | 4 | 9 (10 no longer, owner 2026-11-20: a club event joins later); live card pay waits on Club Tier Stage 12 | yes | Not started, not drawn. Drawing prompt written 2026-11-20 (`BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_PROMPT.md`), drawn while Stage 4 is built. Sponsors on the public tournament pages wait for this stage (owner 2026-11-20) |
+| 11 | **Stage 6** Sponsorships | 4 | 9 (10 no longer, owner 2026-11-20: a club event joins later); live card pay waits on Club Tier Stage 12 | yes | Drawn 2026-11-22 (round 1) and all 15 asks ruled the same day (§5 Stage 6); round 2 (the "sponsor pays the fee" case) and the build prompt next. Not built. Sponsors on the public tournament pages wait for this stage (owner 2026-11-20); their drawing can now start |
 | 12 | **Stage 7** Camps & clinics | 4 | 9, 10; live card pay waits on Club Tier Stage 12 | yes | Not started, not drawn |
 | — | **0d** Continuity message points + `/legal` + write-up | when the owner calls it; **not in the pack (owner 2026-11-16)** | — | no |
 | — | ~~**Q5** Penetration test~~ | ruled out of scope 2026-11-15 | — | — |
@@ -1389,7 +1504,9 @@ and 7 stored files (6.6 MB). This is the cheapest the move will ever be.
   Stage 6; tournament-only organizers get display only.
 - **Drift:** none in prices or keys. The Facts header date is stale. The 2026-10-27 "one sponsor list per org" ruling is
   **not in the Business Decisions Log**, so log it.
-- **Open:** who pays the card fee on a sponsor payment (the families-pay default doesn't fit a business).
+- ~~**Open:** who pays the card fee on a sponsor payment (the families-pay default doesn't fit a business).~~ **Ruled
+  2026-11-22** (owner, Stage 6 ask 3): a separate club-wide choice for sponsorships, "The club pays it" by default, "The
+  sponsor pays it" optional, with the club's GST/HST on the fee line (`BUSINESS_DECISIONS.md` 2026-11-22). Built in Stage 6.
 
 **Tax (product research, not `/accounting`):** `/accounting`'s charter is FieldLogicHQ's own books and excludes a club's
 tax. CRA sources were read 2026-11-10.

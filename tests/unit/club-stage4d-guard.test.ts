@@ -22,7 +22,9 @@ const read = (p: string) => readFileSync(p, 'utf8');
 /** Code only: comments (block and line) removed, so a header that names what is NOT here is not a hit. */
 const code = (p: string) => read(p).replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
 
-const ROUTE = 'app/api/admin/public-site/sponsor-logo/route.ts';
+// Board Ready Stage 6 Part 1: the logo route moved with the list to Sponsorships (the site editor's own was retired; its
+// in-use check read the old column, so it could have deleted a logo a sponsor in the new list still names).
+const ROUTE = 'app/api/admin/sponsorships/sponsors/logo/route.ts';
 const EDITOR = 'app/[orgSlug]/admin/public-site/page.tsx';
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -50,10 +52,10 @@ describe('the database and the code agree', () => {
   });
 });
 
-describe('the logo route is the Public site editor\'s, opens the file and deletes only the club\'s own', () => {
+describe('the logo route is Sponsorships\', opens the file and deletes only the club\'s own', () => {
   const route = code(ROUTE);
-  it('both verbs ask the editor rule (owner or admin to write), never the Look rule the club logo uses', () => {
-    assert.equal((route.match(/publicSiteEditor\(req, \{ write: true \}\)/g) ?? []).length, 2);
+  it('both verbs ask the Sponsorships gate, never the Look rule the club logo uses', () => {
+    assert.equal((route.match(/requireSponsorships\(req\)/g) ?? []).length, 2);
     assert.doesNotMatch(route, /clubLookEditor/);
   });
   it('an upload is opened and re-saved, under a random name in the club\'s own folder, and never overwrites', () => {
@@ -69,9 +71,9 @@ describe('the logo route is the Public site editor\'s, opens the file and delete
   });
   it('a delete names only this club\'s own sponsor logo and never one a saved sponsor still points at', () => {
     assert.match(route, /parseSponsorLogoUrl\(logoUrl, org\.id\)/);
-    assert.match(route, /select\('sponsors'\)\.eq\('org_id', org\.id\)/, 'the stored column, read with the server\'s own access');
+    assert.match(route, /from\('club_sponsors'\)\.select\('logo_url'\)\.eq\('org_id', org\.id\)/, 'the one sponsor list, read with the server\'s own access');
     // Compared by the file named (not the string typed), and a failed read deletes nothing.
-    assert.match(route, /parseSponsorLogoUrl\(s\.logoUrl, org\.id\)\?\.objectPath === parsed\.objectPath/);
+    assert.match(route, /parseSponsorLogoUrl\(s\.logo_url, org\.id\)\?\.objectPath === parsed\.objectPath/);
     assert.match(route, /if \(error\) return NextResponse\.json\(\{ error: W\.saveFailed \}, \{ status: 500 \}\)/);
     assert.match(route, /status: 409/);
   });
@@ -96,9 +98,18 @@ describe('the logo route is the Public site editor\'s, opens the file and delete
 });
 
 describe('the ended filter belongs to the public pages\' loaders', () => {
-  it('the home\'s loader and the About page filter; the shared read and the editor do not', () => {
-    assert.match(code('lib/club-home-data.ts'), /sponsors: sponsorsShowing\(siteContent\?\.sponsors\)/);
-    assert.match(code('app/[orgSlug]/about/page.tsx'), /sponsorsShowing\(content\?\.sponsors\)/);
+  // ⚖ Board Ready Stage 6 (asks 1, 11): the one sponsor list moved to Sponsorships' own tables. The pages' loader is
+  // `publicSponsorsFor` (the filter by the club's day, the home strip's 20); the place's own read keeps every sponsor.
+  it('the home\'s loader and the About page filter; the place\'s read and the editor do not', () => {
+    assert.match(code('lib/club-home-data.ts'), /publicSponsorsFor\(org\.id, org\.planId\)/);
+    assert.match(code('lib/club-home-data.ts'), /sponsors: \(await sponsorList\)\.home/);
+    assert.match(code('app/[orgSlug]/about/page.tsx'), /publicSponsorsFor\(org\.id, org\.planId\)[\s\S]*\.about/);
+    const server = code('lib/club-sponsorships-server.ts');
+    const place = server.slice(server.indexOf('export async function readSponsors'), server.indexOf('export async function readSponsor('));
+    assert.doesNotMatch(place, /placeShowing|homeStrip/, 'the Sponsors tab must see an ended sponsor');
+    const pub = server.slice(server.indexOf('export async function publicSponsorsFor'));
+    assert.match(pub, /homeStrip\(list, today\)/);
+    assert.match(pub, /placeShowing\(/);
     const db = read('lib/db.ts');
     // Code only: the read's own comment names the filter it must NOT apply.
     const fn = db.slice(db.indexOf('export async function getOrgPublicSiteContent'), db.indexOf('/** Each editable field')).replace(/\/\/.*$/gm, '');
@@ -114,10 +125,14 @@ describe('the ended filter belongs to the public pages\' loaders', () => {
 });
 
 describe('the strip is the home\'s and the section is the About page\'s — nowhere else', () => {
-  it('only the home component and the About page import the sponsor parts', () => {
+  // Board Ready Stage 6 (ask 1): a division's "Sponsored by" line, on its schedule and standings pages, joins the two.
+  it('only the home component, the About page and a division\'s schedule and standings import the sponsor parts', () => {
     const users = [...walk('app'), ...walk('components'), ...walk('lib')]
       .filter(p => !p.endsWith('ClubSponsors.tsx') && /ClubSponsors['"]/.test(read(p)));
-    assert.deepEqual(users.sort(), ['app/[orgSlug]/about/page.tsx', 'components/public/ClubSiteHome.tsx']);
+    assert.deepEqual(users.sort(), [
+      'app/[orgSlug]/about/page.tsx', 'app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx',
+      'app/[orgSlug]/league/[seasonSlug]/standings/page.tsx', 'components/public/ClubSiteHome.tsx',
+    ]);
   });
   it('the frame, the footer and the shared frame data know nothing of sponsors', () => {
     for (const f of ['components/public/ClubFrame.tsx', 'components/public/ClubFooter.tsx', 'lib/club-frame-data.ts']) {
@@ -160,9 +175,13 @@ describe('sponsors are not a section, not "ready", and not a reason for the Abou
   it('the About page\'s door still opens only for a contact, a document or a question', () => {
     assert.doesNotMatch(read('lib/club-about.ts'), /sponsor/i);
   });
-  it('the sponsor card sits in the lists row, after Questions, and the row names sponsors', () => {
+  // Board Ready Stage 6 (ask 12, round 1 tab 1 RESTYLED): the list moved to Sponsorships; its line here is the door.
+  it('the Sponsors line sits in the lists row, after Questions, as the door to Sponsorships', () => {
     const editor = code(EDITOR);
-    assert.ok(editor.indexOf("{listPart('questions')}") < editor.indexOf("{listPart('sponsors')}"));
+    assert.doesNotMatch(editor, /listPart\('sponsors'\)/, 'the list is Sponsorships\' now');
+    assert.ok(editor.indexOf("{listPart('questions')}") < editor.indexOf('id="sponsors"'));
+    assert.match(editor, /SPONSORSHIPS_WORDS\.siteDoor\.caption/);
+    assert.match(editor, /opensSponsorships\(/, 'the door only for someone Sponsorships opens to');
     assert.equal(W.lists, 'Contacts, documents and sponsors');
   });
   it('the four lists are folded lines, one open at a time, each saying what is inside (owner 2026-10-23, option 1)', () => {
@@ -170,9 +189,6 @@ describe('sponsors are not a section, not "ready", and not a reason for the Abou
     assert.match(editor, /useState<ListKind \| null>\(null\)/, 'the row opens with every list folded');
     assert.match(editor, /setOpenList\(isOpen \? null : kind\)/, 'opening another list closes the first');
     assert.match(editor, /aria-expanded=\{isOpen\}/);
-    assert.match(editor, /W\.listPeekSponsors\(/);
-    assert.equal(W.listPeekSponsors(3, 1), '3 showing · 1 ended');
-    assert.equal(W.listPeekSponsors(3, 0), '3 showing');
   });
   it('the public footer door keeps its own words', () => {
     assert.match(read('components/public/ClubFooter.tsx'), />Contacts and documents<\/Link>/);

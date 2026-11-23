@@ -99,6 +99,8 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       // Families (mig 251/252): League is first-class — a household spanning house
       // league and a rep team is the area's whole premise (owner decision 2026-08-17).
       'module_families',
+      // Board Ready Stage 6 (ask 12, owner 2026-11-22): the Sponsorships place rides League Plus and both Club bands.
+      'module_sponsorships',
     ],
     gatingStatus: 'early_access',
   },
@@ -121,6 +123,8 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       'module_accounting',
       'module_rep_teams',
       'module_families',
+      // Board Ready Stage 6 (ask 12, owner 2026-11-22): the Sponsorships place rides League Plus and both Club bands.
+      'module_sponsorships',
     ],
     gatingStatus: 'early_access',
   },
@@ -144,6 +148,8 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       'module_accounting',
       'module_rep_teams',
       'module_families',
+      // Board Ready Stage 6 (ask 12, owner 2026-11-22): the Sponsorships place rides League Plus and both Club bands.
+      'module_sponsorships',
     ],
     gatingStatus: 'early_access',
   },

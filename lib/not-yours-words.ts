@@ -39,7 +39,7 @@ export type NotYoursWho =
 export type NotYoursPage =
   | 'families' | 'familiesLimited' | 'accounting' | 'repTeams' | 'publicSite' | 'houseLeague' | 'seasonMoney' | 'seasonEmails'
   | 'pdfSettings' | 'settings' | 'billing' | 'auditLog' | 'members' | 'schedules' | 'calendar' | 'organization'
-  | 'communications' | 'communicationsBoard';
+  | 'communications' | 'communicationsBoard' | 'sponsorships' | 'sponsorshipsLimited';
 
 type PageWords = { title: string; what: string; who: NotYoursWho };
 
@@ -67,6 +67,10 @@ export const NOT_YOURS_PAGES: Record<NotYoursPage, PageWords> = {
   // volunteers have nobody to write to, so no switch gives it to them (`board`). Words: PLACE.notYoursWhat (one block).
   communications: { title: PLACE.name, what: PLACE.notYoursWhat, who: 'grant' },
   communicationsBoard: { title: PLACE.name, what: PLACE.notYoursWhat, who: 'board' },
+  // Board Ready Stage 6 (ask 12 + note): a per-member access the owner can give anyone.
+  sponsorships: { title: 'Sponsorships', what: 'It’s where the club sells sponsorships: its packages, its deals and where each sponsor shows.', who: 'grant' },
+  // A member limited to some teams: never given to them (every sponsor and deal is the club's), so no one is named.
+  sponsorshipsLimited: { title: 'Sponsorships', what: 'It’s where the club sells sponsorships: its packages, its deals and where each sponsor shows.', who: 'wholeClub' },
 };
 
 export const NOT_YOURS_WORDS = {

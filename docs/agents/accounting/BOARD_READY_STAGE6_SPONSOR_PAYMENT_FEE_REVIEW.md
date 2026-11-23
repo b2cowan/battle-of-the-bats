@@ -1,0 +1,40 @@
+# Our application fee on a sponsor's card payment (Board Ready Stage 6, drawing ask 3)
+**Last verified:** 2026-11-22 (read from existing files and the code; no new outside research)
+**Re-verify by:** before sponsor card payments go live; D1 answered; a bank-debit rail added for sponsors; Stage 5's per-fee record built
+**Depends on facts:** registered for GST/HST, annual filer, regular method; R1 (tax inside our fee), R3 (Stripe-owned pricing), T3 (the fee is our charge to the club); Canada first (US clubs follow `US_CLUB_PAYMENTS_REVIEW.md`, stale)
+
+## Question(s) this answers
+- Does taking our application fee on a sponsor payment change how we charge, record, invoice or report it?
+- Is a fee computed on a total that includes the club's own HST a problem for us?
+- "The club pays it" versus a family payment; and if the owner rules "the business pays" (a surcharge line).
+
+## Finding
+- **Same fee, same method.** Our tax base is our application fee only (`PLATFORM_FEE_TAX_COLLECTION_METHOD.md`, R1). The payer, the payer's country, and what the payment is for do not enter it. The recipient of our fee is the club (T3), so place of supply is the club's billing-address province (13/113 ON, 14/114 NS, 15/115 NB/NL/PEI, 5/105 elsewhere; US club 0%).
+- **The club's HST inside the $1,130 is not ours.** It is the club's tax on its own supply. We collect and remit none of it; the fee is a percentage of the amount charged, exactly as on a family payment that includes the club's tax. No tax-on-tax, no change to our base.
+- **Figures, Ontario club, $1,130.00 invoice, card:** fee 3.5% + $1.50 = $41.05. Club pays: Stripe's cost on $1,130.00 = $33.07, our application fee $7.98, tax inside $0.92, revenue net of tax $7.06. The same $1,130.00 base with the payer paying the fee ($1,171.05 charged): Stripe's cost $34.26, our fee $6.79, tax inside $0.78. Margin stays positive.
+- **Club pays versus family pays:** nothing differs for us beyond the arithmetic above (Stripe's percentage falls on a smaller charge, so our margin is larger). Same fees_collector (Stripe), same refund rule (a club's refund does not refund our fee; only a returned bank debit does), same per-fee record.
+- **A surcharge line (business pays):** our side is unchanged (fee, base, tax, place of supply). What moves is the club's: a surcharge passed on is part of the club's charge, and CRA's view (GI-200, cited in `PLATFORM_FEE_TAX_TREATMENT.md`, not re-read today) is that tax follows the underlying supply, so the club's HST would apply to that line. Our fee is never grossed up, so the product would have to decide who funds the HST on the line. The card-network surcharge cap (2.4% in Canada) is `/legal`'s and the club's exposure under the 2026-11-17 ruling; effective rate on $1,130.00 is about 3.6%.
+
+## Recommendation
+1. **Route the sponsor payment through the same online-payment record as a family payment** (same table or the same snapshot writer), so the per-fee tax record GST/HST Stage 5 still has to build (paid_at, livemode, province, rate, tax in cents, fee-refund credit record) sees it. A separate sponsor-payment table that skips it would drop fee revenue and tax from lines 101/103. As of today no per-fee tax record exists in the code.
+2. Store the source kind (sponsorship) and who paid the fee on the record. Bookkeeping's `application_fee` movement then carries it with no new type. A report need not split it.
+3. **Stripe setup: nothing new.** Direct charge on the club's account, `application_fee_amount`, the same Connect account settings. Do not pass `automatic_tax` or tax rates on a sponsor session (our Stripe Tax registration is ours, not the club's); the club's HST is part of the invoice amount. Never print our GST/HST number or name us as supplier on a sponsor-facing page, invoice or receipt.
+4. If a bank-debit rail is offered to sponsors, the returned-debit credit record applies as for families. The drawing offers card only.
+5. A business's card may cost the club more at Stripe (foreign, conversion); that lands on the club's balance, our fee is fixed. I did not check whether Stripe prices Canadian commercial cards higher.
+
+## Addendum 2026-11-22: what the "Charge HST" hint under the per-deal switch may say (round 2 ask 9)
+**Scope note.** A club's own tax is outside this agent's charter (`/accounting` covers FieldLogicHQ's books). This is a wording-safety check on a sentence the product shows, not advice to any club. The plan's §9 tax research (CRA read 2026-11-10) names no document, so I checked canada.ca today.
+- **What CRA says (sponsorship, non-profit organization).** CRA's guide *GST/HST Information for Non-Profit Organizations* (RC4081, Rev. 23) says that when a business backs a non-profit and the non-profit gives it promotional services or the use of its logo or trade name, the payment "is not considered payment for a good or service", so no GST/HST. The exception: a payment made primarily (more than 50%) for advertising on television or radio, or in a newspaper, magazine or other periodical publication is "a payment for advertising services" and is subject to GST/HST. The archived *Excise and GST/HST News No. 93* lists the conditions (the sponsor uses it only to publicize its business; not primarily advertising). Only RC4081 was read; No. 93 was read through a search summary. Memorandum 3-3 (the detailed text) was not opened.
+- **Thresholds.** Non-profit small supplier: $50,000 or less in a quarter and in the last four quarters. Charity: $250,000 gross revenue test. A club below them does not register or charge, and the plan's registered-club switch gate already covers that.
+- **What follows for the hint.** The common case for a club (name, logo, banner, website thank-you) is recognition, so "usually not charged" is accurate and "generally" wording is safe. Real advertising sold as advertising (the periodical/TV/radio test; a printed program that is a periodical is the edge) can be taxable for a registered club. Banner and web placements are NOT in CRA's advertising example, so the hint must not call them "advertising" or it will push volunteers to charge tax that CRA says is not owed. A club that is a charity or a non-profit differs in other rules (RC4082 for charities was not read), so the hint says nothing about club type.
+- **Safe to say:** "usually not charged tax" for a name or logo; "turn this on only if your accountant says the deal is taxable". **Not safe:** "you must/need not charge", any rate promise beyond the existing rate sentence, "advertising" as the trigger, "donation", "gift", "tax receipt".
+- **Static, not reactive.** Recommend one static hint. Reacting to the package's deliverables would make the product classify a deal (tax advice), and the deliverable list is free text. The switch stays off by default; the hint carries the judgment to the accountant.
+- **Professional sign-off:** a given club's registrant status and whether a particular deal is advertising stay with the club's accountant or the CRA (already listed in plan §9).
+
+## Sources
+- [GST/HST Information for Non-Profit Organizations (RC4081, Rev. 23)](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/rc4081/gst-hst-information-non-profit-organizations.html) — accessed 2026-11-22 (first 100,000 characters read)
+- [Excise and GST/HST News No. 93 (archived)](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/news93/news93-excise-gst-hst-news-no-93.html) — search summary only, 2026-11-22
+- Existing files: `PLATFORM_FEE_TAX_COLLECTION_METHOD.md`, `PLATFORM_FEE_TAX_TREATMENT.md`, `US_CLUB_PAYMENTS_REVIEW.md`; `lib/online-payment-fee.ts`; Business Decisions 2026-11-17 (Stripe-owned pricing) and 2026-10-25 (who pays the fee); the Stage 6 drawing tabs 7 and 10.
+
+## Professional sign-off needed?
+No new item. D1 (taxable versus exempt) and the Q2 document question in `STRIPE_OWNED_PRICING_ACCOUNTANT_QUESTIONS.md` cover sponsor payments unchanged. `/legal` owns the surcharge-cap question if the owner rules "the business pays".

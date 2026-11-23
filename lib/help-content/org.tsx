@@ -83,8 +83,8 @@ const orgHelp: HelpPageContent = {
       id: 'roles',
       heading: 'Roles explained — who can do what',
       summary: 'What each role can open, at a glance, then Owner, Admin, Treasurer, Staff, League admin, League registrar, Coach, and Volunteer one by one.',
-      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'team manager', 'coach', 'volunteer', 'scorekeeper', 'gate', 'helping with', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families', 'who can finalize scores', 'change a final score', 'communications', 'email coaches', 'email the board'],
-      searchText: 'roles permissions who can do what communications email coaches email the board group email switch owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner controls what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows volunteer helping with scoring the gate both field scores check-in settings two-step sign-in card admin reads it only the owner changes this',
+      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'team manager', 'coach', 'volunteer', 'scorekeeper', 'gate', 'helping with', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families', 'who can finalize scores', 'change a final score', 'communications', 'email coaches', 'email the board', 'sponsorships', 'who can open sponsorships'],
+      searchText: 'roles permissions who can do what sponsorships access on by default for owner admins treasurer manage member sponsorships row communications email coaches email the board group email switch owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner controls what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows volunteer helping with scoring the gate both field scores check-in settings two-step sign-in card admin reads it only the owner changes this',
       content: (
         <p>Every member of your organization holds one of these roles, and the role decides what they can open. Owners can grant or remove individual programs for any member from <strong>Members → Manage</strong>.</p>
       ),
@@ -111,6 +111,7 @@ const orgHelp: HelpPageContent = {
                 <tbody>
                   <tr><th scope="row">Rep teams</th><td>✓</td><td>✓</td><td>team names only</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team, in the portal</td></tr>
                   <tr><th scope="row">Accounting</th><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team&rsquo;s money</td></tr>
+                  <tr><th scope="row">Sponsorships</th><td>✓</td><td>✓</td><td>✓</td><td>if you turn it on</td><td>if you turn it on</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td></tr>
                   <tr><th scope="row">Public site</th><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
                   <tr><th scope="row">House league · Tournaments</th><td>✓</td><td>✓</td><td>—</td><td>game day</td><td>the house league</td><td>registrations, fees &amp; Email families</td><td>scores &amp; gate</td><td>—</td></tr>
                   <tr><th scope="row">Communications</th><td>✓</td><td>✓</td><td>the board</td><td>—</td><td>house-league coaches &amp; the board</td><td>house-league coaches &amp; the board</td><td>—</td><td>—</td></tr>
@@ -120,7 +121,7 @@ const orgHelp: HelpPageContent = {
                   <tr><th scope="row">Settings</th><td>✓</td><td>Your privacy policy; the Two-step sign-in card, to read</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
                 </tbody>
               </table>
-              <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner, and it can&rsquo;t be given to a member limited to some Rep teams groups: a family&rsquo;s record spans every team its children play on). A row only appears on your own organization once your plan includes that program. <strong>Communications</strong> is on for every seat that has something to write to, unless the owner turns it off for a member (see the <a href="../help/communications">Communications guide</a>); it doesn&rsquo;t need Families access.</p>
+              <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Sponsorships is on by default for the owner, admins and the treasurer, and a club can turn it on for anyone else, a registrar for example; Families is never on by default for anyone but the owner, and it can&rsquo;t be given to a member limited to some Rep teams groups: a family&rsquo;s record spans every team its children play on). A row only appears on your own organization once your plan includes that program. <strong>Communications</strong> is on for every seat that has something to write to, unless the owner turns it off for a member (see the <a href="../help/communications">Communications guide</a>); it doesn&rsquo;t need Families access.</p>
               <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It opens <strong>Families</strong> only when the owner grants that access; emailing families from <strong>Communications</strong> doesn&rsquo;t need it. <strong>Plan &amp; billing</strong> and the audit log stay with the owner and can&rsquo;t be handed out. An admin opens <strong>Settings</strong> to set <strong>Your privacy policy</strong> and to read the <strong>Two-step sign-in</strong> card, and nothing else there: every other Settings card is the owner&rsquo;s. The menu lists only what you can open. An admin can still change the club&rsquo;s logo, colours, type and banner in <strong>Public site</strong>; only the owner turns the site on or off.</p>
             </>
           ),
@@ -1794,7 +1795,7 @@ const orgHelp: HelpPageContent = {
       id: 'settings',
       heading: 'Settings and your web address',
       summary: 'The owner-only Settings page: your organization’s name, web address, your privacy policy link (an admin can set it too), Payouts for online payments, and account deletion. Your public site’s logo, colours, type and switch are in Public site.',
-      keywords: ['settings', 'two-step sign-in', 'require two-step', 'admin settings', 'payouts', 'online payments', 'families pay by card', 'house league pay by card', 'families and teams pay it', 'stripe', 'processing fee', 'bank debit', 'bank debit rate', 'card rate', 'returned bank debit', 'card dispute fee', 'foreign card', 'stripe balance', 'receive less', 'web address', 'org slug', 'url slug', 'organization details', 'delete organization', 'open public site', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up', 'logo', 'colours', 'branding', 'where did branding go', 'birthdays count from', 'birthday cut-off', 'cut-off date', 'birth year', 'born', 'age', 'age group', 'january 1', 'september 1', 'payments terms', 'new payments terms', 'read and agree', 'payouts tab', 'bank statement', 'leaving online payments', 'privacy policy', 'your privacy policy', 'privacy policy link', 'privacy notice', 'link our privacy policy'],
+      keywords: ['settings', 'two-step sign-in', 'require two-step', 'admin settings', 'payouts', 'online payments', 'families pay by card', 'house league pay by card', 'families and teams pay it', 'stripe', 'processing fee', 'processing fee on sponsorships', 'processing fee on registrations', 'the sponsor pays it', 'bank debit', 'bank debit rate', 'card rate', 'returned bank debit', 'card dispute fee', 'foreign card', 'stripe balance', 'receive less', 'web address', 'org slug', 'url slug', 'organization details', 'delete organization', 'open public site', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up', 'logo', 'colours', 'branding', 'where did branding go', 'birthdays count from', 'birthday cut-off', 'cut-off date', 'birth year', 'born', 'age', 'age group', 'january 1', 'september 1', 'payments terms', 'new payments terms', 'read and agree', 'payouts tab', 'bank statement', 'leaving online payments', 'privacy policy', 'your privacy policy', 'privacy policy link', 'privacy notice', 'link our privacy policy'],
       searchText: 'your privacy policy link to your privacy policy the web address of your club’s own privacy policy families see a link to it on your sign-up forms and when they accept an invitation how your club uses their information stores it outside canada mainly in the united states leave it empty for no link enter a web address that starts with https:// or http:// that web address is too long owner or admin sets it privacy notice link audit log refund policy required write the refund policy cant be left blank online payments paused quebec québec payouts refused two-step sign-in card require it for the board also require it for coaches admin opens settings to read the two-step card only the owner changes this payments terms agreed by read the terms new payments terms to agree to read and agree payouts tab match a payout to the bank statement reconcile payouts to your bank leaving online payments disconnect downgrade cancel delete payouts card settings payouts let teams pay online families pay by card house league registration fees families and teams pay it the club pays it stripe connect processing fee who pays it refund policy payouts go to receipts say rows edit pencil check mark disconnect payouts bank debit both rates per card payment per bank debit bank debits still clearing returned bank debit fee card dispute fee card issued outside your country card from another country foreign card extra fee comes out of your stripe balance you may receive less on those payments owner only org settings owner only organization details name web address url slug org slug change redirect save button delete organization account deletion danger zone your public site door card open public site its logo colours type and whether it is online are set in public site branding logo stock logo colours hero banner banner photo font type moved to public site look visibility card style tournament branding page public site switch online offline listed in the directory discover directory take the club offline what goes offline every club page home teams team pages tryouts tryout sign up league archives team calendars subscribed calendars go empty tournament pages stay up this club’s site isn’t available site isnt available coaches sharing note when birthdays count from per sport month day dropdown default january 1 count softball birthdays from keep january 1 change every team and house-league division shows its birth years re-read one birth year show none until you set it again born sep 1 2013 aug 31 2015 age cut-off birth years owner only',
       content: (
         <p>The <strong>Settings</strong> page is <strong>owner-only</strong>, with two exceptions for an admin: they set <strong>Your privacy policy</strong>, and they read the <strong>Two-step sign-in</strong> card. It holds <strong>Organization details</strong> (your organization&rsquo;s name and web address), <strong>Your privacy policy</strong> (the web address of your club&rsquo;s own privacy policy: while it&rsquo;s set, families see a link to it on your house-league sign-up form, on your tryout sign-up and when they accept an invitation; empty it and press <strong>Save</strong> for no link; it must start with https:// or http://, and each change is a line in the audit log; your policy is where you tell families how your club uses their information, and that FieldLogicHQ stores it outside Canada, mainly in the United States), <strong>When birthdays count from</strong>, a card that points to <strong>Public site</strong>, <strong>Payouts</strong> (letting teams pay online by card), <strong>Two-step sign-in</strong> (making it required; see <a href="#two-step-sign-in">Two-step sign-in</a>), and <strong>Delete organization</strong>. Your public site&rsquo;s logo, colours, type, banner and on/off switch are set in <strong>Public site</strong>, not here.</p>
@@ -1805,8 +1806,9 @@ const orgHelp: HelpPageContent = {
           title: 'Payouts: let teams pay online',
           content: (
             <>
-              <p>On the League and Club plans, <strong>Payouts</strong> is a card on Settings, after <strong>Your public site</strong> and before <strong>Delete organization</strong>. The owner connects the organization&rsquo;s own Stripe account there, chooses who pays the processing fee (<strong>Families and teams pay it</strong> or <strong>The club pays it</strong>; on Tournament Plus the first reads <strong>Teams pay it</strong>), writes the organization&rsquo;s <strong>Refund policy</strong> (one or two sentences, required: families and teams can read it beside the pay button before they pay, and no pay page opens without one; it can be changed but not left blank), and can <strong>Disconnect payouts</strong>. Payouts can&rsquo;t be set up with a Québec billing address: online payments aren&rsquo;t offered in Québec yet. Once payments are on, the card reads as a short list of rows: <strong>Payouts go to</strong>, <strong>Receipts say</strong>, <strong>Processing fee</strong>, <strong>Refund policy</strong> and <strong>Payments terms</strong>. The card prints both rates, <em>&hellip; per card payment &middot; &hellip; per bank debit</em>, under the <strong>Processing fee</strong> row (before you connect, as <em>Processing fee: &hellip; per card payment, &hellip; per bank debit</em>), from the current rates; an account that doesn&rsquo;t take bank debit shows the card rate alone. The processing fee covers Stripe&rsquo;s charge and FieldLogicHQ&rsquo;s. <strong>Before you set up payouts</strong> says the same under <em>What it costs</em>, with a worked line for an example fee by card and by bank debit.</p>
+              <p>On the League and Club plans, <strong>Payouts</strong> is a card on Settings, after <strong>Your public site</strong> and before <strong>Delete organization</strong>. The owner connects the organization&rsquo;s own Stripe account there, chooses who pays the processing fee (<strong>Families and teams pay it</strong> or <strong>The club pays it</strong>; on Tournament Plus the first reads <strong>Teams pay it</strong>), writes the organization&rsquo;s <strong>Refund policy</strong> (one or two sentences, required: families and teams can read it beside the pay button before they pay, and no pay page opens without one; it can be changed but not left blank), and can <strong>Disconnect payouts</strong>. Payouts can&rsquo;t be set up with a Québec billing address: online payments aren&rsquo;t offered in Québec yet. Once payments are on, the card reads as a short list of rows: <strong>Payouts go to</strong>, <strong>Receipts say</strong>, <strong>Processing fee</strong> (on a club with Sponsorships, <strong>Processing fee on registrations</strong>, with <strong>Processing fee on sponsorships</strong> below it), <strong>Refund policy</strong> and <strong>Payments terms</strong>. The card prints both rates, <em>&hellip; per card payment &middot; &hellip; per bank debit</em>, under the <strong>Processing fee</strong> row (before you connect, as <em>Processing fee: &hellip; per card payment, &hellip; per bank debit</em>), from the current rates; an account that doesn&rsquo;t take bank debit shows the card rate alone. The processing fee covers Stripe&rsquo;s charge and FieldLogicHQ&rsquo;s. <strong>Before you set up payouts</strong> says the same under <em>What it costs</em>, with a worked line for an example fee by card and by bank debit.</p>
               <p>The choice is one setting for the whole organization. It covers teams paying tournament entry fees and families paying house-league registration fees by card, and house-league families see <strong>Pay now</strong> only once payouts are set up. Only the owner connects; a treasurer sees the state as a line on the Accounting Overview and on a season&rsquo;s Money page. Bank debit is offered to families and teams only once Stripe has approved your account for it.</p>
+              <p>A club with <strong>Sponsorships</strong> has a second row, <strong>Processing fee on sponsorships</strong>, and the first is named <strong>Processing fee on registrations</strong>. The sponsorship row has its own choice, <strong>The sponsor pays it</strong> or <strong>The club pays it</strong>, and the club pays it unless you change it. It applies once sponsors can pay by card; a cheque or an e-transfer never carries a fee. Both rows carry a note that card networks limit what a business or organization may add to a card payment (2.4% in Canada, and none in Qu&eacute;bec), that the fee can be more than that, and that choosing to pass it on is your decision and your responsibility.</p>
             </>
           ),
         },
@@ -2095,7 +2097,7 @@ const orgHelp: HelpPageContent = {
           title: 'Contacts, documents and questions for your About page',
           content: (
             <>
-              <p>The <strong>Contacts, documents and sponsors</strong> row holds four lists. Three of them fill your club&rsquo;s <strong>About</strong> page, and the fourth, sponsors, has its own topic below. The row opens to four folded lines. Each says what is inside, with a count on the right. Tap a line to open its list, and tapping another closes the first. Each entry opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
+              <p>The <strong>Contacts, documents and sponsors</strong> row holds four lists. Three of them fill your club&rsquo;s <strong>About</strong> page, and the fourth, sponsors, is a door to <strong>Sponsorships</strong> (see the topic below). The row opens to four folded lines. Each says what is inside, with a count on the right. Tap a line to open its list, and tapping another closes the first. Each entry opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
               <ul>
                 <li><strong>Who to contact</strong> (up to twelve): a role, such as Registration, and its email address. When an address looks personal, the window suggests a role address like registrar@, which keeps working when a volunteer changes. It never refuses yours.</li>
                 <li><strong>Documents and policies</strong> (up to thirty): a heading, a title and a link to a document you already publish. Families see them under your headings, such as Codes of conduct or Safety, and each opens in a new tab. Your site shows your documents; it never says your club is compliant.</li>
@@ -2110,14 +2112,8 @@ const orgHelp: HelpPageContent = {
           title: 'Sponsors on your home page and About page',
           content: (
             <>
-              <p>The <strong>Sponsors</strong> list, in the <strong>Contacts, documents and sponsors</strong> row, is your club&rsquo;s thank-you to the businesses and people who back it. Families see them in a strip at the foot of your home page, and in a <strong>Sponsors</strong> section at the foot of your About page. Add up to twenty. Each one opens a small window.</p>
-              <ul>
-                <li><strong>Name</strong> is the only thing required. A sponsor with no logo shows as its name.</li>
-                <li><strong>Logo</strong> is a JPG, PNG or WebP up to 2 MB. We open it and save a small copy, so a file that isn&rsquo;t really a picture is refused. It shows scaled to fit and never cropped, so every sponsor gets the same space.</li>
-                <li><strong>Link</strong> is where a family goes when they tap the sponsor. It opens in a new tab.</li>
-                <li><strong>Last day</strong>: families see the sponsor through that day, then it leaves both places by itself. Leave it empty to keep it up.</li>
-              </ul>
-              <p>A sponsor past its last day stays in your list with an <strong>Ended</strong> mark, so renewing is one edit: open it and pick a later day. Sponsors alone don&rsquo;t open your About page, so a club with only sponsors shows them on its home page.</p>
+              <p>The <strong>Sponsors</strong> line in the <strong>Contacts, documents and sponsors</strong> row is a door to <strong>Sponsorships</strong>, where your club&rsquo;s sponsors are kept. Families still see them as a thank-you strip at the foot of your home page and in the sponsors on your About page, but you now choose where each one shows, and the last day for each place, in <strong>Sponsorships</strong> &rarr; <strong>Sponsors</strong>.</p>
+              <p>The sponsors you already had moved over untouched, and they keep showing as they were. See <a href="#club-sponsorships">Sponsorships</a> for the whole place: packages, sponsors and where each one shows, and the invoice details and form.</p>
             </>
           ),
         },
@@ -2167,6 +2163,102 @@ const orgHelp: HelpPageContent = {
               <p>In <strong>Public site</strong>, press <strong>Post a notice</strong> at the top. Write the notice, add more detail if you like, choose when it <strong>Ends</strong> (tonight, tomorrow night, or a date and time) and press <strong>Post notice</strong>.</p>
               <p>It shows at the top of every public page and every team page until it ends, or until you press <strong>End now</strong>.</p>
             </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'club-sponsorships',
+      heading: 'Sponsorships — packages and the businesses that back your club',
+      summary: 'The Sponsorships place keeps your packages, your sponsors and where each one shows on your public site, and the invoice details and form you will sell with. Four tabs: Deals, Packages, Sponsors and Setup.',
+      keywords: [
+        'sponsorships', 'sponsorship', 'sponsor', 'sponsors', 'deals', 'packages', 'package', 'setup', 'get ready to sell sponsorships',
+        'your invoice details', 'invoice details', 'make your first package', 'your sponsorship form', 'sponsorship form',
+        'shows on', 'showing', 'not showing', 'sponsored by', 'sponsor strip', 'home page strip', 'last day', 'how many', 'taken', 'full',
+        'shows until', 'what’s included', 'your logo on our website', 'sponsorship document', 'archive a package', 'price before gst/hst',
+        'registered for gst/hst', 'gst/hst number', 'by e-transfer to', 'cheques payable to', 'payment due', 'contact for sponsors',
+        'mailing address', 'show it somewhere else too', 'who can open sponsorships', 'manage member sponsorships',
+      ],
+      searchText: 'sponsorships place club group sidebar after communications before public site more sheet phone four tabs deals packages sponsors setup get ready to sell sponsorships three steps your invoice details make your first package your sponsorship form offering deals comes later package name price before gst/hst for the club a house league division a house league team a tournament how many empty means no limit shows until what’s included your logo on our website switch other items sponsorship document pdf up to 8 mb taken counts open offers so nothing is promised twice full when every place is taken archived never deleted bring it back sponsors one list every business showing not showing shows on home page strip at most 20 a division sponsored by line on that division’s schedule and standings a team shown on the about page only a tournament last day inclusive leaves by itself list holds 100 sponsors show it somewhere else too remove sponsor logo deleted existing sponsors moved over untouched site editor sponsors line door invoice details mailing address registered for gst/hst and number by e-transfer to cheques payable to payment due contact for sponsors owner admins treasurer change read by others the form business details first then your own questions and documents who can open sponsorships manage member access on by default owner admins treasurer off for others registrar league plus club plan',
+      content: (
+        <p><strong>Sponsorships</strong> is the place for the businesses that back your club. It keeps your <strong>packages</strong> (what a business gets, what it costs and how many you have), every <strong>sponsor</strong> and where each one shows on your public site, and the invoice details and form you sell with. It sits in the Club group of the sidebar, after <strong>Communications</strong> and before <strong>Public site</strong>, and on a phone it is a row in the <strong>More</strong> sheet. It has four tabs: <strong>Deals</strong>, <strong>Packages</strong>, <strong>Sponsors</strong> and <strong>Setup</strong>.</p>
+      ),
+      subtopics: [
+        {
+          id: 'club-sponsorships-t-start',
+          title: 'Getting ready to sell sponsorships',
+          content: (
+            <>
+              <p>Until you have a package, <strong>Deals</strong> shows <strong>Get ready to sell sponsorships</strong>, three steps with a count of how many are done:</p>
+              <ol>
+                <li><strong>Your invoice details</strong>: your club&rsquo;s mailing address, how businesses pay you, and whether you charge GST/HST. It opens <strong>Setup</strong>.</li>
+                <li><strong>Make your first package</strong>: what a business gets, what it costs and how many you have. It opens <strong>Packages</strong>.</li>
+                <li><strong>Your sponsorship form</strong>: it already asks for the business&rsquo;s details and logo. Add your own questions.</li>
+              </ol>
+              <p>Once you have a package, <strong>Deals</strong> lists your deals, and says there are none yet until you offer one. If your club already had sponsors on its website, a line on the checklist says how many, and they keep showing as they are; they are on the <strong>Sponsors</strong> tab.</p>
+              <HelpNote variant="info" title="Who can open Sponsorships">The owner, admins and the treasurer, by default. Anyone else gets it from <strong>Members &rarr; Manage</strong>, on the <strong>Sponsorships</strong> row (see <a href="#roles">Roles explained</a>). A member limited to some rep teams groups doesn&rsquo;t get it, because it holds every sponsor&rsquo;s contact details.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-packages',
+          title: 'Packages: what a business gets and what it costs',
+          content: (
+            <>
+              <p>A package is a standing offer. <strong>Packages</strong> lists each one with its <strong>For</strong>, its <strong>Price</strong> and how many are <strong>Taken</strong>. Press <strong>Add a package</strong> and fill in:</p>
+              <ul>
+                <li><strong>Name</strong> and <strong>Price</strong>. The price is before GST/HST.</li>
+                <li><strong>For</strong>: the whole club, a house-league division, a house-league team or a tournament. A division, team or tournament package picks which one on each deal.</li>
+                <li><strong>How many</strong>: how many businesses can hold it. Leave it empty for no limit.</li>
+                <li><strong>Shows until</strong>: the last day each deal starts with.</li>
+                <li><strong>What&rsquo;s included</strong>: the <strong>Your logo on our website</strong> switch, which puts the business on your public site, and any other items you add, such as a field banner. They are listed on the offer, the invoice and the delivery checklist.</li>
+                <li><strong>Sponsorship document</strong>: an optional PDF up to 8 MB that the business can open from its link.</li>
+              </ul>
+              <p><strong>Taken</strong> counts open offers as well as paid deals, so nothing is promised twice. A package reads <strong>Full</strong> when every place is taken; raise <strong>How many</strong> to offer more. A package is never deleted: <strong>Archive this package</strong> takes it off the list, deals already made with it keep it as it was, and <strong>Show archived</strong> lets you <strong>Bring this package back</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-sponsors',
+          title: 'Sponsors: where each business shows',
+          content: (
+            <>
+              <p><strong>Sponsors</strong> is one list of every business, each marked <strong>Showing</strong> or <strong>Not showing</strong>. You can search it, and the list holds 100 sponsors. Press <strong>Add a sponsor</strong> for a name (the only thing required; a sponsor with no logo shows as its name), a logo, a link and where it shows.</p>
+              <p>Each sponsor has one or more <strong>Shows on</strong> places, and a <strong>Last day</strong> for each:</p>
+              <ul>
+                <li><strong>The club</strong>: a strip at the foot of your home page, at most 20 businesses on the home page.</li>
+                <li><strong>A division</strong>: a <strong>Sponsored by</strong> line on that division&rsquo;s public schedule and standings.</li>
+                <li><strong>A team</strong>: your About page only.</li>
+                <li><strong>A tournament</strong>: that tournament&rsquo;s pages.</li>
+              </ul>
+              <p>Press <strong>Show it somewhere else too</strong> to add another place. Families see the sponsor through its last day, which counts, and then it leaves that place by itself and the row reads <strong>Ended</strong>. Leave the day empty for no last day. Your About page lists every sponsor that is showing anywhere. <strong>Remove sponsor</strong> takes a business off every page and deletes its logo.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-setup',
+          title: 'Setup: invoice details and the sponsorship form',
+          content: (
+            <>
+              <p><strong>Setup</strong> has two rows, <strong>Invoice details</strong> and <strong>Sponsorship form</strong>.</p>
+              <p><strong>Invoice details</strong> are what every sponsorship invoice and offer email carries:</p>
+              <ul>
+                <li><strong>Mailing address</strong>. Use an address the club is happy to publish; a PO box works.</li>
+                <li><strong>Registered for GST/HST</strong>, and the number, which is checked for its form.</li>
+                <li><strong>By e-transfer to</strong> and <strong>Cheques payable to</strong>: how a business pays you.</li>
+                <li><strong>Payment due</strong>: days after the invoice, where 0 means on receipt.</li>
+                <li><strong>Contact for sponsors</strong>: a name and an email.</li>
+              </ul>
+              <p>Only the owner, admins and the treasurer change them. Anyone else who opens Sponsorships can read them. Whether GST/HST applies to a sponsorship depends on what the business gets and on your club, so ask your accountant.</p>
+              <p>The <strong>Sponsorship form</strong> is what a business answers. Every business is first asked for the business details (name, contact name, email, address for the invoice, phone, website and a logo), and you can&rsquo;t remove those. After them come your own questions and documents.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-site',
+          title: 'The Sponsors line in Public site',
+          content: (
+            <p>The <strong>Sponsors</strong> line in <strong>Public site</strong>, under <strong>Contacts, documents and sponsors</strong>, is now a door to <strong>Sponsorships</strong>. The sponsor list moved there, with where each one shows, and the sponsors you already had moved over untouched.</p>
           ),
         },
       ],

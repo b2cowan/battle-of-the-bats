@@ -67,6 +67,7 @@ const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
   'app/[orgSlug]/admin/accounting/layout.tsx': 'page layer — its own module gate (canOpenModule, closed on a cancelled org) redirects out',
   'app/[orgSlug]/admin/families/layout.tsx': 'page layer — its own module gate (canOpenFamilies: the plan half closes on a cancelled org) redirects out (Club Tier Stage 5b)',
   'app/[orgSlug]/admin/club-emails/layout.tsx': 'page layer — its own module gate (hasModuleEntitlement module_communications: the plan half closes on a cancelled org) redirects out (Club Communications Stage 1)',
+  'app/[orgSlug]/admin/sponsorships/layout.tsx': 'page layer — its own module gate (hasModuleEntitlement module_sponsorships: the plan half closes on a cancelled org) redirects out (Board Ready Stage 6)',
   'app/[orgSlug]/admin/permits/layout.tsx': 'page layer — a cancelled org (isOrgBillingSuspended) and a non-reader of permits redirect out to the admin, whose shell sends a cancelled org to Plan & billing (Club Tier 13c; Board Ready trust close-out 2)',
   'app/[orgSlug]/admin/org/venues/layout.tsx': 'page layer — a cancelled org (isOrgBillingSuspended) and a non-reader of the Venue library redirect out to Organization (Board Ready trust close-out 2)',
   'app/[orgSlug]/admin/accounting/payouts/page.tsx': 'page layer — notFound() for a cancelled org SERVER-side (its own isOrgBillingSuspended check); it renders beside the Accounting layout, whose gate redirects out (Club Tier 12d-2)',
@@ -238,6 +239,7 @@ describe('billing rail — a cancelled subscription stops working', () => {
       'app/[orgSlug]/admin/accounting/layout.tsx', // the same: its module gate redirects out (Club Tier Stage 3a)
       'app/[orgSlug]/admin/families/layout.tsx',   // the same: its module gate redirects out (Club Tier Stage 5b)
       'app/[orgSlug]/admin/club-emails/layout.tsx', // the same: its module gate redirects out (Club Communications Stage 1)
+      'app/[orgSlug]/admin/sponsorships/layout.tsx', // the same: its module gate redirects out (Board Ready Stage 6)
     ];
     const HANDLES_SUSPENSION = /isOrgBillingSuspended|suspendedOrgWall|SubscriptionEndedWall/;
 

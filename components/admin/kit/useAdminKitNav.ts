@@ -18,11 +18,12 @@ import { isTournamentTier, orgSettingsOnTournamentSide } from '@/lib/billing-url
 import { adminListsOrgPages } from '@/lib/premium-org-pages';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitCommunicationsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventShell, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitCommunicationsLink, kitSponsorshipsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventShell, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
 import { deskTournamentGroups, kitTournamentGroups } from './kit-tournament-groups';
 import type { TourGroup } from '../admin-nav-config';
 import { useClubBrief } from './club/ClubBriefProvider';
 import { opensCommunications, placeFacts } from '@/lib/club-communications-place';
+import { opensSponsorships } from '@/lib/club-sponsorships-place';
 
 /**
  * The Organization links alone — what `useAdminKitNav` builds for the rail, without the rest of it. Organization's frame and
@@ -104,6 +105,16 @@ export function useCommunicationsLink() {
   return kitCommunicationsLink({ base, opens, isCanceled, tournamentTier: isTournamentTier(currentOrg?.planId) });
 }
 
+/** Sponsorships' row (Board Ready Stage 6) or null — the rail, the More sheet and the bar read this one answer, which is the
+ *  one the place's layout and its routes ask (`opensSponsorships`). */
+export function useSponsorshipsLink() {
+  const { currentOrg, userRole, userCapabilities, limitedToTeamGroups } = useOrg();
+  const { base, isCanceled } = useOrgLinks();
+  const opens = !!currentOrg && !!userRole
+    && opensSponsorships({ role: userRole, capabilities: userCapabilities, limited: limitedToTeamGroups }, currentOrg);
+  return kitSponsorshipsLink({ base, opens, isCanceled, tournamentTier: isTournamentTier(currentOrg?.planId) });
+}
+
 export function useAdminKitNav() {
   const pathname = usePathname();
   const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
@@ -147,6 +158,7 @@ export function useAdminKitNav() {
   // The club's permits (Club Tier 13c, C1): between Calendar and Schedules in the rail, the More sheet's lone row — one gate.
   const permitsLink = usePermitsLink();
   const communicationsLink = useCommunicationsLink();
+  const sponsorshipsLink = useSponsorshipsLink();
   const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind, role: userRole, capabilities: userCapabilities, isSandbox });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachAccess = useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled);
@@ -170,7 +182,7 @@ export function useAdminKitNav() {
   // Tournament-plan club has no /admin/org (its layout redirects), so it never holds the place open there.
   const orgShowsBoard = !isTournamentTier(currentOrg?.planId) && showsOrgBoard({ role: userRole, orgLinks, isTeamWorkspace });
   const placeGroups = tournamentOnly || isCanceled ? [] : clubPlaceGroups<KitLink>({
-    programs: navPrograms, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly, showsBoard: orgShowsBoard }), communications: communicationsLink,
+    programs: navPrograms, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly, showsBoard: orgShowsBoard }), communications: communicationsLink, sponsorships: sponsorshipsLink,
   });
   const litPlace = litClubPlace(pathname, base, billingLink);
   const onTournaments = pathname.startsWith(`${base}/tournaments`);

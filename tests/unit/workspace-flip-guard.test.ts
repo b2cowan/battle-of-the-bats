@@ -485,6 +485,7 @@ const LIVE_ROW_FILES: string[] = [
   'app/[orgSlug]/admin/org/layout.tsx',
   'app/[orgSlug]/admin/org/settings/pdf/page.tsx',
   'app/[orgSlug]/admin/rep-teams/layout.tsx',
+  'app/[orgSlug]/admin/sponsorships/layout.tsx',
   'app/[orgSlug]/admin/tournaments/dashboard/page.tsx',
   'app/[orgSlug]/admin/tournaments/registrations/page.tsx',
   'app/[orgSlug]/coaches/layout.tsx',

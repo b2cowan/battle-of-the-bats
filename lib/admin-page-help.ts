@@ -112,6 +112,11 @@ export const CLUB_PLACE_HELP: Readonly<Record<string, PageHelpTopic>> = {
   'permits/permits': org(['permits'], 'Permits'),
   // Communications (Club Communications Stage 1, N12): the place has its own guide since the Close.
   'club-emails/club-emails': comms(['comms-new-email', 'comms-list'], 'Communications'),
+  // Sponsorships (Board Ready Stage 6, Part 1): four tabs, all covered. The Setup tab also holds its sponsorship form.
+  'sponsorships/deals': org(['club-sponsorships'], 'Deals', 'club-sponsorships-t-start'),
+  'sponsorships/packages': org(['club-sponsorships'], 'Packages', 'club-sponsorships-t-packages'),
+  'sponsorships/sponsors': org(['club-sponsorships'], 'Sponsors', 'club-sponsorships-t-sponsors'),
+  'sponsorships/setup': org(['club-sponsorships'], 'Setup', 'club-sponsorships-t-setup'),
   calendar: org(['club-calendar'], 'Calendar'),
   schedules: org(['club-schedules'], 'Schedules', 'club-schedules-t-list'),
   schedule: org(['club-schedules'], 'Schedule', 'club-schedules-t-page'),

@@ -47,6 +47,11 @@ export const MODULE_CATALOG: { key: Capability; label: string; description: stri
     label: 'Families',
     description: 'Club-admin household records: the family worklist, family pages, duplicate review, household messaging, and per-family data export. Off by default for every role even where the plan carries it.',
   },
+  {
+    key: 'module_sponsorships',
+    label: 'Sponsorships',
+    description: 'The club’s sponsorship packages, deals and sponsors, and where each sponsor shows. On by default for owners, admins and treasurers; a club can turn it on for anyone.',
+  },
 ];
 
 export type PlanModuleEntitlementMatrix = Record<OrgPlan, Capability[]>;

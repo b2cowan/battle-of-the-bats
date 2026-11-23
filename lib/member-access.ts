@@ -81,6 +81,8 @@ export function canMoveClubMoney(member: MemberAccessInput, org: EntitlementOrg)
 export const MEMBER_PROGRAMS: readonly { module: Capability; label: string }[] = [
   { module: 'module_rep_teams', label: 'Rep teams' },
   { module: 'module_accounting', label: 'Accounting' },
+  // Board Ready Stage 6 (round 2 tab 3, owner 2026-11-22): after Accounting, beside the other money program.
+  { module: 'module_sponsorships', label: 'Sponsorships' },
   { module: 'module_families', label: 'Families' },
   // Club Communications Stage 1 (ruling 11): the place's on/off, and every group email's, from every screen. Listed with the
   // programs (it was folded under Tournaments, where it switched nothing). Not on a tournament-only plan (no club side).
@@ -238,7 +240,7 @@ export function roleOpensSentence(role: string): string {
     case 'admin':
       return "You'd help run the organization: every program on its plan, but not its billing or settings.";
     case 'treasurer':
-      return "You'd run the club's books: ledgers, the budget, and allocations to teams.";
+      return "You'd run the club's books and sponsorships: ledgers, the budget, allocations to teams, packages and deals.";
     case 'staff':
       return "You'd help on game day: schedules, scores and check-in.";
     case 'official':

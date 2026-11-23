@@ -17,6 +17,7 @@ import { withObservability } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { discardClubWorkUnlessAllowed } from '@/lib/bank-check-work-server';
 import { FAMILIES_GRANT_REFUSAL } from '@/lib/families-words';
+import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import { requireFreshCode } from '@/lib/two-step-fresh';
 import { roleChangeStartsGrace, startTwoStepGrace } from '@/lib/two-step-grace';
 
@@ -495,6 +496,19 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
           .select('group_id', { count: 'exact', head: true }).eq('member_id', memberId)).count ?? 0) > 0;
     if (limited) {
       return NextResponse.json({ error: FAMILIES_GRANT_REFUSAL, code: 'families_team_limited' }, { status: 400 });
+    }
+  }
+  // Board Ready Stage 6 (review 2026-11-22): Sponsorships the same way — every sponsor's contact details and every deal are
+  // the whole club's, and `opensSponsorships` refuses a limited member, so a grant to one would promise what never opens.
+  if ((hasCapabilitiesUpdate || hasRepGroupIdsUpdate || roleChanging)
+    && !GROUP_UNSCOPED_ROLES.includes(resultingRole)
+    && hasCapability(resultingRole, resultingCaps, 'module_sponsorships')) {
+    const limited = hasRepGroupIdsUpdate
+      ? Array.isArray(body.repGroupIds) && body.repGroupIds.some((id: unknown) => typeof id === 'string')
+      : ((await supabaseAdmin.from('org_member_rep_group_scopes')
+          .select('group_id', { count: 'exact', head: true }).eq('member_id', memberId)).count ?? 0) > 0;
+    if (limited) {
+      return NextResponse.json({ error: SPONSORSHIPS_WORDS.limitedRefusal, code: 'sponsorships_team_limited' }, { status: 400 });
     }
   }
 

@@ -346,6 +346,37 @@ export async function copyForm(input: {
   return { questions: questions.length, documents: added };
 }
 
+/**
+ * The club's ONE sponsorship form (Board Ready Stage 6, ask 8; mig 525): owned by the club itself, always a business form
+ * (no "for each child" groups, no Health switch). Made on first need; the UNIQUE (owner_table, owner_id) keeps it one.
+ */
+export async function ensureSponsorshipForm(orgId: string): Promise<string> {
+  const found = await sponsorshipFormId(orgId);
+  if (found) return found;
+  const { error } = await supabaseAdmin.from('club_forms')
+    .upsert({ org_id: orgId, owner_table: 'organizations', owner_id: orgId, subject_kind: 'business' }, { onConflict: 'owner_table,owner_id', ignoreDuplicates: true });
+  if (error) throw error;
+  const id = await sponsorshipFormId(orgId);
+  if (!id) throw new Error('ensureSponsorshipForm: no form');
+  return id;
+}
+
+/** How many live questions the club's sponsorship form has (the Deals checklist's third step), 0 before it is made. */
+export async function sponsorshipFormQuestionCount(orgId: string): Promise<number> {
+  const formId = await sponsorshipFormId(orgId);
+  if (!formId) return 0;
+  const { count, error } = await supabaseAdmin.from('club_form_questions').select('id', { count: 'exact', head: true }).eq('form_id', formId).is('archived_at', null);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** The club's sponsorship form id, or null before one is made — a READ. */
+export async function sponsorshipFormId(orgId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.from('club_forms').select('id').eq('owner_table', 'organizations').eq('owner_id', orgId).maybeSingle();
+  if (error) throw error;
+  return (data as { id: string } | null)?.id ?? null;
+}
+
 /** The season's form id, or null when it has none — a READ (`ensureSeasonForm` makes one). The one lookup (Stage 4 Part 3). */
 export async function seasonFormId(seasonId: string): Promise<string | null> {
   const { data, error } = await supabaseAdmin.from('club_forms').select('id').eq('owner_table', 'league_seasons').eq('owner_id', seasonId).maybeSingle();

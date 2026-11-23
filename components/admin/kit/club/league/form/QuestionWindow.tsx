@@ -22,10 +22,11 @@ import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import {
   FORM_LIMITS, asksForTyping, canBeRequired, canDeleteQuestion, hasChoices, isAnswered, linesToChoices, looksLikeHealth, offeredChoices,
-  type FormQuestion, type QuestionAsked, type QuestionType,
+  SEASON_FORM_SHAPE, type FormQuestion, type FormShape, type QuestionAsked, type QuestionType,
 } from '@/lib/club-form';
 import { ASKED_WORDS, FORM_WORDS as W, QUESTION_TYPE_WORDS, askedLabel, typeLabel } from '@/lib/club-form-words';
 import f from './SignupForm.module.css';
+import SwitchRow from '@/components/admin/kit/club/sponsorships/SwitchRow';
 
 type Draft = {
   label: string; helpText: string; type: QuestionType; asked: QuestionAsked; choicesText: string;
@@ -55,23 +56,11 @@ const bodyOf = (d: Draft, q: FormQuestion | null) => ({
   onBoard: !d.health && d.onBoard,
 });
 
-function Switch({ id, name, hint, on, disabled = false, onChange }: {
-  id: string; name: string; hint: string; on: boolean; disabled?: boolean; onChange: (v: boolean) => void;
-}) {
-  return (
-    <div className={`${ck.switchRow}${on ? '' : ` ${ck.switchRowOff}`}`}>
-      <div className={ck.switchText}>
-        <span className={ck.switchName} id={id}>{name}</span>
-        <p className={ck.hint} id={`${id}-hint`}>{hint}</p>
-      </div>
-      <button type="button" role="switch" aria-checked={on} aria-labelledby={id} aria-describedby={`${id}-hint`}
-        className={ck.switch} disabled={disabled} onClick={() => onChange(!on)} />
-    </div>
-  );
-}
+/** The kit's settings switch row, shared (Board Ready Stage 6 made the sponsorship screens its second user). */
+const Switch = SwitchRow;
 
 export default function QuestionWindow({
-  question, apiBase, orgQuery, canEdit, counts, prev, next, position, onStep, onClose, onChanged,
+  question, apiBase, orgQuery, canEdit, counts, prev, next, position, onStep, onClose, onChanged, shape = SEASON_FORM_SHAPE,
 }: {
   /** null = Add a question (the same window, asking). */
   question: FormQuestion | null;
@@ -87,6 +76,8 @@ export default function QuestionWindow({
   onStep: (id: string) => void;
   onClose: () => void;
   onChanged: () => Promise<boolean>;
+  /** What the form's editor offers (Board Ready Stage 6, ask 8): the sponsorship form has no Asked, no Health, no board. */
+  shape?: FormShape;
 }) {
   const creating = question === null;
   const [editing, setEditing] = useState(false);
@@ -166,8 +157,8 @@ export default function QuestionWindow({
     }
   }
 
-  const missed = draft.asked === 'once' ? counts.signups : counts.children;
-  const suggestHealth = !draft.health && looksLikeHealth(draft.label, draft.helpText);
+  const missed = !shape.perSubject ? 0 : draft.asked === 'once' ? counts.signups : counts.children;
+  const suggestHealth = shape.healthSwitch && !draft.health && looksLikeHealth(draft.label, draft.helpText);
 
   const fields = (
     <>
@@ -177,7 +168,7 @@ export default function QuestionWindow({
         {answered ? (
           <>
             <div className={ck.field}><span className={ck.label}>{W.type}</span><span className={repKit.readonlyValue}>{typeLabel(question!.type)}</span></div>
-            <div className={ck.field}><span className={ck.label}>{W.asked}</span><span className={repKit.readonlyValue}>{askedLabel(question!.asked)}</span></div>
+            {shape.perSubject && <div className={ck.field}><span className={ck.label}>{W.asked}</span><span className={repKit.readonlyValue}>{askedLabel(question!.asked)}</span></div>}
           </>
         ) : (
           <>
@@ -188,12 +179,14 @@ export default function QuestionWindow({
                 {QUESTION_TYPE_WORDS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </label>
-            <label className={ck.field} htmlFor="cq-asked">
-              <span className={ck.label}>{W.asked}</span>
-              <select id="cq-asked" className={ck.select} value={draft.asked} onChange={e => change({ asked: e.target.value as QuestionAsked })}>
-                {ASKED_WORDS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-              </select>
-            </label>
+            {shape.perSubject && (
+              <label className={ck.field} htmlFor="cq-asked">
+                <span className={ck.label}>{W.asked}</span>
+                <select id="cq-asked" className={ck.select} value={draft.asked} onChange={e => change({ asked: e.target.value as QuestionAsked })}>
+                  {ASKED_WORDS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                </select>
+              </label>
+            )}
           </>
         )}
       </div>
@@ -209,12 +202,16 @@ export default function QuestionWindow({
       <div>
         <Switch id="cq-required" name={W.required} hint={canBeRequired(draft.type) ? W.requiredHint : W.requiredFile}
           on={canBeRequired(draft.type) && draft.required} disabled={!canBeRequired(draft.type)} onChange={v => change({ required: v })} />
-        <Switch id="cq-health" name={W.health} hint={W.healthHint} on={draft.health}
-          onChange={v => change({ health: v, onBoard: v ? false : draft.onBoard })} />
-        <Switch id="cq-board" name={W.board} hint={W.boardHint} on={!draft.health && draft.onBoard} disabled={draft.health}
-          onChange={v => change({ onBoard: v })} />
+        {shape.healthSwitch && (
+          <Switch id="cq-health" name={W.health} hint={W.healthHint} on={draft.health}
+            onChange={v => change({ health: v, onBoard: v ? false : draft.onBoard })} />
+        )}
+        {shape.boardSwitch && (
+          <Switch id="cq-board" name={W.board} hint={W.boardHint} on={!draft.health && draft.onBoard} disabled={draft.health}
+            onChange={v => change({ onBoard: v })} />
+        )}
       </div>
-      {draft.health ? (
+      {shape.healthSwitch && draft.health ? (
         <p className={f.nudge}>{W.healthOn}</p>
       ) : suggestHealth ? (
         <div className={`${f.nudge} ${f.nudgeRow}`}>
@@ -257,7 +254,7 @@ export default function QuestionWindow({
         size="medium"
         title={editing ? (draft.label.trim() || q.label) : q.label}
         ariaLabel={q.label}
-        identity={`${typeLabel(q.type)} · ${askedLabel(q.asked).toLowerCase()}`}
+        identity={shape.perSubject ? `${typeLabel(q.type)} · ${askedLabel(q.asked).toLowerCase()}` : typeLabel(q.type)}
         status={editing ? <SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={held} onRetry={() => void handleSave()} /> : undefined}
         edit={canEdit && !q.archivedAt ? { editing, onToggle: () => void toggleEdit(), label: W.edit(q.label) } : undefined}
         onClose={() => void leave(onClose)}
@@ -280,11 +277,11 @@ export default function QuestionWindow({
               </dd></div>
             )}
             {q.helpText && <div><dt>{W.helpText}</dt><dd>{q.helpText}</dd></div>}
-            <div><dt>{W.asked}</dt><dd>{askedLabel(q.asked)}</dd></div>
+            {shape.perSubject && <div><dt>{W.asked}</dt><dd>{askedLabel(q.asked)}</dd></div>}
             <div><dt>{W.required}</dt><dd>{q.required ? W.yes : W.no}</dd></div>
             {q.health && <div><dt>{W.health}</dt><dd>{W.yes}</dd></div>}
-            <div><dt>{W.boardFact}</dt><dd>{q.onBoard ? W.shown : W.notShown}</dd></div>
-            <div><dt>{W.answers}</dt><dd>{q.answers > 0 ? W.answersCount(q.answers, q.asked) : W.answersNone}</dd></div>
+            {shape.boardSwitch && <div><dt>{W.boardFact}</dt><dd>{q.onBoard ? W.shown : W.notShown}</dd></div>}
+            <div><dt>{W.answers}</dt><dd>{q.answers > 0 ? (shape.perSubject ? W.answersCount(q.answers, q.asked) : W.answersCountBusiness(q.answers)) : W.answersNone}</dd></div>
           </dl>
         )}
         {canEdit && !q.archivedAt && (

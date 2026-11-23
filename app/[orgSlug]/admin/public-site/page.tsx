@@ -23,7 +23,10 @@
  * change saves itself with the floating pill (A6) except a notice, which waits for Post notice.
  */
 import { useCallback, useMemo, useRef, useState, useSyncExternalStore, useEffect, type ReactNode } from 'react';
-import { Check, ChevronDown, Copy, Eye, ExternalLink, Globe } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Copy, Eye, ExternalLink, Globe } from 'lucide-react';
+import Link from 'next/link';
+import { opensSponsorships } from '@/lib/club-sponsorships-place';
+import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { isClubPlan, hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -49,7 +52,7 @@ import {
   checkSiteField, Refused, LIST_MAX, SITE_FIELD_MAX, CONTACT_ROLE_MAX, DOCUMENT_HEADING_MAX, DOCUMENT_TITLE_MAX, QUESTION_MAX,
   ANSWER_MAX, SPONSOR_NAME_MAX, type ListKind, type SiteTextField,
 } from '@/lib/public-site-patch';
-import { sponsorCounts, sponsorEnded, sponsorRowSub } from '@/lib/club-sponsors';
+import { sponsorEnded, sponsorRowSub } from '@/lib/club-sponsors';
 import { tournamentToday } from '@/lib/timezone';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import type { ClubNotice, OrgPublicSiteContent, SiteContact, SiteDocument, SiteQuestion, SiteSponsor } from '@/lib/types';
@@ -159,7 +162,7 @@ const LISTS: Record<ListKind, SiteList> = {
 };
 
 export default function PublicSitePage() {
-  const { currentOrg, user, userRole, userCapabilities, loading, refresh } = useOrg();
+  const { currentOrg, user, userRole, userCapabilities, limitedToTeamGroups, loading, refresh } = useOrg();
   const orgSlug = currentOrg?.slug ?? '';
   const query = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const canWrite = userRole === 'owner' || userRole === 'admin';
@@ -202,6 +205,10 @@ export default function PublicSitePage() {
   const [openRecord, setOpenRecord] = useState<{ kind: ListKind; id: string | 'new' } | null>(null);
   // The Contacts, documents and sponsors row opens to four folded lines; one list is open at a time (owner, 2026-10-23).
   const [openList, setOpenList] = useState<ListKind | null>(null);
+  // Board Ready Stage 6: the Sponsors line's door, only for someone Sponsorships opens to (the sidebar's own answer).
+  const sponsorshipsDoor = currentOrg && userRole
+    && opensSponsorships({ role: userRole, capabilities: userCapabilities, limited: limitedToTeamGroups }, currentOrg)
+    ? { href: `/${currentOrg.slug}/admin/sponsorships` } : null;
   // The one open row ('unset' until the club opens or closes one: then the first part not ready, if any).
   const [openRow, setOpenRow] = useState<RowKey | null | 'unset'>('unset');
   // Which row starts open is decided ONCE, on the first draw (the first part not ready, on a set-up). Never again from
@@ -370,13 +377,13 @@ export default function PublicSitePage() {
   const uploadSponsorLogo = async (file: File): Promise<string> => {
     const body = new FormData();
     body.append('file', file);
-    const res = await fetch(`/api/admin/public-site/sponsor-logo${query}`, { method: 'POST', body });
+    const res = await fetch(`/api/admin/sponsorships/sponsors/logo${query}`, { method: 'POST', body });
     const data = await res.json().catch(() => ({})) as { error?: string; logoUrl?: string };
     if (!res.ok || typeof data.logoUrl !== 'string') throw new Error(typeof data.error === 'string' && data.error ? data.error : W.logoUploadFailed);
     return data.logoUrl;
   };
   const discardSponsorLogo = async (logoUrl: string): Promise<void> => {
-    await fetch(`/api/admin/public-site/sponsor-logo${query}`, {
+    await fetch(`/api/admin/sponsorships/sponsors/logo${query}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ logoUrl }),
@@ -502,7 +509,6 @@ export default function PublicSitePage() {
   const counts = { contacts: content?.contacts?.length ?? 0, documents: content?.documents?.length ?? 0, questions: content?.questions?.length ?? 0 };
   // Sponsors are optional thank-yous: they say how many there are, but an empty list is never "not set up" (not in `counts`).
   const today = tournamentToday();
-  const sponsorFacts = sponsorCounts(content?.sponsors, today);
   const ready = builderReadiness({
     logoUrl: currentOrg.logoUrl, themePreset: currentOrg.themePreset, themePrimary: currentOrg.themePrimary,
     tagline: content?.tagline, contactEmail: content?.contactEmail, ...counts,
@@ -530,7 +536,8 @@ export default function PublicSitePage() {
       content?.contactEmail?.trim() || W.aboutNoEmail,
       ...(socials ? [W.socialCount(socials)] : []),
     ]),
-    lists: W.listsSummary(counts.contacts, counts.documents, counts.questions, sponsorFacts.total, sponsorFacts.ended),
+    // Board Ready Stage 6 (ask 12): sponsors are kept in Sponsorships now, so the row counts the three lists it still holds.
+    lists: W.listsSummary(counts.contacts, counts.documents, counts.questions),
     visibility: W.visibilitySummary(on, currentOrg.isDiscoverable, noun),
     coaches: coachNamesChoiceName(sanitizeCoachNamesPolicy(currentOrg.coachNamesPolicy)),
   };
@@ -570,7 +577,6 @@ export default function PublicSitePage() {
     const isOpen = openList === kind;
     // The line under the title: the first names in the list, or for sponsors how many families see and how many ended.
     const peek = items.length === 0 ? W.listPeekNone
-      : kind === 'sponsors' ? W.listPeekSponsors(sponsorFacts.total - sponsorFacts.ended, sponsorFacts.ended)
       : items.map(i => title(i)).join(' · ');
     return (
       <div className={styles.disItem} id={kind}>
@@ -707,7 +713,25 @@ export default function PublicSitePage() {
             {listPart('contacts')}
             {listPart('documents')}
             {listPart('questions')}
-            {listPart('sponsors')}
+            {/* Board Ready Stage 6 (ask 12, round 1 tab 1 RESTYLED): the list moved to Sponsorships — this line is its door. */}
+            <div className={styles.disItem} id="sponsors">
+              {sponsorshipsDoor ? (
+                <Link className={styles.disHead} href={sponsorshipsDoor.href}>
+                  <span className={styles.disText}>
+                    <span className={styles.disTitle}>{W.sponsors}</span>
+                    <span className={styles.disPeek}>{SPONSORSHIPS_WORDS.siteDoor.caption}</span>
+                  </span>
+                  <span className={styles.disDoor}>{SPONSORSHIPS_WORDS.siteDoor.door}<ChevronRight size={16} aria-hidden /></span>
+                </Link>
+              ) : (
+                <div className={styles.disHead}>
+                  <span className={styles.disText}>
+                    <span className={styles.disTitle}>{W.sponsors}</span>
+                    <span className={styles.disPeek}>{SPONSORSHIPS_WORDS.siteDoor.caption}</span>
+                  </span>
+                </div>
+              )}
+            </div>
           </BuilderRow>
 
           {showCoachNames && (

@@ -1,0 +1,141 @@
+/* Board Ready Stage 6 — the Sponsorships place (Deals · Packages · Sponsors · Setup). Tokens only. */
+
+/* The checklist card's count and its small line under the list. */
+.after { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.deskOnly { display: inline; }
+.phoneOnly { display: none; }
+@media (max-width: 640px) {
+  .deskOnly { display: none; }
+  .phoneOnly { display: inline; }
+}
+
+/* The callout: white, an olive rule on the left (round 1 tab 1's "You already have 6 sponsors on your website"). */
+.callout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-olive);
+  border-radius: 0 8px 8px 0;
+  background: var(--home-card);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.calloutBody { flex: 1; min-width: 0; display: grid; gap: 0.15rem; }
+.calloutBody strong { color: var(--text-primary); }
+.calloutDoor { color: var(--home-olive); font-weight: 700; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.15rem; }
+.calloutDoor:hover { text-decoration: underline; }
+@media (max-width: 640px) {
+  .callout { flex-direction: column; align-items: stretch; }
+  .calloutDoor { justify-content: center; min-height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+}
+
+/* A nudge inside a window: white, an olive rule (the full package's "Both places are taken."). A lock line: grey rule. */
+.nudge {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-olive);
+  border-radius: 0 6px 6px 0;
+  background: var(--home-card);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.nudge strong { color: var(--text-primary); }
+.lock { composes: nudge; border-left-color: var(--home-line-strong); }
+
+/* The packages table. */
+.toolbar { display: flex; align-items: center; gap: 0.75rem; justify-content: flex-end; margin: 0 0 0.75rem; flex-wrap: wrap; }
+.toolbarGrow { flex: 1; min-width: 0; }
+.money { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.takenCell { white-space: nowrap; display: inline-flex; align-items: center; gap: 0.4rem; }
+.tableRowBtn { all: unset; cursor: pointer; display: block; width: 100%; }
+.rowName { font-weight: 700; color: var(--text-primary); }
+.rowCaption { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.chevronCell { width: 1.5rem; color: var(--text-tertiary); text-align: right; }
+.note { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.archivedToggle { margin: 0.75rem 0 0; }
+.linkButton { all: unset; cursor: pointer; color: var(--home-olive); font-weight: 700; font-size: var(--type-support); display: inline-flex; align-items: center; gap: 0.25rem; }
+.linkButton:hover { text-decoration: underline; }
+.linkButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 3px; }
+.dangerLink { composes: linkButton; color: var(--home-live); }
+.rareDoor { margin: 1.25rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--home-line); }
+
+/* The package table on a phone is a row list (round 1 tab 2's phone drawing). */
+.deskTable { display: block; }
+.phoneList { display: none; }
+@media (max-width: 640px) {
+  .deskTable { display: none; }
+  .phoneList { display: block; }
+}
+
+/* The add square on a phone's tab head ("+", 44 px). */
+.addSquare { display: none; }
+@media (max-width: 640px) {
+  .addWord { display: none; }
+  .addSquare { display: inline-flex; width: 44px; height: 44px; padding: 0; align-items: center; justify-content: center; }
+}
+
+/* Window fields. */
+.form { display: grid; gap: 1rem; }
+.twoCol { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+@media (max-width: 640px) { .twoCol { grid-template-columns: minmax(0, 1fr); } }
+.sectionHeading {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.itemRow { display: flex; align-items: center; gap: 0.5rem; }
+.itemRow input { flex: 1; min-width: 0; }
+.iconBtn { all: unset; cursor: pointer; display: inline-grid; place-items: center; width: 44px; height: 44px; color: var(--text-tertiary); border-radius: 6px; }
+.iconBtn:hover { color: var(--text-primary); }
+.iconBtn:focus-visible { outline: 2px solid var(--home-olive); }
+.fileRow { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--home-card); }
+.fileBadge { font-family: var(--font-data); font-size: var(--type-token); font-weight: 700; color: var(--home-live); border: 1px solid currentColor; border-radius: 4px; padding: 0 0.3rem; }
+.fileName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
+.fileSize { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+.error { margin: 0; color: var(--home-live); font-size: var(--type-support); }
+
+/* A record's facts: a term over its value (the record windows' read mode). */
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.55rem 1.25rem; margin: 0; }
+.facts dt { color: var(--text-tertiary); font-size: var(--type-support); }
+.facts dd { margin: 0; color: var(--text-primary); }
+.factSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+@media (max-width: 640px) {
+  .facts { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
+  .facts dd { margin-bottom: 0.55rem; }
+}
+
+/* The sponsors list: a logo tile, its place, the chips. */
+.thumb {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid var(--home-line);
+  background: var(--white-fixed);
+  overflow: hidden;
+  font-size: var(--type-token);
+  color: var(--text-tertiary);
+}
+.thumb img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.thumbNone { border-style: dashed; background: var(--home-paper); }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); margin-right: 0.35rem; vertical-align: middle; }
+.dealChip { color: var(--home-olive); }
+.search { width: 16rem; max-width: 100%; border-radius: 999px; }
+@media (max-width: 640px) { .search { width: 100%; } }
+.placeRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.75rem; align-items: end; }
+@media (max-width: 640px) { .placeRow { grid-template-columns: minmax(0, 1fr); } }
+.placeFixed { padding: 0.6rem 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--home-card); display: flex; gap: 0.75rem; align-items: center; }
+.placeFixedMain { flex: 1; min-width: 0; display: grid; gap: 0.15rem; }
+
+/* The public "Sponsored by" line under a division's name (ask 1): quiet, a hairline frame. */
+.sponsoredBy { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; }
+.clickRow { cursor: pointer; }

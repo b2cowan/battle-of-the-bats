@@ -78,6 +78,7 @@ const LOSES: Partial<Record<Capability, (org: string) => string>> = {
   module_tournaments: () => 'any tournament',
   module_members: () => 'the member list',
   module_communications: () => 'the club’s sent emails, and can’t send a group email from any screen',
+  module_sponsorships: org => `the ${possessive(org)} sponsors, packages and deals`,
 };
 const GAINS: Partial<Record<Capability, (org: string) => string>> = {
   // Families concentrates every household's personal information (plan §5.3) — say so, every time. Since Club Tier Stage 14
@@ -91,6 +92,10 @@ const GAINS: Partial<Record<Capability, (org: string) => string>> = {
   module_tournaments: () => 'the tournaments',
   module_members: () => 'the member list',
   module_communications: () => 'the club’s sent emails, and can send group emails to the people they work with',
+  // Board Ready Stage 6, round 2 tab 3: a grant lets the person send offers in the club's name, which CASL makes the club
+  // answer for — so the grant says the offer rule, every time. The last clause is /legal's re-check wording (owner ruled
+  // 2026-11-22, walk §560 call C1): the four reasons Part 2's offer window allows, never a stricter rule than the law.
+  module_sponsorships: org => `every sponsor’s contact details and the ${possessive(org)} sponsorship deals and payments, and can send offers in the ${possessive(org)} name. Give this only to someone who will send an offer only to a business that has paid the ${org} in the last two years, asked about sponsoring in the last six months, or gave or published its address for business use`,
 };
 
 /**
@@ -121,6 +126,7 @@ export type RoleGuideRow =
   | 'public-site'
   | 'league-tournaments'
   | 'families'
+  | 'sponsorships'
   | 'members'
   | 'owner-only';
 
@@ -156,6 +162,9 @@ export function roleGuideCell(role: OrgRole | 'coach', row: RoleGuideRow): strin
     case 'families':
       // Off for every role by default (Families plan §5.3); the board roles can be given it.
       return role === 'staff' || role === 'official' ? '—' : 'if you turn it on';
+    case 'sponsorships':
+      // Board Ready Stage 6 (round 2 tab 3): owner, admin and treasurer "yes", the others "if you turn it on".
+      return has(role, 'module_sponsorships') ? '✓' : 'if you turn it on';
     case 'members':
       if (has(role, 'manage_members')) return '✓';
       return has(role, 'module_members') ? 'view' : '—';

@@ -16,8 +16,18 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-export type FormOwnerTable = 'league_seasons';
+export type FormOwnerTable = 'league_seasons' | 'organizations';
 export type FormSubjectKind = 'child_signup' | 'business';
+
+/**
+ * WHAT A FORM'S EDITOR OFFERS, by who answers it (Board Ready Stage 6, ask 8). A season's sign-up asks about each child or
+ * once per family, can mark health and can show on the draft board; the club's sponsorship form is answered by one
+ * business, so it has none of the three ("no 'for each child' groups and no Health switch").
+ */
+export type FormShape = { perSubject: boolean; healthSwitch: boolean; boardSwitch: boolean };
+export const SEASON_FORM_SHAPE: FormShape = { perSubject: true, healthSwitch: true, boardSwitch: true };
+export const BUSINESS_FORM_SHAPE: FormShape = { perSubject: false, healthSwitch: false, boardSwitch: false };
+export const formShape = (kind: FormSubjectKind): FormShape => (kind === 'business' ? BUSINESS_FORM_SHAPE : SEASON_FORM_SHAPE);
 
 export type QuestionType = 'short_answer' | 'long_answer' | 'one_choice' | 'many_choices' | 'yes_no' | 'date' | 'file';
 export const QUESTION_TYPE_VALUES: readonly QuestionType[] = [
@@ -208,7 +218,7 @@ export type QuestionWrite = {
  * (ruling 7); "Asked" is absent on a form with one kind of answerer (`perSubject` false, a sponsor's link).
  */
 export function readQuestionInput(
-  body: Record<string, unknown>, existing: FormQuestion | null, newId: () => string, opts: { perSubject: boolean; healthSwitch: boolean },
+  body: Record<string, unknown>, existing: FormQuestion | null, newId: () => string, opts: { perSubject: boolean; healthSwitch: boolean; boardSwitch?: boolean },
 ): { write: QuestionWrite } | { error: string } {
   const str = (v: unknown) => (typeof v === 'string' ? v.trim() : null);
   const label = 'label' in body ? str(body.label) : existing?.label ?? null;
@@ -245,7 +255,8 @@ export function readQuestionInput(
     type,
     required: 'required' in body ? body.required === true : existing?.required ?? false,
     health,
-    onBoard: 'onBoard' in body ? body.onBoard === true : existing?.onBoard ?? false,
+    // A form with no draft board (the sponsorship form, `boardSwitch: false`) never shows an answer on one.
+    onBoard: opts.boardSwitch !== false && ('onBoard' in body ? body.onBoard === true : existing?.onBoard ?? false),
   });
   return { write: {
     question_type: type, label, help_text: help, choices, required: settled.required, asked, health, on_board: settled.onBoard,

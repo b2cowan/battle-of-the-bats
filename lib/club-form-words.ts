@@ -101,6 +101,8 @@ export const FORM_WORDS = {
   answers: 'Answers',
   answersNone: 'None yet',
   answersCount: (n: number, asked: QuestionAsked) => (asked === 'once' ? pluralize(n, 'sign-up') : pluralize(n, 'child', 'children')),
+  // The sponsorship form (Board Ready Stage 6, ask 8): one business answers it.
+  answersCountBusiness: (n: number) => pluralize(n, 'business', 'businesses'),
   archive: 'Archive this question',
   archiveNote: 'Answers already given stay on each registration and in the export, under “No longer asked”.',
   archiveAsk: (label: string) => ({

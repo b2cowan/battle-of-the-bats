@@ -14,6 +14,10 @@
  * The two adds are siblings, both outlined (neither takes the lime). An empty form offers "Copy {season}'s form".
  * Changing it is the people who set up a season, while it is live (the server's `canEdit`); everyone else who can open the
  * season reads it, and a finished season's lock line is the layout's (SeasonLockLine).
+ *
+ * ⚖ THE CLUB'S SPONSORSHIP FORM is this same page (Board Ready Stage 6, ask 8: "Stage 4's editor with no 'for each child'
+ * groups and no Health switch"), given `sponsorship`: its own API, the business form's shape (no Asked, no Health, no
+ * draft board, one list with no bands), and its locked card is the business card the club can't remove. It has no copy.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -32,7 +36,7 @@ import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import LoadingState from '@/components/shared/LoadingState';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { getBillingHref } from '@/lib/billing-urls';
-import { isLiveDocument, isLiveQuestion, type FormDocument, type FormQuestion, type QuestionAsked } from '@/lib/club-form';
+import { BUSINESS_FORM_SHAPE, isLiveDocument, isLiveQuestion, SEASON_FORM_SHAPE, type FormDocument, type FormQuestion, type QuestionAsked } from '@/lib/club-form';
 import {
   ASKED_WORDS, FORM_WORDS as W, typeLabel, documentCaption, fixedFields, foldedLine, questionCaption, questionsSummary,
 } from '@/lib/club-form-words';
@@ -44,18 +48,26 @@ import { STAFF_FORM_WORDS } from '@/lib/club-form-staff-words';
 
 export type FormRead = {
   form: { id: string; questions: FormQuestion[]; documents: FormDocument[]; removedAt?: string | null };
-  counts: { children: number; signups: number };
   canEdit: boolean;
-  finished: boolean;
   questionsOnPlan: boolean;
-  fixed: { friendMax: number; askEmailConsent: boolean; clubName: string };
-  season: { id: string; name: string };
-  copyFrom: { seasonId: string; name: string; questions: number; documents: number } | null;
+  /** A season's form only (the sponsorship form has no sign-ups, no fixed sign-up fields and no earlier form to copy). */
+  counts?: { children: number; signups: number };
+  finished?: boolean;
+  fixed?: { friendMax: number; askEmailConsent: boolean; clubName: string };
+  season?: { id: string; name: string };
+  copyFrom?: { seasonId: string; name: string; questions: number; documents: number } | null;
 };
 
-export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlug: string; seasonId: string; planId: OrgPlan | undefined }) {
+/** The club's sponsorship form (Board Ready Stage 6): its locked card, drawn by the caller. */
+export type SponsorshipFormProps = { fixedCard: React.ReactNode; refusedTitle: string; lede: string; noQuestionsLine: string };
+
+export default function SignupFormScreen({ orgSlug, seasonId = '', planId, sponsorship }: {
+  orgSlug: string; seasonId?: string; planId: OrgPlan | undefined; sponsorship?: SponsorshipFormProps;
+}) {
   const orgQuery = `?orgSlug=${encodeURIComponent(orgSlug)}`;
-  const apiBase = `/api/admin/house-league/seasons/${encodeURIComponent(seasonId)}/form`;
+  // org-slug-ok: every call below appends `orgQuery` (?orgSlug=…) to apiBase, as the season's address does.
+  const apiBase = sponsorship ? '/api/admin/sponsorships/form' : `/api/admin/house-league/seasons/${encodeURIComponent(seasonId)}/form`;
+  const shape = sponsorship ? BUSINESS_FORM_SHAPE : SEASON_FORM_SHAPE;
   const isPhone = useIsPhone();
   const [read, setRead] = useState<FormRead | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -124,16 +136,19 @@ export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlu
   const [copyBusy, setCopyBusy] = useState(false);
   const [copyError, setCopyError] = useState('');
 
-  if (refused) return <LoadFailed title="This season’s sign-up form isn’t yours to open." />;
+  if (refused) return <LoadFailed title={sponsorship?.refusedTitle ?? 'This season’s sign-up form isn’t yours to open.'} />;
   if (!read) return loadError ? <LoadFailed title={loadError} onRetry={() => void refresh()} /> : <LoadingState label={W.loading} />;
 
-  const { canEdit, fixed, counts, questionsOnPlan, copyFrom } = read;
+  const { canEdit, questionsOnPlan } = read;
+  const counts = read.counts ?? { children: 0, signups: 0 };
+  const copyFrom = read.copyFrom ?? null;
+  const fixed = read.fixed ?? { friendMax: 0, clubName: '', askEmailConsent: false };
   const fields = fixedFields(fixed.friendMax, fixed.clubName, fixed.askEmailConsent);
   const detailCount = fields.child.length + fields.guardian.length + fields.end.length;
   // Folded once the club has questions, and on a phone; the person's own Show / Hide wins after that.
   const folded = fixedOpen === null ? (liveQuestions.length > 0 || isPhone) : !fixedOpen;
   // The order the windows step through: each child's band, then once per sign-up (the list's own order).
-  const stepOrder = [...band('per_subject'), ...band('once')];
+  const stepOrder = shape.perSubject ? [...band('per_subject'), ...band('once')] : liveQuestions;
 
   const addButton = (label: string, onClick: () => void) => (
     <button type="button" className={`btn btn-outline ${screenParts.headerButton} ${f.add}`} onClick={onClick}
@@ -174,7 +189,8 @@ export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlu
     const label = ASKED_WORDS.find(a => a.value === asked)!.label;
     return (
       <>
-        <ClubRowBand count={qs.length}>{label}</ClubRowBand>
+        {/* One business answers the sponsorship form: one list, no bands. */}
+        {shape.perSubject && <ClubRowBand count={qs.length}>{label}</ClubRowBand>}
         {canEdit ? (
           <ReorderList ids={qs.map(q => q.id)} names={qs.map(q => q.label)} onMove={moveQuestion(asked)} disabled={orderSaving}>
             {qs.map(q => (
@@ -207,8 +223,8 @@ export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlu
 
   return (
     <div className={f.page}>
-      {/* ── Every sign-up asks (locked; drawing tab 1) ── */}
-      {folded ? (
+      {/* ── Every sign-up asks (locked; drawing tab 1) — or the business card the sponsorship form starts with ── */}
+      {sponsorship ? sponsorship.fixedCard : folded ? (
         <p className={f.folded}>
           {foldedLine(detailCount)} ·{' '}
           <button type="button" className={repKit.inlineLink} aria-expanded={false} onClick={() => setFixedOpen(true)}>{W.show}</button>
@@ -241,7 +257,7 @@ export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlu
         ) : liveQuestions.length === 0 ? (
           <div className={f.empty}>
             <p className={f.emptyTitle}>{W.noQuestions}</p>
-            <p className={f.small}>{isPhone ? W.noQuestionsLinePhone : copyFrom && canEdit ? W.noQuestionsCopyLine : W.noQuestionsLine}</p>
+            <p className={f.small}>{isPhone ? W.noQuestionsLinePhone : copyFrom && canEdit ? W.noQuestionsCopyLine : sponsorship?.noQuestionsLine ?? W.noQuestionsLine}</p>
             {canEdit && (
               <div className={f.emptyActions}>
                 {copyFrom && (
@@ -258,7 +274,7 @@ export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlu
         ) : (
           <>
             <div className={f.head}>
-              <p className={f.lede}>{W.lede}</p>
+              <p className={f.lede}>{sponsorship?.lede ?? W.lede}</p>
               {canEdit && addButton(W.addQuestion, () => setOpenQ('new'))}
             </div>
             <div className={f.outline}>
@@ -308,6 +324,7 @@ export default function SignupFormScreen({ orgSlug, seasonId, planId }: { orgSlu
           orgQuery={orgQuery}
           canEdit={canEdit}
           counts={counts}
+          shape={shape}
           prev={qIdx > 0 ? { id: stepOrder[qIdx - 1].id, name: stepOrder[qIdx - 1].label } : null}
           next={qIdx >= 0 && qIdx < stepOrder.length - 1 ? { id: stepOrder[qIdx + 1].id, name: stepOrder[qIdx + 1].label } : null}
           position={qIdx >= 0 ? `${qIdx + 1} of ${stepOrder.length}` : ''}

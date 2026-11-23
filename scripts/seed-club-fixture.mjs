@@ -193,6 +193,8 @@ const LAKESHORE_ABOUT = {
 // link); Summit Physio has a logo and a link and an end day long past, so it is ENDED: families do not see it, the editor
 // marks it Ended, and bringing it back is one edit. `mark` is drawn here into a small PNG stored where the admin's upload
 // route puts one; `lakeshoreSponsorRows` turns it into the row's `logoUrl`.
+// ⚖ Board Ready Stage 6 (mig 525): the one sponsor list lives in club_sponsors + club_sponsor_places now — each a business
+// with one typed place, "The club", keeping its last day (`seedLakeshoreSponsors`). The old site-content column is not written.
 const LAKESHORE_SPONSORS = [
   { id: 's-riverside', name: 'Riverside Dental', link: 'https://example.com/lynx/riverside-dental', mark: { top: 'Riverside', bottom: 'Dental', colour: '#14595C' } },
   { id: 's-hall', name: 'Hall Real Estate' },
@@ -216,6 +218,16 @@ async function lakeshoreSponsorRows(clubId) {
     rows.push(row);
   }
   return rows;
+}
+async function seedLakeshoreSponsors(clubId) {
+  const rows = await lakeshoreSponsorRows(clubId);
+  for (const [i, s] of rows.entries()) {
+    const { data, error } = await db.from('club_sponsors').insert({
+      org_id: clubId, name: s.name, link: s.link ?? null, logo_url: s.logoUrl ?? null, position: i + 1,
+    }).select('id').single();
+    die('sponsor', error);
+    die('sponsor place', (await db.from('club_sponsor_places').insert({ org_id: clubId, sponsor_id: data.id, kind: 'club', ends_on: s.endsOn ?? null, source: 'typed' })).error);
+  }
 }
 const REP_ONLY_OWNER = {
   name: 'Dana Whitfield',
@@ -1614,8 +1626,8 @@ async function buildRepOnlyClub() {
     description: 'The Lakeshore Lynx are a volunteer-run rep baseball club. Nine teams from 9U to 16U play in the provincial AA and AAA divisions from April to August, with winter training at Lakeshore Dome. (Walk fixture — not a real club.)',
     contact_email: 'info@uat-lakeshore-lynx.local',
     ...LAKESHORE_ABOUT,
-    sponsors: await lakeshoreSponsorRows(club.id),
   })).error);
+  await seedLakeshoreSponsors(club.id);
 
   // The banner, stored where the admin's upload puts it (app/api/admin/org-hero-banner/route.ts).
   const { data: buckets } = await db.storage.listBuckets();

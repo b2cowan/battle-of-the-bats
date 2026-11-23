@@ -54,6 +54,26 @@ export function ClubSponsorStrip({ sponsors }: { sponsors: readonly SiteSponsor[
   );
 }
 
+/**
+ * "SPONSORED BY" under a division's name (Board Ready Stage 6, ask 1; round 1 tab 8's "A division → under the division's
+ * name, on its schedule and standings pages"): one quiet line, the logo (or the name) of each sponsor whose place is that
+ * division, showing today. Absent when there is none. A team's sponsor is NOT drawn here: there is no public team page,
+ * so a team place shows on the About page only (owner 2026-11-22).
+ */
+export function ClubSponsoredBy({ sponsors, label }: { sponsors: readonly SiteSponsor[]; label: string }) {
+  if (sponsors.length === 0) return null;
+  return (
+    <p className={styles.by}>
+      <span className={styles.byLabel}>{label}</span>
+      {sponsors.map(s => (
+        <Out key={s.id} sponsor={s} className={styles.byItem}>
+          {s.logoUrl ? <img src={s.logoUrl} alt={s.name} loading="lazy" /> : <span>{s.name}</span>}
+        </Out>
+      ))}
+    </p>
+  );
+}
+
 export function ClubSponsorList({ sponsors }: { sponsors: readonly SiteSponsor[] }) {
   if (sponsors.length === 0) return null;
   return (

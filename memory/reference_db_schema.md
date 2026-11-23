@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-22 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-23 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-22
+# DB Schema Reference — 2026-11-23
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -919,6 +919,21 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → c
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, starts_on NOT NULL, ends_on NOT NULL, settings (jsonb), version (integer), started_from_permit_id (uuid) → org_permits.id, started_from_schedule_id (uuid) → club_schedules.id, reply_by, sent_at, sent_by (uuid), finalized_at, finalized_by (uuid), changed_since_sent (boolean), bill_line_id (uuid) → org_budget_lines.id, bill_permit_id (uuid) → org_permits.id, bill_amount (numeric), bill_plan, bill_first_due, bill_dates, bill_scale (numeric), allocation_id (uuid) → rep_cost_allocations.id, created_by (uuid), updated_by (uuid), created_at, updated_at, bill_price_mode, part_of_schedule_id (uuid) → club_schedules.id, part_label, bill_dismissed_at, bill_dismissed_by (uuid)
 - Indexes: club_schedules_allocation_idx, club_schedules_bill_line_idx, club_schedules_bill_permit_idx, club_schedules_created_by_idx, club_schedules_finalized_by_idx, club_schedules_from_schedule_idx, club_schedules_org_idx, club_schedules_part_label_once, club_schedules_part_of_idx, club_schedules_permit_idx, club_schedules_sent_by_idx, club_schedules_updated_by_idx
 
+### club_sponsor_places
+id (uuid), org_id (uuid) → organizations.id NOT NULL, sponsor_id (uuid) → club_sponsors.id NOT NULL, kind NOT NULL, target_id (uuid), ends_on, source, deal_id (uuid), created_at, updated_at
+- Indexes: club_sponsor_places_sponsor_idx, club_sponsor_places_target_idx, club_sponsor_places_typed_once
+
+### club_sponsors
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, logo_url, link, contact_name, contact_email, phone, invoice_street, invoice_city, invoice_province, invoice_postal, position (integer), created_by (uuid), created_at, updated_at
+- Indexes: club_sponsors_org_idx
+
+### club_sponsorship_packages
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, price (numeric) NOT NULL, place_kind NOT NULL, how_many (integer), shows_until, logo_on_site (boolean), items (jsonb), document_path, document_name, document_size (integer), archived_at, created_by (uuid), created_at, updated_at
+- Indexes: club_sponsorship_packages_org_idx
+
+### club_sponsorship_settings
+org_id (uuid) → organizations.id NOT NULL, gst_hst_registered (boolean), gst_hst_number, etransfer_to, cheques_payable_to, payment_due_days (integer), sponsor_contact_name, sponsor_contact_email, updated_by (uuid), updated_at
+
 ### cron_call_receipts
 id (uuid), job_name NOT NULL, path NOT NULL, issued_at, used_at
 - Indexes: cron_call_receipts_job_issued_idx
@@ -1074,7 +1089,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, first_day
 - Indexes: org_fiscal_years_closed_by_idx, org_fiscal_years_one_name, org_fiscal_years_one_start
 
 ### org_payment_accounts
-org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, livemode (boolean), country, requirements_due, requirements_deadline, stripe_synced_at, fee_payer, refund_policy, terms_version, terms_agreed_by (uuid), terms_agreed_by_email, terms_agreed_at, connected_by (uuid), connected_at, disconnected_by (uuid), disconnected_at, created_at, updated_at, card_payments_status, card_payments_reason, onboarding_finished_at, bank_debit_status, terms_notice_version, terms_notice_at, terms_reminded_at, ending_warned_for, ending_warned_at, fees_collector NOT NULL
+org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, livemode (boolean), country, requirements_due, requirements_deadline, stripe_synced_at, fee_payer, refund_policy, terms_version, terms_agreed_by (uuid), terms_agreed_by_email, terms_agreed_at, connected_by (uuid), connected_at, disconnected_by (uuid), disconnected_at, created_at, updated_at, card_payments_status, card_payments_reason, onboarding_finished_at, bank_debit_status, terms_notice_version, terms_notice_at, terms_reminded_at, ending_warned_for, ending_warned_at, fees_collector NOT NULL, sponsor_fee_payer
 - Indexes: org_payment_accounts_stripe_account_key
 
 ### org_people
@@ -1210,7 +1225,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **297 tables** across 10 modules.
+Total: **301 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 25 tables
@@ -1221,4 +1236,4 @@ Total: **297 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 30 tables
 - CRM / Leads: 6 tables
-- Other: 115 tables
+- Other: 119 tables

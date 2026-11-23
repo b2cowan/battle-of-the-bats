@@ -9,7 +9,7 @@ import { onlineFeeRateLabel } from '@/lib/plan-config';
 import { onlinePaymentsOn, stripeKeyIsTest, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canConnectPayouts, canSeePayouts } from '@/lib/online-payment-access';
 import { factsFromRow, oldFeeSetting, payoutsState, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow, takesBankDebit, pausedForRefundPolicy } from '@/lib/online-payment-account';
-import { ONLINE_FEE_PAYERS, onlineFee, type OnlineFeePayer } from '@/lib/online-payment-fee';
+import { ONLINE_FEE_PAYERS, onlineFee, SPONSOR_FEE_PAYERS, type OnlineFeePayer, type SponsorFeePayer } from '@/lib/online-payment-fee';
 import { CLUB_ACCOUNT_FEES_COLLECTOR, createClubAccount, dashboardLink, onboardingLink, prefillClubProfile, retrieveAccount } from '@/lib/stripe-connect';
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
 import { stripeProfileFor } from '@/lib/online-payment-profile';
@@ -70,10 +70,11 @@ async function context(orgSlug: string | null): Promise<PayoutsContext | Respons
 async function readAccount(orgId: string): Promise<PayoutsAccountRow & {
   connected_at: string; disconnected_by: string | null; terms_agreed_at: string | null; country: string | null;
   terms_version: string | null; terms_agreed_by: string | null; terms_agreed_by_email: string | null;
+  sponsor_fee_payer: SponsorFeePayer;
 } | null> {
   const { data } = await supabaseAdmin
     .from('org_payment_accounts')
-    .select(`${PAYOUTS_ACCOUNT_COLUMNS}, connected_at, disconnected_by, terms_agreed_at, country, terms_version, terms_agreed_by, terms_agreed_by_email`)
+    .select(`${PAYOUTS_ACCOUNT_COLUMNS}, connected_at, disconnected_by, terms_agreed_at, country, terms_version, terms_agreed_by, terms_agreed_by_email, sponsor_fee_payer`)
     .eq('org_id', orgId)
     .maybeSingle();
   return data as never;
@@ -116,6 +117,10 @@ export const GET = withObservability(async (req: Request) => {
     // The "Before" window's one worked line, computed from config — never typed (copy §3).
     example: { baseCents: example.baseCents, feeCents: example.feeCents, bankFeeCents: bank ? bankExample.feeCents : null },
     feePayer: facts?.feePayer ?? 'family',
+    // Board Ready Stage 6 (ask 3, ruled 2026-11-22; round 2 tab 1): the second, separate choice for sponsorships — shown only
+    // on a plan that carries Sponsorships. The club pays it by default; the registration choice never decides it.
+    sponsorshipsOnPlan: hasModuleEntitlement(ctx.org, 'module_sponsorships'),
+    sponsorFeePayer: row?.sponsor_fee_payer ?? 'club',
     refundPolicy: facts?.refundPolicy ?? '',
     requirementsDue: facts?.requirementsDue.length ?? 0,
     deadline: facts?.requirementsDeadline ?? null,
@@ -168,14 +173,23 @@ export const PATCH = withObservability(async (req: Request) => {
   const demoRefusal = demoBillingRefusal(ctx.user);
   if (demoRefusal) return demoRefusal;
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if ('feePayer' in body) {
+  if ('feePayer' in body || 'sponsorFeePayer' in body) {
     // 12d-2 (ask 6): changing who pays the fee needs the current terms; agreeing again is the terms window's.
     const { data: agreed } = await supabaseAdmin.from('org_payment_accounts').select('terms_version').eq('org_id', ctx.org.id).maybeSingle();
     if (agreed && termsStanding(agreed.terms_version as string | null) === 'stale') {
       return NextResponse.json({ error: TERMS_WORDS.refuseFee, code: 'terms_stale' }, { status: 409 });
     }
-    if (!ONLINE_FEE_PAYERS.includes(body.feePayer)) return NextResponse.json({ error: 'Choose who pays the fee.' }, { status: 400 });
-    update.fee_payer = body.feePayer as OnlineFeePayer;
+    if ('feePayer' in body) {
+      if (!ONLINE_FEE_PAYERS.includes(body.feePayer)) return NextResponse.json({ error: 'Choose who pays the fee.' }, { status: 400 });
+      update.fee_payer = body.feePayer as OnlineFeePayer;
+    }
+    // Board Ready Stage 6 (ask 3): the sponsorships row, its own column; never a plan without Sponsorships.
+    if ('sponsorFeePayer' in body) {
+      if (!hasModuleEntitlement(ctx.org, 'module_sponsorships') || !SPONSOR_FEE_PAYERS.includes(body.sponsorFeePayer)) {
+        return NextResponse.json({ error: 'Choose who pays the fee.' }, { status: 400 });
+      }
+      update.sponsor_fee_payer = body.sponsorFeePayer as SponsorFeePayer;
+    }
   }
   if ('refundPolicy' in body) {
     // Required (owner 2026-11-17): it can be changed, never cleared — a blank one would close every pay page.
@@ -187,6 +201,7 @@ export const PATCH = withObservability(async (req: Request) => {
   if (error) throw error;
   if (!data) return NextResponse.json({ error: 'Set up payouts first.' }, { status: 409 });
   if ('fee_payer' in update) await audit(ctx.org.id, ctx.user.id, 'payouts_fee_payer_changed', { feePayer: update.fee_payer });
+  if ('sponsor_fee_payer' in update) await audit(ctx.org.id, ctx.user.id, 'payouts_sponsor_fee_payer_changed', { sponsorFeePayer: update.sponsor_fee_payer });
   // A club paused for want of a policy is back on: its Needs-attention item settles now, not at Stripe's next event.
   if ('refund_policy' in update) await clearSettled({ orgIds: [ctx.org.id], kinds: ['payouts_need_attention'] });
   return NextResponse.json({ ok: true });

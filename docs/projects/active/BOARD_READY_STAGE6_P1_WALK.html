@@ -1,0 +1,526 @@
+<title>Sponsorships Part 1 Walks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready Stage 6 · Part 1 · Sponsorships: the place, Setup, Packages, the one sponsor list · Owner QA Ledger §560</span>
+    <h1>Sponsorships, Part 1: a place of its own</h1>
+    <p class="lead">Four short walks, 46 steps. The club gets a Sponsorships place (Deals · Packages · Sponsors · Setup); its sponsor list moves out of the site editor and can now show on a division; a new access lets a club give it to someone like a registrar; and the Payouts card gets its sponsorship fee row. Offering a deal, the business’s page, invoices and payments are Parts 2 and 3, so nothing here sends an email or takes money.</p>
+    <p class="lead">Written Nov 22, 2026 against the dev site. Walks A–C use UAT Rep Club; walk D uses Dev Club. Each walk adds rows named “Walk …”; I remove them after you report.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> (dev; the dev server must be running, restarted after this build)</dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code> (shows as <b>Morgan Ellis</b>)</dd>
+      <dt>Club treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · password <code>UATPassword2026!</code> (<b>Avery Chen</b>)</dd>
+      <dt>Club registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · password <code>UATPassword2026!</code> (<b>Riley Okonkwo</b>)</dd>
+      <dt>Dev Club owner</dt><dd><code>owner@dev.local</code> · password <code>devpass123</code> (walk D only: a club with payouts set up)</dd>
+      <dt>Phone</dt><dd>The browser’s device toolbar at <b>390 px</b> wide, where a step says so.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. <b>Each login may meet the Terms screen once on dev</b>: accept it and carry on. A check I ran signed these test logins out everywhere, so sign in again if a window shows you signed out.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>Checked Nov 22, 2026:</b> UAT Rep Club has no sponsors, no packages and no invoice details; its house league season is <b>2026 Fall House League</b> with the division <b>U9 Rookie</b>. Riley (registrar) has every program at the role’s default.</li>
+      <li>Walk A, then B, then C; walk D stands alone. About five to ten minutes each.</li>
+      <li>The two test clubs that had sponsors on dev (UAT Rep Only and Milton) were moved to the new list by the migration; their pages look the same.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>Every Sponsorships route refuses someone the place isn’t open to, and only the owner, admins and the treasurer can change Invoice details (31 checks in the new test file).</li>
+      <li>A sponsor can’t be put on another club’s division; a package refuses a bad “How many”; the GST/HST number is checked for its form; “Registered” needs a number.</li>
+      <li>The sponsorship form’s questions are always asked once, never marked health, never on a draft board. The season’s own sign-up form is unchanged (same code, now shared).</li>
+      <li>The move: on dev the six moved sponsors keep their order, logos, links and last days; the two whose last day has passed still don’t show on the public pages. Production had none to move.</li>
+      <li>The type check is clean, and the unit suite has no new failures (the 72 it already had belong to other work).</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "stage6-p1-sponsorships-walk-v1";
+  var PAGE = "Board Ready Stage 6 · Part 1 · Sponsorships · Owner QA Ledger §560";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "The place, Invoice details, and a first package",
+  "job": "UAT Rep Club · club owner · desk",
+  "forText": "The club finds Sponsorships in its sidebar, sets its invoice details, and makes its first package. The three steps on Deals go away once a package exists.",
+  "passes": "Sponsorships sits between Communications and Public site with four tabs; the invoice details save as you type and read back; a package is added, reads back, refuses a bad How many, and archives (never deletes).",
+  "notIn": "Offering a deal and “Full” filling up (Part 2 counts the deals). The sponsorship form’s business page (Part 2).",
+  "who": "Morgan Ellis, the club owner.",
+  "where": "Admin → <b>Sponsorships</b>. Start at <code>http://localhost:3000/uat-rep-club/admin</code>.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in as the club owner and open the club link.",
+    "s": "The sidebar’s <b>Club</b> group reads, in order: … Communications, <b>Sponsorships</b> (a handshake), Public site, Organization."
+   },
+   {
+    "d": "Press <b>Sponsorships</b>.",
+    "s": "The bar names <b>Sponsorships</b> with four tabs, <b>Deals · Packages · Sponsors · Setup</b>, Deals lit. A card <b>Get ready to sell sponsorships</b> with <b>0 of 3 done</b> and three rows: <b>Your invoice details</b>, <b>Make your first package</b>, <b>Your sponsorship form</b>, each with a grey line under it and a chevron. Under the card: <b>Once you have a package, this tab lists your deals.</b>"
+   },
+   {
+    "d": "Press <b>Your invoice details</b>.",
+    "s": "A window titled <b>Invoice details</b> (small <b>Setup</b> above it) with a pencil. Six rows: Mailing address, GST/HST (<b>Not registered</b>), By e-transfer to, Cheques payable to, Payment due (<b>30 days after the invoice</b>), Contact for sponsors; the empty ones say <b>Not set yet</b>. Two grey hints under them."
+   },
+   {
+    "d": "Press the pencil.",
+    "s": "The rows become fields in the same order. The GST/HST number field is there even though the club isn’t registered yet."
+   },
+   {
+    "d": "In <b>Mailing address</b> type <b>200 Park Road, Riverdale ON K0A 1B0</b>, then click outside the box.",
+    "s": "A <b>Saved</b> pill at the window’s bottom right."
+   },
+   {
+    "d": "In <b>GST/HST number</b> type <b>81234 5678 RT0001</b>, then click outside it.",
+    "s": "Saved."
+   },
+   {
+    "d": "Turn on <b>Registered for GST/HST</b>.",
+    "s": "Saved; the switch stays on."
+   },
+   {
+    "d": "Press the ✓ where the pencil was.",
+    "s": "Read view: Mailing address <b>200 Park Road, Riverdale ON K0A 1B0</b> with <b>On every invoice and at the foot of every offer email</b> under it; GST/HST <b>Registered · 81234 5678 RT0001</b>."
+   },
+   {
+    "d": "Close the window (✕).",
+    "s": "Your invoice details now wears a green <b>Done</b>; the card says <b>1 of 3 done</b>."
+   },
+   {
+    "d": "Press <b>Make your first package</b>.",
+    "s": "A window <b>Add a package</b> (Packages above it): Name, Price (<b>Before GST/HST.</b>), How many (<b>Leave it empty for no limit.</b>), For, Shows until, then <b>What’s included</b> with the switch <b>Your logo on our website</b> on, <b>+ Add an item</b>, a Sponsorship document, and a foot with <b>Cancel</b> and a lime <b>Add package</b>."
+   },
+   {
+    "d": "Name <b>Walk division sponsor</b>, Price <b>1,000.00</b>, How many <b>4</b>, For <b>A house-league division</b>.",
+    "s": "Under For: <b>Each deal picks which division.</b> Under the logo switch: <b>On the division’s pages, from the day the deal is paid until its last day.</b>"
+   },
+   {
+    "d": "Press <b>+ Add an item</b>, type <b>A field banner at the main diamond</b>, press <b>Done</b>.",
+    "s": "The item is a row under the switch, with a grip handle and a chevron."
+   },
+   {
+    "d": "Press <b>Add package</b>.",
+    "s": "The window closes. Deals now reads <b>No deals yet. Once you offer one, it’s listed here.</b>: the three steps are gone."
+   },
+   {
+    "d": "Open the <b>Packages</b> tab.",
+    "s": "A table: Package · For · Price · Taken. One row: <b>Walk division sponsor</b> with <b>Logo on the division’s pages · A field banner at the main diamond</b> under it, <b>A house-league division</b>, <span class=\"amt\">$1,000.00</span>, <b>0 of 4</b>. Under the table: <b>“Taken” counts open offers too, so nothing is promised twice.</b>"
+   },
+   {
+    "d": "Open the row.",
+    "s": "The record reads first: Price $1,000.00 Before GST/HST, For, How many 4, Shows until, What’s included, then <b>Taken by</b> with <b>No deals for this package yet.</b>, and at the end <b>Archive this package</b>."
+   },
+   {
+    "d": "Press the pencil, set How many to <b>0</b>, click outside it.",
+    "s": "It is refused: <b>How many is a whole number from 1 to 999, or empty.</b> (Set it back to 4.)"
+   },
+   {
+    "d": "Press <b>Archive this package</b>, then <b>Archive</b>.",
+    "s": "The table empties to its no-packages line, and <b>Show 1 archived</b> appears under it."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "One sponsor list, and where each one shows",
+  "job": "UAT Rep Club · club owner · desk, one step on a phone",
+  "forText": "A sponsor is kept once and shows where the club says: the club’s home strip, or a “Sponsored by” line under a division. It leaves by itself after its last day. The site editor’s Sponsors line is now a door here.",
+  "passes": "A club sponsor shows in the home strip and on About; a division sponsor shows under U9 Rookie on its schedule and on About, not on the home; a past last day moves a sponsor to Not showing and off the public pages.",
+  "notIn": "A team’s sponsor (shows on About only, by your ruling today; same path as the division). A tournament’s strip (the tournament sponsors drawing). A sponsor from a deal (Part 2).",
+  "who": "Morgan Ellis, the club owner.",
+  "where": "Admin → Sponsorships → <b>Sponsors</b>, then the public site at <code>http://localhost:3000/uat-rep-club</code>.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Open <b>Sponsorships → Sponsors</b>.",
+    "s": "A search box <b>Search sponsors</b>, a lime <b>+ Add a sponsor</b>, the line <b>No sponsors yet…</b>, and <b>Showing 0 of 20 places on your home page.</b>"
+   },
+   {
+    "d": "Press <b>+ Add a sponsor</b>; Name <b>Walk Hardware</b>, Link <b>walkhardware.example.com</b>; leave Shows on as <b>The club</b>; press <b>Add sponsor</b>.",
+    "s": "Under <b>Showing 1</b>: Walk Hardware, a dashed <b>No logo</b> tile, caption <b>The club · no last day</b> with an olive dot. The foot: <b>Showing 1 of 20 places on your home page.</b>"
+   },
+   {
+    "d": "Add another: Name <b>Walk Dental</b>, Shows on <b>U9 Rookie division · 2026 Fall House League</b> (under Divisions), Last day <b>Aug 31, 2027</b>; Add sponsor.",
+    "s": "Two rows under Showing; Walk Dental’s caption <b>U9 Rookie division · until Aug 31, 2027</b>. The foot still says <b>1 of 20</b> (only the club place counts there)."
+   },
+   {
+    "d": "In a new tab open <code>http://localhost:3000/uat-rep-club</code> and scroll to the foot.",
+    "s": "A <b>Sponsors</b> strip with one tile, <b>Walk Hardware</b> (the name as text). Walk Dental is not on the home."
+   },
+   {
+    "d": "Open <code>http://localhost:3000/uat-rep-club/about</code>.",
+    "s": "A <b>Sponsors</b> section listing both Walk Hardware and Walk Dental."
+   },
+   {
+    "d": "Open <code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/schedule?d=b45422fa-b4ac-4080-a53c-d418b17cba83</code>.",
+    "s": "Under the division tabs, a quiet framed line: <b>Sponsored by</b> then <b>Walk Dental</b>."
+   },
+   {
+    "d": "Change <code>/schedule</code> to <code>/standings</code> in that address.",
+    "s": "The same <b>Sponsored by Walk Dental</b> line, or the page’s own words if U9 Rookie keeps no standings (then tick and note it)."
+   },
+   {
+    "d": "Back in Sponsors, open <b>Walk Hardware</b>.",
+    "s": "The record reads first: Logo <b>No logo</b>, Link <b>https://walkhardware.example.com</b>, <b>Shows on</b> with <b>The club · no last day</b>; a pencil."
+   },
+   {
+    "d": "Press the pencil and set <b>Last day</b> to <b>Nov 21, 2026</b> (yesterday).",
+    "s": "Saved. Closing the window, Walk Hardware moves under <b>Not showing</b>, dimmed, with a grey <b>Ended</b> chip and <b>Last day was Nov 21, 2026</b>."
+   },
+   {
+    "d": "Reload the public home.",
+    "s": "The Sponsors strip is gone (no club place shows today)."
+   },
+   {
+    "d": "Open Admin → <b>Public site</b>, then the row <b>Contacts, documents and sponsors</b>.",
+    "s": "Contacts, Documents, Questions as before, then a <b>Sponsors</b> line reading <b>Kept in Sponsorships, with where each one shows</b> with an olive <b>Sponsorships ›</b> at the right. Pressing it lands on Sponsorships."
+   },
+   {
+    "d": "Phone (390 px): open the club admin, then <b>More</b>.",
+    "s": "The More sheet’s <b>Club</b> group lists <b>Sponsorships</b> as a row (never a bar tab)."
+   },
+   {
+    "d": "At a desk: open Walk Hardware, pencil, <b>Remove sponsor</b>, then <b>Remove</b>.",
+    "s": "It is gone from the list."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Who opens Sponsorships, and who changes Invoice details",
+  "job": "UAT Rep Club · treasurer, registrar, owner · desk",
+  "forText": "Sponsorships is on for the owner, admins and the treasurer. The club can turn it on for anyone, here a registrar, in Manage member. Invoice details are changed by the owner, admins and the treasurer only; anyone else with Sponsorships reads them.",
+  "passes": "The treasurer has the place and the pencil on Invoice details; the registrar has no row until the owner turns it on, then has the place but reads Invoice details without a pencil, with the lock line.",
+  "notIn": "An admin (same as the owner here). Offers in the club’s name (Part 2).",
+  "who": "Avery Chen (treasurer), then Riley Okonkwo (registrar), then Morgan Ellis (owner). Use a private window for each person.",
+  "where": "Admin → Sponsorships, and Admin → Organization → <b>Members</b>.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in as the treasurer and open <code>http://localhost:3000/uat-rep-club/admin</code>.",
+    "s": "The sidebar’s Club group has <b>Sponsorships</b> (after Communications)."
+   },
+   {
+    "d": "Open Sponsorships → <b>Setup</b> → <b>Invoice details</b>.",
+    "s": "The window reads the details walk A saved, <b>with a pencil</b> (a treasurer changes them)."
+   },
+   {
+    "stop": true,
+    "d": "Sign in as the registrar (another private window) and open the club admin.",
+    "s": "No Sponsorships row in the sidebar."
+   },
+   {
+    "d": "Type <code>http://localhost:3000/uat-rep-club/admin/sponsorships</code> in the address bar.",
+    "s": "The one “not yours” screen: <b>Sponsorships</b>, <b>It’s where the club sells sponsorships: its packages, its deals and where each sponsor shows.</b>, naming the owner as the person who gives access."
+   },
+   {
+    "stop": true,
+    "d": "As the owner: Organization → <b>Members</b> → open <b>Riley Okonkwo</b>.",
+    "s": "Manage member, <b>What Riley can open</b>: the rows read Rep teams, Accounting, <b>Sponsorships</b>, Families, Communications, Public site, House league, Tournaments, Members. Sponsorships is <b>Off</b>."
+   },
+   {
+    "d": "Set Sponsorships to <b>On</b>.",
+    "s": "<b>Changed for Riley</b> under it, and a sentence: <b>Riley will see every sponsor’s contact details and the club’s sponsorship deals and payments, and can send offers in the club’s name. Give this only to someone who will send an offer only to a business that has paid the club in the last two years, asked about sponsoring in the last six months, or gave or published its address for business use.</b>"
+   },
+   {
+    "d": "Press <b>Save</b>.",
+    "s": "The window closes; Riley’s row shows the change (a <b>+ Sponsorships</b> chip)."
+   },
+   {
+    "d": "In the registrar’s window, reload the club admin.",
+    "s": "Sponsorships is now in the sidebar; Packages and Sponsors open."
+   },
+   {
+    "d": "As the registrar, open Setup → <b>Invoice details</b>.",
+    "s": "No pencil. Under the rows, a grey-ruled line: <b>The owner, admins and the treasurer change these. They’re on every invoice and offer email. Use an address the club is happy to publish; a PO box works.</b>"
+   },
+   {
+    "d": "As the owner, set Riley’s Sponsorships back to <b>Off</b> and Save (tidy-up).",
+    "s": "Riley’s sidebar loses the row on reload."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "The Payouts card’s sponsorship fee row",
+  "job": "Dev Club · owner · desk, one step on a phone",
+  "forText": "The Payouts card gets a second, separate choice for sponsorships. “The club pays it” is the default. The existing row now says what it covers, “Processing fee on registrations”, and both rows carry the card-network limit.",
+  "passes": "Both rows read as drawn; the sponsorship row defaults to the club, lists the sponsor first, carries its three hints, and saves either way without touching the registration choice.",
+  "notIn": "A sponsor paying by card (Part 3; card payments are not on).",
+  "who": "The Dev Club owner, <code>owner@dev.local</code>.",
+  "where": "Admin → Organization → <b>Settings</b>, the <b>Payouts</b> card. Start at <code>http://localhost:3000/dev-club-org/admin/org/settings</code>.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in as the Dev Club owner and open the settings link; find the Payouts card.",
+    "s": "Read view rows: Payouts go to, Receipts say, <b>Processing fee on registrations</b> (its usual words), then <b>Processing fee on sponsorships</b>: <b>The club pays it: it comes out of each payment</b>."
+   },
+   {
+    "d": "Press the card’s pencil.",
+    "s": "Under the registration row’s choices and rates, a new line: <b>Card networks limit what an organization may add to a card payment: 2.4% in Canada, never more than the cost of accepting the card, and nothing at all in Québec. This fee can be more than that. Choosing to pass it on is your decision and your responsibility.</b>"
+   },
+   {
+    "d": "Read the sponsorship row.",
+    "s": "Two choices, <b>The sponsor pays it</b> first and <b>The club pays it</b> selected, each with its drawn hint; then three lines: <b>Card networks limit what a business may add to a card payment: 2.4% in Canada, never more than the cost of accepting the card, and nothing at all in Québec. This fee can be more than that. Choosing it is your decision and your responsibility.</b>, <b>If you refund a sponsor, neither part of the processing fee comes back to you…</b>, and <b>Only a card payment carries a fee. A cheque or e-transfer never does.</b>"
+   },
+   {
+    "d": "Pick <b>The sponsor pays it</b>.",
+    "s": "A <b>Saved</b> pill; the registration choice above is unchanged."
+   },
+   {
+    "d": "Pick <b>The club pays it</b> again (tidy-up).",
+    "s": "Saved."
+   },
+   {
+    "d": "Phone (390 px): reload and open the card’s edit view.",
+    "s": "The sponsorship row stacks: its name above, the two choices as full-width rows, the hints under them."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "C"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      if (w.choices) {
+        w.choices.forEach(function (c) {
+          var box = el("div", "card"); box.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); box.appendChild(el("p", null, c.why));
+          var o = el("div", "opts");
+          c.opts.forEach(function (op) {
+            var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "ch-" + c.id; r.checked = state.choice[c.id] === op[0];
+            r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+            lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+          });
+          box.appendChild(o); sec.appendChild(box);
+        });
+      }
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    if (w.choices) w.choices.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save(); render();
+  });
+  render();
+})();
+</script>

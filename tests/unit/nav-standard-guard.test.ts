@@ -569,25 +569,29 @@ describe('13i · places in the sidebar, pages on the page', () => {
   // ⚖ Navigation Phase 1 (E4): Tournaments left the sheet's Programs group for a door in You, so the owner's place rows are
   // Club's two; the count is unchanged (a place row became a You row).
   // Club Communications Stage 1 (ask 6): Communications is the first row under Club, never a bar tab or a tile — 15 entries.
-  it('the owner’s sheet: the place rows are Club: Communications, Public site, Organization; Tournaments is a door in You — 15 entries', () => {
+  // ⚖ Board Ready Stage 6 (ask 12): Sponsorships joins the Club group — a sheet row, never a bar tab — so 15 → 16.
+  it('the owner’s sheet: the place rows are Club: Communications, Sponsorships, Public site, Organization; Tournaments is a door in You — 16 entries', () => {
     const n = clubNavFor('owner', RUNS_BOTH);
     const groups = clubSheetGroups(n.groups, n.phone);
-    assert.deepEqual(groups.map(g => [placeGroupHeading(g), g.places.map(p => p.key)]), [['Club', ['club-emails', 'public-site', 'org']]]);
+    assert.deepEqual(groups.map(g => [placeGroupHeading(g), g.places.map(p => p.key)]), [['Club', ['club-emails', 'sponsorships', 'public-site', 'org']]]);
     assert.equal(n.tournamentsDoor, true);
     // Notifications 1 + tiles 3 + places 2 + You (Account, Home, Tournaments, Plan & billing) 4 + the foot (Help, Send
     // feedback, Download app, Sign out) 4 = 14.
-    assert.equal(1 + n.phone.tiles!.length + groups.flatMap(g => g.places).length + 4 + 4, 15);
+    assert.equal(1 + n.phone.tiles!.length + groups.flatMap(g => g.places).length + 4 + 4, 16);
   });
 
   // ⚖ Club Communications Stage 1 (drawing tab 4): Communications between Families and Public site, for every seat with
   // somebody to write to: a family, coach or board choice (Session 3 — the treasurer's one choice is the board).
   it('Communications sits in the Club group after Families, per seat (drawing tab 4)', () => {
     const club = (role: OrgRole) => clubNavFor(role, RUNS_BOTH).groups.find(g => g.key === 'club')?.places.map(p => p.key);
-    assert.deepEqual(club('owner'), ['accounting', 'families', 'club-emails', 'public-site', 'org']);
-    assert.deepEqual(club('admin'), ['accounting', 'club-emails', 'public-site', 'org']);
+    // Board Ready Stage 6: Sponsorships after Communications for the owner, admins and the treasurer (their default).
+    assert.deepEqual(club('owner'), ['accounting', 'families', 'club-emails', 'sponsorships', 'public-site', 'org']);
+    assert.deepEqual(club('admin'), ['accounting', 'club-emails', 'sponsorships', 'public-site', 'org']);
     assert.deepEqual(club('league_admin'), ['club-emails', 'org']);
     assert.deepEqual(club('league_registrar'), ['club-emails', 'org']);
-    assert.deepEqual(club('treasurer'), ['accounting', 'club-emails', 'org'], 'the treasurer: the place, with its one button, Email the board');
+    assert.deepEqual(club('treasurer'), ['accounting', 'club-emails', 'sponsorships', 'org'], 'the treasurer: the place, with its one button, Email the board');
+    assert.equal(clubNavFor('league_registrar', RUNS_BOTH, { module_sponsorships: true }).sponsorships?.key, 'sponsorships', 'a registrar the club turned it on for');
+    assert.equal(clubNavFor('admin', RUNS_BOTH, { module_sponsorships: false }).sponsorships, null, 'turned off: no row');
     assert.equal(clubNavFor('admin', RUNS_BOTH, { module_communications: false }).communications, null, 'the switch off: no row');
   });
 });

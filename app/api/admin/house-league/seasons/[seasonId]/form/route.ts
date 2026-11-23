@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { houseLeagueAccess } from '@/lib/house-league-access';
-import { isUuid } from '@/lib/utils';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { friendMaxFor } from '@/lib/league-friends';
 import { copyForm, ensureSeasonForm, formIsEmpty, latestFormToCopy, readForm, seasonSignupCounts } from '@/lib/club-form-server';
+import { reorderForm } from '@/lib/club-form-editor';
 import { badRequest, questionsOnPlan, questionsPlanRefusal, formAuth, seasonNotFound, seasonOf, serverError } from '@/lib/club-form-route';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { FORM_WORDS as W } from '@/lib/club-form-words';
@@ -57,24 +56,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const body = await req.json().catch(() => null) as Record<string, unknown> | null;
   if (!body) return badRequest('Invalid request body');
 
-  if (body.action === 'reorder') {
-    const kind = body.kind;
-    const ids = body.ids;
-    // Every id once, each a real id (a duplicate would take an arbitrary place; a malformed one is a 400, never a 500).
-    if ((kind !== 'questions' && kind !== 'documents') || !Array.isArray(ids) || ids.length > 200
-      || ids.some(i => !isUuid(i)) || new Set(ids).size !== ids.length) {
-      return badRequest('Invalid order');
-    }
-    if (kind === 'questions') { const plan = questionsPlanRefusal(ctx); if (plan) return plan; }
-    const table = kind === 'questions' ? 'club_form_questions' : 'club_form_documents';
-    const { data: rows, error } = await supabaseAdmin.from(table).select('id').eq('form_id', formId).in('id', ids as string[]);
-    if (error) return serverError(W.orderFailed);
-    if ((rows ?? []).length !== new Set(ids as string[]).size) return badRequest('Invalid order');
-    // One statement for the whole order (mig 513 `club_form_reorder`).
-    const { error: moveErr } = await supabaseAdmin.rpc('club_form_reorder', { p_form: formId, p_kind: kind, p_ids: ids });
-    if (moveErr) return serverError(W.orderFailed);
-    return NextResponse.json({ ok: true });
-  }
+  if (body.action === 'reorder') return reorderForm(formId, body, () => questionsPlanRefusal(ctx));
 
   if (body.action === 'copy') {
     const fromSeasonId = typeof body.fromSeasonId === 'string' ? body.fromSeasonId : '';

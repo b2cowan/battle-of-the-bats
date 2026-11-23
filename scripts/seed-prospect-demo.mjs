@@ -156,7 +156,10 @@ const RESET_TABLES = [
 /** Tables the reset leaves alone on purpose (the club itself). Everything else with an org_id must come back empty. */
 const KEEP = new Set(['organizations', 'organization_members', 'org_public_site_content', 'org_venues', 'org_venue_facilities', 'notification_preferences', 'org_payment_accounts',
   // The payments terms agreement record (mig 497): append-only and kept six years, so a reset cannot and must not empty it.
-  'payments_terms_agreements']);
+  'payments_terms_agreements',
+  // The club's sponsors (Board Ready Stage 6, mig 525): kept, as they were on the site content before — the rebuild fills them
+  // only when the club has none (prospect-demo-rep.mjs).
+  'club_sponsors', 'club_sponsor_places']);
 
 async function ownedCounts() {
   const rows = sql(`select t.table_name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I where org_id = %L', t.table_name, ${q(ORG)}), false, true, '')))[1]::text::int as n

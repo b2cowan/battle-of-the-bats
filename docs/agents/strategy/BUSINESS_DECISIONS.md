@@ -8,6 +8,103 @@
 
 ---
 
+### 2026-11-22 — Sponsors on a TOURNAMENT follow the Tournament Plus branding gate (Decided; Board Ready Stage 6 ask 2)
+**Status:** **Decided** (owner, 2026-11-22: Stage 6 drawing round 1, ask 2 = A, as recommended, in the all-15 paste-back).
+**Not built.** Closes the "owed tournament sponsor-display gate" left open in 2026-10-27 (one sponsor list per org) and
+2026-11-10 "Board Ready: no new price, band or key" (`BOARD_READY_PLAN.md` §9).
+**Decision:**
+1. **Tournament Plus and up show sponsors on a tournament** (Tournament Plus, League Plus, both Club bands).
+2. **Below it, Sponsors is shown locked** in the event editor, naming Tournament Plus (a lock line, not hidden), the same
+   treatment as advanced branding's other lock lines on free.
+3. **Tournament-only organizers get display only** (the 2026-11-10 ruling stands): on Tournament Plus a sponsor is typed onto
+   the tournament; deals, packages, invoices and the sponsor link are the club's Sponsorships place, League Plus and both Club
+   bands (2026-11-10, unchanged). On those plans a tournament is one kind of a sponsor's place (Stage 6 ask 1).
+4. **No new key:** the gate is the existing `advanced_tournament_branding` (`FEATURE_MIN_PLAN` = `tournament_plus`). A
+   free event that can't show its host's logo doesn't show a sponsor's.
+**Consequence of reusing the key (follows from it, not separately ruled):** the Premium Coaches Portal (`team`, rank 0) holds
+no grant of that key, so a Premium coach's own event shows Sponsors locked like a free event. Granting it would be a new
+decision.
+**Rationale:** one plan line for "your brand and your partners' brands on a tournament" is simpler to sell and to explain than
+two; it reuses a gate that already exists; and the free tier's floor (the event works, the look is ours) stays intact.
+**Affects:** the tournament sponsors drawing (public tournament pages, unblocked by this ruling) and its build; the event
+editor's lock line; `PLAN_PRICING_FACTS.md` Board Ready line (its "owed" clause closes). **No price, plan name, band, key or
+`lib/plan-config.ts` change.**
+**Handoff:**
+```
+HANDOFF → /plan
+- PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md (sponsors) + the tournament sponsors drawing prompt: gate = advanced_tournament_branding;
+  locked lock line on free; Tournament Plus = typed display only; League Plus and up = the tournament place from Stage 6.
+HANDOFF → /billing (at build time)
+- Gate the tournament sponsor display and its editor card on advanced_tournament_branding (server and screen); the lock line's
+  plan name comes from the plan copy helper, never a hard-coded name.
+HANDOFF → /marketing (at build time)
+- The lock line's words, and whether Tournament Plus's plan card mentions sponsors on the tournament page.
+```
+**Relates to:** 2026-11-03 "Tournament branding is a logo, colours and type"; 2026-11-10 Board Ready gates; 2026-11-22 card
+fee (ask 3). Stage 6 ask 12's per-member Sponsorships access (owner note) is a product access rule, not a plan gate, so it is
+recorded in `BOARD_READY_PLAN.md` §5 Stage 6, not here.
+**Supersedes:** nothing.
+
+---
+
+### 2026-11-22 — Who pays the card fee on a sponsor's card payment is the club's OWN choice, separate from registrations: "The club pays it" by default (Decided; Board Ready Stage 6 ask 3)
+**Status:** **Decided** (owner, 2026-11-22: *"separate switch now, default club pays, record it"*, choosing between a separate
+switch now and club-pays-only for now, after the owner first asked whether sponsorships could reuse the registration setting
+and `/strategy`'s main-chat answer recommended against reusing it). **Not built** — it is built in Stage 6, not deferred.
+Closes the item left open in 2026-11-10 "Board Ready: no new price, band or key" and in `BOARD_READY_PLAN.md` §9.
+**Decision:**
+1. **A separate club-wide choice for sponsorships**, on the same Payouts card as the 2026-10-25 registration choice:
+   **"The club pays it" (the default)** or **"The sponsor pays it"**. The registration choice ("Families pay it" default /
+   "The club pays it") is unchanged and **does not govern sponsorships**; neither choice reads the other.
+2. **The club pays it:** the sponsor pays the invoice to the cent, with no fee shown. The processing fee comes out of the
+   payment and lands in the club's books as a "Payment processing" cost (never a reduction of sponsorship income), as on
+   the registration side.
+3. **The sponsor pays it:** the invoice and the pay page show the processing fee as its own line before the sponsor pays,
+   and the **club's GST/HST applies to that line** (tax follows the underlying supply; `/accounting`
+   `BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`, citing GI-200). The product computes the tax on the fee line and
+   prints it on the invoice. Whether the charged fee line is grossed up so the club still nets its full invoice after Stripe's
+   percentage on the larger charge is a build detail for `/plan`, not ruled here.
+4. **Same rates either way** (card 3.5% + $1.50; `PLAN_PRICING_FACTS.md`). FieldLogicHQ's application fee, its tax base and
+   place of supply are unchanged (2026-11-17 R1/R3). Only who pays moves.
+5. **Offline payment** ("we'll send a cheque or e-transfer") carries no fee, as everywhere else.
+**Rationale:** a club that lets families pay the fee on a $150 registration has not decided to add $41 to a business's
+$1,130 invoice, so inheriting the registration default would pass the fee to most clubs' sponsors by accident. A business
+pays an invoice: a charge that differs from the invoice is a defect a bookkeeper sees, and a passed-on fee line on a taxable
+sponsorship carries the club's HST, which a (usually exempt) children's registration rarely does. The card networks'
+surcharge cap (2.4% in Canada; this fee is about 3.6% of a $1,130 invoice) stays the club's own responsibility under the
+2026-11-17 ruling, which is why passing it on is offered as a choice and is not the default.
+**Affects:** Stage 6 build (the second choice on the Payouts card, the fee line and its tax on the sponsor invoice and pay
+page, the Payment processing cost line); the Payments Terms draft (who pays on a sponsorship); `PLAN_PRICING_FACTS.md` Board
+Ready line (its "Open" closes). **No price, rate, plan name, band, feature key or gate value moves.** No `lib/plan-config.ts`
+change.
+**Handoff:**
+```
+HANDOFF → /plan
+- BOARD_READY_PLAN.md Stage 6: build the sponsorship choice (default club pays) on the Payouts card; the sponsor-pays fee
+  line, its GST/HST, and how it prints on the invoice and the pay page; decide whether the fee line is grossed up.
+  (§9's "Open" line and a Stage 6 checkbox were pointed at this entry on 2026-11-22.)
+- The Stage 6 drawing (BOARD_READY_STAGE6_SPONSORSHIPS_DRAWINGS.html): mark ask 3 ruled; F10's "the club pays it" note
+  becomes "the club's default; the club may switch to the sponsor pays it", and the pay-page "Includes a processing fee"
+  line is drawn for the sponsor-pays case.
+- The drawing prompt's ask 2 (sponsor display on tournaments) is still open and is not touched by this entry.
+HANDOFF → /legal
+- Payments Terms draft §3 and §9 name sponsorships; §4 says the organization chooses who pays the fee on a sponsorship
+  payment, the organization by default. The drawing's F12 proposal ("always paid by your organization") is SUPERSEDED by
+  this ruling. Check the sponsor-pays fee line's disclosure against the surcharge rules as the club's exposure.
+HANDOFF → /accounting
+- None new: the review already covers both cases (our fee, base and tax unchanged). Its recommendation 2 (store who paid
+  the fee on the payment record) now has two real values on sponsorships.
+HANDOFF → /billing
+- None: no gate; the choice rides the existing online-payments gate.
+HANDOFF → /marketing
+- None now. The setting's words and the fee-line words are written at the Stage 6 build.
+```
+**Relates to:** 2026-10-25 "Who pays the processing fee is the club's choice" (the registration choice; unchanged);
+2026-11-17 Stripe-owned pricing (rates and our take unchanged); 2026-11-10 Board Ready gates (its open item closes).
+**Supersedes:** nothing.
+
+---
+
 ### 2026-11-21 — Tournament Plus moves UP to League Plus on its own subscription; EVERY move up is refused while the last payment is failing (Decided; on-sale pages S4 calls 39 and 46)
 **Status:** Decided (owner, 2026-11-21: S4's calls 35–46 "accept" as recommended; call 46's scope ruled at the start of the Part 2 build, "every move up"; the window's credit and charge lines ruled "go with your recommendations" the same day). Built and committed `dba4cd104` (S4 Part 2), plan `CLUB_ON_SALE_PAGES_PLAN.md` S4.
 **Decision:**
@@ -496,7 +593,8 @@ covers is the involuntary one).
 
 ### 2026-11-10 — Board Ready: no new price, band or key; security work is on every plan; Stages 1–7 ride League Plus and both Club bands (Decided; planned, nothing built)
 **Status:** **Decided** (owner, 2026-11-10, "agreed", answering the gate recommendation in `docs/projects/active/BOARD_READY_PLAN.md`
-§9 "Gates"). **Planned, nothing built.** **One item still OPEN:** who pays the card fee on a sponsor payment (below).
+§9 "Gates"). **Planned, nothing built.** ~~One item still OPEN: who pays the card fee on a sponsor payment.~~ **Closed
+2026-11-22:** see "Who pays the card fee on a sponsor's card payment is the club's OWN choice" (the club pays by default).
 **Decision:**
 1. **No new price, band or key** for the Board Ready project.
 2. **Stage 0 is on every plan and never gated** (security fixes, for example two-step sign-in and the contact-email fix; the
@@ -510,8 +608,8 @@ covers is the involuntary one).
 5. **Stage 6 sponsorships:** sponsor *display* stays with the public site module. The owed tournament sponsor-display gate
    (see 2026-10-27 "One sponsor list per organization") is decided **together with Stage 6**, not now. Tournament-only
    organizers get display only.
-**Still open (not decided):** who pays the card fee on a sponsor payment. The families-pay default (2026-10-25) does not fit a
-business.
+**Was open, ruled 2026-11-22:** who pays the card fee on a sponsor payment. The families-pay default (2026-10-25) does not fit a
+business, so sponsorships get their own club-wide choice, "The club pays it" by default (entry 2026-11-22 above).
 **Rationale:** `BOARD_READY_PLAN.md` §9 "Gates". Plan choice follows what an organization runs, not a feature an upgrade unlocks.
 **Affects:** gates (Stage 1–7 builds); `PLAN_PRICING_FACTS.md` (inclusions line added 2026-11-10). No pricing copy, no
 `lib/plan-config.ts` change.

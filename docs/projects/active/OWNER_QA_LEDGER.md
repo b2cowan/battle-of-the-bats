@@ -28741,3 +28741,12 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Not walked:** as §558. The coach demo (no-login sandbox) is covered by the review's fix, not by this walk: its write block now lets the card carry on in the visit and says the sandbox's own sentence in place of "Kept as you go…" (it printed the code name "SandboxReadOnly" under Start before).
 <!-- /§559 -->
+
+## §560 · Board Ready Stage 6 · Part 1 · Sponsorships: the place, Setup, Packages, the one sponsor list — **the owner finds Sponsorships between Communications and Public site, saves Invoice details (mailing address, GST/HST registered with its number) and a first package, and the three steps go away; a club sponsor shows in the home strip and on About, a division sponsor in a "Sponsored by" line on U9 Rookie's schedule and standings, and a past last day takes a sponsor off; the site editor's Sponsors line is a door; the treasurer has the place and the pencil, a registrar has neither until Manage member turns Sponsorships on, then reads Invoice details with the lock line; the Payouts card's sponsorship fee row defaults to the club**
+<!-- §560 -->
+**Walk published 2026-11-22.** [Interactive walk](https://claude.ai/artifact/6ri13cEaq4CXSCUmMsDaqA) (walks A–D, 46 steps) · [repository HTML](BOARD_READY_STAGE6_P1_WALK.html). Built on dev 2026-11-22 (migration 525 applied to dev). Sign in: `uat-club-owner@uat-rep-club.local`, `uat-club-treasurer@uat-rep-club.local`, `uat-club-registrar@uat-rep-club.local` (password `UATPassword2026!`, UAT Rep Club); walk D `owner@dev.local` / `devpass123` (Dev Club, payouts set up).
+
+**Owner calls RULED 2026-11-22 ("use the legal wording for both"):** C1 the Manage member grant sentence ends with /legal's four reasons ("…only to a business that has paid the club in the last two years, asked about sponsoring in the last six months, or gave or published its address for business use."), replacing the drawn "no business the club has never dealt with"; D1 the sponsorship row's card-network sentence takes /legal's fuller words (the cost ceiling, and "nothing at all in Québec"), as the registration row's hint already did. The walk carries the ruled words (version 2).
+
+**Not walked:** offering a deal, "Full" filling, the business's page, invoices and payments (Parts 2–3); a team sponsor (About only, the division's path); a tournament place's public strip (the tournament sponsors drawing).
+<!-- /§560 -->

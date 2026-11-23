@@ -665,7 +665,9 @@ country is NOT copied here: it is read live from `org_payment_accounts.country`.
 <!-- dict:col:org_public_site_content.mailing_address -->
 **`mailing_address`** (text, nullable; CHECK `org_public_site_content_mailing_address_check`: 1–300 characters after trim; mig 454,
 Signed-in family accounts Stage 4a, owner O3 2026-11-08) — the club's **mailing address**, typed on the public site's About row
-(the box shows only while the guardian tier is on). **Shown on no page.** Read only by `clubContactAndMailingAddress`
+(the box shows only while the guardian tier is on). **Since mig 525 (Board Ready Stage 6) Sponsorships › Setup › Invoice details
+also edits it, for every club** (owner, admins, treasurer): the sponsorship offer email's foot and every sponsorship invoice read it,
+and an offer can't be sent until it is set. **Shown on no public page.** Read only by `clubContactAndMailingAddress`
 ([lib/club-email-context.ts](../../../lib/club-email-context.ts)) for the sender line of a family invitation (the second parent's
 copy of the placement email and the rep coach's invitation, /legal draft (c), the commercial-message standard). With the tier on,
 Publish and a club team's rep Send invitation refuse until the club has both this and `contact_email`. ⚠ **Never** filled from
@@ -697,7 +699,7 @@ Publish and a club team's rep Send invitation refuse until the club has both thi
 **`questions`** (jsonb array, NOT NULL, default `[]`, ≤10) — the About page's Questions families ask: `[{ id, question, answer }]`.
 
 <!-- dict:col:org_public_site_content.sponsors -->
-**`sponsors`** (jsonb array, NOT NULL, default `[]`, ≤20, mig 353) — the club's sponsors, shown as a strip at the foot of the home page and a section of the About page: `[{ id, name, logoUrl?, link?, endsOn? }]`, in the club's order. Only `name` is required and an absent field is an absent key. `logoUrl` is only ever a file the club's own upload route wrote (`org-logos/{org_id}/sponsors/{uuid}.png`, re-encoded); `link` is https; `endsOn` is the LAST day it shows (`YYYY-MM-DD`, inclusive, club zone). **An ended sponsor stays in the column** (the editor marks it Ended so renewing is one edit): the "has it ended" filter belongs to the public pages' loaders, never to the read that the editor shares. Not the coach side's `sponsorships` (a team's money) — no relation. The cap is `LIST_MAX.sponsors`; a test holds the CHECK equal to it.
+**`sponsors`** (jsonb array, NOT NULL, default `[]`, ≤20, mig 353) — the club's sponsors, shown as a strip at the foot of the home page and a section of the About page: `[{ id, name, logoUrl?, link?, endsOn? }]`, in the club's order. Only `name` is required and an absent field is an absent key. `logoUrl` is only ever a file the club's own upload route wrote (`org-logos/{org_id}/sponsors/{uuid}.png`, re-encoded); `link` is https; `endsOn` is the LAST day it shows (`YYYY-MM-DD`, inclusive, club zone). **An ended sponsor stays in the column** (the editor marks it Ended so renewing is one edit): the "has it ended" filter belongs to the public pages' loaders, never to the read that the editor shares. Not the coach side's `sponsorships` (a team's money) — no relation. The cap is `LIST_MAX.sponsors`; a test holds the CHECK equal to it. **⚠ SUPERSEDED by `club_sponsors` + `club_sponsor_places` (mig 525, Board Ready Stage 6 Part 1):** every row was moved there (dev 6 rows, production 0, 2026-11-22) and the public pages and the Sponsorships place read the new tables; nothing writes this column any more. It and its CHECK are retired in Stage 6 Part 4, a drop that goes on production after the new code serves.
 
 ---
 
@@ -7146,7 +7148,7 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_forms.subject_kind -->
 <!-- dict:col:club_forms.created_at -->
 <!-- dict:col:club_forms.updated_at -->
-**`id`** (uuid PK) / **`org_id`** (FK → `organizations` CASCADE) / **`owner_table`** (text, CHECK `league_seasons`) + **`owner_id`** (uuid, not a FK) — UNIQUE together (`club_forms_owner_uniq`): one form per owner. **`subject_kind`** (text, CHECK `child_signup | business`) — who the form is about: `child_signup` has the two "Asked" groups and the Health switch; `business` (Stage 6, a sponsor's link) has neither (drawing tab 9). **`created_at` / `updated_at`**.
+**`id`** (uuid PK) / **`org_id`** (FK → `organizations` CASCADE) / **`owner_table`** (text, CHECK `league_seasons | organizations`, the second since **mig 525**) + **`owner_id`** (uuid, not a FK) — UNIQUE together (`club_forms_owner_uniq`): one form per owner. **`subject_kind`** (text, CHECK `child_signup | business`) — who the form is about: `child_signup` has the two "Asked" groups and the Health switch; `business` has neither. **CHECK `club_forms_owner_kind` (mig 525):** a season's form is always `child_signup`; a club-owned form (`owner_table = 'organizations'`, `owner_id = org_id`) is always `business` — **the club's ONE sponsorship form** (Board Ready Stage 6, ask 8; Setup › Sponsorship form), made on first need by `ensureSponsorshipForm` (lib/club-form-server.ts). No owner trigger for it: deleting the club cascades through `org_id`. Its answers, ticks and files keep the `league_registrations` subject CHECKs until Stage 6 Part 2 adds the deal subject. **`created_at` / `updated_at`**.
 
 ## `club_form_questions`
 <!-- dict:table:club_form_questions -->
@@ -7362,6 +7364,113 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_form_files.attached_at -->
 <!-- dict:col:club_form_files.removed_at -->
 **`id`** / **`org_id`** / **`form_id`** (CASCADE) / **`question_id`** / **`submission_id`** (SET NULL) / **`subject_table`** + **`subject_id`** (set when attached) / **`path`** (UNIQUE; bucket `club-form-files`, under `{org}/`, purged with the club: `ORG_FILE_BUCKETS`) / **`file_name`** / **`size_bytes`** / **`content_type`** (from the bytes, never the browser) / **`status`** (CHECK `pending | attached | removed`) / **`created_at`** / **`attached_at`** / **`removed_at`**. Opening one goes through a one-hour signed link with `Content-Disposition: attachment`, and each opening is recorded in the club's activity log (Part 3).
+
+## `club_sponsors`
+<!-- dict:table:club_sponsors -->
+
+**Purpose:** **A club's sponsor, kept ONCE** (Board Ready Stage 6, **mig 525**; plan `docs/projects/active/BOARD_READY_PLAN.md` §5 Stage 6, ask 1 and the 2026-10-27 one-list ruling). The business and its details; WHERE it shows is `club_sponsor_places`. The Sponsorships place's Sponsors tab lists it (lib/club-sponsorships-server.ts `readSponsors`); the public pages read it through `publicSponsorsFor` / `divisionSponsorsFor` (name, logo, link only). Not the coach side's team `sponsorships`.
+
+**Gotchas (read first):**
+1. **At most 100 per club** (ask 11): BEFORE INSERT trigger `club_sponsors_cap` (an advisory lock per club, then a count). 20 is the HOME STRIP's limit only (`homeStrip`, lib/club-sponsorships.ts).
+2. **The move (mig 525):** every `org_public_site_content.sponsors` row became a sponsor here with one typed `club` place, keeping its id (a non-uuid fixture id got `md5(org_id:id)::uuid`), its order, logo, link and last day. **No reason on record for emailing a moved sponsor** (/legal F5): it is not a business that paid. Counts before it ran (owner's yes 2026-11-22): production 0 clubs / 0 rows; dev 2 clubs / 6 rows.
+3. **SERVICE ROLE ONLY** (RLS on, no policies, revoked from anon and authenticated), as the club money tables.
+4. **The logo** is only ever a file the club's own upload wrote (`org-logos/{org_id}/sponsors/{uuid}.png`, the Stage 4d re-encode), checked by `isOwnSponsorLogo`; a replaced or removed logo's file is deleted once no sponsor names it.
+
+<!-- dict:col:club_sponsors.id -->
+<!-- dict:col:club_sponsors.org_id -->
+<!-- dict:col:club_sponsors.name -->
+<!-- dict:col:club_sponsors.logo_url -->
+<!-- dict:col:club_sponsors.link -->
+<!-- dict:col:club_sponsors.position -->
+<!-- dict:col:club_sponsors.created_by -->
+<!-- dict:col:club_sponsors.created_at -->
+<!-- dict:col:club_sponsors.updated_at -->
+**`id`** (uuid PK) / **`org_id`** (FK → `organizations` CASCADE) / **`name`** (text, 1–80, the business name as it should appear) / **`logo_url`** (text, nullable, the public URL of its logo) / **`link`** (text, nullable, `https://` only — where a tap on the logo goes; the business form's "Website") / **`position`** (int, the club's order: the home strip and the About list read it) / **`created_by`** (FK → auth.users, SET NULL) / **`created_at` / `updated_at`**.
+
+<!-- dict:col:club_sponsors.contact_name -->
+<!-- dict:col:club_sponsors.contact_email -->
+<!-- dict:col:club_sponsors.phone -->
+<!-- dict:col:club_sponsors.invoice_street -->
+<!-- dict:col:club_sponsors.invoice_city -->
+<!-- dict:col:club_sponsors.invoice_province -->
+<!-- dict:col:club_sponsors.invoice_postal -->
+**`contact_name`**, **`contact_email`**, **`phone`**, **`invoice_street`**, **`invoice_city`**, **`invoice_province`** (two capital letters), **`invoice_postal`** (all nullable) — the business details the sponsorship form asks first (ask 8). Empty in Part 1; Stage 6 Part 2 fills them from the business's page. The invoice's GST/HST rate follows `invoice_province` (ask 9, Part 3). Business contact information, the club's to hold (/legal review §2).
+
+## `club_sponsor_places`
+<!-- dict:table:club_sponsor_places -->
+
+**Purpose:** **Where a club sponsor shows** (Board Ready Stage 6, **mig 525**, ask 1). A place is a KIND, WHICH ONE and a LAST DAY. `club` → the home strip; `division` → a "Sponsored by" line under the division's name on its public schedule and standings; `team` → **the About page only** (owner 2026-11-22: there is no public team page); `tournament` → that tournament's Overview strip (its look is the tournament sponsors drawing's build; only where the tournament passes `advanced_tournament_branding`, ask 2). About lists every place's sponsor once. A club event joins later as a new kind, with no change to a deal.
+
+**Gotchas (read first):**
+1. **`target_id` is not a foreign key** (the kinds point at three tables): null for `club`, else a `league_divisions`, `league_teams` or `tournaments` id (CHECK `club_sponsor_places_target`). The routes check a target belongs to the club (`targetsBelong`). AFTER DELETE triggers on those three tables (`club_sponsor_places_*_gone`, function `club_sponsor_places_target_gone`) delete a place with its target.
+2. **`source`** — `typed` (set on the Sponsors tab) or `deal` (a paid deal whose package has the logo switch on IS the place, Stage 6 Part 2). CHECK `club_sponsor_places_source`: `deal` ⇔ `deal_id` set. **Part 2 adds the deals table and `deal_id`'s foreign key.** A deal's place is changed on the deal, never on the Sponsors tab, and a sponsor with one can't be removed.
+3. **`ends_on`** — the LAST day it shows, inclusive, in the club's day (the shipped `sponsorEnded` rule); null = no last day. It comes down by itself after that day; the Sponsors tab keeps it under "Not showing".
+4. A sponsor is typed onto one spot once (partial UNIQUE `club_sponsor_places_typed_once`).
+
+<!-- dict:col:club_sponsor_places.id -->
+<!-- dict:col:club_sponsor_places.org_id -->
+<!-- dict:col:club_sponsor_places.sponsor_id -->
+<!-- dict:col:club_sponsor_places.kind -->
+<!-- dict:col:club_sponsor_places.target_id -->
+<!-- dict:col:club_sponsor_places.ends_on -->
+<!-- dict:col:club_sponsor_places.source -->
+<!-- dict:col:club_sponsor_places.deal_id -->
+<!-- dict:col:club_sponsor_places.created_at -->
+<!-- dict:col:club_sponsor_places.updated_at -->
+**`id`** (uuid PK) / **`org_id`** (FK → `organizations` CASCADE) / **`sponsor_id`** (FK → `club_sponsors` CASCADE) / **`kind`** (CHECK `club | division | team | tournament`) / **`target_id`** (uuid, see gotcha 1) / **`ends_on`** (date, nullable) / **`source`** (CHECK `typed | deal`, default `typed`) / **`deal_id`** (uuid, nullable; FK in Part 2) / **`created_at` / `updated_at`**.
+
+## `club_sponsorship_packages`
+<!-- dict:table:club_sponsorship_packages -->
+
+**Purpose:** **A club's sponsorship package** (Board Ready Stage 6, **mig 525**; round 1 tab 2, asks 6 and 7): what a business gets, what it costs, the kind of place it is for, and how many there are. The Packages tab lists them; Part 2's deals offer one.
+
+**Gotchas (read first):**
+1. **`price` is before tax** (ask 9: whether a deal adds GST/HST is the deal's own switch).
+2. **`place_kind`** names the kind of place; each deal picks which one (ask 6). A taken place warns and never blocks.
+3. **Full** = every place paid, invoiced or OFFERED (ask 7: an open offer holds its place), counted from the deals in Part 2; `how_many` null = no limit, never full.
+4. **`logo_on_site`** is the one item the product acts on ("Your logo on our website"): a paid deal with it on IS a place. **`items`** are the other deliverables, an ordered jsonb list `[{ id, text }]` (≤20), ticked by hand on the deal's checklist.
+5. **No delete:** `archived_at` set = archived (out of the list, never offered). Deals keep the package as it was (Part 2 snapshots it).
+6. **The PDF** (optional, ≤8 MB) is in the private `club-form-files` bucket at `{org}/sponsorship-packages/{package}/{uuid}.pdf`; `document_path`, `document_name`, `document_size` are set together (CHECK `club_sponsorship_packages_document_whole`).
+
+<!-- dict:col:club_sponsorship_packages.id -->
+<!-- dict:col:club_sponsorship_packages.org_id -->
+<!-- dict:col:club_sponsorship_packages.name -->
+<!-- dict:col:club_sponsorship_packages.price -->
+<!-- dict:col:club_sponsorship_packages.place_kind -->
+<!-- dict:col:club_sponsorship_packages.how_many -->
+<!-- dict:col:club_sponsorship_packages.shows_until -->
+<!-- dict:col:club_sponsorship_packages.logo_on_site -->
+<!-- dict:col:club_sponsorship_packages.items -->
+<!-- dict:col:club_sponsorship_packages.document_path -->
+<!-- dict:col:club_sponsorship_packages.document_name -->
+<!-- dict:col:club_sponsorship_packages.document_size -->
+<!-- dict:col:club_sponsorship_packages.archived_at -->
+<!-- dict:col:club_sponsorship_packages.created_by -->
+<!-- dict:col:club_sponsorship_packages.created_at -->
+<!-- dict:col:club_sponsorship_packages.updated_at -->
+**`id`** / **`org_id`** (FK CASCADE) / **`name`** (1–80) / **`price`** (numeric(10,2), 0–1,000,000) / **`place_kind`** (CHECK `club | division | team | tournament`) / **`how_many`** (int 1–999, nullable) / **`shows_until`** (date, nullable — the last day each deal starts with) / **`logo_on_site`** (bool, default true) / **`items`** (jsonb array ≤20) / **`document_path` / `document_name` / `document_size`** (nullable together) / **`archived_at`** (timestamptz, nullable) / **`created_by`** (FK → auth.users, SET NULL) / **`created_at` / `updated_at`**.
+
+## `club_sponsorship_settings`
+<!-- dict:table:club_sponsorship_settings -->
+
+**Purpose:** **A club's Invoice details for sponsorships** (Board Ready Stage 6, **mig 525**; round 1 tab 6, ask 9; round 2 ask 4). One row per club, made on the first save. Setup › Invoice details reads and writes it; **the owner, admins and the treasurer change it** (`changesInvoiceDetails`, lib/club-sponsorships-place.ts); anyone else with Sponsorships reads it.
+
+**Gotchas (read first):**
+1. **The mailing address is NOT here:** Invoice details edits `org_public_site_content.mailing_address` (mig 454), the one column the offer email's foot and every invoice read — set for every club from here, whatever the public site's own box shows. Sending an offer waits on it (ask 13, Part 2).
+2. **`gst_hst_registered`** off by default; on requires **`gst_hst_number`** (CHECK `club_sponsorship_settings_registered_number`), stored without spaces (`^[0-9]{9}RT[0-9]{4}$`) and shown as "81234 5678 RT0001". Stage 7 camps read the same registration.
+3. A club with no row reads the defaults (`EMPTY_SETTINGS`: not registered, 30 days to pay).
+
+<!-- dict:col:club_sponsorship_settings.org_id -->
+<!-- dict:col:club_sponsorship_settings.gst_hst_registered -->
+<!-- dict:col:club_sponsorship_settings.gst_hst_number -->
+<!-- dict:col:club_sponsorship_settings.etransfer_to -->
+<!-- dict:col:club_sponsorship_settings.cheques_payable_to -->
+<!-- dict:col:club_sponsorship_settings.payment_due_days -->
+<!-- dict:col:club_sponsorship_settings.sponsor_contact_name -->
+<!-- dict:col:club_sponsorship_settings.sponsor_contact_email -->
+<!-- dict:col:club_sponsorship_settings.updated_by -->
+<!-- dict:col:club_sponsorship_settings.updated_at -->
+**`org_id`** (PK, FK → `organizations` CASCADE) / **`gst_hst_registered`** (bool, default false) / **`gst_hst_number`** (text, nullable) / **`etransfer_to`** (email, nullable — "By e-transfer to") / **`cheques_payable_to`** (text ≤120, nullable) / **`payment_due_days`** (int 0–120, default 30 — "Payment due", 0 = on receipt) / **`sponsor_contact_name` / `sponsor_contact_email`** (nullable — "Contact for sponsors") / **`updated_by`** (FK → auth.users, SET NULL) / **`updated_at`**.
 
 ## `club_group_email_sends`
 <!-- dict:table:club_group_email_sends -->
@@ -9079,6 +9188,9 @@ one test-mode invoice was voided in Stripe before the drop. Historical tax recor
 
 <!-- dict:col:org_payment_accounts.fee_payer -->
 **`fee_payer`** (text, NOT NULL, default `'family'`, CHECK `family` | `club`) — **A14: who pays the processing fee.** `family` = the payer pays the base plus the fee (the club nets the full fee, the default); `club` = the payer pays the base alone and the fee is the club's cost, posted as a "Payment processing" money-out line on the tournament's shelf. Screen words name who actually pays ("Teams pay it" / "The club pays it"). Each `online_payments` row freezes the value in force when its Checkout opened, so a later change never rewrites a past payment.
+
+<!-- dict:col:org_payment_accounts.sponsor_fee_payer -->
+**`sponsor_fee_payer`** (text, NOT NULL, default `'club'`, CHECK `club` | `sponsor`; **mig 525**, Board Ready Stage 6 ask 3 ruled 2026-11-22) — **who pays the card processing fee on a SPONSORSHIP**, the Payouts card's second row ("Processing fee on sponsorships"), shown only on a plan carrying Sponsorships. `club` (the default) = the sponsor pays its invoice to the cent and the fee is a Payment processing cost; `sponsor` = the fee is its own invoice line with the club's GST/HST on it, booked both ways (Part 3). `fee_payer` stays the registration choice and never decides for sponsorships. Owner only, like every Payouts change; audited as `payouts_sponsor_fee_payer_changed`.
 
 <!-- dict:col:org_payment_accounts.refund_policy -->
 **`refund_policy`** (text, nullable, CHECK ≤ 300 chars) — the club's refund policy, shown to the payer beside Pay (a "Refund policy" link that opens it) before paying. **REQUIRED since the owner's ruling of 2026-11-17** (payments terms §6): written in "Before you set up payouts" (the connect refuses without it, 400 `refund_policy_required`, and writes it on the new row and on a reconnect), and the Payouts card's autosave can change it but never clear it. Nullable only for rows written before the ruling (dev clubs): **a row with no policy takes no payments** — `takesPayments` is false, so every pay door shows "How to pay", and `payoutsState` reads `needs_attention` (the same paused card and `payouts_need_attention` item, with the policy's own words; `pausedForRefundPolicy` in `lib/online-payment-account.ts`).
@@ -11301,7 +11413,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`plan_id`** (text, NOT NULL; part of composite PK `(plan_id, module_key)`; CHECK `tournament|team|tournament_plus|league|club|club_large`) — plan side of the grid; iterated via `PLAN_ORDER`. (`club_large` added in mig 144, Club Repackaging — seeds 7 module rows mirroring `club`.)
 
 <!-- dict:col:platform_plan_module_entitlements.module_key -->
-**`module_key`** (text, NOT NULL; part of composite PK; CHECK `module_tournaments|module_communications|module_members|module_public_site|module_house_league|module_accounting|module_rep_teams`) — module side of the grid (= the 7-entry `MODULE_CATALOG`).
+**`module_key`** (text, NOT NULL; part of composite PK; CHECK `module_tournaments|module_communications|module_members|module_public_site|module_house_league|module_accounting|module_rep_teams|module_families|module_sponsorships`) — module side of the grid (= `MODULE_CATALOG`). **Mig 525** widened the CHECK: it still held mig 062's seven keys, so a publish already failed on `module_families` (in the catalog since the Families book) and would have on `module_sponsorships` (Board Ready Stage 6). No rows were seeded; a missing row reads the `PLAN_CONFIG` default.
 
 <!-- dict:col:platform_plan_module_entitlements.included -->
 **`included`** (bool, NOT NULL, default false) — whether the plan includes the module in the **published Feature Matrix**; display/publish only — **not enforced** at runtime.

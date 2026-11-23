@@ -666,9 +666,13 @@ export async function buildRep(ctx) {
   const NX = cfg.siteExtras;
   if (NX?.notice) die('notice', (await db.from('org_site_notices').insert({ org_id: ORG, notice: NX.notice.text, detail: NX.notice.detail, posted_at: torontoInstant(addDays(D, -3), '09:00'),
     posted_by_user_id: ctx.OWNER, posted_by_email: cfg.people.owner.email, ends_at: torontoInstant(addDays(D, 30), '23:59') })).error);
-  const site = await one('site', db.from('org_public_site_content').select('id, sponsors').eq('org_id', ORG).maybeSingle());
-  if (site && (!Array.isArray(site.sponsors) || site.sponsors.length === 0) && NX?.sponsors?.length) {
-    die('sponsors', (await db.from('org_public_site_content').update({ sponsors: NX.sponsors.map(s => ({ id: crypto.randomUUID(), name: s.name, ...(s.link ? { link: s.link } : {}) })) }).eq('id', site.id)).error);
+  // Board Ready Stage 6 (mig 525): the one sponsor list is club_sponsors + club_sponsor_places (a typed "The club" place).
+  const { count: sponsorCount } = await db.from('club_sponsors').select('id', { count: 'exact', head: true }).eq('org_id', ORG);
+  if (!sponsorCount && NX?.sponsors?.length) {
+    for (const [i, s] of NX.sponsors.entries()) {
+      const sp = await one('sponsor', db.from('club_sponsors').insert({ org_id: ORG, name: s.name, link: s.link ?? null, position: i + 1 }).select('id').single());
+      die('sponsor place', (await db.from('club_sponsor_places').insert({ org_id: ORG, sponsor_id: sp.id, kind: 'club', source: 'typed' })).error);
+    }
     ok(`sponsors on the site: ${NX.sponsors.map(s => s.name).join(', ')}`);
   } else ok('sponsors already on the site (left alone)');
   ok('a notice on every public page until it ends');

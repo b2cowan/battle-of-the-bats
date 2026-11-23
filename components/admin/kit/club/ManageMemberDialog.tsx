@@ -44,6 +44,7 @@ import styles from './Members.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import { possessive } from '@/lib/utils';
 import { FAMILIES_LIMITED_ROW } from '@/lib/families-words';
+import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import { PLACE } from '@/lib/club-group-email-words';
 
 /** The tournament fine-grained controls, folded under "Tournaments ›" (specimen 5). */
@@ -510,7 +511,9 @@ export default function ManageMemberDialog({
                     // ⚖ Families is never given to a member limited to some teams (Ask 12): the server refuses it; the row
                     // says why, where it is (Club Tier Stage 5b).
                     const familiesBarred = a.module === 'module_families' && familiesBarredFor(role, groupIds.length > 0);
-                    const sentence = familiesBarred ? FAMILIES_LIMITED_ROW
+                    // Board Ready Stage 6: Sponsorships the same way (the server refuses it too).
+                    const sponsorshipsBarred = a.module === 'module_sponsorships' && familiesBarredFor(role, groupIds.length > 0);
+                    const sentence = familiesBarred ? FAMILIES_LIMITED_ROW : sponsorshipsBarred ? SPONSORSHIPS_WORDS.limitedRow
                       // The Communications switch says what it covers, always, so turning it off never surprises (tab 4, ask 5).
                       : consequence(a.module, saved.get(a.module) ?? false, a.canOpen, first, noun) ?? (a.module === 'module_communications' ? PLACE.switchLine : null);
                     const fold = a.module === 'module_tournaments' && (canChangeAccess || canScopeTournaments) && a.canOpen ? 'tournaments'

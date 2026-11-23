@@ -18,7 +18,7 @@ import { clubOpenNowRows, type ClubOpenNowRow } from '@/lib/club-open-now';
 import { isSectionShown } from '@/lib/club-site-sections';
 import { siteSectionCarries } from '@/lib/public-site-editor-facts';
 import { clubAboutPageShows } from '@/lib/club-about';
-import { sponsorsShowing } from '@/lib/club-sponsors';
+import { publicSponsorsFor } from '@/lib/club-sponsorships-server';
 import { readClubTeams } from '@/lib/club-public-teams';
 import { readClubTryouts } from '@/lib/club-tryouts';
 import { formatEventDateRange, tournamentToday } from '@/lib/timezone';
@@ -65,6 +65,9 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
   const showFollow = isFollowableOrg(org);
   const withTeams = clubTeamsAddress(org) === 'teams-page';
   const today = tournamentToday();
+  // Board Ready Stage 6 (asks 1, 11): the home strip is the club's places from the one sponsor list, showing today, at most
+  // 20. A failed read costs the home its strip, never the page.
+  const sponsorList = publicSponsorsFor(org.id, org.planId).catch(() => ({ home: [], about: [] }));
   const [allTournaments, siteContent, leagueSeasons, clubTeams, clubTryouts] = await Promise.all([
     getTournamentsByOrg(org.id),
     getClubSiteContent(org.id),
@@ -114,8 +117,8 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
     tournaments,
     about: siteContent?.description?.trim() || null,
     aboutPageHref: clubAboutPageShows(siteContent) ? href('/about') : null,
-    // Only the sponsors a family may see now: the filter is HERE (a page's loader), never in the shared read the editor uses.
-    sponsors: sponsorsShowing(siteContent?.sponsors),
+    // Only the sponsors a family may see now: the filter is the loader's (`publicSponsorsFor`), never the place's own read.
+    sponsors: (await sponsorList).home,
     showFollow,
     sectionPrefs,
     carries,

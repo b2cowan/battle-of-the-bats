@@ -22,6 +22,7 @@ const ORGANIZATION_MODULE_SHUTDOWN_COPY: Partial<Record<Capability, ModuleShutdo
   module_rep_teams: { full: 'Rep teams tryouts, rosters, coach portal, and player documents', short: 'Rep teams and every team’s coach portal', shortOrder: 0 },
   module_accounting: { full: 'Accounting: ledgers, the club budget, allocations to teams', short: 'Accounting', shortOrder: 1 },
   module_families: { full: 'The Families area — household records, the family worklist, and duplicate review', short: 'Families', shortOrder: 2 },
+  module_sponsorships: { full: 'Sponsorships: packages, deals and where each sponsor shows', short: 'Sponsorships', shortOrder: 5 },
 };
 
 export const PREMIUM_COACH_SHUTDOWN_AREAS = [

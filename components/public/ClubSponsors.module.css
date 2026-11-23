@@ -95,3 +95,24 @@ a.row:focus-visible {
     min-height: 72px;
   }
 }
+
+/* "Sponsored by" under a division's name (Board Ready Stage 6, ask 1): quiet — the club's soft ink, a hairline frame,
+   the logos at one small height, never cropped. Wraps on a phone. */
+.by {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+  color: var(--club-soft);
+  font: 600 0.8125rem/1.2 var(--club-text-face);
+}
+.byLabel { white-space: nowrap; }
+.byItem { display: inline-flex; align-items: center; color: var(--club-text); text-decoration: none; font-weight: 700; }
+.byItem img { display: block; height: 28px; max-width: 120px; width: auto; object-fit: contain; }
+a.byItem:hover { text-decoration: underline; }
+a.byItem:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; border-radius: 4px; }

@@ -648,3 +648,7 @@
 /* Below the desk: the preview in a window, as tall as the window allows. */
 .previewWindow { height: min(78vh, 900px); }
 @media (max-width: 640px) { .previewWindow { height: calc(100dvh - 140px); } }
+
+/* Board Ready Stage 6: the Sponsors line is a door to Sponsorships — the olive word and its chevron, last. */
+.disDoor { display: inline-flex; align-items: center; gap: 2px; color: var(--home-olive); font-weight: 700; font-size: var(--type-support); white-space: nowrap; }
+a.disHead { text-decoration: none; }
