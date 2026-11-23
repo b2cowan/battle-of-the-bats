@@ -90,3 +90,11 @@ same Canadian province list, no fallback rate (the services fallback was never r
 - Keep the server guard (`terms.chargeTax && !province` → 409 `no_address`): the address save is its own step.
 - The address also prints under "Bill to" on the revised invoice. (Suggestion, NOT ruled — ask the owner:) say in the history line who added it ("address added by
   <name>") so the business can tell where it came from. Words DRAFT for /marketing; /design looks at the window.
+
+## Closed 2026-11-23 (the close-out session)
+- Steps 1–9 done: `/simplify`, `/review` (a real cash tie-out gap, a post-commit failure that could skip the receipt, the revise-on-unrelated-edit nit and the refusal words all fixed), `/marketing` (four wordings), `/ux` at 390 (a silent Void failure, a stale Record window and two small tap targets fixed; the club's deal page was not looked at live: the UAT owner login stops at the Terms tick-box), `/legal` (the unsubscribe-confirmed words fixed; the invoice and receipt emails are most likely not CEMs while no promotion is added), `/accounting` (a tax-timing note and three dev-only migration questions, all on the walk page as owner calls), `/docs`. The probe passed in full and the UAT club's mailing address is empty after.
+- Walk: Owner QA Ledger **§562**, https://claude.ai/artifact/SaFBzF98cxoyAMEed7YpTy (8 walks, 46 steps, 8 owner calls outside the count).
+- **Committed `0f2b83490`** (50 files) at the owner's yes, with the owner's ruling to **hold back the deal page, the new payment windows and the Sponsorships styles** (`DealScreen.tsx`, `DealPaymentWindows.tsx`, `Sponsorships.module.css`): another session is mid-edit on the same screens (its "record page" redesign is interleaved in those hunks). Those three go in when that session lands. Until then the committed deal page lacks Record a payment, the Payments card and Void; the committed words keep `errInvoicedChange` and an optional `emailed` argument so the older page compiles.
+- The clean-checkout typecheck caught that break before the commit moved the branch: run one on any partial commit.
+- Not staged and not Part 3a's: Part 2's finish prompt still shows its older commit-line wording in the working copy (a stale hunk).
+- Next: `BOARD_READY_STAGE6_P3B_KICKOFF_PROMPT.md`.
