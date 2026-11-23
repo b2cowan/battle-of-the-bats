@@ -28748,5 +28748,7 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Owner calls RULED 2026-11-22 ("use the legal wording for both"):** C1 the Manage member grant sentence ends with /legal's four reasons ("…only to a business that has paid the club in the last two years, asked about sponsoring in the last six months, or gave or published its address for business use."), replacing the drawn "no business the club has never dealt with"; D1 the sponsorship row's card-network sentence takes /legal's fuller words (the cost ceiling, and "nothing at all in Québec"), as the registration row's hint already did. The walk carries the ruled words (version 2).
 
+**Walked 2026-11-23 by the owner: checked 46 of 46, nothing failed** — A the place, Invoice details and a first package 17/17 · B one sponsor list and where each shows 13/13 · C who opens Sponsorships and who changes Invoice details 10/10 · D the Payouts card's sponsorship fee row 6/6 — all passed. (Walk D's first try was in UAT Rep Club, whose payouts are disconnected; it passes on the Dev Club as the walk says.)
+
 **Not walked:** offering a deal, "Full" filling, the business's page, invoices and payments (Parts 2–3); a team sponsor (About only, the division's path); a tournament place's public strip (the tournament sponsors drawing).
 <!-- /§560 -->
