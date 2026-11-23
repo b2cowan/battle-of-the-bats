@@ -296,13 +296,29 @@ describe('the offer email (ask 13; /legal §1; round 2 ask 8)', () => {
 describe('the business\'s fixed fields (ask 8)', () => {
   const words = Object.fromEntries(BUSINESS_FIELDS.map(k => [k, k])) as Record<(typeof BUSINESS_FIELDS)[number], string>;
   const provinces = new Set(['ON', 'AB']);
-  it('name, contact, email and the invoice address are required; phone and website are not', () => {
-    const r = parseBusinessInput({}, provinces, words);
+  const who = { name: 'Harbour Dental', contactName: 'Frank Osei', email: 'frank@harbourdental.ca' };
+  it('name, contact and email are always required; phone and website never are', () => {
+    const r = parseBusinessInput({}, provinces, words, { addressRequired: false });
     assert.ok(!r.ok);
-    assert.deepEqual(Object.keys(r.errors).sort(), ['city', 'contactName', 'email', 'name', 'postal', 'province', 'street']);
+    assert.deepEqual(Object.keys(r.errors).sort(), ['contactName', 'email', 'name']);
+  });
+  it('a deal that charges GST/HST requires the whole address (its province sets the rate)', () => {
+    const r = parseBusinessInput(who, provinces, words, { addressRequired: true });
+    assert.ok(!r.ok);
+    assert.deepEqual(Object.keys(r.errors).sort(), ['city', 'postal', 'province', 'street']);
+  });
+  it('any other deal may leave the address blank: all four come back null', () => {
+    const r = parseBusinessInput({ ...who, street: ' ', province: '' }, provinces, words, { addressRequired: false });
+    assert.ok(r.ok);
+    assert.deepEqual([r.value.street, r.value.city, r.value.province, r.value.postal], [null, null, null, null]);
+  });
+  it('but not half-typed: any part of the address asks for the rest', () => {
+    const r = parseBusinessInput({ ...who, city: 'Riverdale' }, provinces, words, { addressRequired: false });
+    assert.ok(!r.ok);
+    assert.deepEqual(Object.keys(r.errors).sort(), ['postal', 'province', 'street']);
   });
   it('a website is saved as https', () => {
-    const r = parseBusinessInput({ name: 'Harbour Dental', contactName: 'Frank Osei', email: 'Frank@HarbourDental.ca', website: 'harbourdental.ca', street: '41 Harbour Street', city: 'Riverdale', province: 'on', postal: 'K0A 1C2' }, provinces, words);
+    const r = parseBusinessInput({ name: 'Harbour Dental', contactName: 'Frank Osei', email: 'Frank@HarbourDental.ca', website: 'harbourdental.ca', street: '41 Harbour Street', city: 'Riverdale', province: 'on', postal: 'K0A 1C2' }, provinces, words, { addressRequired: true });
     assert.ok(r.ok);
     assert.equal(r.value.website, 'https://harbourdental.ca');
     assert.equal(r.value.email, 'frank@harbourdental.ca');

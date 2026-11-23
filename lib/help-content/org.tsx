@@ -2253,7 +2253,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Contact for sponsors</strong>: a name and an email.</li>
               </ul>
               <p>Only the owner, admins and the treasurer change them. Anyone else who opens Sponsorships can read them. Whether GST/HST applies to a sponsorship depends on what the business gets and on your club, so ask your accountant.</p>
-              <p>The <strong>Sponsorship form</strong> is what a business answers. Every business is first asked for the business details (name, contact name, email, address for the invoice, phone, website and a logo), and you can&rsquo;t remove those. After them come your own questions and documents.</p>
+              <p>The <strong>Sponsorship form</strong> is what a business answers. Every business is first asked for the business details (name, contact name, email, business address, phone, website and a logo), and you can&rsquo;t remove those. After them come your own questions and documents.</p>
             </>
           ),
         },
@@ -2267,7 +2267,7 @@ const orgHelp: HelpPageContent = {
                 <li>Pick the <strong>Business</strong> from your sponsors, or type a new name. A new business also needs an email; the business fills in the rest.</li>
                 <li>Pick the <strong>Package</strong>, and for a division, team or tournament package, where it <strong>Shows on</strong>. A place that already has a sponsor warns you but never stops you.</li>
                 <li>Check the <strong>Amount</strong> (it starts at the package price, and you can change it for this business) and <strong>Shows until</strong>.</li>
-                <li>Turn on <strong>Charge GST</strong> or <strong>HST</strong> only if your accountant says this deal is taxable. The rate follows the business&rsquo;s invoice address.</li>
+                <li>Turn on <strong>Charge GST</strong> or <strong>HST</strong> only if your accountant says this deal is taxable. The rate follows the province of the business&rsquo;s address, so the form asks for that address only on a deal that charges tax; on any other deal it&rsquo;s optional and only prints on the invoice.</li>
                 <li>Press <strong>Send the offer</strong> to email it (see <a href="#club-sponsorships-t-email">Emailing the offer</a>), or <strong>Make the link only</strong> to make the link without sending anything.</li>
               </ol>
               <p><strong>Make the link only</strong> is for a business you have spoken to. Nothing is emailed; the deal reads <strong>Link made, not emailed</strong> and you copy the link and give it to them yourself. A link you hand over in person is not an email, so FieldLogicHQ asks for no reason and no mailing address. If you paste it into your own email or text message, that message is yours to justify: send it only to a business you have a reason to email.</p>

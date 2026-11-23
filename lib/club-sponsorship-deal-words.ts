@@ -89,7 +89,7 @@ export const DEAL_WORDS = {
     taxHint: (rate: number, province: string | null) =>
       `${rate}% for ${province && PROVINCE_NAMES[province] ? `${PROVINCE_NAMES[province]} address` : 'the business’s address'}, added to the amount. A sponsorship that shows a name or logo is usually not charged tax. Turn this on only if your accountant says this deal is taxable.`,
     // DRAFT: the province isn't known until the business sends its address (a new business has none on file).
-    taxHintNoAddress: 'The rate comes from the business’s invoice address, added to the amount. A sponsorship that shows a name or logo is usually not charged tax. Turn this on only if your accountant says this deal is taxable.',
+    taxHintNoAddress: 'The rate comes from the business’s address, added to the amount. A sponsorship that shows a name or logo is usually not charged tax. Turn this on only if your accountant says this deal is taxable.',
     taxHintPhone: (rate: number | null) => (rate == null ? 'Added to the amount' : `${rate}%, added to the amount`),
     theEmail: 'The email',
     reason: 'Why you can email them',
@@ -238,6 +238,8 @@ export const DEAL_WORDS = {
     errReason: 'Give a reason.', // DRAFT
     errPaid: 'A paid deal can’t be withdrawn.', // DRAFT
     errInvoicedChange: 'The amount and tax can’t change once the invoice is issued. Withdraw the deal and offer it again.', // /marketing 2026-11-22 (until Part 3's revised invoice)
+    // Owner 2026-11-23: the rate is the address's province, and a business on an untaxed deal may leave it blank. DRAFT.
+    taxNeedsAddress: 'The business didn’t give an address, and the GST/HST rate comes from it. To charge tax, withdraw this deal and offer it again with tax on.',
     errLinkChanged: 'Someone just made a new link for this deal. Reload the page to see it.', // DRAFT
   },
 
@@ -296,7 +298,11 @@ export const DEAL_WORDS = {
     phone: 'Phone',
     email: 'Email',
     emailHint: 'How the club reaches you about your invoice.',
-    address: 'Address for the invoice',
+    // Owner 2026-11-23: it isn't a mailing address (the invoice goes by email). It sets the tax when there is any, and
+    // prints on the invoice; required only when the deal charges GST/HST.
+    address: 'Business address',
+    addressHintTaxed: 'Needed for the GST/HST on your invoice.', // DRAFT
+    addressHint: 'Shown on your invoice.', // DRAFT
     street: 'Street',
     city: 'Town or city',
     province: 'Province',
@@ -320,7 +326,8 @@ export const DEAL_WORDS = {
     // Round 1 tab 4 "Until card payment is on" — the card-off pay block (owner call (b): no card button until Part 3).
     // Part 2 emails no invoice (Part 3 does): until then the page itself shows it, so the words say that (/ux 2026-11-23, owner: apply).
     cardOffLine: 'Once you send, your invoice appears on this page with how to pay by cheque or e-transfer. You won’t be charged on this page.',
-    sendCheque: (total: number) => `Send, and pay ${money(total)} by cheque or e-transfer`,
+    // Owner 2026-11-23: the button sends the form; it pays nothing. How to pay comes with the invoice (the line under it).
+    send: 'Send',
     sendChequeNote: 'Your invoice appears on the next page, with how to pay. Keep your link to come back to it.',
     sendChequeNotePhone: 'Your invoice appears on the next page.',
     sending: 'Sending…', // DRAFT
@@ -356,7 +363,7 @@ export const DEAL_WORDS = {
       email: 'Enter an email address, like frank@harbourdental.ca.',
       phone: 'A phone number is up to 40 characters.',
       website: 'A website starts with https://, like https://harbourdental.ca.',
-      street: 'Enter the street address for the invoice.',
+      street: 'Enter the street address.',
       city: 'Enter the town or city.',
       province: 'Pick a province or territory.',
       postal: 'Enter the postal code.',

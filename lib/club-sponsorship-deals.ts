@@ -10,7 +10,7 @@
  *   · asks 6, 7 — a deal picks which place; a taken place WARNS, never blocks; an open offer holds its place (Full counts
  *     paid, invoiced and offered).
  *   · ask 9 + the hint — the Charge switch shows only to a registered club, off by default; the rate is the province's of
- *     the business's invoice address (lib/gst-hst-rates.ts), never a hard-coded 13%.
+ *     the business's address (lib/gst-hst-rates.ts), never a hard-coded 13%.
  *   · ask 13 + /legal — every offer email carries one of four reasons; an unsubscribed, "Do not offer again" or
  *     family-opted-out address is never emailed an offer.
  *   · call (a) — the invoice number is given when a cheque or e-transfer is chosen: {year}-{seq}, seq printed to 3.
@@ -288,15 +288,22 @@ export function parseOfferInput(b: Record<string, unknown>, today: string, error
 
 export interface BusinessInput {
   name: string; contactName: string; email: string; phone: string | null; website: string | null;
-  street: string; city: string; province: string; postal: string;
+  /** The business address: all four or none (owner 2026-11-23: required only when the deal charges GST/HST). */
+  street: string | null; city: string | null; province: string | null; postal: string | null;
 }
 
 export const BUSINESS_FIELDS = ['name', 'contactName', 'email', 'phone', 'website', 'street', 'city', 'province', 'postal'] as const;
 export type BusinessField = (typeof BUSINESS_FIELDS)[number];
 
-/** Every fixed field the business is asked (ask 8). Required: name, contact, email, the invoice address; phone, website optional. */
+/**
+ * Every fixed field the business is asked (ask 8). Required: name, contact, email; phone, website optional. The business
+ * address (owner 2026-11-23) is required only when the deal charges GST/HST — its province sets the rate, and an email
+ * address doesn't count as one. Otherwise it only prints on the invoice, so it may be left blank, but not half-typed: a
+ * part of an address can't print and can't set a rate, so typing any of it asks for the rest.
+ */
 export function parseBusinessInput(
   b: Record<string, unknown>, provinces: ReadonlySet<string>, words: Record<BusinessField, string>,
+  opts: { addressRequired: boolean },
 ): { ok: true; value: BusinessInput } | { ok: false; errors: Partial<Record<BusinessField, string>> } {
   const errors: Partial<Record<BusinessField, string>> = {};
   const text = (k: BusinessField, max: number, required: boolean): string | null => {
@@ -313,14 +320,19 @@ export function parseBusinessInput(
   const phone = text('phone', 40, false);
   const w = checkLink(typeof b.website === 'string' ? b.website.trim() : b.website);
   if (!w.ok) errors.website = words.website;
-  const street = text('street', 200, true);
-  const city = text('city', 100, true);
+  const typed = (k: BusinessField) => typeof b[k] === 'string' && (b[k] as string).trim() !== '';
+  const address = opts.addressRequired || (['street', 'city', 'province', 'postal'] as const).some(typed);
+  const street = text('street', 200, address);
+  const city = text('city', 100, address);
   const provinceRaw = typeof b.province === 'string' ? b.province.trim().toUpperCase() : '';
-  if (!provinces.has(provinceRaw)) errors.province = words.province;
-  const postal = text('postal', 20, true);
+  if (address && !provinces.has(provinceRaw)) errors.province = words.province;
+  const postal = text('postal', 20, address);
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
     ok: true,
-    value: { name: name!, contactName: contactName!, email: email!, phone, website: w.ok ? w.value : null, street: street!, city: city!, province: provinceRaw, postal: postal! },
+    value: {
+      name: name!, contactName: contactName!, email: email!, phone, website: w.ok ? w.value : null,
+      street: address ? street : null, city: address ? city : null, province: address ? provinceRaw : null, postal: address ? postal : null,
+    },
   };
 }

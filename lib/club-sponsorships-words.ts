@@ -233,7 +233,7 @@ export const SPONSORSHIPS_WORDS = {
       'Business name, as it should appear (required)',
       'Contact name (required)',
       'Email (required)',
-      'Address for the invoice (required)',
+      'Business address (required when you charge GST/HST)',
       'Phone',
       'Website',
       'Their logo (can come later)',

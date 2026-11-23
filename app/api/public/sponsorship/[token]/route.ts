@@ -51,7 +51,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const errors: Record<string, string> = {};
   const missing: string[] = [];
   const raw = (body.business ?? {}) as Record<string, unknown>;
-  const business = parseBusinessInput(raw, PROVINCES, P.err);
+  // The address is required only when this deal charges GST/HST: its province sets the rate (owner 2026-11-23).
+  const settings = await readSettings(org.id);
+  const business = parseBusinessInput(raw, PROVINCES, P.err, { addressRequired: settings.registered && deal.chargeTax });
   if (!business.ok) {
     for (const [k, v] of Object.entries(business.errors)) {
       errors[`business.${k}`] = v;
@@ -97,7 +99,6 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   if (Object.keys(errors).length > 0 || !business.ok) return NextResponse.json({ errors, missing }, { status: 400 });
 
   // The invoice, issued now (ask 4; owner call (a)): its year, due day and figures, fixed here.
-  const settings = await readSettings(org.id);
   const issuedOn = tournamentToday();
   const fig = dealFigures({ amount: deal.amount, chargeTax: deal.chargeTax, registered: settings.registered, province: business.value.province, on: issuedOn });
   // The business is invoiced the figure its page showed (a club edit while the page sat open refreshes the page instead).

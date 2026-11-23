@@ -2,7 +2,7 @@
 /**
  * SETUP › SPONSORSHIP FORM (Board Ready Stage 6, Part 1; ask 8). The season sign-up form's page, given the business form:
  * its locked card is the business details the club can't remove (business name as it should appear, contact name, email,
- * invoice address — required; phone, website — asked; the logo — can come later), then the club's own questions and
+ * business address — required when the deal charges GST/HST; phone, website — asked; the logo — can come later), then the club's own questions and
  * documents, Stage 4's editor with no "for each child" groups and no Health switch.
  */
 import Link from 'next/link';

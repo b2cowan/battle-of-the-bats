@@ -207,7 +207,8 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
         </div>
         {field('email', P.email, { required: true, hint: P.emailHint, type: 'email', autoComplete: 'email' })}
         <fieldset className={`${formKit.field} ${reg.choiceSet}`}>
-          <legend className={formKit.label}>{P.address} <span className={formKit.required}>*</span></legend>
+          <legend className={formKit.label}>{P.address}{view.deal.taxed && <> <span className={formKit.required}>*</span></>}</legend>
+          <p className={formKit.hint}>{view.deal.taxed ? P.addressHintTaxed : P.addressHint}</p>
           <div className={css.address}>
             {field('street', P.street, { autoComplete: 'street-address' })}
             {field('city', P.city, { autoComplete: 'address-level2' })}
@@ -270,7 +271,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
         )}
         {globalError && <div className={formKit.globalError} role="alert">{globalError}</div>}
         <button type="submit" className={formKit.submitBtn} disabled={submitting || uploading}>
-          {uploading ? QW.uploadingButton : submitting ? P.sending : P.sendCheque(total)}
+          {uploading ? QW.uploadingButton : submitting ? P.sending : P.send}
         </button>
         <p className={css.payNote}>
           <span className={css.payNoteDesk}>{P.sendChequeNote}</span>
