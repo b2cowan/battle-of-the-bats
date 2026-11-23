@@ -1367,7 +1367,7 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   Copy and foot address, one address on the withdrawn and replaced pages); `/docs` (three sub-topics in the club guide's
   Sponsorships section); `/legal` re-read (the club's stop list is now read in full, a link pasted into the club's own email is
   the club's to justify; two owner questions: a Copy-the-link hint, and Send the link again on an invoiced deal). Walk **§561**
-  (4 walks, 50 steps) published; Part 2's commit is on `dev` (hash in the commit that follows it). Migrations 526 and 527 go to
+  (4 walks, 50 steps) published; Part 2 committed `c24b35d71` 2026-11-23. Migrations 526 and 527 go to
   production only with the promote that carries Part 2, and before it (the Part 1 tabs read the deals).
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`

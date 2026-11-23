@@ -68,7 +68,7 @@ https://claude.ai/artifact/HtZy3KAvEfbSY9MkqzFaSH.
   Send the link again on an invoiced deal). Source `BOARD_READY_STAGE6_P2_WALK.html`. UAT Rep Club (dev) set up through the product's own
   Setup save: mailing address 1 Walk Street, contact sponsors@uat-rep-club.local, e-transfer/cheque, one package; UAT Rep Only untouched.
   The walk writes deals Walk Pizza and Walk Bakery (withdrawn at the end), a stop for the owner's inbox address and for walk-bakery@example.com,
-  and one invoice number; its mailing-address step clears and restores. **Step 7 (commit) waits for the owner's yes.**
+  and one invoice number; its mailing-address step clears and restores. **Step 7 done: committed `c24b35d71` 2026-11-23 (83 files).** Left to their own sessions, still uncommitted in the shared tree: the Packages, Invoice details and Sponsors-tab walk-fix hunks (RepKit's `even` prop went in with this commit because Deals uses it), edits made to BusinessPicker and DealsList after the commit, the schema DRIFT/MANIFEST/schema_dumps files and one prod row of another session's, the Stage 4 plan hunks, the §557 ledger section, and BOARD_READY_STAGE6_P3_KICKOFF_PROMPT.md. The six schema dumps went in with Part 2's rows only.
 - The probe's runs used invoice numbers 2026-001 to 2026-003 on UAT Rep Only (its deals were deleted; the numbers are spent on dev).
 
 ## The steps
