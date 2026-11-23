@@ -88,28 +88,29 @@ const EXPECTED_WEBHOOK_EVENTS = [
   'charge.dispute.closed',
   'charge.refunded',
   // Card on file: the webhook's payment_method.attached / .detached arms (a card changed in the billing portal arrives with no checkout
-  // session). Found missing from the list on 2026-11-06 when the test sandbox's endpoint was compared with the code.
+  // session).
   'payment_method.attached',
   'payment_method.detached',
   // Every invoice's tax record (GST/HST Stage 3 Part 1, `CHARGE_TAX_INVOICE_EVENTS` in lib/charge-tax-record.ts) and the purchase
-  // email (`invoice.paid`). First added for the club's own Stripe-fees invoice (Club Tier Stage 12d-1), which Stripe-owned pricing
-  // Stage 4 retired (2026-11-18); the four stay for the tax record. docs/agents/ops/stripe-setup-guide.md Step 5 lists them.
+  // email (`invoice.paid`). docs/agents/ops/stripe-setup-guide.md Step 5 lists them.
   'invoice.paid',
   'invoice.voided',
   'invoice.marked_uncollectible',
   'invoice.finalized',
+  // A credit note's tax record (GST/HST Stage 3, `CHARGE_TAX_CREDIT_NOTE_EVENTS` in lib/charge-tax-record.ts). Owner 2026-11-23
+  // (Stripe checklist call R2): the list is 20 events, not the 17 it was; BUSINESS_DECISIONS.md 2026-11-23.
+  'credit_note.created',
+  'credit_note.updated',
+  'credit_note.voided',
 ];
 
-// THE TARGET (docs/agents/strategy/BUSINESS_DECISIONS.md, 2026-11-06 "Stripe set-up order"; PROPOSED until the owner confirms it,
-// reconciled to docs/agents/strategy/PLAN_PRICING_FACTS.md and lib/plan-config.ts). Five paid plans, a monthly and a yearly price each.
-// Product names are read from the plan labels in lib/plan-config.ts (owner 2026-11-06: one name across the portals, marketing and
-// Stripe). A "FieldLogicHQ - " prefix is accepted on any of them.
-// Not covered until their own work lands: tax settings and product tax codes (GST/HST Stage 2), any USD price (none is decided).
+// THE TARGET (docs/agents/strategy/BUSINESS_DECISIONS.md, 2026-11-06 "Stripe set-up order", confirmed by the owner; reconciled to
+// docs/agents/strategy/PLAN_PRICING_FACTS.md and lib/plan-config.ts). Five paid plans, a monthly and a yearly price each.
 // The expected product name is the plan's label in lib/plan-config.ts (the one name the app, the pricing page and the help read), so the
-// audit cannot drift from them: rename a plan there and the audit expects the new name in Stripe.
+// audit cannot drift from them: rename a plan there and the audit expects the new name in Stripe. Owner 2026-11-23 (Stripe checklist
+// call R2): the name must match exactly; the old "FieldLogicHQ - " prefix is no longer accepted.
 function names(planId) {
-  const label = PLAN_CONFIG[planId].label;
-  return [label, `FieldLogicHQ - ${label}`];
+  return [PLAN_CONFIG[planId].label];
 }
 
 const EXPECTED_PRICE_SLOTS = [
@@ -458,9 +459,7 @@ async function auditAccount(stripe) {
   }
 
   const branding = account.settings?.branding ?? {};
-  checks.push(branding.logo
-    ? check('PASS', 'account', 'branding_logo', 'Stripe account logo is set.')
-    : check('WARN', 'account', 'branding_logo', 'Stripe account logo is not set.'));
+  // No logo check: the account logo is empty on purpose (owner ruling Q-D2, kept 2026-11-23, Stripe checklist call R2).
   checks.push(branding.icon
     ? check('PASS', 'account', 'branding_icon', 'Stripe account icon is set.')
     : check('WARN', 'account', 'branding_icon', 'Stripe account icon is not set.'));
