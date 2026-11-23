@@ -404,13 +404,13 @@ export const DEAL_WORDS = {
     cardOffLine: (club: string) => `${club} will email your invoice with how to pay by cheque or e-transfer. You won’t be charged on this page.`,
     // Owner call 4 at walk §562 (2026-11-23): a club with no mailing address or no contact for sponsors can't email the
     // invoice, so the page promises only what it does — the invoice appears here once the business sends.
-    cardOffLineNoEmail: 'Your invoice appears on this page once you send, with how to pay by cheque or e-transfer. You won’t be charged on this page.', // DRAFT
+    cardOffLineNoEmail: 'Once you send, your invoice appears on this page, with how to pay by cheque or e-transfer. You won’t be charged on this page.', // /marketing 2026-11-23
     // Owner 2026-11-23: the button sends the form; it pays nothing. How to pay comes with the invoice (the line under it).
     send: 'Send',
     sendChequeNote: 'Your invoice comes by email, with how to pay.', // round 2 tab 1, verbatim
     sendChequeNotePhone: 'Your invoice comes by email.',
-    sendChequeNoteNoEmail: 'Your invoice appears on this page, with how to pay.', // DRAFT (owner call 4, walk §562)
-    sendChequeNoteNoEmailPhone: 'Your invoice appears on this page.', // DRAFT
+    sendChequeNoteNoEmail: 'Your invoice appears on this page, with how to pay.', // owner call 4, walk §562; /marketing 2026-11-23
+    sendChequeNoteNoEmailPhone: 'Your invoice appears on this page.', // /marketing 2026-11-23
     sending: 'Sending…', // DRAFT
     change: 'Change', // Stage 4 ruling 20: a business that comes back sees its answers and Change
     save: 'Save changes', // DRAFT

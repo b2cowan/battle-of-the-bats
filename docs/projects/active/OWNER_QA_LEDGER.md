@@ -28781,4 +28781,6 @@ performed over the shared working tree. The original walk result is not claimed 
 8. A way to say the club sent the GST/HST on — **add a "GST/HST remitted" word**, so a remittance isn't counted as spending, before any club remits. *Build owed.*
 
 **The five built 2026-11-23 (owner: "build the five now"), on dev, not committed; migration 529 applied to dev 2026-11-23 at the owner's word ("yes, apply 529 to dev").** Said out loud: call 3 is the words "Withdrawn {date}" leading the invoice's subtitle (as "Paid in full" does), not a drawn stamp — the house invoice has no stamps by rule; How to pay goes and the balance reads $0.00. Call 7 lets a paid business ADD one logo, only if it never sent one and while the deal runs; it shows at once, and changing it after that is the club's (`/review` 2026-11-23: a paid deal's logo is public and its link never expires, so replacing it from a forwarded link was refused). Call 8's Months row now reads "The club's other books and GST/HST". A walk is owed once 529 is on dev.
+
+**Owner ruling 2026-11-23 ("sure remove gst/hst from budget plan"):** "GST/HST remitted" stays off the club's budget plan — the plan's word picker hides it and the plan's save refuses it; the ledger keeps it. Built and committed 2026-11-23, with the five calls' words settled by `/marketing`.
 <!-- /§562 -->

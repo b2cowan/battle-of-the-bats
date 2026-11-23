@@ -1428,8 +1428,9 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   storage. **529
   applied to dev 2026-11-23** at the owner's word ("yes, apply 529 to dev"), twice, read back; snapshots refreshed (watermark
   529); production pending in `MANUAL_PROD_STEPS.json`, before the promote. Owed: `/docs` (the club money article names GST/HST collected
-  only); `/marketing` on the DRAFT words; a short walk. Open owner question: a club can still put "GST/HST remitted" on
-  its plan, where it would show a planned cost no actual ever meets.
+  only); `/marketing` on the DRAFT words; a short walk. ~~Open owner question: a club can still put "GST/HST remitted" on
+  its plan.~~ **RULED 2026-11-23 ("sure remove gst/hst from budget plan"):** off the plan — the plan's Filed under hides it
+  and both plan saves refuse it (`readPlanWord`, `tax_not_planned`); the ledger's Filed under keeps it.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or

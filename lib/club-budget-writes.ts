@@ -7,7 +7,7 @@ import { resolveOrgBudgetItem, type ResolvedOrgBudgetItem } from './coach-budget
 import { joinPeriodSplits } from './coach-budget-periods-payload';
 import { refused, type Moved, type Refused } from './club-money-route';
 import { CLUB_BUDGET_REFUSAL, FILED_UNDER_REFUSAL, SEASON_CLOSED_REFUSAL, SOURCE_ENTRY_RETIRED, planClosedWords } from './club-money-words';
-import { sumMoney } from './club-money-figures';
+import { isPassedOnTax, sumMoney } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
 import { billSplits, readAmount, type BillInput, type BillSplitMethod, type CleanSplit } from './club-bill-split';
 import { fiscalYearOf, readFiscalYearParam } from './club-fiscal-year';
@@ -145,6 +145,17 @@ async function readWord(raw: unknown, orgId: string): Promise<Moved<{ item: Reso
   return { ok: true, item: word.item };
 }
 
+/**
+ * The word a PLAN line names: `readWord`, and never the GST/HST the club passes on (owner 2026-11-23: "remove GST/HST from
+ * the budget plan"). A planned "GST/HST remitted" would be a cost no actual ever meets, since Budget vs. Actual leaves the
+ * tax out (`isPassedOnTax`). The ledger's "Filed under" keeps the word (`readFiledUnder` reads `readWord` directly).
+ */
+async function readPlanWord(raw: unknown, orgId: string): Promise<Moved<{ item: ResolvedOrgBudgetItem }>> {
+  const word = await readWord(raw, orgId);
+  if (word.ok && isPassedOnTax({ budgetItemId: word.item.id })) return say(400, 'tax_not_planned');
+  return word;
+}
+
 // ── A line: one step ──────────────────────────────────────────────────────────────────────────
 
 /** `club_budget_line_save` — every part NULL/absent keeps what is there. */
@@ -185,7 +196,7 @@ export async function editClubLine(orgId: string, lineId: string, body: Record<s
   if (!fields.ok) return fields;
   let item: ResolvedOrgBudgetItem | null = null;
   if ('itemId' in body) {
-    const word = await readWord(body.itemId, orgId);
+    const word = await readPlanWord(body.itemId, orgId);
     if (!word.ok) return word;
     item = word.item;
   }
@@ -234,7 +245,7 @@ export async function addClubLine(orgId: string, body: AddLineInput, canMove = t
   if (locked) return locked;
   const total = readAmount(body.totalAmount);
   if (total === null) return say(400, 'bad_total');
-  const word = await readWord(body.itemId, orgId);
+  const word = await readPlanWord(body.itemId, orgId);
   if (!word.ok) return word;
   const item = word.item;
   const description = typeof body.description === 'string' && body.description.trim() ? body.description.trim() : item.name;

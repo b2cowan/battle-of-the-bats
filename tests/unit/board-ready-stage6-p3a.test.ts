@@ -238,6 +238,14 @@ describe('walk §562’s five calls that asked for a build (owner 2026-11-23, ea
     assert.match(stripComments(readSource('components/public/SponsorDealContent.tsx')), /\{view\.takesLogo && \(\s*<section/);
   });
 
+  it('GST/HST remitted stays off the budget plan (owner 2026-11-23); the ledger still files under it', () => {
+    const writes = stripComments(readSource('lib/club-budget-writes.ts'));
+    assert.match(writes, /if \(word\.ok && isPassedOnTax\(\{ budgetItemId: word\.item\.id \}\)\) return say\(400, 'tax_not_planned'\);/);
+    assert.equal((writes.match(/await readPlanWord\(body\.itemId, orgId\)/g) ?? []).length, 2, 'adding a line and changing its word');
+    assert.match(writes, /export async function readFiledUnder[\s\S]*?await readWord\(raw, orgId\)/, 'the ledger keeps the word');
+    assert.match(stripComments(readSource('components/admin/kit/club/money/BudgetWindows.tsx')), /items: c\.items\.filter\(i => !isPassedOnTax\(\{ budgetItemId: i\.id \}\)\)/);
+  });
+
   it('a pending GST/HST line is never scheduled as spending on Months: it rides the other-books row once', () => {
     assert.match(stripComments(readSource('lib/club-budget-report.ts')), /if \(!inYear\(l\.entryDate\) \|\| isPassedOnTax\(l\)\) continue;/);
     const pending = { amount: 130, entryType: 'expense' as const, status: 'pending' as const, bookKind: 'org', category: null, budgetItemId: '5b0d0529-0529-4c1b-8a50-7ea0507c0001' };

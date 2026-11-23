@@ -57,6 +57,7 @@ import {
 import { formatStoredDate } from '@/lib/timezone';
 import { clubYearMonths, type ClubPlanPeriod, type PlanAllocationRow, type PlanLineRow } from '@/lib/club-budget-report';
 import type { FiscalYear } from '@/lib/club-fiscal-year';
+import { isPassedOnTax } from '@/lib/club-money-figures';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import { FormError, TextField, jsonInit, money, moneyFetch, moneyKit, parseAmount as parseKitAmount, refusalText } from './MoneyKit';
 import cr from './ClubReport.module.css';
@@ -207,11 +208,17 @@ function FiledUnderField({ id, categories, value, onChange, direction, orgSlug, 
     const folded = new Set(categories.filter(c => c.hostedEvent).map(c => c.id));
     return folded.size ? { folded } : undefined;
   }, [categories]);
+  // The plan never offers "GST/HST remitted" (owner 2026-11-23): the tax the club passes on is no cost, so the save refuses it
+  // (lib/club-budget-writes.ts readPlanWord). The ledger's own Filed under (LedgerWindows) still offers it.
+  const planWords = useMemo(
+    () => categories.map(c => ({ ...c, items: c.items.filter(i => !isPassedOnTax({ budgetItemId: i.id })) })),
+    [categories],
+  );
   return (
     <div className={ck.field}>
       <span className={ck.label} id={`${id}-label`}>Filed under<span className={repKit.req} aria-hidden>*</span></span>
       <BudgetItemPicker
-        categories={categories}
+        categories={planWords}
         shelves={shelves}
         value={value}
         onChange={onChange}

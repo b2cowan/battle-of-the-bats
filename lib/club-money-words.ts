@@ -434,6 +434,9 @@ export const CLUB_BUDGET_REFUSAL = {
   bad_total: 'The line needs an amount above zero.',
   bad_description: 'A name is needed, 200 characters at most.',
   word_required: 'Choose what this line is filed under.',
+  // Owner 2026-11-23: "GST/HST remitted" stays off the plan — it is the club's tax passed on, never a cost, so a planned
+  // amount would be a cost no actual ever meets. /marketing 2026-11-23.
+  tax_not_planned: 'GST/HST remitted is tax the club passes on, not a cost, so it can’t go on the plan.',
   bad_source_entry: 'That isn’t one of the club’s ledger entries.',
 } as const;
 
