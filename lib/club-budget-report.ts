@@ -45,7 +45,7 @@ import { CLUB_SENT_WAITING_WORD, HELD_BY_THE_TEAM_WORD, OUTSIDE_YOUR_GROUPS_WORD
 import { formatStoredDate } from './timezone';
 import {
   allocationYear, bandCollected, collectedByBook, clubBillFigures, clubCashOnHand, clubMovement, clubYearOf, clubYearSpan,
-  clubActualMovement, closingBalance, countsAsActual, headroom, isClubBook, lineAllocated, netForYear, notAllocated, offPlan,
+  clubActualMovement, closingBalance, countsAsActual, headroom, isClubBook, isPassedOnTax, lineAllocated, netForYear, notAllocated, offPlan,
   otherBooksMovement, owedByTheTeams, planned, spent, sumMoney, teamsCashTotal, teamsWithMoneyLate, teamsWithRequestWaiting,
   waitingOnYou, clubInstallmentDue, requestWaitsOnClub,
   type ClubBookMovementFacts, type ClubInstallmentFacts, type CountAndAmount, type TeamCashHeld,
@@ -742,7 +742,9 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
     }
   }
   for (const l of waiting) {
-    if (!inYear(l.entryDate)) continue;
+    // GST/HST collected or remitted is never a budget figure: a pending one rides the other-books row on Scheduled
+    // (otherBooksMovement), so scheduling it here too would count it twice and show the tax as planned spending (/review 2026-11-23).
+    if (!inYear(l.entryDate) || isPassedOnTax(l)) continue;
     const side = clubMovement(l) as 'in' | 'out';
     const { filing: f } = fileClubLine(l, loop);
     schedule(side, f, l.entryDate, l.amount);

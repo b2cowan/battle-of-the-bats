@@ -8,6 +8,8 @@
  *   · No tax words at all on an untaxed invoice (round 1's "NO TAX WORDS": no field, line or "No GST/HST charged").
  *   · The paid invoice IS the receipt (ask 10): the same page, "Paid in full {date}" leading its subtitle, the payments
  *     received listed, no stamp. Never "donation", "gift" or "tax receipt".
+ *   · A withdrawn invoice (owner call 3 at walk §562, 2026-11-23: "print Withdrawn on it"): the same page, "Withdrawn {date}"
+ *     leading its subtitle as "Paid in full" does — the house has no stamps — with no How to pay and nothing owing.
  *   · The club's GST/HST number at the top only when the invoice carries tax; FieldLogicHQ's never (/accounting).
  */
 import { formatStoredDate } from './timezone';
@@ -60,7 +62,9 @@ export function periodLabel(from: string, to: string): string {
 export interface ClubInvoiceInput {
   club: { name: string; mailingAddress: string | null; gstHstNumber: string | null; contactName: string | null; contactEmail: string | null };
   howToPay: { etransferTo: string | null; chequesPayableTo: string | null };
-  deal: { packageName: string; placeName: string | null; bullets: string[]; endsOn: string | null; revisedOn: string | null };
+  /** `withdrawnAt`: the deal was withdrawn after its invoice was issued (owner call 3 at walk §562: the club's paper still
+   *  downloads, saying "Withdrawn" so nobody pays it by mistake). */
+  deal: { packageName: string; placeName: string | null; bullets: string[]; endsOn: string | null; revisedOn: string | null; withdrawnAt?: string | null };
   invoice: DealInvoice;
   billTo: { name: string; contactName: string | null; address: string | null; email: string | null };
   payments: readonly DealPayment[];
@@ -82,6 +86,8 @@ export function clubInvoiceLayout(i: ClubInvoiceInput) {
   ];
   const who = [i.club.contactName, i.club.contactEmail].filter(Boolean).join(', ');
   const mailed = oneLineAddress(i.club.mailingAddress) || null;
+  // A withdrawn invoice owes nothing (a deal with a live payment can't be withdrawn: mig 528's guard), so its balance reads $0.00.
+  const withdrawn = !!i.deal.withdrawnAt && !standing.paidInFull;
   return {
     clubName: i.club.name,
     fromLine: mailed,
@@ -92,9 +98,10 @@ export function clubInvoiceLayout(i: ClubInvoiceInput) {
     paidInFull: standing.paidInFull,
     paidInFullLabel: standing.paidOn ? formatStoredDate(standing.paidOn) : null,
     partPaid: !standing.paidInFull && standing.paid > 0,
+    withdrawnLabel: withdrawn ? formatStoredDate(i.deal.withdrawnAt) : null,
     invoiced: money(inv.total),
     paid: money(standing.paid),
-    balance: money(standing.owing),
+    balance: money(withdrawn ? 0 : standing.owing),
     billTo: { name: i.billTo.name, attention: i.billTo.contactName, address: i.billTo.address, email: i.billTo.email },
     rows,
     taxNumberLine: taxed && i.club.gstHstNumber ? `GST/HST no. ${formatGstNumber(i.club.gstHstNumber)}` : null,
@@ -107,6 +114,14 @@ export function clubInvoiceLayout(i: ClubInvoiceInput) {
 }
 
 export type ClubInvoiceLayout = ReturnType<typeof clubInvoiceLayout>;
+
+/**
+ * Can the club email a deal's invoice? It needs its mailing address (the invoice's cheque address) and a contact for sponsors
+ * (the email's reply-to) — the sender's own refusal (lib/sponsor-invoice-email.ts) and the business's page (owner call 4 at
+ * walk §562: never promise an email that can't go) ask this one question.
+ */
+export const clubCanEmailInvoice = (mailingAddress: string | null | undefined, contactEmail: string | null | undefined): boolean =>
+  !!mailingAddress?.trim() && !!contactEmail?.trim();
 
 /** "invoice-2027-014-harbour-dental.pdf" — the download's name, ASCII only. */
 export function invoiceFilename(number: string, business: string): string {

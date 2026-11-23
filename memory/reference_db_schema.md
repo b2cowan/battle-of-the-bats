@@ -923,8 +923,12 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, st
 deal_id (uuid) → club_sponsor_deals.id NOT NULL, item_id NOT NULL, org_id (uuid) → organizations.id NOT NULL, done_at, done_by (uuid), done_by_name NOT NULL
 - Indexes: club_sponsor_deal_items_org_idx
 
+### club_sponsor_deal_payments
+id (uuid), org_id (uuid) → organizations.id NOT NULL, deal_id (uuid) → club_sponsor_deals.id NOT NULL, amount (numeric) NOT NULL, tax_part (numeric), received_on NOT NULL, method NOT NULL, reference, note, income_entry_id (uuid) → accounting_entries.id, tax_entry_id (uuid) → accounting_entries.id, recorded_by (uuid), recorded_by_name NOT NULL, recorded_at, voided_at, voided_by (uuid), voided_by_name, void_reason
+- Indexes: club_sponsor_deal_payments_deal_idx
+
 ### club_sponsor_deals
-id (uuid), org_id (uuid) → organizations.id NOT NULL, sponsor_id (uuid) → club_sponsors.id NOT NULL, package_id (uuid) → club_sponsorship_packages.id NOT NULL, package_name NOT NULL, package_items (jsonb), logo_on_site (boolean) NOT NULL, place_kind NOT NULL, target_id (uuid), target_name, ends_on, amount (numeric) NOT NULL, charge_tax (boolean), state, link_version (integer), offered_on NOT NULL, offered_at, offered_by (uuid), offered_by_name NOT NULL, offered_to, emailed_at, opened_at, form_at, business_name, contact_name, contact_email, phone, website, invoice_street, invoice_city, invoice_province, invoice_postal, logo_path, logo_sent_at, pay_method, invoice_year (integer), invoice_seq (integer), invoiced_at, invoiced_on, due_on, tax_kind, tax_rate (numeric), tax_amount (numeric), total (numeric), withdrawn_at, withdrawn_by (uuid), withdrawn_by_name, withdrawn_reason, created_at, updated_at, link_unsent_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, sponsor_id (uuid) → club_sponsors.id NOT NULL, package_id (uuid) → club_sponsorship_packages.id NOT NULL, package_name NOT NULL, package_items (jsonb), logo_on_site (boolean) NOT NULL, place_kind NOT NULL, target_id (uuid), target_name, ends_on, amount (numeric) NOT NULL, charge_tax (boolean), state, link_version (integer), offered_on NOT NULL, offered_at, offered_by (uuid), offered_by_name NOT NULL, offered_to, emailed_at, opened_at, form_at, business_name, contact_name, contact_email, phone, website, invoice_street, invoice_city, invoice_province, invoice_postal, logo_path, logo_sent_at, pay_method, invoice_year (integer), invoice_seq (integer), invoiced_at, invoiced_on, due_on, tax_kind, tax_rate (numeric), tax_amount (numeric), total (numeric), withdrawn_at, withdrawn_by (uuid), withdrawn_by_name, withdrawn_reason, created_at, updated_at, link_unsent_at, revised_on, invoice_emailed_at, receipt_emailed_at, paid_on, original_amount (numeric), original_charge_tax (boolean), original_tax_kind, original_tax_rate (numeric), original_tax_amount (numeric), original_total (numeric)
 - Indexes: club_sponsor_deals_invoice_uniq, club_sponsor_deals_org_idx, club_sponsor_deals_package_idx, club_sponsor_deals_sponsor_idx, club_sponsor_deals_target_idx
 
 ### club_sponsor_invoice_counters
@@ -1243,7 +1247,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **306 tables** across 10 modules.
+Total: **307 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 25 tables
@@ -1254,4 +1258,4 @@ Total: **306 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 30 tables
 - CRM / Leads: 6 tables
-- Other: 124 tables
+- Other: 125 tables

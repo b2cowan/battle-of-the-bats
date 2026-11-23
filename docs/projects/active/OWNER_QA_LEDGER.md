@@ -28767,4 +28767,18 @@ performed over the shared working tree. The original walk result is not claimed 
 ## §562 · Board Ready Stage 6 · Part 3a · The sponsorship invoice, recording and voiding payments, the books — **a club's invoice is emailed as a link and downloads as a PDF; a revised invoice keeps its number; Record a payment (a part payment leaves the rest owing, the rest makes it Paid and the receipt goes); Void puts the money back owing; the Ledger gets two lines (Club sponsorship, GST/HST collected) and Months carries the tax so Cash closes on Cash on hand**
 <!-- §562 -->
 **Walk published 2026-11-23.** [Interactive walk](https://claude.ai/artifact/SaFBzF98cxoyAMEed7YpTy) (walks A–H, 46 steps; eight owner calls outside the count) · [repository HTML](BOARD_READY_STAGE6_P3A_WALK.html). Built on dev (migration 528 applied to dev only). Sign in: `uat-club-owner@uat-rep-club.local`, `uat-club-treasurer@uat-rep-club.local`, `uat-club-registrar@uat-rep-club.local` (password `UATPassword2026!`, UAT Rep Club); the business's walk needs no sign-in (a private window; its email is a `.local` address, which counts as sent and delivers nothing). Setup on UAT Rep Club through the product's own saves: mailing address, contact for sponsors, e-transfer and cheque payee, GST/HST registered with a number, one package "Walk 3a partner" ($1,000.00); Part 2's leftover "Walk Pizza" deal is to be ignored. Plan: `BOARD_READY_PLAN.md` §5 Stage 6; finish record: `BOARD_READY_STAGE6_P3A_FINISH_PROMPT.md`.
+
+**Walked 2026-11-23 by the owner: checked 46 of 46, nothing failed** — A offer the deal and the invoice 10/10 · B the invoice PDF 4/4 · C a revised invoice 4/4 · D record the payments 9/9 · E the club's books 4/4 · F void a payment 5/5 · G who can record and void 6/6 · H on a phone 4/4 — all passed.
+
+**Owner calls RULED 2026-11-23 (each as recommended):**
+1. A member with only Sponsorships, no Accounting, recording and voiding payments — **leave it as built**: Sponsorships is enough.
+2. The tax on the Months view — **one row**; split it when a club asks.
+3. A withdrawn invoiced deal's PDF — **print "Withdrawn" on it** (not refuse the download). *Build owed.*
+4. A link-only deal for a club with no mailing address or contact — **soften the words in that case** (the page says the invoice appears on the page); the club may still make a link. *Build owed.*
+5. GST/HST counted when money arrives — **not now**; no "invoiced, not yet paid" figure (the method is a tax question for `/accounting`).
+6. A revised invoice overwrites the original figures — **keep the original figures** (a small change to the dev-only migration 528). *Build owed.*
+7. A business that pays before sending a logo — **let it add a logo later**, from the receipt page. *Build owed.*
+8. A way to say the club sent the GST/HST on — **add a "GST/HST remitted" word**, so a remittance isn't counted as spending, before any club remits. *Build owed.*
+
+**The five built 2026-11-23 (owner: "build the five now"), on dev, not committed; migration 529 applied to dev 2026-11-23 at the owner's word ("yes, apply 529 to dev").** Said out loud: call 3 is the words "Withdrawn {date}" leading the invoice's subtitle (as "Paid in full" does), not a drawn stamp — the house invoice has no stamps by rule; How to pay goes and the balance reads $0.00. Call 7 lets a paid business ADD one logo, only if it never sent one and while the deal runs; it shows at once, and changing it after that is the club's (`/review` 2026-11-23: a paid deal's logo is public and its link never expires, so replacing it from a forwarded link was refused). Call 8's Months row now reads "The club's other books and GST/HST". A walk is owed once 529 is on dev.
 <!-- /§562 -->

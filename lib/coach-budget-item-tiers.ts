@@ -65,9 +65,10 @@ export const ITEM_TIER_LABEL: Record<BudgetItemTier, string> = {
 /**
  * The club's own standard words no team ever files under (Board Ready Stage 6 Part 3a, mig 528): "Club sponsorship" is the
  * club's sponsorship income, written only by a deal. A team's sponsorships stay the team's ("Team sponsorship", 2026-11-06),
- * so the word is off every team's picker and plan. Fixed ids (mig 528); never change them.
+ * so the word is off every team's picker and plan. "GST/HST remitted" (mig 529) is the club's GST/HST passed on to the government;
+ * a team charges no tax (R2), so it has nothing to remit. Fixed ids (migs 528, 529); never change them.
  */
-export const CLUB_ONLY_ITEM_IDS: readonly string[] = ['5b0d0528-0528-4c1b-8a50-7ea0507c0001'];
+export const CLUB_ONLY_ITEM_IDS: readonly string[] = ['5b0d0528-0528-4c1b-8a50-7ea0507c0001', '5b0d0529-0529-4c1b-8a50-7ea0507c0001'];
 
 /**
  * May this team see this item in its picker?

@@ -20,7 +20,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { readSettings } from './club-sponsorships-server';
 import { readDeal, readDealBusiness } from './club-sponsorship-deals-server';
 import { dealLinkUrl, offerContactOf } from './club-sponsorship-deal-actions';
-import { invoiceStanding } from './club-sponsor-invoice';
+import { clubCanEmailInvoice, invoiceStanding } from './club-sponsor-invoice';
 import { DEAL_WORDS } from './club-sponsorship-deal-words';
 
 const E = DEAL_WORDS.invoiceEmail;
@@ -59,14 +59,17 @@ export async function emailDealInvoice(orgId: string, orgSlug: string, dealId: s
   try {
     const [deal, business, settings, org] = await Promise.all([readDeal(orgId, dealId), readDealBusiness(orgId, dealId), readSettings(orgId), readClubEmailOrg(orgId)]);
     const to = business?.email?.trim().toLowerCase();
-    if (!deal?.invoice || !to || !settings.mailingAddress?.trim()) {
-      console.warn('[sponsorships] the invoice email was not sent — the deal has no invoice, or the business has no address, or the club has no mailing address:', dealId, moment);
+    if (!deal?.invoice || !to) {
+      console.warn('[sponsorships] the invoice email was not sent — the deal has no invoice, or the business has no address:', dealId, moment);
       return false;
     }
     const contactEmail = await offerContactOf(orgId, settings);
     const url = dealLinkUrl(orgSlug, deal.id, deal.linkVersion);
-    if (!contactEmail || !url) {
-      console.warn('[sponsorships] the invoice email was not sent — the club has no sponsorship contact email, or the deal has no link:', dealId, moment);
+    const mailingAddress = settings.mailingAddress?.trim() ?? '';
+    // The same question the business's page asks before it promises an email (owner call 4, walk §562). (`!contactEmail`
+    // again only so the type knows.)
+    if (!clubCanEmailInvoice(mailingAddress, contactEmail) || !contactEmail || !url) {
+      console.warn('[sponsorships] the invoice email was not sent — the club has no mailing address or no sponsorship contact email, or the deal has no link:', dealId, moment);
       return false;
     }
     const standing = moment === 'paid' ? invoiceStanding(deal.invoice.total, deal.payments) : null;
@@ -75,7 +78,7 @@ export async function emailDealInvoice(orgId: string, orgSlug: string, dealId: s
     const html = warmEmailDocument(invoiceEmailHtml({
       moment, club: org.name, business: business?.contactName || business?.name || deal.businessName, number: deal.invoice.number,
       total: deal.invoice.total, dueOn: deal.invoice.dueOn, paidOn: standing?.paidOn ?? null, etransferTo: settings.etransferTo,
-      chequesPayableTo: settings.chequesPayableTo ?? org.name, mailingAddress: settings.mailingAddress.trim(), url,
+      chequesPayableTo: settings.chequesPayableTo ?? org.name, mailingAddress, url,
       contactName: settings.contactEmail ? settings.contactName : null, contactEmail,
     }), facts);
     const subject = moment === 'paid' ? E.subjectPaid(deal.invoice.number, org.name) : moment === 'revised' ? E.subjectRevised(deal.invoice.number, org.name) : E.subject(deal.invoice.number, org.name);

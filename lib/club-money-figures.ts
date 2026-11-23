@@ -765,17 +765,30 @@ export function clubMovement(l: ClubBookMovementFacts): 'in' | 'out' | 'own_tran
  *
  * `category`: the line's key — 'gst_hst_collected' (Part 3a) is tax the club passes on, never its income or spending.
  * (The literal, not club-ledger's GST_HST_COLLECTED_KEY: that module imports this one.)
+ * `budgetItemId`: a line filed under "GST/HST remitted" (mig 529) is that tax passed on — never spending either.
  */
-export function countsAsActual(l: ClubBookMovementFacts & { bookKind: string; category?: string | null }): boolean {
+export function countsAsActual(l: ClubBookMovementFacts & { bookKind: string; category?: string | null; budgetItemId?: string | null }): boolean {
   if (l.status !== 'posted' || !isClubBook(l.bookKind)) return false;
-  // GST/HST collected on a sponsorship invoice (Part 3a): the club's to pass on, so no budget figure counts it (the band, the
-  // Statement, Months, Against last year). It is still money on the book: the balance and Cash on hand include it.
-  if (l.category === 'gst_hst_collected') return false;
+  // GST/HST collected on a sponsorship invoice (Part 3a), and the GST/HST the club sends on to the government: the tax is the
+  // club's to pass on, so no budget figure counts it (the band, the Statement, Months, Against last year, Off-plan). It is
+  // still money on the book: the balance and Cash on hand include it.
+  if (isPassedOnTax(l)) return false;
   const m = clubMovement(l);
   return m === 'in' || m === 'out';
 }
 
-type ActualLine = ClubBookMovementFacts & { bookKind: string; sourceModule?: string | null; category?: string | null };
+/**
+ * "GST/HST remitted" (mig 529; owner call 8 at walk §562, 2026-11-23): the standard money-out word a club files the tax it sends
+ * to the government under, so a remittance is not counted as spending nor shown as Off-plan. Club-only (off every team's
+ * picker, lib/coach-budget-item-tiers.ts). A fixed id; never change it.
+ */
+export const GST_HST_REMITTED_ITEM_ID = '5b0d0529-0529-4c1b-8a50-7ea0507c0001';
+
+/** Is this line GST/HST the club holds for the government — collected on an invoice, or remitted? THE one test. */
+export const isPassedOnTax = (l: { category?: string | null; budgetItemId?: string | null }): boolean =>
+  l.category === 'gst_hst_collected' || l.budgetItemId === GST_HST_REMITTED_ITEM_ID;
+
+type ActualLine = ClubBookMovementFacts & { bookKind: string; sourceModule?: string | null; category?: string | null; budgetItemId?: string | null };
 
 /**
  * A line's ACTUAL movement — the side of the year's figures it counts on, and its signed amount; null when it counts
@@ -921,22 +934,23 @@ export function closingBalance(opening: number, net: number): number {
  * balance covers every book while the statement above it reads the Club books. It leaves when
  * Stages 7 and 9 bring those books into the budget.
  *
- * (Part 3a: the GST/HST collected on sponsorship invoices rides on this row too — cash held, never income or spending.)
+ * (Part 3a: the GST/HST collected on sponsorship invoices, and the GST/HST remitted (mig 529), ride on this row too — the
+ * tax the club holds and passes on, never income or spending. One row: owner call 2 at walk §562.)
  *
  * Returns the money in and out separately (the month's net is in − out), for the lens asked:
  * 'actual' counts posted lines, 'scheduled' pending ones.
  */
 export function otherBooksMovement(
-  lines: readonly (ClubBookMovementFacts & { bookKind: string; category?: string | null })[],
+  lines: readonly (ClubBookMovementFacts & { bookKind: string; category?: string | null; budgetItemId?: string | null })[],
   lens: 'actual' | 'scheduled',
 ): { moneyIn: number; moneyOut: number } {
   let inC = 0, outC = 0;
   const want = lens === 'actual' ? 'posted' : 'pending';
   for (const l of lines) {
     if (l.status !== want || !isClubOwnedBook(l.bookKind)) continue;
-    // A Club book's lines are the Statement's — except the GST/HST collected (Part 3a): in no budget figure (countsAsActual),
-    // but it is cash the club holds, so the month's balance carries it here and Cash still closes on Cash on hand.
-    if (isClubBook(l.bookKind) && l.category !== 'gst_hst_collected') continue;
+    // A Club book's lines are the Statement's — except the GST/HST collected and remitted: in no budget figure (countsAsActual),
+    // but it is cash the club holds or sends on, so the month's balance carries it here and Cash still closes on Cash on hand.
+    if (isClubBook(l.bookKind) && !isPassedOnTax(l)) continue;
     const m = clubMovement(l);
     if (m === 'in') inC += cents(l.amount);
     else if (m === 'out') outC += cents(l.amount);

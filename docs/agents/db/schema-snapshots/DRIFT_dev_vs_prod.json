@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-23",
-  "total": 210,
+  "total": 217,
   "counts": {
     "tables": 6,
-    "columns": 99,
+    "columns": 105,
     "indexes": 16,
     "constraints": 27,
-    "rls": 62
+    "rls": 63
   },
   "items": [
     {
@@ -135,6 +135,10 @@
     },
     {
       "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_offered_to_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_original_whole",
       "sig": ""
     },
     {
@@ -479,6 +483,30 @@
     },
     {
       "key": "column:only-dev:club_sponsor_deals.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.original_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.original_charge_tax",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.original_tax_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.original_tax_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.original_tax_rate",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.original_total",
       "sig": ""
     },
     {

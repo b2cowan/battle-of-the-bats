@@ -160,6 +160,19 @@ export const canRecordPayment = (d: Pick<ClubDeal, 'state' | 'invoice'>): boolea
 export const linkTakesForm = (d: Pick<ClubDeal, 'state'>): boolean => d.state === 'offered' || d.state === 'form_received';
 
 /**
+ * Does the business's link take a logo? Before payment, always (it stays private until the place shows). Once PAID, only a
+ * business that never sent one, while the deal runs (owner call 7 at walk §562: "let it ADD a logo later, from the receipt
+ * page"). Its place is up, so the logo goes public at once — so a paid deal takes ONE logo, and changing it after that is the
+ * club's (the Sponsors tab), never a link anyone forwarded the email to (/review 2026-11-23). Never on a withdrawn deal.
+ * The logo route and the receipt page both ask this; the database write holds the once-only rule (storeDealLogo).
+ */
+export function linkTakesLogo(d: Pick<ClubDeal, 'state' | 'endsOn'>, logoSent: boolean, today: string): boolean {
+  if (d.state === 'withdrawn') return false;
+  if (d.state !== 'paid') return true;
+  return !logoSent && (!d.endsOn || d.endsOn >= today);
+}
+
+/**
  * Should the deal's place show (ask 5)? Paid, or the club ticked the logo line — and only when the package has the logo on.
  * The last day is the place's own (`placeShowing`), so it comes down by itself.
  */

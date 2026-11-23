@@ -453,17 +453,21 @@ async function publishDealLogo(orgId: string, dealId: string, sponsorId: string)
 
 export const dealLogoPath = (orgId: string, dealId: string): string => `${orgId}/sponsorships/deals/${dealId}/logo/${randomUUID()}.png`;
 
-/** Keep a freshly re-encoded logo on the deal; the one it replaces is deleted. A deal already showing publishes it at once. */
+/** Keep a freshly re-encoded logo on the deal; the one it replaces is deleted. A deal already showing (paid, or its logo line
+ *  ticked) publishes it at once. Any state but withdrawn; a PAID deal only while it has never had one (owner call 7 at walk
+ *  §562; `linkTakesLogo`) — held here in the write, so two uploads racing can't both publish. */
 export async function storeDealLogo(orgId: string, dealId: string, png: Buffer): Promise<void> {
   const path = dealLogoPath(orgId, dealId);
   const up = await supabaseAdmin.storage.from(CLUB_FORM_BUCKET).upload(path, png, { contentType: 'image/png', upsert: false });
   if (up.error) throw up.error;
   const { data: before } = await supabaseAdmin.from('club_sponsor_deals').select('logo_path').eq('org_id', orgId).eq('id', dealId).maybeSingle();
-  const { error } = await supabaseAdmin.from('club_sponsor_deals').update({ logo_path: path, logo_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq('org_id', orgId).eq('id', dealId).in('state', ['offered', 'form_received', 'invoiced']);
-  if (error) {
+  const { data: wrote, error } = await supabaseAdmin.from('club_sponsor_deals').update({ logo_path: path, logo_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('org_id', orgId).eq('id', dealId).neq('state', 'withdrawn').or('state.neq.paid,logo_sent_at.is.null').select('id');
+  // Nothing written (withdrawn, or a paid deal that already has its logo, between the door and here): the new file goes,
+  // and the logo it would have replaced stays.
+  if (error || !wrote?.length) {
     await supabaseAdmin.storage.from(CLUB_FORM_BUCKET).remove([path]).catch(() => undefined);
-    throw error;
+    throw error ?? new Error('club_sponsor_deal_logo_not_written');
   }
   const old = (before as { logo_path: string | null } | null)?.logo_path;
   if (old && old !== path) await supabaseAdmin.storage.from(CLUB_FORM_BUCKET).remove([old]).catch(() => undefined);

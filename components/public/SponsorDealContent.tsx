@@ -266,7 +266,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
             <tr><td>{P.yourInvoice}</td><td>{money(total)}</td></tr>
           </tbody>
         </table>
-        <p className={css.payLine}>{P.cardOffLine(view.club.name)}</p>
+        <p className={css.payLine}>{view.clubCanEmail ? P.cardOffLine(view.club.name) : P.cardOffLineNoEmail}</p>
         {errorCount > 0 && (
           <div ref={errorBox} tabIndex={-1} className={`${formKit.globalError} ${reg.errorBox}`} role="group" aria-labelledby="sponsor-errors-text">
             <span id="sponsor-errors-text">{(allMissing ? QW.errorsMissing : QW.errorsMixed)(errorCount, firstError?.name ?? 'above')}</span>
@@ -278,8 +278,8 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
           {uploading ? QW.uploadingButton : submitting ? P.sending : P.send}
         </button>
         <p className={css.payNote}>
-          <span className={css.payNoteDesk}>{P.sendChequeNote}</span>
-          <span className={css.payNotePhone}>{P.sendChequeNotePhone}</span>
+          <span className={css.payNoteDesk}>{view.clubCanEmail ? P.sendChequeNote : P.sendChequeNoteNoEmail}</span>
+          <span className={css.payNotePhone}>{view.clubCanEmail ? P.sendChequeNotePhone : P.sendChequeNoteNoEmailPhone}</span>
         </p>
       </section>
     </form>
@@ -390,7 +390,8 @@ function Thanks({ view }: { view: Open }) {
           </div>
         </div>
       )}
-      {!view.paid && (
+      {/* On the receipt page too (owner call 7, walk §562): a business that paid before sending its logo adds it here, once. */}
+      {view.takesLogo && (
         <section className={formKit.section}>
           <h2 className={formKit.sectionTitle}>{L.logoLaterTitle}</h2>
           <LogoControl token={view.token} club={view.club.name} initialUrl={view.logoUrl} />

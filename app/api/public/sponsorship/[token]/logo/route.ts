@@ -8,6 +8,8 @@ import { storeDealLogo } from '@/lib/club-sponsorship-deals-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { CLUB_FORM_BUCKET } from '@/lib/club-form-server';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
+import { linkTakesLogo } from '@/lib/club-sponsorship-deals';
+import { tournamentToday } from '@/lib/timezone';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +19,11 @@ const P = DEAL_WORDS.page;
  * POST /api/public/sponsorship/[token]/logo — the business sends its logo (round 1 tab 4 "Your logo"; "Send it later from
  * this page"). Multipart `file`: JPG, PNG or WebP up to 2 MB, re-encoded to the sponsor-logo PNG (≤480×216). It stays
  * PRIVATE on the deal until the deal's place shows (paid, or the club ticks the logo line — ask 5); only then is it copied
- * to the public logo bucket (lib/club-sponsorship-deals-server.ts). Throttled first; the token's deal only; refused once the
- * deal is paid (the club changes the logo on the Sponsors tab then). Answers a one-hour link to show it back.
+ * to the public logo bucket (lib/club-sponsorship-deals-server.ts). Throttled first; the token's deal only (a withdrawn
+ * deal or a replaced link is refused by dealForLink). A PAID deal takes ONE, from a business that never sent one, while the
+ * deal runs (owner call 7 at walk §562, 2026-11-23: it adds it from the receipt page, "since the club wants the logo"); its
+ * place is already up, so it shows at once. After that the club changes it (`linkTakesLogo`). Answers a one-hour link to
+ * show it back.
  */
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ token: string }> }) => {
   const throttled = throttleSignupFiles(req);
@@ -27,7 +32,13 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const at = await dealForLink(token);
   if ('failure' in at) return at.failure;
   const { org, deal } = at;
-  if (deal.state === 'paid') return NextResponse.json({ error: P.errClosed, code: 'closed' }, { status: 409 });
+  if (deal.state === 'paid') {
+    const { data: sent, error } = await supabaseAdmin.from('club_sponsor_deals').select('logo_sent_at').eq('org_id', org.id).eq('id', deal.id).maybeSingle();
+    if (error) throw error;
+    if (!linkTakesLogo(deal, !!(sent as { logo_sent_at: string | null } | null)?.logo_sent_at, tournamentToday())) {
+      return NextResponse.json({ error: P.errClosed, code: 'closed' }, { status: 409 });
+    }
+  }
 
   const declared = Number(req.headers.get('content-length') ?? 0);
   if (declared > ORG_LOGO_MAX_BYTES + 64 * 1024) return NextResponse.json({ error: P.logoRefused, code: 'too_big' }, { status: 413 });

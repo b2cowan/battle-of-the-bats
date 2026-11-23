@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-23 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 210 divergence(s)** across dev/prod.
+**⚠️ 217 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 6 | 0 | — |
-| Columns | 99 | 0 | 0 |
+| Columns | 105 | 0 | 0 |
 | Indexes | 16 | 0 | 0 |
 | Constraints | 27 | 0 | — |
-| RLS / CHECK | 58 | 0 | 0 (RLS state) |
+| RLS / CHECK | 59 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (6)
@@ -25,7 +25,7 @@
 _none_
 
 ## Columns
-### Only in DEV (99)
+### Only in DEV (105)
 - `club_sponsor_deal_items.deal_id`
 - `club_sponsor_deal_items.done_at`
 - `club_sponsor_deal_items.done_by`
@@ -82,6 +82,12 @@ _none_
 - `club_sponsor_deals.offered_to`
 - `club_sponsor_deals.opened_at`
 - `club_sponsor_deals.org_id`
+- `club_sponsor_deals.original_amount`
+- `club_sponsor_deals.original_charge_tax`
+- `club_sponsor_deals.original_tax_amount`
+- `club_sponsor_deals.original_tax_kind`
+- `club_sponsor_deals.original_tax_rate`
+- `club_sponsor_deals.original_total`
 - `club_sponsor_deals.package_id`
 - `club_sponsor_deals.package_items`
 - `club_sponsor_deals.package_name`
@@ -194,7 +200,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (58)
+### CHECK only in DEV (59)
 - `club_sponsor_deal_items.club_sponsor_deal_items_done_by_name_check`
 - `club_sponsor_deal_items.club_sponsor_deal_items_item_id_check`
 - `club_sponsor_deal_payments.club_sponsor_deal_payments_amount_check`
@@ -223,6 +229,7 @@ _none_
 - `club_sponsor_deals.club_sponsor_deals_logo_path_check`
 - `club_sponsor_deals.club_sponsor_deals_offered_by_name_check`
 - `club_sponsor_deals.club_sponsor_deals_offered_to_check`
+- `club_sponsor_deals.club_sponsor_deals_original_whole`
 - `club_sponsor_deals.club_sponsor_deals_package_items_check`
 - `club_sponsor_deals.club_sponsor_deals_package_name_check`
 - `club_sponsor_deals.club_sponsor_deals_paid_on`

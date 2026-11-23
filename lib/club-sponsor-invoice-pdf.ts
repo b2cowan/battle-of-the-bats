@@ -35,6 +35,7 @@ export async function dealInvoicePdf(org: Pick<Organization, 'id' | 'name' | 'pl
     deal: {
       packageName: deal.packageName, placeName: deal.placeKind === 'club' ? null : deal.targetName,
       bullets: dealBullets(deal), endsOn: deal.endsOn, revisedOn: deal.revisedOn,
+      withdrawnAt: deal.state === 'withdrawn' ? deal.withdrawn?.at ?? null : null,
     },
     invoice: deal.invoice,
     billTo: {

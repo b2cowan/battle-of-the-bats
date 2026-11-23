@@ -172,7 +172,7 @@ export function clubMonthsNotes(input: ClubMonthsNoteInput): ReportNote[] {
   if (input.otherBooks) {
     out.push(note('club-other-books', [
       { text: OTHER_BOOKS_WORD, bold: true },
-      { text: ' is what the house league’s book took in or paid on its own (a tournament’s book is counted in the rows above, by the budget word its lines carry). It is in the balance, which covers every book the club owns, and in none of the rows above it.' },
+      { text: ' is what the house league’s book took in or paid on its own (a tournament’s book is counted in the rows above, by the budget word its lines carry), and the GST/HST the club collected and remitted. It is in the balance, which covers every book the club owns, and in none of the rows above it.' },
     ]));
   }
   if (input.lens !== 'difference' && input.lens !== 'spending') {

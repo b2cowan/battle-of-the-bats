@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { clubInvoiceLayout, invoiceFilename, invoiceStanding, paymentHow, periodLabel, type DealPayment } from '../../lib/club-sponsor-invoice.ts';
+import { clubCanEmailInvoice, clubInvoiceLayout, invoiceFilename, invoiceStanding, paymentHow, periodLabel, type DealPayment } from '../../lib/club-sponsor-invoice.ts';
 import { canRecordPayment, canRevise, canWithdraw, dealFigures, type DealInvoice } from '../../lib/club-sponsorship-deals.ts';
 import { countsAsActual, bandCollected, otherBooksMovement } from '../../lib/club-money-figures.ts';
 import { fileLine, GST_HST_COLLECTED_ID, SOURCE_MODULE } from '../../lib/club-ledger.ts';
@@ -179,5 +179,83 @@ describe('the invoice and receipt emails (owner call (2): a link, no attachment;
   it('the business’s invoice download is throttled and opens only its own deal', () => {
     const route = stripComments(readSource('app/api/public/sponsorship/[token]/invoice/route.ts'));
     assert.ok(route.indexOf('throttleSignupFiles(') < route.indexOf('dealForLink('));
+  });
+});
+
+describe('walk §562’s five calls that asked for a build (owner 2026-11-23, each as recommended)', () => {
+  it('call 3: a withdrawn invoice still downloads, saying “Withdrawn” as Paid in full does (no stamp), owing nothing, no How to pay', async () => {
+    const withdrawnInput = { ...input(taxedInvoice), deal: { ...input(taxedInvoice).deal, withdrawnAt: '2027-03-10T15:00:00Z' } };
+    const l = clubInvoiceLayout(withdrawnInput);
+    assert.equal(l.withdrawnLabel, 'Mar 10, 2027');
+    assert.equal(l.balance, '$0.00');
+    assert.equal(l.invoiced, '$1,130.00', 'the paper still says what was invoiced');
+    assert.equal(clubInvoiceLayout(input(taxedInvoice)).withdrawnLabel, null);
+    const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
+    const { buildClubSponsorInvoiceDoc } = await import('../../lib/export/pdf.ts');
+    const text = Buffer.from(buildClubSponsorInvoiceDoc(jsPDF, autoTable, { ...l, settings: { ...DEFAULT_PDF_SETTINGS, showBranding: false } })
+      .output('arraybuffer') as ArrayBuffer).toString('latin1');
+    assert.match(text, /Withdrawn Mar 10, 2027/);
+    assert.match(text, /This invoice was withdrawn\. Nothing is owed\./);
+    assert.doesNotMatch(text, /HOW TO PAY|By cheque payable/);
+    assert.match(stripComments(readSource('lib/club-sponsor-invoice-pdf.ts')), /withdrawnAt: deal\.state === 'withdrawn'/);
+  });
+
+  it('call 4: a club that can’t email never promises an email; the page and the sender ask one question', () => {
+    assert.equal(clubCanEmailInvoice('200 Park Road', 'sponsors@club.ca'), true);
+    assert.equal(clubCanEmailInvoice(null, 'sponsors@club.ca'), false, 'no mailing address');
+    assert.equal(clubCanEmailInvoice('200 Park Road', '  '), false, 'no contact for sponsors');
+    const page = stripComments(readSource('components/public/SponsorDealContent.tsx'));
+    assert.match(page, /view\.clubCanEmail \? P\.cardOffLine\(view\.club\.name\) : P\.cardOffLineNoEmail/);
+    assert.match(page, /view\.clubCanEmail \? P\.sendChequeNote : P\.sendChequeNoteNoEmail/);
+    for (const w of [W.page.cardOffLineNoEmail, W.page.sendChequeNoteNoEmail, W.page.sendChequeNoteNoEmailPhone]) assert.doesNotMatch(w, /email/i);
+    assert.match(stripComments(readSource('lib/sponsor-deal-view.ts')), /clubCanEmail: clubCanEmailInvoice\(settings\.mailingAddress, club\.contactEmail\)/);
+    assert.match(stripComments(readSource('lib/sponsor-invoice-email.ts')), /!clubCanEmailInvoice\(mailingAddress, contactEmail\)/);
+  });
+
+  it('call 6: a revised invoice keeps its first figures, stamped the first time only, the functions’ alone', () => {
+    const sql = readSource('supabase/migrations/529_a_revised_invoice_keeps_its_first_figures.sql');
+    for (const c of ['amount', 'charge_tax', 'tax_kind', 'tax_rate', 'tax_amount', 'total']) {
+      assert.match(sql, new RegExp(`original_${c} += CASE WHEN d\\.revised_on IS NULL THEN d\\.${c} +ELSE d\\.original_${c} +END`));
+      assert.match(sql, new RegExp(`NEW\\.original_${c} IS DISTINCT FROM OLD\\.original_${c}`), `the guard holds original_${c}`);
+    }
+    assert.match(sql, /REVOKE ALL ON FUNCTION public\.club_sponsor_deal_revise\([^)]*\) FROM PUBLIC, anon, authenticated;/);
+  });
+
+  it('call 7: a paid deal takes ONE logo later, from the receipt page, while it runs; never a replacement, never withdrawn', async () => {
+    const { linkTakesLogo } = await import('../../lib/club-sponsorship-deals.ts');
+    const today = '2027-05-01';
+    assert.equal(linkTakesLogo({ state: 'invoiced', endsOn: '2027-08-31' }, true, today), true, 'before payment it may change');
+    assert.equal(linkTakesLogo({ state: 'paid', endsOn: '2027-08-31' }, false, today), true, 'paid, never sent one: adds it');
+    assert.equal(linkTakesLogo({ state: 'paid', endsOn: null }, false, today), true);
+    assert.equal(linkTakesLogo({ state: 'paid', endsOn: '2027-08-31' }, true, today), false, 'a paid deal’s public logo is the club’s to change');
+    assert.equal(linkTakesLogo({ state: 'paid', endsOn: '2027-04-30' }, false, today), false, 'the deal has ended');
+    assert.equal(linkTakesLogo({ state: 'withdrawn', endsOn: null }, false, today), false);
+    const route = stripComments(readSource('app/api/public/sponsorship/[token]/logo/route.ts'));
+    assert.ok(route.indexOf('throttleSignupFiles(') < route.indexOf('linkTakesLogo('), 'throttled first');
+    // The once-only rule is held in the write, so two uploads racing can't both publish.
+    assert.match(stripComments(readSource('lib/club-sponsorship-deals-server.ts')),
+      /\.neq\('state', 'withdrawn'\)\.or\('state\.neq\.paid,logo_sent_at\.is\.null'\)\.select\('id'\)/);
+    assert.match(stripComments(readSource('components/public/SponsorDealContent.tsx')), /\{view\.takesLogo && \(\s*<section/);
+  });
+
+  it('a pending GST/HST line is never scheduled as spending on Months: it rides the other-books row once', () => {
+    assert.match(stripComments(readSource('lib/club-budget-report.ts')), /if \(!inYear\(l\.entryDate\) \|\| isPassedOnTax\(l\)\) continue;/);
+    const pending = { amount: 130, entryType: 'expense' as const, status: 'pending' as const, bookKind: 'org', category: null, budgetItemId: '5b0d0529-0529-4c1b-8a50-7ea0507c0001' };
+    assert.deepEqual(otherBooksMovement([pending], 'scheduled'), { moneyIn: 0, moneyOut: 130 });
+  });
+
+  it('call 8: GST/HST remitted lowers the cash but is never spending, nor Off-plan; the month’s balance still closes', async () => {
+    const { GST_HST_REMITTED_ITEM_ID, spent, isPassedOnTax } = await import('../../lib/club-money-figures.ts');
+    const remitted = { amount: 130, entryType: 'expense' as const, status: 'posted' as const, bookKind: 'org', category: null, budgetItemId: GST_HST_REMITTED_ITEM_ID };
+    const gear = { ...remitted, amount: 40, budgetItemId: 'jerseys' };
+    assert.equal(isPassedOnTax(remitted), true);
+    assert.equal(countsAsActual(remitted), false);
+    assert.equal(spent([remitted, gear]), 40, 'a remittance is not spending');
+    const collected = { amount: 130, entryType: 'income' as const, status: 'posted' as const, bookKind: 'org', category: 'gst_hst_collected' };
+    assert.deepEqual(otherBooksMovement([collected, remitted, gear], 'actual'), { moneyIn: 130, moneyOut: 130 });
+    assert.ok(CLUB_ONLY_ITEM_IDS.includes(GST_HST_REMITTED_ITEM_ID));
+    assert.equal(itemVisibleToTeam({ id: GST_HST_REMITTED_ITEM_ID, org_id: null }, 'org', 'team'), false);
+    const sql = readSource('supabase/migrations/529_a_revised_invoice_keeps_its_first_figures.sql');
+    assert.match(sql, new RegExp(`'${GST_HST_REMITTED_ITEM_ID}'::uuid, c\\.id, NULL, 'GST/HST remitted', 90, true, false, NULL, 'out'`));
   });
 });

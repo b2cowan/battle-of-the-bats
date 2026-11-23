@@ -6221,6 +6221,60 @@
         "column_default": null
       },
       {
+        "table_name": "club_sponsor_deals",
+        "pos": 56,
+        "column_name": "original_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 57,
+        "column_name": "original_charge_tax",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 58,
+        "column_name": "original_tax_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 59,
+        "column_name": "original_tax_rate",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 60,
+        "column_name": "original_tax_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 61,
+        "column_name": "original_total",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "club_sponsor_invoice_counters",
         "pos": 1,
         "column_name": "org_id",
@@ -49283,6 +49337,12 @@
         "table_name": "club_sponsor_deals",
         "detail": "club_sponsor_deals_offered_to_check",
         "check_clause": "((offered_to IS NULL) OR (((char_length(offered_to) >= 3) AND (char_length(offered_to) <= 254)) AND (offered_to = lower(offered_to))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_original_whole",
+        "check_clause": "(((original_total IS NULL) = (original_amount IS NULL)) AND ((original_total IS NULL) = (original_charge_tax IS NULL)) AND ((original_total IS NULL) OR (revised_on IS NOT NULL)))"
       },
       {
         "kind": "CHECK",

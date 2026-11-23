@@ -2726,6 +2726,9 @@ export interface SponsorInvoiceOptions {
   paidInFullLabel?: string | null;
   /** Some money has arrived but not all: the due date reads "Balance due". */
   partPaid?: boolean;
+  /** The club withdrew the deal after invoicing it (owner call 3, walk §562): "Withdrawn {date}" leads the subtitle, as
+   *  "Paid in full" does (no stamp), and How to pay goes. Never set on the coach's invoice. */
+  withdrawnLabel?: string | null;
   /** The three figures, formatted: invoiced · paid · balance due. */
   invoiced: string;
   paid: string;
@@ -2890,10 +2893,13 @@ function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage):
   doc.text('Invoice', MARGIN, y);
   y += 5;
   const partPaid = !paidInFull && !!opts.partPaid;
+  const withdrawn = !paidInFull && !!opts.withdrawnLabel;
   const subtitle = paidInFull
     ? [opts.paidInFullLabel ? `Paid in full ${opts.paidInFullLabel}` : 'Paid in full', `No. ${opts.number}`, `Issued ${opts.issuedLabel}`, opts.revisedLabel ? `Revised ${opts.revisedLabel}` : null]
-    : [`No. ${opts.number}`, `Issued ${opts.issuedLabel}`, opts.revisedLabel ? `Revised ${opts.revisedLabel}` : null,
-      opts.dueLabel ? `${partPaid ? 'Balance due' : 'Due'} ${opts.dueLabel}` : null];
+    : withdrawn
+      ? [`Withdrawn ${opts.withdrawnLabel}`, `No. ${opts.number}`, `Issued ${opts.issuedLabel}`, opts.revisedLabel ? `Revised ${opts.revisedLabel}` : null]
+      : [`No. ${opts.number}`, `Issued ${opts.issuedLabel}`, opts.revisedLabel ? `Revised ${opts.revisedLabel}` : null,
+        opts.dueLabel ? `${partPaid ? 'Balance due' : 'Due'} ${opts.dueLabel}` : null];
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(90, 90, 110);
@@ -2944,8 +2950,8 @@ function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage):
     [r.description, ...(r.sub ?? []).map(s => `•  ${s}`)].join('\n'), r.amount,
   ]), { 1: { halign: 'right', cellWidth: 40 } });
 
-  // ── How to pay — gone once nothing is owed ─────────────────────────────────
-  if (!paidInFull) {
+  // ── How to pay — gone once nothing is owed (paid, or withdrawn) ─────────────
+  if (!paidInFull && !withdrawn) {
     // A cheque line only says where to mail one; with neither way given it still names the payee (R1).
     const { etransferEmail, chequeAddress } = opts.howToPay;
     const ways = [
@@ -2968,7 +2974,9 @@ function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage):
   const thanks = `Thank you for supporting ${teamName}.`;
   const who = opts.questionsTo?.trim().replace(/[.\s]+$/, '');
   const ask = who ? `Questions about this invoice? Contact ${who}.` : null;
-  const closing = paidInFull ? ['Paid in full.', thanks, ask].filter(Boolean).join(' ') : [ask, thanks].filter(Boolean).join(' ');
+  const closing = paidInFull ? ['Paid in full.', thanks, ask].filter(Boolean).join(' ')
+    : withdrawn ? ['This invoice was withdrawn. Nothing is owed.', ask].filter(Boolean).join(' ')
+      : [ask, thanks].filter(Boolean).join(' ');
   const closingLines: string[] = doc.splitTextToSize(closing, contentWidth);
   if (y + closingLines.length * 4 + 2 > pageHeight - 13) {
     doc.addPage();

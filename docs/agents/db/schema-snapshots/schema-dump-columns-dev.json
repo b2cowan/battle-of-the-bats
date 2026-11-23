@@ -6219,6 +6219,60 @@
     "ordinal_position": 55
   },
   {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 56
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_charge_tax",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 57
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_tax_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 58
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_tax_rate",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 59
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_tax_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 60
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_total",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 61
+  },
+  {
     "table_name": "club_sponsor_invoice_counters",
     "column_name": "org_id",
     "data_type": "uuid",

@@ -389,10 +389,15 @@ export const DEAL_WORDS = {
     // Part 2 emails no invoice (Part 3 does): until then the page itself shows it, so the words say that (/ux 2026-11-23, owner: apply).
     // Round 1 tab 4, verbatim, now that Part 3a emails the invoice (/legal: the pay block, the Email hint and the help change together).
     cardOffLine: (club: string) => `${club} will email your invoice with how to pay by cheque or e-transfer. You won’t be charged on this page.`,
+    // Owner call 4 at walk §562 (2026-11-23): a club with no mailing address or no contact for sponsors can't email the
+    // invoice, so the page promises only what it does — the invoice appears here once the business sends.
+    cardOffLineNoEmail: 'Your invoice appears on this page once you send, with how to pay by cheque or e-transfer. You won’t be charged on this page.', // DRAFT
     // Owner 2026-11-23: the button sends the form; it pays nothing. How to pay comes with the invoice (the line under it).
     send: 'Send',
     sendChequeNote: 'Your invoice comes by email, with how to pay.', // round 2 tab 1, verbatim
     sendChequeNotePhone: 'Your invoice comes by email.',
+    sendChequeNoteNoEmail: 'Your invoice appears on this page, with how to pay.', // DRAFT (owner call 4, walk §562)
+    sendChequeNoteNoEmailPhone: 'Your invoice appears on this page.', // DRAFT
     sending: 'Sending…', // DRAFT
     change: 'Change', // Stage 4 ruling 20: a business that comes back sees its answers and Change
     save: 'Save changes', // DRAFT

@@ -1407,6 +1407,29 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   compiles. Found and fixed at the review: the Months balance now carries GST/HST collected (so Cash still closes on Cash on hand;
   the row reads "The club’s other books and GST/HST collected"), and a post-payment place failure no longer fails a committed payment
   or skips the receipt. Part 3b (card, refunds drawn first): `BOARD_READY_STAGE6_P3B_KICKOFF_PROMPT.md`.
+  **Walk §562 passed 46 of 46, 2026-11-23**; the eight owner calls ruled, each as recommended:
+  leave as built (Sponsorships is enough to record and void), one tax row on Months, not now for an "invoiced, not yet paid"
+  GST/HST figure — and five that ask for a build: **print "Withdrawn" on a withdrawn invoiced deal's PDF; soften the business
+  page's "we'll email your invoice" when the club can't email; keep the original figures on a revised invoice (migration 528,
+  dev-only); let a business add a logo after it has paid; add a "GST/HST remitted" word.** **The five built 2026-11-23** at
+  the owner's "build the five now", on dev, uncommitted, in files that avoid the other session's held deal page: the
+  withdrawn invoice says "Withdrawn {date}" in its subtitle (the house has no stamps; How to pay gone, $0.00 owing); the
+  business's page asks the sender's own question (`clubCanEmailInvoice`) before promising an email; **migration 529** (a
+  new one after 528, both prod-pending, rather than editing the committed 528) keeps the invoice's first figures on its
+  first revision and adds the club-only Admin word "GST/HST remitted" (fixed id), left out of every Budget vs. Actual
+  figure by `isPassedOnTax` and carried on Months' one row, now "The club's other books and GST/HST"; the logo route and
+  the receipt page take ONE logo on a paid deal, from a business that never sent one, while the deal runs (`linkTakesLogo`;
+  the write holds the once-only rule), and a logo save that writes no row no longer deletes the old file. `/review`
+  2026-11-23 (4 lenses) fixed: a paid deal's public logo could be replaced from a forwarded link with no time limit (now
+  add-once); a pending GST/HST line counted twice on Months' Scheduled lens (now on the other-books row only); a deal
+  revised before 529 would have stamped its earlier revision as the "first" figures (now left empty); the help article and
+  the export note named the old Months row. Left as found: `scripts/check-club-money-arithmetic.mjs` recomputes the
+  other-books net with no GST/HST term (a database check: report only); two uploads at once can leave one unused file in
+  storage. **529
+  applied to dev 2026-11-23** at the owner's word ("yes, apply 529 to dev"), twice, read back; snapshots refreshed (watermark
+  529); production pending in `MANUAL_PROD_STEPS.json`, before the promote. Owed: `/docs` (the club money article names GST/HST collected
+  only); `/marketing` on the DRAFT words; a short walk. Open owner question: a club can still put "GST/HST remitted" on
+  its plan, where it would show a planned cost no actual ever meets.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or

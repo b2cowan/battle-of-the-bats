@@ -22,8 +22,8 @@ import { CLUB_FORM_BUCKET, signupFormView, sponsorshipFormId } from './club-form
 import { dealLinkFormState, type DealLinkAnswer } from './club-form-deal';
 import { readPackage, readSettings } from './club-sponsorships-server';
 import { markDealOpened, readDeal } from './club-sponsorship-deals-server';
-import { dealBullets, linkTakesForm, type DealInvoice } from './club-sponsorship-deals';
-import { invoiceStanding } from './club-sponsor-invoice';
+import { dealBullets, linkTakesForm, linkTakesLogo, type DealInvoice } from './club-sponsorship-deals';
+import { clubCanEmailInvoice, invoiceStanding } from './club-sponsor-invoice';
 import { tournamentToday } from './timezone';
 import { payLinkSecret, readSponsorDealToken } from './sponsor-deal-link';
 import type { SignupFormView } from './club-form-signup';
@@ -109,6 +109,11 @@ export type SponsorPageView =
     /** `emailed`: its email went (the page says "also sent to" only then). */
     invoice: (DealInvoice & { email: string | null; emailed: boolean }) | null;
     howToPay: { etransferTo: string | null; chequesPayableTo: string | null; mailingAddress: string | null };
+    /** The club can email the invoice (its mailing address and a contact for sponsors): when not, the page never promises an
+     *  email (owner call 4 at walk §562) — the invoice appears on the page. */
+    clubCanEmail: boolean;
+    /** The page offers the logo box (`linkTakesLogo`): on the receipt page only to a business that never sent one. */
+    takesLogo: boolean;
     paid: boolean;
     /** What is still owing on the invoice (Part 3a); less than the total means a payment has arrived. */
     owing: number;
@@ -149,7 +154,7 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
     readPackage(org.id, deal.packageId),
     sponsorshipFormId(org.id),
     supabaseAdmin.from('club_sponsor_deals')
-      .select('business_name, contact_name, contact_email, phone, website, invoice_street, invoice_city, invoice_province, invoice_postal, logo_path, offered_to, club_sponsors(name, logo_url, contact_name, contact_email, phone, link, invoice_street, invoice_city, invoice_province, invoice_postal)')
+      .select('business_name, contact_name, contact_email, phone, website, invoice_street, invoice_city, invoice_province, invoice_postal, logo_path, logo_sent_at, offered_to, club_sponsors(name, logo_url, contact_name, contact_email, phone, link, invoice_street, invoice_city, invoice_province, invoice_postal)')
       .eq('org_id', org.id).eq('id', deal.id).single(),
   ]);
   if (biz.error) throw biz.error;
@@ -157,7 +162,7 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
   const b = biz.data as unknown as {
     business_name: string | null; contact_name: string | null; contact_email: string | null; phone: string | null; website: string | null;
     invoice_street: string | null; invoice_city: string | null; invoice_province: string | null; invoice_postal: string | null;
-    logo_path: string | null; offered_to: string | null; club_sponsors: S | S[] | null;
+    logo_path: string | null; logo_sent_at: string | null; offered_to: string | null; club_sponsors: S | S[] | null;
   };
   const s = (Array.isArray(b.club_sponsors) ? b.club_sponsors[0] : b.club_sponsors) ?? null;
   const pick = (a: string | null | undefined, c: string | null | undefined) => (a ?? c ?? '') || '';
@@ -196,6 +201,9 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
     sentBefore: !!deal.formAt,
     invoice: deal.invoice ? { ...deal.invoice, email: b.contact_email, emailed: !!deal.invoiceEmailedAt } : null,
     howToPay: { etransferTo: settings.etransferTo, chequesPayableTo: settings.chequesPayableTo ?? org.name, mailingAddress: settings.mailingAddress },
+    // club.contactEmail is the sender's reply-to (settings' contact, else the club's public one: offerContactOf).
+    clubCanEmail: clubCanEmailInvoice(settings.mailingAddress, club.contactEmail),
+    takesLogo: linkTakesLogo(deal, !!b.logo_sent_at, tournamentToday()),
     paid: deal.state === 'paid',
     owing: standing?.owing ?? 0,
     paidOn: deal.paidOn,
