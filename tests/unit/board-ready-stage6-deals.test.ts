@@ -73,7 +73,8 @@ const deal = (over: Partial<ClubDeal> = {}): ClubDeal => ({
   items: [{ id: 'banner', text: 'A field banner at Riverdale Park' }, { id: 'named', text: 'Named division' }], logoOnSite: true,
   placeKind: 'division', targetId: 't1', targetName: 'U9', endsOn: '2027-08-31', amount: 1000, chargeTax: true, state: 'offered',
   offeredOn: '2027-02-24', offeredAt: '2027-02-24T15:00:00Z', offeredByName: 'Dana Ruiz', offeredTo: 'frank@harbourdental.ca',
-  emailedAt: '2027-02-24T15:00:00Z', openedAt: null, linkUnsentAt: null, formAt: null, invoice: null, withdrawn: null, done: {}, ...over,
+  emailedAt: '2027-02-24T15:00:00Z', openedAt: null, linkUnsentAt: null, formAt: null, invoice: null, withdrawn: null, done: {},
+  revisedOn: null, invoiceEmailedAt: null, paidOn: null, paidHow: null, paidAmount: 0, ...over,
 });
 
 describe('the states follow the money (ask 4)', () => {

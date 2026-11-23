@@ -79,6 +79,7 @@ export interface BookRowOut {
     | { kind: 'allocation'; allocationId: string | null; splitId: string | null; installmentId: string | null; teamId: string | null }
     | { kind: 'request'; requestId: string | null; teamId: string | null }
     | { kind: 'league_fee'; registrationId: string | null }
+    | { kind: 'sponsorship_deal'; dealId: string | null }
     | { kind: 'transfer'; partnerLedgerId: string | null; partnerLedgerName: string | null }
     | { kind: 'hand' };
   /** What the ledger lets you do with it: edit + void a hand line, void both halves of a club
@@ -317,6 +318,10 @@ function shapeLine(
     // Who paid and how it came — a card or bank payment stamps the guardian's name when it lands (online-payment-landing).
     detail = [payeeName, storedHow(l.paymentMethod)].filter(Boolean).join(' · ') || null;
     source = { kind: 'league_fee', registrationId: l.sourceEntityId };
+  } else if (l.sourceModule === SOURCE_MODULE.sponsorshipDeal) {
+    // A sponsor's payment (Part 3a): "Cheque 004417", and its invoice ("Invoice 2027-014 · from Sponsorships", round 1 tab 7).
+    detail = [storedHow(l.paymentMethod), l.notes ? `${l.notes} · from Sponsorships` : 'from Sponsorships'].filter(Boolean).join(' · ');
+    source = { kind: 'sponsorship_deal', dealId: l.sourceEntityId };
   } else if (type === 'transfer') {
     const other = partner?.name ?? 'another book';
     what = moneyIn ? `From ${other}` : `To ${other}`;

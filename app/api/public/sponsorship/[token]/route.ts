@@ -15,6 +15,7 @@ import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { tournamentToday } from '@/lib/timezone';
+import { emailDealInvoice } from '@/lib/sponsor-invoice-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,8 @@ const P = DEAL_WORDS.page;
  * ticked needs this browser's hand-over receipt; a document whose current version this deal already ticked isn't asked
  * again. Then, in ONE transaction (mig 526 `club_sponsor_deal_receive`): the business record, the deal's copy, the
  * answers, files and ticks, and — choosing a cheque or e-transfer issues the invoice at once (ask 4) — its number, with
- * the tax at the rate of the province typed (ask 9) when the club is registered and the deal's switch is on.
+ * the tax at the rate of the province typed (ask 9) when the club is registered and the deal's switch is on. Then the
+ * invoice is emailed to the address the business typed (Part 3a).
  * Answers: 200 { view } (the page redraws as the thank-you); 400 { errors, missing }; 409 { code: 'form_changed', view }
  * or { code: 'closed', view }.
  */
@@ -125,5 +127,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     console.error('[sponsorship-link] receiving a business failed:', code ?? 'no code');
     return NextResponse.json({ error: P.errFailed }, { status: 500 });
   }
+  // The invoice goes by email at once (Part 3a; owner call (2): a link, no attachment). Awaited, never `after()` (it is
+  // dropped on the host); a failed send never fails the step — the page shows the invoice either way.
+  await emailDealInvoice(org.id, org.slug, deal.id, 'issued');
   return NextResponse.json({ view: await fresh() });
 }, { route: '/api/public/sponsorship/[token]' });

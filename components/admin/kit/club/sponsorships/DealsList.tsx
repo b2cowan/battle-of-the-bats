@@ -34,7 +34,8 @@ const FOLDED: ReadonlySet<DealBand> = new Set(['delivered', 'withdrawn']);
 /** The row's grey line under the business (round 1 tab 5). */
 function subLine(d: ListedDeal): string {
   if (d.state === 'withdrawn' && d.withdrawn) return D.list.withdrawnOn(d.withdrawn.at);
-  // "Paid Feb 14 · card" needs the payment's day and way, which Part 3 records; until then a paid deal reads as its invoice.
+  // Round 1 tab 5: "Paid Feb 14 · cheque" — the day it was paid in full and how the last payment came (Part 3a).
+  if (d.state === 'paid' && d.paidOn && d.paidHow) return D.list.paidOn(d.paidOn, d.paidHow);
   if ((d.state === 'invoiced' || d.state === 'paid') && d.invoice) return D.list.invoiceDue(d.invoice.number, d.invoice.dueOn);
   if (d.state === 'form_received' && d.formAt) return D.list.cardNotFinished(d.formAt);
   if (!d.emailedAt) return d.openedAt ? D.list.linkOnlyOpened(d.offeredAt, d.openedAt) : D.list.linkOnly(d.offeredAt);

@@ -2340,6 +2340,76 @@
     "update_rule": null
   },
   {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_deal_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "deal_id",
+    "foreign_table": "club_sponsor_deals",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_income_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "income_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_recorded_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "recorded_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_tax_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tax_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_voided_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "voided_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "club_sponsor_deals",
     "constraint_name": "club_sponsor_deals_offered_by_fkey",
     "constraint_type": "FOREIGN KEY",

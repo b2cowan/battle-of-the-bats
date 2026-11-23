@@ -29,6 +29,7 @@ export type BudgetItemTier = 'platform' | 'club' | 'team';
 
 /** Anything with the ownership columns and the sport tag — all any reader here needs. */
 export interface OwnedBudgetItem {
+  id?: string;
   org_id?: string | null;
   team_id?: string | null;
   /** mig 241 — which sports this is offered to. Null/absent = every sport, the common case. */
@@ -62,6 +63,13 @@ export const ITEM_TIER_LABEL: Record<BudgetItemTier, string> = {
 };
 
 /**
+ * The club's own standard words no team ever files under (Board Ready Stage 6 Part 3a, mig 528): "Club sponsorship" is the
+ * club's sponsorship income, written only by a deal. A team's sponsorships stay the team's ("Team sponsorship", 2026-11-06),
+ * so the word is off every team's picker and plan. Fixed ids (mig 528); never change them.
+ */
+export const CLUB_ONLY_ITEM_IDS: readonly string[] = ['5b0d0528-0528-4c1b-8a50-7ea0507c0001'];
+
+/**
  * May this team see this item in its picker?
  *
  * ⚠ THE WHOLE RULE IN ONE PREDICATE, because "which items can I pick?" is asked by the item list,
@@ -69,6 +77,7 @@ export const ITEM_TIER_LABEL: Record<BudgetItemTier, string> = {
  * refuses is the drift this exists to stop.
  */
 export function itemVisibleToTeam(item: OwnedBudgetItem, orgId: string, teamId: string): boolean {
+  if (item.id && CLUB_ONLY_ITEM_IDS.includes(item.id)) return false;
   if (!item.org_id) return true;                 // platform default
   if (item.org_id !== orgId) return false;       // another club's, at any tier
   return !item.team_id || item.team_id === teamId;

@@ -49,8 +49,27 @@ p.addressHint { margin: 0.1rem 0 0.75rem; }
 .invoice { margin: 0 0 1.25rem; padding: 1rem 1.125rem; border: 1px solid var(--club-line, var(--border-2)); border-radius: 12px; background: var(--club-card); }
 .invoiceTitle { margin: 0; font: 700 1.0625rem var(--club-text-face); color: var(--club-text); }
 .invoiceMeta { margin: 0.25rem 0 0; font: 400 0.875rem/1.45 var(--club-text-face); color: var(--club-soft); }
-.howTitle { margin: 1rem 0 0.25rem; font: 700 0.9375rem var(--club-text-face); color: var(--club-text); }
-.howLine { margin: 0.25rem 0 0; font: 400 0.9375rem/1.5 var(--club-text-face); color: var(--club-text); overflow-wrap: anywhere; }
+/* How to pay: its own block under a rule, a label over what to do for each way, then the reference to quote. */
+.how { margin: 1rem 0 0; padding: 1rem 0 0; border-top: 1px solid var(--club-line, var(--border-2)); }
+.howTitle { margin: 0 0 0.5rem; font: 700 0.9375rem var(--club-text-face); color: var(--club-text); }
+.howList { margin: 0; }
+.howList > div { padding: 0.75rem 0; }
+.howList > div:first-child { padding-top: 0.25rem; }
+.howList > div + div { border-top: 1px solid var(--club-line, var(--border-2)); }
+.howList dt { margin: 0 0 0.25rem; font: 600 0.8125rem var(--club-text-face); color: var(--club-soft); }
+.howList dd { margin: 0; font: 400 0.9375rem/1.5 var(--club-text-face); color: var(--club-text); overflow-wrap: anywhere; }
+.howList dd + dd { margin-top: 0.5rem; }
+.howMail { display: flex; flex-direction: column; }
+.howMailLabel { margin-bottom: 0.125rem; color: var(--club-soft); }
+.howMailLine { display: block; }
+/* The invoice card's facts: Issued / Due / Emailed to, one per line, the labels in one column. */
+.invoiceFacts { display: grid; grid-template-columns: auto 1fr; gap: 0.125rem 1rem; margin: 0.5rem 0 0; font: 400 0.9375rem/1.45 var(--club-text-face); }
+.invoiceFacts > div { display: contents; }
+.invoiceFacts dt { color: var(--club-soft); }
+.invoiceFacts dd { margin: 0; color: var(--club-text); overflow-wrap: anywhere; }
+/* An email address is long: its label sits on its own line above it so it is never broken mid-word. */
+.invoiceFactWide dd { grid-column: 1 / -1; }
+.howQuote { margin: 0.5rem 0 0; font: 400 0.875rem/1.45 var(--club-text-face); color: var(--club-soft); }
 .revisit { margin: 1rem 0 1.25rem; font: 400 0.875rem/1.5 var(--club-text-face); color: var(--club-soft); }
 
 .foot { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--club-line, var(--border-2)); font: 400 0.875rem/1.5 var(--club-text-face); color: var(--club-text); }
@@ -61,3 +80,12 @@ p.addressHint { margin: 0.1rem 0 0.75rem; }
 .closed { padding: 2.5rem 0.5rem; text-align: center; font: 400 1rem/1.5 var(--club-text-face); color: var(--club-text); }
 .closed p { margin: 0; }
 .closed p + p { margin-top: 0.5rem; }
+
+/* Part 3a: the invoice's PDF, and the receipt once paid in full (round 2 tab 1: plain lines, one rule above Paid). */
+.invoiceTo { margin: 0.25rem 0 0; font: 600 0.9375rem var(--club-text-face); color: var(--club-text); }
+.download { display: inline-flex; align-items: center; min-height: 44px; margin-top: 0.5rem; font: 700 0.9375rem var(--club-text-face); color: var(--club-ink); }
+.receiptLines { margin: 0.75rem 0 0; }
+.receiptLines > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; font: 400 0.9375rem var(--club-text-face); color: var(--club-soft); }
+.receiptLines dt { overflow-wrap: anywhere; }
+.receiptLines dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.receiptTotal { border-top: 1px solid var(--club-line, var(--border-2)); margin-top: 0.3rem; padding-top: 0.4rem !important; color: var(--club-text) !important; font-weight: 700; }

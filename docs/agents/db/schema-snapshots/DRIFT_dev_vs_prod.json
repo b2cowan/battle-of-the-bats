@@ -1,456 +1,852 @@
 {
   "generated": "2026-11-23",
-  "total": 111,
+  "total": 210,
   "counts": {
-    "tables": 4,
-    "columns": 53,
-    "indexes": 9,
-    "constraints": 12,
-    "rls": 33
+    "tables": 6,
+    "columns": 99,
+    "indexes": 16,
+    "constraints": 27,
+    "rls": 62
   },
   "items": [
     {
-      "key": "check:changed:club_forms.club_forms_owner_table_check",
-      "sig": "(owner_table = ANY (ARRAY['league_seasons'::text, 'organizations'::text])) :: (owner_table = 'league_seasons'::text)"
+      "key": "check:changed:club_form_answer_clears.club_form_answer_clears_subject_table_check",
+      "sig": "((subject_table IS NULL) OR (subject_table = ANY (ARRAY['league_registrations'::text, 'club_sponsor_deals'::text]))) :: ((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
     },
     {
-      "key": "check:changed:platform_plan_module_entitlements.platform_plan_module_entitlements_module_check",
-      "sig": "(module_key = ANY (ARRAY['module_tournaments'::text, 'module_communications'::text, 'module_members'::text, 'module_public_site'::text, 'module_house_league'::text, 'module_accounting'::text, 'module_rep_teams'::text, 'module_families'::text, 'module_sponsorships'::text])) :: (module_key = ANY (ARRAY['module_tournaments'::text, 'module_communications'::text, 'module_members'::text, 'module_public_site'::text, 'module_house_league'::text, 'module_accounting'::text, 'module_rep_teams'::text]))"
+      "key": "check:changed:club_form_answers.club_form_answers_subject_table_check",
+      "sig": "((subject_table IS NULL) OR (subject_table = ANY (ARRAY['league_registrations'::text, 'club_sponsor_deals'::text]))) :: ((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
     },
     {
-      "key": "check:only-dev:club_forms.club_forms_owner_kind",
+      "key": "check:changed:club_form_files.club_form_files_subject_table_check",
+      "sig": "((subject_table IS NULL) OR (subject_table = ANY (ARRAY['league_registrations'::text, 'club_sponsor_deals'::text]))) :: ((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
+    },
+    {
+      "key": "check:changed:club_form_ticks.club_form_ticks_subject_table_check",
+      "sig": "(subject_table = ANY (ARRAY['league_registrations'::text, 'club_sponsor_deals'::text])) :: (subject_table = 'league_registrations'::text)"
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_items.club_sponsor_deal_items_done_by_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_items.club_sponsor_deal_items_item_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_recorded_by_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_reference_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_void_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_void_whole",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_voided_by_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_business_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_contact_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_contact_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_emailed_to",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_invoice_city_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_invoice_postal_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_invoice_province_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_invoice_seq_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_invoice_street_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_invoice_whole",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_invoice_year_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_invoiced_numbered",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_link_version_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_logo_path_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_offered_by_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_offered_to_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_package_items_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_package_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_paid_on",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_pay_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_phone_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_place_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_revised_invoiced",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_state_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_target",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_target_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_tax_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_tax_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_tax_rate_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_tax_whole",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_total_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_website_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_withdrawn_by_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_withdrawn_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_withdrawn_whole",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_invoice_counters.club_sponsor_invoice_counters_last_seq_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_invoice_counters.club_sponsor_invoice_counters_year_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offer_stops.club_sponsor_offer_stops_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offer_stops.club_sponsor_offer_stops_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offer_stops.club_sponsor_offer_stops_stopped_by_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offer_stops.club_sponsor_offer_stops_who",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offers.club_sponsor_offers_business_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offers.club_sponsor_offers_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offers.club_sponsor_offers_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offers.club_sponsor_offers_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_sponsor_offers.club_sponsor_offers_sent_by_name_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_items.deal_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_items.done_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_items.done_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_items.done_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_items.item_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_items.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.deal_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.income_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.received_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.recorded_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.recorded_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.recorded_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.reference",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.tax_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.tax_part",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.void_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.voided_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.voided_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_payments.voided_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.business_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.charge_tax",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.contact_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.contact_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.due_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.emailed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.ends_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.form_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.invoice_city",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.invoice_emailed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.invoice_postal",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.invoice_province",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deals.invoice_seq",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsor_places.club_sponsor_places_kind_check",
+      "key": "column:only-dev:club_sponsor_deals.invoice_street",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsor_places.club_sponsor_places_source",
+      "key": "column:only-dev:club_sponsor_deals.invoice_year",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsor_places.club_sponsor_places_source_check",
+      "key": "column:only-dev:club_sponsor_deals.invoiced_at",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsor_places.club_sponsor_places_target",
+      "key": "column:only-dev:club_sponsor_deals.invoiced_on",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_contact_email_check",
+      "key": "column:only-dev:club_sponsor_deals.link_unsent_at",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_contact_name_check",
+      "key": "column:only-dev:club_sponsor_deals.link_version",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_invoice_city_check",
+      "key": "column:only-dev:club_sponsor_deals.logo_on_site",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_invoice_postal_check",
+      "key": "column:only-dev:club_sponsor_deals.logo_path",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_invoice_province_check",
+      "key": "column:only-dev:club_sponsor_deals.logo_sent_at",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_invoice_street_check",
+      "key": "column:only-dev:club_sponsor_deals.offered_at",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_link_check",
+      "key": "column:only-dev:club_sponsor_deals.offered_by",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_logo_url_check",
+      "key": "column:only-dev:club_sponsor_deals.offered_by_name",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_name_check",
+      "key": "column:only-dev:club_sponsor_deals.offered_on",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsors.club_sponsors_phone_check",
+      "key": "column:only-dev:club_sponsor_deals.offered_to",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_packages.club_sponsorship_packages_document_name_check",
+      "key": "column:only-dev:club_sponsor_deals.opened_at",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_packages.club_sponsorship_packages_document_size_check",
+      "key": "column:only-dev:club_sponsor_deals.org_id",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_packages.club_sponsorship_packages_document_whole",
+      "key": "column:only-dev:club_sponsor_deals.package_id",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_packages.club_sponsorship_packages_how_many_check",
+      "key": "column:only-dev:club_sponsor_deals.package_items",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_packages.club_sponsorship_packages_items_check",
+      "key": "column:only-dev:club_sponsor_deals.package_name",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_packages.club_sponsorship_packages_name_check",
+      "key": "column:only-dev:club_sponsor_deals.paid_on",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_packages.club_sponsorship_packages_place_kind_check",
+      "key": "column:only-dev:club_sponsor_deals.pay_method",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_packages.club_sponsorship_packages_price_check",
+      "key": "column:only-dev:club_sponsor_deals.phone",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_settings.club_sponsorship_settings_cheques_payable_to_check",
+      "key": "column:only-dev:club_sponsor_deals.place_kind",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_settings.club_sponsorship_settings_etransfer_to_check",
+      "key": "column:only-dev:club_sponsor_deals.receipt_emailed_at",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_settings.club_sponsorship_settings_gst_hst_number_check",
+      "key": "column:only-dev:club_sponsor_deals.revised_on",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_settings.club_sponsorship_settings_payment_due_days_check",
+      "key": "column:only-dev:club_sponsor_deals.sponsor_id",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_settings.club_sponsorship_settings_registered_number",
+      "key": "column:only-dev:club_sponsor_deals.state",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_settings.club_sponsorship_settings_sponsor_contact_email_check",
+      "key": "column:only-dev:club_sponsor_deals.target_id",
       "sig": ""
     },
     {
-      "key": "check:only-dev:club_sponsorship_settings.club_sponsorship_settings_sponsor_contact_name_check",
+      "key": "column:only-dev:club_sponsor_deals.target_name",
       "sig": ""
     },
     {
-      "key": "check:only-dev:org_payment_accounts.org_payment_accounts_sponsor_fee_payer_chk",
+      "key": "column:only-dev:club_sponsor_deals.tax_amount",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.created_at",
+      "key": "column:only-dev:club_sponsor_deals.tax_kind",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.deal_id",
+      "key": "column:only-dev:club_sponsor_deals.tax_rate",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.ends_on",
+      "key": "column:only-dev:club_sponsor_deals.total",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.id",
+      "key": "column:only-dev:club_sponsor_deals.updated_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.kind",
+      "key": "column:only-dev:club_sponsor_deals.website",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.org_id",
+      "key": "column:only-dev:club_sponsor_deals.withdrawn_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.source",
+      "key": "column:only-dev:club_sponsor_deals.withdrawn_by",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.sponsor_id",
+      "key": "column:only-dev:club_sponsor_deals.withdrawn_by_name",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.target_id",
+      "key": "column:only-dev:club_sponsor_deals.withdrawn_reason",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsor_places.updated_at",
+      "key": "column:only-dev:club_sponsor_invoice_counters.last_seq",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.contact_email",
+      "key": "column:only-dev:club_sponsor_invoice_counters.org_id",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.contact_name",
+      "key": "column:only-dev:club_sponsor_invoice_counters.year",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.created_at",
+      "key": "column:only-dev:club_sponsor_offer_stops.email",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.created_by",
+      "key": "column:only-dev:club_sponsor_offer_stops.org_id",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.id",
+      "key": "column:only-dev:club_sponsor_offer_stops.source",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.invoice_city",
+      "key": "column:only-dev:club_sponsor_offer_stops.stopped_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.invoice_postal",
+      "key": "column:only-dev:club_sponsor_offer_stops.stopped_by",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.invoice_province",
+      "key": "column:only-dev:club_sponsor_offer_stops.stopped_by_name",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.invoice_street",
+      "key": "column:only-dev:club_sponsor_offers.business_name",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.link",
+      "key": "column:only-dev:club_sponsor_offers.deal_id",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.logo_url",
+      "key": "column:only-dev:club_sponsor_offers.email",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.name",
+      "key": "column:only-dev:club_sponsor_offers.id",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.org_id",
+      "key": "column:only-dev:club_sponsor_offers.kind",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.phone",
+      "key": "column:only-dev:club_sponsor_offers.org_id",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.position",
+      "key": "column:only-dev:club_sponsor_offers.reason",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsors.updated_at",
+      "key": "column:only-dev:club_sponsor_offers.reason_on",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.archived_at",
+      "key": "column:only-dev:club_sponsor_offers.sent_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.created_at",
+      "key": "column:only-dev:club_sponsor_offers.sent_by",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.created_by",
+      "key": "column:only-dev:club_sponsor_offers.sent_by_name",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.document_name",
+      "key": "constraint:only-dev:club_sponsor_deal_items.club_sponsor_deal_items_deal_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.document_path",
+      "key": "constraint:only-dev:club_sponsor_deal_items.club_sponsor_deal_items_done_by_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.document_size",
+      "key": "constraint:only-dev:club_sponsor_deal_items.club_sponsor_deal_items_org_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.how_many",
+      "key": "constraint:only-dev:club_sponsor_deal_items.club_sponsor_deal_items_pkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.id",
+      "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_deal_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.items",
+      "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_income_entry_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.logo_on_site",
+      "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_org_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.name",
+      "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_pkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.org_id",
+      "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_recorded_by_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.place_kind",
+      "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_tax_entry_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.price",
+      "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_voided_by_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.shows_until",
+      "key": "constraint:only-dev:club_sponsor_deals.club_sponsor_deals_offered_by_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_packages.updated_at",
+      "key": "constraint:only-dev:club_sponsor_deals.club_sponsor_deals_org_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.cheques_payable_to",
+      "key": "constraint:only-dev:club_sponsor_deals.club_sponsor_deals_package_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.etransfer_to",
+      "key": "constraint:only-dev:club_sponsor_deals.club_sponsor_deals_pkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.gst_hst_number",
+      "key": "constraint:only-dev:club_sponsor_deals.club_sponsor_deals_sponsor_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.gst_hst_registered",
+      "key": "constraint:only-dev:club_sponsor_deals.club_sponsor_deals_withdrawn_by_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.org_id",
+      "key": "constraint:only-dev:club_sponsor_invoice_counters.club_sponsor_invoice_counters_org_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.payment_due_days",
+      "key": "constraint:only-dev:club_sponsor_invoice_counters.club_sponsor_invoice_counters_pkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.sponsor_contact_email",
+      "key": "constraint:only-dev:club_sponsor_offer_stops.club_sponsor_offer_stops_org_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.sponsor_contact_name",
+      "key": "constraint:only-dev:club_sponsor_offer_stops.club_sponsor_offer_stops_pkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.updated_at",
+      "key": "constraint:only-dev:club_sponsor_offer_stops.club_sponsor_offer_stops_stopped_by_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:club_sponsorship_settings.updated_by",
+      "key": "constraint:only-dev:club_sponsor_offers.club_sponsor_offers_deal_id_fkey",
       "sig": ""
     },
     {
-      "key": "column:only-dev:org_payment_accounts.sponsor_fee_payer",
+      "key": "constraint:only-dev:club_sponsor_offers.club_sponsor_offers_org_id_fkey",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsor_places.club_sponsor_places_org_id_fkey",
+      "key": "constraint:only-dev:club_sponsor_offers.club_sponsor_offers_pkey",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsor_places.club_sponsor_places_pkey",
+      "key": "constraint:only-dev:club_sponsor_offers.club_sponsor_offers_sent_by_fkey",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsor_places.club_sponsor_places_sponsor_id_fkey",
+      "key": "constraint:only-dev:club_sponsor_places.club_sponsor_places_deal_fk",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsors.club_sponsors_created_by_fkey",
+      "key": "index:only-dev:club_sponsor_deal_items_org_idx",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsors.club_sponsors_org_id_fkey",
+      "key": "index:only-dev:club_sponsor_deal_items_pkey",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsors.club_sponsors_pkey",
+      "key": "index:only-dev:club_sponsor_deal_payments_deal_idx",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsorship_packages.club_sponsorship_packages_created_by_fkey",
+      "key": "index:only-dev:club_sponsor_deal_payments_pkey",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsorship_packages.club_sponsorship_packages_org_id_fkey",
+      "key": "index:only-dev:club_sponsor_deals_invoice_uniq",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsorship_packages.club_sponsorship_packages_pkey",
+      "key": "index:only-dev:club_sponsor_deals_org_idx",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsorship_settings.club_sponsorship_settings_org_id_fkey",
+      "key": "index:only-dev:club_sponsor_deals_package_idx",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsorship_settings.club_sponsorship_settings_pkey",
+      "key": "index:only-dev:club_sponsor_deals_pkey",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:club_sponsorship_settings.club_sponsorship_settings_updated_by_fkey",
+      "key": "index:only-dev:club_sponsor_deals_sponsor_idx",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsor_places_pkey",
+      "key": "index:only-dev:club_sponsor_deals_target_idx",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsor_places_sponsor_idx",
+      "key": "index:only-dev:club_sponsor_invoice_counters_pkey",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsor_places_target_idx",
+      "key": "index:only-dev:club_sponsor_offer_stops_pkey",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsor_places_typed_once",
+      "key": "index:only-dev:club_sponsor_offers_deal_idx",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsors_org_idx",
+      "key": "index:only-dev:club_sponsor_offers_org_idx",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsors_pkey",
+      "key": "index:only-dev:club_sponsor_offers_pkey",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsorship_packages_org_idx",
+      "key": "index:only-dev:club_sponsor_places_one_per_deal",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsorship_packages_pkey",
+      "key": "table:only-dev:club_sponsor_deal_items",
       "sig": ""
     },
     {
-      "key": "index:only-dev:club_sponsorship_settings_pkey",
+      "key": "table:only-dev:club_sponsor_deal_payments",
       "sig": ""
     },
     {
-      "key": "table:only-dev:club_sponsor_places",
+      "key": "table:only-dev:club_sponsor_deals",
       "sig": ""
     },
     {
-      "key": "table:only-dev:club_sponsors",
+      "key": "table:only-dev:club_sponsor_invoice_counters",
       "sig": ""
     },
     {
-      "key": "table:only-dev:club_sponsorship_packages",
+      "key": "table:only-dev:club_sponsor_offer_stops",
       "sig": ""
     },
     {
-      "key": "table:only-dev:club_sponsorship_settings",
+      "key": "table:only-dev:club_sponsor_offers",
       "sig": ""
     }
   ]

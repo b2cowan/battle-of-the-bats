@@ -4,11 +4,13 @@ import { isUuid } from '@/lib/utils';
 import { refused, requireSponsorships } from '@/lib/club-sponsorships-auth';
 import { readPlaceTargets, readSettings } from '@/lib/club-sponsorships-server';
 import {
-  changeDealPlace, changeDealTerms, readDeal, readDealBusiness, readDealOffers, readDeals, readOfferBars,
+  changeDealPlace, changeDealTerms, readDeal, readDealBusiness, readDealOffers, readDealProvince, readDeals, readOfferBars,
+  reviseDealInvoice,
 } from '@/lib/club-sponsorship-deals-server';
+import { emailDealInvoice } from '@/lib/sponsor-invoice-email';
 import { readDealAnswers } from '@/lib/club-form-staff';
 import { dealLinkUrl, findTarget, offerContactOf } from '@/lib/club-sponsorship-deal-actions';
-import { bandOf, emailBarFor } from '@/lib/club-sponsorship-deals';
+import { bandOf, canRevise, dealFigures, emailBarFor, linkTakesForm } from '@/lib/club-sponsorship-deals';
 import { parsePrice } from '@/lib/club-sponsorships';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
@@ -20,7 +22,10 @@ import { isCalendarDate, tournamentToday } from '@/lib/timezone';
  * as its link sent it, its answers (`readDealAnswers`, the Stage 4 staff reader — this route is its one caller, behind
  * Sponsorships), the offer emails sent, whether its address may still be emailed, the copyable link at its current version.
  * PATCH changes where it shows and its last day (any state but withdrawn: "A deal's place changes on the deal", ask 1), or
- * its amount and tax switch while the offer is open (an issued invoice's figures wait for Part 3's revised invoice).
+ * its amount and tax switch: while the offer is open, the offer's; once invoiced (and nothing paid), the REVISED invoice
+ * (Part 3a) — the number kept, the figures worked out again at the rate of the business's invoice province today, the
+ * revision's day stamped, and the revised invoice emailed. Money on the invoice refuses it (void the payment first).
+ * GET also carries the deal's payments (Record a payment's money band, the void).
  */
 export const dynamic = 'force-dynamic';
 
@@ -41,12 +46,13 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     readSettings(org.id), readPlaceTargets(org.id), readDeals(org.id),
   ]);
   const address = deal.offeredTo ?? business?.email ?? null;
-  const { linkVersion, ...shown } = deal;
+  const { linkVersion, payments, ...shown } = deal;
   const rate = settings.registered ? gstHstRateOn(business?.address?.province ?? null, today) : null;
   return NextResponse.json({
     deal: { ...shown, band: bandOf(deal) },
     business,
     offers,
+    payments,
     answers,
     address,
     bar: emailBarFor(address, bars.stops, bars.family),
@@ -90,13 +96,42 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     place = { targetId, targetName, endsOn: endsRaw || null };
   }
 
+  let terms: { amount: number; chargeTax: boolean; registered: boolean } | null = null;
   if ('amount' in b || 'chargeTax' in b) {
     const amount = 'amount' in b ? parsePrice(b.amount) : deal.amount;
     if (amount == null) return refused(DEAL_WORDS.offer.errAmount);
     const settings = await readSettings(org.id);
-    const chargeTax = settings.registered && ('chargeTax' in b ? b.chargeTax === true : deal.chargeTax);
-    if (!(await changeDealTerms(org.id, dealId, { amount, chargeTax }))) return refused(DEAL_WORDS.deal.errInvoicedChange, 409, 'invoiced');
+    // "Changed" is what the coach asked for against what the deal says — not against the registration mask, so a deal
+    // invoiced with tax is not silently re-issued untaxed because the club's registration was switched off since.
+    const asked = 'chargeTax' in b ? b.chargeTax === true : deal.chargeTax;
+    const chargeTax = settings.registered && asked;
+    const changed = Math.round(amount * 100) !== Math.round(deal.amount * 100) || asked !== deal.chargeTax;
+    if (changed) {
+      if (!linkTakesForm(deal) && !canRevise(deal)) return refused(DEAL_WORDS.deal.errPaidChange, 409, 'has_payment');
+      terms = { amount, chargeTax, registered: settings.registered };
+    }
+  }
+
+  let revised: 'emailed' | 'not_emailed' | null = null;
+  if (terms && linkTakesForm(deal)) {
+    if (!(await changeDealTerms(org.id, dealId, terms))) return refused(DEAL_WORDS.deal.errPaidChange, 409, 'has_payment');
+  } else if (terms) {
+    // The revised invoice: its figures at the rate of the invoice province on the revision's day, the number kept.
+    const today = tournamentToday();
+    const province = await readDealProvince(org.id, dealId);
+    // No address, no tax (owner 2026-11-23): the rate is the address's province, and an untaxed deal's business may have
+    // left it blank. Charging "tax" at no rate would invoice a total with nothing on it.
+    if (terms.chargeTax && !province) return refused(DEAL_WORDS.deal.taxNeedsAddress, 409, 'no_address');
+    const fig = dealFigures({ ...terms, province, on: today });
+    const r = await reviseDealInvoice(org.id, dealId, {
+      amount: terms.amount, chargeTax: terms.chargeTax, taxKind: fig.rate?.kind ?? null, taxRate: fig.rate?.rate ?? null,
+      tax: fig.rate ? fig.tax : null, total: fig.total, on: today,
+    });
+    if (!r.ok) {
+      return r.why === 'has_payment' ? refused(DEAL_WORDS.deal.errPaidChange, 409, 'has_payment') : refused(DEAL_WORDS.deal.errNotOwing, 409, 'not_owing');
+    }
+    revised = (await emailDealInvoice(org.id, org.slug, dealId, 'revised')) ? 'emailed' : 'not_emailed';
   }
   if (place) await changeDealPlace(org.id, dealId, place);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, revised });
 }, { route: '/api/admin/sponsorships/deals/[dealId]' });

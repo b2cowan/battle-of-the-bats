@@ -206,17 +206,19 @@ export function BillChip({ chip, overdueCount, sentCount, nextDue, daysLate, fir
 }
 
 /** How the money came: the product's one method list (one spelling — "E-Transfer"), as a dropdown. */
-export function MethodField({ id, label, value, onChange, required = true, emptyLabel = 'Choose…' }: {
+export function MethodField({ id, label, value, onChange, required = true, emptyLabel = 'Choose…', labels = DUES_PAYMENT_METHOD_LABEL }: {
   id: string; label: string; value: DuesPaymentMethod | ''; onChange: (v: DuesPaymentMethod | '') => void; required?: boolean;
   /** The empty choice's words: "Choose…" where a method is required, "Not recorded" where it is not (house-league fees). */
   emptyLabel?: string;
+  /** Each method's words. Sponsorships says "E-transfer" as ruled (round 2 ask 6) ahead of Part 4's sweep of the rest. */
+  labels?: Record<DuesPaymentMethod, string>;
 }) {
   return (
     <label className={ck.field} htmlFor={id}>
       <span className={ck.label}>{label}{required && <span className={repKit.req} aria-hidden>*</span>}</span>
       <select id={id} className={ck.select} value={value} onChange={e => onChange(e.target.value as DuesPaymentMethod | '')}>
         <option value="">{emptyLabel}</option>
-        {DUES_PAYMENT_METHODS.map(m => <option key={m} value={m}>{DUES_PAYMENT_METHOD_LABEL[m]}</option>)}
+        {DUES_PAYMENT_METHODS.map(m => <option key={m} value={m}>{labels[m]}</option>)}
       </select>
     </label>
   );

@@ -199,7 +199,10 @@ export const DEAL_WORDS = {
     hLinkMade: (on: string, by: string) => `link made ${day(on)} by ${by}`, // DRAFT
     hOpened: (on: string) => `opened ${day(on)}`,
     hForm: (on: string) => `details and logo ${day(on)}`,
-    hInvoice: (on: string) => `invoice issued ${day(on)}`, // the drawing's "emailed": the invoice email is Part 3
+    hInvoice: (on: string) => `invoice issued ${day(on)}`, // the invoice shown on the link only (its email didn't go)
+    hInvoiceEmailed: (on: string) => `invoice emailed ${day(on)}`, // round 1 tab 5's history, verbatim
+    hRevised: (on: string) => `revised ${day(on)}`, // DRAFT
+    hPaid: (on: string) => `paid in full ${day(on)}`, // DRAFT
     hWithdrawn: (on: string, by: string) => `withdrawn ${day(on)} by ${by}`, // DRAFT
     copy: 'Copy the link',
     copied: 'Copied',
@@ -237,7 +240,50 @@ export const DEAL_WORDS = {
     errEmailClosed: 'This deal is past its offer, so there’s nothing to email.',
     errReason: 'Give a reason.', // DRAFT
     errPaid: 'A paid deal can’t be withdrawn.', // DRAFT
-    errInvoicedChange: 'The amount and tax can’t change once the invoice is issued. Withdraw the deal and offer it again.', // /marketing 2026-11-22 (until Part 3's revised invoice)
+    // Kept for the deal page that still shows it until the record-page work lands; the revised invoice says errPaidChange instead.
+    errInvoicedChange: 'The amount and tax can’t change once the invoice is issued. Withdraw the deal and offer it again.', // /marketing 2026-11-22
+    // Part 3a: an invoiced deal's amount or tax changes as a revised invoice, while no payment stands on it. DRAFT.
+    errPaidChange: 'A payment is recorded on this invoice, so its amount and tax can’t change. Void the payment first.',
+    errPaidWithdraw: 'A payment is recorded on this deal. Void the payment first, then withdraw it.',
+    revisedSent: (email: string) => `The revised invoice is emailed to ${email}.`,
+    revisedNotSent: 'The invoice is revised. It couldn’t be emailed, so it shows on their link.',
+    // Record a payment (round 1 tab 7, the shipped ledger window cut down).
+    record: 'Record a payment',
+    recordTitle: 'Record a payment',
+    recordEyebrow: (business: string, number: string) => `${business} · ${number}`,
+    recordAmount: 'Amount received',
+    recordOwing: (owing: number) => `Still owing ${money(owing)}`,
+    recordDate: 'Date received',
+    recordHow: 'How it was paid',
+    recordRef: 'Reference',
+    recordRefHint: 'Cheque or e-transfer number',
+    recordNote: 'Note',
+    recordFoot: 'Posts to the General ledger',
+    recordButton: 'Record payment',
+    recording: 'Recording…', // DRAFT
+    voiding: 'Voiding…', // DRAFT
+    errRecordAmount: (owing: number) => `Enter an amount up to ${money(owing)}.`, // DRAFT
+    errRecordDate: 'Pick the day it arrived, no later than today.', // DRAFT
+    errRecordHow: 'Pick how it was paid.', // DRAFT
+    errNotOwing: 'Nothing is owing on this invoice now. The page has been refreshed.', // DRAFT
+    // The club's books refuse a line dated in a closed fiscal year (mig 318). DRAFT.
+    errYearClosed: 'That day is in a closed fiscal year. Pick a day in the open fiscal year.',
+    errYearClosedVoid: 'This payment is in a closed fiscal year, so it can’t be voided here.',
+    errAlreadyVoid: 'This payment is already voided. The page has been refreshed.',
+    // The payments under the money band (undrawn: a part payment and a void need them; /design looks). DRAFT.
+    payments: 'Payments',
+    paymentLine: (on: string, how: string, amount: number) => `${day(on)} · ${how} · ${money(amount)}`,
+    paymentVoided: (on: string, by: string, reason: string) => `Voided ${day(on)} by ${by}: ${reason}`,
+    voidPayment: 'Void',
+    voidAsk: (amount: number) => `Void the ${money(amount)} payment?`, // DRAFT
+    voidBody: 'Its lines in the General ledger are marked void with your reason, and the amount is owing again.', // DRAFT
+    voidReason: 'Reason',
+    voidButton: 'Void payment',
+    voidFailed: 'The payment couldn’t be voided.', // DRAFT
+    invoicePdf: (number: string) => `${number} ↗`, // round 1 tab 5's "2027-014 ↗": opens the PDF
+    receiptSent: (email: string) => `Paid in full. The receipt is emailed to ${email}.`, // DRAFT
+    receiptNotSent: 'Paid in full. The receipt couldn’t be emailed, so it shows on their link.', // DRAFT
+    recorded: 'Payment recorded.', // DRAFT
     // Owner 2026-11-23: the rate is the address's province, and a business on an untaxed deal may leave it blank. DRAFT.
     taxNeedsAddress: 'The business didn’t give an address, and the GST/HST rate comes from it. To charge tax, withdraw this deal and offer it again with tax on.',
     errLinkChanged: 'Someone just made a new link for this deal. Reload the page to see it.', // DRAFT
@@ -251,9 +297,9 @@ export const DEAL_WORDS = {
     waitingFor: (business: string) => `Waiting for ${business}`,
     formReceived: (business: string) => `${business} sent their details and started to pay by card, but didn’t finish.`,
     invoicedTitle: 'Waiting for payment',
-    // The drawing's "was emailed Mar 3": the invoice email is Part 3, so Part 2 says "issued" (DRAFT until then).
-    invoiced: (number: string, total: number, issued: string, due: string) =>
-      `Invoice ${number} for ${money(total)} was issued ${day(issued)} and is due ${day(due)}. Record the cheque or e-transfer when it arrives.`,
+    // Round 1 tab 5, verbatim: "was emailed Mar 3". "issued" stays for an invoice whose email didn't go (it shows on the link).
+    invoiced: (number: string, total: number, issued: string, due: string, emailed = false) =>
+      `Invoice ${number} for ${money(total)} was ${emailed ? 'emailed' : 'issued'} ${day(issued)} and is due ${day(due)}. Record the cheque or e-transfer when it arrives.`,
     invoicedPhone: (number: string, total: number, due: string) => `Invoice ${number}, ${money(total)}, due ${day(due)}.`,
     overdue: (due: string) => `Overdue since ${day(due)}.`,
     paid: (on: string, done: number, of: number) => `Paid ${day(on)}. ${done} of ${of} delivered. Tick each one as it happens.`,
@@ -282,6 +328,22 @@ export const DEAL_WORDS = {
     sentBy: (club: string, address: string) => `Sent by ${club}, ${address}.`,
     unsubscribe: (club: string) => `Don’t want sponsorship offers from ${club}?`,
     unsubscribeLink: 'Unsubscribe',
+  },
+
+  // ── The invoice and receipt emails (Part 3a; owner call (2): a link, no attachment). All DRAFT for /marketing. ──
+  invoiceEmail: {
+    subject: (number: string, club: string) => `Invoice ${number} from ${club}`,
+    subjectRevised: (number: string, club: string) => `Revised invoice ${number} from ${club}`,
+    subjectPaid: (number: string, club: string) => `Paid in full: invoice ${number} from ${club}`,
+    greeting: (name: string) => `Hello ${name},`,
+    issuedLine: (club: string, number: string, total: number, due: string) =>
+      `Thank you for sponsoring ${club}. Your invoice ${number} is for ${money(total)} and is due ${dayYear(due)}.`,
+    revisedLine: (number: string, total: number, due: string) =>
+      `Invoice ${number} has been revised and replaces the earlier version. The new total is ${money(total)}, due ${dayYear(due)}.`,
+    paidLine: (club: string, total: number, number: string, on: string) =>
+      `${club} has received ${money(total)} for invoice ${number}, paid in full ${dayYear(on)}. Thank you for sponsoring ${club}.`,
+    buttonInvoice: 'See your invoice',
+    buttonReceipt: 'See your receipt',
   },
 
   // ── The business's page (round 1 tab 4; round 2 tab 1's card-off pay block, owner call (b)) ──
@@ -325,11 +387,12 @@ export const DEAL_WORDS = {
     taxLine: (kind: 'GST' | 'HST', rate: number) => `${kind} ${rate}%`,
     // Round 1 tab 4 "Until card payment is on" — the card-off pay block (owner call (b): no card button until Part 3).
     // Part 2 emails no invoice (Part 3 does): until then the page itself shows it, so the words say that (/ux 2026-11-23, owner: apply).
-    cardOffLine: 'Once you send, your invoice appears on this page with how to pay by cheque or e-transfer. You won’t be charged on this page.',
+    // Round 1 tab 4, verbatim, now that Part 3a emails the invoice (/legal: the pay block, the Email hint and the help change together).
+    cardOffLine: (club: string) => `${club} will email your invoice with how to pay by cheque or e-transfer. You won’t be charged on this page.`,
     // Owner 2026-11-23: the button sends the form; it pays nothing. How to pay comes with the invoice (the line under it).
     send: 'Send',
-    sendChequeNote: 'Your invoice appears on the next page, with how to pay. Keep your link to come back to it.',
-    sendChequeNotePhone: 'Your invoice appears on the next page.',
+    sendChequeNote: 'Your invoice comes by email, with how to pay.', // round 2 tab 1, verbatim
+    sendChequeNotePhone: 'Your invoice comes by email.',
     sending: 'Sending…', // DRAFT
     change: 'Change', // Stage 4 ruling 20: a business that comes back sees its answers and Change
     save: 'Save changes', // DRAFT
@@ -343,12 +406,26 @@ export const DEAL_WORDS = {
     thanksSub: (club: string) => `${club} has your details and logo.`,
     thanksSubNoLogo: (club: string) => `${club} has your details.`, // DRAFT
     invoiceLine: (number: string, total: number) => `Invoice ${number} · ${money(total)}`,
-    issuedLine: (issued: string, due: string, email: string) => `Issued ${dayYear(issued)} · due ${dayYear(due)} · also sent to ${email}`,
-    issuedLineNoEmail: (issued: string, due: string) => `Issued ${dayYear(issued)} · due ${dayYear(due)}`, // Part 2: the invoice email is Part 3
+    // The invoice card's facts, one per line: a label, then the day or address (owner, 2026-11-23; it was one long "Issued · due · also sent to" line).
+    issuedLabel: 'Issued',
+    dueLabel: 'Due',
+    emailedToLabel: 'Emailed to', // only when the invoice really went to an address
+    invoiceDay: (d: string) => dayYear(d),
+    downloadInvoice: 'Download the invoice (PDF)', // round 1 tab 4, screen D
+    downloadReceipt: 'Download your receipt (PDF)', // round 2 tab 1
+    paidTitle: 'Paid, thank you', // the pay link's receipt card (round 2 tab 1)
+    paidLine: (total: number, club: string) => `${money(total)} to ${club}`,
+    paidOnLine: (on: string, number: string) => `Paid in full ${dayYear(on)} · invoice ${number}`, // DRAFT (a cheque has no card line)
+    partPaid: (paid: number, owing: number) => `${money(paid)} received · ${money(owing)} still owing`, // DRAFT
     howToPay: 'How to pay',
     byEtransfer: (to: string) => `By e-transfer to ${to}`,
     byCheque: (payable: string, address: string | null) => `By cheque payable to ${payable}${address ? `, mailed to ${address}` : ''}`,
     quote: (number: string) => `Please quote invoice ${number}.`,
+    // The page's "How to pay" list: a label, then what to do under it (owner, 2026-11-23). The email keeps the sentences above.
+    payEtransfer: 'E-transfer',
+    payCheque: 'Cheque',
+    payChequePayable: (payable: string) => `Payable to ${payable}`,
+    payChequeMailLabel: 'Mail to', // the address follows on its own lines (street / city and province / postal code)
     revisit: 'This page shows your invoice, and your receipt once you’ve paid, any time you open your link.',
     // A link that can't take a form (round 1 tab 4: "A withdrawn offer’s link says … with the contact").
     withdrawn: (club: string) => `This offer was withdrawn. Contact ${club}.`,
@@ -375,5 +452,7 @@ export const DEAL_WORDS = {
 } as const;
 
 function lowerFirst(s: string): string {
-  return s && /^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s;
+  // A leading article ("A thank-you at the banquet") is a plain word too: the two-letter test below misses "A " because
+  // the second character is a space. A name or an acronym ("HST", "UAT Rep Club") keeps its capital.
+  return s && (/^[A-Z][a-z]/.test(s) || /^A\s/.test(s)) ? s[0].toLowerCase() + s.slice(1) : s;
 }

@@ -19,6 +19,7 @@ import { FAMILY_FORM_WORDS as QW } from '@/lib/club-form-family-words';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSOR_LINK_WORDS as L } from '@/lib/sponsor-link-words';
 import { dealFigures, type BusinessField } from '@/lib/club-sponsorship-deals';
+import { addressLines } from '@/lib/coach-sponsor-invoice';
 import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
 import { ORG_IMAGE_TYPES, ORG_LOGO_MAX_BYTES } from '@/lib/org-image-limits';
 import { money } from '@/lib/online-payment-words';
@@ -152,7 +153,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
         }),
       });
       const data = await res.json().catch(() => ({})) as { view?: SponsorPageView; errors?: Record<string, string>; missing?: string[]; error?: string };
-      if (res.ok && data.view) { onView(data.view); window.scrollTo({ top: 0 }); return; }
+      if (res.ok && data.view) { onView(data.view); return; }
       if (res.status === 400 && data.errors) { setErrors(data.errors); setMissing(data.missing ?? []); setRefusals(n => n + 1); return; }
       if (res.status === 409 && data.view) {
         // A document the club changed is read and ticked again: a tick never carries over to a version the business has not seen.
@@ -258,12 +259,14 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
         <h2 className={formKit.sectionTitle}>{P.howYoullPay}</h2>
         <table className={css.payTable}>
           <tbody>
-            <tr><td>{DEAL_WORDS.email.title(deal.packageName, deal.placeName)}</td><td>{money(deal.amount)}</td></tr>
+            {/* The breakdown (package, tax, total) only when there IS a tax to explain. With no tax the
+                package row and the total are the same figure, so it is one line (owner, 2026-11-23). */}
+            {taxRow && <tr><td>{DEAL_WORDS.email.title(deal.packageName, deal.placeName)}</td><td>{money(deal.amount)}</td></tr>}
             {taxRow && <tr><td>{P.taxLine(taxRow.kind, taxRow.rate)}</td><td>{money(taxRow.tax)}</td></tr>}
             <tr><td>{P.yourInvoice}</td><td>{money(total)}</td></tr>
           </tbody>
         </table>
-        <p className={css.payLine}>{P.cardOffLine}</p>
+        <p className={css.payLine}>{P.cardOffLine(view.club.name)}</p>
         {errorCount > 0 && (
           <div ref={errorBox} tabIndex={-1} className={`${formKit.globalError} ${reg.errorBox}`} role="group" aria-labelledby="sponsor-errors-text">
             <span id="sponsor-errors-text">{(allMissing ? QW.errorsMissing : QW.errorsMixed)(errorCount, firstError?.name ?? 'above')}</span>
@@ -332,22 +335,59 @@ function LogoControl({ token, club, initialUrl }: { token: string; club: string;
 // ── After sending ─────────────────────────────────────────────────────────────────────────────────
 
 function Thanks({ view }: { view: Open }) {
+  // The confirmation replaces a long form: start it at the top rather than wherever Send was. Done once the new page is
+  // on screen, and instantly — the scroll that used to run at the click was a smooth one the page swap cut short.
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }, []);
   const inv = view.invoice;
   const how = view.howToPay;
+  const pdf = `/api/public/sponsorship/${view.token}/invoice`;
   return (
     <>
-      {inv && (
+      {inv && view.paid && (
+        // Paid in full (round 2 tab 1's receipt card: plain lines, one rule above Paid, then the receipt download).
+        <div className={css.invoice}>
+          <p className={css.invoiceTitle}>{P.paidTitle}</p>
+          <p className={css.invoiceTo}>{P.paidLine(inv.total, view.club.name)}</p>
+          {view.paidOn && <p className={css.invoiceMeta}>{P.paidOnLine(view.paidOn, inv.number)}</p>}
+          <dl className={css.receiptLines}>
+            <div><dt>{view.deal.packageName}{view.deal.placeName ? `, ${view.deal.placeName}` : ''}</dt><dd>{money(inv.total - inv.tax)}</dd></div>
+            {inv.taxKind && inv.tax > 0 && <div><dt>{P.taxLine(inv.taxKind, inv.taxRate ?? 0)}</dt><dd>{money(inv.tax)}</dd></div>}
+            <div className={css.receiptTotal}><dt>{DEAL_WORDS.deal.figPaid}</dt><dd>{money(inv.total)}</dd></div>
+          </dl>
+          <a className={css.download} href={pdf} download>{P.downloadReceipt}</a>
+        </div>
+      )}
+      {inv && !view.paid && (
         <div className={css.invoice}>
           <p className={css.invoiceTitle}>{P.invoiceLine(inv.number, inv.total)}</p>
-          <p className={css.invoiceMeta}>{P.issuedLineNoEmail(inv.issuedOn, inv.dueOn)}</p>
-          {!view.paid && (
-            <>
-              <p className={css.howTitle}>{P.howToPay}</p>
-              {how.etransferTo && <p className={css.howLine}>{P.byEtransfer(how.etransferTo)}</p>}
-              {how.chequesPayableTo && <p className={css.howLine}>{P.byCheque(how.chequesPayableTo, how.mailingAddress)}</p>}
-              <p className={css.howLine}>{P.quote(inv.number)}</p>
-            </>
-          )}
+          <dl className={css.invoiceFacts}>
+            <div><dt>{P.issuedLabel}</dt><dd>{P.invoiceDay(inv.issuedOn)}</dd></div>
+            <div><dt>{P.dueLabel}</dt><dd>{P.invoiceDay(inv.dueOn)}</dd></div>
+            {inv.email && inv.emailed && <div className={css.invoiceFactWide}><dt>{P.emailedToLabel}</dt><dd>{inv.email}</dd></div>}
+          </dl>
+          {view.owing < inv.total && <p className={css.invoiceMeta}>{P.partPaid(inv.total - view.owing, view.owing)}</p>}
+          <a className={css.download} href={pdf} download>{P.downloadInvoice}</a>
+          <div className={css.how}>
+            <p className={css.howTitle}>{P.howToPay}</p>
+            <dl className={css.howList}>
+              {how.etransferTo && (
+                <div><dt>{P.payEtransfer}</dt><dd>{how.etransferTo}</dd></div>
+              )}
+              {how.chequesPayableTo && (
+                <div>
+                  <dt>{P.payCheque}</dt>
+                  <dd>{P.payChequePayable(how.chequesPayableTo)}</dd>
+                  {how.mailingAddress && (
+                    <dd className={css.howMail}>
+                      <span className={css.howMailLabel}>{P.payChequeMailLabel}</span>
+                      {addressLines(how.mailingAddress).map((line, i) => <span key={i} className={css.howMailLine}>{line}</span>)}
+                    </dd>
+                  )}
+                </div>
+              )}
+            </dl>
+            <p className={css.howQuote}>{P.quote(inv.number)}</p>
+          </div>
         </div>
       )}
       {!view.paid && (

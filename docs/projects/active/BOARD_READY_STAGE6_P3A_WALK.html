@@ -1,0 +1,630 @@
+<title>Stage 6 · Part 3a walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready Stage 6 · Part 3a · Sponsor invoices, payments and the books</span>
+    <h1>Sponsorships, Part 3a: the money</h1>
+    <p class="lead">Part 3a is the money half of a sponsorship deal. Once a business sends its details, the club issues an invoice with the tax added, the business can download it, and the club records each payment as it arrives. Every payment writes lines into the club’s books, and a payment recorded by mistake can be voided, which marks those lines void and puts the amount back to owing.</p>
+    <p class="lead">This walk follows one deal, “Walk Harbour Dental”, from its link to its receipt and then into the books. Eight walks, 46 steps. Eight owner calls sit at the foot, outside the count.</p>
+    <p class="lead">Written Nov 23, 2026 against the dev site. Everything runs on UAT Rep Club; I remove the “Walk” rows after you report.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> (dev; the dev server must be running). <b>The login may meet the Terms screen once on dev</b>: accept it and carry on.</dd>
+      <dt>Password</dt><dd><code>UATPassword2026!</code>, the same for all three.</dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> (shows as <b>Morgan Ellis</b>) · UAT Rep Club. Walks A to F and H.</dd>
+      <dt>Treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> (<b>Avery Chen</b>). Walk G.</dd>
+      <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> (<b>Riley Okonkwo</b>). Walk G. Riley starts with Sponsorships switched Off.</dd>
+      <dt>The business</dt><dd>Nobody signs in. <b>Walk Harbour Dental</b> uses a private window, signed out, and the email <code>walk-sponsor@harbour-dental.local</code>.</dd>
+      <dt>Phone</dt><dd>The browser’s device toolbar at <b>390 px</b> wide, in walk H.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="windows-h">
+    <h2 id="windows-h">The two kinds of window</h2>
+    <ul class="plain">
+      <li><b>Owner window:</b> your ordinary browser window, signed in as the club owner. It is the club’s side: Deals, the deal page, Accounting.</li>
+      <li><b>Private window:</b> a private or incognito window, signed out. It is the business’s side: it opens the link and sees only what a business sees. Keep it open for the whole walk; you reload it several times.</li>
+      <li>Steps say which window to use. “Reload” means reload that window’s page.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>What UAT Rep Club has now (Nov 23, 2026), all set through the product’s own saves:</b> mailing address <b>1 Walk Street, Toronto ON M1M 1M1</b>; contact for sponsors <b>Walk Sponsorship Contact</b>, <b>sponsors@uat-rep-club.local</b>; e-transfer to <b>pay@uat-rep-club.local</b>; cheques payable to <b>UAT Rep Club</b>; invoices due 30 days after they are issued; <b>registered for GST/HST</b> with the number the paper prints as <b>81234 5678 RT0001</b>.</li>
+      <li><b>One package for this walk:</b> <b>Walk 3a partner</b>, <b>$1,000.00</b>, shows on the club’s home page. It lists “A field banner at the main diamond” and “A thank-you at the banquet”; the logo line is added by the package itself.</li>
+      <li>The club also still holds <b>Walk Pizza</b>, an unpaid $500.00 deal from Part 2 on another package. Leave it alone.</li>
+      <li>I did not touch UAT Rep Only. Walk A to H in order; each builds on the one before. The business’s email ends in <code>.local</code>, so <b>nothing really leaves the system and there is no inbox to check</b>. The screens still say “emailed”, because the system counts a message to that kind of address as sent.</li>
+      <li>The tax: this walk turns HST on only to test the invoice maths (13% for an Ontario address). It is not advice that a club should charge it.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Left out of this walk</h2>
+    <ul class="plain">
+      <li>Paying by card: the business’s page has no card button and says it won’t charge anyone on the page.</li>
+      <li>Whether a coach’s budget or Raising-for picker offers the “Club sponsorship” line. It needs a coach sign-in; it is not in these 46 steps.</li>
+      <li>Offering by email, unsubscribing and withdrawing a deal that has no payment: Part 2.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" id="callsHost" aria-labelledby="calls-h">
+    <h2 id="calls-h">Owner calls (outside the count)</h2>
+    <p class="lead">Each has my recommendation. Pick one, or write your own in the notes. None of these is a pass or a fail.</p>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks and calls)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "stage6-p3a-money-walk-v1";
+  var PAGE = "Board Ready Stage 6 · Part 3a · Sponsor invoices, payments and the books";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Offer the deal and the invoice",
+  "job": "UAT Rep Club · owner window, then a private window",
+  "forText": "The club offers its new package to a business as a link and hands it over. The business opens the link in a private window and sends its details, and its invoice appears with the tax added and a Download button. The club’s deal page shows the same invoice and its money.",
+  "passes": "The invoice reads $1,130.00 (the package $1,000.00 plus HST 13%, which is $130.00) on the business’s page and in the club’s money band, and the deal says the invoice was emailed.",
+  "notIn": "The PDF itself (walk B). Offering by email (Part 2). Paying by card.",
+  "who": "Morgan Ellis, the club owner, then nobody (a private window), then the owner again.",
+  "where": "Admin → <b>Sponsorships</b> → <b>Deals</b>, then the business’s link in a private window. On a computer at normal width.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in as the club owner (<code>uat-club-owner@uat-rep-club.local</code>). Open <b>Sponsorships</b> in the left menu, then the <b>Deals</b> tab.",
+    "s": "Deals lists this year’s deals and has a green <b>+ Offer a deal</b> button. A deal named <b>Walk Pizza</b> from Part 2 may be listed: leave it alone. <b>Stop if Sponsorships is not in the left menu.</b>"
+   },
+   {
+    "d": "Press <b>+ Offer a deal</b>. In <b>Business</b> type <b>Walk Harbour Dental</b>, then press the line <b>New business “Walk Harbour Dental”</b>.",
+    "s": "An <b>Email</b> field appears under Business, with the hint <b>Where the offer and the invoice go.</b>"
+   },
+   {
+    "d": "In <b>Email</b> type <b>walk-sponsor@harbour-dental.local</b>. Then open <b>Package</b> and pick <b>Walk 3a partner</b>.",
+    "s": "<b>Amount</b> reads <b>1000.00</b>; <b>Shows on</b> reads <b>Your home page</b>. The foot of the window says <b>Emails walk-sponsor@harbour-dental.local</b>."
+   },
+   {
+    "d": "Turn on the <b>Charge HST</b> switch.",
+    "s": "The switch is on. Its hint reads <b>The rate comes from the business’s address, added to the amount. A sponsorship that shows a name or logo is usually not charged tax. Turn this on only if your accountant says this deal is taxable.</b>"
+   },
+   {
+    "d": "Press <b>Make the link only</b> (the outline button). On the deal page that opens, press <b>Copy the link</b>.",
+    "s": "The window closes and <b>Walk Harbour Dental</b>’s deal page opens with the chip <b>Offered</b> and <b>The link was made, not emailed. Copy it and give it to them in person.</b> The button reads <b>Copied</b>."
+   },
+   {
+    "d": "Open a <b>private window</b> and paste the link into the address bar.",
+    "s": "The business’s page: <b>Walk 3a partner</b>, <b>Offered to Walk Harbour Dental</b>, and a <b>Your package</b> card with <b>$1,000.00</b> and three lines: <b>Your logo on our website’s home page</b>, <b>A field banner at the main diamond</b> and <b>A thank-you at the banquet</b>. Nothing says the page takes a card."
+   },
+   {
+    "d": "Scroll to <b>How you’ll pay</b> and press <b>Send</b> with <b>Contact name</b> and the address fields still empty.",
+    "s": "A red box above the button counts what is missing and names the first (<b>Contact name</b>), with a <b>Go to it</b> link. <b>Business address</b> is marked required with the hint <b>Needed for the GST/HST on your invoice.</b> Nothing is sent."
+   },
+   {
+    "d": "Fill <b>Contact name</b> (Frank Walker), <b>Street</b> (41 Harbour Street), <b>Town or city</b> (Oakville) and <b>Postal code</b> (L6K 1A1). Then pick <b>ON</b> in <b>Province</b>.",
+    "s": "The red lines clear as you type. Once ON is picked, the <b>How you’ll pay</b> table has three rows: <b>Walk 3a partner $1,000.00</b>, <b>HST 13% $130.00</b> and <b>Your invoice $1,130.00</b>."
+   },
+   {
+    "d": "Press <b>Send</b>.",
+    "s": "The page becomes <b>Thank you, Walk Harbour Dental</b>. A card reads <b>Invoice 2026-00… · $1,130.00</b> with <b>Issued</b>, <b>Due</b> and <b>Emailed to walk-sponsor@harbour-dental.local</b>, a <b>Download the invoice (PDF)</b> button, and <b>How to pay</b>: <b>E-transfer pay@uat-rep-club.local</b> and <b>Cheque</b> payable to UAT Rep Club with the club’s mailing address, then <b>Please quote invoice 2026-00…</b>"
+   },
+   {
+    "d": "In the <b>owner window</b>, reload Walk Harbour Dental’s deal page.",
+    "s": "The chip reads <b>Invoiced</b>. The callout <b>Waiting for payment</b> says the invoice for <b>$1,130.00</b> was <b>emailed</b> and is due, with a green <b>Record a payment</b> button. The money band reads <b>Invoiced $1,130.00</b> (<b>incl. HST $130.00</b>), <b>Paid $0.00</b> and <b>Still owing $1,130.00</b>. The <b>History</b> line ends with <b>invoice emailed</b>."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The invoice PDF",
+  "job": "UAT Rep Club · private window and owner window",
+  "forText": "The invoice downloads from the business’s page and from the club’s deal page. It is the club’s paper, not ours: the club’s name, address and tax number lead, and our name appears only in the standard footer.",
+  "passes": "Both doors give the same paper; it shows the club, the business, HST 13% and $1,130.00; “Generated by FieldLogicHQ” is in the footer and nowhere else; “donation” and “tax receipt” appear nowhere.",
+  "notIn": "How the paper looks when printed. The paper after a revision or a payment (walks C and D).",
+  "who": "Nobody (the private window), then Morgan Ellis.",
+  "where": "The business’s page, then the deal page’s <b>The deal</b> card. Your browser opens or saves the PDF.",
+  "steps": [
+   {
+    "d": "In the <b>private window</b> press <b>Download the invoice (PDF)</b> and open the file. Read the top of it.",
+    "s": "<b>UAT Rep Club</b> with its mailing address, the title <b>Invoice</b>, the number <b>2026-00…</b>, the issued day and the due day, and <b>GST/HST no. 81234 5678 RT0001</b>."
+   },
+   {
+    "d": "Read the middle of the invoice.",
+    "s": "<b>Bill to</b> Walk Harbour Dental, Frank Walker, 41 Harbour Street, Oakville ON L6K 1A1. One row <b>Sponsorship: Walk 3a partner</b> with its three lines and <b>$1,000.00</b>, a row <b>HST 13%</b> with <b>$130.00</b>, and figures <b>$1,130.00 invoiced</b>, <b>$0.00 paid</b>, <b>$1,130.00 balance due</b>. Under <b>How to pay</b>, the e-transfer address and the cheque details."
+   },
+   {
+    "d": "Read the foot of the invoice, then look over the whole page for the words “donation” and “tax receipt”.",
+    "s": "<b>Generated by FieldLogicHQ</b> is in the footer. FieldLogicHQ appears nowhere else on the paper (the club is the one invoicing). Neither “donation” nor “tax receipt” appears anywhere."
+   },
+   {
+    "d": "In the <b>owner window</b>, on the deal page, find <b>The deal</b> card and press the invoice number (<b>2026-00…</b> with a small arrow).",
+    "s": "The same invoice downloads: same number, same figures."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "A revised invoice",
+  "job": "UAT Rep Club · owner window, then the private window",
+  "forText": "While nothing has been paid, the club can change a deal’s amount. The invoice is then revised: the same number, a revised day, the new total, emailed again.",
+  "passes": "Changing the amount to $1,200.00 gives $1,356.00 (HST $156.00) under the same invoice number, with a revised day, and the business’s page shows the new total.",
+  "notIn": "Changing a deal that already has a payment (walk D). Keeping the original figures (owner call 6).",
+  "who": "Morgan Ellis, then nobody (the private window).",
+  "where": "The deal page’s pencil, then the business’s page.",
+  "steps": [
+   {
+    "d": "In the <b>owner window</b>, on the deal page, press the pencil beside the chip (<b>Change this deal</b>).",
+    "s": "A window titled <b>Change this deal</b> under the business’s name. <b>Amount</b> reads <b>1000.00</b>, <b>Charge HST</b> is on, and a line says <b>Changing it now sends a revised invoice.</b>"
+   },
+   {
+    "d": "Set <b>Amount</b> to <b>1200.00</b> and press <b>Done</b>.",
+    "s": "A notice at the top of the page: <b>The revised invoice is emailed to walk-sponsor@harbour-dental.local.</b>"
+   },
+   {
+    "d": "Read the deal page.",
+    "s": "The invoice number is the same as before. The band reads <b>Invoiced $1,356.00</b> (<b>incl. HST $156.00</b>); <b>The deal</b> card reads <b>Amount $1,200.00</b> and <b>Charge HST Yes, 13%</b>. The <b>History</b> line now mentions <b>revised</b> with today’s day."
+   },
+   {
+    "d": "In the <b>private window</b>, reload the business’s page and press <b>Download the invoice (PDF)</b>.",
+    "s": "The card reads <b>Invoice 2026-00… · $1,356.00</b>, the same number. The paper shows <b>Revised</b> with today’s day beside the issued day, <b>HST 13%</b> with <b>$156.00</b> and a balance due of <b>$1,356.00</b>."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "Record the payments",
+  "job": "UAT Rep Club · owner window, then the private window",
+  "forText": "The club records what arrives: a part payment first, then the rest. The window refuses an amount that is too much or a day that hasn’t come, a payment on an invoice locks its amount, and the business’s page follows each step until it reads Paid.",
+  "passes": "The part payment leaves the invoice open with $856.00 owing; the last payment turns it Paid and emails a receipt; the business’s page follows; the receipt lists both payments.",
+  "notIn": "The books (walk E). Voiding (walk F). A card payment.",
+  "who": "Morgan Ellis, then nobody (the private window).",
+  "where": "Accounting → <b>Budget vs. Actual</b> once, then the deal page’s green <b>Record a payment</b>.",
+  "steps": [
+   {
+    "d": "In the <b>owner window</b> open <b>Accounting</b>, then <b>Budget vs. Actual</b>. Write down <b>Collected</b> and <b>Cash on hand</b> from the band at the top.",
+    "s": "Two figures to keep for walk E. Nothing has been paid yet, so neither includes this deal."
+   },
+   {
+    "d": "Back on the deal page press the green <b>Record a payment</b>.",
+    "s": "A window titled <b>Record a payment</b> with <b>Walk Harbour Dental · 2026-00…</b> above it. <b>Amount received</b> holds <b>1356.00</b> with <b>Still owing $1,356.00</b>; <b>Date received</b> is today; <b>How it was paid</b> says <b>Choose…</b>; <b>Reference</b> has the hint <b>Cheque or e-transfer number</b>; there is a <b>Note</b>. The foot says <b>Posts to the General ledger</b>."
+   },
+   {
+    "d": "Type <b>2000.00</b> in <b>Amount received</b>, choose <b>E-transfer</b> in <b>How it was paid</b> and press <b>Record payment</b>.",
+    "s": "Red: <b>Enter an amount up to $1,356.00.</b> Nothing is recorded."
+   },
+   {
+    "d": "Type <b>500.00</b> in <b>Amount received</b>, set <b>Date received</b> to a day next year and press <b>Record payment</b>.",
+    "s": "Red: <b>Pick the day it arrived, no later than today.</b> If the date box will not let you pick a future day at all, tick the step and say so in the notes."
+   },
+   {
+    "d": "Set <b>Date received</b> back to today, type <b>CA4471</b> in <b>Reference</b> and press <b>Record payment</b>.",
+    "s": "A notice <b>Payment recorded.</b> The chip is still <b>Invoiced</b>. The band reads <b>Paid $500.00</b> and <b>Still owing $856.00</b>. A <b>Payments</b> card lists today’s day · <b>E-transfer CA4471</b> · <b>$500.00</b> with <b>Void</b> beside it. <b>Withdraw this deal</b> is no longer along the foot of the page."
+   },
+   {
+    "d": "Press the pencil (<b>Change this deal</b>). Press <b>Cancel</b> after you have read it.",
+    "s": "The window has no Amount field and no Charge HST switch, and says <b>A payment is recorded on this invoice, so its amount and tax can’t change. Void the payment first.</b>"
+   },
+   {
+    "d": "In the <b>private window</b>, reload the business’s page.",
+    "s": "The invoice card now adds <b>$500.00 received · $856.00 still owing</b>. <b>Download the invoice (PDF)</b> and <b>How to pay</b> are still there."
+   },
+   {
+    "d": "In the <b>owner window</b> press <b>Record a payment</b>, choose <b>Cheque</b> in <b>How it was paid</b>, type <b>004417</b> in <b>Reference</b> and press <b>Record payment</b>.",
+    "s": "<b>Amount received</b> already held <b>856.00</b>. A notice: <b>Paid in full. The receipt is emailed to walk-sponsor@harbour-dental.local.</b> The chip reads <b>Paid</b>; the band reads <b>Paid $1,356.00</b> and <b>Still owing $0.00</b>; the Payments card lists both payments; the green Record a payment is gone."
+   },
+   {
+    "d": "In the <b>private window</b>, reload the business’s page and press <b>Download your receipt (PDF)</b>.",
+    "s": "The page reads <b>Paid, thank you</b>, <b>$1,356.00 to UAT Rep Club</b> and <b>Paid in full</b> with today’s day and the invoice number, with rows <b>Walk 3a partner $1,200.00</b>, <b>HST 13% $156.00</b> and <b>Paid $1,356.00</b>. The paper leads with <b>Paid in full</b> and lists <b>E-transfer CA4471 $500.00</b> and <b>Cheque 004417 $856.00</b>."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "The club’s books",
+  "job": "UAT Rep Club · owner window · Accounting",
+  "forText": "Each payment writes lines into the club’s General ledger: the sponsorship, and the tax the club collected for the government under its own word. The tax is cash the club holds, so it is never counted as income or as spending.",
+  "passes": "The ledger holds four lines that add to $1,200.00 and $156.00; a line explains where it came from and leads back to the deal; Budget vs. Actual counts $1,200.00 and not $156.00; Months shows the tax on its own row.",
+  "notIn": "A coach’s budget picker. The club’s other books, beyond one row.",
+  "who": "Morgan Ellis, the club owner.",
+  "where": "Accounting → <b>Ledger</b>, then <b>Budget vs. Actual</b>.",
+  "steps": [
+   {
+    "d": "Open <b>Accounting</b>, then <b>Ledger</b>, and open the club’s <b>General</b> book on a range that includes today.",
+    "s": "Four lines for Walk Harbour Dental: two sponsorship lines (<b>$442.48</b> and <b>$757.52</b>, together <b>$1,200.00</b>) filed under <b>Sponsorship › Club sponsorship</b>, and two lines <b>HST on invoice 2026-00…</b> (<b>$57.52</b> and <b>$98.48</b>, together <b>$156.00</b>) filed under <b>GST/HST collected</b>. The first payment’s lines say <b>E-transfer CA4471</b>; the second’s say <b>Cheque 004417</b>."
+   },
+   {
+    "d": "Open one of the sponsorship lines, then press <b>Open the deal</b> at its foot.",
+    "s": "The line’s window says it is a <b>Sponsorship</b> line and reads <b>This line was written when a sponsor’s payment was recorded. To change it, void the payment on the deal.</b> <b>Open the deal</b> takes you to Walk Harbour Dental’s deal page."
+   },
+   {
+    "d": "Open <b>Budget vs. Actual</b> and compare the band with the two figures you wrote down in walk D.",
+    "s": "<b>Collected</b> is up by exactly <b>$1,200.00</b>, not $1,356.00. <b>Cash on hand</b> is up by <b>$1,356.00</b>. The $156.00 of tax is in none of Collected, Spent or Off-plan."
+   },
+   {
+    "d": "On <b>Budget vs. Actual</b> open <b>View</b>, pick <b>Months</b>, and set <b>Showing</b> to <b>Cash</b>.",
+    "s": "A row <b>The club’s other books and GST/HST collected</b> shows <b>$156.00</b> in this month (plus anything else a tournament or house league book moved this month: if the row is not exactly $156.00, say what it shows in the notes). The balance at the foot of this month matches <b>Cash on hand</b> in the band."
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "Void a payment",
+  "job": "UAT Rep Club · owner window · two tabs",
+  "forText": "A payment recorded by mistake, or a cheque that bounced, is voided with a reason. The deal is owing again, the payment stays on the card struck through, its ledger lines are marked void, and a second void is refused.",
+  "passes": "The $500.00 payment is voided only with a reason; the deal is Invoiced and owing $500.00; the payment is struck through with its reason; its two ledger lines are void and the other payment’s are not; the same payment can’t be voided twice.",
+  "notIn": "A payment in a closed fiscal year (the window says so; this club has none).",
+  "who": "Morgan Ellis, the club owner.",
+  "where": "The deal page’s <b>Payments</b> card, then the Ledger.",
+  "steps": [
+   {
+    "d": "Open Walk Harbour Dental’s deal in a <b>second browser tab</b> and leave it showing both payments.",
+    "s": "Two lines on the Payments card, each with <b>Void</b>. This tab is for step 5."
+   },
+   {
+    "d": "In the first tab press <b>Void</b> beside the <b>$500.00</b> E-transfer line. Leave <b>Reason</b> empty and press <b>Void payment</b>.",
+    "s": "A question <b>Void the $500.00 payment?</b> with <b>Its lines in the General ledger are marked void with your reason, and the amount is owing again.</b> The foot has <b>Keep it</b> and <b>Void payment</b>. The empty reason is refused: <b>Give a reason.</b>"
+   },
+   {
+    "d": "Type <b>Walk test: bounced</b> as the reason and press <b>Void payment</b>.",
+    "s": "The chip is <b>Invoiced</b> again and the green <b>Record a payment</b> is back. The band reads <b>Paid $856.00</b> and <b>Still owing $500.00</b>. The $500.00 line stays on the Payments card struck through with <b>Voided</b> today’s day <b>by Morgan Ellis: Walk test: bounced</b>. The cheque line still has its <b>Void</b>."
+   },
+   {
+    "d": "Open the <b>Ledger</b> on today again and open one of the two lines for that payment (<b>$442.48</b> or <b>$57.52</b>).",
+    "s": "Both lines for that payment are marked <b>Void</b>, and the window shows <b>Void</b> with <b>“Walk test: bounced”</b> and <b>Morgan Ellis</b>. The other payment’s lines (<b>$757.52</b> and <b>$98.48</b>) are still posted."
+   },
+   {
+    "d": "In the <b>second tab</b> (still showing the old page) press <b>Void</b> beside the <b>$500.00</b> line, type any reason and press <b>Void payment</b>.",
+    "s": "<b>This payment is already voided. The page has been refreshed.</b> Nothing is voided twice; the page then shows the line struck through."
+   }
+  ]
+ },
+ {
+  "id": "G",
+  "title": "Who can record and void",
+  "job": "UAT Rep Club · treasurer, registrar and owner",
+  "forText": "The treasurer works with sponsor money by default. The registrar starts with no Sponsorships door; the owner can turn it on in Manage member. Whether a member who has only Sponsorships should be allowed to record and void is an owner call (call 1), so step 5 is a note, not a pass or a fail.",
+  "passes": "The treasurer sees Record a payment and Void; the registrar has no door until the owner turns Sponsorships on; once on, Riley opens the deal; you note what Riley can do.",
+  "notIn": "A team’s coach. Any member limited to some rep teams (Sponsorships never opens for them).",
+  "who": "Avery Chen (treasurer), Riley Okonkwo (registrar) and Morgan Ellis (owner). Sign out between each.",
+  "where": "Sponsorships and the deal page; Members for the access switch.",
+  "steps": [
+   {
+    "d": "Sign out. Sign in as the treasurer (<code>uat-club-treasurer@uat-rep-club.local</code>). Open <b>Sponsorships</b>, then Walk Harbour Dental’s deal. Press nothing on it.",
+    "s": "<b>Sponsorships</b> is in the left menu. The deal shows the green <b>Record a payment</b> and a <b>Void</b> beside the <b>$856.00</b> line."
+   },
+   {
+    "d": "Sign out. Sign in as the registrar (<code>uat-club-registrar@uat-rep-club.local</code>). Look at the left menu.",
+    "s": "There is no <b>Sponsorships</b> row."
+   },
+   {
+    "d": "Type the Sponsorships address by hand: <code>http://localhost:3000/uat-rep-club/admin/sponsorships</code>.",
+    "s": "You do not get the Deals screen. Say in the notes what you get instead."
+   },
+   {
+    "d": "Sign out. Sign in as the owner. Open <b>Members</b>, press <b>Manage</b> on Riley Okonkwo, and under <b>What Riley can open</b> switch <b>Sponsorships</b> to <b>On</b>. Press <b>Save</b>.",
+    "s": "The window closes and the page says it saved. Riley’s Sponsorships row now reads On."
+   },
+   {
+    "d": "Sign out. Sign in as Riley again, open <b>Sponsorships</b>, then Walk Harbour Dental’s deal. Note whether <b>Record a payment</b>, <b>Void</b>, both or neither are there.",
+    "s": "Riley opens Sponsorships and the deal. Nothing here is right or wrong: it is owner call 1. Tick it when you have noted what you saw."
+   },
+   {
+    "d": "Put it back: sign out, sign in as the owner, and switch <b>Sponsorships</b> to <b>Off</b> for Riley. Press <b>Save</b>.",
+    "s": "Saved. Riley’s Sponsorships row reads Off again."
+   }
+  ]
+ },
+ {
+  "id": "H",
+  "title": "On a phone",
+  "job": "UAT Rep Club · a window 390 px wide",
+  "forText": "The business pays from a phone and the club often records from one. The invoice, its Download button, the Record a payment window and Void must all be easy to use at 390 px.",
+  "passes": "Nothing runs off the side; the buttons are easy to hit with a thumb; the money reads as rows; the two windows fit.",
+  "notIn": "A tablet width. The Ledger on a phone.",
+  "who": "Nobody (the private window), then Morgan Ellis.",
+  "where": "The browser’s device toolbar, width <b>390</b>, in both windows.",
+  "steps": [
+   {
+    "d": "In the <b>private window</b>, set the width to <b>390</b> and reload the business’s page.",
+    "s": "After the void in walk F, the card reads the invoice again with <b>$856.00 received · $500.00 still owing</b>. Nothing runs off the side. <b>Download the invoice (PDF)</b> is easy to tap and <b>How to pay</b> reads cleanly."
+   },
+   {
+    "d": "In the <b>owner window</b>, set the width to <b>390</b> and open Walk Harbour Dental’s deal page.",
+    "s": "The money reads as three rows, <b>Invoiced $1,356.00</b> (<b>incl. HST $156.00</b>), <b>Paid $856.00</b> and <b>Still owing $500.00</b>. The callout gives the invoice number, the total and the due day. The green <b>Record a payment</b> is within reach."
+   },
+   {
+    "d": "Press <b>Record a payment</b>. Press <b>Cancel</b> after you have looked.",
+    "s": "The window fits the width with no sideways scroll. <b>Amount received</b> holds <b>500.00</b>; the fields and both buttons are easy to tap."
+   },
+   {
+    "d": "On the <b>Payments</b> card press <b>Void</b> beside the <b>$856.00</b> line. Press <b>Keep it</b> after you have looked.",
+    "s": "<b>Void</b> is easy to tap. The question <b>Void the $856.00 payment?</b> fits the width; <b>Keep it</b> and <b>Void payment</b> are easy to tap. Nothing is voided."
+   }
+  ]
+ }
+];
+  var CALLS = [
+   { id: "1", q: "A member with only Sponsorships, and no Accounting, recording and voiding payments",
+     why: "Riley (registrar) has no Accounting, yet with Sponsorships on can Record a payment and Void, which write lines into the club’s books. My recommendation: leave it as built, because Sponsorships is how the club chooses who handles sponsors.",
+     opts: [["asbuilt", "Leave it: Sponsorships is enough (recommended)"], ["needacct", "Require Accounting to record or void a payment"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "2", q: "The tax on the Months view: one row or two",
+     why: "The GST/HST collected rides on the one row “The club’s other books and GST/HST collected”, beside any tournament or house league movement. My recommendation: one row for now; split it when a club asks.",
+     opts: [["one", "One row (recommended)"], ["two", "Two rows: GST/HST collected on its own"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "3", q: "A withdrawn invoiced deal’s PDF",
+     why: "A deal withdrawn before any payment still downloads its invoice from the club’s deal page, looking live. My recommendation: print “Withdrawn” across it, so nobody pays it by mistake and the club still has its paper.",
+     opts: [["stamp", "Print “Withdrawn” on it (recommended)"], ["refuse", "Refuse the download"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "4", q: "A link-only deal for a club with no mailing address or contact",
+     why: "The business’s page promises “we’ll email your invoice”, but a club without both can’t send it, and nothing goes. My recommendation: soften the words when the club can’t email (the page says the invoice appears on the page), and keep letting that club make a link.",
+     opts: [["soften", "Soften the words in that case (recommended)"], ["require", "Require both before a link can be made"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "5", q: "GST/HST counted when money arrives, not on the invoice day",
+     why: "The tax shows in the books only as payments come in. A “GST/HST invoiced, not yet paid” figure would show what the club will owe. My recommendation: not now. The deal page already says “incl. HST”. Which method a club uses is a tax question for /accounting, not a screen decision.",
+     opts: [["notnow", "Not now (recommended)"], ["add", "Add a “GST/HST invoiced, not yet paid” figure"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "6", q: "A revised invoice overwrites the original figures",
+     why: "After a revision only the new amount and tax are kept. My recommendation: keep the original (a small change to the dev-only migration), so an invoice that was sent and later changed can be traced.",
+     opts: [["keep", "Keep the original figures (recommended)"], ["overwrite", "Leave it: the revised day is enough"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "7", q: "A business that pays before sending a logo can’t add one later",
+     why: "Once a deal is Paid the business’s page drops the logo box, so a logo not sent first can’t be added from the page. My recommendation: let it add one later, from the receipt page, since the club wants the logo.",
+     opts: [["allow", "Let it add a logo later (recommended)"], ["intended", "Intended: leave it"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "8", q: "A way to say the club sent the GST/HST on",
+     why: "Cash on hand includes the tax collected. When the club pays it to the government, the only word is an ordinary expense, which counts as spending and can show as Off-plan. My recommendation: add a “GST/HST remitted” word so a remittance isn’t counted as spending, before any club remits.",
+     opts: [["add", "Add the word (recommended)"], ["later", "Later, when a club asks"], ["other", "Something else (say what, in the notes)"]] }
+  ];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  // The owner calls sit in their own section, outside the step count; they are drawn once.
+  function renderCalls() {
+    var box = document.getElementById("callsHost");
+    CALLS.forEach(function (c) {
+      var card = el("div", "card"); card.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); card.appendChild(el("p", null, c.why));
+      var o = el("div", "opts");
+      c.opts.forEach(function (op) {
+        var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "call-" + c.id; r.checked = state.choice[c.id] === op[0];
+        r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+        lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+      });
+      card.appendChild(o); box.appendChild(card);
+    });
+    var lab = el("label", null, "<h3>Notes on the calls</h3>"); lab.setAttribute("for", "notes-calls");
+    box.appendChild(lab);
+    var ta = el("textarea"); ta.id = "notes-calls"; ta.value = state.notes.calls || "";
+    ta.placeholder = "Anything you want to say about a call";
+    ta.addEventListener("input", function () { state.notes.calls = ta.value; save(); refresh(); });
+    box.appendChild(ta);
+  }
+
+  function callsSummary() {
+    var lines = ["Owner calls (outside the count)"];
+    CALLS.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes.calls || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).concat(["", callsSummary()]).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    document.getElementById("callsHost").querySelectorAll(".card, label, textarea").forEach(function (n) { n.remove(); });
+    renderCalls(); render();
+  });
+  renderCalls();
+  render();
+})();
+</script>

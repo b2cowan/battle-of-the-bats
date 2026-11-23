@@ -159,6 +159,7 @@ const STAYS: Record<string, string> = {
   club_sponsor_offers: 'the club’s CASL record of every offer it emailed, insert-only (Board Ready Stage 6 mig 526)',
   club_sponsor_offer_stops: 'addresses that asked the club to stop sponsorship offers, insert-only (Board Ready Stage 6 mig 526)',
   club_sponsor_invoice_counters: 'the club’s sponsorship invoice numbers, never reused (Board Ready Stage 6 mig 526)',
+  club_sponsor_deal_payments: 'the payments a club recorded on its sponsorship deals, and their General-ledger lines (Board Ready Stage 6 mig 528)',
   // ── Org-level setup a Coaches Portal does not use ────────────────────────────────────────────
   org_budget_lines: 'the club-side org budget (a Coaches Portal has none); moved rows that pointed at one are cleared',
   org_fiscal_years: 'the club’s fiscal years (mig 318) — the years its own plan and books are closed by; a team’s money runs on seasons, never fiscal years, so a Coaches Portal has none to move',

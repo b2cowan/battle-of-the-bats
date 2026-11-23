@@ -16047,6 +16047,15 @@
     "ordinal_position": 33
   },
   {
+    "table_name": "org_payment_accounts",
+    "column_name": "sponsor_fee_payer",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'club'::text",
+    "ordinal_position": 34
+  },
+  {
     "table_name": "org_people",
     "column_name": "id",
     "data_type": "uuid",

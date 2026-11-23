@@ -26,6 +26,8 @@ import {
   type ClubDeal, type DealState, type OfferReason,
 } from './club-sponsorship-deals';
 import type { PackageItem, SponsorPlaceKind } from './club-sponsorships';
+import { DEAL_METHOD_LABEL, invoiceStanding, type DealPayment } from './club-sponsor-invoice';
+import type { DuesPaymentMethod } from './types';
 
 // ── Reading deals ──────────────────────────────────────────────────────────────────────────────────
 
@@ -36,6 +38,7 @@ type DealRow = {
   offered_to: string | null; emailed_at: string | null; opened_at: string | null; link_unsent_at: string | null; form_at: string | null; business_name: string | null;
   invoice_year: number | null; invoice_seq: number | null; invoiced_on: string | null; due_on: string | null; tax_kind: 'GST' | 'HST' | null;
   tax_rate: number | string | null; tax_amount: number | string | null; total: number | string | null; withdrawn_at: string | null;
+  revised_on: string | null; invoice_emailed_at: string | null; paid_on: string | null;
   withdrawn_by_name: string | null; withdrawn_reason: string | null;
   club_sponsors: { name: string } | { name: string }[] | null;
 };
@@ -43,12 +46,14 @@ const DEAL_COLUMNS = [
   'id', 'sponsor_id', 'package_id', 'package_name', 'package_items', 'logo_on_site', 'place_kind', 'target_id', 'target_name', 'ends_on',
   'amount', 'charge_tax', 'state', 'link_version', 'offered_on', 'offered_at', 'offered_by_name', 'offered_to', 'emailed_at', 'opened_at', 'link_unsent_at',
   'form_at', 'business_name', 'invoice_year', 'invoice_seq', 'invoiced_on', 'due_on', 'tax_kind', 'tax_rate', 'tax_amount', 'total',
-  'withdrawn_at', 'withdrawn_by_name', 'withdrawn_reason', 'club_sponsors(name)',
+  'withdrawn_at', 'withdrawn_by_name', 'withdrawn_reason', 'revised_on', 'invoice_emailed_at', 'paid_on', 'club_sponsors(name)',
 ].join(', ');
 
 const num = (v: number | string | null): number => (v == null ? 0 : Number(v));
 
-function dealOf(r: DealRow, done: ClubDeal['done']): ClubDeal & { linkVersion: number } {
+function dealOf(r: DealRow, done: ClubDeal['done'], payments: readonly DealPayment[]): ClubDeal & { linkVersion: number } {
+  const { paid, live } = invoiceStanding(num(r.total), payments);
+  const last = live[live.length - 1];
   const sponsor = Array.isArray(r.club_sponsors) ? r.club_sponsors[0] : r.club_sponsors;
   return {
     id: r.id, sponsorId: r.sponsor_id, businessName: r.business_name ?? sponsor?.name ?? '', packageId: r.package_id,
@@ -62,6 +67,9 @@ function dealOf(r: DealRow, done: ClubDeal['done']): ClubDeal & { linkVersion: n
         taxKind: r.tax_kind, taxRate: r.tax_rate == null ? null : Number(r.tax_rate), tax: num(r.tax_amount), total: num(r.total),
       }
       : null,
+    revisedOn: r.revised_on, invoiceEmailedAt: r.invoice_emailed_at, paidOn: r.paid_on,
+    paidHow: last ? DEAL_METHOD_LABEL[last.method].toLowerCase() : null,
+    paidAmount: paid,
     withdrawn: r.withdrawn_at ? { at: r.withdrawn_at, byName: r.withdrawn_by_name ?? '', reason: r.withdrawn_reason ?? '' } : null,
     done, linkVersion: r.link_version,
   };
@@ -82,21 +90,52 @@ async function doneFor(dealIds: string[]): Promise<Map<string, ClubDeal['done']>
   return out;
 }
 
+// ── Payments (Part 3a, mig 528) ─────────────────────────────────────────────────────────────────────
+
+type PaymentRow = {
+  id: string; deal_id: string; amount: number | string; tax_part: number | string; received_on: string; method: DuesPaymentMethod;
+  reference: string | null; note: string | null; recorded_by_name: string; voided_at: string | null; voided_by_name: string | null; void_reason: string | null;
+};
+const PAYMENT_COLUMNS = 'id, deal_id, amount, tax_part, received_on, method, reference, note, recorded_by_name, voided_at, voided_by_name, void_reason';
+const paymentOf = (r: PaymentRow): DealPayment => ({
+  id: r.id, amount: num(r.amount), taxPart: num(r.tax_part), receivedOn: r.received_on, method: r.method, reference: r.reference, note: r.note,
+  recordedByName: r.recorded_by_name, voided: r.voided_at ? { at: r.voided_at, byName: r.voided_by_name ?? '', reason: r.void_reason ?? '' } : null,
+});
+
+async function paymentsFor(orgId: string, dealIds: string[]): Promise<Map<string, DealPayment[]>> {
+  const out = new Map<string, DealPayment[]>();
+  for (let i = 0; i < dealIds.length; i += 200) {
+    const { data, error } = await supabaseAdmin.from('club_sponsor_deal_payments').select(PAYMENT_COLUMNS)
+      .eq('org_id', orgId).in('deal_id', dealIds.slice(i, i + 200)).order('received_on').order('recorded_at');
+    if (error) throw error;
+    for (const r of (data ?? []) as PaymentRow[]) out.set(r.deal_id, [...(out.get(r.deal_id) ?? []), paymentOf(r)]);
+  }
+  return out;
+}
+
+/** A deal's payments, voided ones included (they stay on record), in the order they arrived. */
+export async function readDealPayments(orgId: string, dealId: string): Promise<DealPayment[]> {
+  return (await paymentsFor(orgId, [dealId])).get(dealId) ?? [];
+}
+
 /** Every deal of the club, oldest offer first. */
 export async function readDeals(orgId: string): Promise<(ClubDeal & { linkVersion: number })[]> {
   const { data, error } = await supabaseAdmin.from('club_sponsor_deals').select(DEAL_COLUMNS).eq('org_id', orgId).order('offered_at');
   if (error) throw error;
   const rows = (data ?? []) as unknown as DealRow[];
-  const done = await doneFor(rows.map(r => r.id));
-  return rows.map(r => dealOf(r, done.get(r.id) ?? {}));
+  const ids = rows.map(r => r.id);
+  const [done, paid] = await Promise.all([doneFor(ids), paymentsFor(orgId, ids)]);
+  return rows.map(r => dealOf(r, done.get(r.id) ?? {}, paid.get(r.id) ?? []));
 }
 
-export async function readDeal(orgId: string, id: string): Promise<(ClubDeal & { linkVersion: number }) | null> {
+/** One deal, with its payments (voided ones included) — the payments are read once here, never again by a caller. */
+export async function readDeal(orgId: string, id: string): Promise<(ClubDeal & { linkVersion: number; payments: DealPayment[] }) | null> {
   const { data, error } = await supabaseAdmin.from('club_sponsor_deals').select(DEAL_COLUMNS).eq('org_id', orgId).eq('id', id).maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const done = await doneFor([id]);
-  return dealOf(data as unknown as DealRow, done.get(id) ?? {});
+  const [done, paid] = await Promise.all([doneFor([id]), paymentsFor(orgId, [id])]);
+  const payments = paid.get(id) ?? [];
+  return { ...dealOf(data as unknown as DealRow, done.get(id) ?? {}, payments), payments };
 }
 
 /** The business's own card on the deal's page (round 1 tab 5): what its link sent, as sent. */
@@ -269,6 +308,72 @@ export async function changeDealTerms(orgId: string, dealId: string, t: { amount
     .eq('org_id', orgId).eq('id', dealId).in('state', ['offered', 'form_received']).select('id');
   if (error) throw error;
   return (data ?? []).length === 1;
+}
+
+// ── Money on an issued invoice (Part 3a, mig 528: one transaction each, the database's own guard behind them) ──
+
+/** Why the database refused a payment step: not owing (SP002), a payment it can't take (SP003), money stands (SP004), a closed year. */
+export type MoneyRefusal = 'not_owing' | 'refused' | 'has_payment' | 'year_closed';
+/** A refusal the database meant is answered; anything else it said is a failure and throws. */
+function refusalOrThrow(e: { code?: string; message?: string }): { ok: false; why: MoneyRefusal } {
+  if (e.code === 'SP002') return { ok: false, why: 'not_owing' };
+  if (e.code === 'SP003') return { ok: false, why: 'refused' };
+  if (e.code === 'SP004') return { ok: false, why: 'has_payment' };
+  if (e.message?.startsWith('year_closed')) return { ok: false, why: 'year_closed' };
+  throw e;
+}
+
+/**
+ * The place (and its logo) follows a money step that has ALREADY COMMITTED in the database — so a failure here is logged,
+ * never thrown: the payment stands, the coach is told it was recorded, and the receipt still goes.
+ */
+async function syncPlaceAfterMoney(orgId: string, dealId: string): Promise<void> {
+  try { await syncDealPlace(orgId, dealId); }
+  catch (e) { console.error('[sponsorships] the money step committed, but the place did not sync:', dealId, (e as { code?: string })?.code ?? (e as Error)?.message ?? 'no code'); }
+}
+
+/** Record a cheque, e-transfer, cash or other payment: its two General-ledger lines, and Paid when nothing is left owing. */
+export async function recordDealPayment(orgId: string, dealId: string, by: { userId: string; name: string }, p: {
+  amount: number; receivedOn: string; method: DuesPaymentMethod; reference: string | null; note: string | null;
+}): Promise<{ ok: true; state: DealState } | { ok: false; why: MoneyRefusal }> {
+  const { data, error } = await supabaseAdmin.rpc('club_sponsor_deal_pay', {
+    p_org: orgId, p_deal: dealId, p_amount: p.amount, p_on: p.receivedOn, p_method: p.method, p_reference: p.reference,
+    p_note: p.note, p_actor: by.userId, p_actor_name: by.name,
+  });
+  if (error) return refusalOrThrow(error);
+  const state = (data as { state: DealState }).state;
+  if (state === 'paid') await syncPlaceAfterMoney(orgId, dealId);
+  return { ok: true, state };
+}
+
+/** Void one payment, with the reason: its lines are marked void, and a paid deal is owing again. */
+export async function voidDealPayment(orgId: string, paymentId: string, by: { userId: string; name: string }, reason: string): Promise<{ ok: true; dealId: string } | { ok: false; why: MoneyRefusal }> {
+  const { data, error } = await supabaseAdmin.rpc('club_sponsor_deal_payment_void', {
+    p_org: orgId, p_payment: paymentId, p_reason: reason, p_actor: by.userId, p_actor_name: by.name,
+  });
+  if (error) return refusalOrThrow(error);
+  const dealId = (data as { deal_id: string }).deal_id;
+  await syncPlaceAfterMoney(orgId, dealId);
+  return { ok: true, dealId };
+}
+
+/** The revised invoice: the amount and tax change, the number kept, the day stamped — only while no payment stands. */
+export async function reviseDealInvoice(orgId: string, dealId: string, r: {
+  amount: number; chargeTax: boolean; taxKind: 'GST' | 'HST' | null; taxRate: number | null; tax: number | null; total: number; on: string;
+}): Promise<{ ok: true } | { ok: false; why: MoneyRefusal }> {
+  const { error } = await supabaseAdmin.rpc('club_sponsor_deal_revise', {
+    p_org: orgId, p_deal: dealId, p_amount: r.amount, p_charge_tax: r.chargeTax, p_tax_kind: r.taxKind, p_tax_rate: r.taxRate,
+    p_tax_amount: r.tax, p_total: r.total, p_on: r.on,
+  });
+  if (error) return refusalOrThrow(error);
+  return { ok: true };
+}
+
+/** The invoice province a deal's link sent (the revised invoice's rate follows it, as the first one did). */
+export async function readDealProvince(orgId: string, dealId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.from('club_sponsor_deals').select('invoice_province').eq('org_id', orgId).eq('id', dealId).maybeSingle();
+  if (error) throw error;
+  return (data as { invoice_province: string | null } | null)?.invoice_province ?? null;
 }
 
 /** Withdraw (until paid, ask 4), with the reason and who; the place comes down and is freed. */

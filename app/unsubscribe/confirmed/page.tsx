@@ -21,7 +21,9 @@ function stateOf(error: string | string[] | undefined): State {
   return (Array.isArray(error) ? error[0] : error) === 'db' ? 'db' : 'invalid';
 }
 
-const REMOVE = 'we’ll remove you within 10 business days as required by CASL.';
+// /legal 2026-11-23 (Board Ready Stage 6 Part 3a): "we" was FieldLogicHQ, but a reply to a club's email (a family email, a
+// sponsorship offer) reaches the CLUB, which is the one that removes the address. "Whoever sent it" is true for all of them.
+const REMOVE = 'whoever sent it will remove you within 10 business days, as CASL requires.';
 
 const COPY: Record<State, { icon: SystemIcon; title: string; body: string }> = {
   done: { icon: 'mail', title: 'You’re unsubscribed', body: 'You won’t get these emails again.' },

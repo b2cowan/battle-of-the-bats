@@ -2744,7 +2744,45 @@ export interface SponsorInvoiceOptions {
 /** Exported for the contract tests — the download wrapper injects real jsPDF/autoTable. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildSponsorInvoiceDoc(jsPDFClass: any, autoTable: any, opts: SponsorInvoiceOptions): any {
-  const { settings, teamName } = opts;
+  // ⚖ R2: the coach's invoice never passes a tax number or a tax row — one Description row, the team's.
+  const { description, amount, ...rest } = opts;
+  return drawSponsorInvoice(jsPDFClass, autoTable, { ...rest, payee: opts.teamName, rows: [{ description, amount }], taxNumberLine: null });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  The CLUB's sponsorship invoice (Board Ready Stage 6 Part 3a; round 1 tab 6, round 2 tab 2, asks 9 and 10; R2 ask 2 ruled
+//  the coach recipe). A SEPARATE builder that shares the coach invoice's page (never a tax switch on the coach one): every
+//  charge a row of the one table — the sponsorship with its deliverables listed under it, then the GST/HST at its rate
+//  when the deal carries tax — the figures carry the total, no totals block. The club's
+//  GST/HST number at the top only on a taxed invoice. FieldLogicHQ's name and number never appear (/accounting).
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface ClubSponsorInvoiceOptions extends Omit<SponsorInvoiceOptions, 'teamName' | 'description' | 'amount'> {
+  /** The club: whose paper and whose thanks. */
+  clubName: string;
+  /** Who a cheque is made out to (Invoice details' "Cheques payable to", else the club). */
+  chequesPayableTo: string;
+  /** Each charge: "Sponsorship: Division sponsor, U9 · Mar 3 to Aug 31, 2027" with its deliverables; "HST 13%". */
+  rows: { description: string; sub?: string[]; amount: string }[];
+  /** "GST/HST no. 81234 5678 RT0001" — only when the invoice carries tax. */
+  taxNumberLine: string | null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildClubSponsorInvoiceDoc(jsPDFClass: any, autoTable: any, opts: ClubSponsorInvoiceOptions): any {
+  const { clubName, chequesPayableTo, ...rest } = opts;
+  return drawSponsorInvoice(jsPDFClass, autoTable, { ...rest, teamName: clubName, payee: chequesPayableTo });
+}
+
+interface InvoicePage extends Omit<SponsorInvoiceOptions, 'description' | 'amount'> {
+  payee: string;
+  rows: { description: string; sub?: string[]; amount: string }[];
+  taxNumberLine: string | null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage): any {
+  const { settings, teamName, payee } = opts;
   const accentRgb = hexToRgb(settings.accentColor);
   const headerTextColor = isDark(settings.accentColor) ? [255, 255, 255] : [15, 15, 20];
   const doc = new jsPDFClass({ orientation: 'portrait', unit: 'mm', format: 'letter' });
@@ -2836,7 +2874,14 @@ export function buildSponsorInvoiceDoc(jsPDFClass: any, autoTable: any, opts: Sp
 
   // ── Header ────────────────────────────────────────────────────────────────
   accentBar();
-  y = drawIdentityBand(doc, identity, line1, MARGIN) + 6;
+  const bandTop = MARGIN;
+  y = drawIdentityBand(doc, identity, line1, bandTop) + 6;
+  if (opts.taxNumberLine) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 100);
+    doc.text(opts.taxNumberLine, pageWidth - MARGIN, bandTop + 6, { align: 'right' });
+  }
 
   // ── Title + subtitle — the status leads once it is paid (design review, A7) ──
   doc.setFont('helvetica', 'bold');
@@ -2895,7 +2940,9 @@ export function buildSponsorInvoiceDoc(jsPDFClass: any, autoTable: any, opts: Sp
   y += 5;
 
   // ── The line — no totals row: the figures above state the total ─────────────
-  table(['Description', 'Amount'], [[opts.description, opts.amount]], { 1: { halign: 'right', cellWidth: 40 } });
+  table(['Description', 'Amount'], opts.rows.map(r => [
+    [r.description, ...(r.sub ?? []).map(s => `•  ${s}`)].join('\n'), r.amount,
+  ]), { 1: { halign: 'right', cellWidth: 40 } });
 
   // ── How to pay — gone once nothing is owed ─────────────────────────────────
   if (!paidInFull) {
@@ -2903,8 +2950,8 @@ export function buildSponsorInvoiceDoc(jsPDFClass: any, autoTable: any, opts: Sp
     const { etransferEmail, chequeAddress } = opts.howToPay;
     const ways = [
       etransferEmail ? `By e-transfer to ${etransferEmail}` : null,
-      chequeAddress ? `By cheque payable to ${teamName}, mailed to ${chequeAddress}` : null,
-      !etransferEmail && !chequeAddress ? `Payable to ${teamName}` : null,
+      chequeAddress ? `By cheque payable to ${payee}, mailed to ${chequeAddress}` : null,
+      !etransferEmail && !chequeAddress ? `Payable to ${payee}` : null,
       `Please quote invoice ${opts.number} with your payment.`,
     ].filter((s): s is string => !!s);
     sectionLabel('How to pay');

@@ -76,7 +76,17 @@ export const SOURCE_MODULE = {
   request: 'rep_payment_request',
   leagueFee: 'league_registration',
   tournamentFee: 'tournament_fee_receipt',
+  /** Board Ready Stage 6 Part 3a (mig 528): a sponsor's payment recorded on its deal. */
+  sponsorshipDeal: 'sponsorship_deal',
 } as const;
+
+/**
+ * The GST/HST a club collected on a sponsorship invoice (Part 3a, mig 528; round 1 tab 7: "a new money-in word. It keeps tax
+ * out of the Sponsorship figure"). Its own word, no library row: the tax is the club's to pass on, not its income, so
+ * Budget vs. Actual leaves it out (lib/club-money-figures.ts `countsAsActual`) while the cash it brought stays on the book.
+ */
+export const GST_HST_COLLECTED_KEY = 'gst_hst_collected';
+export const GST_HST_COLLECTED_WORD = 'GST/HST collected';
 
 export interface LineFacts {
   entryType: 'income' | 'expense' | 'transfer_in' | 'transfer_out';
@@ -136,6 +146,7 @@ export const TEAM_SUPPORT_WORD_IDS = {
 export const FROM_THE_TEAMS_ID = 'club:from-the-teams';
 export const ON_REQUEST_ID = 'club:on-request';
 export const NOT_FILED_ID = 'club:not-filed';
+export const GST_HST_COLLECTED_ID = 'club:gst-hst-collected';
 
 export interface Filing {
   categoryId: string;
@@ -152,6 +163,8 @@ export const TEAM_SUPPORT_FILING: Filing = {
   categoryId: TEAM_SUPPORT_WORD_IDS.categoryId, categoryName: TEAM_SUPPORT_WORD,
   itemId: TEAM_SUPPORT_WORD_IDS.itemId, itemName: TEAM_SUPPORT_ITEM_WORD, byItsSource: true,
 };
+/** The tax line's filing: its own word, written by the deal (read-only, like a loop line). */
+export const GST_HST_FILING: Filing = { categoryId: GST_HST_COLLECTED_ID, categoryName: GST_HST_COLLECTED_WORD, itemId: null, itemName: null, byItsSource: true };
 export const NOT_FILED_FILING: Filing = { categoryId: NOT_FILED_ID, categoryName: NOT_FILED_WORD, itemId: null, itemName: NOT_FILED_WORD, byItsSource: false };
 /** "From the teams", under the allocation a received installment belongs to (null: not found — a line
  *  written before 3a whose installment can no longer be traced). */
@@ -182,10 +195,13 @@ export function fileLine(l: FilingFacts, allocationOf?: () => { id: string; desc
       : null;
   }
   if (type === 'transfer') return l.partnerKind && isClubOwnedBook(l.partnerKind) ? null : NOT_FILED_FILING;
+  // A sponsor's payment (Part 3a): the tax under its own word, the sponsorship under Sponsorship › Club sponsorship — both
+  // filed by the deal that wrote them.
+  if (l.category === GST_HST_COLLECTED_KEY) return GST_HST_FILING;
   if (l.budgetItemId && l.budgetCategoryId) {
     return {
       categoryId: l.budgetCategoryId, categoryName: l.budgetCategoryName ?? NOT_FILED_WORD,
-      itemId: l.budgetItemId, itemName: l.budgetItemName, byItsSource: false,
+      itemId: l.budgetItemId, itemName: l.budgetItemName, byItsSource: l.sourceModule === SOURCE_MODULE.sponsorshipDeal,
     };
   }
   return NOT_FILED_FILING;

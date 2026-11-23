@@ -10,7 +10,8 @@ import 'server-only';
  *   · a link we did not sign, or for another club's address → notFound (no club, no deal named);
  *   · a replaced link, a withdrawn offer, or a place whose division/team/tournament has been removed → closed, which says
  *     only "This offer was withdrawn. Contact {club}." with the club's contact (round 1 tab 4) — no business details;
- *   · offered / form received → the form; invoiced / paid → the thank-you view (the receipt is Part 3).
+ *   · offered / form received → the form; invoiced / paid → the thank-you view: the invoice, how to pay, its PDF, and once
+ *     money arrives the payments received — paid in full, the receipt (Part 3a; the paid invoice IS the receipt, ask 10).
  */
 import { supabaseAdmin } from './supabase-admin';
 import { getOrganizationBySlug } from './db';
@@ -21,10 +22,10 @@ import { CLUB_FORM_BUCKET, signupFormView, sponsorshipFormId } from './club-form
 import { dealLinkFormState, type DealLinkAnswer } from './club-form-deal';
 import { readPackage, readSettings } from './club-sponsorships-server';
 import { markDealOpened, readDeal } from './club-sponsorship-deals-server';
-import { linkTakesForm, type DealInvoice } from './club-sponsorship-deals';
+import { dealBullets, linkTakesForm, type DealInvoice } from './club-sponsorship-deals';
+import { invoiceStanding } from './club-sponsor-invoice';
 import { tournamentToday } from './timezone';
 import { payLinkSecret, readSponsorDealToken } from './sponsor-deal-link';
-import { SPONSOR_LINK_WORDS as L } from './sponsor-link-words';
 import type { SignupFormView } from './club-form-signup';
 import type { SponsorPlaceKind } from './club-sponsorships';
 import type { Organization } from './types';
@@ -105,9 +106,13 @@ export type SponsorPageView =
     saved: { answers: DealLinkAnswer[]; tickedVersions: string[] };
     /** Sent before (a business back on its link sees its details and Change, Stage 4 ruling 20). */
     sentBefore: boolean;
-    invoice: (DealInvoice & { email: string | null }) | null;
+    /** `emailed`: its email went (the page says "also sent to" only then). */
+    invoice: (DealInvoice & { email: string | null; emailed: boolean }) | null;
     howToPay: { etransferTo: string | null; chequesPayableTo: string | null; mailingAddress: string | null };
     paid: boolean;
+    /** What is still owing on the invoice (Part 3a); less than the total means a payment has arrived. */
+    owing: number;
+    paidOn: string | null;
   };
 
 const clubFace = async (org: Organization, contact: string | null): Promise<SponsorClubFace> => ({
@@ -172,10 +177,8 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
   if (open && opts.markOpened && !deal.openedAt) await markDealOpened(deal.id).catch(() => undefined);
 
   const placeName = deal.placeKind === 'club' ? null : deal.targetName;
-  const bullets = [
-    ...(deal.logoOnSite ? [L.logoBullet(deal.placeKind, placeName)] : []),
-    ...deal.items.map(i => i.text),
-  ];
+  const bullets = dealBullets(deal);
+  const standing = deal.invoice ? invoiceStanding(deal.invoice.total, deal.payments) : null;
   return {
     state: open ? 'form' : 'done',
     token,
@@ -191,8 +194,10 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
     form: form && (form.questions.length || form.documents.length) ? form : null,
     saved,
     sentBefore: !!deal.formAt,
-    invoice: deal.invoice ? { ...deal.invoice, email: b.contact_email } : null,
+    invoice: deal.invoice ? { ...deal.invoice, email: b.contact_email, emailed: !!deal.invoiceEmailedAt } : null,
     howToPay: { etransferTo: settings.etransferTo, chequesPayableTo: settings.chequesPayableTo ?? org.name, mailingAddress: settings.mailingAddress },
     paid: deal.state === 'paid',
+    owing: standing?.owing ?? 0,
+    paidOn: deal.paidOn,
   };
 }

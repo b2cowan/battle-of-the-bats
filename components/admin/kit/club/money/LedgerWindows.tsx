@@ -454,6 +454,8 @@ function sourceDoor(row: BookRowOut, accountingBase: string):
   const s = row.source;
   if (s.kind === 'allocation' && s.allocationId) return { allocation: { id: s.allocationId, bill: s.splitId ?? null }, label: 'Open the allocation' };
   if (s.kind === 'request' && s.requestId) return { href: `${accountingBase}/payment-requests?request=${s.requestId}`, label: 'Open the request' };
+  // A sponsor's payment opens its deal (round 1 tab 7: "Each line opens the deal"), where it is voided.
+  if (s.kind === 'sponsorship_deal' && s.dealId) return { href: `${accountingBase.replace(/\/accounting$/, '/sponsorships')}/${s.dealId}`, label: 'Open the deal' };
   return null;
 }
 
@@ -679,7 +681,7 @@ function ReadLineWindow({ row, book, q, orgSlug, accountingBase, canMove, fiscal
   }
   const amount = `${money(row.moneyIn ?? row.moneyOut)} ${row.moneyIn != null ? 'in' : 'out'}`;
   const sourceWord = row.source.kind === 'allocation' ? 'Allocation' : row.source.kind === 'request' ? 'Payment request'
-    : row.source.kind === 'league_fee' ? 'House league fee' : isTransfer ? 'Transfer' : book.name;
+    : row.source.kind === 'league_fee' ? 'House league fee' : row.source.kind === 'sponsorship_deal' ? 'Sponsorship' : isTransfer ? 'Transfer' : book.name;
   const teamSide = row.source.kind === 'allocation' ? 'On their Club page as received'
     : row.source.kind === 'request' ? 'On their Club page as decided' : null;
   const canVoidBoth = canMove && !row.locked && row.status !== 'void' && row.can.void === 'both_halves';
@@ -737,6 +739,8 @@ function ReadLineWindow({ row, book, q, orgSlug, accountingBase, canMove, fiscal
                 ? 'This line was written when the request was decided. To change it, reverse the approval on the request, and both books follow.'
                 : row.source.kind === 'league_fee'
                   ? 'This line was written by a house league registration fee. Change it on the registration.'
+                  : row.source.kind === 'sponsorship_deal'
+                    ? 'This line was written when a sponsor’s payment was recorded. To change it, void the payment on the deal.'
                   : isTransfer && row.status !== 'void' && !canVoidBoth
                     ? 'A transfer is changed by voiding both halves and entering it again.'
                     : null}

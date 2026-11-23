@@ -13,6 +13,7 @@ import type { ClubDeal, DealBand, DealState, EmailBar, OfferReason } from '@/lib
 import type { PackageTaken, PlaceTargets, SponsorPlaceKind, SponsorshipPackage } from '@/lib/club-sponsorships';
 import type { FiscalYearOption } from '@/lib/club-fiscal-year';
 import type { GstHstRate } from '@/lib/gst-hst-rates';
+import type { DealPayment } from '@/lib/club-sponsor-invoice';
 import { sponsorshipsApi } from './api';
 
 export type ListedDeal = ClubDeal & { band: DealBand };
@@ -47,6 +48,8 @@ export interface DealRead {
     address: { street: string; city: string; province: string; postal: string } | null; logoUrl: string | null; logoWaiting: boolean;
   } | null;
   offers: { email: string; reason: OfferReason; reasonOn: string; kind: 'offer' | 'again'; sentAt: string; sentByName: string }[];
+  /** The payments recorded on its invoice, voided ones included (Part 3a). */
+  payments: DealPayment[];
   answers: { questionId: string; label: string; type: string; display: string | null }[];
   address: string | null;
   bar: EmailBar;

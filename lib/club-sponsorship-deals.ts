@@ -21,6 +21,7 @@ import { isUuid } from './utils';
 import { checkEmail, checkLink } from './site-field-checks';
 import { isCalendarDate, addCalendarDays, addCalendarMonths } from './timezone';
 import { parsePrice, type PackageItem, type PackageTaken, type SponsorPlaceKind } from './club-sponsorships';
+import { SPONSOR_LINK_WORDS } from './sponsor-link-words';
 
 export type DealState = 'offered' | 'form_received' | 'invoiced' | 'paid' | 'withdrawn';
 /** The list's bands, in the drawn order (round 1 tab 5); Delivered and Withdrawn start folded. */
@@ -98,6 +99,16 @@ export interface ClubDeal {
   linkUnsentAt: string | null;
   formAt: string | null;
   invoice: DealInvoice | null;
+  /** A revised invoice's day (Part 3a): its amount or tax changed after it was issued, the number kept. */
+  revisedOn: string | null;
+  /** When the invoice (or its latest revision) was emailed; null = shown on the link only (the email failed or predates 3a). */
+  invoiceEmailedAt: string | null;
+  /** The day the last payment brought the balance to nothing (the Paid callout, the list's "Paid Feb 14 · cheque"). */
+  paidOn: string | null;
+  /** How the last arrival came, for the list's grey line. */
+  paidHow: string | null;
+  /** What has arrived so far (live payments only). Money on a deal locks its terms and its Withdraw until it is voided. */
+  paidAmount: number;
   withdrawn: { at: string; byName: string; reason: string } | null;
   /** The checklist's ticks: item id → who and when. */
   done: Record<string, { at: string; byName: string }>;
@@ -115,6 +126,12 @@ export function deliveryCount(d: Pick<ClubDeal, 'logoOnSite' | 'items' | 'done'>
   return { done: lines.filter(l => d.done[l.id]).length, of: lines.length };
 }
 
+/** What the business gets, as the link, the email and the invoice list it: the logo line first when it is on. */
+export function dealBullets(d: Pick<ClubDeal, 'logoOnSite' | 'items' | 'placeKind' | 'targetName'>): string[] {
+  const place = d.placeKind === 'club' ? null : d.targetName;
+  return [...(d.logoOnSite ? [SPONSOR_LINK_WORDS.logoBullet(d.placeKind, place)] : []), ...d.items.map(i => i.text)];
+}
+
 /** Nothing can be delivered on an open offer: the checklist opens once the deal is invoiced ("Items done" is a dash before). */
 export const checklistOpen = (d: Pick<ClubDeal, 'state'>): boolean => d.state === 'invoiced' || d.state === 'paid';
 
@@ -130,8 +147,14 @@ export function bandOf(d: Pick<ClubDeal, 'state' | 'logoOnSite' | 'items' | 'don
   return isDelivered(d) ? 'delivered' : d.state;
 }
 
-/** Withdraw until paid (ask 4). */
-export const canWithdraw = (d: Pick<ClubDeal, 'state'>): boolean => d.state !== 'paid' && d.state !== 'withdrawn';
+/** Withdraw until paid (ask 4) — and while no money stands on it (a part payment is voided first, Part 3a). */
+export const canWithdraw = (d: Pick<ClubDeal, 'state' | 'paidAmount'>): boolean => d.state !== 'paid' && d.state !== 'withdrawn' && d.paidAmount === 0;
+
+/** An issued invoice's amount or tax may change (the revised invoice, Part 3a) only while no payment stands on it. */
+export const canRevise = (d: Pick<ClubDeal, 'state' | 'paidAmount'>): boolean => d.state === 'invoiced' && d.paidAmount === 0;
+
+/** Record a payment: on an invoiced deal with something still owing. */
+export const canRecordPayment = (d: Pick<ClubDeal, 'state' | 'invoice'>): boolean => d.state === 'invoiced' && !!d.invoice;
 
 /** The link is open to the business while the offer is (offered or form received); after that it shows the invoice. */
 export const linkTakesForm = (d: Pick<ClubDeal, 'state'>): boolean => d.state === 'offered' || d.state === 'form_received';

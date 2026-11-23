@@ -128,6 +128,9 @@ export const EMAIL_KINDS = {
   family_message:                       { klass: 'family', label: 'Message to a family' },
   family_club_email:                    { klass: 'family', label: 'Club email to families' },
   club_sponsorship_offer:               { klass: 'family', label: 'Sponsorship offer to a business' },
+  // Board Ready Stage 6 Part 3a: the invoice for a deal the business agreed to, and its "Paid in full" (not offers: no stop holds them).
+  club_sponsorship_invoice:             { klass: 'family', label: 'Sponsorship invoice to a business' },
+  club_sponsorship_receipt:             { klass: 'family', label: 'Sponsorship receipt to a business' },
   house_league_placement:               { klass: 'family', label: 'House league placement' },
   house_league_practice_change:         { klass: 'family', label: 'House league practice change' },
   // House League 9d-2b Part 4: Publish schedule's email and a division's Changes to send (service notices, as above).

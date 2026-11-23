@@ -117,6 +117,9 @@ const CATEGORY_WORD: Record<string, string> = {
   registration_refund: 'Registration refunds',
   // 12c Part 6 (mig 387): a bank debit the bank reversed after it cleared — the bank's line, never a refund.
   registration_returned: 'Returned by the bank',
+  // Board Ready Stage 6 Part 3a (mig 528): a sponsor's payment, written by its deal.
+  club_sponsorship: 'Club sponsorship',
+  gst_hst_collected: 'GST/HST collected',
 };
 
 /** A line's category, in words. A club's own free-text category reads as typed. */
@@ -262,7 +265,7 @@ export const TRANSFER_VOID_REFUSAL: Record<string, string> = {
 export const TEAM_BOOK_READ_ONLY =
   'A team’s book is kept by its coaches and is read-only here. Money moves between the club and a team through allocations and payment requests.';
 export const SOURCED_LINE_READ_ONLY =
-  'This line was written by an allocation, a payment request or a house league fee, so it can’t be edited or voided on the ledger. Change it where it came from.';
+  'This line was written by an allocation, a payment request, a house league fee or a sponsor’s payment, so it can’t be edited or voided on the ledger. Change it where it came from.';
 
 // ── Notifications (titles and lines; /marketing's words) ──────────────────────────────────────
 
@@ -399,7 +402,7 @@ export const TEAM_SUPPORT_ITEM_WORD = 'Paid to teams on request';
 /** A club ledger line filed to no budget word — every line typed before 3b, until someone files it. */
 export const NOT_FILED_WORD = 'Not filed';
 /** Months: what a tournament's or the house league's book moved on its own (Ask 5). */
-export const OTHER_BOOKS_WORD = 'The club’s other books';
+export const OTHER_BOOKS_WORD = 'The club’s other books and GST/HST collected';
 /** A team's cash, read from the coaches' own books and never the club's (D1, Ask 4e). */
 export const HELD_BY_THE_TEAM_WORD = 'Held by the team';
 /** A team outside the reader's groups, where a club read would otherwise name it (B11: counted, never named). */

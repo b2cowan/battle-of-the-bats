@@ -5510,6 +5510,897 @@
         "column_default": null
       },
       {
+        "table_name": "club_sponsor_deal_items",
+        "pos": 1,
+        "column_name": "deal_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_items",
+        "pos": 2,
+        "column_name": "item_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_items",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_items",
+        "pos": 4,
+        "column_name": "done_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_deal_items",
+        "pos": 5,
+        "column_name": "done_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_items",
+        "pos": 6,
+        "column_name": "done_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 3,
+        "column_name": "deal_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 4,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 5,
+        "column_name": "tax_part",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 6,
+        "column_name": "received_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 7,
+        "column_name": "method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 8,
+        "column_name": "reference",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 9,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 10,
+        "column_name": "income_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 11,
+        "column_name": "tax_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 12,
+        "column_name": "recorded_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 13,
+        "column_name": "recorded_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 14,
+        "column_name": "recorded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 15,
+        "column_name": "voided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 16,
+        "column_name": "voided_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 17,
+        "column_name": "voided_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 18,
+        "column_name": "void_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 3,
+        "column_name": "sponsor_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 4,
+        "column_name": "package_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 5,
+        "column_name": "package_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 6,
+        "column_name": "package_items",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 7,
+        "column_name": "logo_on_site",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 8,
+        "column_name": "place_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 9,
+        "column_name": "target_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 10,
+        "column_name": "target_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 11,
+        "column_name": "ends_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 12,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 13,
+        "column_name": "charge_tax",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 14,
+        "column_name": "state",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'offered'::text"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 15,
+        "column_name": "link_version",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 16,
+        "column_name": "offered_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 17,
+        "column_name": "offered_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 18,
+        "column_name": "offered_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 19,
+        "column_name": "offered_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 20,
+        "column_name": "offered_to",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 21,
+        "column_name": "emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 22,
+        "column_name": "opened_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 23,
+        "column_name": "form_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 24,
+        "column_name": "business_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 25,
+        "column_name": "contact_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 26,
+        "column_name": "contact_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 27,
+        "column_name": "phone",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 28,
+        "column_name": "website",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 29,
+        "column_name": "invoice_street",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 30,
+        "column_name": "invoice_city",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 31,
+        "column_name": "invoice_province",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 32,
+        "column_name": "invoice_postal",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 33,
+        "column_name": "logo_path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 34,
+        "column_name": "logo_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 35,
+        "column_name": "pay_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 36,
+        "column_name": "invoice_year",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 37,
+        "column_name": "invoice_seq",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 38,
+        "column_name": "invoiced_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 39,
+        "column_name": "invoiced_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 40,
+        "column_name": "due_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 41,
+        "column_name": "tax_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 42,
+        "column_name": "tax_rate",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 43,
+        "column_name": "tax_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 44,
+        "column_name": "total",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 45,
+        "column_name": "withdrawn_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 46,
+        "column_name": "withdrawn_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 47,
+        "column_name": "withdrawn_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 48,
+        "column_name": "withdrawn_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 49,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 50,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 51,
+        "column_name": "link_unsent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 52,
+        "column_name": "revised_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 53,
+        "column_name": "invoice_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 54,
+        "column_name": "receipt_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 55,
+        "column_name": "paid_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_invoice_counters",
+        "pos": 1,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_invoice_counters",
+        "pos": 2,
+        "column_name": "year",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_invoice_counters",
+        "pos": 3,
+        "column_name": "last_seq",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offer_stops",
+        "pos": 1,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offer_stops",
+        "pos": 2,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offer_stops",
+        "pos": 3,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offer_stops",
+        "pos": 4,
+        "column_name": "stopped_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_offer_stops",
+        "pos": 5,
+        "column_name": "stopped_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offer_stops",
+        "pos": 6,
+        "column_name": "stopped_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 3,
+        "column_name": "deal_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 4,
+        "column_name": "business_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 5,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 6,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 7,
+        "column_name": "reason_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 8,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'offer'::text"
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 9,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 10,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "pos": 11,
+        "column_name": "sent_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "club_sponsor_places",
         "pos": 1,
         "column_name": "id",
@@ -34490,6 +35381,153 @@
         "constraint_name": "club_schedules_updated_by_fkey"
       },
       {
+        "table_name": "club_sponsor_deal_items",
+        "column_name": "deal_id",
+        "foreign_table": "club_sponsor_deals",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_items_deal_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_items",
+        "column_name": "done_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_deal_items_done_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_items",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_items_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "deal_id",
+        "foreign_table": "club_sponsor_deals",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_deal_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "income_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_income_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "recorded_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_deal_payments_recorded_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "tax_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_tax_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "voided_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_deal_payments_voided_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "column_name": "offered_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_deals_offered_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deals_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "column_name": "package_id",
+        "foreign_table": "club_sponsorship_packages",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deals_package_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "column_name": "sponsor_id",
+        "foreign_table": "club_sponsors",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deals_sponsor_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "column_name": "withdrawn_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_deals_withdrawn_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_invoice_counters",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_invoice_counters_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_offer_stops",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_offer_stops_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_offer_stops",
+        "column_name": "stopped_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_offer_stops_stopped_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "column_name": "deal_id",
+        "foreign_table": "club_sponsor_deals",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_offers_deal_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_offers_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_offers",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_offers_sent_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "column_name": "deal_id",
+        "foreign_table": "club_sponsor_deals",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_places_deal_fk"
+      },
+      {
         "table_name": "club_sponsor_places",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -41175,6 +42213,86 @@
         "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
       },
       {
+        "tablename": "club_sponsor_deal_items",
+        "indexname": "club_sponsor_deal_items_org_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deal_items_org_idx ON public.club_sponsor_deal_items USING btree (org_id)"
+      },
+      {
+        "tablename": "club_sponsor_deal_items",
+        "indexname": "club_sponsor_deal_items_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_items_pkey ON public.club_sponsor_deal_items USING btree (deal_id, item_id)"
+      },
+      {
+        "tablename": "club_sponsor_deal_payments",
+        "indexname": "club_sponsor_deal_payments_deal_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deal_payments_deal_idx ON public.club_sponsor_deal_payments USING btree (org_id, deal_id, received_on)"
+      },
+      {
+        "tablename": "club_sponsor_deal_payments",
+        "indexname": "club_sponsor_deal_payments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_payments_pkey ON public.club_sponsor_deal_payments USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsor_deals",
+        "indexname": "club_sponsor_deals_invoice_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deals_invoice_uniq ON public.club_sponsor_deals USING btree (org_id, invoice_year, invoice_seq) WHERE (invoice_seq IS NOT NULL)"
+      },
+      {
+        "tablename": "club_sponsor_deals",
+        "indexname": "club_sponsor_deals_org_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deals_org_idx ON public.club_sponsor_deals USING btree (org_id, offered_on)"
+      },
+      {
+        "tablename": "club_sponsor_deals",
+        "indexname": "club_sponsor_deals_package_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deals_package_idx ON public.club_sponsor_deals USING btree (package_id)"
+      },
+      {
+        "tablename": "club_sponsor_deals",
+        "indexname": "club_sponsor_deals_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deals_pkey ON public.club_sponsor_deals USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsor_deals",
+        "indexname": "club_sponsor_deals_sponsor_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deals_sponsor_idx ON public.club_sponsor_deals USING btree (sponsor_id)"
+      },
+      {
+        "tablename": "club_sponsor_deals",
+        "indexname": "club_sponsor_deals_target_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deals_target_idx ON public.club_sponsor_deals USING btree (org_id, place_kind, target_id)"
+      },
+      {
+        "tablename": "club_sponsor_invoice_counters",
+        "indexname": "club_sponsor_invoice_counters_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_invoice_counters_pkey ON public.club_sponsor_invoice_counters USING btree (org_id, year)"
+      },
+      {
+        "tablename": "club_sponsor_offer_stops",
+        "indexname": "club_sponsor_offer_stops_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_offer_stops_pkey ON public.club_sponsor_offer_stops USING btree (org_id, email)"
+      },
+      {
+        "tablename": "club_sponsor_offers",
+        "indexname": "club_sponsor_offers_deal_idx",
+        "indexdef": "CREATE INDEX club_sponsor_offers_deal_idx ON public.club_sponsor_offers USING btree (deal_id) WHERE (deal_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_sponsor_offers",
+        "indexname": "club_sponsor_offers_org_idx",
+        "indexdef": "CREATE INDEX club_sponsor_offers_org_idx ON public.club_sponsor_offers USING btree (org_id, email)"
+      },
+      {
+        "tablename": "club_sponsor_offers",
+        "indexname": "club_sponsor_offers_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_offers_pkey ON public.club_sponsor_offers USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsor_places",
+        "indexname": "club_sponsor_places_one_per_deal",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_places_one_per_deal ON public.club_sponsor_places USING btree (deal_id) WHERE (deal_id IS NOT NULL)"
+      },
+      {
         "tablename": "club_sponsor_places",
         "indexname": "club_sponsor_places_pkey",
         "indexdef": "CREATE UNIQUE INDEX club_sponsor_places_pkey ON public.club_sponsor_places USING btree (id)"
@@ -47282,7 +48400,7 @@
         "kind": "CHECK",
         "table_name": "club_form_answer_clears",
         "detail": "club_form_answer_clears_subject_table_check",
-        "check_clause": "((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
+        "check_clause": "((subject_table IS NULL) OR (subject_table = ANY (ARRAY['league_registrations'::text, 'club_sponsor_deals'::text])))"
       },
       {
         "kind": "RLS",
@@ -47306,7 +48424,7 @@
         "kind": "CHECK",
         "table_name": "club_form_answers",
         "detail": "club_form_answers_subject_table_check",
-        "check_clause": "((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
+        "check_clause": "((subject_table IS NULL) OR (subject_table = ANY (ARRAY['league_registrations'::text, 'club_sponsor_deals'::text])))"
       },
       {
         "kind": "CHECK",
@@ -47444,7 +48562,7 @@
         "kind": "CHECK",
         "table_name": "club_form_files",
         "detail": "club_form_files_subject_table_check",
-        "check_clause": "((subject_table IS NULL) OR (subject_table = 'league_registrations'::text))"
+        "check_clause": "((subject_table IS NULL) OR (subject_table = ANY (ARRAY['league_registrations'::text, 'club_sponsor_deals'::text])))"
       },
       {
         "kind": "RLS",
@@ -47540,7 +48658,7 @@
         "kind": "CHECK",
         "table_name": "club_form_ticks",
         "detail": "club_form_ticks_subject_table_check",
-        "check_clause": "(subject_table = 'league_registrations'::text)"
+        "check_clause": "(subject_table = ANY (ARRAY['league_registrations'::text, 'club_sponsor_deals'::text]))"
       },
       {
         "kind": "CHECK",
@@ -47983,6 +49101,390 @@
       {
         "kind": "RLS",
         "table_name": "club_schedules",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_items",
+        "detail": "club_sponsor_deal_items_done_by_name_check",
+        "check_clause": "((char_length(btrim(done_by_name)) >= 1) AND (char_length(btrim(done_by_name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_items",
+        "detail": "club_sponsor_deal_items_item_id_check",
+        "check_clause": "(item_id ~ '^[\\w-]{1,64}$'::text)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_deal_items",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_check",
+        "check_clause": "((tax_part >= (0)::numeric) AND (tax_part <= amount))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_method_check",
+        "check_clause": "(method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_note_check",
+        "check_clause": "((note IS NULL) OR ((char_length(btrim(note)) >= 1) AND (char_length(btrim(note)) <= 300)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_recorded_by_name_check",
+        "check_clause": "((char_length(btrim(recorded_by_name)) >= 1) AND (char_length(btrim(recorded_by_name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_reference_check",
+        "check_clause": "((reference IS NULL) OR ((char_length(btrim(reference)) >= 1) AND (char_length(btrim(reference)) <= 60)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_void_reason_check",
+        "check_clause": "((void_reason IS NULL) OR ((char_length(btrim(void_reason)) >= 1) AND (char_length(btrim(void_reason)) <= 300)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_void_whole",
+        "check_clause": "(((voided_at IS NULL) = (voided_by_name IS NULL)) AND ((voided_at IS NULL) = (void_reason IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_voided_by_name_check",
+        "check_clause": "((voided_by_name IS NULL) OR ((char_length(btrim(voided_by_name)) >= 1) AND (char_length(btrim(voided_by_name)) <= 120)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_deal_payments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_amount_check",
+        "check_clause": "((amount >= (0)::numeric) AND (amount <= (1000000)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_business_name_check",
+        "check_clause": "((business_name IS NULL) OR ((char_length(btrim(business_name)) >= 1) AND (char_length(btrim(business_name)) <= 80)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_contact_email_check",
+        "check_clause": "((contact_email IS NULL) OR ((char_length(contact_email) >= 3) AND (char_length(contact_email) <= 254)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_contact_name_check",
+        "check_clause": "((contact_name IS NULL) OR ((char_length(btrim(contact_name)) >= 1) AND (char_length(btrim(contact_name)) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_emailed_to",
+        "check_clause": "((emailed_at IS NULL) OR (offered_to IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_invoice_city_check",
+        "check_clause": "((invoice_city IS NULL) OR ((char_length(btrim(invoice_city)) >= 1) AND (char_length(btrim(invoice_city)) <= 100)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_invoice_postal_check",
+        "check_clause": "((invoice_postal IS NULL) OR ((char_length(btrim(invoice_postal)) >= 1) AND (char_length(btrim(invoice_postal)) <= 20)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_invoice_province_check",
+        "check_clause": "((invoice_province IS NULL) OR (invoice_province ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_invoice_seq_check",
+        "check_clause": "((invoice_seq IS NULL) OR (invoice_seq > 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_invoice_street_check",
+        "check_clause": "((invoice_street IS NULL) OR ((char_length(btrim(invoice_street)) >= 1) AND (char_length(btrim(invoice_street)) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_invoice_whole",
+        "check_clause": "(((invoice_seq IS NULL) = (invoice_year IS NULL)) AND ((invoice_seq IS NULL) = (invoiced_at IS NULL)) AND ((invoice_seq IS NULL) = (total IS NULL)) AND ((invoice_seq IS NULL) = (due_on IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_invoice_year_check",
+        "check_clause": "((invoice_year IS NULL) OR ((invoice_year >= 2000) AND (invoice_year <= 2199)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_invoiced_numbered",
+        "check_clause": "((state <> ALL (ARRAY['invoiced'::text, 'paid'::text])) OR (invoice_seq IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_link_version_check",
+        "check_clause": "(link_version >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_logo_path_check",
+        "check_clause": "((logo_path IS NULL) OR ((char_length(logo_path) >= 1) AND (char_length(logo_path) <= 500)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_offered_by_name_check",
+        "check_clause": "((char_length(btrim(offered_by_name)) >= 1) AND (char_length(btrim(offered_by_name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_offered_to_check",
+        "check_clause": "((offered_to IS NULL) OR (((char_length(offered_to) >= 3) AND (char_length(offered_to) <= 254)) AND (offered_to = lower(offered_to))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_package_items_check",
+        "check_clause": "((jsonb_typeof(package_items) = 'array'::text) AND (jsonb_array_length(package_items) <= 20))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_package_name_check",
+        "check_clause": "((char_length(btrim(package_name)) >= 1) AND (char_length(btrim(package_name)) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_paid_on",
+        "check_clause": "((state = 'paid'::text) = (paid_on IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_pay_method_check",
+        "check_clause": "((pay_method IS NULL) OR (pay_method = ANY (ARRAY['cheque_etransfer'::text, 'card'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_phone_check",
+        "check_clause": "((phone IS NULL) OR ((char_length(btrim(phone)) >= 1) AND (char_length(btrim(phone)) <= 40)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_place_kind_check",
+        "check_clause": "(place_kind = ANY (ARRAY['club'::text, 'division'::text, 'team'::text, 'tournament'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_revised_invoiced",
+        "check_clause": "((revised_on IS NULL) OR (invoice_seq IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_state_check",
+        "check_clause": "(state = ANY (ARRAY['offered'::text, 'form_received'::text, 'invoiced'::text, 'paid'::text, 'withdrawn'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_target",
+        "check_clause": "((place_kind = 'club'::text) = (target_id IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_target_name_check",
+        "check_clause": "((target_name IS NULL) OR ((char_length(target_name) >= 1) AND (char_length(target_name) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_tax_amount_check",
+        "check_clause": "((tax_amount IS NULL) OR (tax_amount >= (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_tax_kind_check",
+        "check_clause": "((tax_kind IS NULL) OR (tax_kind = ANY (ARRAY['GST'::text, 'HST'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_tax_rate_check",
+        "check_clause": "((tax_rate IS NULL) OR ((tax_rate >= (0)::numeric) AND (tax_rate < (100)::numeric)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_tax_whole",
+        "check_clause": "(((tax_kind IS NULL) = (tax_rate IS NULL)) AND ((tax_kind IS NULL) = (tax_amount IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_total_check",
+        "check_clause": "((total IS NULL) OR (total >= (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_website_check",
+        "check_clause": "((website IS NULL) OR ((website ~ '^https://'::text) AND (char_length(website) <= 500)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_withdrawn_by_name_check",
+        "check_clause": "((withdrawn_by_name IS NULL) OR ((char_length(btrim(withdrawn_by_name)) >= 1) AND (char_length(btrim(withdrawn_by_name)) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_withdrawn_reason_check",
+        "check_clause": "((withdrawn_reason IS NULL) OR ((char_length(btrim(withdrawn_reason)) >= 1) AND (char_length(btrim(withdrawn_reason)) <= 300)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_withdrawn_whole",
+        "check_clause": "(((state = 'withdrawn'::text) = (withdrawn_at IS NOT NULL)) AND ((withdrawn_at IS NULL) OR ((withdrawn_by_name IS NOT NULL) AND (withdrawn_reason IS NOT NULL))))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_deals",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_invoice_counters",
+        "detail": "club_sponsor_invoice_counters_last_seq_check",
+        "check_clause": "(last_seq > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_invoice_counters",
+        "detail": "club_sponsor_invoice_counters_year_check",
+        "check_clause": "((year >= 2000) AND (year <= 2199))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_invoice_counters",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offer_stops",
+        "detail": "club_sponsor_offer_stops_email_check",
+        "check_clause": "(((char_length(email) >= 3) AND (char_length(email) <= 254)) AND (email = lower(email)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offer_stops",
+        "detail": "club_sponsor_offer_stops_source_check",
+        "check_clause": "(source = ANY (ARRAY['unsubscribe'::text, 'club'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offer_stops",
+        "detail": "club_sponsor_offer_stops_stopped_by_name_check",
+        "check_clause": "((stopped_by_name IS NULL) OR ((char_length(btrim(stopped_by_name)) >= 1) AND (char_length(btrim(stopped_by_name)) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offer_stops",
+        "detail": "club_sponsor_offer_stops_who",
+        "check_clause": "((source = 'club'::text) = (stopped_by_name IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_offer_stops",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offers",
+        "detail": "club_sponsor_offers_business_name_check",
+        "check_clause": "((char_length(btrim(business_name)) >= 1) AND (char_length(btrim(business_name)) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offers",
+        "detail": "club_sponsor_offers_email_check",
+        "check_clause": "(((char_length(email) >= 3) AND (char_length(email) <= 254)) AND (email = lower(email)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offers",
+        "detail": "club_sponsor_offers_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['offer'::text, 'again'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offers",
+        "detail": "club_sponsor_offers_reason_check",
+        "check_clause": "(reason = ANY (ARRAY['paid_recently'::text, 'asked_recently'::text, 'gave_address'::text, 'published_address'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_offers",
+        "detail": "club_sponsor_offers_sent_by_name_check",
+        "check_clause": "((char_length(btrim(sent_by_name)) >= 1) AND (char_length(btrim(sent_by_name)) <= 120))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_offers",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -58875,6 +60377,474 @@
         "column_default": null
       },
       {
+        "table_name": "club_sponsor_places",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 3,
+        "column_name": "sponsor_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 4,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 5,
+        "column_name": "target_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 6,
+        "column_name": "ends_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 7,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'typed'::text"
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 8,
+        "column_name": "deal_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "pos": 10,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 3,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 4,
+        "column_name": "logo_url",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 5,
+        "column_name": "link",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 6,
+        "column_name": "contact_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 7,
+        "column_name": "contact_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 8,
+        "column_name": "phone",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 9,
+        "column_name": "invoice_street",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 10,
+        "column_name": "invoice_city",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 11,
+        "column_name": "invoice_province",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 12,
+        "column_name": "invoice_postal",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 13,
+        "column_name": "position",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 14,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsors",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 3,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 4,
+        "column_name": "price",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 5,
+        "column_name": "place_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 6,
+        "column_name": "how_many",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 7,
+        "column_name": "shows_until",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 8,
+        "column_name": "logo_on_site",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 9,
+        "column_name": "items",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 10,
+        "column_name": "document_path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 11,
+        "column_name": "document_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 12,
+        "column_name": "document_size",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 13,
+        "column_name": "archived_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 14,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 1,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 2,
+        "column_name": "gst_hst_registered",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 3,
+        "column_name": "gst_hst_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 4,
+        "column_name": "etransfer_to",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 5,
+        "column_name": "cheques_payable_to",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 6,
+        "column_name": "payment_due_days",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "30"
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 7,
+        "column_name": "sponsor_contact_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 8,
+        "column_name": "sponsor_contact_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 9,
+        "column_name": "updated_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "pos": 10,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "cron_call_receipts",
         "pos": 1,
         "column_name": "id",
@@ -68944,6 +70914,15 @@
         "udt_name": "text",
         "is_nullable": "NO",
         "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 34,
+        "column_name": "sponsor_fee_payer",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'club'::text"
       },
       {
         "table_name": "org_people",
@@ -87378,6 +89357,62 @@
         "constraint_name": "club_schedules_updated_by_fkey"
       },
       {
+        "table_name": "club_sponsor_places",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_places_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_places",
+        "column_name": "sponsor_id",
+        "foreign_table": "club_sponsors",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_places_sponsor_id_fkey"
+      },
+      {
+        "table_name": "club_sponsors",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsors_created_by_fkey"
+      },
+      {
+        "table_name": "club_sponsors",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsors_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsorship_packages_created_by_fkey"
+      },
+      {
+        "table_name": "club_sponsorship_packages",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsorship_packages_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsorship_settings_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsorship_settings",
+        "column_name": "updated_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsorship_settings_updated_by_fkey"
+      },
+      {
         "table_name": "diamonds",
         "column_name": "source_org_venue_id",
         "foreign_table": "org_venues",
@@ -94007,6 +96042,51 @@
         "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
       },
       {
+        "tablename": "club_sponsor_places",
+        "indexname": "club_sponsor_places_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_places_pkey ON public.club_sponsor_places USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsor_places",
+        "indexname": "club_sponsor_places_sponsor_idx",
+        "indexdef": "CREATE INDEX club_sponsor_places_sponsor_idx ON public.club_sponsor_places USING btree (sponsor_id)"
+      },
+      {
+        "tablename": "club_sponsor_places",
+        "indexname": "club_sponsor_places_target_idx",
+        "indexdef": "CREATE INDEX club_sponsor_places_target_idx ON public.club_sponsor_places USING btree (org_id, kind, target_id)"
+      },
+      {
+        "tablename": "club_sponsor_places",
+        "indexname": "club_sponsor_places_typed_once",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_places_typed_once ON public.club_sponsor_places USING btree (sponsor_id, kind, COALESCE(target_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (source = 'typed'::text)"
+      },
+      {
+        "tablename": "club_sponsors",
+        "indexname": "club_sponsors_org_idx",
+        "indexdef": "CREATE INDEX club_sponsors_org_idx ON public.club_sponsors USING btree (org_id, \"position\")"
+      },
+      {
+        "tablename": "club_sponsors",
+        "indexname": "club_sponsors_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsors_pkey ON public.club_sponsors USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsorship_packages",
+        "indexname": "club_sponsorship_packages_org_idx",
+        "indexdef": "CREATE INDEX club_sponsorship_packages_org_idx ON public.club_sponsorship_packages USING btree (org_id, created_at)"
+      },
+      {
+        "tablename": "club_sponsorship_packages",
+        "indexname": "club_sponsorship_packages_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsorship_packages_pkey ON public.club_sponsorship_packages USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsorship_settings",
+        "indexname": "club_sponsorship_settings_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsorship_settings_pkey ON public.club_sponsorship_settings USING btree (org_id)"
+      },
+      {
         "tablename": "cron_call_receipts",
         "indexname": "cron_call_receipts_job_issued_idx",
         "indexdef": "CREATE INDEX cron_call_receipts_job_issued_idx ON public.cron_call_receipts USING btree (job_name, issued_at)"
@@ -100344,8 +102424,14 @@
       {
         "kind": "CHECK",
         "table_name": "club_forms",
+        "detail": "club_forms_owner_kind",
+        "check_clause": "(((owner_table = 'league_seasons'::text) AND (subject_kind = 'child_signup'::text)) OR ((owner_table = 'organizations'::text) AND (subject_kind = 'business'::text) AND (owner_id = org_id)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_forms",
         "detail": "club_forms_owner_table_check",
-        "check_clause": "(owner_table = 'league_seasons'::text)"
+        "check_clause": "(owner_table = ANY (ARRAY['league_seasons'::text, 'organizations'::text]))"
       },
       {
         "kind": "CHECK",
@@ -100764,6 +102850,204 @@
       {
         "kind": "RLS",
         "table_name": "club_schedules",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_places",
+        "detail": "club_sponsor_places_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['club'::text, 'division'::text, 'team'::text, 'tournament'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_places",
+        "detail": "club_sponsor_places_source",
+        "check_clause": "((source = 'deal'::text) = (deal_id IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_places",
+        "detail": "club_sponsor_places_source_check",
+        "check_clause": "(source = ANY (ARRAY['typed'::text, 'deal'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_places",
+        "detail": "club_sponsor_places_target",
+        "check_clause": "((kind = 'club'::text) = (target_id IS NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_places",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_contact_email_check",
+        "check_clause": "((contact_email IS NULL) OR ((char_length(contact_email) >= 3) AND (char_length(contact_email) <= 254)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_contact_name_check",
+        "check_clause": "((contact_name IS NULL) OR ((char_length(btrim(contact_name)) >= 1) AND (char_length(btrim(contact_name)) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_invoice_city_check",
+        "check_clause": "((invoice_city IS NULL) OR ((char_length(btrim(invoice_city)) >= 1) AND (char_length(btrim(invoice_city)) <= 100)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_invoice_postal_check",
+        "check_clause": "((invoice_postal IS NULL) OR ((char_length(btrim(invoice_postal)) >= 1) AND (char_length(btrim(invoice_postal)) <= 20)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_invoice_province_check",
+        "check_clause": "((invoice_province IS NULL) OR (invoice_province ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_invoice_street_check",
+        "check_clause": "((invoice_street IS NULL) OR ((char_length(btrim(invoice_street)) >= 1) AND (char_length(btrim(invoice_street)) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_link_check",
+        "check_clause": "((link IS NULL) OR ((link ~ '^https://'::text) AND (char_length(link) <= 500)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_logo_url_check",
+        "check_clause": "((logo_url IS NULL) OR ((char_length(logo_url) >= 1) AND (char_length(logo_url) <= 500)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_name_check",
+        "check_clause": "((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsors",
+        "detail": "club_sponsors_phone_check",
+        "check_clause": "((phone IS NULL) OR ((char_length(btrim(phone)) >= 1) AND (char_length(btrim(phone)) <= 40)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsors",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_packages",
+        "detail": "club_sponsorship_packages_document_name_check",
+        "check_clause": "((document_name IS NULL) OR ((char_length(document_name) >= 1) AND (char_length(document_name) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_packages",
+        "detail": "club_sponsorship_packages_document_size_check",
+        "check_clause": "((document_size IS NULL) OR ((document_size >= 1) AND (document_size <= 8388608)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_packages",
+        "detail": "club_sponsorship_packages_document_whole",
+        "check_clause": "(((document_path IS NULL) = (document_name IS NULL)) AND ((document_path IS NULL) = (document_size IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_packages",
+        "detail": "club_sponsorship_packages_how_many_check",
+        "check_clause": "((how_many IS NULL) OR ((how_many >= 1) AND (how_many <= 999)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_packages",
+        "detail": "club_sponsorship_packages_items_check",
+        "check_clause": "((jsonb_typeof(items) = 'array'::text) AND (jsonb_array_length(items) <= 20))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_packages",
+        "detail": "club_sponsorship_packages_name_check",
+        "check_clause": "((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_packages",
+        "detail": "club_sponsorship_packages_place_kind_check",
+        "check_clause": "(place_kind = ANY (ARRAY['club'::text, 'division'::text, 'team'::text, 'tournament'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_packages",
+        "detail": "club_sponsorship_packages_price_check",
+        "check_clause": "((price >= (0)::numeric) AND (price <= (1000000)::numeric))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsorship_packages",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_settings",
+        "detail": "club_sponsorship_settings_cheques_payable_to_check",
+        "check_clause": "((cheques_payable_to IS NULL) OR ((char_length(btrim(cheques_payable_to)) >= 1) AND (char_length(btrim(cheques_payable_to)) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_settings",
+        "detail": "club_sponsorship_settings_etransfer_to_check",
+        "check_clause": "((etransfer_to IS NULL) OR ((char_length(etransfer_to) >= 3) AND (char_length(etransfer_to) <= 254)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_settings",
+        "detail": "club_sponsorship_settings_gst_hst_number_check",
+        "check_clause": "((gst_hst_number IS NULL) OR (gst_hst_number ~ '^[0-9]{9}RT[0-9]{4}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_settings",
+        "detail": "club_sponsorship_settings_payment_due_days_check",
+        "check_clause": "((payment_due_days >= 0) AND (payment_due_days <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_settings",
+        "detail": "club_sponsorship_settings_registered_number",
+        "check_clause": "((NOT gst_hst_registered) OR (gst_hst_number IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_settings",
+        "detail": "club_sponsorship_settings_sponsor_contact_email_check",
+        "check_clause": "((sponsor_contact_email IS NULL) OR ((char_length(sponsor_contact_email) >= 3) AND (char_length(sponsor_contact_email) <= 254)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsorship_settings",
+        "detail": "club_sponsorship_settings_sponsor_contact_name_check",
+        "check_clause": "((sponsor_contact_name IS NULL) OR ((char_length(btrim(sponsor_contact_name)) >= 1) AND (char_length(btrim(sponsor_contact_name)) <= 120)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsorship_settings",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -102582,6 +104866,12 @@
       {
         "kind": "CHECK",
         "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_sponsor_fee_payer_chk",
+        "check_clause": "(sponsor_fee_payer = ANY (ARRAY['club'::text, 'sponsor'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
         "detail": "org_payment_accounts_terms_chk",
         "check_clause": "(((terms_version IS NULL) AND (terms_agreed_at IS NULL) AND (terms_agreed_by_email IS NULL)) OR ((terms_version IS NOT NULL) AND (terms_agreed_at IS NOT NULL) AND (terms_agreed_by_email IS NOT NULL)))"
       },
@@ -103675,7 +105965,7 @@
         "kind": "CHECK",
         "table_name": "platform_plan_module_entitlements",
         "detail": "platform_plan_module_entitlements_module_check",
-        "check_clause": "(module_key = ANY (ARRAY['module_tournaments'::text, 'module_communications'::text, 'module_members'::text, 'module_public_site'::text, 'module_house_league'::text, 'module_accounting'::text, 'module_rep_teams'::text]))"
+        "check_clause": "(module_key = ANY (ARRAY['module_tournaments'::text, 'module_communications'::text, 'module_members'::text, 'module_public_site'::text, 'module_house_league'::text, 'module_accounting'::text, 'module_rep_teams'::text, 'module_families'::text, 'module_sponsorships'::text]))"
       },
       {
         "kind": "CHECK",
