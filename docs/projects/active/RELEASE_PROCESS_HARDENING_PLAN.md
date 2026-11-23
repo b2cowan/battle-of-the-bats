@@ -2,8 +2,8 @@
 
 **Status:** on the board (Owner Morning Brief).
 **History (not kept current):** PLAN written 2026-11-15, on the owner's word ("write a plan and give me the prompt to kick off stage 1").
-Each stage records its own commit in the ladder below when it lands. Owner asks A1, A2, A4 and A5 are open (§7); A3
-ruled yes 2026-11-15.
+Each stage records its own commit in the ladder below when it lands. Owner asks (§7): A3 ruled yes 2026-11-15; A2 ruled
+yes and A4 re-confirmed off 2026-11-22; A1 and A5 answered yes 2026-11-22 as intent, confirmed in the 1B session.
 Companion brief: `RELEASE_PROCESS_HARDENING_PM_BRIEF.md`.
 Kickoff prompts: `RELEASE_PROCESS_HARDENING_STAGE1A_PROMPT.md`, `RELEASE_PROCESS_HARDENING_STAGE1B_PROMPT.md`.
 
@@ -285,15 +285,18 @@ names every check `/release master` names.
 - The demo re-seed moves to after the deploy is live, and a failed re-seed is reported, not swallowed.
 - A check that every table keeps its access policies (the snapshots learn the policies, not only on/off).
 
-## 7. Owner asks (open)
+## 7. Owner asks
+
+Answered on the Wave 1 owner checklist, pasted back 2026-11-22. A1 and A5 change shared agent automation, so under the
+agency rules the yes counts only when given in the session that builds them: the 1B session asks both again when it opens.
 
 | Ask | Question | Recommendation | Rides on it |
 |---|---|---|---|
-| **A1** | Should a push to production and a production database change always stop and ask you, whatever a session has been told? | Yes | Stage 1B item 7 |
-| **A2** | May the test sign-ins and a dev-database key be stored with GitHub so a cloud runner can check staging? Nothing from production goes there. | Yes | Stage 2 |
+| **A1** | Should a push to production and a production database change always stop and ask you, whatever a session has been told? | Yes. **Answered yes 2026-11-22 (intent; confirm in the 1B session)** | Stage 1B item 7 |
+| **A2** | May the test sign-ins and a dev-database key be stored with GitHub so a cloud runner can check staging? Nothing from production goes there. | Yes. **RULED yes, 2026-11-22** | Stage 2 |
 | **A3** | Accept today's dark-mode findings once, as a list, so later releases show only what is new? | **RULED yes, 2026-11-15** (owner, in the Stage 1A session: "Yes (Recommended)"; the list is written from a complete whole-product dark run, after the count and top screens are shown) | Stage 1A item 9 |
-| **A4** | Confirm in the Supabase account whether point-in-time recovery is on for production. | Owner check | Stage 3 |
-| **A5** | Also run the secret scan at every commit, not only at release? | Yes | Stage 1B item 8 |
+| **A4** | Confirm in the Supabase account whether point-in-time recovery is on for production. | **RULED off, 2026-11-16, re-confirmed 2026-11-22**: off ("daily is enough before a first customer"); the 2026-11-18 rehearsal found it off and restored from a daily backup. Stage 3's safety net leans on the daily backups (7 days kept). | Stage 3 |
+| **A5** | Also run the secret scan at every commit, not only at release? | Yes. **Answered yes 2026-11-22 (intent; confirm in the 1B session)** | Stage 1B item 8 |
 
 ## 8. Risks
 

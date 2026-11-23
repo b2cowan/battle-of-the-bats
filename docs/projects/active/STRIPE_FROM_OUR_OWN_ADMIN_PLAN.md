@@ -92,6 +92,19 @@ R. **Stripe test ↔ live reconciliation (owner ask 2026-11-03).** Not planned y
    the audit does not list, our portal settings v2 (created by the first live press), the empty logo (ruled). Left of R: the first live
    portal press, a live purchase, cancel and refund (after Terms and Privacy are public, Q-L1). The dashboard work was done between
    2026-11-06 and 11-17 and is evidenced by the audit, not by a dated owner note.
+   **2026-11-22 · R DONE: the live end-to-end test passed 16/16 (owner, Wave 1 owner checklist, pasted back).** A fresh buyer
+   bought Premium Coaches Portal monthly on production with a real card ($29.00 + $3.77 HST = $32.77, Ontario address); the first
+   live press of Payment method & invoices created our portal settings v2 on live; the billing page offered only the expected
+   options; the live invoice carried our GST/HST number; Customers listed the buyer; the billing webhook's deliveries were clean;
+   `audit-stripe-billing.mjs` against production passed the portal check. Then the buyer cancelled (Ending chip), the owner pressed
+   End now in platform admin and refunded the full $32.77 with Refund this charge; Stripe shows the payment refunded. No notes,
+   no defect. Read-back the same day (counts only): production holds 2 Terms acceptances on version 2026-11-22, both by one
+   person, as the sign-up door and the purchase window each record one. **Owner call (step 12):** a same-day "I want my money
+   back" customer cancels, then we use End now and Refund this charge in our own platform admin. The plan-ends-early settings,
+   checked in the same sitting: Smart Retries up to 8 times within 2 weeks, then cancel the subscription and mark the invoice
+   uncollectible (recorded in `docs/agents/accounting/UNPAID_SUBSCRIPTION_INVOICES.md`, commit e0d96b7b2). The owner also set
+   Stripe's past-due rule for manual invoices to "mark uncollectible after 30 days"; it touches nothing we send, as every plan
+   charges the card automatically.
 
 **Done when** Stages 0–9 are complete (R is its own owner ask).
 Open questions, not stages (to `/strategy`): pay by invoice (net 30) for Club and Association; pause billing for the off-season.
