@@ -215,7 +215,7 @@ export default async function ForClubsPage() {
                     coach&apos;s season in a fictional club: roster, lineups, schedule and budget. No sign-up.
                   </p>
                   <div className={kit.row}>
-                    <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
+                    <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
                       See a coach&apos;s season
                     </Link>
                   </div>
@@ -229,10 +229,10 @@ export default async function ForClubsPage() {
                     they&apos;re one product.
                   </p>
                   <div className={kit.row}>
-                    <Link href={SEE_IT_LIVE_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
+                    <Link href={SEE_IT_LIVE_PATH} prefetch={false} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
                       See a live tournament
                     </Link>
-                    <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
+                    <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
                       See a coach&apos;s season
                     </Link>
                   </div>
@@ -278,7 +278,7 @@ export default async function ForClubsPage() {
                 <p className={kit.body}>{mod.body}</p>
                 {/* W67 (drawing tab 4): a coach's season, live, on the rep teams card while the demo doors are on. */}
                 {mod.num === '03' && showSandboxDoor && (
-                  <Link href={SEE_IT_LIVE_COACHES_PATH} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
+                  <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
                     See a coach&apos;s season
                   </Link>
                 )}

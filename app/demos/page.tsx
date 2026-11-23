@@ -121,6 +121,7 @@ export default function DemosPage() {
                 <div className={cn(kit.push, styles.foot)}>
                   <Link
                     href={demo.door}
+                    prefetch={false}
                     className={cn(kit.btn, demo.id !== 'tournament' && kit.btnSecondary)}
                   >
                     {demo.doorCta}

@@ -138,7 +138,7 @@ export default async function ForTournamentOrganizersPage() {
                 live thing without out-shouting the lime primary. The sandbox is the proof;
                 signup is still the ask. */}
             {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_PATH} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
+              <Link href={SEE_IT_LIVE_PATH} prefetch={false} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
                 See a live tournament
               </Link>
             )}
@@ -359,7 +359,7 @@ export default async function ForTournamentOrganizersPage() {
             {/* The reader who finished the whole pitch and still isn't ready gets one more exit
                 that isn't "leave" (2026-08-10 door placements). */}
             {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_PATH} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
+              <Link href={SEE_IT_LIVE_PATH} prefetch={false} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
                 See a live tournament
               </Link>
             )}
