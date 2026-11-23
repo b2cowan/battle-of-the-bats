@@ -552,7 +552,7 @@ function StillOpen({ stillOpen, base, isPhone, onOpenBill }: {
                     <td>{r.kind === 'request' ? STILL_OPEN_WORDS.request(r.what) : r.what}</td>
                     <td>
                       {r.kind === 'request'
-                        ? <>{<WaitingCount n={1} />}{r.holdingPayout && <span className={cr.lateCaption}>{STILL_OPEN_WORDS.holding}</span>}</>
+                        ? <span className={cr.requestState}><WaitingCount n={1} />{r.holdingPayout && <span className={cr.negative}>{STILL_OPEN_WORDS.holding}</span>}</span>
                         : <span className={st.late ? cr.negative : undefined}>{st.text}</span>}
                     </td>
                     <td className={repKit.num}>{money(r.amount)}</td>

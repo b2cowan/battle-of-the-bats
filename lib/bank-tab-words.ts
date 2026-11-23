@@ -298,6 +298,8 @@ export const BANK_WORDS = {
   notCheckedLead: 'Not checked yet',
   matches: 'Matches',
   matchesWaiting: (n: number) => `Matches · ${plural(n, 'line')} not in the bank yet`,
+  // The same words as the caption under "Matches" in the desktop list (one fact per cell; the phone card keeps its dot line).
+  waitingLine: (n: number) => `${plural(n, 'line')} not in the bank yet`,
   offBy: (amount: string) => `Off by ${amount}`,
   // The Accounting Overview's line, right of "Where the club stands" (BC5a, ask 4, R0 tab 7): "Bank: {account} checked
   // through {date} ›" · "Bank: {account} · not checked yet ›" · "Bank: not checked yet ›" (no account). BC5b's /marketing.
@@ -319,7 +321,7 @@ export const BANK_WORDS = {
   booksNowSay: (amount: string) => `Books now say ${amount}`,
   // Row 13 (A1b): the list drops "statement"; "Balance checks", not a bare "Checks" (it would read as cheques: A2's reason).
   listTitle: 'Balance checks',
-  listCol: { date: 'Date', bankSaid: 'The bank said', shouldHave: 'Should have been', result: 'Result', checkedBy: 'Checked by', open: 'Open' },
+  listCol: { date: 'Date', bankSaid: 'The bank said', shouldHave: 'Should have been', result: 'Result', checkedBy: 'Checked by', checkedOn: 'Checked on', open: 'Open' },
   // Row 14 (S1b): the start's row, dated the day checking starts.
   startingPoint: 'Starting balance',
   checkedCell: (who: string | null, when: string) => (who ? `${who} · ${when}` : when),

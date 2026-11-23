@@ -93,6 +93,7 @@ export default function BankStatements({ view, accountLine, tools, form, onOpen 
                 <th scope="col" className={repKit.num}>{W.listCol.shouldHave}</th>
                 <th scope="col">{W.listCol.result}</th>
                 <th scope="col">{W.listCol.checkedBy}</th>
+                <th scope="col">{W.listCol.checkedOn}</th>
                 <th scope="col" className={repKit.go} aria-label={W.listCol.open} />
               </tr>
             </thead>
@@ -102,8 +103,9 @@ export default function BankStatements({ view, accountLine, tools, form, onOpen 
                   <td className={s.nowrap}><DateDoor c={c} onOpen={onOpen} /></td>
                   <td className={repKit.num}>{cents(c.bankCents)}</td>
                   <td className={repKit.num}>{cents(c.figure.shouldBeCents)}</td>
-                  <td><Result c={c} /></td>
-                  <td>{W.checkedCell(c.checkedBy, dayYear(c.checkedAt))}</td>
+                  <td><Result c={c} stacked /></td>
+                  <td>{c.checkedBy ?? '—'}</td>
+                  <td>{dayYear(c.checkedAt)}</td>
                   <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
                 </tr>
               ))}
@@ -112,8 +114,12 @@ export default function BankStatements({ view, accountLine, tools, form, onOpen 
                   <td className={s.nowrap}><DateDoor c={start} isStart onOpen={onOpen} /></td>
                   <td className={repKit.num}>{cents(start.bankCents)}</td>
                   <td className={repKit.num}>—</td>
-                  <td>{startResult}</td>
-                  <td>{W.checkedCell(start.checkedBy, dayYear(start.checkedAt))}</td>
+                  <td>
+                    {W.startingPoint}
+                    {startQuiet && <span className={repKit.cellSub}>{startQuiet}</span>}
+                  </td>
+                  <td>{start.checkedBy ?? '—'}</td>
+                  <td>{dayYear(start.checkedAt)}</td>
                   <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
                 </tr>
               )}
@@ -145,14 +151,20 @@ function DateDoor({ c, isStart, onOpen }: { c: SavedCheckView; isStart?: boolean
 }
 
 /** "Matches" · "Matches · 1 line not in the bank yet" · amber "Off by $X" · amber "Books now say $X" (tab 5). */
-function Result({ c }: { c: SavedCheckView }) {
+function Result({ c, stacked }: { c: SavedCheckView; stacked?: boolean }) {
   const waiting = c.waiting.length;
+  const matches = c.figure.result === 'matches';
   return (
-    <span className={s.resultCell}>
-      {c.figure.result === 'matches'
-        ? <span>{waiting ? W.matchesWaiting(waiting) : W.matches}</span>
-        : <RepChip tone="warn">{W.offBy(cents(c.figure.offByCents))}</RepChip>}
-      {c.booksNowSayCents !== null && <RepChip tone="warn">{W.booksNowSay(cents(c.booksNowSayCents))}</RepChip>}
-    </span>
+    <>
+      <span className={s.resultCell}>
+        {matches
+          ? <span>{waiting && !stacked ? W.matchesWaiting(waiting) : W.matches}</span>
+          : <RepChip tone="warn">{W.offBy(cents(c.figure.offByCents))}</RepChip>}
+        {c.booksNowSayCents !== null && <RepChip tone="warn">{W.booksNowSay(cents(c.booksNowSayCents))}</RepChip>}
+      </span>
+      {/* The desktop table says one fact per cell: the lines not in the bank yet are a caption UNDER "Matches"; the phone
+          card keeps its single dotted line. */}
+      {stacked && matches && waiting > 0 && <span className={repKit.cellSub}>{W.waitingLine(waiting)}</span>}
+    </>
   );
 }

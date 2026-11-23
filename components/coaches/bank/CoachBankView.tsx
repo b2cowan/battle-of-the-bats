@@ -162,6 +162,7 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
                 <th className={`${styles.th} ${styles.thNum}`}>{W.listCol.shouldHave}</th>
                 <th className={styles.th}>{W.listCol.result}</th>
                 <th className={styles.th}>{W.listCol.checkedBy}</th>
+                <th className={styles.th}>{W.listCol.checkedOn}</th>
                 <th className={styles.th}><span className={styles.srOnly}>{W.listCol.open}</span></th>
               </tr>
             </thead>
@@ -177,8 +178,9 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
                   </td>
                   <td className={`${styles.td} ${styles.tdNum}`} data-label={W.listCol.bankSaid}>{cents(c.bankCents)}</td>
                   <td className={`${styles.td} ${styles.tdNum}`} data-label={W.listCol.shouldHave}>{cents(c.figure.shouldBeCents)}</td>
-                  <td className={styles.td} data-label={W.listCol.result}><Result c={c} /></td>
-                  <td className={styles.td} data-label={W.listCol.checkedBy}>{W.checkedCell(c.checkedBy, dayYear(c.checkedAt))}</td>
+                  <td className={styles.td} data-label={W.listCol.result}><Result c={c} stacked /></td>
+                  <td className={styles.td} data-label={W.listCol.checkedBy}>{c.checkedBy ?? '—'}</td>
+                  <td className={styles.td} data-label={W.listCol.checkedOn}>{dayYear(c.checkedAt)}</td>
                   <td className={`${styles.td} ${ledgerKit.goCell}`}>
                     <span className={ledgerKit.goMark} aria-hidden><ChevronRight size={16} /></span>
                   </td>
@@ -200,14 +202,20 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
 }
 
 /** "Matches" · "Matches · 1 line not in the bank yet" · amber "Off by $X" · amber "Books now say $X" (tab 5). */
-function Result({ c }: { c: TeamCheck }) {
+function Result({ c, stacked }: { c: TeamCheck; stacked?: boolean }) {
   const waiting = c.waiting.length;
+  const matches = c.figure.result === 'matches';
   return (
-    <span className={b.resultCell}>
-      {c.figure.result === 'matches'
-        ? <span>{waiting ? W.matchesWaiting(waiting) : W.matches}</span>
-        : <CoachChip tone="warn">{W.offBy(cents(c.figure.offByCents))}</CoachChip>}
-      {c.booksNowSayCents !== null && <CoachChip tone="warn">{W.coachBooksNowSay(cents(c.booksNowSayCents))}</CoachChip>}
-    </span>
+    <>
+      <span className={b.resultCell}>
+        {matches
+          ? <span>{waiting && !stacked ? W.matchesWaiting(waiting) : W.matches}</span>
+          : <CoachChip tone="warn">{W.offBy(cents(c.figure.offByCents))}</CoachChip>}
+        {c.booksNowSayCents !== null && <CoachChip tone="warn">{W.coachBooksNowSay(cents(c.booksNowSayCents))}</CoachChip>}
+      </span>
+      {/* The desktop table says one fact per cell: the lines not in the bank yet are a caption UNDER "Matches"; the phone
+          card keeps its single dotted line. `rowCaption` is the portal's marker for a comfortable row. */}
+      {stacked && matches && waiting > 0 && <span className={`${styles.rowCaption} ${b.cellCaption}`}>{W.waitingLine(waiting)}</span>}
+    </>
   );
 }

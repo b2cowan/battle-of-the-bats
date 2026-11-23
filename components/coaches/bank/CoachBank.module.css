@@ -219,6 +219,9 @@ tr.divider > td {
 /* ── the saved checks (tab 5) ── */
 .listHead { margin: 0 0 0.6rem; }
 .resultCell { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
+/* The caption under "Matches" in the desktop list (used WITH the portal's `rowCaption` marker, which is what makes that row
+   comfortable): quiet 12px support text on its own line. */
+.cellCaption { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .empty { margin: 0.6rem 0 0; }
 
 /* ── a saved check, opened: the lines under its band ── */

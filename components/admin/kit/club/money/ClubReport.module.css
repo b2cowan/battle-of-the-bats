@@ -156,6 +156,9 @@ button.windowRow { width: 100%; border: 0; border-top: 1px solid var(--home-line
    phone (check:layout, 2026-10-06). */
 .heldCaption { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 .lateCaption { display: block; font-size: var(--type-support); font-weight: 600; color: var(--danger-light); white-space: nowrap; }
+/* A request row's State cell on the Overview's "still open" table: the amber count with its red words BESIDE it, in the
+   table's own 14px (the same look as "Overdue since…" on the rows above), not the small caption under it. */
+.requestState { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
 .sentCaption { display: block; font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
 /* A caption of whole phrases that may break BETWEEN them (the Teams table's earlier year's line, Club Accounting · Teams):
    its halves keep themselves whole. Written after the captions it relaxes, so it wins. */
