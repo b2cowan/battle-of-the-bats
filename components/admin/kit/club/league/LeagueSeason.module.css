@@ -70,7 +70,9 @@
 .emptyLine { margin: 0; padding: 0.25rem 1.1rem 1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 
 /* ── A record block's read view and its head's one button ── */
-.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.5rem 1.5rem; margin: 0; padding: 0 1.1rem 1rem; font-size: var(--type-body); }
+/* Inside a section (`ClubSection`), whose body already pads it: no padding of its own, so a label lines up with the block's
+   heading (owner 2026-11-23 — it sat a step in, the section's padding twice). */
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.5rem 1.5rem; margin: 0; font-size: var(--type-body); }
 .factLabel { color: var(--text-tertiary); }
 .factValue { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
 @media (max-width: 640px) {

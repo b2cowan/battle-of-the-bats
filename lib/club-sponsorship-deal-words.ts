@@ -114,7 +114,6 @@ export const DEAL_WORDS = {
     rule: 'Send this only to a business that has paid you in the last two years, asked you about sponsoring in the last six months, gave you this address, or published it for business use and a sponsorship is relevant to what they do. Don’t send it to a business you have never dealt with. If you have spoken to them, give them the link in person instead.',
     note: 'A note from you',
     noteHint: 'Optional. It opens the email. Everything else is written for you.',
-    emails: (email: string) => `Emails ${email}`,
     cancel: 'Cancel',
     send: 'Send the offer',
     sending: 'Sending…',
@@ -228,8 +227,20 @@ export const DEAL_WORDS = {
     newLinkBody: 'The old link stops working. Nothing is emailed.', // DRAFT
     newLinkButton: 'Make a new link', // DRAFT
     // The notice at the top of the deal (PageNotice, good): /design's open point placed it there. DRAFT.
-    madeNewLink: 'The new link is made. Nothing was emailed. Copy it and give it to them in person.',
+    // "Make a new link" opens the same window as Make the link only (owner 2026-11-23), copying the new link in the click.
+    newLinkCopiedTitle: 'The new link is copied',
+    newLinkCopied: (name: string) => `The old link no longer works. Paste the new one into a text or email to ${name}. Nothing was emailed.`,
+    newLinkMadeTitle: 'The new link is made',
+    newLinkMadeNotCopied: 'The old link no longer works. Your browser didn’t let us copy the new one. Press Copy the link, then give it to them in person. Nothing was emailed.',
     sentNewLink: (email: string) => `The new link is made and emailed to ${email}.`,
+    // "Make the link only" copies the link in the same click (owner 2026-11-23); the deal it opens says so in a WINDOW the
+    // club closes (owner 2026-11-23: a notice that fades went unseen). A browser that refused the copy gets the second pair,
+    // and Copy the link is the window's button. DRAFT.
+    linkCopiedTitle: 'The link is copied',
+    linkCopied: (name: string) => `Paste it into a text or email to ${name}. Nothing was emailed.`,
+    linkMadeTitle: 'The link is made',
+    linkMadeNotCopied: 'Your browser didn’t let us copy it. Press Copy the link, then give it to them in person. Nothing was emailed.',
+    linkWindowClose: 'Close',
     ranOut: 'The new link is made. Their reason to be emailed has run out, so nothing was emailed. Give it to them in person.',
     notEmailedNewLink: 'The new link is made. It couldn’t be emailed, so give it to them in person.',
     // Email the offer, on a deal made as a link only (the drawing's tab 2 record action). DRAFT.
@@ -245,6 +256,8 @@ export const DEAL_WORDS = {
     // Part 3a: an invoiced deal's amount or tax changes as a revised invoice, while no payment stands on it. DRAFT.
     errPaidChange: 'A payment is recorded on this invoice, so its amount and tax can’t change. Void the payment first.',
     errPaidWithdraw: 'A payment is recorded on this deal. Void the payment first, then withdraw it.',
+    revisedTitle: 'The revised invoice is emailed',
+    revisedNotSentTitle: 'The invoice is revised',
     revisedSent: (email: string) => `The revised invoice is emailed to ${email}.`,
     revisedNotSent: 'The invoice is revised. It couldn’t be emailed, so it shows on their link.',
     // Record a payment (round 1 tab 7, the shipped ledger window cut down).

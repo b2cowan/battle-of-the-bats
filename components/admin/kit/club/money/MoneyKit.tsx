@@ -141,8 +141,9 @@ export function ReasonQuestion({
     >
       {extra}
       {lead != null && <p className={styles.lead1}>{lead}</p>}
-      <FormError>{error}</FormError>
       <ReasonField id="reason-why" label={label} value={reason} onChange={setReason} placeholder={placeholder} hint={hint} />
+      {/* In place, under the reason: the refusal is about that field, and a question window is short enough to see it. */}
+      <FormError inPlace>{error}</FormError>
     </KitDialog>
   );
 }

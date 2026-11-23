@@ -180,7 +180,7 @@ export default function DealsList() {
       ) : isPhone ? phone : desk}
       {data.deals.length > 0 && !isPhone && <p className={css.note}>{D.list.foot}</p>}
       {offering && (
-        <OfferDealWindow slug={slug} read={data} onSent={id => { void reload(); router.push(`${base}/${id}`); }} onClose={() => setOffering(false)} />
+        <OfferDealWindow slug={slug} read={data} onSent={(id, copied) => { void reload(); router.push(`${base}/${id}${copied === null ? '' : `?link=${copied ? 'copied' : 'made'}`}`); }} onClose={() => setOffering(false)} />
       )}
     </>
   );

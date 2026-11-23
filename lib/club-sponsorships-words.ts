@@ -189,7 +189,6 @@ export const SPONSORSHIPS_WORDS = {
     invoiceCaption: 'Your club’s mailing address, how businesses pay you, and whether you charge GST/HST',
     form: 'Sponsorship form',
     formCaption: 'The business’s details and logo come first. Add your own questions.',
-    formBack: 'Setup',
   },
   invoice: {
     eyebrow: 'Setup',

@@ -61,6 +61,8 @@
 .linkButton:hover { text-decoration: underline; }
 .linkButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 3px; }
 .dangerLink { composes: linkButton; color: var(--home-live); }
+/* The sponsorship form's locked card: the support size the season form's locked card reads at, a line's breath between rows. */
+.fixedList { margin: 0 0 0.75rem; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: var(--type-support); line-height: 1.5; color: var(--text-secondary); }
 .rareDoor { margin: 1.25rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--home-line); }
 
 /* The package table on a phone is a row list (round 1 tab 2's phone drawing). */
@@ -151,17 +153,24 @@ textarea.noteBox { resize: none; } /* element + class: outranks the kit's `.text
 .pickerBarred { display: block; font-size: var(--type-support); color: var(--home-live); font-weight: 400; }
 .rule { margin: 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.5; }
 .footLine { font-size: var(--type-support); color: var(--text-tertiary); }
-.dealHead { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.dealTitle { margin: 0; font-size: var(--type-title, 1.35rem); font-weight: 800; color: var(--text-primary); }
-.dealSub { margin: 0.15rem 0 0.9rem; color: var(--text-tertiary); font-size: var(--type-support); }
-.backLink { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--home-olive); font-weight: 700; text-decoration: none; font-size: var(--type-support); margin-bottom: 0.5rem; }
-.backLink:hover { text-decoration: underline; }
+/* One deal is a record page (A8, owner 2026-11-23): its name, line and pill are in the bar, so the page opens on its callout.
+   Its blocks are the portal's sections (`ClubSection`, a season's Registration block); the grid spaces them, not their margin. */
 .dealGrid { display: grid; gap: 1rem; }
-.card { border: 1px solid var(--home-line); border-radius: 10px; background: var(--home-card); padding: 0.9rem 1rem; }
-.cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.6rem; }
-.cardTitle { margin: 0; font-size: var(--type-body); font-weight: 800; color: var(--text-primary); }
-.cardMeta { font-size: var(--type-support); color: var(--text-tertiary); }
-.checkRow { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.45rem 0; border-top: 1px solid var(--home-line); }
+.flushSection { margin: 0; }
+/* A record page's facts, as a season's blocks read them: label and value at the body size, the label grey, a grey line under. */
+.pageFacts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.5rem 1.5rem; margin: 0; font-size: var(--type-body); }
+.pageFacts dt { color: var(--text-tertiary); }
+.pageFacts dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.pageFacts .factSub { margin-top: 0.1rem; }
+@media (max-width: 640px) {
+  .pageFacts { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  .pageFacts dd { margin-bottom: 0.5rem; }
+}
+/* The folded history: a section's frame, its one line at the section's padding. */
+.card { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.85rem 1.1rem; }
+/* The checklist and the payments read at the body size, as the facts above them do (owner 2026-11-23: they had inherited
+   the page's larger size). */
+.checkRow { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.45rem 0; border-top: 1px solid var(--home-line); font-size: var(--type-body); }
 .checkRow:first-of-type { border-top: 0; }
 .checkRow input { margin-top: 0.2rem; width: 18px; height: 18px; flex: none; }
 .checkMain { flex: 1; min-width: 0; display: grid; gap: 0.1rem; }
@@ -170,4 +179,17 @@ textarea.noteBox { resize: none; } /* element + class: outranks the kit's `.text
 .historyLine { font-size: var(--type-support); color: var(--text-tertiary); }
 @media (max-width: 640px) {
   .checkRow input { width: 22px; height: 22px; }
+}
+
+/* Part 3a: the invoice number opens its PDF; a deal's payments, each with Void (a voided one stays, struck through). */
+.inlineLink { color: var(--home-olive); font-weight: 700; text-decoration: none; }
+.inlineLink:hover { text-decoration: underline; }
+.inlineLink:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 3px; }
+.paymentList { list-style: none; margin: 0; padding: 0; font-size: var(--type-body); }
+.paymentList li { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; align-items: baseline; justify-content: space-between; padding: 0.45rem 0; border-top: 1px solid var(--home-line); }
+.paymentList li:first-child { border-top: 0; }
+.paymentVoided > span:first-child { text-decoration: line-through; color: var(--text-tertiary); }
+/* A phone: Void and the invoice number are thumb targets (the 44px floor), not a line of small type. */
+@media (max-width: 640px) {
+  .paymentList .linkButton, .pageFacts .inlineLink { min-height: 44px; display: inline-flex; align-items: center; }
 }

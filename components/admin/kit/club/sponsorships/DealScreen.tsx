@@ -2,8 +2,10 @@
 /**
  * ONE DEAL (Board Ready Stage 6, Part 2; round 1 tab 5, screens C and D; asks 4, 5, 13). A record over the Deals tab, one
  * level down: it reads first. The callout at its top names the state, then the one thing to do next (the tab 5 table's
- * words, verbatim; Part 3 adds "Record a payment"). The money band once there is an invoice. Then the deal (where it shows
- * and its last day change here, ask 1; the amount and the tax switch only while the offer is open), the delivery checklist
+ * words, verbatim; Part 3a adds "Record a payment" as the invoiced callout's lime). The money band once there is an invoice
+ * (Paid and Still owing from the payments recorded), the payments with Void (Part 3a). Then the deal (where it shows and its
+ * last day change here, ask 1; the amount and the tax switch while the offer is open, then as a revised invoice while
+ * nothing is paid; the invoice number opens its PDF), the delivery checklist
  * (open once invoiced; the logo line puts the logo up now, ask 5), the business as its link sent it with its answers, the
  * history, and the record's actions: Copy the link · Send the link again · Do not offer again · Withdraw (until paid).
  *   · A deal made as a link only (owner 1A, 2026-11-23): the callout says the link was made, not emailed, with Copy the link
@@ -12,11 +14,13 @@
  *   · Send the link again reads the kept reason against today (owner 3A): run out, the new link is made, nothing is emailed,
  *     and the notice at the top of the page says why (/design's open point: the shipped PageNotice, said once).
  */
-import { useState } from 'react';
-import Link from 'next/link';
-import { Ban, ChevronLeft, Copy, Mail, Pencil, RefreshCw, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Ban, Copy, Mail, Pencil, RefreshCw, X } from 'lucide-react';
 import KitDialog, { DialogCancel } from '../KitDialog';
-import { Callout, ClubRow, ClubRowList } from '../RepKit';
+import { Callout, ClubRow, ClubRowList, ClubSection } from '../RepKit';
+import { useHandNamedPlace } from '@/components/admin/AdminBarPlace';
+import { usePageTitle } from '@/lib/usePageTitle';
 import PageNotice, { useNotice } from '../PageNotice';
 import OfferReasonFields, { NO_REASON, reasonBody, reasonProblem, type ReasonValue } from './OfferReasonFields';
 import { barSentence } from './BusinessPicker';
@@ -26,13 +30,16 @@ import SwitchRow from './SwitchRow';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import DateInput from '@/components/shared/DateInput';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
+import { copyWhenReady } from './OfferDealWindow';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { formatStoredDate } from '@/lib/timezone';
 import { DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS as W, sponsorshipMoney as money } from '@/lib/club-sponsorships-words';
-import { canWithdraw, checklistOf, checklistOpen, deliveryCount, holdersOf, isOverdue, linkTakesForm, LOGO_ITEM, reasonHasClock } from '@/lib/club-sponsorship-deals';
+import { canRecordPayment, canRevise, canWithdraw, checklistOf, checklistOpen, deliveryCount, holdersOf, isOverdue, linkTakesForm, LOGO_ITEM, reasonHasClock } from '@/lib/club-sponsorship-deals';
+import { invoiceStanding, paymentHow, type DealPayment } from '@/lib/club-sponsor-invoice';
+import { DealPayments, RecordPaymentWindow, VoidPaymentQuestion } from './DealPaymentWindows';
 import { send, sponsorshipsApi } from './api';
 import { placeLabel, useDeal, type DealRead } from './deals-api';
 import css from './Sponsorships.module.css';
@@ -44,9 +51,9 @@ function callout(r: DealRead): { title?: string; text: string; tone: 'olive' | '
   const d = r.deal;
   if (d.band === 'withdrawn' && d.withdrawn) return { text: D.callout.withdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason), tone: 'olive' };
   if (d.band === 'delivered') return { text: D.callout.delivered, tone: 'olive' };
-  if (d.state === 'paid') { const c = deliveryCount(d); return { text: D.callout.paid(d.invoice?.issuedOn ?? d.offeredOn, c.done, c.of), tone: 'olive' }; }
+  if (d.state === 'paid') { const c = deliveryCount(d); return { text: D.callout.paid(d.paidOn ?? d.invoice?.issuedOn ?? d.offeredOn, c.done, c.of), tone: 'olive' }; }
   if (d.state === 'invoiced' && d.invoice) {
-    const text = D.callout.invoiced(d.invoice.number, d.invoice.total, d.invoice.issuedOn, d.invoice.dueOn);
+    const text = D.callout.invoiced(d.invoice.number, d.invoice.total, d.invoice.issuedOn, d.invoice.dueOn, !!d.invoiceEmailedAt);
     return isOverdue(d.invoice, r.today)
       ? { title: D.callout.invoicedTitle, text: `${text} ${D.callout.overdue(d.invoice.dueOn)}`, tone: 'warn' }
       : { title: D.callout.invoicedTitle, text, tone: 'olive' };
@@ -60,17 +67,42 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   const isPhone = useIsPhone();
   const { slug, data, error, reload } = useDeal(dealId);
   const club = useOrg().currentOrg?.name ?? '';
-  const [asking, setAsking] = useState<'again' | 'stop' | 'withdraw' | 'edit' | 'email' | null>(null);
+  const [asking, setAsking] = useState<'again' | 'stop' | 'withdraw' | 'edit' | 'email' | 'record' | null>(null);
+  const [voiding, setVoiding] = useState<DealPayment | null>(null);
   const [notice, setNotice] = useNotice();
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Make the link only says what it did in a window that stays until it is closed (owner 2026-11-23).
+  const [linkSaid, setLinkSaid] = useState<{ title: string; text: string; copy?: boolean } | null>(null);
+  // ⚖ A RECORD PAGE (A8; owner 2026-11-23): the bar names the deal — "← Deals │ business", its line (package · where it
+  // shows · year) and its pill — the way a schedule and a child are named. The address gave "Deal" and the way back.
+  const dl = data?.deal;
+  useHandNamedPlace(dl ? {
+    title: dl.businessName,
+    detail: [dl.packageName, placeLabel(dl), dl.offeredOn.slice(0, 4)].join(' · '),
+    chip: <span className={ck.chip}>{D.list.band[dl.band]}</span>,
+  } : null);
+  usePageTitle(dl ? `${dl.businessName} · ${W.place}` : null);
+  // Make the link only opens this page as `?link=copied` (the click copied it) or `?link=made` (the browser refused): said
+  // in a window the club closes, then dropped from the address so a reload doesn't say it again (owner 2026-11-23).
+  const search = useSearchParams();
+  const linkDoor = useRef(search.get('link'));
+  useEffect(() => {
+    const door = linkDoor.current;
+    if (!dl || !door) return;
+    linkDoor.current = null;
+    setLinkSaid(door === 'copied' ? { title: D.deal.linkCopiedTitle, text: D.deal.linkCopied(dl.businessName) } : { title: D.deal.linkMadeTitle, text: D.deal.linkMadeNotCopied });
+    // The browser's own replaceState, not router.replace: a router navigation to the same page with a different query
+    // string can remount the page, which throws the notice away the instant it is set (owner walk 2026-11-23: the page
+    // opened and said nothing). replaceState only rewrites the address.
+    window.history.replaceState(window.history.state, '', `/${slug}/admin/sponsorships/${dealId}`);
+  }, [dl, slug, dealId]);
   if (error) return <p className={css.error} role="alert">{error}</p>;
   if (!data) return <LoadingState label={W.loading} />;
 
   const d = data.deal;
   const b = data.business;
-  const base = `/${slug}/admin/sponsorships`;
   const api = (path: string) => sponsorshipsApi(slug, `/deals/${d.id}${path}`);
   const c = callout(data);
   const stopped = data.bar && (data.bar.kind === 'do_not_offer' || data.bar.kind === 'unsubscribed') ? data.bar.on : null;
@@ -86,20 +118,27 @@ export default function DealScreen({ dealId }: { dealId: string }) {
 
   async function act(path: string, body?: unknown) {
     setBusy(true); setSaid(null);
-    const r = await send<{ emailed?: boolean; error?: string; outcome?: 'emailed' | 'link_only' | 'ran_out' | 'not_emailed'; to?: string }>(api(path), 'POST', body ?? {});
+    // Make a new link (a deal never emailed) copies the new link in this same click, the way Make the link only does: the
+    // copy starts NOW with the link still on its way, because a browser only lets a click copy.
+    let linkArrived: (link: string | null) => void = () => {};
+    const copying = path === '/again' && linkMade ? copyWhenReady(new Promise<string | null>(res => { linkArrived = res; })) : null;
+    const r = await send<{ emailed?: boolean; error?: string; link?: string; outcome?: 'emailed' | 'link_only' | 'ran_out' | 'not_emailed'; to?: string }>(api(path), 'POST', body ?? {});
+    linkArrived(r.ok ? r.data.link ?? null : null);
+    const copiedNow = copying ? await copying : null;
     setBusy(false);
     if (!r.ok) { setSaid(r.error); void reload(); return false; }
     if (r.data.error) setSaid(r.data.error);
-    // A new link (Send the link again / Make a new link): said once at the top, fading on its own.
+    // A new link (Send the link again / Make a new link). Emailed: said once at the top, fading on its own. Not emailed: the
+    // club has to give it to them, so it is a window that stays until closed, with Copy the link (owner 2026-11-23).
     const o = r.data.outcome;
-    if (o) {
-      setNotice({
-        tone: 'good',
-        text: o === 'emailed' && r.data.to ? D.deal.sentNewLink(r.data.to) : o === 'ran_out' ? D.deal.ranOut : o === 'link_only' ? D.deal.madeNewLink : D.deal.notEmailedNewLink,
-      });
-    }
+    let linkWindow: { title: string; text: string } | null = null;
+    if (o === 'emailed' && r.data.to) setNotice({ tone: 'good', text: D.deal.sentNewLink(r.data.to) });
+    else if (o === 'link_only') linkWindow = copiedNow ? { title: D.deal.newLinkCopiedTitle, text: D.deal.newLinkCopied(d.businessName) } : { title: D.deal.newLinkMadeTitle, text: D.deal.newLinkMadeNotCopied };
+    else if (o === 'ran_out') linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.ranOut };
+    else if (o) linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.notEmailedNewLink };
     setAsking(null);
     await reload();
+    if (linkWindow) setLinkSaid(linkWindow);
     return true;
   }
   async function copy() {
@@ -107,19 +146,25 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     try { await navigator.clipboard.writeText(data.link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setSaid(W.say.failed); }
   }
 
-  const band = d.invoice && (isPhone ? (
+  // The money band (round 1 tabs 5 and 7): Paid and Still owing from the payments recorded; Paid names how the last came.
+  const standing = d.invoice ? invoiceStanding(d.invoice.total, data.payments) : null;
+  const lastIn = standing?.live.at(-1);
+  const paidSub = lastIn ? paymentHow(lastIn).toLowerCase() : undefined;
+  const owingSub = d.invoice && standing && standing.owing > 0 ? D.deal.figDue(d.invoice.dueOn) : undefined;
+  const band = d.invoice && standing && (isPhone ? (
     <ClubRowList inset label={D.deal.figInvoiced}>
       <ClubRow title={D.deal.figInvoiced} caption={d.invoice.taxKind ? D.deal.figInclTax(d.invoice.taxKind, d.invoice.tax) : undefined} trail={<span className={css.money}>{money(d.invoice.total)}</span>} />
-      <ClubRow title={D.deal.figPaid} trail={<span className={css.money}>{money(0)}</span>} />
-      <ClubRow title={D.deal.figOwing} caption={D.deal.figDue(d.invoice.dueOn)} trail={<span className={css.money}>{money(d.invoice.total)}</span>} />
+      <ClubRow title={D.deal.figPaid} caption={paidSub} trail={<span className={css.money}>{money(standing.paid)}</span>} />
+      <ClubRow title={D.deal.figOwing} caption={owingSub} trail={<span className={css.money}>{money(standing.owing)}</span>} />
     </ClubRowList>
   ) : (
     <MoneySummaryBand ariaLabel={d.businessName} tiles={[
       { key: 'invoiced', label: D.deal.figInvoiced, figure: money(d.invoice.total), caption: d.invoice.taxKind ? D.deal.figInclTax(d.invoice.taxKind, d.invoice.tax) : undefined },
-      { key: 'paid', label: D.deal.figPaid, figure: money(0) },
-      { key: 'owing', label: D.deal.figOwing, figure: money(d.invoice.total), caption: D.deal.figDue(d.invoice.dueOn) },
+      { key: 'paid', label: D.deal.figPaid, figure: money(standing.paid), caption: paidSub },
+      { key: 'owing', label: D.deal.figOwing, figure: money(standing.owing), caption: owingSub },
     ]} />
   ));
+  const recordable = canRecordPayment(d) && !!standing && standing.owing > 0;
 
   const firstOffer = data.offers.find(o => o.kind === 'offer') ?? null;
   const reasonOnBit = (o: { reason: DealRead['offers'][number]['reason']; reasonOn: string } | null) =>
@@ -129,35 +174,34 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     d.linkUnsentAt ? D.deal.hRelinked(d.linkUnsentAt) : null,
     d.openedAt ? D.deal.hOpened(d.openedAt) : null,
     d.formAt ? D.deal.hForm(d.formAt) : null,
-    d.invoice ? D.deal.hInvoice(d.invoice.issuedOn) : null,
+    d.invoice ? (d.invoiceEmailedAt && !d.revisedOn ? D.deal.hInvoiceEmailed(d.invoice.issuedOn) : D.deal.hInvoice(d.invoice.issuedOn)) : null,
+    d.revisedOn ? D.deal.hRevised(d.revisedOn) : null,
+    d.paidOn ? D.deal.hPaid(d.paidOn) : null,
     d.withdrawn ? D.deal.hWithdrawn(d.withdrawn.at, d.withdrawn.byName) : null,
   ].filter(Boolean).join(' · ');
 
   return (
     <>
-      <Link className={css.backLink} href={base}><ChevronLeft size={14} aria-hidden />{D.deal.back}</Link>
-      <div className={css.dealHead}>
-        <h2 className={css.dealTitle}>{d.businessName}</h2>
-        <span className={ck.chip}>{D.list.band[d.band]}</span>
-        {d.state !== 'withdrawn' && (
-          <button type="button" className={css.iconBtn} aria-label={D.deal.edit} aria-haspopup="dialog" onClick={() => setAsking('edit')}><Pencil size={16} aria-hidden /></button>
-        )}
-      </div>
-      <p className={css.dealSub}>{[d.packageName, placeLabel(d), d.offeredOn.slice(0, 4)].join(' · ')}</p>
       {notice && <PageNotice notice={notice} />}
 
       <div className={css.dealGrid}>
         <Callout tone={c.tone} role="status" flush
           action={linkMade && d.state === 'offered' && data.link
             ? <button type="button" className="btn btn-lime" onClick={() => void copy()}>{copied ? D.deal.copied : D.deal.copy}</button>
-            : undefined}>
+            : recordable
+              ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setAsking('record')}>{D.deal.record}</button>
+              : undefined}>
           {c.title && <strong>{c.title} </strong>}{isPhone && d.state === 'invoiced' && d.invoice ? D.callout.invoicedPhone(d.invoice.number, d.invoice.total, d.invoice.dueOn) : c.text}
         </Callout>
         {band}
+        <DealPayments payments={data.payments} canVoid={d.state === 'invoiced' || d.state === 'paid'} onVoid={setVoiding} />
 
-        <section className={css.card} aria-label={D.deal.cardDeal}>
-          <div className={css.cardHead}><h3 className={css.cardTitle}>{D.deal.cardDeal}</h3></div>
-          <dl className={css.facts}>
+        {/* The pencil edits what this block lists: it sits in the block's head, as a season's Registration block's does. */}
+        <ClubSection id="deal-block" className={css.flushSection} title={D.deal.cardDeal}
+          actions={d.state !== 'withdrawn' ? (
+            <button type="button" className={css.iconBtn} aria-label={D.deal.edit} aria-haspopup="dialog" onClick={() => setAsking('edit')}><Pencil size={16} aria-hidden /></button>
+          ) : undefined}>
+          <dl className={css.pageFacts}>
             <dt>{D.deal.package}</dt><dd>{d.packageName}</dd>
             <dt>{D.deal.showsOn}</dt>
             <dd>{placeLabel(d)}<span className={css.factSub}>{d.placeKind !== 'club' && !d.targetId ? D.deal.targetGone : D.deal.showsOnSub[d.placeKind](d.endsOn)}</span></dd>
@@ -167,20 +211,16 @@ export default function DealScreen({ dealId }: { dealId: string }) {
                 <dt>{D.deal.chargeTax}</dt>
                 <dd>
                   {d.chargeTax ? (d.invoice?.taxRate != null ? D.deal.taxYes(d.invoice.taxKind ?? 'HST', d.invoice.taxRate) : data.rate ? D.deal.taxYes(data.rate.kind, data.rate.rate) : 'Yes') : D.deal.taxNo}
-                  {/* D.deal.taxLater ("Changing it now sends a revised invoice") returns with Part 3's revised invoice. */}
+                  {canRevise(d) && <span className={css.factSub}>{D.deal.taxLater}</span>}
                 </dd>
               </>
             )}
-            {d.invoice && (<><dt>{D.deal.invoice}</dt><dd>{d.invoice.number}</dd></>)}
+            {d.invoice && (<><dt>{D.deal.invoice}</dt><dd><a className={css.inlineLink} href={api('/invoice')} download>{D.deal.invoicePdf(d.invoice.number)}</a></dd></>)}
           </dl>
-        </section>
+        </ClubSection>
 
         {lines.length > 0 && (
-          <section className={css.card} aria-label={D.deal.cardDelivery}>
-            <div className={css.cardHead}>
-              <h3 className={css.cardTitle}>{D.deal.cardDelivery}</h3>
-              <span className={css.cardMeta}>{D.deal.delivered(delivery.done, delivery.of)}</span>
-            </div>
+          <ClubSection id="delivery-block" className={css.flushSection} title={D.deal.cardDelivery} meta={D.deal.delivered(delivery.done, delivery.of)}>
             {!checklistOpen(d) && d.state !== 'withdrawn' && <p className={ck.hint}>{D.deal.checklistClosed}</p>}
             {lines.map(l => {
               const done = d.done[l.id];
@@ -197,17 +237,13 @@ export default function DealScreen({ dealId }: { dealId: string }) {
                 </label>
               );
             })}
-          </section>
+          </ClubSection>
         )}
 
-        <section className={css.card} aria-label={D.deal.cardBusiness}>
-          <div className={css.cardHead}>
-            <h3 className={css.cardTitle}>{D.deal.cardBusiness}</h3>
-            {d.formAt && <span className={css.cardMeta}>{D.deal.fromLink(d.formAt)}</span>}
-          </div>
+        <ClubSection id="business-block" className={css.flushSection} title={D.deal.cardBusiness} meta={d.formAt ? D.deal.fromLink(d.formAt) : undefined}>
           {!d.formAt || !b ? <p className={ck.hint}>{D.deal.notYet}</p> : (
             <>
-              <dl className={css.facts}>
+              <dl className={css.pageFacts}>
                 <dt>{D.deal.showsAs}</dt>
                 <dd>{b.logoUrl && <span className={css.thumb}><img src={b.logoUrl} alt="" /></span>} {b.name}</dd>
                 <dt>{D.deal.contact}</dt>
@@ -219,8 +255,8 @@ export default function DealScreen({ dealId }: { dealId: string }) {
               </dl>
               {data.answers.length > 0 && (
                 <>
-                  <h4 className={css.sectionHeading}>{D.deal.answers}</h4>
-                  <dl className={css.facts}>
+                  <h3 className={`${css.sectionHeading} ${css.readHeading}`}>{D.deal.answers}</h3>
+                  <dl className={css.pageFacts}>
                     {data.answers.map(a => (
                       <span key={a.questionId} style={{ display: 'contents' }}>
                         <dt>{a.label}</dt>
@@ -232,14 +268,20 @@ export default function DealScreen({ dealId }: { dealId: string }) {
               )}
             </>
           )}
-        </section>
+        </ClubSection>
 
-        <details className={css.card}>
-          <summary className={css.historyLine}><strong>{D.deal.history}</strong> · {historyBits}</summary>
-          <ul className={css.historyLine}>
-            {data.offers.map(o => <li key={o.sentAt}>{`${day(o.sentAt)} · ${o.email} · ${D.offer.reasons[o.reason]}${reasonOnBit(o)} · ${o.sentByName}`}</li>)}
-          </ul>
-        </details>
+        {/* The fold opens onto the emailed offers only; a deal never emailed has none, so its History is the plain line —
+            an arrow that turns onto nothing is a control promising what it doesn't have (owner 2026-11-23). */}
+        {data.offers.length > 0 ? (
+          <details className={css.card}>
+            <summary className={css.historyLine}><strong>{D.deal.history}</strong> · {historyBits}</summary>
+            <ul className={css.historyLine}>
+              {data.offers.map(o => <li key={o.sentAt}>{`${day(o.sentAt)} · ${o.email} · ${D.offer.reasons[o.reason]}${reasonOnBit(o)} · ${o.sentByName}`}</li>)}
+            </ul>
+          </details>
+        ) : (
+          <div className={`${css.card} ${css.historyLine}`}><strong>{D.deal.history}</strong> · {historyBits}</div>
+        )}
 
         <div className={css.recordActions}>
           {data.link && (
@@ -266,6 +308,16 @@ export default function DealScreen({ dealId }: { dealId: string }) {
         </div>
       </div>
 
+      {linkSaid && (
+        <KitDialog kind="question" onClose={() => setLinkSaid(null)}
+          title={linkSaid.title}
+          footer={<>
+            <DialogCancel>{D.deal.linkWindowClose}</DialogCancel>
+            {linkSaid.copy !== false && data.link && <button type="button" className="btn btn-lime" onClick={() => void copy()}>{copied ? D.deal.copied : D.deal.copy}</button>}
+          </>}>
+          <p className={ck.hint}>{linkSaid.text}</p>
+        </KitDialog>
+      )}
       {asking === 'again' && (
         <KitDialog kind="question" busy={busy} onClose={() => setAsking(null)} title={linkMade ? D.deal.newLinkAsk : D.deal.againAsk}
           footer={<><DialogCancel /><button type="button" className="btn btn-lime" disabled={busy} onClick={() => void act('/again')}>{linkMade ? D.deal.newLinkButton : D.deal.againButton}</button></>}>
@@ -288,14 +340,31 @@ export default function DealScreen({ dealId }: { dealId: string }) {
           <p className={ck.hint}>{D.deal.doNotOfferBody}</p>
         </KitDialog>
       )}
+      {asking === 'record' && d.invoice && standing && (
+        <RecordPaymentWindow url={api('/payments')} business={d.businessName} number={d.invoice.number} owing={standing.owing} today={data.today}
+          onClose={() => setAsking(null)}
+          onRecorded={async r => {
+            setAsking(null);
+            if (r.state === 'paid') setNotice({ tone: 'good', text: r.receipt === 'emailed' && b?.email ? D.deal.receiptSent(b.email) : D.deal.receiptNotSent });
+            else setNotice({ tone: 'good', text: D.deal.recorded });
+            await reload();
+          }}
+          onStale={async text => { setAsking(null); setNotice({ tone: 'bad', text }); await reload(); }} />
+      )}
+      {voiding && (
+        <VoidPaymentQuestion url={api(`/payments/${voiding.id}/void`)} payment={voiding} onClose={() => setVoiding(null)}
+          onVoided={async keepOpen => { if (!keepOpen) setVoiding(null); await reload(); }} />
+      )}
       {asking === 'withdraw' && <WithdrawQuestion name={d.businessName} busy={busy} error={said} onClose={() => setAsking(null)} onWithdraw={reason => void act('/withdraw', { reason })} />}
       {asking === 'edit' && (
         <DealEditWindow read={data} busy={busy} onClose={() => setAsking(null)} onSave={async body => {
           setBusy(true);
-          const r = await send(api(''), 'PATCH', body);
+          const r = await send<{ revised: 'emailed' | 'not_emailed' | null }>(api(''), 'PATCH', body);
           setBusy(false);
           if (!r.ok) return r.error;
           setAsking(null);
+          // A revised invoice goes to a business, so it is said in a window the club closes, not a strip that fades (owner 2026-11-23).
+          if (r.data.revised) setLinkSaid(r.data.revised === 'emailed' && b?.email ? { title: D.deal.revisedTitle, text: D.deal.revisedSent(b.email), copy: false } : { title: D.deal.revisedNotSentTitle, text: D.deal.revisedNotSent, copy: false });
           await reload();
           return null;
         }} />
@@ -316,7 +385,6 @@ function EmailOfferWindow({ read, onClose, onSend }: {
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ text: string; field: string | null } | null>(null);
-  const to = read.address ?? email.trim();
   async function sendIt() {
     setError(null);
     if (!read.address && !email.trim()) { setError({ text: D.offer.errEmail, field: 'email' }); return; }
@@ -330,7 +398,6 @@ function EmailOfferWindow({ read, onClose, onSend }: {
   return (
     <KitDialog kind="form" size="medium" busy={busy} onClose={onClose} eyebrow={read.deal.businessName} title={D.deal.emailTitle}
       dirty={!!why.reason || !!why.reasonOn || !!why.note.trim() || !!email.trim()}
-      footerStart={to ? <span className={css.footLine}>{D.offer.emails(to)}</span> : undefined}
       footer={<><DialogCancel /><button type="button" className="btn btn-lime" disabled={busy} onClick={() => void sendIt()}>{busy ? D.offer.sending : D.offer.send}</button></>}>
       <div className={css.form}>
         {!read.address && (
@@ -366,7 +433,8 @@ function WithdrawQuestion({ name, busy, error, onClose, onWithdraw }: {
   );
 }
 
-/** "Change this deal": where it shows and its last day (any state), the amount and the tax switch (while the offer is open). */
+/** "Change this deal": where it shows and its last day (any state); the amount and the tax switch while the offer is open, and
+ *  on an invoice nothing has been paid on, as a revised invoice (Part 3a: "Changing it now sends a revised invoice"). */
 function DealEditWindow({ read, busy, onClose, onSave }: {
   read: DealRead; busy: boolean; onClose: () => void; onSave: (body: Record<string, unknown>) => Promise<string | null>;
 }) {
@@ -376,7 +444,10 @@ function DealEditWindow({ read, busy, onClose, onSave }: {
   const [amount, setAmount] = useState(d.amount.toFixed(2));
   const [chargeTax, setChargeTax] = useState(d.chargeTax);
   const [error, setError] = useState<string | null>(null);
-  const open = linkTakesForm(d);
+  const revising = canRevise(d);
+  const open = linkTakesForm(d) || revising;
+  // A revised invoice can't turn tax on when the business left its address blank: the rate is its province (owner 2026-11-23).
+  const taxBlocked = revising && !d.chargeTax && !read.business?.address;
   const t = read.targets;
   // A name and the line beneath it: a team's division, a division's season (the portal's two-line dropdown).
   const list = d.placeKind === 'division' ? t.divisions.map(x => ({ id: x.id, label: `${x.name} division`, sub: x.seasonName, live: x.live }))
@@ -425,11 +496,12 @@ function DealEditWindow({ read, busy, onClose, onSave }: {
             </div>
             {read.registered && (
               <SwitchRow id="deal-tax" name={read.rate ? D.offer.chargeTaxKind(read.rate.kind) : D.offer.chargeTax}
-                hint={read.rate ? D.offer.taxHint(read.rate.rate, read.business?.address?.province ?? null) : D.offer.taxHintNoAddress}
-                on={chargeTax} disabled={busy} onChange={setChargeTax} />
+                hint={taxBlocked ? D.deal.taxNeedsAddress : read.rate ? D.offer.taxHint(read.rate.rate, read.business?.address?.province ?? null) : D.offer.taxHintNoAddress}
+                on={chargeTax} disabled={busy || taxBlocked} onChange={setChargeTax} />
             )}
+            {revising && <p className={ck.hint}>{D.deal.taxLater}.</p>}
           </>
-        ) : <p className={ck.hint}>{D.deal.errInvoicedChange}</p>}
+        ) : d.state === 'invoiced' || d.state === 'paid' ? <p className={ck.hint}>{D.deal.errPaidChange}</p> : null}
         {error && <p className={css.error} role="alert">{error}</p>}
       </div>
     </KitDialog>

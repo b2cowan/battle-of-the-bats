@@ -248,7 +248,9 @@ export default function SignupFormScreen({ orgSlug, seasonId = '', planId, spons
       )}
 
       {/* ── Your questions (drawing tab 2; the plan's gate, tab 9) ── */}
-      <ClubSection id="form-questions" title={W.questionsTitle} meta={questionsOnPlan ? questionsSummary(liveQuestions.length) : undefined}>
+      {/* The two adds are siblings: each sits in its card's header, whatever the card holds (owner 2026-11-23). */}
+      <ClubSection id="form-questions" title={W.questionsTitle} meta={questionsOnPlan && liveQuestions.length > 0 ? questionsSummary(liveQuestions.length) : undefined}
+        actions={questionsOnPlan && canEdit ? addButton(W.addQuestion, () => setOpenQ('new')) : undefined}>
         {!questionsOnPlan ? (
           <p className={f.small}>
             {W.planLocked}{' '}
@@ -258,25 +260,17 @@ export default function SignupFormScreen({ orgSlug, seasonId = '', planId, spons
           <div className={f.empty}>
             <p className={f.emptyTitle}>{W.noQuestions}</p>
             <p className={f.small}>{isPhone ? W.noQuestionsLinePhone : copyFrom && canEdit ? W.noQuestionsCopyLine : sponsorship?.noQuestionsLine ?? W.noQuestionsLine}</p>
-            {canEdit && (
+            {canEdit && copyFrom && (
               <div className={f.emptyActions}>
-                {copyFrom && (
-                  <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={() => { setCopyError(''); setCopyAsk(true); }}>
-                    {W.copyButton(copyFrom.name)}
-                  </button>
-                )}
-                <button type="button" className={`btn btn-outline ${f.add}`} aria-haspopup="dialog" onClick={() => setOpenQ('new')}>
-                  <Plus size={15} aria-hidden /> {W.addQuestion}
+                <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={() => { setCopyError(''); setCopyAsk(true); }}>
+                  {W.copyButton(copyFrom.name)}
                 </button>
               </div>
             )}
           </div>
         ) : (
           <>
-            <div className={f.head}>
-              <p className={f.lede}>{sponsorship?.lede ?? W.lede}</p>
-              {canEdit && addButton(W.addQuestion, () => setOpenQ('new'))}
-            </div>
+            <p className={f.lede}>{sponsorship?.lede ?? W.lede}</p>
             <div className={f.outline}>
               <ClubRowList inset label={W.questionsTitle}>
                 {bandList('per_subject')}
@@ -291,7 +285,10 @@ export default function SignupFormScreen({ orgSlug, seasonId = '', planId, spons
       <ClubSection id="form-documents" title={W.documentsTitle}
         actions={canEdit ? addButton(W.addDocument, () => setOpenD('new')) : undefined}>
         {liveDocuments.length === 0 ? (
-          <p className={f.small}>{W.noDocuments}</p>
+          <div className={f.empty}>
+            <p className={f.emptyTitle}>{W.noDocuments}</p>
+            <p className={f.small}>{questionsOnPlan ? W.documentsFoot : W.documentsEveryPlan}</p>
+          </div>
         ) : (
           <div className={f.outline}>
             <ClubRowList inset label={W.documentsTitle}>
@@ -312,7 +309,7 @@ export default function SignupFormScreen({ orgSlug, seasonId = '', planId, spons
             </ClubRowList>
           </div>
         )}
-        <p className={f.foot}>{questionsOnPlan ? W.documentsFoot : W.documentsEveryPlan}</p>
+        {liveDocuments.length > 0 && <p className={f.foot}>{questionsOnPlan ? W.documentsFoot : W.documentsEveryPlan}</p>}
       </ClubSection>
 
       <SavePill saving={orderSaving} dirty={false} error={orderError} held={null} onRetry={retryOrder} />

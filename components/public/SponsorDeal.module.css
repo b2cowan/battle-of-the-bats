@@ -67,8 +67,12 @@ p.addressHint { margin: 0.1rem 0 0.75rem; }
 .invoiceFacts > div { display: contents; }
 .invoiceFacts dt { color: var(--club-soft); }
 .invoiceFacts dd { margin: 0; color: var(--club-text); overflow-wrap: anywhere; }
-/* An email address is long: its label sits on its own line above it so it is never broken mid-word. */
-.invoiceFactWide dd { grid-column: 1 / -1; }
+/* Emailed to lines up with Issued and Due: label in the first column, the address in the second. On a phone the
+   address is too long for the second column, so its label sits on its own line above it (never broken mid-word). */
+@media (max-width: 30rem) {
+  .invoiceFactWide dt,
+  .invoiceFactWide dd { grid-column: 1 / -1; }
+}
 .howQuote { margin: 0.5rem 0 0; font: 400 0.875rem/1.45 var(--club-text-face); color: var(--club-soft); }
 .revisit { margin: 1rem 0 1.25rem; font: 400 0.875rem/1.5 var(--club-text-face); color: var(--club-soft); }
 

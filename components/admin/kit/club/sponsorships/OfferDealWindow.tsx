@@ -9,7 +9,8 @@
  *   · Send waits for the club's mailing address ("Add your mailing address in Setup first", the button absent) and is absent
  *     for a business that can't be emailed (its reason said once in the foot).
  *   · "Make the link only" (owner call (c), approved 1A 2026-11-23): the outline button between Cancel and Send. It makes the
- *     same deal and link and emails nothing, so no reason is asked; the deal's page opens with Copy the link. When Send can't
+ *     same deal and link and emails nothing, so no reason is asked; the same click copies the link (owner 2026-11-23) and the
+ *     deal's page opens saying so, Copy the link still its callout's button (`?link=copied|made`). When Send can't
  *     go it stays, and takes the lime (in all four cases: no mailing address, unsubscribed, family opt-out, Do not offer again).
  *   · On a phone the foot holds only Make the link only and Send (owner 2A): Cancel is the head's ←, which asks first when
  *     anything is typed. The computer keeps all three.
@@ -33,12 +34,31 @@ import type { DealsRead } from './deals-api';
 import BusinessPicker, { barSentence, type PickedBusiness } from './BusinessPicker';
 import css from './Sponsorships.module.css';
 
-const STATE_WORD = { offered: 'offered', form_received: 'offered', invoiced: 'invoiced', paid: '', withdrawn: '' } as const;
+/**
+ * Copy a link that is still being made, from inside the click that asked for it. The clipboard takes a promise
+ * (`ClipboardItem`), so the click's permission covers a copy that lands when the link arrives — the way Safari requires.
+ * A browser without that tries a plain copy once the link is here (Chrome allows it a few seconds after a click).
+ * True when the link is on the clipboard; false when there was no link or the browser refused.
+ */
+export function copyWhenReady(link: Promise<string | null>): Promise<boolean> {
+  const plain = () => link.then(l => (l ? navigator.clipboard.writeText(l).then(() => true) : false)).catch(() => false);
+  try {
+    if (typeof ClipboardItem === 'undefined' || !navigator.clipboard?.write) return plain();
+    const blob = link.then(l => { if (!l) throw new Error('no link'); return new Blob([l], { type: 'text/plain' }); });
+    blob.catch(() => {}); // a failed offer rejects it; the write below reports that
+    return navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]).then(() => true, () => link.then(l => (l ? plain() : false)));
+  } catch {
+    return plain();
+  }
+}
+
+const STATE_WORD ={ offered: 'offered', form_received: 'offered', invoiced: 'invoiced', paid: '', withdrawn: '' } as const;
 
 export default function OfferDealWindow({ slug, read, onSent, onClose }: {
   slug: string;
   read: DealsRead;
-  onSent: (dealId: string) => void;
+  /** `copied`: null when the offer was emailed; true/false when Make the link only did / could not copy the link. */
+  onSent: (dealId: string, copied: boolean | null) => void;
   onClose: () => void;
 }) {
   const club = useOrg().currentOrg?.name ?? '';
@@ -58,7 +78,6 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
   const pkg = read.packages.find(p => p.id === packageId) ?? null;
   const sponsor = business?.kind === 'existing' ? read.sponsors.find(s => s.id === business.id) ?? null : null;
   const needsEmail = business?.kind === 'new' || (!!sponsor && !sponsor.email);
-  const to = needsEmail ? email.trim() : sponsor?.email ?? '';
   const bar = sponsor?.bar ?? null;
   const rate = sponsor?.province ? gstHstRateOn(sponsor.province, read.today) : null;
 
@@ -106,14 +125,20 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
       if (problem) { setError(problem); return; }
     }
     setBusy(emailIt ? 'send' : 'link');
-    const r = await send<{ id: string }>(sponsorshipsApi(slug, '/deals'), 'POST', {
+    // Make the link only copies the link in this same click (owner 2026-11-23). The copy starts NOW, inside the click,
+    // with the link still on its way: a browser only lets a click copy, and the request below outlasts that permission.
+    let linkArrived: (link: string | null) => void = () => {};
+    const copying = emailIt ? null : copyWhenReady(new Promise<string | null>(res => { linkArrived = res; }));
+    const r = await send<{ id: string; link?: string }>(sponsorshipsApi(slug, '/deals'), 'POST', {
       sponsorId: business.kind === 'existing' ? business.id : null, newName: business.kind === 'new' ? business.name : null,
       email: needsEmail && email.trim() ? email : null, packageId, targetId: kind === 'club' ? null : targetId, amount, endsOn: endsOn || null,
       chargeTax, ...(emailIt ? reasonBody(why) : {}), send: emailIt,
     });
+    linkArrived(r.ok ? r.data.link ?? null : null);
+    const copied = copying ? await copying : null;
     setBusy(null);
     if (!r.ok) { setError({ text: r.error, field: null }); return; }
-    onSent(r.data.id);
+    onSent(r.data.id, copied);
     onClose();
   }
 
@@ -124,7 +149,7 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
     <KitDialog kind="form" size="medium" onClose={onClose} busy={!!busy}
       dirty={!!business || !!email.trim() || !!why.reason || !!why.reasonOn || !!why.note.trim()}
       eyebrow={D.offer.eyebrow} title={D.offer.title}
-      footerStart={footReason ? <span className={css.footLine}>{footReason}</span> : to ? <span className={css.footLine}>{D.offer.emails(to)}</span> : undefined}
+      footerStart={footReason ? <span className={css.footLine}>{footReason}</span> : undefined}
       footer={(
         <>
           {!isPhone && <DialogCancel>{D.offer.cancel}</DialogCancel>}

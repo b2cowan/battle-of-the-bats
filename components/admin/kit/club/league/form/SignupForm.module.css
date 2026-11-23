@@ -17,15 +17,14 @@
 .titleChip { margin-left: 0.4rem; vertical-align: middle; }
 
 /* ── A card's first line: what the list is, and its add at the right (above the list it fills) ── */
-.head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.75rem; }
-.lede { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.lede { margin: 0 0 0.75rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
 .outline { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
 .foot { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
 
 /* None yet: what is missing, one sentence, and the actions. */
-.empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.35rem; padding: 0.75rem 0.5rem; }
-.emptyTitle { margin: 0; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
-.emptyActions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 0.35rem; }
+.empty { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+.emptyTitle { margin: 0; font-size: var(--type-support); font-weight: 650; color: var(--text-primary); }
+.emptyActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
 
 /* The row's marks, always AFTER the name: HEALTH on a question; TEXT / PDF on a document. */
 .rowMark { margin-left: 0.45rem; vertical-align: 1px; }

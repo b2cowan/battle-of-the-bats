@@ -408,17 +408,25 @@ export function kitSponsorshipsLink({ base, opens, isCanceled, tournamentTier }:
 }
 
 export type SponsorshipsTabId = 'deals' | 'packages' | 'sponsors' | 'setup';
-/** The place's four tabs (ask 12). Setup holds the sponsorship form one level down, so it lights there too (`views`); one
- *  deal is a record over Deals at `/sponsorships/{dealId}` (Part 2), so Deals lights one level under its address too — the
- *  other tabs' own addresses win first. */
+/** The place's four tabs (ask 12). Setup holds the sponsorship form one level down, so it lights there too (`views`). One
+ *  deal (`/sponsorships/{dealId}`, Part 2) is no tab's view: it is a RECORD page, "← Deals │ business" in the bar with no
+ *  tab row (A8, the schedule's and the child's shape; owner 2026-11-23) — `sponsorshipsDealId`. */
 export function sponsorshipsTabs(base: string): (PlaceTab & { id: SponsorshipsTabId; views?: true })[] {
   const s = `${base}/${SPONSORSHIPS_SEGMENT}`;
   return [
-    { id: 'deals', label: 'Deals', href: s, views: true },
+    { id: 'deals', label: 'Deals', href: s },
     { id: 'packages', label: 'Packages', href: `${s}/packages` },
     { id: 'sponsors', label: 'Sponsors', href: `${s}/sponsors` },
     { id: 'setup', label: 'Setup', href: `${s}/setup`, views: true },
   ];
+}
+
+/** One deal's address (`/sponsorships/{dealId}`): its id, or null for any other address (a tab, the form under Setup). */
+export function sponsorshipsDealId(pathname: string, base: string): string | null {
+  const s = `${base}/${SPONSORSHIPS_SEGMENT}/`;
+  if (!pathname.startsWith(s)) return null;
+  const rest = pathname.slice(s.length);
+  return rest && !rest.includes('/') && !['packages', 'sponsors', 'setup'].includes(rest) ? rest : null;
 }
 
 /** Organization's icon (its sidebar row and its More sheet row share it). */
@@ -914,6 +922,12 @@ export function clubPlaceAt(pathname: string, base: string, {
   const sp = `${base}/${SPONSORSHIPS_SEGMENT}`;
   if (isAtOrUnder(pathname, sp)) {
     if (!opensSponsorships) return null;
+    // One deal is a record page (A8): "← Deals" from the address; the page hands over the business, its line and its pill.
+    const dealId = sponsorshipsDealId(pathname, base);
+    if (dealId) return namedScreen(`deal:${dealId}`, 'Deal', { back: { href: sp, label: 'Deals' }, facts: ['Sponsorships'] });
+    // The sponsorship form is a page one level under Setup, named as the season's sign-up form is: "← Setup │ Sponsorship
+    // form" in the bar, no tab row, and no title or back link repeated in the page (owner 2026-11-23).
+    if (pathname === `${sp}/setup/form`) return namedScreen('sponsorship-form', 'Sponsorship form', { back: { href: `${sp}/setup`, label: 'Setup' }, facts: ['Sponsorships'] });
     const tabs = sponsorshipsTabs(base);
     return flatPlace(SPONSORSHIPS_SEGMENT, 'Sponsorships', tabs, placeTabFor(tabs, pathname));
   }
