@@ -28,7 +28,7 @@ export interface PlanConfig {
   // ⚠ This is only the FALLBACK. The live answer is the `plan_gating` row (platform admin), read per request by
   // `getPlanGatingMap()`; this value is used only when that read fails. Opening a plan is the runbook's flip of the
   // row (docs/agents/ops/CLUB_GATE_FLIP_RUNBOOK.md); this value is brought into agreement afterwards so a failed read
-  // never closes a plan that is on sale (on-sale pages S1, Ask 18).
+  // never closes a plan that is on sale (on-sale pages S1, Ask 18). All four paid plans carry 'live' here since 2026-11-24, matching the live rows (Club, Club · Association and League Plus went on sale 2026-11-23).
   gatingStatus: 'live' | 'early_access';
 }
 
@@ -102,7 +102,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       // Board Ready Stage 6 (ask 12, owner 2026-11-22): the Sponsorships place rides League Plus and both Club bands.
       'module_sponsorships',
     ],
-    gatingStatus: 'early_access',
+    gatingStatus: 'live',
   },
   club: {
     label: 'Club',
@@ -126,7 +126,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       // Board Ready Stage 6 (ask 12, owner 2026-11-22): the Sponsorships place rides League Plus and both Club bands.
       'module_sponsorships',
     ],
-    gatingStatus: 'early_access',
+    gatingStatus: 'live',
   },
   club_large: {
     // Upper Club capacity band — public name "Club · Association" (working name pending
@@ -151,7 +151,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       // Board Ready Stage 6 (ask 12, owner 2026-11-22): the Sponsorships place rides League Plus and both Club bands.
       'module_sponsorships',
     ],
-    gatingStatus: 'early_access',
+    gatingStatus: 'live',
   },
 };
 

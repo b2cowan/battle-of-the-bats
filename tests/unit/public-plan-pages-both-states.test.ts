@@ -427,9 +427,8 @@ describe('the one answer and the availability words', () => {
     assert.doesNotMatch(planTrialLine(30), /free/i);
   });
 
-  it('Premium’s code value agrees with production (Ask 18); the other three stay closed until after the flip', () => {
-    assert.equal(PLAN_CONFIG.team.gatingStatus, 'live');
-    for (const plan of ['league', 'club', 'club_large'] as const) assert.equal(PLAN_CONFIG[plan].gatingStatus, 'early_access');
+  it('every paid plan’s code value agrees with the live gate (Ask 18; the three Club plans went on sale 2026-11-23)', () => {
+    for (const plan of ['team', 'league', 'club', 'club_large'] as const) assert.equal(PLAN_CONFIG[plan].gatingStatus, 'live');
   });
 });
 
