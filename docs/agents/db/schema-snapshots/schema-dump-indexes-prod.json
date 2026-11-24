@@ -1160,6 +1160,86 @@
     "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
   },
   {
+    "tablename": "club_sponsor_deal_items",
+    "indexname": "club_sponsor_deal_items_org_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deal_items_org_idx ON public.club_sponsor_deal_items USING btree (org_id)"
+  },
+  {
+    "tablename": "club_sponsor_deal_items",
+    "indexname": "club_sponsor_deal_items_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_items_pkey ON public.club_sponsor_deal_items USING btree (deal_id, item_id)"
+  },
+  {
+    "tablename": "club_sponsor_deal_payments",
+    "indexname": "club_sponsor_deal_payments_deal_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deal_payments_deal_idx ON public.club_sponsor_deal_payments USING btree (org_id, deal_id, received_on)"
+  },
+  {
+    "tablename": "club_sponsor_deal_payments",
+    "indexname": "club_sponsor_deal_payments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_payments_pkey ON public.club_sponsor_deal_payments USING btree (id)"
+  },
+  {
+    "tablename": "club_sponsor_deals",
+    "indexname": "club_sponsor_deals_invoice_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_deals_invoice_uniq ON public.club_sponsor_deals USING btree (org_id, invoice_year, invoice_seq) WHERE (invoice_seq IS NOT NULL)"
+  },
+  {
+    "tablename": "club_sponsor_deals",
+    "indexname": "club_sponsor_deals_org_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deals_org_idx ON public.club_sponsor_deals USING btree (org_id, offered_on)"
+  },
+  {
+    "tablename": "club_sponsor_deals",
+    "indexname": "club_sponsor_deals_package_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deals_package_idx ON public.club_sponsor_deals USING btree (package_id)"
+  },
+  {
+    "tablename": "club_sponsor_deals",
+    "indexname": "club_sponsor_deals_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_deals_pkey ON public.club_sponsor_deals USING btree (id)"
+  },
+  {
+    "tablename": "club_sponsor_deals",
+    "indexname": "club_sponsor_deals_sponsor_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deals_sponsor_idx ON public.club_sponsor_deals USING btree (sponsor_id)"
+  },
+  {
+    "tablename": "club_sponsor_deals",
+    "indexname": "club_sponsor_deals_target_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deals_target_idx ON public.club_sponsor_deals USING btree (org_id, place_kind, target_id)"
+  },
+  {
+    "tablename": "club_sponsor_invoice_counters",
+    "indexname": "club_sponsor_invoice_counters_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_invoice_counters_pkey ON public.club_sponsor_invoice_counters USING btree (org_id, year)"
+  },
+  {
+    "tablename": "club_sponsor_offer_stops",
+    "indexname": "club_sponsor_offer_stops_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_offer_stops_pkey ON public.club_sponsor_offer_stops USING btree (org_id, email)"
+  },
+  {
+    "tablename": "club_sponsor_offers",
+    "indexname": "club_sponsor_offers_deal_idx",
+    "indexdef": "CREATE INDEX club_sponsor_offers_deal_idx ON public.club_sponsor_offers USING btree (deal_id) WHERE (deal_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_sponsor_offers",
+    "indexname": "club_sponsor_offers_org_idx",
+    "indexdef": "CREATE INDEX club_sponsor_offers_org_idx ON public.club_sponsor_offers USING btree (org_id, email)"
+  },
+  {
+    "tablename": "club_sponsor_offers",
+    "indexname": "club_sponsor_offers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_offers_pkey ON public.club_sponsor_offers USING btree (id)"
+  },
+  {
+    "tablename": "club_sponsor_places",
+    "indexname": "club_sponsor_places_one_per_deal",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_places_one_per_deal ON public.club_sponsor_places USING btree (deal_id) WHERE (deal_id IS NOT NULL)"
+  },
+  {
     "tablename": "club_sponsor_places",
     "indexname": "club_sponsor_places_pkey",
     "indexdef": "CREATE UNIQUE INDEX club_sponsor_places_pkey ON public.club_sponsor_places USING btree (id)"

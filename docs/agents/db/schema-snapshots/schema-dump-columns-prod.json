@@ -5508,6 +5508,951 @@
     "ordinal_position": 33
   },
   {
+    "table_name": "club_sponsor_deal_items",
+    "column_name": "deal_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "column_name": "item_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "column_name": "done_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "column_name": "done_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_sponsor_deal_items",
+    "column_name": "done_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "deal_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "tax_part",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "received_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "method",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "reference",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "income_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "tax_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "recorded_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "recorded_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "recorded_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "voided_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "voided_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "voided_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "column_name": "void_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "sponsor_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "package_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "package_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "package_items",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "logo_on_site",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "place_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "target_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "target_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "ends_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "charge_tax",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "state",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'offered'::text",
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "link_version",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "offered_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "offered_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "offered_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "offered_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "offered_to",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "emailed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "opened_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "form_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "business_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "contact_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 25
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "contact_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "phone",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "website",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoice_street",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoice_city",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoice_province",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoice_postal",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "logo_path",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "logo_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 34
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "pay_method",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 35
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoice_year",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 36
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoice_seq",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 37
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoiced_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 38
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoiced_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 39
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "due_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 40
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "tax_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 41
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "tax_rate",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 42
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "tax_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 43
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "total",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 44
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "withdrawn_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 45
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "withdrawn_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 46
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "withdrawn_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 47
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "withdrawn_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 48
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 49
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 50
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "link_unsent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 51
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "revised_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 52
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "invoice_emailed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 53
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "receipt_emailed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 54
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "paid_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 55
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 56
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_charge_tax",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 57
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_tax_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 58
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_tax_rate",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 59
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_tax_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 60
+  },
+  {
+    "table_name": "club_sponsor_deals",
+    "column_name": "original_total",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 61
+  },
+  {
+    "table_name": "club_sponsor_invoice_counters",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_sponsor_invoice_counters",
+    "column_name": "year",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_sponsor_invoice_counters",
+    "column_name": "last_seq",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "column_name": "email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "column_name": "stopped_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "column_name": "stopped_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_sponsor_offer_stops",
+    "column_name": "stopped_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "deal_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "business_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "reason_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'offer'::text",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "sent_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_sponsor_offers",
+    "column_name": "sent_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
     "table_name": "club_sponsor_places",
     "column_name": "id",
     "data_type": "uuid",
