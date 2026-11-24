@@ -33,6 +33,10 @@ an answer.
   in the club's name and recording each payment, set so the two parts equal the processing fee at Stripe's standard prices.
   Show the accountant this wording: calling our part a share of a "processing fee" is a fact that bears on D1. The terms say
   only that any sales tax that applies is included in our fee, so they hold whichever way D1 is answered.
+  **Published 2026-11-23 as Payments Terms version 2026-11-24** (`lib/legal-documents/payments/2026-11-24.md`), §4 and §5
+  word for word as v0.2; `/accounting` re-read the fee sentences that day against the R1 method: consistent, nothing to change.
+  The terms promise no tax receipt or fee statement, so Question 2c's answer is not a promise we could break. D1 is still a
+  before-switch-on item, not a publishing gate.
 
 ## Question 1 (first): taxable or exempt? (D1)
 Is our application fee a **taxable supply** of a platform service to the club, or an **exempt financial service** (arranging for

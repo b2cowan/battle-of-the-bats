@@ -3,7 +3,7 @@
  * (/marketing, 2026-10-25), keyed the same way. One home, so a screen, an email and a notice say a thing one way.
  *
  * ⚠ No rate is typed here: a rate is printed by `onlineFeeRateLabel()` from `lib/plan-config.ts`. No legal sentence is
- * written here either: the payments terms are counsel's (TERMS_PLACEHOLDER).
+ * written here either: the Payments Terms are a published legal page (`lib/legal-documents/payments/`), linked, never copied.
  */
 import { formatStoredDate, utcToZonedInputs } from './timezone';
 import { formatTime, joinWithAnd, pluralize, possessive } from './utils';
@@ -67,14 +67,15 @@ export function cardLabel(brand: string | null, last4: string | null): string {
   return last4 ? `${brandLabel(brand)} •••• ${last4}` : brandLabel(brand);
 }
 
-export const TERMS_PLACEHOLDER = '[PAYMENTS TERMS — counsel to write]';
+/** The version of the Payments Terms an owner agrees to, recorded with the agreement: the newest date in
+ *  `PAYMENTS_TERMS_VERSIONS` (`lib/legal-documents.ts`; a test holds the two equal). Published 2026-11-24, replacing the
+ *  placeholder `'placeholder-counsel-pending'`; an owner who agreed to the placeholder is asked again (the daily job's notice).
+ *  ⚠ Moving it asks EVERY connected club to agree again and emails its owners — minor change or not. */
+export const PAYMENTS_TERMS_VERSION = '2026-11-24';
 
-/** The version of the payments terms an owner agrees to, recorded with the agreement. A placeholder until counsel writes
- *  the terms; the real version replaces it, and an owner who agreed to the placeholder is asked again then. */
-export const PAYMENTS_TERMS_VERSION = 'placeholder-counsel-pending';
-
-/** Counsel's short "What changed" for the current version (words §5.3 `{counselSummary}`). Empty: the window leaves the
- *  section out. Counsel's text; the product never writes it. */
+/** `/legal`'s short "What changed" for the current version (words §5.3 `{counselSummary}`). Empty: the window leaves the
+ *  section out. Empty for 2026-11-24, the first published version (no production club had agreed before). `/legal`'s text;
+ *  the product never writes it. */
 export const PAYMENTS_TERMS_SUMMARY = '';
 
 /**

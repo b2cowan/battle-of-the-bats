@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import {
-  DATA_TERMS_VERSIONS, LEGAL_DOCUMENTS, LEGAL_DOC_KEYS, SUBPROCESSOR_LIST_VERSIONS, isPublishedVersion, isVersionDate,
+  DATA_TERMS_VERSIONS, LEGAL_DOCUMENTS, LEGAL_DOC_KEYS, PAYMENTS_TERMS_VERSIONS, SUBPROCESSOR_LIST_VERSIONS, isPublishedVersion, isVersionDate,
   legalPageLive, pageVersionInForce, publishedFilePath, type PublishedVersion,
 } from '../../lib/legal-documents.ts';
 import { LEGAL_OTHER_TITLES, legalSections, linkSectionReferences } from '../../lib/legal-sections.ts';
@@ -46,6 +46,8 @@ function parseLongDate(text: string): string | null {
 const LINKS_TO = {
   'data-terms': /\]\((?:\/legal)?\/data-terms(?:\/\d{4}-\d{2}-\d{2})?\)/,
   subprocessors: /\]\((?:\/legal)?\/subprocessors\)/,
+  // The Payments Terms (2026-11-24) have no short address: the texts link /legal/payments.
+  payments: /\]\(\/legal\/payments(?:\/\d{4}-\d{2}-\d{2})?\)/,
 } as const;
 /** T1: the Terms name the Data Terms IN the link's words ("Our [Data Terms for organizations](/data-terms) are part of …"). */
 const NAMES_DATA_TERMS = /\[[^\]\n]*Data Terms[^\]\n]*\]\((?:\/legal)?\/data-terms\)/;
@@ -99,7 +101,7 @@ function dataTermsProblems(versions: string[], termsVersions: string[], termsTex
  * drop the Data Terms while their page stays up.
  */
 function inForceProblems(
-  texts: Array<{ name: string; text: string }>, live: Record<keyof typeof LINKS_TO, boolean>, termsText: string | null,
+  texts: Array<{ name: string; text: string }>, live: Partial<Record<keyof typeof LINKS_TO, boolean>>, termsText: string | null,
 ): string[] {
   const out: string[] = [];
   for (const { name, text } of texts) {
@@ -147,7 +149,7 @@ function companiesMissingFromPrivacy(listText: string, privacyText: string): str
 
 // ── The real registry ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-const frozenChecks = (page: 'data-terms' | 'subprocessors', versions: PublishedVersion[]) => {
+const frozenChecks = (page: 'data-terms' | 'subprocessors' | 'payments', versions: PublishedVersion[]) => {
   it(`${page}: every version is a dated, frozen file with no owner note and no unfilled [bracket] fact`, () => {
     for (const p of versions) {
       assert.ok(isVersionDate(p.version), `${p.version} is not YYYY-MM-DD`);
@@ -187,14 +189,17 @@ describe('the Data Terms: part of the Terms', () => {
 
 describe('the texts in force and the pages they link', () => {
   it('no text in force links a page with no published text, and the Data Terms in force are named by the Terms in force', () => {
-    const inForce = (page: 'terms' | 'privacy' | 'data-terms' | 'subprocessors') => {
+    const inForce = (page: 'terms' | 'privacy' | 'data-terms' | 'subprocessors' | 'payments') => {
       const v = pageVersionInForce(page);
       return v === null ? null : { name: `${page} ${v}`, text: readSource(publishedFilePath(page, v)) };
     };
-    const texts = (['terms', 'privacy', 'data-terms', 'subprocessors'] as const).map(inForce).filter(t => t !== null);
+    const texts = (['terms', 'privacy', 'data-terms', 'subprocessors', 'payments'] as const).map(inForce).filter(t => t !== null);
     assert.deepEqual(inForceProblems(
       texts,
-      { 'data-terms': pageVersionInForce('data-terms') !== null, subprocessors: pageVersionInForce('subprocessors') !== null },
+      {
+        'data-terms': pageVersionInForce('data-terms') !== null, subprocessors: pageVersionInForce('subprocessors') !== null,
+        payments: pageVersionInForce('payments') !== null,
+      },
       inForce('terms')?.text ?? null,
     ), []);
   });
@@ -221,10 +226,43 @@ describe('the list of the companies that handle your information', () => {
   });
 });
 
+describe('the Payments Terms: a page of their own, agreed to in the Payouts card (published 2026-11-24)', () => {
+  frozenChecks('payments', PAYMENTS_TERMS_VERSIONS);
+
+  const v = pageVersionInForce('payments');
+  it('the Terms in force name and link them, and the Data Terms in force keep their agreement record', () => {
+    if (v === null) return;
+    const terms = readSource(publishedFilePath('terms', LEGAL_DOCUMENTS.terms.current!));
+    assert.match(terms, /our \[Payments Terms\]\(\/legal\/payments\) also apply to it\./, 'Terms §1 must name and link the Payments Terms');
+    assert.match(terms, /together with the Payments Terms for\s+an organization that takes payments online/, 'Terms "Whole agreement"');
+    const dataTerms = readSource(publishedFilePath('data-terms', pageVersionInForce('data-terms')!));
+    assert.match(dataTerms, /the record of the Terms and Payments Terms your\s+owners agreed to/);
+  });
+
+  it('the Privacy Policy in force names the agreement record before any agreement can be recorded (same day or Privacy first)', () => {
+    if (v === null) return;
+    const privacy = LEGAL_DOCUMENTS.privacy.current!;
+    assert.ok(privacy >= v, 'the Privacy Policy version that names the Payments Terms record must be in force from the Payments Terms date');
+    const text = readSource(publishedFilePath('privacy', privacy));
+    assert.match(text, /which version of our Payments Terms you agreed to for it/, 'Privacy §3 acceptance row');
+    assert.match(text, /and of which version of our Payments Terms an owner\s+agreed to for a club\*\* \(§3\)/, 'Privacy §9 record bullet');
+    assert.match(text, /the record of the Payments Terms its owners agreed to \(above\)/, 'Privacy §9 organization-deleted bullet');
+  });
+
+  it('"§11 of the Terms of Service" and "the Terms of Service (§4)" stay plain; their own sections link', () => {
+    if (v === null) return;
+    const text = readSource(publishedFilePath('payments', v));
+    const out = linkSectionReferences(text, legalSections(text), LEGAL_OTHER_TITLES.payments);
+    assert.equal(/\[§\d+\]\(#section-\d+\)\s+of the Terms of Service/.test(out), false, 'a Terms of Service section linked to a Payments Terms one');
+    assert.equal(/Terms of Service \(?\[§/.test(out), false);
+    assert.match(out, /comes back on a refund\*\* \(\[§4\]\(#section-4\)\)/);
+  });
+});
+
 describe('neither page is accepted anywhere', () => {
   it('the doors record exactly two documents', () => {
     assert.deepEqual([...LEGAL_DOC_KEYS], ['terms', 'privacy']);
-    assert.equal('data-terms' in LEGAL_DOCUMENTS || 'subprocessors' in LEGAL_DOCUMENTS, false);
+    assert.equal('data-terms' in LEGAL_DOCUMENTS || 'subprocessors' in LEGAL_DOCUMENTS || 'payments' in LEGAL_DOCUMENTS, false);
   });
 
   it('nothing in the acceptance path names the Data Terms or the list', () => {

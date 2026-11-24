@@ -36,6 +36,9 @@ export function linkSectionReferences(markdown: string, sections: LegalSection[]
     if (!have.has(n)) return whole;
     const lineStart = markdown.lastIndexOf('\n', offset - 1) + 1;
     if (markdown.startsWith('#', lineStart)) return whole; // a heading is not rewritten
+    // "§11 of the Terms of Service" (the Payments Terms, 2026-11-24): the document is named AFTER the number. No text names its
+    // own section that way, so "§N of the …" / "§N of our …" is always another page's section.
+    if (/^\s+of\s+(?:the|our)\s/.test(markdown.slice(offset + whole.length, offset + whole.length + 12))) return whole;
     // The words just before it, across a hard-wrapped line, back to the last sentence break.
     const before = markdown.slice(Math.max(0, offset - 40), offset).replace(/\s+/g, ' ');
     const sinceBreak = before.slice(Math.max(before.lastIndexOf('. '), before.lastIndexOf('; ')) + 1);
@@ -57,5 +60,7 @@ export const LEGAL_OTHER_TITLES: Record<LegalPageKey, readonly (string | RegExp)
   privacy: [TERMS_TITLE, DATA_TERMS_WORDS, PAYMENTS_TERMS_WORDS],
   'data-terms': [/(?<!Data )Terms\b/, PRIVACY_TITLE],
   subprocessors: [],
+  // The Payments Terms name the Terms in full ("the Terms of Service (§4)", "Terms of Service §17"), and their own sections bare.
+  payments: [TERMS_TITLE, PRIVACY_TITLE],
 };
 

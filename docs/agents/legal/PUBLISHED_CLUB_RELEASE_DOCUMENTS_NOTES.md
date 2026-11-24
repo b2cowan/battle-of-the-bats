@@ -4,8 +4,8 @@
 product's own text, one frozen file each: `lib/legal-documents/terms/2026-11-23.md`, `privacy/2026-11-23.md`,
 `data-terms/2026-11-23.md` and `subprocessors/2026-11-23.md`. The drafts in `drafts/` were deleted so the customer text has
 one home. Each draft's owner-only tail ("Before this can be published", the release-day steps, "For a lawyer's eye") is kept
-below word for word for the next `/legal` pass. The sentences held for the Payments Terms version are in
-`drafts/HELD_FOR_PAYMENTS_TERMS_VERSION.md`. The inline `> NOTE` blocks, change logs and "How to read" blocks are not copied:
+below word for word for the next `/legal` pass. The sentences held for the Payments Terms version were published in version
+2026-11-24 (section below); the held file was deleted then. The inline `> NOTE` blocks, change logs and "How to read" blocks are not copied:
 read them in the last commit that holds the drafts, e.g.
 `git show 422d55a35:docs/agents/legal/drafts/TERMS_OF_SERVICE.md` (and `PRIVACY_POLICY.md`, `DATA_TERMS_FOR_ORGANIZATIONS.md`,
 `SUBPROCESSOR_LIST.md`).
@@ -13,6 +13,81 @@ read them in the last commit that holds the drafts, e.g.
 **A later change.** Write a new draft in `drafts/` (start from the published file, then add the notes), set the document's
 `draftPath` in `lib/legal-documents.ts`, and publish it as a new dated version. Never edit a published file: the build fails.
 The Data Terms change only with a Terms version; the list changes with a new dated copy adding one dated row.
+
+---
+
+# The Payments Terms version (2026-11-24; frozen 2026-11-23, promoted the same day)
+
+**What was published.** One date for four texts (owner 2026-11-23, "one promote, one date"): `lib/legal-documents/payments/
+2026-11-24.md` (new: the Payments Terms, served at `/legal/payments` and `/legal/payments/2026-11-24`), and new versions of
+the Terms, the Privacy Policy and the Data Terms carrying the held sentences. The list of companies is unchanged. Terms,
+Privacy and Data Terms: a minor change; `current` moved to 2026-11-24, `oldestAccepted` stays 2026-11-22, nobody accepts again.
+**Dated 2026-11-24 though promoted on 2026-11-23** (owner's choice, 2026-11-23): 2026-11-23 was already the served Club
+release version and a served date is never reused, so the texts were posted a few hours before their effective date.
+
+**The Payments Terms text** is v0.2 (owner-approved 2026-11-18, O4, with the ruling (e) narrowing approved the same day) run
+through the draft filter, with ONE amendment: §3 "Your owners can open it from the Payouts card" became "The person who set
+up payouts signs in to it from the Payouts card" (/legal 2026-11-23: the dashboard button is any owner's, but only the
+person who set up payouts gets through Stripe's sign-in, `app/api/admin/payouts/list/route.ts:38`; §7 already said so).
+**Owner APPROVED that sentence 2026-11-23 ("I approve"), before the commit.** The draft, its
+NOTE blocks and change log are in git: `git show 5e350e26c:docs/agents/legal/drafts/PAYMENTS_TERMS.md` (v0.2 as
+approved, before the §3 amendment); `drafts/HELD_FOR_PAYMENTS_TERMS_VERSION.md` likewise from the Club release commits.
+
+**The held sentences, as published.** Terms §1, §13 and §19 and Data Terms §11 word for word. Privacy §3 row and the §9
+record bullet word for word. **Privacy §9 organization-deleted bullet re-fitted** (the held text was copied from 0.1; the
+published 2026-11-23 bullet had since become "except our own tax records (above) and our record that the deletion happened"):
+published as "except our own tax records (above), the record of the Payments Terms its owners agreed to (above), and our
+record that the deletion happened (…)". Same meaning; no new data or use.
+
+**The product.** `PAYMENTS_TERMS_VERSION` is `'2026-11-24'` (a test holds it equal to the newest registered text); the
+placeholder text is gone. The Payouts card's "Read the terms" in "Before you set up payouts" and in the new-terms window opens
+that exact version in a new tab; on the agreed row it opens the version that owner agreed to. Production on 2026-11-23
+(counts only): 0 payout accounts, 0 with a recorded version, 0 agreement rows, so the daily notice job tells nobody. Dev: 2
+connected clubs agreed to the placeholder; their owners get the item and the email on dev's next daily run.
+
+## Before this could be published (the draft's list, corrected 2026-11-23)
+
+The draft's list had gone partly stale: items 6 and 7 named `drafts/TERMS_OF_SERVICE.md` and `drafts/PRIVACY_POLICY.md`,
+both deleted 2026-11-22 at the Club release. Corrected:
+- O1–O5: ruled as recorded in the draft (O5, the default payer setting, is a before-switch-on call).
+- 0. v0.1 never published — held.
+- 1. **Tax on our fee** — NOT a publishing gate (owner 2026-11-23): §4 says any tax on our fee is included, which is true
+  whether the fee is taxable or not. It is a **before-switch-on** item (`/accounting` D1, GST/HST Stage 5).
+- 2. L4 money services — researched (`RPAA_FINTRAC_MONEY_SERVICES_STATUS.md`); a lawyer's-eye flag, not a gate.
+- 3. The six-year record — DONE (mig 497).
+- 4. **A rate-change notice procedure** — owed before a rate ever changes (not before publishing; no rate change is planned).
+- 5. The refund policy required — DONE.
+- 6. The Terms' next version — DONE: Terms 2026-11-24 carries §1, §13, §19.
+- 7. The Privacy version naming the record — DONE: Privacy 2026-11-24, in force from the same date as the Payments Terms (the
+  build fails if the Privacy version in force is older than the Payments Terms in force).
+
+## Before online payments switch on in production (the owner's own commit)
+
+1. Tax on our fee decided and, if taxable, recorded (`/accounting` D1; GST/HST Stage 5).
+2. Our fee coming back on a bank debit that fails before it clears, seen on a live payment (§4's exception rests on Stripe;
+   seen in test mode only; no code of ours reverses it).
+3. **Sponsorships (Board Ready Stage 6 Part 3b):** if sponsors can pay by card, the Payments Terms need a minor version saying
+   so (owner 2026-11-23: publish without it, add it with 3b) — §2 and §9 name only "registrations, programs, team fees and
+   tournament entries", and the payer can be a business. ⚠ Every new version asks every connected club to agree again, so
+   **publish that version before switch-on** while no club is connected; after it, every club re-agrees and gets two emails.
+4. L17: whether the refund policy must show open on the pay page (the club's consumer-law exposure; not researched).
+5. O5: the default payer setting.
+
+## For a lawyer's eye (flags, not gates; owner decides when)
+
+1. **The passed-on card fee (§9, O2)** — the card networks' surcharge cap, the advance-notice rule, Québec's ban, whether a fee
+   on both cards and bank debits at different rates is a surcharge or a service fee; and, since v0.2, whether our margin inside
+   the processing fee counts toward the club's "cost of acceptance" (`CARD_SURCHARGE_PAYER_FEE.md`).
+2. **Money-services status (L4)** — whether our Stripe API calls are "initiation", and whether the per-payment fee is a
+   distinct payment service (`RPAA_FINTRAC_MONEY_SERVICES_STATUS.md`).
+3. **The indemnity (§12)** — its reach over regulator and card-network claims, from a club that may be a volunteer
+   non-profit; and how it sits with the Terms §14 cap.
+4. **Acceptance by continuing (§13)** — whether keeping payments on after a material change binds an organization that never
+   ticked the new version.
+5. **"Not a party to the sale" (§2)** with receipts we send in the club's name — that the receipt, the pay page and §2
+   together make the club the seller to a consumer payer under Ontario's consumer protection law.
+6. **Children's information on the pay page** — a parent pays for a child; the payment description names the player (the Low
+   finding on file).
 
 ---
 
@@ -42,7 +117,7 @@ The Data Terms change only with a Terms version; the list changes with a new dat
 2. **Count the paying subscriptions on production (a count only).** 0: T5 ships as a minor change. Not 0 and a move is possible: stop; T5 is significant (30 days' email to the owners, then accept again); do not publish T5 as minor: ask the owner.
 3. Freeze the customer text, register the sha256, move `current`, keep `oldestAccepted`.
 
-### Held for the Payments Terms version (word for word from 0.1; do not lose)
+### Held for the Payments Terms version (word for word from 0.1) — ✅ PUBLISHED in Terms 2026-11-24 (section at the top)
 - §1, after the Privacy Policy sentence: "If your organization takes payments online through FieldLogicHQ, our
   [Payments Terms](/legal/payments) also apply to it." (the route does not exist until the Payments Terms publish).
 - §13, after "Stripe's own terms": "; taking payments online is also covered by our Payments Terms (§1)".
@@ -123,7 +198,7 @@ The Data Terms change only with a Terms version; the list changes with a new dat
 2. Delete the `LEGAL_INDEX.md` carry-forward rows for the fee invoice, the recorded deletion request and work you save for
    later (the Payments Terms record rows stay until the Payments version).
 
-### Held for the Payments Terms version (word for word from 0.1; do not lose; restore when the Payments Terms publish)
+### Held for the Payments Terms version (word for word from 0.1) — ✅ PUBLISHED in Privacy 2026-11-24, the §9 organization-deleted bullet re-fitted (section at the top)
 - **Publishing condition then:** this restoration needs a Privacy version live **before the first Payments Terms agreement is
   recorded on production** (the tick writes that record; the version without these words does not name it).
 - §3, acceptance row: after "which version of our Terms of Service and this policy you accepted" add " (and, for an owner who
@@ -167,7 +242,7 @@ account and a forwarder) is on file in `drafts/SUBPROCESSOR_LIST.md` § For a la
 **Out of this release (owner 2026-11-22):** the 90/120-day retention sentence of item 6 stays out unless one run of the
 sweep (migration 516, scheduled on production 2026-11-22) is confirmed on release day.
 
-**Held for the Payments Terms version (restore with it):** §11, the keep-list bullet "What we keep after that": "the record of
+**Held for the Payments Terms version (✅ PUBLISHED in Data Terms 2026-11-24, word for word):** §11, the keep-list bullet "What we keep after that": "the record of
 the Terms and Payments Terms your owners agreed to" (today: "the record of the Terms your owners agreed to"). Data Terms change
 only with a Terms version, so this rides the Terms version that adds the Payments Terms.
 

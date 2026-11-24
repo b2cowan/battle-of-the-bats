@@ -24,7 +24,6 @@
 .terms { display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; color: var(--text-primary); }
 .terms input { margin-top: 0.25rem; }
 .linkButton { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--home-olive); text-decoration: underline; cursor: pointer; font: inherit; }
-.termsText { margin: 0; padding: 0.6rem 0.75rem; border: 1px dashed var(--home-line); border-radius: 6px; color: var(--text-tertiary); font-family: var(--font-data); font-size: var(--type-support); }
 @media (max-width: 640px) {
   .recordRow { grid-template-columns: 1fr; }
   .actions :global(.btn) { min-height: 44px; flex: 1 1 100%; justify-content: center; }

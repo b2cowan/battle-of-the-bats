@@ -1,18 +1,21 @@
 /**
  * The registry of FieldLogicHQ's own legal documents (GST/HST Stage 6 step 6.2, rulings Q1 and Q2).
  *
- * Until step 6.7 the drafts (`docs/agents/legal/drafts/TERMS_OF_SERVICE.md`, `PRIVACY_POLICY.md`) are the words' one home; the
- * dev preview reads the draft file itself (`lib/legal-draft-preview.ts`). At 6.7 the approved text is written ONCE as that
- * date's frozen version file `lib/legal-documents/<doc>/<YYYY-MM-DD>.md` (customer text only), the draft is deleted, and the
- * entry below gains `{ version, sha256 }`. A published version is FROZEN by the build: its sha256 is the hash of the file's text
- * with line endings normalized to LF, and an edit fails `tests/unit/legal-documents.test.ts`.
+ * HOW A VERSION IS MADE. A change starts as a draft in `docs/agents/legal/drafts/` (begun from the published file); a Terms or
+ * Privacy draft sets `draftPath` so the dev preview reads it (`lib/legal-draft-preview.ts`). Once the owner approves it, the
+ * customer text (the draft filter's output: no owner note, no title heading) is written ONCE as that date's frozen file
+ * `lib/legal-documents/<doc>/<YYYY-MM-DD>.md`, registered below with its sha256, and the draft is deleted. A published version
+ * is FROZEN by the build: its sha256 is the hash of the file's text with line endings normalized to LF, and an edit fails
+ * `tests/unit/legal-documents.test.ts`.
  *
- * ── 6.7, written 2026-11-17 ─────────────────────────────────────────────────────────────────────────────────────────────────
- *   Both documents' owner-approved 0.3 text is frozen as `2026-11-17` (the draft filter's output, so the words are the approved
- *   ones minus every owner note) and the drafts are deleted. ⚠ The version is named for the day it takes effect, and the owner
- *   ruled (2026-11-17) that it is the RELEASE DAY. If the promote that carries `LEGAL_PAGES_PUBLISHED = true` to production is
- *   not on 2026-11-17, rename BOTH files to the promote day and change the six date strings below in the same commit, before
- *   promoting. The text, so the sha256, does not change. After production serves a version, never rename it again.
+ * ⚠ A version is named for the day it takes effect (the promote day, owner 2026-11-17). A file frozen only in the working tree may
+ *   still be renamed to the real promote day (same text, same sha256); after production serves a version, never rename it again,
+ *   and never reuse a date production already served.
+ *
+ * Versions so far: 2026-11-22 (the first published Terms and Privacy Policy), 2026-11-23 (the Club release: the Data Terms and the
+ * list of companies join, Terms and Privacy follow), 2026-11-24 (the Payments Terms publish; the Terms, Privacy Policy and Data
+ * Terms carry the sentences that name them — `docs/agents/legal/PUBLISHED_CLUB_RELEASE_DOCUMENTS_NOTES.md`). Each later version
+ * was a minor change: `current` moved, `oldestAccepted` stayed 2026-11-22, nobody accepts again.
  *
  * ── How 6.3 (acceptance at every door) uses the two values — build it there, NOT here ──────────────────────────────────────
  *   · `currentVersion(doc)` is what a door records when someone accepts: the dated `current` when published, `'draft'` in the
@@ -25,8 +28,7 @@
  * ── Deferred, written as a comment only ────────────────────────────────────────────────────────────────────────────────────
  *   · A significant change needs 30 days' notice (Terms §18), so the new version must be readable BEFORE it is current: an
  *     `upcoming` field, added at the first significant change — not now.
- *   · The payments terms (backlog L3) will add a third key, `'payments'`. No entry until it is written.
- *   · The Data Terms and the list of companies are NOT keys here — see `LegalPageKey` below.
+ *   · The Data Terms, the list of companies and the Payments Terms are NOT keys here — see `LegalPageKey` below.
  *
  * No `server-only` import so the unit tests can load it; it reads no file itself.
  */
@@ -65,8 +67,9 @@ export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
     published: [
       { version: '2026-11-22', sha256: 'b5f8e3d6428cc4709908b4bb199c95ea4ee47df993300589dfc29a5cca877eba' },
       { version: '2026-11-23', sha256: 'e322a101cf5b1b33618858dc68a25e556c8c268e3a3bcd29159a447a4bf46cfe' },
+      { version: '2026-11-24', sha256: '179758c92fd25cb48c98fda35b42d4ba029b25f283294bb5d4f7899a58fcb8a6' },
     ],
-    current: '2026-11-23',
+    current: '2026-11-24',
     oldestAccepted: '2026-11-22',
   },
   privacy: {
@@ -74,17 +77,18 @@ export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
     published: [
       { version: '2026-11-22', sha256: 'abdaa491af8b11109ac2471e9db9106c5ab361d50c125948b42519bd86800552' },
       { version: '2026-11-23', sha256: '013c2bca8c15ce6f3fb7507449412ee75c41e46e4dbf40e068e74c8abf6b4423' },
+      { version: '2026-11-24', sha256: '4799eb1df81bf71c26aad6416161c39b4ef106de800a118da6f045df1457f3d5' },
     ],
-    current: '2026-11-23',
+    current: '2026-11-24',
     oldestAccepted: '2026-11-22',
   },
 };
 
 /*
- * ── The two pages a person READS but never accepts (Board Ready 0a-5, built 2026-11-19) ──────────────────────────────────────
+ * ── The pages the sign-in doors never record (Board Ready 0a-5, built 2026-11-19; the Payments Terms 2026-11-24) ────────────────
  *   Kept OUT of `LegalDocKey` on purpose: that key is the doors' acceptance contract (each entry carries `current` and
- *   `oldestAccepted`, and the registry test requires both once the pages are published). Neither page is ticked anywhere, and the
- *   acceptance record keeps exactly two versions (`tests/unit/legal-data-terms-and-list.test.ts` asserts it).
+ *   `oldestAccepted`, and the registry test requires both once the pages are published). None of these is ticked at a sign-in
+ *   door, and the acceptance record keeps exactly two versions (`tests/unit/legal-data-terms-and-list.test.ts` asserts it).
  *
  *   · DATA TERMS for organizations (`docs/agents/legal/DATA_TERMS_ACCEPTANCE_NOTE.md`): PART OF the Terms, so a version exists
  *     only at a Terms version date, and that Terms file must name and link it (T1). One frozen file per carrying Terms version,
@@ -97,12 +101,23 @@ export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
  *     does not name fails the build.
  *   · Both lists were EMPTY until the Club release (2026-11-23, the Terms version that names the Data Terms): until a text is
  *     registered, the page answers "not found" and no link to it renders.
+ *   · THE PAYMENTS TERMS (`docs/agents/legal/PUBLISHED_CLUB_RELEASE_DOCUMENTS_NOTES.md`): added to the Terms for an organization
+ *     that takes payments online, and agreed to by an owner's tick in the Payouts card — that tick has its own record
+ *     (`payments_terms_agreements`, mig 497) and its own version constant, `PAYMENTS_TERMS_VERSION` in
+ *     `lib/online-payment-words.ts`, which must equal the newest date below (`tests/unit/online-payments-terms.test.ts`). Versions
+ *     of their own (Payments Terms §13), one frozen file each, `lib/legal-documents/payments/<date>.md`; the newest is in force,
+ *     and each earlier one stays served at its own address (the card's "Read the terms" opens the version that owner agreed to).
+ *     ⚠ Every new version asks every connected club to agree again and emails its owners (the daily job), minor or not.
  *   · A frozen text starts at its first section: the page draws the title, so the file carries no title heading of its own.
  */
-export type LegalPageKey = LegalDocKey | 'data-terms' | 'subprocessors';
+export type LegalPageKey = LegalDocKey | 'data-terms' | 'subprocessors' | 'payments';
 
 export const DATA_TERMS_VERSIONS: PublishedVersion[] = [
   { version: '2026-11-23', sha256: '23d88e4ae12c751b9513dffb7d31f01953ca3923998afb9f1d096af24e4af358' },
+  { version: '2026-11-24', sha256: '6f3ca5d077558a46ee3cf257370bc4c0ec6e4f10794f7aa709af794e92b35c2d' },
+];
+export const PAYMENTS_TERMS_VERSIONS: PublishedVersion[] = [
+  { version: '2026-11-24', sha256: '3fe278cb35e129f806c10a3cfca96fcde3bc87e35612e4cf9f1701cd3d20d951' },
 ];
 export const SUBPROCESSOR_LIST_VERSIONS: PublishedVersion[] = [
   { version: '2026-11-23', sha256: '45de07d8b2a178bbb17bde58bca2235878490b979be74e116233fc04368078e8' },
@@ -112,7 +127,10 @@ export const SUBPROCESSOR_LIST_VERSIONS: PublishedVersion[] = [
 export const isDoorDocument = (page: LegalPageKey): page is LegalDocKey => (LEGAL_DOC_KEYS as readonly string[]).includes(page);
 
 const versionsOf = (page: LegalPageKey): PublishedVersion[] =>
-  page === 'data-terms' ? DATA_TERMS_VERSIONS : page === 'subprocessors' ? SUBPROCESSOR_LIST_VERSIONS : LEGAL_DOCUMENTS[page].published;
+  page === 'data-terms' ? DATA_TERMS_VERSIONS
+    : page === 'subprocessors' ? SUBPROCESSOR_LIST_VERSIONS
+      : page === 'payments' ? PAYMENTS_TERMS_VERSIONS
+        : LEGAL_DOCUMENTS[page].published;
 
 const VERSION_RE = /^\d{4}-\d{2}-\d{2}$/;
 export const isVersionDate = (v: string): boolean => VERSION_RE.test(v);
@@ -147,12 +165,12 @@ export const publishedVersions = (doc: LegalPageKey): string[] =>
 
 /**
  * The version a page shows at its plain address, or null when it has no text yet. A door document: its `current`. The Data Terms:
- * the newest version at or before the Terms' `current`. The list: its newest copy.
+ * the newest version at or before the Terms' `current`. The list and the Payments Terms: the newest copy.
  */
 export function pageVersionInForce(page: LegalPageKey): string | null {
   if (isDoorDocument(page)) return LEGAL_DOCUMENTS[page].current;
   const newestFirst = publishedVersions(page);
-  if (page === 'subprocessors') return newestFirst[0] ?? null;
+  if (page === 'subprocessors' || page === 'payments') return newestFirst[0] ?? null;
   const termsCurrent = LEGAL_DOCUMENTS.terms.current;
   return termsCurrent === null ? null : newestFirst.find(v => v <= termsCurrent) ?? null;
 }

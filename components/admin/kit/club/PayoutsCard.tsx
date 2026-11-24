@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Check, ExternalLink, Pencil, Unplug } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
-import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, PAYMENTS_TERMS_VERSION, PAYOUTS_ADDRESS_WORDS, TERMS_PLACEHOLDER, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
+import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, PAYMENTS_TERMS_VERSION, PAYOUTS_ADDRESS_WORDS, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
 import { BILLING_ADDRESS_FORM_WORDS } from '@/lib/billing-location';
 import { isAddressRefusal, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
 import type { PayoutsState } from '@/lib/online-payment-account';
@@ -76,7 +76,11 @@ export type PayoutsView = {
     agreedAt: string;
     agreedVersionDate: string | null;
     currentVersionDate: string | null;
+    /** The published page of the version this owner agreed to; null for the draft (2026-11-24). */
+    agreedHref: string | null;
   } | null;
+  /** The published Payments Terms page of the version a tick records now (`PAYMENTS_TERMS_VERSION`), built by the server. */
+  termsHref: string;
   /** GST/HST Stage 2 Part 2b (owner ruling A), kept by Stripe-owned pricing Stage 4 call (a): connected, but no billing address
    *  on our records — the tax inside our fee needs its province. The owner's. */
   addressMissing?: boolean;
@@ -121,8 +125,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   const [before, setBefore] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [editing, setEditing] = useState(false);
-  // 12d-2 Part 4 (words §5.3): the terms window — 'agree' asks again; 'read' only shows the terms agreed to.
-  const [termsWindow, setTermsWindow] = useState<'agree' | 'read' | null>(null);
+  // 12d-2 Part 4 (words §5.3): the terms window asks again. Reading the terms agreed to is a link to that version's page.
+  const [termsWindow, setTermsWindow] = useState<'agree' | null>(null);
 
   const reload = useCallback(async () => { setView(await loadPayouts(orgSlug)); }, [orgSlug]);
 
@@ -332,7 +336,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         <TermsWindow
           orgSlug={orgSlug}
           clubName={clubName}
-          mode={termsWindow}
+          termsHref={view.termsHref}
           onClose={() => setTermsWindow(null)}
           onAgreed={async () => { setTermsWindow(null); await reload(); }}
         />
@@ -372,7 +376,7 @@ function AddressMissingLine({ orgSlug }: { orgSlug: string }) {
 /** The record (copy §4): reads first; the card's pencil flips it whole. The fee choice and the policy autosave and tell nobody. */
 function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubName, payoutRows }: {
   orgSlug: string; home: PayoutsHome; view: PayoutsView; editing: boolean; onSaved: (next: Partial<PayoutsView>) => void;
-  onTerms: (mode: 'agree' | 'read') => void;
+  onTerms: (mode: 'agree') => void;
   /** The club's name for "Receipts say", and whether this state says where payouts go as rows (taking payments). */
   clubName: string; payoutRows: boolean;
 }) {
@@ -567,7 +571,6 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
   const [policy, setPolicy] = useState(view.refundPolicy);
   const policyId = useId();
   const policyHintId = useId();
-  const [showTerms, setShowTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // GST/HST Stage 2 Part 2b (Ask 8): the club's billing address before Stripe. The window REPLACES this one while open (as
@@ -675,8 +678,9 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
           <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} />
           <span>{W.before.termsCheckbox(clubName)}</span>
         </label>
-        <button type="button" className={pc.linkButton} onClick={() => setShowTerms(s => !s)} aria-expanded={showTerms}>{W.before.termsLink}</button>
-        {showTerms && <p className={pc.termsText}>{TERMS_PLACEHOLDER}</p>}
+        {/* The Payments Terms (published 2026-11-24): the very version this tick records, in a new tab so the refund policy
+            typed above is not lost. The address comes from the server (the legal-links helper), never typed here. */}
+        <a className={pc.linkButton} href={view.termsHref} target="_blank" rel="noopener noreferrer">{W.before.termsLink}</a>
         {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
         {!error && readFailed && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{PAYOUTS_ADDRESS_WORDS.readFailed}</p>}
       </div>
@@ -684,8 +688,9 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
   );
 }
 
-/** "Payments terms" (words §5.1): agreed, to the draft, or behind — with the one door each reads. */
-function TermsRow({ terms, onTerms }: { terms: NonNullable<PayoutsView['terms']>; onTerms: (mode: 'agree' | 'read') => void }) {
+/** "Payments terms" (words §5.1): agreed, to the draft, or behind — with the one door each reads. Agreed: "Read the terms" opens
+ *  the published version THAT owner agreed to, in a new tab (2026-11-24). */
+function TermsRow({ terms, onTerms }: { terms: NonNullable<PayoutsView['terms']>; onTerms: (mode: 'agree') => void }) {
   const day = longDay(terms.agreedAt);
   const version = terms.agreedVersionDate ? longDay(terms.agreedVersionDate) : null;
   const words = terms.standing === 'stale' ? TERMS_WORDS.rowStale(terms.agreedBy, day, version)
@@ -698,18 +703,18 @@ function TermsRow({ terms, onTerms }: { terms: NonNullable<PayoutsView['terms']>
         {words}
         {terms.standing === 'stale'
           ? <> · <button type="button" className={pc.linkButton} onClick={() => onTerms('agree')}>{TERMS_WORDS.readAndAgree}</button></>
-          : terms.standing === 'agreed'
-            ? <> · <button type="button" className={pc.linkButton} onClick={() => onTerms('read')}>{TERMS_WORDS.readTerms}</button></>
+          : terms.standing === 'agreed' && terms.agreedHref
+            ? <> · <a className={pc.linkButton} href={terms.agreedHref} target="_blank" rel="noopener noreferrer">{TERMS_WORDS.readTerms}</a></>
             : null}
       </dd>
     </div>
   );
 }
 
-/** "The new payments terms" (words §5.3): the terms' own summary (left out while empty), the terms, the box — and Agree,
- *  ABSENT until the box is ticked (ask 6). 'read' shows the terms with no box. The wording is the real terms', never ours. */
-function TermsWindow({ orgSlug, clubName, mode, onClose, onAgreed }: {
-  orgSlug: string; clubName: string; mode: 'agree' | 'read'; onClose: () => void; onAgreed: () => void;
+/** "The new payments terms" (words §5.3): the terms' own summary (left out while empty), the link to the version being agreed
+ *  to (a new tab; the published page, never a copy), the box — and Agree, ABSENT until the box is ticked (ask 6). */
+function TermsWindow({ orgSlug, clubName, termsHref, onClose, onAgreed }: {
+  orgSlug: string; clubName: string; termsHref: string; onClose: () => void; onAgreed: () => void;
 }) {
   const W = payoutsWords('club');
   const [agreed, setAgreed] = useState(false);
@@ -731,10 +736,10 @@ function TermsWindow({ orgSlug, clubName, mode, onClose, onAgreed }: {
   return (
     <KitDialog
       kind="form"
-      title={mode === 'agree' ? TERMS_WORDS.windowTitle : TERMS_WORDS.termsHeading}
+      title={TERMS_WORDS.windowTitle}
       onClose={onClose}
       busy={busy}
-      footer={mode === 'agree' ? (
+      footer={(
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{TERMS_WORDS.later}</button>
           {agreed && (
@@ -743,25 +748,23 @@ function TermsWindow({ orgSlug, clubName, mode, onClose, onAgreed }: {
             </button>
           )}
         </>
-      ) : undefined}
+      )}
     >
       <div className={pc.before}>
-        {mode === 'agree' && PAYMENTS_TERMS_SUMMARY && (
+        {PAYMENTS_TERMS_SUMMARY && (
           <section>
             <h3 className={ck.label}>{TERMS_WORDS.changedHeading}</h3>
             <p>{PAYMENTS_TERMS_SUMMARY}</p>
           </section>
         )}
         <section>
-          {mode === 'agree' && <h3 className={ck.label}>{TERMS_WORDS.termsHeading}</h3>}
-          <p className={pc.termsText}>{TERMS_PLACEHOLDER}</p>
+          <h3 className={ck.label}>{TERMS_WORDS.termsHeading}</h3>
+          <a className={pc.linkButton} href={termsHref} target="_blank" rel="noopener noreferrer">{TERMS_WORDS.readTerms}</a>
         </section>
-        {mode === 'agree' && (
-          <label className={pc.terms}>
-            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} disabled={busy} />
-            <span>{W.before.termsCheckbox(clubName)}</span>
-          </label>
-        )}
+        <label className={pc.terms}>
+          <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} disabled={busy} />
+          <span>{W.before.termsCheckbox(clubName)}</span>
+        </label>
         {done && <p className={ck.hint} role="status">{TERMS_WORDS.done}</p>}
         {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
       </div>

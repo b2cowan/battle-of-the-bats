@@ -44,6 +44,7 @@ function payoutsHarness(t: TestContext, home: 'club' | 'tournament', state: Payo
     state, isOwner: true, testMode: true, rateLabel: '3%', example: { baseCents: 10000, feeCents: 300 },
     feePayer: 'family', refundPolicy: 'Ask the club.', requirementsDue: 0, deadline: null, paymentsOn: true,
     connectedAt: '2026-10-25', disconnectedAt: null, disconnectedBy: null, teamsStillOwing: 0,
+    termsHref: 'https://www.fieldlogichq.ca/legal/payments/2026-11-24',
   };
   const events: string[] = [];
   const requests: Record<string, unknown>[] = [];

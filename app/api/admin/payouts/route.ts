@@ -15,6 +15,8 @@ import { syncPayoutsAccount } from '@/lib/online-payment-landing';
 import { stripeProfileFor } from '@/lib/online-payment-profile';
 import { PAYMENTS_TERMS_VERSION, PAYOUTS_WORDS, TERMS_WORDS, termsStanding, termsVersionDate } from '@/lib/online-payment-words';
 import { recordPaymentsTermsAgreement } from '@/lib/payments-terms-agreement';
+import { isPublishedVersion } from '@/lib/legal-documents';
+import { legalPageHref } from '@/lib/legal-links';
 import { clearSettled } from '@/lib/needs-attention';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { endingNotice, readOutstanding, upcomingEnding } from '@/lib/online-payment-endings';
@@ -144,7 +146,11 @@ export const GET = withObservability(async (req: Request) => {
       agreedAt: row.terms_agreed_at,
       agreedVersionDate: termsVersionDate(row.terms_version),
       currentVersionDate: termsVersionDate(PAYMENTS_TERMS_VERSION),
+      // The published page of the version this owner agreed to (2026-11-24); null for the draft, which has no page.
+      agreedHref: row.terms_version && isPublishedVersion('payments', row.terms_version) ? legalPageHref('payments', row.terms_version) : null,
     } : null,
+    // The Payments Terms a tick records now: that version's own page, so the words read are the words agreed to.
+    termsHref: legalPageHref('payments', PAYMENTS_TERMS_VERSION),
     // 12d-2 (words §3.3, ask 5): a club without Accounting reads its payouts on the owner's card instead of a tab.
     hasAccounting: hasModuleEntitlement(ctx.org, 'module_accounting'),
     everConnected: !!row,

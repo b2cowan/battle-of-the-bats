@@ -18,8 +18,12 @@ export const DATA_TERMS_TITLE = 'Data Terms for organizations';
 /** Board Ready 0a-5: the list's title line (`/marketing` 2026-11-19; the address keeps the board's word, "subprocessors"). */
 export const SUBPROCESSORS_TITLE = 'The companies that handle your information';
 
+/** The Payments Terms (2026-11-24): the name the Terms §1 and the document itself use. */
+export const PAYMENTS_TERMS_TITLE = 'Payments Terms';
+
 export const LEGAL_TITLES: Record<LegalPageKey, string> = {
   terms: TERMS_TITLE, privacy: PRIVACY_TITLE, 'data-terms': DATA_TERMS_TITLE, subprocessors: SUBPROCESSORS_TITLE,
+  payments: PAYMENTS_TERMS_TITLE,
 };
 
 /**

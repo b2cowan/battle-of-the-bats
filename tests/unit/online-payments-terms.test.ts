@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import { PAYMENTS_TERMS_VERSION, TERMS_WORDS, termsStanding, termsVersionDate } from '../../lib/online-payment-words.ts';
+import { PAYMENTS_TERMS_VERSIONS, isPublishedVersion, publishedVersions } from '../../lib/legal-documents.ts';
 
 /**
  * CLUB TIER STAGE 12d-2 PART 4: THE PAYMENTS TERMS (frame 5, words §5; ask 6). The read-out, a notice and an owner item
  * when the version changes (payments stay on), the current version required to set up again, reconnect or change who
- * pays the fee, and Agree absent until the box is ticked in both windows. The text is counsel's; changing the one
- * version constant is the whole act of publishing.
+ * pays the fee, and Agree absent until the box is ticked in both windows. Published 2026-11-24: the text is a frozen legal page
+ * (`lib/legal-documents/payments/<date>.md`, registered in `PAYMENTS_TERMS_VERSIONS`), and the version constant names its date.
  */
 const CARD = 'components/admin/kit/club/PayoutsCard.tsx';
 const ROUTE = 'app/api/admin/payouts/route.ts';
@@ -25,8 +26,11 @@ describe('the version', () => {
     assert.equal(termsStanding('2027-01-15', '2027-06-01'), 'stale');
     assert.equal(termsStanding(null, '2027-01-15'), 'none');
   });
-  it('the product never publishes terms: the version is still the placeholder', () => {
-    assert.equal(PAYMENTS_TERMS_VERSION, 'placeholder-counsel-pending');
+  it('the version a tick records is the newest published Payments Terms (published 2026-11-24, replacing the placeholder)', () => {
+    assert.ok(termsVersionDate(PAYMENTS_TERMS_VERSION), 'the version is a date, not the placeholder');
+    assert.ok(isPublishedVersion('payments', PAYMENTS_TERMS_VERSION), 'the version has a registered, frozen text');
+    assert.equal(PAYMENTS_TERMS_VERSION, publishedVersions('payments')[0], 'the version is the NEWEST published text');
+    assert.ok(PAYMENTS_TERMS_VERSIONS.length > 0);
   });
   it('the read-out words (§5.1)', () => {
     assert.equal(TERMS_WORDS.rowAgreed('Sam Patel', 'October 27, 2026', 'January 15, 2027'), 'Agreed by Sam Patel on October 27, 2026, version of January 15, 2027');
@@ -68,9 +72,15 @@ describe('Agree is ABSENT until the box is ticked, in both windows (ask 6)', () 
   it('the new terms window’s Agree', () => {
     assert.match(card, /\{agreed && \(\s*<button type="button" className="btn btn-lime" onClick=\{\(\) => void agree\(\)\}/);
   });
-  it('the window leaves out an empty "What changed" and shows counsel’s text, never ours', () => {
-    assert.match(card, /mode === 'agree' && PAYMENTS_TERMS_SUMMARY && \(/);
-    assert.match(card, /<p className=\{pc\.termsText\}>\{TERMS_PLACEHOLDER\}<\/p>/);
+  it('the window leaves out an empty "What changed" and links the published terms, never a copy', () => {
+    assert.match(card, /\{PAYMENTS_TERMS_SUMMARY && \(/);
+    assert.doesNotMatch(card, /TERMS_PLACEHOLDER/);
+    // Both windows open the version being agreed to, built by the server; the agreed row opens the version agreed to.
+    assert.equal(card.match(/href=\{(?:view\.)?termsHref\} target="_blank" rel="noopener noreferrer"/g)?.length, 2);
+    assert.match(card, /href=\{terms\.agreedHref\} target="_blank"/);
+    const route = readCode(ROUTE);
+    assert.match(route, /termsHref: legalPageHref\('payments', PAYMENTS_TERMS_VERSION\),/);
+    assert.match(route, /isPublishedVersion\('payments', row\.terms_version\) \? legalPageHref\('payments', row\.terms_version\) : null/);
   });
   it('the fee choice gives way to the refusal and its Read and agree while behind', () => {
     assert.match(card, /\{!stale && \(\['family', 'club'\] as const\)\.map/);

@@ -1,5 +1,5 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-20 (Stage 4 Part 2: family sign-up form answers and waiting files); 2026-11-18 (Board Ready data terms follow-through: the four supplier dates, ImprovMX countersigned, notices subscribed, server logs 90 days, the AI rule written into `AGENCY_RULES.md`); 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+**Last updated:** 2026-11-23 (the Payments Terms published as version 2026-11-24, in the product; online payments still off in production, 0 payout accounts and 0 agreements there); 2026-11-20 (Stage 4 Part 2: family sign-up form answers and waiting files); 2026-11-18 (Board Ready data terms follow-through: the four supplier dates, ImprovMX countersigned, notices subscribed, server logs 90 days, the AI rule written into `AGENCY_RULES.md`); 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
 Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
 rests on it.
 
@@ -173,13 +173,18 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   created with `fees_collector: 'stripe'` (Stripe charges the club its processing fee and its extras from the club's own
   balance; nothing is billed to FieldLogicHQ or billed on by us) and our application fee is our margin only (the fee less
   Stripe's standard Canadian cost, stored per payment); `losses_collector: 'stripe'` is unchanged. The terms record and
-  the Québec check were rebuilt 2026-11-17 (mig 497 append-only, survives deletion; Québec payouts refused). Payments
-  terms v0.2 (`drafts/PAYMENTS_TERMS.md`) describe this.
+  the Québec check were rebuilt 2026-11-17 (mig 497 append-only, survives deletion; Québec payouts refused). The
+  Payments Terms (published version 2026-11-24, `lib/legal-documents/payments/2026-11-24.md`) describe this. Re-checked
+  2026-11-23 against the code: true except that our fee coming back on a debit that fails before it clears is Stripe's doing,
+  seen in test mode only (no code of ours reverses it; `lib/stripe-connect.ts:224`) — confirm on a live payment before
+  switch-on.
 
 ## Consent and email mechanics that exist today
-- **Payments terms:** a checkbox clubs tick when setting up payouts; the version and time are recorded.
-  The text is a **placeholder** ("counsel to write"); a draft exists since 2026-11-17 (`drafts/PAYMENTS_TERMS.md`, v0.2
-  owner-approved 2026-11-18, not yet in the product). This is the shape to reuse for signup acceptance.
+- **Payments terms:** a checkbox an owner ticks in "Before you set up payouts" (and again in the card's "new payments terms"
+  window after a change); every tick is kept append-only with who, when, the version and the sentence (mig 497). Since
+  2026-11-23 the text is the published **Payments Terms, version 2026-11-24** (`/legal/payments`; the card links the exact
+  version being ticked, and the version an owner agreed to); the placeholder is gone. Any new version asks every connected club
+  to agree again and emails its owners (daily job), minor or not.
 - **Tryout registration:** two required consents (data collection, eligibility) and a separate optional
   marketing consent.
 - **League registration:** a waiver checkbox, required and recorded.

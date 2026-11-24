@@ -404,7 +404,7 @@ const platformAdminHelp: HelpPageContent = {
               <p>Open the club&rsquo;s record and choose <strong>Online payments</strong>. The tab shows only for a club that has connected payouts, and stays after a downgrade or a cancel, because that is when its open disputes matter most. In test mode it opens with <em>Test mode. Nothing here is real money.</em> Five tiles open their panel:</p>
               <HelpDefs>
                 <HelpDef term="Account">Taking payments, Setting up, Needs attention or Disconnected, with who connected or disconnected it and when, how online payments ended if they did (<em>the plan moved to</em> a plan, or <em>the organization was suspended</em>), and a line when Stripe closed the account.</HelpDef>
-                <HelpDef term="Terms">Draft, Version of a date, or Out of date, with when the owner agreed.</HelpDef>
+                <HelpDef term="Terms">Version of a date, or Out of date, with when the owner agreed. A club that agreed to the draft before the Payments Terms were published reads Out of date.</HelpDef>
                 <HelpDef term="Last 30 days">The total, with the count of payments and refunds.</HelpDef>
                 <HelpDef term="Clearing">How many bank debits are still clearing.</HelpDef>
                 <HelpDef term="Open disputes">How many, with Stripe&rsquo;s fees on them so far (Stripe takes those from the club&rsquo;s own Stripe balance).</HelpDef>
@@ -435,7 +435,7 @@ const platformAdminHelp: HelpPageContent = {
                 <li>a club that is disconnected with a dispute still open;</li>
                 <li>Stripe closing the account;</li>
                 <li>Stripe messages that failed;</li>
-                <li>a club not on the current payments terms, once final terms exist.</li>
+                <li>a club not on the current payments terms, including one that agreed to the draft before the Payments Terms were published.</li>
               </ul>
               <p>A row leaves when it clears: the dispute closes, the message is processed, or the account reconnects. When nothing is wrong it reads <em>Nothing needs a look.</em> The amber count beside <strong>Online payments</strong> in the menu, and its row in Health on <strong>Today</strong>, count this list.</p>
             </>
