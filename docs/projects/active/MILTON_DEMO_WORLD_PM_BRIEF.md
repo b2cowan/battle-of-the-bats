@@ -33,3 +33,13 @@ tournament are never used.
 
 **Success.** All five demos rehearsed against the run sheet with no seeding gap; a rebuild twice in a row gives the same club; a reset
 after a rehearsal returns it exactly; no other club's rows change.
+
+**Update 2026-11-23, the evening before the meeting (2026-11-24).** The club is rebuilt for the meeting day and dressed for the
+questions a board of coaches asks off the script. The dressed team now has three upcoming games, its eight past lineups marked
+ready, awards, an opponent book with notes, two emails already sent to its families, and an emergency contact on every player; the
+club has one invitation waiting in Members. The deck and the run sheet say what is true after the November 22 and 23 releases
+(group email, the club's own registration questions and schedules across several permits are live; the club plans are on sale).
+The run sheet gains a list, "If he asks to see more", of what can be opened and what belongs in a second session. Still empty,
+and not small: tryouts, a finished season, the club's budget and bank, sponsorship packages and deals, a tournament in progress,
+player documents. One lesson for next time: build the club the evening before; a rebuild in the last minutes is not safe, because
+a failed one leaves the club empty until it is run again.

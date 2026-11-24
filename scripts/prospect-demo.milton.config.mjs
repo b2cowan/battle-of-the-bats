@@ -196,6 +196,8 @@ export default {
     /** The dressed team's head coach (Demos 2–4) and its assistant (receives the practice plan in Demo 3). */
     headCoach: { email: 'b2cowan+repcoach@gmail.com', name: 'Morgan Hale' },
     assistant: { email: 'b2cowan+assistant@gmail.com', name: 'Priya Nair' },
+    /** One invitation still waiting, so Members shows "Invited" (plan §10). A `.local` account nobody signs in to. */
+    invited: { email: 'renee.castellano@milton-bats.local', name: 'Renee Castellano', role: 'treasurer', title: 'Treasurer' },
   },
   /** [age group, tier, head coach name (a .local account; the dressed team's is `repPeople.headCoach`)]. Jan 1 cut-off. */
   repTeams: [

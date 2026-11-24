@@ -1,15 +1,22 @@
 :root {
-  --ground: #0B0D12;
+  /* FieldLogicHQ's dark tokens (app/globals.css): pitch black, the surface, the text colour, lime. */
+  --ground: #0A0A0A;
   --slate: #111827;
   --panel: #172033;
+  --line: #2A3550;
   --ink: #F1F5F9;
+  /* --dim and --faint are a step lighter than the product's muted grey, on purpose: a projector washes it out. */
   --dim: #A7B4C6;
   --faint: #8391A7;
   --lime: #D9F99D;
-  --lime-ink: #10140A;
-  --blue: #3B5CC4;
+  --lime-ink: #0F1123;
+  --on-lime: #2C3318;
+  --on-lime-dim: #3D4A1F;
+  --on-lime-faint: #55602F;
   --amber: #FBBF24;
-  --milton: #A855F7;
+  /* Milton Bats' own purple (the "bats" preset): the primary, and its light shade for type on a dark ground. */
+  --milton: #8B2FC9;
+  --milton-light: #C084FC;
   --head: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
   --text: 'Inter', Arial, sans-serif;
   --mono: 'IBM Plex Mono', 'Courier New', monospace;
@@ -29,36 +36,67 @@ section {
 section.slate { background: var(--slate); }
 section.statement { background: var(--lime); color: var(--lime-ink); }
 
-/* The type scale: 120 / 72 / 44 / 32 / 24 */
+/* The type scale: 120 / 72 / 44 / 32 / 24. Every heading is Barlow Condensed 700, sentence case. */
 .eyebrow { font-family: var(--mono); font-size: 24px; letter-spacing: 3px; text-transform: uppercase; color: var(--lime); margin: 0 0 24px; }
-.title { font-family: var(--head); font-size: 72px; font-weight: 600; line-height: 1.05; color: var(--ink); margin: 0 0 40px; }
+.title { font-family: var(--head); font-size: 72px; font-weight: 700; line-height: 1.05; color: var(--ink); margin: 0 0 40px; }
 .lede { font-size: 32px; line-height: 1.4; color: var(--dim); margin: 0 0 48px; max-width: 1400px; }
 .big { font-family: var(--head); font-size: 120px; font-weight: 700; line-height: 1; color: var(--ink); margin: 0; }
-.h3 { font-family: var(--head); font-size: 44px; font-weight: 600; line-height: 1.1; color: var(--ink); margin: 0 0 16px; }
+.h3 { font-family: var(--head); font-size: 44px; font-weight: 700; line-height: 1.1; color: var(--ink); margin: 0 0 16px; }
 .body { font-size: 32px; line-height: 1.4; color: var(--dim); margin: 0; }
 .small { font-size: 24px; line-height: 1.4; color: var(--dim); margin: 0; }
 .label { font-family: var(--mono); font-size: 24px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint); margin: 0; }
+.label.lime { color: var(--lime); }
+.ink { color: var(--ink); }
+.strong { font-weight: 600; }
 .limeword { color: var(--lime); }
+.hero-num { font-family: var(--head); font-size: 160px; font-weight: 700; line-height: 1; color: var(--lime); margin: 0; }
 
-.footer { position: absolute; left: 128px; bottom: 64px; width: 1664px; font-family: var(--mono); font-size: 24px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint); margin: 0; }
+/* The footer: the same line in the same place on every slide after the cover. The name is set as the lockup sets it. */
+.footer { position: absolute; left: 128px; bottom: 64px; width: 1664px; font-family: var(--text); font-size: 24px; font-weight: 400; color: var(--faint); margin: 0; }
+.footer b { font-weight: 700; color: var(--dim); }
+.footer .hq { font-weight: 500; }
 
 /* Cards */
 .row { display: flex; gap: 32px; }
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.col { display: flex; flex-direction: column; }
 .card { background: var(--panel); border-radius: 12px; padding: 40px; display: flex; flex-direction: column; gap: 12px; }
 .card.edge { border-top: 6px solid var(--lime); }
-.card.quiet { background: transparent; border: 2px solid #2A3550; }
+.card.quiet { background: transparent; border: 2px solid var(--line); }
+.card.start { padding: 32px 40px; }
+/* A problem: a ruled column, a heading and one line under it */
+.problem { gap: 8px; border-top: 2px solid var(--line); padding-top: 20px; }
+.problem .h3 { margin: 0; }
+/* The wall: five columns of short feature names, shown and not read */
+.wall { display: grid; grid-template-columns: repeat(5, 1fr); gap: 40px; align-items: start; }
+.wall .col { gap: 5px; }
+.wall .tag { font-family: var(--mono); font-size: 24px; letter-spacing: 2px; text-transform: uppercase; color: var(--lime); margin: 0 0 8px; padding-bottom: 8px; border-bottom: 2px solid var(--line); }
+.wall .small { line-height: 1.25; color: var(--ink); white-space: nowrap; }
 .card .h3 { margin: 0; }
 .card .body { margin: 0; }
 .card .tag { font-family: var(--mono); font-size: 24px; letter-spacing: 2px; text-transform: uppercase; color: var(--lime); margin: 0; }
-.card .tagdim { font-family: var(--mono); font-size: 24px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); margin: 0; }
 
-/* Status pills */
-.pill { font-family: var(--mono); font-size: 24px; letter-spacing: 1px; text-transform: uppercase; padding: 6px 16px; border-radius: 999px; margin: 0; }
+/* Status: one vocabulary for the whole deck. Live = on production today; Under way = built or being built; no pill = not started. */
+.pill { font-family: var(--mono); font-size: 24px; letter-spacing: 1px; text-transform: uppercase; padding: 6px 16px; border-radius: 999px; margin: 0; white-space: nowrap; flex: none; }
 .pill.live { background: var(--lime); color: var(--lime-ink); }
 .pill.next { background: #24314F; color: var(--ink); }
-.pill.way { background: transparent; border: 2px solid var(--dim); color: var(--dim); }
+.pill.way { background: transparent; border: 2px solid var(--dim); color: var(--dim); padding: 4px 14px; }
+
+/* A ruled list: the words on the left, the status in one column on the right. */
+.srow { display: flex; justify-content: space-between; align-items: center; gap: 32px; padding: 14px 0; border-top: 2px solid var(--line); }
+.srow.last { border-bottom: 2px solid var(--line); }
+.rm { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 8px 0; border-top: 2px solid var(--line); }
+.rm .small { flex: 1; }
+.rm .pill { padding: 1px 12px; }
+.rm .pill.way { padding: 0 11px; }
+.rm .when { font-family: var(--mono); font-size: 24px; letter-spacing: 1px; color: var(--faint); width: 128px; flex: none; margin: 0; }
+
+/* Numbered lines on the lime slides */
+.nrow { display: flex; gap: 32px; align-items: baseline; }
+.nrow .h3 { margin: 0; }
+.nrow .num { width: 64px; flex: none; }
+.nrow .what { width: 440px; flex: none; }
 
 /* Lists */
 .list { font-size: 32px; line-height: 1.4; color: var(--dim); margin: 0; padding-left: 40px; }
@@ -68,18 +106,24 @@ section.statement { background: var(--lime); color: var(--lime-ink); }
 .cover { justify-content: space-between; padding: 128px; }
 .cover .stripe { position: absolute; left: 0; top: 0; width: 24px; height: 1080px; background: var(--milton); }
 .cover .kicker { font-family: var(--mono); font-size: 24px; letter-spacing: 3px; text-transform: uppercase; color: var(--faint); margin: 0; }
-.cover .name { font-family: var(--head); font-size: 160px; font-weight: 700; line-height: 0.95; color: var(--ink); margin: 0; }
-.cover .for { color: var(--milton); }
-.cover .tagline { font-family: var(--head); font-size: 72px; font-weight: 500; color: var(--lime); margin: 24px 0 0; }
+/* The lockup: the mark, "FieldLogic" in Inter 700, "HQ" in Inter 500 a little dimmer. Never set the name in another face. */
+.lockup { display: flex; align-items: center; gap: 44px; margin: 0 0 20px; }
+.lockname { font-family: var(--text); font-size: 104px; font-weight: 700; line-height: 1; letter-spacing: -2px; color: var(--ink); margin: 0; }
+.lockname .hq { font-weight: 500; color: var(--dim); }
+.cover .name { font-family: var(--head); font-size: 160px; font-weight: 700; line-height: 0.95; color: var(--milton-light); margin: 0; }
+.cover .tagline { font-family: var(--head); font-size: 72px; font-weight: 700; color: var(--lime); margin: 24px 0 0; }
 
 /* Statement slide */
-.statement .eyebrow { color: #3D4A1F; }
+.statement .eyebrow { color: var(--on-lime-dim); }
 .statement .big { color: var(--lime-ink); }
-.statement .body { color: #2C3318; }
-.statement .footer { color: #55602F; }
+.statement .h3 { color: var(--lime-ink); }
+.statement .body { color: var(--on-lime); }
+.statement .footer { color: var(--on-lime-faint); }
+.statement .footer b { color: var(--on-lime-dim); }
 
 /* Drawings: the mess is faint, the answer is ink, the one thing that hurts is amber */
 .drawing-wrap { position: relative; width: 1664px; height: 560px; }
+.label.amber { color: var(--amber); }
 
 @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 .arrive { animation: rise 500ms ease-out both; animation-delay: calc(var(--i, 0) * 120ms); }

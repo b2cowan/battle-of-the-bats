@@ -73,7 +73,33 @@ const DRESSED_ROSTER = [
   { first: 'Amara', last: 'Mensah', number: '6', primary: 'C', secondary: '1B', bats: 'R', throws: 'R' },
 ];
 const GUARDIAN_FIRSTS = ['Sarah', 'Marc', 'Adaeze', 'Greg', 'Gina', 'Linh', 'Julie', 'Harpreet', 'Rania', 'Elena', 'Piotr', 'Kwame'];
+const EMERGENCY_FIRSTS = ['Daniel', 'Nathalie', 'Chidi', 'Karin', 'Paolo', 'Minh', 'Robert', 'Simran', 'Omar', 'Rafael', 'Anna', 'Abena'];
 const OPPONENTS = ['Kelso Ridge Raptors', 'Twelve Mile Cyclones', 'Harrison Hollow Hornets', 'Cedar Line Storm'];
+// ── the off-script dressing (plan §10, owner 2026-11-23): what a coach on a board asks to see ─────────────────────────
+/** Awards handed out at fall-ball games: [game index, roster index, award type index, note]. */
+const AWARD_TYPES = [{ name: 'Player of the Game', emoji: '🏅' }, { name: 'Hustle Award', emoji: '🧢' }];
+const AWARDS = [
+  [0, 0, 0, 'Three hits, and the tag at second to end it.'], [2, 2, 0, 'Caught all seven innings and threw out two.'],
+  [4, 1, 0, 'A complete game and one run allowed.'], [6, 5, 0, 'Ran down everything hit to centre.'],
+  [3, 10, 1, 'First to every ball in warm-up, all night.'], [7, 8, 1, 'Backed up first base on every throw.'],
+];
+/** The opponent book: one line per opponent, and what was noticed at a game ([game index or null, tag, note]). */
+const SCOUTING = [
+  { summary: 'Patient at the plate and quick on the bases. Throw strikes early and keep the ball in front.',
+    notes: [[0, 'Pitching', 'Their starter lives on the outside corner. Crowd the plate.'], [4, 'Baserunning', 'They run on the first pitch with a runner on first.']] },
+  { summary: 'The one team with our number this fall. Strong arms, and they bunt with two strikes.',
+    notes: [[1, 'Hitting', 'Their third and fourth hitters pull everything. Shade the left side.'], [5, 'Defense', 'Their third baseman plays deep. The bunt is there all game.']] },
+  { summary: 'Free swingers. Change speeds and let the outfield work.',
+    notes: [[2, 'Hitting', 'They chased the rise ball all night.'], [null, 'Coaching', 'They bring the infield in with a runner on third, every time.']] },
+  { summary: 'Close both times. Their catcher has a real arm.',
+    notes: [[3, 'Baserunning', 'Do not run on their catcher without a jump.'], [7, 'Pitching', 'Their second pitcher struggles to find the zone. Take a strike.']] },
+];
+const PLAYER_NOTES = [[2, 'Asked to try catching in the dome this winter. Start her on blocking in January.'], [6, 'Best week of throws to first all fall. Tell her parents at pick-up.']];
+/** Two emails already sent to the families: [days before the demo day, subject, body]. */
+const TEAM_EMAILS = [
+  [-52, 'Bottle drive results, and thank you', 'Hi families,\n\nThe fall bottle drive raised $1,015. Half of what each family collected comes off that player’s dues, and you will see it on your next statement.\n\nThank you to everyone who drove a route on both Saturdays.\n\nMorgan'],
+  [-33, 'Winter dome practices start Sunday', 'Hi families,\n\nOur winter practices are at the Escarpment Indoor Dome, one hour every Sunday. The time moves from week to week, so please check the team schedule each Friday.\n\nBring indoor shoes, a water bottle and your own helmet. No cleats in the dome.\n\nMorgan'],
+];
 /** Fall ball: [days from the demo day, home/away, team score, opponent score]. Eight games, a W-L-T record with a story. */
 const FALL_GAMES = [[-84, 'home', 7, 3], [-80, 'away', 2, 5], [-77, 'home', 9, 8], [-73, 'away', 4, 4], [-70, 'home', 6, 1], [-66, 'away', 3, 6], [-63, 'home', 10, 2], [-56, 'away', 5, 4]];
 /** Fall practices at Sherwood Park (rep only), Tuesday evenings: days from the demo day. The first is testing day 1. */
@@ -176,6 +202,12 @@ export async function resetRep(ctx) {
   const accounts = (await one('bank accounts', db.from('bank_accounts').select('id').eq('org_id', ORG))).map(r => r.id);
   if (accounts.length) die('delete bank_checks', (await db.from('bank_checks').delete().in('bank_account_id', accounts)).error);
   await del('bank_accounts');
+  // Awards before their types: a type holds its awards with RESTRICT, and the team's cascade does not promise an order.
+  await del('rep_player_awards');
+  // ⚠ A sponsorship deal offered in a rehearsal (Board Ready Stage 6, migs 526–529) is NOT cleared here: the deal tables
+  // refuse a direct delete from the service role ("permission denied for table club_sponsor_offers", tried 2026-11-23, and
+  // it stopped a rebuild half-way). A deal holds no rep team or season, so it does not block a rebuild; it stays until it
+  // is removed in the product. Known limit, plan §10.
   await del('rep_teams');
   await del('rep_team_groups');
   await del('rep_team_drills');
@@ -224,6 +256,13 @@ export async function buildRep(ctx) {
     .filter((c, k, all) => !have.has(c.user.id) && all.findIndex(x => x.user.id === c.user.id) === k)
     .map(c => ({ organization_id: ORG, user_id: c.user.id, role: 'coach', status: 'active', display_name: c.name, invited_at: nowIso, accepted_at: nowIso }));
   if (memberRows.length) await insertAll('organization_members', memberRows, 'user_id');
+  // One invitation still waiting, so Members shows what "Invited" looks like (plan §10). The reset removes every invited
+  // row, so this is re-added on each build; the row is the shape the product's own invite writes for an existing account.
+  if (cfg.repPeople.invited) {
+    const invitee = await account(cfg.repPeople.invited.email, cfg.repPeople.invited.name);
+    if (!have.has(invitee.id)) die('pending invitation', (await db.from('organization_members').insert({ organization_id: ORG, user_id: invitee.id, role: cfg.repPeople.invited.role,
+      status: 'invited', invited_at: torontoInstant(addDays(DEMO_DAY, -2), '19:30'), display_name: cfg.repPeople.invited.name, title: cfg.repPeople.invited.title ?? null })).error);
+  }
 
   const ages = [...new Set(teams.map(t => t.age))];
   const groupId = Object.fromEntries(ages.map(a => [a, stableId(cfg, `group:${a}`)]));
@@ -255,7 +294,10 @@ export async function buildRep(ctx) {
   DRESSED_ROSTER.forEach((p, k) => rosterRows.push({ id: dressed.playerIds[k], program_year_id: dressed.pyId, team_id: dressed.id, org_id: ORG,
     player_first_name: p.first, player_last_name: p.last, player_date_of_birth: dob('U15', k), player_number: p.number, primary_position: p.primary, secondary_position: p.secondary,
     bats: p.bats, throws: p.throws, guardian_first_name: GUARDIAN_FIRSTS[k], guardian_last_name: p.last, guardian_email: guardianEmail(GUARDIAN_FIRSTS[k], p.last),
-    guardian_phone: `905-555-02${String(10 + k).padStart(2, '0')}`, status: 'active', source: 'admin_manual', display_order: k }));
+    guardian_phone: `905-555-02${String(10 + k).padStart(2, '0')}`, status: 'active', source: 'admin_manual', display_order: k,
+    // The "Family & paperwork" tab (plan §10): an emergency contact for everyone, a medical note for two.
+    emergency_contact_name: `${EMERGENCY_FIRSTS[k]} ${p.last}`, emergency_contact_phone: `905-555-03${String(10 + k).padStart(2, '0')}`,
+    medical_notes: k === 3 ? 'Asthma. Carries an inhaler in her bat bag.' : k === 8 ? 'Allergic to bee stings. An EpiPen is in the first-aid kit.' : null }));
   const POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'P', 'C'];
   for (const t of teams.filter(x => !x.isDressed)) {
     const size = cfg.repRosterSize[t.i % 2];
@@ -419,7 +461,8 @@ export async function buildRep(ctx) {
   for (const [k, pid] of pids.entries()) {
     const scheduleRow = await one('dues schedule', db.from('rep_player_dues_schedules').insert({ program_year_id: dressed.pyId, player_id: pid, team_id: dressed.id, org_id: ORG, total_amount: DU.total }).select('id').single());
     const paid = (n) => (n === 0 ? k !== OVERDUE : n === 1 ? EARLY.includes(k) : false);
-    const paidDay = (n) => addDays(dueDates[n], n === 0 ? -(k % 5) : -(3 + (k % 6)));
+    // Never dated after the demo day: a payment "made early" on a due date still ahead is one made in the last few days.
+    const paidDay = (n) => { const day = addDays(dueDates[n], n === 0 ? -(k % 5) : -(3 + (k % 6))); return day > D ? addDays(D, -1 - (k % 4)) : day; };
     await insertAll('rep_player_dues_installments', dueDates.map((due, n) => ({ schedule_id: scheduleRow.id, player_id: pid, installment_number: n + 1, amount: each, due_date: due,
       paid_at: paid(n) ? `${paidDay(n)}T17:00:00.000Z` : null, org_id: ORG, team_id: dressed.id, source: 'manual' })));
     const pays = dueDates.map((_, n) => n).filter(paid).map(n => ({ amount: each, day: paidDay(n) }));
@@ -554,7 +597,9 @@ export async function buildRep(ctx) {
   await insertAll('rep_team_event_attendance', att, 'event_id');
   for (const g of games) {
     const lineupId = crypto.randomUUID();
-    die('lineup', (await db.from('rep_team_lineups').insert({ id: lineupId, event_id: g.id, ...T, lineup_mode: 'everyone_bats', inning_count: 7 })).error);
+    // Marked ready the evening before its game, as a coach who finished it would have (a played game's lineup is not a draft).
+    die('lineup', (await db.from('rep_team_lineups').insert({ id: lineupId, event_id: g.id, ...T, lineup_mode: 'everyone_bats', inning_count: 7,
+      status: 'ready', ready_at: torontoInstant(addDays(D, FALL_GAMES[g.g][0] - 1), '20:15'), ready_by: coachId })).error);
     const grid = lineupGrid(g.g);
     const order = [...Array(12).keys()].map(i => (i + g.g) % 12);
     await insertAll('rep_team_lineup_entries', order.map((i, pos) => ({ lineup_id: lineupId, player_id: pids[i], batting_order: pos + 1, starter: true,
@@ -601,6 +646,42 @@ export async function buildRep(ctx) {
   await insertAll('rep_player_observations', obs);
   ok(`attendance on ${games.length} games and ${fallPractices.length + pastDomeEv.length} practices · ${games.length} lineups (7 innings, everyone bats, two pitchers)`);
   ok(`${TESTS.length} tests over 2 testing days (${testing.map(s => s.date).join(', ')}) · ${readings.length} readings · ${obs.length} observations · a goal for every player`);
+
+  // ── B5b · the off-script dressing (plan §10): upcoming games, awards, the opponent book, notes, sent emails ──────────
+  head(`${dressed.name} — upcoming games, awards, the opponent book, emails`);
+  // Three winter exhibition games on Saturdays (the dome schedule is Sundays), the first at least a week out, so the NEXT
+  // thing on the team's schedule is still the dome practice Demo 3 plans. No lineup is made for them: "Build lineup" from a
+  // past one is the live step, and a seeded lineup for an unplayed game would be counted nowhere a coach expects.
+  const firstSaturday = onOrAfter(addDays(D, 7), 6);
+  const upcoming = [0, 1, 2].map(k => {
+    const away = k === 1;
+    const opp = OPPONENTS[(k + 1) % 4];
+    const start = torontoInstant(addDays(firstSaturday, 7 * k), away ? '13:00' : '10:00');
+    return { id: crypto.randomUUID(), ...T, event_type: 'league_game', name: `${away ? 'at' : 'vs'} ${opp}`, starts_at: start, ends_at: minutesLater(start, 90),
+      location: away ? `${opp.split(' ')[0]} Fieldhouse` : `${DM.venue.name} · ${DM.venue.fields[0]}`, org_venue_id: away ? null : domeVenue.id,
+      org_venue_facility_id: away ? null : field[DM.venue.fields[0]], opponent: opp, home_away: away ? 'away' : 'home', status: 'scheduled', arrival_time: null };
+  });
+  await insertAll('rep_team_events', upcoming);
+  const awardTypeIds = AWARD_TYPES.map(() => crypto.randomUUID());
+  await insertAll('rep_team_award_types', AWARD_TYPES.map((t, k) => ({ id: awardTypeIds[k], org_id: ORG, team_id: dressed.id, name: t.name, emoji: t.emoji, sort_order: k, created_by: coachId })));
+  await insertAll('rep_player_awards', AWARDS.map(([g, p, t, note]) => ({ org_id: ORG, team_id: dressed.id, player_id: pids[p], award_type_id: awardTypeIds[t], event_id: games[g].id,
+    awarded_at: addDays(D, FALL_GAMES[g][0]), note, created_by: coachId })));
+  // The opponent book, keyed by the product's own name key so each line meets its games.
+  const { normalizeOpponentName } = await appModule('lib/opponent-name-key.ts');
+  const bookIds = SCOUTING.map(() => crypto.randomUUID());
+  const lastGameOf = (o) => Math.max(...FALL_GAMES.map((_, g) => (g % 4 === o ? g : -1)));
+  await insertAll('rep_team_opponents', SCOUTING.map((s, o) => ({ id: bookIds[o], org_id: ORG, team_id: dressed.id, display_name: OPPONENTS[o], normalized_name: normalizeOpponentName(OPPONENTS[o]),
+    summary: s.summary, updated_by: coachId, last_note_updated_at: torontoInstant(addDays(D, FALL_GAMES[lastGameOf(o)][0]), '21:00') })));
+  await insertAll('rep_team_opponent_observations', SCOUTING.flatMap((s, o) => s.notes.map(([g, tag, body]) => ({ opponent_id: bookIds[o], org_id: ORG, team_id: dressed.id,
+    event_id: g == null ? null : games[g].id, body, tag, created_by: coachId, created_by_name: cfg.repPeople.headCoach.name,
+    created_at: torontoInstant(addDays(D, FALL_GAMES[g ?? lastGameOf(o)][0]), '21:00') }))));
+  await insertAll('rep_player_notes', PLAYER_NOTES.map(([p, body], k) => ({ org_id: ORG, team_id: dressed.id, player_id: pids[p], noted_on: addDays(D, k ? -9 : -16), body, created_by: coachId })));
+  // Emails already sent to the families (history only: nothing here calls the mailer).
+  await insertAll('rep_team_announcements', TEAM_EMAILS.map(([o, subject, body]) => { const at = torontoInstant(addDays(D, o), '19:40'); return { ...T, subject, body,
+    recipient_count: pids.length, sent_count: pids.length, failed_count: 0, status: 'sent', sent_at: at, created_by: coachId, created_at: at }; }));
+  ok(`${upcoming.length} upcoming games (${upcoming.map(e => dayOf(e.starts_at)).join(', ')}; the next event is still the dome practice) · ${games.length} lineups marked ready`);
+  ok(`${AWARDS.length} awards of ${AWARD_TYPES.length} kinds · the opponent book: ${SCOUTING.length} opponents, ${SCOUTING.reduce((n, s) => n + s.notes.length, 0)} notes · ${PLAYER_NOTES.length} player notes · ${TEAM_EMAILS.length} emails sent to the families`);
+  ok('emergency contacts on every player, a medical note on two · one invitation waiting in Members');
 
   // ── B6 · the tournament, the site's notice and sponsors ───────────────────────────────────────────────────────────
   head('The tournament and the public site');

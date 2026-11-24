@@ -7,6 +7,11 @@ Presentation run sheet (Phase B, the five demos): https://claude.ai/artifact/J7Q
 Presentation deck (14 slides, everything outside the demos; built 2026-11-21 from the prep page's outline, /design and /marketing
 passes applied): https://claude.ai/artifact/6z6xGQsVATLw8uRnQCsuc3, source `MILTON_PRESENTATION_DECK/` (publish from a copy of that
 folder; the speaker notes are readable by anyone with the link, so the never-say lists stay on the prep page's Security tab).
+Deck revised 2026-11-23 (deck version 12, source folder updated, not yet committed; owner 2026-11-23: meeting 2026-11-24 on the cover, the closing "Your questions" slide removed, slide 2 says only "since November 10" (that session was with the club's head of house league, not the board), slide 3 made generic to clubs, the last slide is "start with any part", and a new slide lists eighty live features in five groups): statuses trued up to the 11-22 and 11-23
+releases (50 releases; group email, the club's own registration questions, several permits, the club plans, the legal pages, the
+Security page and club file deletion read Live; Sponsorships reads "first part live" / Under way), and a /design pass (one footer and
+one status pill on every slide, headings at the brand weight, the name as the lockup, Milton's own purple `#8B2FC9` / `#C084FC`).
+A data audit the same day found the demo club thin or empty off-script (§10).
 Prospect handout (only what he sees — no reset, scripts, gaps or staging steps): `MILTON_DEMO_PROSPECT_WALK.html`, published as
 https://claude.ai/artifact/NqFaetSngvqWEdJQ6u5A4T. Keep it in step with the playbook's five walks + four on-call. It links straight
 into the season's admin tabs: the season is rebuilt under a FIXED id (`season.id` in the config, 2026-11-10), so those links survive
@@ -173,7 +178,10 @@ past season" has something to offer. The next dome practice has **no** plan: Dem
 Priya. Two testing days (September and November) on four tests give each player a trend; observed skills and goals on every player.
 
 **8.7 What staging shows that production does not** (staging runs `dev` with the family app and online payments switched on):
-Checked against the code's labels 2026-11-21 (the run sheet carries each as a "step around" note):
+Checked against the code's labels 2026-11-21 (the run sheet carries each as a "step around" note).
+**Stale since the 2026-11-22 release:** group email (Communications) and schedules across several permits are on production, so the
+first two rows are no longer "not on production"; stepping around them is now a choice of time, not of truth. The run sheet's two
+notes (Demo 1, steps 4 and 12) still say "not on production yet" and are owed an update. Online payments and the family app rows hold.
 | Where a demo passes it | What it is | Do |
 |---|---|---|
 | Demo 1 · the Admin Area's side menu | **Communications** (group email, Club Communications: dev only); Accounting's **Payouts** tab (online payments; shows because the club has a connected Stripe test account) | Don't open them |
@@ -237,3 +245,46 @@ carries no "not on production" note for them (it keeps the "Pay by card" step-ar
   minutes, questions 9), the agenda email's item 5, the feature menu (custom forms no longer "development site only"; top-20 #1 is
   now the club site), the value case, Demo prep and Start here (custom forms reach production before the meeting, owner's word).
 
+
+## 10. Data audit 2026-11-23: what the demo club can and cannot show off-script (nothing built; owner's go owed)
+Read from the dev database (world built for demo day 2026-11-21), read-only. The five scripted demos' preconditions all hold except
+the date drift a rebuild clears. Off-script, a board of coaches can hit these:
+- **Interrupts the first screen:** every Milton account accepted the Terms on 2026-11-17, older than the published 2026-11-22 version,
+  so each sign-in meets the Terms screen. A rebuild re-records it (`ensureFixtureUser` → `recordLegalAcceptance`); confirm at rehearsal.
+- **Date drift:** the 11-22 dome practice (Demo 3's "next practice, no plan") is past; four dues payments are dated after the demo day
+  (`paidDay` is not clamped to it). Rebuild on the meeting morning, as §6 already says.
+- **Seed not run in full since migrations 525–529:** the sponsor insert changed in `ee17f50df`; the reset list has none of the new
+  sponsorship deal tables, so a rehearsal deal would survive a rebuild.
+- **Dressed team (U15 A), shows well:** roster, 8 past games with scores, 8 past lineups (all read "Draft"), 14 practices (10 with
+  plans), two testing days on four tests, observed skills, goals, attendance, playing time, the coach's book.
+- **Dressed team, empty or thin:** no upcoming game, tournament or team event; no next-game lineup or lineup template; awards;
+  player paperwork and documents (no templates in the club); opponent notes; Email families; Chat; tryouts (none on any team).
+- **Last season:** U15 A's 2026 season holds four practice plans and nothing else, and has no door while 2027 is live (the closed-season
+  page is the one door of a team with NO live season). "The season's end" needs a team whose only season is closed.
+- **Club side, empty or thin:** Sponsorships (three bare names; no packages, deals or invoices); the club's budget, Budget vs. Actual
+  and Bank (no fiscal year, §8.1's choice); tournaments (one finished event: nothing to register, check in, generate or score; no
+  last year to reuse; News and Rules blank); Members (owner, one league admin, 18 coaches; nothing pending); Email history (one send).
+- **Papers:** the deck's "Twenty more" speaker note now says which of the twenty the club can show; §8.5 says six teams a division
+  and the data holds four.
+- **Dressed 2026-11-23 (owner: "rebuild the demo world for tomorrow and dress the small items"), world built for demo day
+  2026-11-24, not committed.** In `scripts/lib/prospect-demo-rep.mjs` (block B5b), `scripts/seed-prospect-demo.mjs` (KEEP) and the
+  Milton config (`repPeople.invited`). On Milton Bats U15 A: three upcoming exhibition games on Saturdays (2026-12-05, 12, 19;
+  the first is at least a week out, so the next event stays the dome practice Demo 3 plans), the eight past lineups marked
+  ready, two award kinds and six awards, the opponent book (four lines, eight notes), two player notes, two emails in Email
+  families' history, an emergency contact on every player and a medical note on two. In the club: one invitation waiting in
+  Members (Renee Castellano, Treasurer, a `.local` account). Dues payments are no longer dated after the demo day.
+  The reset deletes awards before the team (a type holds its awards with RESTRICT).
+  - Proved: a reset over the dressed world cleared 3,698 rows in 78 tables with only the three usual strays, and a full build
+    followed (cash on hand still $4,290.50; next dome practice 2026-11-29 with no plan; part 2 starts 2027-01-03).
+  - **Not built, on purpose:** a lineup for the next game (Build lineup from a past one is the live step); signed documents and
+    a waiver template (they need real stored files); tryouts, sponsorship packages and deals, a finished-season team, the
+    club's budget and bank, a tournament in progress (none is small).
+  - **Known limit:** a sponsorship deal made in a rehearsal is not cleared by the rebuild. The deal tables refuse a direct delete
+    from the service role; the first attempt stopped a rebuild half-way (fixed the same evening by removing it).
+  - **Lesson:** the rebuild reads counts through the hosted query service, which answered 502 for about two minutes that evening
+    and stopped two runs (one after its reset). A rebuild is not safe in the last minutes before a meeting: build the evening
+    before, and rebuild on the morning only if a rehearsal changed the world.
+  - **Papers, same evening:** the run sheet republished (version 3; the 45 boxes and their stored ticks are unchanged): the build
+    for Nov 24 and its figures, "rebuild only after a rehearsal, never in the last half hour", the two Demo 1 notes now say group
+    email and several permits are live, the deck's slide numbers, and a new unticked card "If he asks to see more" (what is
+    ready to open, what belongs in a second session). The board line and the PM brief say the same.

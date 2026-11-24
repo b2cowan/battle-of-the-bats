@@ -159,7 +159,10 @@ const KEEP = new Set(['organizations', 'organization_members', 'org_public_site_
   'payments_terms_agreements',
   // The club's sponsors (Board Ready Stage 6, mig 525): kept, as they were on the site content before — the rebuild fills them
   // only when the club has none (prospect-demo-rep.mjs).
-  'club_sponsors', 'club_sponsor_places']);
+  'club_sponsors', 'club_sponsor_places',
+  // The club's sponsorship packages and Setup (migs 525–529): kept, so what the owner sets up before a meeting survives the
+  // rebuild on its morning. A deal offered in a rehearsal IS cleared (prospect-demo-rep.mjs › resetRep).
+  'club_sponsorship_packages', 'club_sponsorship_settings']);
 
 async function ownedCounts() {
   const rows = sql(`select t.table_name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I where org_id = %L', t.table_name, ${q(ORG)}), false, true, '')))[1]::text::int as n
