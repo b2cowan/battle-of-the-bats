@@ -135,7 +135,9 @@ Recorded as done in `PRODUCT_ROADMAP.md` §4 item 4 (2026-11-21).
 ### 4. For the owner
 
 **Decisions only you can make**
-1. **C3's two numbers.** The Terms keep a club's information 90 days after a plan ends; the roadmap promises 60 days after a
+1. **C3's two numbers. RULED 2026-11-24 (owner): 90 days, one number for both.** The deck's "Your data is yours" card now
+   reads "90 days to take everything with you". The legal read of that ruling (conditions for the Q1 build and the Terms
+   version) is in the 2026-11-24 note at the end of this file. The original question follows. The Terms keep a club's information 90 days after a plan ends; the roadmap promises 60 days after a
    club closes its account. Recommended: keep both, and have the Q1 Terms version define "closing your account" as the
    owner's request to leave and be deleted (60 days to download, then deleted), separate from a plan simply lapsing (90
    days, so you can come back). The alternative, one number (90) for both, is simpler for a board but changes your 60-day
@@ -202,3 +204,33 @@ if you want to say "our published policy". Route D1 and D2 to `/plan`.
 
 ## Lawyer's eye needed?
 Yes, for the three items in §4 "For a lawyer's eye". None is a gate.
+
+## 2026-11-24 note: the 90-day ruling (C3), conditions for the Q1 build and Terms version
+
+**Ruled by the owner 2026-11-24:** 90 days, one number for a plan that lapses and an account that is closed. Read against
+Terms §9, Data Terms §11 and Privacy §9 as published 2026-11-24. Not a lawyer's opinion.
+
+- **Consistent with what is published today.** Terms §9 and Data Terms §11 already keep a club's information 90 days
+  after a plan ends. One number removes the contradiction a board would find reading the deck beside the Terms.
+- **Still a Q1 commitment, not a present fact.** There is no closure step and no automatic deletion at the end of a window
+  (LEGAL_FACTS, "no automatic purge"; not re-checked in code this session). Say "will".
+- **Terms §9 says "may permanently delete"; the slide says "then it is deleted".** The Q1 build must delete at the end of
+  the window, or the slide's sentence is stronger than the product.
+- **Terms §9 tells a club to download "before your plan ends".** A "90 days to take everything with you" commitment means
+  the owner can still download during the window. Whether an ended-plan space allows that is not checked; if not, the Q1
+  build must allow it and the Q1 Terms version must change that sentence.
+- **The 30-day copy must not be cut off by the 90-day deletion.** A written request made on day 80 takes up to 30 days.
+  The Q1 terms must say a request pending at day 90 holds the deletion until the copy is delivered.
+- **"Unless you ask us to delete it sooner"** matches Data Terms §11 and stays.
+- **"Then it is deleted" has exceptions** the published documents already name: our own tax records, the record of the
+  terms the owners agreed to, the record that the deletion happened, and backups gone within 7 days. The Q1 Terms version
+  carries them beside the 90 days. The slide does not need them.
+- **A Premium Coaches Portal keeps 365 days (Terms §9).** The card says "your club", so it is true as written; do not
+  say "90 days" to a coach.
+- **Uploaded documents in "take all of it" (C1).** Recommended: yes. Uploaded files have no backup (Data Terms §6), so
+  once deleted they cannot be restored, and a club closing its account needs them most. Owner call; if no, drop "with its
+  uploaded documents" from the card before the Q1 build.
+- **"No long contracts" for Milton (C4).** True of the plans on sale (Terms §8: a paid plan ends at the end of the period
+  paid for). Any early-access arrangement offered to Milton must be no longer than a plan's own billing period, with no
+  minimum commitment. Nothing in the product or the Terms covers an early-access arrangement; if it is put in writing,
+  that is a new document. Owner call, not decided.

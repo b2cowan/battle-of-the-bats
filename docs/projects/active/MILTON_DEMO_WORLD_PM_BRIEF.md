@@ -21,7 +21,7 @@ season (opening, ready to draft, mid-season with scores to check, full with a wa
 5. **House league, end to end** (replaced the public-page demo 2026-11-21). A parent signs up a U9 child, answers the club's own
    questions ("Can a parent help?" → Coach) and names a friend by code. On the draft board the admin filters to the parent-coaches'
    children, puts one on each team, adds the coach, runs the draft: every family and every friend pair lands together, the new child
-   with her friend on her parent's team. The Winter Classic phone card is left behind instead of demoed.
+   with her friend on her parent's team. The Battle of the Bats phone card is left behind instead of demoed.
 
 **What you can do.** Rebuild the whole club with one command, any time; the morning of the meeting, rebuild it for that day. Logins and
 branding survive. When the club sends its real permit and team list, they go into one settings file and a rebuild.

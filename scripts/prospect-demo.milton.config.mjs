@@ -18,7 +18,7 @@ export default {
   /** Deterministic: the same names, households, scores and payers every run. */
   seed: 20271110,
   sport: 'softball',
-  /** Written on FIRST creation only (reset never touches them). Placeholder purple until the owner supplies the club's. */
+  /** Written on FIRST creation only (reset never touches them). The demo's own purple; the club is not supplying theirs. */
   branding: {
     themePreset: 'platform',
     themePrimary: '#47156C',
@@ -188,8 +188,8 @@ export default {
 
   /**
    * ══ PHASE B — the rep side, for the five presentation demos (plan §1, §8). Built by scripts/lib/prospect-demo-rep.mjs. ══
-   * The team list and the dome permit are PLACEHOLDERS until the club sends theirs: replace `repTeams` and `dome`, then
-   * `npm run demo:milton`. Team names are invented in the club's style. A team's id is derived from its slug, so its
+   * The team list and the dome permit are invented for the demo (the club is not sending its own; owner 2026-11-24).
+   * Change `repTeams` or `dome`, then `npm run demo:milton`. Team names are invented in the club's style. A team's id is derived from its slug, so its
    * Coaches Portal address survives every rebuild (change a slug only together with the run sheet).
    */
   repPeople: {
@@ -226,11 +226,11 @@ export default {
   repTryoutsOpen: { teams: ['U11 Rep Purple', 'U11 Rep White'], description: 'Tryouts for the 2027 season: U11 Rep Purple is players born 2016, U11 Rep White players born 2017. Two sessions in the dome; bring a glove, a helmet if you have one, and water.' },
 
   /**
-   * The dome and its winter permit — PLACEHOLDER until the club sends its permit (dome name, fields and which are half,
-   * days and times, first and last day, dates off, cost). Dates are Sunday COUNTS from the first Sunday on or after
-   * demo day − `firstSundayBefore` days, so the world stays relative; swap in real dates as `startsOn` / `endsOn` /
-   * `datesOff: ['YYYY-MM-DD', …]` when the permit arrives. The permit costs `cost` for the time it holds (dates off
-   * excluded), which is how the product prices an hour.
+   * The dome and its winter permit — invented for the demo; the club's real permit is NOT coming (owner 2026-11-24), so
+   * nothing here or in the seed may read as "waiting for the club" (dome name, fields and which are half, days and
+   * times, first and last day, dates off, cost). Dates are Sunday COUNTS from the first Sunday on or after
+   * demo day − `firstSundayBefore` days, so the world stays relative. The permit costs `cost` for the time it holds
+   * (dates off excluded), which is how the product prices an hour.
    * Part 1 (`sentSundays`) is sent and billed by the seed; Demo 1 builds part 2 live, from the first Sunday after the
    * dates off (plan §8.1 — the same dates would leave the live drafts empty).
    */
@@ -253,7 +253,7 @@ export default {
 
   /** The public tournament (Demo 5). Name invented — owed by the owner. Free: no fee book, no team payments. */
   tournament: {
-    name: 'Milton Bats Winter Classic', slug: 'winter-classic',
+    name: 'Battle of the Bats', slug: 'battle-of-the-bats',
     contactEmail: 'b2cowan+milton-contact@gmail.com',
     divisions: [
       { name: 'U11', teams: ['Milton Bats U11 Rep Purple', 'Milton Bats U11 Rep White', 'Kelso Ridge Raptors', 'Twelve Mile Cyclones'] },

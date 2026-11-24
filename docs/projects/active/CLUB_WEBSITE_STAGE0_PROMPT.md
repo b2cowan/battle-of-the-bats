@@ -2,6 +2,10 @@
 
 > Paste this whole file into a FRESH session. Written 2026-11-24. Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md`
 > (read it first, all of it). Status lives on the board (project `club-website`).
+>
+> **Part 1 is DONE (2026-11-24).** Its findings are the plan's Progress block (items 1–8), §8 is answered, the captures
+> are in `docs/projects/active/club-website-stage0/` (`today/`, `gameday/`, `milton-staging/`) and the capture script is
+> `.probe/club-website-stage0/capture.mjs`. Do not redo Part 1; start at Part 2.
 
 ## What this session is for
 

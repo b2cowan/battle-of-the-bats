@@ -3,13 +3,19 @@
  * A BUSINESS'S SPONSORSHIP PAGE (Board Ready Stage 6 Part 2; round 1 tab 4; round 2 tab 1's pay block). One page, no
  * account, on the club's frame: the package, About your business (the fixed fields the club can't remove, ask 8), Your
  * logo (with /legal's permission sentence), Questions from {club} (the Stage 4 form, the family form's own fields), and How
- * you'll pay. Owner call (b): until Part 3 builds card payment the card button is ABSENT, not disabled — the one button
- * sends the details and asks for the invoice ("Send, and pay $X by cheque or e-transfer"), which is issued at once (ask 4).
+ * you'll pay. The card button shows only when the page view carries card facts (payouts connected, a refund policy, the
+ * launch switch on); the other button sends the details and asks for the invoice ("Send and get my invoice"), which is
+ * issued at once (ask 4).
  * The tax row shows only when the club is registered AND the deal's switch is on, at the rate of the province typed
  * (ask 9). After sending: the thank-you with the invoice and how to pay. A withdrawn offer shows only "This offer was
  * withdrawn. Contact {club}."; a replaced link its own sentence (owner call (f)); neither shows any business details. The Stage 4 error box: the count, the first named, focus to it, Go to it.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { CreditCard } from 'lucide-react';
+import { sponsorCardFee } from '@/lib/online-payment-fee';
+import { formatStoredDate, orgDayKey } from '@/lib/timezone';
+import { clockOf } from '@/lib/league-card-refunds';
 import formKit from '@/components/public/ClubForm.module.css';
 import pay from '@/components/public/TeamPay.module.css';
 import reg from '@/components/league/register.module.css';
@@ -22,11 +28,22 @@ import { dealFigures, type BusinessField } from '@/lib/club-sponsorship-deals';
 import { addressLines } from '@/lib/coach-sponsor-invoice';
 import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
 import { ORG_IMAGE_TYPES, ORG_LOGO_MAX_BYTES } from '@/lib/org-image-limits';
-import { money } from '@/lib/online-payment-words';
+import { money, PAY_WORDS } from '@/lib/online-payment-words';
+import { openCheckout, usePaymentConfirming } from '@/components/public/PayBlock';
 import type { SponsorPageView, SponsorBusinessPrefill } from '@/lib/sponsor-deal-view';
 import css from './SponsorDeal.module.css';
 
 const P = DEAL_WORDS.page;
+const C = DEAL_WORDS.card;
+
+/** The club's refund policy, said outright under the card button (owner 2026-11-24: a "Refund policy" link that opened one short
+ *  sentence was a label repeating its own content; the policy is ≤300 characters, so it simply shows, which also meets /legal's
+ *  "refund policy beside the card button" more strongly than a link did). */
+function RefundPolicy({ text }: { text: string | null }) {
+  if (!text) return null;
+  return <p className={css.payNote}>{text}</p>;
+}
+
 type Open = Extract<SponsorPageView, { state: 'form' | 'done' }>;
 
 const draftsFrom = (saved: Open['saved']): Record<string, AnswerDraft> => {
@@ -57,6 +74,9 @@ export default function SponsorDealContent({ initial }: { initial: SponsorPageVi
 
 function OpenDeal({ view, onView }: { view: Open; onView: (v: SponsorPageView) => void }) {
   const { club, deal, token } = view;
+  const search = useSearchParams();
+  const { confirming, slow } = usePaymentConfirming(session => `/api/public/sponsorship/${token}/pay?session=${encodeURIComponent(session)}`, search.get('paid'));
+  const left = search.get('left') === '1';
   const base = `/api/public/sponsorship/${token}`;
   const title = DEAL_WORDS.email.title(deal.packageName, deal.placeName);
   const [province, setProvince] = useState(view.business.province);
@@ -72,7 +92,26 @@ function OpenDeal({ view, onView }: { view: Open; onView: (v: SponsorPageView) =
         <p className={css.sub}>{view.state === 'done' ? (view.logoUrl ? P.thanksSub(club.name) : P.thanksSubNoLogo(club.name)) : P.offeredTo(deal.offeredTo)}</p>
       </div>
 
-      {view.state === 'form' ? (
+      {confirming ? (
+        <div className={css.invoice} role="status" aria-live="polite">
+          <p className={css.invoiceTitle}>{C.confirmingTitle}</p>
+          {/* After 20 seconds the shipped slow line (the pay block's), so the page never waits in silence: nothing to redo, the receipt comes. */}
+          <p className={css.invoiceMeta}>{slow ? PAY_WORDS.confirmingSlow(view.business.email || null) : C.confirmingBody}</p>
+        </div>
+      ) : left && (
+        <div className={css.invoice} role="status">
+          <p className={css.invoiceTitle}>{C.notFinishedTitle}</p>
+          <p className={css.invoiceMeta}>{C.notFinishedBody}</p>
+        </div>
+      )}
+      {!confirming && view.received && (
+        // A card payment was taken and could not be recorded: said first, and never the plain form again (it would take the money twice).
+        <div className={css.invoice} role="status">
+          <p className={css.invoiceTitle}>{C.receivedTitle}</p>
+          <p className={css.invoiceMeta}>{C.receivedBody(club.name)}</p>
+        </div>
+      )}
+      {confirming || (view.received && view.state === 'form') ? null : view.state === 'form' ? (
         <>
           <div className={css.package}>
             <h2 className={formKit.sectionTitle}>{P.packageTitle}</h2>
@@ -133,9 +172,17 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
     if (errors[`business.${k}`]) setErrors(e => { const n = { ...e }; delete n[`business.${k}`]; return n; });
   };
 
+  const card = view.card;
+  const cardFee = card ? sponsorCardFee(Math.round(total * 100), card.sponsorPays ? 'sponsor' : 'club', taxRow?.rate ?? null, false) : null;
+  const cardTotal = cardFee ? cardFee.totalCents / 100 : total;
+  const [how, setHow] = useState<'card' | 'cheque'>('cheque');
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (uploading || submitting) return;
+    // The button pressed says how they pay (both are this form's submit buttons).
+    const pressed = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('data-pay') === 'card' && card ? 'card' : 'cheque';
+    setHow(pressed);
     setSubmitting(true);
     setGlobalError(null);
     try {
@@ -149,10 +196,13 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
           documents: (form?.documents ?? []).filter(d => ticked[d.id] && (d.source === 'text' || opened[d.id] || tickedBefore.has(d.versionId)))
             .map(d => ({ id: d.id, versionId: d.versionId })),
           formStamp: form?.stamp ?? null,
-          expectedTotal: total,
+          payMethod: pressed,
+          expectedTotal: pressed === 'card' ? cardTotal : total,
         }),
       });
-      const data = await res.json().catch(() => ({})) as { view?: SponsorPageView; errors?: Record<string, string>; missing?: string[]; error?: string };
+      const data = await res.json().catch(() => ({})) as { view?: SponsorPageView; url?: string; errors?: Record<string, string>; missing?: string[]; error?: string };
+      // By card: the details are kept and the secure card page opens (the invoice is issued when the payment lands).
+      if (res.ok && data.url) { window.location.assign(data.url); return; }
       if (res.ok && data.view) { onView(data.view); return; }
       if (res.status === 400 && data.errors) { setErrors(data.errors); setMissing(data.missing ?? []); setRefusals(n => n + 1); return; }
       if (res.status === 409 && data.view) {
@@ -266,7 +316,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
             <tr><td>{P.yourInvoice}</td><td>{money(total)}</td></tr>
           </tbody>
         </table>
-        <p className={css.payLine}>{view.clubCanEmail ? P.cardOffLine(view.club.name) : P.cardOffLineNoEmail}</p>
+        {!card && <p className={css.payLine}>{view.clubCanEmail ? P.cardOffLine(view.club.name) : P.cardOffLineNoEmail}</p>}
         {errorCount > 0 && (
           <div ref={errorBox} tabIndex={-1} className={`${formKit.globalError} ${reg.errorBox}`} role="group" aria-labelledby="sponsor-errors-text">
             <span id="sponsor-errors-text">{(allMissing ? QW.errorsMissing : QW.errorsMixed)(errorCount, firstError?.name ?? 'above')}</span>
@@ -274,13 +324,24 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
           </div>
         )}
         {globalError && <div className={formKit.globalError} role="alert">{globalError}</div>}
-        <button type="submit" className={formKit.submitBtn} disabled={submitting || uploading}>
-          {uploading ? QW.uploadingButton : submitting ? P.sending : P.send}
-        </button>
-        <p className={css.payNote}>
-          <span className={css.payNoteDesk}>{view.clubCanEmail ? P.sendChequeNote : P.sendChequeNoteNoEmail}</span>
-          <span className={css.payNotePhone}>{view.clubCanEmail ? P.sendChequeNotePhone : P.sendChequeNoteNoEmailPhone}</span>
-        </p>
+        {card && cardFee && (
+          <div className={css.payRow}>
+            <button type="submit" data-pay="card" className={formKit.submitBtn} disabled={submitting || uploading}>
+              <CreditCard size={18} aria-hidden /> {uploading ? QW.uploadingButton : submitting && how === 'card' ? C.opening : C.sendCard(cardTotal)}
+            </button>
+            {card.sponsorPays && <p className={css.payNote}>{C.feeNote(cardFee.feeCents / 100, cardFee.feeTaxCents / 100, taxRow?.kind ?? null)}</p>}
+            <RefundPolicy text={card.refundPolicy} />
+          </div>
+        )}
+        <div className={css.payRow}>
+          <button type="submit" data-pay="cheque" className={card ? css.secondPay : formKit.submitBtn} disabled={submitting || uploading}>
+            {uploading ? QW.uploadingButton : submitting && how === 'cheque' ? P.sending : card ? C.sendCheque : P.send}
+          </button>
+          <p className={css.payNote}>
+            <span className={css.payNoteDesk}>{view.clubCanEmail ? P.sendChequeNote : P.sendChequeNoteNoEmail}</span>
+            <span className={css.payNotePhone}>{view.clubCanEmail ? P.sendChequeNotePhone : P.sendChequeNoteNoEmailPhone}</span>
+          </p>
+        </div>
       </section>
     </form>
   );
@@ -348,13 +409,22 @@ function Thanks({ view }: { view: Open }) {
         <div className={css.invoice}>
           <p className={css.invoiceTitle}>{P.paidTitle}</p>
           <p className={css.invoiceTo}>{P.paidLine(inv.total, view.club.name)}</p>
-          {view.paidOn && <p className={css.invoiceMeta}>{P.paidOnLine(view.paidOn, inv.number)}</p>}
+          {view.paidCard?.at
+            ? <p className={css.invoiceMeta}>{C.paidWith(view.paidCard.label, `${formatStoredDate(orgDayKey(view.paidCard.at))}, ${clockOf(view.paidCard.at)}`, inv.number)}</p>
+            : view.paidOn && <p className={css.invoiceMeta}>{P.paidOnLine(view.paidOn, inv.number)}</p>}
           <dl className={css.receiptLines}>
-            <div><dt>{view.deal.packageName}{view.deal.placeName ? `, ${view.deal.placeName}` : ''}</dt><dd>{money(inv.total - inv.tax)}</dd></div>
+            <div><dt>{view.deal.packageName}{view.deal.placeName ? `, ${view.deal.placeName}` : ''}</dt><dd>{money(inv.total - inv.tax - (inv.cardFee ?? 0))}</dd></div>
+            {!!inv.cardFee && <div><dt>{C.feeRow}</dt><dd>{money(inv.cardFee)}</dd></div>}
             {inv.taxKind && inv.tax > 0 && <div><dt>{P.taxLine(inv.taxKind, inv.taxRate ?? 0)}</dt><dd>{money(inv.tax)}</dd></div>}
             <div className={css.receiptTotal}><dt>{DEAL_WORDS.deal.figPaid}</dt><dd>{money(inv.total)}</dd></div>
+            {view.refunds.map(r => (
+              <div key={r.id}><dt>{r.pending || !r.on ? C.refundedOnWay : C.refundedRow(r.on)}</dt><dd>−{money(r.amount)}</dd></div>
+            ))}
           </dl>
           <a className={css.download} href={pdf} download>{P.downloadReceipt}</a>
+          {view.refunds.filter(r => r.creditNumber).map(r => (
+            <a key={r.id} className={css.download} href={`/api/public/sponsorship/${view.token}/credit-note/${r.id}`} download>{C.creditNote(r.creditNumber!)}</a>
+          ))}
         </div>
       )}
       {inv && !view.paid && (
@@ -367,6 +437,7 @@ function Thanks({ view }: { view: Open }) {
           </dl>
           {view.owing < inv.total && <p className={css.invoiceMeta}>{P.partPaid(inv.total - view.owing, view.owing)}</p>}
           <a className={css.download} href={pdf} download>{P.downloadInvoice}</a>
+          {view.card && view.owing > 0 && <PayInvoiceByCard token={view.token} owing={view.owing} policy={view.card.refundPolicy} />}
           <div className={css.how}>
             <p className={css.howTitle}>{P.howToPay}</p>
             <dl className={css.howList}>
@@ -399,6 +470,30 @@ function Thanks({ view }: { view: Open }) {
       )}
       <p className={css.revisit}>{P.revisit}</p>
     </>
+  );
+}
+
+/** "Pay {owing} by card" on an invoice already out: what is owing, to the cent (the club pays the fee, owner call (3)). */
+function PayInvoiceByCard({ token, owing, policy }: { token: string; owing: number; policy: string | null }) {
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function pay() {
+    setOpening(true); setError(null);
+    const out = await openCheckout(`/api/public/sponsorship/${token}/pay`, { expectedTotal: owing });
+    if ('url' in out) { window.location.assign(out.url); return; }
+    if ('changed' in out) { window.location.reload(); return; }
+    setError(out.error);
+    setOpening(false);
+  }
+  return (
+    <div className={css.payRow}>
+      <button type="button" className={formKit.submitBtn} disabled={opening} onClick={() => void pay()}>
+        <CreditCard size={18} aria-hidden /> {opening ? C.opening : C.payInvoice(owing)}
+      </button>
+      <p className={css.payNote}>{C.payInvoiceNote}</p>
+      <RefundPolicy text={policy} />
+      {error && <p className={formKit.errorMsg} role="alert">{error}</p>}
+    </div>
   );
 }
 

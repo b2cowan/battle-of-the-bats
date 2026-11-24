@@ -7547,6 +7547,9 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_sponsor_deals.original_tax_rate -->
 <!-- dict:col:club_sponsor_deals.original_tax_amount -->
 <!-- dict:col:club_sponsor_deals.original_total -->
+<!-- dict:col:club_sponsor_deals.card_fee -->
+<!-- dict:col:club_sponsor_deals.card_fee_tax -->
+**`card_fee`**, **`card_fee_tax`** (numeric(10,2), nullable; **mig 530**, Board Ready Stage 6 Part 3b) — the card processing fee the SPONSOR paid and the club's GST/HST on it, when the Payouts card's "Processing fee on sponsorships" says the sponsor pays it. Set only by `club_sponsor_card_land`, only on an invoice that card payment itself issued (`pay_method 'card'`; owner call (3), 2026-11-23: an invoice already issued never gains a fee line — a card payment on it is at the invoice total and the club pays the fee). Both are INSIDE `total`, and `card_fee_tax` is inside `tax_amount`: the invoice prints the sponsorship (`total − tax_amount − card_fee`), a "Processing fee" row and one tax row. CHECK `club_sponsor_deals_card_fee`; held by the money guard (gotcha 9) like the other money columns. **A full refund of a paid deal ends it** (mig 530, ask 3): `club_sponsor_card_refund_book` sets `state 'withdrawn'` with the refund's reason, `paid_on` NULL, inside the guard's flag — so a withdrawn deal CAN hold live payments now (the money went back by refund; the payments stay on record).
 <!-- dict:col:club_sponsor_deals.created_at -->
 <!-- dict:col:club_sponsor_deals.updated_at -->
 **`id`** / **`org_id`** (FK CASCADE) / **`sponsor_id`** (FK RESTRICT) / **`package_id`** (FK RESTRICT) / **`package_name`**, **`package_items`** (jsonb ≤20), **`logo_on_site`** (the package as offered) / **`place_kind`** (CHECK `club | division | team | tournament`), **`target_id`** (null ⇔ club), **`target_name`** (the place's name as picked) / **`ends_on`** (last day shown, inclusive) / **`amount`** (numeric(10,2), before tax) / **`charge_tax`** (bool, default false) / **`state`** (CHECK, gotcha 1) / **`link_version`** (int ≥ 0) / **`offered_on`** (club day; its fiscal year), **`offered_at`**, **`offered_by`** (SET NULL), **`offered_by_name`** (a name kept as it was), **`offered_to`** (lowercase address; required once emailed) / **`emailed_at`**, **`opened_at`** (first open), **`link_unsent_at`** (mig 527; the last new link made with nothing emailed: Make a new link on a link made only, or Send the link again after the reason ran out — the history's "new link made, not emailed"), **`form_at`** (last send from the link) / the business's details as sent (gotcha 5) / **`logo_path`**, **`logo_sent_at`** / **`pay_method`** (`cheque_etransfer | card`) / the invoice (gotcha 6) / **`withdrawn_at`**, **`withdrawn_by`**, **`withdrawn_by_name`**, **`withdrawn_reason`** (set together with state `withdrawn`) / **`revised_on`**, **`invoice_emailed_at`**, **`receipt_emailed_at`**, **`paid_on`** (mig 528; gotchas 1, 6, 9) / **`original_amount`**, **`original_charge_tax`**, **`original_tax_kind`**, **`original_tax_rate`**, **`original_tax_amount`**, **`original_total`** (mig 529; owner call 6 at walk §562: the invoice's figures as FIRST issued, stamped by `club_sponsor_deal_revise` the first time it is revised (`revised_on` still NULL) and never again, so a sent-then-changed invoice can be traced; NULL on an invoice never revised, and on one revised before mig 529 (its first figures were already overwritten, so none are invented); CHECK `club_sponsor_deals_original_whole`: set together and only with `revised_on`; written only inside the functions, gotcha 9) / **`created_at` / `updated_at`**.
@@ -7614,7 +7617,7 @@ is read as stopped after the grace period (gotcha 4).
 ## `club_sponsor_deal_payments`
 <!-- dict:table:club_sponsor_deal_payments -->
 
-**Purpose:** **A payment a club recorded on an invoiced sponsorship deal** — a cheque, e-transfer, cash or other (Board Ready Stage 6 Part 3a, **mig 528**; round 1 tab 7, "Record a payment"). A part payment is allowed and leaves the rest owing. Card payments on the online rail are Part 3b.
+**Purpose:** **A payment on an invoiced sponsorship deal** — a cheque, e-transfer, cash or other a club recorded (Board Ready Stage 6 Part 3a, **mig 528**; round 1 tab 7, "Record a payment"), or **a card payment that landed from the online rail** (Part 3b, **mig 530**: `online_payment_id` set). A part payment is allowed and leaves the rest owing.
 
 **Gotchas (read first):**
 1. **Written ONLY by `club_sponsor_deal_pay` and `club_sponsor_deal_payment_void`** (SECURITY DEFINER, service role EXECUTE). The service role holds **SELECT only**; no browser access (RLS on, no policies).
@@ -7641,7 +7644,52 @@ is read as stopped after the grace period (gotcha 4).
 <!-- dict:col:club_sponsor_deal_payments.voided_by -->
 <!-- dict:col:club_sponsor_deal_payments.voided_by_name -->
 <!-- dict:col:club_sponsor_deal_payments.void_reason -->
+<!-- dict:col:club_sponsor_deal_payments.online_payment_id -->
+<!-- dict:col:club_sponsor_deal_payments.card_brand -->
+<!-- dict:col:club_sponsor_deal_payments.card_last4 -->
+<!-- dict:col:club_sponsor_deal_payments.fee_paid_by -->
+<!-- dict:col:club_sponsor_deal_payments.fee_amount -->
+<!-- dict:col:club_sponsor_deal_payments.fee_charged -->
+<!-- dict:col:club_sponsor_deal_payments.fee_tax -->
+<!-- dict:col:club_sponsor_deal_payments.fee_income_entry_id -->
+<!-- dict:col:club_sponsor_deal_payments.fee_cost_entry_id -->
+**A card payment (mig 530, Part 3b):** **`online_payment_id`** (FK → `online_payments` RESTRICT, partial UNIQUE) — set ⇔ it landed from the online rail (`club_sponsor_card_land`, written with `recorded_by` NULL and `recorded_by_name` "Paid by card", `method 'card'`); **never voided** (`club_sponsor_deal_payment_void` refuses it, SP004): it comes off only by a refund (`club_sponsor_deal_refunds`). **`card_brand`**, **`card_last4`** (4 digits) / **`fee_paid_by`** (`club | sponsor`) / **`fee_amount`** (the processing fee) / **`fee_charged`**, **`fee_tax`** (what the sponsor was charged for the fee and its GST/HST, both inside `amount` and `fee_tax` inside `tax_part`; 0 when the club paid it) / **`fee_income_entry_id`** (the fee the sponsor paid, its own `income` line under Sponsorship › Club sponsorship, "Processing fee charged to {business}") / **`fee_cost_entry_id`** (the fee as a cost, ALWAYS when it is above zero: `expense` under the platform word **Sponsorship › Payment processing**, fixed item `5b0d0530-0530-4c1b-8a50-7ea0507c0001`, "Card processing fee · invoice {n}" — the club's cost, or the sponsor's booked both ways). The lines carry `payment_method 'online_card'`. CHECK `club_sponsor_deal_payments_card` holds the shape. **What can go back:** `amount − fee_charged − fee_tax`, less every refund not failed (`club_sponsor_card_refund_left`).
 **`id`** (uuid PK) / **`org_id`** (FK CASCADE) / **`deal_id`** (FK → `club_sponsor_deals` CASCADE) / **`amount`** (numeric(10,2) > 0) / **`tax_part`** (0 ≤ tax_part ≤ amount; gotcha 3) / **`received_on`** (club day) / **`method`** (CHECK `etransfer | cash | cheque | card | other`, the product's one list) / **`reference`** (≤60, "Cheque or e-transfer number") / **`note`** (≤300) / **`income_entry_id`**, **`tax_entry_id`** (gotcha 5) / **`recorded_by`** (SET NULL), **`recorded_by_name`** (a name kept as it was), **`recorded_at`** / **`voided_at`**, **`voided_by`** (SET NULL), **`voided_by_name`**, **`void_reason`** (set together, CHECK `club_sponsor_deal_payments_void_whole`). Index (`org_id`, `deal_id`, `received_on`).
+
+## `club_sponsor_deal_refunds`
+<!-- dict:table:club_sponsor_deal_refunds -->
+
+**Purpose:** **A refund to the card of a sponsor's card payment** (Board Ready Stage 6 Part 3b, **mig 530**; the card-refund drawing, RULED 2026-11-23, all seven asks as recommended) — all of what is left on the payment or part of it, never the processing fee. Not `online_payment_refunds` (the tournament and house-league refunds): a sponsorship refund lives here, and the landing (lib/online-payment-landing.ts `refundSponsorCard`, `applySponsorRefundEvent`) answers a sponsorship's Stripe refund events from this table.
+
+**Gotchas (read first):**
+1. **Written ONLY by `club_sponsor_card_refund_open` / `_book` / `_failed`** (SECURITY DEFINER, service role EXECUTE). The service role holds SELECT, plus UPDATE on two columns: `emailed_at` (the refund email's claim) and `stripe_refund_id` (Stripe's id on a refund still pending).
+2. **`_open`** locks the deal then the payment, refuses a payment that isn't a live card payment (SP002), nothing left (SP002 `nothing_left`), a bad amount (SP003) or no reason (SP003), and inserts `pending` with its tax share (`tax_part`: in proportion to the sponsorship's tax, never the fee's; the refund that empties the payment takes what is left) and `ends_deal` (it gives back the last of the deal's money: nothing left on this payment after it, and no other live payment holding money). **`_book`** (Stripe succeeded) writes two `expense` lines on the General ledger — the sponsorship (`category 'club_sponsorship'`, Sponsorship › Club sponsorship) and the tax (`category 'gst_hst_collected'`), "Refund to {business} · invoice {n}", `source_module 'sponsorship_deal'`, `source_entity_id` = the deal — gives **`credit_seq`** when the refund carries tax, sets the online payment `partly_refunded` / `refunded`, and when `ends_deal`, the deal to `withdrawn` with the refund's reason. The fee lines never move (/accounting 2026-11-23). `isFeeRefund` (lib/club-money-figures.ts) nets the sponsorship line against Club sponsorship, never spending. **`_failed`** marks it `failed`; one already booked has its two lines voided ("The refund didn't reach the card"), and a deal it ended stays ended.
+3. **The credit note** (/accounting 2026-11-23, CRA Memo 12.2 ¶15–23): a refund that succeeded with `credit_seq` has one, "{invoice}-C{seq}", drawn on the invoice's page (lib/club-sponsor-invoice.ts `creditNoteLayout`), downloaded by the club and from the business's link. Numbers are never reused (a failed refund keeps its number).
+
+<!-- dict:col:club_sponsor_deal_refunds.id -->
+<!-- dict:col:club_sponsor_deal_refunds.org_id -->
+<!-- dict:col:club_sponsor_deal_refunds.deal_id -->
+<!-- dict:col:club_sponsor_deal_refunds.payment_id -->
+<!-- dict:col:club_sponsor_deal_refunds.online_payment_id -->
+<!-- dict:col:club_sponsor_deal_refunds.amount -->
+<!-- dict:col:club_sponsor_deal_refunds.tax_part -->
+<!-- dict:col:club_sponsor_deal_refunds.whole -->
+<!-- dict:col:club_sponsor_deal_refunds.ends_deal -->
+<!-- dict:col:club_sponsor_deal_refunds.reason -->
+<!-- dict:col:club_sponsor_deal_refunds.status -->
+<!-- dict:col:club_sponsor_deal_refunds.stripe_refund_id -->
+<!-- dict:col:club_sponsor_deal_refunds.failure_reason -->
+<!-- dict:col:club_sponsor_deal_refunds.refunded_on -->
+<!-- dict:col:club_sponsor_deal_refunds.credit_seq -->
+<!-- dict:col:club_sponsor_deal_refunds.income_entry_id -->
+<!-- dict:col:club_sponsor_deal_refunds.tax_entry_id -->
+<!-- dict:col:club_sponsor_deal_refunds.created_by -->
+<!-- dict:col:club_sponsor_deal_refunds.created_by_name -->
+<!-- dict:col:club_sponsor_deal_refunds.created_at -->
+<!-- dict:col:club_sponsor_deal_refunds.succeeded_at -->
+<!-- dict:col:club_sponsor_deal_refunds.failed_at -->
+<!-- dict:col:club_sponsor_deal_refunds.emailed_at -->
+**`id`** (uuid PK) / **`org_id`**, **`deal_id`**, **`payment_id`**, **`online_payment_id`** (FK CASCADE) / **`amount`** (> 0) / **`tax_part`** (0 ≤ tax_part ≤ amount) / **`whole`** (All of it) / **`ends_deal`** / **`reason`** (1–300, the business reads it in the refund email) / **`status`** (CHECK `pending | succeeded | failed`) / **`stripe_refund_id`** (partial UNIQUE) / **`failure_reason`** (≤300) / **`refunded_on`** (the club day it succeeded, its lines' day; set ⇔ `succeeded_at`) / **`credit_seq`** (gotcha 3; UNIQUE per deal) / **`income_entry_id`**, **`tax_entry_id`** (SET NULL) / **`created_by`** (SET NULL), **`created_by_name`** (kept as it was), **`created_at`** / **`succeeded_at`**, **`failed_at`** (CHECK `club_sponsor_deal_refunds_succeeded`) / **`emailed_at`** (the refund email, "Refund from {club}", kind `club_sponsorship_refund`, claimed so it goes once). Indexes (`org_id`, `deal_id`, `created_at`), (`payment_id`).
 
 ## `club_group_email_sends`
 <!-- dict:table:club_group_email_sends -->
@@ -9468,6 +9516,10 @@ one test-mode invoice was voided in Stripe before the drop. Historical tax recor
 <!-- dict:col:online_payments.season_id -->
 **`season_id`** (FK → `league_seasons.id` ON DELETE SET NULL, nullable; migration 374) — the house-league season a `league_signup` payment pays into; NULL on a team payment, or after the season is deleted (the frozen `description` and the items keep the receipt readable). Required on INSERT for a league payment (guard). Partial index `online_payments_season_idx`.
 
+<!-- dict:col:online_payments.sponsor_deal_id -->
+<!-- dict:col:online_payments.sponsor_fee_tax -->
+<!-- dict:col:online_payments.sponsor_invoice -->
+**The third flow, `sponsorship` (mig 530, Board Ready Stage 6 Part 3b):** a business pays its club sponsorship deal by card — one deal, card only, `scope 'full'`. **`sponsor_deal_id`** (FK → `club_sponsor_deals` SET NULL) required on INSERT (the guard's arm); one OPEN page per deal (`online_payments_one_open_per_deal`). **`sponsor_invoice`** (jsonb `{ amount, taxKind, taxRate, tax, total, dueDays }`) — set when the business chose card BEFORE any invoice: the payment issues the invoice when it lands, at those figures; NULL when an invoice was already out (then `fee_payer = 'club'` always: owner call (3)). **`sponsor_fee_tax`** — the GST/HST on the fee when the sponsor pays it (`fee_payer = 'family'`, the rail's word for "the payer"), part of `base_amount` (what the club keeps before its own costs), never of `fee_amount`, so Stripe's standard cost still reads `fee_amount − application_fee_amount`. The landing is `club_sponsor_card_land` (never `online_payment_land`); its refunds are `club_sponsor_deal_refunds` (never `online_payment_refunds`); `online_payment_cost_out` posts a sponsorship's Stripe extra or dispute fee to the club's General ledger under Sponsorship › Payment processing, and `online_payment_lock_for_cost` locks the deal first. The shape CHECK `online_payments_flow_shape_chk` holds every flow's columns; the guard freezes the three new ones.
 <!-- dict:col:online_payments.signup_key -->
 **`signup_key`** (text, nullable, 1–64 chars; migration 374) — which sign-up a `league_signup` payment is for: the sign-up's `league_registrations.signup_ref`, or the one registration's id when it has none (an older registration). Scopes the one-open-Checkout rule and the family pay link. NOT NULL exactly when `flow = 'league_signup'` (flow shape CHECK); never changes (guard).
 

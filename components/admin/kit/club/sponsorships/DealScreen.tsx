@@ -34,12 +34,12 @@ import { copyWhenReady } from './OfferDealWindow';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { formatStoredDate } from '@/lib/timezone';
+import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS as W, sponsorshipMoney as money } from '@/lib/club-sponsorships-words';
 import { canRecordPayment, canRevise, canWithdraw, checklistOf, checklistOpen, deliveryCount, holdersOf, isOverdue, linkTakesForm, LOGO_ITEM, reasonHasClock } from '@/lib/club-sponsorship-deals';
-import { invoiceStanding, paymentHow, type DealPayment } from '@/lib/club-sponsor-invoice';
-import { DealPayments, RecordPaymentWindow, VoidPaymentQuestion } from './DealPaymentWindows';
+import { refundsEndedDeal, invoiceStanding, paymentHow, refundCounts, refundDay, refundedTotal, refundEndsDeal, type DealPayment } from '@/lib/club-sponsor-invoice';
+import { DealPayments, PaymentWindow, RecordPaymentWindow, RefundWindow, VoidPaymentQuestion } from './DealPaymentWindows';
 import { send, sponsorshipsApi } from './api';
 import { placeLabel, useDeal, type DealRead } from './deals-api';
 import css from './Sponsorships.module.css';
@@ -49,7 +49,10 @@ const day = (d: string) => formatStoredDate(d, { withYear: false });
 /** The callout (round 1 tab 5's table, ask 4): the state, then what the club does next. */
 function callout(r: DealRead): { title?: string; text: string; tone: 'olive' | 'warn' } {
   const d = r.deal;
-  if (d.band === 'withdrawn' && d.withdrawn) return { text: D.callout.withdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason), tone: 'olive' };
+  if (d.band === 'withdrawn' && d.withdrawn) {
+    return { text: refundsEndedDeal(r.refunds) ? D.card.calloutRefundedWithdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason) : D.callout.withdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason), tone: 'olive' };
+  }
+  if (r.unrecordedCard && d.state !== 'paid') return { title: D.card.unrecordedTitle, text: D.card.calloutUnrecorded(d.businessName, r.unrecordedCard.amount, r.unrecordedCard.reason), tone: 'warn' };
   if (d.band === 'delivered') return { text: D.callout.delivered, tone: 'olive' };
   if (d.state === 'paid') { const c = deliveryCount(d); return { text: D.callout.paid(d.paidOn ?? d.invoice?.issuedOn ?? d.offeredOn, c.done, c.of), tone: 'olive' }; }
   if (d.state === 'invoiced' && d.invoice) {
@@ -67,8 +70,11 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   const isPhone = useIsPhone();
   const { slug, data, error, reload } = useDeal(dealId);
   const club = useOrg().currentOrg?.name ?? '';
-  const [asking, setAsking] = useState<'again' | 'stop' | 'withdraw' | 'edit' | 'email' | 'record' | null>(null);
+  const [asking, setAsking] = useState<'again' | 'stop' | 'withdraw' | 'edit' | 'email' | 'record' | 'sendInvoice' | null>(null);
   const [voiding, setVoiding] = useState<DealPayment | null>(null);
+  // Part 3b: the payment's own window, and the refund window over it.
+  const [opened, setOpened] = useState<string | null>(null);
+  const [refunding, setRefunding] = useState(false);
   const [notice, setNotice] = useNotice();
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
@@ -141,9 +147,10 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     if (linkWindow) setLinkSaid(linkWindow);
     return true;
   }
-  async function copy() {
-    if (!data?.link) return;
-    try { await navigator.clipboard.writeText(data.link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setSaid(W.say.failed); }
+  /** True when the link is on the clipboard. */
+  async function copy(): Promise<boolean> {
+    if (!data?.link) return false;
+    try { await navigator.clipboard.writeText(data.link); setCopied(true); setTimeout(() => setCopied(false), 2000); return true; } catch { setSaid(W.say.failed); return false; }
   }
 
   // The money band (round 1 tabs 5 and 7): Paid and Still owing from the payments recorded; Paid names how the last came.
@@ -151,16 +158,22 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   const lastIn = standing?.live.at(-1);
   const paidSub = lastIn ? paymentHow(lastIn).toLowerCase() : undefined;
   const owingSub = d.invoice && standing && standing.owing > 0 ? D.deal.figDue(d.invoice.dueOn) : undefined;
+  const back = refundedTotal(data.refunds);
+  const lastBack = data.refunds.filter(refundCounts).at(-1);
+  const backSub = !lastBack ? undefined : lastBack.status === 'pending' ? D.card.figRefundedSubPending
+    : D.card.figRefundedSub(back, refundDay(lastBack));
   const band = d.invoice && standing && (isPhone ? (
     <ClubRowList inset label={D.deal.figInvoiced}>
       <ClubRow title={D.deal.figInvoiced} caption={d.invoice.taxKind ? D.deal.figInclTax(d.invoice.taxKind, d.invoice.tax) : undefined} trail={<span className={css.money}>{money(d.invoice.total)}</span>} />
       <ClubRow title={D.deal.figPaid} caption={paidSub} trail={<span className={css.money}>{money(standing.paid)}</span>} />
+      {back > 0 && <ClubRow title={D.card.figRefunded} caption={backSub} trail={<span className={css.money}>{money(back)}</span>} />}
       <ClubRow title={D.deal.figOwing} caption={owingSub} trail={<span className={css.money}>{money(standing.owing)}</span>} />
     </ClubRowList>
   ) : (
     <MoneySummaryBand ariaLabel={d.businessName} tiles={[
       { key: 'invoiced', label: D.deal.figInvoiced, figure: money(d.invoice.total), caption: d.invoice.taxKind ? D.deal.figInclTax(d.invoice.taxKind, d.invoice.tax) : undefined },
       { key: 'paid', label: D.deal.figPaid, figure: money(standing.paid), caption: paidSub },
+      ...(back > 0 ? [{ key: 'refunded', label: D.card.figRefunded, figure: money(back), caption: backSub }] : []),
       { key: 'owing', label: D.deal.figOwing, figure: money(standing.owing), caption: owingSub },
     ]} />
   ));
@@ -177,8 +190,13 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     d.invoice ? (d.invoiceEmailedAt && !d.revisedOn ? D.deal.hInvoiceEmailed(d.invoice.issuedOn) : D.deal.hInvoice(d.invoice.issuedOn)) : null,
     d.revisedOn ? D.deal.hRevised(d.revisedOn) : null,
     d.paidOn ? D.deal.hPaid(d.paidOn) : null,
-    d.withdrawn ? D.deal.hWithdrawn(d.withdrawn.at, d.withdrawn.byName) : null,
+    ...data.refunds.filter(x => x.status === 'succeeded' && !x.endsDeal).map(x => D.card.hRefunded(x.amount, refundDay(x), x.createdByName)),
+    d.withdrawn ? (refundsEndedDeal(data.refunds) ? D.card.hRefundedWhole(d.withdrawn.at, d.withdrawn.byName) : D.deal.hWithdrawn(d.withdrawn.at, d.withdrawn.byName)) : null,
   ].filter(Boolean).join(' · ');
+  const endedByRefund = d.state === 'withdrawn' && refundsEndedDeal(data.refunds) ? d.withdrawn?.at ?? null : null;
+  const openedPayment = opened ? data.payments.find(x => x.id === opened) ?? null : null;
+  // Send the invoice (round 1 tab 5): a deal its business left at Form received — an unfinished card payment.
+  const sendsInvoice = d.state === 'form_received' && !data.unrecordedCard;
 
   return (
     <>
@@ -190,11 +208,13 @@ export default function DealScreen({ dealId }: { dealId: string }) {
             ? <button type="button" className="btn btn-lime" onClick={() => void copy()}>{copied ? D.deal.copied : D.deal.copy}</button>
             : recordable
               ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setAsking('record')}>{D.deal.record}</button>
-              : undefined}>
+              : sendsInvoice
+                ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setAsking('sendInvoice')}>{D.card.sendInvoice}</button>
+                : undefined}>
           {c.title && <strong>{c.title} </strong>}{isPhone && d.state === 'invoiced' && d.invoice ? D.callout.invoicedPhone(d.invoice.number, d.invoice.total, d.invoice.dueOn) : c.text}
         </Callout>
         {band}
-        <DealPayments payments={data.payments} canVoid={d.state === 'invoiced' || d.state === 'paid'} onVoid={setVoiding} />
+        <DealPayments payments={data.payments} refunds={data.refunds} onOpen={x => setOpened(x.id)} />
 
         {/* The pencil edits what this block lists: it sits in the block's head, as a season's Registration block's does. */}
         <ClubSection id="deal-block" className={css.flushSection} title={D.deal.cardDeal}
@@ -230,7 +250,8 @@ export default function DealScreen({ dealId }: { dealId: string }) {
                     onChange={e => void act('/items', { itemId: l.id, on: e.target.checked })} />
                   <span className={css.checkMain}>
                     <span>{l.logo ? D.deal.logoLine : l.text}</span>
-                    {l.id === LOGO_ITEM && !done && !isPhone && <span className={ck.hint}>{D.deal.logoHintUp(D.deal.logoWhere[d.placeKind])}</span>}
+                    {l.id === LOGO_ITEM && !done && !isPhone && d.state !== 'withdrawn' && <span className={ck.hint}>{D.deal.logoHintUp(D.deal.logoWhere[d.placeKind])}</span>}
+                    {l.id === LOGO_ITEM && endedByRefund && <span className={ck.hint}>{D.card.logoCameDown(orgDayKey(endedByRefund))}</span>}
                     {done && !isPhone && <span className={ck.hint}>{D.deal.tickedBy(done.byName)}</span>}
                   </span>
                   {done && <span className={css.checkWhen}>{day(done.at)}</span>}
@@ -313,7 +334,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
           title={linkSaid.title}
           footer={<>
             <DialogCancel>{D.deal.linkWindowClose}</DialogCancel>
-            {linkSaid.copy !== false && data.link && <button type="button" className="btn btn-lime" onClick={() => void copy()}>{copied ? D.deal.copied : D.deal.copy}</button>}
+            {linkSaid.copy !== false && data.link && <button type="button" className="btn btn-lime" onClick={() => void copy().then(ok => { if (ok) setLinkSaid(null); })}>{copied ? D.deal.copied : D.deal.copy}</button>}
           </>}>
           <p className={ck.hint}>{linkSaid.text}</p>
         </KitDialog>
@@ -350,6 +371,43 @@ export default function DealScreen({ dealId }: { dealId: string }) {
             await reload();
           }}
           onStale={async text => { setAsking(null); setNotice({ tone: 'bad', text }); await reload(); }} />
+      )}
+      {openedPayment && d.invoice && (
+        <PaymentWindow payment={openedPayment} refunds={data.refunds} deal={{ number: d.invoice.number, taxKind: d.invoice.taxKind }}
+          business={d.businessName} businessEmail={b?.email ?? null} refundsOn={data.cardRefundsOn}
+          canVoid={d.state === 'invoiced' || d.state === 'paid'}
+          creditHref={id => api(`/refunds/${id}/credit-note`)}
+          onClose={() => setOpened(null)} onRefund={() => setRefunding(true)} onVoid={() => { setVoiding(openedPayment); setOpened(null); }} />
+      )}
+      {openedPayment?.card && refunding && d.invoice && (
+        <RefundWindow url={api(`/payments/${openedPayment.id}/refund`)} payment={openedPayment} refunds={data.refunds}
+          endsDeal={refundEndsDeal(data.payments, data.refunds, openedPayment.id)} number={d.invoice.number} taxKind={d.invoice.taxKind}
+          business={d.businessName} businessEmail={b?.email ?? null} place={d.placeKind === 'club' ? null : placeLabel(d)}
+          onClose={() => setRefunding(false)}
+          onStale={async text => { setRefunding(false); setNotice({ tone: 'bad', text }); await reload(); }}
+          onDone={async r => {
+            setRefunding(false); setOpened(null);
+            // Money went to a business: said in a window the club closes, not a strip that fades.
+            setLinkSaid(r.state === 'pending'
+              ? { title: D.card.doneTitle, text: D.card.pendingBody(r.amount), copy: false }
+              : { title: D.card.doneTitle, text: `${D.card.doneBody(r.amount, r.emailedTo)}${r.endsDeal ? ` ${D.card.doneEnded}` : ''}`, copy: false });
+            await reload();
+          }} />
+      )}
+      {asking === 'sendInvoice' && (
+        <KitDialog kind="question" busy={busy} onClose={() => setAsking(null)} title={D.card.sendInvoiceAsk(d.businessName)}
+          footer={<><DialogCancel /><button type="button" className="btn btn-lime" disabled={busy} onClick={async () => {
+            setBusy(true); setSaid(null);
+            const r = await send<{ emailed: boolean; to: string | null }>(api('/send-invoice'), 'POST', {});
+            setBusy(false);
+            // A refusal is said at the top, beside the callout the club pressed it from (the line at the page's foot was out of sight).
+            if (!r.ok) { setNotice({ tone: 'bad', text: r.error }); setAsking(null); await reload(); return; }
+            setAsking(null);
+            setLinkSaid({ title: D.card.sendInvoice, text: r.data.emailed && r.data.to ? D.card.sentInvoice(r.data.to) : D.card.sentInvoiceNotEmailed, copy: false });
+            await reload();
+          }}>{D.card.sendInvoiceButton}</button></>}>
+          <p className={ck.hint}>{D.card.sendInvoiceBody}</p>
+        </KitDialog>
       )}
       {voiding && (
         <VoidPaymentQuestion url={api(`/payments/${voiding.id}/void`)} payment={voiding} onClose={() => setVoiding(null)}

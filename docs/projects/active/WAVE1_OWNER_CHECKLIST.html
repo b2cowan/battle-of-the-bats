@@ -1,0 +1,366 @@
+<title>Wave 1 Owner Checklist</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one narrow column — header + overall progress, an index of four job cards, one job open at a time, paste-back at the foot. */
+:root {
+  --bg: #f4f6f7;
+  --surface: #ffffff;
+  --ink: #17232b;
+  --muted: #5b6b75;
+  --line: #d9e0e4;
+  --accent: #1d6a86;
+  --accent-soft: #e2eff4;
+  --good: #217a4b; --good-soft: #e3f3ea;
+  --warn: #9a6200; --warn-soft: #fbf0dc;
+  --bad: #b23a32;  --bad-soft: #f8e4e2;
+  --code-bg: #eef2f4;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11181d; --surface: #182229; --ink: #e3eaee; --muted: #93a4ae; --line: #2a3841;
+  --accent: #5fb4d3; --accent-soft: #19323d;
+  --good: #5fc68f; --good-soft: #17301f; --warn: #e2aa4c; --warn-soft: #33280f; --bad: #ec8178; --bad-soft: #3a1d1a;
+  --code-bg: #212e36; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #11181d; --surface: #182229; --ink: #e3eaee; --muted: #93a4ae; --line: #2a3841;
+  --accent: #5fb4d3; --accent-soft: #19323d;
+  --good: #5fc68f; --good-soft: #17301f; --warn: #e2aa4c; --warn-soft: #33280f; --bad: #ec8178; --bad-soft: #3a1d1a;
+  --code-bg: #212e36; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 1.6rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 1.15rem; margin: 0; text-wrap: balance; }
+h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 4px; font-weight: 600; }
+p { margin: 0; }
+code, .var { font-family: var(--mono); font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+a { color: var(--accent); }
+.sub { color: var(--muted); }
+.head { display: flex; flex-direction: column; gap: 8px; }
+.meter { display: flex; align-items: center; gap: 12px; font-variant-numeric: tabular-nums; }
+.bar { flex: 1; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.note { background: var(--accent-soft); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.note.warn { background: var(--warn-soft); }
+
+.index { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 560px) { .index { grid-template-columns: 1fr; } }
+.card { text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; }
+.card:hover { border-color: var(--accent); }
+.card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.card .n { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.card strong { font-size: 1rem; }
+.chip { align-self: flex-start; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--code-bg); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.prog { background: var(--accent-soft); color: var(--accent); }
+.chip.done { background: var(--good-soft); color: var(--good); }
+.chip.issue { background: var(--bad-soft); color: var(--bad); }
+.chip.call { background: var(--warn-soft); color: var(--warn); }
+
+.walk { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.intro { display: grid; gap: 14px; }
+.intro ul { margin: 4px 0 0; padding-left: 20px; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.step { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 10px; padding: 14px 0; border-top: 1px solid var(--line); }
+.step .num { font-family: var(--mono); color: var(--muted); font-size: 0.85rem; padding-top: 2px; font-variant-numeric: tabular-nums; }
+.step .body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.step .where { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); }
+.step .see { color: var(--muted); }
+.step .see b { color: var(--ink); font-weight: 600; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+label.opt:hover { background: var(--code-bg); }
+label.opt input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+label.opt.on { background: var(--accent-soft); }
+.step.ticked .num { color: var(--good); }
+.section-label { font-size: 0.8rem; font-weight: 700; color: var(--ink); padding: 18px 0 4px; border-top: 1px solid var(--line); }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.vbtn { font: inherit; font-size: 0.88rem; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.vbtn[aria-pressed="true"][data-v="done"] { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.vbtn[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.vbtn[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; min-height: 84px; font: inherit; font-size: 0.92rem; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+.btn { font: inherit; font-weight: 600; font-size: 0.9rem; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.out { font-family: var(--mono); font-size: 0.8rem; min-height: 160px; }
+.foot { display: flex; flex-direction: column; gap: 10px; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <h1>Wave 1 Owner Checklist</h1>
+    <p class="sub">The four console jobs after the 22 November promote. Written 22 November 2026. Every tick stays in this browser. When you finish, copy the summary at the bottom back into a chat so the answers get recorded.</p>
+    <div class="meter"><div class="bar"><i id="bar"></i></div><span id="count">0 of 0</span></div>
+  </header>
+
+  <div class="note warn">
+    <p><strong>Two things changed while I checked the records.</strong></p>
+    <p><strong>A4 is already answered.</strong> You ruled point-in-time recovery off on 16 November ("daily is enough before a first customer"), and the 18 November backup rehearsal confirmed it is off. Job 4 asks only whether that still stands. It does not send you back into Supabase.</p>
+    <p><strong>A1 and A5 can't be settled from a console.</strong> They change how agents are allowed to push and commit, so the yes only counts when you say it in the chat that builds the change. That chat asks both questions when it opens. You can still tick your answer here now.</p>
+  </div>
+
+  <nav class="index" id="index" aria-label="Jobs"></nav>
+  <section class="walk" id="walk" aria-live="polite"></section>
+
+  <section class="foot">
+    <h2>Everything, ready to paste back</h2>
+    <div class="row">
+      <button class="btn" id="buildAll" type="button">Build the full summary</button>
+      <button class="btn ghost" id="copyAll" type="button">Copy it</button>
+      <button class="btn ghost" id="reset" type="button">Clear every tick</button>
+    </div>
+    <p class="sub" id="resetAsk" hidden>Clear every tick and note on this page? <button class="vbtn" id="resetYes" type="button">Yes, clear it</button> <button class="vbtn" id="resetNo" type="button">Keep them</button></p>
+    <textarea class="out" id="outAll" readonly aria-label="Full summary"></textarea>
+  </section>
+</div>
+
+<script>
+var WALKS = [
+{
+  id: "stripe",
+  title: "Stripe live: buy, look, cancel, refund",
+  short: "Stripe live test",
+  purpose: "Prove one real customer can pay on production, see a correct invoice, reach the billing page, and be cancelled and refunded through our own platform admin. Pressing the billing button for the first time on live also sets up the live billing page from our code.",
+  passes: "The payment succeeds, Plan &amp; billing shows Premium, the billing page offers exactly the expected options, the invoice prints our GST/HST number, Stripe shows the customer with clean webhook deliveries, and the plan is ended and the money refunded.",
+  where: [
+    "Production: <code>www.fieldlogichq.ca</code> in a <b>private window</b> for the buyer, and your normal window for platform admin (your own sign-in).",
+    "Stripe dashboard switched to <b>Live</b>.",
+    "A terminal in the repo for one read-only check (step 11)."
+  ],
+  before: [
+    "A fresh email you can open, for example a +alias of your own address. Name the team <b>Live test — delete</b>.",
+    "A real card and an Ontario home address.",
+    "<b>Cost:</b> $29.00 + 13% HST = <b>$32.77</b>, refunded in full. Stripe keeps its fee, about $1.25. That is the “about a dollar”.",
+    "<b>Why Premium monthly:</b> it is the cheapest plan that charges on the spot. Tournament Plus starts with a 14-day trial, so it would charge nothing and there would be nothing to refund."
+  ],
+  notIn: "Deleting the test account afterwards (it simply stays an ended free portal). The count of accepted Terms for this buyer, which a chat reads afterwards. The 42-box Stripe set-up list, which is a separate artifact. And <b>do not edit “FieldLogicHQ portal v2” in Stripe</b>: its settings come from our code, and a dashboard edit is undone by the next version.",
+  steps: [
+    { label: "Buy" },
+    { who: "Buyer · private window", do: "Open <code>www.fieldlogichq.ca/pricing</code>, go to the coach plans and start <b>Premium Coaches Portal, monthly</b>.", see: "The coach sign-up opens." },
+    { who: "Buyer", do: "Sign up with the fresh email and confirm it from the email we send.", see: "You come back signed in and the sign-up carries on." },
+    { who: "Buyer", do: "On the Address step, enter the Ontario home address and continue to checkout.", see: "Stripe Checkout shows <b>$29.00</b>, an HST line of <b>$3.77</b>, total <b>$32.77</b>." },
+    { who: "Buyer", do: "Pay with the real card.", see: "The success message appears, and <b>Plan &amp; billing</b> shows Premium." },
+    { label: "Look" },
+    { who: "Buyer · Plan & billing", do: "Press <b>Payment method &amp; invoices</b>.", see: "Stripe’s billing page opens. This first press creates the live billing page. <b>If Stripe refuses to open it</b>, fill in the public business details in Stripe Settings and press again." },
+    { who: "Buyer · Stripe billing page", do: "Read what it offers.", see: "Exactly these: <b>update payment method, invoice history, update name/email/tax ID, cancel at the end of the period</b>. <b>Not</b> plan switching, and <b>not</b> billing address." },
+    { who: "Buyer · Stripe billing page", do: "Open the invoice from the invoice history.", see: "Our business name and Ontario address, <b>our GST/HST number ending 002</b>, and the 13% HST line. (No live invoice has been looked at before this one.)" },
+    { who: "Buyer", do: "Return to the site without changing anything on the billing page.", see: "You are back on Plan &amp; billing." },
+    { who: "Stripe dashboard · Live", do: "Open <b>Customers</b>.", see: "The fresh email is listed, with the $32.77 payment." },
+    { who: "Stripe dashboard · Live", do: "Open the webhook destination <code>https://www.fieldlogichq.ca/api/billing/webhook</code> (with the www) and read its recent deliveries.", see: "Every delivery from the last few minutes shows <b>200</b>." },
+    { who: "Terminal · repo", do: "Run <code>node scripts/audit-stripe-billing.mjs --env .env.production.local</code> (read-only).", see: "The portal check now finds portal v2 and passes: cancel at period end, no proration, no plan switching, no pause." },
+    { label: "Cancel and refund" },
+    { kind: "choice", who: "Your call", do: "How should a same-day “I want my money back” customer be handled? Steps 14–16 assume the first option.", opts: ["The customer cancels, then we use End now and Refund this charge in our platform admin (recommended: it tests our own buttons)", "Refund it in Stripe’s dashboard instead (note why)", "Something else (say what in the notes)"] },
+    { who: "Buyer · Plan & billing", do: "Press <b>Reduce or cancel</b> and cancel Premium.", see: "An <b>Ending</b> chip with the renewal date, and <b>Keep Premium</b> beside Payment method &amp; invoices." },
+    { who: "You · platform admin", do: "Find the test portal (search the fresh email), open its record, and in the yellow <b>Ending</b> notice press <b>End now…</b> and confirm.", see: "The plan ends today. Ending it refunds nothing by itself." },
+    { who: "You · platform admin · Money tab", do: "On the $32.77 charge press <b>Refund this charge</b> for the full amount.", see: "The refund is recorded with a credit note. If the button is missing, your sign-in lacks the refund permission: refund in Stripe instead and say so in the notes." },
+    { who: "Stripe dashboard · Live", do: "Open the payment.", see: "It reads <b>Refunded</b>, $32.77, with a credit note attached." }
+  ]
+},
+{
+  id: "ending",
+  title: "Stripe live: when a plan ends early",
+  short: "Plan that ends early",
+  purpose: "Make live Stripe do what you ruled on 16 November. When a renewal keeps failing, Stripe ends the plan, and the unpaid invoice is written off when the last retry fails (about 14 days on live) instead of sitting open for ever. Stripe only shows these settings on its dashboard, so no code or check can read them. Your eyes are the only check.",
+  passes: "After the final retry, Stripe cancels the subscription and marks its invoice uncollectible.",
+  where: ["Stripe dashboard on <b>Live</b>, in the same sitting as the job before: <b>Revenue recovery → Retries</b> tab. Both rules are on that tab; the retry schedule is behind <b>Card payments → Manage</b>. There is no “after N days” setting for our invoices: the retry window is the day count."],
+  before: ["Test mode and Live keep separate settings. Make sure the dashboard says Live."],
+  notIn: "The billing page’s own settings. They are checked by the terminal step in the Stripe live test, not here.",
+  steps: [
+    { kind: "choice", who: "Revenue recovery · retries", do: "Find what happens <b>after all retries fail</b> for the subscription.", opts: ["It already said “Cancel the subscription”", "I changed it to “Cancel the subscription”", "Something else that I left as it is (say what)"] },
+    { kind: "choice", who: "Retries · invoice status", do: "Find <b>Invoice status</b>: “If all retries for a payment fail, …”", opts: ["It already said “mark the invoice as uncollectible”", "I set it to “mark the invoice as uncollectible”", "I could not find it (say where you looked)"] },
+    { who: "Retries · card payments", do: "Click <b>Manage</b> under Card payments and copy the retry schedule (how many retries, within how long) into the notes below.", see: "Live on 22 November: Smart Retries, up to 8 times within 2 weeks. You kept 2 weeks, so a failed renewal ends the plan and writes off the invoice at about 14 days." }
+  ]
+},
+{
+  id: "hosting",
+  title: "Hosting console: retire four settings, confirm four",
+  short: "Hosting console",
+  purpose: "Remove the four settings the retired free League plan and Founding season left behind, and confirm the four that run the Status page and email delivery tracking are actually set on production. Nobody ever recorded them as set.",
+  passes: "The four retired names are gone. The four live names have values for the production (master) branch. The Status page no longer says Not checked. Resend’s delivery callback gets 200s.",
+  where: [
+    "AWS console → <b>Amplify</b> → the FieldLogicHQ app → <b>Hosting → Environment variables</b>. Check both the all-branches value <b>and</b> any <b>master</b> override.",
+    "Production platform admin, then the Resend dashboard, for the last two checks."
+  ],
+  before: [
+    "<b>Removing</b> the four old ones changes nothing customers see. No code reads them any more, so no rebuild is needed.",
+    "<b>Adding</b> a missing key only reaches the site at the next production build, because the build copies these in. Use <b>Redeploy this version</b> on master, or wait for the next promote, before steps 9–10 can pass.",
+    "If one is missing: the AWS pair is an IAM user allowed <b>only</b> <code>amplify:ListJobs</code> on this app’s master and dev branches. The Supabase token is a scoped token for the two projects, with Project Settings and Logs read and <b>no Database</b> access. The webhook secret is the signing secret of the production endpoint in Resend. A name must never start with <code>AWS_</code> or <code>NEXT_PUBLIC_</code>."
+  ],
+  notIn: "<code>RESEND_API_KEY</code>. Production already sends mail, so it is set.",
+  steps: [
+    { label: "Remove (retired)" },
+    { kind: "choice", do: "<code class=\"var\">LEAGUE_STARTER_BETA</code>", opts: ["Removed", "Wasn’t there"] },
+    { kind: "choice", do: "<code class=\"var\">NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE</code>", opts: ["Removed", "Wasn’t there"] },
+    { kind: "choice", do: "<code class=\"var\">NEXT_PUBLIC_FOUNDING_SEASON_END</code>", opts: ["Removed", "Wasn’t there"] },
+    { kind: "choice", do: "<code class=\"var\">NEXT_PUBLIC_FOUNDING_SEASON_CARD_WINDOW_OPEN</code>", opts: ["Removed", "Wasn’t there"] },
+    { label: "Confirm set for master" },
+    { kind: "choice", do: "<code class=\"var\">STATUS_AMPLIFY_ACCESS_KEY_ID</code>", opts: ["Set", "Missing: I added it", "Missing: left for later"] },
+    { kind: "choice", do: "<code class=\"var\">STATUS_AMPLIFY_SECRET_ACCESS_KEY</code>", opts: ["Set", "Missing: I added it", "Missing: left for later"] },
+    { kind: "choice", do: "<code class=\"var\">STATUS_SUPABASE_TOKEN</code>", opts: ["Set", "Missing: I added it", "Missing: left for later"] },
+    { kind: "choice", do: "<code class=\"var\">RESEND_WEBHOOK_SECRET</code>", opts: ["Set", "Missing: I added it", "Missing: left for later"] },
+    { label: "Check on the site" },
+    { kind: "choice", who: "Platform admin · production", do: "Open <code>www.fieldlogichq.ca/platform-admin/status</code> and read <b>Production build, Staging build, Database services, Gateway errors</b> and <b>Staging database</b>.", opts: ["None of the five says Not checked", "Some say Not checked (name them)"] },
+    { kind: "choice", who: "Resend dashboard", do: "Open <b>Webhooks</b>, then the production endpoint <code>www.fieldlogichq.ca/api/webhooks/resend</code>, and read the recent deliveries.", opts: ["They show 200", "They show 503 (the secret is missing or wrong)", "There is no production endpoint"] }
+  ]
+},
+{
+  id: "safety",
+  title: "Release safety: A1, A2, A4, A5",
+  short: "Release safety answers",
+  purpose: "Answer the four open questions in the release-safety plan. A3 was answered yes on 15 November. The answers decide what the next two release-safety builds contain.",
+  passes: "Each question has one answer ticked, and A1 and A5 are carried into the chat that builds them.",
+  where: ["Nowhere to log in. Tick an answer per question, then paste the summary back into a chat."],
+  before: [
+    "<b>A1 and A5</b> change how agents may push and commit. The project rules say a change like that needs your yes <b>in the chat that makes it</b>, so a tick here is your intent, not the go-ahead. That chat opens by asking both questions. On the board it comes after the 301 layout findings are dealt with.",
+    "<b>A2 and A4</b> touch nothing like that, so a pasted-back answer is enough."
+  ],
+  notIn: "Building any of it.",
+  steps: [
+    { kind: "choice", who: "A1 · push lock", do: "Should a push to production, and a production database change, <b>always stop and ask you</b>, whatever a session has been told? Today both are allowed without asking. Recommended: yes.", opts: ["Yes", "No"] },
+    { kind: "choice", who: "A2 · test sign-ins at GitHub", do: "May the <b>test</b> sign-ins and a <b>dev</b>-database key be stored with GitHub, so a cloud runner can check staging after every push? Nothing from production goes there. A no holds that whole stage. Recommended: yes.", opts: ["Yes", "No"] },
+    { kind: "choice", who: "A4 · point-in-time recovery", do: "Already answered: <b>off</b>, by your ruling of 16 November. Production keeps daily backups for 7 days, and a restore was rehearsed on 18 November. Does that still stand?", opts: ["Yes, keep it off as ruled (the next release-safety stage leans on the daily backups)", "No, I want it turned on before the next release-safety stage"] },
+    { kind: "choice", who: "A5 · secret scan", do: "Should the scan for leaked passwords and keys run at <b>every commit</b> as well as at release? Recommended: yes.", opts: ["Yes", "No"] }
+  ]
+}
+];
+
+var KEY = "wave1-owner-checklist-v1";
+var state = { ticks: {}, verdict: {}, notes: {}, open: "stripe" };
+try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (s && typeof s === "object") state = Object.assign(state, s); } } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+function realSteps(w) { return w.steps.filter(function (s) { return !s.label; }); }
+function stepKey(w, i) { return w.id + ":" + i; }
+function isTicked(w, i) { var v = state.ticks[stepKey(w, i)]; return v !== undefined && v !== null && v !== false; }
+function walkCount(w) { var n = 0, t = 0; w.steps.forEach(function (s, i) { if (s.label) return; t++; if (isTicked(w, i)) n++; }); return { n: n, t: t }; }
+function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+
+function chipFor(w) {
+  var c = walkCount(w), v = state.verdict[w.id];
+  if (v === "issue") return ["issue", "Problem · " + c.n + " of " + c.t];
+  if (v === "call") return ["call", "Needs a call · " + c.n + " of " + c.t];
+  if (v === "done") return c.n === c.t ? ["done", "Done · " + c.t + " of " + c.t] : ["call", "Done · only " + c.n + " of " + c.t + " ticked"];
+  if (c.n === 0) return ["", "Not started · 0 of " + c.t];
+  return ["prog", "In progress · " + c.n + " of " + c.t];
+}
+
+function renderIndex() {
+  var idx = document.getElementById("index"); idx.innerHTML = "";
+  WALKS.forEach(function (w, k) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "card";
+    b.setAttribute("aria-pressed", state.open === w.id ? "true" : "false");
+    var ch = chipFor(w);
+    b.innerHTML = '<span class="n">Job ' + (k + 1) + ' of ' + WALKS.length + '</span><strong>' + w.short + '</strong><span class="chip ' + ch[0] + '">' + ch[1] + '</span>';
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    idx.appendChild(b);
+  });
+  var all = 0, done = 0; WALKS.forEach(function (w) { var c = walkCount(w); all += c.t; done += c.n; });
+  document.getElementById("count").textContent = done + " of " + all + " steps";
+  document.getElementById("bar").style.width = (all ? (100 * done / all) : 0) + "%";
+}
+
+function list(items) { return "<ul>" + items.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>"; }
+
+function renderWalk() {
+  var w = WALKS.filter(function (x) { return x.id === state.open; })[0] || WALKS[0];
+  var el = document.getElementById("walk");
+  var h = '<div class="intro"><h2>' + w.title + '</h2>' +
+    '<div><h3>What this job is for</h3><p>' + w.purpose + '</p></div>' +
+    '<div><h3>It passes when</h3><p>' + w.passes + '</p></div>' +
+    '<div><h3>Where</h3>' + list(w.where) + '</div>' +
+    '<div><h3>Before you start</h3>' + list(w.before) + '</div>' +
+    '<div><h3>Not in this job</h3><p>' + w.notIn + '</p></div></div>';
+  h += '<ol class="steps">';
+  var num = 0;
+  w.steps.forEach(function (s, i) {
+    if (s.label) { h += '<li class="section-label">' + s.label + '</li>'; return; }
+    num++;
+    var k = stepKey(w, i), ticked = isTicked(w, i);
+    h += '<li class="step' + (ticked ? ' ticked' : '') + '"><span class="num">' + String(num).padStart(2, "0") + '</span><div class="body">';
+    if (s.who) h += '<span class="where">' + s.who + '</span>';
+    h += '<p>' + s.do + '</p>';
+    if (s.see) h += '<p class="see"><b>You should see:</b> ' + s.see + '</p>';
+    h += '<div class="opts">';
+    if (s.kind === "choice") {
+      s.opts.forEach(function (o, j) {
+        var on = state.ticks[k] === j;
+        h += '<label class="opt' + (on ? ' on' : '') + '"><input type="checkbox" id="c-' + k.replace(":", "-") + '-' + j + '" data-k="' + k + '" data-j="' + j + '"' + (on ? ' checked' : '') + '><span>' + o + '</span></label>';
+      });
+    } else {
+      h += '<label class="opt' + (ticked ? ' on' : '') + '"><input type="checkbox" id="c-' + k.replace(":", "-") + '" data-k="' + k + '"' + (ticked ? ' checked' : '') + '><span>Done, and it matched</span></label>';
+    }
+    h += '</div></div></li>';
+  });
+  h += '</ol>';
+  var v = state.verdict[w.id];
+  h += '<div><h3>How did it go?</h3><div class="verdict">' +
+    ['done', 'issue', 'call'].map(function (x) { var lab = { done: 'Done', issue: 'Problem', call: 'Needs a call' }[x]; return '<button type="button" class="vbtn" data-v="' + x + '" aria-pressed="' + (v === x) + '">' + lab + '</button>'; }).join('') +
+    '</div></div>';
+  h += '<div><h3>Notes</h3><textarea id="notes-' + w.id + '" placeholder="Anything that did not match, amounts, what you saw…">' + (state.notes[w.id] || '').replace(/</g, '&lt;') + '</textarea></div>';
+  h += '<div class="row"><button class="btn" type="button" id="copyOne">Copy this job’s summary</button><span class="sub" id="copyMsg"></span></div>';
+  el.innerHTML = h;
+
+  el.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      var k = cb.getAttribute('data-k'), j = cb.getAttribute('data-j');
+      if (j !== null) { state.ticks[k] = cb.checked ? Number(j) : null; }
+      else { state.ticks[k] = cb.checked; }
+      save(); var y = window.scrollY; render(); window.scrollTo(0, y);
+    });
+  });
+  el.querySelectorAll('.vbtn').forEach(function (b) {
+    b.addEventListener('click', function () { var x = b.getAttribute('data-v'); state.verdict[w.id] = state.verdict[w.id] === x ? null : x; save(); var y = window.scrollY; render(); window.scrollTo(0, y); });
+  });
+  document.getElementById('notes-' + w.id).addEventListener('input', function (e) { state.notes[w.id] = e.target.value; save(); });
+  document.getElementById('copyOne').addEventListener('click', function () { copyText(summary([w]), document.getElementById('copyMsg')); });
+}
+
+function summary(ws) {
+  var lines = ["Wave 1 owner checklist — paste-back (written 2026-11-22)"];
+  ws.forEach(function (w) {
+    var c = walkCount(w), v = state.verdict[w.id];
+    lines.push("");
+    lines.push("== " + w.title + " [" + (v ? { done: "DONE", issue: "PROBLEM", call: "NEEDS A CALL" }[v] : "NO VERDICT") + "] " + c.n + "/" + c.t + " ticked");
+    var num = 0;
+    w.steps.forEach(function (s, i) {
+      if (s.label) return; num++;
+      var k = stepKey(w, i), t = state.ticks[k], name = plain((s.who ? s.who + ": " : "") + s.do);
+      if (name.length > 110) name = name.slice(0, 107) + "...";
+      var mark;
+      if (s.kind === "choice") mark = (t !== undefined && t !== null && t !== false) ? "-> " + plain(s.opts[t]) : "( ) not answered";
+      else mark = t ? "[x]" : "[ ]";
+      lines.push(String(num).padStart(2, "0") + " " + (s.kind === "choice" ? name + "  " + mark : mark + " " + name));
+    });
+    var n = (state.notes[w.id] || "").trim();
+    lines.push("Notes: " + (n ? n : "(none)"));
+  });
+  return lines.join("\n");
+}
+
+function copyText(text, msgEl, ta) {
+  var done = function (ok) { if (msgEl) msgEl.textContent = ok ? "Copied." : "Copy was blocked. Select the text and copy it by hand."; };
+  try {
+    navigator.clipboard.writeText(text).then(function () { done(true); }, function () { if (ta) { ta.value = text; ta.select(); } done(false); });
+  } catch (e) { if (ta) { ta.value = text; ta.select(); } done(false); }
+}
+
+function render() { renderIndex(); renderWalk(); }
+
+document.getElementById('buildAll').addEventListener('click', function () { document.getElementById('outAll').value = summary(WALKS); });
+document.getElementById('copyAll').addEventListener('click', function () { var t = summary(WALKS), ta = document.getElementById('outAll'); ta.value = t; copyText(t, null, ta); });
+document.getElementById('reset').addEventListener('click', function () { document.getElementById('resetAsk').hidden = false; });
+document.getElementById('resetNo').addEventListener('click', function () { document.getElementById('resetAsk').hidden = true; });
+document.getElementById('resetYes').addEventListener('click', function () { state = { ticks: {}, verdict: {}, notes: {}, open: "stripe" }; save(); document.getElementById('resetAsk').hidden = true; document.getElementById('outAll').value = ""; render(); });
+
+render();
+</script>

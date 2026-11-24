@@ -42,7 +42,9 @@ const LAND_RPCS = ['online_payment_land', 'online_payment_league_land', 'online_
   // Stripe-owned pricing Stage 3 (mig 501): Stripe's fee and its extra, a dispute's fee, a stand-alone fee line, and the
   // shared cost line they post through.
   'online_payment_stripe_fee_set', 'online_payment_dispute_fee_book', 'online_payment_stripe_fee_line_take',
-  'online_payment_cost_out', 'online_payment_lock_for_cost'];
+  'online_payment_cost_out', 'online_payment_lock_for_cost',
+  // Board Ready Stage 6 Part 3b (mig 530): a sponsor's card payment lands on its deal, and its refunds book, through the same module.
+  'club_sponsor_card_land', 'club_sponsor_card_refund_open', 'club_sponsor_card_refund_book', 'club_sponsor_card_refund_failed'];
 const MIG_12B_REFUNDS = 'supabase/migrations/375_a_house_league_refund_goes_back_to_the_card.sql';
 const fnBody = (sql: string, fn: string) => new RegExp(`FUNCTION public\\.${fn}\\([\\s\\S]*?\\nEND \\$\\$;`).exec(sql)?.[0] ?? '';
 

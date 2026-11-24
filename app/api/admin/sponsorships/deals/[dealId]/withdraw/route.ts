@@ -4,6 +4,7 @@ import { isUuid } from '@/lib/utils';
 import { refused, requireSponsorships } from '@/lib/club-sponsorships-auth';
 import { readDeal, withdrawDeal } from '@/lib/club-sponsorship-deals-server';
 import { actorOf } from '@/lib/club-sponsorship-deal-actions';
+import { closeSponsorCheckout } from '@/lib/sponsor-card-server';
 import { canWithdraw } from '@/lib/club-sponsorship-deals';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
@@ -30,6 +31,9 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const b = (await req.json().catch(() => null) ?? {}) as Record<string, unknown>;
   const reason = typeof b.reason === 'string' ? b.reason.trim() : '';
   if (!reason || reason.length > 300) return refused(DEAL_WORDS.deal.errReason);
+  // A card page still open on the deal is closed first (Part 3b): paid after the withdrawal, it would have nowhere to land.
+  const closed = await closeSponsorCheckout(dealId);
+  if (closed !== 'closed') return refused(DEAL_WORDS.card.errCardPaying, 409, closed === 'paid' ? 'card_paid' : 'card_open');
   try {
     if (!(await withdrawDeal(org.id, dealId, await actorOf(gate.ctx), reason))) return refused(DEAL_WORDS.deal.errPaid, 409, 'paid');
   } catch (e) {

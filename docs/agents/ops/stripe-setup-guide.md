@@ -393,7 +393,13 @@ Dashboard account, with FieldLogicHQ setting the price and Stripe covering losse
 this list. **Everything not named here stays at Stripe's default — do not copy the sandbox's values across.**
 
 1. **Connect is turned on for the Live account**, for Canada. If Live Connect isn't active yet, Stripe walks you through
-   activating it. ⚠ Not recorded as done anywhere.
+   activating it. **Done by the owner 2026-11-23 evening:** business model Platform, integration choices confirmed,
+   identity verified (the path is in `STRIPE_DASHBOARD_MAP.md`, "Live Connect activation"); the platform profile showed no
+   "Onboarding incomplete" on 2026-11-24. **Status of items 3 to 5, 2026-11-23 evening (owner's word):** both live
+   destinations created and their signing secrets set in Amplify production, `PAY_LINK_SECRET` set there too (production's
+   own value), and the production `STRIPE_SECRET_KEY` read as a standard `sk_live_` key with matching last four; the
+   release that night rebuilt production after they were set. Item 4: the platform profile page has no name, support
+   email or website fields (seen 2026-11-24), so there is nothing to fill there. Item 5 (Connect emails) not yet seen.
 2. **Accounts v1 support: OFF.** Owner ruling. New platforms start with it off; the Connect settings page has no
    toggle for it that we could find, so there is nothing to do if you don't see one.
 3. **The two live notifications** (Workbench → Webhooks → Create an event destination, Live): same two as in "Staging"

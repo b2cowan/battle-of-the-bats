@@ -136,10 +136,15 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
     });
     linkArrived(r.ok ? r.data.link ?? null : null);
     const copied = copying ? await copying : null;
-    setBusy(null);
-    if (!r.ok) { setError({ text: r.error, field: null }); return; }
+    if (!r.ok) { setBusy(null); setError({ text: r.error, field: null }); return; }
+    // ⚠ DO NOT CLOSE THE WINDOW HERE (owner walk 2026-11-24: Make the link only closed the window and the deal's page never
+    // opened). The window stands one history entry deep (`useBackStep`); closing it runs `history.back()` to consume that
+    // entry, and a `router.push` is not seen as leaving the page, so the back lands on the push while it is still loading
+    // and cancels it. The push below is what takes the window away: the route change unmounts it once the deal's page is
+    // ready. It stays "busy" until then, so the button keeps saying it is working and nothing is made twice.
     onSent(r.data.id, copied);
-    onClose();
+    // If the page never comes (offline, a failed load), hand the window back rather than leave it frozen.
+    window.setTimeout(() => setBusy(null), 30000);
   }
 
   const fieldError = (field: string) => (error?.field === field ? <p className={css.error} role="alert">{error.text}</p> : null);

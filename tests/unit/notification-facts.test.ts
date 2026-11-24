@@ -170,8 +170,8 @@ describe('the fifteen money notices (C): one wording per kind, rows from the sha
   });
   it('every sender of a kind passes facts to its one entry — no sender writes its own paragraph', () => {
     const landing = readCode('lib/online-payment-landing.ts');
-    assert.equal((landing.match(/refundFailedNotice\(/g) ?? []).length, 3, 'send-back (A, B), a team refund (C, E), a child’s (D)');
-    assert.equal((landing.match(/\.\.\.notRecordedNotice\(/g) ?? []).length, 3);
+    assert.equal((landing.match(/refundFailedNotice\(/g) ?? []).length, 4, 'send-back (A, B), a team refund (C, E), a child’s (D), a sponsor’s card refund (Part 3b)');
+    assert.equal((landing.match(/\.\.\.notRecordedNotice\(/g) ?? []).length, 4, 'four callers: the last is a sponsor’s card payment (Part 3b)');
     assert.doesNotMatch(landing, /refundFailedBody|notRecordedBody|unrecordedBody|unrecordedSignupBody|itemBody|lostBody|returnedBody|reversedBody|bodyTwice|bodyMore|enrolledBody/);
     assert.match(landing, /metadata: \{ \.\.\.p\.extra, \.\.\.\(p\.facts \? \{ facts: p\.facts \} : \{\}\), \[p\.subjectKey\]: p\.subjectId \}/);
     // B: a team's send-back states the send-back's own amount (the refund's, or the whole payment with the fee that goes back).

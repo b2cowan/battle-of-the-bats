@@ -1,0 +1,633 @@
+<title>Stage 6 · Part 3b walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready Stage 6 · Part 3b · Paying a sponsorship by card, and refunding it</span>
+    <h1>Sponsorships, Part 3b: the card</h1>
+    <p class="lead">Part 3b lets a business pay its sponsorship by card, on its own page, and lets the club refund that card payment from the deal. A card payment writes itself into the deal and the club’s books. A refund goes back to the business’s card, comes with a credit note, and a refund of everything ends the deal.</p>
+    <p class="lead">Seven walks, 47 steps, one purpose: the card and its refunds. Nine owner calls sit at the foot, outside the count. Walk F is optional.</p>
+    <p class="lead">Written Nov 23, 2026. Everything runs on Dev Club Org on this computer, with Stripe’s test mode. I remove the “Walk” deals after you report.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> on this computer, with the dev server running. <b>Not the staging site.</b> Stripe sends its test messages about a card payment to this computer through the listen window below, and the Part 3b code is not on staging.</dd>
+      <dt>Club owner</dt><dd><code>owner@dev.local</code> · password <code>devpass123</code> · <b>Dev Club Org</b> (<code>/dev-club-org</code>). Every club-side step.</dd>
+      <dt>The business</dt><dd>Nobody signs in. A business has no account; its page is a link, opened in a <b>private window</b>.</dd>
+      <dt>Test card (pays)</dt><dd><code>4242 4242 4242 4242</code>, any future expiry, any three-digit CVC, any name and postal code.</dd>
+      <dt>Test card (pays, then is disputed)</dt><dd><code>4000 0000 0000 0259</code>, same other details. Walk E uses it; optional walk F needs it.</dd>
+      <dt>An inbox</dt><dd>One address you can open, such as your own Gmail with <code>+card</code> added before the @. The business’s emails (the invoice, the refund) go there. An address ending <code>.local</code> counts as sent and delivers nothing, so do not use one.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins and test cards. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="windows-h">
+    <h2 id="windows-h">The two kinds of window</h2>
+    <ul class="plain">
+      <li><b>Owner window:</b> your ordinary browser window, signed in as the club owner. It is the club’s side: Deals, the deal page, Accounting.</li>
+      <li><b>Private window:</b> a private or incognito window, signed out. It is the business’s side. Keep it open for the whole walk and reload it as the steps say.</li>
+      <li>Steps say which window to use. “Reload” means reload that window’s page.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>These are owed to the building session, not to you.</b> If one of them is not true when you start, stop and tell me; nothing in this list is a box.</p>
+    <ul class="plain">
+      <li><b>The dev server is restarted</b> on the finished code (new files and a new database table came with Part 3b), with the online-payments switch on and a Stripe test key, as in the earlier card walks.</li>
+      <li><b>One Stripe listen window is running</b> (the card-payment messages from the club’s Stripe test account). First sign the Stripe tool in, once, in PowerShell:
+        <pre>C:\tools\stripe\stripe.exe login</pre>
+        It opens the browser. Click <b>Allow access</b> on the <b>test-mode</b> account. (If the next command says “Permission denied” or 403, this sign-in is missing or has expired — run it again.) Then start the listen window:
+        <pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre>
+        Each line it prints should end <code>[200]</code>. The signing secret it shows must be the one in <code>.env.local</code>.</li>
+      <li><b>Dev Club Org is already connected to a Stripe test account</b> with a refund policy written on its Payouts card. That is how the card button is switched on for a club: payouts connected, a refund policy set, and the online-payments switch on. The Payouts card is read in step 1.</li>
+      <li><b>Dev Club Org’s Sponsorships are set up</b> through the product’s own saves: mailing address 250 Lakeshore Road East, Oakville ON L6J 1H8; contact for sponsors Jordan Walker, <code>sponsors@dev-club-org.local</code>; e-transfer to <code>pay@dev-club-org.local</code>; cheques payable to Dev Club Org; due 30 days; <b>registered for GST/HST</b> with the number the paper prints as <b>81234 5678 RT0001</b>; one package <b>Walk card partner</b>, <b>$1,000.00</b>, shown on the home page.</li>
+      <li>The tax in this walk turns HST on only to test the maths (13% for an Ontario address). It is not advice that a club should charge it.</li>
+      <li>Where the test money shows: the Ledger, <code>http://localhost:3000/dev-club-org/admin/accounting/ledger</code>, the club’s <b>General</b> book.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Left out of this walk</h2>
+    <ul class="plain">
+      <li>The invoice, recording and voiding a cheque, and the books for a cheque: walk §562 (Part 3a). Offering a deal by email: Part 2.</li>
+      <li>Switching the card off (the button and the refund route disappear) and the exact money in the books through a refund: proved on dev by a script, not walked by hand.</li>
+      <li>A business that is sitting on the card page when the club withdraws the deal, a refund made in the club’s own Stripe dashboard, and a refund that comes back from the card’s bank.</li>
+      <li>The club’s public home page: the deal has no logo, so there is no strip to see come down.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" id="callsHost" aria-labelledby="calls-h">
+    <h2 id="calls-h">Owner calls (outside the count)</h2>
+    <p class="lead">Each has my recommendation. Pick one, or write your own in the notes. None of these is a pass or a fail.</p>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks and calls)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "stage6-p3b-card-walk-v1";
+  var PAGE = "Board Ready Stage 6 · Part 3b · Paying by card and refunding it";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Pay by card, the club pays the fee",
+  "job": "Dev Club Org · owner window, then a private window",
+  "forText": "The club offers its package as a link. The business opens it, sees two ways to pay (card first), opens the refund policy, and pays by card. The payment writes itself into the deal and the club’s books with nobody typing anything.",
+  "passes": "The page offers the card first and the cheque second, the refund policy opens in place, Stripe asks for $1,130.00, the receipt reads Paid with the card, the deal reads Paid, and the Ledger holds three lines.",
+  "notIn": "The fee the sponsor pays (walk E). Paying an invoice by card (walk D). Refunds (walks B and C).",
+  "who": "Dev Club Org’s owner, then nobody (a private window), then the owner again.",
+  "where": "Admin → Organization → Settings (Payouts card), Sponsorships → Deals, the business’s link, Stripe’s test page, then Accounting → Ledger.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "In the <b>owner window</b> sign in as <code>owner@dev.local</code> and open <code>http://localhost:3000/dev-club-org/admin/org/settings</code>. Find the <b>Payouts</b> card and read it.",
+    "s": "The card reads <b>Taking payments</b> and says families and teams can pay online. A line gives the club’s refund policy in words (for example <b>Refunded in full until Dec 15, then not refunded.</b>). <b>Processing fee on sponsorships</b> reads <b>The club pays it: it comes out of each payment</b>. <b>Stop if the card says Disconnected or Not set up, or is missing.</b>"
+   },
+   {
+    "stop": true,
+    "d": "Open <b>Sponsorships</b> in the left menu, then the <b>Deals</b> tab, and press <b>+ Offer a deal</b>. In <b>Business</b> type <b>Walk Card One</b> and press the line <b>New business “Walk Card One”</b>. In <b>Email</b> type your inbox address. Pick the package <b>Walk card partner</b>, switch <b>Charge HST</b> on, then press <b>Make the link only</b> and, on the deal page, press <b>Copy the link</b>.",
+    "s": "The deal page for Walk Card One opens with the chip <b>Offered</b> and <b>The link was made, not emailed. Copy it and give it to them in person.</b> The button reads <b>Copied</b>. <b>Stop if the package Walk card partner is not in the list.</b>"
+   },
+   {
+    "d": "Open a <b>private window</b> and paste the link into its address bar.",
+    "s": "The business’s page: <b>Walk card partner</b>, <b>Offered to Walk Card One</b>, a <b>Your package</b> card with <b>$1,000.00</b>. Nothing on it mentions Stripe."
+   },
+   {
+    "d": "In the private window fill the form: <b>Contact name</b> Frank Walker; <b>Email</b> your inbox address (it may already be there); <b>Street</b> 41 Harbour Street; <b>Town or city</b> Oakville; <b>Province</b> ON; <b>Postal code</b> L6K 1A1. Leave the rest.",
+    "s": "Under <b>How you’ll pay</b> a table appears with three rows: <b>Walk card partner $1,000.00</b>, <b>HST 13% $130.00</b> and <b>Your invoice $1,130.00</b>."
+   },
+   {
+    "d": "Scroll to the buttons under that table (computer width).",
+    "s": "Two buttons: the card one first, <b>Send and pay $1,130.00 by card</b>, and under it a quieter <b>Send, and pay $1,130.00 by cheque or e-transfer</b>. A small <b>Refund policy</b> link sits beside the card button. There is no note about a processing fee, because the club pays it."
+   },
+   {
+    "d": "Press <b>Refund policy</b>.",
+    "s": "The club’s refund policy opens right there under the button, in the same words as on the Payouts card. The page does not move to another screen."
+   },
+   {
+    "d": "Set the private window’s width to <b>390</b> (the browser’s device toolbar) and look at the same buttons.",
+    "s": "Both buttons are full width and stacked, the card one first, each easy to tap with a thumb. Nothing runs off the side. <b>Refund policy</b> is still beside the card button and easy to tap."
+   },
+   {
+    "d": "Press <b>Send and pay $1,130.00 by card</b>.",
+    "s": "The button reads <b>Opening the secure payment page…</b>, then Stripe’s page opens in the same window, marked as a test, asking for <b>$1,130.00</b> to Dev Club Org."
+   },
+   {
+    "d": "On Stripe’s page pay with <code>4242 4242 4242 4242</code>, any future expiry, any CVC, any name and postal code, and press <b>Pay</b>.",
+    "s": "You land back on the business’s page. It may read <b>Confirming your payment…</b> for a few seconds, then a card reads <b>Paid, thank you</b>, <b>$1,130.00 to Dev Club Org</b>, a line with <b>Visa</b>, the day and time and the invoice number, rows <b>Walk card partner $1,000.00</b>, <b>HST 13% $130.00</b> and <b>Paid $1,130.00</b> (no Processing fee row), and a <b>Download your receipt (PDF)</b> button. <b>If it still says Confirming after a minute, stop and tell me.</b>"
+   },
+   {
+    "d": "In the <b>owner window</b> reload Walk Card One’s deal page.",
+    "s": "The chip reads <b>Paid</b>. The band reads <b>Invoiced $1,130.00</b> (<b>incl. HST $130.00</b>), <b>Paid $1,130.00</b> and <b>Still owing $0.00</b>. A <b>Payments</b> card has one row ending <b>$1,130.00</b> and a small arrow, with the line <b>Recorded by itself when the card payment landed</b>. Nobody pressed Record a payment."
+   },
+   {
+    "d": "Open <b>Accounting</b>, then <b>Ledger</b>, and open the club’s <b>General</b> book on a range that includes today.",
+    "s": "Three lines for Walk Card One: <b>$1,000.00</b> filed under <b>Sponsorship › Club sponsorship</b>, <b>$130.00</b> filed under <b>GST/HST collected</b>, and a cost of <b>$41.05</b> filed under <b>Sponsorship › Payment processing</b> (the card’s fee, which the club pays)."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "A part refund",
+  "job": "Dev Club Org · owner window · the deal page's payment window",
+  "forText": "The club refunds $200.00 of the $1,130.00 to the business’s card. The payment opens as its own window, the refund window asks nothing until the club chooses, the tax share is shown, a credit note and an email follow, and the deal stays Paid.",
+  "passes": "The part refund reads $176.99 plus $23.01 HST, the deal shows a fourth figure Refunded, the business’s page lists the refund and a credit note that opens as a PDF titled Credit note, the invoice lists the refund, and the refund email arrives.",
+  "notIn": "Refunding the rest (walk C). The books through a refund (proved by a script).",
+  "who": "Dev Club Org’s owner, then nobody (the private window).",
+  "where": "Walk Card One’s deal page, then the business’s page and your inbox.",
+  "steps": [
+   {
+    "d": "In the <b>owner window</b> on Walk Card One’s deal page press the row in the <b>Payments</b> card.",
+    "s": "A window titled <b>Walk Card One’s payment</b> with the eyebrow <b>Invoice 2026-00…</b>. Rows: <b>Amount $1,130.00</b> (<b>Of it, HST $130.00</b>), <b>Paid</b> with the day and time, <b>Paid with</b> Visa and 4242, <b>Processing fee $41.05, paid by the club</b> (<b>In the General ledger as Payment processing</b>), a <b>Stripe reference</b> with Copy, and <b>Recorded By itself when the card payment landed</b>. The foot has an outline <b>Refund</b> button and <b>Close</b>. There is no Void."
+   },
+   {
+    "d": "Press <b>Refund</b>.",
+    "s": "A second window, <b>Refund Walk Card One’s payment?</b>, says the $41.05 processing fee the club paid stays a cost: a refund never returns it. Two choices, <b>All of it to the card</b> and <b>Part of it</b>, neither picked. There is no refund button yet and no box about the fee."
+   },
+   {
+    "d": "Pick <b>Part of it</b> and type <b>200.00</b> in the amount.",
+    "s": "The hint under the amount reads <b>$930.00 stays paid. $23.01 of the $200.00 is HST.</b> A <b>Reason</b> box appears, with a hint that the business reads it in the refund email. The button reads <b>Refund $200.00 and email</b>."
+   },
+   {
+    "d": "Type <b>Walk test: part refund</b> as the reason and press <b>Refund $200.00 and email</b>.",
+    "s": "A window says <b>Refunded</b>: <b>$200.00 is on its way to the card.</b>, that your inbox address was emailed, and that it takes 5 to 10 business days to appear on their statement. (If the card company has not confirmed it yet, it says so instead; reload in a minute.)"
+   },
+   {
+    "d": "Close the windows and reload the deal page.",
+    "s": "The chip is still <b>Paid</b>. The band now has a fourth figure, <b>Refunded $200.00</b>, with <b>$200.00 to the card</b> and today’s day. The payment row carries a <b>Refunded</b> chip and the line <b>Refunded $200.00</b> and the day."
+   },
+   {
+    "d": "In the <b>private window</b> reload the business’s page.",
+    "s": "Under the receipt rows a new row reads <b>Refunded</b> with the day and <b>−$200.00</b>, and a button <b>Credit note 2026-00…-C1 (PDF)</b> sits under <b>Download your receipt (PDF)</b>."
+   },
+   {
+    "d": "Press the <b>Credit note</b> button and open the file.",
+    "s": "A one-page paper titled <b>Credit note</b>, <b>No. 2026-00…-C1</b>, <b>For invoice 2026-00…</b>. A row <b>Refund of the sponsorship: Walk card partner $176.99</b> and a row <b>HST 13% refunded $23.01</b>. Figures <b>$200.00 refunded</b>, <b>$23.01 HST refunded</b> and <b>$930.00 paid, after refunds</b>."
+   },
+   {
+    "d": "Press <b>Download your receipt (PDF)</b> and open the file.",
+    "s": "The receipt still shows the payment and now lists the refund of <b>$200.00</b> on it."
+   },
+   {
+    "d": "Open your inbox and find the email from Dev Club Org about the refund (look in spam too).",
+    "s": "It says Dev Club Org refunded part of your sponsorship payment for the invoice, gives your reason (<b>Walk test: part refund</b>), says the credit note is on your sponsorship page, and has a <b>See your sponsorship</b> button."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Refund the rest",
+  "job": "Dev Club Org · owner window, then the private window",
+  "forText": "The club refunds everything that is left. That ends the deal: it reads Withdrawn, the business’s link still shows what happened but offers no way to pay, and nothing more can be refunded.",
+  "passes": "All of it reads $930.00 and warns the deal ends; the deal ends Withdrawn · refunded; the business’s page shows both refunds and both credit notes with no pay button; the payment window has no Refund left.",
+  "notIn": "The club’s public home page (no logo to take down). A second refund the server refuses (proved by a script).",
+  "who": "Dev Club Org’s owner, then nobody (the private window).",
+  "where": "Walk Card One’s payment window, the Deals list, then the business’s page.",
+  "steps": [
+   {
+    "d": "In the <b>owner window</b> open the payment row again, press <b>Refund</b> and pick <b>All of it to the card</b>.",
+    "s": "The lead says <b>$200.00 has already gone back. Up to $930.00 can go back now.</b> Under All of it: <b>$930.00 back</b> and the 5 to 10 business days line, and a note <b>This ends the deal.</b> It says the logo comes down and the place is free for another sponsor. The button reads <b>Refund, end the deal and email</b>."
+   },
+   {
+    "d": "Type <b>Walk test: refund the rest</b> as the reason and press <b>Refund, end the deal and email</b>.",
+    "s": "A window says <b>Refunded</b>: <b>$930.00 is on its way to the card.</b> and <b>The deal has ended and its place is free.</b>"
+   },
+   {
+    "d": "Close the windows, open the <b>Deals</b> tab (open its <b>Withdrawn</b> fold if the deal is not in the main list) and read Walk Card One’s row. Then open the deal.",
+    "s": "In the list the row reads <b>Withdrawn</b> with the day and <b>· refunded</b>. On the deal page the chip reads <b>Withdrawn</b> and the callout reads <b>Refunded in full and withdrawn</b> with the day, your name and the reason <b>Walk test: refund the rest</b>. The band’s fourth figure now reads <b>Refunded $1,130.00</b>."
+   },
+   {
+    "d": "In the <b>private window</b> reload the business’s page.",
+    "s": "The page still shows the receipt with <b>two refund rows</b> (<b>−$200.00</b> and <b>−$930.00</b>) and <b>two credit notes</b>, <b>…-C1</b> and <b>…-C2</b>, that download. There is no <b>Send and pay</b> button, no <b>Pay by card</b> button and no <b>How to pay</b> block."
+   },
+   {
+    "d": "In the owner window open the payment row once more.",
+    "s": "Two refund blocks, each with a <b>Refunded</b> chip, <b>Business emailed</b> with your inbox address, and a credit note link (<b>…-C1 ↗</b>, <b>…-C2 ↗</b>). The foot has <b>Close</b> and no <b>Refund</b> button: nothing is left to give back."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "The invoice route",
+  "job": "Dev Club Org · owner window and a private window",
+  "forText": "A business starts to pay by card and leaves. The deal shows it, the club presses Send the invoice, and the business can still pay by card, now at the invoice’s total with no fee line. One cheque is recorded first, so the card pays only the rest.",
+  "passes": "Form received shows the “started to pay by card” callout; Send the invoice issues and emails the invoice, and is not offered again; the business’s page offers Pay $630.00 by card; the receipt has no Processing fee row; a cheque payment can be voided and a card payment cannot.",
+  "notIn": "Recording a cheque in detail, the invoice paper and voiding (walk §562). A refund on this deal (owner call g).",
+  "who": "Dev Club Org’s owner and the private window.",
+  "where": "Sponsorships → Deals, Walk Card Two’s deal page, the business’s page.",
+  "steps": [
+   {
+    "d": "In the <b>owner window</b> open <b>Sponsorships</b> → <b>Deals</b> and press <b>+ Offer a deal</b>. Business: new business <b>Walk Card Two</b>; Email: your inbox; Package <b>Walk card partner</b>; <b>Charge HST</b> on. Press <b>Make the link only</b>, then <b>Copy the link</b>.",
+    "s": "Walk Card Two’s deal page opens with the chip <b>Offered</b> and the button reads <b>Copied</b>."
+   },
+   {
+    "d": "In the <b>private window</b> (set it back to computer width) paste the link and fill the form as before: Frank Walker, your inbox address, 41 Harbour Street, Oakville, ON, L6K 1A1.",
+    "s": "The same table: <b>$1,000.00</b>, <b>HST 13% $130.00</b>, <b>Your invoice $1,130.00</b>, and the two buttons, <b>Send and pay $1,130.00 by card</b> first."
+   },
+   {
+    "d": "Press <b>Send and pay $1,130.00 by card</b>. When Stripe’s page opens, close that browser tab without paying.",
+    "s": "Stripe’s page showed <b>$1,130.00</b> to Dev Club Org. Closing the tab ends it there; nothing is charged."
+   },
+   {
+    "d": "In the <b>owner window</b> reload Walk Card Two’s deal page.",
+    "s": "The chip reads <b>Form received</b>. The callout reads <b>Walk Card Two sent their details and started to pay by card, but didn’t finish.</b> with a green <b>Send the invoice</b> button."
+   },
+   {
+    "d": "Press <b>Send the invoice</b>.",
+    "s": "A question window, <b>Send Walk Card Two’s invoice?</b>, says the invoice is issued now, with its number, and emailed with how to pay by cheque or e-transfer, and that their link still lets them pay by card."
+   },
+   {
+    "d": "Press <b>Send the invoice</b> in the window.",
+    "s": "A notice <b>Invoice sent to</b> your inbox address. The chip reads <b>Invoiced</b>, the callout reads <b>Waiting for payment</b> with an invoice number and total <b>$1,130.00</b>, and there is <b>no Send the invoice button</b> any more. An email with the invoice also arrives in your inbox."
+   },
+   {
+    "d": "Press the green <b>Record a payment</b>. Type <b>500.00</b> in <b>Amount received</b>, choose <b>Cheque</b> in <b>How it was paid</b>, type <b>7001</b> in <b>Reference</b> and press <b>Record payment</b>.",
+    "s": "A notice <b>Payment recorded.</b> The chip is still <b>Invoiced</b>; the band reads <b>Paid $500.00</b> and <b>Still owing $630.00</b>."
+   },
+   {
+    "d": "In the <b>private window</b> reload the business’s page.",
+    "s": "The invoice card reads <b>Invoice 2026-00… · $1,130.00</b> and <b>$500.00 received · $630.00 still owing</b>. Under <b>Download the invoice (PDF)</b> a button reads <b>Pay $630.00 by card</b> with <b>Or pay by cheque or e-transfer, as below.</b> under it."
+   },
+   {
+    "d": "Press <b>Pay $630.00 by card</b>, pay with <code>4242 4242 4242 4242</code> on Stripe’s page and press <b>Pay</b>.",
+    "s": "Stripe asked for exactly <b>$630.00</b> with no fee line. You land back on the page, and it reads <b>Paid, thank you</b>, <b>$1,130.00 to Dev Club Org</b>, rows <b>Walk card partner $1,000.00</b>, <b>HST 13% $130.00</b> and <b>Paid $1,130.00</b>, and <b>no Processing fee row</b>."
+   },
+   {
+    "d": "In the <b>owner window</b> reload the deal page. Press the <b>cheque</b> row in the Payments card, read its window, and close it. Then press the <b>card</b> row and read its window.",
+    "s": "The cheque’s window has an outline <b>Void</b> button and no Refund. The card’s window has an outline <b>Refund</b> button and <b>no Void</b>."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "The sponsor pays the fee",
+  "job": "Dev Club Org · Payouts card, then the owner window and a private window",
+  "forText": "The club chooses that the sponsor pays the card’s processing fee. The business sees the larger card total and a note, the receipt gets a Processing fee row, and the books get four lines instead of three. At the end the choice is put back.",
+  "passes": "The card button reads $1,176.39 with its fee note while the cheque button stays $1,130.00; Stripe asks for $1,176.39; the receipt shows the fee and the larger HST; the Ledger holds four lines; the club’s choice is put back.",
+  "notIn": "Whether the club should tax a passed-on fee (owner call a). A refund on this deal (the fee never comes back).",
+  "who": "Dev Club Org’s owner, then nobody (the private window).",
+  "where": "Payouts card, Sponsorships → Deals, Walk Card Three’s deal and link, Accounting → Ledger.",
+  "steps": [
+   {
+    "d": "In the <b>owner window</b> open <code>http://localhost:3000/dev-club-org/admin/org/settings</code>, press the Payouts card’s pencil and pick <b>The sponsor pays it</b> under <b>Processing fee on sponsorships</b>.",
+    "s": "A <b>Saved</b> pill. The registration fee row above it is unchanged."
+   },
+   {
+    "d": "Open <b>Sponsorships</b> → <b>Deals</b> and press <b>+ Offer a deal</b>. Business: new business <b>Walk Card Three</b>; Email: your inbox; Package <b>Walk card partner</b>; <b>Charge HST</b> on. Press <b>Make the link only</b>, then <b>Copy the link</b>.",
+    "s": "Walk Card Three’s deal page opens with the chip <b>Offered</b> and the button reads <b>Copied</b>."
+   },
+   {
+    "d": "In the <b>private window</b> paste the link and fill the form as before: Frank Walker, your inbox address, 41 Harbour Street, Oakville, ON, L6K 1A1.",
+    "s": "The card button reads <b>Send and pay $1,176.39 by card</b>, and under it a note <b>Includes a $41.05 card processing fee and $5.34 HST on it.</b> The cheque button still reads <b>Send, and pay $1,130.00 by cheque or e-transfer</b>."
+   },
+   {
+    "d": "Press <b>Send and pay $1,176.39 by card</b>.",
+    "s": "Stripe’s page opens asking for <b>$1,176.39</b> to Dev Club Org."
+   },
+   {
+    "d": "Pay with <code>4000 0000 0000 0259</code> (any future expiry, any CVC) and press <b>Pay</b>. This card pays like any other; Stripe disputes it a minute later, which walk F uses.",
+    "s": "You land back on the page and it reads <b>Paid, thank you</b> and <b>$1,176.39 to Dev Club Org</b>, with rows <b>Walk card partner $1,000.00</b>, <b>Processing fee $41.05</b>, <b>HST 13% $135.34</b> and <b>Paid $1,176.39</b>."
+   },
+   {
+    "d": "Press <b>Download your receipt (PDF)</b> and open the file.",
+    "s": "The paper shows the same figures, with a <b>Processing fee</b> row of <b>$41.05</b>, <b>HST 13%</b> of <b>$135.34</b> and <b>$1,176.39</b> paid."
+   },
+   {
+    "d": "In the <b>owner window</b> open <b>Accounting</b> → <b>Ledger</b>, the club’s <b>General</b> book on a range that includes today, and look for Walk Card Three.",
+    "s": "Four lines: <b>$1,000.00</b> under <b>Sponsorship › Club sponsorship</b>, <b>$41.05</b> as income for the processing fee, <b>$135.34</b> under <b>GST/HST collected</b>, and a <b>$41.05</b> cost under <b>Sponsorship › Payment processing</b>."
+   },
+   {
+    "d": "Put it back: open the Payouts card’s pencil and pick <b>The club pays it</b> under <b>Processing fee on sponsorships</b>.",
+    "s": "A <b>Saved</b> pill. The row reads <b>The club pays it: it comes out of each payment</b> again."
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "A disputed card (optional)",
+  "job": "Dev Club Org · owner window · Walk Card Three’s payment",
+  "forText": "Walk E paid with a card that Stripe disputes soon after. While the card’s bank is disputing the payment, the club cannot refund it from here. Skip this walk if you like; nothing later needs it.",
+  "passes": "Once the dispute has landed, the refund is refused with the sentence below and the deal stays Paid.",
+  "notIn": "What the club does about the dispute in Stripe, and a notice in the product about it (owner call b).",
+  "who": "Dev Club Org’s owner.",
+  "where": "The Stripe listen window, then Walk Card Three’s payment window.",
+  "steps": [
+   {
+    "d": "Look at the Stripe listen window. Wait up to two minutes after the walk E payment for a line <code>charge.dispute.created</code>.",
+    "s": "A line <code>charge.dispute.created</code> followed by <code>[200] POST …/api/payments/connect-webhook</code>. <b>Do not go on until you see it.</b> If you refund before the dispute lands, the refund simply goes through."
+   },
+   {
+    "d": "In the <b>owner window</b> open Walk Card Three’s deal, press its payment row, press <b>Refund</b>, pick <b>All of it to the card</b> and type <b>Walk test: dispute</b> as the reason.",
+    "s": "The refund window as in walk C, ready to press."
+   },
+   {
+    "d": "Press the refund button.",
+    "s": "A red sentence in the window: <b>The sponsor disputed this payment with their card company, so it can’t be refunded here. Answer the dispute in Stripe.</b> Close the windows: the chip is still <b>Paid</b> and nothing was refunded."
+   }
+  ]
+ },
+ {
+  "id": "G",
+  "title": "Help",
+  "job": "Dev Club Org · owner window · the help pages",
+  "forText": "The Sponsorships help now explains the card, the payment’s window, refunds and Send the invoice.",
+  "passes": "All five new topics are in the Sponsorships help and open.",
+  "notIn": "Reading every sentence of them.",
+  "who": "Dev Club Org’s owner.",
+  "where": "<code>http://localhost:3000/dev-club-org/admin/help/org#club-sponsorships</code>",
+  "steps": [
+   {
+    "d": "Open the help address above (or Help in the menu, then the organization guide, then Sponsorships) and find the five topics by name.",
+    "s": "<b>What the business sees: paying by card or by cheque</b>, <b>A payment’s own window</b>, <b>Refunding a card payment</b>, <b>When a refund can’t go ahead, or money isn’t on its deal</b> and <b>Form received: Send the invoice</b> are each listed and each opens."
+   }
+  ]
+ }
+];
+  var CALLS = [
+   { id: "a", q: "Keep taxing the processing fee passed on to the sponsor",
+     why: "When the sponsor pays the fee, the club charges GST/HST on it ($5.34 on $41.05), and the club’s books show the fee as income and as a cost. /accounting (Nov 23) recommends yes, and that the Payouts card’s hint says so.",
+     opts: [["keep", "Keep taxing it and say so in the Payouts hint (recommended)"], ["notax", "Do not tax it"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "b", q: "A sponsor’s card dispute",
+     why: "Today a dispute is answered in Stripe and the deal does not change (the refund is already refused while the card is disputed). /accounting advises building a notice and a books reversal before launch.",
+     opts: [["build", "Build a notice and the books reversal first (recommended)"], ["ship", "Ship as it is, with the Terms saying it is answered in Stripe"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "c", q: "The Payments Terms for sponsorship cards",
+     why: "A new Terms version covering sponsorship cards is drafted. It should be published before the first production club connects.",
+     opts: [["publish", "Publish it before the first production club connects (recommended)"], ["later", "Later"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "d", q: "How long a refund takes to appear",
+     why: "The screens and the email say “It takes 5 to 10 business days to appear.” That is a promise about a card company. I recommend: “can take 5 to 10 business days, depending on the card company.”",
+     opts: [["soften", "Soften it (recommended)"], ["keep", "Keep the flat sentence"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "e", q: "Stripe’s refund reference in the business’s email",
+     why: "The business’s refund email carries Stripe’s code that starts re_. It means nothing to a business. I recommend dropping it from that email (the club still sees it in the payment’s window).",
+     opts: [["drop", "Drop it from the email (recommended)"], ["keep", "Keep it"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "f", q: "Notices that never clear",
+     why: "A refund made in the club’s own Stripe dashboard, and a payment “not recorded” on its deal, each raise a notice that stays until the money is recorded in the Ledger and nothing tells the product so. I recommend an owner-ruled “I’ve recorded it” action.",
+     opts: [["add", "Add the action (recommended)"], ["later", "Later"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "g", q: "A refund of a card payment on a deal that also holds a cheque",
+     why: "The deal stays Paid while money is owing again. Fixing it needs a database change. I recommend fixing it before a production club uses cards.",
+     opts: [["fix", "Fix it before production (recommended)"], ["later", "Later, when a club hits it"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "h", q: "A refund stuck as “on its way” after a crash",
+     why: "If the server stops between asking Stripe for a refund and booking it, the refund sits as on its way. A retry sweep would settle it. I recommend building the sweep.",
+     opts: [["sweep", "Build the retry sweep (recommended)"], ["later", "Later"], ["other", "Something else (say what, in the notes)"]] },
+   { id: "i", q: "The bank check and the Payouts tab do not know sponsor payments",
+     why: "They show a sponsorship card payment as “House league” and keep it “on its way” for 30 days. I recommend one item in the plan, not a fix inside this part.",
+     opts: [["plan", "A plan item, separate from this part (recommended)"], ["now", "Fix it in this part"], ["other", "Something else (say what, in the notes)"]] }
+  ];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  // The owner calls sit in their own section, outside the step count; they are drawn once.
+  function renderCalls() {
+    var box = document.getElementById("callsHost");
+    CALLS.forEach(function (c) {
+      var card = el("div", "card"); card.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); card.appendChild(el("p", null, c.why));
+      var o = el("div", "opts");
+      c.opts.forEach(function (op) {
+        var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "call-" + c.id; r.checked = state.choice[c.id] === op[0];
+        r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+        lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+      });
+      card.appendChild(o); box.appendChild(card);
+    });
+    var lab = el("label", null, "<h3>Notes on the calls</h3>"); lab.setAttribute("for", "notes-calls");
+    box.appendChild(lab);
+    var ta = el("textarea"); ta.id = "notes-calls"; ta.value = state.notes.calls || "";
+    ta.placeholder = "Anything you want to say about a call";
+    ta.addEventListener("input", function () { state.notes.calls = ta.value; save(); refresh(); });
+    box.appendChild(ta);
+  }
+
+  function callsSummary() {
+    var lines = ["Owner calls (outside the count)"];
+    CALLS.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes.calls || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).concat(["", callsSummary()]).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    document.getElementById("callsHost").querySelectorAll(".card, label, textarea").forEach(function (n) { n.remove(); });
+    renderCalls(); render();
+  });
+  renderCalls();
+  render();
+})();
+</script>

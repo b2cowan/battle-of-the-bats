@@ -8,6 +8,73 @@
 
 ---
 
+### 2026-11-24 — The window to take your data when a club leaves is 90 days, one number for a lapsed plan and a closed account (Decided)
+**Status:** **Decided** (owner, 2026-11-24, in the Milton Bats deck review: *"lets go with 90"*, with `/legal` and `/strategy` asked to opine).
+**Decision:** A club that closes its account has **90 days** to take everything with it, unless it asks us to delete sooner; then it
+is deleted. The same 90 days the published Terms (§9) and Data Terms (§11) already keep a club's information after a plan ends. The
+deck card and the public roadmap drawing now read "90 days to take everything with you". A Premium Coaches Portal keeps its 365
+days (Terms §9); this decision is about a club.
+**Rationale:** One number a board can compare across the deck and the Terms without finding a contradiction, and the same number
+for both ways a club can leave. `/legal` (2026-11-24 note in `MILTON_PRESENTATION_SECURITY_BRIEF_REVIEW.md`): consistent with the
+published documents; still a Q1 2027 commitment, not a present fact (no closure step and no automatic deletion exist today).
+Commercially 90 costs thirty more days of storing a leaving club's data, which is negligible, and it gives a club that closes at
+season's end time to settle money and pull records before deleting. The cost of the shorter 60 was a second retention number to
+explain. The one privacy argument for the shorter window is covered by "unless you ask us to delete it sooner".
+**Affects:** Q1 2027 closure and export build; the Terms and Data Terms version that carries the commitment; the public roadmap
+drawing; the Milton prep page; the Milton deck (done).
+**Handoff:**
+HANDOFF → /plan
+- Q1 2027 closure build: a closure step, the 90-day window, automatic deletion at its end (Terms §9 says "may delete"; the commitment
+  says "is deleted"), the owner's download kept working during the window (Terms §9 says download "before your plan ends"), and a
+  written request pending at day 90 holding the deletion until the 30-day copy is delivered.
+HANDOFF → /legal
+- The Q1 Terms version: the exceptions (our own tax records, the record of what the owners agreed to, the record of the deletion,
+  backups gone within 7 days) beside the 90 days, and the changed "download before your plan ends" sentence.
+HANDOFF → /marketing
+- Milton prep page: rows that still say 60 days (the Security tab's owner-call row and the commitments table).
+**Open owner calls (not ruled; recommendations only):**
+1. Does the Q1 "take all of it" download include uploaded documents? Recommended **yes**: uploaded files have no backup, so a
+   deleted file cannot be restored, and "all of it" is not true otherwise. If no, the words "with its uploaded documents" come off
+   the card and the drawing first.
+2. Milton early-access terms, if any are offered. Recommended: no term longer than a plan's own billing period, no minimum
+   commitment, and any price or term offered logged here as its own decision before it is put in writing. "No long contracts" is
+   true today of every plan on sale; it stops being true the day a multi-year commitment or a commitment-for-discount is offered.
+   No pricing or packaging guard is needed beyond that.
+**Supersedes:** the 2026-11-16 ruling (owner: *"I agree with 60 days"*, recorded in `PRODUCT_ROADMAP.md`, "Export window on closure:
+60 days"). The 60 was never a separate entry in this log.
+
+### 2026-11-23 — Online payments switch on with "Families and teams pay it" as the default; the surcharge question is an accepted risk, not a reason to flip it (Decided)
+**Status:** **Decided** (owner, 2026-11-23 evening, Stripe Connect live-setup session: *"for who pays the processing fee go
+with your recommendation"*, the recommendation being that the families-pay default stays; reconfirmed 2026-11-24 when the
+owner asked for it to be logged). Reaffirms "2026-10-25 — Who pays the processing fee is the club's choice" for the live
+switch-on; supersedes nothing.
+**Decision:** On production, a club taking online payments (families' registrations, teams' entry fees) starts on
+**"Families and teams pay it"** (Tournament Plus: "Teams pay it"): our processing fee is added to what the payer owes and
+shown before paying. The club can pick **"The club pays it"** in "Before you set up payouts" or change it later; a change
+applies to payments started from then on. The sponsorship card fee keeps its own separate default ("The club pays it",
+2026-11-22). No price, rate, plan, gate or code change: the product already ships this default.
+**What was declined:** the legal topic `docs/agents/legal/CARD_SURCHARGE_PAYER_FEE.md` (legal index, the passed-on fee vs
+the surcharge rules) recommended asking Stripe in writing whether a passed-on fee is a credit-card surcharge and making
+"The club pays it" the default meanwhile. The owner kept payer-pays and has not asked Stripe.
+**Accepted risk, not resolved:** our card rate is above the 2.4% Canadian surcharge cap, and the fee is higher for a card
+than for a bank debit. If the fee counts as a surcharge, the cap, notice and disclosure rules apply and Québec bans it.
+Under the published Payments Terms that exposure is the club's as merchant of record, per the earlier rulings (2026-10-25,
+2026-11-22). A Québec club cannot connect today (a Québec billing address is refused). Re-open on: a card network, Stripe or
+a regulator raising it; a club asking; the first Québec club.
+**Rationale:** a default the club can switch in one choice keeps the club whole by default, which is the 2026-10-25 reason,
+and the surcharge question is unsettled law the club carries, not a defect in the product. Flipping the default before the
+first club would trade a speculative exposure for a certain cut in every club's takings.
+**Affects:** nothing to build or rewrite. The board's open fee question is closed by this entry; the legal topic's
+recommendation is answered (declined).
+**Handoff:**
+```
+HANDOFF → /legal
+- CARD_SURCHARGE_PAYER_FEE.md + its LEGAL_INDEX row: note the owner kept payer-pays (this entry), the Stripe written ask is
+  not being made, and the re-open triggers above. No document change.
+HANDOFF → the board (OWNER_BRIEF_PROJECTS.json): close the fee-default question on the online-payments line, in the same
+  commit as other work on that line (another session holds uncommitted edits there).
+```
+
 ### 2026-11-23 — The billing webhook's written event list is 20, not 17 (Decided; Stripe checklist call R2)
 **Status:** **Decided** (owner, 2026-11-23, Stripe checklist call R2, answered "Yes": "update the list to 20 events, drop the stale notes and the logo warning, stop accepting the prefix, and route the 17-to-20 correction to the strategy agent"). This entry records only the 17-to-20 correction; the other parts of R2 are code and ops items (see Handoff).
 **Decision:** The target for the **billing webhook endpoint** (`www.fieldlogichq.ca/api/billing/webhook`) is **20 events**: the 17 the 2026-11-06 entry listed (the original seven; the four dispute and refund events; `payment_method.attached` and `.detached`; `invoice.paid`, `.voided`, `.marked_uncollectible`, `.finalized`) **plus the three credit-note events, `credit_note.created`, `.updated` and `.voided`**. The three were left out of the written list although the code already acts on them (GST/HST Stage 3, the tax record on a credit note); the "Drift found" note in `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md` flagged it on 2026-11-17 and the owner added them to both endpoints on 2026-11-07 per the setup guide.

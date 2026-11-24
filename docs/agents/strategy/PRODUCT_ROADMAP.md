@@ -43,29 +43,29 @@ column names, keep one item per row, and change a row's **Status** in the same u
 | Track | Lane | Item | Size | Status | Ruled |
 |---|---|---|---|---|---|
 | Product | What the board asked for | Friend requests in the draft, live | Small | Live | |
-| Product | What the board asked for | Group email to coaches | Small | In progress | |
+| Product | What the board asked for | Group email to coaches | Small | Live | |
 | Product | The Club product | One release of everything built since 5 November | Medium | Live | |
 | Technology | Security | Two-step sign-in, live | Small | Live | |
 | Technology | Security | Access review fixes, live | Small | Live | |
-| Technology | Security | Public Security page | Small | Not started | |
-| Technology | Reliability | Backups documented, first restore rehearsed | Small | Not started | |
+| Technology | Security | Public Security page | Small | Live | |
+| Technology | Reliability | Backups documented, first restore rehearsed | Small | Live | |
 | Technology | Reliability | Uptime monitoring and a public status page | Small | Not started | |
 | Technology | Quality and infrastructure | The whole-product layout check, back in every release | Small | In progress | |
-| Technology | Privacy, data ownership, continuity | Privacy policy and terms published | Small | Built | |
+| Technology | Privacy, data ownership, continuity | Privacy policy and terms published | Small | Live | |
 | Technology | Privacy, data ownership, continuity | Data terms and the supplier list | Small | Not started | |
-| Technology | Privacy, data ownership, continuity | Deleting a club removes its files | Small | Built | |
+| Technology | Privacy, data ownership, continuity | Deleting a club removes its files | Small | Live | |
 
 ### Q1 2027 (planned)
 
 | Track | Lane | Item | Size | Status | Ruled |
 |---|---|---|---|---|---|
 | Product | What the board asked for | Volunteers and their documents | Large | Not started | |
-| Product | What the board asked for | Custom sign-up forms | Large | Not started | |
+| Product | What the board asked for | Custom sign-up forms | Large | Live | |
 | Product | What the board asked for | Club events | Medium | Not started | |
 | Product | The Club product | Club plan on sale | Large | In progress | Yes |
 | Product | The Club product | Club roles walked job by job | Large | Built | |
 | Product | The Club product | Phone layout and wording polish, after launch | Large | Not started | |
-| Product | The Club product | Schedules on several permits | Medium | Built | Yes |
+| Product | The Club product | Schedules on several permits | Medium | Live | Yes |
 | Product | The Club product | Families pay online, switched on | Small | Built | Yes |
 | Product | Switching and growth | Import from a club's current system | Large | Not started | Yes |
 | Technology | Security | Cross-club tests on every change | Medium | Not started | |
@@ -241,7 +241,8 @@ Every ask on the 2026-11-14 review page and every conflict it raised was ruled b
     hidden trap field and a minimum fill time on public forms; the remaining browser protections. Size proposed
     Small (was Medium). The bot challenge becomes a trigger row ("if automated sign-ups appear"), off the board's
     version. Board wording: "public forms are rate-limited and screened for automated sign-ups".
-  - **Export window on closure: 60 days**, then deleted.
+  - **Export window on closure: 60 days**, then deleted. **Superseded 2026-11-24 (owner: "lets go with 90"): 90 days, the
+    same as the Terms keep a club after a plan ends** (`BUSINESS_DECISIONS.md`, 2026-11-24).
 - 2026-11-16 — **Statuses truthed up against production** (no placement changed): friend requests, two-step sign-in and
   the access review fixes are **Live** (release 2026-11-15, production `47cc775b4`), and that release was the "one
   release of everything built since 5 November" (**Live**). Deleting a club removes its files is **Built** (committed

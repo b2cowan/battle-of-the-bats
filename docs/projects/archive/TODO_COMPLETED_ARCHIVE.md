@@ -16,6 +16,8 @@ Everything below was moved out of TODO.md verbatim on 2026-10-26. Add new comple
 
 - [x] **Stripe clean-up, and Stripe from our admin** — closed by the owner 2026-11-22 after the live end-to-end test (purchase, cancel, End now and refund) and the early-end settings were confirmed · plan [STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md](../active/STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md) (stays in active/ for its after-launch stages)
 
+- [x] **Our own GST/HST and the terms** — closed by the owner 2026-11-22 after production walk §557 passed 9/9 · plan [GST_HST_COLLECTION_PLAN.md](../active/GST_HST_COLLECTION_PLAN.md) (stays in active/ for its standing items)
+
 - [x] 🆕 **Coach Overview, lighter on game day** — club proposals + arrival card become rows in the bottom list, game card's chips join the time line and the duplicate "Lineup not started" goes (owner approved drawings A1–A9 2026-11-14; reviewed + committed `960394e86` 2026-11-14; owner browser check passed 2026-11-14) (see docs/projects/active/COACH_OVERVIEW_CLUB_PROPOSALS_DRAWINGS.html; rulings in memory/design_decisions.md 2026-11-14)
 
 - [x] 🧾 13c/Finalize: money terms go only to people who can open Money (the late bill, Finalize, Send the changes, the review, the bells), plus hand-back dollars, the bill toggle and the review email's reply line — FOUND by /legal 2026-11-13, RULED 2026-11-13, built `507f4505b` + `39eb59955`, walked PASSED 49/49 2026-11-14 (OWNER_QA_LEDGER §527); Q-A, Q-B, Q-E ruled and built 2026-11-14; closed by the owner 2026-11-14 without a walk of those three (docs/projects/active/LATE_BILL_MONEY_AUDIENCE_PLAN.md)

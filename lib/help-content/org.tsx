@@ -1808,7 +1808,7 @@ const orgHelp: HelpPageContent = {
             <>
               <p>On the League and Club plans, <strong>Payouts</strong> is a card on Settings, after <strong>Your public site</strong> and before <strong>Delete organization</strong>. The owner connects the organization&rsquo;s own Stripe account there, chooses who pays the processing fee (<strong>Families and teams pay it</strong> or <strong>The club pays it</strong>; on Tournament Plus the first reads <strong>Teams pay it</strong>), writes the organization&rsquo;s <strong>Refund policy</strong> (one or two sentences, required: families and teams can read it beside the pay button before they pay, and no pay page opens without one; it can be changed but not left blank), and can <strong>Disconnect payouts</strong>. Payouts can&rsquo;t be set up with a Québec billing address: online payments aren&rsquo;t offered in Québec yet. Once payments are on, the card reads as a short list of rows: <strong>Payouts go to</strong>, <strong>Receipts say</strong>, <strong>Processing fee</strong> (on a club with Sponsorships, <strong>Processing fee on registrations</strong>, with <strong>Processing fee on sponsorships</strong> below it), <strong>Refund policy</strong> and <strong>Payments terms</strong>. The card prints both rates, <em>&hellip; per card payment &middot; &hellip; per bank debit</em>, under the <strong>Processing fee</strong> row (before you connect, as <em>Processing fee: &hellip; per card payment, &hellip; per bank debit</em>), from the current rates; an account that doesn&rsquo;t take bank debit shows the card rate alone. The processing fee covers Stripe&rsquo;s charge and FieldLogicHQ&rsquo;s. <strong>Before you set up payouts</strong> says the same under <em>What it costs</em>, with a worked line for an example fee by card and by bank debit.</p>
               <p>The choice is one setting for the whole organization. It covers teams paying tournament entry fees and families paying house-league registration fees by card, and house-league families see <strong>Pay now</strong> only once payouts are set up. Only the owner connects; a treasurer sees the state as a line on the Accounting Overview and on a season&rsquo;s Money page. Bank debit is offered to families and teams only once Stripe has approved your account for it.</p>
-              <p>A club with <strong>Sponsorships</strong> has a second row, <strong>Processing fee on sponsorships</strong>, and the first is named <strong>Processing fee on registrations</strong>. The sponsorship row has its own choice, <strong>The sponsor pays it</strong> or <strong>The club pays it</strong>, and the club pays it unless you change it. It applies once sponsors can pay by card; a cheque or an e-transfer never carries a fee. Both rows carry a note that card networks limit what a business or organization may add to a card payment (2.4% in Canada, and none in Qu&eacute;bec), that the fee can be more than that, and that choosing to pass it on is your decision and your responsibility.</p>
+              <p>A club with <strong>Sponsorships</strong> has a second row, <strong>Processing fee on sponsorships</strong>, and the first is named <strong>Processing fee on registrations</strong>. The sponsorship row has its own choice, <strong>The sponsor pays it</strong> or <strong>The club pays it</strong>, and the club pays it unless you change it. It applies once sponsors can pay by card; a cheque or an e-transfer never carries a fee. The choice only counts before an invoice exists: on an invoice already issued the club pays the fee, and an invoice never gains a fee line afterwards. A refund to a sponsor&rsquo;s card never includes the processing fee the business paid (see <a href="#club-sponsorships-t-refund">Refunding a card payment</a>). Both rows carry a note that card networks limit what a business or organization may add to a card payment (2.4% in Canada, and none in Qu&eacute;bec), that the fee can be more than that, and that choosing to pass it on is your decision and your responsibility.</p>
             </>
           ),
         },
@@ -2170,7 +2170,7 @@ const orgHelp: HelpPageContent = {
     {
       id: 'club-sponsorships',
       heading: 'Sponsorships — packages and the businesses that back your club',
-      summary: 'The Sponsorships place keeps your packages, your sponsors and where each one shows on your public site, and the invoice details and form you will sell with. Four tabs: Deals, Packages, Sponsors and Setup.',
+      summary: 'The Sponsorships place keeps your packages, your sponsors and where each one shows on your public site, and the invoice details and form you will sell with. It also covers how a business pays, by card or by cheque, and how to refund a card payment. Four tabs: Deals, Packages, Sponsors and Setup.',
       keywords: [
         'sponsorships', 'sponsorship', 'sponsor', 'sponsors', 'deals', 'packages', 'package', 'setup', 'get ready to sell sponsorships',
         'your invoice details', 'invoice details', 'make your first package', 'your sponsorship form', 'sponsorship form',
@@ -2182,8 +2182,12 @@ const orgHelp: HelpPageContent = {
         'do not offer again', 'unsubscribe', 'unsubscribed', 'send the link again', 'make a new link', 'the old link stops working',
         'give them the link in person', 'link only', 'not emailed', 'casl', 'sponsorship email', 'sponsor’s page', 'the business’s page', 'invoice emailed', 'invoice pdf',
         'record a payment', 'part payment', 'void a payment', 'void payment', 'revised invoice', 'paid in full', 'receipt', 'gst/hst collected', 'gst/hst remitted', 'payments', 'still owing', 'general ledger',
+        'card', 'pay by card', 'credit card', 'sponsor pays by card', 'processing fee', 'processing fee on sponsorships', 'the sponsor pays it', 'the club pays it',
+        'refund', 'refund a sponsor', 'part refund', 'partial refund', 'refund part of a payment', 'refunded', 'credit note', 'credit memo', 'withdrawn',
+        'send the invoice', 'form received', 'payment window', 'open a payment', 'void', 'dispute', 'chargeback', 'dashboard refund', 'refund made in stripe',
+        'needs attention', 'card payment not on its deal', 'refund on its way', 'refund reason', 'all of it', 'part of it',
       ],
-      searchText: 'sponsorships place club group sidebar after communications before public site more sheet phone four tabs deals packages sponsors setup get ready to sell sponsorships three steps your invoice details make your first package your sponsorship form package name price before gst/hst for the club a house league division a house league team a tournament how many empty means no limit shows until what’s included your logo on our website switch other items sponsorship document pdf up to 8 mb taken counts open offers so nothing is promised twice full when every place is taken archived never deleted bring it back sponsors one list every business showing not showing shows on home page strip at most 20 a division sponsored by line on that division’s schedule and standings a team shown on the about page only a tournament last day inclusive leaves by itself list holds 100 sponsors show it somewhere else too remove sponsor logo deleted existing sponsors moved over untouched site editor sponsors line door invoice details mailing address registered for gst/hst and number by e-transfer to cheques payable to payment due contact for sponsors owner admins treasurer change read by others the form business details first then your own questions and documents who can open sponsorships manage member access on by default owner admins treasurer off for others registrar league plus club plan offer a deal offering a deal business package shows on amount shows until charge hst gst tax switch make the link only send the offer new business a name and an email they fill in the rest the business’s page its own link no account needed about your business your logo how you’ll pay send and pay by cheque or e-transfer your invoice comes by email with how to pay download the invoice pdf states offered form received invoiced paid delivered withdrawn copy the link email the offer send the link again make a new link the old link stops working withdraw this deal give a reason why you can email them paid us in the last two years asked us about sponsoring in the last six months gave us this address publish this address for business when the day they paid the day they asked kept with the offer ran out give them the link in person mailing address contact email in setup first the email names why they got it the club’s address and an unsubscribe link a note from you do not offer again unsubscribe page stop sponsorship offers invoices and receipts still come family opted out of club email casl consent getting paid record a payment amount received date received how it was paid cheque e-transfer cash card other reference note record payment part payment leaves the rest owing paid when nothing is left owing payments card void payment reason struck through owing again closed fiscal year revised invoice change this deal same number revised date emailed again paid in full receipt the paid invoice is the receipt link no attachment pdf download mailing address contact for sponsors nothing is sent general ledger sponsorship club sponsorship income gst/hst collected each payment carries its share budget vs. actual months the club’s other books and gst/hst gst/hst remitted remittance send the tax to the government cash on hand accountant files the return reportable from the invoice date',
+      searchText: 'sponsorships place club group sidebar after communications before public site more sheet phone four tabs deals packages sponsors setup get ready to sell sponsorships three steps your invoice details make your first package your sponsorship form package name price before gst/hst for the club a house league division a house league team a tournament how many empty means no limit shows until what’s included your logo on our website switch other items sponsorship document pdf up to 8 mb taken counts open offers so nothing is promised twice full when every place is taken archived never deleted bring it back sponsors one list every business showing not showing shows on home page strip at most 20 a division sponsored by line on that division’s schedule and standings a team shown on the about page only a tournament last day inclusive leaves by itself list holds 100 sponsors show it somewhere else too remove sponsor logo deleted existing sponsors moved over untouched site editor sponsors line door invoice details mailing address registered for gst/hst and number by e-transfer to cheques payable to payment due contact for sponsors owner admins treasurer change read by others the form business details first then your own questions and documents who can open sponsorships manage member access on by default owner admins treasurer off for others registrar league plus club plan offer a deal offering a deal business package shows on amount shows until charge hst gst tax switch make the link only send the offer new business a name and an email they fill in the rest the business’s page its own link no account needed about your business your logo how you’ll pay send and pay by cheque or e-transfer your invoice comes by email with how to pay download the invoice pdf states offered form received invoiced paid delivered withdrawn copy the link email the offer send the link again make a new link the old link stops working withdraw this deal give a reason why you can email them paid us in the last two years asked us about sponsoring in the last six months gave us this address publish this address for business when the day they paid the day they asked kept with the offer ran out give them the link in person mailing address contact email in setup first the email names why they got it the club’s address and an unsubscribe link a note from you do not offer again unsubscribe page stop sponsorship offers invoices and receipts still come family opted out of club email casl consent getting paid record a payment amount received date received how it was paid cheque e-transfer cash card other reference note record payment part payment leaves the rest owing paid when nothing is left owing payments card void payment reason struck through owing again closed fiscal year revised invoice change this deal same number revised date emailed again paid in full receipt the paid invoice is the receipt link no attachment pdf download mailing address contact for sponsors nothing is sent general ledger sponsorship club sponsorship income gst/hst collected each payment carries its share budget vs. actual months the club’s other books and gst/hst gst/hst remitted remittance send the tax to the government cash on hand accountant files the return reportable from the invoice date pay by card credit card card payment two buttons send and pay by card send and pay by cheque or e-transfer processing fee on sponsorships payouts card the sponsor pays it the club pays it before an invoice exists pay by card on an invoice already issued never gains a fee line a card payment issues the invoice paid at once payment window open a payment amount how it was paid who recorded it and when stripe reference card reference the gst/hst share refund void refund a card payment all of it part of it a reason is required what is left to refund never includes the processing fee refund on its way booked when the card company confirms refund of everything ends the deal as withdrawn logo comes down refunded fourth figure the business is emailed credit note credit memo 2027-014-c1 pdf anyone who can open sponsorships can refund card payments are never voided only offered while card payments are on dispute chargeback the card’s bank is disputing answer the dispute in stripe first dashboard refund a refund made in your own stripe dashboard is not booked needs attention record it in the ledger send the invoice form received confirm window the invoice is issued now emailed with how to pay by cheque or e-transfer card page still open try again in a few minutes withdrawing a deal closes an open card page a payment the deal can’t take refund it to the card in stripe',
       content: (
         <p><strong>Sponsorships</strong> is the place for the businesses that back your club. It keeps your <strong>packages</strong> (what a business gets, what it costs and how many you have), every <strong>sponsor</strong> and where each one shows on your public site, and the invoice details and form you sell with. It sits in the Club group of the sidebar, after <strong>Communications</strong> and before <strong>Public site</strong>, and on a phone it is a row in the <strong>More</strong> sheet. It has four tabs: <strong>Deals</strong>, <strong>Packages</strong>, <strong>Sponsors</strong> and <strong>Setup</strong>.</p>
       ),
@@ -2272,8 +2276,8 @@ const orgHelp: HelpPageContent = {
                 <li>Press <strong>Send the offer</strong> to email it (see <a href="#club-sponsorships-t-email">Emailing the offer</a>), or <strong>Make the link only</strong> to make the link without sending anything.</li>
               </ol>
               <p><strong>Make the link only</strong> is for a business you have spoken to. Nothing is emailed; the deal reads <strong>Link made, not emailed</strong> and you copy the link and give it to them yourself. A link you hand over in person is not an email, so FieldLogicHQ asks for no reason and no mailing address. If you paste it into your own email or text message, that message is yours to justify: send it only to a business you have a reason to email.</p>
-              <p>The link opens the business&rsquo;s own page on your club&rsquo;s site, with no account: the package, your form (its business details and logo, then your questions) and <strong>How you&rsquo;ll pay</strong>. When the business presses <strong>Send</strong>, the deal moves to <strong>Invoiced</strong> and its page shows the invoice number, the amount, the due date and how to pay by cheque or e-transfer. The invoice is emailed to the business with a link back to that page, where it downloads as a PDF (no attachment: an attachment can get the email filtered).</p>
-              <p>Open a deal for its states (<strong>Offered</strong>, <strong>Form received</strong>, <strong>Invoiced</strong>, <strong>Paid</strong>, <strong>Delivered</strong>, <strong>Withdrawn</strong>), its history and the business&rsquo;s answers. <strong>Copy the link</strong> is there too, and <strong>Withdraw this deal</strong> takes the offer down with a reason that is kept; a paid deal can&rsquo;t be withdrawn.</p>
+              <p>The link opens the business&rsquo;s own page on your club&rsquo;s site, with no account. What the business sees there, and how it pays, is in <a href="#club-sponsorships-t-business-page">What the business sees: paying by card or by cheque</a>.</p>
+              <p>A deal moves through <strong>Offered</strong>, <strong>Form received</strong>, <strong>Invoiced</strong>, <strong>Paid</strong> and <strong>Delivered</strong>, or ends <strong>Withdrawn</strong>. Open a deal for its history and the business&rsquo;s answers. <strong>Copy the link</strong> is there too, and <strong>Withdraw this deal</strong> takes the offer down with a reason that is kept. Withdrawing also closes any card page the business has open. A paid deal can&rsquo;t be withdrawn; refund a card payment, or void a cheque or e-transfer payment, first.</p>
               <HelpNote variant="info" title="A new link replaces the old one">On a deal that is still open, <strong>Send the link again</strong> emails a new link and <strong>Make a new link</strong> makes one without emailing. Either way the old link stops working and shows the business that it has been replaced.</HelpNote>
             </>
           ),
@@ -2309,6 +2313,38 @@ const orgHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'club-sponsorships-t-business-page',
+          title: 'What the business sees: paying by card or by cheque',
+          content: (
+            <>
+              <p>The business&rsquo;s link opens its own page on your club&rsquo;s site, with no account: the package, your form (its business details and logo, then your questions) and <strong>How you&rsquo;ll pay</strong>. What it can press depends on whether your club has card payments on. The owner turns online payments on under <strong>Payouts</strong> in <strong>Organization &rsaquo; Settings</strong>, and card payment isn&rsquo;t offered until they are.</p>
+              <HelpDefs>
+                <HelpDef term="Card payments are off">The page has one <strong>Send</strong> button. Pressing it moves the deal to <strong>Invoiced</strong>, and the page shows the invoice number, the amount, the due date and how to pay by cheque or e-transfer.</HelpDef>
+                <HelpDef term="Card payments are on">The page has two buttons: <strong>Send and pay $X by card</strong>, or <strong>Send and get my invoice</strong>. The invoice button works as above, and the business pays by cheque or e-transfer. The card button opens a secure card page. When the card payment goes through, the invoice is issued at once, already marked paid, and the page shows the receipt.</HelpDef>
+                <HelpDef term="An invoice already issued">The business&rsquo;s link also shows <strong>Pay $X by card</strong>, with the cheque and e-transfer details still below it. The club pays the fee on that payment, and an invoice already issued never gains a fee line.</HelpDef>
+              </HelpDefs>
+              <p>The invoice is emailed to the business with a link back to its page, where it downloads as a PDF (no attachment: an attachment can get the email filtered).</p>
+              <p>Who pays the card&rsquo;s processing fee, before any invoice exists, is your choice on the <strong>Processing fee on sponsorships</strong> row of the <strong>Payouts</strong> card: <strong>The sponsor pays it</strong> or <strong>The club pays it</strong>. The club pays it unless you change it. When the sponsor pays it, the page says the total <strong>includes a card processing fee</strong>, with the GST/HST on it when the deal charges tax. A cheque or e-transfer never carries a fee.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-send-invoice',
+          title: 'Form received: Send the invoice',
+          content: (
+            <>
+              <p>A deal sits at <strong>Form received</strong> when the business sent its details and started to pay by card but didn&rsquo;t finish. If it would rather pay by cheque or e-transfer, you can issue its invoice yourself.</p>
+              <ol>
+                <li>Open the deal that reads <strong>Form received</strong>.</li>
+                <li>Press <strong>Send the invoice</strong>.</li>
+                <li>Confirm in the window. The invoice is issued now, with its number, and emailed with how to pay by cheque or e-transfer.</li>
+              </ol>
+              <p>The business&rsquo;s link still lets it pay by card. A card page that is still open is closed first.</p>
+              <HelpNote variant="info" title="If the business is on the card page right now">The window asks you to try again in a few minutes, and nothing is sent.</HelpNote>
+            </>
+          ),
+        },
+        {
           id: 'club-sponsorships-t-paid',
           title: 'Getting paid: record a payment, void it, and a revised invoice',
           content: (
@@ -2317,17 +2353,78 @@ const orgHelp: HelpPageContent = {
               <ol>
                 <li>Press <strong>Record a payment</strong>.</li>
                 <li>Check <strong>Amount received</strong>. It starts at what is still owing; type less for a part payment.</li>
-                <li>Pick <strong>Date received</strong> (today or earlier) and <strong>How it was paid</strong>. <strong>Cheque</strong> and <strong>E-transfer</strong> are how a business pays you here; <strong>Cash</strong>, <strong>Card</strong> and <strong>Other</strong> are there for money that reached you another way.</li>
+                <li>Pick <strong>Date received</strong> (today or earlier) and <strong>How it was paid</strong>. <strong>Cheque</strong> and <strong>E-transfer</strong> are how a business pays you here; <strong>Cash</strong>, <strong>Card</strong> and <strong>Other</strong> are there for money that reached you another way. A card payment the business makes on its own page records itself; you don&rsquo;t record it.</li>
                 <li>Add a <strong>Reference</strong> (the cheque or e-transfer number) and a <strong>Note</strong> if you like, then press <strong>Record payment</strong>.</li>
               </ol>
               <p>A part payment leaves the rest owing and the deal stays <strong>Invoiced</strong>. When nothing is left owing, the deal is <strong>Paid</strong>.</p>
-              <p>The <strong>Payments</strong> card lists each payment. To correct a wrong one, press <strong>Void</strong>, give a <strong>Reason</strong> and press <strong>Void payment</strong>. The line stays, struck through with the reason, and a paid deal is owing again. A payment in a closed fiscal year can&rsquo;t be voided here.</p>
+              <p>The <strong>Payments</strong> card lists each payment, and each one opens its own window (see <a href="#club-sponsorships-t-payment-window">A payment&rsquo;s own window</a>). To correct a wrong cheque or e-transfer payment, open it, press <strong>Void</strong>, give a <strong>Reason</strong> and press <strong>Void payment</strong>. The line stays, struck through with the reason, and a paid deal is owing again. A payment in a closed fiscal year can&rsquo;t be voided here. A card payment is never voided; it is refunded (see <a href="#club-sponsorships-t-refund">Refunding a card payment</a>).</p>
               <HelpDefs>
-                <HelpDef term="A revised invoice">While no payment stands on an invoiced deal, <strong>Change this deal</strong> can change the amount or the tax. The invoice keeps its number, shows a <strong>revised</strong> date, and is emailed to the business again. Once a payment is recorded the amount and tax can&rsquo;t change; void the payment first.</HelpDef>
+                <HelpDef term="A revised invoice">While no payment stands on an invoiced deal, <strong>Change this deal</strong> can change the amount or the tax. The invoice keeps its number, shows a <strong>revised</strong> date, and is emailed to the business again. Once a payment is recorded the amount and tax can&rsquo;t change; to change them after a cheque or e-transfer payment, void that payment first.</HelpDef>
                 <HelpDef term="The emails">The invoice, a revised invoice and the <strong>Paid in full</strong> receipt each go to the business as an email with a link to its page. Nothing is attached. The paid invoice is the receipt, and the PDF downloads from the business&rsquo;s page and from the invoice number on the deal.</HelpDef>
                 <HelpDef term="If they don’t go">They need your <strong>Mailing address</strong> and a <strong>Contact for sponsors</strong> email under <strong>Invoice details</strong>. Without them nothing is sent, and the link still shows the invoice or receipt.</HelpDef>
               </HelpDefs>
-              <p>Each payment writes two lines on the <strong>General ledger</strong>: the sponsorship under <strong>Sponsorship</strong> &rsaquo; <strong>Club sponsorship</strong> (income), and, when the invoice carried tax, <strong>GST/HST collected</strong>, each payment carrying its share. <strong>GST/HST collected</strong> is not in <strong>Budget vs. Actual</strong>, because it is the club&rsquo;s to pass on. It is cash, so it shows in <strong>Months</strong> on <strong>The club&rsquo;s other books and GST/HST</strong> and Cash still closes on Cash on hand. The tax is counted when the money arrives, and your accountant files the return; GST/HST can be reportable from the invoice date.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-payment-window',
+          title: 'A payment’s own window',
+          content: (
+            <>
+              <p>On a deal, the <strong>Payments</strong> card lists each recorded payment as a row. Press a row to open that payment&rsquo;s own window.</p>
+              <HelpDefs>
+                <HelpDef term="Amount">What was paid, and the GST/HST share of it when the invoice carried tax.</HelpDef>
+                <HelpDef term="How it was paid">Cheque, e-transfer, card or another way.</HelpDef>
+                <HelpDef term="Recorded">Who recorded it and when. A card payment reads <strong>By itself when the card payment landed</strong>.</HelpDef>
+                <HelpDef term="Stripe reference">The card reference, for a card payment, to find it in your Stripe dashboard.</HelpDef>
+              </HelpDefs>
+              <p>The foot of the window has the one thing you can do with that payment: <strong>Refund</strong> for a card payment, or <strong>Void</strong> for a cheque or e-transfer payment. A card payment is never voided, it is refunded. When a refund has a credit note, the window links to it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-refund',
+          title: 'Refunding a card payment',
+          content: (
+            <>
+              <p>When your club has card payments on, you can send a sponsor&rsquo;s card payment back to its card. Anyone who can open Sponsorships can do it, the same people who record and void payments. <strong>Refund</strong> is only offered while card payments are on for the club.</p>
+              <ol>
+                <li>Open the deal, press the card payment, and press <strong>Refund</strong>.</li>
+                <li>Choose <strong>All of it</strong> or <strong>Part of it</strong>. For part of it, type the amount. The window says what is left to refund.</li>
+                <li>Write a <strong>Reason</strong>. It is required either way, and the business reads it in the refund email.</li>
+                <li>Press the button at the foot, such as <strong>Refund $X and email</strong>.</li>
+              </ol>
+              <HelpDefs>
+                <HelpDef term="The processing fee">A refund never includes the processing fee the business paid, nor the tax on that fee.</HelpDef>
+                <HelpDef term="Where it goes">Back to the business&rsquo;s card. It is booked when the card company confirms it; until then it reads <strong>on its way</strong>.</HelpDef>
+                <HelpDef term="Refunding all of it">Refunding everything that was paid ends the deal as <strong>Withdrawn</strong>, and the business&rsquo;s logo comes down and its place is free for another sponsor.</HelpDef>
+                <HelpDef term="On the deal screen">The money band gets a fourth figure, <strong>Refunded</strong>.</HelpDef>
+                <HelpDef term="The business">It is emailed, and its page and the invoice list the refund.</HelpDef>
+                <HelpDef term="Credit note">When the invoice carries GST/HST, each refund also gets a credit note: its own PDF, numbered like <em>2027-014-C1</em>. The business downloads it from its page, and you download it from the payment&rsquo;s window.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-refund-trouble',
+          title: 'When a refund can’t go ahead, or money isn’t on its deal',
+          content: (
+            <>
+              <p>Three cases come back to you in Stripe, and the last two also put a <strong>Needs attention</strong> item on Sponsorships.</p>
+              <HelpDefs>
+                <HelpDef term="The card’s bank is disputing the charge">A refund isn&rsquo;t possible while a charge is in dispute (a chargeback). The window says so. Answer the dispute in Stripe first.</HelpDef>
+                <HelpDef term="You refunded in your own Stripe dashboard">That refund is not booked in FieldLogicHQ. Sponsorships shows <strong>A refund made in Stripe isn&rsquo;t in your books</strong>; record it in the Ledger, and refund from the deal&rsquo;s payment next time.</HelpDef>
+                <HelpDef term="A payment the deal can’t take">If a payment arrives after the deal was withdrawn, or invoiced another way, the money is not recorded. Sponsorships shows <strong>A sponsor&rsquo;s card payment isn&rsquo;t on its deal</strong>; refund it to the card in Stripe.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'club-sponsorships-t-books',
+          title: 'Where a payment lands in your books',
+          content: (
+            <>
+              <p>Each payment writes two lines on the <strong>General ledger</strong>: the sponsorship under <strong>Sponsorship</strong> &rsaquo; <strong>Club sponsorship</strong> (income), and, when the invoice carried tax, <strong>GST/HST collected</strong>, each payment carrying its share. <strong>GST/HST collected</strong> is not in <strong>Budget vs. Actual</strong>, because it is the club&rsquo;s to pass on. It is cash, so it shows in <strong>Months</strong> on <strong>The club&rsquo;s other books and GST/HST</strong> and Cash still closes on Cash on hand. The tax is counted when the money arrives, and your accountant files the return; GST/HST can be reportable from the invoice date. A card payment&rsquo;s processing fee also goes in the <strong>General ledger</strong>, as <strong>Payment processing</strong>.</p>
               <p>When the club sends the tax on to the government, press <strong>Add entry</strong> on the <strong>General ledger</strong>, choose money out and file it under <strong>Admin</strong> &rsaquo; <strong>GST/HST remitted</strong>. It lowers Cash on hand, but it is not spending: it stays out of <strong>Budget vs. Actual</strong> (and never shows as <strong>Off-plan</strong>) and sits on the same <strong>Months</strong> row as the tax collected. It can&rsquo;t go on the budget plan, for the same reason.</p>
             </>
           ),
@@ -2337,6 +2434,53 @@ const orgHelp: HelpPageContent = {
           title: 'The Sponsors line in Public site',
           content: (
             <p>The <strong>Sponsors</strong> line in <strong>Public site</strong>, under <strong>Contacts, documents and sponsors</strong>, is now a door to <strong>Sponsorships</strong>. The sponsor list moved there, with where each one shows, and the sponsors you already had moved over untouched.</p>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-sponsorship-refund-card',
+          question: 'How do I refund a sponsor who paid by card?',
+          answerText: 'Open the deal, press the card payment, and press Refund. Choose All of it or Part of it, write a reason (required either way) and press the button. A refund never includes the processing fee the business paid. It goes back to the business’s card and is booked when the card company confirms it; until then it shows on its way. Refunding everything ends the deal as Withdrawn. The business is emailed, and when the invoice carries GST/HST the refund gets a credit note PDF. A card payment is never voided, it is refunded. Refund is only offered while card payments are on for the club. Part refund, partial refund, credit memo, chargeback, dispute.',
+          keywords: ['refund a sponsor', 'refund card payment', 'part refund', 'partial refund', 'credit note', 'credit memo', 'void a card payment', 'refunded', 'withdrawn', 'payment window'],
+          answer: (
+            <p>Open the deal, press the card payment and press <strong>Refund</strong>. Choose <strong>All of it</strong> or <strong>Part of it</strong>, write a reason and press the button. It goes back to the business&rsquo;s card and never includes the processing fee the business paid. A card payment is never voided; it is refunded. See <a href="#club-sponsorships-t-refund">Refunding a card payment</a>.</p>
+          ),
+        },
+        {
+          id: 'faq-sponsorship-refund-blocked',
+          question: 'Why can’t I refund a sponsor’s card payment, or why isn’t my Stripe refund in the books?',
+          answerText: 'A refund is not possible while the card’s bank is disputing the charge (a dispute or chargeback): answer the dispute in Stripe first. A refund made directly in your own Stripe dashboard is not booked in FieldLogicHQ: Sponsorships shows a Needs attention item asking you to record it in the Ledger. Refund from the deal’s payment next time. Dashboard refund.',
+          keywords: ['dispute', 'chargeback', 'dashboard refund', 'refund made in stripe', 'needs attention', 'record it in the ledger', 'refund not allowed'],
+          answer: (
+            <p>A refund can&rsquo;t go ahead while the card&rsquo;s bank is disputing the charge; answer the dispute in Stripe first. A refund made in your own Stripe dashboard isn&rsquo;t booked here, so Sponsorships shows a <strong>Needs attention</strong> item asking you to record it in the Ledger. See <a href="#club-sponsorships-t-refund-trouble">When a refund can&rsquo;t go ahead</a>.</p>
+          ),
+        },
+        {
+          id: 'faq-sponsorship-card-not-on-deal',
+          question: 'A sponsor paid by card but the payment isn’t on its deal. What now?',
+          answerText: 'If a card payment arrives that the deal can’t take, for example the deal was withdrawn or invoiced another way in the meantime, the money is not recorded and Sponsorships shows a Needs attention item: A sponsor’s card payment isn’t on its deal. Refund it to the card in Stripe.',
+          keywords: ['card payment not on deal', 'payment not recorded', 'needs attention', 'refund in stripe', 'withdrawn deal paid'],
+          answer: (
+            <p>If a payment arrives that the deal can&rsquo;t take, because it was withdrawn or invoiced another way in the meantime, the money isn&rsquo;t recorded. Sponsorships shows a <strong>Needs attention</strong> item; refund it to the card in Stripe.</p>
+          ),
+        },
+        {
+          id: 'faq-sponsorship-form-received',
+          question: 'A deal says Form received. How do I send the invoice?',
+          answerText: 'A deal sits at Form received when the business sent its details and started to pay by card but did not finish. Press Send the invoice on the deal and confirm: the invoice is issued now with its number and emailed with how to pay by cheque or e-transfer, and their link still lets them pay by card. If the business is on the card page right now, try again in a few minutes. Withdrawing a deal also closes any open card page.',
+          keywords: ['form received', 'send the invoice', 'started to pay by card', 'try again in a few minutes', 'card page open'],
+          answer: (
+            <p>Press <strong>Send the invoice</strong> on the deal and confirm. The invoice is issued now and emailed, and the business can still pay by card from its link. See <a href="#club-sponsorships-t-send-invoice">Form received: Send the invoice</a>.</p>
+          ),
+        },
+        {
+          id: 'faq-sponsorship-card-fee',
+          question: 'Who pays the card processing fee on a sponsorship?',
+          answerText: 'Before an invoice exists, it follows your choice on the Processing fee on sponsorships row of the Payouts card in Organization Settings: The sponsor pays it, or The club pays it. The club pays it unless you change it. On an invoice already issued, the club pays the fee and the invoice never gains a fee line. A cheque or e-transfer never carries a fee. Card, credit card, pay by card.',
+          keywords: ['processing fee', 'processing fee on sponsorships', 'the sponsor pays it', 'the club pays it', 'pay by card', 'credit card', 'card fee'],
+          answer: (
+            <p>Before an invoice exists, it follows your choice on the <strong>Processing fee on sponsorships</strong> row of the <strong>Payouts</strong> card: <strong>The sponsor pays it</strong> or <strong>The club pays it</strong>, and the club pays it unless you change it. On an invoice already issued the club pays it, and the invoice never gains a fee line.</p>
           ),
         },
       ],

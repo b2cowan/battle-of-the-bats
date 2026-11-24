@@ -4,8 +4,9 @@
 > **Created:** 2026-11-24 (owner: "log this as a project called Club Website Enhancements")
 > **Branch:** dev
 > **PM brief:** [CLUB_WEBSITE_ENHANCEMENTS_PM_BRIEF.md](CLUB_WEBSITE_ENHANCEMENTS_PM_BRIEF.md)
-> **Nothing is built, drawn or ruled.** The ten ideas are recommendations from one evaluation session. The stage
-> ladder in §6 is PROPOSED, not accepted.
+> **Nothing is built or ruled.** The end state is drawn (Stage 0, 2026-11-24:
+> [CLUB_WEBSITE_STAGE0_DRAWINGS.html](CLUB_WEBSITE_STAGE0_DRAWINGS.html)); its asks wait. The stage ladder in §6 is
+> PROPOSED, not accepted.
 
 ## 1. Goal
 
@@ -142,15 +143,20 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
 - [ ] **Stage 1 — The home's moving part, with Game day as its first tenant (idea 2; F1, F2).** First because it needs
   no new typing from a volunteer, so it proves the frame on real data. The one read of the club's games is built so
   Stage 6 can change how fast it arrives without touching a page.
-- [ ] **Stage 2 — Field status (idea 3; F3).** Second tenant. Waits on the answer to "do games point at real fields"
-  (the real-venues project for tournaments; house league and rep to be read in Stage 0).
+  *(Corrected by Stage 0: Open now stays first, capped at two rows; the games part sits after it, titled "Today" or
+  "Latest results"; house league pages get the 30-second refresh here.)*
+- [ ] **Stage 2 — Field status (idea 3; F3).** Second tenant. *(Corrected by Stage 0: it is today's Rainout widened to
+  a place ("Close a place"), not a third tool; tournament games ride their own Rain delay, so it does NOT wait on the
+  real-venues project. It needs only a count of typed-only games first, dev, counts only.)*
 - [ ] **Stage 3 — The site's face (idea 7; F4).** `/legal` and the consent question first. Before news, so a news post
   is built with its photo from the start.
 - [ ] **Stage 4 — News (idea 4).** Third tenant: the automatic posts and the admin's own.
 - [ ] **Stage 5 — Sponsors that prove themselves (idea 5; F5).** Club surfaces and the report. Sponsors on tournament
   pages stay with the Public tournament pages project; the two drawings are read side by side.
-- [ ] **Stage 6 — Scores that land in a second (idea 9; F6).** After the `/db` follow-up. After Stages 1 and 2, so the
-  motion is applied once to every score surface that exists.
+- [ ] **Stage 6 — Scores that land faster (idea 9; F6).** *(Corrected by Stage 0 Part 1: NOT a wait on `/db` — the
+  old fast path was deleted. It is a choice: a faster check while a game is live, recommended because it adds no
+  exposure, or instant updates over the open games read, only after `/db` says what that read exposes. It can run any
+  time after Stage 1.)* The motion (rows slide when a final lands) is applied once to every score surface that exists.
 - [ ] **Stage 7 — The Big Board (idea 6).** Needs F2, field status, sponsors and the fast score.
 - [ ] **Stage 8 — Trophy case (idea 8).** Independent; placed late only because nothing waits on it.
 - [ ] **Stage 9 — Share kit (idea 10).** Last, so the poster and the social images carry the finished pages.
@@ -175,8 +181,16 @@ the demos follow the product and are curated with `/demos`, never as a build ste
 - [ ] **C2 — House league team pages.** A public games-only page per team is where a team's sponsor would show. On
   2026-11-22 the owner kept a team's sponsor on About only ("there is no public team page").
 - [ ] **C3 — The demo ruling.** Idea 1 puts a club demo ahead of "the demo comes after launch". Recommendation: move
-  it up as Track P; it is the only item that changes a prospect's first minute.
-- [ ] **C4 — The order of the ten.** §5's order is a recommendation.
+  it up as Track P; it is the only item that changes a prospect's first minute. *(Stage 0 split it: **C3a** move it up,
+  yes/no; **C3b** where a prospect's club lives: on production, unlisted and claimed in place (recommended), or on dev
+  with a copy into production at claim.)*
+- [ ] **C4 — The order of the ten.** §5's order is a recommendation; the corrected ladder is on the drawings' Ladder tab.
+- [ ] **Stage 0 shape asks, A1–A11** (on the drawings' Asks tab, option A recommended each time, none ruled): A1 the
+  home's order (fixed: Open now capped at two rows → games → News); A2 one region in two parts; A3 a running tournament
+  as one row; A4 one Close a place act over the Rainout; A5 rep games marked, not moved; A6 typed-place games listed
+  unticked; A7 `/{club}/news` = the club's News page with a door to a live tournament; A8 a player photo only while
+  everyone in it has said yes; A9 the banner stays computer-only (keeps 2026-10-20); A10 "Email me when it opens"
+  built to CASL, no confirmation email; A11 the trophy case holds recorded rows plus rows the club adds, marked.
 
 ## Progress
 
@@ -185,15 +199,97 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   settled"; the session's reading of his answer, the roadmap's Ruled column is left blank until he places the row in
   his own words). Stage 0 kick-off prompt written; the owner is asking Milton three questions in the meeting (in the
   prompt's feedback slot). Nothing drawn, nothing built.
+- 2026-11-24 — **Stage 0 Part 1 done (the walk and the census). Nothing drawn yet; Part 2 next.** Captures at true size
+  (390 and 1280, DPR 1) in `docs/projects/active/club-website-stage0/`: `today/` and `gameday/` = Kestrel Bay on dev
+  (the extras seed run at 09:55 Toronto for a live Fall Classic), `milton-staging/` = Milton's public pages on staging
+  (the notice-up state; the only fixture with sponsors). Script `.probe/club-website-stage0/capture.mjs` (read-only).
+  **States that could not be staged:** a true quiet day (Kestrel's 2026 house league is open until Dec 25; its home is
+  otherwise the quiet day — Teams, House league, a finished tournament, About); a rep team page WITH its public schedule
+  (no team on dev is both "public link" and has games: 2 public-link teams, 0 games; Kestrel's team is not public, and
+  Milton's team pages are broken, below). Part 2 draws those from the shipped component and says so on the page.
+  **What the walk found, in the order it changes the work:**
+  1. *On game day the home does not change.* Kestrel with two games live: the only difference is a green "Live now" chip
+     on the fourth card down. Milton's home is 3,076 px on a phone, and 20 team rows in one list are most of it
+     (Team structure's Stage 0 has not run, so the Teams section is a placeholder frame in Part 2).
+  2. *F2 does not exist publicly, and the nearest thing must not be reused.* `readClubCalendar` (`lib/club-calendar.ts:128`)
+     reads rep, house league and tournament games club-wide, but for staff, with NONE of the publish rules. The public
+     rules live per program: rep = `getPublicTeamSchedule` (`lib/public-team-schedule.ts:29-38`, one team at a time,
+     guard test `club-stage6d-feeds-guard`); house league = season not draft + `schedule_published_at` + unsent changes
+     held back (`lib/league-game-changes-server.ts:143-151`, but standings and the season page repeat it inline);
+     tournaments = status active/completed + division published (`lib/public-games.ts:19-28`, the literal repeated in 6
+     files). Stage 1's read must CALL these, never copy them. A rep team's draft season counting as live
+     (`lib/family-view.ts:233`) is the 2026-09-28 ruling (`lib/season-live.ts`), not a leak: a rep game is public the
+     moment it is typed, if the team is set to "public link". Few are, so rep games will be thin on the home.
+  3. *F3 is closer than the plan assumed, and it collides with something built.* Permits always point at a real place
+     (`org_time_blocks.org_venue_id` NOT NULL); house league and rep games can (pick from the library, or type a name:
+     `lib/league-venue.ts:60-66`); tournament games reach the club's place only through an import link. The rep public
+     page shows the typed copy. **House league already has a Rainout** (`league_rainouts`: a whole day called off,
+     matched on the place NAME) and tournaments a Rain delay by venue. Field status must be drawn as the same act as
+     those, not a third one beside them. A count of typed-only games is owed before Stage 2 (dev, counts only).
+  4. *F6's premise is gone.* The live bracket's faster path (`LogicSyncBracket`) was deleted and a test stops it coming
+     back (`tests/unit/public-tournament-stage4-guard.test.ts:151`). Pages poll every 30 seconds, pausing when the tab
+     is hidden; house league pages do not refresh at all. The open read is still there (`games_anon_read USING true`,
+     27 columns granted, DATA_DICTIONARY.md:1194; line 1195 still names the deleted reader). Stage 6 is a choice
+     (faster polling, which adds no exposure, or a realtime path that leans on the open read), not a wait on `/db`.
+  5. *F7: "claim it" cannot work from today's seed.* Four guards hold it, not one: dev host only, the config slug, a
+     marker on the organization, a dry-run (`scripts/seed-prospect-demo.mjs:54-59,84-88,135-138`). Staging reads the dev
+     database, so a prospect's world lives on dev and a real sign-up happens on production: no collision, and no way to
+     claim. Track P is a copy-into-production step or a prospect world on production; that is C3's real shape.
+  6. *F4 is empty:* no photo or media consent anywhere, no team photo, and the phone banner is hidden by CSS
+     (`ClubSiteHome.module.css:9-11`). *F5:* sponsors show in three places (home strip, About, "Sponsored by" on house
+     league schedule and standings); none on rep, tryout, tournament or share images; nothing is counted.
+  7. *◦ items re-checked:* calendar subscribe TRUE (public-link teams only); tournament demo has no sponsors/news TRUE;
+     coach demo not public TRUE; Clubs page never pitches the site PARTLY (one passing line); documents are links and
+     contacts role + email TRUE; QR only in the staff kit and rules PDF TRUE, but club share-preview images DO exist
+     (home, team, tryout); no house league public team page TRUE (the `/league/.../team/` page is the coach's, signed in);
+     BRAND_STRATEGY and PRODUCT_ROADMAP still read as if Club is not on sale TRUE; `lib/club-shortcut.ts:14-15` stale TRUE.
+  8. *Notice:* `org_site_notices` has a posted and an end time, no start (shows the moment it is posted).
+- 2026-11-24 — **Stage 0 Part 2 + Part 3 done: the end state is published, the asks wait.** Drawings:
+  [CLUB_WEBSITE_STAGE0_DRAWINGS.html](CLUB_WEBSITE_STAGE0_DRAWINGS.html), published as
+  https://claude.ai/artifact/QuKPkzWBcLFLxgreaLVzvB (15 tabs: walk, home in five states + computer, rep team page,
+  house league, news, sponsors, trophy case, Big Board, share kit, admin doors, Track P, Teams placeholders,
+  foundations, ladder, 16 asks with a paste-back). New capture: Milton U15 Rep Purple on staging
+  (`milton-staging/teams__u15-rep-purple.*.png`); its schedule is `families` with 0 games (dev, counts only), so the
+  page has no Schedule section and the frame draws it from `RepTeamPublicSchedule`. The broken `u15-rep%20purple`
+  captures were removed. **Milton's feedback slot was still empty at publish;** the asks tab carries the prompt's line.
+  `/ux`, `/design`, `/legal` (three items) and `/marketing` (one words pass) ran before the owner saw it; what changed:
+  1. *The home's order is FIXED* (A1 recommendation changed after `/ux`, from "Today lifts above Open now on game
+     days"): notice slot → Open now capped at two rows + "N more" → the games part ("Today" / "Latest results") →
+     News → Teams…; a dashed 844 px line on every phone frame shows the first live game still in the first screen
+     with four things open.
+  2. *Field status = "Close a place"*: today's Rainout window widened to a place, with Until (the notice's Ends
+     choices), Reopen, a result line; house league postponed/cancelled as built, rep games MARKED for the coach,
+     tournament games handed to the Rain delay, typed-place games listed unticked with "link both". The strip rides
+     the notice slot; no closure news post while it is up.
+  3. *Words (`/marketing`)*: "This week" → "News"; "Lions Park closed · waits for a new date" everywhere;
+     "{Division} has N spots left" (never "nearly full"); "Registration opens {date}" only from a typed date; no
+     pills under a heading that already says it (`PublicGameRow` rule); sponsor report "Page opens · Clicked ·
+     Counting since"; "Close a place". Settled for the drawings; each stage still runs its own `/marketing` pass (§10).
+  4. *`/design`*: bands are rows inside one list; Postponed is the shipped pill (no amber edge); type scale 12–24;
+     60 px link rows; computer one-line game row; the Big Board named as an exception (club fill as ground, white
+     cards, ×2 scale); the phone banner made an ask (A9) because it reverses 2026-10-20.
+  5. *`/legal`*: team photo consent belongs to the people IN the photo (roster kept at save, checked every time the
+     page is served, a missing answer = no, withdrawal hides at once); news photos show no recognizable player; no
+     player photo in posters, share images or previews. Sponsor counts: no consent needed if nothing about a visitor
+     is kept (no IP, no hashed id, apart from hosting logs, no analytics vendor) + one privacy-policy sentence.
+     "Email me when it opens" is a CASL commercial message sent by the CLUB: name + mailing address + withdrawal in
+     the consent sentence, an unsubscribe even for one email, records 3 years. Track P: visible "Prepared by
+     FieldLogicHQ for {club}. Not their site yet.", noindex, their own published logo only, fictional sponsors.
+  Nothing built, nothing ruled, nothing committed.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
-- [ ] Do house league and rep team games point at a real field record, or a typed name?
-- [ ] Which rep team schedules are public today, and how does the home learn that without leaking a private one?
-- [ ] What does a club with nothing open and no games see on the home today, on a phone?
-- [ ] Re-check every ◦ item in §2 that the stage being drawn leans on.
-- [ ] Is the prospect seed's allow-list the only thing holding it to two clubs, and what does it write that a real
-  club's sign-up would collide with?
+Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
+- [x] Do house league and rep team games point at a real field record, or a typed name? **Either:** a picked place is a
+  real link; a typed name is allowed by design in both. Permits always link. See Progress item 3.
+- [x] Which rep team schedules are public today, and how does the home learn that without leaking a private one? **Only
+  "public link" teams**, decided in one helper per team; the home must call it (and the house league and tournament
+  rules), never the staff calendar read. Item 2.
+- [x] What does a club with nothing open and no games see on the home today, on a phone? Teams, House league (a "past
+  seasons" door if none is live), Tournaments (finished in the last 30 days), About, sponsors. Item 1; Kestrel `today/`.
+- [x] Re-check every ◦ item in §2 that the stage being drawn leans on. Item 7.
+- [x] Is the prospect seed's allow-list the only thing holding it to two clubs, and what does it write that a real
+  club's sign-up would collide with? **No, four guards; nothing collides, because it runs on dev only.** Item 5.
 
 ## 9. Findings routed, not acted on
 
@@ -202,6 +298,24 @@ the demos follow the product and are curated with `/demos`, never as a build ste
 - [ ] Stale records met on the way: `BRAND_STRATEGY.md` and `PRODUCT_ROADMAP.md` still read as if Club is not on sale ◦;
   `lib/club-shortcut.ts:15` still says `/teams` forwards "until Stage 4b" though the club Teams page exists ◦.
 - [ ] IDEAS_BACKLOG "Public Site Offering Evaluation" now points here.
+- [x] **Milton's rep team pages were all "not found" on staging (found 2026-11-24).** `scripts/lib/prospect-demo-rep.mjs:54`
+  built the web address with `/s+/g` where it meant `/\s+/g`, so "U11 Select Purple" became `u11--elect purple`,
+  spaces included. **Fixed and re-seeded 2026-11-24 on the owner's word** (`npm run demo:milton`): addresses now read
+  `u11-select-purple`; the team pages and their tryout pages answer 200 on staging. Team ids are derived from the address,
+  so each team's Coaches Portal link changed once (the dressed team is now `45f793be-…`); no run sheet, QR card or walk
+  holds a team id. Uncommitted.
+- [ ] `/{club}/news` forwards to the club's latest tournament even after it finished (Kestrel, 4 days after its Fall
+  Classic ended). Part 2's news frame answers this.
+- [ ] `/legal` (Stage 0 read, 2026-11-24): the published **Data Terms §4 and Privacy §5** say no "roster" is shown on a
+  public page; a team photo arguably is one. Before Stage 3 builds, the wording gains "a photo your organization
+  chooses to publish is its own publication; we never add a name to it", and Privacy §5/§9 gain uploaded photos and the
+  consent answers; Privacy §4 gains one sentence for sponsor counts (Stage 5). A `/legal` topic file on minors' images
+  is owed (none exists). Lawyer's eye flagged: minors' images and withdrawal, whether "Email me when it opens" is a
+  commercial message, Track P's use of a real club's name and logo.
+- [ ] A rep team's family sign-up may sit behind the guardian tier (switched off). If so, the photo consent question
+  has no rep door and a rep team photo never shows until it is on. Stage 3 checks.
+- [ ] DATA_DICTIONARY.md:1195 names the deleted `LogicSyncBracket` as a reader of the open games read; `/db` to correct,
+  and to say whether `USING true` lets anyone read games in an unpublished division (Progress item 4).
 
 ## 10. Words for /marketing
 

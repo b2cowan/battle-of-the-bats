@@ -1054,18 +1054,20 @@ follow-ups.
 - [ ] When a person without a valid required document is put on a team, the screen **warns and never blocks** (Q4).
 - [ ] Migration first; dictionary + snapshots; `/legal` before drawing (retention of screening records, who sees them).
 
-### Stage 4 — Forms (item 5) — FOUNDATION: Forms
-- [ ] Generalise the tournament custom-questions model into one **club form**: question types (short answer, long answer,
+### Stage 4 — Forms (item 5) — FOUNDATION: Forms — ✅ COMPLETE (owner's word, 2026-11-22)
+All three parts and 4.P are built, committed and walked (§546 41/41, §551 50/50, §553 32/32, §555 19/19). Left, and not part of the
+stage: the production promote of Parts 1–3 together (call C1, with its release conditions) and the walk fixture's `off` step on dev.
+- [x] Generalise the tournament custom-questions model into one **club form**: question types (short answer, long answer,
   one choice, many choices, yes/no, date, file upload). Each is required or optional, with help text, in a set order.
   **No branching logic in the first pass** (push back if asked; that is where form builders get out of hand).
-- [ ] **Document blocks:** the club attaches a PDF and the family must open it before ticking "I have read {document}".
+- [x] **Document blocks:** the club attaches a PDF and the family must open it before ticking "I have read {document}".
   Ticks are recorded with the document version and time, like today's waiver consent, which becomes one of these blocks
   without losing existing consent records.
-- [ ] First use: the house-league season sign-up (copy last season's form). Then tryouts, camps (Stage 7) and sponsors (Stage 6).
-- [ ] Answers flow into the registrations list (columns + filter), the export and the draft board notes view, keeping
+- [x] First use: the house-league season sign-up (copy last season's form). Then tryouts, camps (Stage 7) and sponsors (Stage 6).
+- [x] Answers flow into the registrations list (columns + filter), the export and the draft board notes view, keeping
   ruling A8 (only seats that can open registrations see notes and answers).
-- [ ] Gate: the tournament version is Tournament Plus value today, so the club gate is a `/strategy` call (Q6).
-- [ ] Migration first; dictionary + snapshots.
+- [x] Gate: the tournament version is Tournament Plus value today, so the club gate is a `/strategy` call (Q6).
+- [x] Migration first; dictionary + snapshots.
 
 **Drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9,
 source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`. **All 20 asks RULED 2026-11-20 as recommended** (owner: *"I agree with
@@ -1392,8 +1394,8 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   the club's to justify; two owner questions: a Copy-the-link hint, and Send the link again on an invoiced deal). Walk **§561**
   (4 walks, 50 steps) published; Part 2 committed `c24b35d71` 2026-11-23. **Walk §561 passed 50 of 50, 2026-11-23**; the two
   owner questions ruled: no Copy-the-link hint (the help article carries it), and Send the link again on an invoiced or paid
-  deal keeps its confirm as is. Migrations 526 and 527 go to
-  production only with the promote that carries Part 2, and before it (the Part 1 tabs read the deals).
+  deal keeps its confirm as is. Migrations 526 and 527 were applied to
+  production 2026-11-23 and Part 2 went live in the evening promote (master job 294, `3077c31e7`), as ruled (the Part 1 tabs read the deals).
 - **Part 3's four owner calls, RULED 2026-11-23** (asked at the start of the Part 3 build, each as recommended): (1) **Part 3
   is split**: **3a** the invoice PDF, the invoice and "Paid in full" receipt emails, Record a payment and its void, the books
   (Club sponsorship, GST/HST collected) and the revised invoice, committed and walked on its own; **3b** the card flow on the
@@ -1411,7 +1413,7 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   remainder so both lines land exactly; an invoiced deal's amount or tax changes (the revised invoice: same number, a
   "Revised {date}", emailed again) only while no payment stands — a recorded payment is voided first.
   **Part 3a code built 2026-11-23** (migration **528** applied to dev at the owner's word, "yes, apply 528 to dev", twice,
-  re-runnable; prod pending in `MANUAL_PROD_STEPS.json`): the club invoice PDF on the server for both doors (the coach
+  re-runnable; applied to prod 2026-11-23 and live in master job 294, `3077c31e7`): the club invoice PDF on the server for both doors (the coach
   invoice's page shared, the coach builder still passes no tax: R2 held), the invoice / revised / "Paid in full" emails
   (a link, no attachment; `.local` addresses never sent), Record a payment (the shipped ledger fields; part payments) and
   Void (the shipped correction question), the revised invoice replacing the "can't change" refusal, the books (platform
@@ -1450,10 +1452,45 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   other-books net with no GST/HST term (a database check: report only); two uploads at once can leave one unused file in
   storage. **529
   applied to dev 2026-11-23** at the owner's word ("yes, apply 529 to dev"), twice, read back; snapshots refreshed (watermark
-  529); production pending in `MANUAL_PROD_STEPS.json`, before the promote. Owed: `/docs` (the club money article names GST/HST collected
-  only); `/marketing` on the DRAFT words; a short walk. ~~Open owner question: a club can still put "GST/HST remitted" on
+  529); applied to production 2026-11-23 before the promote, and live in the evening promote (master job 294, `3077c31e7`). Owed: `/docs` (the club money article names GST/HST collected
+  only); ~~`/marketing` on the DRAFT words; a short walk~~ (words settled and committed `5f98b7c1c`; no walk, owner 2026-11-23: "no need for a walk"). ~~Open owner question: a club can still put "GST/HST remitted" on
   its plan.~~ **RULED 2026-11-23 ("sure remove gst/hst from budget plan"):** off the plan — the plan's Filed under hides it
   and both plan saves refuse it (`readPlanWord`, `tax_not_planned`); the ledger's Filed under keeps it.
+- **Part 3b · the deal page landed `d07a050fe` 2026-11-23** (the held-back Record a payment, Payments card with Void, the
+  invoice PDF link, the revised invoice). **The card-refund drawing RULED 2026-11-23, all seven as recommended** (owner: "I
+  agree with all the recommendations, go ahead and build"; https://claude.ai/artifact/RSMZkJKM2JHZkLwH2bg7Z5, source
+  `BOARD_READY_STAGE6_P3B_CARD_REFUNDS_DRAWING.html`): (1) each payment opens its own window, Refund (card) or Void (cheque,
+  e-transfer) at its foot's start, the inline Void retired; (2) the refund window as drawn — nothing picked, All of it / Part
+  of it, a reason for both, never a fee box, the sponsor-paid-fee intro; (3) a full refund ends the deal as Withdrawn (logo
+  down, the place freed); (4) a fourth "Refunded" figure in the money band once a refund stands; (5) who may refund = who may
+  Record and Void (Sponsorships, per §562's ruling); (6) the shipped refund email, and the business's page lists the refund;
+  (7) the invoice lists the refund, `/accounting` confirming whether a credit note is needed before that part is built.
+  **`/accounting` answered ask 7 the same day: yes** — the club reduces the GST/HST it collected only with a credit note (CRA
+  Memo 12.2 ¶15–23), so each refund that reaches the card on a taxed invoice carries one ("{invoice}-C{n}", the invoice's own
+  page titled "Credit note", downloaded by the club and from the business's link), and the invoice still lists the refund.
+  **Part 3b code built 2026-11-23** (migration **530** applied to dev 2026-11-23 at the owner's word, "apply 530 to dev", twice, read back; snapshots refreshed; production pending in `MANUAL_PROD_STEPS.json`):
+  the third online-payments flow `sponsorship` (its shape, one open page per deal, the guard's arm; the shared cost line and its
+  locks answer a sponsorship; the landing, dispute and refund-event paths answer one before every tournament-only writer);
+  card on the business's page (one button per way to pay, the fee note, the refund-policy link; an invoiced deal's link pays
+  what is owing with the club paying the fee); the card landing (`club_sponsor_card_land`: the invoice when the payment issues
+  it, the payment, the sponsorship / fee / GST/HST lines and the fee as Sponsorship › Payment processing, Paid, the receipt
+  once); refunds (`club_sponsor_deal_refunds`; open → Stripe → book, a full refund ending the deal as Withdrawn); the payment's
+  window and the refund window as drawn; the fourth Refunded figure; "Send the invoice"; the credit note; the refund email
+  ("Refund from {club}", the shipped refund block). Said out loud from the code: a sponsor's card DISPUTE is answered in Stripe
+  and leaves the deal as it is (the dispute writer would put the money back on a team), and a refund made in the club's own
+  Stripe dashboard on a sponsorship is not booked by guesswork — Sponsorships is told to record it in the Ledger. Typecheck
+  clean; Part 3b tests + the sponsorship and card-payment suites 110/110. Owed (hand-off prompt `BOARD_READY_STAGE6_P3B_FINISH_PROMPT.md`): `/simplify`
+  → `/review` → `/marketing` → `/ux` at 390 → `/docs` → `/legal` (the Payments Terms' sponsorship-card section) →
+  `/accounting` → probe → walk.
+  **Part 3b chain, state 2026-11-24:** `/accounting`, `/legal`, `/docs`, the probe (4 runs) and the walk (§564) done 2026-11-23/24;
+  `/simplify` and `/review` (five lenses) run 2026-11-24, five defects fixed (a sponsor switching card → cheque or a club editing
+  terms while a card page was open; the wrong "lines voided" words on a refused refund; the notice guard; a fail-soft page read).
+  **Owner 2026-11-24: every other review finding is to be fixed after he finishes walk §564** — Payouts and the bank check learning
+  the sponsorship flow (before the payments switch goes on for a real club), the "not recorded" wedge, pending refunds that never
+  resolve, `ends_deal` at booking, the `ON DELETE RESTRICT` link, the sponsor notices, credit-note numbering, the lost-dispute
+  books, the dashboard refund, the `re_` reference, plus the smaller items: list and order in
+  `BOARD_READY_STAGE6_P3B_AFTER_WALK_FIXES_PROMPT.md`. Still owed from the finish prompt: `/marketing` on the DRAFT words and `/ux`
+  at 390.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or
@@ -1551,7 +1588,7 @@ parallel.
 | 6 | **0c** Board pack: brief, diagrams, questionnaire answers, Security page, the public roadmap | 2 | 1, 3, 4, 5 | the page only | Roadmap drawn and ruled 2026-11-16; everything else not started |
 | 7 | **Stage 2** Group email to coaches | 2 | 1 (done) | yes | **Drawn 2026-11-16** (https://claude.ai/artifact/WVuNq47ywkxKgmFSYew2eF), asks 1–13 owed; nothing built. The public roadmap carries it as Committed for 2026 only if it is built before the roadmap is first shown (roadmap ask 11) |
 | 8 | **Stage 3** The club's people + documents with expiry | 3 | nothing (adds groups to 7) | yes | Not started, not drawn |
-| 9 | **Stage 4** Custom forms (house-league sign-up first) | 3 | nothing | yes | **Drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks ruled 2026-11-20 as recommended** (§5 Stage 4); build prompt `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md` (three parts) and the tournament fixes `BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md` written 2026-11-20; nothing built. **First in the owner's order of 2026-11-20** (prompt `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md`) |
+| 9 | **Stage 4** Custom forms (house-league sign-up first) | 3 | nothing | yes | **✅ COMPLETE 2026-11-22 (owner's word): Parts 1–3 and 4.P built and walked; the production promote of Parts 1–3 is what remains.** History: **Drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks ruled 2026-11-20 as recommended** (§5 Stage 4); build prompt `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md` (three parts) and the tournament fixes `BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md` written 2026-11-20; nothing built. **First in the owner's order of 2026-11-20** (prompt `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md`) |
 | 10 | **Stage 5** Club events | 3 | ~~Q7~~ (ruled yes 2026-11-15) | yes | Not started, not drawn |
 | 11 | **Stage 6** Sponsorships | 4 | 9 (10 no longer, owner 2026-11-20: a club event joins later); live card pay waits on Club Tier Stage 12 | yes | Drawn 2026-11-22 (round 1) and all 15 asks ruled the same day (§5 Stage 6); round 2 (the "sponsor pays the fee" case) and the build prompt next. Not built. Sponsors on the public tournament pages wait for this stage (owner 2026-11-20); their drawing can now start |
 | 12 | **Stage 7** Camps & clinics | 4 | 9, 10; live card pay waits on Club Tier Stage 12 | yes | Not started, not drawn |

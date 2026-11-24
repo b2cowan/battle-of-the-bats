@@ -2769,6 +2769,10 @@ export interface ClubSponsorInvoiceOptions extends Omit<SponsorInvoiceOptions, '
   rows: { description: string; sub?: string[]; amount: string }[];
   /** "GST/HST no. 81234 5678 RT0001" — only when the invoice carries tax. */
   taxNumberLine: string | null;
+  /** Its card refunds (Part 3b): [date, where it went, amount]. */
+  refunds?: string[][];
+  /** Set for a credit note (Part 3b): the same page, titled and summed as the note. */
+  credit?: { title: string; subtitle: string[]; stats: { n: string; label: string }[]; closing: string };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2781,6 +2785,10 @@ interface InvoicePage extends Omit<SponsorInvoiceOptions, 'description' | 'amoun
   payee: string;
   rows: { description: string; sub?: string[]; amount: string }[];
   taxNumberLine: string | null;
+  /** The club's card refunds (Part 3b): [date, where it went, amount], listed under the payments. */
+  refunds?: string[][];
+  /** The credit note (Part 3b; /accounting 2026-11-23) is the same page under its own title, subtitle, figures and close. */
+  credit?: { title: string; subtitle: string[]; stats: { n: string; label: string }[]; closing: string };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2890,11 +2898,11 @@ function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(20, 20, 35);
-  doc.text('Invoice', MARGIN, y);
+  doc.text(opts.credit?.title ?? 'Invoice', MARGIN, y);
   y += 5;
   const partPaid = !paidInFull && !!opts.partPaid;
   const withdrawn = !paidInFull && !!opts.withdrawnLabel;
-  const subtitle = paidInFull
+  const subtitle = opts.credit ? opts.credit.subtitle : paidInFull
     ? [opts.paidInFullLabel ? `Paid in full ${opts.paidInFullLabel}` : 'Paid in full', `No. ${opts.number}`, `Issued ${opts.issuedLabel}`, opts.revisedLabel ? `Revised ${opts.revisedLabel}` : null]
     : withdrawn
       ? [`Withdrawn ${opts.withdrawnLabel}`, `No. ${opts.number}`, `Issued ${opts.issuedLabel}`, opts.revisedLabel ? `Revised ${opts.revisedLabel}` : null]
@@ -2907,7 +2915,7 @@ function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage):
   y += 8.5;
 
   // ── The three figures (the statement's dues · paid · balance) ───────────────
-  const stats = [
+  const stats = opts.credit?.stats ?? [
     { n: opts.invoiced, label: 'invoiced' },
     { n: opts.paid, label: 'paid' },
     { n: opts.balance, label: 'balance due' },
@@ -2951,7 +2959,7 @@ function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage):
   ]), { 1: { halign: 'right', cellWidth: 40 } });
 
   // ── How to pay — gone once nothing is owed (paid, or withdrawn) ─────────────
-  if (!paidInFull && !withdrawn) {
+  if (!opts.credit && !paidInFull && !withdrawn) {
     // A cheque line only says where to mail one; with neither way given it still names the payee (R1).
     const { etransferEmail, chequeAddress } = opts.howToPay;
     const ways = [
@@ -2969,12 +2977,17 @@ function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage):
     sectionLabel('Payments received — thank you');
     table(['Date', 'How it arrived', 'Amount'], opts.payments, { 2: { halign: 'right', cellWidth: 40 } });
   }
+  if (opts.refunds?.length) {
+    sectionLabel('Refunds');
+    table(['Date', 'Where it went', 'Amount'], opts.refunds, { 2: { halign: 'right', cellWidth: 40 } });
+  }
 
   // ── The door back to a human ───────────────────────────────────────────────
   const thanks = `Thank you for supporting ${teamName}.`;
   const who = opts.questionsTo?.trim().replace(/[.\s]+$/, '');
-  const ask = who ? `Questions about this invoice? Contact ${who}.` : null;
-  const closing = paidInFull ? ['Paid in full.', thanks, ask].filter(Boolean).join(' ')
+  const ask = who ? `Questions about this ${opts.credit ? 'credit note' : 'invoice'}? Contact ${who}.` : null;
+  const closing = opts.credit ? [opts.credit.closing, ask].filter(Boolean).join(' ')
+    : paidInFull ? ['Paid in full.', thanks, ask].filter(Boolean).join(' ')
     : withdrawn ? ['This invoice was withdrawn. Nothing is owed.', ask].filter(Boolean).join(' ')
       : [ask, thanks].filter(Boolean).join(' ');
   const closingLines: string[] = doc.splitTextToSize(closing, contentWidth);

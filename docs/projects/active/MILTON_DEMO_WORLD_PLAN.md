@@ -4,7 +4,7 @@
 History (not kept current): Phase A built and run on dev 2026-11-10 (committed 9ca8c679d; sign-ups auto-approve under capacity; password only in .env.local) · Parent: `PROSPECT_DEMO_PROGRAM_PLAN.md` (P1, P4c) · Brief: `MILTON_DEMO_WORLD_PM_BRIEF.md`
 Playbook (walkthrough): the "House League Demo Playbook" Artifact (republished from this plan's §6).
 Presentation run sheet (Phase B, the five demos): https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W (`MILTON_DEMO_RUN_SHEET.html`).
-Presentation deck (16 slides since 2026-11-24: slide 8 "See what your families see" (two QR codes, the demo club's site and the Winter Classic; images in `MILTON_PRESENTATION_DECK/assets/`, uploaded to the deck) and slide 13 "Your club's website, today and next"; the prep page and run sheet were renumbered the same day; everything outside the demos; built 2026-11-21 from the prep page's outline, /design and /marketing
+Presentation deck (16 slides since 2026-11-24: slide 8 "See what your families see" (two QR codes, the demo club's site and Battle of the Bats; images in `MILTON_PRESENTATION_DECK/assets/`, uploaded to the deck) and slide 13 "Your club's website, today and next"; the prep page and run sheet were renumbered the same day; everything outside the demos; built 2026-11-21 from the prep page's outline, /design and /marketing
 passes applied): https://claude.ai/artifact/6z6xGQsVATLw8uRnQCsuc3, source `MILTON_PRESENTATION_DECK/` (publish from a copy of that
 folder; the speaker notes are readable by anyone with the link, so the never-say lists stay on the prep page's Security tab).
 Deck revised 2026-11-23 (deck version 12, source folder updated, not yet committed; owner 2026-11-23: meeting 2026-11-24 on the cover, the closing "Your questions" slide removed, slide 2 says only "since November 10" (that session was with the club's head of house league, not the board), slide 3 made generic to clubs, the last slide is "start with any part", and a new slide lists eighty live features in five groups): statuses trued up to the 11-22 and 11-23
@@ -56,7 +56,7 @@ house-league venues (unallocated rows for the U9 Walk 3).
 | **Milton Bats U15 A** — the dressed team (`+repcoach` head coach, `+assistant` assistant) | Books, practices and drills, skills, lineups, attendance, a finished 2026 season behind it (§8) |
 | **The club's shared drill set** (8 drills, Admin › Rep teams › Shared library) | Shows in every team's drill picker |
 | **Public site**: rep team pages (automatic), two teams with tryouts open, one notice, sponsors | |
-| **Milton Bats Winter Classic** (name invented, owed), a one-day dome tournament the Saturday before the demo, U11 and U15, six teams each | Every game final, standings, semifinals and finals, champions crowned; **free** (no fee book) |
+| **Battle of the Bats** (name invented, owed), a one-day dome tournament the Saturday before the demo, U11 and U15, six teams each | Every game final, standings, semifinals and finals, champions crowned; **free** (no fee book) |
 Fees (placeholders until the owner supplies Milton's): U7 $120 · U9 $140 · U11 $150 · U13 $160 · U15 $160; early bird $20 off to a date.
 Dates are **relative to `--demo-day`** (default today). Games are dated around it (a past block, the coming Saturday, a future block).
 
@@ -113,7 +113,7 @@ Fixed in the review commit: a reset after a test-card payment (online payment ro
 sign-up window times written as the app reads them; no acceptance dated after yesterday; `--demo-day` refused beyond -35/+60 days of today
 (the app judges "open", the early bird and "the coming Saturday" by the real clock — rebuild on the morning of the demo).
 Known limits, deliberately left: (a) a reset stops if a walk closes a fiscal year (the closed-year lock refuses the budget-line
-deletes; do not close a year in a rehearsal). The tournament half of (a) is RESOLVED in Phase B: the Winter Classic is free (no fee
+deletes; do not close a year in a rehearsal). The tournament half of (a) is RESOLVED in Phase B: Battle of the Bats is free (no fee
 book, no team payments), and the reset now deletes the club's tournaments and tournament books before its budget words, so a
 tournament a walk adds with a fee no longer stops it; (b) a member who accepted an invitation under any address other than the seeded `+registrar` keeps their seat through
 a reset; (c) ids in season URLs change on every rebuild, so use navigation, not saved links; (d) U7/U9 hold "To review" rows although the season
@@ -167,7 +167,7 @@ per-team charge and no per-team row (`lib/coach-portal-plan.ts`: a club org's te
 `lib/plan-config.ts` Club and Club · Association both do). ⚠ 17 teams is the Club · Association band, not Club (Club's cap is 15; the
 demo org's own cap is set to 40 so nothing refuses). Say "the club plan for your size", not a plan name.
 
-**8.5 The tournament** is invented ("Milton Bats Winter Classic") and **free**, so it writes no fee book (§7 a). A one-day dome
+**8.5 The tournament** is invented ("Battle of the Bats") and **free**, so it writes no fee book (§7 a). A one-day dome
 tournament the Saturday before the demo, U11 and U15 (Milton's own A and B teams plus four invented visitors each), a round robin in two
 pools of three, semifinals and finals, every game final, champions crowned. Standings and the playoff picture are computed by the
 product on read. Played in the dome on a Saturday so it never meets the Sunday dome schedule.
@@ -191,7 +191,7 @@ notes (Demo 1, steps 4 and 12) still say "not on production yet" and are owed an
 | Demo 5 · after "Sign up" | **"Pay $X by card"** under "To pay now" (online payments) | Stop at the "To pay" card |
 | Demo 5 · the sign-up's status page | "Sign in to see it" / "Email me an invitation" (signed-in family app; only once a child is placed) | Not reached |
 The run sheet: `MILTON_DEMO_RUN_SHEET.html`, published as https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W (45 boxes since §9). The phone
-cards page (`MILTON_DEMO_QR_CARDS.html`) carries the Winter Classic's QR code — since §9 a leave-behind, no demo time.
+cards page (`MILTON_DEMO_QR_CARDS.html`) carries the Battle of the Bats' QR code — since §9 a leave-behind, no demo time.
 
 **8.8 Verified 2026-11-21** (demo day 2026-11-21): built four times. Two builds in a row match table for table (3,201 rows in 69
 tables). A simulated rehearsal through the real coach routes (an e-transfer recorded, a balance check saved, the sponsor invoice
@@ -200,14 +200,14 @@ to the same 3,201 rows. No table outside Milton changed (only the dev server's o
 team's register closes at the same figure as Money's cash on hand, with dues, fundraising, club and cost rows behind it; Budget vs.
 Actual, the club bill, attendance (8 games, 11 practices), playing time (8 lineups), both testing days, the drills, templates,
 circuit and the past-season plans all read. Owner pages: Rep teams, Shared library, Schedules; public: the club, Teams, Tryouts, the
-Winter Classic and its playoffs. Still owned after a reset, as before Phase B: three rows the club's Stripe test account and the
+Battle of the Bats and its playoffs. Still owned after a reset, as before Phase B: three rows the club's Stripe test account and the
 sign-up form's file sweep keep (`billing_locations`, `club_form_storage_removals`, `stripe_connect_events`).
 - Seed lesson: a sponsor with a cheque in is stored "received" (the product flips it on the first cheque and works out "part
   received" from the money); stored "pledged" with an arrival, the register counts none of the cheque.
 
 ## 9. Demo 5 replaced: house league end to end (owner 2026-11-21, "go with your recommendations")
-The public-page demo (club home, a team page, tryouts, a sign-up, the Winter Classic on his phone) is replaced by one U9 child
-followed from the sign-up to a team. Owner rulings, all as recommended: the Winter Classic phone card stays as a **leave-behind**
+The public-page demo (club home, a team page, tryouts, a sign-up, Battle of the Bats on his phone) is replaced by one U9 child
+followed from the sign-up to a team. Owner rulings, all as recommended: The Battle of the Bats phone card stays as a **leave-behind**
 (no demo time); **one** parent-coach is added live ("same for the other three"); Demo 5 runs **7 minutes**, the meeting 31.
 The owner: the sign-up questions, friend requests and board answers will be **on production by the demo**, so the run sheet
 carries no "not on production" note for them (it keeps the "Pay by card" step-around, worded as "leave it").
@@ -288,3 +288,10 @@ the date drift a rebuild clears. Off-script, a board of coaches can hit these:
     for Nov 24 and its figures, "rebuild only after a rehearsal, never in the last half hour", the two Demo 1 notes now say group
     email and several permits are live, the deck's slide numbers, and a new unticked card "If he asks to see more" (what is
     ready to open, what belongs in a second session). The board line and the PM brief say the same.
+  - **The prep page, same evening:** republished (version 4) and given a source file for the first time,
+    `MILTON_PRESENTATION_PREP.html`, built from the live copy (until now the published page was the only copy). Every tab says
+    tonight's state: the club plans on sale, the legal pages and supplier list published, the demo club built and its figures,
+    the deck's fourteen slides as published, the November 10 session named by its date only. On the Security tab the two
+    "waiting" lines and the conditions /legal set on 2026-11-21 were lifted after checking the published Data Terms (72 hours,
+    30 days for a new supplier, a full copy within 30 days, deletion with backups gone in 7 days); /legal has not re-read the
+    tab since. The run sheet (version 4) adds that on staging Sponsorships' Deals and invoices are ahead of production.

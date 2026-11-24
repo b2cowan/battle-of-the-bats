@@ -199,3 +199,31 @@ textarea.noteBox { resize: none; } /* element + class: outranks the kit's `.text
 @media (max-width: 640px) {
   .paymentList .linkButton, .pageFacts .inlineLink { min-height: 44px; display: inline-flex; align-items: center; }
 }
+
+/* Part 3b (the card-refund drawing, RULED 2026-11-23): a payment's line is a door to its own window — the whole row, no
+   button inside it (a list row holds no buttons); the day and how it came over its grey line, the chip, the amount, the chevron. */
+.paymentRow { all: unset; box-sizing: border-box; cursor: pointer; display: flex; width: 100%; gap: 0.75rem; align-items: center; justify-content: space-between; min-height: 44px; }
+.paymentRow:hover .paymentWhat { text-decoration: underline; }
+.paymentRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.paymentMain { display: flex; flex-direction: column; min-width: 0; }
+.paymentWhat { color: var(--text-primary); }
+.paymentEnd { display: inline-flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+.paymentChevron { color: var(--text-tertiary); }
+.paymentVoided .paymentWhat { text-decoration: line-through; color: var(--text-tertiary); }
+/* Stripe's reference and its Copy (the shipped "To the card" block's). */
+.refLine { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+/* A phone: Copy (Stripe's reference) and the credit note's link inside a payment's window are thumb targets at the 44px floor. */
+@media (max-width: 768px) {
+  .refLine .linkButton, .touchLink { min-height: 44px; display: inline-flex; align-items: center; }
+}
+.refValue { font-family: var(--font-data); overflow-wrap: anywhere; } /* type-ok: code — Stripe's payment and refund references */
+/* Each refund in the payment's window: the shipped block, under a rule. */
+.refundBlock { margin: 0.75rem 0 0; padding: 0.75rem 0 0; border-top: 1px solid var(--home-line); }
+.refundHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font-size: var(--type-body); font-weight: 650; }
+/* The refund window's two choices: a radio, its name, the grey line under it. */
+.refundChoice { border: 0; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.choiceRow { display: flex; gap: 0.6rem; align-items: flex-start; cursor: pointer; min-height: 44px; }
+.choiceRow input { margin-top: 0.25rem; }
+.choiceRow > span { display: flex; flex-direction: column; }
+.choiceName { color: var(--text-primary); font-weight: 650; }
+.choiceNote { margin: -0.2rem 0 0 1.6rem; font-size: var(--type-support); color: var(--text-secondary); }

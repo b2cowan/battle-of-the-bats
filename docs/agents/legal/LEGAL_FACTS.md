@@ -179,6 +179,14 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   seen in test mode only (no code of ours reverses it; `lib/stripe-connect.ts:224`) — confirm on a live payment before
   switch-on.
 
+  **Sponsor card payments (Board Ready Stage 6 Part 3b, built on dev 2026-11-23; payments off in production):** a third payer
+  kind, a BUSINESS that pays a club's sponsorship deal by card from its own link (no sign-in, no FieldLogicHQ terms shown to it). Data
+  held: the email typed on its sponsor form, card brand and last four, Stripe session, payment-intent and refund ids, receipt and invoice
+  numbers, amounts, and the club's free-text refund reason (shown to the business, up to 300 characters) with the name of the refunding
+  member; no full card number, no IP. **A sponsor's card dispute is deliberately silent** (no row, no notice, deal stays Paid, nothing booked;
+  `lib/online-payment-landing.ts` `applyCardDispute`), so the club's deletion check cannot see it. Possibly stale because of it: the
+  published Payments Terms 2026-11-24 §2/§4/§7/§9/§10 and Privacy 2026-11-24 §5/§6 (see `BOARD_READY_STAGE6_PART3B_CARD_REVIEW.md`).
+
 ## Consent and email mechanics that exist today
 - **Payments terms:** a checkbox an owner ticks in "Before you set up payouts" (and again in the card's "new payments terms"
   window after a change); every tick is kept append-only with who, when, the version and the sentence (mig 497). Since

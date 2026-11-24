@@ -97,6 +97,40 @@ export function canOpen(fee: Pick<OnlineFee, 'feeCents' | 'totalCents' | 'applic
   return fee.feeCents < fee.totalCents && fee.applicationFeeCents > 0;
 }
 
+/** A sponsor's card payment (Part 3b): `onlineFee`'s figures, plus the GST/HST on a fee the sponsor pays. */
+export interface SponsorCardFee extends OnlineFee {
+  /** The club's GST/HST on the fee when the sponsor pays it on a taxed deal (round 2: "Includes a $41.05 card processing fee
+   *  and $5.34 HST on it."). Part of `baseCents` (the club keeps it to send on), never of `feeCents`. */
+  feeTaxCents: number;
+  /** What the sponsor's invoice says it owes before the fee (the invoice total, or what is still owing on it). */
+  owingCents: number;
+}
+
+/**
+ * The card fee on a sponsorship (Board Ready Stage 6 Part 3; round 2 asks 1–3, 9; owner call (3), 2026-11-23). `onlineFee` on
+ * what is owed INCLUDING its GST/HST, never grossed up (F13). When the sponsor pays it, the fee is its own invoice row with the
+ * club's GST/HST on it ($1,130.00 → $41.05 fee + $5.34 HST → $1,176.39; the club receives $1,135.34 and keeps $1,000.00 after
+ * the $135.34 HST); when the club pays it, the sponsor pays the invoice to the cent and the fee is a Payment processing cost.
+ * `issued` (an invoice already out) always makes it the club's, whatever the Payouts row says (owner call (3)).
+ */
+export function sponsorCardFee(owingCents: number, payer: SponsorFeePayer, taxRate: number | null, issued: boolean): SponsorCardFee {
+  const sponsorPays = payer === 'sponsor' && !issued;
+  const f = onlineFee(owingCents, sponsorPays ? 'family' : 'club');
+  const feeTaxCents = sponsorPays && taxRate ? Math.round(f.feeCents * taxRate / 100) : 0;
+  const totalCents = f.totalCents + feeTaxCents;
+  const stripeCostCents = stripeStandardCostCents(totalCents, f.rail);
+  return {
+    ...f,
+    baseCents: owingCents + feeTaxCents,
+    totalCents,
+    stripeCostCents,
+    applicationFeeCents: f.feeCents - stripeCostCents,
+    clubReceivesCents: totalCents - f.feeCents,
+    feeTaxCents,
+    owingCents,
+  };
+}
+
 /**
  * One payment's fee split across the children it covers (Stage 12b, `online_payment_items.fee_share`): each child's share
  * is in proportion to its amount, rounded down, and the last child takes the cents left over — so the shares always sum

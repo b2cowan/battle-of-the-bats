@@ -66,7 +66,13 @@ What moved here, with its decision IDs:
     platform-collector question, which stays open here.
 - **The registration-side validation list** (revenue plan §9): pending payments, retries and out-of-order events, partial
   and full refunds, fees, payouts and ledger reconciliation.
-- **Not moved:** tax on the online-payment fee stays in GST/HST Stage 5 (which closes with this plan, not as a trigger); the
+- **Moved in 2026-11-22 (owner, `/brief do gst-hst`): the tax on our online-payment fee, from GST/HST Stage 5**, which no
+  longer holds that project open. Ruled R1 (2026-11-17): the GST/HST is included in our fee and paid out of our share; no
+  tax on top, no tax bill to clubs. **Before online payments switch on:** record the tax inside each fee (rate by the club's
+  billing-address province, US 0%) so it reaches the return's lines 101/103; a record when a returned debit refunds our fee
+  (or claim no adjustment); the information-only fee statement; the accountant's taxable-or-exempt answer (R2); the January
+  CRA platform-reporting check. Method: `docs/agents/accounting/PLATFORM_FEE_TAX_COLLECTION_METHOD.md` ("The R1 method").
+- **Not moved:** the
   books half of 3.7 goes to the Bookkeeping plan. Gate A (subscriptions) stays in Revenue readiness and is not held by this plan
   (nor does this plan hold subscriptions — "launch together" was dropped 2026-10-31).
 

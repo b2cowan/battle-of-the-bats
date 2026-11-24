@@ -16,7 +16,7 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
   if (throttled) return throttled;
   const { token } = await params;
   const gone = () => new NextResponse('Not found', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
-  const at = await dealForLink(token);
+  const at = await dealForLink(token, { keepRefunded: true });
   if ('failure' in at) return gone();
   const file = await dealInvoicePdf(at.org, at.deal.id);
   return file ? invoicePdfResponse(file) : gone();

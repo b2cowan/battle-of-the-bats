@@ -32,3 +32,10 @@ owner sets where it sits among the after-launch projects.
 
 **How it will be done:** one whole-site pass first (today's site walked, every page drawn once with all ten ideas in),
 then one deep dive at a time in dependency order. Proposed, not yet accepted.
+
+**What the whole-site pass recommends (2026-11-24, drawn, not yet ruled):** the home keeps one order every day, with
+registration first but limited to two rows, then the day's games, then news, so a family still sees the first live game
+on a phone without scrolling. Closing a field is today's house league Rainout widened to a whole park: one act that
+posts the notice and marks every affected game. A rep game is marked for its coach, never moved by the club. A player
+photo shows only while everyone in it has agreed. The phone banner stays off, which keeps the October ruling. "Email me
+when registration opens" is built to anti-spam law, with the club as the sender.

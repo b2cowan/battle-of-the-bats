@@ -251,8 +251,6 @@ export const DEAL_WORDS = {
     errEmailClosed: 'This deal is past its offer, so there’s nothing to email.',
     errReason: 'Give a reason.', // DRAFT
     errPaid: 'A paid deal can’t be withdrawn.', // DRAFT
-    // Kept for the deal page that still shows it until the record-page work lands; the revised invoice says errPaidChange instead.
-    errInvoicedChange: 'The amount and tax can’t change once the invoice is issued. Withdraw the deal and offer it again.', // /marketing 2026-11-22
     // Part 3a: an invoiced deal's amount or tax changes as a revised invoice, while no payment stands on it. DRAFT.
     errPaidChange: 'A payment is recorded on this invoice, so its amount and tax can’t change. Void the payment first.',
     errPaidWithdraw: 'A payment is recorded on this deal. Void the payment first, then withdraw it.',
@@ -311,7 +309,7 @@ export const DEAL_WORDS = {
     formReceived: (business: string) => `${business} sent their details and started to pay by card, but didn’t finish.`,
     invoicedTitle: 'Waiting for payment',
     // Round 1 tab 5, verbatim: "was emailed Mar 3". "issued" stays for an invoice whose email didn't go (it shows on the link).
-    invoiced: (number: string, total: number, issued: string, due: string, emailed = false) =>
+    invoiced: (number: string, total: number, issued: string, due: string, emailed: boolean) =>
       `Invoice ${number} for ${money(total)} was ${emailed ? 'emailed' : 'issued'} ${day(issued)} and is due ${day(due)}. Record the cheque or e-transfer when it arrives.`,
     invoicedPhone: (number: string, total: number, due: string) => `Invoice ${number}, ${money(total)}, due ${day(due)}.`,
     overdue: (due: string) => `Overdue since ${day(due)}.`,
@@ -466,6 +464,146 @@ export const DEAL_WORDS = {
     errClosed: 'This offer has changed. The page has been refreshed.', // DRAFT
     errPriceChanged: 'The price changed while you were filling this in. Check it, then send again.', // DRAFT
     errFailed: 'That didn’t go through. Try again.',
+  },
+
+  // ── Part 3b: paying by card, a payment's own window, and refunds to the card (round 2 tab 1; the card-refund drawing,
+  //    RULED 2026-11-23, all seven as recommended). /marketing pass 2026-11-23; `doneBody` keeps its DRAFT (the 5 to 10 business days is an owner call). ──
+  card: {
+    // The business's page (round 2 tab 1's pay block): one button per way to pay, each with its total.
+    sendCard: (total: number) => `Send and pay ${money(total)} by card`,
+    sendCheque: 'Send and get my invoice', // owner 2026-11-24: no amount (it is the line above) and no "pay" (nothing is charged)
+    feeNote: (fee: number, tax: number, kind: 'GST' | 'HST' | null) =>
+      tax > 0 && kind ? `Includes a ${money(fee)} card processing fee and ${money(tax)} ${kind} on it.` : `Includes a ${money(fee)} card processing fee.`,
+    // An invoice already issued: its link still lets them pay by card, at the invoice total (owner call (3)).
+    payInvoice: (owing: number) => `Pay ${money(owing)} by card`,
+    payInvoiceNote: 'Or pay by cheque or e-transfer, as below.',
+    opening: 'Opening the secure payment page…',
+    confirmingTitle: 'Confirming your payment…',
+    confirmingBody: 'This takes a few seconds. Please keep this page open.',
+    notFinishedTitle: 'Payment not finished',
+    notFinishedBody: 'Nothing was charged. Pay again below, or choose a cheque or e-transfer.',
+    // A card payment that was taken but could not be recorded on the deal (owner walk 2026-11-24: the page went back to the plain
+    // form, as if nothing had been paid, and the business paid a second time). DRAFT until /marketing's pass.
+    receivedTitle: 'We’ve received your payment',
+    receivedBody: (club: string) => `Your card payment went through, but we couldn’t finish recording it. ${club} has been told and will confirm it with you. You don’t need to pay again.`,
+    errReceived: 'Your card payment has already been received. You don’t need to pay again.',
+    unrecordedTitle: 'Card payment not recorded',
+    // The club's callout while one sits unrecorded (the money is in its Stripe account; the reason is the one the notice names).
+    calloutUnrecorded: (business: string, amount: number, reason: string | null) =>
+      `${business} paid ${money(amount)} by card, but it couldn’t be recorded on this deal. The money is in your Stripe account.${reason ? ` Why: ${reason}` : ''}`,
+    errOff: 'Card payment isn’t available right now. Choose a cheque or e-transfer.',
+    errOpen: 'The card page couldn’t open. Try again, or choose a cheque or e-transfer.',
+    // The paid receipt's card line (round 2 tab 1: "Visa ••4242 · Mar 3, 2027, 2:14 p.m. · invoice 2027-014").
+    paidWith: (card: string, when: string, number: string) => `${card} · ${when} · invoice ${number}`,
+    feeRow: 'Processing fee',
+    refundedRow: (on: string) => `Refunded ${dayYear(on)}`,
+    refundedOnWay: 'Refund on its way to the card',
+    creditNote: (number: string) => `Credit note ${number} (PDF)`,
+
+    // The club's deal page: a payment's line opens its own window (ask 1).
+    lineSubCard: 'Recorded by itself when the card payment landed',
+    lineSubRecorded: (by: string, on: string) => `Recorded by ${by}, ${day(on)}`,
+    lineRefunded: (amount: number, on: string) => `Refunded ${money(amount)} ${day(on)}`,
+    lineRefundPending: (amount: number) => `Refund of ${money(amount)} on its way`,
+    lineOpen: (how: string) => `Open the payment: ${how}`,
+    chipPending: 'Pending',
+    chipRefunded: 'Refunded',
+    chipFailed: 'Refund didn’t reach the card', // the ONE wording (CARD_REFUND_WORDS.record.pill.failed)
+    // The payment's window (520).
+    windowTitle: (business: string) => `${possessive(business)} payment`,
+    windowEyebrow: (number: string) => `Invoice ${number}`,
+    amount: 'Amount',
+    ofItTax: (kind: string, tax: number) => `Of it, ${kind} ${money(tax)}`,
+    paid: 'Paid',
+    paidAt: (d: string, time: string) => `${day(d)} at ${time}`,
+    received: 'Received',
+    paidWithLabel: 'Paid with',
+    how: 'How',
+    fee: 'Processing fee',
+    feeClub: (fee: number) => `${money(fee)}, paid by the club`,
+    feeSponsor: (charged: number, business: string) => `${money(charged)} with its tax, paid by ${business}`,
+    feeBookClub: 'In the General ledger as Payment processing',
+    feeBookSponsor: 'In the General ledger as income under Club sponsorship and as Payment processing',
+    stripeRef: 'Stripe reference',
+    recorded: 'Recorded',
+    recordedByItself: 'By itself when the card payment landed',
+    recordedBy: 'Recorded by',
+    recordedByValue: (by: string, on: string) => `${by}, ${day(on)}`,
+    note: 'Note',
+    voided: 'Voided',
+    refund: 'Refund',
+    close: 'Close',
+    // The refund window (the drawing's tab 2; the shipped words where they are the same: REFUND_WORDS).
+    refundAsk: (business: string) => `Refund ${possessive(business)} payment?`,
+    refundLeadClub: (paid: number, on: string, number: string, fee: number) =>
+      `Paid ${money(paid)} on ${day(on)} (invoice ${number}). The ${money(fee)} processing fee the club paid on it stays a cost: a refund never returns it.`,
+    refundLeadSponsor: (paid: number, on: string, number: string, sponsorship: number, fee: number, left: number) =>
+      `Paid ${money(paid)} on ${day(on)} (invoice ${number}): the ${money(sponsorship)} sponsorship with its tax, and a ${money(fee)} processing fee with its tax. A refund never returns the fee, so up to ${money(left)} can go back.`,
+    refundLeadAgain: (refunded: number, left: number) => `${money(refunded)} has already gone back. Up to ${money(left)} can go back now.`,
+    allBack: (left: number) => `${money(left)} back`,
+    endsDeal: (place: string) => `This ends the deal. The logo comes down from ${place} and the place is free for another sponsor.`,
+    endsDealClub: 'This ends the deal. The logo comes down from your website and the place is free for another sponsor.',
+    partRest: (rest: number, tax: number, of: number, kind: string) =>
+      tax > 0 ? `${money(rest)} stays paid. ${money(tax)} of the ${money(of)} is ${kind}.` : `${money(rest)} stays paid.`,
+    reason: 'Reason',
+    reasonHint: (business: string) => `${business} reads this in the refund email.`,
+    foot: (business: string) => `${possessive(business)} contact is emailed.`,
+    footNoEmail: 'No email address on file. Tell them yourself.',
+    buttonEnd: 'Refund, end the deal and email',
+    buttonAll: (amount: number) => `Refund ${money(amount)} and email`,
+    errAmount: (left: number) => `Enter an amount above $0 and up to ${money(left)}.`,
+    errReason: 'Say why you’re refunding.',
+    errVoidCard: 'A card payment is refunded, not voided. Open it and choose Refund.',
+    errNothingLeft: 'Everything this payment can give back has already gone back. The page has been refreshed.',
+    errDisputed: 'The sponsor disputed this payment with their card company, so it can’t be refunded here. Answer the dispute in Stripe.',
+    errRefundOff: 'Refunds to the card aren’t available right now.',
+    // After the press (said in a window the club closes: money went to a business).
+    doneTitle: 'Refunded',
+    doneBody: (amount: number, email: string | null) => `${money(amount)} is on its way to the card.${email ? ` We emailed ${email}.` : ''} It takes 5 to 10 business days to appear on their statement.`, // DRAFT
+    doneEnded: 'The deal has ended and its place is free.',
+    pendingBody: (amount: number) => `${money(amount)} is on its way to the card. The card company hasn’t confirmed it yet. It goes in the books when it does.`,
+    failedBody: 'The card company refused the refund. Nothing was refunded and nothing changed.',
+    // The "To the card" block in the payment's window (the shipped block's words: CARD_REFUND_WORDS.record).
+    refundSplit: (pre: number, tax: number, kind: string) =>
+      tax > 0 ? `${money(pre)} of the sponsorship and ${money(tax)} ${kind}. A refund never includes the processing fee.` : 'A refund never includes the processing fee.',
+    reachedSub: 'It takes 5 to 10 business days to appear on the statement.',
+    statusPending: (on: string, time: string) => `Stripe accepted it ${day(on)} at ${time} and is waiting on the card’s bank. It goes in the books when it reaches the card.`,
+    whatFailed: (sent: string, back: string) => `Sent ${day(sent)}. The card’s bank sent it back ${day(back)}, for example because the card was closed. Its lines in the books are voided, so the money shows as still with the club. Send it another way, then record that in the Ledger.`,
+    businessEmailed: 'Business emailed',
+    emailedValue: (email: string, on: string) => `${email}, ${day(on)}`,
+    notEmailed: 'Not emailed. Tell them yourself.',
+    creditNoteLabel: 'Credit note',
+    creditNoteValue: (number: string) => `${number} ↗`,
+    // The money band's fourth figure (ask 4).
+    figRefunded: 'Refunded',
+    figRefundedSub: (amount: number, on: string) => `${money(amount)} to the card, ${day(on)}`,
+    figRefundedSubPending: 'on its way to the card',
+    // The deal after a full refund (the drawing's tab 3).
+    calloutRefundedWithdrawn: (on: string, by: string, reason: string) => `Refunded in full and withdrawn ${day(on)} by ${by}: ${reason}`,
+    hRefundedWhole: (on: string, by: string) => `refunded in full and withdrawn ${day(on)} by ${by}`,
+    hRefunded: (amount: number, on: string, by: string) => `refunded ${money(amount)} ${day(on)} by ${by}`,
+    listWithdrawnRefunded: (on: string) => `Withdrawn ${day(on)} · refunded`,
+    logoCameDown: (on: string) => `Came down ${day(on)}, when the deal was refunded`,
+    // Send the invoice (round 1 tab 5's Form received callout: "they pay by cheque or e-transfer instead").
+    sendInvoice: 'Send the invoice',
+    sendInvoiceAsk: (business: string) => `Send ${possessive(business)} invoice?`,
+    sendInvoiceBody: 'The invoice is issued now, with its number, and emailed with how to pay by cheque or e-transfer. Their link still lets them pay by card.',
+    sendInvoiceButton: 'Send the invoice',
+    sentInvoice: (email: string) => `Invoice sent to ${email}.`,
+    sentInvoiceNotEmailed: 'The invoice is issued. It couldn’t be emailed, so it shows on their link.',
+    errCardTaken: 'They’ve already paid by card, and it couldn’t be recorded here. An invoice would bill them twice.',
+    errCardPaying: 'They’re on the card page right now. Try again in a few minutes.',
+    errNotFormReceived: 'This deal isn’t waiting for an invoice any more. The page has been refreshed.',
+    // The refund email (the shipped refund email's subject and block).
+    emailLead: (club: string, number: string) => `${club} refunded part of your sponsorship payment for invoice ${number}.`,
+    emailLeadWhole: (club: string, number: string) => `${club} refunded your sponsorship payment for invoice ${number}, and the sponsorship has ended.`,
+    emailCreditNote: (number: string) => `Your credit note ${number} is on your sponsorship page.`,
+    emailButton: 'See your sponsorship',
+    // Needs attention (the rail's notices, in the sponsorship's words).
+    notRecordedTitle: 'A sponsor’s card payment isn’t on its deal',
+    dashboardRefundTitle: 'A refund made in Stripe isn’t in your books',
+    dashboardRefundBody: (amount: string, on: string) => `${amount} went back to a sponsor’s card from your Stripe dashboard on ${on}. Record it in the Ledger, and refund from the deal’s payment next time.`,
+    theSponsor: 'The sponsor',
   },
 } as const;
 

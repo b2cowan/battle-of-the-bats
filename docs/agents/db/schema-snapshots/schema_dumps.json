@@ -5726,6 +5726,294 @@
         "column_default": null
       },
       {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 19,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 20,
+        "column_name": "card_brand",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 21,
+        "column_name": "card_last4",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 22,
+        "column_name": "fee_paid_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 23,
+        "column_name": "fee_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 24,
+        "column_name": "fee_charged",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 25,
+        "column_name": "fee_tax",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 26,
+        "column_name": "fee_income_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 27,
+        "column_name": "fee_cost_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 3,
+        "column_name": "deal_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 4,
+        "column_name": "payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 5,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 6,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 7,
+        "column_name": "tax_part",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 8,
+        "column_name": "whole",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 9,
+        "column_name": "ends_deal",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 10,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 11,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 12,
+        "column_name": "stripe_refund_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 13,
+        "column_name": "failure_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 14,
+        "column_name": "refunded_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 15,
+        "column_name": "credit_seq",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 16,
+        "column_name": "income_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 17,
+        "column_name": "tax_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 18,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 19,
+        "column_name": "created_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 20,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 21,
+        "column_name": "succeeded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 22,
+        "column_name": "failed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 23,
+        "column_name": "emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "club_sponsor_deals",
         "pos": 1,
         "column_name": "id",
@@ -6269,6 +6557,24 @@
         "table_name": "club_sponsor_deals",
         "pos": 61,
         "column_name": "original_total",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 62,
+        "column_name": "card_fee",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 63,
+        "column_name": "card_fee_tax",
         "data_type": "numeric",
         "udt_name": "numeric",
         "is_nullable": "YES",
@@ -15424,6 +15730,33 @@
         "column_name": "reversal_fee_entry_id",
         "data_type": "uuid",
         "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 54,
+        "column_name": "sponsor_deal_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 55,
+        "column_name": "sponsor_fee_tax",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 56,
+        "column_name": "sponsor_invoice",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -35464,10 +35797,31 @@
       },
       {
         "table_name": "club_sponsor_deal_payments",
+        "column_name": "fee_cost_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_fee_cost_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "fee_income_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_fee_income_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
         "column_name": "income_entry_id",
         "foreign_table": "accounting_entries",
         "foreign_column": "id",
         "constraint_name": "club_sponsor_deal_payments_income_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_online_payment_id_fkey"
       },
       {
         "table_name": "club_sponsor_deal_payments",
@@ -35496,6 +35850,55 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "club_sponsor_deal_payments_voided_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_deal_refunds_created_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "deal_id",
+        "foreign_table": "club_sponsor_deals",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_deal_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "income_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_income_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_online_payment_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "payment_id",
+        "foreign_table": "club_sponsor_deal_payments",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_payment_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "tax_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_tax_entry_id_fkey"
       },
       {
         "table_name": "club_sponsor_deals",
@@ -37204,6 +37607,13 @@
         "foreign_table": "league_seasons",
         "foreign_column": "id",
         "constraint_name": "online_payments_season_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "sponsor_deal_id",
+        "foreign_table": "club_sponsor_deals",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_sponsor_deal_id_fkey"
       },
       {
         "table_name": "online_payments",
@@ -42283,8 +42693,38 @@
       },
       {
         "tablename": "club_sponsor_deal_payments",
+        "indexname": "club_sponsor_deal_payments_online_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_payments_online_uniq ON public.club_sponsor_deal_payments USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_sponsor_deal_payments",
         "indexname": "club_sponsor_deal_payments_pkey",
         "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_payments_pkey ON public.club_sponsor_deal_payments USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_credit_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_credit_uniq ON public.club_sponsor_deal_refunds USING btree (deal_id, credit_seq) WHERE (credit_seq IS NOT NULL)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_deal_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deal_refunds_deal_idx ON public.club_sponsor_deal_refunds USING btree (org_id, deal_id, created_at)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_payment_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deal_refunds_payment_idx ON public.club_sponsor_deal_refunds USING btree (payment_id)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_pkey ON public.club_sponsor_deal_refunds USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_stripe_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_stripe_uniq ON public.club_sponsor_deal_refunds USING btree (stripe_refund_id) WHERE (stripe_refund_id IS NOT NULL)"
       },
       {
         "tablename": "club_sponsor_deals",
@@ -43965,6 +44405,11 @@
         "tablename": "online_payments",
         "indexname": "online_payments_intent_key",
         "indexdef": "CREATE UNIQUE INDEX online_payments_intent_key ON public.online_payments USING btree (stripe_payment_intent_id) WHERE (stripe_payment_intent_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_one_open_per_deal",
+        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_deal ON public.online_payments USING btree (sponsor_deal_id) WHERE ((status = 'open'::text) AND (flow = 'sponsorship'::text) AND (sponsor_deal_id IS NOT NULL))"
       },
       {
         "tablename": "online_payments",
@@ -49185,6 +49630,12 @@
       {
         "kind": "CHECK",
         "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_card",
+        "check_clause": "(((online_payment_id IS NULL) AND (fee_paid_by IS NULL) AND (fee_amount IS NULL) AND (fee_charged = (0)::numeric) AND (fee_tax = (0)::numeric)) OR ((online_payment_id IS NOT NULL) AND (method = 'card'::text) AND (fee_paid_by = ANY (ARRAY['club'::text, 'sponsor'::text])) AND (fee_amount >= (0)::numeric) AND ((fee_paid_by = 'sponsor'::text) OR ((fee_charged = (0)::numeric) AND (fee_tax = (0)::numeric))) AND (fee_charged >= (0)::numeric) AND (fee_tax >= (0)::numeric) AND (fee_tax <= tax_part) AND ((fee_charged + fee_tax) < amount) AND ((card_last4 IS NULL) OR (card_last4 ~ '^[0-9]{4}$'::text))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
         "detail": "club_sponsor_deal_payments_check",
         "check_clause": "((tax_part >= (0)::numeric) AND (tax_part <= amount))"
       },
@@ -49238,6 +49689,60 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_check",
+        "check_clause": "((tax_part >= (0)::numeric) AND (tax_part <= amount))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_created_by_name_check",
+        "check_clause": "((char_length(btrim(created_by_name)) >= 1) AND (char_length(btrim(created_by_name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_credit_seq_check",
+        "check_clause": "((credit_seq IS NULL) OR (credit_seq > 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_failure_reason_check",
+        "check_clause": "((failure_reason IS NULL) OR (char_length(failure_reason) <= 300))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_reason_check",
+        "check_clause": "((char_length(btrim(reason)) >= 1) AND (char_length(btrim(reason)) <= 300))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'succeeded'::text, 'failed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_succeeded",
+        "check_clause": "(((succeeded_at IS NULL) = (refunded_on IS NULL)) AND ((status <> 'succeeded'::text) OR (succeeded_at IS NOT NULL)) AND ((status <> 'failed'::text) OR (failed_at IS NOT NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "club_sponsor_deals",
         "detail": "club_sponsor_deals_amount_check",
         "check_clause": "((amount >= (0)::numeric) AND (amount <= (1000000)::numeric))"
@@ -49247,6 +49752,12 @@
         "table_name": "club_sponsor_deals",
         "detail": "club_sponsor_deals_business_name_check",
         "check_clause": "((business_name IS NULL) OR ((char_length(btrim(business_name)) >= 1) AND (char_length(btrim(business_name)) <= 80)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_card_fee",
+        "check_clause": "(((card_fee IS NULL) OR ((card_fee > (0)::numeric) AND (invoice_seq IS NOT NULL) AND (pay_method = 'card'::text))) AND ((card_fee_tax IS NULL) OR ((card_fee IS NOT NULL) AND (card_fee_tax >= (0)::numeric))))"
       },
       {
         "kind": "CHECK",
@@ -51262,13 +51773,13 @@
         "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_flow_chk",
-        "check_clause": "(flow = ANY (ARRAY['tournament_team'::text, 'league_signup'::text]))"
+        "check_clause": "(flow = ANY (ARRAY['tournament_team'::text, 'league_signup'::text, 'sponsorship'::text]))"
       },
       {
         "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_flow_shape_chk",
-        "check_clause": "(((flow = 'tournament_team'::text) AND (season_id IS NULL) AND (signup_key IS NULL)) OR ((flow = 'league_signup'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (signup_key IS NOT NULL) AND ((char_length(signup_key) >= 1) AND (char_length(signup_key) <= 64)) AND (scope = 'full'::text)))"
+        "check_clause": "(((flow = 'tournament_team'::text) AND (season_id IS NULL) AND (signup_key IS NULL) AND (sponsor_deal_id IS NULL) AND (sponsor_fee_tax IS NULL) AND (sponsor_invoice IS NULL)) OR ((flow = 'league_signup'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (signup_key IS NOT NULL) AND ((char_length(signup_key) >= 1) AND (char_length(signup_key) <= 64)) AND (scope = 'full'::text) AND (sponsor_deal_id IS NULL) AND (sponsor_fee_tax IS NULL) AND (sponsor_invoice IS NULL)) OR ((flow = 'sponsorship'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (season_id IS NULL) AND (signup_key IS NULL) AND (scope = 'full'::text) AND (rail = 'card'::text) AND ((sponsor_fee_tax IS NULL) OR ((sponsor_fee_tax >= (0)::numeric) AND (fee_payer = 'family'::text))) AND ((sponsor_invoice IS NULL) OR (jsonb_typeof(sponsor_invoice) = 'object'::text))))"
       },
       {
         "kind": "CHECK",

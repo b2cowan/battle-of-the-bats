@@ -33,7 +33,8 @@ const FOLDED: ReadonlySet<DealBand> = new Set(['delivered', 'withdrawn']);
 
 /** The row's grey line under the business (round 1 tab 5). */
 function subLine(d: ListedDeal): string {
-  if (d.state === 'withdrawn' && d.withdrawn) return D.list.withdrawnOn(d.withdrawn.at);
+  // A withdrawn deal still holding a payment was refunded in full, which ended it (Part 3b, ask 3).
+  if (d.state === 'withdrawn' && d.withdrawn) return d.paidAmount > 0 ? D.card.listWithdrawnRefunded(d.withdrawn.at) : D.list.withdrawnOn(d.withdrawn.at);
   // Round 1 tab 5: "Paid Feb 14 · cheque" — the day it was paid in full and how the last payment came (Part 3a).
   if (d.state === 'paid' && d.paidOn && d.paidHow) return D.list.paidOn(d.paidOn, d.paidHow);
   if ((d.state === 'invoiced' || d.state === 'paid') && d.invoice) return D.list.invoiceDue(d.invoice.number, d.invoice.dueOn);

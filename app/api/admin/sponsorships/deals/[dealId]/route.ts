@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
 import { refused, requireSponsorships } from '@/lib/club-sponsorships-auth';
@@ -16,6 +17,7 @@ import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import { gstHstRateOn } from '@/lib/gst-hst-rates';
 import { isCalendarDate, tournamentToday } from '@/lib/timezone';
+import { closeSponsorCheckout, unrecordedCardPayment } from '@/lib/sponsor-card-server';
 
 /**
  * ONE DEAL (Board Ready Stage 6, Part 2; round 1 tab 5). GET reads the deal's page whole: the deal as offered, the business
@@ -46,13 +48,18 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     readSettings(org.id), readPlaceTargets(org.id), readDeals(org.id),
   ]);
   const address = deal.offeredTo ?? business?.email ?? null;
-  const { linkVersion, payments, ...shown } = deal;
+  const { linkVersion, payments, refunds, ...shown } = deal;
   const rate = settings.registered ? gstHstRateOn(business?.address?.province ?? null, today) : null;
   return NextResponse.json({
     deal: { ...shown, band: bandOf(deal) },
     business,
     offers,
     payments,
+    refunds,
+    // Part 3b: whether refunds to the card can be asked now (the launch switch: the Refund button is absent, not broken, while it is off).
+    cardRefundsOn: onlinePaymentsOn(),
+    // A card payment Stripe took that never landed on this deal: the callout says so instead of "didn't finish".
+    unrecordedCard: deal.state === 'withdrawn' ? null : await unrecordedCardPayment(org.id, dealId).catch(() => null),
     answers,
     address,
     bar: emailBarFor(address, bars.stops, bars.family),
@@ -110,6 +117,13 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       if (!linkTakesForm(deal) && !canRevise(deal)) return refused(DEAL_WORDS.deal.errPaidChange, 409, 'has_payment');
       terms = { amount, chargeTax, registered: settings.registered };
     }
+  }
+
+  // A card page open on the deal shows the OLD figures, and a card payment lands at the figures its page showed: change the
+  // terms under it and the edit is silently reverted (or the payment fails to record). Close it first, as Send the invoice does.
+  if (terms) {
+    const closed = await closeSponsorCheckout(dealId);
+    if (closed !== 'closed') return refused(DEAL_WORDS.card.errCardPaying, 409, closed === 'paid' ? 'card_paid' : 'card_open');
   }
 
   let revised: 'emailed' | 'not_emailed' | null = null;

@@ -646,8 +646,11 @@ export function isClubBook(kind: string): boolean {
  * (`bandCollected`, `spent`), the Statement and Months (lib/club-budget-report.ts) and Against last year, so the four can
  * never file a refund two ways.
  */
-export function isFeeRefund(l: { entryType: string; sourceModule?: string | null }): boolean {
-  return l.sourceModule === 'league_registration' && l.entryType === 'expense';
+export function isFeeRefund(l: { entryType: string; sourceModule?: string | null; category?: string | null }): boolean {
+  if (l.entryType !== 'expense') return false;
+  // A sponsor's card refund (Board Ready Stage 6 Part 3b, mig 530) nets Club sponsorship the same way: its sponsorship line out
+  // is less sponsorship, never spending. (Its tax line is GST/HST collected, which no figure counts; its fee line never moves.)
+  return l.sourceModule === 'league_registration' || (l.sourceModule === 'sponsorship_deal' && l.category === 'club_sponsorship');
 }
 
 // ── The year rule (Club Tier Stage 3c: the FISCAL year — lib/club-fiscal-year.ts) ───────────────

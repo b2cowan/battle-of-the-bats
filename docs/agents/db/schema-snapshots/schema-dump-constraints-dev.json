@@ -2351,12 +2351,42 @@
   },
   {
     "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_fee_cost_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fee_cost_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_fee_income_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fee_income_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
     "constraint_name": "club_sponsor_deal_payments_income_entry_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "income_entry_id",
     "foreign_table": "accounting_entries",
     "foreign_column": "id",
     "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_payments",
+    "constraint_name": "club_sponsor_deal_payments_online_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
   },
   {
@@ -2406,6 +2436,86 @@
     "column_name": "voided_by",
     "foreign_table": null,
     "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_deal_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "deal_id",
+    "foreign_table": "club_sponsor_deals",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_income_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "income_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_online_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "payment_id",
+    "foreign_table": "club_sponsor_deal_payments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_tax_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tax_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -5855,6 +5965,16 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "season_id",
     "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_sponsor_deal_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sponsor_deal_id",
+    "foreign_table": "club_sponsor_deals",
     "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"

@@ -93,3 +93,12 @@ p.addressHint { margin: 0.1rem 0 0.75rem; }
 .receiptLines dt { overflow-wrap: anywhere; }
 .receiptLines dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .receiptTotal { border-top: 1px solid var(--club-line, var(--border-2)); margin-top: 0.3rem; padding-top: 0.4rem !important; color: var(--club-text) !important; font-weight: 700; }
+
+/* Part 3b (round 2 tab 1): one button per way to pay, each with its total and its note under it; the card first, the cheque
+   or e-transfer button the quiet one beside it once card is there. The refund policy opens in place under the card button. */
+.payRow { display: grid; gap: 0; margin-top: 0.75rem; }
+.payRow + .payRow { margin-top: 1rem; }
+.payRow > button { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.policy { margin-top: 0.25rem; }
+/* The cheque or e-transfer button beside the card one: the pay block's second rail, outlined (12c's bank-debit look). */
+.secondPay { composes: btn btnOutline from './ClubKit.module.css'; width: 100%; }

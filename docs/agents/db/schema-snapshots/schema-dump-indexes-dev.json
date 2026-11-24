@@ -1176,8 +1176,38 @@
   },
   {
     "tablename": "club_sponsor_deal_payments",
+    "indexname": "club_sponsor_deal_payments_online_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_payments_online_uniq ON public.club_sponsor_deal_payments USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_sponsor_deal_payments",
     "indexname": "club_sponsor_deal_payments_pkey",
     "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_payments_pkey ON public.club_sponsor_deal_payments USING btree (id)"
+  },
+  {
+    "tablename": "club_sponsor_deal_refunds",
+    "indexname": "club_sponsor_deal_refunds_credit_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_credit_uniq ON public.club_sponsor_deal_refunds USING btree (deal_id, credit_seq) WHERE (credit_seq IS NOT NULL)"
+  },
+  {
+    "tablename": "club_sponsor_deal_refunds",
+    "indexname": "club_sponsor_deal_refunds_deal_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deal_refunds_deal_idx ON public.club_sponsor_deal_refunds USING btree (org_id, deal_id, created_at)"
+  },
+  {
+    "tablename": "club_sponsor_deal_refunds",
+    "indexname": "club_sponsor_deal_refunds_payment_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deal_refunds_payment_idx ON public.club_sponsor_deal_refunds USING btree (payment_id)"
+  },
+  {
+    "tablename": "club_sponsor_deal_refunds",
+    "indexname": "club_sponsor_deal_refunds_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_pkey ON public.club_sponsor_deal_refunds USING btree (id)"
+  },
+  {
+    "tablename": "club_sponsor_deal_refunds",
+    "indexname": "club_sponsor_deal_refunds_stripe_uniq",
+    "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_stripe_uniq ON public.club_sponsor_deal_refunds USING btree (stripe_refund_id) WHERE (stripe_refund_id IS NOT NULL)"
   },
   {
     "tablename": "club_sponsor_deals",
@@ -2858,6 +2888,11 @@
     "tablename": "online_payments",
     "indexname": "online_payments_intent_key",
     "indexdef": "CREATE UNIQUE INDEX online_payments_intent_key ON public.online_payments USING btree (stripe_payment_intent_id) WHERE (stripe_payment_intent_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_one_open_per_deal",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_deal ON public.online_payments USING btree (sponsor_deal_id) WHERE ((status = 'open'::text) AND (flow = 'sponsorship'::text) AND (sponsor_deal_id IS NOT NULL))"
   },
   {
     "tablename": "online_payments",

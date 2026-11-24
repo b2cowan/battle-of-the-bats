@@ -61,6 +61,53 @@ webhook gained 13 events (disputes, refunds, payment methods, invoice and credit
 configuration now has customer updates off (our sessions name our own configuration; ours, v2, does not exist on live yet). The
 re-run at the promote and the re-count of production subscriptions stay owed as release steps, not owner steps.
 
+**Re-checked 2026-11-22, after the promote was serving (read-only live audit `stripe-live-2026-11-22.json`, GST/HST Stage 9):**
+every section identical to 2026-11-17 (1 CA registration `active`, default `exclusive`, 10 prices `unspecified`, no errors). The
+"re-run at the promote" step is **done**. The re-count of production subscriptions made before 2026-11-06 is **done: zero**
+(production counts read before the 2026-11-22 migrations: no subscriptions), so no untaxed sale exists to self-assess. Still open,
+and only this: a printed live invoice or credit note has never been seen (the W9 check below).
+
+**⚠ OPEN 2026-11-22 — the live dashboard says "Needs attention" on Canada.** Stripe moved Tax › Registrations to **Tax › Locations**.
+There the one row reads *Canada (GST/HST) · 1 registration · Status **Needs attention** · Filing setup —*, with the tiles *Needs
+attention 1, Collecting and filing 0, Not collecting tax 0*. Tax › Overview also shows *Continue Tax setup — 1/2 steps completed*,
+while its Action items say *You're all set*. Stripe's docs (registering, monitoring) give exactly three causes for Needs attention:
+sales over a threshold with no registration; **"an active registration but your tax setup is incomplete (for example, missing head
+office address or preset product tax code)"**; or a draft registration application not yet submitted. Only the second fits an active
+registration. "Collecting tax" is defined as an active registration **and** a complete setup, so on the docs' own words this row is
+**not** in the collecting state. Whether calculation actually stops is **not stated**. It conflicts with the API read the same day
+(tax settings `active`, `missing_fields` empty, preset code set, head office complete), so the dashboard is counting a step the API
+does not report. Filing setup "—" is expected: that column belongs to Stripe's own filing service, and we file with CRA ourselves.
+**Settles it:** (1) the dashboard's own reason, found by clicking the Canada row or Overview › *Continue setup*. Read it, change nothing
+until it is known. (2) The §557 walk step B4: a live checkout with an Ontario address must show **HST 13%** on its own line. A $0
+tax line there means Canadian sales are going out untaxed, and the first live sale must wait. Until both are read, "collecting on
+live" is **unproven**, even though every API field says yes.
+**Reason read 2026-11-22 (owner, the Canada (Federal) page):** *"you've added a tax registration, but your Stripe Tax setup isn't
+complete. Continue Tax setup to start calculating and collecting tax on subscriptions, invoices, and payment links."* The page also
+shows the GST/HST number ending 002, Standard, start 2026-11-06 20:17 UTC, no end date. The wording names Stripe's own no-code
+surfaces. Our code switches automatic tax on, explicitly, on every paid path: checkout, plan moves, schedules, previews. So the most
+likely reading is a dashboard default that our sales don't use. B4 is still the proof, and the unfinished step must be read before it
+is completed.
+**The unfinished step is choosing a Stripe Tax plan (owner screenshot of the setup wizard, 2026-11-22):** 1 Choose a Stripe Tax plan →
+2 Choose where to collect and file → 3 Set up your integration. Plans, re-read 2026-11-22 (stripe.com/en-ca/tax/pricing and the
+support pricing page): **Tax Basic** covers calculation and collection only, pay-as-you-go with no recurring fee. No-code use (Checkout,
+Billing, Invoicing, Payment Links) costs 0.5% of volume where registered; API calculations cost CA$0.50 per transaction. **Tax Complete**
+adds registrations and filing, from CA$120/month on a 1-year contract, and its Canada filing covers **only the Simplified (non-resident)
+GST/HST registration, not a Normal one like ours**, so it buys us nothing. **Recommendation: Tax Basic.** The docs do not say what a live
+account with no plan chosen does to automatic tax (calculated, $0, or an error), so B4 runs **after** the plan is chosen. In step 2,
+add nothing: the Canada registration is already there, and filing is skipped because we file with CRA. In step 3, keep tax **added on
+top** (exclusive) and edit no prices. Step 3 turned out to be guide links only (Subscriptions, Invoices: "Add automatic tax to your
+…"). Nothing to switch on, because our code already turns automatic tax on per sale. **Where the 0.5% lands:** only on our own plan
+billing. Automatic tax is enabled only on the subscription and plan-billing paths (checkout, plan moves, schedules, renewal and
+proration invoices). Families' online payments to clubs never turn it on, and Stripe Tax does not tax or count Connect application
+fees. The fee is charged per completed transaction in a jurisdiction where we are registered, so today that means Canadian buyers'
+invoices, **renewals included**, not only the first sale. A US buyer is calculated at $0, with no registration, and Stripe states no
+fee there. A price preview is not a transaction; the docs do not say outright that previews are free, but the per-transaction wording
+implies it.
+**Setup wizard completed 2026-11-22 (owner, live; recommended plan Tax Basic):** Tax › Overview no longer shows *Continue Tax setup*,
+and Action items say *You're all set*. The Locations row was then read (owner screenshot, same day): *Canada (GST/HST) · 1 registration · **Collecting tax***,
+with the tiles Needs attention 0 and Collecting and filing 1. Still to read: B4 (HST 13%
+on a live checkout). This block closes when both are seen.
+
 **Leave alone:** the 14 live prices. They follow the default; setting each to exclusive gains nothing and cannot be undone.
 
 **Check before the first live invoice (Part 7 walk, W9):** the live account's public business details (name, Ontario address) and that
@@ -75,11 +122,15 @@ invoice process (Stripe Tax won't do it) — see PLATFORM_FEE_TAX_TREATMENT.md.
 
 ## Sources
 - [Stripe — Specify product tax codes and tax behavior](https://docs.stripe.com/tax/products-prices-tax-codes-tax-behavior) — accessed 2026-11-06
-- [Stripe — Register for sales tax, VAT, and GST (registration types; adding a registration)](https://docs.stripe.com/tax/registering) — accessed 2026-11-06
+- [Stripe — Register for sales tax, VAT, and GST (registration types; adding a registration)](https://docs.stripe.com/tax/registering) — accessed 2026-11-06; Locations statuses re-read 2026-11-22
+- [Stripe — Monitor your obligations (Locations statuses)](https://docs.stripe.com/tax/monitoring) — accessed 2026-11-22
+- [Stripe — File with Stripe (Filing setup column)](https://docs.stripe.com/tax/file-with-stripe) — accessed 2026-11-22
 - [Stripe — Collect tax in Canada](https://docs.stripe.com/tax/supported-countries/canada/collect-tax.md?tax-jurisdiction-canada=federal) — accessed 2026-10-31
 - [Stripe — Customer locations](https://docs.stripe.com/tax/customer-locations) — accessed 2026-10-31
 - [Stripe — Zero tax / not collecting](https://docs.stripe.com/tax/zero-tax) — accessed 2026-10-31
-- [Stripe — Tax pricing](https://support.stripe.com/questions/understanding-stripe-tax-pricing) — accessed 2026-10-31
+- [Stripe — Tax pricing](https://support.stripe.com/questions/understanding-stripe-tax-pricing) — accessed 2026-10-31; re-read 2026-11-22
+- [Stripe — Tax pricing, Canada (CAD)](https://stripe.com/en-ca/tax/pricing) — accessed 2026-11-22
+- [Stripe — File with Stripe outside the US](https://docs.stripe.com/tax/file-with-stripe-outside-us) — accessed 2026-11-22
 - Sandbox probes: `.probe/gst2/tax-behaviour-run2.txt` (2026-11-05), `.probe/gst2/part7-unspecified-price-run1.txt` (2026-11-06); live
   read-only audit `stripe-live-2026-11-06.json`
 

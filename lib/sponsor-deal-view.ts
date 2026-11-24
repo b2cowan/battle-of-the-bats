@@ -23,7 +23,9 @@ import { dealLinkFormState, type DealLinkAnswer } from './club-form-deal';
 import { readPackage, readSettings } from './club-sponsorships-server';
 import { markDealOpened, readDeal } from './club-sponsorship-deals-server';
 import { dealBullets, linkTakesForm, linkTakesLogo, type DealInvoice } from './club-sponsorship-deals';
-import { clubCanEmailInvoice, invoiceStanding } from './club-sponsor-invoice';
+import { clubCanEmailInvoice, invoiceStanding, refundCounts, refundedAway } from './club-sponsor-invoice';
+import { sponsorCardFacts, unrecordedCardPayment } from './sponsor-card-server';
+import { cardLabel } from './online-payment-words';
 import { tournamentToday } from './timezone';
 import { payLinkSecret, readSponsorDealToken } from './sponsor-deal-link';
 import type { SignupFormView } from './club-form-signup';
@@ -115,9 +117,18 @@ export type SponsorPageView =
     /** The page offers the logo box (`linkTakesLogo`): on the receipt page only to a business that never sent one. */
     takesLogo: boolean;
     paid: boolean;
+    /** A card payment was taken for this deal and could not be recorded on it: the page says so and takes no second payment. */
+    received: boolean;
     /** What is still owing on the invoice (Part 3a); less than the total means a payment has arrived. */
     owing: number;
     paidOn: string | null;
+    /** Part 3b: the card button is there only while the club takes card (absent, not broken). `sponsorPays`: the Payouts card's
+     *  "Processing fee on sponsorships" says the sponsor pays it — only ever before an invoice (owner call (3)). */
+    card: { sponsorPays: boolean; refundPolicy: string | null } | null;
+    /** The card a paid invoice was paid with, and when ("Visa •••• 4242 · Mar 3, 2027, 2:14 p.m."). */
+    paidCard: { label: string; at: string } | null;
+    /** Its refunds to the card (a failed one gave nothing back and isn't listed), each with its credit note when it has one. */
+    refunds: { id: string; amount: number; on: string | null; pending: boolean; creditNumber: string | null }[];
   };
 
 const clubFace = async (org: Organization, contact: string | null): Promise<SponsorClubFace> => ({
@@ -146,7 +157,8 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
   if (door.kind === 'replaced') return { state: 'closed', club, replaced: true };
 
   const deal = await readDeal(org.id, door.dealId);
-  if (!deal || deal.state === 'withdrawn') return { state: 'closed', club };
+  // A deal refunded away (Part 3b) still shows its invoice and refund to the business that paid it, with no way to pay.
+  if (!deal || (deal.state === 'withdrawn' && !refundedAway(deal))) return { state: 'closed', club };
   const open = linkTakesForm(deal);
   if (open && !(await targetExists(deal.placeKind, deal.targetId))) return { state: 'closed', club };
 
@@ -184,6 +196,11 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
   const placeName = deal.placeKind === 'club' ? null : deal.targetName;
   const bullets = dealBullets(deal);
   const standing = deal.invoice ? invoiceStanding(deal.invoice.total, deal.payments) : null;
+  const ended = deal.state === 'withdrawn';
+  // The card button: the club takes card now, and the deal can still take money (an open offer, or an invoice still owing).
+  const facts = !ended && (open || (deal.state === 'invoiced' && (standing?.owing ?? 0) > 0)) ? await sponsorCardFacts(org.id).catch(() => null) : null;
+  const received = !ended && deal.state !== 'paid' && !!(await unrecordedCardPayment(org.id, deal.id).catch(() => null));
+  const lastCard = [...deal.payments].reverse().find(x => !x.voided && x.card)?.card ?? null;
   return {
     state: open ? 'form' : 'done',
     token,
@@ -204,8 +221,12 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
     // club.contactEmail is the sender's reply-to (settings' contact, else the club's public one: offerContactOf).
     clubCanEmail: clubCanEmailInvoice(settings.mailingAddress, club.contactEmail),
     takesLogo: linkTakesLogo(deal, !!b.logo_sent_at, tournamentToday()),
-    paid: deal.state === 'paid',
-    owing: standing?.owing ?? 0,
-    paidOn: deal.paidOn,
+    received,
+    paid: deal.state === 'paid' || (ended && !!standing?.paidInFull),
+    owing: ended ? 0 : standing?.owing ?? 0,
+    paidOn: deal.paidOn ?? standing?.paidOn ?? null,
+    card: facts && !received ? { sponsorPays: open && facts.feePayer === 'sponsor', refundPolicy: facts.refundPolicy } : null,
+    paidCard: lastCard ? { label: cardLabel(lastCard.brand, lastCard.last4), at: lastCard.paidAt ?? '' } : null,
+    refunds: deal.refunds.filter(refundCounts).map(r => ({ id: r.id, amount: r.amount, on: r.refundedOn, pending: r.status === 'pending', creditNumber: r.status === 'succeeded' ? r.creditNumber : null })),
   };
 }

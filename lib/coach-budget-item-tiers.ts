@@ -68,7 +68,9 @@ export const ITEM_TIER_LABEL: Record<BudgetItemTier, string> = {
  * so the word is off every team's picker and plan. "GST/HST remitted" (mig 529) is the club's GST/HST passed on to the government;
  * a team charges no tax (R2), so it has nothing to remit. Fixed ids (migs 528, 529); never change them.
  */
-export const CLUB_ONLY_ITEM_IDS: readonly string[] = ['5b0d0528-0528-4c1b-8a50-7ea0507c0001', '5b0d0529-0529-4c1b-8a50-7ea0507c0001'];
+export const CLUB_ONLY_ITEM_IDS: readonly string[] = ['5b0d0528-0528-4c1b-8a50-7ea0507c0001', '5b0d0529-0529-4c1b-8a50-7ea0507c0001',
+  // Board Ready Stage 6 Part 3b (mig 530): Sponsorship › Payment processing, the club's card fee on a sponsor's payment.
+  '5b0d0530-0530-4c1b-8a50-7ea0507c0001'];
 
 /**
  * May this team see this item in its picker?

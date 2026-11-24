@@ -26,7 +26,7 @@ import {
   type ClubDeal, type DealState, type OfferReason,
 } from './club-sponsorship-deals';
 import type { PackageItem, SponsorPlaceKind } from './club-sponsorships';
-import { DEAL_METHOD_LABEL, invoiceStanding, type DealPayment } from './club-sponsor-invoice';
+import { creditNoteNumber, DEAL_METHOD_LABEL, invoiceStanding, type DealPayment, type DealRefund } from './club-sponsor-invoice';
 import type { DuesPaymentMethod } from './types';
 
 // ── Reading deals ──────────────────────────────────────────────────────────────────────────────────
@@ -39,6 +39,7 @@ type DealRow = {
   invoice_year: number | null; invoice_seq: number | null; invoiced_on: string | null; due_on: string | null; tax_kind: 'GST' | 'HST' | null;
   tax_rate: number | string | null; tax_amount: number | string | null; total: number | string | null; withdrawn_at: string | null;
   revised_on: string | null; invoice_emailed_at: string | null; paid_on: string | null;
+  card_fee: number | string | null; card_fee_tax: number | string | null;
   withdrawn_by_name: string | null; withdrawn_reason: string | null;
   club_sponsors: { name: string } | { name: string }[] | null;
 };
@@ -46,7 +47,7 @@ const DEAL_COLUMNS = [
   'id', 'sponsor_id', 'package_id', 'package_name', 'package_items', 'logo_on_site', 'place_kind', 'target_id', 'target_name', 'ends_on',
   'amount', 'charge_tax', 'state', 'link_version', 'offered_on', 'offered_at', 'offered_by_name', 'offered_to', 'emailed_at', 'opened_at', 'link_unsent_at',
   'form_at', 'business_name', 'invoice_year', 'invoice_seq', 'invoiced_on', 'due_on', 'tax_kind', 'tax_rate', 'tax_amount', 'total',
-  'withdrawn_at', 'withdrawn_by_name', 'withdrawn_reason', 'revised_on', 'invoice_emailed_at', 'paid_on', 'club_sponsors(name)',
+  'withdrawn_at', 'withdrawn_by_name', 'withdrawn_reason', 'revised_on', 'invoice_emailed_at', 'paid_on', 'card_fee', 'card_fee_tax', 'club_sponsors(name)',
 ].join(', ');
 
 const num = (v: number | string | null): number => (v == null ? 0 : Number(v));
@@ -65,6 +66,7 @@ function dealOf(r: DealRow, done: ClubDeal['done'], payments: readonly DealPayme
       ? {
         number: invoiceNumber(r.invoice_year, r.invoice_seq), issuedOn: r.invoiced_on ?? '', dueOn: r.due_on ?? '',
         taxKind: r.tax_kind, taxRate: r.tax_rate == null ? null : Number(r.tax_rate), tax: num(r.tax_amount), total: num(r.total),
+        ...(r.card_fee != null ? { cardFee: num(r.card_fee), cardFeeTax: num(r.card_fee_tax) } : {}),
       }
       : null,
     revisedOn: r.revised_on, invoiceEmailedAt: r.invoice_emailed_at, paidOn: r.paid_on,
@@ -94,13 +96,53 @@ async function doneFor(dealIds: string[]): Promise<Map<string, ClubDeal['done']>
 
 type PaymentRow = {
   id: string; deal_id: string; amount: number | string; tax_part: number | string; received_on: string; method: DuesPaymentMethod;
-  reference: string | null; note: string | null; recorded_by_name: string; voided_at: string | null; voided_by_name: string | null; void_reason: string | null;
+  reference: string | null; note: string | null; recorded_by_name: string; recorded_at: string; voided_at: string | null; voided_by_name: string | null; void_reason: string | null;
+  // Part 3b (mig 530): a card payment.
+  online_payment_id: string | null; card_brand: string | null; card_last4: string | null; fee_paid_by: 'club' | 'sponsor' | null;
+  fee_amount: number | string | null; fee_charged: number | string; fee_tax: number | string;
+  online_payments: { paid_at: string | null; stripe_payment_intent_id: string | null } | { paid_at: string | null; stripe_payment_intent_id: string | null }[] | null;
 };
-const PAYMENT_COLUMNS = 'id, deal_id, amount, tax_part, received_on, method, reference, note, recorded_by_name, voided_at, voided_by_name, void_reason';
-const paymentOf = (r: PaymentRow): DealPayment => ({
-  id: r.id, amount: num(r.amount), taxPart: num(r.tax_part), receivedOn: r.received_on, method: r.method, reference: r.reference, note: r.note,
-  recordedByName: r.recorded_by_name, voided: r.voided_at ? { at: r.voided_at, byName: r.voided_by_name ?? '', reason: r.void_reason ?? '' } : null,
+const PAYMENT_COLUMNS = 'id, deal_id, amount, tax_part, received_on, method, reference, note, recorded_by_name, recorded_at, voided_at, voided_by_name, void_reason, '
+  + 'online_payment_id, card_brand, card_last4, fee_paid_by, fee_amount, fee_charged, fee_tax, online_payments(paid_at, stripe_payment_intent_id)';
+const paymentOf = (r: PaymentRow): DealPayment => {
+  const op = Array.isArray(r.online_payments) ? r.online_payments[0] : r.online_payments;
+  return {
+    id: r.id, amount: num(r.amount), taxPart: num(r.tax_part), receivedOn: r.received_on, method: r.method, reference: r.reference, note: r.note,
+    recordedByName: r.recorded_by_name, recordedAt: r.recorded_at,
+    voided: r.voided_at ? { at: r.voided_at, byName: r.voided_by_name ?? '', reason: r.void_reason ?? '' } : null,
+    card: r.online_payment_id ? {
+      brand: r.card_brand, last4: r.card_last4, paidAt: op?.paid_at ?? null, reference: op?.stripe_payment_intent_id ?? null,
+      feePaidBy: r.fee_paid_by ?? 'club', fee: num(r.fee_amount), feeCharged: num(r.fee_charged), feeTax: num(r.fee_tax),
+    } : null,
+  };
+};
+
+// ── Refunds to the card (Part 3b, mig 530) ──────────────────────────────────────────────────────────
+
+type RefundRow = {
+  id: string; deal_id: string; payment_id: string; amount: number | string; tax_part: number | string; whole: boolean; ends_deal: boolean;
+  reason: string; status: DealRefund['status']; failure_reason: string | null; refunded_on: string | null; succeeded_at: string | null;
+  failed_at: string | null; created_at: string; created_by_name: string; stripe_refund_id: string | null; emailed_at: string | null; credit_seq: number | null; income_entry_id: string | null;
+};
+const REFUND_COLUMNS = 'id, deal_id, payment_id, amount, tax_part, whole, ends_deal, reason, status, failure_reason, refunded_on, succeeded_at, failed_at, created_at, created_by_name, stripe_refund_id, emailed_at, credit_seq, income_entry_id';
+const refundOf = (r: RefundRow, invoiceNo: string | null): DealRefund => ({
+  id: r.id, paymentId: r.payment_id, amount: num(r.amount), taxPart: num(r.tax_part), whole: r.whole, endsDeal: r.ends_deal, reason: r.reason,
+  status: r.status, failureReason: r.failure_reason, refundedOn: r.refunded_on, succeededAt: r.succeeded_at, failedAt: r.failed_at,
+  createdAt: r.created_at, createdByName: r.created_by_name, stripeRefundId: r.stripe_refund_id, emailedAt: r.emailed_at, booked: r.income_entry_id != null,
+  creditNumber: r.credit_seq != null && invoiceNo ? creditNoteNumber(invoiceNo, r.credit_seq) : null,
 });
+
+/** Every refund on these deals, oldest first (a failed one stays on record: "Refund didn't reach the card"). */
+async function refundsFor(orgId: string, dealIds: string[], numbers: Map<string, string | null>): Promise<Map<string, DealRefund[]>> {
+  const out = new Map<string, DealRefund[]>();
+  for (let i = 0; i < dealIds.length; i += 200) {
+    const { data, error } = await supabaseAdmin.from('club_sponsor_deal_refunds').select(REFUND_COLUMNS)
+      .eq('org_id', orgId).in('deal_id', dealIds.slice(i, i + 200)).order('created_at');
+    if (error) throw error;
+    for (const r of (data ?? []) as RefundRow[]) out.set(r.deal_id, [...(out.get(r.deal_id) ?? []), refundOf(r, numbers.get(r.deal_id) ?? null)]);
+  }
+  return out;
+}
 
 async function paymentsFor(orgId: string, dealIds: string[]): Promise<Map<string, DealPayment[]>> {
   const out = new Map<string, DealPayment[]>();
@@ -108,7 +150,7 @@ async function paymentsFor(orgId: string, dealIds: string[]): Promise<Map<string
     const { data, error } = await supabaseAdmin.from('club_sponsor_deal_payments').select(PAYMENT_COLUMNS)
       .eq('org_id', orgId).in('deal_id', dealIds.slice(i, i + 200)).order('received_on').order('recorded_at');
     if (error) throw error;
-    for (const r of (data ?? []) as PaymentRow[]) out.set(r.deal_id, [...(out.get(r.deal_id) ?? []), paymentOf(r)]);
+    for (const r of (data ?? []) as unknown as PaymentRow[]) out.set(r.deal_id, [...(out.get(r.deal_id) ?? []), paymentOf(r)]);
   }
   return out;
 }
@@ -128,14 +170,16 @@ export async function readDeals(orgId: string): Promise<(ClubDeal & { linkVersio
   return rows.map(r => dealOf(r, done.get(r.id) ?? {}, paid.get(r.id) ?? []));
 }
 
-/** One deal, with its payments (voided ones included) — the payments are read once here, never again by a caller. */
-export async function readDeal(orgId: string, id: string): Promise<(ClubDeal & { linkVersion: number; payments: DealPayment[] }) | null> {
+/** One deal, with its payments (voided ones included) and its refunds — read once here, never again by a caller. */
+export async function readDeal(orgId: string, id: string): Promise<(ClubDeal & { linkVersion: number; payments: DealPayment[]; refunds: DealRefund[] }) | null> {
   const { data, error } = await supabaseAdmin.from('club_sponsor_deals').select(DEAL_COLUMNS).eq('org_id', orgId).eq('id', id).maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const [done, paid] = await Promise.all([doneFor([id]), paymentsFor(orgId, [id])]);
+  const row = data as unknown as DealRow;
+  const number = row.invoice_seq != null && row.invoice_year != null ? invoiceNumber(row.invoice_year, row.invoice_seq) : null;
+  const [done, paid, back] = await Promise.all([doneFor([id]), paymentsFor(orgId, [id]), refundsFor(orgId, [id], new Map([[id, number]]))]);
   const payments = paid.get(id) ?? [];
-  return { ...dealOf(data as unknown as DealRow, done.get(id) ?? {}, payments), payments };
+  return { ...dealOf(row, done.get(id) ?? {}, payments), payments, refunds: back.get(id) ?? [] };
 }
 
 /** The business's own card on the deal's page (round 1 tab 5): what its link sent, as sent. */

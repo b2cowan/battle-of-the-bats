@@ -1,0 +1,805 @@
+<title>Sponsorship Card Refunds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ─── Stage 6 additions ─── */
+/* the portal's joined money band (MoneySummaryBand): one frame, a hairline between figures */
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.mband > div { padding: 11px 16px; display: grid; gap: 2px; }
+.mband > div + div { border-left: 1px solid var(--home-line); }
+.mband .ml { font-size: 12px; color: var(--home-dim); }
+.mband .mv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-ink); }
+.mband .mc { font-size: 12px; color: var(--home-dim); }
+/* on a phone: figure ROWS, never tiles */
+.frows { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto 14px; gap: 10px; align-items: center; padding: 11px 14px; min-height: 52px; }
+.frow + .frow { border-top: 1px solid var(--home-line); }
+.frow .fl1 { font-size: 14px; font-weight: 600; } .frow .fc { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.frow .fv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl th.num { text-align: right; }
+.ptabs { display: flex; gap: 22px; border-bottom: 1px solid var(--home-line); font-size: 14px; }
+.ptabs span { padding: 8px 0 9px; color: var(--home-ink-soft); }
+.ptabs span.on { color: var(--home-ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--home-olive); }
+.stP { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(70,55,30,0.08); color: var(--home-ink-soft); white-space: nowrap; }
+.stP.paid { background: var(--good-bg); color: var(--good); }
+.stP.inv { background: var(--warn-bg); color: var(--warn); }
+.stP.off { background: var(--home-olive-soft); color: var(--home-olive); }
+.callout { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callout .ct { flex: 1 1 260px; display: grid; gap: 2px; }
+.callout .ct b { font-size: 15px; }
+.callout .ct span { font-size: 13px; color: var(--home-ink-soft); }
+.ck { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; }
+.ck + .ck { border-top: 1px solid var(--home-line); }
+.ck .t { font-size: 14px; font-weight: 600; } .ck .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.ck .when { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.logoT { width: 64px; height: 32px; border: 1px solid var(--home-line); border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; background: #fff; color: var(--home-ink); flex: 0 0 auto; text-align: center; line-height: 1.1; padding: 0 3px; }
+.logoT.none { border-style: dashed; color: var(--home-faint); font-weight: 600; }
+.lg1 { color: #1F5E8C; } .lg2 { color: #8A3B12; } .lg3 { color: #2E6B2F; } .lg4 { color: #6B2E7A; }
+.srow { display: grid; grid-template-columns: 64px minmax(0,1fr) auto 22px; gap: 12px; align-items: center; padding: 10px 14px; min-height: 56px; background: var(--home-card); }
+.srow + .srow { border-top: 1px solid var(--home-line); }
+.srow .nm { font-size: 14px; font-weight: 650; } .srow .cap { display: block; font-size: 12px; color: var(--home-dim); }
+.srow.ended { opacity: 0.55; }
+.place { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--home-ink-soft); }
+.place::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); }
+/* the business's page */
+.pub { box-sizing: content-box; width: 640px; padding: 0 0 28px; }
+.pubBand { background: #2B3A1C; color: #F4F1E6; padding: 14px 40px; display: flex; gap: 12px; align-items: center; border-radius: 8px 8px 0 0; }
+.pubBand .crest { width: 34px; height: 34px; border-radius: 50%; background: #D9F99D; color: #2B3A1C; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.pubBand b { font-size: 16px; }
+.pubIn { padding: 22px 40px 0; display: grid; gap: 18px; }
+.phone .pubBand { padding: 12px 16px; border-radius: 0; }
+.phone .pubIn { padding: 16px 16px 0; }
+.pkg { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 10px; }
+.pkg .pr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pkg ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sumT { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sumT td { padding: 6px 0; border-top: 1px solid var(--home-line); }
+.sumT tr:first-child td { border-top: 0; }
+.sumT tr.tot td { font-weight: 700; border-top: 1px solid var(--home-line-strong); }
+.payOpt { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.payOpt.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.payOpt .t { font-size: 15px; font-weight: 650; } .payOpt .h { font-size: 13px; color: var(--home-dim); }
+.receipt { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 8px; }
+.receipt .rt { font-size: 18px; font-weight: 700; margin: 0; }
+/* email */
+.mail { width: 600px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; color: #241E15; }
+.mailHd { padding: 12px 18px; border-bottom: 1px solid var(--home-line); font-size: 13px; display: grid; gap: 2px; background: #FBF9F5; }
+.mailHd span { color: var(--home-dim); }
+.mailBd { padding: 22px 28px; display: grid; gap: 12px; font-size: 15px; line-height: 1.55; }
+.mailBd p { margin: 0; }
+.mailBtn { justify-self: start; background: #2B3A1C; color: #F4F1E6; font-weight: 700; padding: 11px 18px; border-radius: 8px; font-size: 15px; }
+.mailFt { padding: 14px 28px 20px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-dim); display: grid; gap: 4px; }
+/* invoice paper: Letter at 96 dpi is 816 px wide */
+.paper { width: 816px; background: #fff; color: #1d1d1d; font-family: Helvetica, Arial, sans-serif; border: 1px solid #d6d2ca; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.paper .acc { height: 8px; background: #2B3A1C; }
+.paper .pin { padding: 34px 56px 40px; display: grid; gap: 18px; font-size: 13px; }
+.paper .idb { display: flex; justify-content: space-between; gap: 20px; }
+.paper .idb b { font-size: 16px; display: block; }
+.paper h4 { font-size: 26px; margin: 0; letter-spacing: 0.01em; }
+.paper .subl { color: #555; margin-top: 2px; }
+.paper .pfig { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #d6d2ca; border-radius: 4px; }
+.paper .pfig > div { padding: 10px 14px; } .paper .pfig > div + div { border-left: 1px solid #d6d2ca; }
+.paper .pfig span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+.paper .pfig b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.paper .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 4px; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #bbb; padding: 6px 0; }
+.paper td { padding: 8px 0; border-bottom: 1px solid #e3e0da; vertical-align: top; }
+.paper td.r, .paper th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .inc { margin: 4px 0 0; padding-left: 16px; color: #444; }
+.paper .tt td { border-bottom: 0; padding: 4px 0; }
+.paper .tt tr.big td { font-weight: 700; font-size: 15px; border-top: 1px solid #bbb; padding-top: 8px; }
+.paper .stamp { display: inline-block; border: 2px solid #2E6B2F; color: #2E6B2F; font-weight: 800; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; font-size: 13px; }
+.paper .foot { color: #777; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e3e0da; padding-top: 8px; }
+.paper.mini { width: 816px; }
+/* public club site */
+.site { box-sizing: content-box; width: 960px; padding: 0 0 22px; }
+.siteBar { background: #2B3A1C; color: #F4F1E6; padding: 12px 28px; display: flex; gap: 22px; align-items: center; font-size: 14px; border-radius: 8px 8px 0 0; }
+.siteBar b { font-size: 16px; margin-right: auto; }
+.siteIn { padding: 20px 28px 0; display: grid; gap: 14px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, 184px); gap: 12px; }
+.strip > div { min-height: 72px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; text-align: center; padding: 6px; }
+.byLine { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--home-dim); border: 1px solid var(--home-line); background: #fff; border-radius: 8px; padding: 6px 10px; }
+.pcard { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 4px 8px; }
+.pcard .nm { font-size: 15px; font-weight: 650; } .pcard .s { font-size: 13px; color: var(--home-dim); grid-column: 1; }
+.pcard .chev { grid-row: 1 / span 3; grid-column: 2; align-self: start; }
+.pband { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); display: flex; gap: 8px; padding-top: 4px; }
+.lockedRow { opacity: 0.6; }
+.planTbl td.y { color: var(--tag-new); font-weight: 700; }
+.planTbl td.n { color: var(--doc-soft); }
+.chip.q { background: rgba(70,55,30,0.08); color: var(--home-dim); }
+.phone .btnLime, .phone .btnOut { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.phone .ptabs span { padding: 12px 0; }
+.phone .ck { min-height: 44px; align-items: center; }
+.tap44 { min-width: 44px; min-height: 44px; padding: 0 10px; }
+.bandBtn { display: flex; gap: 8px; align-items: center; }
+</style>
+
+<style>
+/* ─── Part 3b additions ─── */
+.win.w520 { width: 520px; }
+.prows { border-top: 1px solid var(--home-line); }
+.prow { display: grid; grid-template-columns: minmax(0,1fr) auto 18px; gap: 10px; align-items: center; padding: 10px 0; min-height: 48px; font-size: 14px; }
+.prow + .prow { border-top: 1px solid var(--home-line); }
+.prow .pm { font-weight: 600; } .prow .ps { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.prow .pv { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.prow.void .pm, .prow.void .pv { color: var(--home-faint); text-decoration: line-through; }
+.chip.info { background: rgba(47,93,138,0.10); color: #2F5D8A; }
+.wfoot.two { justify-content: space-between; }
+.wfoot.two .l { display: flex; gap: 8px; }
+.rblock { border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; background: #FBF9F5; }
+.rblock h4 { margin: 0; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+.rblock .facts { grid-template-columns: 150px minmax(0,1fr); gap: 6px 14px; font-size: 13px; }
+.cutLine { font-size: 12px; color: var(--home-dim); text-align: center; padding: 4px; border: 1px dashed var(--home-line-strong); border-radius: 6px; }
+.ledg { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.ledg th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--home-line); }
+.ledg td { padding: 8px 10px; border-bottom: 1px solid var(--home-line); }
+.ledg td.num, .ledg th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ledg tr.newRow td { background: rgba(46,107,47,0.05); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stage 6 · sponsorships · Part 3b · drawn Nov 23, 2026 · card refunds, drawn before they are built</span>
+    <h1>Refunding a sponsor’s card payment: all of it ends the deal, part of it keeps it, and the processing fee never goes back</h1>
+    <p class="lead">You ruled on Nov 23 that card refunds are drawn before any code: the shipped refund window, whole or part, never the fee, and the deal after a full and after a part refund. This page draws exactly that, from the shipped tournament and house-league refund windows, on the deal page as it stands today (committed Nov 23). The example is Harbour Dental’s U9 division sponsorship: $1,000.00 plus 13% HST, $1,130.00, paid by card on Mar 3 with the club paying the $41.05 processing fee. Click any tag to read the build rule behind it, and any blue number to jump to its ask. Words marked DRAFT go through the /marketing pass. Nothing here works until online payments are on, which on production waits for Club Tier Stage 12.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · Where Refund sits</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · The refund window</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · After a full refund</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · After a part refund</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · Asks</button>
+  </nav>
+
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <h2>A payment opens as its own window; a card payment has Refund at its foot, never Void</h2>
+    <p>Today a payment is a line on the Payments card with Void at its end. A card payment carries more (its card, its processing fee, Stripe’s reference, its refunds) and a list row holds no buttons, so the row opens the payment’s own window. Void stays for a cheque or e-transfer, where it means the payment was recorded by mistake. A card payment can’t be voided because the money really moved; the only way back is a refund. <button class="mark" type="button" data-ask="1">1</button></p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>The deal page · paid by card</b><span class="chrome">record page · desktop · 960</span></div><div class="scroll"><div class="frame adm">
+    <div class="phead"><span class="back">← Deals │</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Harbour Dental <span class="stP paid">Paid</span> </p></div><span class="sub">Division sponsor · U9 division · 2027</span></div>
+    <div class="callout"><div class="ct"><span style="font-size:14px;color:var(--home-ink)">Paid Mar 3. 1 of 3 delivered. Tick each one as it happens.</span></div></div>
+    <div class="mband">
+      <div class=""><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div>
+      <div class=""><span class="ml">Paid</span><span class="mv">$1,130.00</span><span class="mc">card visa •••• 4242</span></div>
+      
+      <div class=""><span class="ml">Still owing</span><span class="mv">$0.00</span><span class="mc">&nbsp;</span></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Payments</p><button class="tag re" type="button" data-note="THE PAYMENTS CARD, RESTYLED (ask 1). Part 3a shipped each payment as a line with a Void link at its end. A list row holds no buttons (2026-09-28, the portal benchmark), so here a payment is a row that opens its own window, &quot;Harbour Dental’s payment&quot; (tab 1), and Void or Refund sits at that window’s foot. The row: day · how it came · amount, its line under it, a chip only when a refund or a void stands, and a chevron.">RESTYLED</button><button class="mark" type="button" data-ask="1">1</button></div>
+      <div class="prows"><div class="prow"><span><span class="pm">Mar 3 · Card, Visa •••• 4242</span><span class="ps">Recorded by itself when the card payment landed</span></span><span style="display:flex;gap:10px;align-items:center"><span class="pv">$1,130.00</span></span><span class="chev">›</span></div></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">The deal</p><span class="ico">✎</span></div>
+      <dl class="facts">
+        <dt>Package</dt><dd>Division sponsor</dd>
+        <dt>Shows on</dt><dd>U9 division <span class="s">Its pages, until Aug 31, 2027</span></dd>
+        <dt>Amount</dt><dd>$1,000.00</dd>
+        <dt>Charge HST</dt><dd>Yes, 13%</dd>
+        <dt>Invoice</dt><dd><span class="door" style="font-weight:500">2027-014 ↗</span></dd>
+      </dl>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">1 of 3 delivered</span></div>
+      
+      <div class="ck"><span class="box on">✓</span><span><span class="t">Your logo on our website</span><span class="h">Ticked by itself when the deal was paid</span></span><span class="when">Mar 3</span></div>
+      <div class="ck"><span class="box"></span><span><span class="t">Banner at the U9 field</span></span><span class="when"></span></div>
+      <div class="ck"><span class="box"></span><span><span class="t">A thank-you post on our social media</span></span><span class="when"></span></div>
+    </div>
+    <div class="cutLine">The business · from their link, Mar 2 · unchanged, not drawn</div>
+    <div class="collapsedSec">History · offered Feb 26 by Dana Ruiz · details and logo Mar 2 · invoice emailed Mar 2 · paid in full Mar 3</div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap" class=""><span class="recAct">⧉ Copy the link</span><span class="recAct">⊘ Do not offer again</span></div>
+  </div></div></div>
+      <div class="stack">
+        <div class="spec"><div class="specHead"><b>The payment’s window · a card payment</b><span class="chrome">window · 520</span><button class="tag new" type="button" data-note="THE PAYMENT’S WINDOW, the kit’s window at 520, read-only facts, a two-ended foot: the act at its start, Close at its end. Its facts are the card version of the shipped &quot;To the card&quot; block’s rows. The processing fee row reads &quot;paid by the club&quot; here; when the sponsor paid it, &quot;$41.05 and $5.34 HST, paid by Harbour Dental&quot;.">NEW</button></div><div class="scroll"><div class="frame dimmer"><div class="win w520">
+    <div class="whead"><div style="flex:1"><div class="wmeta">Invoice 2027-014</div><p class="wtitle">Harbour Dental’s payment</p></div><span class="ico">✕</span></div>
+    <div class="wbody"><dl class="facts" style="grid-template-columns:140px minmax(0,1fr)"><dt>Amount</dt><dd>$1,130.00 <span class="s">Of it, HST $130.00</span></dd>
+       <dt>Paid</dt><dd>Mar 3 at 9:14 a.m.</dd>
+       <dt>Paid with</dt><dd>Visa •••• 4242</dd>
+       <dt>Processing fee</dt><dd>$41.05, paid by the club <span class="s">In the General ledger as Payment processing</span></dd>
+       <dt>Stripe reference</dt><dd>pi_3QbX…7rTz <span class="door" style="font-weight:500">Copy</span></dd>
+       <dt>Recorded</dt><dd>By itself when the card payment landed</dd></dl></div>
+    <div class="wfoot two"><span class="l"><span class="btnOut">Refund</span><button class="tag new" type="button" data-note="REFUND, at the foot’s start, white (an action, never the window’s lime; the lime is the refund window’s own button). A card payment has no Void: money really moved, so the only way back is a refund. Shown only to the people who may refund (ask 5). Absent, not faded, while online payments are off or the payment’s refundable amount is $0.00.">NEW</button><button class="mark" type="button" data-ask="1">1</button></span><span class="btnOut">Close</span></div>
+  </div></div></div></div>
+        <div class="spec"><div class="specHead"><b>The same window · a cheque</b><span class="chrome">window · 520</span></div><div class="scroll"><div class="frame dimmer"><div class="win w520">
+    <div class="whead"><div style="flex:1"><div class="wmeta">Invoice 2027-014</div><p class="wtitle">Harbour Dental’s payment</p></div><span class="ico">✕</span></div>
+    <div class="wbody"><dl class="facts" style="grid-template-columns:140px minmax(0,1fr)"><dt>Amount</dt><dd>$1,130.00 <span class="s">Of it, HST $130.00</span></dd>
+       <dt>Received</dt><dd>Mar 3</dd>
+       <dt>How</dt><dd>Cheque 004417</dd>
+       <dt>Recorded by</dt><dd>Avery Chen, Mar 4</dd></dl></div>
+    <div class="wfoot two"><span class="l"><span class="btnOut">Void</span><button class="tag re" type="button" data-note="VOID, MOVED from the end of the payment’s line on the Payments card to this window’s foot start (a two-ended foot, 2026-10-09). Same question window as today (a required reason, the books marked void). Shown on a cheque or e-transfer only.">MOVED</button></span><span class="btnOut">Close</span></div>
+  </div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <h2>The refund window starts with nothing picked: all of it, or part of it with an amount, and a reason either way</h2>
+    <p>It opens over the payment’s window. As in the shipped windows, nothing is picked and there is no button until the club chooses, because a refund is money leaving the club’s account. There is never a fee box: the shipped windows offer the fee back only when the payer paid it and the club is ending things, and a sponsorship refund never returns the fee (round 2 tab 1). <button class="mark" type="button" data-ask="2">2</button></p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>1 · On opening</b><span class="chrome">window · 520</span><button class="tag same" type="button" data-note="THE SHIPPED REFUND WINDOW (the tournament’s, the kit’s question window): its title shape &quot;Refund {name}’s payment?&quot;, the intro sentence, the two radio rows with their lines, the foot’s sentence at its left, Cancel, and the lime absent until a choice. Phone: the kit’s small centred card, the foot as in the shipped window.">SHIPPED</button></div><div class="scroll"><div class="frame dimmer"><div class="win w520">
+    <div class="whead"><div style="flex:1"><p class="wtitle">Refund Harbour Dental’s payment?</p></div></div>
+    <div class="wbody">
+      <p style="margin:0;font-size:14px">Paid $1,130.00 on Mar 3 (invoice 2027-014). The $41.05 processing fee the club paid on it stays a cost: a refund never returns it.</p>
+      <div style="display:grid;gap:8px">
+        <div class="radioRow"><span class="dot"></span><span><span class="t">All of it to the card, Visa •••• 4242</span><br><span class="h">Arrives in 5 to 10 business days</span></span></div>
+        
+        <div class="radioRow"><span class="dot"></span><span><span class="t">Part of it</span><br><span class="h">An amount up to $1,130.00, with a reason</span></span></div>
+      </div>
+      
+    </div>
+    <div class="wfoot"><span class="fs">Choose how much to refund.</span><span class="btnOut">Cancel</span></div>
+  </div></div></div></div>
+      <div class="spec"><div class="specHead"><b>2 · All of it</b><span class="chrome">window · 520</span><button class="mark" type="button" data-ask="3">3</button></div><div class="scroll"><div class="frame dimmer"><div class="win w520">
+    <div class="whead"><div style="flex:1"><p class="wtitle">Refund Harbour Dental’s payment?</p></div></div>
+    <div class="wbody">
+      <p style="margin:0;font-size:14px">Paid $1,130.00 on Mar 3 (invoice 2027-014). The $41.05 processing fee the club paid on it stays a cost: a refund never returns it.</p>
+      <div style="display:grid;gap:8px">
+        <div class="radioRow on"><span class="dot"></span><span><span class="t">All of it to the card, Visa •••• 4242</span><br><span class="h">Arrives in 5 to 10 business days</span></span></div>
+        <p class="hint" style="margin:0">This ends the deal. The logo comes down from the U9 division’s pages and the division is free for another sponsor. <button class="tag new" type="button" data-note="THE FULL REFUND ENDS THE DEAL (ask 3 A), said in the window before the press, the way the house-league window names the ending in its button. DRAFT words.">DRAFT</button><button class="mark" type="button" data-ask="3">3</button></p>
+        <div class="radioRow"><span class="dot"></span><span><span class="t">Part of it</span><br><span class="h">An amount up to $1,130.00, with a reason</span></span></div>
+      </div>
+      <div class="fld"><span class="l">Reason <span class="req">*</span></span><div class="inp">The U9 division was cancelled for the season.</div><span class="hint">Harbour Dental reads this in the refund email. <button class="tag re" type="button" data-note="The shipped windows ask a reason for a part refund only. Here it is asked for all of it too, because a full refund ends the deal and a withdrawn deal always keeps its reason (the shipped Withdraw asks one). One field, one place on the record.">BOTH CHOICES</button></span></div>
+    </div>
+    <div class="wfoot"><span class="fs">Harbour Dental’s contact is emailed.</span><span class="btnOut">Cancel</span><span class="btnLime">Refund, end the deal and email</span></div>
+  </div></div></div></div>
+    </div>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>3 · Part of it</b><span class="chrome">window · 520</span></div><div class="scroll"><div class="frame dimmer"><div class="win w520">
+    <div class="whead"><div style="flex:1"><p class="wtitle">Refund Harbour Dental’s payment?</p></div></div>
+    <div class="wbody">
+      <p style="margin:0;font-size:14px">Paid $1,130.00 on Mar 3 (invoice 2027-014). The $41.05 processing fee the club paid on it stays a cost: a refund never returns it.</p>
+      <div style="display:grid;gap:8px">
+        <div class="radioRow"><span class="dot"></span><span><span class="t">All of it to the card, Visa •••• 4242</span><br><span class="h">Arrives in 5 to 10 business days</span></span></div>
+        
+        <div class="radioRow on"><span class="dot"></span><span><span class="t">Part of it</span><br><span class="h">An amount up to $1,130.00, with a reason</span></span></div>
+      </div>
+      <div class="fld"><span class="l">Amount to refund <span class="req">*</span></span><div class="inp">200.00</div><span class="hint">$930.00 stays paid. $23.01 of the $200.00 is HST. <button class="tag new" type="button" data-note="THE SHIPPED HINTS (&quot;Up to {left}.&quot; while empty; &quot;{rest} stays paid&quot; once valid; &quot;{x} already refunded on {day}. Up to {left}.&quot; after a part) plus one NEW clause: the HST share, because the refund lowers GST/HST collected by it, in proportion, the same rule a part payment follows (Part 3’s default, 2026-11-23). DRAFT.">DRAFT</button></span></div><div class="fld"><span class="l">Reason <span class="req">*</span></span><div class="inp">The banner went up a month late.</div><span class="hint">Harbour Dental reads this in the refund email. <button class="tag re" type="button" data-note="The shipped windows ask a reason for a part refund only. Here it is asked for all of it too, because a full refund ends the deal and a withdrawn deal always keeps its reason (the shipped Withdraw asks one). One field, one place on the record.">BOTH CHOICES</button></span></div>
+    </div>
+    <div class="wfoot"><span class="fs">Harbour Dental’s contact is emailed.</span><span class="btnOut">Cancel</span><span class="btnLime">Refund $200.00 and email</span></div>
+  </div></div></div></div>
+      <div class="spec"><div class="specHead"><b>4 · When the sponsor paid the fee</b><span class="chrome">window · 520</span><button class="tag new" type="button" data-note="A sponsor paid by card before an invoice, with the Payouts row set to &quot;The sponsor pays it&quot;: $1,130.00 plus the $41.05 fee and $5.34 HST on it, $1,176.39. The intro names the fee and says it never comes back; All of it reads $1,130.00. The fee stays booked both ways, as round 2 tab 2 drew it.">NEW INTRO</button></div><div class="scroll"><div class="frame dimmer"><div class="win w520">
+    <div class="whead"><div style="flex:1"><p class="wtitle">Refund Harbour Dental’s payment?</p></div></div>
+    <div class="wbody">
+      <p style="margin:0;font-size:14px">Paid $1,176.39 on Mar 3 (invoice 2027-014): the $1,130.00 sponsorship with its HST, and a $46.39 processing fee with its HST. A refund never returns the fee, so up to $1,130.00 can go back.</p>
+      <div style="display:grid;gap:8px">
+        <div class="radioRow on"><span class="dot"></span><span><span class="t">All of it to the card, Visa •••• 4242</span><br><span class="h">$1,130.00 back · Arrives in 5 to 10 business days</span></span></div>
+        <p class="hint" style="margin:0">This ends the deal. The logo comes down from the U9 division’s pages and the division is free for another sponsor. <button class="tag new" type="button" data-note="THE FULL REFUND ENDS THE DEAL (ask 3 A), said in the window before the press, the way the house-league window names the ending in its button. DRAFT words.">DRAFT</button><button class="mark" type="button" data-ask="3">3</button></p>
+        <div class="radioRow"><span class="dot"></span><span><span class="t">Part of it</span><br><span class="h">An amount up to $1,130.00, with a reason</span></span></div>
+      </div>
+      <div class="fld"><span class="l">Reason <span class="req">*</span></span><div class="inp">The U9 division was cancelled for the season.</div><span class="hint">Harbour Dental reads this in the refund email. <button class="tag re" type="button" data-note="The shipped windows ask a reason for a part refund only. Here it is asked for all of it too, because a full refund ends the deal and a withdrawn deal always keeps its reason (the shipped Withdraw asks one). One field, one place on the record.">BOTH CHOICES</button></span></div>
+    </div>
+    <div class="wfoot"><span class="fs">Harbour Dental’s contact is emailed.</span><span class="btnOut">Cancel</span><span class="btnLime">Refund, end the deal and email</span></div>
+  </div></div></div></div>
+    </div>
+    <div class="explain"><h3>What the press does</h3><ul>
+      <li><b>The card first, then the books.</b> The refund goes to the card; when the card company accepts it, two money-out lines land in the General ledger (tab 4) and the business is emailed. If the card company refuses it, nothing changes and the window says so in place, as the shipped windows do.</li>
+      <li><b>All of it</b> also ends the deal in the same press (ask 3). A part refund leaves the deal as it was.</li>
+      <li><b>The fee.</b> When the club paid it, it stays a Payment processing cost. When the sponsor paid it, it stays income under Club sponsorship and a cost the same size, as round 2 drew it. Neither is touched by a refund.</li>
+    </ul></div>
+  </section>
+
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p3"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>After a full refund the deal has ended: Withdrawn, the logo down, the place free</h2>
+    <p>Left: the deal as paid. Right: the same deal the moment the full refund is pressed. The refund is still on its way to the card, so its chip reads Pending. The callout, the fourth figure, the payment’s line, the closed checklist and the history are what change. <button class="mark" type="button" data-ask="3">3</button> <button class="mark" type="button" data-ask="4">4</button></p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>Before · paid</b><span class="chrome">960</span></div><div class="scroll"><div class="frame adm">
+    <div class="phead"><span class="back">← Deals │</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Harbour Dental <span class="stP paid">Paid</span> </p></div><span class="sub">Division sponsor · U9 division · 2027</span></div>
+    <div class="callout"><div class="ct"><span style="font-size:14px;color:var(--home-ink)">Paid Mar 3. 1 of 3 delivered. Tick each one as it happens.</span></div></div>
+    <div class="mband">
+      <div class=""><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div>
+      <div class=""><span class="ml">Paid</span><span class="mv">$1,130.00</span><span class="mc">card visa •••• 4242</span></div>
+      
+      <div class=""><span class="ml">Still owing</span><span class="mv">$0.00</span><span class="mc">&nbsp;</span></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Payments</p><button class="tag re" type="button" data-note="THE PAYMENTS CARD, RESTYLED (ask 1). Part 3a shipped each payment as a line with a Void link at its end. A list row holds no buttons (2026-09-28, the portal benchmark), so here a payment is a row that opens its own window, &quot;Harbour Dental’s payment&quot; (tab 1), and Void or Refund sits at that window’s foot. The row: day · how it came · amount, its line under it, a chip only when a refund or a void stands, and a chevron.">RESTYLED</button><button class="mark" type="button" data-ask="1">1</button></div>
+      <div class="prows"><div class="prow"><span><span class="pm">Mar 3 · Card, Visa •••• 4242</span><span class="ps">Recorded by itself when the card payment landed</span></span><span style="display:flex;gap:10px;align-items:center"><span class="pv">$1,130.00</span></span><span class="chev">›</span></div></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">The deal</p><span class="ico">✎</span></div>
+      <dl class="facts">
+        <dt>Package</dt><dd>Division sponsor</dd>
+        <dt>Shows on</dt><dd>U9 division <span class="s">Its pages, until Aug 31, 2027</span></dd>
+        <dt>Amount</dt><dd>$1,000.00</dd>
+        <dt>Charge HST</dt><dd>Yes, 13%</dd>
+        <dt>Invoice</dt><dd><span class="door" style="font-weight:500">2027-014 ↗</span></dd>
+      </dl>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">1 of 3 delivered</span></div>
+      
+      <div class="ck"><span class="box on">✓</span><span><span class="t">Your logo on our website</span><span class="h">Ticked by itself when the deal was paid</span></span><span class="when">Mar 3</span></div>
+      <div class="ck"><span class="box"></span><span><span class="t">Banner at the U9 field</span></span><span class="when"></span></div>
+      <div class="ck"><span class="box"></span><span><span class="t">A thank-you post on our social media</span></span><span class="when"></span></div>
+    </div>
+    <div class="cutLine">The business · from their link, Mar 2 · unchanged, not drawn</div>
+    <div class="collapsedSec">History · offered Feb 26 by Dana Ruiz · details and logo Mar 2 · invoice emailed Mar 2 · paid in full Mar 3</div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap" class=""><span class="recAct">⧉ Copy the link</span><span class="recAct">⊘ Do not offer again</span></div>
+  </div></div></div>
+      <div class="spec"><div class="specHead"><b>After · refunded in full</b><span class="chrome">960</span></div><div class="scroll"><div class="frame adm">
+    <div class="phead"><span class="back">← Deals │</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Harbour Dental <span class="stP">Withdrawn</span> <button class="tag new" type="button" data-note="THE PILL AFTER A FULL REFUND. Recommended (ask 3 A): the deal ends as the Withdrawn state that is already built everywhere: its group on Deals (&quot;Withdrawn Mar 20 · refunded&quot; as the row line), its invoice (&quot;Withdrawn Mar 20&quot; leading the subtitle, ruled at walk §562 call 3), the logo coming down and the place freeing. Ask 3 B gives it a state of its own, &quot;Refunded&quot;, in the same ended group.">ASK 3</button><button class="mark" type="button" data-ask="3">3</button></p></div><span class="sub">Division sponsor · U9 division · 2027</span></div>
+    <div class="callout" style="border-left-color:var(--home-dim)"><div class="ct"><span style="font-size:14px;color:var(--home-ink)">Refunded in full and withdrawn Mar 20 by Dana Ruiz: The U9 division was cancelled for the season. <button class="tag new" type="button" data-note="NEW CALLOUT WORDS for a deal a full refund ended (DRAFT, /marketing at the build). The shipped withdrawn callout is &quot;Withdrawn {date} by {name}: {reason}&quot;; this says the refund first because that is what the club did. No button: nothing is left to do.">DRAFT</button></span></div></div>
+    <div class="mband">
+      <div class="same-part"><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div>
+      <div class="same-part"><span class="ml">Paid</span><span class="mv">$1,130.00</span><span class="mc">card visa •••• 4242</span></div>
+      <div><span class="ml">Refunded <button class="tag new" type="button" data-note="A FOURTH FIGURE, present only once a refund stands (ask 4 A). The joined band holds three or four figures, never five (2026-10-16). Its line names where it went and when, quiet. Still owing stays Invoiced minus Paid: a refund never makes money owing again.">NEW</button><button class="mark" type="button" data-ask="4">4</button></span><span class="mv">$1,130.00</span><span class="mc">to the card, Mar 20</span></div>
+      <div class="same-part"><span class="ml">Still owing</span><span class="mv">$0.00</span><span class="mc">&nbsp;</span></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Payments</p><button class="tag new" type="button" data-note="THE ROW AFTER A REFUND: its line says the refund and its day; the chip says where it stands (Pending while it is on its way, Refunded once it reached the card, &quot;Refund didn’t reach the card&quot; if it came back, the shipped words). The row still opens the payment’s window, where the refund block and, after a part refund, Refund again live.">NEW LINE</button><button class="mark" type="button" data-ask="1">1</button></div>
+      <div class="prows"><div class="prow"><span><span class="pm">Mar 3 · Card, Visa •••• 4242</span><span class="ps">Refunded $1,130.00 Mar 20</span></span><span style="display:flex;gap:10px;align-items:center"><span class="chip info">Pending</span><span class="pv">$1,130.00</span></span><span class="chev">›</span></div></div>
+    </div>
+    <div class="card same-part">
+      <div class="cardTop"><p class="cardH">The deal</p><button class="tag same" type="button" data-note="An ended deal has nothing to change, as a withdrawn deal today.">NO PENCIL</button></div>
+      <dl class="facts">
+        <dt>Package</dt><dd>Division sponsor</dd>
+        <dt>Shows on</dt><dd>U9 division <span class="s">Its pages, until Mar 20, 2027 (ended)</span></dd>
+        <dt>Amount</dt><dd>$1,000.00</dd>
+        <dt>Charge HST</dt><dd>Yes, 13%</dd>
+        <dt>Invoice</dt><dd><span class="door" style="font-weight:500">2027-014 ↗</span></dd>
+      </dl>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">0 of 3 delivered</span></div>
+      <p class="small">The deal has ended, so the checklist is closed.</p>
+      <div class="ck"><span class="box off"></span><span><span class="t">Your logo on our website</span><span class="h">Came down Mar 20, when the deal was refunded <button class="tag new" type="button" data-note="The logo comes down by itself when a full refund ends the deal, as it does after the last day (5A). The line says so, so the club isn’t surprised to find it gone. DRAFT words.">DRAFT</button></span></span><span class="when"></span></div>
+      <div class="ck"><span class="box off"></span><span><span class="t">Banner at the U9 field</span></span><span class="when"></span></div>
+      <div class="ck"><span class="box off"></span><span><span class="t">A thank-you post on our social media</span></span><span class="when"></span></div>
+    </div>
+    <div class="cutLine same-part">The business · from their link, Mar 2 · unchanged, not drawn</div>
+    <div class="collapsedSec">History · offered Feb 26 by Dana Ruiz · details and logo Mar 2 · invoice emailed Mar 2 · paid in full Mar 3 · <b>refunded in full and withdrawn Mar 20 by Dana Ruiz</b> <button class="tag new" type="button" data-note="The refund joins the history line with its day and who did it. DRAFT words.">DRAFT</button></div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap" class="same-part"><span class="recAct">⧉ Copy the link</span><span class="recAct">⊘ Do not offer again</span></div>
+  </div></div></div>
+    </div>
+    <div class="explain"><h3>Elsewhere, after a full refund</h3><ul>
+      <li><b>Deals:</b> the row moves to the Withdrawn group, its line “Withdrawn Mar 20 · refunded”.</li>
+      <li><b>The invoice PDF:</b> “Withdrawn Mar 20” leads its subtitle (walk §562 call 3), the payment and the refund listed, nothing owing (ask 7).</li>
+      <li><b>The business’s page:</b> the same invoice facts with the refund under the payment, no way to pay.</li>
+      <li><b>The U9 division’s pages:</b> the logo is gone at once, and the division can be offered to another business.</li>
+    </ul></div>
+  </section>
+
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p4"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>After a part refund the deal carries on: Paid, a Refunded figure, and the refund on the payment</h2>
+    <p>Left: the deal as paid. Right: after $200.00 went back because the banner went up a month late, once it reached the card. The deal stays Paid, the logo stays up, and the checklist carries on. <button class="mark" type="button" data-ask="4">4</button></p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>Before · paid</b><span class="chrome">960</span></div><div class="scroll"><div class="frame adm">
+    <div class="phead"><span class="back">← Deals │</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Harbour Dental <span class="stP paid">Paid</span> </p></div><span class="sub">Division sponsor · U9 division · 2027</span></div>
+    <div class="callout"><div class="ct"><span style="font-size:14px;color:var(--home-ink)">Paid Mar 3. 1 of 3 delivered. Tick each one as it happens.</span></div></div>
+    <div class="mband">
+      <div class=""><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div>
+      <div class=""><span class="ml">Paid</span><span class="mv">$1,130.00</span><span class="mc">card visa •••• 4242</span></div>
+      
+      <div class=""><span class="ml">Still owing</span><span class="mv">$0.00</span><span class="mc">&nbsp;</span></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Payments</p><button class="tag re" type="button" data-note="THE PAYMENTS CARD, RESTYLED (ask 1). Part 3a shipped each payment as a line with a Void link at its end. A list row holds no buttons (2026-09-28, the portal benchmark), so here a payment is a row that opens its own window, &quot;Harbour Dental’s payment&quot; (tab 1), and Void or Refund sits at that window’s foot. The row: day · how it came · amount, its line under it, a chip only when a refund or a void stands, and a chevron.">RESTYLED</button><button class="mark" type="button" data-ask="1">1</button></div>
+      <div class="prows"><div class="prow"><span><span class="pm">Mar 3 · Card, Visa •••• 4242</span><span class="ps">Recorded by itself when the card payment landed</span></span><span style="display:flex;gap:10px;align-items:center"><span class="pv">$1,130.00</span></span><span class="chev">›</span></div></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">The deal</p><span class="ico">✎</span></div>
+      <dl class="facts">
+        <dt>Package</dt><dd>Division sponsor</dd>
+        <dt>Shows on</dt><dd>U9 division <span class="s">Its pages, until Aug 31, 2027</span></dd>
+        <dt>Amount</dt><dd>$1,000.00</dd>
+        <dt>Charge HST</dt><dd>Yes, 13%</dd>
+        <dt>Invoice</dt><dd><span class="door" style="font-weight:500">2027-014 ↗</span></dd>
+      </dl>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">1 of 3 delivered</span></div>
+      
+      <div class="ck"><span class="box on">✓</span><span><span class="t">Your logo on our website</span><span class="h">Ticked by itself when the deal was paid</span></span><span class="when">Mar 3</span></div>
+      <div class="ck"><span class="box"></span><span><span class="t">Banner at the U9 field</span></span><span class="when"></span></div>
+      <div class="ck"><span class="box"></span><span><span class="t">A thank-you post on our social media</span></span><span class="when"></span></div>
+    </div>
+    <div class="cutLine">The business · from their link, Mar 2 · unchanged, not drawn</div>
+    <div class="collapsedSec">History · offered Feb 26 by Dana Ruiz · details and logo Mar 2 · invoice emailed Mar 2 · paid in full Mar 3</div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap" class=""><span class="recAct">⧉ Copy the link</span><span class="recAct">⊘ Do not offer again</span></div>
+  </div></div></div>
+      <div class="spec"><div class="specHead"><b>After · $200.00 refunded</b><span class="chrome">960</span></div><div class="scroll"><div class="frame adm">
+    <div class="phead"><span class="back">← Deals │</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Harbour Dental <span class="stP paid">Paid</span> </p></div><span class="sub">Division sponsor · U9 division · 2027</span></div>
+    <div class="callout same-part"><div class="ct"><span style="font-size:14px;color:var(--home-ink)">Paid Mar 3. 1 of 3 delivered. Tick each one as it happens.</span></div></div>
+    <div class="mband">
+      <div class="same-part"><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div>
+      <div class="same-part"><span class="ml">Paid</span><span class="mv">$1,130.00</span><span class="mc">card visa •••• 4242</span></div>
+      <div><span class="ml">Refunded <button class="tag new" type="button" data-note="A FOURTH FIGURE, present only once a refund stands (ask 4 A). The joined band holds three or four figures, never five (2026-10-16). Its line names where it went and when, quiet. Still owing stays Invoiced minus Paid: a refund never makes money owing again.">NEW</button><button class="mark" type="button" data-ask="4">4</button></span><span class="mv">$200.00</span><span class="mc">to the card, Mar 20</span></div>
+      <div class="same-part"><span class="ml">Still owing</span><span class="mv">$0.00</span><span class="mc">&nbsp;</span></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><p class="cardH">Payments</p><button class="tag new" type="button" data-note="THE ROW AFTER A REFUND: its line says the refund and its day; the chip says where it stands (Pending while it is on its way, Refunded once it reached the card, &quot;Refund didn’t reach the card&quot; if it came back, the shipped words). The row still opens the payment’s window, where the refund block and, after a part refund, Refund again live.">NEW LINE</button><button class="mark" type="button" data-ask="1">1</button></div>
+      <div class="prows"><div class="prow"><span><span class="pm">Mar 3 · Card, Visa •••• 4242</span><span class="ps">Refunded $200.00 Mar 20</span></span><span style="display:flex;gap:10px;align-items:center"><span class="chip good">Refunded</span><span class="pv">$1,130.00</span></span><span class="chev">›</span></div></div>
+    </div>
+    <div class="card same-part">
+      <div class="cardTop"><p class="cardH">The deal</p><span class="ico">✎</span></div>
+      <dl class="facts">
+        <dt>Package</dt><dd>Division sponsor</dd>
+        <dt>Shows on</dt><dd>U9 division <span class="s">Its pages, until Aug 31, 2027</span></dd>
+        <dt>Amount</dt><dd>$1,000.00</dd>
+        <dt>Charge HST</dt><dd>Yes, 13%</dd>
+        <dt>Invoice</dt><dd><span class="door" style="font-weight:500">2027-014 ↗</span></dd>
+      </dl>
+    </div>
+    <div class="card same-part">
+      <div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">1 of 3 delivered</span></div>
+      
+      <div class="ck"><span class="box on">✓</span><span><span class="t">Your logo on our website</span><span class="h">Ticked by itself when the deal was paid</span></span><span class="when">Mar 3</span></div>
+      <div class="ck"><span class="box"></span><span><span class="t">Banner at the U9 field</span></span><span class="when"></span></div>
+      <div class="ck"><span class="box"></span><span><span class="t">A thank-you post on our social media</span></span><span class="when"></span></div>
+    </div>
+    <div class="cutLine same-part">The business · from their link, Mar 2 · unchanged, not drawn</div>
+    <div class="collapsedSec">History · offered Feb 26 by Dana Ruiz · details and logo Mar 2 · invoice emailed Mar 2 · paid in full Mar 3 · <b>refunded $200.00 Mar 20 by Dana Ruiz</b> <button class="tag new" type="button" data-note="The refund joins the history line with its day and who did it. DRAFT words.">DRAFT</button></div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap" class="same-part"><span class="recAct">⧉ Copy the link</span><span class="recAct">⊘ Do not offer again</span></div>
+  </div></div></div>
+    </div>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>The payment’s window after the part refund</b><span class="chrome">window · 520</span></div><div class="scroll"><div class="frame dimmer"><div class="win w520">
+    <div class="whead"><div style="flex:1"><div class="wmeta">Invoice 2027-014</div><p class="wtitle">Harbour Dental’s payment</p></div><span class="ico">✕</span></div>
+    <div class="wbody"><dl class="facts" style="grid-template-columns:140px minmax(0,1fr)"><dt>Amount</dt><dd>$1,130.00 <span class="s">Of it, HST $130.00</span></dd>
+       <dt>Paid</dt><dd>Mar 3 at 9:14 a.m.</dd>
+       <dt>Paid with</dt><dd>Visa •••• 4242</dd>
+       <dt>Processing fee</dt><dd>$41.05, paid by the club <span class="s">In the General ledger as Payment processing</span></dd>
+       <dt>Stripe reference</dt><dd>pi_3QbX…7rTz <span class="door" style="font-weight:500">Copy</span></dd>
+       <dt>Recorded</dt><dd>By itself when the card payment landed</dd></dl><div class="rblock">
+      <h4>To the card <span class="chip good">Refunded</span> <button class="tag same" type="button" data-note="THE SHIPPED &quot;To the card&quot; BLOCK (house league CardRefundBlock; the tournament’s View the payment reads the same): its heading, pill words, and fact rows, cut to what a deal needs. Pending reads &quot;Stripe accepted it Mar 20 at 2:05 p.m. and is waiting on the card’s bank. It’s already in the General ledger. Nothing to do.&quot; A refund the card sent back reads &quot;Refund didn’t reach the card&quot; (one wording everywhere, 2026-11-14), and the person who may refund gets &quot;Record the refund sent another way&quot;.">SHIPPED BLOCK</button></h4>
+      <dl class="facts">
+        <dt>Amount</dt><dd>$200.00 to Visa •••• 4242 <span class="s">$176.99 of the sponsorship and $23.01 HST. A refund never includes the processing fee.</span></dd>
+        <dt>Reason</dt><dd>The banner went up a month late.</dd>
+        <dt>Refunded by</dt><dd>Dana Ruiz, Mar 20 at 2:05 p.m.</dd>
+        <dt>Reached the card</dt><dd>Mar 24 at 6:40 a.m. <span class="s">It takes 5 to 10 business days to appear on the statement.</span></dd>
+        <dt>Stripe reference</dt><dd>re_3QbX…9kLm <span class="door" style="font-weight:500">Copy</span></dd>
+        <dt>Business emailed</dt><dd>frank@harbourdental.ca, Mar 20</dd>
+      </dl>
+    </div></div>
+    <div class="wfoot two"><span class="l"><span class="btnOut">Refund</span><button class="tag same" type="button" data-note="After a part refund, Refund stays: up to what is left on the payment ($930.00), as the tournament’s window allows several parts up to the charge.">STILL THERE</button><button class="mark" type="button" data-ask="1">1</button></span><span class="btnOut">Close</span></div>
+  </div></div></div></div>
+      <div class="spec"><div class="specHead"><b>The books</b><span class="chrome">General ledger · 700</span><button class="tag new" type="button" data-note="Two money-out lines per refund, split between the sponsorship and its tax in proportion ($200.00 × 1,000 / 1,130 = $176.99; the tax takes the rest, $23.01), the same rule a part payment follows. Each opens the deal from the Ledger, as the payment’s lines do. /accounting reviews the tax side before the build.">NEW LINES</button></div><div class="scroll"><div class="frame adm w700">
+  <p class="capL" style="margin:0">General ledger · Harbour Dental’s lines</p>
+  <table class="ledg"><thead><tr><th>Date</th><th>Description</th><th>Filed under</th><th class="num">Amount</th></tr></thead><tbody>
+    <tr><td>Mar 3</td><td>Harbour Dental · invoice 2027-014</td><td>Club sponsorship</td><td class="num">$1,000.00</td></tr>
+    <tr><td>Mar 3</td><td>Harbour Dental · invoice 2027-014</td><td>GST/HST collected</td><td class="num">$130.00</td></tr>
+    <tr><td>Mar 3</td><td>Card processing fee · invoice 2027-014</td><td>Payment processing</td><td class="num">−$41.05</td></tr>
+    <tr class="newRow"><td>Mar 20</td><td>Refund to Harbour Dental · invoice 2027-014</td><td>Club sponsorship</td><td class="num">−$176.99</td></tr>
+    <tr class="newRow"><td>Mar 20</td><td>Refund to Harbour Dental · invoice 2027-014</td><td>GST/HST collected</td><td class="num">−$23.01</td></tr>
+  </tbody></table>
+  <p class="small">Green rows are new. Each refund line is its own money-out line and never edits the payment’s (2026-10-20). The processing fee line is untouched.</p>
+</div></div></div>
+    </div>
+  </section>
+
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <h2>Your asks</h2>
+    <p>Seven asks. The first answer to each is my recommendation and is already selected. Add a note if you want something changed, then press Build the summary and paste it into the chat. Your picks are kept in this browser only.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var ASKS = [{"n":1,"t":"A payment opens as its own window, with Void or Refund at its foot","why":"Part 3a shipped each payment as a line with a Void link at its end. A list row holds no buttons (the portal benchmark, 2026-09-28), and a card payment needs a place for its fee, its reference and its refunds. Tab 1.","o":["Build as drawn: each payment is a row that opens “Harbour Dental’s payment”; a cheque or e-transfer has Void at the window’s foot, a card payment has Refund there (never Void); the inline Void link on the row retires","Keep the inline link on each row: Void on a cheque or e-transfer, Refund on a card payment","Change it (say what in the note)"]},{"n":2,"t":"The refund window","why":"Built from the shipped tournament and house-league windows. Tab 2.","o":["Build as drawn: nothing picked to start and no button until a choice; All of it or Part of it (an amount, with the HST share said); never a fee box; a reason for both; the business emailed; the button names what happens","Change it (say what in the note)"]},{"n":3,"t":"What a full refund does to the deal","why":"A paid deal can’t be withdrawn today (Withdraw stops at paid). A full refund is how a paid deal ends early. Tab 3.","o":["It ends the deal, shown as Withdrawn: the logo comes down, the place is free, the row moves to the ended group, the invoice prints “Withdrawn Mar 20”","It ends the deal with its own state and pill, “Refunded”, in the same ended group","It doesn’t end the deal: the money goes back and the deal stays as it was (logo up, place held) until the club withdraws it"]},{"n":4,"t":"The money band after a refund","why":"Invoiced and Paid stay what happened; something has to say money went back. The band holds three or four figures, never five. Tabs 3 and 4.","o":["A fourth figure, Refunded, present only once a refund stands; Still owing stays Invoiced minus Paid","Three figures: Paid shows what the club kept ($930.00), with “$200.00 refunded Mar 20” on its line"]},{"n":5,"t":"Who may refund","why":"House league: owner, club admin, league admin and registrar; the treasurer never refunds. Tournaments: whoever runs tournaments. Who may Record a payment and Void on a deal is your open call on walk §562.","o":["The same people who may Record a payment and Void on a deal, whatever §562’s call rules","Owner and club admin only","Change it (say who in the note)"]},{"n":6,"t":"How the business is told","why":"The club flows email the payer a refund (“Refund from {club}”, with the shipped refund block). /legal reviews it at the build; it stays free of any promotion so it is not a commercial message.","o":["The shipped refund email, with the club’s reason; the business’s page lists the refund under its payments (a full refund: “Withdrawn Mar 20”, no way to pay)","No email; the business’s page only"]},{"n":7,"t":"The invoice after a refund","why":"A refund lowers the GST/HST the club collected. Whether the club must issue a credit note for it is an /accounting question; it runs before the build either way.","o":["The same invoice lists the refund under its payments, a full refund prints “Withdrawn {date}” on it; /accounting confirms before the build whether a GST/HST credit note is needed, and if it is, that is drawn first","A separate credit note PDF for every refund, from the start"]}];
+var KEY = "br-stage6-p3b-refunds-v1";
+var S = { pick:{}, note:{}, tab:"p1", seg:{} };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+var host = document.getElementById("asks");
+function pickOf(a){ return S.pick[a.n] != null ? S.pick[a.n] : 0; }
+function txt(s){ var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + txt(a.t) + "</h3><p class=\"why\">" + txt(a.why) + "</p>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + txt(o) + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var r = document.getElementById("a" + a.n + "o" + pickOf(a)); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+function build(){
+  var L = ["Board Ready Stage 6 Part 3b, card refunds drawing (drawn Nov 23, 2026)", ""];
+  ASKS.forEach(function(a){
+    var p = pickOf(a);
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var t = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(t).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+Array.prototype.forEach.call(document.querySelectorAll(".seg"), function(seg){
+  var pane = document.getElementById(seg.getAttribute("data-seg"));
+  function set(v){ Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-v") === v ? "true" : "false"); }); pane.classList.toggle("diffs", v === "diff"); S.seg[seg.getAttribute("data-seg")] = v; save(); }
+  seg.addEventListener("click", function(ev){ var b = ev.target.closest("button"); if (b) set(b.getAttribute("data-v")); });
+  set(S.seg[seg.getAttribute("data-seg")] || "all");
+});
+var dlg = document.getElementById("note");
+function open(title, paras){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); show("p5"); var el = document.getElementById("ask" + n); if (el) el.scrollIntoView({ block: "start" }); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")]); }
+});
+})();
+</script>

@@ -60,12 +60,28 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
 - **Stage 8 — US clubs:** 8a DONE 2026-10-31 (review + rulings U1–U5). **8b NOT STARTED — STANDING TRIGGER** (Stripe's
   written confirmation + US demand): USD prices and grandfathering (D03/D04), U2, U3, the U4 per-state tracker, USD payout
   accounts, 1099-K set-up, marketplace-facilitator opinion.
-- **Stage 9 — Release and docs:** NOT STARTED (new, 2026-10-31) — help articles and `/docs`, demo check, data dictionary
-  and snapshots, production migrations, `/accounting` review, owner walk, on production. Needs Stages 1–3 (and 6).
+- **Stage 9 — Release and docs:** DONE 2026-11-22 — owner walk §557 PASSED 9/9 2026-11-22 (no flags). Help ("Taxes: what you're charged and why",
+  the address step), demo check (the build's tour gate), data dictionary and snapshots, production migrations (applied
+  2026-11-22, `ad7046900`) and the release record were already done; the live Stripe audit re-run after the promote was
+  serving (`revenue-accounting-evidence/stripe-live-2026-11-22.json`: identical to 11-17, 1 CA registration active,
+  default exclusive, no errors); production had no subscriptions, so no pre-tax sale to self-assess; `/accounting`
+  pre-handoff review 2026-11-22: nothing to fix before the first Canadian sale except seeing our GST/HST number on a live
+  invoice (walk §557 A4). Walk: https://claude.ai/artifact/Phu8JuqypzghhYPnPtesid (source `GST_HST_STAGE9_PROD_WALK.html`).
+
+**Owner rulings 2026-11-22 (`/brief do gst-hst`), in his words where quoted:**
+- **Stage 5 leaves this project.** "We settled the tax, we will not charge it on top of our fees on Stripe and if we owe it
+  to the CRA we will pay it out of our end." What R1 still needs (the tax inside each fee recorded for the return, a record
+  when a returned debit refunds our fee, the information-only fee statement, the accountant's taxable-or-exempt answer, the
+  January platform-reporting check) moves to [Club Stage 12](CLUB_TIER_STAGE12_PAYMENTS_PLAN.md) as work that must be done
+  before online payments switch on. `/accounting` note: being registered, we owe the tax on every fee unless the accountant
+  rules it exempt, so the per-fee record is needed either way.
+- **Stage 0's leftover desk items become standing chores** (the number to foreign vendors, ITC receipts, the accountant
+  package): they join the Ongoing rhythm and do not hold the project open.
+- So the project is **done when Stage 9's walk §557 passes** (Stages 0 and 5 are no longer in the "done when" line).
 - **Ongoing — operating rhythm:** STANDING TRIGGER — monthly close and missing-reason check, each return, the January
   digital-platform report, the yearly `/accounting` re-verify.
 
-**Done when** Stages 0–6 and 9 are complete. **Standing triggers (not needed to close):** Stage 7 (provincial
+**CLOSED by the owner 2026-11-22** (walk §557 passed 9/9). **Done when** Stages 1–4, 6 and 9 are complete (owner 2026-11-22: Stage 5 moved to Club Stage 12, Stage 0's leftovers are standing chores; was Stages 0–6 and 9). **Standing triggers (not needed to close):** Stage 7 (provincial
 registrations), Stage 8b (US clubs), the Ongoing rhythm (returns, January report, yearly re-verify), and the first
 GST/HST return (owner: out of scope, sequence item i04).
 

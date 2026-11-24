@@ -29,6 +29,8 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const payment = (await readDealPayments(org.id, dealId)).find(p => p.id === paymentId);
   if (!payment) return notFound();
   if (payment.voided) return refused(D.errAlreadyVoid, 409, 'already_void');
+  // A card payment is never voided (mig 530): it is refunded. The window shows Refund for it; this answers a hand-made call plainly.
+  if (payment.card) return refused(DEAL_WORDS.card.errVoidCard, 409, 'card_payment');
   const b = (await req.json().catch(() => null) ?? {}) as Record<string, unknown>;
   const reason = typeof b.reason === 'string' ? b.reason.trim() : '';
   if (!reason || reason.length > 300) return refused(D.errReason);

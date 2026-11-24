@@ -248,6 +248,13 @@ export async function retrieveDispute(accountId: string, disputeId: string): Pro
   return getStripe().disputes.retrieve(disputeId, {}, on(accountId));
 }
 
+/** A payment's disputes at Stripe (Part 3b: a sponsor's card dispute is answered in Stripe and kept nowhere here, so a refund
+ *  asks Stripe itself). */
+export async function listDisputes(accountId: string, paymentIntentId: string): Promise<Stripe.Dispute[]> {
+  const page = await getStripe().disputes.list({ payment_intent: paymentIntentId, limit: 100 }, on(accountId));
+  return page.data;
+}
+
 /** A payment's refunds at Stripe (12c): a refund made in Stripe before its payment landed here is recorded once it lands. */
 export async function listRefunds(accountId: string, paymentIntentId: string): Promise<Stripe.Refund[]> {
   const page = await getStripe().refunds.list({ payment_intent: paymentIntentId, limit: 100 }, on(accountId));

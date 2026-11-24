@@ -68,6 +68,10 @@ export interface DealInvoice {
   taxRate: number | null;
   tax: number;
   total: number;
+  /** The card processing fee the SPONSOR paid (Part 3b, mig 530): its own invoice row, inside `total`; its GST/HST is inside
+   *  `tax`. Only on an invoice a card payment issued (owner call (3): an issued invoice never gains a fee line). */
+  cardFee?: number;
+  cardFeeTax?: number;
 }
 
 /** One deal as the club side reads it. */
@@ -227,6 +231,16 @@ export const invoiceNumber = formatInvoiceNumber;
 export const invoiceYearOf = (issuedOn: string): number => Number(issuedOn.slice(0, 4));
 
 export const dueOnFrom = (issuedOn: string, days: number): string => addCalendarDays(issuedOn, days);
+
+/** The invoice the two issuing RPCs (`club_sponsor_deal_receive`, `club_sponsor_deal_issue`) are handed: its year, issue and due
+ *  days, and the figures as strings (a deal with no tax sends empty tax fields). One builder, so the two routes can't drift. */
+export function invoiceArg(fig: ReturnType<typeof dealFigures>, issuedOn: string, dueDays: number) {
+  return {
+    year: invoiceYearOf(issuedOn), issuedOn, dueOn: dueOnFrom(issuedOn, dueDays),
+    taxKind: fig.rate?.kind ?? '', taxRate: fig.rate ? String(fig.rate.rate) : '', taxAmount: fig.rate ? String(fig.tax) : '',
+    total: String(fig.total),
+  };
+}
 
 /** Past due: the day after its due day, in the club's day. */
 export const isOverdue = (inv: Pick<DealInvoice, 'dueOn'> | null, today: string): boolean => !!inv && today > inv.dueOn;

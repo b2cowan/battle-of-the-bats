@@ -941,6 +941,8 @@ export async function buildDocuments() {
       year: { key: '2025-09-01', name: '2025–26', firstDay: '2025-09-01', lastDay: '2026-08-31' },
       closed: { at: '2026-10-07T15:00:00Z', byName: 'Priya Nair' },
       atAGlance: { opening: 15880, revenue: 30410, expenses: 29350, net: 1060, closing: 16940 },
+      /* What Revenue includes from the books beside the General ledger (13e-6 A) — the real builder reads it. */
+      revenueIncludes: { leagueFees: 2355, tournaments: [{ name: 'Harvest Classic 2025', amount: 1440 }] },
       statement,
       againstLastYear: {
         lastYear: { key: '2024-09-01', name: '2024–25' }, thisSpan: { from: '2025-09-01', to: '2026-08-31' }, lastSpan: { from: '2024-09-01', to: '2025-08-31' },

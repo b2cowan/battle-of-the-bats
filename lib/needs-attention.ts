@@ -553,8 +553,25 @@ const cardRefundFailed: Resolver = async rows => {
   const refundDone = new Set(refundIds.length
     ? (await rowsIn<{ id: string; status: string }>('online_payment_refunds', 'id, status', 'id', refundIds)).filter(f => f.status === 'succeeded').map(f => f.id)
     : []);
-  const byId = new Map((await onlinePayments(rows.filter(r => !meta(r, 'refundId')))).map(p => [p.id, p]));
+  // A sponsor's card refund that came back (Part 3b) waits on ITS refund: done once a later refund on the same payment gave
+  // that much back (the payment itself may still be only partly refunded, so "refunded" would never come).
+  const sponsorIds = uniq(rows.map(r => meta(r, 'sponsorRefundId')));
+  const failedSponsor = new Map((sponsorIds.length
+    ? await rowsIn<{ id: string; online_payment_id: string; amount: number; created_at: string }>('club_sponsor_deal_refunds', 'id, online_payment_id, amount, created_at', 'id', sponsorIds)
+    : []).map(f => [f.id, f]));
+  const sponsorPays = uniq([...failedSponsor.values()].map(f => f.online_payment_id));
+  const gaveBack = sponsorPays.length
+    ? await rowsIn<{ online_payment_id: string; amount: number; created_at: string }>('club_sponsor_deal_refunds', 'id, online_payment_id, amount, created_at', 'online_payment_id', sponsorPays, q => q.eq('status', 'succeeded'))
+    : [];
+  const byId = new Map((await onlinePayments(rows.filter(r => !meta(r, 'refundId') && !meta(r, 'sponsorRefundId')))).map(p => [p.id, p]));
   for (const r of rows) {
+    const sponsorRefundId = meta(r, 'sponsorRefundId');
+    if (sponsorRefundId) {
+      const failed = failedSponsor.get(sponsorRefundId);
+      if (!failed) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
+      else out.set(r.id, gaveBack.some(g => g.online_payment_id === failed.online_payment_id && g.created_at > failed.created_at && Number(g.amount) >= Number(failed.amount)) ? said(W.refundRecorded) : 'waiting');
+      continue;
+    }
     const refundId = meta(r, 'refundId');
     if (refundId) { out.set(r.id, refundDone.has(refundId) ? said(W.refundRecorded) : 'waiting'); continue; }
     const id = meta(r, 'onlinePaymentId');

@@ -1,0 +1,614 @@
+<title>Milton Bats Presentation Prep</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one working document. Sticky tab bar; each tab is a single reading column with tables only where rows compare. */
+:root{
+  --bg:#f4f6fa; --card:#ffffff; --ink:#131a2b; --muted:#55607a; --line:#d7ddea;
+  --accent:#1e3a8a; --accent-soft:#e7ecfb; --mark:#5a7700;
+  --good:#1b6a39; --good-bg:#e2f3e8; --warn:#845000; --warn-bg:#fbefd8; --stop:#9a1c1c; --stop-bg:#fbe5e5;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e1321; --card:#161d30; --ink:#e8ecf6; --muted:#9ba7c1; --line:#2a3450;
+  --accent:#93abff; --accent-soft:#1b2648; --mark:#c3ee3a;
+  --good:#82d6a0; --good-bg:#13301f; --warn:#f0c272; --warn-bg:#38290c; --stop:#ff9e9e; --stop-bg:#3a1717; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0e1321; --card:#161d30; --ink:#e8ecf6; --muted:#9ba7c1; --line:#2a3450;
+  --accent:#93abff; --accent-soft:#1b2648; --mark:#c3ee3a;
+  --good:#82d6a0; --good-bg:#13301f; --warn:#f0c272; --warn-bg:#38290c; --stop:#ff9e9e; --stop-bg:#3a1717; color-scheme:dark }
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+header.top{display:flex;flex-direction:column;gap:4px;padding-block:8px 14px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:38px;line-height:1.05;margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);max-width:66ch;margin:0}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:2px;overflow-x:auto;margin-bottom:22px}
+nav.tabs button{font:500 14px var(--body);color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:12px 11px 9px;white-space:nowrap;cursor:pointer}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.tab{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--display);font-weight:600;font-size:28px;line-height:1.1;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:21px;margin:6px 0 0;letter-spacing:.01em}
+p{margin:0;max-width:70ch}
+ul,ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px;max-width:72ch}
+.lead{font-size:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 14px;border-radius:0 6px 6px 0}
+.note.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.note.stop{border-left-color:var(--stop);background:var(--stop-bg)}
+.note.good{border-left-color:var(--good);background:var(--good-bg)}
+.note b{font-weight:600}
+.chip{display:inline-block;font:500 11.5px var(--mono);letter-spacing:.03em;padding:2px 7px;border-radius:4px;white-space:nowrap;vertical-align:1px}
+.chip.good{color:var(--good);background:var(--good-bg)} .chip.warn{color:var(--warn);background:var(--warn-bg)} .chip.stop{color:var(--stop);background:var(--stop-bg)} .chip.plain{color:var(--accent);background:var(--accent-soft)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th{font:500 11.5px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.t{font-family:var(--mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--accent)}
+td b{font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.two>*{min-width:0}
+@media (max-width:720px){.two{grid-template-columns:1fr} h1{font-size:31px}}
+.email{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px 22px;display:flex;flex-direction:column;gap:12px;font-size:15px}
+.email h4{font:600 15px var(--body);margin:6px 0 0}
+.email ul,.email ol{gap:5px}
+.copy{font:600 14px var(--body);color:var(--card);background:var(--accent);border:0;border-radius:6px;padding:9px 14px;cursor:pointer;align-self:flex-start}
+.copied{font:500 13px var(--mono);color:var(--good)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+figure{margin:0;display:flex;flex-direction:column;gap:8px}
+figure .scroll{padding:10px}
+figcaption{color:var(--muted);font-size:13.5px;max-width:72ch}
+svg{display:block;width:100%;min-width:680px;height:auto;color:var(--ink)}
+svg .box{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+svg .core{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg text{fill:currentColor;font-family:var(--body);font-size:13px}
+svg .h{font-weight:600;font-size:14px}
+svg .m{fill:var(--muted);font-size:12px}
+svg .lbl{fill:var(--accent);font-family:var(--mono);font-size:11.5px}
+svg .ln{stroke:currentColor;stroke-width:1.4;fill:none}
+svg .dash{stroke-dasharray:5 4}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;counter-reset:s}
+.steps div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px;min-width:0}
+.steps div::before{counter-increment:s;content:counter(s);font:500 12px var(--mono);color:var(--accent);display:block;margin-bottom:4px}
+@media (max-width:720px){.steps{grid-template-columns:1fr 1fr}}
+dl{margin:0;display:flex;flex-direction:column;gap:12px;max-width:72ch}
+dt{font-weight:600} dd{margin:2px 0 0;color:var(--ink)}
+.small{font-size:13.5px;color:var(--muted)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Internal prep · updated 24 Nov 2026 · the meeting is 24 Nov</div>
+  <h1>Milton Bats <span>presentation prep</span></h1>
+  <p class="sub">One hour with the club president on Tuesday, November 24. Everything here was checked against what the product does today, and it says where a claim needs care.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-tab="start">Start here</button>
+  <button role="tab" data-tab="run">Run of show</button>
+  <button role="tab" data-tab="agenda">Agenda email</button>
+  <button role="tab" data-tab="features">Feature menu</button>
+  <button role="tab" data-tab="value">Value case</button>
+  <button role="tab" data-tab="security">Security</button>
+  <button role="tab" data-tab="deck">Deck outline</button>
+  <button role="tab" data-tab="demo">Demo prep</button>
+  <button role="tab" data-tab="also">Also include</button>
+</nav>
+
+<!-- ============ START ============ -->
+<section class="tab" id="start">
+  <h2>Where things stand, the evening before</h2>
+  <p class="lead">The meeting is Tuesday, November 24. The deck, the run sheet and the demo club were all brought up to date on November 23. Six facts to carry in.</p>
+
+  <div class="card">
+    <h3>1. The hour only fits if the demos carry it</h3>
+    <p>The plan in <b>Run of show</b> gives the slides about 17 minutes, the five demos 31, security 5, and questions 7. The three-portal tour is folded into the demos: each demo names the place it lives.</p>
+  </div>
+
+  <div class="card">
+    <h3>2. The club plans are on sale, and nearly everything shown is live</h3>
+    <p>League Plus, Club and Club · Association went on sale on November 23. The scheduler, permits, club books, house league and the club site were already on production; the November 22 and 23 releases added group email to coaches and the board, the club’s own registration questions, schedules across several permits, and the first part of Sponsorships (packages and the sponsor list). The true line for the room: <b>“Everything you see today is live, and the club plans are on sale.”</b> Milton would still be the first club on them.</p>
+    <p>Three things are built and must not be shown as available: families paying online and the signed-in family app (both switched off on production), and sponsorship deals and invoices (on the staging site, not on production as of the evening of November 23). The deck says “first part live” for Sponsorships.</p>
+  </div>
+
+  <div class="card">
+    <h3>3. One club now carries all five demos</h3>
+    <p>The Milton Bats demo club has its 20 rep teams (Rep and Select in each age group from U11 to U19, each with a Purple and a White team), the dome and its permit, one fully dressed team (Milton Bats U15 Rep Purple), a club drill set, a finished tournament and the house league. It was rebuilt on the morning of November 24 with the club’s Rep and Select teams and dressed for off-script questions. The run sheet has every click and a card for what to open if he asks for more: https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W. See <b>Demo prep</b>.</p>
+  </div>
+
+  <div class="card">
+    <h3>4. One of your five demo lines needs care</h3>
+    <p>“Drill libraries that can be reused and shared with the club” is half true. Coaches reuse their own drills, templates and plans across practices and seasons, and send plans to their assistants. The club can publish a standard drill set that every team pulls from. A coach cannot share a drill or plan up to the club or across to another team. The agenda and the run sheet say it the true way.</p>
+  </div>
+
+  <div class="card">
+    <h3>5. Security: the gaps of November 20 are closed</h3>
+    <ul>
+      <li><b>Hosting is in the United States (Ohio).</b> You ruled not to move. Say it first, before he asks.</li>
+      <li><b>The Terms and Privacy Policy were published on November 22</b>, so “our published policy says” is now true.</li>
+      <li><b>The Data Terms and the list of our suppliers were published on November 23</b>, so the 72-hour notice, the 30-day notice of a new supplier and the full copy within 30 days can be quoted.</li>
+      <li><b>The Security page is public</b> at fieldlogichq.ca/security, and the written brief is the leave-behind: https://claude.ai/artifact/2qBeedXuyYTRPs1MEo8TUR</li>
+      <li><b>Settled November 24:</b> the deck promises 90 days to take everything on leaving, the same 90 days the published Terms keep a club's information after a plan ends. It is a Q1 2027 promise, so say “will”. See the Security tab.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>6. Things on record about this club</h3>
+    <ul>
+      <li>At <b>20 rep teams</b> (four in each of five age groups) they are in the Club · Association band (16 to 30 teams), not Club. Your pricing record still says 17, the same band.</li>
+      <li>What runs on production under the Milton name today is your own tournament and your own U13 team, both on free time. Present it as “I ran my own team and tournament on it”, not as the club already adopting it.</li>
+      <li><b>The November 10 session was with the club’s head of house league, not the board, and the president was not there</b> (your word, Nov 23). The deck says “since November 10” and nothing about who asked. Do not say “since you asked”.</li>
+      <li>Your pitch ruling of Aug 21 keeps plan names and prices off every pitch surface. The slides and the agenda follow it. Prices are answered in the room, and they are on the pricing page now.</li>
+    </ul>
+  </div>
+
+  <h2>Still yours to settle</h2>
+  <div class="scroll"><table>
+    <tr><th>Call</th><th>Where it stands</th></tr>
+    <tr><td><b>What do you ask him for at the end?</b></td><td>The closing “Your questions” slide was removed, so the ask is said in the room. The terms you would offer (free time, length) are still not on record anywhere.</td></tr>
+    <tr><td><b>60 days or 90?</b></td><td>90, ruled November 24. Slide 15 carries 90 days as a Q1 2027 promise, the same number the published Terms keep a club's information after a plan ends. Say “will”: there is no closure step or automatic deletion yet.</td></tr>
+    <tr><td><b>Did the sponsorship deals release go out?</b></td><td>Its database step was applied to production on the evening of November 23, and the release that ships the screens had not gone out when this page was updated. If it is promoted before the meeting, slide 2’s “First part live” and slide 12’s “Under way” for Sponsorships both become Live.</td></tr>
+    <tr><td><b>Their real dome permit and coaches</b></td><td>Not received. The teams follow the club’s own structure (Rep and Select, Purple and White), but the dome, the coaches’ names, the fees, the logo and the tournament’s name are invented. Say once: “a practice club dressed as Milton Bats”.</td></tr>
+    <tr><td><b>The roadmap record</b></td><td>It is behind the two releases (another session is editing it). The deck’s roadmap slides carry tonight’s statuses, and their source is committed, which is the saved copy of what was shown.</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ RUN OF SHOW ============ -->
+<section class="tab" id="run" hidden>
+  <h2>Sixty minutes, minute by minute</h2>
+  <p>The demo order follows one story: the club hands out winter dome time, the coach receives it and runs the team, and the hour ends on house league, from a family’s sign-up to a team. Each demo opens by naming where it lives, which covers the three-portal tour without a separate segment.</p>
+  <div class="scroll"><table>
+    <tr><th>Clock</th><th>Segment</th><th>What happens</th><th>Min</th></tr>
+    <tr><td class="t">0:00</td><td><b>Open</b></td><td>Why you are here. What has gone live since November 10 (say the date, not who asked). Today's plan.</td><td>3</td></tr>
+    <tr><td class="t">0:03</td><td><b>The product in one picture</b></td><td>How clubs run today, scattered across many tools, beside one place. The three places people work: Admin Area, Coaches Portal, the public and family side. 50 releases since June 28, then the wall of eighty live features: show it, do not read it.</td><td>7</td></tr>
+    <tr><td class="t">0:10</td><td><b>Demo 1 · Winter dome</b><br><span class="small">Admin Area</span></td><td>Permit, then a schedule shared fairly between teams, drafts, review by team and by day, send to coaches, bill the teams.</td><td>9</td></tr>
+    <tr><td class="t">0:19</td><td><b>Demo 2 · A coach's books</b><br><span class="small">Coaches Portal</span></td><td>Sign in as a coach. The dome time is on the schedule and the bill is in Money. Then budget, dues and installments, fundraising, Budget vs. Actual, season settlement.</td><td>6</td></tr>
+    <tr><td class="t">0:25</td><td><b>Demo 3 · Practice plans</b><br><span class="small">Coaches Portal</span></td><td>Start a plan from a past practice, add drills and a station rotation, send to assistants. Show the club's standard drill set.</td><td>4</td></tr>
+    <tr><td class="t">0:29</td><td><b>Demo 4 · Skills and insights</b><br><span class="small">Coaches Portal</span></td><td>A skills test with a trend, a player's goals and handout, then Insights: attendance and playing time.</td><td>5</td></tr>
+    <tr><td class="t">0:34</td><td><b>Demo 5 · House league, end to end</b><br><span class="small">Family side, then the Admin Area</span></td><td>A parent signs up a U9 child, answers the club’s own questions (“Can a parent help?” → Coach) and names a friend by code. On the draft board: filter to the parent-coaches’ children, lock one to each team, add a coach, run the draft. Every family and friend pair lands together. The Battle of the Bats phone card is left behind.</td><td>7</td></tr>
+    <tr><td class="t">0:41</td><td><b>On their phones</b><br><span class="small">Slide 8</span></td><td>Two codes on the screen. One opens the demo club’s website, the other Battle of the Bats. Nobody signs in. Give them a moment to look, then carry on; the pages stay open on their phones.</td><td>1</td></tr>
+    <tr><td class="t">0:42</td><td><b>Security and your club's information</b></td><td>One diagram, six plain statements, hosting said up front. The written brief is the leave-behind.</td><td>5</td></tr>
+    <tr><td class="t">0:47</td><td><b>What is coming, and getting started</b></td><td>The roadmap through 2027 (product and technology), with one slide on the club’s website: what is live today and what is being added. Start with any part and add the rest when ready. The 20 other features sit on slide 9, after the phone codes.</td><td>6</td></tr>
+    <tr><td class="t">0:53</td><td><b>Questions and next steps</b></td><td>His questions. Any of the 20 he wants to see. The ask, said in the room: the deck ends on “Getting started” and has no closing slide.</td><td>7</td></tr>
+  </table></div>
+  <div class="note"><b>Changed on Nov 24.</b> The phone codes (1 minute) and the club website slide (1 minute) are new. Their two minutes came out of the questions block, which is now 7.</div>
+  <div class="note"><b>If time runs short,</b> cut Demo 3 first (it is the easiest to show in a follow-up), then shorten Demo 4 to Insights only. Keep the dome, the coach's books and the house league whole.</div>
+  <div class="note warn"><b>If he asks to see one of the 20 on the spot,</b> it comes out of the questions block. The run sheet’s card “If he asks to see more” says which ones the demo club can open tomorrow. Offer a second session for the rest, and for more than one.</div>
+</section>
+
+<!-- ============ AGENDA EMAIL ============ -->
+<section class="tab" id="agenda" hidden>
+  <h2>The agenda email, ready to send</h2>
+  <p>Written for the club president. It carries no prices and names no other product, in line with your brand rules. Fill in the four bracketed places.</p>
+  <div class="row"><button class="copy" id="copy-email" type="button">Copy the email</button><span class="copied" id="copy-done" hidden>Copied</span></div>
+  <div class="email" id="email-body">
+    <p><b>Subject:</b> Agenda for our FieldLogicHQ session on [date]</p>
+    <p>Hi [first name],</p>
+    <p>Thanks for making time on [day, date] at [time]. Here is how I plan to use the hour, so you can tell me beforehand if anything should change.</p>
+    <h4>The hour</h4>
+    <ol>
+      <li>Where things stand (10 min). What has shipped since our session on November 10, and how the pieces fit together for a club like yours.</li>
+      <li>Live demo (30 min). The five items below.</li>
+      <li>Security and your club's information (5 min). Where it is kept, who can see it, and what we do and do not do with it.</li>
+      <li>What is coming next (5 min). The product and technology roadmap through 2027.</li>
+      <li>Your questions and next steps (10 min).</li>
+    </ol>
+    <h4>What I plan to show</h4>
+    <ol>
+      <li>Your winter dome schedule, start to finish. From the permit to a fair schedule for every team, sent to coaches for review, with each team's share of the cost on its books.</li>
+      <li>A coach's team books. Budget, player dues and installments, fundraising, bills, and what each family is owed at season's end.</li>
+      <li>Practice plans and drills. Coaches build a practice from their own drills and past plans, and the club can give every team a standard drill set.</li>
+      <li>Player development. Skills tests, goals, and season insights such as attendance and playing time.</li>
+      <li>House league, from sign-up to teams. A family registers and answers your club’s own questions, then the draft places your parent coaches and keeps brothers, sisters and requested friends together.</li>
+    </ol>
+    <p>One request: if you can send me this winter's dome permit details (fields, days and times, dates off, cost) and your list of teams, I will build item 1 with your real schedule.</p>
+    <h4>Also in the product</h4>
+    <p>I am not planning to cover these, but each one is ready to show. If any of them matter to you, tell me and I will make room, or we can book a second session.</p>
+    <p><b>Running the club</b></p>
+    <ul>
+      <li>Your club site: team pages, tryouts, notices and sponsors, edited with a live preview.</li>
+      <li>Registration desk: waitlists, a review queue, early-bird prices, and who still owes.</li>
+      <li>Club books: budget, Budget vs. Actual, and closing a fiscal year, with a board report as PDF or Excel.</li>
+      <li>Money between the club and its teams: allocations, payment requests, and each team's cash on hand.</li>
+      <li>Balance check: confirm the books match the bank, for the treasurer and for each coach.</li>
+      <li>Families: one record per household across every program, with duplicates caught.</li>
+      <li>Email families: season emails in the club's name, with a history of what was sent.</li>
+      <li>One club calendar: every program's week in one place, with clashes marked.</li>
+      <li>Rainouts and rain delays: reschedule a house league day or push back a whole tournament day without editing games one by one.</li>
+      <li>What the club sees: each rep team's roster, schedule, results and cash on hand, while a coach's lineups and notes stay with the coach.</li>
+      <li>Members and roles: give each volunteer only the access they need, with two-step sign-in.</li>
+    </ul>
+    <p><b>Tournaments</b></p>
+    <ul>
+      <li>Team registration with a waitlist, and check-in at the gate.</li>
+      <li>Schedule and playoff generators, with a health check that flags conflicts.</li>
+      <li>Volunteer scorekeeping from a phone, with score alerts for families who follow a team.</li>
+      <li>Reuse last year's tournament: divisions, venues, registration and branding copied into a new draft.</li>
+    </ul>
+    <p><b>Coaches Portal</b></p>
+    <ul>
+      <li>Tryouts: weighted scorecards, blind evaluation, and a report for the board.</li>
+      <li>Lineups and the game console: run the bench from a phone, with innings-pitched and sitting-streak flags.</li>
+      <li>Season's end: awards, a season page to keep, and starting next season with the same players.</li>
+      <li>Opponent book: scouting notes that grow each time you meet a team, shared across the club's teams if coaches choose.</li>
+      <li>Calendar subscribe: each team's schedule in every family's phone calendar.</li>
+    </ul>
+    <p>See you on [date].</p>
+    <p>[Your name]</p>
+  </div>
+  <p class="small">Changed Nov 23: the president was not at the November 10 session, and it was with the club's head of house league, not the board (your word), so the email now says “our session”. If it already went out with the old wording, there is nothing to send again; just do not repeat it in the room.</p>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section class="tab" id="features" hidden>
+  <h2>The five you demo, and my top 20 to offer</h2>
+  <p>Every item below is built and its screens are on production, and the club plans went on sale on November 23. I left out anything switched off or not on production, so nothing on the list can embarrass you if he picks it. Whether the demo club holds anything to show for an item is a separate question: the run sheet’s card “If he asks to see more” lists what can be opened tomorrow.</p>
+
+  <h3>Your five</h3>
+  <div class="scroll"><table>
+    <tr><th>Demo</th><th>What is true to say</th><th>Care needed</th></tr>
+    <tr><td><b>Winter dome schedule</b></td><td>Permits carry cost and field prices. A schedule shares the time by team, group or percentage, with rules and four drafts. Coaches review it. Bill the teams puts each team's share and its installments in the coach's Money.</td><td>The bill is priced from the permit or shared by time. A custom amount per team is ruled for after launch. The permit cost does not post itself to the club's books.</td></tr>
+    <tr><td><b>Coach's books</b></td><td>Budget, player dues and installments, fundraising and sponsor invoices, ledger and bills, Budget vs. Actual, balance check, season settlement, Excel and PDF export.</td><td>Families paying online is switched off. The balance check compares balances; it is not a bank feed.</td></tr>
+    <tr><td><b>Practice plans and drills</b></td><td>Blocks, stations that rotate, run mode, a printed sheet, send to assistants. Start from a template, a past practice or a past season. The club publishes a standard drill set to every team.</td><td>No sharing from a coach up to the club or across teams.</td></tr>
+    <tr><td><b>Skills and insights</b></td><td>Skills tests with aims and trends, observed skills, focus areas, a player handout. Insights: results, attendance, playing time, development.</td><td>No rankings against teammates. Nothing goes to families by itself during the season.</td></tr>
+    <tr><td><b>House league, end to end</b></td><td>A sign-up form carrying the club’s own questions. The draft board shows a question’s answers and filters on them. Lock a child to a team, add its coach, run the draft: brothers and sisters and confirmed friends stay together (groups of up to 3), ratings are balanced. Friend requests shows each one Honoured or not, with the reason.</td><td>A parent’s “Coach” answer does not make them the coach: the admin locks the child and types the coach in. A child moved but not locked is dealt again. House league belongs to the club plans (on sale since Nov 23).</td></tr>
+  </table></div>
+
+  <h3>Top 20 to offer</h3>
+  <div class="scroll"><table>
+    <tr><th>#</th><th>Feature</th><th>Why a president cares</th><th>Time to show</th></tr>
+    <tr><td colspan="4" class="small"><b>Admin Area · running the club</b></td></tr>
+    <tr><td>1</td><td><b>The club site</b></td><td>Team pages for all 20 rep teams made by the product, tryouts, notices and sponsors, in Milton purple. The board edits it with a live preview.</td><td>3 min</td></tr>
+    <tr><td>2</td><td><b>Registration desk</b></td><td>Waitlists, review queue, early-bird prices, several children in one sign-up, who still owes.</td><td>4 min</td></tr>
+    <tr><td>3</td><td><b>Club books</b></td><td>Replaces the Excel accounting. Budget, Budget vs. Actual, fiscal-year close, board report.</td><td>5 min</td></tr>
+    <tr><td>4</td><td><b>Money between club and teams</b></td><td>Allocations and payment requests to teams, and each team's cash on hand in one list.</td><td>3 min</td></tr>
+    <tr><td>5</td><td><b>Balance check</b></td><td>Treasurer and coaches confirm the books match the bank. Shipped Nov 15.</td><td>3 min</td></tr>
+    <tr><td>6</td><td><b>Families</b></td><td>One household record across programs. Answers part of “how do we connect with families?”</td><td>3 min</td></tr>
+    <tr><td>7</td><td><b>Email families</b></td><td>Season emails in the club's name with a sent history.</td><td>2 min</td></tr>
+    <tr><td>8</td><td><b>One club calendar</b></td><td>Every program's week, clashes marked. Ends the board-and-coaches spreadsheet.</td><td>2 min</td></tr>
+    <tr><td>9</td><td><b>Rainouts and rain delays</b></td><td>Named as a pain: rainouts handled game by game.</td><td>3 min</td></tr>
+    <tr><td>10</td><td><b>What the club sees</b></td><td>Oversight of 20 rep teams without taking the coach's private notes. Coaches are told exactly what the club can read.</td><td>2 min</td></tr>
+    <tr><td>11</td><td><b>Members, roles and two-step sign-in</b></td><td>Each volunteer gets only what they need. Two-step sign-in went live November 15.</td><td>2 min</td></tr>
+    <tr><td colspan="4" class="small"><b>Admin Area · tournaments</b></td></tr>
+    <tr><td>12</td><td><b>Team registration, waitlist and check-in</b></td><td>Replaces tournament registration in their current tool.</td><td>4 min</td></tr>
+    <tr><td>13</td><td><b>Schedule and playoff generators</b></td><td>Draft schedules, pools, brackets, and a health check for conflicts.</td><td>5 min</td></tr>
+    <tr><td>14</td><td><b>Scorekeeping from a phone, with score alerts</b></td><td>Volunteers enter scores, standings update, followers get alerts.</td><td>3 min</td></tr>
+    <tr><td>15</td><td><b>Reuse last year's tournament</b></td><td>Next year starts from a copy, not a blank page. The Battle of the Bats card he takes away shows a finished one: standings, bracket, champions.</td><td>2 min</td></tr>
+    <tr><td colspan="4" class="small"><b>Coaches Portal</b></td></tr>
+    <tr><td>16</td><td><b>Tryouts</b></td><td>Weighted scorecards, blind evaluation, helper scoring links, a report for the board. Fairness is a board-level worry at 20 rep teams.</td><td>5 min</td></tr>
+    <tr><td>17</td><td><b>Lineups and the game console</b></td><td>Bench from a phone, innings-pitched and sitting-streak flags.</td><td>4 min</td></tr>
+    <tr><td>18</td><td><b>Season's end</b></td><td>Awards, the one-page season record, and starting next season with the same players.</td><td>3 min</td></tr>
+    <tr><td>19</td><td><b>Opponent book</b></td><td>Scouting notes shared across the club's teams when coaches opt in.</td><td>2 min</td></tr>
+    <tr><td>20</td><td><b>Calendar subscribe</b></td><td>Each team's schedule in every family's phone calendar.</td><td>1 min</td></tr>
+  </table></div>
+
+  <h3>Left off the list on purpose</h3>
+  <ul>
+    <li><span class="chip stop">Switched off</span> Families paying online, the signed-in family app, family RSVPs, team chat.</li>
+    <li><span class="chip good">Now live</span> Group email to coaches and the board, schedules across several permits, the club’s own registration questions, and the first part of Sponsorships (packages and the sponsor list). All four reached production on November 22 and 23; the deck’s slide 2 names them.</li>
+    <li><span class="chip warn">Built, not on production</span> Sponsorship deals and invoices. They show on the staging site; do not present them as available.</li>
+    <li><span class="chip warn">Not started</span> Volunteer documents with expiry, club events, camps, importing from their current system, one-button export. These belong on the roadmap slide.</li>
+  </ul>
+</section>
+
+<!-- ============ VALUE ============ -->
+<section class="tab" id="value" hidden>
+  <h2>The value case, from their week to ours</h2>
+  <p>The left column is what you told me they do today. The middle is what replaces it. The right is where the hour proves it.</p>
+  <div class="scroll"><table>
+    <tr><th>Today</th><th>With FieldLogicHQ</th><th>Proved by</th></tr>
+    <tr><td>Tournament registration in one tool, and no public page for tournaments</td><td>Registration, waitlist, schedule, scores, standings and a public page for every tournament. Visiting coaches get a free Basic Coaches Portal.</td><td>The Battle of the Bats phone card, and your own Battle of the Bats results</td></tr>
+    <tr><td>Team management in a separate subscription</td><td>Every rep coach's Premium Coaches Portal is included with the club. No per-team fee.</td><td>Demos 2 to 4</td></tr>
+    <tr><td>Accounting by hand in Excel</td><td>Club books and team books in one place. The club sees each team's cash on hand without taking over the coach's book.</td><td>Demo 2, features 3 to 5</td></tr>
+    <tr><td>Board and coaches coordinate by email and Excel</td><td>The dome schedule goes to coaches in their portal. They answer “Looks good” or ask for a change. Their share of the cost arrives in their Money.</td><td>Demo 1 into Demo 2</td></tr>
+    <tr><td>Many manual tasks</td><td>Draft, schedule generators, rainouts, reuse last year's tournament, start next season.</td><td>Demo 5, features 9, 13, 15, 18</td></tr>
+    <tr><td>An old public page</td><td>A club site the board edits with a live preview: teams, tryouts, notices, sponsors.</td><td>Demo 5 opens on it; feature 1</td></tr>
+    <tr><td>Several bills</td><td>One subscription for the whole club.</td><td>Said in the room</td></tr>
+  </table></div>
+
+  <div class="two">
+    <div class="card">
+      <h3>Time savings: let him supply the number</h3>
+      <p>Nothing on record measures hours saved, and an invented figure is the easiest thing in the deck to challenge. Before Demo 1, ask: “How long did last winter's dome schedule take, and how many emails after it went out?” Then build it in nine minutes. His number does the selling.</p>
+      <p>Use the same move for the draft, the tournament weekend and month-end books if they come up.</p>
+    </div>
+    <div class="card">
+      <h3>“One bill”, said truthfully</h3>
+      <p>One FieldLogicHQ subscription covers the club, its tournaments, its house league and every coach's portal. A coach who already pays for Premium is not charged again once the team moves into the club.</p>
+      <p>It does not mean one bill for what families pay. Online payments are switched off, and they sit on the roadmap for Q1 2027.</p>
+    </div>
+  </div>
+
+  <div class="note warn"><b>Comparisons.</b> No checked comparison with their current tools exists in your records. Talk about “what you do today”, which he knows better than we do, and leave the other product's features alone. Stay away from card rates: ours is the higher of the two.</div>
+  <div class="note"><b>His standing question is “how do we connect with families?”</b> The answer today: the club site, registration with a status page, Email families, team schedules in family phone calendars, and score alerts for a followed team. The signed-in family app is built and comes next on the roadmap. Say both halves.</div>
+</section>
+
+<!-- ============ SECURITY ============ -->
+<section class="tab" id="security" hidden>
+  <h2>Security and their children's information</h2>
+  <div class="note good"><b>Checked by /legal, Nov 21.</b> Every line on this tab was checked against the live product and may be said as written. A line marked <span class="chip warn">after …</span> waits for that release or publication. The do-not-say list stays unsaid. The leave-behind brief for their board, written from the same lines: <b>https://claude.ai/artifact/2qBeedXuyYTRPs1MEo8TUR</b> (private until you share it).</div>
+  <div class="note"><b>Updated Nov 23.</b> Both things the waiting lines waited for have happened: the November 22 release, and the Data Terms and supplier list published on November 23. Each waiting line was checked against the published text and its mark lifted, and the two do-not-say lines those releases retired were removed. Nothing else on this tab was reworded, and /legal has not re-read it since Nov 21.</div>
+  <p>Two things were asked on Nov 10: does our data leak or get sold, and what if a one-person business stops. This answers the first. You ruled that you answer the second yourself, only if asked.</p>
+
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 880 470" role="img" aria-label="Where a club's information lives: people connect over an encrypted link to the FieldLogicHQ app, which checks every request before reading the database. Email, payments and phone alerts each receive only what they need.">
+      <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="currentColor"/></marker></defs>
+      <path class="ln dash" d="M130,70 C130,22 750,22 750,66" marker-end="url(#ah)"/>
+      <text class="lbl" x="440" y="28" text-anchor="middle">sign-in and live score updates</text>
+
+      <rect class="box" x="20" y="70" width="220" height="92" rx="6"/>
+      <text class="h" x="130" y="100" text-anchor="middle">Board, coaches, families</text>
+      <text class="m" x="130" y="122" text-anchor="middle">a phone or a computer</text>
+      <text class="m" x="130" y="140" text-anchor="middle">two-step sign-in for every account</text>
+
+      <rect class="core" x="330" y="70" width="220" height="92" rx="6"/>
+      <text class="h" x="440" y="100" text-anchor="middle">FieldLogicHQ app</text>
+      <text class="m" x="440" y="122" text-anchor="middle">Amazon Web Services</text>
+      <text class="m" x="440" y="140" text-anchor="middle">Ohio, United States</text>
+
+      <rect class="box" x="640" y="70" width="220" height="92" rx="6"/>
+      <text class="h" x="750" y="100" text-anchor="middle">Database, sign-in, files</text>
+      <text class="m" x="750" y="122" text-anchor="middle">Supabase on AWS</text>
+      <text class="m" x="750" y="140" text-anchor="middle">Ohio, United States</text>
+
+      <line class="ln" x1="240" y1="116" x2="328" y2="116" marker-end="url(#ah)"/>
+      <text class="lbl" x="284" y="106" text-anchor="middle">encrypted</text>
+      <line class="ln" x1="550" y1="116" x2="638" y2="116" marker-end="url(#ah)"/>
+      <text class="lbl" x="594" y="106" text-anchor="middle">checked</text>
+
+      <text class="m" x="440" y="186" text-anchor="middle">Every request: signed in, second step where on,</text>
+      <text class="m" x="440" y="203" text-anchor="middle">belongs to this club, allowed for this role</text>
+      <text class="m" x="750" y="186" text-anchor="middle">Encrypted at rest by the host</text>
+      <text class="m" x="750" y="203" text-anchor="middle">Database backed up daily, kept 7 days</text>
+      <text class="m" x="750" y="220" text-anchor="middle">Player documents open by 1-hour links</text>
+
+      <line class="ln" x1="390" y1="225" x2="160" y2="318" marker-end="url(#ah)"/>
+      <line class="ln" x1="440" y1="225" x2="440" y2="318" marker-end="url(#ah)"/>
+      <line class="ln" x1="490" y1="225" x2="720" y2="318" marker-end="url(#ah)"/>
+      <text class="lbl" x="232" y="262" text-anchor="middle">sends email</text>
+      <text class="lbl" x="440" y="284" text-anchor="middle">hands off checkout</text>
+      <text class="lbl" x="652" y="262" text-anchor="middle">sends an alert</text>
+
+      <rect class="box" x="20" y="320" width="260" height="110" rx="6"/>
+      <text class="h" x="150" y="348" text-anchor="middle">Email delivery</text>
+      <text class="m" x="150" y="370" text-anchor="middle">Resend, United States</text>
+      <text class="m" x="150" y="392" text-anchor="middle">Receives: names, addresses,</text>
+      <text class="m" x="150" y="409" text-anchor="middle">the message itself</text>
+
+      <rect class="box" x="310" y="320" width="260" height="110" rx="6"/>
+      <text class="h" x="440" y="348" text-anchor="middle">Payments</text>
+      <text class="m" x="440" y="370" text-anchor="middle">Stripe</text>
+      <text class="m" x="440" y="392" text-anchor="middle">Card numbers are typed on Stripe's</text>
+      <text class="m" x="440" y="409" text-anchor="middle">own page and never reach us</text>
+
+      <rect class="box" x="600" y="320" width="260" height="110" rx="6"/>
+      <text class="h" x="730" y="348" text-anchor="middle">Phone alerts</text>
+      <text class="m" x="730" y="370" text-anchor="middle">the browser's own push service</text>
+      <text class="m" x="730" y="392" text-anchor="middle">Receives: a device address, and</text>
+      <text class="m" x="730" y="409" text-anchor="middle">the alert, sealed for that device</text>
+    </svg>
+    </div>
+    <figcaption>Where a club's information lives and who it passes through. Nothing goes to advertisers or analytics companies, and your club's information is never given to an AI service. Families can't pay online through FieldLogicHQ yet.</figcaption>
+  </figure>
+
+  <h3>Four checks before anyone reads a record</h3>
+  <div class="steps">
+    <div><b>Signed in.</b> Passwords are kept by our sign-in service, Supabase, only in scrambled form. FieldLogicHQ never sees or stores them.</div>
+    <div><b>Second step.</b> Two-step sign-in is available to everyone, and your club can require it for its board and coaches; FieldLogicHQ staff always use it.</div>
+    <div><b>Belongs to this club.</b> On every request our server checks that the person belongs to this club.</div>
+    <div><b>Allowed for this role.</b> A registrar, treasurer or coach sees only their part, and that is enforced on our server, not in the browser.</div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h3>Safe to say</h3>
+      <ul>
+        <li>We never sell your club's information or use it to advertise. We don't use advertising trackers, third-party analytics or an outside error-monitoring service.</li>
+        <li>Your club's information is never given to an AI service. <span class="small">Holds while your rule that AI sessions read production only as counts stands. Don't add more: the true answer to a follow-up is a rule, not a lock.</span></li>
+        <li>Information is encrypted in transit, and our database host encrypts everything it stores (AES-256).</li>
+        <li>Card numbers and bank details never reach us. When you pay for FieldLogicHQ, you pay on Stripe's own page. Families can't pay online through FieldLogicHQ yet; when your club turns that on, they'll pay on Stripe's page into the club's own Stripe account. Stripe states it is certified PCI Service Provider Level 1.</li>
+        <li>Player documents are stored privately and open only through links that expire after one hour.</li>
+        <li>Our database is backed up daily, and each backup is kept 7 days. We rehearsed a restore from a backup on November 18.</li>
+        <li>In November we reviewed, route by route, who can see and change what in every club. It found nothing that lets one club see another club's people. Its serious and medium findings are fixed in the live product, and the smaller follow-ups went live on November 22. <span class="small">If asked “anything serious?”: yes, two, both fixed in the Nov 15 release. One let any signed-in account replace another club's rules files.</span></li>
+        <li>The friend requests families type on a house-league sign-up are deleted when the season is marked finished, or at the latest 60 days after its last day.</li>
+        <li>Our support tools log each club and person record our staff open, and keep a permanent record of every change they make.</li>
+        <li>Our database host states SOC 2 Type 2 and ISO 27001; our email provider states SOC 2 Type II. These are their certifications, not ours.</li>
+        <li>If something goes wrong with your club's information, we tell your club's owners within 72 hours of confirming it touches your information, and help you tell your families. <span class="small">In our published Data Terms since Nov 23.</span></li>
+        <li>When your club is deleted, its information and the files uploaded to it are deleted, and backup copies are gone within 7 days. <span class="small">Live since Nov 22, and in the published Data Terms. It covers deleting the whole club.</span></li>
+        <li>Before a new company starts handling your club's information, we email your club's owners at least 30 days ahead. <span class="small">In our published Data Terms since Nov 23.</span></li>
+        <li>Our Terms, Privacy Policy, Data Terms and the list of companies that handle your information are published on our site, and our Security page is public at fieldlogichq.ca/security. <span class="small">Published Nov 22 and Nov 23.</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Do not say</h3>
+      <ul>
+        <li>“Hosted in Canada” or “data stays in Canada”. It is in Ohio.</li>
+        <li>“Certified”, “audited” or “pen-tested” about FieldLogicHQ itself.</li>
+        <li>“End-to-end encrypted”, or that medical notes have their own encryption.</li>
+        <li>“Your files are backed up”. Uploaded files are not in the database backups.</li>
+        <li>“Every finding fixed”. Some were left as they are by decision. The follow-ups have been live since November 22, so “every finding resolved” is now true, but the access-review line on the left is still the safest wording.</li>
+        <li>“Export everything with one button”. It is on the roadmap for Q1 2027.</li>
+        <li>“Deleting a team or a player removes its files”. Only deleting the whole club is covered; a single team’s or player’s files have not been checked.</li>
+        <li>“That log cannot be edited”, or “every page our staff open is logged”. Only the record of changes is locked, and the log of records opened covers club and person records.</li>
+        <li>“Families pay on Stripe's own page”, as if it happens today.</li>
+        <li>“Full restore”. Uploaded files are not in the backups, so the rehearsal restored the database.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>If he asks</h3>
+  <dl>
+    <div><dt>Where is our data?</dt><dd>In the United States, in Ohio, with our database host Supabase on Amazon Web Services. Email goes out through Resend, and payments through Stripe. Canadian privacy law doesn't require information to stay in Canada. It requires us to stay responsible for it, protect it by contract with every company that handles it, and say plainly that it is held outside Canada, where that country's courts and authorities can sometimes reach it. Each company that stores or sends your club's information is bound by data-processing terms with us. The full list is published at fieldlogichq.ca/legal/subprocessors; it also names the two behind our own business email, a forwarding service and our inbox, which the deck's diagram leaves out.</dd></div>
+    <div><dt>Who can see our kids' information?</dt><dd>Your own people, each by their role. On our side, our support staff, which today means me, in our support tools, which log each record opened and every change made; and me directly in the database when something has to be repaired. We have no way to sign in as one of your people. No advertisers, and it is never given to an AI service.</dd></div>
+    <div><dt>Does any public page show our kids?</dt><dd>No page anyone can open shows a player's name, date of birth or roster. Your club decides what it publishes. A link we email to a family shows only that family's own sign-up. <span class="small">Checked against the live product Nov 21. A club's own free text (a news post, a team description) shows as typed.</span></dd></div>
+    <div><dt>What if we leave?</dt><dd>Today you download from the lists that offer it, such as members, registrations and payments, and your owner can ask us in writing for a full copy, which we give within 30 days; that is in our published Data Terms. An owner can also send a delete request from Settings, and nothing is deleted until it is confirmed by email. In Q1 2027 we'll add a download of everything, and written terms for leaving: 90 days to take it all with you, then it's deleted. There's no long contract: a cancelled plan ends at its renewal date. <span class="small">The 90 days is the same number the published Terms keep a club's information after a plan ends. The leaving window itself is a Q1 2027 promise, not today's practice: say “will”.</span></dd></div>
+    <div><dt>What if something happens to you?</dt><dd>Yours to answer in your own words. No written commitment exists, and you ruled it stays out of the pack.</dd></div>
+    <div><dt>Have you been independently tested?</dt><dd>No independent test. We run our own checks: reviews of who can see and change what in every club (two in October, one on November 10), with the serious and medium findings fixed in the live product, and a rehearsed restore from backup on November 18. The services underneath state their own certifications, which are theirs, not ours.</dd></div>
+    <div><dt>Are you compliant with privacy law?</dt><dd>Our privacy policy and terms are written to the federal privacy law, PIPEDA, and they are published on our site. We follow a written breach procedure. None of it has been reviewed by a lawyer yet.</dd></div>
+  </dl>
+
+  <h3>The roadmap's four data promises, as the slide may carry them</h3>
+  <p>Under “What we promise · in writing from Q1 2027”. Your guard of Nov 16 keeps anything not on production out of the present tense, so the first and third are reworded.</p>
+  <div class="scroll"><table>
+    <tr><th>Promise</th><th>Words for the slide</th><th>True today?</th></tr>
+    <tr><td><b>Take all of it</b></td><td>“Take all of it, any time. Your club will be able to download all of its records itself, in ordinary spreadsheet files, with its uploaded documents, without asking us.”</td><td><span class="chip warn">Q1 2027</span> Only if the export includes uploaded documents; if not, drop those words.</td></tr>
+    <tr><td><b>A reminder</b></td><td>“A reminder to keep a copy when your season closes and when registration closes.”</td><td><span class="chip warn">Q1 2027</span> Not built.</td></tr>
+    <tr><td><b>90 days</b></td><td>“90 days to take everything with you if your club closes its account, unless you ask us to delete it sooner. Then it is deleted.”</td><td><span class="chip warn">Q1 2027</span> Ruled November 24: 90, the same as the Terms keep information after a plan ends. See below.</td></tr>
+    <tr><td><b>No lock-in</b></td><td>“No lock-in. No long contracts. A cancelled plan ends at its renewal date, and nothing more is charged.”</td><td><span class="chip good">Yes</span> For every plan on sale. It must also be true of the terms you offer Milton.</td></tr>
+  </table></div>
+
+  <h3>Close before the meeting</h3>
+  <ol>
+    <li><b>The 60 days against the Terms' 90: closed.</b> You ruled 90 on November 24, one number for a plan that ends and an account that is closed. It is a Q1 2027 promise. Still open: whether the download of everything includes uploaded documents (recommended yes).</li>
+    <li><b>The staff-log sentence: closed.</b> The November 22 release logs the remaining record pages our staff open (feedback records and early-access leads), which is what the policy's sentence needed. The Safe to say line stays the narrower one.</li>
+    <li><b>The legal pages: done.</b> The Terms and Privacy pages were published on November 22, and the Data Terms and supplier list on November 23. Club deletion removing files went live with the first.</li>
+    <li><b>The terms you offer Milton are still not on record.</b> Offer no term longer than the plan's own, or “no long contract” is not true for them.</li>
+  </ol>
+</section>
+
+<!-- ============ DECK ============ -->
+<section class="tab" id="deck" hidden>
+  <h2>Sixteen slides, as published</h2>
+  <p>The deck: https://claude.ai/artifact/6z6xGQsVATLw8uRnQCsuc3 (private until you share it). No plan names or prices on any slide, per your Aug 21 ruling. The demos sit after slide 7, which stays up while you switch to the browser. Slide 8 puts two codes up for their phones when you come back.</p>
+  <div class="scroll"><table>
+    <tr><th>#</th><th>Slide</th><th>What is on it</th><th>Min</th></tr>
+    <tr><td>1</td><td><b>Cover</b></td><td>The FieldLogicHQ name and mark, “for Milton Bats” in the club’s purple, November 24, 2026. “Less admin. More sport.”</td><td>0.5</td></tr>
+    <tr><td>2</td><td><b>What has gone live since November 10</b></td><td>Eight rows, seven Live: friend requests in the draft, two-step sign-in, the access review with its fixes, the legal pages and the Security page, the balance check, group email to coaches and the board, the club’s own registration questions. Sponsorships reads “First part live”.</td><td>2</td></tr>
+    <tr><td>3</td><td><b>Scattered across many tools</b></td><td>How clubs run today, drawn: many subscriptions, spreadsheets, email chains, an old website, no single record. Three problems under it: everything typed twice, information gets lost, payments get missed.</td><td>2</td></tr>
+    <tr><td>4</td><td><b>One place</b></td><td>The same club in three places that share one record: Admin Area, Coaches Portal, the public and family side.</td><td>2</td></tr>
+    <tr><td>5</td><td><b>What is built</b></td><td>50 releases between June 28 and November 23, more than two a week. A year at the club as a wheel.</td><td>2.5</td></tr>
+    <tr><td>6</td><td><b>Eighty features, since April</b></td><td>A wall of eighty feature names in five groups, every one live today. Shown, not read.</td><td>0.5</td></tr>
+    <tr><td>7</td><td><b>Five demos</b></td><td>The five named. Leave it up while you switch to the browser.</td><td></td></tr>
+    <tr><td colspan="4" class="small"><b>Live demos · 31 minutes</b></td></tr>
+    <tr><td>8</td><td><b>See what your families see</b></td><td>Two codes for their phones: the demo club’s website (home, teams, tryouts, house league sign-up) and Battle of the Bats (scores, standings, the bracket, the champions). Nobody signs in. It says the names and scores are made up.</td><td>1</td></tr>
+    <tr><td>9</td><td><b>Twenty more</b></td><td>The 20 other features in three groups, for today or a second session.</td><td>1</td></tr>
+    <tr><td>10</td><td><b>Where it lives</b></td><td>The diagram from the Security tab, as checked by /legal on Nov 21, with one added line: the list of our suppliers is published.</td><td>2.5</td></tr>
+    <tr><td>11</td><td><b>Six plain statements</b></td><td>The six statements, word for word as /legal approved them, hosting first. Under them: the brief is his to keep, and the Security page is public.</td><td>2.5</td></tr>
+    <tr><td>12</td><td><b>The roadmap, through 2027</b></td><td>New tools by quarter. Three Q1 items already read Live (registration questions, several permits, club tools on sale); Sponsorships reads Under way.</td><td>1.5</td></tr>
+    <tr><td>13</td><td><b>Your club’s website, today and next</b></td><td>Left: six lines that are live on the club site today. Right: what is being added. Q2 2027, targeted: game day on the home page (tonight’s games, the weekend’s results, field closures). Second half of 2027, a goal: club news, photos and a trophy case; sponsors on game day with a season report, and a scoreboard for the park. None of the right column is started.</td><td>1</td></tr>
+    <tr><td>14</td><td><b>Your data, and keeping it safe</b></td><td>Data and security by year. The legal pages, the supplier list, club file deletion and the Security page all read Live.</td><td>1.5</td></tr>
+    <tr><td>15</td><td><b>Your data is yours</b></td><td>Three commitments in writing from Q1 2027, and “No lock-in. No long contracts.”</td><td>1</td></tr>
+    <tr><td>16</td><td><b>Getting started</b></td><td>Start with any part and add the rest when ready: house league, the Coaches Portal, club accounting, a first tournament, permits and field time, the club online. “One part or all of it, in any order, on your timing.”</td><td>2</td></tr>
+  </table></div>
+  <div class="note"><b>Changed on Nov 23, at your word.</b> The date is on the cover. Slide 2 says only “since November 10”. Slide 3 is about clubs in general, not Milton’s own tools. Slide 6 is new. The last slide is about starting anywhere, not a staged plan. The closing “Your questions” slide was removed, so the ask is said in the room.</div>
+  <div class="note"><b>Changed on Nov 24, at your word.</b> Two slides are new. Slide 8 has two codes for their phones. Slide 13 is the club’s website: what is live today and the three website lines added to the roadmap, whose quarters are yours to confirm. Every slide after slide 7 moved down, so check any slide number you wrote down.</div>
+  <div class="note warn"><b>One thing to check on the morning.</b> If the sponsorship deals release reached production overnight, slide 2’s “First part live” and slide 12’s “Under way” for Sponsorships are out of date and should read Live.</div>
+</section>
+
+<!-- ============ DEMO PREP ============ -->
+<section class="tab" id="demo" hidden>
+  <h2>The demo club is ready</h2>
+  <p>Option A was built: one club, dressed as Milton, carries all five demos. It was rebuilt on the morning of November 24 with the club’s Rep and Select teams (20 teams, U11 to U19), and the run sheet’s figures came out the same. The run sheet has every click, and the figures below are on it: https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W</p>
+
+  <div class="scroll"><table>
+    <tr><th>Demo</th><th>What the club holds</th><th>The build’s figures, and care</th></tr>
+    <tr><td><b>1 · Winter dome</b></td><td>The permit “Winter dome 2026–27”, and part 1 of its schedule sent and billed to all 20 teams.</td><td>Part 2 is built live from <b>Sunday, January 3, 2027</b> (December 20 and 27 are off). Send it “For review first”. The dome and the coaches’ names are invented until the club sends its own.</td></tr>
+    <tr><td><b>2 · Coach's books</b></td><td>Milton Bats U15 Rep Purple: a budget, dues in four payments, a bottle drive, a sponsor, bills, the club’s dome bill.</td><td>Cash on hand reads <b>$4,290.50</b> for the balance check. Nora Haddad is overdue, Ella Sinclair part-paid.</td></tr>
+    <tr><td><b>3 · Practice plans</b></td><td>Twelve drills, the club’s eight, two templates, a circuit, plans on past practices.</td><td>The next dome practice, <b>Sunday, November 29</b>, has no plan; last Sunday’s has one to start from.</td></tr>
+    <tr><td><b>4 · Skills and insights</b></td><td>Two testing days on four tests, goals and observed skills, attendance on 8 games and 11 practices, 8 lineups.</td><td>Stay on Skills &amp; goals on a player; the family-app invitation on “Family &amp; paperwork” is not on production.</td></tr>
+    <tr><td><b>5 · House league</b></td><td>U9 open with room, the club’s three questions answered, three parent-coach children, six confirmed friend requests.</td><td>The friend code is <b>MLT 9BV</b>. The three children: Ryan Kim, Isaiah Bautista, Ryan Tran. Stop at the “To pay” card.</td></tr>
+  </table></div>
+
+  <div class="two">
+    <div class="card">
+      <h3>Dressed for off-script questions</h3>
+      <ul>
+        <li>Three upcoming games after Sunday’s practice, and eight past lineups marked ready.</li>
+        <li>Awards, an opponent book with notes, two emails already sent to the families.</li>
+        <li>An emergency contact on every player, a medical note on two.</li>
+        <li>One invitation waiting in Members.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Nothing in them yet</h3>
+      <ul>
+        <li>Tryouts, and a finished season (“The season’s end”).</li>
+        <li>The club’s Budget, Budget vs. Actual and Bank.</li>
+        <li>Sponsorship packages and deals (three sponsor names only).</li>
+        <li>A tournament in progress, and player documents.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Live-demo risks, in order</h3>
+  <ol>
+    <li><b>Where it runs.</b> Present from the staging site, never from your laptop’s development server. The latest work was pushed to it on the evening of November 23; open it tonight to confirm it loads. Staging is ahead of production in one place a board member might open: Sponsorships shows Deals and invoices, which are not on production yet.</li>
+    <li><b>Do not rebuild in the last half hour.</b> The world is already built for the 24th. On the evening of the 23rd the hosted database’s query service dropped out for about two minutes and stopped two rebuilds, one after it had cleared the club. Rebuild only if a rehearsal changed something, and leave time to run it again.</li>
+    <li><b>Sign in to both windows ahead of time.</b> Every Milton account carries the current Terms acceptance; if the Terms screen shows anyway, tick it then, not in the room.</li>
+    <li><b>The Milton club sends real email</b> to your own aliases. Do not publish teams in a rehearsal: it emails the families.</li>
+    <li><b>A sponsorship deal offered in a rehearsal is not cleared by the rebuild.</b> Remove it in Sponsorships yourself.</li>
+    <li><b>Have a recording.</b> Screenshots or a short capture of each demo, in case the room's connection fails.</li>
+  </ol>
+</section>
+
+<!-- ============ ALSO ============ -->
+<section class="tab" id="also" hidden>
+  <h2>What else I would include</h2>
+  <div class="card">
+    <h3>Add</h3>
+    <ul>
+      <li><b>A “since November 10” opener.</b> It answers the one-person-business worry with evidence: eight things that have gone live in the two weeks since. The slide names the date only, not who asked.</li>
+      <li><b>Their real dome schedule.</b> Ask for the permit ahead of time and build it. Winter is now, so it is also the natural first thing for them to use.</li>
+      <li><b>Something for his own phone.</b> The Battle of the Bats QR card, left behind: a finished tournament’s standings, bracket and champions in his hand.</li>
+      <li><b>Start with any part.</b> The last slide shows six places to begin (house league, the Coaches Portal, club accounting, a first tournament, permits and field time, the club online), in any order and on their timing, so the decision feels small.</li>
+      <li><b>A clear ask, said in the room.</b> The closing slide is gone. First club, a named first step and a date for it. The club plans are on sale now, so decide the terms beforehand.</li>
+      <li><b>A leave-behind.</b> Three pages: the security brief, the feature menu, the roadmap. The security brief doubles as the first page of the pack owed to their board.</li>
+      <li><b>A direct answer to “how do we connect with families?”</b> It is his question on record. See the Value case tab.</li>
+      <li><b>A rehearsal with a clock.</b> Thirty minutes for five demos leaves no slack for searching for a screen.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Have ready, but do not lead with</h3>
+    <ul>
+      <li><b>Price.</b> At 20 rep teams they fall in the Club · Association band. Know your answer and your offer before you walk in; the price is on the pricing page now.</li>
+      <li><b>Moving their records over.</b> Importing from their current system is planned for Q1 2027. Today's honest answer is to switch at the next registration, not in the middle of a season.</li>
+      <li><b>The draft, rainout and team-change walks</b> from the Nov 10 handout. They are the fastest of the 20 to show on request.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Leave out</h3>
+    <ul>
+      <li>Hours-saved figures we cannot back.</li>
+      <li>Comparisons that name another product's features.</li>
+      <li>The family app and online payments as anything other than roadmap items.</li>
+      <li>The word “Canadian” as a selling point. The hosting is not.</li>
+    </ul>
+  </div>
+  <div class="note warn"><b>One sensitive item, yours to judge.</b> Your records note that the club's current website still shows old recruiting pages with players' photos, schools and parents' phone numbers. If you raise it, do it privately and as a reason a new club site helps, not as a criticism.</div>
+</section>
+</div>
+
+<script>
+(function(){
+  var names=["start","run","agenda","features","value","security","deck","demo","also"];
+  var buttons=document.querySelectorAll("nav.tabs button");
+  function show(name){
+    if(names.indexOf(name)<0){name="start";}
+    names.forEach(function(n){document.getElementById(n).hidden=(n!==name);});
+    buttons.forEach(function(b){b.setAttribute("aria-selected",b.dataset.tab===name?"true":"false");});
+  }
+  buttons.forEach(function(b){b.addEventListener("click",function(){
+    show(b.dataset.tab);
+    try{history.replaceState(null,"","#"+b.dataset.tab);}catch(e){location.hash=b.dataset.tab;}
+    window.scrollTo(0,0);
+  });});
+  window.addEventListener("hashchange",function(){show(location.hash.slice(1));});
+  show(location.hash.slice(1));
+
+  var copyBtn=document.getElementById("copy-email"),done=document.getElementById("copy-done"),body=document.getElementById("email-body");
+  copyBtn.addEventListener("click",function(){
+    var text=body.innerText;
+    function ok(){done.hidden=false;setTimeout(function(){done.hidden=true;},2500);}
+    function fallback(){var r=document.createRange();r.selectNodeContents(body);var s=window.getSelection();s.removeAllRanges();s.addRange(r);done.textContent="Selected. Press Ctrl+C.";done.hidden=false;}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(ok,fallback);}else{fallback();}
+  });
+})();
+</script>
+

@@ -22,6 +22,8 @@ import { readDeal, readDealBusiness } from './club-sponsorship-deals-server';
 import { dealLinkUrl, offerContactOf } from './club-sponsorship-deal-actions';
 import { clubCanEmailInvoice, invoiceStanding } from './club-sponsor-invoice';
 import { DEAL_WORDS } from './club-sponsorship-deal-words';
+import { refundBlockHtml } from './online-refund-block';
+import { ONLINE_EMAIL_WORDS, REFUND_BLOCK_WORDS, money } from './online-payment-words';
 
 const E = DEAL_WORDS.invoiceEmail;
 
@@ -98,3 +100,62 @@ export async function emailDealInvoice(orgId: string, orgSlug: string, dealId: s
     return false;
   }
 }
+
+/**
+ * THE REFUND EMAIL (Part 3b; the card-refund drawing's ask 6, RULED 2026-11-23: "the shipped refund email"): "Refund from
+ * {club}", the shipped refund block (Refunded · To · On · Refund reference, the fee line, how long it takes), the club's
+ * reason, and — on a taxed invoice — the credit note's number, which downloads from the business's page. Sent once a refund
+ * reaches the card (Stripe accepted it), claimed on the refund so the press and Stripe's event never send two. Never fails
+ * the refund; answers the address it went to, or null.
+ */
+export async function emailDealRefund(orgId: string, refundId: string): Promise<string | null> {
+  try {
+    const { data: claimed } = await supabaseAdmin.from('club_sponsor_deal_refunds').update({ emailed_at: new Date().toISOString() })
+      .eq('id', refundId).eq('org_id', orgId).is('emailed_at', null).eq('status', 'succeeded').select('deal_id').maybeSingle();
+    const dealId = (claimed as { deal_id: string } | null)?.deal_id;
+    if (!dealId) return null;
+    const release = async () => { await supabaseAdmin.from('club_sponsor_deal_refunds').update({ emailed_at: null }).eq('id', refundId); };
+    const [deal, business, settings, org] = await Promise.all([readDeal(orgId, dealId), readDealBusiness(orgId, dealId), readSettings(orgId), readClubEmailOrg(orgId)]);
+    const refund = deal?.refunds.find(r => r.id === refundId);
+    const payment = refund ? deal?.payments.find(x => x.id === refund.paymentId) : null;
+    const to = business?.email?.trim().toLowerCase();
+    const contactEmail = await offerContactOf(orgId, settings);
+    const mailingAddress = settings.mailingAddress?.trim() ?? '';
+    const url = deal ? dealLinkUrl(org.slug, deal.id, deal.linkVersion) : null;
+    if (!deal?.invoice || !refund || !payment?.card || !to || !contactEmail || !clubCanEmailInvoice(mailingAddress, contactEmail)) {
+      console.warn('[sponsorships] the refund email was not sent — no address, no contact for sponsors, or no mailing address:', refundId);
+      await release();
+      return null;
+    }
+    const facts = await clubEmailFacts(org);
+    const p = (text: string, style: string = WARM_EMAIL_STYLE.paragraph) => `<p style="${style}">${escText(text)}</p>`;
+    const html = warmEmailDocument([
+      `<div style="display:none;max-height:0;overflow:hidden;">${escText(REFUND_BLOCK_WORDS.preheader(money(refund.amount), false))}</div>`,
+      p(E.greeting(business?.contactName || business?.name || deal.businessName)),
+      p(refund.endsDeal ? C.emailLeadWhole(org.name, deal.invoice.number) : C.emailLead(org.name, deal.invoice.number)),
+      p(ONLINE_EMAIL_WORDS.refundReason(org.name, refund.reason)),
+      refundBlockHtml({
+        refundCents: Math.round(refund.amount * 100), bank: false, cardBrand: payment.card.brand, cardLast4: payment.card.last4, bankLast4: null,
+        refundedAt: refund.succeededAt ?? refund.createdAt, reference: refund.stripeRefundId, receiptNo: null, paidOn: payment.receivedOn,
+        feeBackCents: 0,
+        feeKeptCents: payment.card.feePaidBy === 'sponsor' ? Math.round((payment.card.feeCharged + payment.card.feeTax) * 100) : 0,
+      }),
+      refund.creditNumber ? p(C.emailCreditNote(refund.creditNumber)) : '',
+      url ? warmEmailButton(escText(C.emailButton), escText(url)) : '',
+      p(DEAL_WORDS.email.questions(settings.contactEmail ? settings.contactName : null, contactEmail), WARM_EMAIL_STYLE.small),
+      `<div style="${WARM_EMAIL_STYLE.footRule}">`,
+      `<p style="${WARM_EMAIL_STYLE.finePrint}">${escText(DEAL_WORDS.email.sentBy(org.name, mailingAddress))}</p>`,
+      '</div>',
+    ].join('\n'), facts);
+    const result = await sendEmail(to, ONLINE_EMAIL_WORDS.refundSubject(org.name), html, {
+      kind: 'club_sponsorship_refund', fromName: familySenderName(org.name), replyTo: contactEmail, orgId,
+    });
+    if (result.status !== 'sent') { await release(); return null; }
+    return to;
+  } catch (e) {
+    console.error('[sponsorships] the refund email did not go:', refundId, (e as Error)?.message ?? 'no code');
+    return null;
+  }
+}
+
+const C = DEAL_WORDS.card;

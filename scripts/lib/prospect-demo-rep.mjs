@@ -51,7 +51,7 @@ async function appModule(rel) {
   return import(new URL(`../../${rel}`, import.meta.url).href);
 }
 
-const slugOf = (age, tier) => `${age}-${tier}`.toLowerCase().replace(/s+/g, '-');
+const slugOf = (age, tier) => `${age}-${tier}`.toLowerCase().replace(/\s+/g, '-');
 const teamName = (age, tier) => `Milton Bats ${age} ${tier}`;
 const TEAM_COLORS = ['#47156C', '#5E2B8A', '#3B1259', '#6A3D9A', '#2F0F4A', '#7B4FA6'];
 const money = (n) => `$${Number(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -350,7 +350,7 @@ export async function buildRep(ctx) {
   const cost = Math.round(fullFieldHours * P.costPerFullFieldHour * 100) / 100;
   const permitId = await one('permit', db.rpc('org_permit_save', { p_org: ORG, p_permit: null, p_actor: null, p_data: {
     name: P.name, issuerName: P.issuer, reference: P.reference, heldFor: 'club', startsOn: sundays[0], endsOn: sundays[sundays.length - 1], cost,
-    notes: 'PLACEHOLDER until the club sends its permit (scripts/prospect-demo.milton.config.mjs › dome).',
+    notes: 'Winter block for the club. Field 3 is a half field. Dome staff unlock at 7:45 a.m.; the club locks up.',
     blocks: [{ venueId: domeVenue.id, facilityIds: DM.venue.fields.map(f => field[f]), weekdays: [P.weekday], startTime: P.start, endTime: P.end }],
     shares: [...halfSet].map(f => ({ facilityId: field[f], share: 0.5 })),
     datesOff: offDays.map(day => ({ day, note: P.offNote })),
