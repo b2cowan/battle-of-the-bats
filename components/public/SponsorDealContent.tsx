@@ -98,7 +98,7 @@ function OpenDeal({ view, onView }: { view: Open; onView: (v: SponsorPageView) =
           {/* After 20 seconds the shipped slow line (the pay block's), so the page never waits in silence: nothing to redo, the receipt comes. */}
           <p className={css.invoiceMeta}>{slow ? PAY_WORDS.confirmingSlow(view.business.email || null) : C.confirmingBody}</p>
         </div>
-      ) : left && (
+      ) : left && !view.received && (
         <div className={css.invoice} role="status">
           <p className={css.invoiceTitle}>{C.notFinishedTitle}</p>
           <p className={css.invoiceMeta}>{C.notFinishedBody}</p>
@@ -155,6 +155,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
   const [refusals, setRefusals] = useState(0);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const leaving = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const errorBox = useRef<HTMLDivElement>(null);
   const uploading = anyUploading(answers);
@@ -184,6 +185,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
     const pressed = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('data-pay') === 'card' && card ? 'card' : 'cheque';
     setHow(pressed);
     setSubmitting(true);
+    leaving.current = false;
     setGlobalError(null);
     try {
       const sent = (form?.questions ?? []).map(q => toAnswerIn(q.id, answers[q.id])).filter((x): x is AnswerIn => !!x);
@@ -202,7 +204,8 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
       });
       const data = await res.json().catch(() => ({})) as { view?: SponsorPageView; url?: string; errors?: Record<string, string>; missing?: string[]; error?: string };
       // By card: the details are kept and the secure card page opens (the invoice is issued when the payment lands).
-      if (res.ok && data.url) { window.location.assign(data.url); return; }
+      // The page is leaving for the card page: the button stays disabled until it has (a second tap would open a second checkout).
+      if (res.ok && data.url) { leaving.current = true; window.location.assign(data.url); return; }
       if (res.ok && data.view) { onView(data.view); return; }
       if (res.status === 400 && data.errors) { setErrors(data.errors); setMissing(data.missing ?? []); setRefusals(n => n + 1); return; }
       if (res.status === 409 && data.view) {
@@ -218,7 +221,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
     } catch {
       setGlobalError(P.errFailed);
     } finally {
-      setSubmitting(false);
+      if (!leaving.current) setSubmitting(false);
     }
   }
 
@@ -402,6 +405,18 @@ function Thanks({ view }: { view: Open }) {
   const inv = view.invoice;
   const how = view.howToPay;
   const pdf = `/api/public/sponsorship/${view.token}/invoice`;
+  // The credit notes the business was sent (and any that were cancelled): on the receipt, and on an invoice that is owing again, since the
+  // refund email says "your credit note is on your sponsorship page" whichever state the deal is in.
+  const noteLinks = (
+    <>
+      {view.refunds.filter(r => r.creditNumber).map(r => (
+        <a key={r.id} className={css.download} href={`/api/public/sponsorship/${view.token}/credit-note/${r.id}`} download>{C.creditNote(r.creditNumber!)}</a>
+      ))}
+      {view.cancelledNotes.map(n => (
+        <a key={n.id} className={css.download} href={`/api/public/sponsorship/${view.token}/credit-note/${n.id}`} download>{C.creditNoteCancelled(n.creditNumber)}</a>
+      ))}
+    </>
+  );
   return (
     <>
       {inv && view.paid && (
@@ -423,12 +438,7 @@ function Thanks({ view }: { view: Open }) {
           </dl>
           <div className={css.downloads}>
             <a className={css.download} href={pdf} download>{P.downloadReceipt}</a>
-            {view.refunds.filter(r => r.creditNumber).map(r => (
-              <a key={r.id} className={css.download} href={`/api/public/sponsorship/${view.token}/credit-note/${r.id}`} download>{C.creditNote(r.creditNumber!)}</a>
-            ))}
-            {view.cancelledNotes.map(n => (
-              <a key={n.id} className={css.download} href={`/api/public/sponsorship/${view.token}/credit-note/${n.id}`} download>{C.creditNoteCancelled(n.creditNumber)}</a>
-            ))}
+            {noteLinks}
           </div>
         </div>
       )}
@@ -441,7 +451,15 @@ function Thanks({ view }: { view: Open }) {
             {inv.email && inv.emailed && <div className={css.invoiceFactWide}><dt>{P.emailedToLabel}</dt><dd>{inv.email}</dd></div>}
           </dl>
           {view.owing < inv.total && <p className={css.invoiceMeta}>{P.partPaid(inv.total - view.owing, view.owing)}</p>}
+          {view.refunds.length > 0 && (
+            <dl className={css.receiptLines}>
+              {view.refunds.map(r => (
+                <div key={r.id}><dt>{r.pending || !r.on ? C.refundedOnWay : C.refundedRow(r.on)}</dt><dd>−{money(r.amount)}</dd></div>
+              ))}
+            </dl>
+          )}
           <a className={css.download} href={pdf} download>{P.downloadInvoice}</a>
+          {(view.refunds.some(r => r.creditNumber) || view.cancelledNotes.length > 0) && <div className={css.downloads}>{noteLinks}</div>}
           {view.card && view.owing > 0 && <PayInvoiceByCard token={view.token} owing={view.owing} policy={view.card.refundPolicy} />}
           <div className={css.how}>
             <p className={css.howTitle}>{P.howToPay}</p>

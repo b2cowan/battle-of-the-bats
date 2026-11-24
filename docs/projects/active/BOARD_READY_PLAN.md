@@ -1489,13 +1489,13 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   the sponsorship flow (before the payments switch goes on for a real club), the "not recorded" wedge, pending refunds that never
   resolve, `ends_deal` at booking, the `ON DELETE RESTRICT` link, the sponsor notices, credit-note numbering, the lost-dispute
   books, the dashboard refund, the `re_` reference, plus the smaller items: list and order in
-  `BOARD_READY_STAGE6_P3B_AFTER_WALK_FIXES_PROMPT.md`. Still owed from the finish prompt: `/ux` at 390.
+  `BOARD_READY_STAGE6_P3B_AFTER_WALK_FIXES_PROMPT.md`. The `/ux` check at 390 ran 2026-11-24 (a real phone-width render of the deal screens; its fixes are committed in the commit after `ef7fe7d28`; six decisions are listed in the after-walk record).
   **Part 3b after-walk fixes COMMITTED 2026-11-24** (owner: "go, commit in that order, tweaks included"): the database `0ca618cc3` (migrations 531 to
   534, applied to dev, pending on production after 530), the code, words and tests `6d866f1b9` (the Payouts tab and bank check know a sponsorship,
   a lost dispute is booked, a bounced refund's credit note is kept and cancelled, the arrival wording and the Stripe code on refund emails
   settled, with the walk-time tweaks), and the daily job's refund-retry step on its own `7f2015740`. `/simplify`, `/review` (five lenses),
   `/marketing` and `/legal` run; `/accounting` answered the dispute books. Owed: the owner's walk §565 (`BOARD_READY_STAGE6_P3B_AFTER_WALK_WALK.html`),
-  migrations 530 to 534 on production before the promote, `/ux` at 390, and the dashboard-refund plan item. The commit plan: `BOARD_READY_STAGE6_P3B_COMMIT_PLAN.md`.
+  migrations 530 to 534 on production before the promote, and the dashboard-refund plan item. The commit plan: `BOARD_READY_STAGE6_P3B_COMMIT_PLAN.md`.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or

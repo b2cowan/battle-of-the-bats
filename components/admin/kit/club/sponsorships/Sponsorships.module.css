@@ -218,6 +218,18 @@ textarea.noteBox { resize: none; } /* element + class: outranks the kit's `.text
 @media (max-width: 768px) {
   .refLine .linkButton, .touchLink { min-height: 44px; display: inline-flex; align-items: center; }
 }
+/* A phone (the /ux check at 390, 2026-11-24): the deal page's own text buttons (Copy the link, Make a new link, Email the offer, Do not
+   offer again, Withdraw) are thumb targets at the 44px floor, not a line of 12px type. */
+@media (max-width: 768px) {
+  .recordActions .linkButton { min-height: 44px; }
+}
+/* A phone: a long chip ("Taken back", "Partly refunded", "Refund didn't reach the card") must not squeeze the day and the card to a few
+   letters a line; when the end cluster cannot sit beside them, it drops under, right-aligned. */
+@media (max-width: 640px) {
+  .paymentRow { flex-wrap: wrap; row-gap: 0.25rem; }
+  .paymentMain { flex: 1 1 7rem; }
+  .paymentEnd { margin-left: auto; }
+}
 .refValue { font-family: var(--font-data); overflow-wrap: anywhere; } /* type-ok: code — Stripe's payment and refund references */
 /* Each refund in the payment's window: the shipped block, under a rule. */
 .refundBlock { margin: 0.75rem 0 0; padding: 0.75rem 0 0; border-top: 1px solid var(--home-line); }

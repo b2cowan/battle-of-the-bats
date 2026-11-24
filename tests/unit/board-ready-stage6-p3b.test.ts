@@ -611,3 +611,34 @@ describe('Part 3b after the walk — the place follows the deal', () => {
     assert.equal(DEAL_WORDS.card.chipTakenBack, 'Taken back');
   });
 });
+
+/** The /ux check at 390 (2026-11-24): what it fixed, pinned. */
+describe('Part 3b — the phone check at 390', () => {
+  const windows = readCode('components/admin/kit/club/sponsorships/DealPaymentWindows.tsx');
+  const page = readCode('components/public/SponsorDealContent.tsx');
+  const css = readSource('components/admin/kit/club/sponsorships/Sponsorships.module.css');
+
+  it('"Part of it" for exactly what is left says it ends the deal, as "All of it" does', () => {
+    assert.match(windows, /const partEnds = endsDeal && choice === 'part' && partOk && Math\.round\(typed! \* 100\) === Math\.round\(left \* 100\);/);
+    assert.match(windows, /partEnds \? C\.buttonEnd : C\.buttonAll\(partOk \? typed! : left\)/);
+    assert.match(windows, /\{partEnds && <p className=\{css\.choiceNote\}>/);
+  });
+
+  it('a payment the bank took back says so in its own window, and a typed refund is not lost to a stray tap', () => {
+    assert.match(windows, /\[C\.chipTakenBack, C\.lineTakenBack\] as const : null,/);
+    assert.match(windows, /<KitDialog kind="question" raised busy=\{busy\} dirty=\{!!reason\.trim\(\) \|\| !!amount\.trim\(\)\}/);
+  });
+
+  it('the business\u2019s page: the card button stays disabled while the browser leaves; an owing-again invoice shows its refunds and credit notes', () => {
+    assert.match(page, /leaving\.current = true; window\.location\.assign\(data\.url\)/);
+    assert.match(page, /if \(!leaving\.current\) setSubmitting\(false\);/);
+    assert.match(page, /\) : left && !view\.received && \(/);
+    const inv = page.slice(page.indexOf('{inv && !view.paid && ('));
+    assert.match(inv.slice(0, 1800), /view\.refunds\.length > 0 && \([\s\S]*?\{noteLinks\}/);
+  });
+
+  it('the deal page\u2019s text buttons are thumb targets, and a long chip drops under the row instead of squeezing it', () => {
+    assert.match(css, /@media \(max-width: 768px\) \{\s+\.recordActions \.linkButton \{ min-height: 44px; \}/);
+    assert.match(css, /\.paymentRow \{ flex-wrap: wrap; row-gap: 0\.25rem; \}\s+\.paymentMain \{ flex: 1 1 7rem; \}\s+\.paymentEnd \{ margin-left: auto; \}/);
+  });
+});

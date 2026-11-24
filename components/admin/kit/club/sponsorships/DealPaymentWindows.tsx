@@ -193,6 +193,8 @@ export function PaymentWindow({ payment, refunds, deal, business, businessEmail,
   const day = (iso: string) => formatStoredDate(iso.length > 10 ? orgDayKey(iso) : iso, { withYear: false });
   const card = p.card;
   const rows = card ? [
+    // A payment the bank took back (a dispute the club lost): the row said so; the window says it too, so a missing Refund has its reason.
+    p.returned && !p.voided && !mine.some(r => r.status === 'succeeded') ? [C.chipTakenBack, C.lineTakenBack] as const : null,
     [C.amount, withSub(money(p.amount), p.taxPart > 0 ? C.ofItTax(kind, p.taxPart) : null)] as const,
     [C.paid, card.paidAt ? C.paidAt(orgDayKey(card.paidAt), clockOf(card.paidAt)) : day(p.receivedOn)] as const,
     [C.paidWithLabel, cardLabel(card.brand, card.last4)] as const,
@@ -270,6 +272,8 @@ export function RefundWindow({ url, payment, refunds, endsDeal, number, taxKind,
   const typed = parsePrice(amount);
   const partOk = typed != null && typed > 0 && Math.round(typed * 100) <= Math.round(left * 100);
   const tax = partOk ? refundTaxPart(p, refunds, typed!) : 0;
+  // "Part of it" for exactly what is left gives back the last of the deal's money, and the database ends the deal as it does for "All of it".
+  const partEnds = endsDeal && choice === 'part' && partOk && Math.round(typed! * 100) === Math.round(left * 100);
   const label = cardLabel(card.brand, card.last4);
   const sponsorFee = card.feePaidBy === 'sponsor';
   const lead = sponsorFee
@@ -294,13 +298,13 @@ export function RefundWindow({ url, payment, refunds, endsDeal, number, taxKind,
   }
 
   return (
-    <KitDialog kind="question" raised busy={busy} onClose={onClose} title={C.refundAsk(business)}
+    <KitDialog kind="question" raised busy={busy} dirty={!!reason.trim() || !!amount.trim()} onClose={onClose} title={C.refundAsk(business)}
       footerStart={choice && businessEmail ? undefined : <span className={css.footLine}>{choice ? C.footNoEmail : RW_ROOT.footChoose}</span>}
       footer={<>
         <DialogCancel />
         {choice && (
           <button type="button" className="btn btn-lime" disabled={busy} onClick={() => void go()}>
-            {busy ? RW_ROOT.working : choice === 'all' ? (endsDeal ? C.buttonEnd : C.buttonAll(left)) : C.buttonAll(partOk ? typed! : left)}
+            {busy ? RW_ROOT.working : choice === 'all' ? (endsDeal ? C.buttonEnd : C.buttonAll(left)) : partEnds ? C.buttonEnd : C.buttonAll(partOk ? typed! : left)}
           </button>
         )}
       </>}>
@@ -328,6 +332,7 @@ export function RefundWindow({ url, payment, refunds, endsDeal, number, taxKind,
         <TextField id="deal-refund-amount" label={RW_ROOT.partAmount} required value={amount} onChange={setAmount} maxLength={12}
           hint={partOk ? C.partRest(Math.round((p.amount - already - typed!) * 100) / 100, tax, typed!, taxKind ?? 'GST/HST') : RW_ROOT.partLimit(money(left))} />
       )}
+      {partEnds && <p className={css.choiceNote}>{place ? C.endsDeal(place) : C.endsDealClub}</p>}
       {choice && (
         <TextField id="deal-refund-reason" label={C.reason} required value={reason} onChange={setReason} maxLength={300} hint={C.reasonHint(business)} />
       )}
