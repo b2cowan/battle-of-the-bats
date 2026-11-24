@@ -40,7 +40,7 @@ import BillWindow from '@/components/admin/kit/club/schedules/BillWindow';
 import SendWindow, { type SendKeep } from '@/components/admin/kit/club/schedules/SendWindow';
 import AnswerWindow from '@/components/admin/kit/club/money/AnswerWindow';
 import { SendLogWindow, SlotWindow, SwapWindow, TeamSlotsWindow, WhichWeeks, type PendingMove, type SendLogRow } from '@/components/admin/kit/club/schedules/ScheduleWindows';
-import { ScheduleStateChip, Swatch } from '@/components/admin/kit/club/schedules/ScheduleParts';
+import { HoursCell, ScheduleStateChip, Swatch } from '@/components/admin/kit/club/schedules/ScheduleParts';
 import sch from '@/components/admin/kit/club/schedules/Schedules.module.css';
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
@@ -58,7 +58,7 @@ import { usePermitsLink } from '@/components/admin/kit/useAdminKitNav';
 import type { DateOff } from '@/lib/permit-time';
 import {
   NO_GROUP, askedSlots, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
-  slotDays, slotTime, stepGrid, teamColour, weekCounts, weeksOnScreen, type ScheduleView, type SlotView,
+  slotDays, slotTime, stepGrid, teamColour, weeksOnScreen, type ScheduleView, type SlotView,
 } from '@/lib/club-schedule-view';
 
 interface PageRead extends ScheduleView {
@@ -541,6 +541,9 @@ export default function SchedulePage() {
   const partResults = selectedParts.size
     ? addTeamResults([...(selectedParts.has(PARENT_PART) ? [own.fairness.teams] : []), ...parts.filter(x => selectedParts.has(x.id)).map(x => x.view.fairness.teams)])
     : v.fairness.teams;
+  // A week, over the same dates as Slots and Hours (owner 2026-11-24 — one period per row, never the grid's dates beside the
+  // whole schedule's): the slots the Part filter keeps ÷ the weeks that hold them.
+  const partWeeks = new Set((selectedParts.size ? v.slots.filter(inParts) : v.slots).map(x => x.week)).size || 1;
   const resultById = new Map(partResults.map(r => [r.teamId, r]));
   const resultOf = (id: string) => resultById.get(id);
   const teamGroups = (() => {
@@ -568,9 +571,7 @@ export default function SchedulePage() {
   };
   const dim = (x: SlotView) => (clashesOnly && !x.clash) || !inParts(x)
     || !matchesScheduleTeamFilter(x.teamIds, selectedGroups, selectedTeams, id => groupOf(id) ?? NO_GROUP);
-  const counts = weekCounts(v.slots, cols?.days ?? []);
   const weeksShown = cols ? weeksOnScreen(cols.mode, cols.days, v.slots) : 1;
-  const weekCount = (id: string) => perWeek(counts.get(id) ?? 0, weeksShown);
   const byTeamTable = (
     <>
       <div className={`${repKit.tableFrame} ${repKit.deskOnly}`}>
@@ -598,9 +599,9 @@ export default function SchedulePage() {
                 return (
                   <tr key={t.id} className={repKit.rowOpens} onClick={() => setWin({ kind: 'team', teamId: t.id })}>
                     <td><span className={sch.nameCell}><Swatch colour={colourOf(t.id)} /><button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); setWin({ kind: 'team', teamId: t.id }); }}>{t.name}</button></span></td>
-                    <td className={repKit.num}>{weekCount(t.id)}</td>
+                    <td className={repKit.num}>{perWeek(r?.got ?? 0, partWeeks)}</td>
                     <td className={repKit.num}>{r?.shared ? W.sharedCount(r.got, r.shared) : r?.got ?? 0}</td>
-                    <td className={repKit.num}>{W.hours((r?.pricedMinutes ?? 0) / 60)}</td>
+                    <td className={repKit.num}><HoursCell minutes={r?.minutes ?? 0} pricedMinutes={r?.pricedMinutes ?? 0} /></td>
                     <td className={repKit.num}>{hasPrime ? <>{r?.prime ?? 0}<span className={repKit.cellSub}>{pct(r?.prime ?? 0, r?.got ?? 0)}</span></> : W.noTime}</td>
                     <td>{nightsWords(r?.nights ?? [])}</td>
                     <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
@@ -660,9 +661,9 @@ export default function SchedulePage() {
               <tr key={key}>
                 <td><b>{g.name}</b></td>
                 <td className={repKit.num}>{g.teams.length}</td>
-                <td className={repKit.num}>{perWeek(g.teams.reduce((n, t) => n + (counts.get(t.id) ?? 0), 0), weeksShown)}</td>
+                <td className={repKit.num}>{perWeek(got, partWeeks)}</td>
                 <td className={repKit.num}>{got}</td>
-                <td className={repKit.num}>{W.hours(rs.reduce((n, r) => n + r.pricedMinutes / 60, 0))}</td>
+                <td className={repKit.num}><HoursCell minutes={rs.reduce((n, r) => n + r.minutes, 0)} pricedMinutes={rs.reduce((n, r) => n + r.pricedMinutes, 0)} /></td>
                 <td className={repKit.num}>{hasPrime ? <>{prime}<span className={repKit.cellSub}>{pct(prime, got)}</span></> : W.noTime}</td>
               </tr>
             );

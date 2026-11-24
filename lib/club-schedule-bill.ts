@@ -116,11 +116,17 @@ export function pricedValues(slots: readonly BillSlot[], rateOf: (s: BillSlot) =
 }
 
 /** Each team's priced minutes on each permit ('' = time no permit prices) — the bill's "hours by permit". */
-export function pricedMinutesByPermit(slots: readonly BillSlot[]): Map<string, Map<string, number>> {
+export const pricedMinutesByPermit = (slots: readonly BillSlot[]) => minutesByPermit(slots, eachTeamsMinutes);
+
+/** Each team's minutes on the clock on each permit — the hours a column of "hours by permit" reads, the priced ones under
+ *  them (owner 2026-11-24: Hours read the clock). */
+export const clockMinutesByPermit = (slots: readonly BillSlot[]) => minutesByPermit(slots, s => (s.endMs - s.startMs) / MIN);
+
+function minutesByPermit(slots: readonly BillSlot[], minutesOf: (s: BillSlot) => number): Map<string, Map<string, number>> {
   const out = new Map<string, Map<string, number>>();
   for (const s of slots) {
     if (!s.teamIds.length) continue;
-    const each = eachTeamsMinutes(s), key = s.permitId ?? '';
+    const each = minutesOf(s), key = s.permitId ?? '';
     for (const t of s.teamIds) {
       const mine = out.get(t) ?? new Map<string, number>();
       mine.set(key, (mine.get(key) ?? 0) + each);

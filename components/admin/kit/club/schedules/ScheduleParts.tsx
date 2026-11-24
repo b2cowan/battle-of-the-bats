@@ -2,9 +2,24 @@
 /** Shared schedule state, team swatch, summary band, and statement components. */
 import type { CSSProperties, ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { RepChip } from '../RepKit';
-import { SCHEDULE_WORDS } from '@/lib/club-schedule-words';
+import { RepChip, repKit } from '../RepKit';
+import { SCHEDULE_SCREEN_WORDS, SCHEDULE_WORDS } from '@/lib/club-schedule-words';
 import sch from './Schedules.module.css';
+
+/**
+ * A TEAM'S HOURS (owner 2026-11-24): the time on the clock, and — only when a half field or a shared slot made them
+ * differ — the full-field hours the bill counts, as a small line under it. Six 1.5-hour Sundays, two on a half field:
+ * "9 h" over "7.5 full-field hours". The clock is what a coach recognises; the full-field figure is what the time costs.
+ */
+export function HoursCell({ minutes, pricedMinutes }: { minutes: number; pricedMinutes: number }) {
+  const tenth = (m: number) => Math.round((m / 60) * 10) / 10;
+  return (
+    <>
+      {SCHEDULE_SCREEN_WORDS.hours(minutes / 60)}
+      {tenth(pricedMinutes) !== tenth(minutes) && <span className={repKit.cellSub}>{SCHEDULE_SCREEN_WORDS.fullFieldHours(pricedMinutes / 60)}</span>}
+    </>
+  );
+}
 
 /** THE STATE PILL — every schedule wears its state, wherever its name is read (owner ruling 2026-11-14, replacing "a sent
  *  schedule with nothing waiting says nothing more"): Draft (grey) · In review (olive) · Final (green). A final schedule that

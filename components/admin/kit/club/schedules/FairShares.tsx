@@ -15,10 +15,10 @@ import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { SCHEDULE_SCREEN_WORDS as W, moneyCents as money } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import { NO_GROUP, dayHead, facilityNoun, fairBill, heldWords, perWeek, primeWords, viewBillSlots, weekCounts, weekShortfalls, type ScheduleView } from '@/lib/club-schedule-view';
-import { pricedMinutesByPermit } from '@/lib/club-schedule-bill';
+import { clockMinutesByPermit, pricedMinutesByPermit } from '@/lib/club-schedule-bill';
 import { formatTime } from '@/lib/utils';
 import type { TeamResult } from '@/lib/club-schedule-engine';
-import { JoinedBand, Swatch } from './ScheduleParts';
+import { HoursCell, JoinedBand, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
 
 /** One of the table's columns: its head, a team's cell, a group's (By percentage and the bill band teams by group). */
@@ -73,6 +73,7 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   const used = new Set(view.slots.map(x => x.facilityId));
   const facilityWord = moved ? W.colFacilities(facilityNoun(view.places.flatMap(p => p.facilities.filter(f => used.has(f.id)).map(f => f.name)), 2)) : '';
   const billTotal = [...billCents.values()].reduce((a, b) => a + b, 0);
+  const scheduleWeeks = new Set(view.slots.map(x => x.week)).size || 1;
 
   const percent = settings.split.method === 'percentage';
   const groupsOf = new Map<string, { name: string; teamIds: string[] }>();
@@ -88,14 +89,17 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   // THE COLUMNS, one list per mode — the header, a team's row and a group's row all read it.
   const sum = (rs: readonly TeamResult[], of: (r: TeamResult) => number) => rs.reduce((n, r) => n + of(r), 0);
   const allCol: Column = { head: W.colAll, cell: r => W.sharedCount(r.got, r.shared), group: rs => sum(rs, r => r.got) };
-  const hoursCol: Column = { head: W.colHours, cell: r => hours(r), group: rs => hours({ pricedMinutes: sum(rs, r => r.pricedMinutes) }), hours: true };
+  // Hours read the clock, the full-field hours under them when they differ (owner 2026-11-24).
+  const hoursCol: Column = { head: W.colHours, cell: r => <HoursCell minutes={r.minutes} pricedMinutes={r.pricedMinutes} />, group: rs => <HoursCell minutes={sum(rs, r => r.minutes)} pricedMinutes={sum(rs, r => r.pricedMinutes)} />, hours: true };
   // Several permits (Session C, drawing tab 5 'Fair shares'): a column of hours per permit replaces the one Hours column
   // when more than one permit prices the time, so why a team pays more is answered in the table.
-  const byPermit = showBill && (view.pricing?.permits.length ?? 0) > 1 ? pricedMinutesByPermit(viewBillSlots(view.slots)) : null;
+  const permitSlots = showBill && (view.pricing?.permits.length ?? 0) > 1 ? viewBillSlots(view.slots) : null;
+  const byPermit = permitSlots && pricedMinutesByPermit(permitSlots);
+  const clockByPermit = permitSlots && clockMinutesByPermit(permitSlots);
   const permitHourCols: Column[] = byPermit ? view.pricing!.permits.map(x => ({
     head: W.colHours, sub: x.name, hours: true,
-    cell: r => hours({ pricedMinutes: byPermit.get(r.teamId)?.get(x.id) ?? 0 }),
-    group: rs => hours({ pricedMinutes: sum(rs, r => byPermit.get(r.teamId)?.get(x.id) ?? 0) }),
+    cell: r => <HoursCell minutes={clockByPermit!.get(r.teamId)?.get(x.id) ?? 0} pricedMinutes={byPermit.get(r.teamId)?.get(x.id) ?? 0} />,
+    group: rs => <HoursCell minutes={sum(rs, r => clockByPermit!.get(r.teamId)?.get(x.id) ?? 0)} pricedMinutes={sum(rs, r => byPermit.get(r.teamId)?.get(x.id) ?? 0)} />,
   })) : [];
   const billCol: Column = { head: W.colBill, cell: r => money(billCents.get(r.teamId) ?? 0), group: rs => money(sum(rs, r => billCents.get(r.teamId) ?? 0)) };
   const columns: Column[] = moved
@@ -105,7 +109,8 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
       : [
         percent
           ? { head: W.colShare, cell: r => `${share(r.teamId)}%`, group: rs => `${Math.round(sum(rs, r => share(r.teamId)) * 100) / 100}%` }
-          : { head: W.colThisWeek, cell: r => perWeek(counts.get(r.teamId) ?? 0, weeks), group: () => '' },
+          // A week over the same dates as the columns beside it — the whole schedule (owner 2026-11-24), not the grid's.
+          : { head: W.colThisWeek, cell: r => perWeek(r.got, scheduleWeeks), group: () => '' },
         allCol,
         settings.prime ? { head: W.colPrime, cell: r => r.prime, group: rs => sum(rs, r => r.prime) } : hoursCol,
       ];
@@ -129,7 +134,7 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
     { key: 'clashes', label: W.tileClashes, value: String(t.clashes), amber: t.clashes > 0 },
   ];
   // Hours count a shared slot and a half field each half (Stage 11c Ask 3) — said once, where Hours shows and either is on
-  // the schedule; "every team has 37.5 hours" when they all do.
+  // the schedule; "every team has 37.5 full-field hours" when they all do.
   const hoursShown = columns.some(c => c.hours);
   const halves = view.slots.some(x => x.teamIds.length > 1 || (x.teamIds.length > 0 && x.weight < 1));
   const playing = results.filter(r => r.got > 0);

@@ -153,7 +153,7 @@ export default function BillWindow({ q, view, addedPart = null, nameOf, onSaved,
     // More than one price: the team's hours by permit, so "why does 15U AA pay more?" is answered in the row.
     if (multi) {
       const parts = [...(byPermit.get(teamId) ?? [])].filter(([, m]) => m > 0)
-        .map(([id, m]) => `${W.hours(m / 60)} ${permitName.get(id) ?? W.billNoLineName}`);
+        .map(([id, m]) => `${Math.round((m / 60) * 10) / 10} ${permitName.get(id) ?? W.billNoLineName}`);
       return W.billTeamByPermit(k.all, parts);
     }
     return W.billTeamCaption(k.full, k.half, k.shared, k.all - k.full - k.half - k.shared, hours);

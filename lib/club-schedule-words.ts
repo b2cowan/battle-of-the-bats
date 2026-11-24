@@ -1102,9 +1102,10 @@ export const SCHEDULE_SCREEN_WORDS = {
   /** The schedule's own facility word, plural: "Fields" at the dome, "Lanes" at the lanes, else "Facilities". */
   colFacilities: (noun: string) => capFirst(noun),
   sharedCount: (all: number, shared: number) => (shared >= all ? `${all} shared` : shared ? `${all} · ${shared} shared` : String(all)),
+  /** Hours read the clock; the line under one counts a shared slot and a half field each half (owner 2026-11-24). */
   hoursNote: (hours: string | null) => (hours
-    ? `A shared slot and a half field each count half a facility, so every team has ${hours} hours.`
-    : 'A shared slot and a half field each count half a facility.'),
+    ? `Hours are time on the clock. The full-field hours under them count a shared slot and a half field each half, so every team has ${hours} full-field hours.`
+    : 'Hours are time on the clock. The full-field hours under them count a shared slot and a half field each half.'),
   movedNote: 'Moved around: early and late taken in turn, and the facilities each team’s rules allow.',
   slotShared: 'shared',
   shareWith: 'Share with',
@@ -1239,6 +1240,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   colNights: 'Days',
   bandGroup: (group: string, teams: number, slots: number) => `${group} · ${pluralize(teams, 'team')} · ${pluralize(slots, 'slot')}`,
   hours: (h: number) => `${Math.round(h * 10) / 10} h`,
+  /** The small line under a team's clock hours when a half field or a shared slot made them differ: "7.5 full-field hours". */
+  fullFieldHours: (h: number) => { const n = Math.round(h * 10) / 10; return `${n} full-field ${n === 1 ? 'hour' : 'hours'}`; },
   teamSlotsTitle: (team: string) => `${possessive(team)} slots`,
   // The bill (specimen 14 step 4)
   billTitle: 'Bill the teams',
@@ -1267,7 +1270,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   /** N6 A: "Bill from" starts on the line of the permit with the most priced time, and says so. */
   billFromMost: (permit: string, planned: string, left: string) => `${possessive(permit)} budget line, the permit with the most time · ${planned} planned, ${left} left`,
   /** A team's caption with its hours by permit: "2 slots · 1 h Milton spring + 1 h Halton Hills". */
-  billTeamByPermit: (slots: number, parts: readonly string[]) => `${slots === 1 ? '1 slot' : `${slots} slots`} · ${parts.join(' + ')}`,
+  /** "25 slots · full-field hours: 12 Milton spring + 6 Halton Hills" — the bill's hours are full-field ones, said so. */
+  billTeamByPermit: (slots: number, parts: readonly string[]) => `${slots === 1 ? '1 slot' : `${slots} slots`} · full-field hours: ${parts.join(' + ')}`,
   /** The read-only view once the bill is made (P9 B item 5): the terms it keeps, and any permit billed later at its own price. */
   billKeptEach: (list: string) => `Priced at each permit’s price: ${list}.`,
   billKeptOne: (rate: string) => `Priced at one rate for all: ${rate} a full field, an hour.`,
@@ -1302,7 +1306,9 @@ export const SCHEDULE_SCREEN_WORDS = {
     // One kind says it whole (specimen 2's bill, Stage 11c): "50 shared slots", "50 half-field slots".
     const slots = parts.length > 1 ? parts.join(' + ')
       : full ? `${full} full-field slots` : half ? `${half} half-field slots` : shared ? `${shared} shared slots` : parts.join('');
-    return `${slots} · ${Math.round(hours * 10) / 10} h`;
+    // Full-field hours, named (owner 2026-11-24): a bare "h" beside the tables' clock hours would read as the same figure.
+    const h = Math.round(hours * 10) / 10;
+    return `${slots} · ${h} full-field ${h === 1 ? 'hour' : 'hours'}`;
   },
   billStatementLead: 'The bill goes to the teams with the schedule.',
   billStatement: (payments: number, word: string | null) =>
