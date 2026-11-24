@@ -1,0 +1,239 @@
+<title>Real Money Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Online payments · Real money</span>
+    <h1>The first real club’s first real payment: the club connects Stripe, a real payer pays, the money reaches its bank</h1>
+    <p class="sub">Rewritten 2026-11-24 (first written 2026-11-23 around your own club and card). One purpose: prove, once, on the live site, that a real club can connect its own Stripe account, that its first real payment shows everywhere it should, and that the money reaches the club’s bank. You watch and check our side; the club does the club’s part; a real team or family pays. This is the run-through that closes the Canadian launch. 35 steps.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Every earlier walk of online payments ran in Stripe’s test mode on the dev site. This one runs on <strong>production with real money</strong>, and it has to be real business: Stripe’s own testing guide says its Services Agreement prohibits testing in live mode with real card details, so you do <strong>not</strong> pay a club of your own with your own card. Instead you sit with the first real club while it connects, and you follow its first real payment through our records to its bank.</p>
+    <p>The things only a real run can show are the closest looks: Stripe’s live onboarding, whether bank debit is switched on for a live club, whether Stripe’s news of the payment reaches us, and the payout itself.</p>
+    <div><strong>It passes when</strong></div>
+    <ul>
+      <li>The Payouts card goes from “Not set up” to “Taking payments” with no “Test mode” anywhere, and records that the club’s owner agreed to the current Payments Terms.</li>
+      <li>The first real payment shows on the club’s record with a receipt number and no test tag, and the club gets the “Payment received” notification.</li>
+      <li>FieldLogicHQ’s two Connect destinations in Stripe show the payment delivered and no failed deliveries.</li>
+      <li>A payout appears (on Accounting › Payouts, or in the club’s Stripe dashboard) and the club confirms the matching deposit reached its bank.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private.</p>
+    <dl class="facts">
+      <dt>Where</dt><dd>The live site <strong>https://www.fieldlogichq.ca</strong>. Keep two tabs of your own ready: <strong>FieldLogicHQ’s own Stripe dashboard with the Live switch on</strong> (https://dashboard.stripe.com/webhooks) and your platform admin.</dd>
+      <dt>The club</dt><dd>A real customer club on <strong>Tournament Plus or higher</strong> (League Plus or Club if its families will pay), with a billing address in Canada <strong>outside Québec</strong> (a Québec address is refused; if the club is in Québec, this walk waits for another club). Its <strong>owner</strong> does Parts A to C on their own login: only the owner can connect payouts, and Stripe’s sign-in code will be asked for.</dd>
+      <dt>The time</dt><dd>Agree about 30 minutes with the club’s owner for Parts A and B, together in person or on a screen share. Part C happens whenever the club sends its first pay link and the payer pays; Part E runs over the following days.</dd>
+      <dt>What it costs you</dt><dd>Nothing. The money is the club’s real business: a fee a real team or family really owes. You never pay, never refund, and never type card or bank details.</dd>
+      <dt>The payment</dt><dd>Whatever the club charges first: a tournament team’s entry fee or a house-league family’s registration fee. Both paths are written into Part C. If the payer chooses bank debit, it takes up to 5 business days to clear; Part C waits for it.</dd>
+      <dt>Their private details</dt><dd>The club’s bank account, the signing officer’s identity and the payer’s card go on Stripe’s pages only. On a screen share, ask the owner to stop sharing while Stripe’s form is open. Write no personal or bank details in the notes.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts">
+      <dt>Club owner</dt><dd>Their own production login (their email, their password, their two-step code) at <code>https://www.fieldlogichq.ca/auth/login</code>. You never sign in as them, and the UAT test logins do not exist on production.</dd>
+      <dt>You</dt><dd>Your platform-admin login at <code>https://www.fieldlogichq.ca/platform-admin/login</code>, and FieldLogicHQ’s own Stripe dashboard with the Live switch on.</dd>
+      <dt>Payer</dt><dd>The club’s real team contact or family, not you. They get the pay link by email from the club and pay on their own time.</dd>
+    </dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>Settle first (an owner call, not a box):</strong> if sponsorship card payments are on production when this club connects, the sponsorship version of the Payments Terms must be published before Part A. The legal index holds it as owed “before the first production club connects”.</p>
+    <p><strong>Then Part S, on your own.</strong> If either Connect destination is missing from FieldLogicHQ’s Stripe, do not book the club; tell me. If in Part A the Payouts card is missing, online payments are not switched on for production yet (or the club’s plan does not include them): stop there and tell me.</p>
+    <p><strong>What this walk leaves behind:</strong> the club connected and taking payments (that is the point), one real payment on its record, and a payout in its bank. Nothing needs putting back.</p>
+    <p><strong>If something goes wrong with money:</strong> the club’s owner stops, writes down what the screen said and the time, and you tell me before anyone presses anything again. If a payer says “Confirming your payment” was slow, they must not pay a second time: check the club’s record and Stripe first.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <p>Left out on purpose:</p>
+    <ul>
+      <li><strong>You paying a club of your own with your own card:</strong> not allowed. Stripe’s testing guide says its Services Agreement prohibits testing in live mode with real card details. The research is in the legal index (“Proving online payments on the live site”).</li>
+      <li><strong>Refunds:</strong> walked in test mode, including the part refund and that the treasurer cannot refund. The first real refund is checked against Stripe when the club really gives one; never stage one for the walk.</li>
+      <li><strong>A card dispute and its CA$15 fee, and a foreign card:</strong> they cannot be produced on demand. They are watched when a first real one happens.</li>
+      <li><strong>The payer’s side of the screen</strong> (the pay page, the receipt email): walked in test mode. Here you see it only through the club’s record and what the payer tells the club.</li>
+      <li><strong>Changing who pays the fee after setup:</strong> walked in test mode.</li>
+      <li><strong>Your accountant’s question about tax on our fee:</strong> an owner step after switch-on, not a screen.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"online-payments-real-money-walk-v2","title":"Online payments real-money walk: the first real club connects Stripe, its first real payment, and the payout","parts":[{"id":"S","title":"On your own, before you meet the club: the live switch-on, no money","steps":[{"who":"You · platform admin · computer","do":"Sign in at https://www.fieldlogichq.ca/platform-admin/login and open https://www.fieldlogichq.ca/platform-admin/online-payments .","see":"The page opens. Nothing is pinned here: write in the notes what it says about online payments on production and about connected clubs (there should be none yet)."},{"who":"You · FieldLogicHQ’s own Stripe, Live","do":"Open https://dashboard.stripe.com/webhooks with the Live switch on.","see":"“Connect – payments and refunds (live)” and “Connect – club accounts (live)” are both listed, with no errors. If either is missing, STOP: do not book the club."},{"who":"You · computer","do":"Open https://www.fieldlogichq.ca/legal/payments .","see":"The Payments Terms. Write its date in the notes: that is the version the club’s owner will agree to in Part A."}]},{"id":"A","title":"With the club’s owner: the Payouts card and the terms","steps":[{"who":"Club owner · their club · computer, you watching","do":"The club’s owner signs in at https://www.fieldlogichq.ca/auth/login with their own login and checks the club switcher.","see":"They are in their club’s admin."},{"who":"Club owner · their club · computer","do":"Open the Payouts card. On a League Plus or Club plan: https://www.fieldlogichq.ca/{their club}/admin/org/settings#payouts . On Tournament Plus: https://www.fieldlogichq.ca/{their club}/admin/tournaments/settings/payouts .","see":"A Payouts card titled “Let families and teams pay online” (Tournament Plus: “Let teams pay online”), a “Not set up” pill and a “Set up payouts” button. If there is no Payouts card at all, STOP: the switch is not on yet, or the plan does not include online payments."},{"who":"Club owner · their club · computer","do":"Read the “Processing fee” row on the card.","see":"“3.5% + $1.50 per card payment · 2.5% + $1.00 per bank debit” and “You choose who pays it.”"},{"who":"Club owner · their club · computer","do":"Press “Set up payouts”.","see":"The window “Before you set up payouts”. If the club has no billing address, a “Billing address” window opens first: they fill it in and it carries straight on."},{"who":"Club owner · their club · computer","do":"Read the first section, “What it costs”.","see":"The two rates, a sentence that the fee covers Stripe’s charge and FieldLogicHQ’s, an example on a $165.00 fee, and a note that Stripe’s own agreement applies and a balance below zero is the club’s."},{"who":"Club owner · their club · computer","do":"In “Who pays it”, the owner picks what the club really wants.","see":"Two choices: “Families and teams pay it” (Tournament Plus: “Teams pay it”), selected to start, and “The club pays it”. Write their choice in the notes, and whether they understood it without help."},{"who":"Club owner · their club · computer","do":"Before they type or tick anything, look at the buttons at the bottom of the window.","see":"“Cancel” only. There is no “Continue to Stripe” button yet."},{"who":"Club owner · their club · computer","do":"In “Your refund policy” the owner types the club’s real refund policy.","see":"Still no “Continue to Stripe” button (the terms box is not ticked yet)."},{"who":"Club owner · their club · computer","do":"The owner presses “Read the terms”, reads them, then closes that tab.","see":"A new tab opens on the Payments Terms, with the same date you wrote down in S3."},{"who":"Club owner · their club · computer","do":"The owner ticks “I agree to the FieldLogicHQ payments terms for {their club}.”","see":"The “Continue to Stripe” button appears."}]},{"id":"B","title":"Stripe onboarding, and the card afterwards","steps":[{"who":"Club owner · their club · computer","do":"The owner presses “Continue to Stripe” and, if asked, enters a fresh two-step sign-in code.","see":"The button shows “Opening Stripe…”, then Stripe’s own onboarding opens. On a screen share, the owner stops sharing now."},{"who":"Club owner · Stripe’s pages","do":"The owner fills in Stripe’s form with the club’s legal name, a signing officer and the club’s bank account, and submits.","see":"Stripe sends them back to the club’s Settings page. In the notes, write how long it took and anything on Stripe’s screens that confused them (not the details they typed)."},{"who":"Club owner · their club · computer","do":"Look at the Payouts card.","see":"Pill “Taking payments”, title “Families and teams can pay online” (Tournament Plus: “Teams can pay online”) and a button “Open Stripe”. If it says “Setting up” with “Continue setup”, Stripe is still checking: wait a few minutes, reload, and note how long it took."},{"who":"Club owner · their club · computer","do":"Read the rows “Payouts go to” and “Processing fee”.","see":"“Your bank account, on Stripe’s schedule”, and the fee row matching the choice they made in A6, with the rates."},{"who":"Club owner · their club · computer","do":"Read the rows “Refund policy” and “Payments terms”.","see":"Their refund policy text, and “Agreed by {owner’s name} on {today}, version of {the date from S3}” with a “Read the terms” link."},{"who":"Club owner · their club · computer","do":"Look over the card for a “Test mode” chip.","see":"None, and no “No real money moves while payouts are in test mode.” line. That absence is what tells you this is a live account."},{"who":"Club owner · their club · computer","do":"The owner presses “Open Stripe”, looks, then closes that tab.","see":"A new tab opens on the club’s OWN Stripe dashboard (Stripe’s Express dashboard), not FieldLogicHQ’s."},{"who":"You · FieldLogicHQ’s own Stripe, Live","do":"Open Connect › Connected accounts.","see":"The club’s new account is in the list."},{"who":"You · FieldLogicHQ’s own Stripe, Live","do":"Open the club’s account and find its payment methods (Stripe may call them capabilities).","see":"Cards active. Write in the notes whether Canadian pre-authorized debit (bank debit) shows active too, and the words Stripe uses: this page is not mapped yet."}]},{"id":"C","title":"The first real payment","steps":[{"who":"Club owner · their club · computer","do":"The owner opens the record of a team or family that really owes a fee. Tournament: Tournaments › Registrations › the team › its “Payment” section. House league: House League › the season › Registrations › the child’s row.","see":"Accepted, owing the real amount, payments tracked (not “Not tracked here”), and a real contact email on the record."},{"who":"Club owner · their club · computer","do":"Open the “…” menu (tournament: on the “Pay link” line; house league: on the owing row) and choose “Email the pay link”.","see":"“Pay link sent to {their contact}.” In house league the row then reads “Pay link sent {day}”."},{"who":"Club owner · their club · computer · once the payer has paid","do":"Open the notifications bell.","see":"A “Payment received” notification for that team or child, with the amount and “by card” (or “by bank debit”)."},{"who":"Club owner · their club · computer","do":"Reload the record.","see":"Tournament: under “Received”, “Entry fee · Online, card · receipt {N}”. House league: the fee cell reads “Online, card · receipt {N}”. No “Test, no money moved” tag. Write N and the amount in the notes. A bank debit reads “started {day}” instead; wait for it to clear, then tick."},{"who":"Club owner · their club · computer","do":"Compare the amount with the fee.","see":"If the payer pays the fee: the fee plus about 3.5% of it plus $1.50 (card). If the club pays it: the fee alone. Anything else, STOP and tell me."},{"who":"You · FieldLogicHQ’s own Stripe, Live","do":"On https://dashboard.stripe.com/webhooks open “Connect – payments and refunds (live)”.","see":"A recent delivery for this payment answered 200, and nothing shows as failed."},{"who":"Club owner · by message, whenever convenient","do":"Ask whether the payer said anything about paying (it was confusing, it was slow, they were charged twice).","see":"Nothing alarming. Write what they heard in the notes, or “nothing said”."}]},{"id":"D","title":"Our records","steps":[{"who":"You · platform admin","do":"Reload https://www.fieldlogichq.ca/platform-admin/online-payments .","see":"Write in the notes what it shows about this club and this payment, and whether it matches the amount and receipt from C4."},{"who":"Club owner · their club · computer · only if the club has Accounting","do":"Open https://www.fieldlogichq.ca/{their club}/admin/accounting/payouts . No Accounting on this club: tick this box and move on.","see":"“No payouts yet. Stripe sends the first one on its schedule after the first payment.”"}]},{"id":"E","title":"Later: the payout lands in the club’s bank","steps":[{"who":"Club owner · their club · computer · the day after, then every few days","do":"With Accounting: reload Accounting › Payouts until a row appears. Without it: look at Payouts in the club’s own Stripe dashboard (“Open Stripe” on the Payouts card).","see":"A payout “On its way”, later “Paid”. Write the day it first appeared. Stripe sends a new account’s first payout on its own schedule, which can take several days."},{"who":"Club owner · their club · computer · only if the club has Accounting","do":"Open that payout. No Accounting on this club: tick this box and move on.","see":"A line for the payment (“… · card”) and “Stripe fee”, ending on “Paid to the bank account ending {last four} on {date}”."},{"who":"Club owner · their bank","do":"The owner checks the club’s bank account on the payout’s date and tells you.","see":"A deposit equal to the payout’s amount. You do not need to see their statement."},{"who":"You · FieldLogicHQ’s own Stripe, Live","do":"On https://dashboard.stripe.com/webhooks look at both Connect destinations.","see":"No failed deliveries on “Connect – payments and refunds (live)” or “Connect – club accounts (live)”. The second may show account updates from the onboarding."}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (rewritten 2026-11-24 for the first real club)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
