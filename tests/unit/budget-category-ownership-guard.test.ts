@@ -131,9 +131,17 @@ const CATEGORY_VISIBILITY_GUARDS: Array<{ file: string; needs: string; why: stri
     why: 'a club line naming a bare category id, with no item to derive from, went to the database unread',
   },
   {
+    // 2026-11-23: the plan line's two doors (add, edit) read the word through readPlanWord, which keeps GST/HST off the plan
+    // and calls readWord first. The guard follows the call: both doors still read through it, and the ownership read inside
+    // it stays guarded on the next entry, so neither half can drop out unseen.
     file: 'lib/club-budget-writes.ts',
-    needs: 'const word = await readWord(body.itemId, orgId);',
+    needs: 'const word = await readPlanWord(body.itemId, orgId);',
     why: 'the PATCH beside it had the same hole',
+  },
+  {
+    file: 'lib/club-budget-writes.ts',
+    needs: 'const word = await readWord(raw, orgId);',
+    why: 'readPlanWord (and the ledger’s Filed under) read the word, with the org, before anything else: the ownership read itself',
   },
 ];
 
