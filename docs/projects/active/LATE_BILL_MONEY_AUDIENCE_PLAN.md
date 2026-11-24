@@ -1,7 +1,7 @@
 # Money terms go only to people who can open Money — Implementation Plan
 
 > **Status:** on the board (Owner Morning Brief).
-> **History (not kept current):** CLOSED 2026-11-14 (owner). Built 2026-11-13 — committed `507f4505b` (the send engine) and `39eb59955` (the Send window); /simplify + /review applied; the owner's walk PASSED 49/49 on 2026-11-14, W5 optional Treasurer walk skipped (OWNER_QA_LEDGER §527). Q-A, Q-B and Q-E are still open.
+> **History (not kept current):** CLOSED 2026-11-14 (owner). Built 2026-11-13 — committed `507f4505b` (the send engine) and `39eb59955` (the Send window); /simplify + /review applied; the owner's walk PASSED 49/49 on 2026-11-14, W5 optional Treasurer walk skipped (OWNER_QA_LEDGER §527). Q-A, Q-B and Q-E were ruled and built 2026-11-14, then closed by the owner with their walk waived (see "Ruled and BUILT" and "CLOSED" below).
 > **Created:** 2026-11-13
 > **Branch:** dev
 > **Plan tier:** Club (the schedule send is `clubSchedulerOn`; the Club tier is not on sale)

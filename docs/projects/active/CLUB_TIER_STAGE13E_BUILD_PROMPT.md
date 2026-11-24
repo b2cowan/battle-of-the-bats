@@ -260,7 +260,7 @@ proven by Session C's tests, not walked (a fixture of 200 owing children is not 
 
 ## Not in this build
 
-- The closed year's year-end file "includes" field (13e-6 A leaves it; its own small item).
+- ~~The closed year's year-end file "includes" field~~ — built 2026-11-23 as its own small item (plan §10, 2026-11-23 entry).
 - Families' "Owes money" (a third answer to "who owes", per family across rep and house league): **13h**.
 - The phone Schedule's opening rule (13e-1 A: unchanged).
 - A merged who-owes list; a month control on Budget vs. Actual; an "off-plan" Ledger filter; a door from a club figure into a coach's book.

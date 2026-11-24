@@ -197,3 +197,10 @@ Status `New` for all.
 - **"Make this parent the coach" on the draft board.** A family that answers the club's "Can a parent help?" with Coach is only a note on the child's card today: the admin locks the child to a team and types the parent's name and email into the team's coaches by hand. One action from the child's answer (lock the child, add the guardian as the team's coach) would close it. Seen while building the Milton demo's house-league walk, 2026-11-21 (MILTON_DEMO_WORLD_PLAN.md §9).
 - **A second Save on the phone while Find is open (bank check, parked).** Measured 2026-11-09 after the quiet list: with the list folded, Save sits about a third of a screen under the callout, so it was ruled not needed. Revisit only if people lose the Save button. See [the plan](docs/projects/archive/BANK_CHECK_NOVICE_UX_PLAN.md) S5.
 - **An age line on the Overview for the last balance check (bank check, parked).** "Last checked 40 days ago" in the Overview line; ruled "not yet" 2026-11-08. See [the plan](docs/projects/archive/BANK_CHECK_NOVICE_UX_PLAN.md) S6.
+
+## Club journeys (Stage 13): owed plans, not Stage 13 items (2026-11-23)
+
+Both came out of the 2026-11-07 external review of the club's navigation (`CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md` §11). Neither is part of Stage 13, so neither holds that project open. Status: ruled that each gets its own plan; no plan written yet (`/plan` when the owner asks).
+
+- **Cancel a day across programs (F-XR-5).** Owner Ask 12 ruled it gets its own plan. A rainout that cancels games only is already ruled (9e·10) and is not this. The 13c drawing prompt points at it as "its own plan to come".
+- **A club-level "next season" door and roll-all for rep teams (F-XR-7).** Ruled "a rep teams item, not in Stage 13" (F-O4-1); no plan owns it. Today each team rolls on its own.

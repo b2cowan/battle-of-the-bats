@@ -31,7 +31,7 @@ import { bvaActivityRows, bvaExportColumns, type ExportRow, type MoneyRowKind } 
 import type { MoneyReport } from '../components/coaches/MoneyStatementRows';
 import type { ClubMonthsFeed } from './club-budget-report';
 import type { AgainstLastYear, YearEndReport } from './club-year-compare';
-import { AGAINST_LAST_YEAR_WORDS, OFF_PLAN_WORDS, OTHER_BOOKS_WORD, YEAR_END_NO_TEAM_CASH, YEAR_END_WORDS, netForYearWord } from './club-money-words';
+import { AGAINST_LAST_YEAR_WORDS, OFF_PLAN_WORDS, OTHER_BOOKS_WORD, OWED_TO_THE_CLUB_WORDS, YEAR_END_NO_TEAM_CASH, YEAR_END_WORDS, netForYearWord } from './club-money-words';
 import { fmt as paperMoney } from './coach-money-summary';
 import { formatStoredDate } from './timezone';
 import { sumMoney } from './club-money-figures';
@@ -412,5 +412,11 @@ export function clubYearEndFile(r: YearEndReport): {
   sections.push({ label: W.carried(r.carried.nextYear.name), headers: ['', 'Amount'], rows: carried.length ? carried : [[W.nothingCarried, '']] });
 
   const note = (id: string, text: string): ReportNote => ({ id, tone: 'note', segments: [{ text }] });
-  return { columns, rows, kinds, sections, notes: [note('year-end-variance', W.varianceKey), note('year-end-team-cash', YEAR_END_NO_TEAM_CASH)] };
+  // 13e-6 A: the file says what Revenue includes, in the words the Overview's year line uses ("2025–26 includes …");
+  // no note when nothing came from house league or a tournament.
+  const includes = OWED_TO_THE_CLUB_WORDS.revenueIncludes(r.revenueIncludes, r.year.name);
+  return {
+    columns, rows, kinds, sections,
+    notes: [...(includes ? [note('year-end-includes', includes)] : []), note('year-end-variance', W.varianceKey), note('year-end-team-cash', YEAR_END_NO_TEAM_CASH)],
+  };
 }

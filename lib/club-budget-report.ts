@@ -896,6 +896,17 @@ function billsByYear(allocations: readonly ClubAllocationFacts[], setting: Fisca
   });
 }
 
+/** What a year's Revenue includes from the books beside the General ledger — house league's fees (every season's book,
+ *  summed) and each tournament's book. ONE definition for the Overview's year line and the closed year's year-end file
+ *  (13e-6 A), read from the report's own `revenueByBook`, never typed. */
+export function revenueIncludesOf(report: Pick<ClubReport, 'revenueByBook'>): { leagueFees: number; tournaments: { name: string; amount: number }[] } {
+  return {
+    leagueFees: sumMoney(report.revenueByBook.filter(b => b.kind === 'league_season')),
+    tournaments: report.revenueByBook.filter(b => b.kind === 'tournament' && Math.abs(b.amount) > 0.005)
+      .map(b => ({ name: b.name, amount: b.amount })),
+  };
+}
+
 export function buildBoardSummary(input: {
   report: ClubReport;
   /** The club's fiscal years (which year each team's allocations count in). */
@@ -932,11 +943,7 @@ export function buildBoardSummary(input: {
 
   const againstBudget = {
     revenue: { planned: statement.revenue.budgeted, plannedToDate: report.toDate.revenuePlanned, actual: statement.revenue.actual },
-    revenueIncludes: {
-      leagueFees: sumMoney(report.revenueByBook.filter(b => b.kind === 'league_season')),
-      tournaments: report.revenueByBook.filter(b => b.kind === 'tournament' && Math.abs(b.amount) > 0.005)
-        .map(b => ({ name: b.name, amount: b.amount })),
-    },
+    revenueIncludes: revenueIncludesOf(report),
     fromTheTeams: {
       planned: itemActual(statement.revenue, FROM_THE_TEAMS_ID, null, 'budgeted'),
       allocations: itemActual(statement.revenue, FROM_THE_TEAMS_ID, null),

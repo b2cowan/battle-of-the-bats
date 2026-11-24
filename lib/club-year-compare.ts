@@ -29,7 +29,7 @@
 import { clubActualMovement, countsAsActual, netForYear, sumMoney } from './club-money-figures';
 import { shiftMonthsBack, shiftMonthsOn, type FiscalSetting, type FiscalYear } from './club-fiscal-year';
 import {
-  allocationYearKey, fileClubLine, loopIndex, EARLIER_BILLS_PREFIX,
+  allocationYearKey, fileClubLine, loopIndex, revenueIncludesOf, EARLIER_BILLS_PREFIX,
   type ClubAllocationFacts, type ClubBookLineFacts, type ClubRequestFacts, type ClubReport, type ClubBook, type TeamScope,
 } from './club-budget-report';
 import { categoryKey } from './coach-budget-rollup';
@@ -203,6 +203,9 @@ export interface YearEndReport {
   atAGlance: { opening: number; revenue: number; expenses: number; net: number; closing: number };
   /** The Statement against budget (the closed year's own, locked). */
   statement: ClubReport['statement'];
+  /** What the year's Revenue includes from house league's books and each tournament's (13e-6 A) — the same read as the
+   *  Overview's year line, so the file says what the screen says. */
+  revenueIncludes: ReturnType<typeof revenueIncludesOf>;
   /** Against the year before, whole years (null when the year before has no books). */
   againstLastYear: AgainstLastYear | null;
   /** Each club book at both ends: what it held the day before the first day, and at the last day. */
@@ -223,7 +226,7 @@ export function buildYearEndReport(input: {
   year: FiscalYear;
   closedByName: string | null;
   opening: number;
-  report: Pick<ClubReport, 'statement'>;
+  report: Pick<ClubReport, 'statement' | 'revenueByBook'>;
   againstLastYear: AgainstLastYear | null;
   books: readonly (Pick<ClubBook, 'id' | 'name' | 'kind'> & { atStart: number; atEnd: number })[];
   snapshot: CloseSnapshot;
@@ -237,6 +240,7 @@ export function buildYearEndReport(input: {
     closed: { at: year.closed.at, byName: input.closedByName },
     atAGlance: { opening: input.opening, revenue, expenses, net: netForYear(revenue, expenses), closing: year.closed.closingBalance },
     statement: report.statement,
+    revenueIncludes: revenueIncludesOf(report),
     againstLastYear: input.againstLastYear,
     books: input.books.map(b => ({ id: b.id, name: b.name, kind: b.kind, atStart: b.atStart, atEnd: b.atEnd })),
     booksTotal: {

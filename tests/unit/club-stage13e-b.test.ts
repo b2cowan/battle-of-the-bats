@@ -11,7 +11,8 @@ import {
   CARRIED_WORDS, OFF_PLAN_WORDS, OWED_TO_THE_CLUB_WORDS, SUMMARY_WORDS, installmentsDueWords,
 } from '../../lib/club-money-words.ts';
 import { owedToTheClub } from '../../lib/club-band-view.ts';
-import { clubStatementNotes } from '../../lib/club-money-reports.ts';
+import { clubStatementNotes, clubYearEndFile } from '../../lib/club-money-reports.ts';
+import type { YearEndReport } from '../../lib/club-year-compare.ts';
 import { bookLedgerHref, ledgerOpensAllTime } from '../../lib/club-ledger.ts';
 import { fiscalYearOf, type FiscalSetting } from '../../lib/club-fiscal-year.ts';
 
@@ -121,7 +122,28 @@ describe('B4 · figures that say which they are (13e-6 A)', () => {
     assert.match(ov, /on request\$\{includes \? `; \$\{includes\}` : ''\}\)/, 'the board report’s year line');
     assert.match(ov, /what it includes`, OWED_TO_THE_CLUB_WORDS\.revenueParts\(a\.revenueIncludes\)/, 'the PDF’s opening block');
     assert.equal(OWED_TO_THE_CLUB_WORDS.revenueParts({ leagueFees: 0, tournaments: [] }), null);
-    assert.doesNotMatch(readCode('lib/club-money-reports.ts'), /revenueIncludes/, 'the closed year’s year-end file waits (its own item)');
+  });
+  it('the closed year’s year-end file says what Revenue includes, in the Overview’s own words (13e-6 A, its own small item)', () => {
+    const base = {
+      year: { key: '2025-26', name: '2025–26', firstDay: '2025-09-01', lastDay: '2026-08-31' },
+      closed: { at: '2026-10-07T12:00:00Z', byName: 'Pat Treasurer' },
+      atAGlance: { opening: 0, revenue: 0, expenses: 0, net: 0, closing: 0 },
+      statement: { revenue: { categories: [] }, expenses: { categories: [] }, net: {} },
+      againstLastYear: null, books: [], booksTotal: { atStart: 0, atEnd: 0 }, teams: [], teamsTotal: { billed: 0, collected: 0, owed: 0 },
+      carried: {
+        nextYear: { key: '2026-27', name: '2026–27' }, closing: 0,
+        stillOpen: { installments: { count: 0, amount: 0 }, requests: { count: 0, amount: 0 }, pending: { count: 0, amount: 0 } },
+      },
+    };
+    const inc = { leagueFees: 2355, tournaments: [{ name: 'Harbourtown Invitational 2026', amount: 1440 }] };
+    const withIncludes = clubYearEndFile({ ...base, revenueIncludes: inc } as unknown as YearEndReport).notes.map(n => n.id);
+    assert.deepEqual(withIncludes, ['year-end-includes', 'year-end-variance', 'year-end-team-cash']);
+    const note = clubYearEndFile({ ...base, revenueIncludes: inc } as unknown as YearEndReport).notes[0];
+    assert.equal(note.segments.map(s => s.text).join(''), OWED_TO_THE_CLUB_WORDS.revenueIncludes(inc, '2025–26'));
+    assert.match(note.segments[0].text, /^2025–26 includes house league fees \$2,355\.00 · Harbourtown Invitational 2026 \$1,440\.00$/);
+    // Nothing from house league or a tournament: no note, never an empty line.
+    const none = clubYearEndFile({ ...base, revenueIncludes: { leagueFees: 0, tournaments: [] } } as unknown as YearEndReport).notes.map(n => n.id);
+    assert.deepEqual(none, ['year-end-variance', 'year-end-team-cash']);
   });
 });
 

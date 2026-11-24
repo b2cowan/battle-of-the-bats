@@ -1043,6 +1043,25 @@ ahead of the owner's rulings.
   ($1,800.00); pinned in `club-stage13e-b.test.ts`; words only, no money definition moved; not yet re-read in a browser.
   **Next:** the closing check on staging. 13f, 13g and 13h are after launch (owner, 17 Nov).
 
+- 2026-11-23 — **Open-items cross-check, and the owner's rulings.** The ledger and plans were read against the project's open list. Already
+  closed, not open: late-bill Q-A, Q-B and Q-E (ruled and built 2026-11-14, owner-closed with their walk waived), 13d's three calls (closed
+  2026-11-14 on the owner's word; each stays as built), the 13c walk (§502, 53/53). **The owner agreed the recommendations, 2026-11-23:**
+  (1) 13e's "clearing" stays visible to a registrar; (2) Money's Received reads **"1 part-paid"**, not "1 in part" (the words go through
+  `/marketing`; **the change itself is not built**, and the help, search words and test pins move with it); (3) Back from a child stays as
+  built (the window closes first); (4) leaving the setup checklist early stays as built (an owner sees it at every sign-in until it is
+  done — the design); (5) spring tryouts are **not** reopened (§11.4 #2); (6) rep dues online stays "a possible 12e", its own drawing round
+  after launch (§11.4 #3); (7) F-XR-8 and F-XR-9 wait until after launch; (8) the "including each payment" copy from fix-now 2's walk is
+  dropped. **Built the same day (uncommitted):** the closed year's year-end file now carries what Revenue includes — a note "2025–26 includes
+  house league fees $… · {tournament} $…" in the Excel and the PDF, from the same read as the Overview's year line (one shared helper,
+  `revenueIncludesOf`); no note when nothing came from house league or a tournament; no figure moved. Tests: `club-stage13e-b.test.ts` (the
+  old "the file waits" guard now pins the note and the empty case) and `club-year-compare.test.ts`. **Housekeeping:** the late-bill plan's
+  stale "still open" header and its ledger entry (§527) now say ruled and built; F-XR-5 and F-XR-7 have a home in the ideas backlog ("owed
+  plans from Stage 13"); neither is a Stage 13 item, so neither holds this project open. **Left as is:** the hub republish (tabs 10 and 11,
+  owed since 2026-11-06 — the live copy must be read first; an owner call whether it is still worth doing) and the bill-amendment plan (draw
+  it after the staging sweep, per its own note; after launch or not is the owner's call). **Next:** the owner's decision on building the
+  "part-paid" word; then the closing check on staging, which now also reads the year-end file of a closed year with a tournament or house
+  league book.
+
 ## 11. The external review, cross-checked (2026-11-07)
 
 Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they

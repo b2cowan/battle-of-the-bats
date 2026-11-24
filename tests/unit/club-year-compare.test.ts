@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { buildAgainstLastYear, buildYearEndReport, compareSpans, holdsBooks, scopeCloseSnapshot, type CloseSnapshot } from '../../lib/club-year-compare.ts';
-import { EARLIER_BILLS_PREFIX, type ClubAllocationFacts, type ClubBookLineFacts, type ClubReport } from '../../lib/club-budget-report.ts';
+import { EARLIER_BILLS_PREFIX, revenueIncludesOf, type ClubAllocationFacts, type ClubBookLineFacts, type ClubReport } from '../../lib/club-budget-report.ts';
 import { EARLIER_YEARS_BILLS_WORD, OUTSIDE_YOUR_GROUPS_WORD } from '../../lib/club-money-words.ts';
 import { fiscalYearName, fiscalYearOf, type FiscalSetting, type FiscalYearRow } from '../../lib/club-fiscal-year.ts';
 
@@ -141,12 +141,20 @@ describe('buildYearEndReport — read only from locked figures (specimen 5)', ()
     totals: { billed: 1000, collected: 520, owed: 480 },
   };
   const statement = { revenue: { actual: 9000, categories: [] }, expenses: { actual: 7940, categories: [] } } as unknown as ClubReport['statement'];
+  // The year's revenue by book: the General book is not an "include"; house league's two seasons sum; a tournament is named.
+  const revenueByBook: ClubReport['revenueByBook'] = [
+    { ledgerId: 'g', kind: 'org', name: 'General', amount: 5000 },
+    { ledgerId: 's1', kind: 'league_season', name: 'Fall', amount: 1200.5 },
+    { ledgerId: 's2', kind: 'league_season', name: 'Winter', amount: 800 },
+    { ledgerId: 't1', kind: 'tournament', name: 'Harbourtown Invitational 2026', amount: 1440 },
+    { ledgerId: 't2', kind: 'tournament', name: 'Nothing here', amount: 0 },
+  ];
   const closedSetting: FiscalSetting = {
     firstMonth: 9, rows: [row('2025-09-01', '2026-08-31', { closedAt: '2026-10-07T12:00:00Z', closedBy: 'u1', closingBalance: 16940 })],
   };
   const closed = fiscalYearOf('2026-03-01', closedSetting);
   const input = {
-    closedByName: 'Pat Treasurer', opening: 15880, report: { statement }, againstLastYear: null,
+    closedByName: 'Pat Treasurer', opening: 15880, report: { statement, revenueByBook }, againstLastYear: null,
     books: [{ id: 'g', name: 'General', kind: 'org', atStart: 12000.1, atEnd: 13000.2 }, { id: 'b', name: 'Bank', kind: 'org_named', atStart: 3880, atEnd: 3940 }],
     snapshot, nextYear: fiscalYearOf('2026-10-07', closedSetting),
   };
@@ -157,6 +165,11 @@ describe('buildYearEndReport — read only from locked figures (specimen 5)', ()
     assert.deepEqual(r.booksTotal, { atStart: 15880.1, atEnd: 16940.2 });
     assert.deepEqual([r.carried.nextYear.name, r.carried.closing, r.carried.stillOpen.installments.count], ['2026–27', 16940, 2]);
     assert.deepEqual(r.teamsTotal, { billed: 1000, collected: 520, owed: 480 });
+  });
+  it('13e-6 A: the report carries what Revenue includes — the same read the Overview’s year line uses', () => {
+    const r = buildYearEndReport({ ...input, year: closed });
+    assert.deepEqual(r.revenueIncludes, { leagueFees: 2000.5, tournaments: [{ name: 'Harbourtown Invitational 2026', amount: 1440 }] });
+    assert.deepEqual(r.revenueIncludes, revenueIncludesOf({ revenueByBook }));
   });
   it('B11: a group-scoped reader sees their teams named and every other team counted as one row, never named', () => {
     const club: CloseSnapshot = {
