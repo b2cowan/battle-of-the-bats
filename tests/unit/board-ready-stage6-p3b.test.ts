@@ -337,6 +337,7 @@ describe('Part 3b after the walk — migration 531', () => {
     assert.match(landing, /if \(stripeRefused\(e\)\) \{ await failSponsorRefund\(row\.id, e\);/);
     assert.match(landing, /export async function sweepStuckSponsorRefunds/);
     assert.match(landing, /\.find\(x => x\.metadata\?\.refund_id === row\.id\)/);
+    assert.match(readCode('app/api/platform-admin/stripe-fees-daily/route.ts'), /run\('sponsor_refunds', \(\) => sweepStuckSponsorRefunds\(now\)\)/);
   });
 });
 

@@ -3,7 +3,7 @@ import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { scheduledCall } from '@/lib/cron-auth';
-import { bookLostDisputesSweep, catchUpStripeFees, sendDisputeReminders, takeStandaloneStripeFees } from '@/lib/online-payment-landing';
+import { bookLostDisputesSweep, catchUpStripeFees, sendDisputeReminders, sweepStuckSponsorRefunds, takeStandaloneStripeFees } from '@/lib/online-payment-landing';
 import { sendEndingWarnings, sendTermsNotices } from '@/lib/online-payment-owner-notices';
 import { countOverdueEndings, sendEndingEmails } from '@/lib/plan-ending-server';
 import { closeAgainEndedFreeTime } from '@/lib/free-time-reclose-server';
@@ -82,6 +82,8 @@ export const POST = withObservability(async (req: Request) => {
   await run('purchase_emails', () => catchUpPurchaseEmails(now));
   await run('renewal_reminders', () => sendRenewalReminders(now));
   await run('tax_records_backfill', () => backfillChargeTaxRecords(now));
+  // Board Ready Stage 6 Part 3b (walk §564 owner call (h)): a sponsor's card refund stuck 'on its way' after a crash is settled or retried.
+  await run('sponsor_refunds', () => sweepStuckSponsorRefunds(now));
   // Stripe-owned pricing Stage 3: Stripe's own fee on a payment it wasn't ready for at the landing (and a dispute fee whose
   // event came before the landing), and Stripe's stand-alone fees (a failed debit's $5, an answered dispute's $15) matched
   // to their payment and booked (owner ruling (d), 2026-11-18). LAST (hardening, owner 2026-11-18): they read Stripe per
