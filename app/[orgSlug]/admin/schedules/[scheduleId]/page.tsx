@@ -414,10 +414,21 @@ export default function SchedulePage() {
     <div className={`${sch.callout} ${sch.calloutOlive}`}>
       <div className={sch.calloutBody}>
         <b>{W.inReviewHead(replied.size, teamsInSlots.length)}</b>
+        {/* ⚖ A long run of names is a wall of text: past 3 the head says the count, the names fold behind Show who, and the
+            reply-by date sits beside the headline instead of at the end of the sentence (owner 2026-11-24). */}
+        {s.replyBy && notReplied.length > 3 && <span className={sch.calloutTail}>{W.replyByTail(formatShortWeekdayDate(s.replyBy))}</span>}
         <ul>
           {replies.some(r => r.answer === 'looks_good') && <li>{W.looksGoodCount(replies.filter(r => r.answer === 'looks_good').length)}</li>}
           {replies.filter(r => r.answer === 'ask_for_change').map(r => <li key={r.teamId}>{W.askedFor(nameOf(r.teamId), r.words ?? '')}</li>)}
-          {notReplied.length > 0 && <li>{W.notReplied(joinWithAnd(notReplied.map(t => t.name)), notReplied.length > 1, s.replyBy ? formatShortWeekdayDate(s.replyBy) : null)}</li>}
+          {notReplied.length > 0 && notReplied.length <= 3 && <li>{W.notReplied(joinWithAnd(notReplied.map(t => t.name)), notReplied.length > 1, s.replyBy ? formatShortWeekdayDate(s.replyBy) : null)}</li>}
+          {notReplied.length > 3 && (
+            <li>
+              <details className={sch.waitingDetails}>
+                <summary><span>{W.waitingMany(notReplied.length)}</span> <span className={sch.waitingToggle}><span>{W.showWho}</span><span>{W.hideWho}</span></span></summary>
+                <ul className={sch.waitingNames}>{notReplied.map(t => <li key={t.id}>{t.name}</li>)}</ul>
+              </details>
+            </li>
+          )}
         </ul>
       </div>
       {!isPhone && <button type="button" className="btn btn-lime" onClick={() => setWin({ kind: 'send', start: 'final' })}>{W.finalize}</button>}

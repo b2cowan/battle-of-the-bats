@@ -1420,6 +1420,11 @@ export const SCHEDULE_SCREEN_WORDS = {
   inReviewHead: (replied: number, teams: number) => `In review · ${replied} of ${pluralize(teams, 'team')} replied`,
   looksGoodCount: (n: number) => `${n} said it looks good`,
   askedFor: (team: string, words: string) => `${team} asked for a change: “${words}”`,
+  /** Past a few teams the names fold away: "20 teams haven’t replied", the names behind Show who (owner 2026-11-24). */
+  waitingMany: (n: number) => `${n} teams haven’t replied`,
+  showWho: 'Show who',
+  hideWho: 'Hide',
+  replyByTail: (replyBy: string) => `Reply by ${replyBy}`,
   notReplied: (teams: string, many: boolean, replyBy: string | null) => `${teams} ${many ? 'haven’t' : 'hasn’t'} replied${replyBy ? ` (reply by ${replyBy})` : ''}`,
   changesHead: (n: number, day: string) => `${pluralize(n, 'change')} since you sent it on ${day}`,
   /** The closed list's door, as it read before the groups (owner 2026-11-17: the list starts closed). */

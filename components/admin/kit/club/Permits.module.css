@@ -32,6 +32,13 @@
    tabular — as specimens 2 and 12 draw it (/design 10a). */
 .rowFigure { flex: none; font-size: var(--type-body); color: var(--text-primary); font-variant-numeric: tabular-nums; text-align: right; }
 
+/* A use row with a long "who booked it": the place and figure on one line, the bookings as tags beneath, full width —
+   beside a figure the names were squeezed into a column of run-together text. */
+.rowStack { flex-direction: column; align-items: stretch; gap: 0.35rem; padding-block: 0.65rem; }
+.rowHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.tags { list-style: none; margin: 0.15rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.tag { padding: 0.15rem 0.55rem; border: 1px solid var(--home-line); border-radius: 999px; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.35; }
+
 /* A sentence under a section (dates off, "4 full fields and 2 half fields share …"), never inside a cell. It sits where
    the club kit's notes stack sits under a table (RepKit `.notes`, §3.5): 0.4rem read as glued to the rows above it
    (owner, walking §296, 2026-10-11: "not enough space between this disclaimer and the table above"). */

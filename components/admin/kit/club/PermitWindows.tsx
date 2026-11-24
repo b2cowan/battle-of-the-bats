@@ -584,6 +584,50 @@ function ReadRow({ title, sub, figure }: { title: ReactNode; sub?: ReactNode; fi
   );
 }
 
+/** The words every name starts with ("Milton Bats"), when three or more names share them and each keeps something after. */
+function sharedLead(names: readonly string[]): string {
+  if (names.length < 3) return '';
+  const first = names[0].split(' ');
+  let n = first.length - 1;
+  for (const name of names) {
+    const w = name.split(' ');
+    let i = 0;
+    while (i < n && i < w.length - 1 && w[i] === first[i]) i++;
+    n = i;
+  }
+  return n > 0 ? first.slice(0, n).join(' ') : '';
+}
+
+/** Youngest age group first ("U11" before "U13"), then by name; a name with no age group goes after them, by name. */
+function sortByAge(names: readonly string[]): string[] {
+  const age = (n: string) => Number(/\bU(\d+)\b/i.exec(n)?.[1] ?? Infinity);
+  return [...names].sort((a, b) => (age(a) - age(b) || 0) || a.localeCompare(b, undefined, { numeric: true }));
+}
+
+/** A use row: the place and its figure on one line, then who booked it as tags on a line of their own. */
+function UseRow({ title, who: booked, note, figure }: { title: ReactNode; who: readonly string[]; note?: string; figure: ReactNode }) {
+  const who = sortByAge(booked);
+  const lead = sharedLead(who);
+  const tags = who.map(n => (lead ? n.slice(lead.length + 1) : n));
+  return (
+    <div className={`${own.row} ${own.rowStack}`}>
+      <div className={own.rowHead}>
+        <span className={own.rowTitle}>{title}</span>
+        <span className={own.rowFigure}>{figure}</span>
+      </div>
+      {who.length === 0 ? <span className={own.rowSub}>Nothing booked</span> : (
+        <>
+          {lead && <span className={own.rowSub}>{lead}</span>}
+          <ul className={own.tags}>
+            {tags.map((t, i) => <li key={who[i]} className={own.tag}>{t}</li>)}
+          </ul>
+        </>
+      )}
+      {note && <span className={own.rowSub}>{note}</span>}
+    </div>
+  );
+}
+
 const blockWhere = (b: PermitView['blocks'][number]) =>
   `${b.venueName} · ${b.facilityNames ? facilityListWords(b.facilityNames.map(f => facilityWords(null, f) || f)) : W.everyFacility.toLowerCase()}`;
 
@@ -921,8 +965,8 @@ export function PermitWindow({
             ]} /></div>
             <div className={own.rows}>
               {blocksRead.map(b => (
-                <ReadRow key={b.id} title={blockWhere(b)}
-                  sub={[b.who.length ? b.who.join(' · ') : 'Nothing booked', b.unplacedMinutes > 0 ? `${hoursWords(b.unplacedMinutes)} with no facility set` : ''].filter(Boolean).join(' · ')}
+                <UseRow key={b.id} title={blockWhere(b)} who={b.who}
+                  note={b.unplacedMinutes > 0 ? `${hoursWords(b.unplacedMinutes)} with no facility set` : undefined}
                   figure={`${usedOfWords(b.bookedMinutes, b.heldMinutes)} · ${usedPercent(b.bookedMinutes, b.heldMinutes)}`} />
               ))}
             </div>
