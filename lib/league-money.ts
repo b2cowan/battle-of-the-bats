@@ -155,7 +155,7 @@ export interface SeasonMoney {
   /** Posted in, less posted out, across every registration (a fee the club kept on an ended one included). */
   received: number;
   receivedPlayers: number;
-  /** Of `receivedPlayers`, the accepted ones who have paid part of the fee and still owe the rest (13e-8: "1 in part"). */
+  /** Of `receivedPlayers`, the accepted ones who have paid part of the fee and still owe the rest (13e-8: "1 part-paid"). */
   partPlayers: number;
   /** Money given back. */
   refunded: number;
@@ -194,7 +194,7 @@ export function seasonMoney(
     const onTheWay = price - got - left;
     if (onTheWay > 0) { clearing += onTheWay; clearingPlayers += 1; }
     if (left > 0) { owing += left; owingPlayers += 1; }
-    // Received's "1 in part" (13e-8): an accepted child who has paid some of the fee and owes the rest (inside Received's
+    // Received's "1 part-paid" (13e-8): an accepted child who has paid some of the fee and owes the rest (inside Received's
     // players, never taken out of them: Registrations' Received filter counts paid in full, and this says why they differ).
     if (got > 0) partPlayers += 1;
   }

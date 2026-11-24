@@ -1061,6 +1061,14 @@ ahead of the owner's rulings.
   it after the staging sweep, per its own note; after launch or not is the owner's call). **Next:** the owner's decision on building the
   "part-paid" word; then the closing check on staging, which now also reads the year-end file of a closed year with a tournament or house
   league book.
+- 2026-11-23 (later) — **Owner: "go ahead with your recommendations" on the three open calls.** (4) **"1 part-paid" BUILT** (uncommitted): Money's
+  Received now reads "8 players · 1 part-paid" (`MONEY_PAGE_WORDS.band.inPart`, key unchanged); the Received help line and its two sets of
+  search words moved with it (the old phrase "in part" stays a search word); the 13e-8 test pins the new word. The `/marketing` pass was not run
+  (the owner ruled the word itself). Tests: 13e a/b/c 44/44, help suites 152/152, spelling clean. (5) **The hub republish is DROPPED** — the hub
+  only presents rulings already recorded here; tabs 10 and 11 stay unpublished on purpose. (6) **Bill amendments after a schedule is made go
+  AFTER LAUNCH**, drawn once the staging sweep has run (its own plan's note). **What remains on this project:** the closing check on staging
+  (with the headroom sentence, the year-end file's new line and "1 part-paid" to read), then the owner closes it. 13f, 13g and 13h wait until
+  after launch.
 
 ## 11. The external review, cross-checked (2026-11-07)
 

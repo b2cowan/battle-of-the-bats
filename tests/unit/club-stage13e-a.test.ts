@@ -11,7 +11,7 @@ import type { LeagueGame, LeaguePractice, LeagueRegistration } from '../../lib/t
 
 /**
  * Club Tier Stage 13e, Session A — the registrar's house league (build prompt CLUB_TIER_STAGE13E_BUILD_PROMPT.md; drawing
- * tabs 2, 3 and 7). One shared Still owing rule (13e-3), Received's "1 in part" (13e-8), Still owing's doors (13e-2, 13e-3),
+ * tabs 2, 3 and 7). One shared Still owing rule (13e-3), Received's "1 part-paid" (13e-8), Still owing's doors (13e-2, 13e-3),
  * Find a child (13e-4, 13e-1).
  */
 const TODAY = '2026-11-16';
@@ -109,12 +109,12 @@ describe('13e-3: one Still owing rule, two lists that cannot drift', () => {
   });
 });
 
-describe('13e-8: Received says "1 in part"', () => {
+describe('13e-8: Received says "1 part-paid"', () => {
   it('counts the part-paid inside Received, never takes them out', () => {
     const b = seasonMoney(REGS, SEASON, LINES, CLEARING);
     assert.equal(b.receivedPlayers, 3, 'part-paid, paid in full, and the ended one the club kept');
     assert.equal(b.partPlayers, 1);
-    assert.equal(MONEY_PAGE_WORDS.band.inPart(1), '1 in part');
+    assert.equal(MONEY_PAGE_WORDS.band.inPart(1), '1 part-paid');
     const page = readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx');
     assert.match(page, /band\.partPlayers > 0 \? `\$\{W\.band\.players\(band\.receivedPlayers\)\} · \$\{W\.band\.inPart\(band\.partPlayers\)\}`/);
   });

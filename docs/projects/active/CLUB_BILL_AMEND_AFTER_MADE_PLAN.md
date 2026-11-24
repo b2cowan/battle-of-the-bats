@@ -1,6 +1,6 @@
 # A club changes one team's payment arrangement after the bill is made — PLAN (needs a drawing session)
 
-**Status:** on the board (Owner Morning Brief).
+**Status:** on the board (Owner Morning Brief). **Ruled 2026-11-23 (owner): after launch** — draw it once the closing staging sweep has run.
 **History (not kept current):** LOGGED 2026-11-13 (owner), not drawn, not ruled, not built. Found walking Club Tier Stage 13c step 82:
 the owner asked why a finalized schedule couldn't be billed, and then the bigger question: *"a team comes to the
 president and makes an arrangement of payment — shouldn't the president be able to amend the financial part without

@@ -91,8 +91,8 @@ export const MONEY_PAGE_WORDS = {
   band: {
     owed: 'Owed', received: 'Received', owing: 'Still owing',
     players: (n: number) => pluralize(n, 'player'),
-    // 13e-8: Received's part-paid, counted and said ("8 players · 1 in part").
-    inPart: (n: number) => `${n} in part`,
+    // 13e-8: Received's part-paid, counted and said ("8 players · 1 part-paid").
+    inPart: (n: number) => `${n} part-paid`,
     afterRefunds: (amount: string) => `after ${amount} refunded`,
     // 12c words §3.4: the card/bank split moves from Received's caption to the band's note; Clearing while there is some.
     clearing: 'Clearing',

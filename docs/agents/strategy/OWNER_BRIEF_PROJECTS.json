@@ -98,7 +98,7 @@
       "goals": ["canada"], "lane": "next", "order": 6, "phase": "Building",
       "stage": "Done: 13e, numbers open their lines, walk §536 passed 40 of 40, 17 Nov → Next: the closing check on staging",
       "next": "Run the closing check on staging.",
-      "remains": "The closing check on staging, which now also covers: the closed 2025–26 year's headroom sentence reading $1,200.00 (fixed 18 Nov, not yet seen in a browser), and the closed year's year-end file saying what Revenue includes (built 23 Nov, not yet committed). Your call: whether to change Money's \"1 in part\" to \"1 part-paid\" now (ruled 23 Nov, not built). 13f, 13g and 13h are after launch (your ruling, 17 Nov). Cancel-a-day-across-programs and a club-level next-season door are not Stage 13; they wait in the ideas backlog for a plan.",
+      "remains": "The closing check on staging, which now also covers: the closed 2025–26 year's headroom sentence reading $1,200.00 (fixed 18 Nov, not yet seen in a browser), and the closed year's year-end file saying what Revenue includes (built 23 Nov, not yet committed). Money's \"1 in part\" now reads \"1 part-paid\" (built 23 Nov, not yet committed). 13f, 13g and 13h, and drawing the bill-amendment plan, are after launch (your rulings, 17 and 23 Nov). Cancel-a-day-across-programs and a club-level next-season door are not Stage 13; they wait in the ideas backlog for a plan.",
       "waitsOn": [], "finishesAfter": [],
       "youOwe": [] },
     { "id": "several-permits", "name": "A schedule on several permits", "track": "product", "state": "open", "checked": true,
