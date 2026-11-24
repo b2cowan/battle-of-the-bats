@@ -61,6 +61,12 @@
 .linkButton:hover { text-decoration: underline; }
 .linkButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 3px; }
 .dangerLink { composes: linkButton; color: var(--home-live); }
+/* Touch widths (the layout sweep measures to 768): the Deals fold toggle, the Packages "Show archived" toggle and the package
+   table's row button are thumb targets at the 44px floor, as the payment list's links are below. Release sweep 2026-11-23. */
+@media (max-width: 768px) {
+  .bandToggle, .archivedToggle .linkButton { min-height: 44px; }
+  .tableRowBtn { min-height: 44px; display: flex; flex-direction: column; justify-content: center; }
+}
 /* The sponsorship form's locked card: the support size the season form's locked card reads at, a line's breath between rows. */
 .fixedList { margin: 0 0 0.75rem; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: var(--type-support); line-height: 1.5; color: var(--text-secondary); }
 .rareDoor { margin: 1.25rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--home-line); }

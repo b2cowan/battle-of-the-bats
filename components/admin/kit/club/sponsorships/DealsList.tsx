@@ -75,7 +75,7 @@ export default function DealsList() {
   const toggle = (band: DealBand) => setUnfolded(s => { const n = new Set(s); if (n.has(band)) n.delete(band); else n.add(band); return n; });
   const open = (band: DealBand) => !FOLDED.has(band) || unfolded.has(band);
   const bandLabel = (band: DealBand, n: number, folded: boolean) => (folded
-    ? <button type="button" className={css.linkButton} aria-expanded={open(band)} onClick={() => toggle(band)}>
+    ? <button type="button" className={`${css.linkButton} ${css.bandToggle}`} aria-expanded={open(band)} onClick={() => toggle(band)}>
       {open(band) ? '▾' : '▸'} {D.list.band[band]} <span className={css.foldCount}>{n}</span>
     </button>
     : <>{D.list.band[band]}</>);
