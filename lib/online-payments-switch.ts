@@ -4,10 +4,12 @@
  *
  *  1. `ONLINE_PAYMENTS_ENABLED` — a server-only env var, the `GUARDIAN_TIER_ENABLED` convention: absent or anything other
  *     than the literal 'true' means OFF. Deliberately not `NEXT_PUBLIC_`: the browser learns the answer from the server.
- *     Production does not set it.
- *  2. `LIVE_PAYMENTS_ALLOWED` — a code constant, false. While it is false, a LIVE Stripe key turns the feature off even
- *     with the env var set, so no real money can move by a console setting alone. Turning it true is one reviewed commit,
- *     made only when the owner switches live payments on, real payments terms first (the `CHAT_PAUSED` reasoning: a reversal that matters is a commit, not a toggle).
+ *     Production's setting is the owner's own switch: absent means off.
+ *  2. `LIVE_PAYMENTS_ALLOWED` — a code constant, true since the owner's switch-on commit (2026-11-23, the Payments Terms
+ *     published first). While it was false, a LIVE Stripe key turned the feature off even with the env var set, so no real
+ *     money could move by a console setting alone. Turning it true was one reviewed commit (the `CHAT_PAUSED` reasoning:
+ *     a reversal that matters is a commit, not a toggle). Setting it back to false is the same one-line commit, and it
+ *     shuts every live payment door whatever the env var says.
  *
  * With the switch off, no Payouts card, no Pay button and no pay link renders anywhere, and every connect, pay and refund
  * route refuses. `tests/unit/online-payments-switch.test.ts` proves production is off; the guard test proves every door
@@ -18,7 +20,7 @@ import { stripeKeyIsTest } from './stripe-mode';
 
 export { stripeKeyIsLive, stripeKeyIsTest } from './stripe-mode';
 
-export const LIVE_PAYMENTS_ALLOWED: boolean = false;
+export const LIVE_PAYMENTS_ALLOWED: boolean = true;
 
 /** The one question every online-payments door asks. */
 export function onlinePaymentsOn(env: Record<string, string | undefined> = process.env): boolean {

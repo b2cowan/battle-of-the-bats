@@ -140,9 +140,11 @@ describe('the launch switch: off in production', () => {
     }
   });
 
-  it('a LIVE key keeps it off even with the env var set, until the owner switches it on', () => {
-    assert.equal(LIVE_PAYMENTS_ALLOWED, false, 'turning live payments on is its own reviewed commit, made when the owner switches it on');
-    assert.equal(onlinePaymentsOn({ ONLINE_PAYMENTS_ENABLED: 'true', STRIPE_SECRET_KEY: 'sk_live_x' }), false);
+  it('a LIVE key opens it only with the env var set AND a standard sk_live_ key (the owner switched live payments on 2026-11-23)', () => {
+    assert.equal(LIVE_PAYMENTS_ALLOWED, true, 'live payments were switched on by its own reviewed commit; setting this back to false shuts every live door');
+    assert.equal(onlinePaymentsOn({ ONLINE_PAYMENTS_ENABLED: 'true', STRIPE_SECRET_KEY: 'sk_live_x' }), true);
+    assert.equal(onlinePaymentsOn({ STRIPE_SECRET_KEY: 'sk_live_x' }), false, 'no env var, no payments');
+    assert.equal(onlinePaymentsOn({ ONLINE_PAYMENTS_ENABLED: 'true', STRIPE_SECRET_KEY: 'rk_live_x' }), false, 'a restricted live key never opens it');
   });
 
   it('is off with no Stripe key at all', () => {
