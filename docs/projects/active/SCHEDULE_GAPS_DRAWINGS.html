@@ -1,0 +1,576 @@
+<title>Schedule Gaps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the house drawings sheet. Sticky numbered tabs, a View row where a tab compares, then a product frame drawn at
+   true size in the shipped warm theme, with clickable numbered notes beside it. Cool slate chrome so the warm frames
+   read as specimens, not as the page. */
+:root {
+  --bg: #E7EAEE; --surface: #FFFFFF; --fg: #1A1F25; --muted: #56606B; --rule: #D0D6DC;
+  --accent: #2D5B86; --accent-soft: rgba(45, 91, 134, 0.10); --new: #2D5B86; --re: #7A4E12; --same: #6B7480; --gone: #9B2C2C;
+  --doc-font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --doc-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  /* the product's shipped warm tokens (fixed: a specimen looks the same in either theme) */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink2: #4A4235; --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12); --p-line2: rgba(70, 55, 30, 0.20); --p-fill: rgba(70, 55, 30, 0.06);
+  --p-olive: #57651E; --p-olive-soft: rgba(87, 101, 30, 0.10); --p-lime: #D9F99D;
+  --p-amber: #835006; --p-amber-soft: rgba(131, 80, 6, 0.07); --p-amber-line: rgba(131, 80, 6, 0.30);
+  --p-rep: #4B2A6B; --p-sel: #7C5BA6;
+  --p-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+    --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE; --gone: #F2A0A0; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+  --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE; --gone: #F2A0A0; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-font); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.doc { max-width: 1680px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.dochead { display: grid; gap: 4px; margin-bottom: 12px; }
+.eyebrow { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.dochead h1 { margin: 0; font-size: 24px; line-height: 1.2; text-wrap: balance; }
+.dochead p { margin: 0; color: var(--muted); max-width: 90ch; }
+
+.stabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--rule);
+  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.stabs::-webkit-scrollbar { display: none; }
+.stabs button { border: 0; background: none; color: var(--muted); cursor: pointer; white-space: nowrap; font: 600 14px/1 var(--doc-font); padding: 14px 12px 12px; border-bottom: 2px solid transparent; }
+.stabs button:hover { color: var(--fg); }
+.stabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 12px 0 14px; }
+.vgroup { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vgroup > span { font: 600 11px/1 var(--doc-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 2px; }
+.seg button { border: 0; background: none; color: var(--muted); cursor: pointer; font: 600 13px/1 var(--doc-font); padding: 8px 11px; border-radius: 6px; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+
+.lede { margin: 0 0 14px; max-width: 96ch; }
+.stage { display: grid; grid-template-columns: minmax(0, auto) minmax(300px, 1fr); gap: 24px; align-items: start; }
+.stage.desk { grid-template-columns: minmax(0, 1fr); }
+.fcol { min-width: 0; display: grid; gap: 8px; }
+.fcap { font-size: 13px; color: var(--muted); }
+.fcap b { color: var(--fg); }
+.fscroll { overflow-x: auto; max-width: 100%; padding-bottom: 6px; }
+.notes { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.stage.desk .notes { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.nt { text-align: left; border: 1px solid var(--rule); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 10px 12px; cursor: pointer;
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font: 14px/1.5 var(--doc-font); }
+.nt:hover { border-color: var(--accent); }
+.nt.flash { box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.nn { grid-row: span 3; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px/1 var(--doc-mono); color: #fff; background: var(--same); }
+.nt.new .nn { background: var(--new); } .nt.re .nn { background: var(--re); } .nt.gone .nn { background: var(--gone); }
+.nt b { font-weight: 600; }
+.nt .tx { color: var(--muted); font-size: 13.5px; }
+.tag { justify-self: start; font: 600 10.5px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--rule); color: var(--same); }
+.nt.new .tag { color: var(--new); border-color: var(--new); } .nt.re .tag { color: var(--re); border-color: var(--re); } .nt.gone .tag { color: var(--gone); border-color: var(--gone); }
+
+/* numbered pins on the specimens (open their note) */
+.pin { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 0; cursor: pointer; vertical-align: middle;
+  font: 700 11px/1 var(--doc-mono); color: #fff; background: var(--new); margin: 0 4px; flex: none; }
+.pin.re { background: var(--re); } .pin.same { background: var(--same); } .pin.gone { background: var(--gone); }
+
+/* ── the product frame ─────────────────────────────────────────────────────────────── */
+.fr { font: 14px/1.45 var(--p-sans); color: var(--p-ink); background: var(--p-paper); border: 1px solid var(--p-line2); border-radius: 10px; overflow: hidden; }
+.fr.desk { width: 1280px; }
+.fr.phone { width: 375px; }
+.chrome { font: 600 10.5px/1 var(--doc-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.fr b { font-weight: 700; }
+.hdr { display: flex; align-items: center; gap: 14px; padding: 14px 28px; background: var(--p-card); border-bottom: 1px solid var(--p-line); }
+.hdr .back { font-weight: 600; color: var(--p-ink2); padding-right: 14px; border-right: 1px solid var(--p-line); }
+.hdr h2 { margin: 0; font: 700 20px/1.2 var(--p-sans); }
+.chip { font: 700 10.5px/1 var(--p-sans); letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; background: var(--p-fill); border: 1px solid var(--p-line2); color: var(--p-ink2); }
+.hdr .sp { flex: 1; }
+.hdr .ghost { font-weight: 600; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--p-line2); background: var(--p-fill); }
+.pg { padding: 18px 28px 22px; display: grid; gap: 16px; }
+.band { display: inline-grid; grid-template-columns: repeat(4, 180px); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.band > div { padding: 10px 16px; border-left: 1px solid var(--p-line); display: grid; gap: 2px; }
+.band > div:first-child { border-left: 0; }
+.band .lab { font: 600 11px/1.2 var(--p-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-dim); }
+.band .val { font: 700 22px/1.2 var(--p-sans); font-variant-numeric: tabular-nums; }
+.band .amber { color: var(--p-amber); }
+.band .door { cursor: pointer; }
+.band .door .lab::after { content: " →"; color: var(--p-olive); opacity: 0.55; }
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 16px 18px; display: grid; gap: 12px; }
+.card h3 { margin: 0; font: 700 16px/1.3 var(--p-sans); }
+.card .sub { margin: -8px 0 0; color: var(--p-ink2); }
+.tb { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 7px 14px; border: 1px solid var(--p-line2); background: var(--p-olive-soft); color: var(--p-olive); font-weight: 600; }
+.sq { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--p-line2); border-radius: 8px; background: var(--p-card); }
+.range { font: 700 19px/1 var(--p-sans); padding: 0 12px; }
+.fil { border: 1px solid var(--p-line2); border-radius: 8px; padding: 8px 12px; color: var(--p-ink2); background: var(--p-card); }
+.btn { border: 1px solid var(--p-line2); border-radius: 8px; padding: 9px 16px; font-weight: 700; background: var(--p-card); }
+.btn.lime { background: var(--p-lime); border-color: transparent; color: #2E3A0C; }
+.btn.small { padding: 7px 12px; font-weight: 600; }
+.lines { display: grid; gap: 5px; color: var(--p-amber); }
+.ln { display: flex; gap: 7px; align-items: flex-start; }
+.ln svg { flex: none; margin-top: 3px; }
+/* the schedule screens' shipped door: olive, bold, a chevron, no underline until hover */
+.link { color: var(--p-olive); font-weight: 650; white-space: nowrap; cursor: pointer; }
+.link:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* the kit's in-sentence link (Show all N) */
+.tlink { display: inline-block; margin-top: 6px; color: var(--p-olive); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; font-size: 13.5px; }
+.oldlines { max-height: 300px; overflow: hidden; position: relative; }
+.oldlines::after { content: ""; position: absolute; inset: auto 0 0; height: 60px; background: linear-gradient(transparent, var(--p-card)); }
+.grid { display: grid; grid-template-columns: 120px repeat(7, 1fr); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; font-size: 12.5px; }
+.grid > div { border-left: 1px solid var(--p-line); border-top: 1px solid var(--p-line); padding: 6px 8px; min-height: 34px; }
+.grid .gh { font: 700 11px/1.2 var(--p-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); border-top: 0; text-align: center; padding: 9px 6px; }
+.grid .gh:first-child { text-align: left; }
+.grid .fac { font-weight: 600; color: var(--p-ink2); border-left: 0; }
+.slot { display: block; border-radius: 5px; padding: 3px 6px; color: #fff; font-weight: 600; font-size: 11.5px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot.rep { background: var(--p-rep); } .slot.sel { background: var(--p-sel); }
+.slot.open { background: transparent; color: var(--p-dim); border: 1px dashed var(--p-line2); font-weight: 500; }
+
+/* the window */
+/* KitDialog, wide (800): a tinted edge, 12px radius, no shadow (the One Window ruling); full screen on a phone */
+.win { background: var(--p-card); border-radius: 12px; border: 1px solid var(--p-line2); width: 800px; }
+.whd { display: flex; align-items: flex-start; gap: 12px; padding: 18px 22px 14px; border-bottom: 1px solid var(--p-line); }
+.whd h4 { margin: 0; font: 700 19px/1.25 var(--p-sans); }
+.whd p { margin: 2px 0 0; color: var(--p-ink2); font-size: 13.5px; }
+.weye { display: block; font: 700 11px/1.2 var(--p-sans); letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-dim); margin-bottom: 4px; }
+.whd p.wid { color: var(--p-dim); font-size: 13px; }
+.grp { display: grid; gap: 14px; }
+.grp + .grp { border-top: 1px solid var(--p-line); padding-top: 16px; }
+.whd .x { margin-left: auto; color: var(--p-dim); font-size: 20px; line-height: 1; }
+.wbd { padding: 16px 22px 18px; display: grid; gap: 16px; }
+.why { border: 1px solid var(--p-line); border-left: 3px solid var(--p-amber); border-radius: 8px; padding: 12px 14px; display: grid; gap: 10px; }
+.why.ok { border-left-color: var(--p-olive); }
+.why .head { font-weight: 700; }
+.why p { margin: 0; color: var(--p-ink2); }
+.doors { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.sec { font: 700 11px/1.2 var(--p-sans); letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-ink2); margin-bottom: 6px; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.t th { text-align: left; font: 700 11px/1.2 var(--p-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); padding: 7px 8px; border-bottom: 1px solid var(--p-line2); }
+.t td { padding: 8px; border-bottom: 1px solid var(--p-line); vertical-align: top; }
+.t .num { text-align: right; font-variant-numeric: tabular-nums; }
+.t .amb { color: var(--p-amber); font-weight: 600; }
+.t .dim { color: var(--p-dim); }
+.wft { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 22px; border-top: 1px solid var(--p-line); }
+.give { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; border: 1px solid var(--p-line2); border-radius: 8px; padding: 0 12px; font-weight: 600; white-space: nowrap; background: var(--p-card); }
+.give.touch { min-height: 44px; }
+
+/* drafts step */
+.dwin { width: 1280px; background: var(--p-card); }
+.steps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 28px; }
+.steps i { height: 4px; border-radius: 2px; background: var(--p-olive); display: block; }
+.dbody { display: grid; grid-template-columns: 290px 1fr; gap: 20px; padding: 18px 28px 22px; align-items: start; }
+/* the shipped warning notice (ck.notice + noticeWarn): an amber tint and a 1px border */
+.notice { grid-column: 1 / -1; display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--p-amber-line); background: rgba(131, 80, 6, 0.08); border-radius: 8px; padding: 10px 13px; color: var(--p-ink2); font-size: 13.5px; }
+.notice svg { color: var(--p-amber); flex: none; margin-top: 3px; }
+.dcard { border: 1.5px solid var(--p-olive); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.dcard .top { display: flex; justify-content: space-between; align-items: baseline; }
+.dcard .score { font: 800 24px/1 var(--p-sans); color: var(--p-olive); }
+.dcard .score small { font-size: 13px; color: var(--p-dim); font-weight: 600; }
+.dcard ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.dcard li { display: flex; gap: 6px; align-items: flex-start; }
+.dcard li svg { flex: none; margin-top: 3px; }
+.dcard li.amber { color: var(--p-amber); }
+.dcard li.good svg { color: var(--p-good, #2A5222); }
+.dcard li.plain { color: var(--p-ink2); padding-left: 19px; }
+.trow { display: grid; grid-template-columns: 1fr 120px 90px 70px; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--p-line); align-items: center; }
+.trow:first-child { border-top: 0; }
+.trow .nm { display: flex; gap: 8px; align-items: center; font-weight: 700; }
+.sw { width: 10px; height: 10px; border-radius: 2px; background: var(--p-rep); }
+.sw.sel { background: var(--p-sel); }
+.trow .amb { color: var(--p-amber); font-weight: 600; }
+.tlist { border: 1px solid var(--p-line); border-radius: 8px; }
+
+.compare { display: grid; gap: 18px; }
+.lbl { font: 600 11px/1 var(--doc-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.lbl.after { color: var(--new); } .lbl.before { color: var(--gone); }
+[data-only="after"] [data-v="before"] { display: none; }
+
+/* asks */
+.asks { display: grid; gap: 12px; max-width: 980px; }
+.ask { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; }
+.ask h3 { margin: 0; font-size: 16px; }
+.ask p { margin: 0; color: var(--muted); }
+.ask .rec { color: var(--fg); }
+.ask .ruled { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--new); }
+
+dialog { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); color: var(--fg); max-width: 560px; padding: 18px 20px; }
+dialog::backdrop { background: rgba(10, 15, 20, 0.45); }
+dialog h3 { margin: 0 0 6px; font-size: 17px; }
+dialog p { margin: 0 0 10px; color: var(--muted); }
+dialog .close { margin-top: 6px; border: 1px solid var(--rule); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 7px 14px; font: 600 13px var(--doc-font); cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="warn" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M20 6 9 17l-5-5"/></symbol>
+</svg>
+
+<div class="doc">
+  <header class="dochead">
+    <span class="eyebrow">Club schedules · drawings · 2026-11-24</span>
+    <h1>Open slots and short teams, said once and with a reason</h1>
+    <p>Owner ruling today: a team’s share is the limit. Time nobody is owed stays open, and the screen says why it is open and what would change it. Every number here comes from the Milton Bats winter dome runs traced today.</p>
+  </header>
+
+  <nav class="stabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" data-tab="page" aria-selected="true">1 · The schedule page</button>
+    <button type="button" role="tab" data-tab="why" aria-selected="false">2 · The “why” window</button>
+    <button type="button" role="tab" data-tab="drafts" aria-selected="false">3 · New schedule drafts</button>
+    <button type="button" role="tab" data-tab="phone" aria-selected="false">4 · On a phone</button>
+    <button type="button" role="tab" data-tab="asks" aria-selected="false">5 · Asks</button>
+  </nav>
+
+  <!-- ═════════════ 1 · THE PAGE ═════════════ -->
+  <section data-panel="page">
+    <div class="viewrow">
+      <div class="vgroup"><span>View</span><div class="seg" data-seg="page"><button type="button" aria-pressed="true" data-show="all">Before and after</button><button type="button" aria-pressed="false" data-show="after">Only the new page</button></div></div>
+    </div>
+    <p class="lede">The whole screen at desk width (1,280px, true size; scroll sideways inside the frame if your window is narrower). Before, a line per team pushed the grid below the fold. After, one line says how many teams are short and where the open slots are, and opens the window that explains them.</p>
+    <div class="stage desk">
+      <div class="fcol compare" data-cmp="page">
+        <div data-v="before">
+          <div class="lbl before">Before · today’s page, Oct 25 – Dec 6 on screen</div>
+          <div class="fscroll"><div class="fr desk">
+            <div class="hdr"><span class="back">← Schedules</span><h2>Winter dome 2026–27</h2><span class="chip">Draft</span><span class="sp"></span><span class="ghost">View site</span></div>
+            <div class="pg">
+              <div class="band"><div><span class="lab">Handed out</span><span class="val">112 of 120</span></div><div class="door"><span class="lab">The bill</span><span class="val">$13,680.00</span></div><div><span class="lab">Short</span><span class="val amber">8</span></div><div><span class="lab">Clashes</span><span class="val">0</span></div></div>
+              <div class="card">
+                <h3>Read the schedule</h3><p class="sub">Choose a view to inspect this schedule.</p>
+                <div class="tb"><span class="pill">View <b>Grid</b> ▾</span><span class="sq">‹</span><span class="range">Oct 25 – Dec 6, 2026</span><span class="sq">›</span><span class="sp" style="flex:1"></span><span class="fil">Facility ▾</span><span class="fil">Group ▾</span><span class="fil">Team ▾</span><span class="btn">⋯ Tools ▾</span><span class="btn">Export</span><span class="btn lime">Send</span></div>
+                <div class="lines oldlines">
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U11 Rep Purple is 3 short these Sundays.<button type="button" class="pin gone" data-goto="p1">1</button></span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U11 Rep White is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U13 Rep Purple is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U13 Rep White is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U15 Rep Purple is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U15 Rep White is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U17 Rep Purple is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U17 Rep White is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U19 Rep Purple is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>Milton Bats U19 Rep White is 3 short these Sundays.</span>
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg>… and 10 more lines, one per Select team. The grid starts below them.</span>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div data-v="after">
+          <div class="lbl after">After · the same page, Feb 21 – Mar 7 on screen · drawn for a reader without the club’s Accounting, so tile 2 reads Open (a money reader sees The bill there, also a door)</div>
+          <div class="fscroll"><div class="fr desk">
+            <div class="hdr"><span class="back">← Schedules</span><h2>Winter dome 2026–27</h2><span class="chip">Draft</span><span class="sp"></span><span class="ghost">View site</span></div>
+            <div class="pg">
+              <div class="band"><div><span class="lab">Handed out</span><span class="val">172 of 180</span></div><div class="door"><span class="lab">Open</span><span class="val">8</span></div><div class="door"><span class="lab">Short</span><span class="val amber">8</span></div><div><span class="lab">Clashes</span><span class="val">0</span></div></div>
+              <div style="margin-top:-10px"><button type="button" class="pin" data-goto="p3">3</button><span style="font-size:12px;color:var(--p-dim)">The Short tile opens the same window as the line below.</span></div>
+              <div class="card">
+                <h3>Read the schedule</h3><p class="sub">Choose a view to inspect this schedule.</p>
+                <div class="tb"><span class="pill">View <b>Grid</b> ▾</span><span class="sq">‹</span><span class="range">Feb 21 – Mar 7, 2027</span><span class="sq">›</span><span class="sp" style="flex:1"></span><span class="fil">Facility ▾</span><span class="fil">Group ▾</span><span class="fil">Team ▾</span><span class="btn">⋯ Tools ▾</span><span class="btn">Export</span><span class="btn lime">Send</span></div>
+                <div class="lines">
+                  <span class="ln"><svg width="14" height="14"><use href="#warn"/></svg><span>8 teams are 1 slot short of their share, and 8 slots are open, all on Sun, Mar 7. <span class="link">See why ›</span></span><button type="button" class="pin" data-goto="p2">2</button></span>
+                </div>
+                <div class="grid">
+                  <div class="gh">Facility</div><div class="gh">Sun, Feb 21</div><div class="gh">Sun, Feb 28</div><div class="gh">Sun, Mar 7</div><div class="gh"></div><div class="gh"></div><div class="gh"></div><div class="gh"></div>
+                  <div class="fac">Field 1</div><div><span class="slot rep">U13 Rep Purple</span><span class="slot rep">U17 Rep White</span><span class="slot rep">U11 Rep White</span></div><div><span class="slot rep">U15 Rep White</span><span class="slot rep">U19 Rep Purple</span><span class="slot sel">U13 Select White</span></div><div><span class="slot rep">U11 Rep Purple</span><span class="slot rep">U15 Rep Purple</span><span class="slot rep">U17 Rep Purple</span></div><div></div><div></div><div></div><div></div>
+                  <div class="fac">Field 5</div><div><span class="slot sel">U15 Select Purple</span><span class="slot sel">U19 Select White</span><span class="slot sel">U11 Select White</span></div><div><span class="slot sel">U17 Select Purple</span><span class="slot sel">U13 Select Purple</span><span class="slot sel">U11 Select Purple</span></div><div><span class="slot open">Open</span><span class="slot open">Open</span><span class="slot open">Open</span></div><div></div><div></div><div></div><div></div>
+                  <div class="fac">Field 6</div><div><span class="slot sel">U17 Select White</span><span class="slot sel">U15 Select White</span><span class="slot sel">U19 Select Purple</span></div><div><span class="slot sel">U19 Select White</span><span class="slot sel">U15 Select Purple</span><span class="slot sel">U13 Select White</span></div><div><span class="slot open">Open</span><span class="slot open">Open</span><span class="slot open">Open</span></div><div></div><div></div><div></div><div></div>
+                </div>
+                <div style="font-size:12px;color:var(--p-dim)">Fields 2–4 left out of this drawing, and the team placements are illustrative; the grid itself is unchanged. <button type="button" class="pin same" data-goto="p4">4</button></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <div class="notes">
+        <button type="button" class="nt gone" id="p1"><span class="nn">1</span><b>A line per team, gone</b><span class="tag">Removed</span><span class="tx">Each line compared a team with a slice of its season share pro-rated over the dates on screen. Rotation decides who looks behind on any seven Sundays, so the list changed with every arrow click and named teams that had their full share (U11 Rep had 7 of 7) while missing ones that were short (U19 Select). It also counted Sundays a booking held as time owed.</span></button>
+        <button type="button" class="nt new" id="p2"><span class="nn">2</span><b>One line, the season’s facts</b><span class="tag">New</span><span class="tx">The same sentence on every set of Sundays: how many teams are short, by how much, how many slots are open, and where. Only the “where” clause follows the screen: “all on Sun, Mar 7”, or “on 4 Sundays, 2 of them on these”. When nothing is short and nothing is open, there is no line. “See why ›” opens tab 2’s window.</span></button>
+        <button type="button" class="nt new" id="p3"><span class="nn">3</span><b>Short becomes a door</b><span class="tag">New</span><span class="tx">The band’s Short tile opens the same window, so the number at the top leads somewhere. Its arrow sits after the label, as the shipped band draws a door tile. At 0 it is not a door: there would be nothing to open. Open (or The bill) and Clashes keep what they do today.</span></button>
+        <button type="button" class="nt" id="p4"><span class="nn">4</span><b>The grid</b><span class="tag">Unchanged</span><span class="tx">Open slots already draw as dashed “Open”. The page gains back the height twenty lines took, so the grid starts where the first warning used to.</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ 2 · THE WHY WINDOW ═════════════ -->
+  <section data-panel="why" hidden>
+    <div class="viewrow">
+      <div class="vgroup"><span>Case</span><div class="seg" data-seg="why"><button type="button" aria-pressed="true" data-case="a">A · A rule holds teams back</button><button type="button" aria-pressed="false" data-case="b">B · A kept field</button><button type="button" aria-pressed="false" data-case="c">C · Someone can take it</button></div></div>
+    </div>
+    <p class="lede">One window, opened from the line or the Short tile. It groups the open slots by the reason they are open: a callout says the reason and offers the change that would close it, and the teams and slots it covers sit under it. It is a window you read, so it has no footer; × closes it. Cases A and B are the Milton runs traced today; C is an example of a slot that comes open later.</p>
+    <div class="stage">
+      <div class="fcol">
+        <div data-case-show="a">
+          <div class="fcap"><b>Case A</b> · your run today: 60-minute slots, 10 usable Sundays, one practice a team a week</div>
+          <div class="fscroll"><div class="win">
+            <div class="whd"><div><span class="weye">Winter dome 2026–27</span><h4>Open slots and short teams</h4><p class="wid">Jan 3 – Mar 7 · 180 slots to hand out</p></div><span class="x">×</span></div>
+            <div class="wbd">
+              <div class="grp">
+                <div class="why">
+                  <span class="head">8 slots are open because one practice a week holds the Rep teams back <button type="button" class="pin" data-goto="w1">1</button></span>
+                  <p>A Rep team can play at most 10 of these 10 Sundays, and its 60% share is 11 slots. Every Select team already has its full share, so the time the Rep teams can’t use stays open.</p>
+                  <div class="doors"><span class="link">Change practices a week ›</span><span class="link">Change the shares ›</span><button type="button" class="pin" data-goto="w2">2</button></div>
+                </div>
+                <div>
+                  <div class="sec">Short for the season <button type="button" class="pin" data-goto="w3">3</button></div>
+                  <table class="t"><thead><tr><th>Team</th><th class="num">Has</th><th class="num">Share</th></tr></thead><tbody>
+                    <tr><td>Milton Bats U11 Rep Purple</td><td class="num amb">10</td><td class="num">11</td></tr>
+                    <tr><td>Milton Bats U11 Rep White</td><td class="num amb">10</td><td class="num">11</td></tr>
+                    <tr><td>Milton Bats U13 Rep Purple</td><td class="num amb">10</td><td class="num">11</td></tr>
+                    <tr><td>Milton Bats U13 Rep White</td><td class="num amb">10</td><td class="num">11</td></tr>
+                    <tr><td>Milton Bats U15 Rep Purple</td><td class="num amb">10</td><td class="num">11</td></tr>
+                    <tr><td>Milton Bats U15 Rep White</td><td class="num amb">10</td><td class="num">11</td></tr>
+                  </tbody></table>
+                  <span class="tlink">Show all 8</span>
+                </div>
+                <div>
+                  <div class="sec">Open slots</div>
+                  <table class="t"><thead><tr><th>When</th><th>Where</th><th>Who could take it</th></tr></thead><tbody>
+                    <tr><td>Sun, Mar 7 · 8:00 a.m., 9:00 a.m. and 10:00 a.m.</td><td>Fields 5 and 6</td><td class="dim">Nobody: kept for Select, and every Select team has its share</td></tr>
+                    <tr><td>Sun, Mar 7 · 2 slots</td><td>Fields 1–4</td><td class="dim">Nobody: every Rep team already plays that Sunday</td></tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div data-case-show="b" hidden>
+          <div class="fcap"><b>Case B</b> · the 90-minute schedule, after the generator fix: 2 left on the Select fields</div>
+          <div class="fscroll"><div class="win">
+            <div class="whd"><div><span class="weye">Winter dome 2026–27</span><h4>Open slots and short teams</h4><p class="wid">Jan 3 – Mar 7 · 120 slots to hand out</p></div><span class="x">×</span></div>
+            <div class="wbd">
+              <div class="grp">
+                <div class="why">
+                  <span class="head">2 slots are open on fields kept for Select <button type="button" class="pin" data-goto="w4">4</button></span>
+                  <p>Fields 5 and 6 are kept for the Select group, and every Select team has its full share. The two teams still short are Rep teams, and the rule keeps them off those fields.</p>
+                  <div class="doors"><span class="link">Change the field rules ›</span></div>
+                </div>
+                <div>
+                  <div class="sec">Short for the season</div>
+                  <table class="t"><thead><tr><th>Team</th><th class="num">Has</th><th class="num">Share</th></tr></thead><tbody>
+                    <tr><td>Milton Bats U19 Rep White</td><td class="num amb">6</td><td class="num">7</td></tr>
+                    <tr><td>Milton Bats U15 Rep Purple</td><td class="num amb">6</td><td class="num">7</td></tr>
+                  </tbody></table>
+                </div>
+                <div>
+                  <div class="sec">Open slots</div>
+                  <table class="t"><thead><tr><th>When</th><th>Where</th><th>Who could take it</th></tr></thead><tbody>
+                    <tr><td>Sun, Mar 7 · 8:00 a.m.</td><td>Field 5</td><td class="dim">Nobody: kept for Select, and every Select team has its share</td></tr>
+                    <tr><td>Sun, Mar 7 · 8:00 a.m.</td><td>Field 6</td><td class="dim">Nobody: kept for Select, and every Select team has its share</td></tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div data-case-show="c" hidden>
+          <div class="fcap"><b>Case C</b> · a slot comes open after the schedule is made (a team hands one back, or you clear one) and a team owed time is free</div>
+          <div class="fscroll"><div class="win">
+            <div class="whd"><div><span class="weye">Winter dome 2026–27</span><h4>Open slots and short teams</h4><p class="wid">Jan 3 – Mar 7 · 120 slots to hand out</p></div><span class="x">×</span></div>
+            <div class="wbd">
+              <div class="grp">
+                <div class="why ok">
+                  <span class="head">1 slot is open that a short team can take <button type="button" class="pin" data-goto="w5">5</button></span>
+                  <p>Milton Bats U15 Select White handed back Sun, Feb 14. Two Select teams are 1 short and free that Sunday.</p>
+                </div>
+                <div>
+                  <div class="sec">Open slots</div>
+                  <table class="t"><thead><tr><th>When</th><th>Where</th><th>Who could take it</th><th class="num"></th></tr></thead><tbody>
+                    <tr><td>Sun, Feb 14 · 9:30 a.m.</td><td>Field 5</td><td>U17 Select Purple, U17 Select White</td><td class="num"><span class="give">Give it to ▾</span></td></tr>
+                  </tbody></table>
+                </div>
+                <div>
+                  <div class="sec">Short for the season</div>
+                  <table class="t"><thead><tr><th>Team</th><th class="num">Has</th><th class="num">Share</th><th>Why</th></tr></thead><tbody>
+                    <tr><td>Milton Bats U15 Select White</td><td class="num amb">4</td><td class="num">5</td><td class="dim">Handed back Feb 14</td></tr>
+                    <tr><td>Milton Bats U17 Select Purple</td><td class="num amb">4</td><td class="num">5</td><td class="dim">Free Feb 14</td></tr>
+                    <tr><td>Milton Bats U17 Select White</td><td class="num amb">4</td><td class="num">5</td><td class="dim">Free Feb 14</td></tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <div class="notes">
+        <button type="button" class="nt new" id="w1"><span class="nn">1</span><b>The reason, as a callout</b><span class="tag">New</span><span class="tx">The window groups open slots by why they are open. Each group opens with a white callout with a coloured edge: one sentence a coordinator can check against the settings they chose (“one practice a week”, “kept for Select”), and the doors. The teams and slots sit under it, unboxed. Two reasons, two groups, a hairline between them.</span></button>
+        <button type="button" class="nt new" id="w2"><span class="nn">2</span><b>Doors go to Settings, named for what they open</b><span class="tag">New</span><span class="tx">Drawn as the schedule screens’ shipped door (olive, bold, a chevron, no underline until hover, 44px on touch). Each opens the schedule’s Settings with that rule or share in view; the coordinator changes it and regenerates. Nothing changes behind their back. Tab 5, ask 4.</span></button>
+        <button type="button" class="nt new" id="w3"><span class="nn">3</span><b>Has · Share</b><span class="tag">New</span><span class="tx">What each team has against what it should have, so the “1 short” reads as 10 against 11. The Fair shares table’s recipe: figures right under right-aligned headings, amber on what it has. A Why column appears only when the rows differ (case C); here the callout already says why. Past 6 rows, “Show all 8”.</span></button>
+        <button type="button" class="nt new" id="w4"><span class="nn">4</span><b>The kept-field case</b><span class="tag">New</span><span class="tx">What the generator fix today leaves on the 90-minute schedule. The one setting that closes it is letting Rep onto the Select fields. A swap (move a Select team onto Field 5 to free a regular field for a Rep team) would also close it; that is tab 5, ask 6.</span></button>
+        <button type="button" class="nt new" id="w5"><span class="nn">5</span><b>When someone can take it: Give it to</b><span class="tag">New</span><span class="tx">The only case with a one-click fix, because nothing about the rules changes: a free team that is owed time, allowed on that field. The control sits in the last column, the same shape on every row, at the control height (44px on touch). On a draft it assigns; on a sent schedule it joins “Send the changes”. Tab 5, ask 5.</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ 3 · DRAFTS ═════════════ -->
+  <section data-panel="drafts" hidden>
+    <div class="viewrow">
+      <div class="vgroup"><span>View</span><div class="seg" data-seg="drafts"><button type="button" aria-pressed="true" data-show="all">Before and after</button><button type="button" aria-pressed="false" data-show="after">Only the new step</button></div></div>
+    </div>
+    <p class="lede">The New schedule window’s step 2, as you saw it today. The card and the team list changes are already built (not committed). The reason notice above the cards is new: today it only appears when the one-a-day rule is the cause.</p>
+    <div class="stage desk">
+      <div class="fcol compare" data-cmp="drafts">
+        <div data-v="before">
+          <div class="lbl before">Before · today</div>
+          <div class="fscroll"><div class="fr desk dwin">
+            <div class="whd" style="padding:18px 28px 12px"><div><span style="color:var(--p-ink2);font-weight:600">← Settings</span><h4 style="margin-top:8px">New schedule</h4><p>Step 2 of 2 · drafts for Winter dome 2026–27</p></div><span class="x">×</span></div>
+            <div class="steps"><i></i><i></i></div>
+            <div class="dbody">
+              <div class="dcard"><div class="top"><b>Best overall</b><span class="score">94<small>/100</small></span></div>
+                <ul><li class="amber"><svg width="13" height="13"><use href="#warn"/></svg>8 teams short: Milton Bats U11 Rep Purple by 1, Milton Bats U11 Rep White by 1, Milton Bats U13 Rep Purple by 1, Milton Bats U13 Rep White by 1, Milton Bats U15 Rep Purple by 1, Milton Bats U15 Rep White by 1, Milton Bats U17 Rep Purple by 1 and Milton Bats U17 Rep White by 1</li>
+                <li class="good"><svg width="13" height="13"><use href="#check"/></svg>Each team on the same nights every week</li><li class="plain">8 slots left open</li></ul></div>
+              <div class="tlist">
+                <div class="trow"><span class="nm"><i class="sw"></i>Milton Bats U11 Rep Purple</span><span>10 slots</span><span>0 prime</span><span>Sun</span></div>
+                <div class="trow"><span class="nm"><i class="sw"></i>Milton Bats U19 Rep Purple</span><span>10 slots</span><span>0 prime</span><span>Sun</span></div>
+                <div class="trow"><span class="nm"><i class="sw sel"></i>Milton Bats U11 Select Purple</span><span>8 slots</span><span>0 prime</span><span>Sun</span></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div data-v="after">
+          <div class="lbl after">After</div>
+          <div class="fscroll"><div class="fr desk dwin">
+            <div class="whd" style="padding:18px 28px 12px"><div><span style="color:var(--p-ink2);font-weight:600">← Settings</span><h4 style="margin-top:8px">New schedule</h4><p>Step 2 of 2 · drafts for Winter dome 2026–27</p></div><span class="x">×</span></div>
+            <div class="steps"><i></i><i></i></div>
+            <div class="dbody">
+              <div class="notice"><svg width="14" height="14"><use href="#warn"/></svg><span>One practice a week means a Rep team can play at most 10 of these 10 Sundays, and its 60% share is 11 slots. <span class="link">Change the rules ›</span></span><button type="button" class="pin" data-goto="d1">1</button></div>
+              <div class="dcard"><div class="top"><b>Best overall</b><span class="score">94<small>/100</small></span></div>
+                <ul><li class="amber"><svg width="13" height="13"><use href="#warn"/></svg><span>8 teams are 1 slot short of their share: Milton Bats U11 Rep Purple, Milton Bats U11 Rep White and 6 more. Each is marked in the list.<button type="button" class="pin re" data-goto="d2">2</button></span></li>
+                <li class="good"><svg width="13" height="13"><use href="#check"/></svg>Each team on the same nights every week</li><li class="plain">8 slots left open</li></ul></div>
+              <div class="tlist">
+                <div class="trow"><span class="nm"><i class="sw"></i>Milton Bats U11 Rep Purple</span><span class="amb">10 of 11 slots <button type="button" class="pin re" data-goto="d3">3</button></span><span>0 prime</span><span>Sun</span></div>
+                <div class="trow"><span class="nm"><i class="sw"></i>Milton Bats U19 Rep Purple</span><span>10 slots</span><span>0 prime</span><span>Sun</span></div>
+                <div class="trow"><span class="nm"><i class="sw sel"></i>Milton Bats U11 Select Purple</span><span>8 slots</span><span>0 prime</span><span>Sun</span></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <div class="notes">
+        <button type="button" class="nt new" id="d1"><span class="nn">1</span><b>The reason, before you keep a draft</b><span class="tag">New</span><span class="tx">The shipped notice that today explains a one-a-day shortfall learns the other reasons: one a week (this case) and a kept field (case B). It says the cause only; the card under it already says who is short. It sits above the cards because every draft shares the cause. Drawn as it ships (an amber tint); moving every warning notice to the white-with-an-edge callout is a separate sweep.</span></button>
+        <button type="button" class="nt re" id="d2"><span class="nn">2</span><b>The card line, folded</b><span class="tag">Restyled · built</span><span class="tx">Up to three teams by name; past that one sentence naming the two furthest behind. The card is itself the button that picks a draft, so it can’t hold a “Show all” link; the list beside it is where the detail is.</span></button>
+        <button type="button" class="nt re" id="d3"><span class="nn">3</span><b>“10 of 11 slots”</b><span class="tag">Restyled · built</span><span class="tx">A short team’s row says what it has of its share, in amber. A team with its share still reads “10 slots”.</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ 4 · PHONE ═════════════ -->
+  <section data-panel="phone" hidden>
+    <p class="lede" style="margin-top:14px">375px, true size. Open this page on your phone to judge it. The line sits under the day stepper; the window opens full screen, as every window does on a phone, its tables turning into rows.</p>
+    <div class="stage">
+      <div class="fcol" style="grid-template-columns:repeat(auto-fit, minmax(375px, max-content));gap:18px">
+        <div>
+          <div class="fcap"><b>The page</b> · the line under the day stepper</div>
+          <div class="fr phone">
+            <div class="hdr" style="padding:12px 16px"><span class="back" style="border:0;padding:0">←</span><h2 style="font-size:17px">Winter dome 2026–27</h2><span class="chip">Draft</span></div>
+            <div class="pg" style="padding:14px 16px">
+              <div class="card" style="padding:14px">
+                <div class="tb"><span class="sq">‹</span><span class="range" style="font-size:16px;flex:1;text-align:center">Sun, Mar 7</span><span class="sq">›</span></div>
+                <div class="lines"><span class="ln"><svg width="14" height="14"><use href="#warn"/></svg><span>8 teams are 1 slot short of their share, and 8 slots are open, all on Sun, Mar 7. <span class="link" style="display:inline-flex;align-items:center;min-height:44px">See why ›</span></span></span></div>
+                <div style="display:grid;gap:6px"><span class="slot open" style="padding:10px">8:00 a.m. · Field 5 · Open</span><span class="slot open" style="padding:10px">8:00 a.m. · Field 6 · Open</span><span class="slot rep" style="padding:10px">8:00 a.m. · Field 1 · U11 Rep Purple</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="fcap"><b>The window</b> · full screen, case A</div>
+          <div class="fr phone" style="background:var(--p-card)">
+            <div class="whd" style="padding:16px"><div><span class="weye">Winter dome 2026–27</span><h4 style="font-size:17px">Open slots and short teams</h4><p class="wid">Jan 3 – Mar 7 · 180 slots</p></div><span class="x">×</span></div>
+            <div class="wbd" style="padding:14px 16px">
+              <div class="why"><span class="head">8 slots are open because one practice a week holds the Rep teams back</span>
+                <p>A Rep team can play at most 10 of these 10 Sundays, and its 60% share is 11 slots.</p>
+                <div class="doors" style="display:grid;gap:0"><span class="link" style="min-height:44px;display:flex;align-items:center">Change practices a week ›</span><span class="link" style="min-height:44px;display:flex;align-items:center">Change the shares ›</span></div>
+                <div class="sec">Short for the season</div>
+                <div style="display:grid;gap:0">
+                  <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--p-line)"><span>U11 Rep Purple</span><span class="amb" style="color:var(--p-amber);font-weight:600">10 of 11</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--p-line)"><span>U11 Rep White</span><span style="color:var(--p-amber);font-weight:600">10 of 11</span></div>
+                  <div style="padding:8px 0;color:var(--p-dim)">… 4 more rows, then <span class="tlink" style="margin:0">Show all 8</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="fcap"><b>The window</b> · case C, an open slot as a row</div>
+          <div class="fr phone" style="background:var(--p-card)">
+            <div class="whd" style="padding:16px"><div><span class="weye">Winter dome 2026–27</span><h4 style="font-size:17px">Open slots and short teams</h4><p class="wid">Jan 3 – Mar 7 · 120 slots</p></div><span class="x">×</span></div>
+            <div class="wbd" style="padding:14px 16px">
+              <div class="why ok"><span class="head">1 slot is open that a short team can take</span><p>Milton Bats U15 Select White handed back Sun, Feb 14.</p></div>
+              <div class="sec">Open slots</div>
+              <div style="display:grid;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--p-line)">
+                <div><b>Sun, Feb 14 · 9:30 a.m.</b> · Field 5</div>
+                <div style="color:var(--p-ink2)">Could go to U17 Select Purple or U17 Select White</div>
+                <span class="give touch" style="justify-self:start">Give it to ▾</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <button type="button" class="nt new" id="ph1"><span class="nn">1</span><b>Rows, not a table</b><span class="tag">New</span><span class="tx">On a phone the Has · Share table becomes a row per team: the name on the left, “10 of 11” on the right in amber. The doors stack, each 44px tall. An open slot becomes a short block: when and where, who could take it, then “Give it to ▾” at 44px.</span></button>
+        <button type="button" class="nt" id="ph2"><span class="nn">2</span><b>Team names drop the club’s name here</b><span class="tag">Proposal</span><span class="tx">“Milton Bats U11 Rep Purple” repeats the club’s name on every row. The phone drawing shows them without it. Whether to do that everywhere is a separate question (tab 5, ask 7); it isn’t part of this build unless you say so.</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ 5 · ASKS ═════════════ -->
+  <section data-panel="asks" hidden>
+    <div class="asks" style="margin-top:16px">
+      <div class="ask"><span class="ruled">Ruled 2026-11-24</span><h3>1 · A team’s share is the limit</h3><p class="rec">Time nobody is owed stays open. The generator never hands a team more than its share; the screen says why the time is open and what would change it.</p></div>
+      <div class="ask"><span class="ruled">Ruled 2026-11-24 · as recommended</span><h3>2 · One line above the grid, and the per-team lines go</h3><p>The same sentence on every set of Sundays; only “where the open slots are” follows the screen. The “3 slots behind its share on these 7 Sundays” lines are removed (they were rebuilt today and are still misleading).</p><p class="rec"><b>Ruled:</b> yes.</p></div>
+      <div class="ask"><span class="ruled">Ruled 2026-11-24 · as recommended</span><h3>3 · The Short tile opens the same window</h3><p class="rec"><b>Ruled:</b> yes. The band’s amber number then leads to its explanation.</p></div>
+      <div class="ask"><span class="ruled">Ruled 2026-11-24 · as recommended</span><h3>4 · Doors go to Settings; nothing applies itself</h3><p>“Change practices a week ›” opens Settings with that rule in view, and the coordinator regenerates. The alternative is a one-click “apply and regenerate”.</p><p class="rec"><b>Ruled:</b> doors to Settings. A rule change re-plans every unlocked slot and can change bills; it should be seen.</p></div>
+      <div class="ask"><span class="ruled">Ruled 2026-11-24 · as recommended</span><h3>5 · “Give it to ▾” when a free, owed team can take a slot</h3><p>Only for case C. On a draft it assigns; on a sent schedule it becomes one of the changes to send.</p><p class="rec"><b>Ruled:</b> yes, in this build.</p></div>
+      <div class="ask"><span class="ruled">Ruled 2026-11-24 · as recommended</span><h3>6 · Suggest a swap for the kept-field case</h3><p>“Move U13 Select Purple to Field 5 and give its Field 2 slot to U19 Rep White.” It closes case B without changing a rule, but it is the hardest piece to build well.</p><p class="rec"><b>Ruled:</b> not now. After today’s generator fix this case is rare; record it in the ideas backlog.</p></div>
+      <div class="ask"><span class="ruled">Ruled 2026-11-24 · as recommended</span><h3>7 · Drop the club’s name from team names on these screens</h3><p>“Milton Bats U11 Rep Purple” → “U11 Rep Purple” in lists inside one club’s own schedule.</p><p class="rec"><b>Ruled:</b> a separate decision across the product, not this build.</p></div>
+      <div class="ask"><span class="ruled">Ruled 2026-11-24 · as recommended</span><h3>8 · The unit word is “slot”</h3><p>The band already counts slots (“172 of 180”). “10 of 11 slots” matches it. “Practices” reads warmer but would be a second word for the same count on one screen.</p><p class="rec"><b>Ruled:</b> slot.</p></div>
+    </div>
+  </section>
+</div>
+
+<dialog id="dlg"><h3 id="dlgT"></h3><p id="dlgB"></p><button type="button" class="close" id="dlgC">Close</button></dialog>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.stabs [data-tab]');
+  function show(name) {
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === name)); });
+    document.querySelectorAll('[data-panel]').forEach(function (p) { p.hidden = p.dataset.panel !== name; });
+    try { localStorage.setItem('gaps-tab', name); } catch (e) {}
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+  try { var t = localStorage.getItem('gaps-tab'); if (t && document.querySelector('[data-panel="' + t + '"]')) show(t); } catch (e) {}
+
+  document.querySelectorAll('.seg').forEach(function (seg) {
+    seg.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      seg.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      var which = seg.dataset.seg;
+      if (b.dataset.show) { var c = document.querySelector('[data-cmp="' + which + '"]'); if (c) c.dataset.only = b.dataset.show === 'after' ? 'after' : ''; }
+      if (b.dataset.case) document.querySelectorAll('[data-case-show]').forEach(function (x) { x.hidden = x.dataset.caseShow !== b.dataset.case; });
+    });
+  });
+
+  var dlg = document.getElementById('dlg');
+  document.getElementById('dlgC').addEventListener('click', function () { dlg.close(); });
+  document.addEventListener('click', function (e) {
+    var pin = e.target.closest('[data-goto]');
+    if (pin) {
+      e.preventDefault(); e.stopPropagation();
+      var n = document.getElementById(pin.dataset.goto); if (!n) return;
+      if (window.matchMedia('(max-width: 900px)').matches || n.closest('.stage.desk')) {
+        document.getElementById('dlgT').textContent = n.querySelector('b').textContent + ' · ' + n.querySelector('.tag').textContent;
+        document.getElementById('dlgB').textContent = n.querySelector('.tx').textContent;
+        if (dlg.showModal) dlg.showModal();
+      }
+      n.classList.add('flash'); setTimeout(function () { n.classList.remove('flash'); }, 1400);
+      return;
+    }
+    var nt = e.target.closest('.nt');
+    if (nt) {
+      document.getElementById('dlgT').textContent = nt.querySelector('b').textContent + ' · ' + nt.querySelector('.tag').textContent;
+      document.getElementById('dlgB').textContent = nt.querySelector('.tx').textContent;
+      if (dlg.showModal) dlg.showModal();
+    }
+  });
+})();
+</script>

@@ -204,3 +204,10 @@ Both came out of the 2026-11-07 external review of the club's navigation (`CLUB_
 
 - **Cancel a day across programs (F-XR-5).** Owner Ask 12 ruled it gets its own plan. A rainout that cancels games only is already ruled (9e·10) and is not this. The 13c drawing prompt points at it as "its own plan to come".
 - **A club-level "next season" door and roll-all for rep teams (F-XR-7).** Ruled "a rep teams item, not in Stage 13" (F-O4-1); no plan owns it. Today each team rolls on its own.
+
+## Club schedules: open slots and short teams (2026-11-24)
+
+Ruled "not now" on the schedule gaps drawings (`SCHEDULE_GAPS_DRAWINGS.html`, asks 6 and 7). Plan of record: [SCHEDULE_GAPS_PLAN.md](active/SCHEDULE_GAPS_PLAN.md).
+
+- **Suggest a swap for a slot left open on a kept field (ask 6).** When a field is kept for one group, every team of that group has its share, and a team outside the group is short, one swap closes it: move a group team from a regular field onto the kept field, and give the regular field to the short team. The generator's last pass does not swap. Rare after the 2026-11-24 generator fix (Milton's 90-minute winter dome: 2 open); revisit if coordinators see it often.
+- **Drop the club's name from team names inside one club's own screens (ask 7).** "Milton Bats U11 Rep Purple" repeats the club on every row of a club's own schedule, draft card and team lists. A product-wide decision about how a team is named where the club is already known; not part of the schedule gaps build.

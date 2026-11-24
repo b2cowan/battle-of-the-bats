@@ -483,28 +483,3 @@ export function weekCounts(slots: readonly Pick<SlotView, 'day' | 'teamIds'>[], 
   return out;
 }
 
-export function weekShortfalls(p: {
-  slots: readonly SlotView[];
-  week: readonly string[];
-  results: readonly { teamId: string; target: number }[];
-  settings: Pick<ScheduleSettings, 'split'>;
-  /** `weekCounts` for the same week, when the caller has it. */
-  counts?: ReadonlyMap<string, number>;
-  /** The weeks the days stand for (`weeksOnScreen`) — a weekly figure is owed once for each. */
-  weeks?: number;
-}): Map<string, number> {
-  const inWeek = new Set(p.week);
-  const all = p.slots.length;
-  const here = p.slots.reduce((n, s) => n + (inWeek.has(s.day) ? 1 : 0), 0);
-  if (!all || !here) return new Map();
-  const counts = p.counts ?? weekCounts(p.slots, p.week);
-  const out = new Map<string, number>();
-  for (const r of p.results) {
-    const expected = p.settings.split.method === 'weekly'
-      ? Number(p.settings.split.values[r.teamId] ?? 0) * (p.weeks ?? 1)
-      : Math.round((r.target * here) / all);
-    const got = counts.get(r.teamId) ?? 0;
-    if (got < expected) out.set(r.teamId, expected - got);
-  }
-  return out;
-}

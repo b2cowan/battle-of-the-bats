@@ -14,7 +14,8 @@ import type { ReactNode } from 'react';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { SCHEDULE_SCREEN_WORDS as W, moneyCents as money } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
-import { NO_GROUP, dayHead, facilityNoun, fairBill, heldWords, perWeek, primeWords, viewBillSlots, weekCounts, weekShortfalls, type ScheduleView } from '@/lib/club-schedule-view';
+import { GAP_WORDS as G } from '@/lib/club-schedule-gaps';
+import { NO_GROUP, dayHead, facilityNoun, fairBill, heldWords, perWeek, primeWords, viewBillSlots, type ScheduleView } from '@/lib/club-schedule-view';
 import { clockMinutesByPermit, pricedMinutesByPermit } from '@/lib/club-schedule-bill';
 import { formatTime } from '@/lib/utils';
 import type { TeamResult } from '@/lib/club-schedule-engine';
@@ -44,12 +45,8 @@ function clashGroups(clashes: readonly ScheduleView['slots'][number][]) {
 
 export interface FairInput {
   view: ScheduleView;
-  /** The days on screen — "this week". */
+  /** The days on screen — "this week": its clash lines. */
   week: readonly string[];
-  /** The weeks those days stand for (`weeksOnScreen`): a one-weekday schedule's seven dates are seven weeks. */
-  weeks?: number;
-  /** "this week" / "these Sundays" — what the short lines are short of. */
-  scope?: string;
   nameOf: (teamId: string) => string;
   placeOf: (venueId: string, facilityId: string | null) => string;
 }
@@ -57,13 +54,14 @@ export interface FairInput {
 export type FairModel = ReturnType<typeof fairShares>;
 
 /** Fair shares, worked out once for the band, the lines and the card. */
-export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf, placeOf }: FairInput) {
+export function fairShares({ view, week, nameOf, placeOf }: FairInput) {
   const { fairness, schedule } = view;
   const settings = schedule.settings;
   const results = fairness.teams.filter(r => r.target > 0 || r.got > 0);
   const inWeek = new Set(week);
-  const counts = weekCounts(view.slots, week);
-  const shorts = weekShortfalls({ slots: view.slots, week, results, settings, counts, weeks });
+  // Short for the SEASON, the band's own count (owner 2026-11-24): a slice of a share pro-rated over the dates on screen
+  // named teams that had their share and missed teams that were short, so the page no longer measures one.
+  const shorts = new Set(results.filter(r => r.short > 0).map(r => r.teamId));
   const teamById = new Map(view.teams.map(t => [t.id, t]));
 
   const billCents = fairBill(view);
@@ -117,12 +115,11 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
 
   // The week's clashes: a few each with its date and what holds it; past that, one line per kind of booking, naming who
   // holds them — a draft laid over a schedule already on the books listed 71 (owner 2026-10-13), and the grid marks each
-  // one. The week's short teams stay a line each: there are never more of them than teams.
+  // one. Who is short and what is open is ONE line, the season's (`scheduleGaps`, the page's `gapLine`).
   const clashes = view.slots.filter(s => inWeek.has(s.day) && s.clash && s.heldBy);
   const clashLines = clashes.length <= CLASH_LINES_EACH
     ? clashes.map(s => W.clashLine(`${dayHead(s.day)} · ${formatTime(s.startClock)}`, placeOf(s.venueId, s.facilityId), heldWords(s.heldBy!)))
     : W.clashGroupLines(clashGroups(clashes));
-  const shortLines = [...shorts].map(([id, n]) => W.shortLine(nameOf(id), n, scope));
   const t = fairness.totals;
   // A schedule finalized with no bill: the permit's price is an estimate, not a bill — the tile says so (2026-11-14).
   const finalNoBill = showBill && schedule.state === 'final' && !view.bill;
@@ -130,7 +127,8 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
     { key: 'handed', label: W.tileHandedOut, value: W.ofSlots(t.handedOut, t.seats) },
     // The door to Fair shares and the bill (13c C4): The bill for a money reader, Open for anyone else.
     { ...(showBill ? { key: 'bill', label: W.tileBill, value: finalNoBill ? W.tileNotBilled : money(billTotal), quiet: finalNoBill } : { key: 'open', label: W.tileOpen, value: String(t.open) }), door: true },
-    { key: 'short', label: W.tileShort, value: String(t.short), amber: t.short > 0 },
+    // A door to "Open slots and short teams" while anything is short (owner 2026-11-24, ruling 3) — never to an empty window.
+    { key: 'short', label: W.tileShort, value: String(t.short), amber: t.short > 0, gaps: t.short > 0 },
     { key: 'clashes', label: W.tileClashes, value: String(t.clashes), amber: t.clashes > 0 },
   ];
   // Hours count a shared slot and a half field each half (Stage 11c Ask 3) — said once, where Hours shows and either is on
@@ -154,7 +152,7 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   // A schedule finalized with no bill reads the permit's estimate in its Bill column — said once, so it isn't mistaken for a
   // bill that went out (13c). The door beside it makes one, without reopening the schedule.
   const unbilled = finalNoBill ? W.billLateNote : null;
-  return { results, shorts, columns, groupsOf, withGroups, tiles, lines: [...clashLines, ...shortLines], kept, notes, billDoor, unbilled };
+  return { results, shorts, columns, groupsOf, withGroups, tiles, lines: clashLines, kept, notes, billDoor, unbilled };
 }
 
 /**
@@ -162,8 +160,8 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
  * tile is the door to Fair shares and the bill — "The bill →" for a money reader, "Open →" for anyone else, who reaches
  * Fair shares' team detail the same way without the bill (nobody loses the view the View menu used to hold).
  */
-export function FairSharesBand({ model, onOpen }: { model: FairModel; onOpen?: () => void }) {
-  const tiles = model.tiles.map(t => ('door' in t && t.door && onOpen ? { ...t, onOpen } : t));
+export function FairSharesBand({ model, onOpen, onGaps }: { model: FairModel; onOpen?: () => void; /** The Short tile's door (2026-11-24). */ onGaps?: () => void }) {
+  const tiles = model.tiles.map(t => ('door' in t && t.door && onOpen ? { ...t, onOpen } : 'gaps' in t && t.gaps && onGaps ? { ...t, onOpen: onGaps } : t));
   return (
     <div className={sch.fairAbove}>
       <JoinedBand label={W.fairTitle} tiles={tiles} across />
@@ -171,14 +169,28 @@ export function FairSharesBand({ model, onOpen }: { model: FairModel; onOpen?: (
   );
 }
 
-/** THE WEEK'S LINES, under the toolbar and above the grid: its clashes, and who is short. `lead` (13c Session C, C2): the
- *  permit's pulled dates, said first — its first words in bold. */
-export function FairSharesLines({ model, lead }: { model: FairModel; lead?: { bold: string; rest: string } | null }) {
-  if (!model.lines.length && !lead) return null;
+/** THE WEEK'S LINES, under the toolbar and above the grid: its clashes, and the season's one line on open slots and short
+ *  teams (`gap`, owner 2026-11-24 — "See why ›" opens the window). `lead` (13c Session C, C2): the permit's pulled dates,
+ *  said first — its first words in bold. */
+export function FairSharesLines({ model, lead, gap }: {
+  model: FairModel;
+  lead?: { bold: string; rest: string } | null;
+  gap?: { text: string; onOpen: () => void } | null;
+}) {
+  if (!model.lines.length && !lead && !gap) return null;
   return (
     <div className={sch.fairLines}>
       {lead && <span className={sch.fairLine}><AlertTriangle size={13} aria-hidden /><span><b>{lead.bold}</b>{lead.rest}</span></span>}
-      {model.lines.map(line => <span key={line} className={sch.fairLine}><AlertTriangle size={13} aria-hidden />{line}</span>)}
+      {gap && (
+        <span className={`${sch.fairLine} ${sch.gapLine}`}>
+          <AlertTriangle size={13} aria-hidden />
+          <span>
+            {gap.text}{' '}
+            <button type="button" className={sch.door} onClick={gap.onOpen}>{G.seeWhy}<ChevronRight size={13} aria-hidden /></button>
+          </span>
+        </span>
+      )}
+      {model.lines.map((line, i) => <span key={`${i}-${line}`} className={sch.fairLine}><AlertTriangle size={13} aria-hidden />{line}</span>)}
     </div>
   );
 }

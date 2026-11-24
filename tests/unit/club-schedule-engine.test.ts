@@ -234,6 +234,61 @@ describe('the dome, walked (specimen 14, step 3)', () => {
   }
 });
 
+// ── THE LAST PASS (owner 2026-11-24, Milton's winter dome) ─────────────────────────────────────────────────────────────
+// 10 Rep teams at 6% and 10 Select at 4% on the dome's 12 Sunday slots, Fields 5–6 kept for Select, one practice a team a
+// week: 100% of the time. The week's quota promised Rep more seats than Rep may use, and nothing offered the leftover
+// Select-field seats to Select teams still owed time — 8 slots sat open while 8 teams were 1 short. The rule now: no slot
+// is left open while a team that may have it, is free that week, and is under its season share.
+describe('a slot the week’s quota left open goes to a team still owed time', () => {
+  const REP = 'g-rep', SEL = 'g-sel';
+  const ages = ['11U', '13U', '15U', '17U', '19U'];
+  const teams20: EngineTeam[] = [
+    ...ages.flatMap(a => ['Purple', 'White'].map(c => team(`r${a}${c}`, `${a} Rep ${c}`, REP))),
+    ...ages.flatMap(a => ['Purple', 'White'].map(c => team(`s${a}${c}`, `${a} Select ${c}`, SEL))),
+  ];
+  const winter = (s: Slot) => s.day >= '2027-01-03' && s.day <= '2027-03-07';
+  const base = domeInput({
+    split: { method: 'percentage', values: Object.fromEntries(teams20.map(t => [t.id, t.groupId === REP ? 6 : 4])) },
+    teamIds: teams20.map(t => t.id), timeMode: 'moved',
+    rules: { maxPerDay: 1, maxPerWeek: 1, fieldsBy: [{ facilityIds: ['f-5', 'f-6'], groupIds: [SEL], teamIds: [] }] },
+  });
+  const input: EngineInput = { ...base, teams: teams20, slots: base.slots.filter(winter) };
+  const kept = (s: Slot) => s.facilityId === 'f-5' || s.facilityId === 'f-6';
+  for (const d of generateDrafts(input)) {
+    it(`${d.strategy}: no open slot a free, owed team may have`, () => {
+      const got = new Map(d.teams.map(r => [r.teamId, r]));
+      const playsOn = (id: string, day: string) => input.slots.some(s => s.day === day && (d.assignments.get(s.key) ?? []).includes(id));
+      for (const s of input.slots) {
+        if ((d.assignments.get(s.key) ?? []).length) continue;
+        const could = teams20.filter(t => (!kept(s) || t.groupId === SEL) && !playsOn(t.id, s.day) && got.get(t.id)!.got < got.get(t.id)!.target);
+        assert.deepEqual(could.map(t => t.name), [], `${s.day} ${s.startClock} ${s.facilityId} is open`);
+      }
+      assert.ok(d.totals.open <= 2, `${d.totals.open} open — it was 8 before the last pass`);
+    });
+  }
+  it('never past a team’s season share', () => {
+    for (const d of generateDrafts(input)) for (const r of d.teams) assert.ok(r.got <= r.target, `${r.teamId} ${r.got} of ${r.target}`);
+  });
+  // /review 2026-11-24: owing the WHOLE season front-loaded any split under 100% (48%: weeks 1–6 full, weeks 7–12 empty).
+  // The last pass catches a team up to its pace, never past it, so the open time stays spread across the season.
+  it('shares under 100% stay paced: every week hands out about the same', () => {
+    const under = lanesInput({ split: { method: 'percentage', values: Object.fromEntries(ids.map(t => [t, 6])) } });
+    const d = makeDraft(under, 'best');
+    // Each week's share of its own seats: a week with a holiday or a tryout day has fewer seats, so it hands out fewer.
+    const byWeek = new Map<string, { seats: number; handed: number }>();
+    for (const s of under.slots) {
+      if (under.held.has(s.key)) continue;
+      const w = byWeek.get(s.week) ?? { seats: 0, handed: 0 };
+      w.seats++;
+      if ((d.assignments.get(s.key) ?? []).length) w.handed++;
+      byWeek.set(s.week, w);
+    }
+    const share = [...byWeek.values()].map(w => w.handed / w.seats);
+    assert.ok(Math.max(...share) - Math.min(...share) <= 0.2,
+      `handed of seats by week: ${[...byWeek.values()].map(w => `${w.handed}/${w.seats}`).join(', ')}`);
+  });
+});
+
 describe('the rules, one by one', () => {
   it('a team’s day off — 13U AAA on the Sunday before Christmas — gives its slots to nobody else’s share, and says so', () => {
     const input = domeInput({ rules: { daysOff: [{ teamId: 't13aaa', date: '2026-12-20', weekday: null, note: 'away at a tournament' }], fieldsBy: [{ facilityIds: ['f-5', 'f-6'], groupIds: [JUNIOR], teamIds: [] }] } });

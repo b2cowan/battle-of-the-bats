@@ -36,6 +36,8 @@ import ScheduleOverview from '@/components/admin/kit/club/schedules/ScheduleOver
 import ScheduleAttention from '@/components/admin/kit/club/schedules/ScheduleAttention';
 import { FairSharesBand, FairSharesLines, FairSharesTeams, fairShares } from '@/components/admin/kit/club/schedules/FairShares';
 import NewScheduleWindow from '@/components/admin/kit/club/schedules/NewScheduleWindow';
+import GapsWindow, { type GapDoor } from '@/components/admin/kit/club/schedules/GapsWindow';
+import { GAP_WORDS as G, scheduleGaps } from '@/lib/club-schedule-gaps';
 import BillWindow from '@/components/admin/kit/club/schedules/BillWindow';
 import SendWindow, { type SendKeep } from '@/components/admin/kit/club/schedules/SendWindow';
 import AnswerWindow from '@/components/admin/kit/club/money/AnswerWindow';
@@ -58,7 +60,7 @@ import { usePermitsLink } from '@/components/admin/kit/useAdminKitNav';
 import type { DateOff } from '@/lib/permit-time';
 import {
   NO_GROUP, askedSlots, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
-  slotDays, slotTime, stepGrid, teamColour, weeksOnScreen, type ScheduleView, type SlotView,
+  slotDays, slotTime, stepGrid, teamColour, type ScheduleView, type SlotView,
 } from '@/lib/club-schedule-view';
 
 interface PageRead extends ScheduleView {
@@ -77,9 +79,11 @@ type Win =
   | { kind: 'slot'; key: string }
   | { kind: 'swap'; key: string }
   /** `partId`: Settings… or Regenerate of an added part (Phase 8, Session 3 — after "which part?"). */
-  | { kind: 'settings'; regenerate?: boolean; addDatesOff?: DateOff[]; addTime?: boolean; partId?: string }
+  | { kind: 'settings'; regenerate?: boolean; addDatesOff?: DateOff[]; addTime?: boolean; partId?: string; focus?: GapDoor }
+  /** Open slots and short teams (owner 2026-11-24). */
+  | { kind: 'gaps' }
   /** Regenerate / Settings… on a schedule with added parts asks which part first (drawing tab 4, ruling 4). */
-  | { kind: 'which'; then: 'settings' | 'regenerate' }
+  | { kind: 'which'; then: 'settings' | 'regenerate'; focus?: GapDoor }
   | { kind: 'fair' }
   /** `partId`: an added part's bill — from Send the changes' "Bill it…" (`back: 'send'`) or Needs attention's (a part sent
    *  without one). */
@@ -571,7 +575,12 @@ export default function SchedulePage() {
   };
   const dim = (x: SlotView) => (clashesOnly && !x.clash) || !inParts(x)
     || !matchesScheduleTeamFilter(x.teamIds, selectedGroups, selectedTeams, id => groupOf(id) ?? NO_GROUP);
-  const weeksShown = cols ? weeksOnScreen(cols.mode, cols.days, v.slots) : 1;
+  // ⚖ OPEN SLOTS AND SHORT TEAMS (owner rulings 2026-11-24): ONE line for the season — how many teams are short, how many
+  // slots are open and where — the same on every set of dates; "See why ›" and the band's Short tile open the window.
+  const gaps = scheduleGaps({ slots: v.slots, results: v.fairness.teams, teams: v.teams, rules: s.settings.rules, split: s.settings.split });
+  const gapScope = cols?.mode === 'dates' && oneWeekday ? `on ${W.scopeDates(oneWeekday)}` : W.scopeWeek;
+  const gapText = G.pageLine(gaps, cols?.days ?? (shownDay ? [shownDay] : []), gapScope);
+  const gapLine = gapText ? { text: gapText, onOpen: () => setWin({ kind: 'gaps' }) } : null;
   const byTeamTable = (
     <>
       <div className={`${repKit.tableFrame} ${repKit.deskOnly}`}>
@@ -684,6 +693,13 @@ export default function SchedulePage() {
         choices={days.map(d => ({ key: d, label: W.phoneDayLabel(d, today) }))} value={shownDay} onChoose={setPhoneDay}
         prev={dayAt > 0 ? days[dayAt - 1] : null} next={dayAt >= 0 && dayAt < days.length - 1 ? days[dayAt + 1] : null}
         prevLabel={W.previousDay} nextLabel={W.nextDay} menuTitle={W.chooseDay} />
+      {/* The season's one line under the day stepper (drawing tab 4); its window opens full screen. */}
+      {gapLine && (
+        <p className={`${sch.fairLines} ${sch.fairLine} ${sch.gapLine}`}>
+          <AlertTriangle size={13} aria-hidden />
+          <span>{gapLine.text}{' '}<button type="button" className={`${sch.door} ${sch.gapPhoneDoor}`} onClick={gapLine.onOpen}>{G.seeWhy}<ChevronRight size={13} aria-hidden /></button></span>
+        </p>
+      )}
       {[shownDay].map(d => {
         const list = v.slots.filter(x => x.day === d).sort((a, b) => a.startsAt.localeCompare(b.startsAt) || placeOfSlot(a).localeCompare(placeOfSlot(b), 'en-CA', { numeric: true }));
         if (!list.length) return null;
@@ -711,10 +727,10 @@ export default function SchedulePage() {
   const slotAsk = slotWin ? asked.get(slotWin.id) ?? null : null;
 
   // Fair shares' figures answer for the whole schedule; its team detail opens from the band's Bill tile (13c C4).
-  const fair = cols ? fairShares({ view: v, week: cols.days, weeks: weeksShown, scope: weekScope, nameOf, placeOf: (a, b) => placeName(v.places, a, b) }) : null;
+  const fair = cols ? fairShares({ view: v, week: cols.days, nameOf, placeOf: (a, b) => placeName(v.places, a, b) }) : null;
   // The band counts the family (Handed out, Short, Clashes); Fair shares and the bill — the window — is the schedule's own
   // bill, so it reads the schedule's own view (Phase 8: a part's bill is set in Send the changes).
-  const fairOwn = !parts.length ? fair : cols ? fairShares({ view: own, week: cols.days, weeks: weeksShown, scope: weekScope, nameOf, placeOf: (a, b) => placeName(own.places, a, b) }) : null;
+  const fairOwn = !parts.length ? fair : cols ? fairShares({ view: own, week: cols.days, nameOf, placeOf: (a, b) => placeName(own.places, a, b) }) : null;
   const canOverview = final && oneWeekday != null && days.length > 1;
   const desktopViews: { id: Lens; label: string }[] = [
     ...(canOverview ? [{ id: 'overview' as const, label: W.viewOverview }] : []),
@@ -777,7 +793,7 @@ export default function SchedulePage() {
         onSend={() => setWin({ kind: 'send', start: 'changes' })}
         unbilledParts={unbilledSent} onBillPart={own.canMoney && canChange ? id => setWin({ kind: 'bill', partId: id }) : undefined}
         onFreePart={own.canMoney && canChange ? id => void markPartFree(id) : undefined} />
-      {!isPhone && fair && <FairSharesBand model={fair} onOpen={() => setWin({ kind: 'fair' })} />}
+      {!isPhone && fair && <FairSharesBand model={fair} onOpen={() => setWin({ kind: 'fair' })} onGaps={() => setWin({ kind: 'gaps' })} />}
 
       {isPhone ? (
         <>
@@ -831,13 +847,13 @@ export default function SchedulePage() {
           </CoachListToolbar>
           <p className={repKit.srOnly} role="status" aria-live="polite">{refused}</p>
           {lens === 'overview' && cols && <>
-            {fair && <FairSharesLines model={fair} lead={outsideWords?.lead} />}
+            {fair && <FairSharesLines model={fair} lead={outsideWords?.lead} gap={gapLine} />}
             <ScheduleOverview rows={allRows} days={cols.days} slots={v.slots} askedIds={askedIds}
               nameOf={nameOf} onOpenGrid={openOverviewDate} outsideDays={outsideDays} />
           </>}
           {lens === 'grid' && cols ? (
             <>
-              {fair && <FairSharesLines model={fair} lead={outsideWords?.lead} />}
+              {fair && <FairSharesLines model={fair} lead={outsideWords?.lead} gap={gapLine} />}
               <ScheduleGrid
                 view={v} days={cols.days} rows={rows} canDrag={canChange && !busy} dim={dim} moved={moved} asked={asked} today={today}
                 nameOf={nameOf} colourOf={colourOf} groupOf={groupOf} sharing={sharing}
@@ -875,14 +891,31 @@ export default function SchedulePage() {
         <NewScheduleWindow q={q} orgSlug={slug} orgName={currentOrg?.name} onCancel={() => setWin(null)}
           settingsOf={{
             view: winPart?.view ?? own, regenerate: win.regenerate, addDatesOff: win.addDatesOff, addTime: win.addTime, parts, onStale: () => void load(),
-            part: partWords,
+            part: partWords, focus: win.focus,
             onKept: (_version, renamed, said) => { setWin(null); setMoved(new Set()); say(said ?? (renamed ? W.regenerated(winName) : W.regeneratedNotRenamed(winName))); void load(); },
           }} />
       )}
       {win?.kind === 'which' && (
         <WhichPartWindow then={win.then} parentName={own.schedule.name} parentView={own} parts={parts}
           onClose={() => setWin(null)}
-          onPick={partId => setWin({ kind: 'settings', regenerate: win.then === 'regenerate', partId: partId ?? undefined })} />
+          onPick={partId => setWin({ kind: 'settings', regenerate: win.then === 'regenerate', partId: partId ?? undefined, focus: win.focus })} />
+      )}
+      {/* ⚖ Open slots and short teams (owner rulings 2026-11-24): why time is open, grouped by reason. Its doors open Settings
+          with that setting in view (ruling 4); "Give it to ▾" only where a free, owed team may take a slot (ruling 5). On a
+          schedule with added parts a door asks which part first, as Tools › Settings does. */}
+      {win?.kind === 'gaps' && (
+        <GapsWindow gaps={gaps} teams={v.teams} eyebrow={s.name} identity={G.identity(scheduleDates(s.startsOn, s.endsOn), v.fairness.totals.seats)}
+          nameOf={nameOf} placeOf={placeOfSlot}
+          facilityName={id => v.places.flatMap(p => p.facilities).find(f => f.id === id)?.name ?? ''}
+          onDoor={canChange ? door => setWin(parts.length ? { kind: 'which', then: 'settings', focus: door } : { kind: 'settings', focus: door }) : undefined}
+          onGive={canChange ? (key, teamId) => {
+            const x = slotOfKey(key);
+            // A save still on its way (a drag a moment ago): the window stays open rather than the click being lost.
+            if (busy) return;
+            setWin(null);
+            if (x) void edit([{ slotKey: key, teamIds: [teamId] }], G.gave(nameOf(teamId), `${formatShortWeekdayDate(x.day)}, ${formatTime(x.startClock)} · ${placeOfSlot(x)}`));
+          } : undefined}
+          onClose={() => setWin(null)} />
       )}
       {/* ⚖ 13c Session C (C4 = A): Fair shares and the bill, in a window — the team table and its bill door. A reader
           without the club's money reads Fair shares alone (the window is titled so), and nobody lost the view. */}

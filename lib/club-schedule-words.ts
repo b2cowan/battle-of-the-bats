@@ -148,17 +148,33 @@ const thoseDays = (n: number) => (n === 1 ? 'that day' : 'those days');
 
 // ── A draft's measures (specimen 5) ──────────────────────────────────────────────────────────────
 
+/**
+ * [marketing] A draft card's short teams. Up to three by name, each with its gap; past that ONE sentence naming the two
+ * furthest behind (owner 2026-11-24 — a card listing eight teams "by 1" read as a jumble). The By team list beside the
+ * card marks each short team with what it has of its share ("10 of 11 slots"), so the sentence says where to look.
+ *   "Milton Bats U11 Rep Purple is 1 slot short of its share"
+ *   "8 teams are 1 slot short of their share: Milton Bats U11 Rep Purple, Milton Bats U11 Rep White and 6 more. Each is marked in the list."
+ *   "5 teams are short of their share, 7 slots in all: 13U AAA by 3, 12U AA by 1 and 3 more. Each is marked in the list."
+ */
+export function draftShortLine(short: readonly { teamId: string; short: number }[], nameOf: (teamId: string) => string): string {
+  const list = [...short].sort((a, b) => b.short - a.short);
+  if (list.length === 1) return `${nameOf(list[0].teamId)} is ${pluralize(list[0].short, 'slot')} short of its share`;
+  if (list.length <= 3) return `${list.length} teams short: ${joinWithAnd(list.map(s => `${nameOf(s.teamId)} by ${s.short}`))}`;
+  const same = list.every(s => s.short === list[0].short);
+  const total = list.reduce((n, s) => n + s.short, 0);
+  const firstTwo = same ? list.slice(0, 2).map(s => nameOf(s.teamId)) : list.slice(0, 2).map(s => `${nameOf(s.teamId)} by ${s.short}`);
+  const lead = same ? `${list.length} teams are ${pluralize(list[0].short, 'slot')} short of their share` : `${list.length} teams are short of their share, ${total} slots in all`;
+  return `${lead}: ${firstTwo.join(', ')} and ${list.length - 2} more. Each is marked in the list.`;
+}
+
 /** [marketing] A draft card's lines, in the order the drawing reads them — ONE line per measure (the card pairs each line
  *  with its measure by place). `nameOf` names a team; `groupNameOf` a group (a whole group's sharing rule). */
 export function measureLines(measures: readonly DraftMeasure[], nameOf: (teamId: string) => string, groupNameOf: (groupId: string) => string = () => 'A group'): string[] {
   const out: string[] = [];
   for (const m of measures) {
     if (m.kind === 'shares') {
-      if (m.short.length) {
-        out.push(m.short.length === 1
-          ? `${nameOf(m.short[0].teamId)} is ${m.short[0].short} short of its share`
-          : `${pluralize(m.short.length, 'team')} short: ${joinWithAnd(m.short.map(s => `${nameOf(s.teamId)} by ${s.short}`))}`);
-      } else out.push(m.sameCount != null ? `Every team gets ${pluralize(m.sameCount, 'slot')}` : 'Every team gets its share');
+      if (m.short.length) out.push(draftShortLine(m.short, nameOf));
+      else out.push(m.sameCount != null ? `Every team gets ${pluralize(m.sameCount, 'slot')}` : 'Every team gets its share');
     } else if (m.kind === 'sharing') {
       out.push(m.rules.map(r => `${sharingWho(r, nameOf, groupNameOf)} share a facility: ${facilityPart(r.atOnce)} each`).join('; '));
     } else if (m.kind === 'prime') {
@@ -1000,6 +1016,9 @@ export const SCHEDULE_SCREEN_WORDS = {
   scheduleExportHolds: (name: string, slots: number, draft: boolean) => `${name}${draft ? ' · a draft' : ''} · ${pluralize(slots, 'slot')}`,
   pdfHint: 'By facility and week, to print',
   rowSlots: (n: number) => pluralize(n, 'slot'),
+  /** A short team's row in the drafts' By team list: what it has of its share (owner 2026-11-24: "show the amount expected
+   *  and the amount they have"). */
+  rowSlotsOf: (got: number, share: number) => `${got} of ${pluralize(share, 'slot')}`,
   rowPrime: (n: number) => `${n} prime`,
   openSlot: 'Open',
   /** By day: the slots the club's other bookings already hold stay out of the list until asked for (owner 2026-11-24). */
@@ -1125,7 +1144,6 @@ export const SCHEDULE_SCREEN_WORDS = {
     const tail = i === groups.length - 1 ? ' Each is marked on the grid.' : '';
     return `${pluralize(g.count, 'slot')} ${one ? 'clashes' : 'clash'} with ${what} already booked for ${who}.${tail}`;
   }),
-  shortLine: (team: string, n: number, scope: string) => `${team} is ${n} short ${scope}.`,
   billDoor: (payments: number) => `The bill · ${pluralize(payments, 'payment')}`,
   billTeamsDoor: 'Bill the teams',
 

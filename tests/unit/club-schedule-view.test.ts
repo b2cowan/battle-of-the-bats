@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { SCHEDULE_SCREEN_WORDS as SCREEN } from '../../lib/club-schedule-words.ts';
 import {
   closingNote, dropVerdict, facilityNoun, gridColumns, isStale, openingDay, perWeek, ruleBroken, slotDays, stepGrid, summaryLine,
-  viewBillSlots, weekCounts, weekShortfalls, weekdayDates, weeksOnScreen, type GenerateSummary, type SlotView,
+  viewBillSlots, weekCounts, weekdayDates, weeksOnScreen, type GenerateSummary, type SlotView,
 } from '../../lib/club-schedule-view.ts';
 import { pricedMinutes } from '../../lib/club-schedule-bill.ts';
 import { clubScheduleDocument, scheduleSheets, sheetNameOf, type DocSlot } from '../../lib/club-schedule-document.ts';
@@ -179,10 +179,6 @@ describe('a one-weekday schedule’s seven dates are seven weeks (/review)', () 
     assert.equal(perWeek(weekCounts(slots, sundays).get('t13') ?? 0, weeks), 2);
     assert.equal(weeksOnScreen('week', sundays, slots), 1);
   });
-  it('a set number a week is owed for each of them: 3 a Sunday over 7 Sundays is 7 short with 14', () => {
-    const short = weekShortfalls({ slots, week: sundays, results: [{ teamId: 't13', target: 75 }], settings: { split: { method: 'weekly', values: { t13: 3 } } }, weeks: 7 });
-    assert.equal(short.get('t13'), 7);
-  });
   it('a shared slot’s time is split between its teams on the bill, as the server prices it', () => {
     const shared = [slot('s1', '2027-01-05', '18:00', '19:00', ['t15aa', 't16aa']), slot('s2', '2027-01-06', '18:00', '19:00', ['t16aa'])];
     const priced = pricedMinutes(viewBillSlots(shared));
@@ -193,15 +189,6 @@ describe('a one-weekday schedule’s seven dates are seven weeks (/review)', () 
     assert.equal(isStale({ code: 'changed', error: 'x' }), true);
     assert.equal(isStale({ code: 'team_twice' }), false);
     assert.equal(isStale(null), false);
-  });
-});
-
-describe('Fair shares says who is short THIS week', () => {
-  it('a weekly split reads its own figure: 12U AA is 1 short once its Tuesday is cleared', () => {
-    const week = ['2027-01-04', '2027-01-05', '2027-01-06', '2027-01-07', '2027-01-08', '2027-01-09', '2027-01-10'];
-    const slots = [slot('a', '2027-01-04', '18:00', '19:00', ['t12']), slot('b', '2027-01-06', '18:00', '19:00', ['t12']), slot('c', '2027-01-05', '19:00', '20:00', [])];
-    const short = weekShortfalls({ slots, week, results: [{ teamId: 't12', target: 36 }], settings: { split: { method: 'weekly', values: { t12: 3 } } } });
-    assert.equal(short.get('t12'), 1);
   });
 });
 

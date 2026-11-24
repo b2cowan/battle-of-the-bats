@@ -66,6 +66,7 @@ import {
   type DayOffRule, type FieldsRule, type SettingsDraft, type ShareRule, type WindowRule,
 } from '@/lib/club-schedule-form';
 import { PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
+import { GAP_WORDS as GAPS, scheduleGaps, teamSubject, teamsWords } from '@/lib/club-schedule-gaps';
 import { bookedWords } from '@/lib/club-schedule-document';
 import { familyUseOf, partFromFor, partLabelFor, type PartRead } from '@/lib/club-schedule-family';
 import {
@@ -274,6 +275,8 @@ export interface SettingsOf {
   /** Settings… or Regenerate of an ADDED PART (Phase 8, Session 3 — after "which part?"): `view` is the part's own. Taking
    *  its only permit off removes the part (drawing tab 4): before its first send it simply goes; after, the usual credit. */
   part?: { label: string; parentName: string } | null;
+  /** Opened from a door in "Open slots and short teams" (2026-11-24): the setting to show first. */
+  focus?: 'perDay' | 'perWeek' | 'shares' | 'fieldRules' | 'rules';
 }
 
 export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId = null, settingsOf, onCancel, onSaved }: {
@@ -298,9 +301,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [rulesOpen, setRulesOpen] = useState(false);
+  // A door from "Open slots and short teams" opens on its rule: the rules unfolded, the weekly cap opened in place.
+  const [rulesOpen, setRulesOpen] = useState(() => ['perWeek', 'fieldRules', 'rules'].includes(settingsOf?.focus ?? ''));
   /** The one rule opened in place (its key; `WEEK_CAP` for the weekly cap), or none (Stage 11c Ask 6). */
-  const [openRule, setOpenRule] = useState<string | null>(null);
+  const [openRule, setOpenRule] = useState<string | null>(() => (settingsOf?.focus === 'perWeek' ? WEEK_CAP : null));
   const [adding, setAdding] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -332,6 +336,22 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     parks: [...new Set(rows.filter(rowDone).map(r => r.place?.venueId ?? draft.venueId).filter(Boolean))],
     permitParks: id => [...new Set((permitById.get(id)?.blocks ?? []).map(b => b.venueId))],
   }), [permitById, draft.venueId]);
+
+  // ── A door from "Open slots and short teams" (owner 2026-11-24): the form opens with that setting in view — the per-day
+  //    select, the weekly cap opened in place, the rules unfolded (the state above starts so), or the shares. Once, after
+  //    the inputs seed the form.
+  const focusDone = useRef(false);
+  const focus = settingsOf?.focus ?? null;
+  useEffect(() => {
+    if (!focus || !inputs || focusDone.current) return;
+    focusDone.current = true;
+    const id = focus === 'perDay' ? 'ns-max-per-day' : focus === 'perWeek' ? `ns-${WEEK_CAP}-week` : focus === 'shares' ? 'ns-split' : 'ns-rules';
+    window.setTimeout(() => {
+      const el = document.getElementById(id);
+      el?.scrollIntoView({ block: 'center' });
+      (el?.closest('button') ?? el)?.focus();
+    }, 0);
+  }, [focus, inputs]);
 
   // ── The inputs, and where the form starts ──
   useEffect(() => {
@@ -1634,6 +1654,31 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     setStep('settings');
     window.setTimeout(() => document.getElementById('ns-max-per-day')?.focus(), 0);
   };
+  // ⚖ The other reasons a draft leaves time open (owner 2026-11-24, SCHEDULE_GAPS_DRAWINGS.html tab 3): a practices-a-week
+  // (or -a-day) rule holds teams under their share, or a field kept for a group that already has its share. The cause only —
+  // the card under it says who is short — with the door to that setting. Every draft shares the cause, so it sits above them.
+  const gapTeams = (inputs?.teams ?? []).map(t => ({ id: t.id, name: t.name, groupId: t.groupId, groupName: inputs?.groups.find(g => g.id === t.groupId)?.name ?? null }));
+  const gapSettings = pick && gen && !shortWhy && inputs ? settingsBody(false) : null;
+  const pickGaps = pick && gen && gapSettings ? scheduleGaps({
+    slots: gen.slots.map(x => ({ ...x, teamIds: pick.assignments[x.key] ?? [], locked: x.kept, movedByHand: false })),
+    results: pick.teams, teams: gapTeams, rules: gapSettings.rules, split: gapSettings.split,
+  }) : null;
+  const gapReason = pickGaps?.groups.find(g => g.kind === 'cap' || g.kind === 'kept') ?? null;
+  const gapWhy = gapReason && pickGaps ? {
+    text: `${GAPS.head(gapReason, t => teamsWords(t, gapTeams))}. ${GAPS.explain(gapReason, pickGaps, t => teamSubject(t, gapTeams), ids => ids.map(id => places.flatMap(p => p.facilities).find(f => f.id === id)?.name ?? ''))}`,
+    door: gapReason.kind === 'kept' ? GAPS.doorFieldRules : gapReason.cap === 'day' ? GAPS.doorPerDay : GAPS.doorPerWeek,
+    go: () => {
+      setStep('settings');
+      if (gapReason.kind === 'cap' && gapReason.cap === 'day') { window.setTimeout(() => document.getElementById('ns-max-per-day')?.focus(), 0); return; }
+      setRulesOpen(true);
+      if (gapReason.kind === 'cap') setOpenRule(WEEK_CAP);
+      window.setTimeout(() => {
+        const el = document.getElementById(gapReason.kind === 'cap' ? `ns-${WEEK_CAP}-week` : 'ns-rules');
+        el?.scrollIntoView({ block: 'center' });
+        (el?.closest('button') ?? el)?.focus();
+      }, 0);
+    },
+  } : null;
   /** P7b A: found days another schedule's draft holds, by place and day — each draft warns on the slots it gives there,
    *  like a clash (a draft is booked nowhere else, so this is the drafts step's only word of it). */
   const foundHeld = new Map<string, readonly string[]>();
@@ -1718,6 +1763,14 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           </span>
         </p>
       )}
+      {gapWhy && (
+        <p className={`${ck.notice} ${ck.noticeWarn} ${sch.draftsSpan}`} role="status" data-drafts-gap>
+          <AlertTriangle size={14} aria-hidden />
+          <span className={ck.noticeBody}>{gapWhy.text}{' '}
+            <button type="button" className={sch.door} onClick={gapWhy.go}>{gapWhy.door}<ChevronRight size={14} aria-hidden /></button>
+          </span>
+        </p>
+      )}
       <div className={sch.cards} role="group" aria-label="Drafts">
         {gen.drafts.map((d, i) => (
           <button key={`${d.strategy}-${d.round}`} type="button" className={sch.card} aria-pressed={chosen === i} onClick={() => setChosen(i)}>
@@ -1757,7 +1810,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             {teamRows.map(({ t, r }) => (
               <div key={t.id} className={sch.teamLine} role="listitem">
                 <span className={sch.teamLineName}><Swatch colour={colourOf(t.id)} /><b>{t.name}</b></span>
-                <span>{r.shared ? W.sharedCount(r.got, r.shared) : W.rowSlots(r.got)}</span>
+                {/* A short team reads what it has of its share, in amber — the draft card's short line points here. */}
+                <span className={r.short > 0 ? sch.amber : undefined}>
+                  {r.shared ? W.sharedCount(r.got, r.shared) : r.short > 0 ? W.rowSlotsOf(r.got, r.got + r.short) : W.rowSlots(r.got)}
+                </span>
                 <span>{W.rowPrime(r.prime)}</span>
                 <span>{nightsWords(r.nights)}</span>
               </div>

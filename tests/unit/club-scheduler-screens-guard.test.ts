@@ -270,7 +270,8 @@ describe('10 · New schedule, round two: three questions, rules as sentences, sh
     const page = readCode(PAGE);
     assert.equal(page.match(/r\?\.shared \? W\.sharedCount\(r\.got, r\.shared\)/g)?.length, 2, 'By team at a desk and on a phone');
     assert.match(readCode('components/admin/kit/club/schedules/FairShares.tsx'), /W\.sharedCount\(r\.got, r\.shared\)/);
-    assert.match(code, /r\.shared \? W\.sharedCount\(r\.got, r\.shared\) : W\.rowSlots\(r\.got\)/, 'the drafts’ By team');
+    // A short team reads what it has of its share ("10 of 11 slots", owner 2026-11-24); a team that shares still says so.
+    assert.match(code, /r\.shared \? W\.sharedCount\(r\.got, r\.shared\) : r\.short > 0 \? W\.rowSlotsOf\(r\.got, r\.got \+ r\.short\) : W\.rowSlots\(r\.got\)/, 'the drafts’ By team');
   });
 });
 
@@ -404,7 +405,8 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
     assert.match(page, /\{lens === 'grid' && cols \? \(/);
     assert.match(page, /type Lens = 'overview' \| 'grid' \| 'team' \| 'group';/, 'no fair lens');
     assert.doesNotMatch(page, /id: 'fair'|lens === 'fair'/, 'the View menu holds Overview, Grid, By team and By group');
-    assert.match(page, /<FairSharesBand model=\{fair\} onOpen=\{\(\) => setWin\(\{ kind: 'fair' \}\)\} \/>/, 'the band’s tile opens the window');
+    // The Short tile opens "Open slots and short teams" too (owner 2026-11-24, schedule gaps ruling 3).
+    assert.match(page, /<FairSharesBand model=\{fair\} onOpen=\{\(\) => setWin\(\{ kind: 'fair' \}\)\} onGaps=\{\(\) => setWin\(\{ kind: 'gaps' \}\)\} \/>/, 'the band’s tile opens the window');
     // Phase 8: the window is the schedule's OWN bill (fairOwn); the band above counts the family.
     assert.match(page, /\{win\?\.kind === 'fair' && fairOwn && \(\s*<KitDialog [^>]*title=\{v\.canMoney \? W\.fairBillTitle : W\.fairTitle\}/, 'titled for whether the bill is in it — the bill is a money reader’s, always (13c: even a finalized schedule with none can be billed)');
     assert.match(page, /<FairSharesTeams model=\{fairOwn\} nameOf=\{nameOf\} colourOf=\{colourOf\}\s+onBill=\{own\.canMoney && \(!final \|\| !!own\.bill \|\| own\.slots\.some\(x => x\.teamIds\.some\(id => teamById\.has\(id\)\)\)\) \? \(\) => setWin\(\{ kind: 'bill' \}\) : undefined\} \/>/, 'a money reader’s door — not on a schedule given wholly to house league');
@@ -447,7 +449,9 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
   });
   it('the band’s door is the Bill tile for a money reader and the Open tile for anyone else — nobody loses Fair shares', () => {
     assert.match(fair, /\{ \.\.\.\(showBill \? \{ key: 'bill', label: W\.tileBill, value: finalNoBill \? W\.tileNotBilled : money\(billTotal\), quiet: finalNoBill \} : \{ key: 'open', label: W\.tileOpen, value: String\(t\.open\) \}\), door: true \}/);
-    assert.match(fair, /'door' in t && t\.door && onOpen \? \{ \.\.\.t, onOpen \} : t/);
+    assert.match(fair, /'door' in t && t\.door && onOpen \? \{ \.\.\.t, onOpen \} : 'gaps' in t && t\.gaps && onGaps \? \{ \.\.\.t, onOpen: onGaps \} : t/);
+    // The Short tile is a door only while something is short — never to an empty window (schedule gaps ruling 3).
+    assert.match(fair, /key: 'short', label: W\.tileShort, value: String\(t\.short\), amber: t\.short > 0, gaps: t\.short > 0/);
     assert.match(parts, /<button key=\{t\.key\} type="button" className=\{`\$\{sch\.bandTile\} \$\{sch\.bandDoor\}`\} onClick=\{t\.onOpen\}>/);
     // 13c: a schedule finalized WITHOUT a bill can still be billed (Send the bill, mig 481), so the door is the money reader's
     // always — it was once shut after Finalize unless a bill existed, which left a finalized, unbilled schedule stuck.
@@ -535,7 +539,7 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     assert.doesNotMatch(page, /W\.billWas|was \$\{|billWent/);
   });
   it('the dates off head the warnings and mark "Different on a date" (C2, the drawing’s notes 5 and 6)', () => {
-    assert.match(page, /<FairSharesLines model=\{fair\} lead=\{outsideWords\?\.lead\} \/>/);
+    assert.match(page, /<FairSharesLines model=\{fair\} lead=\{outsideWords\?\.lead\} gap=\{gapLine\} \/>/);
     assert.match(overview, /\{outsideDays\.map\(o => \(/);
     assert.match(overview, /pluralize\(exceptions\.length \+ outsideDays\.length, 'difference'\)/);
   });

@@ -131,6 +131,16 @@ describe('the words a coach reads (Ask 7 — drafts for /marketing)', () => {
       ['Prime time 21–26: 16U AA gets 21', '9U AA and 12U AA never after 7:00 p.m.']);
     assert.equal(heldLine(5, ['a', 'b']), 'Leaves out the 5 slots bookings already hold');
   });
+  it('a draft card’s short teams: by name up to three, then one sentence (owner 2026-11-24)', () => {
+    const nm = (id: string) => id.toUpperCase();
+    const short = (pairs: [string, number][]) => [{ kind: 'shares' as const, allMet: false, sameCount: null, short: pairs.map(([teamId, n]) => ({ teamId, short: n })) }];
+    assert.deepEqual(measureLines(short([['a', 1]]), nm), ['A is 1 slot short of its share']);
+    assert.deepEqual(measureLines(short([['a', 1], ['b', 2], ['c', 1]]), nm), ['3 teams short: B by 2, A by 1 and C by 1']);
+    assert.deepEqual(measureLines(short(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map(id => [id, 1] as [string, number])), nm),
+      ['8 teams are 1 slot short of their share: A, B and 6 more. Each is marked in the list.']);
+    assert.deepEqual(measureLines(short([['a', 1], ['b', 3], ['c', 1], ['d', 2]]), nm),
+      ['4 teams are short of their share, 7 slots in all: B by 3, D by 2 and 2 more. Each is marked in the list.']);
+  });
   it('the change lines, the closing row, the send log', () => {
     const clockOf = (m: number) => ({ day: new Date(m - 5 * 3_600_000).toISOString().slice(0, 10), time: new Date(m - 5 * 3_600_000).toISOString().slice(11, 16) });
     assert.equal(changeLine({ kind: 'moved', fromStartMs: Date.parse(at('2027-01-11', '19:00')), fromPlace: 'Lane 2', toStartMs: Date.parse(at('2027-01-12', '20:00')), toEndMs: 0, toPlace: 'Lane 2' }, clockOf),

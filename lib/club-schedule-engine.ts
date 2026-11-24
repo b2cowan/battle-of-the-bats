@@ -840,6 +840,8 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
    */
   const needsFor = (seats: readonly Seat[], cumSeats: number, cumPrime: number, kept: Map<string, Seat[]>, have: Map<string, number>, havePrime: Map<string, number>) => {
     const need = new Map<string, number>(), primeNeed = new Map<string, number>();
+    /** What the week means to hand out, counted as the shares count — the last pass's budget (2026-11-24). */
+    let toHand = 0;
     if (settings.split.method === 'weekly') {
       for (const t of teams) need.set(t.id, Math.min(settings.split.values[t.id] ?? 0, t.many ? Infinity : maxPerWeek));
     } else {
@@ -849,7 +851,7 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
       // And never more than it can place THIS week (fix-now 3), so a slot a team can't use goes to a team that can.
       const caps = new Map(teams.map(t => [t.id, Math.min(Math.ceil(targets.slots.get(t.id)! - have.get(t.id)! - EPS),
         t.many ? Infinity : Math.min(maxPerWeek, canPlace(t, seats)))]));
-      const toHand = Math.max(0, Math.min(seats.length,
+      toHand = Math.max(0, Math.min(seats.length,
         Math.round([...ideal.values()].reduce((a, b) => a + b, 0) - [...have.values()].reduce((a, b) => a + b, 0))));
       const share = apportionDeficits(toHand, deficits, caps);
       // Never more than it is still owed — a half, for a team that shares (whole numbers without sharing: the same).
@@ -869,7 +871,7 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
       need.set(t.id, Math.max(0, need.get(t.id)! - mine.reduce((n, x) => n + worth(x.slot), 0)));
       if (settings.prime) primeNeed.set(t.id, Math.max(0, primeNeed.get(t.id)! - mine.filter(x => x.slot.prime).reduce((n, x) => n + worth(x.slot), 0)));
     }
-    return { need, primeNeed };
+    return { need, primeNeed, toHand };
   };
 
   /**
@@ -924,7 +926,7 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
    * starts or two placers (a sharing team in two partner groups), over its day cap, or on back-to-back days when that
    * rule is on, is found after and forbidden, and the week placed again.
    */
-  const planWeek = (seats: readonly Seat[], kept: Map<string, Seat[]>, free: readonly Seat[], placers: readonly Placer[]): Map<Seat, Placer> => {
+  const planWeek = (seats: readonly Seat[], kept: Map<string, Seat[]>, free: readonly Seat[], placers: readonly Placer[], hv: ReadonlyMap<string, number>, cum: number, toHand: number): Map<Seat, Placer> => {
     const weekStarts = [...new Set(seats.map(x => x.slot.startClock))].sort();
     const timePct = (s: Slot) => (weekStarts.length < 2 ? 0.5 : weekStarts.indexOf(s.startClock) / (weekStarts.length - 1));
     const forbid = new Set<string>();
@@ -1044,7 +1046,59 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
       }
       const alone = [...missed].map(([id, n]) => ({ id, teams: [teamById.get(id)!], quota: Math.floor(n + EPS), primeQuota: 0 })).filter(p => p.quota > 0);
       if (alone.length) run(free.filter(x => !out.has(x)), p => p.quota - (placed.get(p) ?? 0), alone);
+      lastPass(out, taken, placed, run);
       return out;
+    };
+
+    /**
+     * THE LAST PASS (owner 2026-11-24): a seat the week MEANT to hand out that its quota could not place goes to a team still
+     * under its season share that may have it — the furthest behind its pace first, one slot at a time, never past its share
+     * or its week's cap.
+     *
+     * Why it exists: the quota (`needsFor`) caps each team by what IT can place, never by what its group can. Milton's
+     * winter dome promised its Rep teams 10 of a Sunday's 12 seats when 4 sat on fields kept for Select — 2 Rep promises
+     * went unkept and 2 Select-field seats stayed open while Select teams owed time were free (8 open, 8 short, a season).
+     * ⚠ THE WEEK'S OWN BUDGET, never more (/review 2026-11-24): it hands out only what the week meant to (`toHand`) less
+     * what the week holds. Shares under 100% leave seats open on purpose; filling every open seat front-loaded a 48% schedule
+     * (weeks 1–6 full, 7–12 empty), and a per-team pace instead left Milton's gap open.
+     *
+     * Not under "A set number a week" (a team gets its number, no more), never a prime seat while prime time has its own
+     * share to keep (`settings.prime`), never a team in a sharing rule (its share is half a facility; a whole slot alone
+     * would spend it twice as fast and skip pairing). A program holder (`many`) is left to its own count.
+     */
+    const lastPass = (out: Map<Seat, Placer>, taken: Map<string, Seat[]>, placed: Map<Placer, number>, run: (pool: readonly Seat[], capOf: (p: Placer) => number, among: readonly Placer[]) => void) => {
+      if (settings.split.method === 'weekly') return;
+      const open = () => free.filter(x => !out.has(x) && !(settings.prime && x.slot.prime));
+      if (!open().length) return;
+      // What each team holds this week so far, counted as its share counts.
+      const week = new Map<string, number>();
+      for (const [t, list] of kept) week.set(t, list.reduce((n, x) => n + worth(x.slot), 0));
+      for (const [, p] of out) for (const t of p.teams) week.set(t.id, (week.get(t.id) ?? 0) + (byUnits ? 1 / p.teams.length : 1));
+      let budget = Math.floor(toHand - [...week.values()].reduce((a, b) => a + b, 0) + EPS);
+      if (budget <= 0) return;
+      // Each team's room: its season share left, its week's cap; its place in line: how far behind its pace it is.
+      const extra: { p: Placer; behind: number }[] = [];
+      for (const t of teams) {
+        if (t.many || pooled(t.id)) continue;
+        const target = targets.slots.get(t.id) ?? 0;
+        const has = (hv.get(t.id) ?? 0) + (week.get(t.id) ?? 0);
+        const quota = Math.min(maxPerWeek - (taken.get(t.id)?.length ?? 0), Math.floor(target - has + EPS));
+        if (quota > 0) extra.push({ p: { id: t.id, teams: [t], quota, primeQuota: 0 }, behind: target * cum / Math.max(1, targets.capacity) - has });
+      }
+      extra.sort((x, y) => y.behind - x.behind);
+      // A slot a round, the furthest behind first, until the budget is spent or nobody can use what is left.
+      const rounds = Math.max(0, ...extra.map(x => x.p.quota));
+      for (let round = 1; round <= rounds; round++) {
+        for (const { p } of extra) {
+          if (budget <= 0) return;
+          if ((placed.get(p) ?? 0) >= Math.min(p.quota, round)) continue;
+          const seatsLeft = open();
+          if (!seatsLeft.length) return;
+          const before = placed.get(p) ?? 0;
+          run(seatsLeft, q => Math.min(q.quota, round) - (placed.get(q) ?? 0), [p]);
+          budget -= (placed.get(p) ?? 0) - before;
+        }
+      }
     };
 
     /** A team twice at once (within a placer, or across two), over its day cap, or on back-to-back days — the first, as a
@@ -1135,8 +1189,8 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
    */
   const weekOf = (seats: readonly Seat[], cumSeats: number, cumPrime: number, hv = have, hvPrime = havePrime) => {
     const { kept, free } = splitSeats(seats);
-    const { need, primeNeed } = needsFor(seats, cumSeats, cumPrime, kept, hv, hvPrime);
-    const result = planWeek(seats, kept, free, placersFor(need, primeNeed, kept, free));
+    const { need, primeNeed, toHand } = needsFor(seats, cumSeats, cumPrime, kept, hv, hvPrime);
+    const result = planWeek(seats, kept, free, placersFor(need, primeNeed, kept, free), hv, cumSeats, toHand);
     const lists = new Map<string, Seat[]>(teams.map(t => [t.id, [...(kept.get(t.id) ?? [])]]));
     const out: { slot: Slot; teamIds: readonly string[]; placerId: string }[] = [];
     for (const [seat, p] of result) {
