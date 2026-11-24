@@ -51,7 +51,7 @@ async function appModule(rel) {
   return import(new URL(`../../${rel}`, import.meta.url).href);
 }
 
-const slugOf = (age, tier) => `${age}-${tier}`.toLowerCase();
+const slugOf = (age, tier) => `${age}-${tier}`.toLowerCase().replace(/s+/g, '-');
 const teamName = (age, tier) => `Milton Bats ${age} ${tier}`;
 const TEAM_COLORS = ['#47156C', '#5E2B8A', '#3B1259', '#6A3D9A', '#2F0F4A', '#7B4FA6'];
 const money = (n) => `$${Number(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -247,6 +247,12 @@ export async function buildRep(ctx) {
       pyId: stableId(cfg, `rep:${slugOf(age, tier)}:${S.year}`) });
   }
   const dressed = teams.find(t => t.isDressed);
+  // A team's born-in years: its age group's two, or one of them when its tier ends in a side (`repSides`: Purple the older).
+  const yearsOf = (t) => {
+    const [older, younger] = cfg.repBirthYears[t.age];
+    const side = cfg.repSides?.[t.tier.split(' ').at(-1)];
+    return side === 'older' ? [older, older] : side === 'younger' ? [younger, younger] : [older, younger];
+  };
   if (!dressed) die('dressed team', { message: `the config's dressed team "${dressedKey}" is not in repTeams` });
 
   // Club memberships: only the missing ones (a reset never edits a membership).
@@ -265,14 +271,19 @@ export async function buildRep(ctx) {
   }
 
   const ages = [...new Set(teams.map(t => t.age))];
-  const groupId = Object.fromEntries(ages.map(a => [a, stableId(cfg, `group:${a}`)]));
-  await insertAll('rep_team_groups', ages.map((a, k) => ({ id: groupId[a], org_id: ORG, name: a, display_order: k })));
+  // The teams' headings: the club's levels when the config names them (a team's group is its tier's first word), else age groups.
+  const groupOf = (t) => (cfg.repGroups ? t.tier.split(' ')[0] : t.age);
+  const groupNames = cfg.repGroups ?? ages;
+  const strays = teams.filter(t => !groupNames.includes(groupOf(t)));
+  if (strays.length) die('team groups', { message: `${strays.map(t => t.key).join(', ')}: not in repGroups (${groupNames.join(', ')})` });
+  const groupId = Object.fromEntries(groupNames.map(g => [g, stableId(cfg, `group:${g}`)]));
+  await insertAll('rep_team_groups', groupNames.map((g, k) => ({ id: groupId[g], org_id: ORG, name: g, display_order: k })));
   await insertAll('rep_teams', teams.map(t => ({ id: t.id, org_id: ORG, name: t.name, slug: t.slug, sport: cfg.sport, division: t.age,
-    color: TEAM_COLORS[t.i % TEAM_COLORS.length], group_id: groupId[t.age], is_archived: false,
-    description: t.isDressed ? 'Our U15 A team: fall ball in September and October, Sunday dome practices all winter, three spring tournaments.' : null })));
+    color: TEAM_COLORS[t.i % TEAM_COLORS.length], group_id: groupId[groupOf(t)], is_archived: false,
+    description: t.isDressed ? `Our ${t.key} team: fall ball in September and October, Sunday dome practices all winter, three spring tournaments.` : null })));
   const tryouts = new Set(cfg.repTryoutsOpen?.teams ?? []);
   await insertAll('rep_program_years', teams.map(t => {
-    const [from, to] = cfg.repBirthYears[t.age];
+    const [from, to] = yearsOf(t);
     return { id: t.pyId, team_id: t.id, org_id: ORG, name: S.name, year: S.year, status: 'active', born_from_year: from, born_to_year: to,
       tryout_open: tryouts.has(t.key), tryout_description: tryouts.has(t.key) ? cfg.repTryoutsOpen.description : null };
   }));
@@ -289,10 +300,10 @@ export async function buildRep(ctx) {
   // Rosters. The dressed team's twelve are named; the others are drawn from the world's name pool, deterministically.
   const guardianEmail = (first, last) => `${ascii(first).toLowerCase()}.${ascii(last).toLowerCase().replace(/[^a-z]/g, '')}@miltonfamilies.local`;
   const rosterRows = [];
-  const dob = (age, k) => { const [from, to] = cfg.repBirthYears[age]; const y = k % 2 ? from : to; return `${y}-${String(1 + (k * 5) % 12).padStart(2, '0')}-${String(1 + (k * 7) % 27).padStart(2, '0')}`; };
+  const dob = (team, k) => { const [from, to] = yearsOf(team); const y = k % 2 ? from : to; return `${y}-${String(1 + (k * 5) % 12).padStart(2, '0')}-${String(1 + (k * 7) % 27).padStart(2, '0')}`; };
   dressed.playerIds = DRESSED_ROSTER.map((_, k) => stableId(cfg, `rep:${dressed.slug}:player:${k}`));
   DRESSED_ROSTER.forEach((p, k) => rosterRows.push({ id: dressed.playerIds[k], program_year_id: dressed.pyId, team_id: dressed.id, org_id: ORG,
-    player_first_name: p.first, player_last_name: p.last, player_date_of_birth: dob('U15', k), player_number: p.number, primary_position: p.primary, secondary_position: p.secondary,
+    player_first_name: p.first, player_last_name: p.last, player_date_of_birth: dob(dressed, k), player_number: p.number, primary_position: p.primary, secondary_position: p.secondary,
     bats: p.bats, throws: p.throws, guardian_first_name: GUARDIAN_FIRSTS[k], guardian_last_name: p.last, guardian_email: guardianEmail(GUARDIAN_FIRSTS[k], p.last),
     guardian_phone: `905-555-02${String(10 + k).padStart(2, '0')}`, status: 'active', source: 'admin_manual', display_order: k,
     // The "Family & paperwork" tab (plan §10): an emergency contact for everyone, a medical note for two.
@@ -306,7 +317,7 @@ export async function buildRep(ctx) {
       const first = g.kids[(t.i * 5 + k * 3) % g.kids.length];
       const last = g.last[(t.i * 7 + k) % g.last.length];
       const parent = g.parents[(t.i + k) % g.parents.length];
-      rosterRows.push({ id: crypto.randomUUID(), program_year_id: t.pyId, team_id: t.id, org_id: ORG, player_first_name: first, player_last_name: last, player_date_of_birth: dob(t.age, k + t.i),
+      rosterRows.push({ id: crypto.randomUUID(), program_year_id: t.pyId, team_id: t.id, org_id: ORG, player_first_name: first, player_last_name: last, player_date_of_birth: dob(t, k + t.i),
         player_number: String(1 + ((k * 7 + t.i) % 40)), primary_position: POSITIONS[k % POSITIONS.length], guardian_first_name: parent, guardian_last_name: last,
         guardian_email: guardianEmail(parent, last), status: 'active', source: 'admin_manual', display_order: k });
     }
@@ -314,7 +325,7 @@ export async function buildRep(ctx) {
   await insertAll('rep_roster_players', rosterRows);
   ok(`${teams.length} rep teams in ${ages.length} age groups (each on a live "${S.name}" with an accepted head coach) · ${rosterRows.length} players`);
   ok(`${dressed.name}: ${cfg.repPeople.headCoach.email} head coach · ${cfg.repPeople.assistant.email} assistant · "${S.previousName}" finished behind it`);
-  if (tryouts.size) ok(`tryouts open on the public site: ${[...tryouts].map(k => teamName(...k.split(' '))).join(', ')}`);
+  if (tryouts.size) ok(`tryouts open on the public site: ${teams.filter(t => tryouts.has(t.key)).map(t => t.name).join(', ')}`);
 
   // ── the dome (a venue: kept across resets) and its permit ────────────────────────────────────────────────────────
   head('The dome and its winter permit');
@@ -350,7 +361,8 @@ export async function buildRep(ctx) {
   head('Dome schedule part 1 — sent and billed');
   const part1 = heldSundays.slice(0, P.offAfter);
   const hours = Array.from({ length: blockHours * 60 / DM.slotMinutes }, (_, h) => { const m = toMin(P.start) + h * DM.slotMinutes; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; });
-  const cells = hours.flatMap(t => DM.venue.fields.map(f => ({ t, f }))); // 18 a Sunday
+  const cells = hours.flatMap(t => DM.venue.fields.map(f => ({ t, f }))); // 21 a Sunday (7 hours × 3 fields): every team's hour and one open
+  if (cells.length <= teams.length) die('dome hours', { message: `${cells.length} dome hours a Sunday for ${teams.length} teams: lengthen the permit so one hour stays open` });
   const slots = []; // { day, t, f, teamIdx|null }
   part1.forEach((day, w) => cells.forEach((c, s) => {
     const teamIdx = (s - 5 * w + cells.length * 10) % cells.length; // each team moves five places a week: new hour, new field
@@ -398,7 +410,7 @@ export async function buildRep(ctx) {
   sql(`UPDATE club_schedules SET finalized_at = ${q(sentAt)}, finalized_by = ${q(ctx.OWNER)}, sent_at = ${q(sentAt)}, sent_by = ${q(ctx.OWNER)}, created_at = ${q(minutesLater(sentAt, -60 * 24 * 5))} WHERE id = ${q(scheduleId)} AND org_id = ${q(ORG)};
        UPDATE club_schedule_sends SET sent_at = ${q(sentAt)}, sent_by = ${q(ctx.OWNER)}, people_count = ${teams.length}, failed_count = 0, landed_at = ${q(minutesLater(sentAt, 1))} WHERE schedule_id = ${q(scheduleId)} AND org_id = ${q(ORG)};
        UPDATE rep_cost_allocations SET created_at = ${q(sentAt)} WHERE id = ${q(fin.allocationId)} AND org_id = ${q(ORG)};`);
-  // Ten of the seventeen coaches have paid the club's first payment; the dressed team is one of them.
+  // Ten of the coaches have paid the club's first payment; the dressed team is one of them.
   const firstPaid = new Set([dressed.id, ...teams.filter(t => !t.isDressed).slice(0, 9).map(t => t.id)]);
   const allocSplits = await one('splits', db.from('rep_allocation_splits').select('id, team_id, amount').eq('allocation_id', fin.allocationId));
   const inst1 = await one('installments', db.from('rep_allocation_installments').select('id, team_id, installment_number, amount, due_date').eq('org_id', ORG).in('split_id', allocSplits.map(s => s.id)));
@@ -502,7 +514,7 @@ export async function buildRep(ctx) {
     budget_category_id: sp.budget_category_id, budget_item_id: sp.budget_item_id })).error);
   die('sponsor arrival', (await db.from('rep_fundraiser_entries').insert({ fundraiser_id: spId, org_id: ORG, team_id: dressed.id, player_id: null, amount_raised: SP.received, rebate_percent: 0,
     rebate_amount: 0, received_date: addDays(D, SP.receivedOffset), method: 'cheque' })).error);
-  die('sponsor invoice details', (await db.from('rep_teams').update({ sponsor_payment_details: { payTo: 'Milton Bats U15 A', instructions: 'E-transfer to the team treasurer, or a cheque payable to Milton Bats Softball Association with "U15 A" on the memo line.' } }).eq('id', dressed.id)).error);
+  die('sponsor invoice details', (await db.from('rep_teams').update({ sponsor_payment_details: { payTo: dressed.name, instructions: `E-transfer to the team treasurer, or a cheque payable to Milton Bats Softball Association with "${dressed.key}" on the memo line.` } }).eq('id', dressed.id)).error);
   // Costs and bills: paid, part-paid, one a family paid out of pocket, one still ahead.
   const COSTS = [
     { cat: 'League & Fees', item: 'League registration', description: 'Fall ball league fee', payee: 'Halton Fall Ball League', pieces: [{ amount: 1450, due: -88, paid: -86 }] },

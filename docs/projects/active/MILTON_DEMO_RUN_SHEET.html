@@ -79,12 +79,12 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
 <section class="card" aria-labelledby="h-before">
   <h2 id="h-before">Before you start</h2>
   <ul class="plain">
-    <li><b>The world is built for November 24</b> (rebuilt the evening of November 23). Staging reads the same database, so nothing needs pushing for the world. Rebuild on your laptop (<code>npm run demo:milton</code>) only if a rehearsal changed it, and not in the last half hour before the meeting: a rebuild that fails part-way leaves the club empty until it is run again. Never rebuild while a window is mid-demo.</li>
+    <li><b>The world is built for November 24</b> (rebuilt the morning of November 24 with the club’s Rep and Select teams: 20 teams, U11 to U19, each level a Purple and a White team). Staging reads the same database, so nothing needs pushing for the world. Rebuild on your laptop (<code>npm run demo:milton</code>) only if a rehearsal changed it, and not in the last half hour before the meeting: a rebuild that fails part-way leaves the club empty until it is run again. Never rebuild while a window is mid-demo.</li>
     <li><b>Sign in to both windows before the meeting.</b> Every Milton account carries the current Terms acceptance, so sign-in should go straight in; if the Terms screen shows, tick it then, not in the room.</li>
-    <li><b>The deck:</b> slides 1 to 6, then leave slide 7, "Five demos", up while you switch to the browser. Slides 8 to 14 follow the demos.</li>
+    <li><b>The deck:</b> slides 1 to 6, then leave slide 7, "Five demos", up while you switch to the browser. When you come back, slide 8 puts two codes up for their phones (the demo club’s website and the Winter Classic); slides 9 to 16 follow.</li>
     <li>Read the last lines it prints: <b>the Sunday part 2 starts</b>, <b>the next dome practice</b>, <b>cash on hand</b>, and for Demo 5 <b>the three parent-coaches</b> and <b>the friend code</b> (always MLT 9BV, Tomas Volkov's). The steps below use them.</li>
     <li><b>Owner window</b>: <code>https://dev.fieldlogichq.ca</code>, signed in as <code>b2cowan+owner@gmail.com</code> (Jordan Whitfield, the club's Owner). Only the Owner or an Admin can build and send a schedule.</li>
-    <li><b>Coach window</b> (a second browser profile): signed in as <code>b2cowan+repcoach@gmail.com</code> (Morgan Hale, head coach of Milton Bats U15 A). The assistant is <code>b2cowan+assistant@gmail.com</code> (Priya Nair).</li>
+    <li><b>Coach window</b> (a second browser profile): signed in as <code>b2cowan+repcoach@gmail.com</code> (Morgan Hale, head coach of Milton Bats U15 Rep Purple). The assistant is <code>b2cowan+assistant@gmail.com</code> (Priya Nair).</li>
     <li><b>Password</b> for every Milton account: <code>MILTON_DEMO_PASSWORD</code> in <code>.env.local</code> on your laptop. It is not written here.</li>
     <li><b>A private window</b> (signed out) for Demo 5's sign-up. <b>Phone cards</b>: print the Winter Classic card to leave behind; no demo time.</li>
     <li><b>Stop check:</b> in the Coach window, Schedule shows a Sunday <b>Practice</b> at Escarpment Indoor Dome. If it doesn't, rebuild before going further.</li>
@@ -102,13 +102,13 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
     <li><input type="checkbox" id="s3"><label class="step" for="s3"><span class="do">Open the band's "The bill" tile.</span><span class="see">Each team's share and its three payments. Say: "This went out to the coaches weeks ago. I'll build the rest of the winter now."</span></label></li>
     <li><input type="checkbox" id="s4"><label class="step" for="s4"><span class="do">Back on the permit: "Hand out this time in a schedule ›", then "Start from the permit".</span><span class="around"><b>Keep it simple:</b> leave only Winter dome ticked. The Permits tick-list and "Find the time across every permit" are schedules across several permits, on production since November 22; open them only if he asks.</span></label></li>
     <li><input type="checkbox" id="s5"><label class="step" for="s5"><span class="do">Change Dates "From" to the Sunday part 2 starts.</span><span class="see">The rebuild printed it. Leave it at the permit's first day and the drafts say they leave out the time already booked.</span></label></li>
-    <li><input type="checkbox" id="s6"><label class="step" for="s6"><span class="do">"Who, and how much": tick all 17 teams, split evenly.</span></label></li>
+    <li><input type="checkbox" id="s6"><label class="step" for="s6"><span class="do">"Who, and how much": tick all 20 teams, split evenly.</span></label></li>
     <li><input type="checkbox" id="s7"><label class="step" for="s7"><span class="do">"Rules": at most one a week.</span></label></li>
     <li><input type="checkbox" id="s8"><label class="step" for="s8"><span class="do">"Generate drafts".</span><span class="see">Three drafts, each scored out of 100. Pick "Best overall".</span></label></li>
     <li><input type="checkbox" id="s9"><label class="step" for="s9"><span class="do">Switch the view to "By day".</span><span class="see">Each Sunday's grid, field by field.</span></label></li>
     <li><input type="checkbox" id="s10"><label class="step" for="s10"><span class="do">"Save as a draft".</span><span class="see">The schedule's own page.</span></label></li>
     <li><input type="checkbox" id="s11"><label class="step" for="s11"><span class="do">"Bill the teams ›": bill from the permit, Monthly, then "Add the bill to the schedule".</span><span class="see">Each team's share of the time. Care: a custom amount per team comes after launch.</span></label></li>
-    <li><input type="checkbox" id="s12"><label class="step" for="s12"><span class="do">"Send" › "For review first" › "Send to 17 coaches".</span><span class="see">Say: "When they reply, Finalize and send books it and bills it. Part 1 is what that looks like."</span><span class="around"><b>Step around:</b> "Final now" (it would bill every team a second time in Demo 2). In the side menu, Communications is group email to coaches and the board, on production since November 22; open it only if he asks.</span></label></li>
+    <li><input type="checkbox" id="s12"><label class="step" for="s12"><span class="do">"Send" › "For review first" › "Send to 20 coaches".</span><span class="see">Say: "When they reply, Finalize and send books it and bills it. Part 1 is what that looks like."</span><span class="around"><b>Step around:</b> "Final now" (it would bill every team a second time in Demo 2). In the side menu, Communications is group email to coaches and the board, on production since November 22; open it only if he asks.</span></label></li>
   </ol>
   <div class="verdict" role="radiogroup" aria-label="Demo 1 verdict"><label><input type="radio" name="v1" value="pass">Pass</label><label><input type="radio" name="v1" value="issue">Issue</label><label><input type="radio" name="v1" value="call">Needs a call</label></div>
   <textarea id="n1" aria-label="Demo 1 notes" placeholder="Notes for Demo 1"></textarea>
@@ -117,7 +117,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
 <section class="card demo" data-demo="2" data-min="6" style="--start:12" aria-labelledby="h-d2">
   <div class="head"><h2 id="h-d2">2 · A coach's books <small>Coaches Portal · 6 min</small></h2>
     <span class="clock"><output aria-live="off">0:00</output><button type="button" class="go">Start</button></span></div>
-  <p class="where">Coach window, Milton Bats U15 A. <b>"This is the Coaches Portal. Every rep coach gets it with the club, no per-team charge."</b></p>
+  <p class="where">Coach window, Milton Bats U15 Rep Purple. <b>"This is the Coaches Portal. Every rep coach gets it with the club, no per-team charge."</b></p>
   <ol class="steps">
     <li><input type="checkbox" id="s13"><label class="step" for="s13"><span class="do">Schedule › open Sunday's dome practice.</span><span class="see">Escarpment Indoor Dome, the field, the hour the club gave.</span></label></li>
     <li><input type="checkbox" id="s14"><label class="step" for="s14"><span class="do">Money › Club.</span><span class="see">"What the club has billed us": part 1 in three payments, the first sent.</span></label></li>
@@ -191,9 +191,9 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
   <h2 id="h-more">If he asks to see more</h2>
   <p class="where">What the club holds as built for November 24. Nothing here is on the clock.</p>
   <ul class="plain">
-    <li><b>Coach window, Milton Bats U15 A, ready to open:</b> Schedule (three upcoming games after Sunday's practice) · Lineups (eight past lineups, all ready; build the next game's from a past one, live) · Insights, the Awards tab (six awards of two kinds) and the Opponents tab (a line and notes on each of the four opponents) · Email families (two emails already sent) · Roster, a player's "Family &amp; paperwork" tab (an emergency contact on everyone; Harper Lindqvist and Nora Haddad carry a medical note) · the calendar subscription.</li>
+    <li><b>Coach window, Milton Bats U15 Rep Purple, ready to open:</b> Schedule (three upcoming games after Sunday's practice) · Lineups (eight past lineups, all ready; build the next game's from a past one, live) · Insights, the Awards tab (six awards of two kinds) and the Opponents tab (a line and notes on each of the four opponents) · Email families (two emails already sent) · Roster, a player's "Family &amp; paperwork" tab (an emergency contact on everyone; Harper Lindqvist and Nora Haddad carry a medical note) · the calendar subscription.</li>
     <li><b>Owner window, ready to open:</b> Registrations (U13 is full with a waitlist of six, and a "To review" queue) · Families · the club Calendar · a rainout on Saturday's U11 games · U11 Standings and "Scores to check" · what the club sees of each rep team · Organization › Members (one invitation waiting, Renee Castellano, Treasurer).</li>
-    <li><b>Nothing in them yet, so offer a second session:</b> tryouts · a finished season ("The season's end": every team is mid-season) · the club's Budget, Budget vs. Actual and Bank · Sponsorships (three sponsor names; no packages or deals) · the tournament tools beyond the finished Winter Classic (no check-in, live scoring or last year to reuse) · player documents.</li>
+    <li><b>Nothing in them yet, so offer a second session:</b> tryouts · a finished season ("The season's end": every team is mid-season) · the club's Budget, Budget vs. Actual and Bank · Sponsorships (three sponsor names; no packages or deals; on staging its Deals and invoices are ahead of production, so do not present them as available) · the tournament tools beyond the finished Winter Classic (no check-in, live scoring or last year to reuse) · player documents.</li>
   </ul>
 </section>
 
@@ -205,7 +205,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
     <li>A sponsorship deal offered in a rehearsal is not cleared by the rebuild; remove it in Sponsorships yourself.</li>
     <li>Copy the summary above and paste it to Claude.</li>
   </ul>
-  <div class="note warn">Not in this sheet: the team list and dome permit are placeholders until the club sends theirs (a settings change and a rebuild). Everything shown is built, and the club plans have been on sale since November 23.</div>
+  <div class="note warn">Not in this sheet: the coaches’ names and the dome permit are placeholders until the club sends theirs (a settings change and a rebuild). Everything shown is built, and the club plans have been on sale since November 23.</div>
   <div id="summary-box" hidden><textarea id="summary" aria-label="Summary to copy" rows="10"></textarea></div>
 </section>
 </div>

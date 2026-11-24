@@ -199,22 +199,31 @@ export default {
     /** One invitation still waiting, so Members shows "Invited" (plan §10). A `.local` account nobody signs in to. */
     invited: { email: 'renee.castellano@milton-bats.local', name: 'Renee Castellano', role: 'treasurer', title: 'Treasurer' },
   },
-  /** [age group, tier, head coach name (a .local account; the dressed team's is `repPeople.headCoach`)]. Jan 1 cut-off. */
+  /**
+   * [age group, tier, head coach name (a .local account; the dressed team's is `repPeople.headCoach`)]. Jan 1 cut-off.
+   * The club's structure (owner 2026-11-24): each age group has two levels, Rep and Select, and each level a senior team
+   * (Purple, the older birth year) and a junior team (White, the younger). A tier is "<level> <side>"; the level is the
+   * team's group on the public site and the admin's Rep teams screen (`repGroups`), the side picks its birth year
+   * (`repSides`). The coach names are the earlier placeholder list's, re-used so no coach is left on the club with no team.
+   */
   repTeams: [
-    ['U9', 'A', 'Dana Whitlock'], ['U9', 'B', 'Sam Achterberg'],
-    ['U11', 'A', 'Lauren Petrakis'], ['U11', 'B', 'Kevin Osei'], ['U11', 'C', 'Rosa Delgado'],
-    ['U13', 'A', 'Brian Kowalczyk'], ['U13', 'B', 'Monique Baptiste'], ['U13', 'C', 'Graham Tennant'],
-    ['U15', 'A', null], ['U15', 'B', 'Aisha Rahimi'], ['U15', 'C', 'Patrick Doucet'],
-    ['U17', 'A', 'Heather McLeod'], ['U17', 'B', 'Victor Lindgren'], ['U17', 'C', 'Simone Arsenault'],
-    ['U19', 'A', 'Darren Fitzpatrick'], ['U19', 'B', 'Nadia Volkova'], ['U19', 'C', 'Owen Gallant'],
+    ['U11', 'Rep Purple', 'Lauren Petrakis'], ['U11', 'Rep White', 'Kevin Osei'], ['U11', 'Select Purple', 'Rosa Delgado'], ['U11', 'Select White', 'Dana Whitlock'],
+    ['U13', 'Rep Purple', 'Brian Kowalczyk'], ['U13', 'Rep White', 'Monique Baptiste'], ['U13', 'Select Purple', 'Graham Tennant'], ['U13', 'Select White', 'Sam Achterberg'],
+    ['U15', 'Rep Purple', null], ['U15', 'Rep White', 'Aisha Rahimi'], ['U15', 'Select Purple', 'Patrick Doucet'], ['U15', 'Select White', 'Erin Moffatt'],
+    ['U17', 'Rep Purple', 'Heather McLeod'], ['U17', 'Rep White', 'Victor Lindgren'], ['U17', 'Select Purple', 'Simone Arsenault'], ['U17', 'Select White', 'Megan Thibault'],
+    ['U19', 'Rep Purple', 'Darren Fitzpatrick'], ['U19', 'Rep White', 'Nadia Volkova'], ['U19', 'Select Purple', 'Owen Gallant'], ['U19', 'Select White', 'Andre Lafleur'],
   ],
-  /** Born-in years for the 2027 season, by age group (Jan 1 cut-off). */
-  repBirthYears: { U9: [2018, 2019], U11: [2016, 2017], U13: [2014, 2015], U15: [2012, 2013], U17: [2010, 2011], U19: [2008, 2009] },
+  /** The public site's and the admin's team headings, in order: a team's group is its tier's first word. */
+  repGroups: ['Rep', 'Select'],
+  /** A tier's last word → which of its age group's two birth years the team is: Purple the older, White the younger. */
+  repSides: { Purple: 'older', White: 'younger' },
+  /** Born-in years for the 2027 season, by age group (Jan 1 cut-off), older year first. */
+  repBirthYears: { U11: [2016, 2017], U13: [2014, 2015], U15: [2012, 2013], U17: [2010, 2011], U19: [2008, 2009] },
   repSeason: { name: '2027 Season', year: 2027, previousName: '2026 Season', previousYear: 2026 },
-  /** Light rosters for the other sixteen; the dressed team has its own twelve. */
+  /** Light rosters for the other nineteen; the dressed team has its own twelve. */
   repRosterSize: [11, 12],
   /** Teams with tryouts open on the public site (Demo 5). */
-  repTryoutsOpen: { teams: ['U9 A', 'U9 B'], description: 'Tryouts for the 2027 season, players born 2018 and 2019. Two sessions in the dome; bring a glove, a helmet if you have one, and water.' },
+  repTryoutsOpen: { teams: ['U11 Rep Purple', 'U11 Rep White'], description: 'Tryouts for the 2027 season: U11 Rep Purple is players born 2016, U11 Rep White players born 2017. Two sessions in the dome; bring a glove, a helmet if you have one, and water.' },
 
   /**
    * The dome and its winter permit — PLACEHOLDER until the club sends its permit (dome name, fields and which are half,
@@ -227,16 +236,16 @@ export default {
    */
   dome: {
     venue: { name: 'Escarpment Indoor Dome', address: '8 Dome Way, Milton', fields: ['Field 1', 'Field 2', 'Field 3'], halfFields: ['Field 3'] },
-    permit: { name: 'Winter dome 2026–27', issuer: 'Escarpment Indoor Dome', reference: 'ESC-W27-0412', weekday: 7, start: '08:00', end: '14:00', sundays: 20, offAfter: 8, offCount: 2, offNote: 'Dome closed (holiday break)', firstSundayBefore: 35, costPerFullFieldHour: 95 },
+    permit: { name: 'Winter dome 2026–27', issuer: 'Escarpment Indoor Dome', reference: 'ESC-W27-0412', weekday: 7, start: '08:00', end: '15:00', sundays: 20, offAfter: 8, offCount: 2, offNote: 'Dome closed (holiday break)', firstSundayBefore: 35, costPerFullFieldHour: 95 },
     slotMinutes: 60,
     part1: { name: 'Winter dome · part 1', sentDaysBefore: 56 },
     /** The bill's payment dates, as days from the demo day (the product's "On these dates" plan). */
     billDates: [-42, -7, 10],
   },
 
-  /** Milton Bats U15 A — the team every Coaches Portal demo runs on (plan §8.6). */
+  /** Milton Bats U15 Rep Purple — the team every Coaches Portal demo runs on (plan §8.6). */
   dressed: {
-    team: 'U15 A',
+    team: 'U15 Rep Purple',
     dues: { total: 1600, installments: 4, dueOffsets: [-60, 12, 52, 110] },
     fundraiser: { name: 'Fall bottle drive', rebatePercent: 50, startOffset: -74, endOffset: -58 },
     sponsor: { name: 'Main Street Physio & Sport', pledged: 1500, received: 750, receivedOffset: -30, contact: 'Alana Brooks', email: 'alana@mainstreetphysio.local', address: '210 Main St E, Milton, ON' },
@@ -247,8 +256,8 @@ export default {
     name: 'Milton Bats Winter Classic', slug: 'winter-classic',
     contactEmail: 'b2cowan+milton-contact@gmail.com',
     divisions: [
-      { name: 'U11', teams: ['Milton Bats U11 A', 'Milton Bats U11 B', 'Kelso Ridge Raptors', 'Twelve Mile Cyclones'] },
-      { name: 'U15', teams: ['Milton Bats U15 A', 'Milton Bats U15 B', 'Harrison Hollow Hornets', 'Cedar Line Storm'] },
+      { name: 'U11', teams: ['Milton Bats U11 Rep Purple', 'Milton Bats U11 Rep White', 'Kelso Ridge Raptors', 'Twelve Mile Cyclones'] },
+      { name: 'U15', teams: ['Milton Bats U15 Rep Purple', 'Milton Bats U15 Rep White', 'Harrison Hollow Hornets', 'Cedar Line Storm'] },
     ],
   },
 

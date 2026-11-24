@@ -38,7 +38,7 @@ import { ensureFixtureUser, findUserByEmail } from './lib/fixture-user.mjs';
 import {
   addDays, saturdayAfter, onOrAfter, torontoInstant, minutesLater, mulberry32, buildWorld, snakeDraft, tally,
 } from './lib/prospect-demo-world.mjs';
-// Phase B — the rep side (17 teams, the dome, the dressed team, the tournament), when the club config has `repTeams`.
+// Phase B — the rep side (the rep teams, the dome, the dressed team, the tournament), when the club config has `repTeams`.
 import { repConfigured, resetRep, buildRep } from './lib/prospect-demo-rep.mjs';
 // Demo 5 — the club's own sign-up questions and the U9 friend requests, when the club config has `signupForm`.
 import { planSignupForm, writeSignupForm } from './lib/prospect-demo-signup-form.mjs';
