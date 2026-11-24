@@ -5807,6 +5807,24 @@
         "column_default": null
       },
       {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 28,
+        "column_name": "returned_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 29,
+        "column_name": "dispute_lost_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "club_sponsor_deal_refunds",
         "pos": 1,
         "column_name": "id",
@@ -6008,6 +6026,15 @@
         "table_name": "club_sponsor_deal_refunds",
         "pos": 23,
         "column_name": "emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 24,
+        "column_name": "cancel_emailed_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",

@@ -2,12 +2,12 @@
 
 **Generated:** 2026-11-24 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 69 divergence(s)** across dev/prod.
+**⚠️ 72 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 1 | 0 | — |
-| Columns | 37 | 0 | 0 |
+| Columns | 40 | 0 | 0 |
 | Indexes | 7 | 0 | 0 |
 | Constraints | 12 | 0 | — |
 | RLS / CHECK | 10 | 0 | 0 (RLS state) |
@@ -20,9 +20,10 @@
 _none_
 
 ## Columns
-### Only in DEV (37)
+### Only in DEV (40)
 - `club_sponsor_deal_payments.card_brand`
 - `club_sponsor_deal_payments.card_last4`
+- `club_sponsor_deal_payments.dispute_lost_at`
 - `club_sponsor_deal_payments.fee_amount`
 - `club_sponsor_deal_payments.fee_charged`
 - `club_sponsor_deal_payments.fee_cost_entry_id`
@@ -30,7 +31,9 @@ _none_
 - `club_sponsor_deal_payments.fee_paid_by`
 - `club_sponsor_deal_payments.fee_tax`
 - `club_sponsor_deal_payments.online_payment_id`
+- `club_sponsor_deal_payments.returned_at`
 - `club_sponsor_deal_refunds.amount`
+- `club_sponsor_deal_refunds.cancel_emailed_at`
 - `club_sponsor_deal_refunds.created_at`
 - `club_sponsor_deal_refunds.created_by`
 - `club_sponsor_deal_refunds.created_by_name`

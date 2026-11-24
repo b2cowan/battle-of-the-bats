@@ -1,9 +1,9 @@
 {
   "generated": "2026-11-24",
-  "total": 69,
+  "total": 72,
   "counts": {
     "tables": 1,
-    "columns": 37,
+    "columns": 40,
     "indexes": 7,
     "constraints": 12,
     "rls": 12
@@ -66,6 +66,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:club_sponsor_deal_payments.dispute_lost_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:club_sponsor_deal_payments.fee_amount",
       "sig": ""
     },
@@ -94,7 +98,15 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:club_sponsor_deal_payments.returned_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:club_sponsor_deal_refunds.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.cancel_emailed_at",
       "sig": ""
     },
     {

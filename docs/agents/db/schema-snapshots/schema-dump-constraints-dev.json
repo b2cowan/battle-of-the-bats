@@ -2386,7 +2386,7 @@
     "column_name": "online_payment_id",
     "foreign_table": "online_payments",
     "foreign_column": "id",
-    "delete_rule": "RESTRICT",
+    "delete_rule": "NO ACTION",
     "update_rule": "NO ACTION"
   },
   {
