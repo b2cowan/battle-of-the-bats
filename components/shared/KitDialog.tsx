@@ -247,9 +247,9 @@ export default function KitDialog({
   busy?: boolean;
   /** A form's width (One Window Q3, 2026-10-18; the ladder is in the stylesheet): 520 when absent, one column of
    *  fields. `medium` 640: fields side by side, or a record window on every path it opens from (guarded). `wide` 800:
-   *  a big table or two panes. Nothing reacts to the window's own width, so a two-across form must say so. A phone
+   *  a big table or two panes. `xwide` 1024: a pane of cards beside a long list (New schedule only). Nothing reacts to the window's own width, so a two-across form must say so. A phone
    *  fills the screen either way. */
-  size?: 'medium' | 'wide';
+  size?: 'medium' | 'wide' | 'xwide';
   /** A form opened from INSIDE another form stands one layer above it (see the header; Stage 3d, Ask 7a). */
   raised?: boolean;
   /** A question with a field to type in (Sign in again): its layer follows the phone's VISIBLE area, so the card lifts

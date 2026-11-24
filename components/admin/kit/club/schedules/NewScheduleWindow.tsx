@@ -66,6 +66,7 @@ import {
   type DayOffRule, type FieldsRule, type SettingsDraft, type ShareRule, type WindowRule,
 } from '@/lib/club-schedule-form';
 import { PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
+import { bookedWords } from '@/lib/club-schedule-document';
 import { familyUseOf, partFromFor, partLabelFor, type PartRead } from '@/lib/club-schedule-family';
 import {
   NO_GROUP, PRIME_DAYS, closingNote, isStale, facilityNoun, footCount, nightsWords, placeKey, placeName, scheduleDates, summaryLine, teamColour, yearOn,
@@ -689,6 +690,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const [round, setRound] = useState(0);
   const [chosen, setChosen] = useState(0);
   const [lens, setLens] = useState<'team' | 'day'>('team');
+  /** By day: what the club's other bookings already hold is out of the list until the box is ticked. */
+  const [showBooked, setShowBooked] = useState(false);
   const [asking, setAsking] = useState(false);
   /** What the drafts on show were made from — what Save and Keep send with them. */
   const [madeFrom, setMadeFrom] = useState<{ time: typeof timeBody; settings: ScheduleSettings } | null>(null);
@@ -1584,6 +1587,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       day, list: list.sort((a, b) => a.startsAt.localeCompare(b.startsAt) || placeOf(a).localeCompare(placeOf(b), 'en-CA', { numeric: true })),
     }));
   }, [gen, placeOf]);
+  /** A slot the draft leaves alone because a booking already holds it (drawn only while "Avoid bookings" is on). */
+  const isBookedSlot = (s: DraftSlot) => !!s.heldBy && settingsNow.rules.avoidBookings && !(pick?.assignments[s.key] ?? []).length;
+  const bookedCount = gen ? gen.slots.filter(isBookedSlot).length : 0;
+  /** By day's days: the booked slots out until asked for, and a day with nothing left drops its heading too. */
+  const shownDays = dayGroups.map(g => ({ day: g.day, list: g.list.filter(s => showBooked || !isBookedSlot(s)) })).filter(g => g.list.length);
   const exportDraft = async (kind: 'xlsx' | 'pdf') => {
     if (!gen || !pick) return;
     try {
@@ -1736,6 +1744,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         <div className={sch.lensLine}>
           <ViewSwitch views={[{ id: 'team', label: W.byTeam }, { id: 'day', label: W.byDay }]} value={lens} onChange={setLens} label="Read the draft" />
           <span className={sch.spacer} />
+          {lens === 'day' && bookedCount > 0 && (
+            <label className={sch.showBooked}>
+              <input type="checkbox" checked={showBooked} onChange={e => setShowBooked(e.target.checked)} />
+              {W.showBooked(bookedCount)}
+            </label>
+          )}
           {exportMenu}
         </div>
         {lens === 'team' ? (
@@ -1751,7 +1765,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           </div>
         ) : (
           <div className={sch.dayList} aria-label={W.byDay}>
-            {dayGroups.map(g => (
+            {shownDays.length === 0 && bookedCount > 0 && <p className={sch.dayEmpty}>{W.onlyBooked}</p>}
+            {shownDays.map(g => (
               <div key={g.day} role="list" aria-label={formatShortWeekdayDate(g.day)}>
                 <div className={sch.dayBand}>{formatShortWeekdayDate(g.day)}</div>
                 {g.list.map(s => {
@@ -1761,7 +1776,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
                       {teams[0] ? <Swatch colour={colourOf(teams[0])} /> : <span className={sch.swatchEmpty} aria-hidden />}
                       <span className={sch.dTime}>{formatTimeRange(s.startClock, s.endClock)}</span>
                       {teams.length ? <b>{teams.map(teamName).join(' · ')}</b>
-                        : s.heldBy && settingsNow.rules.avoidBookings ? <span className={sch.dHeld}>{`${s.heldBy.kind === 'tryout' ? 'Tryout day' : 'Booked'} · ${s.heldBy.ownerName}`}</span>
+                        : s.heldBy && settingsNow.rules.avoidBookings ? <span className={sch.dHeld}>{bookedWords(s.heldBy)}</span>
                           : <span className={sch.dOpen}>{W.openSlot}</span>}
                       <span className={sch.dPlace}>{placeOf(s)}</span>
                     </div>
@@ -1903,7 +1918,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     <>
       <KitDialog
         kind="form"
-        size="wide"
+        size="xwide"
         eyebrow={editing ? editing.schedule.name : partOf ? partOf.schedule.name : undefined}
         title={inFinder ? W.findTitle : partOf ? W.addTitle : editing ? W.settingsBack : W.newTitle}
         identity={identity}

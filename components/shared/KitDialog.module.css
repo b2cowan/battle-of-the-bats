@@ -57,10 +57,12 @@
 }
 .question { max-width: 26rem; }
 /* THE WIDTH LADDER (One Window Q3; `size` on KitDialog): 520 a form · 640 (`medium`) fields side by side, a short
-   table that fits, or a record window keeping today's width · 800 (`wide`) a big table or two panes side by side. */
+   table that fits, or a record window keeping today's width · 800 (`wide`) a big table or two panes side by side ·
+   1024 (`xwide`, owner 2026-11-24) a pane of cards beside a long list: New schedule's window, on every step it opens at. */
 .form { max-width: 32.5rem; }
 .form.medium { max-width: 40rem; }
 .form.wide { max-width: 50rem; }
+.form.xwide { max-width: 64rem; }
 
 /* A form in steps (Stage 5): the step bar under the head — one segment a step, the steps reached in olive. */
 .progress {
@@ -448,7 +450,8 @@
   }
   /* A sized form fills the phone too (its size class outranks `.form` above). */
   .form.medium,
-  .form.wide { max-width: none; }
+  .form.wide,
+  .form.xwide { max-width: none; }
   .form .back { display: inline-flex; margin-left: -0.4rem; }
   .form .close { display: none; }
   /* The head's ← goes up a level on a phone and names where (its label), so the named line would say it twice. */

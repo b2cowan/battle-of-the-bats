@@ -110,8 +110,9 @@ describe('Q3 and Q6 — the admin window: the width ladder, a tinted edge, no sh
     assert.match(cssRule(kitDialogCss, '.form'), /max-width: 32\.5rem;/);
     assert.match(cssRule(kitDialogCss, '.form.medium'), /max-width: 40rem;/);
     assert.match(cssRule(kitDialogCss, '.form.wide'), /max-width: 50rem;/);
+    assert.match(cssRule(kitDialogCss, '.form.xwide'), /max-width: 64rem;/);
     assert.match(cssRule(kitDialogCss, '.question'), /max-width: 26rem;/);
-    assert.match(readCode('components/shared/KitDialog.tsx'), /size\?: 'medium' \| 'wide';/, 'one size prop, never two booleans');
+    assert.match(readCode('components/shared/KitDialog.tsx'), /size\?: 'medium' \| 'wide' \| 'xwide';/, 'one size prop, never two booleans');
   });
 
   it('the panel and the preview card beside it have the tinted edge and no shadow', () => {

@@ -1002,6 +1002,10 @@ export const SCHEDULE_SCREEN_WORDS = {
   rowSlots: (n: number) => pluralize(n, 'slot'),
   rowPrime: (n: number) => `${n} prime`,
   openSlot: 'Open',
+  /** By day: the slots the club's other bookings already hold stay out of the list until asked for (owner 2026-11-24). */
+  showBooked: (n: number) => `Show already booked (${n})`,
+  /** By day with every slot already booked: the list is empty until the tick is ticked. */
+  onlyBooked: 'Nothing new here: every slot is already booked. Tick “Show already booked” to see them.',
   statementBullets: (handedOut: number, slots: number, teams: number, open: number, held: number) => [
     `Hands out ${handedOut} of the ${slots} slots to ${pluralize(teams, 'team')}`,
     open ? `Leaves ${open} open` : 'Leaves nothing open',

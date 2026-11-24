@@ -85,10 +85,18 @@ function weightWords(weight: number): string {
   return `${Math.round(weight * 1000) / 10}%`;
 }
 
+/** "Booked practice · 13U AAA" — a slot a booking already holds: the word Booked, then what holds it (tryout day, game,
+ *  practice) when that is known. The one wording the New schedule's By day list, the printed schedule and the Excel share
+ *  (owner 2026-11-24). */
+export function bookedWords(h: { ownerName: string; kind: string | null }): string {
+  const what = h.kind === 'tryout' ? 'tryout day' : h.kind === 'game' ? 'game' : h.kind === 'practice' ? 'practice' : '';
+  return `Booked${what ? ` ${what}` : ''} · ${h.ownerName}`;
+}
+
 /** What a slot reads in its cell: its teams, the booking that holds it, "Handed back", or Open. */
 function slotWords(s: DocSlot, teams: readonly DocTeam[]): string {
   if (s.teamIds.length) return s.teamIds.map(t => nameOf(teams, t)).join(' · ');
-  if (s.heldBy) return `${s.heldBy.kind === 'tryout' ? 'Tryout day' : 'Booked'} · ${s.heldBy.ownerName}`;
+  if (s.heldBy) return bookedWords(s.heldBy);
   return 'Open';
 }
 
