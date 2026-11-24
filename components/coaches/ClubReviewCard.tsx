@@ -42,6 +42,7 @@ interface Review {
   slots: number;
   days: number;
   hours: number;
+  fullFieldHours: number;
   patterns: string[];
   bill: { cents: number; installments: { installmentNumber: number; amount: number; dueDate: string }[]; pricedBy?: PriceMode | null } | null;
   covers: { slots: number; days: number; months: string[] }[];
@@ -175,7 +176,11 @@ function ReviewWindow({ review: r, url, onClose, onAnswered }: { review: Review;
           ))}
           <div className={own.row}>
             <span className={own.rowMain}><small>{slotCountWords(r.slots, r.days, r.oneWeekday)}</small></span>
-            <span className={own.figure}>{Math.round(r.hours * 10) / 10} h</span>
+            {/* Clock hours; the full-field hours under them when a half field or a shared slot made them differ (owner 2026-11-24). */}
+            <span className={own.figure}>
+              {Math.round(r.hours * 10) / 10} h
+              {Math.round(r.fullFieldHours * 10) !== Math.round(r.hours * 10) && <span className={own.figureSub}>{C.fullFieldHours(r.fullFieldHours)}</span>}
+            </span>
           </div>
         </div>
         {r.bill && (

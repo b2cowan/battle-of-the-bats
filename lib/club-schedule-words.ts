@@ -1452,6 +1452,8 @@ export const SCHEDULE_COACH_WORDS = {
   reviewFrom: 'The club’s proposal',
   replyByWords: (day: string) => `reply by ${day}`,
   yourTime: 'Your time',
+  /** Under Your time's clock hours, when a half field or a shared slot made them differ — the club's own words. */
+  fullFieldHours: SCHEDULE_SCREEN_WORDS.fullFieldHours,
   yourBill: 'Your bill',
   yourShare: 'Your share',
   byTheTime: 'By the time you got',

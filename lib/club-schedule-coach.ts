@@ -88,7 +88,10 @@ export interface ReviewCard {
   slots: number;
   /** The days those slots fall on — what a one-weekday schedule counts ("25 Sundays"). */
   days: number;
+  /** Time on the clock. */
   hours: number;
+  /** The same time as the bill counts it: a shared slot and a half field each count half. */
+  fullFieldHours: number;
   patterns: string[];
   /** `pricedBy`: how the club priced time that has more than one price (Session C) — null at one price. */
   bill: { cents: number; installments: Installment[]; pricedBy: PriceMode | null } | null;
@@ -134,7 +137,11 @@ export async function teamReviews(orgId: string, teamId: string): Promise<Review
     const weekdays = [...new Set(own.map(x => x.weekday))];
     return {
       scheduleId: id, scheduleName: loaded.row.name, replyBy: loaded.row.reply_by, slots: own.length, days: new Set(own.map(x => x.day)).size,
-      hours: Math.round(own.reduce((n, s) => n + (s.endMs - s.startMs) / 3_600_000 / Math.max(1, (assignments.get(s.key) ?? []).length), 0) * 100) / 100,
+      // Clock hours, and the full-field hours the bill counts (a shared slot and a half field each count half) — the club's
+      // By team rule, so a coach and the club read one team’s time the same way (owner 2026-11-24). Kept to four places, so the
+      // card’s one rounding to a tenth lands where the club’s does (rounding to hundredths first could tip x.x5 the other way).
+      hours: Math.round(own.reduce((n, s) => n + (s.endMs - s.startMs) / 3_600_000, 0) * 10_000) / 10_000,
+      fullFieldHours: Math.round(own.reduce((n, s) => n + (s.endMs - s.startMs) / 3_600_000 * s.weight / Math.max(1, (assignments.get(s.key) ?? []).length), 0) * 10_000) / 10_000,
       patterns,
       // `pricedBy`: how the club priced time with more than one price (the drawing's coach frame, note 2) — null at one price.
       bill: bill && cents ? { cents, installments, pricedBy: bill.shares?.multiPrice ? loaded.row.bill_price_mode : null } : null,

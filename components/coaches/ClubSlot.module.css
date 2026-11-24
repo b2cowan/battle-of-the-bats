@@ -78,7 +78,9 @@
 .rowMain { flex: 1; min-width: 0; }
 .rowMain b { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
 .rowMain small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
-.figure { font-size: var(--type-body); font-weight: 650; font-variant-numeric: tabular-nums; color: var(--text-primary); white-space: nowrap; }
+.figure { font-size: var(--type-body); font-weight: 650; font-variant-numeric: tabular-nums; color: var(--text-primary); white-space: nowrap; text-align: right; }
+/* The full-field hours under a team's clock hours (owner 2026-11-24): the club's By team rule, quiet. */
+.figureSub { display: block; margin-top: 0.1rem; font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
 /* The bill's figures: ONE joined band (owner 2026-10-08) — the coach's copy of the admin's `JoinedBand` (schedules/ScheduleParts.tsx); the two portals keep their own sheets, so a change to one is a change to both. */
 .band { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 0 0.6rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
 .tile { padding: 0.55rem 0.75rem; }
