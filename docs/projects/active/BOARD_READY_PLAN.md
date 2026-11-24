@@ -680,8 +680,12 @@ board's two questions:
   their own team, and no answers unless the owner gave them House league); (3) the payment step is drawn in the present
   tense, "where online payments are on"; (4) the picture lives in the board pack only, beside the brief, not on the public
   Security page. Published for the ruling: https://claude.ai/artifact/BRobdR7zpV3dM8EG26hopW (private). The drawing is
-  ruled as drawn; nothing on it changes. **Not yet done:** placing it in the pack beside the brief (a brief version with
-  `/legal`'s read of the placement). **Gaps it exposes, for `/plan` and `/legal`:**
+  ruled as drawn; nothing on it changes. **Placed in the brief 2026-11-24** (the private brief Artifact, version 6, a new
+  section "What happens to a family's sign-up" after "Where your information lives"; `/legal` read the placement and four
+  corrections went into both the brief and the drawing: the caption no longer counts "three" companies, step 6 happens
+  whenever staff open the answers, the desk notice is bell-only unless a person turns a phone alert or email on, and the
+  second parent's email is named). The brief's footer keeps 21 November and names the section and the payment wording as
+  checked 24 November. **Gaps it exposes, for `/plan` and `/legal`:**
   the privacy policy states no clock for waiting files or for health and file answers although the sweeps run; ordinary
   registrations have no removal date and a club cannot delete one itself; any member given House league can read health
   answers (a lawyer's eye). Same pass: the Security page's two "families can't pay online yet" sentences now say families and

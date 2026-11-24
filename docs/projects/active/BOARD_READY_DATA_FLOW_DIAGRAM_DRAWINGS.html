@@ -122,11 +122,12 @@ textarea{width:100%;font:13px/1.4 ui-monospace,Consolas,monospace;background:var
   <line class="arrow" x1="572" y1="238" x2="758" y2="198" marker-end="url(#ah)"/>
   <circle class="dot" cx="610" cy="230" r="10"/><text class="n" x="610" y="234">4</text>
   <text class="lbl" x="590" y="258">sends the confirmation</text>
-  <rect class="box" x="760" y="160" width="270" height="92" rx="8"/>
-  <text class="t" x="775" y="184">Email delivery</text>
-  <text class="m" x="775" y="202">Resend, United States</text>
-  <text class="lbl" x="775" y="226">Receives: names, the guardian's email,</text>
-  <text class="lbl" x="775" y="242">division, fee, the family's sign-up link</text>
+  <rect class="box" x="760" y="150" width="270" height="108" rx="8"/>
+  <text class="t" x="775" y="174">Email delivery</text>
+  <text class="m" x="775" y="192">Resend, United States</text>
+  <text class="lbl" x="775" y="216">Receives: names, the guardian's email,</text>
+  <text class="lbl" x="775" y="232">a second parent's email if given,</text>
+        <text class="lbl" x="775" y="248">division, fee, the sign-up link</text>
 
   <!-- step 7: app to payments -->
   <line class="arrow" x1="572" y1="272" x2="758" y2="330" marker-end="url(#ah)"/>
@@ -162,16 +163,16 @@ textarea{width:100%;font:13px/1.4 ui-monospace,Consolas,monospace;background:var
 </div>
 
 <ol class="steps" aria-label="The same steps as a list">
-  <li><span class="num">1</span><div><b>The family opens the club's sign-up page.</b><span>Nothing is stored. No account is needed.</span></div></li>
+  <li><span class="num">1</span><div><b>The family opens the club's sign-up page.</b><span>Nothing is saved to the club's records. No account is needed.</span></div></li>
   <li><span class="num">2</span><div><b>They attach a file, if the club asked for one.</b><span>It goes to private file storage (Supabase, Ohio) and waits for the sign-up.</span></div></li>
   <li><span class="num">3</span><div><b>They submit the sign-up.</b><span>The child's and guardian's details and the club's answers are saved together in the club's database (Supabase, Ohio), through the FieldLogicHQ app (Amazon Web Services, Ohio).</span></div></li>
-  <li><span class="num">4</span><div><b>The app sends the confirmation.</b><span>Email delivery (Resend, United States) receives the names, the guardian's email, division, fee and the family's sign-up link.</span></div></li>
-  <li><span class="num">5</span><div><b>The club's registration desk gets a bell notice.</b><span>Names and counts, never the answers.</span></div></li>
-  <li><span class="num">6</span><div><b>Staff read the answers.</b><span>Owner, admin, league admin, league registrar, and anyone the owner gave House league to, signed in and role checked. Files open by 1-hour links, and each file opening is recorded first. Reading the answers is not recorded.</span></div></li>
+  <li><span class="num">4</span><div><b>The app sends the confirmation.</b><span>Email delivery (Resend, United States) receives the names, the guardian's email, division, fee and the family's sign-up link, and a second parent's email if given.</span></div></li>
+  <li><span class="num">5</span><div><b>The club's registration desk gets a bell notice.</b><span>Names and counts, never the answers. A phone alert or email for this notice is off unless that person turns it on; a phone alert goes through the browser's push service, sealed for their device.</span></div></li>
+  <li><span class="num">6</span><div><b>Staff read the answers.</b><span>Owner, admin, league admin, league registrar, and anyone the owner gave House league to, signed in and role checked. Files open by 1-hour links, and each file opening is recorded first. Club staff reading the answers is not recorded.</span></div></li>
   <li><span class="num">7</span><div><b>Later, where online payments are on, the app hands off checkout from the family's own link.</b><span>Card numbers are typed on Stripe's own page and never reach us. The money goes to the club's own Stripe account, less our fee.</span></div></li>
 </ol>
 
-<figcaption><strong>A sign-up reaches four outside places and no others: our database host, our email service, our payment provider, and the club's own staff.</strong> Steps 5 and 6 happen as soon as the sign-up is submitted. Step 7 happens later, from the family's own link, and only where the club has turned on online payments. Club staff read the answers only through the app, by role. Nothing on this picture goes to advertisers or analytics companies, and a club's information is never given to an AI service.</figcaption>
+<figcaption><strong>A sign-up passes through our app, which runs on Amazon Web Services. Our database host stores it, our email service sends the confirmation and, where online payments are on and a family pays, our payment provider takes the payment. Club staff then read it through the app.</strong> Step 5 happens as soon as the sign-up is submitted. Step 6 happens whenever staff open it. Step 7 happens later, from the family's own link, and only where the club has turned on online payments. Club staff read the answers only through the app, by role. Nothing on this picture goes to advertisers or analytics companies, and a club's information is never given to an AI service.</figcaption>
 </figure>
 </section>
 
@@ -180,12 +181,12 @@ textarea{width:100%;font:13px/1.4 ui-monospace,Consolas,monospace;background:var
 <table>
 <thead><tr><th>Step</th><th>What is kept</th><th>Who can see it</th><th>For how long</th></tr></thead>
 <tbody>
-<tr><td><span class="num">2</span>A waiting file</td><td data-label="What is kept">A PDF or photo the family attached, in private storage, before the sign-up is finished</td><td data-label="Who can see it">No one. Staff see it only once it is attached to a sign-up</td><td data-label="For how long">Deleted within a day if the sign-up is never finished</td></tr>
-<tr><td><span class="num">3</span>The sign-up</td><td data-label="What is kept">The child's name, date of birth, jersey and position wishes and free-text notes; the guardian's name, email and phone, and a second parent's email if given; the answers to the club's own questions; ticks on the club's documents; the email-consent tick</td><td data-label="Who can see it">The club's owner, admin, league admin and league registrar, and anyone the owner gave House league to. Reading the answers is not recorded</td><td data-label="For how long">No automatic removal date. A club can't delete one registration itself today; they go when the club is deleted</td></tr>
+<tr><td><span class="num">2</span>A waiting file</td><td data-label="What is kept">A PDF or photo the family attached, in private storage, before the sign-up is finished</td><td data-label="Who can see it">No one at the club. Staff see it only once it is attached to a sign-up</td><td data-label="For how long">Deleted within a day if the sign-up is never finished</td></tr>
+<tr><td><span class="num">3</span>The sign-up</td><td data-label="What is kept">The child's name, date of birth, jersey and position wishes and free-text notes; the guardian's name, email and phone, and a second parent's email if given; the answers to the club's own questions; ticks on the club's documents; the email-consent tick</td><td data-label="Who can see it">The club's owner, admin, league admin and league registrar, and anyone the owner gave House league to. Club staff reading the answers is not recorded</td><td data-label="For how long">No automatic removal date. A club can't delete one registration itself today; they go when the club is deleted</td></tr>
 <tr><td><span class="num">3</span>Health and file answers</td><td data-label="What is kept">Any question the club marked as health, and any file the family attached</td><td data-label="Who can see it">The same seats. Opening a file is recorded</td><td data-label="For how long">Removed 90 days after the season is marked finished, or 120 days after its last day if it never is</td></tr>
 <tr><td><span class="num">3</span>Friend requests</td><td data-label="What is kept">Names or codes of friends the family asked to play with</td><td data-label="Who can see it">The club's draft seats</td><td data-label="For how long">Deleted when the season is marked finished, and at the latest 60 days after its last day</td></tr>
 <tr><td><span class="num">4</span>The confirmation email</td><td data-label="What is kept">Names, the guardian's email, division, fee and the family's sign-up link; a second parent gets a copy if the family gave one</td><td data-label="Who can see it">The family. Not kept in our own sent-email log</td><td data-label="For how long">Held by the email service and in the family's own inbox</td></tr>
-<tr><td><span class="num">5</span>The bell notice</td><td data-label="What is kept">Names and counts, never the answers</td><td data-label="Who can see it">The club's registration desk</td><td data-label="For how long">Until the person deletes it or the club is deleted. No end date today</td></tr>
+<tr><td><span class="num">5</span>The bell notice</td><td data-label="What is kept">Names and counts, never the answers. A phone alert or email is off unless the person turns it on</td><td data-label="Who can see it">The club's registration desk</td><td data-label="For how long">Until the person deletes it or the club is deleted. No end date today</td></tr>
 <tr><td><span class="num">7</span>A payment</td><td data-label="What is kept">The payer's email, the children's names and the season, the amount, and the card's or bank account's last four digits. Card numbers stay with Stripe</td><td data-label="Who can see it">The club, on its own Stripe account</td><td data-label="For how long">Kept by Stripe and in the club's books. Our fee comes out of it</td></tr>
 </tbody></table>
 <p class="lead">Also: our server's technical logs, which can hold internet addresses, are deleted after 90 days.</p>
