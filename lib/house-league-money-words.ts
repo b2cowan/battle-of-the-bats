@@ -482,7 +482,7 @@ export const END_WORDS = {
   footChoose: (amount: string) => `Choose what happens to the ${amount}.`,
   // 12b copy §6.1: a card-paid child's ending refunds to the card — all of it, or part with a reason; A2's box only on all.
   cardFull: (card: string) => `Refund to the card, ${card}`,
-  cardArrives: 'Arrives in 5 to 10 business days',
+  cardArrives: 'Can take 5 to 10 business days',
   cardPart: 'Refund part of it',
   cardPartSub: (left: string) => `An amount up to ${left}, with a reason`,
   cardPartAmount: 'Amount to refund',
@@ -559,7 +559,7 @@ export const PRICE_WORDS = {
   // 12b copy §6.2 (drawn b6): a card-paid child — the difference goes back to the card, or a pay link asks for the rest.
   hintLowerCard: (name: string, paid: string, diff: string) => `${possessive(name)} family paid ${paid} by card. ${diff} goes back to them.`,
   lowerCardChoice: (diff: string) => `Refund ${diff} to the card`,
-  lowerCardSub: 'Arrives in 5 to 10 business days',
+  lowerCardSub: 'Can take 5 to 10 business days',
   lowerOtherChoice: 'Refunded another way',
   // 12c: the same for a child who paid by bank debit — the difference goes back to the bank account.
   hintLowerBank: (name: string, paid: string, diff: string) => `${possessive(name)} family paid ${paid} by bank debit. ${diff} goes back to them.`,
@@ -757,7 +757,7 @@ export const CARD_REFUND_WORDS = {
     // A bank account's {bankDays} is Stripe's "about 3 business days" (plan §0k).
     reachedSub: (bank: boolean) => (bank
       ? 'It takes about 3 business days to appear on the family’s statement.'
-      : 'It takes 5 to 10 business days to appear on the family’s statement.'),
+      : 'It can take 5 to 10 business days to appear on the family’s statement.'),
     status: 'Status',
     statusValue: (day: string, time: string, bank: boolean) =>
       `Stripe accepted it ${day} at ${time} and is waiting on the ${bank ? 'bank' : 'card’s bank'}. It’s already in the season’s book. Nothing to do.`,

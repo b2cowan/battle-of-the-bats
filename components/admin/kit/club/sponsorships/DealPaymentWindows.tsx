@@ -111,7 +111,8 @@ export function VoidPaymentQuestion({ url, payment, onClose, onVoided }: {
 // ── Part 3b: a payment opens as its own window (the card-refund drawing's tab 1, ask 1) ─────────────────────────────────
 
 const tone = (r: DealRefund) => (r.status === 'failed' ? 'warn' : r.status === 'pending' ? 'info' : 'good') as 'warn' | 'info' | 'good';
-const chip = (r: DealRefund) => (r.status === 'failed' ? C.chipFailed : r.status === 'pending' ? C.chipPending : C.chipRefunded);
+// "Refunded" says the money all went back; when some of it is still the club's, the chip says "Partly refunded".
+const chip = (r: DealRefund, partly = false) => (r.status === 'failed' ? C.chipFailed : r.status === 'pending' ? C.chipPending : partly ? C.chipPartlyRefunded : C.chipRefunded);
 
 /**
  * The payments under the money band (ask 1, RULED 2026-11-23): each row is a door that opens the payment's own window — a list
@@ -123,13 +124,16 @@ export function DealPayments({ payments, refunds, onOpen }: {
 }) {
   if (!payments.length) return null;
   return (
-    <ClubSection id="payments-block" className={css.flushSection} title={D.deal.payments}>
+    <ClubSection id="payments-block" className={css.flushSection} title={D.deal.payments} list>
       <ul className={css.paymentList}>
         {payments.map(p => {
           const mine = refunds.filter(r => r.paymentId === p.id);
           const last = mine.at(-1);
           const back = refundedTotal(mine);
+          // A payment that holds no money and was not refunded: the sponsor's bank took it back (a dispute the club lost, mig 532).
+          const takenBack = p.returned && !p.voided && !mine.some(r => r.status === 'succeeded');
           const sub = p.voided ? D.deal.paymentVoided(p.voided.at, p.voided.byName, p.voided.reason)
+            : takenBack ? C.lineTakenBack
             : last?.status === 'pending' ? C.lineRefundPending(last.amount)
               : back > 0 && last ? C.lineRefunded(back, refundDay(last))
                 : p.card ? C.lineSubCard : C.lineSubRecorded(p.recordedByName, orgDayKey(p.recordedAt));
@@ -142,7 +146,8 @@ export function DealPayments({ payments, refunds, onOpen }: {
                   <span className={ck.hint}>{sub}</span>
                 </span>
                 <span className={css.paymentEnd}>
-                  {last && !p.voided && <RepChip tone={tone(last)}>{chip(last)}</RepChip>}
+                  {takenBack ? <RepChip tone="warn">{C.chipTakenBack}</RepChip>
+                    : last && !p.voided && <RepChip tone={tone(last)}>{chip(last, refundLeft(p, refunds).left > 0)}</RepChip>}
                   <span className={css.money}>{money(p.amount)}</span>
                   <ChevronRight size={16} aria-hidden className={css.paymentChevron} />
                 </span>
@@ -204,10 +209,10 @@ export function PaymentWindow({ payment, refunds, deal, business, businessEmail,
     p.voided ? [C.voided, D.deal.paymentVoided(p.voided.at, p.voided.byName, p.voided.reason)] as const : null,
   ];
   const start = card
-    ? (refundsOn && left > 0 ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={onRefund}>{C.refund}</button> : undefined)
+    ? (refundsOn && left > 0 && !p.returned ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={onRefund}>{C.refund}</button> : undefined)
     : (canVoid && !p.voided ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={onVoid}>{D.deal.voidPayment}</button> : undefined);
   // Card refunds are switched off (the server refuses them too): say so, rather than a payment with no way back and no reason.
-  const startOrWhy = start ?? (card && !refundsOn && left > 0 ? <span className={css.footLine}>{C.errRefundOff}</span> : undefined);
+  const startOrWhy = start ?? (card && !refundsOn && left > 0 && !p.returned ? <span className={css.footLine}>{C.errRefundOff}</span> : undefined);
   return (
     <KitDialog kind="form" onClose={onClose} eyebrow={C.windowEyebrow(deal.number)} title={C.windowTitle(business)}
       footerStart={startOrWhy}
@@ -290,7 +295,7 @@ export function RefundWindow({ url, payment, refunds, endsDeal, number, taxKind,
 
   return (
     <KitDialog kind="question" raised busy={busy} onClose={onClose} title={C.refundAsk(business)}
-      footerStart={<span className={css.footLine}>{choice ? (businessEmail ? C.foot(business) : C.footNoEmail) : RW_ROOT.footChoose}</span>}
+      footerStart={choice && businessEmail ? undefined : <span className={css.footLine}>{choice ? C.footNoEmail : RW_ROOT.footChoose}</span>}
       footer={<>
         <DialogCancel />
         {choice && (
@@ -300,13 +305,14 @@ export function RefundWindow({ url, payment, refunds, endsDeal, number, taxKind,
         )}
       </>}>
       <p className={ck.hint}>{lead}{already > 0 ? ` ${C.refundLeadAgain(already, left)}` : ''}</p>
+      <p className={ck.hint}>{C.refundTarget(label)}</p>
       <fieldset className={css.refundChoice}>
         <legend className={repKit.srOnly}>{C.refundAsk(business)}</legend>
         <label className={css.choiceRow}>
           <input type="radio" name="deal-refund" checked={choice === 'all'} onChange={() => setChoice('all')} />
           <span>
-            <span className={css.choiceName}>{RW_ROOT.choiceAll(label)}</span>
-            <span className={ck.hint}>{sponsorFee || already > 0 ? `${C.allBack(left)} · ${RW_ROOT.arrives}` : RW_ROOT.arrives}</span>
+            <span className={css.choiceName}>{C.choiceAll}</span>
+            <span className={ck.hint}>{C.allBack(left)}</span>
           </span>
         </label>
         {choice === 'all' && endsDeal && <p className={css.choiceNote}>{place ? C.endsDeal(place) : C.endsDealClub}</p>}

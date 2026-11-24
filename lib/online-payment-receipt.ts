@@ -173,7 +173,7 @@ export async function sendRefundEmail(refundId: string, extra?: { lead?: string;
     const test = !op.livemode;
     const block: RefundBlockInput = {
       refundCents: Math.round(Number(r.amount) * 100), bank: op.rail === 'bank_debit', cardBrand: op.card_brand, cardLast4: op.card_last4,
-      bankLast4: op.bank_last4, refundedAt: ((r.stripe_created_at as string | null) ?? r.created_at) as string, reference: (r.stripe_refund_id as string | null) ?? null,
+      bankLast4: op.bank_last4, refundedAt: ((r.stripe_created_at as string | null) ?? r.created_at) as string,
       receiptNo: op.receipt_no, paidOn: op.paid_on, feeBackCents: Math.round(Number(r.fee_refunded) * 100),
       feeKeptCents: op.fee_payer === 'family' && Number(r.fee_refunded) === 0 ? Math.round(Number(op.fee_amount) * 100) : 0,
     };

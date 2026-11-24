@@ -214,7 +214,7 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
       title={anotherWay ? R.titleAnotherWay : R.title(teamName, scope)}
       onClose={onClose}
       busy={busy}
-      footerStart={anotherWay ? undefined : <span>{choice ? (p.payerEmail ? R.foot : R.footNoEmail) : R.footChoose}</span>}
+      footerStart={anotherWay || (choice && p.payerEmail) ? undefined : <span>{choice ? R.footNoEmail : R.footChoose}</span>}
       footer={
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{R.cancel}</button>
@@ -230,13 +230,14 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
         ? R.paidTeams(dollars(p.totalCents), paidDay, receipt, dollars(p.baseCents), scopeNoun, dollars(p.feeCents))
         : R.paidClub(dollars(p.baseCents), paidDay, receipt, scopeNoun)}</p>
       {anotherWay && <p className={ck.hint}>{R.anotherWayLead(bank)}</p>}
+      {!anotherWay && <p className={ck.hint}>{bank ? R.goesToBank(p.bankLast4 ?? '', untouched) : R.goesToCard(cardLabel(p.brand, p.last4), untouched)}</p>}
       {!anotherWay && (
         <fieldset className={styles.refundChoice}>
           {untouched && (
             <label>
               <input type="radio" name="refund-how-much" checked={choice === 'all'} onChange={() => setChoice('all')} />
-              {' '}{bank ? R.choiceAllBank(p.bankLast4 ?? '') : R.choiceAll(cardLabel(p.brand, p.last4))}
-              <span className={ck.hint}> · {overAll && over ? O.allSub(over.howPaid) : bank ? R.arrivesBank : R.arrives}</span>
+              {' '}{R.choiceAll}
+              {overAll && over && <span className={ck.hint}> · {O.allSub(over.howPaid)}</span>}
             </label>
           )}
           <label>

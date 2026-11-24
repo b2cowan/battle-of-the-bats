@@ -98,7 +98,7 @@ export async function leagueRefundMail(refundIds: string[]): Promise<LeagueRefun
     children: children.map(c => ({ name: c.name, cents: c.baseCents })),
     bank: pay.rail === 'bank_debit', cardBrand: pay.card_brand, cardLast4: pay.card_last4, bankLast4: pay.bank_last4,
     // The refund's own date, never the day we heard of it (a late webhook, or a refund that waited for "whose was it?").
-    refundedAt: refunds.map(r => r.stripe_created_at ?? r.created_at).sort()[0], reference: refunds[0].stripe_refund_id,
+    refundedAt: refunds.map(r => r.stripe_created_at ?? r.created_at).sort()[0],
     receiptNo: pay.receipt_no, paidOn: pay.paid_on,
     feeBackCents: feeBack, feeKeptCents: familyPaidFee && feeBack === 0 ? feeShare : 0,
   };

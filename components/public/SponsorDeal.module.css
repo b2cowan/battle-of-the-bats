@@ -88,6 +88,8 @@ p.addressHint { margin: 0.1rem 0 0.75rem; }
 /* Part 3a: the invoice's PDF, and the receipt once paid in full (round 2 tab 1: plain lines, one rule above Paid). */
 .invoiceTo { margin: 0.25rem 0 0; font: 600 0.9375rem var(--club-text-face); color: var(--club-text); }
 .download { display: inline-flex; align-items: center; min-height: 44px; margin-top: 0.5rem; font: 700 0.9375rem var(--club-text-face); color: var(--club-ink); }
+/* The receipt and each credit note: side by side with room between, wrapping to their own lines on a narrow screen. */
+.downloads { display: flex; flex-wrap: wrap; column-gap: 1.75rem; }
 .receiptLines { margin: 0.75rem 0 0; }
 .receiptLines > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; font: 400 0.9375rem var(--club-text-face); color: var(--club-soft); }
 .receiptLines dt { overflow-wrap: anywhere; }

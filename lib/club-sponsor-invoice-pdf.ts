@@ -10,7 +10,7 @@ import { resolveOrgPdfSettings } from './export/resolve-pdf-settings';
 import { buildClubSponsorInvoiceDoc } from './export/pdf';
 import { readSettings } from './club-sponsorships-server';
 import { readDeal, readDealBusiness } from './club-sponsorship-deals-server';
-import { clubInvoiceLayout, creditNoteFilename, creditNoteLayout, invoiceFilename, type ClubInvoiceInput } from './club-sponsor-invoice';
+import { clubInvoiceLayout, creditNoteFilename, creditNoteLayout, invoiceFilename, refundHasNote, type ClubInvoiceInput } from './club-sponsor-invoice';
 import { dealBullets } from './club-sponsorship-deals';
 import type { Organization } from './types';
 
@@ -31,7 +31,8 @@ export async function dealInvoicePdf(org: PdfOrg, dealId: string): Promise<{ byt
 export async function dealCreditNotePdf(org: PdfOrg, dealId: string, refundId: string): Promise<{ bytes: ArrayBuffer; filename: string } | null> {
   const read = await invoiceInput(org, dealId);
   const refund = read?.input.refunds?.find(r => r.id === refundId);
-  if (!read || !refund || refund.status !== 'succeeded' || !refund.creditNumber) return null;
+  // A refund that reached the card has its note; so does one that was booked, sent, and then bounced, marked cancelled (owner 2026-11-24).
+  if (!read || !refund || !refundHasNote(refund) || !refund.creditNumber) return null;
   const layout = creditNoteLayout(read.input, refund);
   return { bytes: await renderPdf(layout, read.pdf), filename: creditNoteFilename(refund.creditNumber, read.input.billTo.name) };
 }

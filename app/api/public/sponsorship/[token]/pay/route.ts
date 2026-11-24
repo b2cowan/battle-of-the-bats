@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
-import { throttlePublicForm } from '@/lib/public-form-throttle';
+import { throttleSponsorPay, throttleSponsorPoll } from '@/lib/public-form-throttle';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { landCheckoutSession } from '@/lib/online-payment-landing';
@@ -18,6 +18,8 @@ export const dynamic = 'force-dynamic';
 const C = DEAL_WORDS.card;
 /** How long the page waits on the webhook before asking Stripe itself (the league status route's rule). */
 const ASK_STRIPE_AFTER_MS = 8_000;
+/** A payment Stripe has but that never landed is tried again by the poll no more often than this. */
+const RETRY_LANDING_AFTER_MS = 60_000;
 
 /**
  * POST /api/public/sponsorship/[token]/pay — an INVOICED deal's link pays what is owing by card (Board Ready Stage 6 Part 3b;
@@ -28,9 +30,10 @@ const ASK_STRIPE_AFTER_MS = 8_000;
  */
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ token: string }> }) => {
   if (!onlinePaymentsOn()) return NextResponse.json({ error: C.errOff }, { status: 404 });
-  const throttled = throttlePublicForm(req);
-  if (throttled) return throttled;
   const { token } = await params;
+  // Its own buckets (the sponsor's, never the family forms'), one of them keyed on the link: a caller cannot spoof that one.
+  const throttled = throttleSponsorPay(req, token);
+  if (throttled) return throttled;
   const at = await dealForLink(token);
   if ('failure' in at) return at.failure;
   const { org, deal } = at;
@@ -63,6 +66,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
 export const GET = withObservability(async (req: Request, { params }: { params: Promise<{ token: string }> }) => {
   if (!onlinePaymentsOn()) return NextResponse.json({ state: 'unknown' }, { status: 404 });
   const { token } = await params;
+  const throttled = throttleSponsorPoll(req, token);
+  if (throttled) return throttled;
   const sessionId = new URL(req.url).searchParams.get('session');
   if (!sessionId) return NextResponse.json({ state: 'unknown' }, { status: 404 });
   // Polled every two seconds: only the door's deal id is needed to know the session is this deal's, not the whole deal.
@@ -81,7 +86,11 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
   if (op.status === 'paid') {
     // Stripe has the money. Landing is tried once more; whatever it answers (even a failure), the page reloads to what the
     // record says — the deal paid, or "We've received your payment" — never an endless "Confirming" that asks Stripe every 2 seconds.
-    await landCheckoutSession(op.stripe_account_id as string, sessionId).catch(() => undefined);
+    // At most once a minute for a payment that could not be recorded (its failure stamped `updated_at`): a poll never re-lands
+    // and re-fails one every two seconds.
+    if (Date.now() - Date.parse(op.updated_at as string) > RETRY_LANDING_AFTER_MS) {
+      await landCheckoutSession(op.stripe_account_id as string, sessionId).catch(() => undefined);
+    }
     return NextResponse.json({ state: 'paid' });
   }
   if (op.status === 'expired') return NextResponse.json({ state: 'not_finished' });

@@ -421,10 +421,15 @@ function Thanks({ view }: { view: Open }) {
               <div key={r.id}><dt>{r.pending || !r.on ? C.refundedOnWay : C.refundedRow(r.on)}</dt><dd>−{money(r.amount)}</dd></div>
             ))}
           </dl>
-          <a className={css.download} href={pdf} download>{P.downloadReceipt}</a>
-          {view.refunds.filter(r => r.creditNumber).map(r => (
-            <a key={r.id} className={css.download} href={`/api/public/sponsorship/${view.token}/credit-note/${r.id}`} download>{C.creditNote(r.creditNumber!)}</a>
-          ))}
+          <div className={css.downloads}>
+            <a className={css.download} href={pdf} download>{P.downloadReceipt}</a>
+            {view.refunds.filter(r => r.creditNumber).map(r => (
+              <a key={r.id} className={css.download} href={`/api/public/sponsorship/${view.token}/credit-note/${r.id}`} download>{C.creditNote(r.creditNumber!)}</a>
+            ))}
+            {view.cancelledNotes.map(n => (
+              <a key={n.id} className={css.download} href={`/api/public/sponsorship/${view.token}/credit-note/${n.id}`} download>{C.creditNoteCancelled(n.creditNumber)}</a>
+            ))}
+          </div>
         </div>
       )}
       {inv && !view.paid && (

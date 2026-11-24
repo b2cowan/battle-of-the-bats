@@ -2855,7 +2855,9 @@ function drawSponsorInvoice(jsPDFClass: any, autoTable: any, opts: InvoicePage):
       margin: { left: MARGIN, right: MARGIN, top: MARGIN + 11, bottom: 18 },
       rowPageBreak: 'avoid',
       head: [head],
-      body,
+      // The PDF's built-in font has no true minus (U+2212) and prints it as a stray quote with spaced-out digits, so a
+      // negative figure (a refund) is set with a plain hyphen here, at the PDF's edge; the words keep the real minus on screen.
+      body: body.map(row => row.map(cell => cell.replace(/−/g, '-'))),
       columnStyles,
       startY: y,
       didDrawPage: () => {

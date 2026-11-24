@@ -54,7 +54,13 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   if (!r.ok) {
     if (r.why === 'nothing_left') return refused(C.errNothingLeft, 409, 'nothing_left');
     if (r.why === 'reason') return refused(C.errReason, 400, 'reason');
-    if (r.why === 'amount') return refused(C.errAmount(left), 400, 'amount');
+    if (r.why === 'amount') {
+      // The database capped it at what is left UNDER THE LOCK, which can be less than what was read above (another refund
+      // opened in between): say that figure, never the earlier one.
+      const fresh = await readDeal(org.id, dealId).catch(() => null);
+      const freshPayment = fresh?.payments.find(p => p.id === paymentId);
+      return refused(C.errAmount(freshPayment ? refundLeft(freshPayment, fresh!.refunds).left : left), 400, 'amount');
+    }
     if (r.why === 'disputed') return refused(C.errDisputed, 409, 'disputed');
     return NextResponse.json({ error: SPONSORSHIPS_WORDS.say.notFound, code: 'not_found' }, { status: 404 });
   }

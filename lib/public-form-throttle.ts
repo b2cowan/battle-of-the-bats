@@ -103,3 +103,31 @@ export function throttleSignupFiles(req: Request): NextResponse | null {
   }
   return null;
 }
+
+// A sponsor's card page (Board Ready Stage 6 Part 3b, after the walk): its own buckets, so a registration-night rush on the
+// family forms never refuses a sponsor who is paying, and a sponsor's polling never spends a family's budget. Each also has a
+// bucket keyed on the LINK, which a caller cannot spoof the way a client-supplied forwarded address can.
+const sponsorPayIpLimiter = new FixedWindowRateLimiter(60 * MINUTE, 20);
+const sponsorPayLinkLimiter = new FixedWindowRateLimiter(10 * MINUTE, 30);
+// "Confirming your payment" asks every two seconds for as long as the webhook is slow: roomy per minute, capped per link.
+const sponsorPollIpLimiter = new FixedWindowRateLimiter(MINUTE, 40);
+const sponsorPollLinkLimiter = new FixedWindowRateLimiter(10 * MINUTE, 200);
+
+/** First thing in the sponsor link's "pay an invoice by card" POST. */
+export function throttleSponsorPay(req: Request, token: string): NextResponse | null {
+  // The token is a stranger's text until the link is read: bounded, so a flood of made-up ones cannot fill the limiter's keys.
+  // No global bucket here (review 2026-11-24): a caller rotating forwarded addresses could drain it and refuse every real
+  // sponsor. The per-link bucket is the one a caller cannot spoof; the per-address one is the courtesy.
+  if (!sponsorPayIpLimiter.take(clientIpFrom(req)) || !sponsorPayLinkLimiter.take(token.slice(0, 64))) {
+    return NextResponse.json({ error: TOO_MANY }, { status: 429 });
+  }
+  return null;
+}
+
+/** First thing in the sponsor link's "Confirming your payment" poll. */
+export function throttleSponsorPoll(req: Request, token: string): NextResponse | null {
+  if (!sponsorPollIpLimiter.take(clientIpFrom(req)) || !sponsorPollLinkLimiter.take(token.slice(0, 64))) {
+    return NextResponse.json({ state: 'confirming' }, { status: 429 });
+  }
+  return null;
+}

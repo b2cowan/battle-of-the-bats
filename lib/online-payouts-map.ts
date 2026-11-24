@@ -130,6 +130,8 @@ export const PAYOUT_LINE_WORDS = {
   // inside the returned line). Stripe-owned pricing Stage 3: "Processing fee returned" read as the whole fee coming back,
   // which is true only on an old account, where our fee WAS the whole fee — so this says whose part it is, true on both.
   feeBack: 'FieldLogicHQ’s fee returned',
+  // Derived, owed to /marketing: what a sponsor's card payment is called on a payout line (the business is the "who").
+  sponsorship: 'Sponsorship',
   dispute: 'Dispute',
   disputeWon: 'Dispute won',
   // Derived, owed to /marketing: a Stripe fee taken from the club's own balance (12d-1 ruling 5).

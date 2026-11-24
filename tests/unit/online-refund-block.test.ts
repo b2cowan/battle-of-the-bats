@@ -9,18 +9,17 @@ import { refundBlockFoot, refundBlockHtml, refundBlockRows, type RefundBlockInpu
  */
 const base: RefundBlockInput = {
   refundCents: 15675, bank: false, cardBrand: 'visa', cardLast4: '4242', bankLast4: null,
-  refundedAt: '2026-10-27T02:30:00Z', reference: 're_3Pq', receiptNo: 1052, paidOn: '2026-10-20',
+  refundedAt: '2026-10-27T02:30:00Z', receiptNo: 1052, paidOn: '2026-10-20',
   feeBackCents: 675, feeKeptCents: 0,
 };
 
 describe('the refund block (12c words §4)', () => {
-  it('one child: Refunded · To · On · Refund reference · Your receipt, in that order', () => {
+  it('one child: Refunded · To · On · Your receipt, in that order (no Stripe refund code: owner 2026-11-24, O-S6)', () => {
     assert.deepEqual(refundBlockRows(base), [
       ['Refunded', '$156.75'],
       ['To', 'Visa •••• 4242'],
       // 02:30 UTC on the 27th is the evening of the 26th in Toronto: the club's day, not the server's.
       ['On', 'Oct 26, 2026'],
-      ['Refund reference', 're_3Pq'],
       ['Your receipt', '1052 (paid Oct 20, 2026)'],
     ]);
   });
@@ -33,15 +32,17 @@ describe('the refund block (12c words §4)', () => {
     const bank = { ...base, bank: true, bankLast4: '6789' };
     assert.deepEqual(refundBlockRows(bank).find(r => r[0] === 'To'), ['To', 'Bank account ending 6789']);
     assert.equal(refundBlockFoot(bank).at(-1), 'It takes about 3 business days to appear.');
-    assert.equal(refundBlockFoot(base).at(-1), 'It takes 5 to 10 business days to appear.');
+    assert.equal(refundBlockFoot(base).at(-1), 'It can take 5 to 10 business days to appear, depending on the card company.');
   });
   it('the processing fee: included when it went back, named as not part of it while the family paid it, silent otherwise', () => {
     assert.equal(refundBlockFoot(base)[0], 'This includes the $6.75 processing fee.');
     assert.equal(refundBlockFoot({ ...base, feeBackCents: 0, feeKeptCents: 675 })[0], 'The $6.75 processing fee isn’t part of this refund.');
     assert.equal(refundBlockFoot({ ...base, feeBackCents: 0, feeKeptCents: 0 }).length, 1, 'the club paid the fee: no fee line');
   });
-  it('escapes what it prints', () => {
-    assert.ok(!refundBlockHtml({ ...base, reference: '<b>x</b>' }).includes('<b>x</b>'));
+  it('escapes what it prints, and prints no Stripe refund code however a caller is written', () => {
+    assert.ok(!refundBlockHtml({ ...base, children: [{ name: '<b>x</b>', cents: 100 }, { name: 'Ana', cents: 100 }] }).includes('<b>x</b>'));
+    assert.ok(!refundBlockHtml(base).includes('re_'));
+    assert.ok(!('reference' in base));
   });
   it('no refund email dates the refund by the send (the F3 class): the tournament email reads the refund row', () => {
     const src = readCode('lib/online-payment-receipt.ts');

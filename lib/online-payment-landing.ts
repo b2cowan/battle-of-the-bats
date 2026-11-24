@@ -21,7 +21,7 @@ import { sendDebitReturnedEmail, sendDebitReversedEmail, sendDebitStartedEmail }
 import { isUuid, possessive } from './utils';
 import {
   DEBIT_NOTICE_WORDS as DW, DISPUTE_WORDS, LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as OW, cardLabel, disputeDue, leagueUnrecordedWhy,
-  ONLINE_NOTICE_WORDS as W, money as formatMoney, notRecordedNotice, refundFailedNotice,
+  ONLINE_NOTICE_WORDS as W, SPONSOR_DISPUTE_WORDS, money as formatMoney, notRecordedNotice, refundFailedNotice, sponsorRefundFailedNotice,
 } from './online-payment-words';
 import type { NoticeFacts } from './notification-facts';
 import { formatStoredDate } from './timezone';
@@ -29,7 +29,7 @@ import type { Organization, OrgRole } from './types';
 import { opensSponsorships } from './club-sponsorships-place';
 import { GROUP_UNSCOPED_ROLES } from './member-access';
 import { syncDealPlace } from './club-sponsorship-deals-server';
-import { emailDealInvoice, emailDealRefund } from './sponsor-invoice-email';
+import { emailDealInvoice, emailDealRefund, emailDealRefundCancelled } from './sponsor-invoice-email';
 import { DEAL_WORDS } from './club-sponsorship-deal-words';
 
 /**
@@ -467,16 +467,18 @@ export async function reverseDebit(stripeAccountId: string, dispute: Stripe.Disp
 // ── A card dispute (12d-1 Part 3) ───────────────────────────────────────────────────────────────
 
 type DisputedPay = {
-  id: string; org_id: string; flow: OnlineFlow; team_id: string | null; tournament_id: string | null;
+  id: string; org_id: string; flow: OnlineFlow; team_id: string | null; tournament_id: string | null; sponsor_deal_id: string | null;
   season_id: string | null; stripe_account_id: string; rail: string; status: string; landed_at: string | null;
   receipt_no: number | null; total_amount: number; paid_on: string | null; description: string; livemode: boolean;
 };
-const DISPUTED_PAY_COLUMNS = 'id, org_id, flow, team_id, tournament_id, season_id, stripe_account_id, rail, status, landed_at, receipt_no, total_amount, paid_on, description, livemode';
+const DISPUTED_PAY_COLUMNS = 'id, org_id, flow, team_id, tournament_id, sponsor_deal_id, season_id, stripe_account_id, rail, status, landed_at, receipt_no, total_amount, paid_on, description, livemode';
 
 type DisputeRow = {
   id: string; status: string; reason: string | null; amount: number; held: number; due_by: string | null; answered: boolean;
   stripe_fee: number | null; fee_paid_from: string | null; opened_emailed_at: string | null;
   lost_booked_at: string | null; won_back_at: string | null; taken_back: { amount?: number; children?: Array<{ registrationId: string; amount: number }> } | null;
+  /** A sponsor's win (mig 534) keeps what now stands past the invoice in `extra`. */
+  won_back: { extra?: number } | null;
 };
 
 /**
@@ -559,11 +561,8 @@ export async function applyCardDispute(stripeAccountId: string, event: Pick<Stri
     if (!op) return;
   }
   if (op.stripe_account_id !== stripeAccountId || op.rail !== 'card') return;
-  // Part 3b: a sponsor's card dispute is answered in Stripe; online_payment_dispute_apply would put the money back on a team.
-  if (op.flow === 'sponsorship') {
-    console.warn('[online-payment-landing] a sponsor disputed a card payment; it is answered in Stripe and the deal is unchanged:', op.id, event.id);
-    return;
-  }
+  // Part 3b, after the walk (mig 532): a sponsor's card dispute goes through the same writer; a loss reverses the payment's
+  // receipt lines (no credit note) and puts the deal back to owing, a win puts it back (/accounting 2026-11-24).
   // Paid at Stripe but not landed yet: throw, so Stripe redelivers once the landing is in (the line a loss takes back must
   // exist). A payment whose landing failed is recorded as it stands: the "isn't in the record" item already has the desk.
   if (!op.landed_at && op.status === 'open') throw new Error('This card payment has not landed yet; the dispute will be retried.');
@@ -603,7 +602,7 @@ async function afterDisputeApplied(onlinePaymentId: string, out: { disputeId: st
   const [{ data: opData }, { data: dData }] = await Promise.all([
     supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('id', onlinePaymentId).maybeSingle(),
     supabaseAdmin.from('online_payment_disputes')
-      .select('id, status, reason, amount, held, due_by, answered, stripe_fee, fee_paid_from, opened_emailed_at, lost_booked_at, won_back_at, taken_back')
+      .select('id, status, reason, amount, held, due_by, answered, stripe_fee, fee_paid_from, opened_emailed_at, lost_booked_at, won_back_at, taken_back, won_back')
       .eq('id', out.disputeId).maybeSingle(),
   ]);
   const op = opData as DisputedPay | null;
@@ -611,6 +610,7 @@ async function afterDisputeApplied(onlinePaymentId: string, out: { disputeId: st
   if (!op || !d) return;
   const org = await orgById(op.org_id);
   if (!org) return;
+  if (op.flow === 'sponsorship') { await afterSponsorDispute(org, op, d); return; }
   if (isDisputeOpen(d.status)) {
     await raiseDisputed(org, op, d);
     if (!d.opened_emailed_at) await sendDisputeOpenedEmail(org, op, d);
@@ -750,6 +750,8 @@ export async function sendDisputeReminders(now: Date = new Date()): Promise<numb
       ]);
       const op = opData as DisputedPay | null;
       if (!org || !op || !answerer.email) continue;
+      // The reminder email is worded for a team or a child. A sponsor's dispute has its notice (open, lost, won) and no email yet.
+      if (op.flow === 'sponsorship') continue;
       const who = await disputeWho(op);
       const html = disputeReminderEmailHtml({
         club: org.name, forWhom: who.many ?? who.name, record: who.many ? null : who.record, receiptNo: String(op.receipt_no ?? ''),
@@ -1827,7 +1829,8 @@ async function raiseUnmatched(stripeAccountId: string, refund: Stripe.Refund): P
   const { data: acct } = await supabaseAdmin.from('org_payment_accounts').select('org_id').eq('stripe_account_id', stripeAccountId).maybeSingle();
   const org = acct ? await orgById(acct.org_id as string) : null;
   if (!org) return;
-  const people = [...new Set([...(await leagueRefundPeople(org)), ...(await refundPeople(org))])];
+  // Whoever opens Sponsorships hears it too: a refund made in the dashboard before a sponsor's card payment landed has no payment to name yet.
+  const people = [...new Set([...(await leagueRefundPeople(org)), ...(await refundPeople(org)), ...(await sponsorshipPeople(org))])];
   await raiseOnce({
     org, userIds: people, eventType: 'card_refund_unmatched', subjectKey: 'unmatchedStripeRefundId', subjectId: refund.id,
     title: LW.noMatchTitle, body: LW.noMatchBody(formatMoney(refund.amount / 100), formatStoredDate(stripeMoment(refund), { withYear: false })),
@@ -2045,6 +2048,8 @@ async function landSponsorship(op: OnlineRow, paidAt: string, card: ReturnType<t
   const landed = data as { already: boolean };
   await afterSponsorLanding(op.id);
   await recordStripeFee(op.id, session);
+  // A refund made in the club's Stripe dashboard before this payment landed is looked at now, as the team and league landings do.
+  if (!landed.already) await reconcileDashboardRefunds(op.stripe_account_id, op.id).catch(e => console.error('[online-payment-landing] a sponsor payment landed, but the refunds made in Stripe before it were not read:', op.id, e instanceof Error ? e.message : String(e)));
   return landed.already ? 'already' : 'landed';
 }
 
@@ -2068,6 +2073,19 @@ async function afterSponsorLanding(onlinePaymentId: string): Promise<void> {
   }
 }
 
+/** An answer Stripe GAVE (a refusal), as opposed to a lost connection or a timeout that may still have made the refund. */
+const stripeRefused = (e: unknown): boolean =>
+  ['StripeInvalidRequestError', 'StripeCardError', 'StripePermissionError'].includes((e as { type?: string } | null)?.type ?? '');
+
+/** Fail a sponsor refund Stripe refused (nothing was booked): the one place the database is told. Answers the reason. */
+async function failSponsorRefund(refundId: string, e: unknown): Promise<string> {
+  const message = e instanceof Error ? e.message : 'Stripe refused the refund';
+  const { error } = await supabaseAdmin.rpc('club_sponsor_card_refund_failed', { p_refund: refundId, p_stripe_refund: null, p_reason: message });
+  // A refund the database did not mark failed is still pending (the sweep asks again): never say "failed" over a lost write.
+  if (error) throw new Error(error.message);
+  return message;
+}
+
 /** Why a sponsor's card refund was refused before Stripe was asked (the window says each in words). */
 export type SponsorRefundRefusal = 'nothing_left' | 'amount' | 'not_card' | 'reason' | 'disputed';
 
@@ -2086,8 +2104,9 @@ export async function refundSponsorCard(p: {
   orgId: string; paymentId: string; amount: number | null; reason: string; actorId: string; actorName: string;
 }): Promise<SponsorRefund> {
   // No refund while the sponsor's bank is disputing the charge: Stripe has already taken the money back, and a refund on top
-  // would pay it twice (the team and league refunds' rule). A sponsor's dispute is kept nowhere here, so Stripe is asked, and a
-  // read that fails refuses — closed, never open (/review 2026-10-27).
+  // would pay it twice (the team and league refunds' rule). Stripe is asked, not the dispute row: an open dispute may be older
+  // than our last event, and a read that fails refuses — closed, never open (/review 2026-10-27). A LOST one is refused by the
+  // database (mig 532).
   const { data: pay } = await supabaseAdmin.from('club_sponsor_deal_payments')
     .select('online_payments(stripe_account_id, stripe_payment_intent_id)').eq('id', p.paymentId).eq('org_id', p.orgId).maybeSingle();
   const online = (Array.isArray(pay?.online_payments) ? pay?.online_payments[0] : pay?.online_payments) as { stripe_account_id: string; stripe_payment_intent_id: string | null } | null | undefined;
@@ -2100,7 +2119,7 @@ export async function refundSponsorCard(p: {
   if (error) {
     const code = (error as { code?: string }).code;
     const msg = (error as { message?: string }).message ?? '';
-    if (code === 'SP002') return { ok: false, why: msg.includes('nothing_left') ? 'nothing_left' : 'not_card' };
+    if (code === 'SP002') return { ok: false, why: msg.includes('nothing_left') ? 'nothing_left' : msg.includes('disputed') ? 'disputed' : 'not_card' };
     if (code === 'SP003') return { ok: false, why: msg.includes('reason') ? 'reason' : 'amount' };
     throw new Error(msg);
   }
@@ -2114,22 +2133,36 @@ export async function refundSponsorCard(p: {
       metadata: { online_payment_id: o.onlinePaymentId, refund_id: o.refundId },
     });
   } catch (e) {
-    const type = (e as { type?: string } | null)?.type;
-    if (type === 'StripeConnectionError' || type === 'StripeAPIError') return { ...base, state: 'pending', emailedTo: null };
-    const message = e instanceof Error ? e.message : 'Stripe refused the refund';
-    await supabaseAdmin.rpc('club_sponsor_card_refund_failed', { p_refund: o.refundId, p_stripe_refund: null, p_reason: message });
-    return { ...base, state: 'failed', emailedTo: null, message };
+    // Only an answer Stripe GAVE is a failure. Anything else (a lost connection, a timeout, an error we did not expect) may
+    // have reached Stripe and created the refund, so it stays pending: a later event, or the sweep, settles it.
+    if (!stripeRefused(e)) return { ...base, state: 'pending', emailedTo: null };
+    return { ...base, state: 'failed', emailedTo: null, message: await failSponsorRefund(o.refundId, e) };
   }
   const outcome = await settleSponsorRefund(p.orgId, o.refundId, refund);
   return { ...base, state: outcome.state, emailedTo: outcome.emailedTo };
 }
 
+/** A deal's place on the club's site follows the deal's state; a failed sync is logged and never stops the money step that asked for it. */
+async function syncSponsorPlace(orgId: string, dealId: string | null): Promise<void> {
+  if (!dealId) return;
+  await syncDealPlace(orgId, dealId).catch(e => console.error('[online-payment-landing] a sponsor deal changed state, but its place did not sync:', dealId, e instanceof Error ? e.message : String(e)));
+}
+
 /** Stripe's answer on one of our sponsor refunds: book it (succeeded), fail it, or keep it pending with Stripe's id. */
 async function settleSponsorRefund(orgId: string, refundId: string, refund: Stripe.Refund): Promise<{ state: 'succeeded' | 'pending' | 'failed'; emailedTo: string | null }> {
   if (refund.status === 'failed' || refund.status === 'canceled') {
-    const { data } = await supabaseAdmin.rpc('club_sponsor_card_refund_failed', { p_refund: refundId, p_stripe_refund: refund.id, p_reason: refund.failure_reason ?? refund.status });
-    const r = data as { already: boolean; wasBooked: boolean; dealId?: string } | null;
-    if (r && !r.already && r.wasBooked) await raiseSponsorRefundFailed(refundId);
+    const { data, error } = await supabaseAdmin.rpc('club_sponsor_card_refund_failed', { p_refund: refundId, p_stripe_refund: refund.id, p_reason: refund.failure_reason ?? refund.status });
+    if (error) throw new Error(error.message); // not swallowed: Stripe redelivers the event, and the lines stay posted until this lands
+    const r = data as { already: boolean; wasBooked: boolean; dealId: string } | null;
+    if (r?.wasBooked) {
+      // The deal may have gone back to Paid (a payment revived) or stay ended: its place on the club's site follows the deal.
+      await syncSponsorPlace(orgId, r.dealId);
+      // Both are done from the failed state every time Stripe says it again, each once only on its own record (the notice
+      // once per refund; the business's email on its own stamp), so one lost to a crash after the database committed, or a
+      // send that failed, is done on the replay. The business is told its credit note is cancelled; the email goes whether
+      // or not the club's notice could be raised.
+      try { await raiseSponsorRefundFailed(refundId); } finally { await emailDealRefundCancelled(orgId, r.dealId, refundId); }
+    }
     return { state: 'failed', emailedTo: null };
   }
   if (refund.status !== 'succeeded') {
@@ -2138,8 +2171,9 @@ async function settleSponsorRefund(orgId: string, refundId: string, refund: Stri
   }
   const { data, error } = await supabaseAdmin.rpc('club_sponsor_card_refund_book', { p_refund: refundId, p_stripe_refund: refund.id });
   if (error) throw new Error(error.message);
-  const b = data as { already: boolean; dealId: string; endsDeal: boolean };
-  if (b.endsDeal) await syncDealPlace(orgId, b.dealId).catch(e => console.error('[online-payment-landing] a refund ended a deal, but its place did not sync:', b.dealId, e instanceof Error ? e.message : String(e)));
+  const b = data as { already: boolean; dealId: string; endsDeal: boolean; owingAgain?: boolean };
+  // A refund that ended the deal, or put it back to owing (a payment given back beside a cheque), takes its place down.
+  if (b.endsDeal || b.owingAgain) await syncSponsorPlace(orgId, b.dealId);
   const emailedTo = await emailDealRefund(orgId, refundId);
   return { state: 'succeeded', emailedTo };
 }
@@ -2155,7 +2189,9 @@ async function applySponsorRefundEvent(op: PayForRefund, refund: Stripe.Refund):
   if (rows.length) {
     for (const r of rows) {
       // A succeeded one only changes when Stripe later says it failed ("Refund didn't reach the card").
-      if (r.status === 'failed') continue;
+      // A failed one is left alone EXCEPT when Stripe says it failed again (a redelivery): the settle then answers "already" and
+      // finishes what a crash or a failed send left undone (the club's notice, the business's correction email).
+      if (r.status === 'failed' && refund.status !== 'failed' && refund.status !== 'canceled') continue;
       // A replay of a succeeded one runs the settle again: booking answers "already", and the place sync and the email are
       // each once-only, so a crash after the booking that left them undone is finished here (the landing's replay does the same).
       if (r.status === 'succeeded' && refund.status !== 'succeeded' && refund.status !== 'failed' && refund.status !== 'canceled') continue;
@@ -2164,6 +2200,17 @@ async function applySponsorRefundEvent(op: PayForRefund, refund: Stripe.Refund):
     return;
   }
   if (refund.status !== 'succeeded' && refund.status !== 'pending') return;
+  // A payment that arrived but could not be recorded, given back IN FULL from Stripe's own dashboard (mig 531): it is refunded,
+  // and its "not recorded" notice clears. Without this the deal stayed wedged: card refused, invoice refused, Withdraw the only way out.
+  if (refund.status === 'succeeded' && op.status === 'paid' && !op.landed_at && op.stripe_payment_intent_id) {
+    const all = await listRefunds(op.stripe_account_id, op.stripe_payment_intent_id).catch(() => [] as Stripe.Refund[]);
+    const back = all.filter(x => x.status === 'succeeded').reduce((s, x) => s + x.amount, 0) / 100;
+    const { data: done } = await supabaseAdmin.rpc('club_sponsor_card_unlanded_refunded', { p_online_payment: op.id, p_refunded: back });
+    if ((done as { handled?: boolean } | null)?.handled) {
+      await clearSettled({ orgIds: [op.org_id], kinds: ['online_payment_not_recorded', 'card_refund_unmatched'] });
+      return;
+    }
+  }
   const org = await orgById(op.org_id);
   if (!org) return;
   const { data: row } = await supabaseAdmin.from('online_payments').select('sponsor_deal_id').eq('id', op.id).maybeSingle();
@@ -2175,21 +2222,127 @@ async function applySponsorRefundEvent(op: PayForRefund, refund: Stripe.Refund):
   });
 }
 
-/** A booked sponsor refund the card's bank sent back: "Refund didn't reach the card" (the ONE wording), to Sponsorships. */
+/** A booked sponsor refund the card's bank sent back: "Refund didn't reach the card" (the ONE wording), to Sponsorships. Keyed on
+ *  the REFUND (a second refund that bounces on the same payment raises its own), and safe to call again: `raiseOnce` never doubles. */
 async function raiseSponsorRefundFailed(refundId: string): Promise<void> {
-  const { data: r } = await supabaseAdmin.from('club_sponsor_deal_refunds').select('org_id, deal_id, online_payment_id, amount, club_sponsor_deals(business_name)').eq('id', refundId).maybeSingle();
+  const { data: r } = await supabaseAdmin.from('club_sponsor_deal_refunds').select('org_id, deal_id, online_payment_id, amount, ends_deal, club_sponsor_deals(business_name, state)').eq('id', refundId).maybeSingle();
   if (!r) return;
-  const deal = (Array.isArray(r.club_sponsor_deals) ? r.club_sponsor_deals[0] : r.club_sponsor_deals) as { business_name: string | null } | null;
+  // Raised once ever per refund (open or settled): a replay stops here, before the member reads.
+  if (await hasRecentNotification(r.org_id as string, 'card_refund_failed', { sponsorRefundId: refundId }, '1970-01-01T00:00:00Z')) return;
+  const deal = (Array.isArray(r.club_sponsor_deals) ? r.club_sponsor_deals[0] : r.club_sponsor_deals) as { business_name: string | null; state: string } | null;
   const org = await orgById(r.org_id as string);
   if (!org) return;
   const { data: op } = await supabaseAdmin.from('online_payments').select('card_brand, card_last4').eq('id', r.online_payment_id as string).maybeSingle();
   await raiseOnce({
-    org, userIds: await sponsorshipPeople(org), eventType: 'card_refund_failed', subjectKey: 'onlinePaymentId', subjectId: r.online_payment_id as string,
-    ...refundFailedNotice({
-      amount: formatMoney(Number(r.amount)), bank: false, card: cardLabel((op?.card_brand as string | null) ?? null, (op?.card_last4 as string | null) ?? null),
-      bankLast4: null, whose: { team: deal?.business_name || DEAL_WORDS.card.theSponsor }, sent: true,
+    org, userIds: await sponsorshipPeople(org), eventType: 'card_refund_failed', subjectKey: 'sponsorRefundId', subjectId: refundId,
+    ...sponsorRefundFailedNotice({
+      amount: formatMoney(Number(r.amount)), card: cardLabel((op?.card_brand as string | null) ?? null, (op?.card_last4 as string | null) ?? null),
+      business: deal?.business_name || DEAL_WORDS.card.theSponsor, dealEnded: !!r.ends_deal && deal?.state === 'withdrawn',
     }),
     link: dealHref(org, r.deal_id as string),
-    extra: { sponsorRefundId: refundId },
   });
+}
+
+/**
+ * After a sponsor's dispute was written (mig 532): the notices, each once and read from the rows (a replay owes nothing twice).
+ * OPEN: whoever opens Sponsorships, and whoever answers in Stripe, hears it (answer it; never refund meanwhile). LOST: told once,
+ * with what the books did (or, for a part dispute that was left alone, to record it by hand). WON: the lost notice clears itself.
+ */
+async function afterSponsorDispute(org: Organization, op: DisputedPay, d: DisputeRow): Promise<void> {
+  const dealId = op.sponsor_deal_id;
+  const [{ data: deal }, answerer, people] = await Promise.all([
+    dealId ? supabaseAdmin.from('club_sponsor_deals').select('business_name').eq('id', dealId).maybeSingle() : Promise.resolve({ data: null }),
+    disputeAnswerer(org.id), sponsorshipPeople(org),
+  ]);
+  const business = (deal?.business_name as string | null | undefined) || DEAL_WORDS.card.theSponsor;
+  const link = dealHref(org, dealId);
+  const amount = formatMoney(Number(d.amount));
+  const everyone = [...new Set([...people, ...answerer.ids])];
+  const extra: Record<string, string> = dealId ? { sponsorDealId: dealId } : {};
+  if (isDisputeOpen(d.status)) {
+    await raiseOnce({
+      org, userIds: everyone, eventType: 'card_disputed', subjectKey: 'onlineDisputeId', subjectId: d.id, link, extra,
+      title: SPONSOR_DISPUTE_WORDS.openTitle(business), body: SPONSOR_DISPUTE_WORDS.openBody(amount, disputeDue(d.due_by)),
+    });
+  }
+  if (d.status === 'lost' && !d.won_back_at && !(await disputeLostRaised(op.org_id, d.id))) {
+    const day = formatStoredDate(d.lost_booked_at ?? new Date().toISOString(), { withYear: false });
+    await raiseOnce({
+      org, userIds: everyone, eventType: 'card_dispute_lost', subjectKey: 'onlineDisputeId', subjectId: d.id, link, extra,
+      title: SPONSOR_DISPUTE_WORDS.lostTitle(business),
+      // A loss that was booked says what the books did; one the writer left alone (a part dispute) says to record it.
+      body: d.lost_booked_at ? SPONSOR_DISPUTE_WORDS.lostLine(amount, day) : SPONSOR_DISPUTE_WORDS.partialBody(amount),
+    });
+  }
+  // A loss puts the deal back to owing and a win to paid again: its place on the club's site follows (a void does the same).
+  if (d.lost_booked_at || d.won_back_at) await syncSponsorPlace(org.id, dealId);
+  // A win after the sponsor paid again another way leaves more standing than the invoice asks (mig 534): the club is told, once, to refund it.
+  const extraStanding = Number(d.won_back?.extra ?? 0);
+  if (d.won_back_at && extraStanding > 0) {
+    await raiseOnce({
+      org, userIds: everyone, eventType: 'card_dispute_lost', subjectKey: 'sponsorExtraDisputeId', subjectId: d.id, link,
+      extra: { ...extra, sponsorExtra: 'yes' },
+      title: SPONSOR_DISPUTE_WORDS.wonExtraTitle(business), body: SPONSOR_DISPUTE_WORDS.wonExtraBody(formatMoney(extraStanding)),
+    });
+  }
+  await clearSettled({ orgIds: [op.org_id], kinds: ['card_disputed', 'card_dispute_lost'] });
+}
+
+/**
+ * The retry sweep for a sponsor's card refund stuck "on its way" (walk §564 owner call (h); mig 531's companion). A refund opens
+ * in the database BEFORE Stripe is asked, so a crash or a lost connection between the two leaves it pending with no Stripe id,
+ * and no event will ever arrive for it; it holds back the payment's refundable amount for good. Each one older than 15 minutes
+ * is looked for in Stripe by the id we put in its metadata: found, it is settled as Stripe says; not found, Stripe is asked again
+ * with the same idempotency key (so a refund Stripe already made is returned, never doubled). An answer Stripe GAVE (a refusal)
+ * fails it; anything else leaves it for the next run. Run by the daily online-payments job; safe to run any time.
+ */
+export async function sweepStuckSponsorRefunds(now: Date = new Date()): Promise<{ looked: number; settled: number; stillStuck: number; corrected: number }> {
+  const before = new Date(now.getTime() - 15 * 60_000).toISOString();
+  const { data, error } = await supabaseAdmin.from('club_sponsor_deal_refunds')
+    .select('id, org_id, amount, online_payments(id, stripe_account_id, stripe_payment_intent_id)')
+    .eq('status', 'pending').is('stripe_refund_id', null).lt('created_at', before).order('created_at').limit(50);
+  if (error) throw error;
+  type Row = { id: string; org_id: string; amount: number | string; online_payments: OpRef | OpRef[] | null };
+  type OpRef = { id: string; stripe_account_id: string; stripe_payment_intent_id: string | null };
+  let settled = 0;
+  let stillStuck = 0;
+  const listed = new Map<string, Promise<Stripe.Refund[]>>(); // one Stripe list per payment, however many of its refunds are stuck
+  for (const row of (data ?? []) as unknown as Row[]) {
+    const op = Array.isArray(row.online_payments) ? row.online_payments[0] : row.online_payments;
+    if (!op?.stripe_payment_intent_id) { stillStuck++; continue; }
+    try {
+      const key = op.stripe_payment_intent_id;
+      if (!listed.has(key)) listed.set(key, listRefunds(op.stripe_account_id, key));
+      // Looking is not asking: an error from the LIST (a revoked account, an intent not found) says nothing about whether our
+      // refund exists, so it leaves the row stuck. Only Stripe's answer to the refund REQUEST can fail it.
+      const existing = (await listed.get(key)!).find(x => x.metadata?.refund_id === row.id);
+      let refund = existing;
+      if (!refund) {
+        try {
+          refund = await refundToCard({
+            accountId: op.stripe_account_id, paymentIntentId: key, amountCents: Math.round(Number(row.amount) * 100), refundId: row.id,
+            metadata: { online_payment_id: op.id, refund_id: row.id },
+          });
+        } catch (e) {
+          if (stripeRefused(e)) { await failSponsorRefund(row.id, e); settled++; } else stillStuck++;
+          continue;
+        }
+      }
+      await settleSponsorRefund(row.org_id, row.id, refund);
+      settled++;
+    } catch {
+      stillStuck++; // a list that failed, or a settle that did not finish: the next run looks again
+    }
+  }
+  // A booked refund that bounced, whose correction email never went (a failed send released its stamp, or the failure's own
+  // redelivery never came): tried again here, each on its own stamp (mig 533), so a sent one is never doubled.
+  let corrected = 0;
+  try {
+    const { data: bounced } = await supabaseAdmin.from('club_sponsor_deal_refunds').select('id, org_id, deal_id')
+      .eq('status', 'failed').not('emailed_at', 'is', null).not('credit_seq', 'is', null).is('cancel_emailed_at', null).limit(50);
+    for (const b of (bounced ?? []) as { id: string; org_id: string; deal_id: string }[]) { await emailDealRefundCancelled(b.org_id, b.deal_id, b.id); corrected++; }
+  } catch (e) {
+    console.error('[online-payment-landing] the refund corrections still owed could not be read; the next run tries again:', e instanceof Error ? e.message : String(e));
+  }
+  return { looked: (data ?? []).length, settled, stillStuck, corrected };
 }

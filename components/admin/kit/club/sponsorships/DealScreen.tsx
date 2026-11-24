@@ -98,7 +98,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     const door = linkDoor.current;
     if (!dl || !door) return;
     linkDoor.current = null;
-    setLinkSaid(door === 'copied' ? { title: D.deal.linkCopiedTitle, text: D.deal.linkCopied(dl.businessName) } : { title: D.deal.linkMadeTitle, text: D.deal.linkMadeNotCopied });
+    setLinkSaid(door === 'copied' ? { title: D.deal.linkCopiedTitle, text: D.deal.linkCopied(dl.businessName), copy: false } : { title: D.deal.linkMadeTitle, text: D.deal.linkMadeNotCopied });
     // The browser's own replaceState, not router.replace: a router navigation to the same page with a different query
     // string can remount the page, which throws the notice away the instant it is set (owner walk 2026-11-23: the page
     // opened and said nothing). replaceState only rewrites the address.
@@ -137,9 +137,9 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     // A new link (Send the link again / Make a new link). Emailed: said once at the top, fading on its own. Not emailed: the
     // club has to give it to them, so it is a window that stays until closed, with Copy the link (owner 2026-11-23).
     const o = r.data.outcome;
-    let linkWindow: { title: string; text: string } | null = null;
+    let linkWindow: { title: string; text: string; copy?: boolean } | null = null;
     if (o === 'emailed' && r.data.to) setNotice({ tone: 'good', text: D.deal.sentNewLink(r.data.to) });
-    else if (o === 'link_only') linkWindow = copiedNow ? { title: D.deal.newLinkCopiedTitle, text: D.deal.newLinkCopied(d.businessName) } : { title: D.deal.newLinkMadeTitle, text: D.deal.newLinkMadeNotCopied };
+    else if (o === 'link_only') linkWindow = copiedNow ? { title: D.deal.newLinkCopiedTitle, text: D.deal.newLinkCopied(d.businessName), copy: false } : { title: D.deal.newLinkMadeTitle, text: D.deal.newLinkMadeNotCopied };
     else if (o === 'ran_out') linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.ranOut };
     else if (o) linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.notEmailedNewLink };
     setAsking(null);

@@ -140,7 +140,7 @@ export async function readClubOnlinePayments(orgId: string, now: Date = new Date
         const p = payById.get(d.online_payment_id);
         return {
           id: d.id, onlinePaymentId: d.online_payment_id, receiptNo: (p?.receipt_no as number | null) ?? null,
-          home: p?.flow === 'league_signup' ? 'house league' : (p?.tournament_id && tourName.get(p.tournament_id as string)) || 'a tournament',
+          home: p?.flow === 'sponsorship' ? 'a sponsorship' : p?.flow === 'league_signup' ? 'house league' : (p?.tournament_id && tourName.get(p.tournament_id as string)) || 'a tournament',
           why: disputeWhyShort(d.reason), answerBy: d.due_by, held: Number(d.held) > 0 ? Number(d.held) : Number(d.amount),
         };
       }),

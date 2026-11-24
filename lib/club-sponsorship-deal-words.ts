@@ -499,6 +499,14 @@ export const DEAL_WORDS = {
     refundedRow: (on: string) => `Refunded ${dayYear(on)}`,
     refundedOnWay: 'Refund on its way to the card',
     creditNote: (number: string) => `Credit note ${number} (PDF)`,
+    // DRAFT for /marketing: a credit note the business was sent for a refund that then did not reach the card (owner 2026-11-24: kept, marked cancelled).
+    creditNoteCancelled: (number: string) => `Credit note ${number}, cancelled (PDF)`,
+    creditNoteCancelledTitle: 'Credit note, cancelled',
+    // A cancelled note's table rows say so too, so no line on it reads as a tax reduction that stands (/legal 2026-11-24).
+    creditNoteCancelledRow: (line: string) => `Cancelled: ${line}`,
+    creditNoteCancelledSub: (day: string) => `Cancelled ${day}`,
+    creditNoteCancelledClosing: (number: string, amount: string) =>
+      `This credit note is cancelled: the ${amount} refund did not reach the card, so invoice ${number} is not reduced by it. The number is kept on record and is not used again.`,
 
     // The club's deal page: a payment's line opens its own window (ask 1).
     lineSubCard: 'Recorded by itself when the card payment landed',
@@ -508,6 +516,10 @@ export const DEAL_WORDS = {
     lineOpen: (how: string) => `Open the payment: ${how}`,
     chipPending: 'Pending',
     chipRefunded: 'Refunded',
+    chipPartlyRefunded: 'Partly refunded',
+    // DRAFT for /marketing: a card payment the sponsor's bank took back (a dispute the club lost); nothing was refunded.
+    chipTakenBack: 'Taken back',
+    lineTakenBack: 'The sponsor’s bank took this payment back. The deal is owing again.',
     chipFailed: 'Refund didn’t reach the card', // the ONE wording (CARD_REFUND_WORDS.record.pill.failed)
     // The payment's window (520).
     windowTitle: (business: string) => `${possessive(business)} payment`,
@@ -541,13 +553,15 @@ export const DEAL_WORDS = {
       `Paid ${money(paid)} on ${day(on)} (invoice ${number}): the ${money(sponsorship)} sponsorship with its tax, and a ${money(fee)} processing fee with its tax. A refund never returns the fee, so up to ${money(left)} can go back.`,
     refundLeadAgain: (refunded: number, left: number) => `${money(refunded)} has already gone back. Up to ${money(left)} can go back now.`,
     allBack: (left: number) => `${money(left)} back`,
+    // Where a refund goes is said once, above both choices: it is the same card either way.
+    refundTarget: (card: string) => `Either way it goes back to the card, ${card}, and can take 5 to 10 business days to appear, depending on the card company.`,
+    choiceAll: 'All of it',
     endsDeal: (place: string) => `This ends the deal. The logo comes down from ${place} and the place is free for another sponsor.`,
     endsDealClub: 'This ends the deal. The logo comes down from your website and the place is free for another sponsor.',
     partRest: (rest: number, tax: number, of: number, kind: string) =>
       tax > 0 ? `${money(rest)} stays paid. ${money(tax)} of the ${money(of)} is ${kind}.` : `${money(rest)} stays paid.`,
     reason: 'Reason',
     reasonHint: (business: string) => `${business} reads this in the refund email.`,
-    foot: (business: string) => `${possessive(business)} contact is emailed.`,
     footNoEmail: 'No email address on file. Tell them yourself.',
     buttonEnd: 'Refund, end the deal and email',
     buttonAll: (amount: number) => `Refund ${money(amount)} and email`,
@@ -559,14 +573,14 @@ export const DEAL_WORDS = {
     errRefundOff: 'Refunds to the card aren’t available right now.',
     // After the press (said in a window the club closes: money went to a business).
     doneTitle: 'Refunded',
-    doneBody: (amount: number, email: string | null) => `${money(amount)} is on its way to the card.${email ? ` We emailed ${email}.` : ''} It takes 5 to 10 business days to appear on their statement.`, // DRAFT
+    doneBody: (amount: number, email: string | null) => `${money(amount)} is on its way to the card.${email ? ` We emailed ${email}.` : ''} It can take 5 to 10 business days to appear on their statement.`, // DRAFT
     doneEnded: 'The deal has ended and its place is free.',
     pendingBody: (amount: number) => `${money(amount)} is on its way to the card. The card company hasn’t confirmed it yet. It goes in the books when it does.`,
     failedBody: 'The card company refused the refund. Nothing was refunded and nothing changed.',
     // The "To the card" block in the payment's window (the shipped block's words: CARD_REFUND_WORDS.record).
     refundSplit: (pre: number, tax: number, kind: string) =>
       tax > 0 ? `${money(pre)} of the sponsorship and ${money(tax)} ${kind}. A refund never includes the processing fee.` : 'A refund never includes the processing fee.',
-    reachedSub: 'It takes 5 to 10 business days to appear on the statement.',
+    reachedSub: 'It can take 5 to 10 business days to appear on the statement.',
     statusPending: (on: string, time: string) => `Stripe accepted it ${day(on)} at ${time} and is waiting on the card’s bank. It goes in the books when it reaches the card.`,
     whatFailed: (sent: string, back: string) => `Sent ${day(sent)}. The card’s bank sent it back ${day(back)}, for example because the card was closed. Its lines in the books are voided, so the money shows as still with the club. Send it another way, then record that in the Ledger.`,
     businessEmailed: 'Business emailed',
@@ -599,6 +613,11 @@ export const DEAL_WORDS = {
     emailLeadWhole: (club: string, number: string) => `${club} refunded your sponsorship payment for invoice ${number}, and the sponsorship has ended.`,
     emailCreditNote: (number: string) => `Your credit note ${number} is on your sponsorship page.`,
     emailButton: 'See your sponsorship',
+    // DRAFT for /marketing: the correction when a refund the business was told about did not reach their card.
+    emailCancelledSubject: (club: string) => `Correction: your refund from ${club}`,
+    // `number` is null on an untaxed invoice (no credit note was given).
+    emailCancelled: (club: string, amount: string, number: string | null) =>
+      `The ${amount} refund ${club} sent you did not reach your card, so ${number ? `credit note ${number} is cancelled and ` : ''}your invoice is not reduced by it.`, // a statement of fact; the email's own contact line says who to ask (no promise made in the club's name)
     // Needs attention (the rail's notices, in the sponsorship's words).
     notRecordedTitle: 'A sponsor’s card payment isn’t on its deal',
     dashboardRefundTitle: 'A refund made in Stripe isn’t in your books',

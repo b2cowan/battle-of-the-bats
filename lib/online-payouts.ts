@@ -7,7 +7,7 @@ import { onlinePaymentsOn } from './online-payments-switch';
 import { toCents } from './coach-register';
 import { fetchAllIn } from './supabase-paging';
 import {
-  childrenWho, mapPayoutLines, payoutContents, payoutCounts, payoutFailReason, payoutStatus,
+  PAYOUT_LINE_WORDS, childrenWho, mapPayoutLines, payoutContents, payoutCounts, payoutFailReason, payoutStatus,
   type BtIn, type DisputeFacts, type OurIndex, type OurPayment, type PayoutEntryIndex, type PayoutContents, type PayoutFailReason, type PayoutLine, type PayoutStatus,
 } from './online-payouts-map';
 
@@ -103,7 +103,7 @@ function sourceOf(bt: Stripe.BalanceTransaction): { sourceId: string | null; sou
 }
 
 type PaymentRowForEntries = {
-  id: string; flow: 'tournament_team' | 'league_signup'; rail: 'card' | 'bank_debit'; status: string; processing_cost_entry_id: string | null;
+  id: string; flow: 'tournament_team' | 'league_signup' | 'sponsorship'; rail: 'card' | 'bank_debit'; status: string; processing_cost_entry_id: string | null;
   // Stripe-owned pricing Stage 3 (mig 501).
   stripe_extra_entry_id: string | null; dispute_fee_entry_id: string | null; reversal_fee_entry_id: string | null;
 };
@@ -119,8 +119,11 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
   const reversed = payments.filter(p => p.status === 'reversed' && p.rail === 'bank_debit');
   const reversedTeams = reversed.filter(p => p.flow === 'tournament_team').map(p => p.id);
   const reversedLeagueIds = new Set(reversed.filter(p => p.flow === 'league_signup').map(p => p.id));
+  // Board Ready Stage 6 Part 3b: a sponsor's card payment keeps its book lines on the deal's payment row (the income, the tax,
+  // the passed-on fee and the card-fee cost), so those are keyed here, not through the tournament or league tables.
+  const sponsorIds = payments.filter(p => p.flow === 'sponsorship').map(p => p.id);
   // Paged (`fetchAllIn`): one league payment carries many children, and a plain `.in()` read stops silently at 1,000 rows.
-  const [teamRows, itemRows, refundRows, disputeRows, teamReturned, standaloneRows] = await Promise.all([
+  const [teamRows, itemRows, refundRows, disputeRows, teamReturned, standaloneRows, sponsorRows, sponsorRefundRows] = await Promise.all([
     fetchAllIn<{ online_payment_id: string; entry_id: string | null }>(teamIds, (c, a, b) =>
       supabaseAdmin.from('tournament_team_payments').select('online_payment_id, entry_id').in('online_payment_id', c).order('id').range(a, b)),
     fetchAllIn<{ online_payment_id: string; entry_id: string | null; registration_id: string | null }>(leagueIds, (c, a, b) =>
@@ -141,6 +144,13 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
     fetchAllIn<{ stripe_txn_id: string; entry_id: string | null; unmatched_reason: string | null }>(standaloneTxnIds, (c, a, b) =>
       supabaseAdmin.from('online_payment_stripe_fee_lines').select('stripe_txn_id, entry_id, unmatched_reason').eq('org_id', orgId)
         .in('stripe_txn_id', c).order('stripe_txn_id').range(a, b)),
+    fetchAllIn<{ online_payment_id: string; income_entry_id: string | null; tax_entry_id: string | null; fee_income_entry_id: string | null }>(sponsorIds, (c, a, b) =>
+      supabaseAdmin.from('club_sponsor_deal_payments').select('online_payment_id, income_entry_id, tax_entry_id, fee_income_entry_id')
+        .eq('org_id', orgId).in('online_payment_id', c).order('id').range(a, b)),
+    // A refund only has book lines once Stripe said it succeeded (a failed one has its lines voided); the Stripe id is set before then.
+    fetchAllIn<{ stripe_refund_id: string; income_entry_id: string | null; tax_entry_id: string | null }>(refundIds, (c, a, b) =>
+      supabaseAdmin.from('club_sponsor_deal_refunds').select('stripe_refund_id, income_entry_id, tax_entry_id')
+        .eq('org_id', orgId).in('stripe_refund_id', c).order('stripe_refund_id').range(a, b)),
   ]);
   // A child's debit reversed after it landed: the child's `registration_returned` line (keyed by the registration).
   // The line is keyed by the registration alone, so it is tied to a payment only when exactly one REVERSED payment carried
@@ -162,6 +172,10 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
   const pay: Record<string, string[]> = {};
   for (const r of teamRows) push(pay, r.online_payment_id, r.entry_id);
   for (const r of itemRows) push(pay, r.online_payment_id, r.entry_id);
+  for (const r of sponsorRows) {
+    for (const id of [r.income_entry_id, r.tax_entry_id, r.fee_income_entry_id]) push(pay, r.online_payment_id, id);
+  }
+  // The card-fee cost line is the payment's `processing_cost_entry_id` (mig 530), pushed once just below.
   for (const p of payments) { push(pay, p.id, p.processing_cost_entry_id); push(pay, p.id, p.stripe_extra_entry_id); }
   // Stage 3: a dispute's fee and a family-paid fee taken back with the payment leave with the dispute's withdrawal.
   const fees: Record<string, string[]> = {};
@@ -174,6 +188,7 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
   }
   const refunds: Record<string, string[]> = {};
   for (const r of refundRows) { push(refunds, r.stripe_refund_id, r.refund_entry_id); push(refunds, r.stripe_refund_id, r.processing_cost_entry_id); }
+  for (const r of sponsorRefundRows) { push(refunds, r.stripe_refund_id, r.income_entry_id); push(refunds, r.stripe_refund_id, r.tax_entry_id); }
   const reversals: Record<string, string[]> = {};
   for (const e of teamReturned) push(reversals, e.source_entity_id, e.id);
   for (const e of leagueReturned) { const op = regOf.get(e.source_entity_id); if (op) push(reversals, op, e.id); }
@@ -201,23 +216,27 @@ async function ourIndex(orgId: string, bts: readonly BtIn[], withEntries = false
     return withEntries ? { ...none, entries: { payments: {}, refunds: {}, reversals: {}, disputes: {} } } : none;
   }
 
-  const [refunds, disputes] = await Promise.all([
+  const [refunds, disputes, sponsorRefunds] = await Promise.all([
     rowsWhereIn<{ stripe_refund_id: string; online_payment_id: string }>(refundIds, c =>
       supabaseAdmin.from('online_payment_refunds').select('stripe_refund_id, online_payment_id').eq('org_id', orgId).in('stripe_refund_id', c)),
     rowsWhereIn<{ stripe_dispute_id: string; online_payment_id: string }>(disputeIds, c =>
       supabaseAdmin.from('online_payment_disputes').select('stripe_dispute_id, online_payment_id').eq('org_id', orgId).in('stripe_dispute_id', c)),
+    // A sponsor's refund lives in its own table (Board Ready Stage 6 Part 3b), never in `online_payment_refunds`.
+    rowsWhereIn<{ stripe_refund_id: string; online_payment_id: string }>(refundIds, c =>
+      supabaseAdmin.from('club_sponsor_deal_refunds').select('stripe_refund_id, online_payment_id').eq('org_id', orgId).in('stripe_refund_id', c)),
   ]);
   const refundMap: Record<string, string> = {};
   for (const r of refunds) refundMap[r.stripe_refund_id] = r.online_payment_id;
+  for (const r of sponsorRefunds) refundMap[r.stripe_refund_id] = r.online_payment_id;
   const disputeMap: Record<string, string> = {};
   for (const d of disputes) disputeMap[d.stripe_dispute_id] = d.online_payment_id;
 
   const byIdWanted = [...new Set([...Object.values(refundMap), ...Object.values(disputeMap)])];
-  const cols = 'id, flow, rail, scope, receipt_no, stripe_charge_id, stripe_payment_intent_id, stripe_dispute_id, tournament_id, team_id, description, status, processing_cost_entry_id, stripe_extra_entry_id, dispute_fee_entry_id, reversal_fee_entry_id';
+  const cols = 'id, flow, rail, scope, receipt_no, stripe_charge_id, stripe_payment_intent_id, stripe_dispute_id, tournament_id, team_id, sponsor_deal_id, description, status, processing_cost_entry_id, stripe_extra_entry_id, dispute_fee_entry_id, reversal_fee_entry_id';
   type Row = {
-    id: string; flow: 'tournament_team' | 'league_signup'; rail: 'card' | 'bank_debit'; scope: 'deposit' | 'balance' | 'full' | null;
+    id: string; flow: 'tournament_team' | 'league_signup' | 'sponsorship'; rail: 'card' | 'bank_debit'; scope: 'deposit' | 'balance' | 'full' | null;
     receipt_no: number | null; stripe_charge_id: string | null; stripe_payment_intent_id: string | null; stripe_dispute_id: string | null;
-    tournament_id: string | null; team_id: string | null; description: string; status: string; processing_cost_entry_id: string | null;
+    tournament_id: string | null; team_id: string | null; sponsor_deal_id: string | null; description: string; status: string; processing_cost_entry_id: string | null;
     stripe_extra_entry_id: string | null; dispute_fee_entry_id: string | null; reversal_fee_entry_id: string | null;
   };
   const rows = new Map<string, Row>();
@@ -232,12 +251,19 @@ async function ourIndex(orgId: string, bts: readonly BtIn[], withEntries = false
   const teamIds = [...new Set(list.map(r => r.team_id).filter((x): x is string => !!x))];
   const tourIds = [...new Set(list.map(r => r.tournament_id).filter((x): x is string => !!x))];
   const leagueIds = list.filter(r => r.flow === 'league_signup').map(r => r.id);
-  const [teams, tours, itemRows] = await Promise.all([
+  const dealIds = [...new Set(list.filter(r => r.flow === 'sponsorship').map(r => r.sponsor_deal_id).filter((x): x is string => !!x))];
+  const [teams, tours, itemRows, deals] = await Promise.all([
     rowsWhereIn<{ id: string; name: string }>(teamIds, c => supabaseAdmin.from('teams').select('id, name').in('id', c)),
     rowsWhereIn<{ id: string; name: string }>(tourIds, c => supabaseAdmin.from('tournaments').select('id, name').in('id', c)),
     rowsWhereIn<{ online_payment_id: string; registration_id: string | null; description: string }>(leagueIds, c =>
       supabaseAdmin.from('online_payment_items').select('online_payment_id, registration_id, description').in('online_payment_id', c)),
+    rowsWhereIn<{ id: string; business_name: string | null; club_sponsors: { name: string } | { name: string }[] | null }>(dealIds, c =>
+      supabaseAdmin.from('club_sponsor_deals').select('id, business_name, club_sponsors(name)').eq('org_id', orgId).in('id', c)),
   ]);
+  const dealName = new Map(deals.map(d => {
+    const s = Array.isArray(d.club_sponsors) ? d.club_sponsors[0] : d.club_sponsors;
+    return [d.id, d.business_name ?? s?.name ?? ''] as const;
+  }));
   const teamName = new Map(teams.map(t => [t.id, t.name]));
   const tourName = new Map(tours.map(t => [t.id, t.name]));
   const regIds = [...new Set(itemRows.map(i => i.registration_id).filter((x): x is string => !!x))];
@@ -252,6 +278,9 @@ async function ourIndex(orgId: string, bts: readonly BtIn[], withEntries = false
       who = (r.team_id && teamName.get(r.team_id)) || r.description;
       const tour = (r.tournament_id && tourName.get(r.tournament_id)) || '';
       what = `${tour}${tour ? ' ' : ''}${SCOPE_WORDS.noun[r.scope ?? 'full']}`.trim();
+    } else if (r.flow === 'sponsorship') {
+      who = (r.sponsor_deal_id && dealName.get(r.sponsor_deal_id)) || r.description;
+      what = PAYOUT_LINE_WORDS.sponsorship;
     } else {
       const kids = itemRows.filter(i => i.online_payment_id === r.id).map(i => (i.registration_id && regName.get(i.registration_id)) || null)
         .filter((k): k is { first: string; last: string } => !!k && !!(k.first || k.last));

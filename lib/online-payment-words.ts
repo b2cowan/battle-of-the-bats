@@ -206,6 +206,43 @@ export function refundFailedNotice(p: {
 }
 
 /**
+ * A SPONSOR'S refund that the card's bank sent back (Board Ready Stage 6 Part 3b, owner 2026-11-24, after-walk fix 6). The
+ * deal page has no "record it sent another way" door, only another card refund, so the next step names what the club can
+ * actually do. Draft copy owed to /marketing. [marketing]
+ */
+export function sponsorRefundFailedNotice(p: {
+  amount: string; card: string | null; business: string; dealEnded: boolean;
+}): NoticeText & { title: string } {
+  const to = p.card || 'the card';
+  return {
+    title: `${possessive(p.business)} refund didn’t reach the card`,
+    body: `${p.amount} to ${to} came back.`,
+    facts: noticeFacts([
+      factRow(L.amount, p.amount, { lead: true }),
+      factRow(L.sentTo, asSentence(to)),
+      factRow(L.for, p.business),
+      factRow(L.reason, 'It came back, for example because the card was closed'),
+    ], `${p.dealEnded ? 'The deal ended with this refund and stays ended. ' : ''}The refund is out of the books, so the money shows as still with the club. Refund it again from the payment, or send the money another way and record it in the Ledger.`),
+  };
+}
+
+/** A sponsor's card dispute (Board Ready Stage 6 Part 3b, after-walk fix 8; /accounting 2026-11-24). Draft copy owed to /marketing. [marketing] */
+export const SPONSOR_DISPUTE_WORDS = {
+  openTitle: (business: string) => `${possessive(business)} card payment is disputed`,
+  openBody: (amount: string, due: string | null) =>
+    `The sponsor’s bank is disputing ${amount}. Answer it in Stripe${due ? ` by ${due}` : ''}. Don’t refund this sponsor while it is open, or they get the money back twice.`,
+  lostTitle: (business: string) => `${possessive(business)} dispute was lost`,
+  lostLine: (amount: string, day: string) =>
+    `The bank took back ${amount} on ${day}. The payment is out of the books and the deal is owing again. Ask the sponsor to pay again, or withdraw the deal. No credit note is needed.`,
+  // A dispute WON after the sponsor paid again another way (mig 534): the first payment stands again, so more than the invoice stands.
+  wonExtraTitle: (business: string) => `${possessive(business)} dispute was won, and they paid twice`,
+  wonExtraBody: (extra: string) =>
+    `The club won the dispute, so the first payment stands again. That leaves ${extra} over the invoice. Refund it from the payment, or press Done if it is settled another way.`,
+  partialBody: (amount: string) =>
+    `The bank took back ${amount}. Nothing was changed in the books. Either it is only part of what the sponsor paid, or the payment was never recorded here. Check the payment in Stripe, record what happened in the Ledger, and ask your accountant about the GST/HST.`,
+} as const;
+
+/**
  * THE REFUND BLOCK (Club Tier Stage 12c, words CLUB_TIER_STAGE12C_REFUND_VISIBLE_COPY.md §4): one block, the same in every
  * email that carries a refund, in both flows. `bank` swaps the card's words for a bank account's (the rail table, §3.9 of
  * the bank-debit words). Replaces 12b's one-sentence `refundAmount`.
@@ -218,11 +255,10 @@ export const REFUND_BLOCK_WORDS = {
   to: 'To',
   bankTarget: (last4: string | null) => (last4 ? `Bank account ending ${last4}` : 'Your bank account'),
   on: 'On',
-  ref: 'Refund reference',
   receipt: 'Your receipt',
   receiptValue: (receiptNo: string, paid: string) => `${receiptNo} (paid ${paid})`,
   // {bankDays}: Stripe's refund to a bank account takes about 3 business days (plan §0k).
-  arrives: (bank: boolean) => (bank ? 'It takes about 3 business days to appear.' : 'It takes 5 to 10 business days to appear.'),
+  arrives: (bank: boolean) => (bank ? 'It takes about 3 business days to appear.' : 'It can take 5 to 10 business days to appear, depending on the card company.'),
 } as const;
 
 /** Why a child's share couldn't land: the house-league writer's refusal, in the family's terms (12b copy §7 `why*`). */
@@ -303,7 +339,7 @@ export const ONLINE_EMAIL_WORDS = {
   refundSubject: (clubName: string) => `Refund from ${clubName}`,
   refundLead: (teamName: string, tournamentName: string) => `${possessive(teamName)} payment for ${tournamentName} was refunded.`,
   refundAmount: (amount: string, card: string, date: string) =>
-    `${amount} refunded to ${card} on ${date}. It takes 5 to 10 business days to appear.`,
+    `${amount} refunded to ${card} on ${date}. It can take 5 to 10 business days to appear, depending on the card company.`,
   refundFeeIncluded: (fee: string) => `This includes the ${fee} processing fee.`,
   refundFeeKept: (fee: string) => `The ${fee} processing fee isn’t part of this refund.`,
   refundQuestions: (contact: string | null) => (contact ? `Questions: ${contact}.` : ''),
@@ -917,8 +953,10 @@ export const REFUND_WORDS = {
   paidTeams: (total: string, date: string, receiptNo: string, base: string, scopeNoun: string, fee: string) =>
     `Paid ${total} on ${date} (receipt ${receiptNo}): the ${base} ${scopeNoun} and a ${fee} processing fee.`,
   paidClub: (base: string, date: string, receiptNo: string, scopeNoun: string) => `Paid ${base} on ${date} (receipt ${receiptNo}): the ${scopeNoun}.`,
-  choiceAll: (card: string) => `All of it to the card, ${card}`,
-  choiceAllBank: (last4: string) => `All of it to the bank account ending ${last4}`,
+  choiceAll: 'All of it',
+  // Where a refund goes is said once, above the choices: it is the same place whichever is picked.
+  goesToCard: (card: string, both: boolean) => `${both ? 'Either way it' : 'It'} goes back to the card, ${card}, and can take 5 to 10 business days to appear, depending on the card company.`,
+  goesToBank: (last4: string, both: boolean) => `${both ? 'Either way it' : 'It'} goes back to the bank account ending ${last4}, and arrives in about 3 business days.`,
   choicePart: 'Part of it',
   choicePartSub: (left: string) => `An amount up to ${left}, with a reason`,
   footChoose: 'Choose how much to refund.',
@@ -934,12 +972,10 @@ export const REFUND_WORDS = {
   partAlreadyMany: (refunded: string, n: number, left: string) => `${refunded} already refunded in ${n} refunds. Up to ${left}.`,
   partBigger: (left: string, otherPossessive: string) => `Up to ${left} on this payment. Refund the rest from the ${otherPossessive} ⋯.`,
   partButton: (amount: string) => `Refund ${amount} and email`,
-  foot: 'The team’s contact is emailed.',
   footNoEmail: 'No email address on file. Tell the team yourself.',
   partDoneToast: (amount: string, rest: string, email: string | null, bank = false) =>
     `Refunded ${amount} to the ${bank ? 'bank account' : 'card'}. ${rest} stays paid.${email ? ` We emailed ${email}.` : ''}`,
   target: (card: string) => `Refund to the card, ${card}`,
-  arrives: 'Arrives in 5 to 10 business days',
   // {bankDays}: Stripe's refund to a bank account takes about 3 business days (plan §0k).
   arrivesBank: 'Arrives in about 3 business days',
   anotherWayLead: (bank = false) => `The refund to the ${bank ? 'bank account' : 'card'} came back. Record the money you sent the team another way, so the team’s record and the books match.`,

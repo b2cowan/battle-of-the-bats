@@ -202,9 +202,11 @@ textarea.noteBox { resize: none; } /* element + class: outranks the kit's `.text
 
 /* Part 3b (the card-refund drawing, RULED 2026-11-23): a payment's line is a door to its own window — the whole row, no
    button inside it (a list row holds no buttons); the day and how it came over its grey line, the chip, the amount, the chevron. */
-.paymentRow { all: unset; box-sizing: border-box; cursor: pointer; display: flex; width: 100%; gap: 0.75rem; align-items: center; justify-content: space-between; min-height: 44px; }
-.paymentRow:hover .paymentWhat { text-decoration: underline; }
-.paymentRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.paymentList li:has(> .paymentRow) { display: block; padding: 0; }
+.paymentRow { all: unset; box-sizing: border-box; cursor: pointer; display: flex; width: 100%; gap: 0.75rem; align-items: center; justify-content: space-between; min-height: 44px; padding: var(--table-pad-compact) 1.1rem; transition: background 0.1s; }
+/* The whole row tints on hover, edge to edge, as every other row that opens does (the kit's row door). */
+.paymentRow:hover { background: var(--home-olive-soft); }
+.paymentRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
 .paymentMain { display: flex; flex-direction: column; min-width: 0; }
 .paymentWhat { color: var(--text-primary); }
 .paymentEnd { display: inline-flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }

@@ -96,13 +96,13 @@ async function doneFor(dealIds: string[]): Promise<Map<string, ClubDeal['done']>
 
 type PaymentRow = {
   id: string; deal_id: string; amount: number | string; tax_part: number | string; received_on: string; method: DuesPaymentMethod;
-  reference: string | null; note: string | null; recorded_by_name: string; recorded_at: string; voided_at: string | null; voided_by_name: string | null; void_reason: string | null;
+  reference: string | null; note: string | null; recorded_by_name: string; recorded_at: string; voided_at: string | null; voided_by_name: string | null; void_reason: string | null; returned_at: string | null;
   // Part 3b (mig 530): a card payment.
   online_payment_id: string | null; card_brand: string | null; card_last4: string | null; fee_paid_by: 'club' | 'sponsor' | null;
   fee_amount: number | string | null; fee_charged: number | string; fee_tax: number | string;
   online_payments: { paid_at: string | null; stripe_payment_intent_id: string | null } | { paid_at: string | null; stripe_payment_intent_id: string | null }[] | null;
 };
-const PAYMENT_COLUMNS = 'id, deal_id, amount, tax_part, received_on, method, reference, note, recorded_by_name, recorded_at, voided_at, voided_by_name, void_reason, '
+const PAYMENT_COLUMNS = 'id, deal_id, amount, tax_part, received_on, method, reference, note, recorded_by_name, recorded_at, voided_at, voided_by_name, void_reason, returned_at, '
   + 'online_payment_id, card_brand, card_last4, fee_paid_by, fee_amount, fee_charged, fee_tax, online_payments(paid_at, stripe_payment_intent_id)';
 const paymentOf = (r: PaymentRow): DealPayment => {
   const op = Array.isArray(r.online_payments) ? r.online_payments[0] : r.online_payments;
@@ -110,6 +110,7 @@ const paymentOf = (r: PaymentRow): DealPayment => {
     id: r.id, amount: num(r.amount), taxPart: num(r.tax_part), receivedOn: r.received_on, method: r.method, reference: r.reference, note: r.note,
     recordedByName: r.recorded_by_name, recordedAt: r.recorded_at,
     voided: r.voided_at ? { at: r.voided_at, byName: r.voided_by_name ?? '', reason: r.void_reason ?? '' } : null,
+    returned: r.returned_at != null,
     card: r.online_payment_id ? {
       brand: r.card_brand, last4: r.card_last4, paidAt: op?.paid_at ?? null, reference: op?.stripe_payment_intent_id ?? null,
       feePaidBy: r.fee_paid_by ?? 'club', fee: num(r.fee_amount), feeCharged: num(r.fee_charged), feeTax: num(r.fee_tax),

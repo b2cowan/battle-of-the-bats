@@ -766,10 +766,10 @@ const onlinePaymentOver: Resolver = async rows => {
   return out;
 };
 
-type DisputeRow = { id: string; status: string; answered: boolean; answered_at: string | null; closed_at: string | null; won_back_at: string | null };
+type DisputeRow = { id: string; status: string; answered: boolean; answered_at: string | null; closed_at: string | null; won_back_at: string | null; lost_booked_at: string | null };
 const DISPUTE_CLOSED = new Set(['won', 'lost', 'prevented', 'warning_closed']);
 const disputes = (rows: NoticeRow[]) =>
-  rowsIn<DisputeRow>('online_payment_disputes', 'id, status, answered, answered_at, closed_at, won_back_at', 'id', uniq(rows.map(r => meta(r, 'onlineDisputeId'))));
+  rowsIn<DisputeRow>('online_payment_disputes', 'id, status, answered, answered_at, closed_at, won_back_at, lost_booked_at', 'id', uniq(rows.map(r => meta(r, 'onlineDisputeId'))));
 
 /**
  * A card payment is disputed (12d-1, `onlineDisputeId`; words §1.4). The answerer's copy (raised with `answerer: 'yes'`
@@ -800,8 +800,38 @@ const cardDisputeLost: Resolver = async rows => {
   const byId = new Map((await disputes(rows)).map(d => [d.id, d]));
   const out = await debitOwedAgain(rows);
   for (const r of rows) {
+    if (meta(r, 'sponsorExtra')) continue; // a sponsor's "won, and paid twice" waits on the extra itself, below
     const d = byId.get(meta(r, 'onlineDisputeId') ?? '');
     if (d?.won_back_at) out.set(r.id, said(W.disputeWon, { at: d.won_back_at }));
+  }
+  // A sponsor’s lost dispute (mig 532) puts the deal back to owing: once the loss was BOOKED it waits until the deal is paid again, or
+  // ended. A part dispute books nothing (the deal stays as it was): that notice waits for a person to press Done.
+  const dealIds = uniq(rows.map(r => meta(r, 'sponsorDealId')));
+  if (dealIds.length) {
+    const state = new Map((await rowsIn<{ id: string; state: string }>('club_sponsor_deals', 'id, state', 'id', dealIds)).map(x => [x.id, x.state]));
+    for (const r of rows) {
+      const s = state.get(meta(r, 'sponsorDealId') ?? '');
+      if (s && s !== 'invoiced' && !meta(r, 'sponsorExtra') && byId.get(meta(r, 'onlineDisputeId') ?? '')?.lost_booked_at && !out.has(r.id)) out.set(r.id, said(W.sponsorDealMoved));
+    }
+  }
+  // A sponsor's WON dispute that left an extra standing (mig 534): it waits while the payments that hold money, less the refunds
+  // that went through, stand above what the invoice asks (a withdrawn deal asks nothing). The club refunds the extra, or presses Done.
+  const extraDeals = uniq(rows.filter(r => meta(r, 'sponsorExtra')).map(r => meta(r, 'sponsorDealId')));
+  if (extraDeals.length) {
+    const [deals, pays, refunds] = await Promise.all([
+      rowsIn<{ id: string; state: string; total: number | string | null }>('club_sponsor_deals', 'id, state, total', 'id', extraDeals),
+      rowsIn<{ deal_id: string; amount: number | string }>('club_sponsor_deal_payments', 'deal_id, amount', 'deal_id', extraDeals, q => q.is('voided_at', null).is('returned_at', null)),
+      rowsIn<{ deal_id: string; amount: number | string }>('club_sponsor_deal_refunds', 'deal_id, amount', 'deal_id', extraDeals, q => q.eq('status', 'succeeded')),
+    ]);
+    const sum = (list: { deal_id: string; amount: number | string }[], id: string) => list.filter(x => x.deal_id === id).reduce((n, x) => n + Math.round(Number(x.amount) * 100), 0);
+    for (const r of rows) {
+      if (!meta(r, 'sponsorExtra')) continue;
+      const id = meta(r, 'sponsorDealId') ?? '';
+      const deal = deals.find(x => x.id === id);
+      if (!deal) { out.set(r.id, said(W.onlinePaymentGone, { link: null })); continue; }
+      const asks = deal.state === 'withdrawn' ? 0 : Math.round(Number(deal.total ?? 0) * 100);
+      if (sum(pays, id) - sum(refunds, id) - asks <= 0) out.set(r.id, said(W.sponsorExtraBack));
+    }
   }
   return out;
 };

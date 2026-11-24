@@ -167,3 +167,47 @@ describe('the /review of 12d-2 (the payouts read)', () => {
     assert.equal(payoutMatches(p, '108'), false);
   });
 });
+
+describe('Board Ready Stage 6 Part 3b: a sponsor’s card payment is read as a sponsorship, with its book lines keyed', () => {
+  const SPONSOR: OurIndex = {
+    payments: [{ id: 'p-sponsor', chargeId: 'ch_sponsor', paymentIntentId: 'pi_s', disputeId: null, receiptNo: null, rail: 'card', who: 'Walk Card One', what: 'Sponsorship' }],
+    refunds: { re_sponsor: 'p-sponsor' },
+    disputes: {},
+    entries: {
+      payments: { 'p-sponsor': ['e-income', 'e-tax', 'e-cost'] },
+      refunds: { re_sponsor: ['e-out-income', 'e-out-tax'] },
+      reversals: {}, disputes: {},
+    },
+  };
+  const lines = mapPayoutLines([
+    bt({ id: 's1', type: 'charge', reportingCategory: 'charge', net: 112_000, sourceId: 'ch_sponsor' }),
+    bt({ id: 's2', type: 'refund', reportingCategory: 'refund', net: -20_000, sourceId: 're_sponsor', sourceCharge: 'ch_sponsor' }),
+    bt({ id: 's3', type: 'refund', reportingCategory: 'refund', net: -1_000, sourceId: 're_dash', sourceCharge: 'ch_sponsor' }),
+  ], SPONSOR);
+  const by = (id: string) => lines.find(l => l.id === id)!;
+
+  it('the payment names the business and says Sponsorship, never House league', () => {
+    assert.deepEqual([by('s1').kind, by('s1').who, by('s1').what], ['payment', 'Walk Card One', 'Sponsorship · card']);
+  });
+  it('its income, tax and card-fee lines are tied to the payout, and a refund’s two out-lines to its refund line', () => {
+    assert.deepEqual(by('s1').entryIds, ['e-income', 'e-tax', 'e-cost']);
+    assert.deepEqual([by('s2').kind, by('s2').who, by('s2').entryIds], ['refund', 'Walk Card One', ['e-out-income', 'e-out-tax']]);
+  });
+  it('a refund made in Stripe’s own dashboard is still named for the sponsor, with no book line', () => {
+    assert.deepEqual([by('s3').who, by('s3').entryIds], ['Walk Card One', []]);
+  });
+
+  const code = readCode('lib/online-payouts.ts');
+  it('the read names a sponsorship from its deal and never falls into the league branch', () => {
+    assert.match(code, /flow: 'tournament_team' \| 'league_signup' \| 'sponsorship'/);
+    assert.match(code, /else if \(r\.flow === 'sponsorship'\) \{/);
+    assert.match(code, /what = PAYOUT_LINE_WORDS\.sponsorship;/);
+    assert.match(code, /from\('club_sponsor_deals'\)\.select\('id, business_name, club_sponsors\(name\)'\)\.eq\('org_id', orgId\)/);
+  });
+  it('the refund map and the bank check’s index both read the sponsor’s own tables, inside the club', () => {
+    assert.match(code, /from\('club_sponsor_deal_refunds'\)\.select\('stripe_refund_id, online_payment_id'\)\.eq\('org_id', orgId\)/);
+    assert.match(code, /from\('club_sponsor_deal_payments'\)\.select\('online_payment_id, income_entry_id, tax_entry_id, fee_income_entry_id'\)/);
+    assert.match(code, /from\('club_sponsor_deal_refunds'\)\.select\('stripe_refund_id, income_entry_id, tax_entry_id'\)/);
+    assert.match(code, /push\(refunds, r\.stripe_refund_id, r\.income_entry_id\); push\(refunds, r\.stripe_refund_id, r\.tax_entry_id\);/);
+  });
+});

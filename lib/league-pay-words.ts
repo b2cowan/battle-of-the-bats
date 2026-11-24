@@ -61,7 +61,7 @@ export const LEAGUE_PAY_WORDS = {
     leadPart: (amount: string, child: string, season: string) => `${amount} of ${possessive(child)} registration fee for ${season} was refunded.`,
     priceChanged: (from: string, to: string) => `The price changed from ${from} to ${to}.`,
     reason: (club: string, why: string) => `${possessive(club)} reason: ${why}`,
-    amount: (amount: string) => `${amount} is on its way back to the card. It takes 5 to 10 business days to appear.`,
+    amount: (amount: string) => `${amount} is on its way back to the card. It can take 5 to 10 business days to appear, depending on the card company.`,
     questions: (contact: string) => `Questions: ${contact}.`,
     // 12c words §4: the refund email's leads, in the season's words (the block under each is REFUND_BLOCK_WORDS).
     lead: (child: string, season: string) => `${possessive(child)} registration fee for ${season} was refunded.`,

@@ -14,6 +14,7 @@
  */
 import { formatStoredDate, orgDayKey } from './timezone';
 import { cardLabel, money } from './online-payment-words';
+import { DEAL_WORDS } from './club-sponsorship-deal-words';
 import { formatGstNumber } from './club-sponsorships';
 import { oneLineAddress } from './coach-sponsor-invoice';
 import type { DealInvoice } from './club-sponsorship-deals';
@@ -33,6 +34,8 @@ export interface DealPayment {
   /** When it was recorded (a card payment: when it landed). */
   recordedAt: string;
   voided: { at: string; byName: string; reason: string } | null;
+  /** A card payment given back to the card in full (mig 531): it stays on record, and the money it held is owing again. */
+  returned: boolean;
   /** A card payment (Part 3b, mig 530): it landed from an online payment, is never voided, and comes off only by a refund. */
   card: DealCardFacts | null;
 }
@@ -83,6 +86,13 @@ export interface DealRefund {
 /** A refund that moved money or is on its way (a failed one gave nothing back). */
 export const refundCounts = (r: Pick<DealRefund, 'status'>): boolean => r.status !== 'failed';
 
+/** A refund that was booked (its credit note given), sent to the business, and then did not reach the card: its note is kept, cancelled. */
+export const refundNoteCancelled = (r: Pick<DealRefund, 'status' | 'booked'>): boolean => r.status === 'failed' && r.booked;
+
+/** A refund whose credit note can be downloaded: one that reached the card, or one whose note was cancelled. */
+export const refundHasNote = (r: Pick<DealRefund, 'status' | 'booked' | 'creditNumber'>): boolean =>
+  !!r.creditNumber && (r.status === 'succeeded' || refundNoteCancelled(r));
+
 /** The day a refund went back: the day Stripe booked it, else the day it was opened (club time). */
 export const refundDay = (r: Pick<DealRefund, 'refundedOn' | 'createdAt'>): string => r.refundedOn ?? orgDayKey(r.createdAt);
 
@@ -92,8 +102,8 @@ export const refundsEndedDeal = (refunds: readonly Pick<DealRefund, 'status' | '
 
 /** A withdrawn deal that money reached and that was refunded (Part 3b, ask 3) keeps its paper: its link still downloads the
  *  invoice and the credit note, and shows them. Nothing else opens on it. */
-export const refundedAway = (d: { state: string; payments?: readonly { voided: unknown }[] }): boolean =>
-  d.state === 'withdrawn' && !!d.payments?.some(p => !p.voided);
+export const refundedAway = (d: { state: string; refunds?: readonly Pick<DealRefund, 'status'>[] }): boolean =>
+  d.state === 'withdrawn' && !!d.refunds?.some(r => r.status === 'succeeded');
 
 /** "2027-014-C1": an invoice's credit notes are numbered in the order they were given. */
 export const creditNoteNumber = (invoiceNumber: string, seq: number): string => `${invoiceNumber}-C${seq}`;
@@ -126,7 +136,7 @@ export function refundTaxPart(p: Pick<DealPayment, 'id' | 'amount' | 'taxPart' |
 /** Does giving back all of what is left on this payment end the deal? Only when no other payment still holds money on it
  *  (a cheque never comes back by card; a card payment already given back holds nothing). */
 export function refundEndsDeal(payments: readonly DealPayment[], refunds: readonly DealRefund[], paymentId: string): boolean {
-  return payments.every(o => o.id === paymentId || !!o.voided || (!!o.card && refundLeft(o, refunds).left <= 0));
+  return payments.every(o => o.id === paymentId || !!o.voided || o.returned || (!!o.card && refundLeft(o, refunds).left <= 0));
 }
 
 /** What has gone back to the card on a deal (refunds on their way included; a failed one gave nothing back). */
@@ -149,14 +159,22 @@ const cents = (n: number) => Math.round(n * 100);
 
 /** What has arrived against an invoice: paid, still owing, and the day it was paid in full (the last arrival's). */
 export function invoiceStanding(total: number, payments: readonly DealPayment[]): {
-  paid: number; owing: number; paidInFull: boolean; paidOn: string | null; live: DealPayment[];
+  paid: number; owing: number; paidInFull: boolean; paidOn: string | null; live: DealPayment[]; listed: DealPayment[];
 } {
-  const live = payments.filter(p => !p.voided).sort((a, b) => a.receivedOn.localeCompare(b.receivedOn));
+  // `listed`: every payment not voided, for the paper. `live`: those that still HOLD money. A card payment given back in full
+  // (mig 531) or lost to a dispute (mig 532) stays on record, listed, but holds none: it is owing again.
+  const listed = payments.filter(p => !p.voided).sort((a, b) => a.receivedOn.localeCompare(b.receivedOn));
+  const live = listed.filter(p => !p.returned);
   const paidC = live.reduce((s, p) => s + cents(p.amount), 0);
   const owingC = Math.max(0, cents(total) - paidC);
   const paidInFull = live.length > 0 && owingC === 0;
-  return { paid: paidC / 100, owing: owingC / 100, paidInFull, paidOn: paidInFull ? live[live.length - 1].receivedOn : null, live };
+  return { paid: paidC / 100, owing: owingC / 100, paidInFull, paidOn: paidInFull ? live[live.length - 1].receivedOn : null, live, listed };
 }
+
+/** The payments the PAPER lists: every one not voided, except a payment that no longer holds money and has no refund to show for it (a
+ *  dispute the club lost: the bank took it, nothing was refunded, and the invoice reads as owing again). */
+export const paymentsOnPaper = (listed: readonly DealPayment[], refunds: readonly Pick<DealRefund, 'paymentId' | 'status'>[]): DealPayment[] =>
+  listed.filter(p => !p.returned || refunds.some(r => r.paymentId === p.id && r.status === 'succeeded'));
 
 /** "Mar 3 to Aug 31, 2027" — the year once when both days share it. */
 export function periodLabel(from: string, to: string): string {
@@ -216,7 +234,7 @@ export function clubInvoiceLayout(i: ClubInvoiceInput) {
     billTo: { name: i.billTo.name, attention: i.billTo.contactName, address: i.billTo.address, email: i.billTo.email },
     rows,
     taxNumberLine: taxed && i.club.gstHstNumber ? `GST/HST no. ${formatGstNumber(i.club.gstHstNumber)}` : null,
-    payments: standing.live.map(p => [formatStoredDate(p.receivedOn), paymentHow(p), money(p.amount)]),
+    payments: paymentsOnPaper(standing.listed, i.refunds ?? []).map(p => [formatStoredDate(p.receivedOn), paymentHow(p), money(p.amount)]),
     refunds: refunds.map(r => {
       const p = i.payments.find(x => x.id === r.paymentId);
       const to = p?.card ? `To ${cardLabel(p.card.brand, p.card.last4)}` : 'To the card';
@@ -245,29 +263,38 @@ export function creditNoteLayout(i: ClubInvoiceInput, refund: DealRefund) {
   const what = `${i.deal.packageName}${i.deal.placeName ? `, ${i.deal.placeName}` : ''}`;
   // What stands paid once this refund (and every refund given before it) is taken off.
   const upTo = (i.refunds ?? []).filter(r => refundCounts(r) && (r.id === refund.id || r.createdAt <= refund.createdAt));
-  const netPaidC = cents(invoiceStanding(inv.total, i.payments).paid) - upTo.reduce((sum, r) => sum + cents(r.amount), 0);
+  // Paid, then the refunds taken off: from what was LISTED, since a payment given back in full no longer counts as paid and its refund would come off twice.
+  const netPaidC = paymentsOnPaper(invoiceStanding(inv.total, i.payments).listed, i.refunds ?? []).reduce((sum, p) => sum + cents(p.amount), 0) - upTo.reduce((sum, r) => sum + cents(r.amount), 0);
   const kind = inv.taxKind ?? 'GST/HST';
+  const cancelled = refundNoteCancelled(refund);
+  const row = (description: string) => (cancelled ? DEAL_WORDS.card.creditNoteCancelledRow(description) : description);
+  // The day the note was ISSUED. A failed refund loses its booking day (the database clears it), so a cancelled note reads the day its
+  // refund email went, which is the day it was booked and sent; never the day the refund was merely opened.
+  const issuedDay = cancelled && refund.emailedAt ? orgDayKey(refund.emailedAt) : refundDay(refund);
   return {
     ...base,
     number,
     paidInFull: false,
     withdrawnLabel: null,
     rows: [
-      { description: `Refund of the sponsorship: ${what}`, amount: money((cents(refund.amount) - cents(refund.taxPart)) / 100) },
-      ...(refund.taxPart > 0 ? [{ description: `${kind} ${inv.taxRate}% refunded`, amount: money(refund.taxPart) }] : []),
+      { description: row(`Refund of the sponsorship: ${what}`), amount: money((cents(refund.amount) - cents(refund.taxPart)) / 100) },
+      ...(refund.taxPart > 0 ? [{ description: row(`${kind} ${inv.taxRate}% refunded`), amount: money(refund.taxPart) }] : []),
     ],
     payments: [] as string[][],
     refunds: [] as string[][],
     credit: {
-      title: 'Credit note',
-      subtitle: [`No. ${number}`, `Issued ${formatStoredDate(refundDay(refund))}`,
+      // A refund that was booked, sent to the business, and then did not reach the card: its note is kept, never reused,
+      // and says it is cancelled (owner 2026-11-24).
+      title: cancelled ? DEAL_WORDS.card.creditNoteCancelledTitle : 'Credit note',
+      subtitle: [`No. ${number}`, `Issued ${formatStoredDate(issuedDay)}`,
+        ...(cancelled ? [DEAL_WORDS.card.creditNoteCancelledSub(formatStoredDate(orgDayKey(refund.failedAt ?? refund.createdAt)))] : []),
         `For invoice ${inv.number}, issued ${formatStoredDate(inv.issuedOn)}`],
       stats: [
-        { n: money(refund.amount), label: 'refunded' },
-        { n: money(refund.taxPart), label: `${kind} refunded` },
+        { n: money(refund.amount), label: cancelled ? 'not refunded' : 'refunded' },
+        { n: money(refund.taxPart), label: cancelled ? `${kind} not refunded` : `${kind} refunded` },
         { n: money(Math.max(0, netPaidC) / 100), label: 'paid, after refunds' },
       ],
-      closing: `This credit note reduces invoice ${inv.number} by ${money(refund.amount)}, including ${money(refund.taxPart)} ${kind} at ${inv.taxRate}%. The amount went back to the card it was paid with. A refund never includes the processing fee.`,
+      closing: cancelled ? DEAL_WORDS.card.creditNoteCancelledClosing(inv.number, money(refund.amount)) : `This credit note reduces invoice ${inv.number} by ${money(refund.amount)}, including ${money(refund.taxPart)} ${kind} at ${inv.taxRate}%. The amount went back to the card it was paid with. A refund never includes the processing fee.`,
     },
   };
 }

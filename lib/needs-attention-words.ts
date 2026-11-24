@@ -83,6 +83,10 @@ export const SETTLED_WORDS = {
   disputeWon: 'The club won the dispute.',
   disputeAnswered: 'Answered in Stripe. The bank decides.',
   disputeLost: 'The dispute was lost.',
+  // A sponsor’s lost dispute (mig 532, DRAFT for /marketing): the deal stopped waiting on that money.
+  // A sponsor's won dispute that left an extra standing (mig 534, DRAFT for /marketing): nothing stands past the invoice any more.
+  sponsorExtraBack: 'Nothing on this deal is extra any more.',
+  sponsorDealMoved: 'The deal was paid again or ended.',
 
   // Requests holding a coach's payout (team_request_holding_payout)
   allSettled: (n: number) => (n === 1 ? 'The request is settled.' : n === 2 ? 'Both requests are settled.' : `All ${n} requests are settled.`),

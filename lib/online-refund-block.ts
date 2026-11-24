@@ -2,8 +2,7 @@
  * THE REFUND BLOCK (Club Tier Stage 12c Part 3; words docs/projects/active/CLUB_TIER_STAGE12C_REFUND_VISIBLE_COPY.md §4):
  * one block, the same in every email that carries a refund, in both flows — the house-league refund email, the ending
  * email's refund, a price correction's, the "still enrolled" pay link, and a tournament team's refund. Label then value:
- * Refunded · For (one row per child, only when the payment covered two or more) · To · On · Refund reference · Your
- * receipt; then the fee line and how long it takes to appear.
+ * Refunded · For (one row per child, only when the payment covered two or more) · To · On · Your receipt; then the fee line and how long it takes to appear.
  *
  * **On is the refund's own date, never the day we heard of it** (Stripe's `created` when we have it), so an email sent
  * late, or for a refund made in Stripe whose event arrived late, still reads right (the F3 class of bug).
@@ -25,7 +24,6 @@ export interface RefundBlockInput {
   bankLast4: string | null;
   /** The refund's own moment (Stripe's), as an ISO instant or a club day. */
   refundedAt: string;
-  reference: string | null;
   receiptNo: number | null;
   /** The day the payment was made (the receipt's). */
   paidOn: string | null;
@@ -43,7 +41,6 @@ export function refundBlockRows(i: RefundBlockInput): Array<[string, string]> {
   if (i.children && i.children.length >= 2) for (const c of i.children) rows.push([B.forLabel, B.forValue(c.name, money(c.cents / 100))]);
   rows.push([B.to, i.bank ? B.bankTarget(i.bankLast4) : cardLabel(i.cardBrand, i.cardLast4)]);
   rows.push([B.on, day(i.refundedAt)]);
-  if (i.reference) rows.push([B.ref, i.reference]);
   if (i.receiptNo != null) rows.push([B.receipt, B.receiptValue(receiptLabel(i.receiptNo), day(i.paidOn))]);
   return rows;
 }

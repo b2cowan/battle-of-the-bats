@@ -23,7 +23,7 @@ import { dealLinkFormState, type DealLinkAnswer } from './club-form-deal';
 import { readPackage, readSettings } from './club-sponsorships-server';
 import { markDealOpened, readDeal } from './club-sponsorship-deals-server';
 import { dealBullets, linkTakesForm, linkTakesLogo, type DealInvoice } from './club-sponsorship-deals';
-import { clubCanEmailInvoice, invoiceStanding, refundCounts, refundedAway } from './club-sponsor-invoice';
+import { clubCanEmailInvoice, invoiceStanding, refundCounts, refundNoteCancelled, refundedAway } from './club-sponsor-invoice';
 import { sponsorCardFacts, unrecordedCardPayment } from './sponsor-card-server';
 import { cardLabel } from './online-payment-words';
 import { tournamentToday } from './timezone';
@@ -129,6 +129,8 @@ export type SponsorPageView =
     paidCard: { label: string; at: string } | null;
     /** Its refunds to the card (a failed one gave nothing back and isn't listed), each with its credit note when it has one. */
     refunds: { id: string; amount: number; on: string | null; pending: boolean; creditNumber: string | null }[];
+    /** A credit note the business was sent for a refund that then did not reach the card: kept, and shown as cancelled (its number is never reused). */
+    cancelledNotes: { id: string; creditNumber: string }[];
   };
 
 const clubFace = async (org: Organization, contact: string | null): Promise<SponsorClubFace> => ({
@@ -200,7 +202,8 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
   // The card button: the club takes card now, and the deal can still take money (an open offer, or an invoice still owing).
   const facts = !ended && (open || (deal.state === 'invoiced' && (standing?.owing ?? 0) > 0)) ? await sponsorCardFacts(org.id).catch(() => null) : null;
   const received = !ended && deal.state !== 'paid' && !!(await unrecordedCardPayment(org.id, deal.id).catch(() => null));
-  const lastCard = [...deal.payments].reverse().find(x => !x.voided && x.card)?.card ?? null;
+  // The card named on the receipt: one still holding money; on a deal a refund ended, the one it refunded.
+  const lastCard = [...deal.payments].reverse().find(x => !x.voided && (ended || !x.returned) && x.card)?.card ?? null;
   return {
     state: open ? 'form' : 'done',
     token,
@@ -222,11 +225,12 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
     clubCanEmail: clubCanEmailInvoice(settings.mailingAddress, club.contactEmail),
     takesLogo: linkTakesLogo(deal, !!b.logo_sent_at, tournamentToday()),
     received,
-    paid: deal.state === 'paid' || (ended && !!standing?.paidInFull),
+    paid: deal.state === 'paid' || (ended && refundedAway(deal)),
     owing: ended ? 0 : standing?.owing ?? 0,
     paidOn: deal.paidOn ?? standing?.paidOn ?? null,
     card: facts && !received ? { sponsorPays: open && facts.feePayer === 'sponsor', refundPolicy: facts.refundPolicy } : null,
     paidCard: lastCard ? { label: cardLabel(lastCard.brand, lastCard.last4), at: lastCard.paidAt ?? '' } : null,
     refunds: deal.refunds.filter(refundCounts).map(r => ({ id: r.id, amount: r.amount, on: r.refundedOn, pending: r.status === 'pending', creditNumber: r.status === 'succeeded' ? r.creditNumber : null })),
+    cancelledNotes: deal.refunds.filter(r => refundNoteCancelled(r) && !!r.creditNumber).map(r => ({ id: r.id, creditNumber: r.creditNumber! })),
   };
 }

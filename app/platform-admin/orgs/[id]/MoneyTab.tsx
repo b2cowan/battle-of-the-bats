@@ -901,7 +901,7 @@ function RefundWindow({ orgId, orgName, charge, read, flaggedDuplicate, onClose,
       <b>This cannot be undone.</b>{' '}
       {earlier + amount < charge.amountCents && <>With {earlier ? `the ${formatCents(earlier, charge.currency)} already refunded` : 'this refund'}, {formatCents(charge.amountCents - earlier - amount, charge.currency)} stays paid. </>}
       {possessive(orgName)} plan does not change{next ? <>, the subscription keeps running, and the next charge is still {formatStoredDate(next.at)}</> : ''}.
-      {' '}The card usually shows it in 5 to 10 business days. {receipt} {noteWords}
+      {' '}The card can show it 5 to 10 business days later, depending on the card company. {receipt} {noteWords}
     </>
   ) : viaNote && asked && !over
     ? <>{seen?.error ?? 'Asking Stripe for the credit note…'}</>

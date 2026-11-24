@@ -162,11 +162,11 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_guardians_asked:              'Your club asked you to add guardian emails for some of your players, on your Roster.',
   payouts_need_attention:            'Stripe needs something more from the club, or the club needs a refund policy, to keep online payments on. The owner fixes it on the Payouts card.',
   online_payment_not_recorded:       'A team paid by card, but the payment couldn’t be added to the team’s record. Refund it to the card.',
-  card_refund_failed:                'A refund to a team’s card was returned. Send the team the money another way, then record the refund.',
+  card_refund_failed:                'A refund to a card was returned. Send the money another way, then record the refund.',
   // 12c words §5 `kind.*.desc`.
   card_refund_whose:                 'A part refund was made in Stripe on a payment for more than one child. Choose whose fee it was.',
   card_refund_still_enrolled:        'A child’s fee was refunded in Stripe, but the registration is still active. Withdraw them, email the pay link or keep them enrolled.',
-  card_refund_unmatched:             'A refund was made in Stripe on a payment that isn’t recorded yet. It clears when the payment arrives.',
+  card_refund_unmatched:             'A refund was made in Stripe that isn’t in the books. Record it, then press Done.',
   payments_terms_changed:            'FieldLogicHQ’s payments terms changed. The owner reads and agrees on the Payouts card; online payments stay on.',
   payments_ending:                   'Online payments stop through an ending the owner didn’t choose: a comp running out, or a subscription payment that failed.',
   debit_returned:                    'A bank debit was returned while it was clearing. Nothing was taken. The family was emailed a way to pay.',

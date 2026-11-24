@@ -101,34 +101,57 @@ export async function emailDealInvoice(orgId: string, orgSlug: string, dealId: s
   }
 }
 
+/** What both refund emails read: the deal, the business, the club's settings and face, and who and how it can be sent. */
+async function refundEmailInputs(orgId: string, dealId: string) {
+  const [deal, business, settings, org] = await Promise.all([readDeal(orgId, dealId), readDealBusiness(orgId, dealId), readSettings(orgId), readClubEmailOrg(orgId)]);
+  const contactEmail = await offerContactOf(orgId, settings);
+  const mailingAddress = settings.mailingAddress?.trim() ?? '';
+  return {
+    deal, business, settings, org, contactEmail, mailingAddress,
+    to: business?.email?.trim().toLowerCase() ?? null,
+    url: deal ? dealLinkUrl(org.slug, deal.id, deal.linkVersion) : null,
+    canSend: !!contactEmail && clubCanEmailInvoice(mailingAddress, contactEmail),
+  };
+}
+
+/** The paragraph helper and the button, questions and footer both refund emails end with. */
+const refundEmailP = (text: string, style: string = WARM_EMAIL_STYLE.paragraph) => `<p style="${style}">${escText(text)}</p>`;
+function refundEmailTail(i: { org: { name: string }; settings: { contactEmail: string | null; contactName: string | null }; contactEmail: string; mailingAddress: string; url: string | null }): string[] {
+  return [
+    i.url ? warmEmailButton(escText(C.emailButton), escText(i.url)) : '',
+    refundEmailP(DEAL_WORDS.email.questions(i.settings.contactEmail ? i.settings.contactName : null, i.contactEmail), WARM_EMAIL_STYLE.small),
+    `<div style="${WARM_EMAIL_STYLE.footRule}">`,
+    `<p style="${WARM_EMAIL_STYLE.finePrint}">${escText(DEAL_WORDS.email.sentBy(i.org.name, i.mailingAddress))}</p>`,
+    '</div>',
+  ];
+}
+
 /**
  * THE REFUND EMAIL (Part 3b; the card-refund drawing's ask 6, RULED 2026-11-23: "the shipped refund email"): "Refund from
- * {club}", the shipped refund block (Refunded · To · On · Refund reference, the fee line, how long it takes), the club's
+ * {club}", the shipped refund block (Refunded · To · On, the fee line, how long it takes), the club's
  * reason, and — on a taxed invoice — the credit note's number, which downloads from the business's page. Sent once a refund
  * reaches the card (Stripe accepted it), claimed on the refund so the press and Stripe's event never send two. Never fails
  * the refund; answers the address it went to, or null.
  */
 export async function emailDealRefund(orgId: string, refundId: string): Promise<string | null> {
+  let release: (() => Promise<void>) | null = null;
   try {
     const { data: claimed } = await supabaseAdmin.from('club_sponsor_deal_refunds').update({ emailed_at: new Date().toISOString() })
       .eq('id', refundId).eq('org_id', orgId).is('emailed_at', null).eq('status', 'succeeded').select('deal_id').maybeSingle();
     const dealId = (claimed as { deal_id: string } | null)?.deal_id;
     if (!dealId) return null;
-    const release = async () => { await supabaseAdmin.from('club_sponsor_deal_refunds').update({ emailed_at: null }).eq('id', refundId); };
-    const [deal, business, settings, org] = await Promise.all([readDeal(orgId, dealId), readDealBusiness(orgId, dealId), readSettings(orgId), readClubEmailOrg(orgId)]);
+    release = async () => { await supabaseAdmin.from('club_sponsor_deal_refunds').update({ emailed_at: null }).eq('id', refundId); };
+    const inputs = await refundEmailInputs(orgId, dealId);
+    const { deal, business, org, to, contactEmail } = inputs;
     const refund = deal?.refunds.find(r => r.id === refundId);
     const payment = refund ? deal?.payments.find(x => x.id === refund.paymentId) : null;
-    const to = business?.email?.trim().toLowerCase();
-    const contactEmail = await offerContactOf(orgId, settings);
-    const mailingAddress = settings.mailingAddress?.trim() ?? '';
-    const url = deal ? dealLinkUrl(org.slug, deal.id, deal.linkVersion) : null;
-    if (!deal?.invoice || !refund || !payment?.card || !to || !contactEmail || !clubCanEmailInvoice(mailingAddress, contactEmail)) {
+    if (!deal?.invoice || !refund || !payment?.card || !to || !contactEmail || !inputs.canSend) {
       console.warn('[sponsorships] the refund email was not sent — no address, no contact for sponsors, or no mailing address:', refundId);
       await release();
       return null;
     }
     const facts = await clubEmailFacts(org);
-    const p = (text: string, style: string = WARM_EMAIL_STYLE.paragraph) => `<p style="${style}">${escText(text)}</p>`;
+    const p = refundEmailP;
     const html = warmEmailDocument([
       `<div style="display:none;max-height:0;overflow:hidden;">${escText(REFUND_BLOCK_WORDS.preheader(money(refund.amount), false))}</div>`,
       p(E.greeting(business?.contactName || business?.name || deal.businessName)),
@@ -136,16 +159,12 @@ export async function emailDealRefund(orgId: string, refundId: string): Promise<
       p(ONLINE_EMAIL_WORDS.refundReason(org.name, refund.reason)),
       refundBlockHtml({
         refundCents: Math.round(refund.amount * 100), bank: false, cardBrand: payment.card.brand, cardLast4: payment.card.last4, bankLast4: null,
-        refundedAt: refund.succeededAt ?? refund.createdAt, reference: refund.stripeRefundId, receiptNo: null, paidOn: payment.receivedOn,
+        refundedAt: refund.succeededAt ?? refund.createdAt, receiptNo: null, paidOn: payment.receivedOn,
         feeBackCents: 0,
         feeKeptCents: payment.card.feePaidBy === 'sponsor' ? Math.round((payment.card.feeCharged + payment.card.feeTax) * 100) : 0,
       }),
       refund.creditNumber ? p(C.emailCreditNote(refund.creditNumber)) : '',
-      url ? warmEmailButton(escText(C.emailButton), escText(url)) : '',
-      p(DEAL_WORDS.email.questions(settings.contactEmail ? settings.contactName : null, contactEmail), WARM_EMAIL_STYLE.small),
-      `<div style="${WARM_EMAIL_STYLE.footRule}">`,
-      `<p style="${WARM_EMAIL_STYLE.finePrint}">${escText(DEAL_WORDS.email.sentBy(org.name, mailingAddress))}</p>`,
-      '</div>',
+      ...refundEmailTail({ ...inputs, org, contactEmail }),
     ].join('\n'), facts);
     const result = await sendEmail(to, ONLINE_EMAIL_WORDS.refundSubject(org.name), html, {
       kind: 'club_sponsorship_refund', fromName: familySenderName(org.name), replyTo: contactEmail, orgId,
@@ -154,7 +173,45 @@ export async function emailDealRefund(orgId: string, refundId: string): Promise<
     return to;
   } catch (e) {
     console.error('[sponsorships] the refund email did not go:', refundId, (e as Error)?.message ?? 'no code');
+    // A send that threw after the claim must not leave "emailed" on a refund the business never heard of.
+    await release?.().catch(() => undefined);
     return null;
+  }
+}
+
+/**
+ * THE CORRECTION (owner 2026-11-24, walk §564 call (h)'s companion): a refund the business was TOLD about (its email went) that
+ * then did not reach the card. Its credit note is kept and marked cancelled, never reused, and the business is told so once,
+ * from the failed state (mig 533's own stamp), so a send that failed is tried again. Nothing goes for a refund that was never
+ * emailed (they never heard of it). Never throws.
+ */
+export async function emailDealRefundCancelled(orgId: string, dealId: string, refundId: string): Promise<void> {
+  let release: (() => Promise<void>) | null = null;
+  try {
+    // Claimed first, released if the send does not go (as the refund email's is): the caller runs this from the failed state on
+    // every replay, so a send that failed is tried again and a sent one is never doubled. Only a refund the business was told
+    // about (`emailed_at`) that then failed.
+    const { data: claimed } = await supabaseAdmin.from('club_sponsor_deal_refunds').update({ cancel_emailed_at: new Date().toISOString() })
+      .eq('id', refundId).eq('org_id', orgId).eq('status', 'failed').not('emailed_at', 'is', null).is('cancel_emailed_at', null).select('id').maybeSingle();
+    if (!claimed) return;
+    release = async () => { await supabaseAdmin.from('club_sponsor_deal_refunds').update({ cancel_emailed_at: null }).eq('id', refundId); };
+    const inputs = await refundEmailInputs(orgId, dealId);
+    const { deal, business, org, to, contactEmail } = inputs;
+    const refund = deal?.refunds.find(r => r.id === refundId);
+    if (!deal?.invoice || !refund || !to || !contactEmail || !inputs.canSend) { await release(); return; }
+    const facts = await clubEmailFacts(org);
+    const html = warmEmailDocument([
+      refundEmailP(E.greeting(business?.contactName || business?.name || deal.businessName)),
+      refundEmailP(C.emailCancelled(org.name, money(refund.amount), refund.creditNumber)), // a refund on an untaxed invoice has no note to cancel
+      ...refundEmailTail({ ...inputs, org, contactEmail }),
+    ].join('\n'), facts);
+    const result = await sendEmail(to, C.emailCancelledSubject(org.name), html, {
+      kind: 'club_sponsorship_refund', fromName: familySenderName(org.name), replyTo: contactEmail, orgId,
+    });
+    if (result.status !== 'sent') await release();
+  } catch (e) {
+    console.error('[sponsorships] the refund correction did not go:', refundId, (e as Error)?.message ?? 'no code');
+    await release?.().catch(() => undefined);
   }
 }
 

@@ -24,7 +24,7 @@ const taxedInvoice: DealInvoice = { number: '2027-014', issuedOn: '2027-03-03', 
 const untaxedInvoice: DealInvoice = { number: '2027-015', issuedOn: '2027-03-03', dueOn: '2027-04-02', taxKind: null, taxRate: null, tax: 0, total: 1000 };
 const pay = (over: Partial<DealPayment> = {}): DealPayment => ({
   id: 'p1', amount: 1130, taxPart: 130, receivedOn: '2027-03-18', method: 'cheque', reference: '004417', note: null,
-  recordedByName: 'Dana Ruiz', recordedAt: '2027-03-18T16:00:00Z', voided: null, card: null, ...over,
+  recordedByName: 'Dana Ruiz', recordedAt: '2027-03-18T16:00:00Z', voided: null, returned: false, card: null, ...over,
 });
 const input = (invoice: DealInvoice, payments: DealPayment[] = []) => ({
   club: { name: 'Riverdale Minor Ball', mailingAddress: '200 Park Road\nRiverdale ON K0A 1B0', gstHstNumber: '812345678RT0001', contactName: 'Dana Ruiz', contactEmail: 'sponsors@riverdaleminorball.ca' },

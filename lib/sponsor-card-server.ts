@@ -107,7 +107,9 @@ export async function openSponsorCheckout(p: {
   } catch {
     return { ok: false, error: C.errOpen, status: 502 };
   }
-  const { error } = await supabaseAdmin.from('online_payments').insert({
+  // The record is written right after Stripe's page exists; if it cannot be (a refusal OR a thrown error), the page is closed
+  // before anyone sees it, so no page can be paid that has no record behind it.
+  const recordFailed = await supabaseAdmin.from('online_payments').insert({
     id, org_id: p.orgId, stripe_account_id: p.facts.account.stripeAccountId, flow: 'sponsorship', sponsor_deal_id: p.dealId,
     scope: 'full', description: p.lineName, payer_email: p.email,
     base_amount: toDollars(p.fee.baseCents), fee_amount: toDollars(p.fee.feeCents),
@@ -116,10 +118,10 @@ export async function openSponsorCheckout(p: {
     livemode: p.facts.account.livemode, stripe_checkout_session_id: session.id,
     sponsor_fee_tax: sponsorPays && p.fee.feeTaxCents > 0 ? toDollars(p.fee.feeTaxCents) : null,
     sponsor_invoice: p.plan,
-  });
-  if (error) {
-    // Another press recorded its page first: close ours before anyone sees it, and offer theirs.
-    await expireCheckout(p.facts.account.stripeAccountId, session.id);
+  }).then(r => !!r.error, () => true);
+  if (recordFailed) {
+    // Another press recorded its page first (or the record could not be written): close ours before anyone sees it, and offer theirs.
+    await expireCheckout(p.facts.account.stripeAccountId, session.id).catch(() => undefined);
     return (await openPageFor(p.dealId, p.fee.totalCents, issues)) ?? { ok: false, error: C.errOpen, status: 409 };
   }
   return session.url ? { ok: true, url: session.url } : { ok: false, error: C.errOpen, status: 502 };
@@ -145,8 +147,10 @@ async function openPageFor(dealId: string, totalCents: number | null, issues: bo
     return { ok: true, url: session.url };
   }
   if (session.status === 'open') {
-    await expireCheckout(account, sessionId);
+    // A session that completes between the read above and this close makes Stripe refuse the close: that is "paid", not a failure.
+    await expireCheckout(account, sessionId).catch(() => undefined);
     const still = await retrieveCheckout(account, sessionId).catch(() => null);
+    if (still?.status === 'complete') return { ok: false, error: C.errOpen, status: 409, code: 'paid' };
     if (still?.status !== 'expired') return { ok: false, error: C.errOpen, status: 503 };
   }
   await supabaseAdmin.from('online_payments').update({ status: 'expired', updated_at: new Date().toISOString() })

@@ -1269,7 +1269,7 @@ const tournamentsHelp: HelpPageContent = {
               <p>You can refund all of a card payment or part of it. Whoever runs tournaments can make them; the treasurer reads the refund and doesn&rsquo;t make one.</p>
               <ol>
                 <li>Open the team&rsquo;s record. Under <strong>Received</strong>, press the <strong>&hellip;</strong> on the online payment and choose <strong>Refund to the card</strong> (for a bank debit, <strong>Refund to the bank account</strong>).</li>
-                <li>The window, titled for the payment (for example <em>Refund Thunder&rsquo;s deposit?</em>), says what the team paid and the card it goes back to. It arrives in 5 to 10 business days. A payment made by bank debit goes back to the bank account, and the window says it arrives in about 3 business days.</li>
+                <li>The window, titled for the payment (for example <em>Refund Thunder&rsquo;s deposit?</em>), says what the team paid and the card it goes back to. It can take 5 to 10 business days to appear, depending on the card company. A payment made by bank debit goes back to the bank account, and the window says it arrives in about 3 business days.</li>
                 <li>Choose <strong>All of it</strong> or <strong>Part of it</strong>. For all of it, if the team paid the processing fee, answer <strong>Who is ending this?</strong> and decide the fee box (below). For part of it, type the amount and a reason: the processing fee is never part of a part refund.</li>
                 <li>Add a <strong>Note to the team</strong> if you like. It goes in the refund email.</li>
                 <li>Press <strong>Refund and email</strong> (for a part refund, <strong>Refund $X and email</strong>). Nothing moves until you do.</li>
