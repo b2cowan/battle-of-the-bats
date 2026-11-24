@@ -1,0 +1,597 @@
+<title>Plan &amp; billing · the final walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Plan &amp; billing · the final walk</span>
+    <h1>Plan &amp; billing: what is still unwalked</h1>
+    <p class="lead">This is the last billing walk before the project closes. It covers four things never looked at in a browser: a Premium plan set to end (with Stripe’s real Renew button), two words built after the last walk (“payment method” on the past-due line, and End now’s refund sentence), the Tournament and Tournament Plus menu highlight, and one pass over the remaining billing screens.</p>
+    <p class="lead">Five walks, 39 steps. Three owner calls sit at the foot, outside the count.</p>
+    <p class="lead">Written Nov 23, 2026 against the dev site, with Stripe in <b>test mode only</b>. Nothing here touches production or a real card. After you report I remove the six Words Walk accounts.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> (dev; the dev server is running). <b>A login may meet the Terms screen once on dev</b>: accept it and carry on.</dd>
+      <dt>Password</dt><dd><code>UATPassword2026!</code>, the same for every account below.</dd>
+      <dt>Premium coach</dt><dd><code>words+pw5@fieldlogichq-walk.local</code> · Words Walk Premium. Walks A and E.</dd>
+      <dt>Premium, past due</dt><dd><code>words+pw6@fieldlogichq-walk.local</code> · Words Walk Premium Past Due. Walk B.</dd>
+      <dt>Club, past due</dt><dd><code>words+pw3@fieldlogichq-walk.local</code> · Words Walk Past Due Club (Tournament Plus). Walk B.</dd>
+      <dt>Staff</dt><dd><code>uat-platform@fieldlogichq.ca</code> at <code>http://localhost:3000/platform-admin/login</code> (a super admin). Walk C.</dd>
+      <dt>Tournament organizer</dt><dd><code>uat-owner@uat-test-org.local</code> · owns UAT Plus Org (Tournament) and UAT Test Org (Tournament Plus). Walk D.</dd>
+      <dt>Club coach</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code> · head coach of 15U AAA at UAT Rep Club. Walk E.</dd>
+      <dt>Phone width</dt><dd>The browser’s device toolbar at <b>390 px</b>, in walk D.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. The six Words Walk accounts were set up on Nov 23 by the product’s own seed (Stripe test objects, <code>.local</code> addresses, so no real mail goes anywhere).</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>Stripe’s messages must reach your computer for the last two steps of walk A.</b> In a spare terminal run <code>stripe listen --forward-to localhost:3000/api/billing/webhook</code> and leave it running. Its secret (<code>whsec_…</code>) must match <code>STRIPE_WEBHOOK_SECRET</code> in <code>.env.local</code>; if you had to change it, restart the dev server. In PowerShell write the address as one quoted piece.</li>
+      <li><b>Walk A before walk E</b> (E starts on the Premium account A leaves Active). Walks B, C and D can go in any order.</li>
+      <li><b>Never press “End the plan now”</b> in walk C. The walk only reads that window.</li>
+      <li>Dates in the steps are shown as {date}: they depend on the day the fixture was made. The Premium plan was set to renew in late December 2026.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Left out of this walk</h2>
+    <ul class="plain">
+      <li>The Club purchase from start to finish: that is the Club release’s first-purchase watch.</li>
+      <li>The Cancel, Keep and Change windows for Tournament, Tournament Plus and club plans: the same shared page, walked earlier (§535, 51 of 51).</li>
+      <li>The Premium page on a phone, and every email (the addresses are <code>.local</code>).</li>
+      <li>The old “Open payment settings” refusal: the words are gone (owner call 1).</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" id="callsHost" aria-labelledby="calls-h">
+    <h2 id="calls-h">Owner calls (outside the count)</h2>
+    <p class="lead">Each has my recommendation. Pick one, or write your own in the notes. None of these is a pass or a fail.</p>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks and calls)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "plan-billing-final-walk-v1";
+  var PAGE = "Plan & billing · the final walk";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "A Premium coach ends the plan, then keeps it",
+  "job": "Words Walk Premium · Premium coach · desktop",
+  "forText": "A Premium coach cancels, sees the plan marked as ending, is told to keep Premium before changing it, and then renews in Stripe’s own billing page. This is the check that was never walked: a Premium plan set to end, and the real Stripe Renew button.",
+  "passes": "Cancelling shows “Ending” with the date and a Keep Premium button; the Club row offers nothing while it ends and says why; renewing in Stripe puts the page back to “Active” with its renewal date.",
+  "notIn": "Past-due words (walk B). The Club purchase. Stripe live mode. The email the “kept” step sends (a .local address delivers nothing).",
+  "who": "Words Walk Premium’s owner.",
+  "where": "<code>http://localhost:3000/words-walk-premium/coaches/billing</code> · Stripe TEST mode. Needs the Stripe forwarder from “Before you start” for the last two steps.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in as <code>words+pw5@fieldlogichq-walk.local</code>. In the left menu’s foot press <b>Plan &amp; billing</b>.",
+    "s": "The page is titled <b>Plan &amp; billing</b>. The plan card reads <b>Premium Coaches Portal</b> with a green <b>Active</b> chip, <b>$29 CAD / month</b> then <b>plus applicable taxes</b>, and <b>Renews</b> with a December 2026 date. <b>Stop if the chip says Ending or Past due</b>: the fixture is not fresh, tell me."
+   },
+   {
+    "d": "Scroll to <b>Reduce or cancel</b> and press <b>Cancel Premium…</b>.",
+    "s": "A window titled <b>Cancel Premium?</b>. Its first lines read <b>Premium stays on until {date}, the end of the period you paid for. No Premium tool stops before then, and no more Premium payments are taken.</b> and <b>You can keep Premium any time before {Month D}.</b>"
+   },
+   {
+    "d": "Read down the rest of the window.",
+    "s": "A list headed <b>Premium tools that stop on {Month D}</b> with three lines (the Premium roster, schedule, attendance, lineup, documents, dues and budget tools; coach-managed payment reminders and premium team documents; the Premium local tournament slot), then <b>Basic tournament records stay available. Premium team data is kept for 365 days after that, until {date}.</b>"
+   },
+   {
+    "d": "Press the outline <b>Keep Premium</b> button at the foot of the window.",
+    "s": "The window closes and nothing changes: the chip still says <b>Active</b> and <b>Renews</b> is still there."
+   },
+   {
+    "d": "Press <b>Cancel Premium…</b> again, then the red <b>Cancel on {Month D}</b>.",
+    "s": "A notice reads <b>Premium ends on {date}. You can keep it until then.</b>"
+   },
+   {
+    "d": "Look at the plan card.",
+    "s": "The chip is amber <b>Ending</b>. Under the price: <b>Ends on {date}, the last day you paid for.</b> The <b>Renews</b> line is gone. A lime <b>Keep Premium</b> button sits beside <b>Payment method &amp; invoices</b>. The <b>Reduce or cancel</b> section has gone."
+   },
+   {
+    "d": "Scroll to <b>Change plan</b> and look at the <b>Club</b> row.",
+    "s": "A callout above the table reads <b>Your plan ends on {date}. Keep Premium first, then change it.</b> The Club row’s last cell is empty: there is no <b>Start my club</b> button."
+   },
+   {
+    "d": "Scroll back up and press the lime <b>Keep Premium</b>.",
+    "s": "A window titled <b>Keep Premium?</b> reads <b>{your team’s name} stays on Premium Coaches Portal and renews on {date} at $29 CAD / month plus applicable taxes.</b> then <b>Nothing else changes.</b> Its buttons are <b>Not now</b> and <b>Keep Premium</b>."
+   },
+   {
+    "d": "Press <b>Not now</b>.",
+    "s": "The window closes. The chip still says <b>Ending</b>."
+   },
+   {
+    "d": "Press <b>Payment method &amp; invoices</b>.",
+    "s": "The browser leaves for Stripe’s own billing page (an address starting <code>billing.stripe.com</code>, with a test-mode banner). It lists the Premium plan with a notice that it is set to cancel on its end date."
+   },
+   {
+    "d": "On Stripe’s page find the button that undoes the cancel (expected: <b>Renew plan</b>) and press it. Write its exact words in the notes.",
+    "s": "Stripe asks you to confirm; after you do, it shows the plan is no longer set to cancel."
+   },
+   {
+    "d": "Press Stripe’s link back to the site.",
+    "s": "You are back on <b>Plan &amp; billing</b> at <code>/words-walk-premium/coaches/billing</code>. No notice is shown on return; that is expected (owner call 2)."
+   },
+   {
+    "stop": true,
+    "d": "If the chip still says Ending, reload the page once.",
+    "s": "The chip is green <b>Active</b>, <b>Renews {date}</b> is back, the lime <b>Keep Premium</b> button is gone and <b>Reduce or cancel</b> is back. <b>Stop: if it still says Ending after two reloads and 30 seconds, look at the Stripe forwarder window from “Before you start”. If it is running and the page is still Ending, that is a defect.</b>"
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The past-due words, from a Premium coach and a club",
+  "job": "Words Walk Premium Past Due · then Words Walk Past Due Club",
+  "forText": "When a plan’s payment has failed, the page says what to do in the words “payment method” (the older words said “card”). This walk reads that line where a customer meets it, and the one place it also changes what a button does.",
+  "passes": "The red line says “update your payment method”; the Cancel window and the Start my club window both speak of the failed payment in the same plain way.",
+  "notIn": "Making a payment really fail (the fixture’s record is set to past due; Stripe is not made to fail). The emails.",
+  "who": "Words Walk Premium Past Due’s owner, then Words Walk Past Due Club’s owner.",
+  "where": "<code>http://localhost:3000/words-walk-premium-past-due/coaches/billing</code>, then <code>http://localhost:3000/words-walk-past-due-club/admin/tournaments/settings/subscription</code>",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign out. Sign in as <code>words+pw6@fieldlogichq-walk.local</code> and press <b>Plan &amp; billing</b> in the left menu’s foot.",
+    "s": "A red-edged line above the plan card reads exactly <b>Your last payment didn’t go through. Everything stays open during the grace period — update your payment method in Payment method &amp; invoices to keep it that way.</b> The chip says <b>Past due</b>. Neither the line nor the page says “card”."
+   },
+   {
+    "d": "Look at the Plan &amp; billing row in the left menu’s foot.",
+    "s": "It carries an amber <b>Plan payment didn’t go through</b> mark."
+   },
+   {
+    "d": "Scroll to <b>Reduce or cancel</b> and press <b>Cancel Premium…</b>.",
+    "s": "The window’s first callout reads <b>Your last payment didn’t go through, and it is still due. If it’s collected, Premium stays on until {date}. If it can’t be, Premium ends sooner, on the day the payment provider stops trying.</b>"
+   },
+   {
+    "d": "Press <b>Keep Premium</b> (outline) to close the window.",
+    "s": "The window closes and nothing changes."
+   },
+   {
+    "d": "Scroll to <b>Change plan</b> and press <b>Start my club</b>. If a <b>Your home address</b> window asks first, enter any Ontario address and save.",
+    "s": "The <b>Start your club</b> window refuses before showing any figure: <b>Your last payment didn’t go through. Update your payment method first, then start your club.</b> Its foot button reads <b>Payment method &amp; invoices</b>. Close the window."
+   },
+   {
+    "d": "Sign out. Sign in as <code>words+pw3@fieldlogichq-walk.local</code> and open <code>/words-walk-past-due-club/admin/tournaments/settings/subscription</code>.",
+    "s": "The same red line appears above this club’s plan card, with the same words, and the chip says <b>Past due</b>."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "End now, in the staff console",
+  "job": "Platform admin · Words Walk Paying Club’s record",
+  "forText": "Ending a plan today (fraud, abuse, a chargeback) has its own red window, for staff only. Its sentence used to say flatly that nothing is refunded. It should now say that ending refunds nothing by itself and where a refund goes if the club did nothing wrong. This walk only reads the window; it never ends the plan.",
+  "passes": "The window says the ending refunds nothing by itself and points to the Money tab’s Refund this charge, and “Keep it” closes it with the club untouched.",
+  "notIn": "Really ending a plan. The Money tab’s Refund this charge door. An owner-side End now (there is none; it is staff only).",
+  "who": "Staff super admin.",
+  "where": "<code>http://localhost:3000/platform-admin/login</code>, then <code>/platform-admin/orgs/d3a0deca-18ab-465e-867d-4873e64aa2d3?tab=access</code>",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in at the staff login as <code>uat-platform@fieldlogichq.ca</code>, then open the address above.",
+    "s": "The record for <b>Words Walk Paying Club</b> opens on its <b>Access</b> tab. <b>Stop if a warning callout about an ending is at the top</b>: another cancel is waiting; tell me."
+   },
+   {
+    "d": "Scroll to the end of Access and press the red <b>Cancel the subscription</b>.",
+    "s": "A window titled <b>Cancel the subscription for Words Walk Paying Club</b>. Near its foot: <b>Fraud, abuse or a chargeback?</b> and a red link <b>End it today instead…</b>"
+   },
+   {
+    "stop": true,
+    "d": "Press <b>End it today instead…</b>. <b>Do not press End the plan now.</b>",
+    "s": "A red window titled <b>End the plan for Words Walk Paying Club today</b>."
+   },
+   {
+    "d": "Read the window’s opening paragraph.",
+    "s": "It reads <b>This ends the plan today, {n} days before the period it paid for is over. Ending it refunds nothing by itself: fraud, abuse and disputed charges get no refund. If the club did nothing wrong, refund the unused part afterwards with Refund this charge on its Money tab, never from Stripe’s own dashboard, so a credit note is issued.</b> It goes on to say the club is suspended now and <b>This cannot be put back</b>. No sentence says flatly “Nothing is refunded.”"
+   },
+   {
+    "d": "Read the small print under the reason box.",
+    "s": "It reads <b>Ends immediately. Refunds nothing by itself; a refund when it is not the club’s doing goes through its Money tab. This cannot be put back. Reaches Stripe.</b>"
+   },
+   {
+    "d": "Press <b>Keep it</b>.",
+    "s": "The window closes. The record is unchanged: <b>Words Walk Paying Club</b> is still on its League plan, active."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "Tournament and Tournament Plus: one row lit on Plan & billing",
+  "job": "UAT owner · UAT Plus Org (Tournament) and UAT Test Org (Tournament Plus)",
+  "forText": "A tournament organizer’s menu once lit two rows at once on the Plan & billing page (that row and Settings & access). The fix has been in the code for weeks and was never looked at in a browser. This walk looks, on a computer and on a phone-width window, for both plans.",
+  "passes": "On each plan’s Plan & billing page exactly one menu row is lit (Plan & billing), and Settings & access lights only on its own pages.",
+  "notIn": "The cancel, keep and change windows for these two plans. A real phone (a 390 px browser window stands in).",
+  "who": "The UAT organizer who owns both organizations.",
+  "where": "<code>http://localhost:3000/uat-plus-org/admin/tournaments/settings/subscription</code> (Tournament) and <code>http://localhost:3000/uat-test-org/admin/tournaments/settings/subscription</code> (Tournament Plus). A menu with a tournament picked shows an event menu: the rule is the same.",
+  "steps": [
+   {
+    "d": "Sign out. Sign in as <code>uat-owner@uat-test-org.local</code> and open the Tournament address above on a computer-width window.",
+    "s": "The page is headed <b>Plan &amp; billing</b> with the Tournament plan’s card."
+   },
+   {
+    "d": "Look down the whole left menu, foot included.",
+    "s": "Exactly one row is lit: <b>Plan &amp; billing</b> in the foot. <b>Settings &amp; access</b> and <b>Tournaments</b> are not lit."
+   },
+   {
+    "d": "Narrow the window to <b>390 px</b>, press <b>More</b> in the bottom bar and look at the rows.",
+    "s": "Under <b>Admin</b>, <b>Settings &amp; access</b> is not lit. Under <b>You</b>, <b>Plan &amp; billing</b> is marked as the current page."
+   },
+   {
+    "d": "Widen the window again and open the Tournament Plus address above.",
+    "s": "The page is headed <b>Plan &amp; billing</b> with the Tournament Plus card."
+   },
+   {
+    "d": "Look down the whole left menu, foot included.",
+    "s": "Exactly one row is lit: <b>Plan &amp; billing</b>. <b>Settings &amp; access</b> is not lit."
+   },
+   {
+    "d": "Narrow the window to <b>390 px</b>, press <b>More</b> and look at the rows.",
+    "s": "<b>Settings &amp; access</b> is not lit; <b>Plan &amp; billing</b> under <b>You</b> is marked as the current page."
+   },
+   {
+    "d": "Widen the window and press <b>Settings &amp; access</b> in the menu.",
+    "s": "<b>Settings &amp; access</b> is lit now and <b>Plan &amp; billing</b> is not."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "The rest of the billing screens: Change plan, Start my club, Covered by",
+  "job": "Words Walk Premium · then a club coach",
+  "forText": "A last pass over the screens the other walks only brush: the Change plan table, the two-step Start my club window (opened and closed, never completed) and the card that tells a coach their club pays.",
+  "passes": "The table, the window and the card read as described, and nothing is charged or changed.",
+  "notIn": "Finishing Start my club (that is the Club purchase, watched on its own). Any email.",
+  "who": "Words Walk Premium’s owner, then a club coach.",
+  "where": "<code>http://localhost:3000/words-walk-premium/coaches/billing</code>, then <code>http://localhost:3000/uat-rep-club/coaches/teams/638ac88f-e941-41e7-ad3e-50869b7cb379/settings</code>",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign out. Sign in as <code>words+pw5@fieldlogichq-walk.local</code> and open Plan &amp; billing, then scroll to <b>Change plan</b>.",
+    "s": "The table has columns <b>Plan</b>, <b>At a glance</b>, <b>Monthly</b> and <b>Yearly</b>. One row is <b>Premium Coaches Portal</b> with a green <b>Your plan</b> chip; the <b>Club</b> row reads <b>$219</b> and <b>$2,190</b> with a lime <b>Start my club</b> button. Under it: <b>Prices are plus applicable taxes.</b> <b>Stop if the chip at the top says Ending: finish walk A’s last two steps first.</b>"
+   },
+   {
+    "d": "Look under the table.",
+    "s": "A card headed <b>Part of a club?</b> with a <b>Join a club</b> button."
+   },
+   {
+    "d": "Press <b>Start my club</b>. If a <b>Your home address</b> window asks first, enter any Ontario address and save.",
+    "s": "A window titled <b>Start your club</b> with <b>Step 1 of 2 · Your club</b>, a <b>Club name</b> box with the hint text <b>For example, Falcons Baseball Association</b>, and a foot line <b>The charge and terms come next.</b>"
+   },
+   {
+    "d": "Press <b>Next</b> with the club name empty.",
+    "s": "A message reads <b>Enter your club’s name.</b> The window stays on step 1."
+   },
+   {
+    "d": "Close the window with the ✕ (or Escape).",
+    "s": "You are back on Plan &amp; billing. The chip is still <b>Active</b>: nothing was started or charged."
+   },
+   {
+    "d": "Sign out. Sign in as <code>uat-club-coach-15aaa@uat-rep-club.local</code> and open the team settings address above.",
+    "s": "The first card at the top reads <b>Plan</b>, then <b>Covered by UAT Rep Club</b>, then <b>Your club pays for this team’s Coaches Portal. There is nothing to manage here.</b> It has no button, link or price."
+   },
+   {
+    "d": "Look at the left menu’s foot.",
+    "s": "There is no <b>Plan &amp; billing</b> row: this coach has nothing to manage."
+   }
+  ]
+ }
+];
+  var CALLS = [
+ {
+  "id": "1",
+  "q": "The Club row while a plan is ending",
+  "why": "The old walk expected a refusal that said “Open payment settings”. That wording no longer exists. Now, while a Premium plan is set to end, the Club row simply has no button, and a line above the table says “Your plan ends on {date}. Keep Premium first, then change it.” My recommendation: leave it, because the reason and the way forward are both on the screen.",
+  "opts": [
+   [
+    "leave",
+    "Leave it as it is (recommended)"
+   ],
+   [
+    "button",
+    "Show the button and refuse when pressed"
+   ],
+   [
+    "other",
+    "Something else (say what, in the notes)"
+   ]
+  ]
+ },
+ {
+  "id": "2",
+  "q": "Coming back from Stripe after Renew",
+  "why": "You return to Plan & billing with no “welcome back” notice, and if Stripe’s message is a few seconds late the page still says Ending until you reload. My recommendation: leave it. It is rare and a reload fixes it; a “Checking…” state would be new work for little gain.",
+  "opts": [
+   [
+    "leave",
+    "Leave it (recommended)"
+   ],
+   [
+    "notice",
+    "Add a short notice on return and re-read once"
+   ],
+   [
+    "other",
+    "Something else (say what, in the notes)"
+   ]
+  ]
+ },
+ {
+  "id": "3",
+  "q": "Close the Plan and billing project after this walk",
+  "why": "If this walk passes, the closing list is ready for your yes (I will not archive anything until you say close). Pick “hold” if the walk found something that should stay open.",
+  "opts": [
+   [
+    "close",
+    "Close it once this walk passes"
+   ],
+   [
+    "hold",
+    "Hold: something found needs fixing first"
+   ],
+   [
+    "other",
+    "Something else (say what, in the notes)"
+   ]
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  // The owner calls sit in their own section, outside the step count; they are drawn once.
+  function renderCalls() {
+    var box = document.getElementById("callsHost");
+    CALLS.forEach(function (c) {
+      var card = el("div", "card"); card.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); card.appendChild(el("p", null, c.why));
+      var o = el("div", "opts");
+      c.opts.forEach(function (op) {
+        var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "call-" + c.id; r.checked = state.choice[c.id] === op[0];
+        r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+        lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+      });
+      card.appendChild(o); box.appendChild(card);
+    });
+    var lab = el("label", null, "<h3>Notes on the calls</h3>"); lab.setAttribute("for", "notes-calls");
+    box.appendChild(lab);
+    var ta = el("textarea"); ta.id = "notes-calls"; ta.value = state.notes.calls || "";
+    ta.placeholder = "Anything you want to say about a call";
+    ta.addEventListener("input", function () { state.notes.calls = ta.value; save(); refresh(); });
+    box.appendChild(ta);
+  }
+
+  function callsSummary() {
+    var lines = ["Owner calls (outside the count)"];
+    CALLS.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes.calls || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).concat(["", callsSummary()]).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    document.getElementById("callsHost").querySelectorAll(".card, label, textarea").forEach(function (n) { n.remove(); });
+    renderCalls(); render();
+  });
+  renderCalls();
+  render();
+})();
+</script>

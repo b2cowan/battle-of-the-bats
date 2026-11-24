@@ -6,6 +6,8 @@ Everything below was moved out of TODO.md verbatim on 2026-10-26. Add new comple
 
 (Newest additions go here.)
 
+- [x] **Plan and billing** — closed by the owner 2026-11-23 after the final walk §563 passed 39/39 (plan-ending words §535 51/51; the two-step start and the live payment-provider steps done 22 Nov); release state in the release-history record · plan [PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md](../active/PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md) (stays in active/ with its sibling plans)
+
 - [x] **Bank check through a volunteer’s eyes** — closed by the owner 2026-11-23: every stage built and walked (S1b §497, S2 §503, S3 §505, S4 §523, save for later §558 28/28 and §559 26/26); release state in the release-history record · plan [BANK_CHECK_NOVICE_UX_PLAN.md](BANK_CHECK_NOVICE_UX_PLAN.md)
 
 - [x] **Free League retired + Founding removed** — closed by the owner 2026-11-22: live on production since 22 Nov (the free League gone, the three Founding holders on ordinary free time through September 30, 2027, all three database steps applied) and the hosting console cleared · plan [FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md](FREE_LEAGUE_AND_FOUNDING_REMOVAL_PLAN.md)
