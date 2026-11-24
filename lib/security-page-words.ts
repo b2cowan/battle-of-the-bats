@@ -84,7 +84,7 @@ export const SECURITY_DIAGRAM_ALT =
   "Where a club's information lives. People sign in from a phone or computer and connect over an encrypted link to the FieldLogicHQ app, run on Amazon Web Services in Ohio. The app checks every request before it reads the database, sign-in and file storage, run by Supabase on Amazon Web Services in Ohio. From the app, email goes out through Resend, payments are handed off to Stripe's own page, and phone alerts go through the browser's push service, sealed for the receiving device.";
 /** The caption under the panel (visible text; review row 10). */
 export const SECURITY_DIAGRAM_CAPTION =
-  "Where a club's information lives and who it passes through. Nothing goes to advertisers or analytics companies, and your club's information is never given to an AI service. Families can't pay online through FieldLogicHQ yet.";
+  "Where a club's information lives and who it passes through. Nothing goes to advertisers or analytics companies, and your club's information is never given to an AI service. Where a club has turned on online payments, families and teams pay on Stripe's own page.";
 
 /** "Who handles it": the shipped legal table (labelled cards below 640px). */
 export const SECURITY_HANDLES_COLUMNS = ['Company', 'What it does for us', 'What it receives', 'Where', 'Its certifications'] as const;
@@ -92,7 +92,7 @@ export const SECURITY_HANDLES_ROWS = [
   ['Supabase', 'Our database, sign-in and file storage', 'Everything your club keeps in FieldLogicHQ', 'United States (Ohio)', 'SOC 2 Type 2, ISO 27001'],
   ['Amazon Web Services', 'Runs our website and its server', 'Every page and form passes through it', 'United States (Ohio)', 'SOC 2, ISO 27001, for the hosting service we use'],
   ['Resend', 'Sends every email FieldLogicHQ sends', 'The name and address of each person emailed, and the message', 'United States', 'SOC 2 Type 2'],
-  ['Stripe', 'Card payments', "The payer's details and what is being paid for. Card numbers go to Stripe, never to us", 'Canada, the United States and other countries', 'PCI Service Provider Level 1, SOC 2 Type 2'],
+  ['Stripe', 'Card and bank payments', "The payer's details and what is being paid for. Card numbers go to Stripe, never to us", 'Canada, the United States and other countries', 'PCI Service Provider Level 1, SOC 2 Type 2'],
   ['ImprovMX and Google (Gmail)', 'Deliver email that people send to our own addresses', 'Only what people write to us', 'France (until delivered), the United States', 'None stated'],
 ] as const;
 export const SECURITY_CERT_NOTE =
@@ -140,7 +140,7 @@ export const SECURITY_PROTECT = [
   '**Checked on our server.** On every request our server checks who the person is, that they belong to your club, and what their role allows. This is enforced on our server, not in the browser.',
   '**Encryption.** Information is encrypted in transit, and our database host encrypts everything it stores (AES-256).',
   '**Player documents** are stored privately and open only through links that expire after one hour.',
-  "**Card numbers and bank details never reach us.** When you pay for FieldLogicHQ, you pay on Stripe's own page. Stripe states it is certified PCI Service Provider Level 1. Families can't pay online through FieldLogicHQ yet; when your club turns that on, they will pay on Stripe's page into your club's own Stripe account.",
+  "**Card numbers and bank details never reach us.** When you pay for FieldLogicHQ, you pay on Stripe's own page. Stripe states it is certified PCI Service Provider Level 1. Once your club has turned on online payments, families and teams pay on Stripe's page too, into your club's own Stripe account.",
   '**Phone alerts** are sealed so that only the receiving device can read them.',
 ] as const;
 

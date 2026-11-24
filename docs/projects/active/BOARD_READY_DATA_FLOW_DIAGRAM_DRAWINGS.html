@@ -1,0 +1,254 @@
+<!-- Board Ready · 0c · the data-flow diagram: what a family's sign-up touches, end to end.
+     Drawn 2026-11-24 from the checked facts (code read + /legal review rows). Source of record; the published Artifact is a copy.
+     Layout: one picture of a house-league sign-up, left to right, numbered because the order is real; below 760px the picture
+     becomes the same seven steps as a list (true size, no sideways scroll); the table under it carries what is kept and for how long.
+     Round 1 after /design (geometry, phone form, table cards, paste-back format) and /legal (every label).
+     RULED 2026-11-24: asks 1A 2A 3A 4A, every one as recommended (the drawing is as ruled; the asks below stay as they were asked). -->
+<title>Sign-up data flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{
+  --bg:#f6f7f5; --panel:#ffffff; --ink:#1c2321; --muted:#566360; --line:#cfd6d2; --soft:#eaeeeb; --edge:#7d8a85;
+  --accent:#1f6f5c; --accent-ink:#ffffff; --warn:#8a5a00; --warn-bg:#fbf1da;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; --font-head:'Space Grotesk','Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121816; --panel:#1a2220; --ink:#e8eeeb; --muted:#9aa8a3; --line:#33403c; --soft:#222c29; --edge:#7a8883;
+  --accent:#5cc3a6; --accent-ink:#0d1a16; --warn:#e8bd62; --warn-bg:#2d2514; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121816; --panel:#1a2220; --ink:#e8eeeb; --muted:#9aa8a3; --line:#33403c; --soft:#222c29; --edge:#7a8883;
+  --accent:#5cc3a6; --accent-ink:#0d1a16; --warn:#e8bd62; --warn-bg:#2d2514; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font-body);margin:0;
+  padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:var(--font-head);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.75rem;line-height:1.2} h2{font-size:1.2rem;line-height:1.3}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+p{margin:0} .lead{color:var(--muted);max-width:68ch;margin-top:8px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+figure{margin:0} figcaption{color:var(--muted);font-size:.9rem;margin-top:12px;max-width:80ch}
+figcaption strong{color:var(--ink)}
+.scroll{overflow-x:auto}
+svg{display:block;width:100%;height:auto;color:var(--ink)}
+svg text{font-family:var(--font-body);font-size:12px;fill:currentColor}
+svg .t{font-weight:600;font-size:13px} svg .m{fill:var(--muted)} svg .lbl{font-size:12px}
+svg .box{fill:var(--panel);stroke:var(--edge);stroke-width:1.5} svg .hot{stroke:var(--accent);stroke-width:2}
+svg .arrow{stroke:var(--ink);stroke-width:1.5;fill:none} svg .acc{stroke:var(--accent);stroke-width:2;fill:none}
+svg .dot{fill:var(--accent)} svg .n{fill:var(--accent-ink);font-size:11px;font-weight:700;text-anchor:middle}
+.steps{display:none;margin:0;padding:0;list-style:none;flex-direction:column;gap:12px}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.steps .num{margin:2px 0 0}
+.steps b{display:block} .steps span{color:var(--muted);font-size:.92rem}
+@media (max-width:759px){.scroll{display:none}.steps{display:flex}}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;vertical-align:top;padding:10px 10px;border-bottom:1px solid var(--line)}
+th{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td:first-child{white-space:nowrap;font-weight:600}
+.num{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:.72rem;font-weight:700;margin-right:8px}
+@media (max-width:640px){
+  thead{display:none} tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}
+  td{display:block;border:0;padding:4px 10px} td:first-child{white-space:normal}
+  td::before{content:attr(data-label);display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  td:first-child::before{display:none}}
+.note{background:var(--warn-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;color:var(--ink)}
+.note b{color:var(--warn)}
+ul{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+a{color:var(--accent)}
+.ask{border-top:1px solid var(--line);padding-top:16px;margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.ask h3{margin:0;font-size:1rem;font-family:var(--font-head)}
+.ask p{color:var(--muted);font-size:.9rem}
+.ask label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;min-height:44px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--panel)}
+.ask label:has(input:checked){border-color:var(--accent)}
+.ask label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.ask input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:var(--accent)}
+.rec{color:var(--accent);font-weight:600;font-size:.8rem;margin-left:6px}
+button{font:inherit;background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:44px}
+button:focus-visible,.scroll:focus-visible,textarea:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+textarea{width:100%;font:13px/1.4 ui-monospace,Consolas,monospace;background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;min-height:90px}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Board pack · data-flow diagram · drawing round 1</p>
+  <h1>What a family's sign-up touches, end to end</h1>
+  <p class="lead">A house-league sign-up from the family's first tap to the club's desk. Each number is a step, in the order data really moves. Drawn from the product as it runs on production today, with every label read against the code.</p>
+</header>
+
+<section class="panel">
+<figure>
+<div class="scroll" tabindex="0" role="group" aria-label="Sign-up data-flow diagram">
+<svg viewBox="0 0 1040 566" role="img" aria-label="A family opens a club's sign-up page, attaches a file, and submits. The FieldLogicHQ app stores the sign-up in the database and private file storage, sends a confirmation email through Resend, tells the club's desk with a notice that carries names and counts but never answers, and hands any payment off to Stripe's own page. Club staff read the answers through the app.">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+        <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--accent)"/></marker></defs>
+
+  <!-- the family and the app -->
+  <rect class="box" x="10" y="190" width="170" height="110" rx="8"/>
+  <text class="t" x="95" y="226" text-anchor="middle">A family</text>
+  <text class="m" x="95" y="246" text-anchor="middle">phone or computer</text>
+  <text class="m" x="95" y="264" text-anchor="middle">no account needed</text>
+
+  <rect class="box hot" x="400" y="190" width="170" height="110" rx="8"/>
+  <text class="t" x="485" y="218" text-anchor="middle">FieldLogicHQ app</text>
+  <text class="m" x="485" y="238" text-anchor="middle">Amazon Web Services</text>
+  <text class="m" x="485" y="254" text-anchor="middle">Ohio, United States</text>
+  <text class="m" x="485" y="278" text-anchor="middle">checks and limits each sign-up</text>
+
+  <!-- steps 1-3: family to app -->
+  <line class="arrow" x1="182" y1="214" x2="398" y2="214" marker-end="url(#ah)"/>
+  <line class="arrow" x1="182" y1="245" x2="398" y2="245" marker-end="url(#ah)"/>
+  <line class="arrow" x1="182" y1="276" x2="398" y2="276" marker-end="url(#ah)"/>
+  <circle class="dot" cx="204" cy="214" r="10"/><text class="n" x="204" y="218">1</text>
+  <circle class="dot" cx="204" cy="245" r="10"/><text class="n" x="204" y="249">2</text>
+  <circle class="dot" cx="204" cy="276" r="10"/><text class="n" x="204" y="280">3</text>
+  <text class="lbl" x="222" y="207">opens the sign-up page</text>
+  <text class="lbl" x="222" y="238">attaches a file, if asked</text>
+  <text class="lbl" x="222" y="269">submits the sign-up</text>
+
+  <!-- steps 2-3: app to database -->
+  <path class="acc" d="M572 205 H640 V70 H758" marker-end="url(#ahA)"/>
+  <circle class="dot" cx="640" cy="130" r="10"/><text class="n" x="640" y="134">2</text>
+  <circle class="dot" cx="640" cy="156" r="10"/><text class="n" x="640" y="160">3</text>
+  <text class="lbl" x="658" y="147">stored</text>
+
+  <rect class="box" x="760" y="20" width="270" height="120" rx="8"/>
+  <text class="t" x="775" y="44">Database and file storage</text>
+  <text class="m" x="775" y="62">Supabase on Amazon Web Services</text>
+  <text class="m" x="775" y="78">Ohio, United States</text>
+  <text class="lbl" x="775" y="102">Child and guardian details,</text>
+  <text class="lbl" x="775" y="118">the club's answers, waiting files</text>
+
+  <!-- step 4: app to email -->
+  <line class="arrow" x1="572" y1="238" x2="758" y2="198" marker-end="url(#ah)"/>
+  <circle class="dot" cx="610" cy="230" r="10"/><text class="n" x="610" y="234">4</text>
+  <text class="lbl" x="590" y="258">sends the confirmation</text>
+  <rect class="box" x="760" y="160" width="270" height="92" rx="8"/>
+  <text class="t" x="775" y="184">Email delivery</text>
+  <text class="m" x="775" y="202">Resend, United States</text>
+  <text class="lbl" x="775" y="226">Receives: names, the guardian's email,</text>
+  <text class="lbl" x="775" y="242">division, fee, the family's sign-up link</text>
+
+  <!-- step 7: app to payments -->
+  <line class="arrow" x1="572" y1="272" x2="758" y2="330" marker-end="url(#ah)"/>
+  <circle class="dot" cx="610" cy="284" r="10"/><text class="n" x="610" y="288">7</text>
+  <text class="lbl" x="590" y="338">hands off checkout, later,</text>
+  <text class="lbl" x="590" y="354">from the family's own link</text>
+  <rect class="box" x="760" y="272" width="270" height="130" rx="8"/>
+  <text class="t" x="775" y="296">Payments</text>
+  <text class="m" x="775" y="314">Stripe, where online payments are on</text>
+  <text class="lbl" x="775" y="338">Card numbers are typed on Stripe's</text>
+  <text class="lbl" x="775" y="354">own page and never reach us.</text>
+  <text class="lbl" x="775" y="370">The money goes to the club's own</text>
+  <text class="lbl" x="775" y="386">Stripe account, less our fee.</text>
+
+  <!-- steps 5-6: the club desk -->
+  <line class="arrow" x1="450" y1="302" x2="450" y2="438" marker-end="url(#ah)"/>
+  <circle class="dot" cx="450" cy="340" r="10"/><text class="n" x="450" y="344">5</text>
+  <text class="lbl" x="436" y="372" text-anchor="end">a bell notice:</text>
+  <text class="lbl" x="436" y="388" text-anchor="end">names and counts,</text>
+  <text class="lbl" x="436" y="404" text-anchor="end">never the answers</text>
+  <line class="arrow" x1="520" y1="438" x2="520" y2="302" marker-end="url(#ah)"/>
+  <circle class="dot" cx="520" cy="340" r="10"/><text class="n" x="520" y="344">6</text>
+  <text class="lbl" x="536" y="366">staff read the answers</text>
+  <text class="lbl" x="536" y="382">files open by 1-hour links,</text>
+  <text class="lbl" x="536" y="398">each opening recorded first</text>
+  <rect class="box" x="350" y="440" width="270" height="108" rx="8"/>
+  <text class="t" x="365" y="466">The club's registration desk</text>
+  <text class="m" x="365" y="484">Owner, admin, league admin,</text>
+  <text class="m" x="365" y="499">league registrar, and anyone the</text>
+  <text class="m" x="365" y="514">owner gave House league to</text>
+  <text class="m" x="365" y="534">Signed in, role checked</text>
+</svg>
+</div>
+
+<ol class="steps" aria-label="The same steps as a list">
+  <li><span class="num">1</span><div><b>The family opens the club's sign-up page.</b><span>Nothing is stored. No account is needed.</span></div></li>
+  <li><span class="num">2</span><div><b>They attach a file, if the club asked for one.</b><span>It goes to private file storage (Supabase, Ohio) and waits for the sign-up.</span></div></li>
+  <li><span class="num">3</span><div><b>They submit the sign-up.</b><span>The child's and guardian's details and the club's answers are saved together in the club's database (Supabase, Ohio), through the FieldLogicHQ app (Amazon Web Services, Ohio).</span></div></li>
+  <li><span class="num">4</span><div><b>The app sends the confirmation.</b><span>Email delivery (Resend, United States) receives the names, the guardian's email, division, fee and the family's sign-up link.</span></div></li>
+  <li><span class="num">5</span><div><b>The club's registration desk gets a bell notice.</b><span>Names and counts, never the answers.</span></div></li>
+  <li><span class="num">6</span><div><b>Staff read the answers.</b><span>Owner, admin, league admin, league registrar, and anyone the owner gave House league to, signed in and role checked. Files open by 1-hour links, and each file opening is recorded first. Reading the answers is not recorded.</span></div></li>
+  <li><span class="num">7</span><div><b>Later, where online payments are on, the app hands off checkout from the family's own link.</b><span>Card numbers are typed on Stripe's own page and never reach us. The money goes to the club's own Stripe account, less our fee.</span></div></li>
+</ol>
+
+<figcaption><strong>A sign-up reaches four outside places and no others: our database host, our email service, our payment provider, and the club's own staff.</strong> Steps 5 and 6 happen as soon as the sign-up is submitted. Step 7 happens later, from the family's own link, and only where the club has turned on online payments. Club staff read the answers only through the app, by role. Nothing on this picture goes to advertisers or analytics companies, and a club's information is never given to an AI service.</figcaption>
+</figure>
+</section>
+
+<section class="panel">
+<h2>What is kept, and for how long</h2>
+<table>
+<thead><tr><th>Step</th><th>What is kept</th><th>Who can see it</th><th>For how long</th></tr></thead>
+<tbody>
+<tr><td><span class="num">2</span>A waiting file</td><td data-label="What is kept">A PDF or photo the family attached, in private storage, before the sign-up is finished</td><td data-label="Who can see it">No one. Staff see it only once it is attached to a sign-up</td><td data-label="For how long">Deleted within a day if the sign-up is never finished</td></tr>
+<tr><td><span class="num">3</span>The sign-up</td><td data-label="What is kept">The child's name, date of birth, jersey and position wishes and free-text notes; the guardian's name, email and phone, and a second parent's email if given; the answers to the club's own questions; ticks on the club's documents; the email-consent tick</td><td data-label="Who can see it">The club's owner, admin, league admin and league registrar, and anyone the owner gave House league to. Reading the answers is not recorded</td><td data-label="For how long">No automatic removal date. A club can't delete one registration itself today; they go when the club is deleted</td></tr>
+<tr><td><span class="num">3</span>Health and file answers</td><td data-label="What is kept">Any question the club marked as health, and any file the family attached</td><td data-label="Who can see it">The same seats. Opening a file is recorded</td><td data-label="For how long">Removed 90 days after the season is marked finished, or 120 days after its last day if it never is</td></tr>
+<tr><td><span class="num">3</span>Friend requests</td><td data-label="What is kept">Names or codes of friends the family asked to play with</td><td data-label="Who can see it">The club's draft seats</td><td data-label="For how long">Deleted when the season is marked finished, and at the latest 60 days after its last day</td></tr>
+<tr><td><span class="num">4</span>The confirmation email</td><td data-label="What is kept">Names, the guardian's email, division, fee and the family's sign-up link; a second parent gets a copy if the family gave one</td><td data-label="Who can see it">The family. Not kept in our own sent-email log</td><td data-label="For how long">Held by the email service and in the family's own inbox</td></tr>
+<tr><td><span class="num">5</span>The bell notice</td><td data-label="What is kept">Names and counts, never the answers</td><td data-label="Who can see it">The club's registration desk</td><td data-label="For how long">Until the person deletes it or the club is deleted. No end date today</td></tr>
+<tr><td><span class="num">7</span>A payment</td><td data-label="What is kept">The payer's email, the children's names and the season, the amount, and the card's or bank account's last four digits. Card numbers stay with Stripe</td><td data-label="Who can see it">The club, on its own Stripe account</td><td data-label="For how long">Kept by Stripe and in the club's books. Our fee comes out of it</td></tr>
+</tbody></table>
+<p class="lead">Also: our server's technical logs, which can hold internet addresses, are deleted after 90 days.</p>
+</section>
+
+<section class="panel">
+<h2>What this picture leaves out, on purpose</h2>
+<ul>
+<li>Unless the owner has given a coach House league, coaches do not see sign-up answers. A coach does see the family name, email and phone for their own team. <a href="#ask2">(Ask 2.)</a></li>
+<li>The guardian sign-in tier is not on, so no family account appears here.</li>
+<li>The email service's own retention is not stated, because its page was not read for this drawing.</li>
+</ul>
+</section>
+
+<section class="note"><b>Two gaps this drawing exposes.</b> The privacy policy does not yet say that waiting files go within 12 hours or that health and file answers go after 90 or 120 days, though both rules run on production. And ordinary registrations have no removal date at all, and a club cannot delete one itself. All three are logged for the owner, and none is hidden on the picture. One more for a lawyer's eye: any member the owner gives House league to can read health answers.</section>
+
+<section class="panel" id="asks">
+<h2>Four calls for you</h2>
+<p class="lead">Pick one in each, add a note if you want, then copy the text at the bottom and paste it back.</p>
+
+<div class="ask" id="ask1"><h3>1 · Ordinary answers: how long they are kept</h3>
+<p>Changes the "3 · The sign-up" row of the table, and what a board is told about registrations.</p>
+<label><input type="radio" name="a1" value="A" checked><span>A · Say plainly that there is no automatic removal date, and that they go with the club if the club is deleted<span class="rec">Recommended</span></span></label>
+<label><input type="radio" name="a1" value="B"><span>B · Show only the data that has a removal rule, and leave ordinary answers off the table</span></label></div>
+
+<div class="ask" id="ask2"><h3>2 · The coaches line</h3>
+<p>Changes whether the picture speaks about coaches at all.</p>
+<label><input type="radio" name="a2" value="A" checked><span>A · Keep the line as worded above<span class="rec">Recommended</span></span></label>
+<label><input type="radio" name="a2" value="B"><span>B · Leave it off</span></label></div>
+
+<div class="ask" id="ask3"><h3>3 · The payment step</h3>
+<p>Changes how step 7 is drawn and worded.</p>
+<label><input type="radio" name="a3" value="A" checked><span>A · As drawn: present tense, "where online payments are on"<span class="rec">Recommended</span></span></label>
+<label><input type="radio" name="a3" value="B"><span>B · Dotted arrow until the first real club has taken a real payment</span></label></div>
+
+<div class="ask" id="ask4"><h3>4 · Where this picture lives</h3>
+<p>Changes whether a prospect can find it without being sent it.</p>
+<label><input type="radio" name="a4" value="A" checked><span>A · In the board pack only, beside the brief<span class="rec">Recommended</span></span></label>
+<label><input type="radio" name="a4" value="B"><span>B · Also as a second picture on the public Security page</span></label></div>
+
+<div class="ask"><h3>Notes (optional)</h3>
+<textarea id="notes" aria-label="Notes" placeholder="Anything else on this drawing"></textarea></div>
+
+<div class="ask"><h3>Your answer</h3>
+<textarea id="out" readonly aria-label="Your answers, ready to paste back"></textarea>
+<div><button id="copy" type="button">Copy the text</button> <span id="copied" class="lead" aria-live="polite"></span></div></div>
+</section>
+</div>
+<script>
+(function(){
+  var out=document.getElementById('out'),notes=document.getElementById('notes');
+  var titles={1:'Ordinary answers: how long they are kept',2:'The coaches line',3:'The payment step',4:'Where this picture lives'};
+  function build(){
+    var lines=['Board Ready 0c data-flow drawing, round 1, my calls:'];
+    for(var i=1;i<=4;i++){var el=document.querySelector('input[name="a'+i+'"]:checked');var v=el?el.value:'?';
+      lines.push(i+v+' · '+titles[i]+(v==='A'?' (recommended)':' (not the recommendation)'));}
+    if(notes.value.trim())lines.push('Notes: '+notes.value.trim());
+    out.value=lines.join('\n');}
+  document.querySelectorAll('.ask input').forEach(function(r){r.addEventListener('change',build)});
+  notes.addEventListener('input',build);build();
+  document.getElementById('copy').addEventListener('click',function(){
+    var msg=document.getElementById('copied');
+    var fail=function(){out.removeAttribute('readonly');out.select();msg.textContent='Select the text and copy it.'};
+    try{navigator.clipboard.writeText(out.value).then(function(){msg.textContent='Copied.'},fail)}catch(e){fail()}});
+})();
+</script>

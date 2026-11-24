@@ -156,8 +156,14 @@ Every ask on the 2026-11-14 review page and every conflict it raised was ruled b
      (Committed)** (§6). This replaces ask 11A's condition, so the row no longer has to be built before first showing.
      The Q1 review (end of January 2027) is where a miss would be looked at.
    - A §7 snapshot of the version shown.
-5. **"Every finding fixed"** may be said only after the third access sweep's open owner calls are closed and its small
-   findings confirmed (ask 13). Until then the public line is "with its fixes live".
+5. ~~**"Every finding fixed"** may be said only after the third access sweep's open owner calls are closed and its small
+   findings confirmed (ask 13). Until then the public line is "with its fixes live".~~ **Closed 2026-11-24 (sweep call 22,
+   ruled as recommended 2026-11-18).** The public line is now **"A full access review of who can see what, every finding
+   resolved."** Basis, checked 2026-11-24: every leftover is fixed or accepted with its reason on record; the fixes (P8,
+   P8b, P8c, P9b, P9c) are on production (the 2026-11-22 promote) with migrations 505, 506 and 507 applied before it
+   (`BOARD_READY_TRUST_FIX_PROMPTS.md`, the P9 close-out note's three conditions). **"Every finding fixed" is still never
+   said**: some were accepted by decision, not fixed. The public drawing's source carries the new line; the published
+   Artifact is not republished until the owner says.
 6. **The first restore rehearsal.** Until it is done, "restore rehearsed" appears only as the roadmap's commitment;
    the brief and the Security page do not say it (ask 6).
 

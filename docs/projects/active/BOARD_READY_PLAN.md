@@ -131,7 +131,9 @@ points here, so they aren't tracked twice)
   -player scan: still open" is fixed by `d8a6bb4c0`; "a See it live session can create real clubs, leagues" is now true
   only of a coach's team, the other two being turned away by the one-club rule). Until the 18 are ruled and the chosen
   fixes are live, the public roadmap says "with its fixes live", never "every finding fixed"
-  (`PRODUCT_ROADMAP.md` §4 item 5).
+  (`PRODUCT_ROADMAP.md` §4 item 5). **Now said, 2026-11-24:** the fixes went live in the 2026-11-22 promote, so the
+  roadmap's line is "A full access review of who can see what, every finding resolved" (call 22); "every finding fixed"
+  stays unsaid, because some findings were accepted by decision.
   **The owner's checklist, published 2026-11-16:** https://claude.ai/artifact/2KZrC64ucjBpWCgMkfPCej (source
   `BOARD_READY_TRUST_CLOSE_CHECKLIST.html`). Part A is the 18 open items as calls, each with a recommendation, plus two
   production checks, one new finding and the public wording; nothing is built until it is pasted back.
@@ -667,6 +669,23 @@ board's two questions:
   DONE 2026-11-21:** the "where your information lives" diagram, checked label by label (`/legal` review rows 1–10), is in
   the brief. **Left:** the data-flow diagram, drawn from today's sign-up (not from the custom-form parts until they are on
   production).
+  **Data-flow diagram DRAWN 2026-11-24 (round 1, after `/design` and `/legal`):** source
+  `BOARD_READY_DATA_FLOW_DIAGRAM_DRAWINGS.html` (house-league sign-up, seven numbered steps, a phone step list, a "kept and for
+  how long" table). `/legal` corrected it against the code: waiting files go "within a day" (older than 12 hours, swept every
+  six hours); sign-up answers are readable by anyone the owner gave House league to, not only four roles; the payment step
+  happens later from the family's own link. Four owner calls (retention wording, the coaches line, the payment step, where
+  it lives), paste-back "Board Ready 0c data-flow drawing, round 1, my calls". **ALL FOUR RULED 2026-11-24, every one as
+  recommended (1A 2A 3A 4A):** (1) the table says plainly that ordinary answers have no automatic removal date and go with
+  the club if the club is deleted; (2) the coaches line stays as worded (a coach sees a family's name, email and phone for
+  their own team, and no answers unless the owner gave them House league); (3) the payment step is drawn in the present
+  tense, "where online payments are on"; (4) the picture lives in the board pack only, beside the brief, not on the public
+  Security page. Published for the ruling: https://claude.ai/artifact/BRobdR7zpV3dM8EG26hopW (private). The drawing is
+  ruled as drawn; nothing on it changes. **Not yet done:** placing it in the pack beside the brief (a brief version with
+  `/legal`'s read of the placement). **Gaps it exposes, for `/plan` and `/legal`:**
+  the privacy policy states no clock for waiting files or for health and file answers although the sweeps run; ordinary
+  registrations have no removal date and a club cannot delete one itself; any member given House league can read health
+  answers (a lawyer's eye). Same pass: the Security page's two "families can't pay online yet" sentences now say families and
+  teams pay on Stripe's page where a club has turned online payments on (owner: payments are on in production).
 - [ ] A filled-in vendor security questionnaire (the common short form), so the next board gets it on request.
 - [ ] A public **Security** page on the marketing site, drawn from the brief (`/marketing` words, `/legal` review).
   **Scoped 2026-11-21 (owner ruling: the brief becomes the public Security page, for any prospect).** Recorded, not built.
