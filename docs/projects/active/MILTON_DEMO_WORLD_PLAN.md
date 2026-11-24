@@ -188,7 +188,7 @@ notes (Demo 1, steps 4 and 12) still say "not on production yet" and are owed an
 | Demo 1 · "Start from the permit" | The **Permits** tick-list and **"Find the time across every permit"** (schedules across several permits: built, not yet on production) | Leave only the one permit ticked |
 | Demo 2 · recording a payment | "How" offers E-Transfer, Cash, Cheque, Card, Other. "Card" is a card taken in person, not online; nothing here pays online | Record an e-transfer |
 | Demo 4 · a player's "Family & paperwork" tab | **Guardians › Invite a guardian** (signed-in family app; renders only while it is switched on) | Stay on Skills & goals |
-| Demo 5 · after "Sign up" | **"Pay $X by card"** under "To pay now" (online payments) | Stop at the "To pay" card |
+| Demo 5 · after "Sign up" | **"Pay $X by card"** under "To pay now" (online payments) | Since 2026-11-24 the demo takes it: Stripe test card 4242, then the owner sees "Online, card" on Lily's record. Fallback if Stripe is slow: stop at "To pay" |
 | Demo 5 · the sign-up's status page | "Sign in to see it" / "Email me an invitation" (signed-in family app; only once a child is placed) | Not reached |
 The run sheet: `MILTON_DEMO_RUN_SHEET.html`, published as https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W (45 boxes since §9). The phone
 cards page (`MILTON_DEMO_QR_CARDS.html`) carries the Battle of the Bats' QR code — since §9 a leave-behind, no demo time.

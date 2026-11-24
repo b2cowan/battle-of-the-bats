@@ -235,9 +235,12 @@ export default {
    * dates off (plan §8.1 — the same dates would leave the live drafts empty).
    */
   dome: {
-    venue: { name: 'Escarpment Indoor Dome', address: '8 Dome Way, Milton', fields: ['Field 1', 'Field 2', 'Field 3'], halfFields: ['Field 3'] },
-    permit: { name: 'Winter dome 2026–27', issuer: 'Escarpment Indoor Dome', reference: 'ESC-W27-0412', weekday: 7, start: '08:00', end: '15:00', sundays: 20, offAfter: 8, offCount: 2, offNote: 'Dome closed (holiday break)', firstSundayBefore: 35, costPerFullFieldHour: 95 },
-    slotMinutes: 60,
+    venue: { name: 'Escarpment Indoor Dome', address: '8 Dome Way, Milton', fields: ['Field 1', 'Field 2', 'Field 3', 'Field 4', 'Field 5', 'Field 6'], halfFields: ['Field 5', 'Field 6'] },
+    permit: { name: 'Winter dome 2026–27', issuer: 'Escarpment Indoor Dome', reference: 'ESC-W27-0412', weekday: 7, start: '08:00', end: '11:00', sundays: 20, offAfter: 8, offCount: 2, offNote: 'Dome closed (holiday break)', firstSundayBefore: 35, costPerFullFieldHour: 95 },
+    /** Practices are 1½-hour blocks, so a Sunday holds two (8:00 and 9:30) on each of the six fields. */
+    slotMinutes: 90,
+    /** Practices a team gets, by level (the owner's split): a Select team gets half of what a Rep team gets. */
+    levelWeights: { Rep: 2, Select: 1 },
     part1: { name: 'Winter dome · part 1', sentDaysBefore: 56 },
     /** The bill's payment dates, as days from the demo day (the product's "On these dates" plan). */
     billDates: [-42, -7, 10],
@@ -268,6 +271,6 @@ export default {
       { name: 'Escarpment Indoor Dome', link: null },
       { name: 'Halton Hardware & Supply', link: null },
     ],
-    notice: { text: 'Winter dome practices run every Sunday until the holiday break.', detail: 'Rep teams: your Sunday hour is on your team schedule. House league registration for 2027 is open now.' },
+    notice: { text: 'Winter dome practices run every Sunday until the holiday break.', detail: 'Rep teams: your Sunday practices are on your team schedule. House league registration for 2027 is open now.' },
   },
 };

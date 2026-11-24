@@ -28,6 +28,7 @@ import crypto from 'node:crypto';
 import { register } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { insertCommitmentWithRecords } from './seed-commitment-records.mjs';
+import { splitDomeSlots } from './dome-practice-split.mjs';
 import { addDays, onOrAfter, torontoInstant, minutesLater, NAME_GROUPS } from './prospect-demo-world.mjs';
 
 export const repConfigured = (cfg) => Array.isArray(cfg.repTeams) && cfg.repTeams.length > 0;
@@ -98,7 +99,7 @@ const PLAYER_NOTES = [[2, 'Asked to try catching in the dome this winter. Start 
 /** Two emails already sent to the families: [days before the demo day, subject, body]. */
 const TEAM_EMAILS = [
   [-52, 'Bottle drive results, and thank you', 'Hi families,\n\nThe fall bottle drive raised $1,015. Half of what each family collected comes off that player’s dues, and you will see it on your next statement.\n\nThank you to everyone who drove a route on both Saturdays.\n\nMorgan'],
-  [-33, 'Winter dome practices start Sunday', 'Hi families,\n\nOur winter practices are at the Escarpment Indoor Dome, one hour every Sunday. The time moves from week to week, so please check the team schedule each Friday.\n\nBring indoor shoes, a water bottle and your own helmet. No cleats in the dome.\n\nMorgan'],
+  [-33, 'Winter dome practices start Sunday', 'Hi families,\n\nOur winter practices are at the Escarpment Indoor Dome, an hour and a half on Sundays. Rep teams practise more often than Select teams, and the time moves from week to week, so please check the team schedule each Friday.\n\nBring indoor shoes, a water bottle and your own helmet. No cleats in the dome.\n\nMorgan'],
 ];
 /** Fall ball: [days from the demo day, home/away, team score, opponent score]. Eight games, a W-L-T record with a story. */
 const FALL_GAMES = [[-84, 'home', 7, 3], [-80, 'away', 2, 5], [-77, 'home', 9, 8], [-73, 'away', 4, 4], [-70, 'home', 6, 1], [-66, 'away', 3, 6], [-63, 'home', 10, 2], [-56, 'away', 5, 4]];
@@ -350,7 +351,7 @@ export async function buildRep(ctx) {
   const cost = Math.round(fullFieldHours * P.costPerFullFieldHour * 100) / 100;
   const permitId = await one('permit', db.rpc('org_permit_save', { p_org: ORG, p_permit: null, p_actor: null, p_data: {
     name: P.name, issuerName: P.issuer, reference: P.reference, heldFor: 'club', startsOn: sundays[0], endsOn: sundays[sundays.length - 1], cost,
-    notes: 'Winter block for the club. Field 3 is a half field. Dome staff unlock at 7:45 a.m.; the club locks up.',
+    notes: 'Winter block for the club. Fields 5 and 6 are half fields. Dome staff unlock at 7:45 a.m.; the club locks up.',
     blocks: [{ venueId: domeVenue.id, facilityIds: DM.venue.fields.map(f => field[f]), weekdays: [P.weekday], startTime: P.start, endTime: P.end }],
     shares: [...halfSet].map(f => ({ facilityId: field[f], share: 0.5 })),
     datesOff: offDays.map(day => ({ day, note: P.offNote })),
@@ -361,15 +362,14 @@ export async function buildRep(ctx) {
   head('Dome schedule part 1 — sent and billed');
   const part1 = heldSundays.slice(0, P.offAfter);
   const hours = Array.from({ length: blockHours * 60 / DM.slotMinutes }, (_, h) => { const m = toMin(P.start) + h * DM.slotMinutes; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; });
-  const cells = hours.flatMap(t => DM.venue.fields.map(f => ({ t, f }))); // 21 a Sunday (7 hours × 3 fields): every team's hour and one open
-  if (cells.length <= teams.length) die('dome hours', { message: `${cells.length} dome hours a Sunday for ${teams.length} teams: lengthen the permit so one hour stays open` });
-  const slots = []; // { day, t, f, teamIdx|null }
-  part1.forEach((day, w) => cells.forEach((c, s) => {
-    const teamIdx = (s - 5 * w + cells.length * 10) % cells.length; // each team moves five places a week: new hour, new field
-    slots.push({ day, t: c.t, f: c.f, teamIdx: teamIdx < teams.length ? teamIdx : null });
-  }));
+  // 12 practices a Sunday (two times × six fields) for 20 teams: Rep teams get twice what Select teams get, the age groups evenly.
+  const slots = splitDomeSlots({ days: part1, times: hours, fields: DM.venue.fields, halfFields: DM.venue.halfFields, levelWeights: DM.levelWeights,
+    teams: teams.map(t => ({ level: t.tier.split(' ')[0], group: t.age })) }); // { day, t, f, teamIdx|null }
+  // The split as the schedule states it: each team's share of the time, by level (Rep 2 : Select 1, summing to 100).
+  const levelWeightTotal = teams.reduce((n, t) => n + DM.levelWeights[t.tier.split(' ')[0]], 0);
+  const shareOf = (t) => Math.round(DM.levelWeights[t.tier.split(' ')[0]] / levelWeightTotal * 10000) / 100;
   const settings = { v: 2, slotMinutes: DM.slotMinutes, changeoverMinutes: 0, teamsAtOnce: 1, teamIds: teams.map(t => t.id),
-    split: { method: 'even', values: {} }, timeMode: 'same', prime: null,
+    split: { method: 'percentage', values: Object.fromEntries(teams.map(t => [t.id, shareOf(t)])) }, timeMode: 'same', prime: null,
     rules: { windows: [], maxPerDay: 1, maxPerWeek: 1, avoidGameDays: true, avoidBookings: true, noBackToBack: false, daysOff: [], fieldsBy: [], sharing: [] } };
   const saved = await one('schedule save', db.rpc('club_schedule_save', { p_org: ORG, p_schedule: null, p_actor: ctx.OWNER, p_version: 1, p_data: {
     name: DM.part1.name, startsOn: part1[0], endsOn: part1.at(-1), settings, startedFromPermitId: permitId,
@@ -422,7 +422,7 @@ export async function buildRep(ctx) {
   const dressedSplit = allocSplits.find(s => s.team_id === dressed.id);
   const dressedInst = inst1.filter(i => i.team_id === dressed.id).sort((a, b) => a.installment_number - b.installment_number);
   const pastDome = part1.filter(d => d < D).length;
-  ok(`"${DM.part1.name}": ${part1[0]} – ${part1.at(-1)} (${pastDome} Sundays played, ${part1.length - pastDome} to come) · ${rows.length} practices on ${teams.length} team schedules · one hour open each Sunday`);
+  ok(`"${DM.part1.name}": ${part1[0]} – ${part1.at(-1)} (${pastDome} Sundays played, ${part1.length - pastDome} to come) · ${rows.length} practices on ${teams.length} team schedules · ${hours.length * DM.venue.fields.length} practices each Sunday`);
   ok(`billed ${money(shares.totalCents / 100)} (the time's price; the open hour is the club's) · ${dressed.name}'s share ${money(dressedSplit.amount)} in ${dressedInst.length} payments (${dressedInst.map(i => `${money(i.amount)} ${i.due_date}`).join(', ')}) · ${firstPaid.size} teams have paid the first`);
   ok(`Demo 1 builds part 2 live: start a schedule from "${P.name}" dated from ${heldSundays[P.offAfter]} (the first Sunday after ${offDays.join(' and ')})`);
 

@@ -64,13 +64,13 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
 
 <div class="wrap">
 <header>
-  <div class="eyebrow">Milton Bats · November 24 · the five demos · 31 minutes</div>
+  <div class="eyebrow">Milton Bats · November 24 · the five demos · 33 minutes</div>
   <h1>Run sheet <span>for the room</span></h1>
   <p class="sub">One action per box, in the Run of show's order. Start each demo's clock as you open it. Tick, note, then copy the summary back to Claude after a rehearsal.</p>
 </header>
 
 <div class="bar" role="region" aria-label="Progress">
-  <span class="count" id="count">0 of 45</span>
+  <span class="count" id="count">0 of 49</span>
   <span class="meter" aria-hidden="true"><i id="meter"></i></span>
   <button type="button" id="copy" class="primary">Copy the summary</button>
   <button type="button" id="clear">Clear ticks</button>
@@ -79,7 +79,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
 <section class="card" aria-labelledby="h-before">
   <h2 id="h-before">Before you start</h2>
   <ul class="plain">
-    <li><b>The world is built for November 24</b> (rebuilt the morning of November 24 with the club’s Rep and Select teams: 20 teams, U11 to U19, each level a Purple and a White team). Staging reads the same database, so nothing needs pushing for the world. Rebuild on your laptop (<code>npm run demo:milton</code>) only if a rehearsal changed it, and not in the last half hour before the meeting: a rebuild that fails part-way leaves the club empty until it is run again. Never rebuild while a window is mid-demo.</li>
+    <li><b>The world is built for November 24</b> (rebuilt the morning of November 24 with the club’s Rep and Select teams: 20 teams, U11 to U19, each level a Purple and a White team). Staging reads the same database, so nothing needs pushing for the world. Rebuild on your laptop (<code>npm.cmd run demo:milton</code>, see the box below) only if a rehearsal changed it, and not in the last half hour before the meeting: a rebuild that fails part-way leaves the club empty until it is run again. Never rebuild while a window is mid-demo.</li>
     <li><b>Sign in to both windows before the meeting.</b> Every Milton account carries the current Terms acceptance, so sign-in should go straight in; if the Terms screen shows, tick it then, not in the room.</li>
     <li><b>The deck:</b> slides 1 to 6, then leave slide 7, "Five demos", up while you switch to the browser. When you come back, slide 8 puts two codes up for their phones (the demo club’s website and Battle of the Bats); slides 9 to 16 follow.</li>
     <li>Read the last lines it prints: <b>the Sunday part 2 starts</b>, <b>the next dome practice</b>, <b>cash on hand</b>, and for Demo 5 <b>the three parent-coaches</b> and <b>the friend code</b> (always MLT 9BV, Tomas Volkov's). The steps below use them.</li>
@@ -89,6 +89,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
     <li><b>A private window</b> (signed out) for Demo 5's sign-up. <b>Phone cards</b>: print the Battle of the Bats card to leave behind; no demo time.</li>
     <li><b>Stop check:</b> in the Coach window, Schedule shows a Sunday <b>Practice</b> at Escarpment Indoor Dome. If it doesn't, rebuild before going further.</li>
   </ul>
+  <div class="note warn"><b>The rebuild command, in the VS Code terminal (PowerShell): <code>npm.cmd run demo:milton</code></b><br>Use <code>npm.cmd</code>, not <code>npm</code>. PowerShell on this laptop refuses to run plain <code>npm</code> ("running scripts is disabled on this system"); the <code>.cmd</code> version works. Run it from the project folder, <code>C:\Users\b2cow\Documents\tournament-website</code>.</div>
   <p class="today">The build for Nov 24: part 2 from Sun Jan 3, 2027 (Dec 20 and Dec 27 are off) · next dome practice Sun Nov 29 · cash on hand $4,290.50 · U9 parent-coaches Ryan Kim, Isaiah Bautista, Ryan Tran. These move with each rebuild (the friend code does not).</p>
 </section>
 
@@ -165,8 +166,8 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
   <textarea id="n4" aria-label="Demo 4 notes" placeholder="Notes for Demo 4"></textarea>
 </section>
 
-<section class="card demo" data-demo="5" data-min="7" style="--start:33" aria-labelledby="h-d5">
-  <div class="head"><h2 id="h-d5">5 · House league, end to end <small>Family side, then the Admin Area · 7 min</small></h2>
+<section class="card demo" data-demo="5" data-min="9" style="--start:33" aria-labelledby="h-d5">
+  <div class="head"><h2 id="h-d5">5 · House league, end to end <small>Family side, then the Admin Area · 9 min</small></h2>
     <span class="clock"><output aria-live="off">0:00</output><button type="button" class="go">Start</button></span></div>
   <p class="where">A private window (signed out) for the family, then the owner window. <b>"One child, from the sign-up to a team."</b> Leave the Battle of the Bats phone card behind at the end.</p>
   <ol class="steps">
@@ -174,8 +175,12 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
     <li><input type="checkbox" id="s35"><label class="step" for="s35"><span class="do">Child <b>Lily Porter</b>, born 2018-06-12; parent <b>Sam Porter</b>, <code>b2cowan+newfamily@gmail.com</code>.</span><span class="see">She lands in U9 by her birth year.</span></label></li>
     <li><input type="checkbox" id="s36"><label class="step" for="s36"><span class="do">The club’s questions: allergies “None”, T-shirt size YM, <b>Can a parent help?</b> tick <b>Coach</b>.</span><span class="see">Say: “The club writes these itself, on the season’s Sign-up form. This one shows on the draft board.”</span></label></li>
     <li><input type="checkbox" id="s37"><label class="step" for="s37"><span class="do">“Who would you like Lily to play with?” › “Have a friend code? Enter it instead” › <code>MLT 9BV</code>.</span><span class="see">Tomas Volkov’s family shared it from their sign-up page. A code in the same age group is matched on the spot; a name waits for the registrar.</span></label></li>
-    <li><input type="checkbox" id="s38"><label class="step" for="s38"><span class="do">“Sign up”, and stop at the “To pay” card.</span><span class="around"><b>Step around:</b> if “Pay by card” shows, leave it; the demo ends at To pay.</span></label></li>
-    <li><input type="checkbox" id="s39"><label class="step" for="s39"><span class="do">Owner window: House league › 2027 Summer House League › Teams › U9.</span><span class="see">34 children in the pool, Lily among them; four teams, each “No coach yet”.</span></label></li>
+    <li><input type="checkbox" id="s38"><label class="step" for="s38"><span class="do">“Sign up”.</span><span class="see">The “To pay now” card: Lily’s U9 fee, with “Test payment: no money moves.” above it.</span></label></li>
+    <li><input type="checkbox" id="s46"><label class="step" for="s46"><span class="do">Press <b>Pay … by card</b>.</span><span class="see">Stripe’s own payment page opens.</span><span class="around"><b>Step around:</b> “Pay by bank debit” sits beside it; use the card.</span></label></li>
+    <li><input type="checkbox" id="s47"><label class="step" for="s47"><span class="do">Stripe’s test card <code>4242 4242 4242 4242</code>, any future date, any 3 digits, any postal code › Pay.</span><span class="around"><b>Say it truly:</b> this is Stripe’s test mode on the demo site; no money moves. A real club connects its own Stripe account first. <b>If Stripe is slow or won’t load,</b> close the tab and carry on to the owner window; the sign-up stands.</span></label></li>
+    <li><input type="checkbox" id="s48"><label class="step" for="s48"><span class="do">Back on Lily’s “Your sign-up” page.</span><span class="see">“Confirming your payment” for a few seconds, then a receipt card: <b>Paid, thank you</b>, with a receipt number and “Test payment · no money moved”, and “Everything is paid. Thank you.”</span></label></li>
+    <li><input type="checkbox" id="s49"><label class="step" for="s49"><span class="do">Owner window: House league › 2027 Summer House League › Registrations › Lily Porter.</span><span class="see">Her fee is paid in full, received “Online, card”. Say: “Nobody typed that in. The club’s book already has it.”</span></label></li>
+    <li><input type="checkbox" id="s39"><label class="step" for="s39"><span class="do">Same season › Teams › U9.</span><span class="see">34 children in the pool, Lily among them; four teams, each “No coach yet”.</span></label></li>
     <li><input type="checkbox" id="s40"><label class="step" for="s40"><span class="do">Pool › Filter › Can a parent help? › Coach.</span><span class="see">Four children: the three the rebuild printed, and Lily.</span></label></li>
     <li><input type="checkbox" id="s41"><label class="step" for="s41"><span class="do">Each of the four: ⋯ › “Move to…” a different team, then ⋯ › “Lock to this team”. Lily to Stingers.</span><span class="see">A locked child stays put through the draft.</span><span class="around"><b>Care:</b> moved but not locked, the draft deals them again.</span></label></li>
     <li><input type="checkbox" id="s42"><label class="step" for="s42"><span class="do">Stingers › “No coach yet” › Sam Porter, <code>b2cowan+newfamily@gmail.com</code> › ✓.</span><span class="see">Say: “Same for the other three.”</span><span class="around"><b>Say it truly:</b> the parent’s answer doesn’t fill in the coach; you type the coach in.</span></label></li>
@@ -200,7 +205,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
 <section class="card" aria-labelledby="h-after">
   <h2 id="h-after">After a rehearsal</h2>
   <ul class="plain">
-    <li><b>Rebuild</b> (<code>npm run demo:milton</code>). It clears what the rehearsal made: the part-2 schedule, Nora's payment, the balance check, the invoice, the plan you started, Lily’s sign-up, the U9 draft and its coach. Nobody is signed out.</li>
+    <li><b>Rebuild</b> (<code>npm.cmd run demo:milton</code>, with the <code>.cmd</code>). It clears what the rehearsal made: the part-2 schedule, Nora's payment, the balance check, the invoice, the plan you started, Lily’s sign-up and her test card payment, the U9 draft and its coach. Nobody is signed out.</li>
     <li>Never close a fiscal year in a rehearsal: the rebuild stops on a closed year.</li>
     <li>A sponsorship deal offered in a rehearsal is not cleared by the rebuild; remove it in Sponsorships yourself.</li>
     <li>Copy the summary above and paste it to Claude.</li>
@@ -212,7 +217,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;m
 
 <script>
 (function () {
-  var KEY = 'milton-run-sheet-v2'; // v2: Demo 5 became house league end to end (box ids 34+ changed meaning)
+  var KEY = 'milton-run-sheet-v3'; // v3: Demo 5 takes a test card payment (boxes 38 and 39 changed meaning, 46 to 49 are new); v2: Demo 5 became house league end to end
   var state = {};
   try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private window: ticks last this visit only */ } }
