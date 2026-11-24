@@ -29,7 +29,7 @@ import {
 } from './club-group-email-words';
 import {
   canFinish, chooseBoard, chooseCoaches, cleanName, coachBasis, coachLine, displayName, groupKey, groupOffered, isSender, namesPending,
-  parseColleagueGroup, pickable, recount, replyTarget, seatOf, unionCoaches, type BoardMember, type CoachGroup, type ColleagueGroup, type CoachPerson,
+  parseColleagueGroup, pickable, recount, replyTarget, seatOf, seatSeesEveryMissed, unionCoaches, type BoardMember, type CoachGroup, type ColleagueGroup, type CoachPerson,
   type Seat, type Seen,
 } from './club-group-email-rules';
 import { loadCoachRows, type CoachRows } from './club-group-email-people';
@@ -417,30 +417,60 @@ export async function finishColleagueEmail(ctx: AuthContextWithRole, seat: Seat,
   // 2026-11-17), so a failed read never leaves a stopped email held for 15 minutes with nothing sent. The second two are
   // settled rather than thrown, so the checks that follow keep their order: the reply target refuses before any failure. The
   // words are read here too, before the take: a failed read or deleted words must never leave the email held 15 minutes.
-  const [clubContact, senderEmail, [missedRead, groupRead, wordsRead]] = await Promise.all([
-    send.replyTo === 'club' ? clubPublicContact(ctx.org.id) : null,
+  const copyOwed = send.kind === 'coaches' && send.clubCopy === 'asked';
+  const [clubContact, senderEmail, senderStatus, [missedRead, groupRead, wordsRead]] = await Promise.all([
+    // The club's contact is also read when the sender asked for a copy to the club's inbox that never went (finish rule 2).
+    send.replyTo === 'club' || copyOwed ? clubPublicContact(ctx.org.id) : null,
     send.replyTo === 'sender' && send.sentBy
       ? supabaseAdmin.auth.admin.getUserById(send.sentBy).then(r => r.data.user?.email ?? null).catch(() => null)
       : null,
+    // Finish rule 3: is the sender still a member of this club? Only "Replies come to me" promises their address.
+    send.replyTo === 'sender' && send.sentBy
+      ? supabaseAdmin.from('organization_members').select('status').eq('organization_id', ctx.org.id).eq('user_id', send.sentBy).maybeSingle()
+        .then(r => (r.error ? 'unknown' : ((r.data?.status as string | undefined) ?? null)), () => 'unknown')
+      : null,
     Promise.allSettled([
       supabaseAdmin.from('club_group_email_recipients')
-        .select('id, user_id, league_coach_id, name, basis, board_role').eq('send_id', sendId).in('status', ['pending', 'failed']),
+        .select('id, user_id, league_coach_id, name, basis, board_role, rep, house_league').eq('send_id', sendId).in('status', ['pending', 'failed']),
       stillInTheGroup(ctx, seat, send),
       supabaseAdmin.from('club_group_email_bodies').select('subject, body').eq('send_id', sendId).maybeSingle(),
     ]),
   ]);
-  const target = replyTargetOf(send.replyTo, senderEmail, clubContact);
-  if ('ok' in target) return target;
+  // Nothing to send to anyone (everyone has it, only the last mark is missing): the finish only closes the email, so it needs no
+  // sender, no reply address and no group. A sender who has left, a club that has lost its contact, or a season that has ended
+  // must not keep it open. A copy still owed is then sent only if a reply address can be had, else recorded as not gone.
+  const closesOnly = missedRead.status === 'fulfilled' && !missedRead.value.error && (missedRead.value.data ?? []).length === 0;
+  let target: { replyTo: string } | null = null; // null only when closing: nobody is written to, a copy may be refused
+  if (closesOnly) {
+    if (copyOwed && (send.replyTo !== 'sender' || senderStatus === 'active')) {
+      const t = replyTargetOf(send.replyTo, senderEmail, clubContact);
+      if (!('ok' in t)) target = t;
+    }
+  } else {
+    // Finish rule 3 comes BEFORE the reply target: a sender whose account is gone has no address either, and "Your account has no
+    // email address" would name the wrong person. Only "Replies come to me" promises the sender's address.
+    if (send.replyTo === 'sender' && senderStatus === 'unknown') throw new Error("the sender's membership could not be read");
+    if (send.replyTo === 'sender' && senderStatus !== 'active') return refuse(409, 'sender_gone', SAY.senderGone(send.senderName));
+    const t = replyTargetOf(send.replyTo, senderEmail, clubContact);
+    if ('ok' in t) return t;
+    target = t;
+  }
+  const replyTo = target ? target.replyTo : ''; // '' only while closing, when nothing is sent to a person
   if (missedRead.status === 'rejected') throw missedRead.reason;
   const { data: missedRows, error: mErr } = missedRead.value;
   if (mErr) throw mErr;
   if (groupRead.status === 'rejected') throw groupRead.reason;
-  const addressOf = groupRead.value;
-  if ('ok' in addressOf) return addressOf;
+  const groupNow = groupRead.value;
+  if ('ok' in groupNow && !closesOnly) return groupNow;
+  const addressOf: Map<string, string> = 'ok' in groupNow ? new Map() : groupNow;
   if (wordsRead.status === 'rejected') throw wordsRead.reason;
   const { data: words, error: wErr } = wordsRead.value;
   if (wErr) throw wErr;
   if (!words) return refuse(409, 'words_gone', SAY.wordsGone); // before the take: nothing is held
+  // Finish rule 1: never write off people this seat cannot see. Refused before the take, so nothing is held or sent.
+  if (!seatSeesEveryMissed(seat, send.groupKind, (missedRows ?? []).map(r => ({ rep: !!r.rep, houseLeague: !!r.house_league })))) {
+    return refuse(403, 'not_yours', SAY.finishHidden(send.kind, send.senderName));
+  }
 
   // Taking the row is the press's claim: a second press finds it taken, and nothing goes twice. Words the nightly clean-up
   // has just deleted are never sent: the take only matches a send that still has them.
@@ -461,20 +491,51 @@ export async function finishColleagueEmail(ctx: AuthContextWithRole, seat: Seat,
       subject: words.subject as string, body: words.body as string,
       recipient: { firstName: firstName(r.name as string | null), basis: r.basis as ColleagueBasis, boardRole: r.board_role as string | null },
     });
-    const s = await deliverOne(sendId, to, mail, mailKindOf(send.kind), target.replyTo);
+    const s = await deliverOne(sendId, to, mail, mailKindOf(send.kind), replyTo);
     await markRecipient(r.id as string, s);
     return s;
   });
-  const { data: all, error: cErr } = await supabaseAdmin.from('club_group_email_recipients').select('status').eq('send_id', sendId);
+  const { data: all, error: cErr } = await supabaseAdmin.from('club_group_email_recipients').select('status, user_id, league_coach_id').eq('send_id', sendId);
   if (cErr) throw cErr;
   const reached = (all ?? []).filter(x => x.status === 'sent').length;
   const failed = (all ?? []).filter(x => x.status === 'failed').length;
+  // Finish rule 2: the copy for the club's inbox that the sender asked for and the first run never made. It is CLAIMED before it
+  // is sent (asked → failed, one atomic update, so a second finisher or a retry finds nothing to claim), then recorded as what
+  // happened. So it goes at most once, and a closed send is never left at "asked". The price: a crash mid-send leaves "didn't
+  // go" on a copy that may have gone. It all happens BEFORE the send is marked done.
+  let copy: string | null = null;
+  if (copyOwed) {
+    const { data: claimed, error: claimErr } = await supabaseAdmin.from('club_group_email_sends').update({ club_copy: 'failed' })
+      .eq('id', sendId).eq('org_id', ctx.org.id).eq('club_copy', 'asked').select('id').maybeSingle();
+    // A failed claim stops here, before the send is closed: it stays stopped and finishable, never closed at "asked".
+    if (claimErr) throw claimErr;
+    if (claimed) {
+      const contact = clubContact?.trim().toLowerCase() ?? null;
+      // Listed = the club's contact is one of the people THIS email reached (judged by who is still in the group: addresses are
+      // never stored). Not "anyone in the group now": that would skip a copy the sender asked for.
+      const listed = !!contact && (all ?? []).some(r => {
+        const a = addressOf.get(r.user_id ? `u:${r.user_id}` : `c:${r.league_coach_id}`);
+        return r.status === 'sent' && !!a && a.trim().toLowerCase() === contact;
+      });
+      // Nobody reached: a copy saying so is no use to the club, and the sender is told it didn't go.
+      copy = !contact || reached === 0 || !target ? 'failed'
+        : listed ? 'already_listed'
+          : await deliverOne(sendId, clubContact as string, {
+            ...renderInboxCopy({ club: ctx.org.name, mode: send.replyTo, senderName: send.senderName ?? '', groupLabel: send.label, reached, subject: words.subject as string, body: words.body as string }),
+            fromName: MAIL.from(ctx.org.name),
+          }, 'club_inbox_copy', target.replyTo);
+      if (copy !== 'failed') {
+        const { error: copyErr } = await supabaseAdmin.from('club_group_email_sends').update({ club_copy: copy }).eq('id', sendId).eq('org_id', ctx.org.id);
+        if (copyErr) console.error("[club-group-email] the copy's outcome was not recorded:", copyErr.message);
+      }
+    }
+  }
   // Counts only from people still on the record: if the clock has removed them, the counts already stored stand.
   const done = (all ?? []).length > 0 ? { reached_count: reached, failed_count: failed, status: 'done' } : { status: 'done' };
-  const { error: doneErr } = await supabaseAdmin.from('club_group_email_sends').update(done).eq('id', sendId);
+  const { error: doneErr } = await supabaseAdmin.from('club_group_email_sends').update(done).eq('id', sendId).eq('org_id', ctx.org.id);
   if (doneErr) console.error('[club-group-email] the finished send could not be completed:', doneErr.message);
-  await writeOrgAudit(ctx.org.id, ctx.user.id, null, 'club_group_email_finished', { sendId, tried: outcomes.length, reached, failed });
-  return okay({ sendId, tried: outcomes.length, reached, failed });
+  await writeOrgAudit(ctx.org.id, ctx.user.id, null, 'club_group_email_finished', { sendId, tried: outcomes.length, reached, failed, copy });
+  return okay({ sendId, tried: outcomes.length, reached, failed, copy });
 }
 
 /**

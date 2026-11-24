@@ -11,7 +11,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAllIn } from './supabase-paging';
 import type { AuthContextWithRole } from './api-auth';
 import { RECORD, SAY, type ColleagueKind, type ReplyMode } from './club-group-email-words';
-import { canFinish, canReadSend, shapeRecipients, type Seat, type SendFacts, type StoredRecipient } from './club-group-email-rules';
+import { canFinish, canReadSend, seatSeesEveryMissed, shapeRecipients, type Seat, type SendFacts, type StoredRecipient } from './club-group-email-rules';
 
 /** A send still `sending` this long after it started (or was last retried) reads as Stopped — the family send's length. */
 export const STOPPED_AFTER_MS = 15 * 60 * 1000;
@@ -139,6 +139,25 @@ export async function lastColleagueSend(ctx: AuthContextWithRole, seat: Seat, ki
   return first ? { at: first.sentAt, by: first.senderName, subject: first.subject, reached: first.reached } : null;
 }
 
+/**
+ * May this reader finish a stopped email, and if not, why. Mirrors the refusals `finishColleagueEmail` is certain to give, so
+ * the record never offers a button that only ever says no: the wrong seat, a pick that reached people this seat cannot see,
+ * and "Replies come to me" whose sender has left (only when someone was missed: with nobody missed it just closes).
+ */
+async function finishFacts(ctx: AuthContextWithRole, seat: Seat, send: ReadableSend, stored: readonly StoredRecipient[]): Promise<{ may: boolean; line: string | null }> {
+  if (!canFinish(seat, ctx.user.id, send)) return { may: false, line: SAY.finishWho(send.kind, send.senderName) };
+  const missed = stored.filter(r => r.status !== 'sent');
+  if (!seatSeesEveryMissed(seat, send.groupKind, missed)) return { may: false, line: SAY.finishHidden(send.kind, send.senderName) };
+  if (missed.length > 0 && send.replyTo === 'sender') {
+    const { data, error } = send.sentBy
+      ? await supabaseAdmin.from('organization_members').select('status').eq('organization_id', ctx.org.id).eq('user_id', send.sentBy).maybeSingle()
+      : { data: null, error: null };
+    // A failed read offers the button: the server decides, and it refuses in the same words.
+    if (!error && data?.status !== 'active') return { may: false, line: SAY.senderGone(send.senderName) };
+  }
+  return { may: true, line: null };
+}
+
 /** One coach or board email's record, shaped for THIS reader. */
 export async function readColleagueEmail(ctx: AuthContextWithRole, seat: Seat, sendId: string) {
   const send = await loadReadableSend(ctx, seat, sendId);
@@ -154,9 +173,7 @@ export async function readColleagueEmail(ctx: AuthContextWithRole, seat: Seat, s
     boardRole: (r.board_role as string | null) ?? null, houseLeague: !!r.house_league, rep: !!r.rep, status: r.status as StoredRecipient['status'],
   }));
   const who = shapeRecipients(seat, send.kind, stored);
-  const finish = send.state === 'stopped'
-    ? (canFinish(seat, ctx.user.id, send) ? { may: true, line: null } : { may: false, line: SAY.finishWho(send.kind, send.senderName) })
-    : null;
+  const finish = send.state === 'stopped' ? await finishFacts(ctx, seat, send, stored) : null;
   const { sentBy: _sentBy, params: _params, ...shown } = send;
   void _sentBy; void _params;
   return {

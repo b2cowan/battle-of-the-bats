@@ -285,7 +285,7 @@ const communicationsHelp: HelpPageContent = {
       heading: 'The Communications switch',
       summary: 'The owner turns Communications on or off for each member, in Members, Manage.',
       keywords: ['communications switch', 'turn off communications', 'turn on communications', 'members manage', 'what they can open', 'access', 'group email off'],
-      searchText: 'the owner turns communications on or off for a member in members manage what they can open writes group email and reads what was sent off no group email from communications or a season’s email families board email sent to them still arrives a board seat is the membership only the owner changes what a member can open admin league admin registrar treasurer',
+      searchText: 'the owner turns communications on or off for a member in members manage what they can open writes group email and reads what was sent off no group email from communications or a season’s email families practice reminder and team change notice still go set messages board email sent to them still arrives a board seat is the membership only the owner changes what a member can open admin league admin registrar treasurer',
       content: (
         <>
           <p>
@@ -293,6 +293,9 @@ const communicationsHelp: HelpPageContent = {
           </p>
           <p>
             With it off, the member can&rsquo;t write group email in Communications or in a season&rsquo;s <strong>Email families</strong> tab, and can&rsquo;t read the list of what was sent. Board email sent to them still arrives: a board seat is the membership.
+          </p>
+          <p>
+            The switch covers email a person writes. The practice reminder and the team-change notice are set messages the house-league screens send for an action, so they still go when it is off.
           </p>
         </>
       ),

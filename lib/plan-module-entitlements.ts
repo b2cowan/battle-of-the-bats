@@ -15,7 +15,7 @@ export const MODULE_CATALOG: { key: Capability; label: string; description: stri
   {
     key: 'module_communications',
     label: 'Communications',
-    description: 'Operational email and announcement workflows for tournament and organization staff.',
+    description: 'Writing group email to families, coaches and the board, and reading the record of what was sent.',
   },
   {
     key: 'module_members',

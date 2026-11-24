@@ -273,6 +273,14 @@ export const SAY = {
   finishWho: (kind: ColleagueKind, sender: string | null) => kind === 'board'
     ? `${sender ?? 'The sender'}, the owner or an admin can send it to the ones it missed.`
     : `${sender ?? 'The sender'} or an admin can send it to the ones it missed.`,
+  /** Finish rule 1: the pick reached people this seat cannot see, so it cannot finish it for them. */
+  finishHidden: (kind: ColleagueKind, sender: string | null) =>
+    `It missed people outside the groups you send to, so you can't finish it. ${kind === 'board'
+      ? `${sender ?? 'The sender'}, the owner or an admin can send it to the ones it missed.`
+      : `${sender ?? 'The sender'} or an admin can send it to the ones it missed.`}`,
+  /** Finish rule 3: "Replies come to me" promises a reply reaches the sender, and they are no longer in the club. */
+  senderGone: (sender: string | null) =>
+    `${sender ?? 'The sender'} isn't an active member of the club any more, and this email says replies reach them, so it can't be sent to the ones it missed. Send it again to the same people yourself, and untick anyone who already has it.`,
   notFound: 'Not found',
 };
 
@@ -355,7 +363,7 @@ export const PLACE = {
   /** The small line above a window's title when opened here (ask 9; a season's window keeps the season's name). */
   eyebrow: 'Communications',
   /** The member window's one line for the switch (tab 4, ask 5). */
-  switchLine: 'Writes group email and reads what was sent. If it’s off, no group email from any screen; board email sent to them still arrives.',
+  switchLine: 'Writes group email and reads what was sent. If it’s off, they can’t write a group email from any screen. Practice reminders and team-change notices still go from the house-league screens, and board email sent to them still arrives.',
   /** The "not yours" screen's middle sentence (tab 4). */
   notYoursWhat: 'It’s where the club’s emails to families and coaches are written, and what was sent.',
 };

@@ -20,7 +20,7 @@ import {
 } from '../../lib/club-group-email-words.ts';
 import {
   canFinish, canReadSend, chooseBoard, chooseCoaches, cleanName, coachBasis, displayName, groupKey, namesColleagueAudience,
-  namesPending, parseColleagueGroup, recount, replyTarget, seatOf, shapeRecipients, unionCoaches,
+  namesPending, parseColleagueGroup, recount, replyTarget, seatOf, seatSeesEveryMissed, shapeRecipients, unionCoaches,
   type BoardMember, type LeagueRow, type RepRow, type Seat, type SeatFacts, type StoredRecipient,
 } from '../../lib/club-group-email-rules.ts';
 import { familySenderName } from '../../lib/email-club-identity.ts';
@@ -560,6 +560,86 @@ describe('T25 · a stopped email whose words have expired cannot be finished', (
       'gone words are refused before the take');
     assert.match(readCode('lib/families-email.ts'), /return refuse\(409, CW\.wordsGone, 'words_gone'\)/);
     assert.equal(SAY.wordsGone, "Its words were deleted 12 months after it was sent, so it can't be sent again.");
+  });
+});
+
+describe('Finishing a stopped email · the three finish rules (owner 2026-11-24, hardened by /review the same day)', () => {
+  const finish = readCode('lib/club-group-email.ts').match(/export async function finishColleagueEmail[\s\S]*?\n\}/)?.[0] ?? '';
+  const takeAt = finish.indexOf('retried_at: new Date()');
+
+  it('rule 1 · a seat that cannot see everyone the pick missed is refused, never closing the email over them', () => {
+    const repOnly: Seat = { ...ADMIN, coaches: { rep: true, league: false } };
+    const leagueOnly: Seat = { ...ADMIN, coaches: { rep: false, league: true } };
+    const both = { rep: true, houseLeague: true };
+    assert.ok(seatSeesEveryMissed(ADMIN, 'coaches_picked', [{ rep: true, houseLeague: false }, { rep: false, houseLeague: true }]), 'a seat with both sees both');
+    assert.ok(!seatSeesEveryMissed(repOnly, 'coaches_picked', [{ rep: true, houseLeague: false }, { rep: false, houseLeague: true }]), 'a rep seat cannot see a house-league-only coach');
+    assert.ok(!seatSeesEveryMissed(leagueOnly, 'coaches_picked', [{ rep: true, houseLeague: false }]), 'a league seat cannot see a rep-only coach');
+    assert.ok(seatSeesEveryMissed(leagueOnly, 'coaches_picked', [both, { rep: false, houseLeague: true }]), 'a dual-role coach is visible to either seat');
+    assert.ok(seatSeesEveryMissed(repOnly, 'coaches_picked', []), 'nobody missed: nothing hidden');
+    assert.ok(seatSeesEveryMissed(repOnly, 'rep_staff', [{ rep: false, houseLeague: true }]), 'only a pick can mix; a named group is whole for the seat canFinish admits');
+    assert.match(finish, /seatSeesEveryMissed\(seat, send\.groupKind/);
+    assert.match(finish, /select\('id, user_id, league_coach_id, name, basis, board_role, rep, house_league'\)/);
+    const at = finish.indexOf('seatSeesEveryMissed(seat');
+    assert.ok(at > 0 && at < takeAt, 'refused before the row is taken: nothing is held, nothing is written off');
+    assert.match(finish.slice(at, at + 260), /refuse\(403, 'not_yours', SAY\.finishHidden\(send\.kind, send\.senderName\)\)/, 'the refusal says the real reason, not only "ask the sender"');
+    assert.equal(SAY.finishHidden('coaches', 'Morgan Ellis'),
+      "It missed people outside the groups you send to, so you can't finish it. Morgan Ellis or an admin can send it to the ones it missed.");
+    assert.match(SAY.finishHidden('board', null), /The sender, the owner or an admin can send it to the ones it missed\.$/);
+  });
+
+  it('rule 1 and 3 · the record never offers a finish the server is certain to refuse', () => {
+    const read = readCode('lib/club-group-email-read.ts');
+    const facts = read.match(/async function finishFacts[\s\S]*?\n\}/)?.[0] ?? '';
+    assert.ok(facts.length > 0, 'one function decides what the record offers');
+    assert.match(facts, /canFinish\(seat, ctx\.user\.id, send\)/);
+    assert.match(facts, /seatSeesEveryMissed\(seat, send\.groupKind, missed\)/);
+    assert.match(facts, /SAY\.finishHidden\(/);
+    assert.match(facts, /missed\.length > 0 && send\.replyTo === 'sender'/, 'a departed sender only matters when someone was missed');
+    assert.match(facts, /SAY\.senderGone\(send\.senderName\)/);
+    assert.match(read, /send\.state === 'stopped' \? await finishFacts\(/);
+  });
+
+  it('rule 2 · the inbox copy the sender asked for is claimed, sent once, recorded, and only then is the email closed', () => {
+    assert.match(finish, /const copyOwed = send\.kind === 'coaches' && send\.clubCopy === 'asked'/);
+    assert.match(finish, /send\.replyTo === 'club' \|\| copyOwed \? clubPublicContact/, 'the club contact is read even when replies go to the sender');
+    assert.match(finish, /'club_inbox_copy'/, 'sent through the colleague copy kind');
+    const claim = finish.indexOf("update({ club_copy: 'failed' })");
+    assert.ok(claim > takeAt, 'claimed after the take, which admits one finisher');
+    assert.match(finish.slice(claim, claim + 260), /\.eq\('org_id', ctx\.org\.id\)\.eq\('club_copy', 'asked'\)\.select\('id'\)/, 'one atomic asked → failed update: a second finisher or a retry finds nothing to claim');
+    assert.ok(finish.indexOf("deliverOne(sendId, clubContact as string") > claim, 'the copy is sent only after it was claimed');
+    assert.match(finish, /if \(claimed\) \{/, 'only the one who claimed it sends it');
+    assert.match(finish, /!contact \|\| reached === 0 \|\| !target \? 'failed'/, 'no contact, nobody reached, or no reply address: nothing goes, and the sender is told');
+    assert.match(finish, /if \(claimErr\) throw claimErr;/, 'a failed claim leaves the send stopped, never closed at "asked"');
+    assert.match(finish, /r\.status === 'sent' && !!a && a\.trim\(\)\.toLowerCase\(\) === contact/, 'already listed = this email reached the contact');
+    assert.ok(!/addressOf\.values\(\)/.test(finish), 'never judged against everyone in the group now');
+    assert.ok(!/club_copy: 'asked'/.test(finish), 'a finish never re-asks');
+    const recorded = finish.indexOf('.update({ club_copy: copy })');
+    const closed = finish.indexOf("status: 'done'");
+    assert.ok(recorded > claim && closed > recorded, 'claimed, sent and recorded BEFORE the send is marked done: a closed send is never left at "asked"');
+    assert.match(finish.slice(closed, closed + 400), /\.eq\('org_id', ctx\.org\.id\)/, 'the closing update is org-scoped too');
+  });
+
+  it('rule 3 · "Replies come to me" refuses once the sender is no longer an active member, but only when something is to be sent', () => {
+    assert.match(finish, /from\('organization_members'\)\.select\('status'\)/);
+    assert.match(finish, /send\.replyTo === 'sender' && senderStatus !== 'active'\) return refuse\(409, 'sender_gone', SAY\.senderGone\(send\.senderName\)\)/);
+    const at = finish.indexOf("'sender_gone'");
+    assert.ok(at > 0 && at < takeAt, 'refused before the row is taken');
+    assert.ok(at < finish.lastIndexOf('replyTargetOf('),
+      'a sender whose account is gone has no address either: the member check speaks first, never "Your account has no email address"');
+    const gate = finish.indexOf('if (closesOnly) {');
+    assert.ok(gate > 0 && gate < at && finish.lastIndexOf('replyTargetOf(') > at,
+      'the sender and the reply address are only asked when something is sent: an email nobody was missed on can always be closed');
+    assert.match(finish, /const closesOnly = missedRead\.status === 'fulfilled' && !missedRead\.value\.error && \(missedRead\.value\.data \?\? \[\]\)\.length === 0/);
+    assert.match(finish, /'ok' in groupNow && !closesOnly\) return groupNow/, 'an ended season does not keep an email nobody was missed on open either');
+    assert.match(finish, /copyOwed && \(send\.replyTo !== 'sender' \|\| senderStatus === 'active'\)/, 'a copy still owed to a closing email is sent only with a usable reply address');
+    assert.equal(SAY.senderGone('Morgan Ellis'),
+      "Morgan Ellis isn't an active member of the club any more, and this email says replies reach them, so it can't be sent to the ones it missed. Send it again to the same people yourself, and untick anyone who already has it.");
+    assert.match(SAY.senderGone(null), /^The sender isn't an active member of the club any more/);
+  });
+
+  it('the finish screen says so when the copy the sender asked for did not go', () => {
+    const screen = readCode('components/admin/kit/club/communications/ColleagueRecord.tsx');
+    assert.match(screen, /res\.data\.copy === 'failed' \? `\$\{said\} \$\{RECORD\.copyFailed\}` : said/);
   });
 });
 

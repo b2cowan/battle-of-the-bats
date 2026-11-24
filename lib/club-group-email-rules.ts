@@ -329,6 +329,19 @@ export function canFinish(seat: Seat, viewerId: string, row: SendFacts): boolean
   return false;
 }
 
+/**
+ * Finish rule 1 (owner 2026-11-24): a seat finishing a picked email may only send to people it may still see. A pick that
+ * mixed rep staff and house-league coaches, finished by a narrower seat, would otherwise write the people that seat cannot
+ * see off as "no longer in the group" and close the email, so they would never get it. Visibility is judged from the flags stored with each person when it was sent, so a hidden person who has since left still stops
+ * a finish: the seat cannot verify they are gone (the 2026-11-22 ruling). Every other group is already whole for the seat `canFinish` admits.
+ */
+export function seatSeesEveryMissed(seat: Seat, groupKind: string, missed: readonly { rep: boolean; houseLeague: boolean }[]): boolean {
+  if (groupKind !== 'coaches_picked') return true;
+  const c = seat.coaches;
+  if (!c) return false;
+  return missed.every(r => (c.rep && r.rep) || (c.league && r.houseLeague));
+}
+
 export interface StoredRecipient {
   name: string | null; line: string | null; basis: ColleagueBasis; boardRole: string | null; houseLeague: boolean;
   /** Also rep staff: a league seat sees them named (they coach in its house league) but never their rep-team line. */

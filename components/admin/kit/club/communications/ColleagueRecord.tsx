@@ -86,8 +86,13 @@ export function ColleagueRecord({ row, eyebrow, q, canSendAgain, onSendAgain, on
     if (busy) return;
     setBusy(true); setError('');
     try {
-      const res = await moneyFetch<{ tried?: number; reached?: number; failed?: number; error?: string; code?: string }>(url, jsonInit('POST', { action: 'finish' }));
-      if (res.ok) { onFinished(res.data.tried === 0 ? RECORD.finishedNone : RECORD.finished(res.data.reached ?? 0, res.data.failed ?? 0)); return; }
+      const res = await moneyFetch<{ tried?: number; reached?: number; failed?: number; copy?: string | null; error?: string; code?: string }>(url, jsonInit('POST', { action: 'finish' }));
+      if (res.ok) {
+        const said = res.data.tried === 0 ? RECORD.finishedNone : RECORD.finished(res.data.reached ?? 0, res.data.failed ?? 0);
+        // The copy the sender asked for goes with the finish; a copy that did not go is said now, not left for the next read.
+        onFinished(res.data.copy === 'failed' ? `${said} ${RECORD.copyFailed}` : said);
+        return;
+      }
       setError(refusalText(res.data, RECORD.finishUnsure));
       // Someone else took it (or it is no longer stopped): read the record again so it stops offering the finish.
       if (res.status === 409) void read();
