@@ -236,7 +236,7 @@ export default function SublinedChoice<T extends string>({
                     role="option"
                     aria-selected={value === o.value}
                     aria-disabled={o.disabled || undefined}
-                    className={styles.convWhatOpt}
+                    className={o.sub ? styles.convWhatOpt : `${styles.convWhatOpt} ${styles.convWhatOptSolo}`}
                     onClick={() => { if (o.disabled) return; onChange(o.value); setOpen(false); }}
                   >
                     <span>

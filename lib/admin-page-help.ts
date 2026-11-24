@@ -152,6 +152,9 @@ export const TOURNAMENT_PAGE_HELP: Readonly<Record<string, PageHelpTopic>> = {
   'staff-kit': t(['scores-and-results'], 'Staff kit', 'scores-t-staff-kit'),
   'settings/notifications': t(['settings-and-access'], 'Your notifications', 'tournament-notifications'),
   'settings/payouts': t(['online-payments'], 'Payouts', 'online-payments-setup'),
+  // Plan & billing on the Tournament plans (GST/HST §557 B5, 2026-11-22): it drew no "?", so a tournament organizer could not
+  // reach the billing-address and tax help. The organization guide's section covers every plan's Plan & billing page.
+  'settings/subscription': org(['club-plan-and-billing'], 'Plan & billing'),
   // ── The club's own screens, reused by Settings & access on the Tournament plans: the club's topic ──
   'settings/members': CLUB_PLACE_HELP['org/org/members'],
   'settings/members/audit': CLUB_PLACE_HELP['org/org/audit'],

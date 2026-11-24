@@ -112,7 +112,6 @@ describe('every tournament admin page has a topic, or a stated reason it has non
     'data-tools': 'a redirect to Teams (data tools retired)',
     'settings': 'the Settings & access address is a door to its first tab',
     'settings/registration-fields': 'a redirect into Event settings',
-    'settings/subscription': 'Plan & billing on a Tournament plan: no tournaments-guide section describes it (recorded as open in the plan)',
     'settings/subscription/mock-portal': 'a development stand-in for the Stripe portal',
     'preview/[tournamentSlug]': 'the public site in a frame (no chrome)',
     'preview/[tournamentSlug]/[section]': 'the public site in a frame (no chrome)',

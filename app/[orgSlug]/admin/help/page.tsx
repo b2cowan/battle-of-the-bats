@@ -157,7 +157,7 @@ export default function AdminHelpHubPage() {
         // Board Ready Stage 6: the club's Sponsorships place, where the plan carries it.
         ...(canSponsorships ? [{ label: 'Sell sponsorships and show sponsors', href: `${helpBase}/org#club-sponsorships` }] : []),
         ...(canPublicSite ? [{ label: 'Run your public site', href: `${helpBase}/org#public-site-editor` }] : []),
-        ...(isClub ? [{ label: 'Club plan & billing', href: `${helpBase}/org#club-plan-and-billing` }] : []),
+        { label: 'Plan & billing, your billing address and taxes', href: `${helpBase}/org#club-plan-and-billing` },
         // Club Tier Stage 6b: the club calendar and the Venue library, where the plan carries the library.
         ...(hasOrgVenueLibrary(currentOrg?.planId) ? [
           { label: 'See the whole club’s week', href: `${helpBase}/org#club-calendar` },
