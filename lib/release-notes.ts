@@ -45,11 +45,27 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
     date: '2026-11-23',
-    title: "Save a bank check and finish it later",
+    title: "Sponsorship deals with invoices and payments, and save a bank check and finish it later",
     highlights: [
+      {
+        category: 'new',
+        text: "On League Plus and the Club plans, a club can offer a sponsor a deal from the Sponsorships page. The business gets its own page by link, with no sign-in, where it chooses a package and adds its details.",
+      },
+      {
+        category: 'new',
+        text: "A club can send a sponsor an invoice as a PDF, with the email linking to it. The club can record each payment as it arrives and void one entered by mistake. A revised invoice keeps the first figures beside the new ones, and the sponsor gets a \"Paid in full\" email when the deal is settled. GST/HST shows only on a deal that charges it, and the business's address is asked for only then.",
+      },
       {
         category: 'improved',
         text: "The bank check now keeps your work as you go. Start checking a statement, choose Save for later, and pick it up on any device for 30 days after your last change. Signing out no longer clears it.",
+      },
+      {
+        category: 'improved',
+        text: "On the Tournament plans, the ? on Plan & billing now opens help on your billing address and the GST/HST added to what we charge.",
+      },
+      {
+        category: 'new',
+        text: "Our Payments Terms are now published and linked from the Payouts card.",
       },
     ],
   },
