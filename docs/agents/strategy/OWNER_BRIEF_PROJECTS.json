@@ -353,6 +353,14 @@
       "next": "Run the whole-site pass in a fresh session from its kick-off prompt: today's club site walked on a phone and a computer, then every club page drawn once with all ten ideas in. Its asks wait for Milton's answers before you rule.",
       "remains": "The whole-site pass, then ten ideas one at a time in dependency order: game day on the club home, field status, photos, news, sponsors with a report, scores that land in a second, the Big Board, a trophy case, a share kit, and a separate track that makes a prospect's own club site before a meeting.",
       "waitsOn": [], "finishesAfter": ["team-structure"],
-      "youOwe": ["Paste Milton Bats' answers to the three website questions into the kick-off prompt's feedback slot (what they would miss, what families ask for, who updates the site)", "Rule three calls in the plan: sponsor tiers, a public page for a house league team, and moving a club demo ahead of 'the demo comes after launch'"] }
+      "youOwe": ["Paste Milton Bats' answers to the three website questions into the kick-off prompt's feedback slot (what they would miss, what families ask for, who updates the site)", "Rule three calls in the plan: sponsor tiers, a public page for a house league team, and moving a club demo ahead of 'the demo comes after launch'"] },
+    { "id": "team-structure", "name": "Team structure (levels, age groups, who runs each)", "track": "product", "state": "open", "checked": true,
+      "files": ["TEAM_STRUCTURE_PLAN.md","TEAM_STRUCTURE_PM_BRIEF.md"], "ledger": ["Team structure"],
+      "goals": ["after"], "lane": "later", "order": 54, "phase": "Planning",
+      "stage": "Now: logged 24 Nov from the Milton demo as its own project, not part of the website project; today a club gets one heading then a stacked list, age is typed text, and a VP limited to their level can only look, not change → Next: the walk and the end-state drawing",
+      "next": "The walk, the census and the end state in one publish: today's rep-team screens walked for Milton on a phone and a computer, every team list drawn once as level, then age, then teams side by side, and a four-level club drawn to test it.",
+      "remains": "The structure itself (levels, real age groups, an optional side such as Purple or White), people who run a level with a /legal look, every admin team list redrawn as one set, and the public Teams page drawn with the website project. Seven calls of yours come back from the drawing.",
+      "waitsOn": [], "finishesAfter": [],
+      "youOwe": ["Ask Milton Bats how their VP of Rep and VP of Select split the work (teams, tryouts, schedules, money, families, emails), and paste it into the plan for the drawing session"] }
   ]
 }
