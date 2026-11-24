@@ -2,13 +2,14 @@
 
 | | |
 |---|---|
-| **Version** | 0.1 (an addendum to the published Payments Terms version 2026-11-24; becomes a whole new frozen text, see "How this publishes") |
+| **Version** | 0.2 (an addendum to the published Payments Terms version 2026-11-24; becomes a whole new frozen text, see "How this publishes") |
 | **Status** | draft. Not owner-approved. Not reviewed by a lawyer. The live Payments Terms page and every version constant are untouched. |
 | **Effective date** | none yet (a new dated version: the day it is promoted or later; never reuse 2026-11-24) |
-| **Last reviewed** | 2026-11-23 (`/legal`, against the code on dev, Board Ready Stage 6 Part 3b) |
+| **Last reviewed** | 2026-11-24 (`/legal`, against the code on dev after the after-walk fixes: a sponsor dispute is now recorded and booked, migrations 532 and 534) |
 | **Seller** | the owner, trading as FieldLogicHQ, Ontario (`docs/agents/accounting/ACCOUNTING_FACTS.md`) |
 
 **Change log**
+- 0.2 (2026-11-24): the product now RECORDS a sponsor's dispute (a dispute row, a notice to whoever opens Sponsorships, and on a loss the payment's receipt lines reversed with no credit note and the deal back to owing), so §7's "handled in Stripe, and only there" bullet is rewritten, the two §10 narrowings are dropped (a sponsor's dispute works in FieldLogicHQ and holds up a deletion like any other), O-S2 is answered (built, owner call (b) of walk §564) and O-S4 falls away. §6 gains what we send when a refund does not reach the card (the credit note is cancelled and the business is told). No other text moves.
 - 0.1 (2026-11-23): first draft. Adds a business that pays a club's sponsorship deal by card to §1, §2, §4, §6, §7, §9, §10 and §11 of the published 2026-11-24 text. Written from what the code does (`lib/sponsor-card-server.ts`, `lib/online-payment-fee.ts`, `lib/online-payment-landing.ts` `refundSponsorCard` and `applyCardDispute`, `lib/online-payment-endings.ts`), not from the plan.
 
 **How to read this.** Each block below is the text to put in the published Payments Terms, in the Terms' own style. "Replaces" means the sentence in the 2026-11-24 file is changed, not added to. Everything not listed stays word for word. Sections are numbered as in the published file.
@@ -46,6 +47,7 @@
 - **A sponsor's card payment is refunded from the deal.** Your organization decides each refund of a sponsorship and makes it from the deal in FieldLogicHQ, for all of what can go back or for part of it, with a reason. We do not decide refunds or make them on your behalf. Anyone at your organization who can open Sponsorships can make one.
 - **A refund of a sponsorship never includes the processing fee**, including a processing fee that the business paid, or the GST/HST on that fee. Neither part of the processing fee comes back (§4). Whether your organization makes the business whole for a fee it paid is between your organization and the business, and is not done through the refund FieldLogicHQ makes.
 - **What we send.** When a refund reaches the card, we email the business a notice of it, with your reason, and, when the invoice carried GST/HST, a credit note for that refund, in your organization's name. Refunding everything that was paid ends the deal.
+- **If a refund does not reach the card.** If the card company sends a refund back after we have told the business about it, the refund comes out of your organization's books, the credit note we sent is marked cancelled (its number is kept and never used again), and we email the business that the refund did not reach its card and that the credit note is cancelled. Your organization decides what to do next: refund again, or send the money another way and record it. We tell your organization in its notifications.
 - **How long it takes.** A refund goes back to the card the business paid with. When it appears on the business's statement is up to the card company and its bank. We cannot say when.
 - **No refund while the card is disputed.** We will not make a refund of a card payment while the business's card company is disputing it (§7).
 - **A refund made in your own Stripe account** is not recorded by FieldLogicHQ. We remind your organization to record it in its own books; we do not record it for you.
@@ -53,9 +55,9 @@
 
 ## §7. Disputes and returned bank debits (adds one bullet)
 
-- **A dispute of a sponsor's card payment is handled in Stripe, and only there.** For a sponsorship payment, FieldLogicHQ does not record the dispute, does not raise a notice about it, does not gather its facts, and does not book the amount Stripe takes back; the deal stays marked as paid. Stripe tells your organization under its own agreement with Stripe. Your organization decides whether to answer it in Stripe, and corrects the deal and its books itself if the dispute is lost. Neither part of the processing fee is returned (§4); Stripe's dispute fees come out of your organization's Stripe balance (§5).
+- **A dispute of a sponsor's card payment is answered in Stripe, and recorded in FieldLogicHQ.** For a sponsorship payment, FieldLogicHQ records the dispute and tells whoever at your organization opens Sponsorships when it opens and when it is decided. Your organization answers it in Stripe, under its agreement with Stripe; we cannot answer it for you. **If your organization loses it,** the amount Stripe takes back comes out of your organization's books in the same way as the payment went in, the deal returns to owing, and no credit note is issued, because your organization did not refund anyone and the business still owes the invoice. **If your organization wins it** after that, the payment is put back. We do not decide for your organization whether to ask the business to pay again or to withdraw the deal, and we do not adjust the GST/HST on an invoice that has been issued; your organization (with its accountant) decides how to treat the tax on an amount it does not recover. Neither part of the processing fee is returned (§4); Stripe's dispute fees come out of your organization's Stripe balance (§5). A dispute that covers only part of a payment, or a payment that was never recorded here, is not booked by us: we tell your organization so that it can record it.
 
-(The existing first bullet "FieldLogicHQ can gather the facts of the payment for you to copy" is true of registrations, team fees and tournament entries only. Change it to end "…FieldLogicHQ can, for payments other than a sponsorship, gather the facts of the payment for you to copy, but cannot answer a dispute for you.")
+(The existing first bullet "FieldLogicHQ can gather the facts of the payment for you to copy" is still true of registrations, team fees and tournament entries only: no sponsorship screen gathers the facts. Change it to end "…FieldLogicHQ can, for payments other than a sponsorship, gather the facts of the payment for you to copy, but cannot answer a dispute for you.")
 
 ## §9. Your organization's responsibilities (replaces the second bullet, adds two)
 
@@ -66,8 +68,7 @@ Your organization agrees to:
 
 ## §10. Switching online payments off, and ending (replaces two sentences)
 
-- **Replaces** "Refunds and disputes of payments already made keep working in FieldLogicHQ." **with** "Refunds of payments already made keep working in FieldLogicHQ, and so do disputes of payments other than a sponsorship. A dispute of a sponsorship payment is only in Stripe (§7)."
-- **Replaces** "We will not delete an organization while money is still in motion: an open dispute, or a bank debit still clearing." **with** "We will not delete an organization while money is still in motion that we can see: an open dispute of a registration, team or tournament payment, or a bank debit still clearing. We cannot see a dispute of a sponsorship payment, so it does not hold up a deletion."
+No text change (0.2). A sponsor's dispute is recorded, so "Refunds and disputes of payments already made keep working in FieldLogicHQ" and "We will not delete an organization while money is still in motion: an open dispute…" are both true of a sponsorship, as published. (0.1 narrowed both; that is withdrawn.)
 
 ## §11. Information about payers (adds one sentence)
 
@@ -95,13 +96,14 @@ Left as published. See "How this publishes" for what the new version asks of a c
 
 **Owner decisions.**
 - O-S1. Publish this as a new Payments Terms version before switch-on (recommended), with the Privacy version.
-- O-S2. The §7 sponsorship-dispute bullet says what the product does (nothing). If you would rather the product raised a notice for a sponsor's dispute, that is a build for `/plan`, and the bullet then changes. Either is honest; the silent version is the ruled design.
+- O-S2. ANSWERED 2026-11-24 (owner, walk §564 call (b): "build a notice and the books reversal first"): the product records a sponsor's dispute, raises a notice, and books a loss; §7 now says so (0.2).
 - O-S3. §6 "We cannot say when" (a recommendation: the product's current "5 to 10 business days" is a card-network time, not a promise we can keep; see the topic file `BOARD_READY_STAGE6_PART3B_CARD_REVIEW.md` §4).
-- O-S4. §10 narrows two published sentences for sponsorships only. They are narrowings of a promise, which only helps the customer's expectations; no notice owed beyond the new version's.
+- O-S4. FALLS AWAY (0.2): §10 is no longer narrowed.
 
 ## For a lawyer's eye
 
-- **§7, the dispute bullet and §10's narrowed deletion sentence.** The product stays silent on a sponsor's chargeback by design. The terms say so rather than promise a notice. A lawyer could read whether a club that never reads Stripe's emails can say it was not told by us; the text says we do not tell it.
+- **§7, the dispute bullet (0.2).** The product now tells the club of a sponsor's dispute, and books a lost one, but does not promise to catch every case (a part dispute, an unrecorded payment): the bullet says so. A lawyer could read whether "we tell whoever at your organization opens Sponsorships" is a promise stronger than the product can keep when nobody holds that seat, and the GST/HST sentence ("we do not adjust the GST/HST on an invoice that has been issued") is a statement about the club's tax that the club's accountant owns.
+- **§6, a refund that does not reach the card (0.2).** The cancelled credit note: the product keeps the note, marks it cancelled, never reuses its number, and tells the business. Whether that is the right way to withdraw a credit note that reduced GST/HST is for the club's accountant (see the topic file's 2026-11-24 addendum).
 - **§4 and §9, the business-pays fee.** A processing fee passed to a business is the club's charge, and the card rate can exceed the card networks' surcharge ceiling if it is read as a surcharge (2.4%, no more than the cost of acceptance, none in Québec); GST/HST is charged on it. Whether it is a surcharge or a service fee is unsettled (`CARD_SURCHARGE_PAYER_FEE.md`). The default is "the club pays", which keeps it out of the common case.
 - **§6, no fee refund.** A business that paid a fee on a deal that is then fully refunded gets everything back but the fee, and the card page does not say so before it pays (it says so in the refund email). The exposure sits with the club (its own representation to its sponsor), not with us; whether the page should say it first is O-S5 in the topic file.
 - **§2 and §6, an individual sponsor.** If the payer is a person, a family or a sole proprietor rather than a business, consumer rules for internet agreements may apply to the club (`ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md`, backlog L17). The club's obligations, not ours; the draft puts the information duty on the club in §9.
