@@ -1,0 +1,220 @@
+<title>Start This Plan From Drawings</title>
+<style>
+  :root { --d-bg:#F1EFEA; --d-ink:#1d1b16; --d-mute:#5f5a4e; --d-line:rgba(0,0,0,.14); --d-card:#fff; --d-accent:#3d4a12; --d-hl:rgba(214,70,40,.12); }
+  @media (prefers-color-scheme: dark) { :root { --d-bg:#17160f; --d-ink:#ece8dc; --d-mute:#a9a391; --d-line:rgba(255,255,255,.16); --d-card:#201f17; --d-accent:#c9dc7a; --d-hl:rgba(255,140,110,.18); } }
+  * { box-sizing: border-box; }
+  body { background: var(--d-bg); }
+  .doc { background:var(--d-bg); color:var(--d-ink); font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; padding:0 0 3rem; min-height:100vh; }
+  .top { position:sticky; top:0; z-index:5; background:var(--d-bg); border-bottom:1px solid var(--d-line); padding:.9rem 1.25rem 0; }
+  .top h1 { margin:0 0 .15rem; font-size:1.15rem; }
+  .top p { margin:0 0 .6rem; color:var(--d-mute); font-size:.88rem; }
+  .tabs { display:flex; gap:.25rem; flex-wrap:wrap; }
+  .tab { appearance:none; border:1px solid transparent; border-bottom:none; background:none; color:var(--d-mute); font:inherit; font-size:.9rem; padding:.5rem .9rem; border-radius:8px 8px 0 0; cursor:pointer; }
+  .tab[aria-selected="true"] { background:var(--d-card); color:var(--d-ink); border-color:var(--d-line); font-weight:650; margin-bottom:-1px; }
+  .viewrow { display:flex; align-items:center; gap:.7rem; padding:.7rem 1.25rem 0; font-size:.85rem; color:var(--d-mute); }
+  .track { display:inline-flex; background:#fff; border:1px solid rgba(70,55,30,.2); border-radius:999px; padding:3px; }
+  .track button { appearance:none; border:0; background:none; font:inherit; font-size:.85rem; padding:.3rem .85rem; border-radius:999px; color:#5b5446; cursor:pointer; }
+  .track button[aria-pressed="true"] { background:rgba(87,101,30,.14); color:#241E15; font-weight:650; }
+  .pane { display:none; padding:1rem 1.25rem; max-width:1060px; }
+  .pane.on { display:block; }
+  .pane h2 { font-size:1.05rem; margin:.2rem 0 .35rem; }
+  .lede { color:var(--d-mute); margin:0 0 1rem; max-width:62ch; }
+  .tag { display:inline-block; font-size:.68rem; font-weight:700; letter-spacing:.06em; padding:.1rem .45rem; border-radius:4px; vertical-align:middle; margin-left:.4rem; }
+  .tag.new { background:#d9f0a3; color:#2d3a05; } .tag.same { background:rgba(120,120,120,.2); color:var(--d-mute); } .tag.re { background:#f5e2b8; color:#5a3d00; }
+  .cap { font-size:.78rem; letter-spacing:.05em; text-transform:uppercase; color:var(--d-mute); margin:1.1rem 0 .4rem; font-weight:650; }
+  .grid { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:1.25rem; align-items:start; }
+  @media (max-width: 900px) { .grid { grid-template-columns:1fr; } }
+  .notes { font-size:.88rem; } .notes ol, .notes ul { padding-left:1.1rem; margin:.3rem 0; } .notes li { margin:.35rem 0; }
+  .mk { appearance:none; border:0; cursor:pointer; display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; background:#d64628; color:#fff; font:700 .72rem/1 system-ui; vertical-align:middle; }
+  .mk.at { position:absolute; z-index:2; }
+  .hl { outline:2px dashed #d64628; outline-offset:4px; border-radius:8px; }
+
+  /* ───── specimen: the product, warm portal tokens ───── */
+  .frame { position:relative; width:100%; max-width:860px; background:#F8F4ED; color:#241E15; border:1px solid rgba(0,0,0,.2); border-radius:10px; padding:1rem; --lime:#D9F99D; --olive:#57651E; --line:rgba(70,55,30,.2); --sec:#5b5446; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  .frame .chrome { font-size:.68rem; letter-spacing:.07em; text-transform:uppercase; color:#8a8270; margin:0 0 .6rem; }
+  .scout { background:#fff; border:1px solid var(--line); border-left:3px solid var(--olive); border-radius:8px; padding:.65rem .85rem; margin-bottom:.8rem; font-size:.88rem; }
+  .scout b.l { font-size:.95rem; } .scout i { display:block; margin:.15rem 0; color:#3b3528; } .scout a { color:var(--olive); font-weight:650; }
+  .sheet { background:#fff; border:1px solid var(--line); border-radius:8px; padding:1rem 1.1rem 1.1rem; }
+  .shead { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #241E15; padding-bottom:.55rem; }
+  .shead .t { font:600 .98rem ui-monospace,Consolas,monospace; } .shead .s { font:.78rem ui-monospace,Consolas,monospace; color:var(--sec); }
+  .shead .v { font-size:.78rem; color:var(--olive); font-weight:600; }
+  .row { margin-top:.85rem; font-size:.92rem; } .row b { font-size:1rem; } .row em { color:#8a8270; }
+  .fold { margin-top:.75rem; color:var(--olive); font-weight:650; font-size:.95rem; padding:.35rem 0; border-top:1px solid var(--line); }
+  .tl { display:grid; grid-template-columns:88px 1fr; margin-top:.9rem; }
+  .gut { border-right:2px solid #241E15; font:.74rem/1.2 ui-monospace,Consolas,monospace; color:var(--sec); text-align:right; padding:.9rem .6rem 0 0; }
+  .ghost { display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; padding:.85rem 0 .85rem 1.1rem; }
+  .btn { display:inline-flex; align-items:center; gap:.35rem; min-height:44px; border-radius:6px; padding:.45rem .9rem; font:600 .88rem system-ui; cursor:default; }
+  .btn.p { background:var(--lime); color:#241E15; border:0; }
+  .btn.s { background:#fff; color:var(--sec); border:1px solid var(--line); }
+  .quiet { font-size:.82rem; font-weight:600; color:var(--sec); } .quiet u { text-decoration:underline; text-underline-offset:2px; color:var(--olive); }
+  .frame.dim .same { opacity:.22; }
+  .gone { display:none; }
+  .phone { width:390px; max-width:100%; }
+  .phone .ghost { flex-direction:column; align-items:stretch; padding:.7rem 0 .4rem; gap:.55rem; }
+  .phone .ghost .btn { justify-content:center; }
+  .phone .quiet { text-align:center; }
+  .phone .tl { grid-template-columns:80px 1fr; }
+  table.st { border-collapse:collapse; width:100%; font-size:.86rem; background:var(--d-card); border:1px solid var(--d-line); border-radius:8px; }
+  .st th, .st td { text-align:left; padding:.5rem .65rem; border-bottom:1px solid var(--d-line); vertical-align:top; }
+  .st th { font-size:.74rem; text-transform:uppercase; letter-spacing:.05em; color:var(--d-mute); }
+  .ask { background:var(--d-card); border:1px solid var(--d-line); border-radius:8px; padding:.75rem .95rem; margin:.7rem 0; max-width:70ch; }
+  .ask.flash { box-shadow:0 0 0 3px #d64628; }
+  .ask h3 { margin:0 0 .25rem; font-size:.95rem; } .ask p { margin:.2rem 0; font-size:.88rem; color:var(--d-mute); } .ask .rec { color:var(--d-ink); }
+</style>
+
+<div class="doc" id="doc">
+  <div class="top">
+    <h1>Practice plan · "Start this plan from…" made findable</h1>
+    <p>Drawings for the blank practice plan (Coaches Portal). Nothing is built yet. Milton demo, Sun Dec 6 practice.</p>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="t1">1 · The blank plan</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="t2">2 · When it shows</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="t3">3 · On a phone</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="t4">4 · Asks</button>
+    </div>
+  </div>
+
+  <!-- ───────── 1 ───────── -->
+  <section class="pane on" id="t1">
+    <div class="viewrow">View
+      <span class="track" id="vt"><button aria-pressed="true" data-v="all">Everything</button><button aria-pressed="false" data-v="diff">Show only what differs</button></span>
+    </div>
+    <h2>The whole screen, today and proposed</h2>
+    <p class="lede">The same blank plan twice, with the game-week scouting card included, because that is what the prospect sees. The only change is in the row under the timeline: the way to start from a past practice becomes a button next to the lime one.</p>
+
+    <div class="cap">Today <span class="tag same">UNCHANGED</span></div>
+    <div class="frame" id="f-today">
+      <div class="chrome">Coaches portal · desktop · Practice plan, no blocks yet</div>
+      <div class="scout same"><b class="l">🔭 You play Harrison Hollow Hornets Saturday — the book:</b><i>"Free swingers. Change speeds and let the outfield work."</i>They bring the infield in with a runner on third, every time. — Morgan Hale<br><a>Full book · 2 observations ›</a></div>
+      <div class="sheet">
+        <div class="shead same"><div><div class="t">Sun, Dec 6 · 9:30 a.m.–11:00 a.m. · 90 min</div><div class="s">0 of 90 min planned · 90 unplanned</div></div><div class="v">View on schedule</div></div>
+        <div class="row same"><b>Tonight:</b> <em>What the whole practice is for</em></div>
+        <div class="fold same">› About this practice</div>
+        <div class="fold same">+ Groups for tonight</div>
+        <div class="tl"><div class="gut">9:30 a.m.<br>start</div>
+          <div class="ghost">
+            <span class="btn p">+ Add the first block</span>
+            <span class="quiet">15 min · or <u>start this plan from…</u> · <u>a drill from your library</u></span>
+          </div></div>
+        <div class="fold same">+ What everyone's working on</div>
+      </div>
+    </div>
+
+    <div class="cap">Proposed <span class="tag re">RESTYLED · one row</span></div>
+    <div class="frame" id="f-new" style="padding-top:1.35rem">
+      <button class="mk at" style="left:.6rem;top:.45rem" data-ask="a1" aria-label="Ask 1">1</button>
+      <div class="chrome">Coaches portal · desktop · Practice plan, no blocks yet</div>
+      <div class="scout same"><b class="l">🔭 You play Harrison Hollow Hornets Saturday — the book:</b><i>"Free swingers. Change speeds and let the outfield work."</i>They bring the infield in with a runner on third, every time. — Morgan Hale<br><a>Full book · 2 observations ›</a></div>
+      <div class="sheet">
+        <div class="shead same"><div><div class="t">Sun, Dec 6 · 9:30 a.m.–11:00 a.m. · 90 min</div><div class="s">0 of 90 min planned · 90 unplanned</div></div><div class="v">View on schedule</div></div>
+        <div class="row same"><b>Tonight:</b> <em>What the whole practice is for</em></div>
+        <div class="fold same">› About this practice</div>
+        <div class="fold same">+ Groups for tonight</div>
+        <div class="tl"><div class="gut">9:30 a.m.<br>start</div>
+          <div class="ghost hl">
+            <span class="btn p">+ Add the first block</span>
+            <span class="btn s"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Start this plan from…</span>
+            <span class="quiet">15 min · <u>a drill from your library</u></span>
+            <button class="mk" data-ask="a2" aria-label="Ask 2">2</button>
+          </div></div>
+        <div class="fold same">+ What everyone's working on</div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="cap">What changed</div>
+      <ul>
+        <li><b>A white button joins the lime one</b>, same height and same look as every other secondary button in the portal. Lime stays the one earned action on the screen.</li>
+        <li><b>The sentence loses its "or"</b>: with the start-from move gone from it, the quiet line only offers the drill library.</li>
+        <li><b>The plan does not move.</b> The ghost row is the same height, so the scouting card, the sheet and the blank plan sit exactly where they do today. Nothing is pushed below the fold.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ───────── 2 ───────── -->
+  <section class="pane" id="t2">
+    <h2>When the button shows</h2>
+    <p class="lede">The rules do not change. They are the ones the screen already follows for the quiet link; only its look changes.</p>
+    <table class="st">
+      <tr><th>The plan</th><th>The team has</th><th>Row shows</th></tr>
+      <tr><td>Blank, coach can edit</td><td>A past practice with a plan, a saved template, or a past season's plan</td><td><b>+ Add the first block</b> · <b>Start this plan from…</b> · quiet: drill library (if the team has one)</td></tr>
+      <tr><td>Blank, coach can edit</td><td>None of those yet (a brand-new team)</td><td><b>+ Add the first block</b> · quiet: drill library. No start-from button, because it would open an empty list.</td></tr>
+      <tr><td>Has one or more blocks</td><td>Anything</td><td><b>+ Add a block</b> only. Start-from is gone, as today: it would replace work the coach has begun.</td></tr>
+      <tr><td>A finished practice, or a viewer who cannot edit</td><td>Anything</td><td>No row. Unchanged.</td></tr>
+    </table>
+    <div class="cap">What the button opens <span class="tag same">UNCHANGED</span></div>
+    <p class="lede">The same picker as today: one window with three sources (a previous practice, a template, a past season's plan). It lands on the fullest source. This is the window step 23 of the run sheet walks through.</p>
+  </section>
+
+  <!-- ───────── 3 ───────── -->
+  <section class="pane" id="t3">
+    <h2>On a phone</h2>
+    <p class="lede">Drawn at true phone width (390 px). On a phone the blank plan was not redrawn in the last phone pass, so this is a change there too: two full-width 44 px buttons, lime first, with the quiet line under them. Once a block exists the phone shows only its single "Add a block" row, as today.</p>
+    <div class="grid">
+      <div>
+        <div class="cap">Proposed · phone, blank plan <span class="tag re">RESTYLED</span></div>
+        <div class="frame phone">
+          <div class="chrome">Phone · 390 px</div>
+          <div class="sheet" style="padding:.8rem .8rem 1rem">
+            <div class="shead same"><div><div class="t" style="font-size:.85rem">Sun, Dec 6 · 9:30 a.m.</div><div class="s">0 of 90 min planned</div></div></div>
+            <div class="row same"><b>Tonight:</b> <em>What the whole practice is for</em></div>
+            <div class="tl"><div class="gut" style="padding-right:.4rem">9:30 a.m.<br>start</div>
+              <div class="ghost">
+                <span class="btn p">+ Add the first block</span>
+                <span class="btn s"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Start this plan from…</span>
+                <span class="quiet">15 min · <u>a drill from your library</u></span>
+              </div></div>
+          </div>
+        </div>
+      </div>
+      <div class="notes"><div class="cap">Notes</div><ul>
+        <li>Both buttons are 44 px tall, the portal's tap floor (the ghost row already sets this for every button in it, on a computer too).</li>
+        <li>Build note: reuse the portal's existing white secondary button; no new button style.</li>
+        <li>Open this page on the actual phone to judge the size; it is drawn at the real width and does not reflow.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- ───────── 4 ───────── -->
+  <section class="pane" id="t4">
+    <h2>Asks</h2>
+    <p class="lede">Four calls for the owner. Recommendations first.</p>
+    <div class="ask" id="a1"><h3>1 · A button, not a chooser on arrival</h3>
+      <p class="rec"><b>Recommend:</b> yes, a visible button on the blank plan. Do not pop the picker when the coach opens the plan: most coaches who open a blank plan want a blank plan, and the picker would be an extra tap for all of them.</p>
+      <p>This replaces the owner's earlier "quiet alternative" ruling for this one control only. The drill-library link stays quiet.</p></div>
+    <div class="ask" id="a2"><h3>2 · The label</h3>
+      <p class="rec"><b>Recommend:</b> keep "Start this plan from…" exactly. The help articles, the run sheet and the picker's own title already use it, so there is one name for it everywhere.</p>
+      <p>Alternative: "Copy a past practice". Clearer for a stranger, but it leaves out templates and past seasons, which the same window also offers.</p></div>
+    <div class="ask" id="a3"><h3>3 · The scouting card above a blank plan</h3>
+      <p class="rec"><b>Recommend:</b> leave it, and let the run sheet say so (done). With this change the blank plan's actions stay in the same place, so the card no longer competes with them.</p>
+      <p>Alternative: collapse it to a one-line row while the plan is blank. It costs a second design for a feature that is working as ruled.</p></div>
+    <div class="ask" id="a4"><h3>4 · Phone included in this change</h3>
+      <p class="rec"><b>Recommend:</b> yes, same build. The demo includes a phone moment, and the phone's blank plan has the same hidden link today.</p></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.tab');
+  var panes = document.querySelectorAll('.pane');
+  function show(id) {
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === id)); });
+    panes.forEach(function (p) { p.classList.toggle('on', p.id === id); });
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.getAttribute('data-tab')); }); });
+  document.querySelectorAll('[data-ask]').forEach(function (m) {
+    m.addEventListener('click', function () {
+      show('t4');
+      var el = document.getElementById(m.getAttribute('data-ask'));
+      if (el) { el.classList.add('flash'); el.scrollIntoView({ block: 'center' }); setTimeout(function () { el.classList.remove('flash'); }, 1800); }
+    });
+  });
+  document.querySelectorAll('#vt button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#vt button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      var diff = b.getAttribute('data-v') === 'diff';
+      document.getElementById('f-today').classList.toggle('dim', diff);
+      document.getElementById('f-new').classList.toggle('dim', diff);
+    });
+  });
+})();
+</script>

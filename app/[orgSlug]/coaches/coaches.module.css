@@ -11156,7 +11156,11 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   .ppTl { --pp-gutter-w: 5rem; }
   .ppTlGutter { font-size: var(--type-label); padding: 0.75rem 0.4rem 0.75rem 0; }
   .ppTlClosed { padding-left: 0.75rem; }
-  .ppTlGhost { padding-left: 0.75rem; }
+  /* The blank page's two buttons stack full width, lime first, the quiet line under them (owner
+     2026-11-24, drawings tab 3). Once a block exists the phone shows its single add row instead. */
+  .ppTlGhost { padding-left: 0.75rem; flex-direction: column; align-items: stretch; gap: 0.55rem; }
+  .ppTlGhost button { justify-content: center; }
+  .ppTlGhost .ppTlQuiet { text-align: center; }
   .ppTlOpen { margin-left: 0.4rem; }
   /* Columns become rows on a phone (stage 3, D2): one station per row, nothing else re-arranges —
      except a carried station's slots, which turn to run top and bottom, the way the rows now run

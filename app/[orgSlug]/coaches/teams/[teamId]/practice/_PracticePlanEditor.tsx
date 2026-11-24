@@ -6,7 +6,7 @@ import {
   type DragEndEvent, type DragOverEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import {
-  Check, ChevronLeft, ChevronRight, ChevronUp, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
+  Check, ChevronLeft, ChevronRight, ChevronUp, Copy, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
 } from 'lucide-react';
 import {
   MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_GROUPS, MAX_MINUTES, MAX_SHORT_TEXT_LEN,
@@ -4410,8 +4410,11 @@ export default function PracticePlanEditor({
     if (library?.canDock) library.onDock(true);
     else setDrillSheet({ kind: 'block' });
   };
+  /* "Start this plan from…" is a white BUTTON beside the lime first block on the blank page (owner,
+     2026-11-24 — it sat in the quiet line and a coach, and the demo, walked straight past it; drawings
+     PRACTICE_START_FROM_DRAWINGS.html). It leaves the quiet list, so the list is the drill library only. */
+  const startFromButton = firstBlock && onStartFrom ? onStartFrom : null;
   const ghostAlternatives = [
-    firstBlock && onStartFrom ? { label: 'start this plan from…', onClick: onStartFrom } : null,
     drills.length > 0 || circuits.length > 0 ? { label: 'a drill from your library', onClick: openLibrary } : null,
   ].filter((a): a is { label: string; onClick: () => void } => !!a);
   const removeFocus = () => {
@@ -4714,13 +4717,18 @@ export default function PracticePlanEditor({
               <button type="button" className={firstBlock ? styles.btnPrimary : styles.btnSecondary} data-pp-add-row onClick={addBlock}>
                 <Plus size={14} aria-hidden /> {firstBlock ? 'Add the first block' : 'Add a block'}
               </button>
+              {startFromButton && (
+                <button type="button" className={styles.btnSecondary} onClick={startFromButton}>
+                  <Copy size={14} aria-hidden /> Start this plan from…
+                </button>
+              )}
               <span className={styles.ppTlQuiet}>
                 {DEFAULT_BLOCK_MINUTES} min
-                {ghostAlternatives.map((alt, i) => (
+                {ghostAlternatives.map((alt) => (
                   <span key={alt.label} className={styles.ppTlQuietAlt}>
                     {/* A no-break space leads the separator: the span is an inline-block (so the
                         phrase wraps as a unit) and an ordinary leading space would collapse. */}
-                    {'\u00A0· '}{i === 0 ? 'or ' : ''}
+                    {'\u00A0· '}
                     <button type="button" className={styles.ppTlQuietLink} onClick={alt.onClick}>{alt.label}</button>
                   </span>
                 ))}
